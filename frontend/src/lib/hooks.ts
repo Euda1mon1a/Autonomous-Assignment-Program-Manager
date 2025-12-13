@@ -8,11 +8,20 @@ import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstac
 import { get, post, put, del, ApiError } from './api'
 import type {
   Person,
+  PersonCreate,
+  PersonUpdate,
   Absence,
+  AbsenceCreate,
+  AbsenceUpdate,
   RotationTemplate,
+  RotationTemplateCreate,
+  RotationTemplateUpdate,
+  Assignment,
+  AssignmentCreate,
+  AssignmentUpdate,
   ScheduleResponse,
   ValidationResult,
-} from '@/types'
+} from '@/types/api'
 
 // ============================================================================
 // API Response Types
@@ -24,7 +33,7 @@ export interface ListResponse<T> {
 }
 
 export interface PeopleFilters {
-  type?: 'resident' | 'faculty'
+  role?: string
   pgy_level?: number
 }
 
@@ -59,69 +68,7 @@ export interface ScheduleGenerateResponse {
   run_id?: string
 }
 
-export interface PersonCreate {
-  name: string
-  type: 'resident' | 'faculty'
-  email?: string
-  pgy_level?: number
-  performs_procedures?: boolean
-  specialties?: string[]
-  primary_duty?: string
-}
 
-export interface PersonUpdate {
-  name?: string
-  email?: string
-  pgy_level?: number
-  performs_procedures?: boolean
-  specialties?: string[]
-  primary_duty?: string
-}
-
-export interface AbsenceCreate {
-  person_id: string
-  start_date: string
-  end_date: string
-  absence_type: 'vacation' | 'deployment' | 'tdy' | 'medical' | 'family_emergency' | 'conference'
-  deployment_orders?: boolean
-  tdy_location?: string
-  replacement_activity?: string
-  notes?: string
-}
-
-export interface AbsenceUpdate {
-  start_date?: string
-  end_date?: string
-  absence_type?: string
-  deployment_orders?: boolean
-  tdy_location?: string
-  replacement_activity?: string
-  notes?: string
-}
-
-export interface RotationTemplateCreate {
-  name: string
-  activity_type: string
-  abbreviation?: string
-  clinic_location?: string
-  max_residents?: number
-  requires_specialty?: string
-  requires_procedure_credential?: boolean
-  supervision_required?: boolean
-  max_supervision_ratio?: number
-}
-
-export interface RotationTemplateUpdate {
-  name?: string
-  activity_type?: string
-  abbreviation?: string
-  clinic_location?: string
-  max_residents?: number
-  requires_specialty?: string
-  requires_procedure_credential?: boolean
-  supervision_required?: boolean
-  max_supervision_ratio?: number
-}
 
 // ============================================================================
 // Query Keys
@@ -150,16 +97,19 @@ export const queryKeys = {
  * Used by the main calendar view
  */
 export function useSchedule(
-  startDate: string,
-  endDate: string,
-  options?: Omit<UseQueryOptions<ScheduleResponse, ApiError>, 'queryKey' | 'queryFn'>
+  startDate: Date,
+  endDate: Date,
+  options?: Omit<UseQueryOptions<ListResponse<Assignment>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  return useQuery<ScheduleResponse, ApiError>({
-    queryKey: queryKeys.schedule(startDate, endDate),
-    queryFn: () => get<ScheduleResponse>(`/schedule/${startDate}/${endDate}`),
+  const startIso = startDate.toISOString()
+  const endIso = endDate.toISOString()
+  const startDateStr = startDate.toISOString().split('T')[0]
+  const endDateStr = endDate.toISOString().split('T')[0]
+
+  return useQuery<ListResponse<Assignment>, ApiError>({
+    queryKey: ['schedule', startIso, endIso],
+    queryFn: () => get<ListResponse<Assignment>>(`/api/assignments?start_date=${startDateStr}&end_date=${endDateStr}`),
     refetchOnWindowFocus: true,
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
-    staleTime: 60 * 1000, // Consider stale after 1 minute
     ...options,
   })
 }
@@ -209,14 +159,13 @@ export function usePeople(
   options?: Omit<UseQueryOptions<ListResponse<Person>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams()
-  if (filters?.type) params.set('type', filters.type)
+  if (filters?.role) params.set('role', filters.role)
   if (filters?.pgy_level !== undefined) params.set('pgy_level', String(filters.pgy_level))
   const queryString = params.toString()
 
   return useQuery<ListResponse<Person>, ApiError>({
-    queryKey: queryKeys.people(filters),
-    queryFn: () => get<ListResponse<Person>>(`/people${queryString ? `?${queryString}` : ''}`),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryKey: ['people', filters],
+    queryFn: () => get<ListResponse<Person>>(`/api/people${queryString ? `?${queryString}` : ''}`),
     ...options,
   })
 }
@@ -324,23 +273,17 @@ export function useDeletePerson() {
 // ============================================================================
 
 /**
- * Fetch absences with optional filters
+ * Fetch absences with optional person filter
  */
 export function useAbsences(
-  filters?: AbsenceFilters,
+  personId?: number,
   options?: Omit<UseQueryOptions<ListResponse<Absence>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  const params = new URLSearchParams()
-  if (filters?.person_id) params.set('person_id', filters.person_id)
-  if (filters?.start_date) params.set('start_date', filters.start_date)
-  if (filters?.end_date) params.set('end_date', filters.end_date)
-  if (filters?.absence_type) params.set('absence_type', filters.absence_type)
-  const queryString = params.toString()
+  const params = personId !== undefined ? `?person_id=${personId}` : ''
 
   return useQuery<ListResponse<Absence>, ApiError>({
-    queryKey: queryKeys.absences(filters),
-    queryFn: () => get<ListResponse<Absence>>(`/absences${queryString ? `?${queryString}` : ''}`),
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    queryKey: ['absences', personId],
+    queryFn: () => get<ListResponse<Absence>>(`/api/absences${params}`),
     ...options,
   })
 }
@@ -415,15 +358,12 @@ export function useDeleteAbsence() {
  * Fetch all rotation templates
  */
 export function useRotationTemplates(
-  activityType?: string,
   options?: Omit<UseQueryOptions<ListResponse<RotationTemplate>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  const params = activityType ? `?activity_type=${encodeURIComponent(activityType)}` : ''
-
   return useQuery<ListResponse<RotationTemplate>, ApiError>({
-    queryKey: queryKeys.rotationTemplates(activityType),
-    queryFn: () => get<ListResponse<RotationTemplate>>(`/rotation-templates${params}`),
-    staleTime: 10 * 60 * 1000, // 10 minutes - templates rarely change
+    queryKey: ['rotation-templates'],
+    queryFn: () => get<ListResponse<RotationTemplate>>('/api/rotation-templates'),
+    staleTime: 10 * 60 * 1000, // 10 minutes
     ...options,
   })
 }
@@ -490,35 +430,6 @@ export function useDeleteTemplate() {
 // ============================================================================
 // Assignment Hooks
 // ============================================================================
-
-export interface Assignment {
-  id: string
-  block_id: string
-  person_id: string
-  rotation_template_id?: string
-  role: 'primary' | 'supervising' | 'backup'
-  activity_override?: string
-  notes?: string
-  created_by?: string
-  created_at: string
-  updated_at: string
-}
-
-export interface AssignmentCreate {
-  block_id: string
-  person_id: string
-  rotation_template_id?: string
-  role: 'primary' | 'supervising' | 'backup'
-  activity_override?: string
-  notes?: string
-}
-
-export interface AssignmentUpdate {
-  rotation_template_id?: string
-  role?: 'primary' | 'supervising' | 'backup'
-  activity_override?: string
-  notes?: string
-}
 
 /**
  * Fetch assignments with optional filters
