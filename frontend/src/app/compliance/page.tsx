@@ -1,24 +1,55 @@
 'use client'
 
 import { useState } from 'react'
-import { format, startOfMonth, endOfMonth } from 'date-fns'
-import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
+import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns'
+import { CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
 import { useValidateSchedule } from '@/lib/hooks'
+import type { Violation } from '@/types/api'
 
 export default function CompliancePage() {
-  const [selectedMonth] = useState(new Date())
+  const [selectedMonth, setSelectedMonth] = useState(new Date())
   const startDate = format(startOfMonth(selectedMonth), 'yyyy-MM-dd')
   const endDate = format(endOfMonth(selectedMonth), 'yyyy-MM-dd')
 
-  const { data: validation, isLoading } = useValidateSchedule(startDate, endDate)
+  const { data: validation, isLoading, isError, error, refetch } = useValidateSchedule(startDate, endDate)
+
+  const goToPreviousMonth = () => setSelectedMonth(subMonths(selectedMonth, 1))
+  const goToNextMonth = () => setSelectedMonth(addMonths(selectedMonth, 1))
+  const goToCurrentMonth = () => setSelectedMonth(new Date())
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">ACGME Compliance</h1>
-        <p className="text-gray-600">
-          Validate schedule against ACGME requirements
-        </p>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">ACGME Compliance</h1>
+          <p className="text-gray-600">
+            Validate schedule against ACGME requirements
+          </p>
+        </div>
+
+        {/* Month Navigation */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={goToPreviousMonth}
+            className="p-2 hover:bg-gray-100 rounded-md"
+            aria-label="Previous month"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={goToCurrentMonth}
+            className="btn-secondary text-sm min-w-[140px]"
+          >
+            {format(selectedMonth, 'MMMM yyyy')}
+          </button>
+          <button
+            onClick={goToNextMonth}
+            className="p-2 hover:bg-gray-100 rounded-md"
+            aria-label="Next month"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -61,6 +92,19 @@ export default function CompliancePage() {
           <div className="flex items-center justify-center h-32">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center justify-center h-32 text-center">
+            <p className="text-gray-600 mb-4">
+              {error?.message || 'Failed to load compliance data'}
+            </p>
+            <button
+              onClick={() => refetch()}
+              className="btn-primary flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Retry
+            </button>
+          </div>
         ) : validation?.violations?.length === 0 ? (
           <div className="text-center py-8 text-green-600">
             <CheckCircle className="w-12 h-12 mx-auto mb-2" />
@@ -68,7 +112,7 @@ export default function CompliancePage() {
           </div>
         ) : (
           <div className="divide-y">
-            {validation?.violations?.map((violation: any, idx: number) => (
+            {validation?.violations?.map((violation: Violation, idx: number) => (
               <ViolationRow key={idx} violation={violation} />
             ))}
           </div>
@@ -115,8 +159,8 @@ function ComplianceCard({
   )
 }
 
-function ViolationRow({ violation }: { violation: any }) {
-  const severityColors: Record<string, string> = {
+function ViolationRow({ violation }: { violation: Violation }) {
+  const severityColors: Record<Violation['severity'], string> = {
     CRITICAL: 'bg-red-100 text-red-800',
     HIGH: 'bg-orange-100 text-orange-800',
     MEDIUM: 'bg-yellow-100 text-yellow-800',
@@ -128,7 +172,7 @@ function ViolationRow({ violation }: { violation: any }) {
       <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
       <div className="flex-1">
         <div className="flex items-center gap-2">
-          <span className={`px-2 py-0.5 rounded text-xs font-medium ${severityColors[violation.severity] || 'bg-gray-100'}`}>
+          <span className={`px-2 py-0.5 rounded text-xs font-medium ${severityColors[violation.severity]}`}>
             {violation.severity}
           </span>
           <span className="text-sm font-medium text-gray-900">
