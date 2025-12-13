@@ -2,19 +2,25 @@
 
 import { useState } from 'react'
 import { format, startOfWeek, addDays, addWeeks, subWeeks } from 'date-fns'
-import { ChevronLeft, ChevronRight, Calendar, Users, Settings } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, Users, Settings, RefreshCw } from 'lucide-react'
 import { ScheduleCalendar } from '@/components/ScheduleCalendar'
-import { useSchedule } from '@/lib/hooks'
+import { useSchedule, useValidateSchedule } from '@/lib/hooks'
+import { CalendarSkeleton } from '@components/skeletons'
 
 export default function HomePage() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }) // Monday
   const weekEnd = addDays(weekStart, 6)
 
-  const { data: schedule, isLoading } = useSchedule(
-    format(weekStart, 'yyyy-MM-dd'),
-    format(weekEnd, 'yyyy-MM-dd')
+  const { data: schedule, isLoading, isError, error, refetch } = useSchedule(
+    weekStart,
+    weekEnd
   )
+
+  // Get validation data for ACGME status
+  const startDateStr = format(weekStart, 'yyyy-MM-dd')
+  const endDateStr = format(weekEnd, 'yyyy-MM-dd')
+  const { data: validation } = useValidateSchedule(startDateStr, endDateStr)
 
   const goToPreviousWeek = () => setCurrentDate(subWeeks(currentDate, 1))
   const goToNextWeek = () => setCurrentDate(addWeeks(currentDate, 1))
@@ -68,36 +74,52 @@ export default function HomePage() {
       <div className="grid grid-cols-4 gap-4 mb-6">
         <StatCard
           title="Total Assignments"
-          value={schedule?.total_assignments || 0}
+          value={schedule?.total ?? 0}
           icon={<Calendar className="w-5 h-5 text-blue-600" />}
         />
         <StatCard
           title="Residents Scheduled"
-          value={schedule?.schedule ? Object.keys(schedule.schedule).length : 0}
+          value={schedule?.items ? new Set(schedule.items.map(a => a.person_id)).size : 0}
           icon={<Users className="w-5 h-5 text-green-600" />}
         />
         <StatCard
           title="Coverage Rate"
-          value="--"
+          value={validation?.coverage_rate ? `${validation.coverage_rate.toFixed(0)}%` : '--'}
           icon={<Settings className="w-5 h-5 text-purple-600" />}
         />
         <StatCard
           title="ACGME Status"
-          value="Valid"
-          icon={<CheckIcon />}
-          valueColor="text-green-600"
+          value={validation?.valid ? 'Valid' : validation ? `${validation.total_violations} Issues` : '--'}
+          icon={validation?.valid !== false ? <CheckIcon /> : <WarningIcon />}
+          valueColor={validation?.valid !== false ? 'text-green-600' : 'text-amber-600'}
         />
       </div>
 
       {/* Schedule Calendar */}
       {isLoading ? (
-        <div className="card flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <CalendarSkeleton />
+      ) : isError ? (
+        <div className="card flex flex-col items-center justify-center h-96 text-center">
+          <div className="text-red-500 mb-4">
+            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <p className="text-gray-600 mb-4">
+            {error?.message || 'Failed to load schedule'}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="btn-primary flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry
+          </button>
         </div>
       ) : (
         <ScheduleCalendar
           weekStart={weekStart}
-          schedule={schedule?.schedule || {}}
+          schedule={{}}
         />
       )}
     </div>
@@ -141,6 +163,24 @@ function CheckIcon() {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M5 13l4 4L19 7"
+      />
+    </svg>
+  )
+}
+
+function WarningIcon() {
+  return (
+    <svg
+      className="w-5 h-5 text-amber-600"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
       />
     </svg>
   )
