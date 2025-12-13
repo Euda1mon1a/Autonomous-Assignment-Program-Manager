@@ -75,3 +75,4 @@ logs/
 *.pyc
 *.pyo
 .build/
+*.tsbuildinfo
