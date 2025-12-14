@@ -5,12 +5,14 @@ import { Plus, User, GraduationCap, RefreshCw } from 'lucide-react'
 import { usePeople, useDeletePerson, type PeopleFilters } from '@/lib/hooks'
 import { CardSkeleton } from '@/components/skeletons'
 import { AddPersonModal } from '@/components/AddPersonModal'
+import { EditPersonModal } from '@/components/EditPersonModal'
 import type { Person } from '@/types/api'
 
 export default function PeoplePage() {
   const [roleFilter, setRoleFilter] = useState<'all' | 'resident' | 'faculty'>('all')
   const [pgyFilter, setPgyFilter] = useState<number | undefined>(undefined)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [editingPerson, setEditingPerson] = useState<Person | null>(null)
 
   // Build filters
   const filters: PeopleFilters | undefined =
@@ -114,6 +116,7 @@ export default function PeoplePage() {
               <PersonCard
                 key={person.id}
                 person={person}
+                onEdit={() => setEditingPerson(person)}
                 onDelete={() => handleDelete(person.id)}
               />
             ))
@@ -126,11 +129,26 @@ export default function PeoplePage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
       />
+
+      {/* Edit Person Modal */}
+      <EditPersonModal
+        isOpen={editingPerson !== null}
+        onClose={() => setEditingPerson(null)}
+        person={editingPerson}
+      />
     </div>
   )
 }
 
-function PersonCard({ person, onDelete }: { person: Person; onDelete: () => void }) {
+function PersonCard({
+  person,
+  onEdit,
+  onDelete,
+}: {
+  person: Person
+  onEdit: () => void
+  onDelete: () => void
+}) {
   const isResident = person.type === 'resident'
 
   return (
@@ -163,7 +181,12 @@ function PersonCard({ person, onDelete }: { person: Person; onDelete: () => void
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <button className="text-blue-600 hover:underline text-sm">Edit</button>
+        <button
+          onClick={onEdit}
+          className="text-blue-600 hover:underline text-sm"
+        >
+          Edit
+        </button>
         <button
           onClick={onDelete}
           className="text-red-600 hover:underline text-sm"

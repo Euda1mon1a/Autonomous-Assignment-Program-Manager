@@ -1,11 +1,17 @@
 'use client'
 
+import { useState } from 'react'
 import { Plus, RefreshCw } from 'lucide-react'
 import { useRotationTemplates, useDeleteTemplate } from '@/lib/hooks'
 import { CardSkeleton } from '@/components/skeletons'
+import { CreateTemplateModal } from '@/components/CreateTemplateModal'
+import { EditTemplateModal } from '@/components/EditTemplateModal'
 import type { RotationTemplate } from '@/types/api'
 
 export default function TemplatesPage() {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [editingTemplate, setEditingTemplate] = useState<RotationTemplate | null>(null)
+
   const { data, isLoading, isError, error, refetch } = useRotationTemplates()
   const deleteTemplate = useDeleteTemplate()
 
@@ -22,7 +28,10 @@ export default function TemplatesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Rotation Templates</h1>
           <p className="text-gray-600">Define reusable activity patterns with constraints</p>
         </div>
-        <button className="btn-primary flex items-center gap-2">
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="btn-primary flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           New Template
         </button>
@@ -58,21 +67,37 @@ export default function TemplatesPage() {
               <TemplateCard
                 key={template.id}
                 template={template}
+                onEdit={() => setEditingTemplate(template)}
                 onDelete={() => handleDelete(template.id, template.name)}
               />
             ))
           )}
         </div>
       )}
+
+      {/* Create Template Modal */}
+      <CreateTemplateModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      {/* Edit Template Modal */}
+      <EditTemplateModal
+        isOpen={editingTemplate !== null}
+        onClose={() => setEditingTemplate(null)}
+        template={editingTemplate}
+      />
     </div>
   )
 }
 
 function TemplateCard({
   template,
+  onEdit,
   onDelete,
 }: {
   template: RotationTemplate
+  onEdit: () => void
   onDelete: () => void
 }) {
   const activityColors: Record<string, string> = {
@@ -80,6 +105,8 @@ function TemplateCard({
     inpatient: 'bg-purple-100 text-purple-800',
     procedure: 'bg-red-100 text-red-800',
     conference: 'bg-gray-100 text-gray-800',
+    elective: 'bg-green-100 text-green-800',
+    call: 'bg-orange-100 text-orange-800',
   }
 
   const colorClass = activityColors[template.activity_type] || 'bg-gray-100 text-gray-800'
@@ -120,7 +147,12 @@ function TemplateCard({
       </div>
 
       <div className="mt-4 pt-4 border-t flex gap-2">
-        <button className="text-blue-600 hover:underline text-sm">Edit</button>
+        <button
+          onClick={onEdit}
+          className="text-blue-600 hover:underline text-sm"
+        >
+          Edit
+        </button>
         <button
           onClick={onDelete}
           className="text-red-600 hover:underline text-sm"
