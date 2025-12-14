@@ -10,6 +10,8 @@ from app.schemas.rotation_template import (
 from app.schemas.assignment import AssignmentCreate, AssignmentUpdate, AssignmentResponse
 from app.schemas.absence import AbsenceCreate, AbsenceUpdate, AbsenceResponse
 from app.schemas.schedule import ScheduleRequest, ScheduleResponse, ValidationResult
+from app.schemas.settings import SettingsCreate, SettingsUpdate, SettingsResponse
+from app.schemas.auth import Token, TokenData, UserLogin, UserCreate, UserResponse
 
 __all__ = [
     "PersonCreate",
@@ -32,4 +34,12 @@ __all__ = [
     "ScheduleRequest",
     "ScheduleResponse",
     "ValidationResult",
+    "SettingsCreate",
+    "SettingsUpdate",
+    "SettingsResponse",
+    "Token",
+    "TokenData",
+    "UserLogin",
+    "UserCreate",
+    "UserResponse",
 ]
