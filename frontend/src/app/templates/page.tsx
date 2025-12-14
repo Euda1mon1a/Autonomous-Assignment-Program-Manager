@@ -6,6 +6,7 @@ import { useRotationTemplates, useDeleteTemplate } from '@/lib/hooks'
 import { CardSkeleton } from '@/components/skeletons'
 import { CreateTemplateModal } from '@/components/CreateTemplateModal'
 import { EditTemplateModal } from '@/components/EditTemplateModal'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 import type { RotationTemplate } from '@/types/api'
 
 export default function TemplatesPage() {
@@ -22,10 +23,11 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Rotation Templates</h1>
+    <ProtectedRoute>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Rotation Templates</h1>
           <p className="text-gray-600">Define reusable activity patterns with constraints</p>
         </div>
         <button
@@ -81,13 +83,14 @@ export default function TemplatesPage() {
         onClose={() => setIsCreateModalOpen(false)}
       />
 
-      {/* Edit Template Modal */}
-      <EditTemplateModal
-        isOpen={editingTemplate !== null}
-        onClose={() => setEditingTemplate(null)}
-        template={editingTemplate}
-      />
-    </div>
+        {/* Edit Template Modal */}
+        <EditTemplateModal
+          isOpen={editingTemplate !== null}
+          onClose={() => setEditingTemplate(null)}
+          template={editingTemplate}
+        />
+      </div>
+    </ProtectedRoute>
   )
 }
 
