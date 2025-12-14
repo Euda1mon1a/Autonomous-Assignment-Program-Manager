@@ -5,8 +5,8 @@ import { format, startOfWeek, addDays, addWeeks, subWeeks } from 'date-fns'
 import { ChevronLeft, ChevronRight, Calendar, Users, Settings, RefreshCw } from 'lucide-react'
 import { ScheduleCalendar } from '@/components/ScheduleCalendar'
 import { useSchedule, useValidateSchedule } from '@/lib/hooks'
-import { CalendarSkeleton } from '@components/skeletons'
-import { GenerateScheduleDialog } from '@components/GenerateScheduleDialog'
+import { CalendarSkeleton } from '@/components/skeletons'
+import { GenerateScheduleDialog } from '@/components/GenerateScheduleDialog'
 
 export default function HomePage() {
   const [currentDate, setCurrentDate] = useState(new Date())
