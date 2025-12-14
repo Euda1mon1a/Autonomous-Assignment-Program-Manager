@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from './providers'
 import { Navigation } from '@/components/Navigation'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export const metadata: Metadata = {
   title: 'Residency Scheduler',
@@ -17,10 +18,12 @@ export default function RootLayout({
     <html lang="en">
       <body className="font-sans">
         <Providers>
-          <div className="min-h-screen bg-gray-50">
-            <Navigation />
-            <main>{children}</main>
-          </div>
+          <ErrorBoundary>
+            <div className="min-h-screen bg-gray-50">
+              <Navigation />
+              <main>{children}</main>
+            </div>
+          </ErrorBoundary>
         </Providers>
       </body>
     </html>
