@@ -1,10 +1,19 @@
 'use client'
 
-import { Plus } from 'lucide-react'
-import { useRotationTemplates } from '@/lib/hooks'
+import { Plus, RefreshCw } from 'lucide-react'
+import { useRotationTemplates, useDeleteTemplate } from '@/lib/hooks'
+import { CardSkeleton } from '@/components/skeletons'
+import type { RotationTemplate } from '@/types/api'
 
 export default function TemplatesPage() {
-  const { data, isLoading } = useRotationTemplates()
+  const { data, isLoading, isError, error, refetch } = useRotationTemplates()
+  const deleteTemplate = useDeleteTemplate()
+
+  const handleDelete = (id: string, name: string) => {
+    if (confirm(`Are you sure you want to delete "${name}"?`)) {
+      deleteTemplate.mutate(id)
+    }
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -20,8 +29,23 @@ export default function TemplatesPage() {
       </div>
 
       {isLoading ? (
-        <div className="card flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
+      ) : isError ? (
+        <div className="card flex flex-col items-center justify-center h-64 text-center">
+          <p className="text-gray-600 mb-4">
+            {error?.message || 'Failed to load templates'}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="btn-primary flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry
+          </button>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -30,8 +54,12 @@ export default function TemplatesPage() {
               No templates found. Create your first rotation template.
             </div>
           ) : (
-            data?.items?.map((template: any) => (
-              <TemplateCard key={template.id} template={template} />
+            data?.items?.map((template: RotationTemplate) => (
+              <TemplateCard
+                key={template.id}
+                template={template}
+                onDelete={() => handleDelete(template.id, template.name)}
+              />
             ))
           )}
         </div>
@@ -40,7 +68,13 @@ export default function TemplatesPage() {
   )
 }
 
-function TemplateCard({ template }: { template: any }) {
+function TemplateCard({
+  template,
+  onDelete,
+}: {
+  template: RotationTemplate
+  onDelete: () => void
+}) {
   const activityColors: Record<string, string> = {
     clinic: 'bg-blue-100 text-blue-800',
     inpatient: 'bg-purple-100 text-purple-800',
@@ -87,7 +121,12 @@ function TemplateCard({ template }: { template: any }) {
 
       <div className="mt-4 pt-4 border-t flex gap-2">
         <button className="text-blue-600 hover:underline text-sm">Edit</button>
-        <button className="text-red-600 hover:underline text-sm">Delete</button>
+        <button
+          onClick={onDelete}
+          className="text-red-600 hover:underline text-sm"
+        >
+          Delete
+        </button>
       </div>
     </div>
   )

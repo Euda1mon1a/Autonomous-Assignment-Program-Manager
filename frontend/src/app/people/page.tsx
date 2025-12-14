@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { Plus, User, GraduationCap, RefreshCw } from 'lucide-react'
 import { usePeople, useDeletePerson, type PeopleFilters } from '@/lib/hooks'
-import { CardSkeleton } from '@components/skeletons'
-import { AddPersonModal } from '@components/AddPersonModal'
+import { CardSkeleton } from '@/components/skeletons'
+import { AddPersonModal } from '@/components/AddPersonModal'
 import type { Person } from '@/types/api'
 
 export default function PeoplePage() {
