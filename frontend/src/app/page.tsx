@@ -5,10 +5,12 @@ import { format, startOfWeek, addDays, addWeeks, subWeeks } from 'date-fns'
 import { ChevronLeft, ChevronRight, Calendar, Users, Settings, RefreshCw } from 'lucide-react'
 import { ScheduleCalendar } from '@/components/ScheduleCalendar'
 import { useSchedule, useValidateSchedule } from '@/lib/hooks'
-import { CalendarSkeleton } from '@components/skeletons'
+import { CalendarSkeleton } from '@/components/skeletons'
+import { GenerateScheduleDialog } from '@/components/GenerateScheduleDialog'
 
 export default function HomePage() {
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false)
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }) // Monday
   const weekEnd = addDays(weekStart, 6)
 
@@ -63,12 +65,23 @@ export default function HomePage() {
           </div>
 
           {/* Generate Schedule */}
-          <button className="btn-primary flex items-center gap-2">
+          <button
+            onClick={() => setIsGenerateDialogOpen(true)}
+            className="btn-primary flex items-center gap-2"
+          >
             <Calendar className="w-4 h-4" />
             Generate Schedule
           </button>
         </div>
       </div>
+
+      {/* Generate Schedule Dialog */}
+      <GenerateScheduleDialog
+        isOpen={isGenerateDialogOpen}
+        onClose={() => setIsGenerateDialogOpen(false)}
+        defaultStartDate={startDateStr}
+        defaultEndDate={endDateStr}
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">
