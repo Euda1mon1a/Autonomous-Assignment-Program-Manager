@@ -2,10 +2,10 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, Boolean, DateTime
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
+from app.db.types import GUID
 
 
 class RotationTemplate(Base):
@@ -19,7 +19,7 @@ class RotationTemplate(Base):
     """
     __tablename__ = "rotation_templates"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)  # e.g., "PGY-1 Clinic", "FMIT", "Sports Medicine"
     activity_type = Column(String(255), nullable=False)  # "clinic", "inpatient", "procedure", "conference"
     abbreviation = Column(String(10))  # For Excel export: "C", "FMIT", "LEC"

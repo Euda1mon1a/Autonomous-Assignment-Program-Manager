@@ -2,10 +2,10 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Boolean, Date, DateTime, Text, ForeignKey, CheckConstraint
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
+from app.db.types import GUID
 
 
 class Absence(Base):
@@ -21,8 +21,8 @@ class Absence(Base):
     """
     __tablename__ = "absences"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    person_id = Column(UUID(as_uuid=True), ForeignKey("people.id", ondelete="CASCADE"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    person_id = Column(GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     absence_type = Column(String(50), nullable=False)
