@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, FormEvent } from 'react'
-import { CheckCircle } from 'lucide-react'
+import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { get, put, ApiError } from '@/lib/api'
 
 interface Settings {
   academicYear: {
@@ -35,23 +37,40 @@ const defaultSettings: Settings = {
   },
 }
 
+// API hooks for settings
+function useSettings() {
+  return useQuery<Settings, ApiError>({
+    queryKey: ['settings'],
+    queryFn: () => get<Settings>('/settings'),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+}
+
+function useUpdateSettings() {
+  const queryClient = useQueryClient()
+
+  return useMutation<Settings, ApiError, Settings>({
+    mutationFn: (data) => put<Settings>('/settings', data),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['settings'], data)
+    },
+  })
+}
+
 export default function SettingsPage() {
+  const { data: fetchedSettings, isLoading: isLoadingSettings, error: loadError } = useSettings()
+  const updateSettingsMutation = useUpdateSettings()
+
   const [settings, setSettings] = useState<Settings>(defaultSettings)
-  const [isSaving, setIsSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
 
-  // Load settings from localStorage on mount
+  // Load settings from API when fetched
   useEffect(() => {
-    const saved = localStorage.getItem('residencySchedulerSettings')
-    if (saved) {
-      try {
-        setSettings(JSON.parse(saved))
-      } catch {
-        // Use defaults if parsing fails
-      }
+    if (fetchedSettings) {
+      setSettings(fetchedSettings)
     }
-  }, [])
+  }, [fetchedSettings])
 
   const updateSettings = <K extends keyof Settings>(
     section: K,
@@ -71,20 +90,37 @@ export default function SettingsPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setIsSaving(true)
+    setShowSuccess(false)
 
-    // Simulate API call - in production, this would POST to /api/settings
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    try {
+      await updateSettingsMutation.mutateAsync(settings)
+      setHasChanges(false)
+      setShowSuccess(true)
 
-    // Save to localStorage
-    localStorage.setItem('residencySchedulerSettings', JSON.stringify(settings))
+      // Hide success message after 3 seconds
+      setTimeout(() => setShowSuccess(false), 3000)
+    } catch {
+      // Error is handled by mutation state
+    }
+  }
 
-    setIsSaving(false)
-    setHasChanges(false)
-    setShowSuccess(true)
+  const isSaving = updateSettingsMutation.isPending
+  const saveError = updateSettingsMutation.error
 
-    // Hide success message after 3 seconds
-    setTimeout(() => setShowSuccess(false), 3000)
+  // Loading state
+  if (isLoadingSettings) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+          <p className="text-gray-600">Configure application settings</p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <span className="ml-3 text-gray-600">Loading settings...</span>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -94,6 +130,23 @@ export default function SettingsPage() {
         <p className="text-gray-600">Configure application settings</p>
       </div>
 
+      {/* Load error */}
+      {loadError && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-yellow-600" />
+          <span className="text-yellow-800">Could not load settings from server. Using defaults.</span>
+        </div>
+      )}
+
+      {/* Save error */}
+      {saveError && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600" />
+          <span className="text-red-800">Failed to save settings: {saveError.message}</span>
+        </div>
+      )}
+
+      {/* Success message */}
       {showSuccess && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
           <CheckCircle className="w-5 h-5 text-green-600" />
