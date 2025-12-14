@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Modal } from '@components/Modal';
-import { Input, Select } from '@components/forms';
+import { Modal } from '@/components/Modal';
+import { Input, Select } from '@/components/forms';
 import { useUpdateTemplate } from '@/lib/hooks';
 import type { RotationTemplate, RotationTemplateUpdate } from '@/types/api';
 
