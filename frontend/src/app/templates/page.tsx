@@ -2,7 +2,7 @@
 
 import { Plus, RefreshCw } from 'lucide-react'
 import { useRotationTemplates, useDeleteTemplate } from '@/lib/hooks'
-import { CardSkeleton } from '@components/skeletons'
+import { CardSkeleton } from '@/components/skeletons'
 import type { RotationTemplate } from '@/types/api'
 
 export default function TemplatesPage() {
