@@ -3,23 +3,25 @@ import json
 from pathlib import Path
 from fastapi import APIRouter, HTTPException
 
-from app.schemas.settings import SettingsCreate, SettingsUpdate, SettingsResponse
+from app.schemas.settings import SettingsBase, SettingsUpdate, SettingsResponse
 
 router = APIRouter()
 
 # Settings file path (in production, use database)
 SETTINGS_FILE = Path(__file__).parent.parent.parent.parent / "settings.json"
 
-# Default settings
+# Default settings matching SettingsBase
 DEFAULT_SETTINGS = {
     "scheduling_algorithm": "greedy",
     "work_hours_per_week": 80,
     "max_consecutive_days": 6,
-    "pgy1_supervision_ratio": 2,
-    "pgy2_supervision_ratio": 4,
-    "academic_year_start": "2024-07-01",
-    "academic_year_end": "2025-06-30",
-    "block_duration_days": 28,
+    "min_days_off_per_week": 1,
+    "pgy1_supervision_ratio": "1:2",
+    "pgy2_supervision_ratio": "1:4",
+    "pgy3_supervision_ratio": "1:4",
+    "enable_weekend_scheduling": True,
+    "enable_holiday_scheduling": False,
+    "default_block_duration_hours": 4,
 }
 
 
@@ -48,7 +50,7 @@ def get_settings():
 
 
 @router.post("", response_model=SettingsResponse)
-def update_settings(settings_in: SettingsCreate):
+def update_settings(settings_in: SettingsBase):
     """Update application settings (full replacement)."""
     settings_data = settings_in.model_dump()
     save_settings(settings_data)
@@ -63,7 +65,7 @@ def patch_settings(settings_in: SettingsUpdate):
 
     # Validate the merged settings
     merged = {**current_settings, **update_data}
-    validated = SettingsCreate(**merged)
+    validated = SettingsBase(**merged)
 
     save_settings(validated.model_dump())
     return SettingsResponse(**validated.model_dump())
