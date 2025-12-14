@@ -2,10 +2,10 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Boolean, Date, DateTime, ForeignKey, UniqueConstraint, CheckConstraint
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
+from app.db.types import GUID
 
 
 class CallAssignment(Base):
@@ -19,9 +19,9 @@ class CallAssignment(Base):
     """
     __tablename__ = "call_assignments"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     date = Column(Date, nullable=False)
-    person_id = Column(UUID(as_uuid=True), ForeignKey("people.id", ondelete="CASCADE"), nullable=False)
+    person_id = Column(GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False)
     call_type = Column(String(50), nullable=False)  # 'overnight', 'weekend', 'backup'
 
     # Call metadata
