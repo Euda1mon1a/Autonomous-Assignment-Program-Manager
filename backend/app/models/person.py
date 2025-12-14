@@ -1,11 +1,11 @@
 """Person model - residents and faculty."""
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, ARRAY, CheckConstraint
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, CheckConstraint
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
+from app.db.types import GUID, StringArrayType
 
 
 class Person(Base):
@@ -17,7 +17,7 @@ class Person(Base):
     """
     __tablename__ = "people"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
     type = Column(String(50), nullable=False)  # 'resident' or 'faculty'
     email = Column(String(255), unique=True)
@@ -27,7 +27,7 @@ class Person(Base):
 
     # Faculty-specific fields
     performs_procedures = Column(Boolean, default=False)
-    specialties = Column(ARRAY(String))  # e.g., ['Sports Medicine', 'Dermatology']
+    specialties = Column(StringArrayType())  # e.g., ['Sports Medicine', 'Dermatology']
     primary_duty = Column(String(255))
 
     # Timestamps

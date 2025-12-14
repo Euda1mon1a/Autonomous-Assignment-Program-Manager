@@ -2,9 +2,9 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, Date, DateTime, Numeric
-from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 from app.db.base import Base
+from app.db.types import GUID, JSONType
 
 
 class ScheduleRun(Base):
@@ -18,7 +18,7 @@ class ScheduleRun(Base):
     """
     __tablename__ = "schedule_runs"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     algorithm = Column(String(50), nullable=False)  # 'greedy', 'min_conflicts', 'cp_sat'
@@ -30,7 +30,7 @@ class ScheduleRun(Base):
     runtime_seconds = Column(Numeric(10, 2))
 
     # Configuration snapshot
-    config_json = Column(JSONB)
+    config_json = Column(JSONType())
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
