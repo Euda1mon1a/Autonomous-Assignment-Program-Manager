@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns'
 import { CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
 import { useValidateSchedule } from '@/lib/hooks'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 import type { Violation } from '@/types/api'
 
 export default function CompliancePage() {
@@ -18,10 +19,11 @@ export default function CompliancePage() {
   const goToCurrentMonth = () => setSelectedMonth(new Date())
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">ACGME Compliance</h1>
+    <ProtectedRoute>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">ACGME Compliance</h1>
           <p className="text-gray-600">
             Validate schedule against ACGME requirements
           </p>
@@ -117,8 +119,9 @@ export default function CompliancePage() {
             ))}
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   )
 }
 
