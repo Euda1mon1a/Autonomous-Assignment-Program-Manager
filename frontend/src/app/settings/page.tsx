@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent } from 'react'
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { get, put, ApiError } from '@/lib/api'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 interface Settings {
   academicYear: {
@@ -110,25 +111,28 @@ export default function SettingsPage() {
   // Loading state
   if (isLoadingSettings) {
     return (
+      <ProtectedRoute requireAdmin>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+            <p className="text-gray-600">Configure application settings</p>
+          </div>
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            <span className="ml-3 text-gray-600">Loading settings...</span>
+          </div>
+        </div>
+      </ProtectedRoute>
+    )
+  }
+
+  return (
+    <ProtectedRoute requireAdmin>
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
           <p className="text-gray-600">Configure application settings</p>
         </div>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <span className="ml-3 text-gray-600">Loading settings...</span>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600">Configure application settings</p>
-      </div>
 
       {/* Load error */}
       {loadError && (
@@ -332,6 +336,7 @@ export default function SettingsPage() {
           </button>
         </div>
       </form>
-    </div>
+      </div>
+    </ProtectedRoute>
   )
 }

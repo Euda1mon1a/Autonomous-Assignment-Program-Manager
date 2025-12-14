@@ -6,7 +6,9 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.person import Person
+from app.models.user import User
 from app.schemas.person import PersonCreate, PersonUpdate, PersonResponse, PersonListResponse
+from app.core.security import get_current_active_user
 
 router = APIRouter()
 
@@ -69,8 +71,12 @@ def get_person(person_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=PersonResponse, status_code=201)
-def create_person(person_in: PersonCreate, db: Session = Depends(get_db)):
-    """Create a new person (resident or faculty)."""
+def create_person(
+    person_in: PersonCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Create a new person (resident or faculty). Requires authentication."""
     # Validate resident fields
     if person_in.type == "resident" and person_in.pgy_level is None:
         raise HTTPException(status_code=400, detail="PGY level required for residents")
@@ -83,8 +89,13 @@ def create_person(person_in: PersonCreate, db: Session = Depends(get_db)):
 
 
 @router.put("/{person_id}", response_model=PersonResponse)
-def update_person(person_id: UUID, person_in: PersonUpdate, db: Session = Depends(get_db)):
-    """Update an existing person."""
+def update_person(
+    person_id: UUID,
+    person_in: PersonUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Update an existing person. Requires authentication."""
     person = db.query(Person).filter(Person.id == person_id).first()
     if not person:
         raise HTTPException(status_code=404, detail="Person not found")
@@ -99,8 +110,12 @@ def update_person(person_id: UUID, person_in: PersonUpdate, db: Session = Depend
 
 
 @router.delete("/{person_id}", status_code=204)
-def delete_person(person_id: UUID, db: Session = Depends(get_db)):
-    """Delete a person."""
+def delete_person(
+    person_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Delete a person. Requires authentication."""
     person = db.query(Person).filter(Person.id == person_id).first()
     if not person:
         raise HTTPException(status_code=404, detail="Person not found")
