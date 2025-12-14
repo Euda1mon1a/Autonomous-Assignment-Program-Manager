@@ -7,6 +7,7 @@ import { ScheduleCalendar } from '@/components/ScheduleCalendar'
 import { useSchedule, useValidateSchedule } from '@/lib/hooks'
 import { CalendarSkeleton } from '@/components/skeletons'
 import { GenerateScheduleDialog } from '@/components/GenerateScheduleDialog'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 interface ScheduleData {
   [date: string]: {
@@ -78,9 +79,10 @@ export default function HomePage() {
   const goToToday = () => setCurrentDate(new Date())
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+    <ProtectedRoute>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Schedule</h1>
           <p className="text-gray-600">
@@ -184,7 +186,8 @@ export default function HomePage() {
           schedule={transformScheduleData(schedule?.items || [])}
         />
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   )
 }
 
