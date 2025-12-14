@@ -1,10 +1,7 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 import { Navigation } from '@/components/Navigation'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Residency Scheduler',
@@ -18,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className="font-sans">
         <Providers>
           <div className="min-h-screen bg-gray-50">
             <Navigation />
