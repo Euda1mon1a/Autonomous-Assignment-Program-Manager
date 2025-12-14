@@ -2,10 +2,10 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey, UniqueConstraint, CheckConstraint
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
+from app.db.types import GUID
 
 
 class Assignment(Base):
@@ -17,10 +17,10 @@ class Assignment(Base):
     """
     __tablename__ = "assignments"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    block_id = Column(UUID(as_uuid=True), ForeignKey("blocks.id", ondelete="CASCADE"), nullable=False)
-    person_id = Column(UUID(as_uuid=True), ForeignKey("people.id", ondelete="CASCADE"), nullable=False)
-    rotation_template_id = Column(UUID(as_uuid=True), ForeignKey("rotation_templates.id"))
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    block_id = Column(GUID(), ForeignKey("blocks.id", ondelete="CASCADE"), nullable=False)
+    person_id = Column(GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False)
+    rotation_template_id = Column(GUID(), ForeignKey("rotation_templates.id"))
 
     role = Column(String(50), nullable=False)  # 'primary', 'supervising', 'backup'
 
