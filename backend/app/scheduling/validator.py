@@ -23,7 +23,7 @@ class ACGMEValidator:
 
     # Constants
     MAX_WEEKLY_HOURS = 80
-    HOURS_PER_HALF_DAY = 4  # AM or PM block = 4 hours
+    HOURS_PER_HALF_DAY = 6  # AM or PM block = 6 hours (realistic clinical duty)
     ROLLING_WINDOW_WEEKS = 4
 
     def __init__(self, db: Session):
