@@ -57,22 +57,22 @@ export default function CompliancePage() {
         <ComplianceCard
           title="80-Hour Rule"
           description="Max 80 hours/week (4-week average)"
-          status={validation?.violations?.filter((v: any) => v.type === '80_HOUR_VIOLATION').length === 0 ? 'pass' : 'fail'}
-          count={validation?.violations?.filter((v: any) => v.type === '80_HOUR_VIOLATION').length || 0}
+          status={validation?.violations?.filter((v: Violation) => v.type === '80_HOUR_VIOLATION').length === 0 ? 'pass' : 'fail'}
+          count={validation?.violations?.filter((v: Violation) => v.type === '80_HOUR_VIOLATION').length || 0}
           isLoading={isLoading}
         />
         <ComplianceCard
           title="1-in-7 Rule"
           description="One day off every 7 days"
-          status={validation?.violations?.filter((v: any) => v.type === '1_IN_7_VIOLATION').length === 0 ? 'pass' : 'fail'}
-          count={validation?.violations?.filter((v: any) => v.type === '1_IN_7_VIOLATION').length || 0}
+          status={validation?.violations?.filter((v: Violation) => v.type === '1_IN_7_VIOLATION').length === 0 ? 'pass' : 'fail'}
+          count={validation?.violations?.filter((v: Violation) => v.type === '1_IN_7_VIOLATION').length || 0}
           isLoading={isLoading}
         />
         <ComplianceCard
           title="Supervision Ratios"
           description="PGY-1: 1:2, PGY-2/3: 1:4"
-          status={validation?.violations?.filter((v: any) => v.type === 'SUPERVISION_RATIO_VIOLATION').length === 0 ? 'pass' : 'fail'}
-          count={validation?.violations?.filter((v: any) => v.type === 'SUPERVISION_RATIO_VIOLATION').length || 0}
+          status={validation?.violations?.filter((v: Violation) => v.type === 'SUPERVISION_RATIO_VIOLATION').length === 0 ? 'pass' : 'fail'}
+          count={validation?.violations?.filter((v: Violation) => v.type === 'SUPERVISION_RATIO_VIOLATION').length || 0}
           isLoading={isLoading}
         />
       </div>
