@@ -1,12 +1,61 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { format, startOfWeek, addDays, addWeeks, subWeeks } from 'date-fns'
 import { ChevronLeft, ChevronRight, Calendar, Users, Settings, RefreshCw } from 'lucide-react'
 import { ScheduleCalendar } from '@/components/ScheduleCalendar'
 import { useSchedule, useValidateSchedule } from '@/lib/hooks'
 import { CalendarSkeleton } from '@/components/skeletons'
 import { GenerateScheduleDialog } from '@/components/GenerateScheduleDialog'
+
+interface ScheduleData {
+  [date: string]: {
+    AM: Array<{
+      id: string
+      person: { id: string; name: string; type: string; pgy_level: number | null }
+      role: string
+      activity: string
+      abbreviation: string
+    }>
+    PM: Array<{
+      id: string
+      person: { id: string; name: string; type: string; pgy_level: number | null }
+      role: string
+      activity: string
+      abbreviation: string
+    }>
+  }
+}
+
+// Transform flat assignment list to calendar format
+function transformScheduleData(items: any[]): ScheduleData {
+  const scheduleData: ScheduleData = {}
+
+  items?.forEach((assignment) => {
+    const dateStr = assignment.block?.date
+    if (!dateStr) return
+
+    if (!scheduleData[dateStr]) {
+      scheduleData[dateStr] = { AM: [], PM: [] }
+    }
+
+    const timeOfDay = (assignment.block?.time_of_day || 'AM') as 'AM' | 'PM'
+    scheduleData[dateStr][timeOfDay]?.push({
+      id: assignment.id,
+      person: {
+        id: assignment.person?.id || assignment.person_id,
+        name: assignment.person?.name || 'Unknown',
+        type: assignment.person?.type || 'resident',
+        pgy_level: assignment.person?.pgy_level ?? null,
+      },
+      role: assignment.role,
+      activity: assignment.rotation_template?.name || assignment.activity_override || 'Unassigned',
+      abbreviation: assignment.rotation_template?.abbreviation || '',
+    })
+  })
+
+  return scheduleData
+}
 
 export default function HomePage() {
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -132,7 +181,7 @@ export default function HomePage() {
       ) : (
         <ScheduleCalendar
           weekStart={weekStart}
-          schedule={{}}
+          schedule={transformScheduleData(schedule?.items || [])}
         />
       )}
     </div>
