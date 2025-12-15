@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Settings,
   LogIn,
+  HelpCircle,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -29,6 +30,7 @@ const navItems: NavItem[] = [
   { href: '/templates', label: 'Templates', icon: FileText },
   { href: '/absences', label: 'Absences', icon: CalendarOff },
   { href: '/compliance', label: 'Compliance', icon: AlertTriangle },
+  { href: '/help', label: 'Help', icon: HelpCircle },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ]
 
