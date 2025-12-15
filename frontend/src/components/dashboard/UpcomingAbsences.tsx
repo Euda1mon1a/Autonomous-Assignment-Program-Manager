@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { format, addDays, parseISO, isWithinInterval } from 'date-fns'
 import { CalendarOff, User } from 'lucide-react'
 import { useAbsences, usePeople } from '@/lib/hooks'
+import { EmptyState } from '@/components/EmptyState'
 
 const absenceTypeBadgeColors: Record<string, string> = {
   vacation: 'bg-blue-100 text-blue-800',
@@ -71,10 +72,11 @@ export function UpcomingAbsences() {
           ))}
         </div>
       ) : upcomingAbsences.length === 0 ? (
-        <div className="text-center py-6">
-          <CalendarOff className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">No upcoming absences</p>
-        </div>
+        <EmptyState
+          icon={CalendarOff}
+          title="No upcoming absences"
+          description="No absences scheduled for the next 7 days"
+        />
       ) : (
         <div className="space-y-3">
           {upcomingAbsences.map((absence) => (
