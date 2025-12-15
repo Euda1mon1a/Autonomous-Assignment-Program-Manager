@@ -93,6 +93,14 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "react-dom"
         update-types: ["version-update:semver-major"]
+      # Ignore ESLint major updates - Next.js 14 doesn't support ESLint 9
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      # Ignore Jest major updates - require manual testing validation
+      - dependency-name: "jest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jest-environment-jsdom"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
