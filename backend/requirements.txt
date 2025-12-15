@@ -44,7 +44,7 @@ python-docx==1.2.0
 
 ***REMOVED*** Background Tasks
 celery==5.6.0
-redis==5.0.1
+redis==7.1.0
 
 ***REMOVED*** Development Tools
 black==25.12.0
