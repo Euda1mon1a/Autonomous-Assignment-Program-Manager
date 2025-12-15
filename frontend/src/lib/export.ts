@@ -92,3 +92,64 @@ export function exportToJSON(data: unknown[], filename: string): void {
 
   downloadFile(jsonContent, jsonFilename, 'application/json');
 }
+
+/**
+ * Export schedule to legacy Excel format via backend API
+ */
+export async function exportToLegacyXlsx(
+  startDate: string,
+  endDate: string,
+  blockNumber?: number,
+  federalHolidays?: string[]
+): Promise<void> {
+  const params = new URLSearchParams({
+    start_date: startDate,
+    end_date: endDate,
+  });
+
+  if (blockNumber !== undefined) {
+    params.append('block_number', blockNumber.toString());
+  }
+
+  if (federalHolidays && federalHolidays.length > 0) {
+    params.append('federal_holidays', federalHolidays.join(','));
+  }
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const url = `${apiUrl}/export/schedule/xlsx?${params.toString()}`;
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to export Excel file');
+    }
+
+    // Get the blob from response
+    const blob = await response.blob();
+
+    // Extract filename from Content-Disposition header or use default
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = `schedule_${startDate}_${endDate}.xlsx`;
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename=([^;]+)/);
+      if (match) {
+        filename = match[1].replace(/"/g, '');
+      }
+    }
+
+    // Create download link
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    console.error('Excel export failed:', error);
+    throw error;
+  }
+}
