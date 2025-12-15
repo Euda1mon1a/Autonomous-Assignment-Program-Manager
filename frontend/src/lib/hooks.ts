@@ -109,6 +109,8 @@ export function useSchedule(
   return useQuery<ListResponse<Assignment>, ApiError>({
     queryKey: ['schedule', startIso, endIso],
     queryFn: () => get<ListResponse<Assignment>>(`/api/assignments?start_date=${startDateStr}&end_date=${endDateStr}`),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: true,
     ...options,
   })
@@ -143,6 +145,7 @@ export function useValidateSchedule(
     queryKey: queryKeys.validation(startDate, endDate),
     queryFn: () => get<ValidationResult>(`/schedule/validate?start_date=${startDate}&end_date=${endDate}`),
     staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     ...options,
   })
 }
@@ -166,6 +169,8 @@ export function usePeople(
   return useQuery<ListResponse<Person>, ApiError>({
     queryKey: ['people', filters],
     queryFn: () => get<ListResponse<Person>>(`/api/people${queryString ? `?${queryString}` : ''}`),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     ...options,
   })
 }
@@ -180,6 +185,8 @@ export function usePerson(
   return useQuery<Person, ApiError>({
     queryKey: queryKeys.person(id),
     queryFn: () => get<Person>(`/people/${id}`),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     enabled: !!id,
     ...options,
   })
@@ -197,7 +204,8 @@ export function useResidents(
   return useQuery<ListResponse<Person>, ApiError>({
     queryKey: queryKeys.residents(pgyLevel),
     queryFn: () => get<ListResponse<Person>>(`/people/residents${params}`),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     ...options,
   })
 }
@@ -214,7 +222,8 @@ export function useFaculty(
   return useQuery<ListResponse<Person>, ApiError>({
     queryKey: queryKeys.faculty(specialty),
     queryFn: () => get<ListResponse<Person>>(`/people/faculty${params}`),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     ...options,
   })
 }
@@ -284,6 +293,8 @@ export function useAbsences(
   return useQuery<ListResponse<Absence>, ApiError>({
     queryKey: ['absences', personId],
     queryFn: () => get<ListResponse<Absence>>(`/api/absences${params}`),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     ...options,
   })
 }
@@ -298,6 +309,8 @@ export function useAbsence(
   return useQuery<Absence, ApiError>({
     queryKey: queryKeys.absence(id),
     queryFn: () => get<Absence>(`/absences/${id}`),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     enabled: !!id,
     ...options,
   })
@@ -364,6 +377,7 @@ export function useRotationTemplates(
     queryKey: ['rotation-templates'],
     queryFn: () => get<ListResponse<RotationTemplate>>('/api/rotation-templates'),
     staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     ...options,
   })
 }
@@ -378,8 +392,9 @@ export function useRotationTemplate(
   return useQuery<RotationTemplate, ApiError>({
     queryKey: queryKeys.rotationTemplate(id),
     queryFn: () => get<RotationTemplate>(`/rotation-templates/${id}`),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     enabled: !!id,
-    staleTime: 10 * 60 * 1000,
     ...options,
   })
 }
@@ -449,6 +464,7 @@ export function useAssignments(
     queryKey: queryKeys.assignments(filters),
     queryFn: () => get<ListResponse<Assignment>>(`/assignments${queryString ? `?${queryString}` : ''}`),
     staleTime: 60 * 1000, // 1 minute
+    gcTime: 30 * 60 * 1000, // 30 minutes
     ...options,
   })
 }

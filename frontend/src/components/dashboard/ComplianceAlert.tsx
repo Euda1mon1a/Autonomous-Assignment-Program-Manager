@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
-import { ShieldCheck, ShieldAlert, AlertTriangle } from 'lucide-react'
+import { ShieldCheck, ShieldAlert, AlertTriangle, ShieldOff } from 'lucide-react'
 import { useValidateSchedule } from '@/lib/hooks'
+import { EmptyState } from '@/components/EmptyState'
 
 export function ComplianceAlert() {
   const today = new Date()
@@ -15,6 +16,7 @@ export function ComplianceAlert() {
   const violationCount = validation?.total_violations ?? 0
   const hasViolations = violationCount > 0
   const isClean = !hasViolations && validation?.valid
+  const hasNoData = !validation || validation.valid === undefined
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -37,6 +39,12 @@ export function ComplianceAlert() {
           <AlertTriangle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
           <p className="text-sm text-gray-500">Unable to load compliance data</p>
         </div>
+      ) : hasNoData ? (
+        <EmptyState
+          icon={ShieldOff}
+          title="No compliance data"
+          description="Generate a schedule to view compliance status"
+        />
       ) : isClean ? (
         <div className="text-center py-4">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-3">
