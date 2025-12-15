@@ -2,7 +2,7 @@
 # Node 20 Alpine with multi-stage build for minimal production image
 
 # Base stage
-FROM node:20-alpine AS base
+FROM node:25-alpine AS base
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
