@@ -27,6 +27,7 @@ class ScheduleRun(Base):
     status = Column(String(50), nullable=False)  # 'success', 'partial', 'failed'
     total_blocks_assigned = Column(Integer)
     acgme_violations = Column(Integer, default=0)
+    acgme_override_count = Column(Integer, default=0)  # Number of acknowledged overrides
     runtime_seconds = Column(Numeric(10, 2))
 
     # Configuration snapshot
