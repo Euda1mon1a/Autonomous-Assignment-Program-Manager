@@ -169,6 +169,14 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           </div>
         </div>
       </div>
+
+      {/* Help Section */}
+      <div className="mt-4 text-center text-sm text-gray-500">
+        <p className="font-medium text-gray-600">Need help signing in?</p>
+        <p className="mt-1">
+          Contact your program administrator for account access or password reset.
+        </p>
+      </div>
     </div>
   )
 }
