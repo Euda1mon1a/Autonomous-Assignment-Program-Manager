@@ -109,64 +109,95 @@ class SchedulingEngine:
             logger.warning(f"Unknown algorithm '{algorithm}', using 'greedy'")
             algorithm = "greedy"
 
-        # Step 1: Ensure blocks exist
-        blocks = self._ensure_blocks_exist()
+        # Issue #3: Transaction boundaries - wrap everything in a single transaction
+        # Create an "in_progress" run record first
+        run = self._create_initial_run(algorithm)
 
-        # Step 2: Load absences and build availability matrix
-        self._build_availability_matrix()
+        try:
+            # Step 1: Ensure blocks exist (but don't commit yet)
+            blocks = self._ensure_blocks_exist(commit=False)
 
-        # Step 3: Get residents, faculty, and templates
-        residents = self._get_residents(pgy_levels)
-        templates = self._get_rotation_templates(rotation_template_ids)
-        faculty = self._get_faculty()
+            # Issue #2: Delete existing assignments for this date range to avoid duplicates
+            self._delete_existing_assignments()
 
-        if not residents:
+            # Step 2: Load absences and build availability matrix
+            self._build_availability_matrix()
+
+            # Step 3: Get residents, faculty, and templates
+            residents = self._get_residents(pgy_levels)
+            templates = self._get_rotation_templates(rotation_template_ids)
+            faculty = self._get_faculty()
+
+            if not residents:
+                self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
+                self.db.commit()
+                return {
+                    "status": "failed",
+                    "message": "No residents found matching criteria",
+                    "total_assigned": 0,
+                    "total_blocks": len(blocks),
+                    "validation": self._empty_validation(),
+                    "run_id": run.id,
+                }
+
+            # Step 4: Create scheduling context
+            context = self._build_context(residents, faculty, blocks, templates)
+
+            # Step 5: Run solver
+            solver_result = self._run_solver(algorithm, context, timeout_seconds)
+
+            if not solver_result.success:
+                logger.warning(f"Solver failed: {solver_result.solver_status}")
+                # Fallback to greedy if advanced solver fails
+                if algorithm != "greedy":
+                    logger.info("Falling back to greedy solver")
+                    solver_result = self._run_solver("greedy", context, timeout_seconds)
+
+            # Step 6: Convert solver results to assignments
+            self._create_assignments_from_result(solver_result, residents, templates)
+
+            # Step 7: Assign faculty supervision
+            self._assign_faculty(faculty, blocks)
+
+            # Step 8: Add assignments to session (but don't commit yet)
+            for assignment in self.assignments:
+                self.db.add(assignment)
+
+            # Step 9: Validate
+            validation = self.validator.validate_all(self.start_date, self.end_date)
+
+            # Step 10: Update run record with results
+            runtime = time.time() - start_time
+            self._update_run_with_results(run, algorithm, validation, runtime, solver_result)
+
+            # Issue #3: Single atomic commit - all or nothing
+            self.db.commit()
+            self.db.refresh(run)
+
             return {
-                "status": "failed",
-                "message": "No residents found matching criteria",
-                "total_assigned": 0,
+                "status": "success" if validation.valid else "partial",
+                "message": f"Generated {len(self.assignments)} assignments using {algorithm}",
+                "total_assigned": len(self.assignments),
                 "total_blocks": len(blocks),
-                "validation": self._empty_validation(),
+                "validation": validation,
+                "run_id": run.id,
+                "solver_stats": solver_result.statistics,
             }
 
-        # Step 4: Create scheduling context
-        context = self._build_context(residents, faculty, blocks, templates)
+        except Exception as e:
+            # Issue #3: Rollback on any failure to prevent partial persistence
+            logger.error(f"Schedule generation failed: {e}")
+            self.db.rollback()
 
-        # Step 5: Run solver
-        solver_result = self._run_solver(algorithm, context, timeout_seconds)
+            # Try to update run status to failed (in a new transaction)
+            try:
+                self.db.refresh(run)
+                self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
+                self.db.commit()
+            except Exception:
+                self.db.rollback()
 
-        if not solver_result.success:
-            logger.warning(f"Solver failed: {solver_result.solver_status}")
-            # Fallback to greedy if advanced solver fails
-            if algorithm != "greedy":
-                logger.info("Falling back to greedy solver")
-                solver_result = self._run_solver("greedy", context, timeout_seconds)
-
-        # Step 6: Convert solver results to assignments
-        self._create_assignments_from_result(solver_result, residents, templates)
-
-        # Step 7: Assign faculty supervision
-        self._assign_faculty(faculty, blocks)
-
-        # Step 8: Save assignments
-        self._save_assignments()
-
-        # Step 9: Validate
-        validation = self.validator.validate_all(self.start_date, self.end_date)
-
-        # Step 10: Record run
-        runtime = time.time() - start_time
-        run = self._record_run(algorithm, validation, runtime, solver_result)
-
-        return {
-            "status": "success" if validation.valid else "partial",
-            "message": f"Generated {len(self.assignments)} assignments using {algorithm}",
-            "total_assigned": len(self.assignments),
-            "total_blocks": len(blocks),
-            "validation": validation,
-            "run_id": run.id,
-            "solver_stats": solver_result.statistics,
-        }
+            raise
 
     def _build_context(
         self,
@@ -225,7 +256,7 @@ class SchedulingEngine:
             )
             self.assignments.append(assignment)
 
-    def _ensure_blocks_exist(self) -> list[Block]:
+    def _ensure_blocks_exist(self, commit: bool = True) -> list[Block]:
         """Ensure half-day blocks exist for the date range."""
         blocks = []
         current_date = self.start_date
@@ -255,7 +286,11 @@ class SchedulingEngine:
             block_number = 1 + (days_from_start // 28)
             current_date += timedelta(days=1)
 
-        self.db.commit()
+        if commit:
+            self.db.commit()
+        else:
+            self.db.flush()  # Make blocks available in the session without committing
+
         return blocks
 
     def _build_availability_matrix(self):
@@ -267,10 +302,15 @@ class SchedulingEngine:
             person_id: {
                 block_id: {
                     'available': bool,
-                    'replacement': str (activity shown when absent)
+                    'replacement': str (activity shown when absent),
+                    'partial_absence': bool (has partial absence but available)
                 }
             }
         }
+
+        Logic:
+        - Blocking absences (deployment, TDY, extended medical) -> available = False
+        - Partial absences (vacation day, conference, appointment) -> available = True, partial_absence = True
         """
         # Get all people
         people = self.db.query(Person).all()
@@ -295,6 +335,7 @@ class SchedulingEngine:
                 # Default: available
                 is_available = True
                 replacement_activity = None
+                has_partial_absence = False
 
                 # Check absences
                 for absence in absences:
@@ -302,13 +343,22 @@ class SchedulingEngine:
                         absence.person_id == person.id
                         and absence.start_date <= block.date <= absence.end_date
                     ):
-                        is_available = False
-                        replacement_activity = absence.replacement_activity
-                        break
+                        # Use the should_block_assignment property to determine
+                        if absence.should_block_assignment:
+                            # Blocking absence - person cannot be assigned
+                            is_available = False
+                            replacement_activity = absence.replacement_activity
+                            break
+                        else:
+                            # Partial absence - person can be assigned but we track it
+                            has_partial_absence = True
+                            replacement_activity = absence.replacement_activity
+                            # Don't break - keep checking for blocking absences
 
                 self.availability_matrix[person.id][block.id] = {
                     "available": is_available,
                     "replacement": replacement_activity,
+                    "partial_absence": has_partial_absence,
                 }
 
     def _get_residents(self, pgy_levels: Optional[list[int]] = None) -> list[Person]:
@@ -394,20 +444,56 @@ class SchedulingEngine:
             return True
         return self.availability_matrix[person_id][block_id]["available"]
 
-    def _save_assignments(self):
-        """Save all assignments to database."""
-        for assignment in self.assignments:
-            self.db.add(assignment)
+    def _create_initial_run(self, algorithm: str) -> ScheduleRun:
+        """Create initial run record with 'in_progress' status."""
+        run = ScheduleRun(
+            start_date=self.start_date,
+            end_date=self.end_date,
+            algorithm=algorithm,
+            status="in_progress",
+            total_blocks_assigned=0,
+            acgme_violations=0,
+            runtime_seconds=0.0,
+            config_json={},
+        )
+        self.db.add(run)
         self.db.commit()
+        self.db.refresh(run)
+        return run
 
-    def _record_run(
+    def _delete_existing_assignments(self):
+        """Delete existing assignments for the date range to avoid duplicates."""
+        # Get all block IDs in the date range
+        blocks = self.db.query(Block).filter(
+            Block.date >= self.start_date,
+            Block.date <= self.end_date,
+        ).all()
+        block_ids = [block.id for block in blocks]
+
+        if block_ids:
+            # Delete assignments for these blocks
+            deleted_count = self.db.query(Assignment).filter(
+                Assignment.block_id.in_(block_ids)
+            ).delete(synchronize_session=False)
+            logger.info(f"Deleted {deleted_count} existing assignments for date range")
+
+    def _update_run_status(self, run: ScheduleRun, status: str, total_assigned: int, violations: int, runtime: float):
+        """Update run record with final status."""
+        run.status = status
+        run.total_blocks_assigned = total_assigned
+        run.acgme_violations = violations
+        run.runtime_seconds = runtime
+        self.db.add(run)
+
+    def _update_run_with_results(
         self,
+        run: ScheduleRun,
         algorithm: str,
         validation,
         runtime: float,
         solver_result: Optional[SolverResult] = None,
-    ) -> ScheduleRun:
-        """Record the schedule run for audit."""
+    ):
+        """Update run record with generation results."""
         config = {}
         if solver_result:
             config = {
@@ -417,20 +503,13 @@ class SchedulingEngine:
                 "statistics": solver_result.statistics,
             }
 
-        run = ScheduleRun(
-            start_date=self.start_date,
-            end_date=self.end_date,
-            algorithm=algorithm,
-            status="success" if validation.valid else "partial",
-            total_blocks_assigned=len(self.assignments),
-            acgme_violations=validation.total_violations,
-            runtime_seconds=runtime,
-            config_json=config,
-        )
+        run.algorithm = algorithm
+        run.status = "success" if validation.valid else "partial"
+        run.total_blocks_assigned = len(self.assignments)
+        run.acgme_violations = validation.total_violations
+        run.runtime_seconds = runtime
+        run.config_json = config
         self.db.add(run)
-        self.db.commit()
-        self.db.refresh(run)
-        return run
 
     def _empty_validation(self):
         """Return empty validation result."""

@@ -3,7 +3,7 @@ from datetime import date
 from enum import Enum
 from typing import Optional, Literal
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class SchedulingAlgorithm(str, Enum):
@@ -27,6 +27,16 @@ class ScheduleRequest(BaseModel):
         le=300.0,
         description="Maximum solver runtime in seconds (5-300)"
     )
+
+    @model_validator(mode='after')
+    def validate_date_range(self) -> 'ScheduleRequest':
+        """Ensure start_date is before or equal to end_date."""
+        if self.start_date > self.end_date:
+            raise ValueError(
+                f"start_date ({self.start_date}) must be before or equal to "
+                f"end_date ({self.end_date})"
+            )
+        return self
 
 
 class Violation(BaseModel):

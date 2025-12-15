@@ -69,23 +69,24 @@ class TestSchedulingEngineBasics:
         for resident in sample_residents:
             assert resident.id in engine.availability_matrix
 
-    def test_availability_matrix_with_absence(
+    def test_availability_matrix_with_blocking_absence(
         self,
         db: Session,
         sample_residents: list[Person],
         sample_blocks: list[Block],
     ):
-        """Should mark person as unavailable during absence."""
+        """Should mark person as unavailable during blocking absence (deployment, TDY)."""
         start_date = date.today()
         end_date = start_date + timedelta(days=6)
 
-        # Create absence for first resident
+        # Create blocking absence (deployment) for first resident
         absence = Absence(
             id=uuid4(),
             person_id=sample_residents[0].id,
             start_date=start_date,
             end_date=start_date + timedelta(days=2),
-            absence_type="vacation",
+            absence_type="deployment",
+            is_blocking=True,
         )
         db.add(absence)
         db.commit()
@@ -93,13 +94,49 @@ class TestSchedulingEngineBasics:
         engine = SchedulingEngine(db, start_date, end_date)
         engine._build_availability_matrix()
 
-        # Check first resident is unavailable for absence period
+        # Check first resident is unavailable for blocking absence period
         resident_id = sample_residents[0].id
         for block in sample_blocks:
             if block.date <= start_date + timedelta(days=2):
                 assert engine.availability_matrix[resident_id][block.id]["available"] is False
             else:
                 assert engine.availability_matrix[resident_id][block.id]["available"] is True
+
+    def test_availability_matrix_with_partial_absence(
+        self,
+        db: Session,
+        sample_residents: list[Person],
+        sample_blocks: list[Block],
+    ):
+        """Should allow assignment during partial absence (vacation, conference)."""
+        start_date = date.today()
+        end_date = start_date + timedelta(days=6)
+
+        # Create partial absence (short vacation) for first resident
+        absence = Absence(
+            id=uuid4(),
+            person_id=sample_residents[0].id,
+            start_date=start_date,
+            end_date=start_date + timedelta(days=1),  # 2 days
+            absence_type="vacation",
+            is_blocking=False,
+        )
+        db.add(absence)
+        db.commit()
+
+        engine = SchedulingEngine(db, start_date, end_date)
+        engine._build_availability_matrix()
+
+        # Check first resident is AVAILABLE (partial absence doesn't block)
+        # but partial_absence flag is set
+        resident_id = sample_residents[0].id
+        for block in sample_blocks:
+            if block.date <= start_date + timedelta(days=1):
+                assert engine.availability_matrix[resident_id][block.id]["available"] is True
+                assert engine.availability_matrix[resident_id][block.id]["partial_absence"] is True
+            else:
+                assert engine.availability_matrix[resident_id][block.id]["available"] is True
+                assert engine.availability_matrix[resident_id][block.id]["partial_absence"] is False
 
 
 class TestGreedyAlgorithm:
@@ -122,23 +159,24 @@ class TestGreedyAlgorithm:
         assert result["total_assigned"] > 0
         assert len(engine.assignments) > 0
 
-    def test_greedy_respects_availability(
+    def test_greedy_respects_blocking_absence(
         self,
         db: Session,
         sample_residents: list[Person],
         sample_rotation_template: RotationTemplate,
     ):
-        """Should not assign residents who are absent."""
+        """Should not assign residents who have blocking absences."""
         start_date = date.today()
         end_date = start_date + timedelta(days=6)
 
-        # Make first resident absent for entire period
+        # Make first resident absent for entire period with blocking absence
         absence = Absence(
             id=uuid4(),
             person_id=sample_residents[0].id,
             start_date=start_date,
             end_date=end_date,
             absence_type="deployment",
+            is_blocking=True,
         )
         db.add(absence)
         db.commit()
@@ -152,6 +190,35 @@ class TestGreedyAlgorithm:
             if a.person_id == sample_residents[0].id
         ]
         assert len(first_resident_assignments) == 0
+
+    def test_greedy_allows_partial_absence(
+        self,
+        db: Session,
+        sample_residents: list[Person],
+        sample_rotation_template: RotationTemplate,
+    ):
+        """Should allow assignment during partial absences (vacation, conference)."""
+        start_date = date.today()
+        end_date = start_date + timedelta(days=6)
+
+        # Give first resident a partial absence (short vacation)
+        absence = Absence(
+            id=uuid4(),
+            person_id=sample_residents[0].id,
+            start_date=start_date,
+            end_date=start_date + timedelta(days=1),
+            absence_type="vacation",
+            is_blocking=False,
+        )
+        db.add(absence)
+        db.commit()
+
+        engine = SchedulingEngine(db, start_date, end_date)
+        engine.generate(algorithm="greedy")
+
+        # First resident CAN still be assigned (partial absence doesn't block)
+        # Just verify the engine ran successfully
+        assert len(engine.assignments) > 0
 
     def test_greedy_equity_distribution(
         self,
@@ -451,18 +518,18 @@ class TestFacultyAssignment:
         if len(primary_assignments) > 0:
             assert len(supervising_assignments) > 0
 
-    def test_faculty_respects_availability(
+    def test_faculty_respects_blocking_absence(
         self,
         db: Session,
         sample_residents: list[Person],
         sample_faculty_members: list[Person],
         sample_rotation_template: RotationTemplate,
     ):
-        """Should not assign absent faculty."""
+        """Should not assign faculty with blocking absences."""
         start_date = date.today()
         end_date = start_date + timedelta(days=6)
 
-        # Make all but one faculty absent
+        # Make all but one faculty absent with blocking absence
         for faculty in sample_faculty_members[:-1]:
             absence = Absence(
                 id=uuid4(),
@@ -470,6 +537,7 @@ class TestFacultyAssignment:
                 start_date=start_date,
                 end_date=end_date,
                 absence_type="conference",
+                is_blocking=True,  # Conference is blocking for faculty
             )
             db.add(absence)
         db.commit()
