@@ -1,0 +1,34 @@
+# CODEOWNERS - Define code ownership for pull request reviews
+# Documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+* @Euda1mon1a
+
+# GitHub Workflows and CI/CD (DevOps territory)
+/.github/workflows/ @Euda1mon1a
+/.github/dependabot.yml @Euda1mon1a
+/.github/CODEOWNERS @Euda1mon1a
+
+# Docker configuration (DevOps territory)
+/.docker/ @Euda1mon1a
+/docker-compose*.yml @Euda1mon1a
+/.dockerignore @Euda1mon1a
+
+# Monitoring configuration (DevOps territory)
+/monitoring/ @Euda1mon1a
+
+# Nginx/Reverse proxy configuration (DevOps territory)
+/nginx/ @Euda1mon1a
+
+# Backend code
+/backend/ @Euda1mon1a
+
+# Frontend code
+/frontend/ @Euda1mon1a
+
+# Documentation
+/docs/ @Euda1mon1a
+*.md @Euda1mon1a
+
+# Environment and configuration
+/.env* @Euda1mon1a

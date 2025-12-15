@@ -1,0 +1,340 @@
+# Security Scanning Workflow
+# Runs security analysis on code and dependencies
+# Includes SAST, dependency scanning, and container scanning
+
+name: Security Scanning
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+  push:
+    branches: [main, master]
+  schedule:
+    # Run weekly security scan on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  # CodeQL Analysis (SAST)
+  codeql-analysis:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['python', 'javascript-typescript']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: +security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  # Python dependency vulnerability scanning
+  python-dependency-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Safety
+        run: pip install safety pip-audit
+
+      - name: Run Safety check
+        working-directory: backend
+        continue-on-error: true
+        run: |
+          safety check -r requirements.txt --full-report || echo "Safety scan completed with findings"
+
+      - name: Run pip-audit
+        working-directory: backend
+        continue-on-error: true
+        run: |
+          pip-audit -r requirements.txt --format json --output pip-audit-results.json || true
+          pip-audit -r requirements.txt || echo "pip-audit scan completed with findings"
+
+      - name: Upload pip-audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pip-audit-results
+          path: backend/pip-audit-results.json
+          retention-days: 30
+
+  # Node.js dependency vulnerability scanning
+  npm-audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run npm audit
+        working-directory: frontend
+        continue-on-error: true
+        run: |
+          npm audit --json > npm-audit-results.json || true
+          npm audit || echo "npm audit completed with findings"
+
+      - name: Upload npm audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-results
+          path: frontend/npm-audit-results.json
+          retention-days: 30
+
+  # Bandit - Python security linter
+  bandit-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Bandit
+        run: pip install bandit[toml]
+
+      - name: Run Bandit
+        working-directory: backend
+        continue-on-error: true
+        run: |
+          bandit -r app -f json -o bandit-results.json || true
+          bandit -r app -f txt || echo "Bandit scan completed"
+
+      - name: Upload Bandit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-results
+          path: backend/bandit-results.json
+          retention-days: 30
+
+  # Trivy vulnerability scanner for containers and filesystem
+  trivy-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+
+      - name: Run Trivy for misconfigurations
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+  # Secret scanning using Gitleaks
+  secret-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # OWASP Dependency Check
+  owasp-dependency-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'residency-scheduler'
+          path: '.'
+          format: 'HTML'
+          out: 'reports'
+          args: >-
+            --enableRetired
+            --enableExperimental
+
+      - name: Upload OWASP report
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-dependency-check-report
+          path: reports/
+          retention-days: 30
+
+  # Semgrep SAST
+  semgrep:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/default
+            p/python
+            p/javascript
+            p/typescript
+            p/react
+            p/security-audit
+            p/secrets
+          generateSarif: true
+
+      - name: Upload Semgrep SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+
+  # Docker image scanning (if Dockerfiles exist)
+  docker-scan:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    strategy:
+      matrix:
+        context: ['backend', 'frontend']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for Dockerfile
+        id: check
+        run: |
+          if [ -f "${{ matrix.context }}/Dockerfile" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.check.outputs.exists == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image for scanning
+        if: steps.check.outputs.exists == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.context }}
+          push: false
+          load: true
+          tags: scan-${{ matrix.context }}:latest
+
+      - name: Run Trivy container scan
+        if: steps.check.outputs.exists == 'true'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'scan-${{ matrix.context }}:latest'
+          format: 'sarif'
+          output: 'trivy-${{ matrix.context }}-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy container scan results
+        if: steps.check.outputs.exists == 'true'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-${{ matrix.context }}-results.sarif'
+
+  # Security summary
+  security-summary:
+    runs-on: ubuntu-latest
+    needs: [codeql-analysis, python-dependency-scan, npm-audit, bandit-scan, trivy-scan, secret-scan, semgrep]
+    if: always()
+
+    steps:
+      - name: Security scan summary
+        run: |
+          echo "=== Security Scan Summary ==="
+          echo "CodeQL Analysis: ${{ needs.codeql-analysis.result }}"
+          echo "Python Dependency Scan: ${{ needs.python-dependency-scan.result }}"
+          echo "NPM Audit: ${{ needs.npm-audit.result }}"
+          echo "Bandit Scan: ${{ needs.bandit-scan.result }}"
+          echo "Trivy Scan: ${{ needs.trivy-scan.result }}"
+          echo "Secret Scan: ${{ needs.secret-scan.result }}"
+          echo "Semgrep: ${{ needs.semgrep.result }}"
+
+          # Don't fail the workflow for security findings, but report status
+          if [[ "${{ needs.secret-scan.result }}" == "failure" ]]; then
+            echo "CRITICAL: Secret scan found potential secrets in the codebase!"
+            exit 1
+          fi
+
+          echo "Security scans completed. Review findings in the Security tab."
