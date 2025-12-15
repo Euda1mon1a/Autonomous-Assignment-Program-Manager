@@ -151,12 +151,12 @@ class PuLPSolver(BaseSolver):
         # Filter to workday blocks
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
 
-        if not workday_blocks or not context.residents:
+        if not workday_blocks or not context.residents or not context.templates:
             return SolverResult(
                 success=False,
                 assignments=[],
                 status="empty",
-                solver_status="No blocks or residents",
+                solver_status="No blocks, residents, or rotation templates",
             )
 
         # Create the LP problem
@@ -164,19 +164,63 @@ class PuLPSolver(BaseSolver):
 
         # ==================================================
         # DECISION VARIABLES
-        # x[r_i, b_i] = 1 if resident r assigned to block b
+        # x[r_i, b_i, t_i] = 1 if resident r assigned to rotation t during block b
         # ==================================================
         x = {}
+        template_idx = {t.id: i for i, t in enumerate(context.templates)}
+
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
             for block in workday_blocks:
                 b_i = context.block_idx[block.id]
-                x[r_i, b_i] = pulp.LpVariable(
-                    f"x_{r_i}_{b_i}",
-                    cat=pulp.LpBinary,
-                )
+                for template in context.templates:
+                    # Skip templates requiring procedure credentials if resident doesn't have them
+                    if template.requires_procedure_credential:
+                        continue
 
-        variables = {"assignments": x}
+                    t_i = template_idx[template.id]
+                    x[r_i, b_i, t_i] = pulp.LpVariable(
+                        f"x_{r_i}_{b_i}_{t_i}",
+                        cat=pulp.LpBinary,
+                    )
+
+        # Store both 2D (for legacy constraints) and 3D variables
+        # 2D view: x_2d[r_i, b_i] = sum over all rotations
+        x_2d = {}
+        for resident in context.residents:
+            r_i = context.resident_idx[resident.id]
+            for block in workday_blocks:
+                b_i = context.block_idx[block.id]
+                rotation_vars = [
+                    x[r_i, b_i, t_i]
+                    for t_i in range(len(context.templates))
+                    if (r_i, b_i, t_i) in x
+                ]
+                if rotation_vars:
+                    x_2d[r_i, b_i] = pulp.lpSum(rotation_vars)
+
+        variables = {
+            "assignments": x_2d,  # For legacy constraints
+            "template_assignments": x,  # For rotation-specific constraints
+        }
+
+        # ==================================================
+        # CONSTRAINT: At most one rotation per person per block
+        # ==================================================
+        for resident in context.residents:
+            r_i = context.resident_idx[resident.id]
+            for block in workday_blocks:
+                b_i = context.block_idx[block.id]
+                rotation_vars = [
+                    x[r_i, b_i, t_i]
+                    for t_i in range(len(context.templates))
+                    if (r_i, b_i, t_i) in x
+                ]
+                if rotation_vars:
+                    prob += (
+                        pulp.lpSum(rotation_vars) <= 1,
+                        f"one_rotation_{r_i}_{b_i}"
+                    )
 
         # ==================================================
         # APPLY CONSTRAINTS FROM MANAGER
@@ -192,8 +236,10 @@ class PuLPSolver(BaseSolver):
                     r_i = context.resident_idx[assignment.person_id]
                     if assignment.block_id in context.block_idx:
                         b_i = context.block_idx[assignment.block_id]
-                        if (r_i, b_i) in x:
-                            prob += x[r_i, b_i] == 1, f"preserve_{r_i}_{b_i}"
+                        if assignment.rotation_template_id and assignment.rotation_template_id in template_idx:
+                            t_i = template_idx[assignment.rotation_template_id]
+                            if (r_i, b_i, t_i) in x:
+                                prob += x[r_i, b_i, t_i] == 1, f"preserve_{r_i}_{b_i}_{t_i}"
 
         # ==================================================
         # OBJECTIVE FUNCTION
@@ -248,13 +294,14 @@ class PuLPSolver(BaseSolver):
             r_i = context.resident_idx[resident.id]
             for block in workday_blocks:
                 b_i = context.block_idx[block.id]
-                if (r_i, b_i) in x and pulp.value(x[r_i, b_i]) == 1:
-                    template = self._select_template(resident, context.templates)
-                    assignments.append((
-                        resident.id,
-                        block.id,
-                        template.id if template else None,
-                    ))
+                for template in context.templates:
+                    t_i = template_idx[template.id]
+                    if (r_i, b_i, t_i) in x and pulp.value(x[r_i, b_i, t_i]) == 1:
+                        assignments.append((
+                            resident.id,
+                            block.id,
+                            template.id,
+                        ))
 
         logger.info(f"PuLP found {len(assignments)} assignments in {runtime:.2f}s")
 
@@ -268,6 +315,7 @@ class PuLPSolver(BaseSolver):
             statistics={
                 "total_blocks": len(workday_blocks),
                 "total_residents": len(context.residents),
+                "total_templates": len(context.templates),
                 "coverage_rate": len(assignments) / len(workday_blocks) if workday_blocks else 0,
             },
         )
@@ -319,12 +367,12 @@ class CPSATSolver(BaseSolver):
         # Filter to workday blocks
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
 
-        if not workday_blocks or not context.residents:
+        if not workday_blocks or not context.residents or not context.templates:
             return SolverResult(
                 success=False,
                 assignments=[],
                 status="empty",
-                solver_status="No blocks or residents",
+                solver_status="No blocks, residents, or rotation templates",
             )
 
         # Create the CP model
@@ -332,16 +380,61 @@ class CPSATSolver(BaseSolver):
 
         # ==================================================
         # DECISION VARIABLES
-        # x[r_i, b_i] = 1 if resident r assigned to block b
+        # x[r_i, b_i, t_i] = 1 if resident r assigned to rotation t during block b
         # ==================================================
         x = {}
+        template_idx = {t.id: i for i, t in enumerate(context.templates)}
+
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
             for block in workday_blocks:
                 b_i = context.block_idx[block.id]
-                x[r_i, b_i] = model.NewBoolVar(f"x_{r_i}_{b_i}")
+                for template in context.templates:
+                    # Skip templates requiring procedure credentials if resident doesn't have them
+                    if template.requires_procedure_credential:
+                        continue
 
-        variables = {"assignments": x}
+                    t_i = template_idx[template.id]
+                    x[r_i, b_i, t_i] = model.NewBoolVar(f"x_{r_i}_{b_i}_{t_i}")
+
+        # Store both 2D (for legacy constraints) and 3D variables
+        # 2D view: x_2d[r_i, b_i] = OR of all rotations
+        x_2d = {}
+        for resident in context.residents:
+            r_i = context.resident_idx[resident.id]
+            for block in workday_blocks:
+                b_i = context.block_idx[block.id]
+                rotation_vars = [
+                    x[r_i, b_i, t_i]
+                    for t_i in range(len(context.templates))
+                    if (r_i, b_i, t_i) in x
+                ]
+                if rotation_vars:
+                    # Create a 2D indicator: 1 if assigned to any rotation in this block
+                    x_2d[r_i, b_i] = model.NewBoolVar(f"x_2d_{r_i}_{b_i}")
+                    # x_2d = 1 iff at least one rotation is selected
+                    model.Add(sum(rotation_vars) >= 1).OnlyEnforceIf(x_2d[r_i, b_i])
+                    model.Add(sum(rotation_vars) == 0).OnlyEnforceIf(x_2d[r_i, b_i].Not())
+
+        variables = {
+            "assignments": x_2d,  # For legacy constraints
+            "template_assignments": x,  # For rotation-specific constraints
+        }
+
+        # ==================================================
+        # CONSTRAINT: At most one rotation per person per block
+        # ==================================================
+        for resident in context.residents:
+            r_i = context.resident_idx[resident.id]
+            for block in workday_blocks:
+                b_i = context.block_idx[block.id]
+                rotation_vars = [
+                    x[r_i, b_i, t_i]
+                    for t_i in range(len(context.templates))
+                    if (r_i, b_i, t_i) in x
+                ]
+                if rotation_vars:
+                    model.Add(sum(rotation_vars) <= 1)
 
         # ==================================================
         # APPLY CONSTRAINTS FROM MANAGER
@@ -357,8 +450,10 @@ class CPSATSolver(BaseSolver):
                     r_i = context.resident_idx[assignment.person_id]
                     if assignment.block_id in context.block_idx:
                         b_i = context.block_idx[assignment.block_id]
-                        if (r_i, b_i) in x:
-                            model.Add(x[r_i, b_i] == 1)
+                        if assignment.rotation_template_id and assignment.rotation_template_id in template_idx:
+                            t_i = template_idx[assignment.rotation_template_id]
+                            if (r_i, b_i, t_i) in x:
+                                model.Add(x[r_i, b_i, t_i] == 1)
 
         # ==================================================
         # OBJECTIVE FUNCTION
@@ -402,13 +497,14 @@ class CPSATSolver(BaseSolver):
             r_i = context.resident_idx[resident.id]
             for block in workday_blocks:
                 b_i = context.block_idx[block.id]
-                if (r_i, b_i) in x and solver.Value(x[r_i, b_i]) == 1:
-                    template = self._select_template(resident, context.templates)
-                    assignments.append((
-                        resident.id,
-                        block.id,
-                        template.id if template else None,
-                    ))
+                for template in context.templates:
+                    t_i = template_idx[template.id]
+                    if (r_i, b_i, t_i) in x and solver.Value(x[r_i, b_i, t_i]) == 1:
+                        assignments.append((
+                            resident.id,
+                            block.id,
+                            template.id,
+                        ))
 
         logger.info(f"CP-SAT found {len(assignments)} assignments in {runtime:.2f}s (status: {status_name})")
 
@@ -422,6 +518,7 @@ class CPSATSolver(BaseSolver):
             statistics={
                 "total_blocks": len(workday_blocks),
                 "total_residents": len(context.residents),
+                "total_templates": len(context.templates),
                 "coverage_rate": len(assignments) / len(workday_blocks) if workday_blocks else 0,
                 "branches": solver.NumBranches(),
                 "conflicts": solver.NumConflicts(),
@@ -523,23 +620,26 @@ class GreedySolver(BaseSolver):
         # Filter to workday blocks
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
 
-        if not workday_blocks or not context.residents:
+        if not workday_blocks or not context.residents or not context.templates:
             return SolverResult(
                 success=False,
                 assignments=[],
                 status="empty",
-                solver_status="No blocks or residents",
+                solver_status="No blocks, residents, or rotation templates",
             )
 
         # Track existing assignments
         assigned_blocks = set()
         assignment_counts = {r.id: 0 for r in context.residents}
+        template_block_counts = defaultdict(lambda: defaultdict(int))  # template_id -> block_id -> count
 
         if existing_assignments:
             for a in existing_assignments:
                 assigned_blocks.add(a.block_id)
                 if a.person_id in assignment_counts:
                     assignment_counts[a.person_id] += 1
+                if a.rotation_template_id:
+                    template_block_counts[a.rotation_template_id][a.block_id] += 1
 
         # Calculate difficulty (eligible resident count) for each block
         def count_eligible(block):
@@ -570,15 +670,33 @@ class GreedySolver(BaseSolver):
             # Select resident with fewest assignments (equity)
             selected = min(eligible, key=lambda r: assignment_counts[r.id])
 
-            # Find template
-            template = self._select_template(selected, context.templates)
+            # Select best available template
+            template = None
+            for t in context.templates:
+                # Skip if requires procedure credential
+                if t.requires_procedure_credential:
+                    continue
+
+                # Check capacity constraint
+                if t.max_residents and template_block_counts[t.id][block.id] >= t.max_residents:
+                    continue
+
+                # Found a valid template
+                template = t
+                break
+
+            if not template:
+                # No valid template available, skip this block
+                logger.debug(f"No valid rotation template for resident {selected.name} in block {block.id}")
+                continue
 
             assignments.append((
                 selected.id,
                 block.id,
-                template.id if template else None,
+                template.id,
             ))
             assignment_counts[selected.id] += 1
+            template_block_counts[template.id][block.id] += 1
 
         runtime = time.time() - start_time
 
@@ -594,6 +712,7 @@ class GreedySolver(BaseSolver):
             statistics={
                 "total_blocks": len(workday_blocks),
                 "total_residents": len(context.residents),
+                "total_templates": len(context.templates),
                 "coverage_rate": len(assignments) / len(sorted_blocks) if sorted_blocks else 0,
             },
         )

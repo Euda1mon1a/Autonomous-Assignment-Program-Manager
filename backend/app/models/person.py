@@ -25,6 +25,13 @@ class Person(Base):
     # Resident-specific fields
     pgy_level = Column(Integer)  # 1, 2, or 3 for residents
 
+    # Capacity/workload fields
+    target_clinical_blocks = Column(Integer)  # Expected number of clinical blocks per scheduling period
+    # Examples:
+    # - Regular resident: 48-56 blocks (12-14 weeks * 4 blocks/week)
+    # - Chief resident: 24 blocks (6 clinical + 6 admin)
+    # - Research track: 8 blocks (2 clinical weeks)
+
     ***REMOVED***-specific fields
     performs_procedures = Column(Boolean, default=False)
     specialties = Column(StringArrayType())  # e.g., ['Sports Medicine', 'Dermatology']

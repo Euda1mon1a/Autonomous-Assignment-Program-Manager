@@ -27,6 +27,11 @@ class Absence(Base):
     end_date = Column(Date, nullable=False)
     absence_type = Column(String(50), nullable=False)
 
+    # Blocking vs partial absence
+    # True = blocks entire period (deployment, extended medical leave)
+    # False = partial absence, should be tracked but doesn't prevent assignment (single day, appointment)
+    is_blocking = Column(Boolean, default=False)
+
     # Military-specific
     deployment_orders = Column(Boolean, default=False)
     tdy_location = Column(String(255))
@@ -60,3 +65,28 @@ class Absence(Base):
     def duration_days(self) -> int:
         """Get the duration of the absence in days."""
         return (self.end_date - self.start_date).days + 1
+
+    @property
+    def should_block_assignment(self) -> bool:
+        """
+        Determine if this absence should block assignment to clinical blocks.
+
+        Logic:
+        - If is_blocking is explicitly set, use that value
+        - Otherwise, auto-determine based on absence type:
+          - Blocking: deployment, extended medical (>7 days), TDY
+          - Partial: vacation (<=7 days), conference, family_emergency, short medical
+        """
+        if self.is_blocking is not None:
+            return self.is_blocking
+
+        # Auto-determine based on type and duration
+        if self.absence_type in ("deployment", "tdy"):
+            return True
+
+        # Medical leave >7 days is blocking
+        if self.absence_type == "medical" and self.duration_days > 7:
+            return True
+
+        # Everything else is partial (vacation, conference, short medical, etc.)
+        return False

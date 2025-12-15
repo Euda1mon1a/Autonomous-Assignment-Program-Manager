@@ -42,6 +42,31 @@ async def generate_schedule(
     - pulp: PuLP linear programming, fast for large problems
     - hybrid: Combines CP-SAT and PuLP for best results
     """
+    from datetime import datetime, timedelta
+    from app.models.schedule_run import ScheduleRun
+
+    # Issue #1: Double-submit / Re-entrancy protection
+    # Check for in-progress generations for overlapping date ranges
+    recent_cutoff = datetime.utcnow() - timedelta(minutes=5)
+    in_progress_run = (
+        db.query(ScheduleRun)
+        .filter(
+            ScheduleRun.status == "in_progress",
+            ScheduleRun.created_at >= recent_cutoff,
+            # Check for overlapping date ranges
+            ScheduleRun.start_date <= request.end_date,
+            ScheduleRun.end_date >= request.start_date,
+        )
+        .first()
+    )
+
+    if in_progress_run:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Schedule generation already in progress for overlapping date range. "
+                   f"Please wait for the current run to complete.",
+        )
+
     try:
         engine = SchedulingEngine(db, request.start_date, request.end_date)
 
@@ -65,7 +90,7 @@ async def generate_schedule(
                 conflicts=stats.get("conflicts"),
             )
 
-        return ScheduleResponse(
+        response = ScheduleResponse(
             status=result["status"],
             message=result["message"],
             total_blocks_assigned=result["total_assigned"],
@@ -75,6 +100,24 @@ async def generate_schedule(
             solver_stats=solver_stats,
         )
 
+        # Issue #5: Partial success semantics - use proper HTTP status codes
+        # Return 207 Multi-Status for partial success (some assignments created but with violations)
+        # Return 422 for validation errors or complete failure
+        if result["status"] == "failed":
+            raise HTTPException(status_code=422, detail=result["message"])
+        elif result["status"] == "partial":
+            # Use 207 Multi-Status for partial success
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                status_code=207,
+                content=response.model_dump(),
+            )
+
+        return response
+
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
