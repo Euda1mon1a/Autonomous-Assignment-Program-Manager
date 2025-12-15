@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import { Modal } from './Modal';
 import { Input, Select } from './forms';
 import { useCreatePerson } from '@/lib/hooks';
+import { validateRequired, validateEmail, validateMinLength, validatePgyLevel } from '@/lib/validation';
 import type { PersonCreate } from '@/types/api';
 
 interface AddPersonModalProps {
@@ -27,6 +28,11 @@ const pgyOptions = [
   { value: '1', label: 'PGY-1' },
   { value: '2', label: 'PGY-2' },
   { value: '3', label: 'PGY-3' },
+  { value: '4', label: 'PGY-4' },
+  { value: '5', label: 'PGY-5' },
+  { value: '6', label: 'PGY-6' },
+  { value: '7', label: 'PGY-7' },
+  { value: '8', label: 'PGY-8' },
 ];
 
 export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
@@ -43,21 +49,30 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    // Name is required
-    if (!name.trim()) {
-      newErrors.name = 'Name is required';
+    // Name is required and must be at least 2 characters
+    const nameRequiredError = validateRequired(name, 'Name');
+    if (nameRequiredError) {
+      newErrors.name = nameRequiredError;
+    } else {
+      const nameMinLengthError = validateMinLength(name, 2, 'Name');
+      if (nameMinLengthError) {
+        newErrors.name = nameMinLengthError;
+      }
     }
 
     // Email format validation (if provided)
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Please enter a valid email address';
+    if (email) {
+      const emailError = validateEmail(email);
+      if (emailError) {
+        newErrors.email = emailError;
+      }
     }
 
-    // PGY level validation for residents
+    // PGY level validation for residents (1-8)
     if (type === 'resident') {
-      const pgyNum = parseInt(pgyLevel);
-      if (isNaN(pgyNum) || pgyNum < 1 || pgyNum > 3) {
-        newErrors.pgy_level = 'PGY level must be between 1 and 3';
+      const pgyError = validatePgyLevel(pgyLevel);
+      if (pgyError) {
+        newErrors.pgy_level = pgyError;
       }
     }
 
