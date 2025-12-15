@@ -1,11 +1,15 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { format, startOfWeek, addDays } from 'date-fns'
 import { Calendar, Users, CheckCircle, AlertCircle } from 'lucide-react'
 import { useSchedule, usePeople } from '@/lib/hooks'
+import { EmptyState } from '@/components/EmptyState'
+import { GenerateScheduleDialog } from '@/components/GenerateScheduleDialog'
 
 export function ScheduleSummary() {
+  const [isGenerateOpen, setIsGenerateOpen] = useState(false)
   const today = new Date()
   const weekStart = startOfWeek(today, { weekStartsOn: 1 })
   const weekEnd = addDays(weekStart, 6)
@@ -50,13 +54,15 @@ export function ScheduleSummary() {
           <div className="animate-pulse h-4 bg-gray-200 rounded w-2/3"></div>
         </div>
       ) : !hasSchedule ? (
-        <div className="text-center py-4">
-          <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-          <p className="text-sm text-gray-600 mb-3">No schedule generated for this week</p>
-          <p className="text-xs text-gray-500">
-            {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
-          </p>
-        </div>
+        <EmptyState
+          icon={Calendar}
+          title="No schedule generated"
+          description={`${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}`}
+          action={{
+            label: 'Generate Schedule',
+            onClick: () => setIsGenerateOpen(true),
+          }}
+        />
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-sm">
@@ -105,6 +111,13 @@ export function ScheduleSummary() {
           View Full Schedule &rarr;
         </Link>
       </div>
+
+      <GenerateScheduleDialog
+        isOpen={isGenerateOpen}
+        onClose={() => setIsGenerateOpen(false)}
+        defaultStartDate={format(weekStart, 'yyyy-MM-dd')}
+        defaultEndDate={format(weekEnd, 'yyyy-MM-dd')}
+      />
     </div>
   )
 }
