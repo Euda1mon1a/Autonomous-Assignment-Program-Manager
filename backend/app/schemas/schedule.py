@@ -77,6 +77,7 @@ class ScheduleResponse(BaseModel):
     validation: ValidationResult
     run_id: Optional[UUID] = None
     solver_stats: Optional[SolverStatistics] = None
+    acgme_override_count: int = 0  ***REMOVED*** Number of acknowledged ACGME overrides
 
 
 class EmergencyRequest(BaseModel):
