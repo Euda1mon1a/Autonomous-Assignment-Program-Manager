@@ -13,6 +13,9 @@ class SettingsBase(BaseModel):
     enable_holiday_scheduling: bool = False
     default_block_duration_hours: int = Field(default=4, ge=1, le=12)
 
+class SettingsCreate(SettingsBase):
+    pass
+
 class SettingsUpdate(BaseModel):
     scheduling_algorithm: Optional[str] = None
     work_hours_per_week: Optional[int] = None

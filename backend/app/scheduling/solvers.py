@@ -462,7 +462,7 @@ class CPSATSolver(BaseSolver):
         coverage = sum(x.values())
 
         equity_penalty = variables.get("equity_penalty")
-        if equity_penalty:
+        if equity_penalty is not None:
             model.Maximize(coverage * 1000 - equity_penalty * 10)
         else:
             model.Maximize(coverage)
