@@ -6,6 +6,7 @@ import { usePeople, useDeletePerson, type PeopleFilters } from '@/lib/hooks'
 import { CardSkeleton } from '@/components/skeletons'
 import { AddPersonModal } from '@/components/AddPersonModal'
 import { EditPersonModal } from '@/components/EditPersonModal'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 import type { Person } from '@/types/api'
 
 export default function PeoplePage() {
@@ -33,10 +34,11 @@ export default function PeoplePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">People</h1>
+    <ProtectedRoute>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">People</h1>
           <p className="text-gray-600">Manage residents and faculty</p>
         </div>
         <button
@@ -130,13 +132,14 @@ export default function PeoplePage() {
         onClose={() => setIsAddModalOpen(false)}
       />
 
-      {/* Edit Person Modal */}
-      <EditPersonModal
-        isOpen={editingPerson !== null}
-        onClose={() => setEditingPerson(null)}
-        person={editingPerson}
-      />
-    </div>
+        {/* Edit Person Modal */}
+        <EditPersonModal
+          isOpen={editingPerson !== null}
+          onClose={() => setEditingPerson(null)}
+          person={editingPerson}
+        />
+      </div>
+    </ProtectedRoute>
   )
 }
 

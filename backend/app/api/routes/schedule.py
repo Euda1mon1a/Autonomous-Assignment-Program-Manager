@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.schedule import (
     ScheduleRequest,
     ScheduleResponse,
@@ -14,14 +15,19 @@ from app.schemas.schedule import (
 from app.scheduling.engine import SchedulingEngine
 from app.scheduling.validator import ACGMEValidator
 from app.services.emergency_coverage import EmergencyCoverageService
+from app.core.security import get_current_active_user
 
 router = APIRouter()
 
 
 @router.post("/generate", response_model=ScheduleResponse)
-async def generate_schedule(request: ScheduleRequest, db: Session = Depends(get_db)):
+async def generate_schedule(
+    request: ScheduleRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
     """
-    Generate schedule for a date range.
+    Generate schedule for a date range. Requires authentication.
 
     Uses the scheduling engine to:
     1. Load absences and build availability matrix
@@ -84,9 +90,10 @@ async def validate_schedule(
 async def handle_emergency_coverage(
     request: EmergencyRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
-    Handle emergency absence and find replacement coverage.
+    Handle emergency absence and find replacement coverage. Requires authentication.
 
     Used for:
     - Military deployments

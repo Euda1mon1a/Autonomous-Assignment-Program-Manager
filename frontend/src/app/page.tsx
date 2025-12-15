@@ -5,11 +5,13 @@ import { ScheduleSummary } from '@/components/dashboard/ScheduleSummary'
 import { ComplianceAlert } from '@/components/dashboard/ComplianceAlert'
 import { UpcomingAbsences } from '@/components/dashboard/UpcomingAbsences'
 import { QuickActions } from '@/components/dashboard/QuickActions'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 export default function DashboardPage() {
   const today = new Date()
 
   return (
+        <ProtectedRoute>
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
@@ -25,5 +27,6 @@ export default function DashboardPage() {
         <QuickActions />
       </div>
     </div>
+          </ProtectedRoute>
   )
 }
