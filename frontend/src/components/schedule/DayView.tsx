@@ -35,24 +35,38 @@ export interface DayViewProps {
   holidays?: Record<string, string>
 }
 
-// Activity type to color mapping
-const activityColors: Record<string, string> = {
-  clinic: 'bg-clinic-light text-clinic-dark border-clinic',
-  inpatient: 'bg-inpatient-light text-inpatient-dark border-inpatient',
-  call: 'bg-call-light text-call-dark border-call',
-  leave: 'bg-leave-light text-leave-dark border-leave',
-  conference: 'bg-gray-100 text-gray-700 border-gray-300',
-  default: 'bg-blue-50 text-blue-700 border-blue-300',
+/**
+ * Color coding for rotation types
+ * Matches ScheduleCell rotationColors for consistency across all views
+ */
+const rotationColors: Record<string, string> = {
+  clinic: 'bg-blue-100 text-blue-800 border-blue-300',
+  inpatient: 'bg-purple-100 text-purple-800 border-purple-300',
+  procedure: 'bg-red-100 text-red-800 border-red-300',
+  conference: 'bg-gray-100 text-gray-800 border-gray-300',
+  elective: 'bg-green-100 text-green-800 border-green-300',
+  call: 'bg-orange-100 text-orange-800 border-orange-300',
+  off: 'bg-white text-gray-400 border-gray-200',
+  leave: 'bg-amber-100 text-amber-800 border-amber-300',
+  vacation: 'bg-amber-100 text-amber-800 border-amber-300',
+  default: 'bg-slate-100 text-slate-700 border-slate-300',
 }
 
 function getActivityColor(activity: string): string {
   const activityLower = activity.toLowerCase()
-  for (const [key, color] of Object.entries(activityColors)) {
+
+  // Check exact match first
+  if (rotationColors[activityLower]) {
+    return rotationColors[activityLower]
+  }
+
+  // Check for partial matches
+  for (const [key, color] of Object.entries(rotationColors)) {
     if (activityLower.includes(key)) {
       return color
     }
   }
-  return activityColors.default
+  return rotationColors.default
 }
 
 export function DayView({
