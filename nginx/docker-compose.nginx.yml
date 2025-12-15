@@ -1,0 +1,68 @@
+# =============================================================================
+# Nginx Service Configuration for Docker Compose
+# =============================================================================
+# This file defines the nginx and certbot services.
+# Use with: docker-compose -f docker-compose.yml -f nginx/docker-compose.nginx.yml up
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # Nginx Reverse Proxy
+  # ===========================================================================
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: residency-scheduler-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Configuration files (for development/hot-reload)
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/snippets:/etc/nginx/snippets:ro
+      # SSL certificates from Let's Encrypt
+      - ./nginx/certbot/conf:/etc/nginx/ssl:ro
+      - ./nginx/certbot/www:/var/www/certbot:ro
+      # DH parameters
+      - ./nginx/ssl/dhparam.pem:/etc/nginx/ssl/dhparam.pem:ro
+      # Static files
+      - ./nginx/html:/var/www/html:ro
+      # Logs
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app-network
+    environment:
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ===========================================================================
+  # Certbot for Let's Encrypt Certificates
+  # ===========================================================================
+  certbot:
+    image: certbot/certbot:latest
+    container_name: residency-scheduler-certbot
+    volumes:
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - app-network
+
+# ===========================================================================
+# Volumes
+# ===========================================================================
+volumes:
+  nginx_logs:
+    driver: local
