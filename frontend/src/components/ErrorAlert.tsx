@@ -1,17 +1,25 @@
 'use client';
 
 import { X, RefreshCw } from 'lucide-react';
+import { getErrorMessage } from '@/lib/errors';
 
 interface ErrorAlertProps {
-  message: string;
+  /**
+   * Error message to display. Can be a string or any error type.
+   * If an error object is passed, getErrorMessage will extract a user-friendly message.
+   */
+  message: string | unknown;
   onRetry?: () => void;
   onDismiss?: () => void;
 }
 
 /**
  * Reusable error display component with optional retry and dismiss actions.
+ * Automatically converts error objects to user-friendly messages.
  */
 export function ErrorAlert({ message, onRetry, onDismiss }: ErrorAlertProps) {
+  // Convert error objects to user-friendly messages
+  const displayMessage = typeof message === 'string' ? message : getErrorMessage(message);
   return (
     <div className="bg-red-50 border border-red-200 rounded-lg p-4" role="alert">
       <div className="flex items-start gap-3">
@@ -34,7 +42,7 @@ export function ErrorAlert({ message, onRetry, onDismiss }: ErrorAlertProps) {
 
         {/* Message content */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-red-800">{message}</p>
+          <p className="text-sm text-red-800">{displayMessage}</p>
         </div>
 
         {/* Action buttons */}
