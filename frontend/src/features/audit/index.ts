@@ -55,7 +55,7 @@ export type {
   AuditUser,
   AuditLogEntry,
   DateRange,
-  AuditLogFilters,
+  AuditLogFilters as AuditLogFiltersType,
   AuditLogSort,
   AuditLogPagination,
   AuditLogQueryParams,
