@@ -1,48 +1,64 @@
-# Frontend Dockerfile
-FROM node:20-alpine AS base
+# Frontend Dockerfile for Residency Scheduler
+# Node 20 Alpine with multi-stage build for minimal production image
 
-# Install dependencies only when needed
-FROM base AS deps
+# Base stage
+FROM node:20-alpine AS base
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
+# Dependencies stage - install only when needed
+FROM base AS deps
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --only=production && npm cache clean --force
 
-# Rebuild the source code only when needed
+# Builder stage - build the application
 FROM base AS builder
 WORKDIR /app
+
+# Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ENV NEXT_TELEMETRY_DISABLED 1
+# Disable Next.js telemetry during build
+ENV NEXT_TELEMETRY_DISABLED=1
 
+# Build the application
 RUN npm run build
 
-# Production image, copy all the files and run next
+# Production stage - minimal runtime image
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 nextjs
 
+# Copy public assets
 COPY --from=builder /app/public ./public
 
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
+# Create .next directory and set permissions
+RUN mkdir .next && chown nextjs:nodejs .next
 
-# Automatically leverage output traces to reduce image size
+# Copy standalone build output (leverages Next.js output tracing for minimal size)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Switch to non-root user
 USER nextjs
 
+# Expose port
 EXPOSE 3000
 
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
+# Set hostname to listen on all interfaces
+ENV PORT=3000 \
+    HOSTNAME="0.0.0.0"
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+
+# Start the application
 CMD ["node", "server.js"]
