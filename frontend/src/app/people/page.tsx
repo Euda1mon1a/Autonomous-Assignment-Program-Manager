@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus, User, Users, GraduationCap, RefreshCw } from 'lucide-react'
 import { usePeople, useDeletePerson, type PeopleFilters } from '@/lib/hooks'
 import { CardSkeleton } from '@/components/skeletons'
@@ -8,7 +8,15 @@ import { AddPersonModal } from '@/components/AddPersonModal'
 import { EditPersonModal } from '@/components/EditPersonModal'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { EmptyState } from '@/components/EmptyState'
+import { ExportButton } from '@/components/ExportButton'
 import type { Person } from '@/types/api'
+
+const peopleExportColumns = [
+  { key: 'name', header: 'Name' },
+  { key: 'type', header: 'Type' },
+  { key: 'pgy_level', header: 'PGY Level' },
+  { key: 'email', header: 'Email' },
+]
 
 export default function PeoplePage() {
   const [roleFilter, setRoleFilter] = useState<'all' | 'resident' | 'faculty'>('all')
@@ -28,6 +36,11 @@ export default function PeoplePage() {
   const { data, isLoading, isError, error, refetch } = usePeople(filters)
   const deletePerson = useDeletePerson()
 
+  // Prepare export data
+  const exportData = useMemo(() => {
+    return (data?.items || []) as unknown as Record<string, unknown>[]
+  }, [data?.items])
+
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this person?')) {
       deletePerson.mutate(id)
@@ -42,13 +55,20 @@ export default function PeoplePage() {
             <h1 className="text-2xl font-bold text-gray-900">People</h1>
           <p className="text-gray-600">Manage residents and faculty</p>
         </div>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="btn-primary flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Person
-        </button>
+        <div className="flex items-center gap-3">
+          <ExportButton
+            data={exportData}
+            filename="people"
+            columns={peopleExportColumns}
+          />
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Person
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
