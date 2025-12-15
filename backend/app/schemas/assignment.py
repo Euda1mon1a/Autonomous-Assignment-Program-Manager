@@ -13,6 +13,7 @@ class AssignmentBase(BaseModel):
     role: str  # 'primary', 'supervising', 'backup'
     activity_override: Optional[str] = None
     notes: Optional[str] = None
+    override_reason: Optional[str] = None  # Reason for acknowledging ACGME violations
 
     @field_validator("role")
     @classmethod
@@ -25,7 +26,6 @@ class AssignmentBase(BaseModel):
 class AssignmentCreate(AssignmentBase):
     """Schema for creating an assignment."""
     created_by: Optional[str] = None
-    override_reason: Optional[str] = None  # Reason for acknowledging ACGME violations
 
 
 class AssignmentUpdate(BaseModel):
@@ -35,6 +35,7 @@ class AssignmentUpdate(BaseModel):
     activity_override: Optional[str] = None
     notes: Optional[str] = None
     override_reason: Optional[str] = None  # Reason for acknowledging ACGME violations
+    acknowledge_override: Optional[bool] = None  # Set to True to timestamp override_acknowledged_at
     updated_at: datetime  # Required for optimistic locking
 
     @field_validator("role")
@@ -51,6 +52,7 @@ class AssignmentResponse(AssignmentBase):
     created_by: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    override_acknowledged_at: Optional[datetime] = None  # When ACGME violation was acknowledged
 
     class Config:
         from_attributes = True
