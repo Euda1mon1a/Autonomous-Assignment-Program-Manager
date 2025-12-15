@@ -76,3 +76,11 @@ logs/
 *.pyo
 .build/
 *.tsbuildinfo
+
+# Nginx SSL/TLS files
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
+nginx/ssl/*.csr
+!nginx/ssl/.gitkeep
+nginx/certbot/

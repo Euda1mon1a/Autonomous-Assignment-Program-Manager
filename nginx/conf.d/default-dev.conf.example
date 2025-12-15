@@ -1,0 +1,131 @@
+# =============================================================================
+# Development Server Configuration - No SSL
+# =============================================================================
+# Use this configuration for local development without SSL.
+# Copy to default.conf and remove the SSL configuration in default.conf
+#
+# To use: cp default-dev.conf.example default.conf
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# HTTP Server - Development (No SSL)
+# -----------------------------------------------------------------------------
+server {
+    listen 80;
+    listen [::]:80;
+    server_name localhost;
+
+    # Logging
+    access_log /var/log/nginx/dev.access.log;
+    error_log /var/log/nginx/dev.error.log debug;
+
+    # Root for static files
+    root /var/www/html;
+
+    # =========================================================================
+    # API Routes - Backend Proxy
+    # =========================================================================
+    location /api/ {
+        # Rate limiting for API endpoints
+        limit_req zone=api burst=50 nodelay;
+
+        proxy_pass http://backend_servers;
+        include /etc/nginx/snippets/proxy-params.conf;
+
+        # API-specific timeouts
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+    }
+
+    # =========================================================================
+    # Authentication Endpoints
+    # =========================================================================
+    location /api/auth/login {
+        limit_req zone=login burst=10 nodelay;
+        proxy_pass http://backend_servers;
+        include /etc/nginx/snippets/proxy-params.conf;
+    }
+
+    location /api/auth/register {
+        limit_req zone=login burst=5 nodelay;
+        proxy_pass http://backend_servers;
+        include /etc/nginx/snippets/proxy-params.conf;
+    }
+
+    # =========================================================================
+    # Schedule Generation
+    # =========================================================================
+    location /api/schedule/generate {
+        limit_req zone=schedule_gen burst=2 nodelay;
+        proxy_pass http://backend_servers;
+        include /etc/nginx/snippets/proxy-params.conf;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
+    # =========================================================================
+    # API Documentation
+    # =========================================================================
+    location ~ ^/(docs|redoc|openapi.json) {
+        proxy_pass http://backend_servers;
+        include /etc/nginx/snippets/proxy-params.conf;
+    }
+
+    # =========================================================================
+    # WebSocket Connections
+    # =========================================================================
+    location /ws/ {
+        proxy_pass http://websocket_servers;
+        include /etc/nginx/snippets/websocket-params.conf;
+    }
+
+    # =========================================================================
+    # Health Check
+    # =========================================================================
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+
+    location /nginx_status {
+        stub_status on;
+        access_log off;
+        allow all;
+    }
+
+    # =========================================================================
+    # Static Files
+    # =========================================================================
+    location /_next/static/ {
+        proxy_pass http://frontend_servers;
+        include /etc/nginx/snippets/proxy-params.conf;
+    }
+
+    location /_next/webpack-hmr {
+        proxy_pass http://frontend_servers;
+        include /etc/nginx/snippets/websocket-params.conf;
+    }
+
+    # =========================================================================
+    # Frontend - Next.js Application
+    # =========================================================================
+    location / {
+        proxy_pass http://frontend_servers;
+        include /etc/nginx/snippets/proxy-params.conf;
+
+        # Support for Next.js hot module replacement
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    # =========================================================================
+    # Error Pages
+    # =========================================================================
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+        internal;
+    }
+}
