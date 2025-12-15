@@ -11,6 +11,7 @@ from app.schemas.schedule import (
     ValidationResult,
     EmergencyRequest,
     EmergencyResponse,
+    SolverStatistics,
 )
 from app.scheduling.engine import SchedulingEngine
 from app.scheduling.validator import ACGMEValidator
@@ -29,21 +30,40 @@ async def generate_schedule(
     """
     Generate schedule for a date range. Requires authentication.
 
-    Uses the scheduling engine to:
+    Uses the scheduling engine with constraint-based optimization:
     1. Load absences and build availability matrix
-    2. Assign residents using greedy algorithm
-    3. Assign supervising faculty
+    2. Assign residents using selected algorithm
+    3. Assign supervising faculty based on ACGME ratios
     4. Validate ACGME compliance
+
+    Available algorithms:
+    - greedy: Fast heuristic, good for initial solutions
+    - cp_sat: OR-Tools constraint programming, optimal solutions
+    - pulp: PuLP linear programming, fast for large problems
+    - hybrid: Combines CP-SAT and PuLP for best results
     """
     try:
         engine = SchedulingEngine(db, request.start_date, request.end_date)
 
-        # Generate schedule
+        # Generate schedule with selected algorithm
         result = engine.generate(
             pgy_levels=request.pgy_levels,
             rotation_template_ids=request.rotation_template_ids,
-            algorithm=request.algorithm,
+            algorithm=request.algorithm.value,
+            timeout_seconds=request.timeout_seconds,
         )
+
+        # Build solver statistics if available
+        solver_stats = None
+        if result.get("solver_stats"):
+            stats = result["solver_stats"]
+            solver_stats = SolverStatistics(
+                total_blocks=stats.get("total_blocks"),
+                total_residents=stats.get("total_residents"),
+                coverage_rate=stats.get("coverage_rate"),
+                branches=stats.get("branches"),
+                conflicts=stats.get("conflicts"),
+            )
 
         return ScheduleResponse(
             status=result["status"],
@@ -52,6 +72,7 @@ async def generate_schedule(
             total_blocks=result["total_blocks"],
             validation=result["validation"],
             run_id=result.get("run_id"),
+            solver_stats=solver_stats,
         )
 
     except Exception as e:
