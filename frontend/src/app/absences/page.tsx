@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus, Calendar, List, RefreshCw } from 'lucide-react'
 import { useAbsences, usePeople, useDeleteAbsence, useUpdateAbsence } from '@/lib/hooks'
 import { CardSkeleton } from '@/components/skeletons'
@@ -9,7 +9,16 @@ import { AbsenceCalendar } from '@/components/AbsenceCalendar'
 import { AbsenceList } from '@/components/AbsenceList'
 import { Modal } from '@/components/Modal'
 import { Select, DatePicker, TextArea } from '@/components/forms'
+import { ExportButton } from '@/components/ExportButton'
 import type { Absence } from '@/types/api'
+
+const absenceExportColumns = [
+  { key: 'person_name', header: 'Person' },
+  { key: 'absence_type', header: 'Type' },
+  { key: 'start_date', header: 'Start Date' },
+  { key: 'end_date', header: 'End Date' },
+  { key: 'notes', header: 'Notes' },
+]
 
 type ViewMode = 'calendar' | 'list'
 type AbsenceTypeFilter = 'all' | 'vacation' | 'sick' | 'conference' | 'personal' | 'medical' | 'deployment' | 'tdy' | 'family_emergency'
@@ -42,6 +51,15 @@ export default function AbsencesPage() {
 
   const people = peopleData?.items || []
   const allAbsences = absencesData?.items || []
+
+  // Prepare export data with person names resolved
+  const exportData = useMemo(() => {
+    const peopleMap = new Map(people.map(p => [p.id, p.name]))
+    return allAbsences.map(absence => ({
+      ...absence,
+      person_name: peopleMap.get(absence.person_id) || 'Unknown',
+    })) as unknown as Record<string, unknown>[]
+  }, [allAbsences, people])
 
   // Filter absences by type
   const absences = typeFilter === 'all'
@@ -100,13 +118,20 @@ export default function AbsencesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Absence Management</h1>
           <p className="text-gray-600">Manage vacation, sick days, and other absences</p>
         </div>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="btn-primary flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Absence
-        </button>
+        <div className="flex items-center gap-3">
+          <ExportButton
+            data={exportData}
+            filename="absences"
+            columns={absenceExportColumns}
+          />
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Absence
+          </button>
+        </div>
       </div>
 
       {/* Controls Row */}
