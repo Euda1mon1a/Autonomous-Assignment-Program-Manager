@@ -1,0 +1,173 @@
+# Alertmanager Configuration
+# Residency Scheduler Alert Routing
+
+global:
+  # SMTP configuration for email alerts
+  smtp_smarthost: '${SMTP_HOST:-smtp.example.com:587}'
+  smtp_from: '${SMTP_FROM:-alerts@residency-scheduler.local}'
+  smtp_auth_username: '${SMTP_USERNAME}'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_require_tls: true
+
+  # Slack configuration
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+
+  # Default resolve timeout
+  resolve_timeout: 5m
+
+# Templates for notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route tree for alert routing
+route:
+  # Default receiver
+  receiver: 'default-receiver'
+
+  # Group alerts by these labels
+  group_by: ['alertname', 'severity', 'service']
+
+  # Wait before sending first notification for a group
+  group_wait: 30s
+
+  # Wait before sending updated notifications
+  group_interval: 5m
+
+  # Wait before resending notification
+  repeat_interval: 4h
+
+  # Child routes for specific routing
+  routes:
+    # Critical alerts go to PagerDuty/on-call and Slack
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 10s
+      repeat_interval: 1h
+      continue: true
+
+    # Warning alerts go to Slack
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 1m
+      repeat_interval: 4h
+
+    # Database alerts to DBA team
+    - match:
+        type: database
+      receiver: 'database-alerts'
+      group_wait: 30s
+      repeat_interval: 2h
+
+    # Infrastructure alerts
+    - match:
+        type: infrastructure
+      receiver: 'infrastructure-alerts'
+      group_wait: 1m
+      repeat_interval: 4h
+
+    # Scheduling/business alerts
+    - match:
+        service: scheduling
+      receiver: 'scheduling-alerts'
+      group_wait: 5m
+      repeat_interval: 12h
+
+    # Compliance alerts (ACGME)
+    - match:
+        service: compliance
+      receiver: 'compliance-alerts'
+      group_wait: 30s
+      repeat_interval: 4h
+
+# Inhibition rules
+inhibit_rules:
+  # If a critical alert is firing, suppress warnings for the same service
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'service']
+
+  # If the whole service is down, suppress individual component alerts
+  - source_match:
+      alertname: 'APIServiceDown'
+    target_match_re:
+      alertname: '.*'
+    equal: ['service']
+
+# Receivers - configure based on your notification channels
+receivers:
+  - name: 'default-receiver'
+    email_configs:
+      - to: '${ALERT_EMAIL:-ops@residency-scheduler.local}'
+        send_resolved: true
+        headers:
+          Subject: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
+
+  - name: 'critical-alerts'
+    slack_configs:
+      - channel: '#alerts-critical'
+        send_resolved: true
+        title: '{{ template "slack.title" . }}'
+        text: '{{ template "slack.text" . }}'
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_SERVICE_KEY}'
+        send_resolved: true
+        severity: critical
+        description: '{{ .GroupLabels.alertname }}: {{ .Annotations.summary }}'
+    email_configs:
+      - to: '${CRITICAL_ALERT_EMAIL:-oncall@residency-scheduler.local}'
+        send_resolved: true
+
+  - name: 'warning-alerts'
+    slack_configs:
+      - channel: '#alerts-warning'
+        send_resolved: true
+        title: '{{ template "slack.title" . }}'
+        text: '{{ template "slack.text" . }}'
+        color: 'warning'
+    email_configs:
+      - to: '${ALERT_EMAIL:-ops@residency-scheduler.local}'
+        send_resolved: true
+
+  - name: 'database-alerts'
+    slack_configs:
+      - channel: '#alerts-database'
+        send_resolved: true
+        title: '{{ template "slack.title" . }}'
+        text: '{{ template "slack.text" . }}'
+    email_configs:
+      - to: '${DBA_EMAIL:-dba@residency-scheduler.local}'
+        send_resolved: true
+
+  - name: 'infrastructure-alerts'
+    slack_configs:
+      - channel: '#alerts-infrastructure'
+        send_resolved: true
+    email_configs:
+      - to: '${INFRA_EMAIL:-infra@residency-scheduler.local}'
+        send_resolved: true
+
+  - name: 'scheduling-alerts'
+    slack_configs:
+      - channel: '#residency-scheduler'
+        send_resolved: true
+        title: 'Scheduling Alert: {{ .GroupLabels.alertname }}'
+    email_configs:
+      - to: '${SCHEDULING_ALERT_EMAIL:-scheduling@residency-scheduler.local}'
+        send_resolved: true
+
+  - name: 'compliance-alerts'
+    slack_configs:
+      - channel: '#compliance-alerts'
+        send_resolved: true
+        title: 'ACGME Compliance Alert'
+        color: 'danger'
+    email_configs:
+      - to: '${COMPLIANCE_EMAIL:-compliance@residency-scheduler.local}'
+        send_resolved: true
+        headers:
+          Subject: '[ACGME COMPLIANCE] {{ .GroupLabels.alertname }}'
