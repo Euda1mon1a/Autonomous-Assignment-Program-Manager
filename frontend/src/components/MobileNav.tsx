@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -36,8 +36,13 @@ const navItems: NavItem[] = [
 
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const pathname = usePathname()
   const { user, isAuthenticated } = useAuth()
+  const drawerRef = useRef<HTMLDivElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const hamburgerButtonRef = useRef<HTMLButtonElement>(null)
 
   const isAdmin = user?.role === 'admin'
 
@@ -45,54 +50,137 @@ export function MobileNav() {
     (item) => !item.adminOnly || (item.adminOnly && isAdmin)
   )
 
+  // Minimum swipe distance (in px) to trigger close
+  const minSwipeDistance = 50
+
+  // Handle touch gestures for swipe to close
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > minSwipeDistance
+
+    // Close drawer on left swipe
+    if (isLeftSwipe) {
+      setIsOpen(false)
+    }
+
+    setTouchStart(null)
+    setTouchEnd(null)
+  }
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false)
+        // Return focus to hamburger button
+        hamburgerButtonRef.current?.focus()
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape)
+      // Focus the close button when drawer opens
+      closeButtonRef.current?.focus()
+      // Prevent body scroll when drawer is open
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = ''
+    }
+  }, [isOpen])
+
+  // Close drawer on route change
+  useEffect(() => {
+    setIsOpen(false)
+  }, [pathname])
+
+  const handleOpen = useCallback(() => {
+    setIsOpen(true)
+  }, [])
+
+  const handleClose = useCallback(() => {
+    setIsOpen(false)
+    // Return focus to hamburger button
+    setTimeout(() => {
+      hamburgerButtonRef.current?.focus()
+    }, 100)
+  }, [])
+
   return (
     <>
-      {/* Hamburger Button - visible on mobile only */}
+      {/* Hamburger Button - visible on mobile only, min 44x44px touch target */}
       <button
-        onClick={() => setIsOpen(true)}
-        className="flex md:hidden items-center justify-center p-2 rounded-md text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
-        aria-label="Open menu"
+        ref={hamburgerButtonRef}
+        onClick={handleOpen}
+        className="flex md:hidden items-center justify-center min-w-[44px] min-h-[44px] p-2.5 rounded-md text-gray-600 hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        aria-label="Open navigation menu"
         aria-expanded={isOpen}
         aria-controls="mobile-nav-menu"
+        type="button"
       >
-        <Menu className="w-6 h-6" />
+        <Menu className="w-6 h-6" aria-hidden="true" />
       </button>
 
-      {/* Overlay */}
+      {/* Backdrop Overlay - semi-transparent with smooth fade */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setIsOpen(false)}
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-300 ease-in-out"
+          onClick={handleClose}
           aria-hidden="true"
+          role="presentation"
         />
       )}
 
-      {/* Slide-out Drawer */}
-      <div
+      {/* Slide-out Drawer from left with swipe support */}
+      <aside
+        ref={drawerRef}
         id="mobile-nav-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Mobile navigation"
         aria-hidden={!isOpen}
-        className={`fixed top-0 left-0 h-full w-64 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        className={`fixed top-0 left-0 h-full w-64 sm:w-72 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Drawer Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        {/* Drawer Header with close button (44x44px touch target) */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
           <div className="flex items-center gap-2">
-            <Calendar className="w-6 h-6 text-blue-600" />
+            <Calendar className="w-6 h-6 text-blue-600" aria-hidden="true" />
             <span className="font-bold text-gray-900">Scheduler</span>
           </div>
           <button
-            onClick={() => setIsOpen(false)}
-            className="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-            aria-label="Close menu"
+            ref={closeButtonRef}
+            onClick={handleClose}
+            className="min-w-[44px] min-h-[44px] p-2.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 active:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label="Close navigation menu"
+            type="button"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="p-4">
-          <ul className="space-y-1">
+        {/* Navigation Links - scrollable if needed */}
+        <nav className="flex-1 overflow-y-auto overscroll-contain p-4" aria-label="Primary navigation">
+          <ul className="space-y-1" role="list">
             {filteredNavItems.map((item) => {
               const isActive = pathname === item.href
               const Icon = item.icon
@@ -101,16 +189,16 @@ export function MobileNav() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    onClick={() => setIsOpen(false)}
+                    onClick={handleClose}
                     aria-current={isActive ? 'page' : undefined}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-3 min-h-[44px] px-3 py-2.5 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                       isActive
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'bg-blue-100 text-blue-700 font-semibold'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200'
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                    {item.label}
+                    <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                    <span>{item.label}</span>
                   </Link>
                 </li>
               )
@@ -122,16 +210,16 @@ export function MobileNav() {
             <div className="mt-4 pt-4 border-t border-gray-200">
               <Link
                 href="/login"
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 aria-current={pathname === '/login' ? 'page' : undefined}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 min-h-[44px] px-3 py-2.5 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                   pathname === '/login'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-blue-100 text-blue-700 font-semibold'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200'
                 }`}
               >
-                <LogIn className="w-5 h-5" />
-                Login
+                <LogIn className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                <span>Login</span>
               </Link>
             </div>
           )}
@@ -139,9 +227,12 @@ export function MobileNav() {
 
         {/* User Info at Bottom (if authenticated) */}
         {isAuthenticated && user && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
+          <div className="shrink-0 p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+            <div className="flex items-center gap-3 min-h-[56px]">
+              <div
+                className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white text-sm font-semibold shadow-sm flex-shrink-0"
+                aria-hidden="true"
+              >
                 {user.username
                   .split(' ')
                   .map((n) => n[0])
@@ -158,7 +249,7 @@ export function MobileNav() {
             </div>
           </div>
         )}
-      </div>
+      </aside>
     </>
   )
 }
