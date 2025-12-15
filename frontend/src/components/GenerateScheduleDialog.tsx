@@ -20,9 +20,10 @@ interface FormErrors {
 }
 
 const algorithmOptions = [
-  { value: 'greedy', label: 'Greedy (Fast)' },
-  { value: 'min_conflicts', label: 'Min Conflicts (Balanced)' },
-  { value: 'cp_sat', label: 'CP-SAT (Optimal)' },
+  { value: 'greedy', label: 'Greedy (Fast)', description: 'Quick heuristic, good for initial solutions' },
+  { value: 'cp_sat', label: 'CP-SAT (Optimal)', description: 'OR-Tools constraint solver, guarantees ACGME compliance' },
+  { value: 'pulp', label: 'PuLP (Large Scale)', description: 'Linear programming, efficient for large problems' },
+  { value: 'hybrid', label: 'Hybrid (Best Quality)', description: 'Combines solvers for optimal results' },
 ];
 
 const pgyLevelOptions = [
@@ -32,7 +33,14 @@ const pgyLevelOptions = [
   { value: '3', label: 'PGY-3 Only' },
 ];
 
-type Algorithm = 'greedy' | 'min_conflicts' | 'cp_sat';
+const timeoutOptions = [
+  { value: '30', label: '30 seconds (Quick)' },
+  { value: '60', label: '60 seconds (Standard)' },
+  { value: '120', label: '2 minutes (Extended)' },
+  { value: '300', label: '5 minutes (Maximum)' },
+];
+
+type Algorithm = 'greedy' | 'cp_sat' | 'pulp' | 'hybrid';
 
 export function GenerateScheduleDialog({
   isOpen,
@@ -43,6 +51,7 @@ export function GenerateScheduleDialog({
   const [startDate, setStartDate] = useState(defaultStartDate || '');
   const [endDate, setEndDate] = useState(defaultEndDate || '');
   const [algorithm, setAlgorithm] = useState<Algorithm>('greedy');
+  const [timeout, setTimeout] = useState('60');
   const [pgyLevelFilter, setPgyLevelFilter] = useState('all');
   const [errors, setErrors] = useState<FormErrors>({});
   const [showResults, setShowResults] = useState(false);
@@ -84,6 +93,7 @@ export function GenerateScheduleDialog({
         start_date: startDate,
         end_date: endDate,
         algorithm,
+        timeout_seconds: parseFloat(timeout),
         pgy_levels: pgyLevels,
       });
       setShowResults(true);
@@ -96,6 +106,7 @@ export function GenerateScheduleDialog({
     setStartDate(defaultStartDate || '');
     setEndDate(defaultEndDate || '');
     setAlgorithm('greedy');
+    setTimeout('60');
     setPgyLevelFilter('all');
     setErrors({});
     setShowResults(false);
@@ -158,6 +169,27 @@ export function GenerateScheduleDialog({
               </p>
             </div>
           </div>
+
+          {/* Solver Statistics */}
+          {result.solver_stats && (
+            <div className="bg-blue-50 rounded-lg p-3 text-sm">
+              <p className="font-medium text-blue-800 mb-1">Solver Details</p>
+              <div className="grid grid-cols-2 gap-2 text-blue-700">
+                {result.solver_stats.total_residents && (
+                  <p>Residents: {result.solver_stats.total_residents}</p>
+                )}
+                {result.solver_stats.coverage_rate != null && (
+                  <p>Solver Coverage: {(result.solver_stats.coverage_rate * 100).toFixed(1)}%</p>
+                )}
+                {result.solver_stats.branches != null && (
+                  <p>Branches: {result.solver_stats.branches.toLocaleString()}</p>
+                )}
+                {result.solver_stats.conflicts != null && (
+                  <p>Conflicts: {result.solver_stats.conflicts.toLocaleString()}</p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Validation Summary */}
           {result.validation && (
@@ -230,19 +262,32 @@ export function GenerateScheduleDialog({
             />
           </div>
 
-          <Select
-            label="Algorithm"
-            value={algorithm}
-            onChange={(e) => setAlgorithm(e.target.value as Algorithm)}
-            options={algorithmOptions}
-          />
+          <div>
+            <Select
+              label="Algorithm"
+              value={algorithm}
+              onChange={(e) => setAlgorithm(e.target.value as Algorithm)}
+              options={algorithmOptions}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {algorithmOptions.find(a => a.value === algorithm)?.description}
+            </p>
+          </div>
 
-          <Select
-            label="PGY Level Filter"
-            value={pgyLevelFilter}
-            onChange={(e) => setPgyLevelFilter(e.target.value)}
-            options={pgyLevelOptions}
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="Solver Timeout"
+              value={timeout}
+              onChange={(e) => setTimeout(e.target.value)}
+              options={timeoutOptions}
+            />
+            <Select
+              label="PGY Level Filter"
+              value={pgyLevelFilter}
+              onChange={(e) => setPgyLevelFilter(e.target.value)}
+              options={pgyLevelOptions}
+            />
+          </div>
 
           {/* Progress Indicator */}
           {isGenerating && (
