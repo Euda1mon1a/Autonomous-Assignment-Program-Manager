@@ -6,7 +6,8 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export const metadata: Metadata = {
   title: 'Residency Scheduler',
-  description: 'ACGME-compliant residency program scheduling',
+  description: 'Medical residency scheduling with ACGME compliance',
+  robots: 'noindex, nofollow', // Private app
 }
 
 export default function RootLayout({
