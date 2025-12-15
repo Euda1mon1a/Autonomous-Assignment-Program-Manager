@@ -68,18 +68,32 @@ const FEDERAL_HOLIDAYS_2024: Record<string, string> = {
   '2024-12-25': 'Christmas Day',
 }
 
-// Activity type colors for mini indicators
+/**
+ * Activity type colors for mini indicators
+ * Matches ScheduleCell rotationColors for consistency across all views
+ */
 const activityIndicatorColors: Record<string, string> = {
-  clinic: 'bg-clinic',
-  inpatient: 'bg-inpatient',
-  call: 'bg-call',
-  leave: 'bg-leave',
-  conference: 'bg-gray-400',
-  default: 'bg-blue-400',
+  clinic: 'bg-blue-500',
+  inpatient: 'bg-purple-500',
+  procedure: 'bg-red-500',
+  conference: 'bg-gray-500',
+  elective: 'bg-green-500',
+  call: 'bg-orange-500',
+  off: 'bg-gray-300',
+  leave: 'bg-amber-500',
+  vacation: 'bg-amber-500',
+  default: 'bg-slate-500',
 }
 
 function getIndicatorColor(activity: string): string {
   const activityLower = activity.toLowerCase()
+
+  // Check exact match first
+  if (activityIndicatorColors[activityLower]) {
+    return activityIndicatorColors[activityLower]
+  }
+
+  // Check for partial matches
   for (const [key, color] of Object.entries(activityIndicatorColors)) {
     if (activityLower.includes(key)) {
       return color
@@ -314,20 +328,24 @@ export function MonthView({
       <div className="mt-4 pt-4 border-t flex flex-wrap items-center gap-4 text-xs text-gray-600">
         <span className="font-medium text-gray-700">Activity Types:</span>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-clinic" />
+          <div className="w-3 h-3 rounded-full bg-blue-500" />
           <span>Clinic</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-inpatient" />
+          <div className="w-3 h-3 rounded-full bg-purple-500" />
           <span>Inpatient</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-call" />
+          <div className="w-3 h-3 rounded-full bg-orange-500" />
           <span>Call</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-leave" />
+          <div className="w-3 h-3 rounded-full bg-amber-500" />
           <span>Leave</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-green-500" />
+          <span>Elective</span>
         </div>
         <div className="flex items-center gap-1.5 ml-4">
           <AlertCircle className="w-3 h-3 text-red-500" />
