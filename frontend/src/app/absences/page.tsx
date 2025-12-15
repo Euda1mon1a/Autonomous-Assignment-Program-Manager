@@ -10,6 +10,7 @@ import { AbsenceList } from '@/components/AbsenceList'
 import { Modal } from '@/components/Modal'
 import { Select, DatePicker, TextArea } from '@/components/forms'
 import { ExportButton } from '@/components/ExportButton'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import type { Absence } from '@/types/api'
 
 const absenceExportColumns = [
@@ -37,6 +38,7 @@ export default function AbsencesPage() {
   const [typeFilter, setTypeFilter] = useState<AbsenceTypeFilter>('all')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingAbsence, setEditingAbsence] = useState<Absence | null>(null)
+  const [absenceToDelete, setAbsenceToDelete] = useState<Absence | null>(null)
 
   // Edit form state
   const [editStartDate, setEditStartDate] = useState('')
@@ -66,10 +68,15 @@ export default function AbsencesPage() {
     ? allAbsences
     : allAbsences.filter((a) => a.absence_type === typeFilter)
 
-  const handleDelete = (absence: Absence) => {
-    if (confirm('Are you sure you want to delete this absence?')) {
-      deleteAbsence.mutate(absence.id)
+  const handleDeleteClick = (absence: Absence) => {
+    setAbsenceToDelete(absence)
+  }
+
+  const handleConfirmDelete = () => {
+    if (absenceToDelete) {
+      deleteAbsence.mutate(absenceToDelete.id)
     }
+    setAbsenceToDelete(null)
   }
 
   const handleEditClick = (absence: Absence) => {
@@ -209,7 +216,7 @@ export default function AbsencesPage() {
           absences={absences}
           people={people}
           onEdit={handleEditClick}
-          onDelete={handleDelete}
+          onDelete={handleDeleteClick}
         />
       )}
 
@@ -279,6 +286,19 @@ export default function AbsencesPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={absenceToDelete !== null}
+        onClose={() => setAbsenceToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Absence"
+        message="Are you sure you want to delete this absence record? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={deleteAbsence.isPending}
+      />
     </div>
   )
 }
