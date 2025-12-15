@@ -190,11 +190,13 @@ export interface RotationTemplateUpdate {
 // ScheduleRun Types (Response only)
 // ============================================================================
 
+export type SchedulingAlgorithm = 'greedy' | 'cp_sat' | 'pulp' | 'hybrid';
+
 export interface ScheduleRun {
   id: string;
   start_date: string;
   end_date: string;
-  algorithm: 'greedy' | 'min_conflicts' | 'cp_sat';
+  algorithm: SchedulingAlgorithm;
   status: 'success' | 'partial' | 'failed';
   total_blocks_assigned: number | null;
   acgme_violations: number;
@@ -226,8 +228,29 @@ export interface ValidationResult {
 }
 
 // ============================================================================
-// Schedule Response Types
+// Solver Statistics Types
 // ============================================================================
+
+export interface SolverStatistics {
+  total_blocks: number | null;
+  total_residents: number | null;
+  coverage_rate: number | null;
+  branches: number | null;  // CP-SAT specific
+  conflicts: number | null; // CP-SAT specific
+}
+
+// ============================================================================
+// Schedule Request/Response Types
+// ============================================================================
+
+export interface ScheduleRequest {
+  start_date: string;
+  end_date: string;
+  pgy_levels?: number[];
+  rotation_template_ids?: string[];
+  algorithm: SchedulingAlgorithm;
+  timeout_seconds?: number;
+}
 
 export interface ScheduleResponse {
   status: 'success' | 'partial' | 'failed';
@@ -236,6 +259,7 @@ export interface ScheduleResponse {
   total_blocks: number;
   validation: ValidationResult;
   run_id: string | null;
+  solver_stats: SolverStatistics | null;
 }
 
 // ============================================================================
