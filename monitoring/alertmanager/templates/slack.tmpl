@@ -1,0 +1,28 @@
+{{ define "slack.title" }}
+{{ if eq .Status "firing" }}🔥 FIRING{{ else }}✅ RESOLVED{{ end }} - {{ .GroupLabels.alertname }}
+{{ end }}
+
+{{ define "slack.text" }}
+*Alert:* {{ .GroupLabels.alertname }}
+*Severity:* {{ .CommonLabels.severity }}
+*Status:* {{ .Status | toUpper }}
+
+{{ if .CommonAnnotations.summary }}
+*Summary:* {{ .CommonAnnotations.summary }}
+{{ end }}
+
+{{ if .CommonAnnotations.description }}
+*Description:* {{ .CommonAnnotations.description }}
+{{ end }}
+
+*Details:*
+{{ range .Alerts }}
+  - *Instance:* {{ .Labels.instance }}
+  - *Service:* {{ .Labels.service }}
+  {{ if .Annotations.runbook_url }}
+  - *Runbook:* {{ .Annotations.runbook_url }}
+  {{ end }}
+{{ end }}
+
+*Source:* <{{ .ExternalURL }}|Alertmanager>
+{{ end }}
