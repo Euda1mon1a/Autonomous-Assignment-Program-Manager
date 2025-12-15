@@ -12,6 +12,27 @@ export type { WeekViewProps } from './WeekView'
 
 export { MonthView } from './MonthView'
 export type { MonthViewProps } from './MonthView'
+
+/**
+ * Assignment Editing Components
+ *
+ * Components for editing assignments with warning system.
+ * Warns but does not block - humans have final authority.
+ */
+
+// Modal for editing or creating assignments
+export { EditAssignmentModal } from './EditAssignmentModal'
+export type { EditAssignmentModalProps } from './EditAssignmentModal'
+
+// Warning display component for assignment conflicts
+export { AssignmentWarnings, WarningBadge, generateWarnings } from './AssignmentWarnings'
+export type {
+  AssignmentWarning,
+  WarningType,
+  WarningSeverity,
+  WarningCheckContext,
+} from './AssignmentWarnings'
+
 /**
  * Personal Schedule View Components
  *
