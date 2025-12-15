@@ -24,3 +24,66 @@
     @apply p-2 border-r cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all;
   }
 }
+
+/* Print styles for Help page PDF export */
+@media print {
+  /* Hide navigation and non-essential elements */
+  nav,
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print\\:block {
+    display: block !important;
+  }
+
+  /* Reset page margins */
+  @page {
+    margin: 0.5in;
+    size: letter;
+  }
+
+  /* Ensure content fits on page */
+  body {
+    font-size: 11pt;
+    line-height: 1.4;
+    color: #000;
+    background: #fff;
+  }
+
+  /* Card styles for print */
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure good contrast */
+  h1, h2, h3, h4, h5, h6 {
+    color: #000 !important;
+  }
+
+  /* Links don't need special styling in print */
+  a {
+    color: #000 !important;
+    text-decoration: none !important;
+  }
+
+  /* Page breaks */
+  .print\\:break-after-page {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .print\\:break-before-page {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  /* Optimize grid layouts for print */
+  .print\\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}

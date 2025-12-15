@@ -17,6 +17,9 @@ This guide explains how to use the Residency Scheduler application for managing 
 9. [Exporting Data](#exporting-data)
 10. [Settings (Admin Only)](#settings-admin-only)
 11. [Common Workflows](#common-workflows)
+12. [Quick Reference Card](#quick-reference-card)
+13. [Glossary](#glossary)
+14. [FAQ](#frequently-asked-questions)
 
 ---
 
@@ -43,6 +46,7 @@ The main navigation bar provides access to all sections:
 | **Templates** | Define rotation types and constraints |
 | **Absences** | Track vacation, deployments, and other time off |
 | **Compliance** | Monitor ACGME requirement violations |
+| **Help** | Quick reference, glossary, and FAQ (printable as PDF) |
 | **Settings** | System configuration (Admin only) |
 
 ---
@@ -470,12 +474,144 @@ Lists recognized holidays that affect scheduling:
 
 ---
 
+## Quick Reference Card
+
+### Common Tasks at a Glance
+
+| Task | Where to Go |
+|------|-------------|
+| Generate a schedule | Dashboard → Generate Schedule |
+| Add a new resident | People → Add Person |
+| Record time off | Absences → Add Absence |
+| Check compliance | Compliance page |
+| Export to Excel | Dashboard → Export Excel |
+| Create rotation type | Templates → New Template |
+
+### Navigation Quick Guide
+
+- **Dashboard** - Home page, overview, quick actions
+- **People** - Manage residents and faculty
+- **Templates** - Rotation types and rules
+- **Absences** - Vacation, deployment, sick leave
+- **Compliance** - ACGME rule monitoring
+- **Help** - This reference guide (printable)
+- **Settings** - System config (Admin only)
+
+### Absence Types Quick Reference
+
+| Type | Use For |
+|------|---------|
+| Vacation | Planned annual leave |
+| Medical | Sick days, appointments |
+| Deployment | Military active duty |
+| TDY | Temporary duty assignment |
+| Conference | CME, medical meetings |
+| Family Emergency | Personal matters |
+
+### ACGME Rules Quick Reference
+
+| Rule | Limit |
+|------|-------|
+| 80-Hour Rule | Max 80 hrs/week (4-week avg) |
+| 1-in-7 Rule | One day off every 7 days |
+| PGY-1 Supervision | 1 faculty per 2 residents |
+| PGY-2/3 Supervision | 1 faculty per 4 residents |
+
+---
+
+## Glossary
+
+| Term | Definition |
+|------|------------|
+| **ACGME** | Accreditation Council for Graduate Medical Education - sets residency training standards |
+| **PGY** | Post-Graduate Year - PGY-1 is first year, PGY-2 is second year, etc. |
+| **Block** | A scheduling period, typically 4 weeks (28 days) |
+| **Rotation** | A clinical assignment (e.g., Inpatient, Clinic, ICU) |
+| **TDY** | Temporary Duty - military assignment away from home station |
+| **Deployment** | Military active duty assignment, typically overseas |
+| **Template** | A reusable rotation definition with rules and constraints |
+| **Supervision Ratio** | Required number of faculty per resident (e.g., 1:2 means 1 faculty per 2 residents) |
+| **Coverage Rate** | Percentage of required positions that are filled |
+| **Violation** | When a schedule breaks an ACGME rule |
+| **Academic Year** | Typically July 1 to June 30 for residency programs |
+| **CME** | Continuing Medical Education - required ongoing training |
+| **Greedy Algorithm** | Fast scheduling method that fills slots one at a time |
+| **CP-SAT** | Constraint Programming - slower but finds optimal schedules |
+| **AM/PM** | Morning and afternoon sessions in the daily schedule |
+| **Faculty** | Attending physicians who supervise residents |
+
+---
+
+## Frequently Asked Questions
+
+### Access & Permissions
+
+**Q: Why can't I see the Settings page?**
+A: Settings is only available to Admin users. Contact your program administrator if you need settings changed.
+
+**Q: How do I reset my password?**
+A: Contact your program administrator to reset your password.
+
+**Q: Can multiple people use the system at the same time?**
+A: Yes, multiple users can be logged in simultaneously. Changes are saved immediately.
+
+### Scheduling
+
+**Q: Which scheduling algorithm should I use?**
+A: Start with "Greedy" for quick results. Try "Min Conflicts" if you're getting violations. Use "CP-SAT" when you need the best possible schedule and have time to wait.
+
+**Q: How far in advance can I generate schedules?**
+A: You can generate schedules for any date range. Most programs do one block (4 weeks) at a time.
+
+**Q: Why is the schedule showing compliance violations?**
+A: Violations appear when the schedule breaks ACGME rules. Check the Compliance page to see details and adjust the schedule accordingly.
+
+### People & Absences
+
+**Q: How do I add a new resident at the start of the year?**
+A: Go to People → Add Person. Select "Resident" as type, set PGY level to 1 for interns.
+
+**Q: How do I update a resident's PGY level?**
+A: Go to People, find the resident, click Edit, and change their PGY level.
+
+**Q: What's the difference between Deployment and TDY?**
+A: Deployment is typically longer military assignment (often overseas). TDY is shorter, usually for training or temporary work.
+
+**Q: What happens if I delete a person with scheduled assignments?**
+A: Their assignments will be affected. Remove or reassign their slots first, then delete.
+
+### Exporting & Printing
+
+**Q: How do I print the schedule for distribution?**
+A: From Dashboard, click "Export Excel" to download a formatted spreadsheet you can print or email.
+
+**Q: How do I print this help guide?**
+A: Go to Help page in the application and click "Print / Save PDF" button.
+
+### Mobile & Technical
+
+**Q: Can I use this on my phone?**
+A: Yes, the application works on mobile devices. For complex tasks, a tablet or computer is recommended.
+
+---
+
 ## Getting Help
 
+### In-App Help
+
+Click **Help** in the navigation bar to access:
+- Quick Reference Card
+- Glossary of Terms
+- Frequently Asked Questions
+- **Print / Save PDF** button for offline reference
+
+### Additional Support
+
 If you encounter issues:
-1. Check this guide for the relevant section
-2. Contact your program administrator
-3. For technical issues, contact your IT support
+1. Check the in-app **Help** page
+2. Review this user guide
+3. Contact your program administrator
+4. For technical issues, contact your IT support
 
 ---
 
