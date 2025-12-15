@@ -35,7 +35,7 @@ pulp>=2.7.0
 
 # Monitoring & Observability
 sentry-sdk[fastapi]==1.39.2
-prometheus-fastapi-instrumentator==6.1.0
+prometheus-fastapi-instrumentator==7.1.0
 
 # Reporting & Export
 openpyxl==3.1.5
