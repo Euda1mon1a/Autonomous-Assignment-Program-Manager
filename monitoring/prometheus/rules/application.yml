@@ -1,0 +1,159 @@
+# Application Alerting Rules
+# Residency Scheduler Backend Alerts
+
+groups:
+  - name: residency_scheduler_application
+    interval: 30s
+    rules:
+      # API Availability Alert
+      - alert: APIServiceDown
+        expr: up{job="residency-scheduler-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: backend
+        annotations:
+          summary: "Backend API is down"
+          description: "The Residency Scheduler backend API has been unreachable for more than 1 minute."
+          runbook_url: "https://docs.example.com/runbooks/api-down"
+
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{job="residency-scheduler-backend",status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{job="residency-scheduler-backend"}[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: backend
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} which exceeds 5% threshold."
+
+      # Critical Error Rate
+      - alert: CriticalErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{job="residency-scheduler-backend",status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{job="residency-scheduler-backend"}[5m]))
+          ) > 0.15
+        for: 2m
+        labels:
+          severity: critical
+          service: backend
+        annotations:
+          summary: "Critical error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} which exceeds 15% threshold."
+
+      # High Response Latency (P95)
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{job="residency-scheduler-backend"}[5m])) by (le)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: backend
+        annotations:
+          summary: "High P95 latency detected"
+          description: "95th percentile latency is {{ $value | humanizeDuration }} which exceeds 2 second threshold."
+
+      # Very High Response Latency
+      - alert: VeryHighLatency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_seconds_bucket{job="residency-scheduler-backend"}[5m])) by (le)
+          ) > 5
+        for: 3m
+        labels:
+          severity: critical
+          service: backend
+        annotations:
+          summary: "Very high latency detected"
+          description: "99th percentile latency is {{ $value | humanizeDuration }} which exceeds 5 second threshold."
+
+      # Health Check Failures
+      - alert: HealthCheckFailing
+        expr: probe_success{job="backend-health"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: backend
+        annotations:
+          summary: "Health check is failing"
+          description: "The backend health check has been failing for 2 minutes."
+
+  - name: residency_scheduler_scheduling
+    interval: 60s
+    rules:
+      # Schedule Generation Failures
+      - alert: ScheduleGenerationFailures
+        expr: |
+          increase(schedule_generation_failures_total{job="residency-scheduler-backend"}[1h]) > 5
+        for: 0m
+        labels:
+          severity: warning
+          service: scheduling
+        annotations:
+          summary: "Schedule generation failures detected"
+          description: "{{ $value }} schedule generation failures in the last hour."
+
+      # Long Running Schedule Generation
+      - alert: LongScheduleGeneration
+        expr: |
+          schedule_generation_duration_seconds{job="residency-scheduler-backend",quantile="0.95"} > 300
+        for: 5m
+        labels:
+          severity: warning
+          service: scheduling
+        annotations:
+          summary: "Schedule generation taking too long"
+          description: "Schedule generation is taking {{ $value | humanizeDuration }} (P95)."
+
+      # ACGME Compliance Violations
+      - alert: ACGMEComplianceViolations
+        expr: |
+          increase(acgme_compliance_violations_total{job="residency-scheduler-backend"}[24h]) > 0
+        for: 0m
+        labels:
+          severity: warning
+          service: compliance
+        annotations:
+          summary: "ACGME compliance violations detected"
+          description: "{{ $value }} ACGME compliance violations detected in the last 24 hours."
+
+  - name: residency_scheduler_business
+    interval: 300s
+    rules:
+      # No Schedules Generated Recently
+      - alert: NoSchedulesGenerated
+        expr: |
+          increase(schedule_generation_total{job="residency-scheduler-backend"}[24h]) == 0
+        for: 0m
+        labels:
+          severity: info
+          service: scheduling
+        annotations:
+          summary: "No schedules generated in 24 hours"
+          description: "No schedule generation activity detected in the last 24 hours."
+
+      # Active Users Drop
+      - alert: ActiveUsersDropped
+        expr: |
+          (
+            avg_over_time(active_users_gauge{job="residency-scheduler-backend"}[1h])
+            /
+            avg_over_time(active_users_gauge{job="residency-scheduler-backend"}[1h] offset 1d)
+          ) < 0.5
+        for: 30m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "Significant drop in active users"
+          description: "Active users dropped by more than 50% compared to yesterday."
