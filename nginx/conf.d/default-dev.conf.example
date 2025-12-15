@@ -1,0 +1,131 @@
+***REMOVED*** =============================================================================
+***REMOVED*** Development Server Configuration - No SSL
+***REMOVED*** =============================================================================
+***REMOVED*** Use this configuration for local development without SSL.
+***REMOVED*** Copy to default.conf and remove the SSL configuration in default.conf
+***REMOVED***
+***REMOVED*** To use: cp default-dev.conf.example default.conf
+***REMOVED*** =============================================================================
+
+***REMOVED*** -----------------------------------------------------------------------------
+***REMOVED*** HTTP Server - Development (No SSL)
+***REMOVED*** -----------------------------------------------------------------------------
+server {
+    listen 80;
+    listen [::]:80;
+    server_name localhost;
+
+    ***REMOVED*** Logging
+    access_log /var/log/nginx/dev.access.log;
+    error_log /var/log/nginx/dev.error.log debug;
+
+    ***REMOVED*** Root for static files
+    root /var/www/html;
+
+    ***REMOVED*** =========================================================================
+    ***REMOVED*** API Routes - Backend Proxy
+    ***REMOVED*** =========================================================================
+    location /api/ {
+        ***REMOVED*** Rate limiting for API endpoints
+        limit_req zone=api burst=50 nodelay;
+
+        proxy_pass http://backend_servers;
+        include /etc/nginx/snippets/proxy-params.conf;
+
+        ***REMOVED*** API-specific timeouts
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+    }
+
+    ***REMOVED*** =========================================================================
+    ***REMOVED*** Authentication Endpoints
+    ***REMOVED*** =========================================================================
+    location /api/auth/login {
+        limit_req zone=login burst=10 nodelay;
+        proxy_pass http://backend_servers;
+        include /etc/nginx/snippets/proxy-params.conf;
+    }
+
+    location /api/auth/register {
+        limit_req zone=login burst=5 nodelay;
+        proxy_pass http://backend_servers;
+        include /etc/nginx/snippets/proxy-params.conf;
+    }
+
+    ***REMOVED*** =========================================================================
+    ***REMOVED*** Schedule Generation
+    ***REMOVED*** =========================================================================
+    location /api/schedule/generate {
+        limit_req zone=schedule_gen burst=2 nodelay;
+        proxy_pass http://backend_servers;
+        include /etc/nginx/snippets/proxy-params.conf;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
+    ***REMOVED*** =========================================================================
+    ***REMOVED*** API Documentation
+    ***REMOVED*** =========================================================================
+    location ~ ^/(docs|redoc|openapi.json) {
+        proxy_pass http://backend_servers;
+        include /etc/nginx/snippets/proxy-params.conf;
+    }
+
+    ***REMOVED*** =========================================================================
+    ***REMOVED*** WebSocket Connections
+    ***REMOVED*** =========================================================================
+    location /ws/ {
+        proxy_pass http://websocket_servers;
+        include /etc/nginx/snippets/websocket-params.conf;
+    }
+
+    ***REMOVED*** =========================================================================
+    ***REMOVED*** Health Check
+    ***REMOVED*** =========================================================================
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+
+    location /nginx_status {
+        stub_status on;
+        access_log off;
+        allow all;
+    }
+
+    ***REMOVED*** =========================================================================
+    ***REMOVED*** Static Files
+    ***REMOVED*** =========================================================================
+    location /_next/static/ {
+        proxy_pass http://frontend_servers;
+        include /etc/nginx/snippets/proxy-params.conf;
+    }
+
+    location /_next/webpack-hmr {
+        proxy_pass http://frontend_servers;
+        include /etc/nginx/snippets/websocket-params.conf;
+    }
+
+    ***REMOVED*** =========================================================================
+    ***REMOVED*** Frontend - Next.js Application
+    ***REMOVED*** =========================================================================
+    location / {
+        proxy_pass http://frontend_servers;
+        include /etc/nginx/snippets/proxy-params.conf;
+
+        ***REMOVED*** Support for Next.js hot module replacement
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    ***REMOVED*** =========================================================================
+    ***REMOVED*** Error Pages
+    ***REMOVED*** =========================================================================
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+        internal;
+    }
+}
