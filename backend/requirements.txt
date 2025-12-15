@@ -54,7 +54,7 @@ mypy==1.19.1
 # Testing
 pytest==9.0.2
 pytest-asyncio==0.23.3
-pytest-cov==4.1.0
+pytest-cov==7.0.0
 httpx==0.28.1
 factory-boy==3.3.3
 faker==38.2.0
