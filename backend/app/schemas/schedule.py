@@ -1,8 +1,17 @@
 """Schedule-related schemas."""
 from datetime import date
-from typing import Optional
+from enum import Enum
+from typing import Optional, Literal
 from uuid import UUID
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+
+class SchedulingAlgorithm(str, Enum):
+    """Available scheduling algorithms."""
+    GREEDY = "greedy"      # Fast heuristic, good for initial solutions
+    CP_SAT = "cp_sat"      # OR-Tools constraint programming, optimal solutions
+    PULP = "pulp"          # PuLP linear programming, fast for large problems
+    HYBRID = "hybrid"      # Combines CP-SAT and PuLP for best results
 
 
 class ScheduleRequest(BaseModel):
@@ -11,7 +20,13 @@ class ScheduleRequest(BaseModel):
     end_date: date
     pgy_levels: Optional[list[int]] = None  # Filter residents by PGY level
     rotation_template_ids: Optional[list[UUID]] = None  # Specific templates to use
-    algorithm: str = "greedy"  # 'greedy', 'min_conflicts', 'cp_sat'
+    algorithm: SchedulingAlgorithm = SchedulingAlgorithm.GREEDY
+    timeout_seconds: float = Field(
+        default=60.0,
+        ge=5.0,
+        le=300.0,
+        description="Maximum solver runtime in seconds (5-300)"
+    )
 
 
 class Violation(BaseModel):
@@ -34,6 +49,15 @@ class ValidationResult(BaseModel):
     statistics: Optional[dict] = None
 
 
+class SolverStatistics(BaseModel):
+    """Statistics from the solver run."""
+    total_blocks: Optional[int] = None
+    total_residents: Optional[int] = None
+    coverage_rate: Optional[float] = None
+    branches: Optional[int] = None  # CP-SAT specific
+    conflicts: Optional[int] = None  # CP-SAT specific
+
+
 class ScheduleResponse(BaseModel):
     """Response schema for schedule generation."""
     status: str  # 'success', 'partial', 'failed'
@@ -42,6 +66,7 @@ class ScheduleResponse(BaseModel):
     total_blocks: int
     validation: ValidationResult
     run_id: Optional[UUID] = None
+    solver_stats: Optional[SolverStatistics] = None
 
 
 class EmergencyRequest(BaseModel):
