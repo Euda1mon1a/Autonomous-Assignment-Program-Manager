@@ -34,8 +34,13 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   // Show loading spinner while checking auth
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div
+        className="flex flex-col items-center justify-center min-h-[60vh]"
+        aria-live="polite"
+        aria-busy="true"
+        role="status"
+      >
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" aria-hidden="true" />
         <p className="mt-3 text-gray-600">Checking authentication...</p>
       </div>
     )
@@ -44,8 +49,13 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   // Not authenticated - will redirect via useEffect
   if (!isAuthenticated) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div
+        className="flex flex-col items-center justify-center min-h-[60vh]"
+        aria-live="polite"
+        aria-busy="true"
+        role="status"
+      >
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" aria-hidden="true" />
         <p className="mt-3 text-gray-600">Redirecting to login...</p>
       </div>
     )
@@ -54,9 +64,13 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   // Check admin requirement
   if (requireAdmin && user?.role !== 'admin') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+      <div
+        className="flex flex-col items-center justify-center min-h-[60vh]"
+        aria-live="polite"
+        role="alert"
+      >
         <div className="text-center">
-          <ShieldX className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <ShieldX className="w-16 h-16 text-red-500 mx-auto mb-4" aria-hidden="true" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
           <p className="text-gray-600 mb-6">
             You do not have permission to access this page.
