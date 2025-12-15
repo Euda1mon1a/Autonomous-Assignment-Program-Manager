@@ -108,7 +108,7 @@ export function useSchedule(
 
   return useQuery<ListResponse<Assignment>, ApiError>({
     queryKey: ['schedule', startIso, endIso],
-    queryFn: () => get<ListResponse<Assignment>>(`/api/assignments?start_date=${startDateStr}&end_date=${endDateStr}`),
+    queryFn: () => get<ListResponse<Assignment>>(`/assignments?start_date=${startDateStr}&end_date=${endDateStr}`),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: true,
@@ -168,7 +168,7 @@ export function usePeople(
 
   return useQuery<ListResponse<Person>, ApiError>({
     queryKey: ['people', filters],
-    queryFn: () => get<ListResponse<Person>>(`/api/people${queryString ? `?${queryString}` : ''}`),
+    queryFn: () => get<ListResponse<Person>>(`/people${queryString ? `?${queryString}` : ''}`),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     ...options,
@@ -292,7 +292,7 @@ export function useAbsences(
 
   return useQuery<ListResponse<Absence>, ApiError>({
     queryKey: ['absences', personId],
-    queryFn: () => get<ListResponse<Absence>>(`/api/absences${params}`),
+    queryFn: () => get<ListResponse<Absence>>(`/absences${params}`),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     ...options,
@@ -375,7 +375,7 @@ export function useRotationTemplates(
 ) {
   return useQuery<ListResponse<RotationTemplate>, ApiError>({
     queryKey: ['rotation-templates'],
-    queryFn: () => get<ListResponse<RotationTemplate>>('/api/rotation-templates'),
+    queryFn: () => get<ListResponse<RotationTemplate>>('/rotation-templates'),
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     ...options,
