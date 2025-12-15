@@ -1,21 +1,26 @@
-# Development override - use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 version: '3.8'
 
+# Development Docker Compose Override
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
 services:
+  # Database with exposed port for local access
+  db:
+    ports:
+      - "5432:5432"
+
+  # Backend with hot reload
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
     volumes:
       - ./backend:/app
+      - /app/__pycache__
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     environment:
       DEBUG: "true"
+      CORS_ORIGINS: '["http://localhost:3000", "http://127.0.0.1:3000"]'
 
+  # Frontend with hot reload
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -23,3 +28,4 @@ services:
     command: npm run dev
     environment:
       NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:8000
