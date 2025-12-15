@@ -1,11 +1,11 @@
-"""Export API routes for CSV and JSON data export."""
+"""Export API routes for CSV, JSON, and Excel data export."""
 import csv
 import io
 import json
-from datetime import date
-from typing import Optional
+from datetime import date, datetime
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
 from sqlalchemy.orm import Session, joinedload
 
 from app.db.session import get_db
@@ -13,6 +13,7 @@ from app.models.person import Person
 from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.block import Block
+from app.services.xlsx_export import generate_legacy_xlsx
 
 router = APIRouter()
 
@@ -190,3 +191,68 @@ def export_schedule(
     ]
     content = generate_csv(headers, rows)
     return create_csv_response(content, "schedule.csv")
+
+
+@router.get("/schedule/xlsx")
+def export_schedule_xlsx(
+    start_date: date = Query(..., description="Schedule start date"),
+    end_date: date = Query(..., description="Schedule end date"),
+    block_number: Optional[int] = Query(None, description="Block number for header (auto-calculated if not provided)"),
+    federal_holidays: Optional[str] = Query(None, description="Comma-separated federal holiday dates (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+):
+    """
+    Export schedule in legacy Excel format.
+
+    This generates an Excel file matching the historical format used for
+    schedule distribution with:
+    - AM/PM columns per day
+    - Color-coded rotation labels
+    - PGY level grouping
+    - Federal holiday highlighting
+
+    Args:
+        start_date: Start date of the block (typically 28 days)
+        end_date: End date of the block
+        block_number: Block number to display in header (1-13 for academic year)
+        federal_holidays: Comma-separated list of holiday dates to highlight
+
+    Returns:
+        Excel file (.xlsx) download
+    """
+    # Parse federal holidays if provided
+    holidays: List[date] = []
+    if federal_holidays:
+        try:
+            for date_str in federal_holidays.split(","):
+                date_str = date_str.strip()
+                if date_str:
+                    holidays.append(datetime.strptime(date_str, "%Y-%m-%d").date())
+        except ValueError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid date format in federal_holidays. Use YYYY-MM-DD. Error: {str(e)}"
+            )
+
+    try:
+        xlsx_bytes = generate_legacy_xlsx(
+            db=db,
+            start_date=start_date,
+            end_date=end_date,
+            block_number=block_number,
+            federal_holidays=holidays
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate Excel file: {str(e)}"
+        )
+
+    # Generate filename with date range
+    filename = f"schedule_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.xlsx"
+
+    return Response(
+        content=xlsx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
