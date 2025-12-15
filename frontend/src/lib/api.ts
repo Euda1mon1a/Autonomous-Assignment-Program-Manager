@@ -95,10 +95,23 @@ function createApiClient(): AxiosInstance {
     (error: AxiosError) => {
       const apiError = transformError(error)
 
-      // Handle 401 - redirect to login if unauthorized
-      if (apiError.status === 401 && typeof window !== 'undefined') {
-        // Could dispatch to auth context or redirect
-        // window.location.href = '/login'
+      if (typeof window !== 'undefined') {
+        // Handle 401 - clear auth and redirect to login
+        if (apiError.status === 401) {
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('user')
+          window.location.href = '/login'
+        }
+
+        // Handle 403 - forbidden access
+        if (apiError.status === 403) {
+          apiError.message = 'You do not have permission to perform this action'
+        }
+
+        // Handle 500 - server error
+        if (apiError.status >= 500) {
+          apiError.message = 'A server error occurred. Please try again later.'
+        }
       }
 
       return Promise.reject(apiError)
