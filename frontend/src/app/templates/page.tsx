@@ -8,19 +8,26 @@ import { CreateTemplateModal } from '@/components/CreateTemplateModal'
 import { EditTemplateModal } from '@/components/EditTemplateModal'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { EmptyState } from '@/components/EmptyState'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import type { RotationTemplate } from '@/types/api'
 
 export default function TemplatesPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<RotationTemplate | null>(null)
+  const [templateToDelete, setTemplateToDelete] = useState<RotationTemplate | null>(null)
 
   const { data, isLoading, isError, error, refetch } = useRotationTemplates()
   const deleteTemplate = useDeleteTemplate()
 
-  const handleDelete = (id: string, name: string) => {
-    if (confirm(`Are you sure you want to delete "${name}"?`)) {
-      deleteTemplate.mutate(id)
+  const handleDeleteClick = (template: RotationTemplate) => {
+    setTemplateToDelete(template)
+  }
+
+  const handleConfirmDelete = () => {
+    if (templateToDelete) {
+      deleteTemplate.mutate(templateToDelete.id)
     }
+    setTemplateToDelete(null)
   }
 
   return (
@@ -79,7 +86,7 @@ export default function TemplatesPage() {
                 key={template.id}
                 template={template}
                 onEdit={() => setEditingTemplate(template)}
-                onDelete={() => handleDelete(template.id, template.name)}
+                onDelete={() => handleDeleteClick(template)}
               />
             ))
           )}
@@ -97,6 +104,19 @@ export default function TemplatesPage() {
           isOpen={editingTemplate !== null}
           onClose={() => setEditingTemplate(null)}
           template={editingTemplate}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmDialog
+          isOpen={templateToDelete !== null}
+          onClose={() => setTemplateToDelete(null)}
+          onConfirm={handleConfirmDelete}
+          title="Delete Template"
+          message={`Are you sure you want to delete "${templateToDelete?.name || 'this template'}"? This action cannot be undone.`}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          variant="danger"
+          isLoading={deleteTemplate.isPending}
         />
       </div>
     </ProtectedRoute>
