@@ -12,9 +12,9 @@ from app.api.routes import api_router
 settings = get_settings()
 
 app = FastAPI(
-    title=settings.APP_NAME,
-    version=settings.APP_VERSION,
-    description="API for residency program scheduling with ACGME compliance",
+    title="Residency Scheduler API",
+    description="API for medical residency scheduling with ACGME compliance",
+    version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -36,8 +36,8 @@ app.include_router(api_router, prefix="/api")
 async def root():
     """Health check endpoint."""
     return {
-        "name": settings.APP_NAME,
-        "version": settings.APP_VERSION,
+        "name": "Residency Scheduler API",
+        "version": "1.0.0",
         "status": "healthy",
     }
 
