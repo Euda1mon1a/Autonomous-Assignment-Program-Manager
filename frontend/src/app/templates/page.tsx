@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
+import { Plus, RefreshCw, FileText } from 'lucide-react'
 import { useRotationTemplates, useDeleteTemplate } from '@/lib/hooks'
 import { CardSkeleton } from '@/components/skeletons'
 import { CreateTemplateModal } from '@/components/CreateTemplateModal'
 import { EditTemplateModal } from '@/components/EditTemplateModal'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { EmptyState } from '@/components/EmptyState'
 import type { RotationTemplate } from '@/types/api'
 
 export default function TemplatesPage() {
@@ -61,8 +62,16 @@ export default function TemplatesPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {data?.items?.length === 0 ? (
-            <div className="col-span-full card text-center py-12 text-gray-500">
-              No templates found. Create your first rotation template.
+            <div className="col-span-full card">
+              <EmptyState
+                icon={FileText}
+                title="No rotation templates"
+                description="Create templates to define reusable activity patterns with constraints"
+                action={{
+                  label: 'Create Template',
+                  onClick: () => setIsCreateModalOpen(true),
+                }}
+              />
             </div>
           ) : (
             data?.items?.map((template: RotationTemplate) => (
