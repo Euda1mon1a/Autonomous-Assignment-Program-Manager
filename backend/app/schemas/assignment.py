@@ -1,6 +1,6 @@
 """Assignment schemas."""
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 from pydantic import BaseModel, field_validator
 
@@ -25,6 +25,7 @@ class AssignmentBase(BaseModel):
 class AssignmentCreate(AssignmentBase):
     """Schema for creating an assignment."""
     created_by: Optional[str] = None
+    override_reason: Optional[str] = None  # Reason for acknowledging ACGME violations
 
 
 class AssignmentUpdate(BaseModel):
@@ -33,6 +34,15 @@ class AssignmentUpdate(BaseModel):
     role: Optional[str] = None
     activity_override: Optional[str] = None
     notes: Optional[str] = None
+    override_reason: Optional[str] = None  # Reason for acknowledging ACGME violations
+    updated_at: datetime  # Required for optimistic locking
+
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in ("primary", "supervising", "backup"):
+            raise ValueError("role must be 'primary', 'supervising', or 'backup'")
+        return v
 
 
 class AssignmentResponse(AssignmentBase):
@@ -44,3 +54,9 @@ class AssignmentResponse(AssignmentBase):
 
     class Config:
         from_attributes = True
+
+
+class AssignmentWithWarnings(AssignmentResponse):
+    """Schema for assignment response with ACGME validation warnings."""
+    acgme_warnings: List[str] = []
+    is_compliant: bool = True

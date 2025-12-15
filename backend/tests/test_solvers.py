@@ -180,10 +180,12 @@ class TestGreedySolver:
         # Check all assignments have valid IDs
         resident_ids = {r.id for r in small_context.residents}
         block_ids = {b.id for b in small_context.blocks}
+        template_ids = {t.id for t in small_context.templates}
 
-        for person_id, block_id, _ in result.assignments:
+        for person_id, block_id, template_id in result.assignments:
             assert person_id in resident_ids
             assert block_id in block_ids
+            assert template_id in template_ids  # All assignments must have a rotation
 
     def test_solve_respects_availability(self, small_context):
         """Test that solver respects availability constraints."""
@@ -216,6 +218,25 @@ class TestGreedySolver:
         result = solver.solve(context)
 
         assert result.success is False
+
+    def test_solve_respects_rotation_capacity(self, small_context):
+        """Test that solver respects rotation template capacity limits."""
+        # Set max_residents to 1 for the only template
+        small_context.templates[0].max_residents = 1
+
+        solver = GreedySolver()
+        result = solver.solve(small_context)
+
+        # Count assignments per template per block
+        from collections import defaultdict
+        template_block_counts = defaultdict(lambda: defaultdict(int))
+        for person_id, block_id, template_id in result.assignments:
+            template_block_counts[template_id][block_id] += 1
+
+        # Verify no block has more than max_residents for any template
+        for template_id, block_counts in template_block_counts.items():
+            for block_id, count in block_counts.items():
+                assert count <= 1, f"Template {template_id} has {count} residents in block {block_id} (max: 1)"
 
 
 # ============================================================================
@@ -255,6 +276,17 @@ class TestCPSATSolver:
         assert "total_blocks" in result.statistics
         assert "total_residents" in result.statistics
 
+    def test_solve_assigns_valid_rotations(self, small_context):
+        """Test that all assignments have valid rotation template IDs."""
+        solver = CPSATSolver(timeout_seconds=10)
+        result = solver.solve(small_context)
+
+        template_ids = {t.id for t in small_context.templates}
+
+        for person_id, block_id, template_id in result.assignments:
+            assert template_id in template_ids
+            assert template_id is not None  # Must have a rotation
+
 
 # ============================================================================
 # PuLP Solver Tests
@@ -290,6 +322,17 @@ class TestPuLPSolver:
 
         # PuLP should return an objective value
         assert result.objective_value is not None
+
+    def test_solve_assigns_valid_rotations(self, small_context):
+        """Test that all assignments have valid rotation template IDs."""
+        solver = PuLPSolver(timeout_seconds=10)
+        result = solver.solve(small_context)
+
+        template_ids = {t.id for t in small_context.templates}
+
+        for person_id, block_id, template_id in result.assignments:
+            assert template_id in template_ids
+            assert template_id is not None  # Must have a rotation
 
 
 # ============================================================================
