@@ -4,12 +4,15 @@ import { useState, useEffect, useMemo } from 'react';
 import { Modal } from '@/components/Modal';
 import { Select } from '@/components/forms/Select';
 import { TextArea } from '@/components/forms/TextArea';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import {
   useUpdateAssignment,
   useCreateAssignment,
   useDeleteAssignment,
   useRotationTemplates,
   usePerson,
+  useAbsences,
+  useAssignments,
 } from '@/lib/hooks';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Assignment, AssignmentCreate, AssignmentUpdate } from '@/types/api';
@@ -19,7 +22,7 @@ import {
   generateWarnings,
   WarningCheckContext,
 } from './AssignmentWarnings';
-import { Trash2, Save, X, Loader2 } from 'lucide-react';
+import { Trash2, Save, X, Loader2, AlertTriangle } from 'lucide-react';
 
 // ============================================================================
 // Types
@@ -63,10 +66,21 @@ export function EditAssignmentModal({
   const [notes, setNotes] = useState<string>('');
   const [criticalAcknowledged, setCriticalAcknowledged] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Queries
   const { data: rotationTemplatesData, isLoading: templatesLoading } = useRotationTemplates();
   const { data: person, isLoading: personLoading } = usePerson(personId);
+
+  // Fetch absences for this person to check for conflicts
+  const { data: absencesData } = useAbsences();
+
+  // Fetch existing assignments for this person to check for conflicts
+  const { data: existingAssignmentsData } = useAssignments({
+    person_id: personId,
+    start_date: date,
+    end_date: date,
+  });
 
   // Mutations
   const createAssignment = useCreateAssignment();
@@ -118,6 +132,32 @@ export function EditAssignmentModal({
     { value: 'backup', label: 'Backup' },
   ];
 
+  // Process absences for this person
+  const personAbsences = useMemo(() => {
+    if (!absencesData?.items) return [];
+    return absencesData.items
+      .filter((a) => a.person_id === personId)
+      .map((a) => ({
+        startDate: a.start_date,
+        endDate: a.end_date,
+        type: a.absence_type,
+      }));
+  }, [absencesData, personId]);
+
+  // Process existing assignments (exclude the current one if editing)
+  const existingAssignments = useMemo(() => {
+    if (!existingAssignmentsData?.items) return [];
+    return existingAssignmentsData.items
+      .filter((a) => a.id !== assignment?.id) // Exclude current assignment when editing
+      .map((a) => ({
+        date,
+        session: session, // We'd need block info to get the actual session
+        rotationName: rotationTemplatesData?.items?.find(
+          (t) => t.id === a.rotation_template_id
+        )?.name,
+      }));
+  }, [existingAssignmentsData, assignment, date, session, rotationTemplatesData]);
+
   // Generate warnings based on current state
   const warnings = useMemo<AssignmentWarning[]>(() => {
     if (!person || !rotationTemplateId) {
@@ -135,11 +175,23 @@ export function EditAssignmentModal({
       session,
       rotationTemplateId,
       requiresSupervision: selectedRotation?.supervision_required,
+      absences: personAbsences,
+      existingAssignments: existingAssignments,
       ...warningContext,
     };
 
     return generateWarnings(context);
-  }, [person, rotationTemplateId, rotationTemplatesData, personId, date, session, warningContext]);
+  }, [
+    person,
+    rotationTemplateId,
+    rotationTemplatesData,
+    personId,
+    date,
+    session,
+    personAbsences,
+    existingAssignments,
+    warningContext,
+  ]);
 
   const hasCriticalWarnings = warnings.some((w) => w.severity === 'critical');
   const canSave = canEdit && rotationTemplateId && (!hasCriticalWarnings || criticalAcknowledged);
@@ -210,10 +262,16 @@ export function EditAssignmentModal({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = () => {
+    if (!assignment || !canEdit) return;
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
     if (!assignment || !canEdit) return;
 
     setError(null);
+    setShowDeleteConfirm(false);
 
     try {
       await deleteAssignment.mutateAsync(assignment.id);
@@ -327,7 +385,7 @@ export function EditAssignmentModal({
           <div>
             {isEditing && (
               <button
-                onClick={handleDelete}
+                onClick={handleDeleteClick}
                 disabled={isLoading}
                 className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-700 bg-red-50 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -365,6 +423,19 @@ export function EditAssignmentModal({
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Assignment"
+        message={`Are you sure you want to delete this ${session} assignment for ${person?.name || 'this person'} on ${formattedDate}? This action cannot be undone.`}
+        confirmLabel="Delete Assignment"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={deleteAssignment.isPending}
+      />
     </Modal>
   );
 }
