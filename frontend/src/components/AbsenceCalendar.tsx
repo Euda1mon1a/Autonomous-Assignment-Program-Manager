@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   format,
@@ -41,16 +41,86 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
+// Memoized day cell component to prevent unnecessary re-renders
+interface AbsenceDayCellProps {
+  day: Date
+  dateKey: string
+  dayAbsences: Absence[]
+  isWeekend: boolean
+  isCurrentMonth: boolean
+  isToday: boolean
+  personMap: Map<string, Person>
+  onAbsenceClick: (absence: Absence) => void
+}
+
+const AbsenceDayCell = React.memo(function AbsenceDayCell({
+  day,
+  dateKey,
+  dayAbsences,
+  isWeekend,
+  isCurrentMonth,
+  isToday,
+  personMap,
+  onAbsenceClick,
+}: AbsenceDayCellProps) {
+  return (
+    <div
+      className={`min-h-[100px] border-r border-b p-1 ${
+        isWeekend ? 'bg-gray-50' : 'bg-white'
+      } ${!isCurrentMonth ? 'opacity-50' : ''}`}
+    >
+      {/* Day Number */}
+      <div
+        className={`text-sm font-medium mb-1 ${
+          isToday
+            ? 'bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center'
+            : 'text-gray-700 px-1'
+        }`}
+      >
+        {format(day, 'd')}
+      </div>
+
+      {/* Absences for this day */}
+      <div className="space-y-1">
+        {dayAbsences.slice(0, 3).map((absence) => {
+          const person = personMap.get(absence.person_id)
+          const colors = typeColors[absence.absence_type] || typeColors.personal
+
+          return (
+            <button
+              key={absence.id}
+              onClick={() => onAbsenceClick(absence)}
+              className={`w-full text-left px-1 py-0.5 text-xs rounded border-l-2 truncate ${colors.bg} ${colors.border} ${colors.text} hover:opacity-80 transition-opacity`}
+              title={`${person?.name || 'Unknown'} - ${absence.absence_type}`}
+            >
+              {person ? getInitials(person.name) : '??'}{' '}
+              <span className="capitalize">{absence.absence_type.replace('_', ' ')}</span>
+            </button>
+          )
+        })}
+        {dayAbsences.length > 3 && (
+          <div className="text-xs text-gray-500 px-1">
+            +{dayAbsences.length - 3} more
+          </div>
+        )}
+      </div>
+    </div>
+  )
+})
+
 export function AbsenceCalendar({ absences, people, onAbsenceClick }: AbsenceCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
 
-  const monthStart = startOfMonth(currentDate)
-  const monthEnd = endOfMonth(currentDate)
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
-
-  // Calculate starting blank days (for first week offset)
-  const startDayOfWeek = getDay(monthStart)
-  const blankDays = Array.from({ length: startDayOfWeek }, (_, i) => i)
+  // Memoize date calculations
+  const { days, blankDays, monthStart } = useMemo(() => {
+    const start = startOfMonth(currentDate)
+    const end = endOfMonth(currentDate)
+    return {
+      days: eachDayOfInterval({ start, end }),
+      blankDays: Array.from({ length: getDay(start) }, (_, i) => i),
+      monthStart: start,
+    }
+  }, [currentDate])
 
   // Create a map of person_id to person for quick lookup
   const personMap = useMemo(() => {
@@ -82,10 +152,8 @@ export function AbsenceCalendar({ absences, people, onAbsenceClick }: AbsenceCal
     return map
   }, [absences, days])
 
-  const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1))
-  const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1))
-
-  const isToday = (day: Date) => isSameDay(day, new Date())
+  const handlePrevMonth = useCallback(() => setCurrentDate(subMonths(currentDate, 1)), [currentDate])
+  const handleNextMonth = useCallback(() => setCurrentDate(addMonths(currentDate, 1)), [currentDate])
 
   return (
     <div className="card">
@@ -139,48 +207,17 @@ export function AbsenceCalendar({ absences, people, onAbsenceClick }: AbsenceCal
           const isWeekend = getDay(day) === 0 || getDay(day) === 6
 
           return (
-            <div
+            <AbsenceDayCell
               key={dateKey}
-              className={`min-h-[100px] border-r border-b p-1 ${
-                isWeekend ? 'bg-gray-50' : 'bg-white'
-              } ${!isSameMonth(day, currentDate) ? 'opacity-50' : ''}`}
-            >
-              {/* Day Number */}
-              <div
-                className={`text-sm font-medium mb-1 ${
-                  isToday(day)
-                    ? 'bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center'
-                    : 'text-gray-700 px-1'
-                }`}
-              >
-                {format(day, 'd')}
-              </div>
-
-              {/* Absences for this day */}
-              <div className="space-y-1">
-                {dayAbsences.slice(0, 3).map((absence) => {
-                  const person = personMap.get(absence.person_id)
-                  const colors = typeColors[absence.absence_type] || typeColors.personal
-
-                  return (
-                    <button
-                      key={absence.id}
-                      onClick={() => onAbsenceClick(absence)}
-                      className={`w-full text-left px-1 py-0.5 text-xs rounded border-l-2 truncate ${colors.bg} ${colors.border} ${colors.text} hover:opacity-80 transition-opacity`}
-                      title={`${person?.name || 'Unknown'} - ${absence.absence_type}`}
-                    >
-                      {person ? getInitials(person.name) : '??'}{' '}
-                      <span className="capitalize">{absence.absence_type.replace('_', ' ')}</span>
-                    </button>
-                  )
-                })}
-                {dayAbsences.length > 3 && (
-                  <div className="text-xs text-gray-500 px-1">
-                    +{dayAbsences.length - 3} more
-                  </div>
-                )}
-              </div>
-            </div>
+              day={day}
+              dateKey={dateKey}
+              dayAbsences={dayAbsences}
+              isWeekend={isWeekend}
+              isCurrentMonth={isSameMonth(day, currentDate)}
+              isToday={isSameDay(day, new Date())}
+              personMap={personMap}
+              onAbsenceClick={onAbsenceClick}
+            />
           )
         })}
       </div>
