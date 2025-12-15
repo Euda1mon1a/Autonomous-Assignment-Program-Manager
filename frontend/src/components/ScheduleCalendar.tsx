@@ -1,5 +1,6 @@
 'use client'
 
+import React, { useMemo } from 'react'
 import { format, addDays } from 'date-fns'
 import { DayCell } from './DayCell'
 
@@ -29,28 +30,34 @@ interface ScheduleCalendarProps {
 }
 
 export function ScheduleCalendar({ weekStart, schedule }: ScheduleCalendarProps) {
-  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+  // Memoize days array to prevent recalculation on each render
+  const days = useMemo(() =>
+    Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
+    [weekStart]
+  )
 
-  // Get unique people from schedule
-  const allPeople = new Map<string, { name: string; type: string; pgy_level: number | null }>()
+  // Memoize people extraction and sorting
+  const people = useMemo(() => {
+    const allPeople = new Map<string, { name: string; type: string; pgy_level: number | null }>()
 
-  Object.values(schedule).forEach((dayData) => {
-    ;['AM', 'PM'].forEach((time) => {
-      dayData[time as 'AM' | 'PM']?.forEach((assignment) => {
-        if (!allPeople.has(assignment.person.id)) {
-          allPeople.set(assignment.person.id, assignment.person)
-        }
+    Object.values(schedule).forEach((dayData) => {
+      ;['AM', 'PM'].forEach((time) => {
+        dayData[time as 'AM' | 'PM']?.forEach((assignment) => {
+          if (!allPeople.has(assignment.person.id)) {
+            allPeople.set(assignment.person.id, assignment.person)
+          }
+        })
       })
     })
-  })
 
-  const people = Array.from(allPeople.entries()).sort((a, b) => {
-    // Sort residents by PGY level, then faculty, then by name
-    const aLevel = a[1].pgy_level || 99
-    const bLevel = b[1].pgy_level || 99
-    if (aLevel !== bLevel) return aLevel - bLevel
-    return a[1].name.localeCompare(b[1].name)
-  })
+    return Array.from(allPeople.entries()).sort((a, b) => {
+      // Sort residents by PGY level, then faculty, then by name
+      const aLevel = a[1].pgy_level || 99
+      const bLevel = b[1].pgy_level || 99
+      if (aLevel !== bLevel) return aLevel - bLevel
+      return a[1].name.localeCompare(b[1].name)
+    })
+  }, [schedule])
 
   return (
     <div className="card overflow-hidden">

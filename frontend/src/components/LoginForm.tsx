@@ -1,11 +1,17 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useCallback, useMemo } from 'react'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { validateRequired, validatePassword } from '@/lib/validation'
 
 interface LoginFormProps {
   onSuccess?: () => void
+}
+
+interface FormErrors {
+  username?: string;
+  password?: string;
 }
 
 export function LoginForm({ onSuccess }: LoginFormProps) {
@@ -14,9 +20,46 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+
+  const validateForm = useCallback((): FormErrors => {
+    const errors: FormErrors = {};
+
+    const usernameError = validateRequired(username, 'Username');
+    if (usernameError) {
+      errors.username = usernameError;
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      errors.password = passwordError;
+    }
+
+    return errors;
+  }, [username, password]);
+
+  const formErrors = useMemo(() => validateForm(), [validateForm]);
+
+  const isFormValid = useMemo(() => {
+    return Object.keys(formErrors).length === 0 && username.trim() !== '' && password !== '';
+  }, [formErrors, username, password]);
+
+  const handleBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+
+    // Mark all fields as touched
+    setTouched({ username: true, password: true });
+
+    // Check for validation errors
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
     setError(null)
     setIsSubmitting(true)
 
@@ -42,7 +85,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           </div>
         )}
 
-        <div>
+        <div className="space-y-1">
           <label
             htmlFor="username"
             className="block text-sm font-medium text-gray-700 mb-1"
@@ -54,15 +97,20 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="input-field w-full"
+            onBlur={() => handleBlur('username')}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              touched.username && formErrors.username ? 'border-red-500' : 'border-gray-300'
+            }`}
             placeholder="Enter your username"
-            required
             disabled={isSubmitting}
             autoComplete="username"
           />
+          {touched.username && formErrors.username && (
+            <p className="text-sm text-red-600">{formErrors.username}</p>
+          )}
         </div>
 
-        <div>
+        <div className="space-y-1">
           <label
             htmlFor="password"
             className="block text-sm font-medium text-gray-700 mb-1"
@@ -74,17 +122,22 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="input-field w-full"
+            onBlur={() => handleBlur('password')}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              touched.password && formErrors.password ? 'border-red-500' : 'border-gray-300'
+            }`}
             placeholder="Enter your password"
-            required
             disabled={isSubmitting}
             autoComplete="current-password"
           />
+          {touched.password && formErrors.password && (
+            <p className="text-sm text-red-600">{formErrors.password}</p>
+          )}
         </div>
 
         <button
           type="submit"
-          disabled={isSubmitting || !username || !password}
+          disabled={isSubmitting || !isFormValid}
           className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {isSubmitting ? (

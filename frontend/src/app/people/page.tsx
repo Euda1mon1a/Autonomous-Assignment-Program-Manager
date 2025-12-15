@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, User, GraduationCap, RefreshCw } from 'lucide-react'
+import { Plus, User, Users, GraduationCap, RefreshCw } from 'lucide-react'
 import { usePeople, useDeletePerson, type PeopleFilters } from '@/lib/hooks'
 import { CardSkeleton } from '@/components/skeletons'
 import { AddPersonModal } from '@/components/AddPersonModal'
 import { EditPersonModal } from '@/components/EditPersonModal'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { EmptyState } from '@/components/EmptyState'
 import type { Person } from '@/types/api'
 
 export default function PeoplePage() {
@@ -110,8 +111,16 @@ export default function PeoplePage() {
       ) : (
         <div className="grid gap-4">
           {data?.items?.length === 0 ? (
-            <div className="card text-center py-12 text-gray-500">
-              No people found. Add your first resident or faculty member.
+            <div className="card">
+              <EmptyState
+                icon={Users}
+                title="No people added yet"
+                description="Add residents and faculty members to start building schedules"
+                action={{
+                  label: 'Add Person',
+                  onClick: () => setIsAddModalOpen(true),
+                }}
+              />
             </div>
           ) : (
             data?.items?.map((person: Person) => (
