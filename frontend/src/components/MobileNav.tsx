@@ -50,6 +50,8 @@ export function MobileNav() {
         onClick={() => setIsOpen(true)}
         className="flex md:hidden items-center justify-center p-2 rounded-md text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
         aria-label="Open menu"
+        aria-expanded={isOpen}
+        aria-controls="mobile-nav-menu"
       >
         <Menu className="w-6 h-6" />
       </button>
@@ -65,6 +67,8 @@ export function MobileNav() {
 
       {/* Slide-out Drawer */}
       <div
+        id="mobile-nav-menu"
+        aria-hidden={!isOpen}
         className={`fixed top-0 left-0 h-full w-64 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
@@ -96,6 +100,7 @@ export function MobileNav() {
                   <Link
                     href={item.href}
                     onClick={() => setIsOpen(false)}
+                    aria-current={isActive ? 'page' : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
                       isActive
                         ? 'bg-blue-100 text-blue-700'
@@ -116,6 +121,7 @@ export function MobileNav() {
               <Link
                 href="/login"
                 onClick={() => setIsOpen(false)}
+                aria-current={pathname === '/login' ? 'page' : undefined}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
                   pathname === '/login'
                     ? 'bg-blue-100 text-blue-700'
