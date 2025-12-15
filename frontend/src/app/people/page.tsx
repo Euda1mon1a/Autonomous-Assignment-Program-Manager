@@ -9,6 +9,7 @@ import { EditPersonModal } from '@/components/EditPersonModal'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { EmptyState } from '@/components/EmptyState'
 import { ExportButton } from '@/components/ExportButton'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import type { Person } from '@/types/api'
 
 const peopleExportColumns = [
@@ -23,6 +24,7 @@ export default function PeoplePage() {
   const [pgyFilter, setPgyFilter] = useState<number | undefined>(undefined)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingPerson, setEditingPerson] = useState<Person | null>(null)
+  const [personToDelete, setPersonToDelete] = useState<Person | null>(null)
 
   // Build filters
   const filters: PeopleFilters | undefined =
@@ -41,10 +43,15 @@ export default function PeoplePage() {
     return (data?.items || []) as unknown as Record<string, unknown>[]
   }, [data?.items])
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this person?')) {
-      deletePerson.mutate(id)
+  const handleDeleteClick = (person: Person) => {
+    setPersonToDelete(person)
+  }
+
+  const handleConfirmDelete = () => {
+    if (personToDelete) {
+      deletePerson.mutate(personToDelete.id)
     }
+    setPersonToDelete(null)
   }
 
   return (
@@ -148,7 +155,7 @@ export default function PeoplePage() {
                 key={person.id}
                 person={person}
                 onEdit={() => setEditingPerson(person)}
-                onDelete={() => handleDelete(person.id)}
+                onDelete={() => handleDeleteClick(person)}
               />
             ))
           )}
@@ -166,6 +173,19 @@ export default function PeoplePage() {
           isOpen={editingPerson !== null}
           onClose={() => setEditingPerson(null)}
           person={editingPerson}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmDialog
+          isOpen={personToDelete !== null}
+          onClose={() => setPersonToDelete(null)}
+          onConfirm={handleConfirmDelete}
+          title="Delete Person"
+          message={`Are you sure you want to delete ${personToDelete?.name || 'this person'}? This action cannot be undone.`}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          variant="danger"
+          isLoading={deletePerson.isPending}
         />
       </div>
     </ProtectedRoute>
