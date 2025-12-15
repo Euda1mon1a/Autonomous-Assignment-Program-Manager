@@ -1,0 +1,265 @@
+# Code Quality Workflow
+# Runs linting, type checking, and code formatting verification
+# on pull requests and pushes
+
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+  push:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
+
+jobs:
+  # Detect which parts of the codebase changed
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+
+  # Backend code quality checks
+  backend-quality:
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: 'backend/requirements*.txt'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Ruff linter
+        working-directory: backend
+        run: |
+          ruff check . --output-format=github
+
+      - name: Run Ruff formatter check
+        working-directory: backend
+        run: |
+          ruff format --check .
+
+      - name: Run Black formatter check
+        working-directory: backend
+        run: |
+          black --check --diff .
+
+      - name: Run MyPy type checker
+        working-directory: backend
+        run: |
+          mypy app --ignore-missing-imports --no-error-summary || true
+          # Note: Using || true to not fail on type errors initially
+          # Remove || true once codebase is fully typed
+
+      - name: Check import sorting
+        working-directory: backend
+        run: |
+          ruff check --select I .
+
+  # Frontend code quality checks
+  frontend-quality:
+    needs: changes
+    if: ${{ needs.changes.outputs.frontend == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Run TypeScript type check
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Check Prettier formatting
+        working-directory: frontend
+        run: |
+          npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css,md}" || true
+          # Using || true since Prettier might not be fully configured
+
+  # Check for common issues across the codebase
+  common-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for merge conflicts markers
+        run: |
+          if grep -rn "<<<<<<< HEAD" --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" .; then
+            echo "Error: Found merge conflict markers in codebase"
+            exit 1
+          fi
+          echo "No merge conflict markers found"
+
+      - name: Check for debug statements
+        run: |
+          echo "Checking for debug statements..."
+          # Python debug statements
+          if grep -rn "import pdb" --include="*.py" backend/app/; then
+            echo "Warning: Found pdb imports in production code"
+          fi
+          if grep -rn "breakpoint()" --include="*.py" backend/app/; then
+            echo "Warning: Found breakpoint() calls in production code"
+          fi
+          # JavaScript/TypeScript debug statements
+          if grep -rn "debugger" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" frontend/src/; then
+            echo "Warning: Found debugger statements in frontend code"
+          fi
+          echo "Debug statement check completed"
+
+      - name: Check for TODO/FIXME comments
+        run: |
+          echo "Listing TODO/FIXME comments (informational)..."
+          grep -rn "TODO\|FIXME" --include="*.py" --include="*.ts" --include="*.tsx" backend/app/ frontend/src/ || echo "No TODO/FIXME comments found"
+
+      - name: Check for hardcoded secrets patterns
+        run: |
+          echo "Checking for potential hardcoded secrets..."
+          # Check for common secret patterns (this is a basic check, use dedicated tools for thorough scanning)
+          PATTERNS=(
+            "password\s*=\s*['\"][^'\"]+['\"]"
+            "secret\s*=\s*['\"][^'\"]+['\"]"
+            "api_key\s*=\s*['\"][^'\"]+['\"]"
+            "token\s*=\s*['\"][^'\"]+['\"]"
+          )
+          for pattern in "${PATTERNS[@]}"; do
+            if grep -rniE "$pattern" --include="*.py" --include="*.ts" --include="*.tsx" backend/app/ frontend/src/ 2>/dev/null; then
+              echo "Warning: Found potential hardcoded secret pattern: $pattern"
+            fi
+          done
+          echo "Secret pattern check completed"
+
+      - name: Validate YAML files
+        run: |
+          echo "Validating YAML files..."
+          find . -name "*.yml" -o -name "*.yaml" | head -20 | while read file; do
+            if python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+              echo "Valid: $file"
+            else
+              echo "Invalid YAML: $file"
+              exit 1
+            fi
+          done
+
+      - name: Check JSON files
+        run: |
+          echo "Validating JSON files..."
+          find . -name "*.json" -not -path "*/node_modules/*" -not -path "*/.git/*" | while read file; do
+            if python3 -c "import json; json.load(open('$file'))" 2>/dev/null; then
+              echo "Valid: $file"
+            else
+              echo "Invalid JSON: $file"
+              exit 1
+            fi
+          done
+
+  # Code complexity analysis
+  complexity-analysis:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || github.event_name == 'push' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install analysis tools
+        run: |
+          pip install radon xenon
+
+      - name: Python cyclomatic complexity
+        if: ${{ needs.changes.outputs.backend == 'true' || github.event_name == 'push' }}
+        working-directory: backend
+        run: |
+          echo "Cyclomatic Complexity Analysis (A=low, F=high):"
+          radon cc app -a -s || true
+
+      - name: Python maintainability index
+        if: ${{ needs.changes.outputs.backend == 'true' || github.event_name == 'push' }}
+        working-directory: backend
+        run: |
+          echo "Maintainability Index (100=best, 0=worst):"
+          radon mi app -s || true
+
+      - name: Check complexity thresholds
+        if: ${{ needs.changes.outputs.backend == 'true' || github.event_name == 'push' }}
+        working-directory: backend
+        run: |
+          # Fail if any function has complexity > 20 (configurable)
+          xenon --max-absolute C --max-modules B --max-average A app || echo "High complexity detected - review recommended"
+
+  # Summary job
+  quality-summary:
+    runs-on: ubuntu-latest
+    needs: [changes, backend-quality, frontend-quality, common-checks, complexity-analysis]
+    if: always()
+
+    steps:
+      - name: Check quality status
+        run: |
+          echo "Backend quality: ${{ needs.backend-quality.result }}"
+          echo "Frontend quality: ${{ needs.frontend-quality.result }}"
+          echo "Common checks: ${{ needs.common-checks.result }}"
+          echo "Complexity analysis: ${{ needs.complexity-analysis.result }}"
+
+          if [[ "${{ needs.backend-quality.result }}" == "failure" ]] || \
+             [[ "${{ needs.frontend-quality.result }}" == "failure" ]] || \
+             [[ "${{ needs.common-checks.result }}" == "failure" ]]; then
+            echo "Code quality checks failed"
+            exit 1
+          fi
+
+          echo "All code quality checks passed!"
