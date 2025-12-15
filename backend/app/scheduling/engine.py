@@ -7,13 +7,21 @@ Implements the core scheduling algorithms:
 - Phase 2: Resident association -> Constraint-based assignment
 - Phase 3: Faculty assignment -> Supervision ratio enforcement
 - Phase 7: Validation -> ACGME compliance checking
+
+Algorithms:
+- greedy: Fast heuristic, assigns hardest blocks first to least-loaded residents
+- cp_sat: Constraint programming solver using Google OR-Tools, guarantees ACGME compliance
 """
 from datetime import date, timedelta
 from typing import Optional
 from uuid import UUID
+from collections import defaultdict
 import time
+import logging
 
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 from app.models.person import Person
 from app.models.block import Block
@@ -79,10 +87,13 @@ class SchedulingEngine:
             }
 
         ***REMOVED*** Step 4: Assign residents
-        if algorithm == "greedy":
-            self._assign_residents_greedy(residents, templates, blocks)
+        if algorithm == "cp_sat":
+            success = self._assign_residents_cpsat(residents, templates, blocks)
+            if not success:
+                logger.warning("CP-SAT solver failed, falling back to greedy")
+                self._assign_residents_greedy(residents, templates, blocks)
         else:
-            ***REMOVED*** Default to greedy for now
+            ***REMOVED*** Default to greedy
             self._assign_residents_greedy(residents, templates, blocks)
 
         ***REMOVED*** Step 5: Assign faculty supervision
@@ -269,6 +280,223 @@ class SchedulingEngine:
             )
             self.assignments.append(assignment)
             assignment_counts[selected.id] += 1
+
+    def _assign_residents_cpsat(
+        self,
+        residents: list[Person],
+        templates: list[RotationTemplate],
+        blocks: list[Block],
+    ) -> bool:
+        """
+        CP-SAT constraint programming solver for resident assignment.
+
+        Guarantees ACGME compliance by encoding constraints directly into the solver:
+        - 80-hour rule: Max 80 hours/week (rolling 4-week average)
+        - 1-in-7 rule: Max 6 consecutive duty days
+        - Availability: Respects absences
+        - Equity: Balances workload across residents
+
+        Returns True if optimal/feasible solution found, False otherwise.
+        """
+        try:
+            from ortools.sat.python import cp_model
+        except ImportError:
+            logger.error("ortools not installed. Run: pip install ortools>=9.8")
+            return False
+
+        ***REMOVED*** Filter to workday blocks only
+        workday_blocks = [b for b in blocks if not b.is_weekend]
+
+        if not workday_blocks or not residents:
+            return False
+
+        ***REMOVED*** Create the model
+        model = cp_model.CpModel()
+
+        ***REMOVED*** ============================================================
+        ***REMOVED*** DECISION VARIABLES
+        ***REMOVED*** x[r_idx, b_idx] = 1 if resident r is assigned to block b
+        ***REMOVED*** ============================================================
+        x = {}
+        resident_ids = [r.id for r in residents]
+        block_ids = [b.id for b in workday_blocks]
+
+        ***REMOVED*** Create mapping for fast lookup
+        resident_idx = {r.id: i for i, r in enumerate(residents)}
+        block_idx = {b.id: i for i, b in enumerate(workday_blocks)}
+        block_by_id = {b.id: b for b in workday_blocks}
+
+        for r in residents:
+            for b in workday_blocks:
+                r_i = resident_idx[r.id]
+                b_i = block_idx[b.id]
+                x[r_i, b_i] = model.NewBoolVar(f"x_{r_i}_{b_i}")
+
+        ***REMOVED*** ============================================================
+        ***REMOVED*** CONSTRAINT 1: AVAILABILITY (from absences)
+        ***REMOVED*** If resident is absent, they cannot be assigned
+        ***REMOVED*** ============================================================
+        for r in residents:
+            r_i = resident_idx[r.id]
+            for b in workday_blocks:
+                b_i = block_idx[b.id]
+                if not self._is_available(r.id, b.id):
+                    model.Add(x[r_i, b_i] == 0)
+
+        ***REMOVED*** ============================================================
+        ***REMOVED*** CONSTRAINT 2: AT MOST ONE RESIDENT PER BLOCK
+        ***REMOVED*** Each block can have at most one primary resident assignment
+        ***REMOVED*** ============================================================
+        for b in workday_blocks:
+            b_i = block_idx[b.id]
+            model.Add(
+                sum(x[resident_idx[r.id], b_i] for r in residents) <= 1
+            )
+
+        ***REMOVED*** ============================================================
+        ***REMOVED*** CONSTRAINT 3: 80-HOUR RULE (Rolling 4-week average)
+        ***REMOVED*** Max 80 hours/week averaged over 4 weeks
+        ***REMOVED*** Each half-day block = 6 hours
+        ***REMOVED*** So max blocks per 4 weeks = (80 * 4) / 6 = 53.3 -> 53 blocks
+        ***REMOVED*** ============================================================
+        HOURS_PER_BLOCK = 6
+        MAX_WEEKLY_HOURS = 80
+        ROLLING_WEEKS = 4
+        MAX_BLOCKS_PER_WINDOW = (MAX_WEEKLY_HOURS * ROLLING_WEEKS) // HOURS_PER_BLOCK  ***REMOVED*** 53
+
+        ***REMOVED*** Group blocks by date for window calculations
+        blocks_by_date = defaultdict(list)
+        for b in workday_blocks:
+            blocks_by_date[b.date].append(b)
+
+        dates = sorted(blocks_by_date.keys())
+
+        ***REMOVED*** For each possible 28-day window starting point
+        for window_start_idx in range(len(dates)):
+            window_start = dates[window_start_idx]
+            window_end = window_start + timedelta(days=ROLLING_WEEKS * 7 - 1)
+
+            ***REMOVED*** Get all blocks in this window
+            window_blocks = [
+                b for b in workday_blocks
+                if window_start <= b.date <= window_end
+            ]
+
+            if not window_blocks:
+                continue
+
+            ***REMOVED*** For each resident, sum of blocks in window <= MAX_BLOCKS
+            for r in residents:
+                r_i = resident_idx[r.id]
+                window_sum = sum(
+                    x[r_i, block_idx[b.id]] for b in window_blocks
+                )
+                model.Add(window_sum <= MAX_BLOCKS_PER_WINDOW)
+
+        ***REMOVED*** ============================================================
+        ***REMOVED*** CONSTRAINT 4: 1-IN-7 RULE (Max consecutive duty days)
+        ***REMOVED*** Cannot work more than 6 consecutive days
+        ***REMOVED*** ============================================================
+        MAX_CONSECUTIVE_DAYS = 6
+
+        for r in residents:
+            r_i = resident_idx[r.id]
+
+            ***REMOVED*** Check each possible 7-day window
+            for start_idx in range(len(dates)):
+                ***REMOVED*** Get 7 consecutive days starting from this date
+                consecutive_dates = []
+                current = dates[start_idx]
+
+                for day_offset in range(MAX_CONSECUTIVE_DAYS + 1):  ***REMOVED*** 7 days
+                    target_date = current + timedelta(days=day_offset)
+                    if target_date in blocks_by_date:
+                        consecutive_dates.append(target_date)
+                    elif target_date <= self.end_date:
+                        ***REMOVED*** Date exists but no blocks (weekend or holiday)
+                        ***REMOVED*** This counts as a day off, break the streak
+                        break
+
+                ***REMOVED*** If we have 7 consecutive calendar days with blocks
+                if len(consecutive_dates) == MAX_CONSECUTIVE_DAYS + 1:
+                    ***REMOVED*** At least one of these days must be off
+                    ***REMOVED*** Sum of assignments across all 7 days must be < 7
+                    ***REMOVED*** (accounting for AM and PM blocks)
+                    day_has_assignment = []
+                    for d in consecutive_dates:
+                        day_blocks = blocks_by_date[d]
+                        ***REMOVED*** Resident works this day if assigned to ANY block on this day
+                        day_vars = [x[r_i, block_idx[b.id]] for b in day_blocks]
+                        if day_vars:
+                            day_worked = model.NewBoolVar(f"day_{r_i}_{d}")
+                            ***REMOVED*** day_worked = 1 if any block on this day is assigned
+                            model.AddMaxEquality(day_worked, day_vars)
+                            day_has_assignment.append(day_worked)
+
+                    ***REMOVED*** Can't work all 7 days
+                    if len(day_has_assignment) == MAX_CONSECUTIVE_DAYS + 1:
+                        model.Add(sum(day_has_assignment) <= MAX_CONSECUTIVE_DAYS)
+
+        ***REMOVED*** ============================================================
+        ***REMOVED*** OBJECTIVE: MAXIMIZE COVERAGE + BALANCE WORKLOAD
+        ***REMOVED*** 1. Maximize total assignments (coverage)
+        ***REMOVED*** 2. Minimize the maximum assignments per resident (equity)
+        ***REMOVED*** ============================================================
+
+        ***REMOVED*** Total assignments
+        total_assignments = sum(
+            x[resident_idx[r.id], block_idx[b.id]]
+            for r in residents
+            for b in workday_blocks
+        )
+
+        ***REMOVED*** Track max assignments per resident for equity
+        max_assignments = model.NewIntVar(0, len(workday_blocks), "max_assignments")
+        for r in residents:
+            r_i = resident_idx[r.id]
+            resident_total = sum(x[r_i, block_idx[b.id]] for b in workday_blocks)
+            model.Add(resident_total <= max_assignments)
+
+        ***REMOVED*** Combined objective: maximize coverage, minimize max (for equity)
+        ***REMOVED*** Scale total_assignments to prioritize coverage, then equity
+        model.Maximize(total_assignments * 1000 - max_assignments)
+
+        ***REMOVED*** ============================================================
+        ***REMOVED*** SOLVE
+        ***REMOVED*** ============================================================
+        solver = cp_model.CpSolver()
+        solver.parameters.max_time_in_seconds = 60.0  ***REMOVED*** 1 minute timeout
+        solver.parameters.num_search_workers = 4  ***REMOVED*** Parallel solving
+
+        status = solver.Solve(model)
+
+        if status not in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
+            logger.warning(f"CP-SAT solver status: {solver.StatusName(status)}")
+            return False
+
+        logger.info(f"CP-SAT found {'optimal' if status == cp_model.OPTIMAL else 'feasible'} solution")
+        logger.info(f"Total assignments: {solver.Value(total_assignments)}")
+
+        ***REMOVED*** ============================================================
+        ***REMOVED*** EXTRACT SOLUTION
+        ***REMOVED*** ============================================================
+        for r in residents:
+            r_i = resident_idx[r.id]
+            for b in workday_blocks:
+                b_i = block_idx[b.id]
+                if solver.Value(x[r_i, b_i]) == 1:
+                    ***REMOVED*** Find appropriate template
+                    template = self._select_template_for_resident(r, templates)
+
+                    assignment = Assignment(
+                        block_id=b.id,
+                        person_id=r.id,
+                        rotation_template_id=template.id if template else None,
+                        role="primary",
+                    )
+                    self.assignments.append(assignment)
+
+        return True
 
     def _assign_faculty(self, faculty: list[Person], blocks: list[Block]):
         """
