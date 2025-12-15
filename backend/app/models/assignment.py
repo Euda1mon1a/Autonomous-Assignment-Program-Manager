@@ -27,6 +27,8 @@ class Assignment(Base):
     ***REMOVED*** Override fields (for manual adjustments)
     activity_override = Column(String(255))  ***REMOVED*** If different from template
     notes = Column(Text)
+    override_reason = Column(Text)  ***REMOVED*** Reason for acknowledging ACGME violations
+    override_acknowledged_at = Column(DateTime)  ***REMOVED*** When user acknowledged ACGME violation
 
     ***REMOVED*** Audit
     created_by = Column(String(255))
