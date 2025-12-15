@@ -51,12 +51,13 @@ function transformError(error: AxiosError): ApiError {
  */
 function getStatusMessage(status: number): string {
   const messages: Record<number, string> = {
+    207: 'Partial success - some validation warnings',
     400: 'Bad request - please check your input',
     401: 'Unauthorized - please log in',
     403: 'Forbidden - you do not have permission',
     404: 'Not found',
-    409: 'Conflict - resource already exists',
-    422: 'Validation error',
+    409: 'Conflict - resource already exists or operation in progress',
+    422: 'Validation error - generation failed',
     500: 'Server error - please try again later',
   }
   return messages[status] || `Error (${status})`
@@ -71,7 +72,9 @@ function createApiClient(): AxiosInstance {
     headers: {
       'Content-Type': 'application/json',
     },
-    timeout: 30000, // 30 second timeout
+    // Issue #4: Timeout mismatch - increased from 30s to 120s to match backend
+    // Schedule generation can take longer with constraint solving algorithms
+    timeout: 120000, // 120 second timeout (2 minutes)
   })
 
   // Request interceptor - attach auth token if available
@@ -91,9 +94,18 @@ function createApiClient(): AxiosInstance {
 
   // Response interceptor - transform errors
   client.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      // Issue #5: Handle 207 Multi-Status as a successful response (partial success)
+      // This is used for schedule generation that completes but has validation warnings
+      return response
+    },
     (error: AxiosError) => {
       const apiError = transformError(error)
+
+      // Issue #5: Treat 207 Multi-Status as success (partial success scenario)
+      if (error.response?.status === 207) {
+        return error.response
+      }
 
       if (typeof window !== 'undefined') {
         // Handle 401 - clear auth and redirect to login
@@ -106,6 +118,16 @@ function createApiClient(): AxiosInstance {
         // Handle 403 - forbidden access
         if (apiError.status === 403) {
           apiError.message = 'You do not have permission to perform this action'
+        }
+
+        // Handle 409 - conflict (e.g., generation already in progress)
+        if (apiError.status === 409) {
+          apiError.message = apiError.detail || 'Operation already in progress'
+        }
+
+        // Handle 422 - validation error
+        if (apiError.status === 422) {
+          apiError.message = apiError.detail || 'Validation failed'
         }
 
         // Handle 500 - server error

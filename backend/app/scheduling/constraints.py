@@ -168,6 +168,7 @@ class SchedulingContext:
     # Lookup dictionaries for fast access
     resident_idx: dict[UUID, int] = field(default_factory=dict)
     block_idx: dict[UUID, int] = field(default_factory=dict)
+    template_idx: dict[UUID, int] = field(default_factory=dict)
     blocks_by_date: dict[date, list] = field(default_factory=dict)
 
     # Availability matrix: {person_id: {block_id: {'available': bool, 'replacement': str}}}
@@ -184,6 +185,7 @@ class SchedulingContext:
         """Build lookup dictionaries."""
         self.resident_idx = {r.id: i for i, r in enumerate(self.residents)}
         self.block_idx = {b.id: i for i, b in enumerate(self.blocks)}
+        self.template_idx = {t.id: i for i, t in enumerate(self.templates)}
 
         self.blocks_by_date = defaultdict(list)
         for block in self.blocks:
@@ -747,7 +749,7 @@ class ClinicCapacityConstraint(HardConstraint):
             b_i = context.block_idx[block.id]
             for template in context.templates:
                 if template.max_residents and template.max_residents > 0:
-                    t_i = context.templates.index(template)
+                    t_i = context.template_idx[template.id]
 
                     template_block_vars = [
                         template_vars[r_i, b_i, t_i]
@@ -771,7 +773,7 @@ class ClinicCapacityConstraint(HardConstraint):
             b_i = context.block_idx[block.id]
             for template in context.templates:
                 if template.max_residents and template.max_residents > 0:
-                    t_i = context.templates.index(template)
+                    t_i = context.template_idx[template.id]
 
                     template_block_vars = [
                         template_vars[(context.resident_idx[r.id], b_i, t_i)]
@@ -824,7 +826,13 @@ class ClinicCapacityConstraint(HardConstraint):
 class EquityConstraint(SoftConstraint):
     """
     Balances workload across residents.
-    Minimizes the difference between max and min assignments.
+
+    Now supports heterogeneous targets:
+    - If resident has target_clinical_blocks set, penalizes deviation from that target
+    - Otherwise, uses global average for equity
+
+    This fixes the homogeneity assumption where all residents were expected
+    to work the same number of blocks.
     """
 
     def __init__(self, weight: float = 10.0):
@@ -836,51 +844,128 @@ class EquityConstraint(SoftConstraint):
         )
 
     def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
-        """Add equity objective to model."""
+        """Add equity objective to model with support for individual targets."""
         x = variables.get("assignments", {})
 
         if not x:
             return
 
-        # Create max_assignments variable
-        max_assigns = model.NewIntVar(0, len(context.blocks), "max_assignments")
+        # Check if residents have individual targets
+        has_individual_targets = any(
+            hasattr(r, 'target_clinical_blocks') and r.target_clinical_blocks is not None
+            for r in context.residents
+        )
 
-        for resident in context.residents:
-            r_i = context.resident_idx[resident.id]
-            resident_total = sum(
-                x[r_i, context.block_idx[b.id]]
-                for b in context.blocks
-                if (r_i, context.block_idx[b.id]) in x
-            )
-            model.Add(resident_total <= max_assigns)
+        if has_individual_targets:
+            # Use individual targets - penalize deviation from each resident's target
+            total_deviation = 0
+            for resident in context.residents:
+                r_i = context.resident_idx[resident.id]
+                resident_total = sum(
+                    x[r_i, context.block_idx[b.id]]
+                    for b in context.blocks
+                    if (r_i, context.block_idx[b.id]) in x
+                )
 
-        # Store for objective
-        variables["equity_penalty"] = max_assigns
+                if hasattr(resident, 'target_clinical_blocks') and resident.target_clinical_blocks:
+                    target = resident.target_clinical_blocks
+                    # Create deviation variable (absolute value approximation)
+                    deviation = model.NewIntVar(0, len(context.blocks), f"deviation_{r_i}")
+                    model.Add(deviation >= resident_total - target)
+                    model.Add(deviation >= target - resident_total)
+                    total_deviation += deviation
+
+            variables["equity_penalty"] = total_deviation
+        else:
+            # Fall back to original equity logic (minimize max assignments)
+            max_assigns = model.NewIntVar(0, len(context.blocks), "max_assignments")
+
+            for resident in context.residents:
+                r_i = context.resident_idx[resident.id]
+                resident_total = sum(
+                    x[r_i, context.block_idx[b.id]]
+                    for b in context.blocks
+                    if (r_i, context.block_idx[b.id]) in x
+                )
+                model.Add(resident_total <= max_assigns)
+
+            variables["equity_penalty"] = max_assigns
 
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
-        """Add equity objective to model."""
+        """Add equity objective to model with support for individual targets."""
         import pulp
         x = variables.get("assignments", {})
 
         if not x:
             return
 
-        max_assigns = pulp.LpVariable("max_assignments", lowBound=0, cat="Integer")
+        # Check if residents have individual targets
+        has_individual_targets = any(
+            hasattr(r, 'target_clinical_blocks') and r.target_clinical_blocks is not None
+            for r in context.residents
+        )
 
-        for resident in context.residents:
-            r_i = context.resident_idx[resident.id]
-            resident_vars = [
-                x[r_i, context.block_idx[b.id]]
-                for b in context.blocks
-                if (r_i, context.block_idx[b.id]) in x
-            ]
-            if resident_vars:
-                model += (
-                    pulp.lpSum(resident_vars) <= max_assigns,
-                    f"equity_{r_i}"
-                )
+        if has_individual_targets:
+            # Use individual targets - penalize deviation from each resident's target
+            total_deviation = []
 
-        variables["equity_penalty"] = max_assigns
+            for resident in context.residents:
+                r_i = context.resident_idx[resident.id]
+                resident_vars = [
+                    x[r_i, context.block_idx[b.id]]
+                    for b in context.blocks
+                    if (r_i, context.block_idx[b.id]) in x
+                ]
+
+                if resident_vars and hasattr(resident, 'target_clinical_blocks') and resident.target_clinical_blocks:
+                    resident_total = pulp.lpSum(resident_vars)
+                    target = resident.target_clinical_blocks
+
+                    # Create deviation variables (absolute value via two inequalities)
+                    deviation_pos = pulp.LpVariable(f"deviation_pos_{r_i}", lowBound=0, cat="Integer")
+                    deviation_neg = pulp.LpVariable(f"deviation_neg_{r_i}", lowBound=0, cat="Integer")
+
+                    # resident_total - target = deviation_pos - deviation_neg
+                    model += resident_total - target == deviation_pos - deviation_neg, f"deviation_def_{r_i}"
+
+                    total_deviation.append(deviation_pos + deviation_neg)
+
+            if total_deviation:
+                variables["equity_penalty"] = pulp.lpSum(total_deviation)
+            else:
+                # No targets set, use original logic
+                max_assigns = pulp.LpVariable("max_assignments", lowBound=0, cat="Integer")
+                for resident in context.residents:
+                    r_i = context.resident_idx[resident.id]
+                    resident_vars = [
+                        x[r_i, context.block_idx[b.id]]
+                        for b in context.blocks
+                        if (r_i, context.block_idx[b.id]) in x
+                    ]
+                    if resident_vars:
+                        model += (
+                            pulp.lpSum(resident_vars) <= max_assigns,
+                            f"equity_{r_i}"
+                        )
+                variables["equity_penalty"] = max_assigns
+        else:
+            # Fall back to original equity logic (minimize max assignments)
+            max_assigns = pulp.LpVariable("max_assignments", lowBound=0, cat="Integer")
+
+            for resident in context.residents:
+                r_i = context.resident_idx[resident.id]
+                resident_vars = [
+                    x[r_i, context.block_idx[b.id]]
+                    for b in context.blocks
+                    if (r_i, context.block_idx[b.id]) in x
+                ]
+                if resident_vars:
+                    model += (
+                        pulp.lpSum(resident_vars) <= max_assigns,
+                        f"equity_{r_i}"
+                    )
+
+            variables["equity_penalty"] = max_assigns
 
     def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
         """Calculate equity score."""
