@@ -1,0 +1,10 @@
+***REMOVED*** This directory stores SSL-related files
+***REMOVED*** - dhparam.pem: Diffie-Hellman parameters (generate with scripts/generate-dhparam.sh)
+***REMOVED*** - Custom certificates if not using Let's Encrypt
+
+***REMOVED*** IMPORTANT: Never commit actual certificates or private keys to version control!
+***REMOVED*** The following patterns should be in .gitignore:
+***REMOVED*** *.pem
+***REMOVED*** *.key
+***REMOVED*** *.crt
+***REMOVED*** *.csr
