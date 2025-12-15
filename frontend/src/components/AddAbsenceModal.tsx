@@ -4,6 +4,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import { Modal } from './Modal';
 import { Input, Select, TextArea, DatePicker } from './forms';
 import { useCreateAbsence, usePeople } from '@/lib/hooks';
+import { validateRequired, validateDateRange } from '@/lib/validation';
 import type { AbsenceCreate } from '@/types/api';
 
 interface AddAbsenceModalProps {
@@ -59,20 +60,30 @@ export function AddAbsenceModal({ isOpen, onClose, preselectedPersonId }: AddAbs
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!personId) {
+    // Validate person is selected
+    const personError = validateRequired(personId, 'Person');
+    if (personError) {
       newErrors.person_id = 'Please select a person';
     }
 
-    if (!startDate) {
-      newErrors.start_date = 'Start date is required';
+    // Validate start date is selected
+    const startDateError = validateRequired(startDate, 'Start date');
+    if (startDateError) {
+      newErrors.start_date = startDateError;
     }
 
-    if (!endDate) {
-      newErrors.end_date = 'End date is required';
+    // Validate end date is selected
+    const endDateError = validateRequired(endDate, 'End date');
+    if (endDateError) {
+      newErrors.end_date = endDateError;
     }
 
-    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-      newErrors.end_date = 'End date must be after start date';
+    // Validate date range (end date >= start date)
+    if (startDate && endDate) {
+      const dateRangeError = validateDateRange(startDate, endDate);
+      if (dateRangeError) {
+        newErrors.end_date = dateRangeError;
+      }
     }
 
     setErrors(newErrors);
