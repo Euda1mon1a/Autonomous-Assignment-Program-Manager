@@ -42,7 +42,7 @@ export function Navigation() {
   )
 
   return (
-    <nav className="bg-white shadow-sm">
+    <nav className="bg-white shadow-sm" aria-label="Main navigation">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Left Side: Mobile Menu + Logo */}
@@ -72,6 +72,7 @@ export function Navigation() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={isActive ? 'page' : undefined}
                   className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive
                       ? 'bg-blue-100 text-blue-700'
@@ -95,6 +96,7 @@ export function Navigation() {
               ) : (
                 <Link
                   href="/login"
+                  aria-current={pathname === '/login' ? 'page' : undefined}
                   className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     pathname === '/login'
                       ? 'bg-blue-100 text-blue-700'
