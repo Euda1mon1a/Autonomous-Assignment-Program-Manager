@@ -1,16 +1,17 @@
-"""Settings API routes."""
-import json
-from pathlib import Path
-from fastapi import APIRouter, HTTPException
+"""Settings API routes with database persistence."""
+import logging
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
+from app.db.session import get_db
+from app.models.settings import ApplicationSettings
 from app.schemas.settings import SettingsBase, SettingsUpdate, SettingsResponse
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Settings file path (in production, use database)
-SETTINGS_FILE = Path(__file__).parent.parent.parent.parent / "settings.json"
-
-# Default settings matching SettingsBase
+# Default settings for initialization
 DEFAULT_SETTINGS = {
     "scheduling_algorithm": "greedy",
     "work_hours_per_week": 80,
@@ -25,53 +26,74 @@ DEFAULT_SETTINGS = {
 }
 
 
-def load_settings() -> dict:
-    """Load settings from file or return defaults."""
-    if SETTINGS_FILE.exists():
-        try:
-            with open(SETTINGS_FILE, "r") as f:
-                return {**DEFAULT_SETTINGS, **json.load(f)}
-        except (json.JSONDecodeError, IOError):
-            return DEFAULT_SETTINGS.copy()
-    return DEFAULT_SETTINGS.copy()
-
-
-def save_settings(settings: dict) -> None:
-    """Save settings to file."""
-    with open(SETTINGS_FILE, "w") as f:
-        json.dump(settings, f, indent=2)
+def get_or_create_settings(db: Session) -> ApplicationSettings:
+    """Get settings from database, creating default if none exist."""
+    settings = db.query(ApplicationSettings).first()
+    if settings is None:
+        logger.info("No settings found, creating defaults")
+        settings = ApplicationSettings(**DEFAULT_SETTINGS)
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+    return settings
 
 
 @router.get("", response_model=SettingsResponse)
-def get_settings():
+def get_settings(db: Session = Depends(get_db)):
     """Get current application settings."""
-    settings = load_settings()
-    return SettingsResponse(**settings)
+    settings = get_or_create_settings(db)
+    return SettingsResponse(**settings.to_dict())
 
 
 @router.post("", response_model=SettingsResponse)
-def update_settings(settings_in: SettingsBase):
+def update_settings(settings_in: SettingsBase, db: Session = Depends(get_db)):
     """Update application settings (full replacement)."""
-    settings_data = settings_in.model_dump()
-    save_settings(settings_data)
-    return SettingsResponse(**settings_data)
+    settings = get_or_create_settings(db)
+
+    # Update all fields
+    for field, value in settings_in.model_dump().items():
+        setattr(settings, field, value)
+
+    settings.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(settings)
+
+    logger.info("Settings updated: algorithm=%s, work_hours=%d",
+                settings.scheduling_algorithm, settings.work_hours_per_week)
+    return SettingsResponse(**settings.to_dict())
 
 
 @router.patch("", response_model=SettingsResponse)
-def patch_settings(settings_in: SettingsUpdate):
+def patch_settings(settings_in: SettingsUpdate, db: Session = Depends(get_db)):
     """Partially update application settings."""
-    current_settings = load_settings()
+    settings = get_or_create_settings(db)
+
+    # Only update provided fields
     update_data = settings_in.model_dump(exclude_unset=True)
+    if not update_data:
+        return SettingsResponse(**settings.to_dict())
 
-    # Validate the merged settings
-    merged = {**current_settings, **update_data}
-    validated = SettingsBase(**merged)
+    for field, value in update_data.items():
+        setattr(settings, field, value)
 
-    save_settings(validated.model_dump())
-    return SettingsResponse(**validated.model_dump())
+    settings.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(settings)
+
+    logger.info("Settings patched: %s", list(update_data.keys()))
+    return SettingsResponse(**settings.to_dict())
 
 
 @router.delete("", status_code=204)
-def reset_settings():
+def reset_settings(db: Session = Depends(get_db)):
     """Reset settings to defaults."""
-    save_settings(DEFAULT_SETTINGS.copy())
+    settings = get_or_create_settings(db)
+
+    # Reset all fields to defaults
+    for field, value in DEFAULT_SETTINGS.items():
+        setattr(settings, field, value)
+
+    settings.updated_at = datetime.utcnow()
+    db.commit()
+
+    logger.info("Settings reset to defaults")

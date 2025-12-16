@@ -21,11 +21,16 @@ from app.notifications.channels import (
     DeliveryResult,
     get_channel,
 )
+from app.models.notification import (
+    Notification,
+    ScheduledNotificationRecord,
+    NotificationPreferenceRecord,
+)
 
 
 class ScheduledNotification(BaseModel):
     """
-    A notification scheduled for future delivery.
+    A notification scheduled for future delivery (Pydantic model for API).
 
     Attributes:
         id: Unique identifier
@@ -47,7 +52,7 @@ class ScheduledNotification(BaseModel):
 
 class NotificationPreferences(BaseModel):
     """
-    User notification preferences.
+    User notification preferences (Pydantic model for API).
 
     Attributes:
         user_id: UUID of the user
@@ -80,6 +85,8 @@ class NotificationService:
     This service provides a queue-based architecture for sending notifications
     through multiple channels (in-app, email, webhook) with support for
     immediate, bulk, and scheduled delivery.
+
+    Now backed by database persistence for scheduled notifications and preferences.
     """
 
     def __init__(self, db: Session):
@@ -90,7 +97,6 @@ class NotificationService:
             db: Database session for persistence
         """
         self.db = db
-        self._scheduled_queue: List[ScheduledNotification] = []
 
     async def send_notification(
         self,
@@ -123,11 +129,22 @@ class NotificationService:
         # Determine which channels to use
         target_channels = channels or rendered.get("channels", ["in_app"])
 
-        # NOTE: User preference filtering disabled until NotificationPreference model exists
-        # Uncomment when ready:
-        # preferences = self._get_user_preferences(recipient_id)
-        # if not self._should_send_notification(preferences, notification_type):
-        #     return []
+        # Check user preferences
+        preferences = self._get_user_preferences(recipient_id)
+        if not self._should_send_notification(preferences, notification_type):
+            logger.info(
+                "Notification %s skipped for user %s due to preferences",
+                notification_type.value,
+                recipient_id
+            )
+            return []
+
+        # Filter channels by user preferences
+        enabled_channels = preferences.enabled_channels
+        target_channels = [c for c in target_channels if c in enabled_channels]
+
+        if not target_channels:
+            return []
 
         # Create notification payload
         payload = NotificationPayload(
@@ -141,17 +158,34 @@ class NotificationService:
 
         # Deliver through each channel
         results = []
+        delivered_channels = []
         for channel_name in target_channels:
             channel = get_channel(channel_name)
             if channel:
                 result = await channel.deliver(payload, self.db)
                 results.append(result)
+                if result.success:
+                    delivered_channels.append(channel_name)
             else:
                 results.append(DeliveryResult(
                     success=False,
                     channel=channel_name,
                     message=f"Channel not found: {channel_name}"
                 ))
+
+        # Store notification record for in-app display
+        if "in_app" in delivered_channels or any(r.success for r in results):
+            notification_record = Notification(
+                recipient_id=recipient_id,
+                notification_type=notification_type.value,
+                subject=rendered["subject"],
+                body=rendered["body"],
+                data=data,
+                priority=rendered.get("priority", "normal"),
+                channels_delivered=",".join(delivered_channels),
+            )
+            self.db.add(notification_record)
+            self.db.commit()
 
         return results
 
@@ -205,18 +239,35 @@ class NotificationService:
         Returns:
             ScheduledNotification object
         """
-        scheduled = ScheduledNotification(
+        # Create database record
+        record = ScheduledNotificationRecord(
+            recipient_id=recipient_id,
+            notification_type=notification_type.value,
+            data=data,
+            send_at=send_at,
+            status="pending",
+        )
+        self.db.add(record)
+        self.db.commit()
+        self.db.refresh(record)
+
+        logger.info(
+            "Scheduled notification %s for user %s at %s",
+            notification_type.value,
+            recipient_id,
+            send_at
+        )
+
+        # Return Pydantic model for API
+        return ScheduledNotification(
+            id=record.id,
             recipient_id=recipient_id,
             notification_type=notification_type,
             data=data,
             send_at=send_at,
+            status=record.status,
+            created_at=record.created_at,
         )
-
-        # NOTE: Using in-memory queue. For production, persist to database
-        # using ScheduledNotification SQLAlchemy model (not yet created)
-        self._scheduled_queue.append(scheduled)
-
-        return scheduled
 
     async def process_scheduled_notifications(self) -> int:
         """
@@ -231,33 +282,49 @@ class NotificationService:
         now = datetime.utcnow()
         sent_count = 0
 
-        # NOTE: Using in-memory queue. Replace with database query when model exists
-        due_notifications = [
-            n for n in self._scheduled_queue
-            if n.send_at <= now and n.status == "pending"
-        ]
+        # Query due notifications from database
+        due_notifications = (
+            self.db.query(ScheduledNotificationRecord)
+            .filter(ScheduledNotificationRecord.send_at <= now)
+            .filter(ScheduledNotificationRecord.status == "pending")
+            .all()
+        )
 
-        for notification in due_notifications:
+        for record in due_notifications:
+            # Mark as processing
+            record.status = "processing"
+            self.db.commit()
+
             try:
+                notification_type = NotificationType(record.notification_type)
                 results = await self.send_notification(
-                    recipient_id=notification.recipient_id,
-                    notification_type=notification.notification_type,
-                    data=notification.data
+                    recipient_id=record.recipient_id,
+                    notification_type=notification_type,
+                    data=record.data or {}
                 )
 
                 # Update status based on results
-                all_success = all(r.success for r in results)
-                notification.status = "sent" if all_success else "failed"
+                all_success = all(r.success for r in results) if results else False
+                record.status = "sent" if all_success else "failed"
+                record.sent_at = datetime.utcnow()
+                if not all_success:
+                    record.error_message = "; ".join(
+                        r.message for r in results if not r.success
+                    )
                 sent_count += 1
 
             except Exception as e:
-                notification.status = "failed"
+                record.status = "failed"
+                record.error_message = str(e)
+                record.retry_count += 1
                 logger.error(
                     "Failed to send scheduled notification %s: %s",
-                    notification.id,
+                    record.id,
                     e,
                     exc_info=True,
                 )
+
+            self.db.commit()
 
         return sent_count
 
@@ -278,21 +345,33 @@ class NotificationService:
         Returns:
             List of notification dictionaries
         """
-        # TODO: Query database when notification model exists
-        # For now, return empty list
-        # notifications = (
-        #     self.db.query(Notification)
-        #     .filter(Notification.recipient_id == user_id)
-        # )
-        #
-        # if unread_only:
-        #     notifications = notifications.filter(Notification.is_read == False)
-        #
-        # notifications = notifications.order_by(
-        #     Notification.created_at.desc()
-        # ).limit(limit).all()
+        query = (
+            self.db.query(Notification)
+            .filter(Notification.recipient_id == user_id)
+        )
 
-        return []
+        if unread_only:
+            query = query.filter(Notification.is_read == False)
+
+        notifications = (
+            query.order_by(Notification.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+        return [
+            {
+                "id": str(n.id),
+                "notification_type": n.notification_type,
+                "subject": n.subject,
+                "body": n.body,
+                "data": n.data,
+                "priority": n.priority,
+                "is_read": n.is_read,
+                "created_at": n.created_at.isoformat() if n.created_at else None,
+            }
+            for n in notifications
+        ]
 
     def mark_as_read(self, notification_ids: List[UUID]) -> int:
         """
@@ -304,16 +383,16 @@ class NotificationService:
         Returns:
             Number of notifications marked as read
         """
-        # TODO: Update database when notification model exists
-        # count = (
-        #     self.db.query(Notification)
-        #     .filter(Notification.id.in_(notification_ids))
-        #     .update({"is_read": True, "read_at": datetime.utcnow()})
-        # )
-        # self.db.commit()
-        # return count
-
-        return len(notification_ids)
+        count = (
+            self.db.query(Notification)
+            .filter(Notification.id.in_(notification_ids))
+            .update(
+                {"is_read": True, "read_at": datetime.utcnow()},
+                synchronize_session=False
+            )
+        )
+        self.db.commit()
+        return count
 
     def _get_user_preferences(self, user_id: UUID) -> NotificationPreferences:
         """
@@ -325,9 +404,66 @@ class NotificationService:
         Returns:
             NotificationPreferences object
         """
-        # TODO: Load from database when preference model exists
-        # For now, return default preferences
+        record = (
+            self.db.query(NotificationPreferenceRecord)
+            .filter(NotificationPreferenceRecord.user_id == user_id)
+            .first()
+        )
+
+        if record:
+            return NotificationPreferences(
+                user_id=user_id,
+                enabled_channels=record.get_enabled_channels(),
+                notification_types=record.notification_types or {},
+                quiet_hours_start=record.quiet_hours_start,
+                quiet_hours_end=record.quiet_hours_end,
+            )
+
+        # Return default preferences if none exist
         return NotificationPreferences(user_id=user_id)
+
+    def update_user_preferences(
+        self,
+        user_id: UUID,
+        preferences: NotificationPreferences
+    ) -> NotificationPreferences:
+        """
+        Update user notification preferences.
+
+        Args:
+            user_id: UUID of the user
+            preferences: New preferences
+
+        Returns:
+            Updated NotificationPreferences
+        """
+        record = (
+            self.db.query(NotificationPreferenceRecord)
+            .filter(NotificationPreferenceRecord.user_id == user_id)
+            .first()
+        )
+
+        if record:
+            record.enabled_channels = ",".join(preferences.enabled_channels)
+            record.notification_types = preferences.notification_types
+            record.quiet_hours_start = preferences.quiet_hours_start
+            record.quiet_hours_end = preferences.quiet_hours_end
+            record.updated_at = datetime.utcnow()
+        else:
+            record = NotificationPreferenceRecord(
+                user_id=user_id,
+                enabled_channels=",".join(preferences.enabled_channels),
+                notification_types=preferences.notification_types,
+                quiet_hours_start=preferences.quiet_hours_start,
+                quiet_hours_end=preferences.quiet_hours_end,
+            )
+            self.db.add(record)
+
+        self.db.commit()
+        self.db.refresh(record)
+
+        logger.info("Updated notification preferences for user %s", user_id)
+        return preferences
 
     def _should_send_notification(
         self,
@@ -349,11 +485,13 @@ class NotificationService:
             return False
 
         # Check quiet hours
-        if preferences.quiet_hours_start and preferences.quiet_hours_end:
+        if preferences.quiet_hours_start is not None and preferences.quiet_hours_end is not None:
             current_hour = datetime.utcnow().hour
             if preferences.quiet_hours_start <= current_hour < preferences.quiet_hours_end:
                 # Don't send during quiet hours unless it's high priority
-                return False
+                template = get_template(notification_type)
+                if template and template.priority != "high":
+                    return False
 
         return True
 

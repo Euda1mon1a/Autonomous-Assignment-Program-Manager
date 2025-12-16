@@ -1,4 +1,5 @@
 """Security utilities for authentication and authorization."""
+import uuid
 from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID
@@ -12,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.db.session import get_db
 from app.models.user import User
+from app.models.token_blacklist import TokenBlacklist
 from app.schemas.auth import TokenData
 
 settings = get_settings()
@@ -39,16 +41,16 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(
     data: dict,
     expires_delta: Optional[timedelta] = None
-) -> str:
+) -> tuple[str, str, datetime]:
     """
-    Create a JWT access token.
+    Create a JWT access token with jti for blacklist support.
 
     Args:
         data: Payload data to encode in the token
         expires_delta: Optional custom expiration time
 
     Returns:
-        Encoded JWT token string
+        Tuple of (encoded_jwt, jti, expires_at)
     """
     to_encode = data.copy()
 
@@ -57,17 +59,26 @@ def create_access_token(
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    to_encode.update({"exp": expire})
+    # Generate unique token identifier for blacklist tracking
+    jti = str(uuid.uuid4())
+
+    to_encode.update({
+        "exp": expire,
+        "jti": jti,
+        "iat": datetime.utcnow(),
+    })
+
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return encoded_jwt, jti, expire
 
 
-def verify_token(token: str) -> Optional[TokenData]:
+def verify_token(token: str, db: Optional[Session] = None) -> Optional[TokenData]:
     """
     Verify and decode a JWT token.
 
     Args:
         token: JWT token string
+        db: Database session for blacklist check (optional)
 
     Returns:
         TokenData if valid, None otherwise
@@ -76,13 +87,50 @@ def verify_token(token: str) -> Optional[TokenData]:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         username: str = payload.get("username")
+        jti: str = payload.get("jti")
 
         if user_id is None:
             return None
 
-        return TokenData(user_id=user_id, username=username)
+        # Check if token is blacklisted
+        if db is not None and jti:
+            if TokenBlacklist.is_blacklisted(db, jti):
+                return None
+
+        return TokenData(user_id=user_id, username=username, jti=jti)
     except JWTError:
         return None
+
+
+def blacklist_token(
+    db: Session,
+    jti: str,
+    expires_at: datetime,
+    user_id: Optional[UUID] = None,
+    reason: str = "logout"
+) -> TokenBlacklist:
+    """
+    Add a token to the blacklist.
+
+    Args:
+        db: Database session
+        jti: JWT ID to blacklist
+        expires_at: When the token expires (for cleanup)
+        user_id: Optional user ID who owned this token
+        reason: Reason for blacklisting
+
+    Returns:
+        Created TokenBlacklist record
+    """
+    record = TokenBlacklist(
+        jti=jti,
+        user_id=user_id,
+        expires_at=expires_at,
+        reason=reason,
+    )
+    db.add(record)
+    db.commit()
+    return record
 
 
 def get_user_by_username(db: Session, username: str) -> Optional[User]:
@@ -134,7 +182,7 @@ async def get_current_user(
     if not token:
         return None
 
-    token_data = verify_token(token)
+    token_data = verify_token(token, db)
     if token_data is None or token_data.user_id is None:
         return None
 
