@@ -21,6 +21,27 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
+    # Middleware Configuration
+    # GZip compression
+    GZIP_ENABLED: bool = True
+    GZIP_MINIMUM_SIZE: int = 1000  # Compress responses > 1KB
+
+    # Security headers
+    SECURITY_HEADERS_ENABLED: bool = True
+    HSTS_ENABLED: bool = False  # Enable only in production with HTTPS
+    HSTS_MAX_AGE: int = 31536000  # 1 year in seconds
+
+    # Trusted hosts (empty = allow all, set in production)
+    TRUSTED_HOSTS: list[str] = []  # e.g., ["scheduler.hospital.org", "api.scheduler.hospital.org"]
+
+    # HTTPS redirect (enable only in production)
+    HTTPS_REDIRECT_ENABLED: bool = False
+
+    # Rate limiting
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_DEFAULT: str = "100/minute"
+    RATE_LIMIT_AUTHENTICATED: str = "1000/hour"
+
     # Resilience Configuration (Tier 1)
     # Utilization thresholds (queuing theory)
     RESILIENCE_MAX_UTILIZATION: float = 0.80  # 80% utilization cliff

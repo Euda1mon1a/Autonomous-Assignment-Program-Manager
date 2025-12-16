@@ -3,8 +3,12 @@ Residency Scheduler API.
 
 FastAPI application for managing residency program schedules.
 """
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from contextlib import asynccontextmanager
 import logging
 
@@ -84,7 +88,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware
+# ============================================================================
+# Middleware Stack (order matters - executed in reverse order of addition)
+# ============================================================================
+
+# 1. CORS middleware (outermost - handles preflight requests first)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -93,6 +101,46 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 2. Security headers middleware
+if settings.SECURITY_HEADERS_ENABLED:
+    from app.middleware.security_headers import SecurityHeadersMiddleware
+
+    app.add_middleware(
+        SecurityHeadersMiddleware,
+        enable_hsts=settings.HSTS_ENABLED,
+        hsts_max_age=settings.HSTS_MAX_AGE,
+    )
+    logger.info("Security headers middleware enabled")
+
+# 3. GZip compression middleware
+if settings.GZIP_ENABLED:
+    app.add_middleware(
+        GZipMiddleware,
+        minimum_size=settings.GZIP_MINIMUM_SIZE,
+    )
+    logger.info(f"GZip compression enabled (min size: {settings.GZIP_MINIMUM_SIZE} bytes)")
+
+# 4. Trusted hosts middleware (production only)
+if settings.TRUSTED_HOSTS:
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=settings.TRUSTED_HOSTS,
+    )
+    logger.info(f"Trusted hosts middleware enabled: {settings.TRUSTED_HOSTS}")
+
+# 5. HTTPS redirect middleware (production only)
+if settings.HTTPS_REDIRECT_ENABLED:
+    app.add_middleware(HTTPSRedirectMiddleware)
+    logger.info("HTTPS redirect middleware enabled")
+
+# 6. Rate limiting middleware
+if settings.RATE_LIMIT_ENABLED:
+    from app.middleware.rate_limiting import setup_rate_limiting
+
+    setup_rate_limiting(app)
+    logger.info(f"Rate limiting enabled (default: {settings.RATE_LIMIT_DEFAULT})")
+
+# ============================================================================
 # Include API routes
 app.include_router(api_router, prefix="/api")
 
