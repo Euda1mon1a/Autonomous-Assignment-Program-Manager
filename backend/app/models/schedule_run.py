@@ -15,8 +15,12 @@ class ScheduleRun(Base):
     - Audit trail (who generated what, when)
     - Performance tracking (runtime, success rate)
     - Configuration snapshot (settings used)
+
+    Version history is tracked via SQLAlchemy-Continuum.
+    Access history: schedule_run.versions
     """
     __tablename__ = "schedule_runs"
+    __versioned__ = {}  # Enable audit trail - tracks all changes with who/what/when
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     start_date = Column(Date, nullable=False)
