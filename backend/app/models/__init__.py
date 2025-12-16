@@ -8,6 +8,7 @@ from app.models.call_assignment import CallAssignment
 from app.models.schedule_run import ScheduleRun
 from app.models.user import User
 from app.models.resilience import (
+    # Tier 1 models
     ResilienceHealthCheck,
     ResilienceEvent,
     SacrificeDecision,
@@ -15,6 +16,36 @@ from app.models.resilience import (
     VulnerabilityRecord,
     ResilienceEventType,
     OverallStatus,
+    # Tier 2 models
+    AllostasisState,
+    ZoneStatus,
+    ContainmentLevel,
+    EquilibriumState,
+    FeedbackLoopState,
+    AllostasisRecord,
+    PositiveFeedbackAlert,
+    SchedulingZoneRecord,
+    ZoneFacultyAssignmentRecord,
+    ZoneBorrowingRecord,
+    ZoneIncidentRecord,
+    EquilibriumShiftRecord,
+    SystemStressRecord,
+    CompensationRecord,
+    # Tier 3 models
+    CognitiveState,
+    DecisionComplexity,
+    DecisionCategory,
+    DecisionOutcome,
+    TrailType,
+    HubRiskLevel,
+    CrossTrainingPriority,
+    CognitiveSessionRecord,
+    CognitiveDecisionRecord,
+    PreferenceTrailRecord,
+    TrailSignalRecord,
+    FacultyCentralityRecord,
+    HubProtectionPlanRecord,
+    CrossTrainingRecommendationRecord,
 )
 
 __all__ = [
@@ -26,7 +57,7 @@ __all__ = [
     "CallAssignment",
     "ScheduleRun",
     "User",
-    # Resilience models
+    # Tier 1 Resilience models
     "ResilienceHealthCheck",
     "ResilienceEvent",
     "SacrificeDecision",
@@ -34,4 +65,34 @@ __all__ = [
     "VulnerabilityRecord",
     "ResilienceEventType",
     "OverallStatus",
+    # Tier 2 Resilience models
+    "AllostasisState",
+    "ZoneStatus",
+    "ContainmentLevel",
+    "EquilibriumState",
+    "FeedbackLoopState",
+    "AllostasisRecord",
+    "PositiveFeedbackAlert",
+    "SchedulingZoneRecord",
+    "ZoneFacultyAssignmentRecord",
+    "ZoneBorrowingRecord",
+    "ZoneIncidentRecord",
+    "EquilibriumShiftRecord",
+    "SystemStressRecord",
+    "CompensationRecord",
+    # Tier 3 Resilience models
+    "CognitiveState",
+    "DecisionComplexity",
+    "DecisionCategory",
+    "DecisionOutcome",
+    "TrailType",
+    "HubRiskLevel",
+    "CrossTrainingPriority",
+    "CognitiveSessionRecord",
+    "CognitiveDecisionRecord",
+    "PreferenceTrailRecord",
+    "TrailSignalRecord",
+    "FacultyCentralityRecord",
+    "HubProtectionPlanRecord",
+    "CrossTrainingRecommendationRecord",
 ]
