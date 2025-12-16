@@ -47,10 +47,14 @@ class ConstraintType(Enum):
     CONTINUITY = "continuity"
     CALL = "call"
     SPECIALTY = "specialty"
-    # Resilience-aware constraint types
+    # Resilience-aware constraint types (Tier 1)
     RESILIENCE = "resilience"
     HUB_PROTECTION = "hub_protection"
     UTILIZATION_BUFFER = "utilization_buffer"
+    # Resilience-aware constraint types (Tier 2)
+    ZONE_BOUNDARY = "zone_boundary"
+    PREFERENCE_TRAIL = "preference_trail"
+    N1_VULNERABILITY = "n1_vulnerability"
 
 
 @dataclass
@@ -1551,6 +1555,561 @@ class UtilizationBufferConstraint(SoftConstraint):
 
 
 # =============================================================================
+# TIER 2: STRATEGIC RESILIENCE CONSTRAINTS
+# =============================================================================
+
+class ZoneBoundaryConstraint(SoftConstraint):
+    """
+    Respects blast radius zone boundaries in scheduling.
+
+    AWS Architecture Pattern: Failures should be contained within defined
+    boundaries ("cells" or "availability zones"). A problem in one area
+    cannot propagate to affect others.
+
+    Rationale:
+    - Each zone has dedicated faculty as primary coverage
+    - Cross-zone assignments weaken isolation
+    - When Zone A fails, Zones B and C should continue unaffected
+
+    Implementation:
+    - Penalizes assignments where faculty zone != block zone
+    - Severity increases with containment level (soft → lockdown)
+    - Critical zones (e.g., inpatient) have higher penalties
+    """
+
+    # Zone type priority multipliers
+    ZONE_PRIORITY = {
+        "inpatient": 2.0,      # Critical - highest isolation
+        "outpatient": 1.5,     # Important
+        "on_call": 1.5,        # Important
+        "education": 1.0,      # Standard
+        "research": 0.8,       # Flexible
+        "admin": 0.5,          # Most flexible
+    }
+
+    def __init__(self, weight: float = 12.0):
+        super().__init__(
+            name="ZoneBoundary",
+            constraint_type=ConstraintType.ZONE_BOUNDARY,
+            weight=weight,
+            priority=ConstraintPriority.MEDIUM,
+        )
+
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+        """
+        Add zone boundary penalty to CP-SAT model.
+
+        For each assignment where faculty_zone != block_zone, add penalty.
+        """
+        x = variables.get("assignments", {})
+
+        if not x or not context.zone_assignments or not context.block_zones:
+            return  # No zone data available
+
+        total_zone_penalty = 0
+
+        for faculty in context.faculty:
+            f_i = context.resident_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            faculty_zone = context.zone_assignments.get(faculty.id)
+            if not faculty_zone:
+                continue  # Faculty not assigned to a zone
+
+            for block in context.blocks:
+                b_i = context.block_idx[block.id]
+                if (f_i, b_i) not in x:
+                    continue
+
+                block_zone = context.block_zones.get(block.id)
+                if not block_zone:
+                    continue  # Block not in a zone
+
+                # Penalty if zones don't match
+                if faculty_zone != block_zone:
+                    penalty_factor = 10  # Base penalty for cross-zone
+                    total_zone_penalty += x[f_i, b_i] * penalty_factor
+
+        if total_zone_penalty:
+            variables["zone_penalty"] = total_zone_penalty
+
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+        """Add zone boundary penalty to PuLP model."""
+        import pulp
+        x = variables.get("assignments", {})
+
+        if not x or not context.zone_assignments or not context.block_zones:
+            return
+
+        penalty_terms = []
+
+        for faculty in context.faculty:
+            f_i = context.resident_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            faculty_zone = context.zone_assignments.get(faculty.id)
+            if not faculty_zone:
+                continue
+
+            for block in context.blocks:
+                b_i = context.block_idx[block.id]
+                if (f_i, b_i) not in x:
+                    continue
+
+                block_zone = context.block_zones.get(block.id)
+                if block_zone and faculty_zone != block_zone:
+                    penalty_factor = 10
+                    penalty_terms.append(x[f_i, b_i] * penalty_factor)
+
+        if penalty_terms:
+            variables["zone_penalty"] = pulp.lpSum(penalty_terms)
+
+    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+        """
+        Validate zone boundary compliance.
+
+        Reports:
+        - Cross-zone assignment count
+        - Which zones are being violated
+        - Total isolation breach penalty
+        """
+        violations = []
+        total_penalty = 0.0
+
+        if not context.zone_assignments or not context.block_zones:
+            return ConstraintResult(satisfied=True, penalty=0.0)
+
+        cross_zone_count = 0
+        zone_violation_details = defaultdict(int)
+
+        for assignment in assignments:
+            faculty_zone = context.zone_assignments.get(assignment.person_id)
+            block_zone = context.block_zones.get(assignment.block_id)
+
+            if faculty_zone and block_zone and faculty_zone != block_zone:
+                cross_zone_count += 1
+                zone_violation_details[(str(faculty_zone), str(block_zone))] += 1
+                total_penalty += self.weight
+
+        if cross_zone_count > 0:
+            # Determine severity based on percentage
+            total_assignments = len(assignments)
+            cross_zone_pct = cross_zone_count / total_assignments if total_assignments > 0 else 0
+
+            if cross_zone_pct >= 0.20:
+                severity = "HIGH"
+            elif cross_zone_pct >= 0.10:
+                severity = "MEDIUM"
+            else:
+                severity = "LOW"
+
+            violations.append(ConstraintViolation(
+                constraint_name=self.name,
+                constraint_type=self.constraint_type,
+                severity=severity,
+                message=f"{cross_zone_count} cross-zone assignments ({cross_zone_pct:.0%} of total) - blast radius isolation weakened",
+                details={
+                    "cross_zone_count": cross_zone_count,
+                    "total_assignments": total_assignments,
+                    "cross_zone_percentage": cross_zone_pct,
+                    "zone_violations": dict(zone_violation_details),
+                },
+            ))
+
+        return ConstraintResult(
+            satisfied=True,  # Soft constraint
+            violations=violations,
+            penalty=total_penalty,
+        )
+
+
+class PreferenceTrailConstraint(SoftConstraint):
+    """
+    Uses stigmergy preference trails for assignment optimization.
+
+    Swarm Intelligence Pattern (Biology/AI): Individual agents following
+    simple rules can collectively solve complex problems through indirect
+    coordination. Ants find shortest paths without central planning by
+    depositing and following pheromone trails.
+
+    Rationale:
+    - Preference trails encode learned faculty preferences
+    - Strong trails indicate consistent preference/avoidance
+    - Following trails improves satisfaction without explicit rules
+
+    Implementation:
+    - Rewards assignments matching strong preference trails
+    - Penalizes assignments matching strong avoidance trails
+    - Trail strength (0-1) modulates reward/penalty
+    """
+
+    # Trail strength thresholds
+    STRONG_TRAIL_THRESHOLD = 0.6   # Above this = strong signal
+    WEAK_TRAIL_THRESHOLD = 0.3     # Below this = ignore
+
+    def __init__(self, weight: float = 8.0):
+        super().__init__(
+            name="PreferenceTrail",
+            constraint_type=ConstraintType.PREFERENCE_TRAIL,
+            weight=weight,
+            priority=ConstraintPriority.LOW,
+        )
+
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+        """
+        Add preference trail bonus/penalty to CP-SAT model.
+
+        For each (faculty, block), check if matching preference trail exists.
+        """
+        x = variables.get("assignments", {})
+
+        if not x or not context.preference_trails:
+            return  # No preference data available
+
+        total_trail_score = 0
+
+        for faculty in context.faculty:
+            f_i = context.resident_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            faculty_prefs = context.preference_trails.get(faculty.id, {})
+            if not faculty_prefs:
+                continue
+
+            for block in context.blocks:
+                b_i = context.block_idx[block.id]
+                if (f_i, b_i) not in x:
+                    continue
+
+                # Determine slot type from block
+                slot_type = f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+
+                # Check if we have a preference for this slot type
+                trail_strength = faculty_prefs.get(slot_type, 0.5)
+
+                if trail_strength >= self.STRONG_TRAIL_THRESHOLD:
+                    # Bonus for matching strong preference
+                    bonus = int((trail_strength - 0.5) * 20)
+                    total_trail_score += x[f_i, b_i] * bonus
+                elif trail_strength <= (1.0 - self.STRONG_TRAIL_THRESHOLD):
+                    # Penalty for matching strong avoidance (low trail = avoidance)
+                    penalty = int((0.5 - trail_strength) * 20)
+                    total_trail_score -= x[f_i, b_i] * penalty
+
+        if total_trail_score:
+            variables["trail_bonus"] = total_trail_score
+
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+        """Add preference trail bonus/penalty to PuLP model."""
+        import pulp
+        x = variables.get("assignments", {})
+
+        if not x or not context.preference_trails:
+            return
+
+        bonus_terms = []
+        penalty_terms = []
+
+        for faculty in context.faculty:
+            f_i = context.resident_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            faculty_prefs = context.preference_trails.get(faculty.id, {})
+            if not faculty_prefs:
+                continue
+
+            for block in context.blocks:
+                b_i = context.block_idx[block.id]
+                if (f_i, b_i) not in x:
+                    continue
+
+                slot_type = f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+                trail_strength = faculty_prefs.get(slot_type, 0.5)
+
+                if trail_strength >= self.STRONG_TRAIL_THRESHOLD:
+                    bonus = (trail_strength - 0.5) * 2
+                    bonus_terms.append(x[f_i, b_i] * bonus)
+                elif trail_strength <= (1.0 - self.STRONG_TRAIL_THRESHOLD):
+                    penalty = (0.5 - trail_strength) * 2
+                    penalty_terms.append(x[f_i, b_i] * penalty)
+
+        if bonus_terms:
+            variables["trail_bonus"] = pulp.lpSum(bonus_terms)
+        if penalty_terms:
+            variables["trail_penalty"] = pulp.lpSum(penalty_terms)
+
+    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+        """
+        Validate preference trail alignment.
+
+        Reports:
+        - How well assignments align with preference trails
+        - Assignments against strong avoidance trails
+        """
+        violations = []
+        total_penalty = 0.0
+
+        if not context.preference_trails:
+            return ConstraintResult(satisfied=True, penalty=0.0)
+
+        aligned_count = 0
+        misaligned_count = 0
+        total_checked = 0
+
+        for assignment in assignments:
+            faculty_prefs = context.preference_trails.get(assignment.person_id, {})
+            if not faculty_prefs:
+                continue
+
+            # Get block for slot type
+            block = None
+            for b in context.blocks:
+                if b.id == assignment.block_id:
+                    block = b
+                    break
+
+            if not block:
+                continue
+
+            slot_type = f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+            trail_strength = faculty_prefs.get(slot_type, 0.5)
+            total_checked += 1
+
+            if trail_strength >= self.STRONG_TRAIL_THRESHOLD:
+                aligned_count += 1
+            elif trail_strength <= (1.0 - self.STRONG_TRAIL_THRESHOLD):
+                misaligned_count += 1
+                total_penalty += (0.5 - trail_strength) * self.weight
+
+        if total_checked > 0:
+            alignment_rate = aligned_count / total_checked
+            misalignment_rate = misaligned_count / total_checked
+
+            # Report if significant misalignment
+            if misaligned_count > 0 and misalignment_rate >= 0.10:
+                violations.append(ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity="MEDIUM" if misalignment_rate >= 0.20 else "LOW",
+                    message=f"{misaligned_count} assignments against preference trails ({misalignment_rate:.0%})",
+                    details={
+                        "aligned_count": aligned_count,
+                        "misaligned_count": misaligned_count,
+                        "total_checked": total_checked,
+                        "alignment_rate": alignment_rate,
+                        "misalignment_rate": misalignment_rate,
+                    },
+                ))
+
+        return ConstraintResult(
+            satisfied=True,  # Soft constraint
+            violations=violations,
+            penalty=total_penalty,
+        )
+
+
+class N1VulnerabilityConstraint(SoftConstraint):
+    """
+    Prevents schedules that create single points of failure.
+
+    Power Grid N-1 Pattern: The system must survive the loss of any single
+    component. Applied to scheduling: no service should depend on exactly
+    one faculty member being available.
+
+    Rationale:
+    - N-1 compliance = schedule survives any single faculty absence
+    - Single points of failure cause cascade risks
+    - Cross-training and redundancy improve resilience
+
+    Implementation:
+    - Penalizes assignments that create N-1 vulnerabilities
+    - Higher penalty for critical services/time slots
+    - Identifies faculty who are sole coverage providers
+    """
+
+    def __init__(self, weight: float = 25.0):
+        super().__init__(
+            name="N1Vulnerability",
+            constraint_type=ConstraintType.N1_VULNERABILITY,
+            weight=weight,
+            priority=ConstraintPriority.HIGH,
+        )
+
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+        """
+        Add N-1 vulnerability penalty to CP-SAT model.
+
+        For blocks where only one faculty could be assigned, add penalty.
+        This encourages solutions with redundancy.
+        """
+        x = variables.get("assignments", {})
+
+        if not x:
+            return
+
+        # For each block, count how many faculty could cover it
+        # If only 1 faculty assigned and no alternatives, that's N-1 vulnerable
+        total_n1_penalty = 0
+
+        for block in context.blocks:
+            b_i = context.block_idx[block.id]
+
+            # Count available faculty for this block
+            available_for_block = []
+            for faculty in context.faculty:
+                f_i = context.resident_idx.get(faculty.id)
+                if f_i is None:
+                    continue
+
+                # Check availability
+                is_available = context.availability.get(
+                    faculty.id, {}
+                ).get(block.id, {}).get("available", True)
+
+                if is_available and (f_i, b_i) in x:
+                    available_for_block.append((f_i, faculty.id))
+
+            # If only 1-2 faculty available, add penalty for assignments
+            if len(available_for_block) <= 2:
+                for f_i, _ in available_for_block:
+                    # Penalty scaled by scarcity: 1 available = high, 2 = medium
+                    scarcity_factor = 3 - len(available_for_block)  # 2 or 1
+                    total_n1_penalty += x[f_i, b_i] * scarcity_factor * 10
+
+        if total_n1_penalty:
+            variables["n1_penalty"] = total_n1_penalty
+
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+        """Add N-1 vulnerability penalty to PuLP model."""
+        import pulp
+        x = variables.get("assignments", {})
+
+        if not x:
+            return
+
+        penalty_terms = []
+
+        for block in context.blocks:
+            b_i = context.block_idx[block.id]
+
+            available_for_block = []
+            for faculty in context.faculty:
+                f_i = context.resident_idx.get(faculty.id)
+                if f_i is None:
+                    continue
+
+                is_available = context.availability.get(
+                    faculty.id, {}
+                ).get(block.id, {}).get("available", True)
+
+                if is_available and (f_i, b_i) in x:
+                    available_for_block.append(f_i)
+
+            if len(available_for_block) <= 2:
+                scarcity_factor = 3 - len(available_for_block)
+                for f_i in available_for_block:
+                    penalty_terms.append(x[f_i, b_i] * scarcity_factor)
+
+        if penalty_terms:
+            variables["n1_penalty"] = pulp.lpSum(penalty_terms)
+
+    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+        """
+        Validate N-1 compliance of the schedule.
+
+        Reports:
+        - Blocks that are N-1 vulnerable (single coverage)
+        - Faculty who are single points of failure
+        - Overall N-1 compliance rate
+        """
+        violations = []
+        total_penalty = 0.0
+
+        # Analyze each block for redundancy
+        block_coverage = defaultdict(list)
+        for assignment in assignments:
+            block_coverage[assignment.block_id].append(assignment.person_id)
+
+        n1_vulnerable_blocks = []
+        sole_providers = defaultdict(int)
+
+        for block in context.blocks:
+            providers = block_coverage.get(block.id, [])
+
+            if len(providers) == 1:
+                n1_vulnerable_blocks.append(block.id)
+                sole_providers[providers[0]] += 1
+                total_penalty += self.weight
+
+        # Also check faculty in n1_vulnerable_faculty set
+        for faculty_id in context.n1_vulnerable_faculty:
+            if faculty_id in sole_providers:
+                # Already counted in sole_providers
+                continue
+            # Check how many assignments this faculty has
+            faculty_assignments = [a for a in assignments if a.person_id == faculty_id]
+            if faculty_assignments:
+                # Add extra penalty for known N-1 vulnerable faculty
+                total_penalty += len(faculty_assignments) * self.weight * 0.5
+
+        # Report violations
+        if n1_vulnerable_blocks:
+            vulnerability_rate = len(n1_vulnerable_blocks) / len(context.blocks) if context.blocks else 0
+
+            if vulnerability_rate >= 0.20:
+                severity = "CRITICAL"
+            elif vulnerability_rate >= 0.10:
+                severity = "HIGH"
+            else:
+                severity = "MEDIUM"
+
+            violations.append(ConstraintViolation(
+                constraint_name=self.name,
+                constraint_type=self.constraint_type,
+                severity=severity,
+                message=f"{len(n1_vulnerable_blocks)} blocks have single-point-of-failure coverage ({vulnerability_rate:.0%})",
+                details={
+                    "n1_vulnerable_blocks": len(n1_vulnerable_blocks),
+                    "total_blocks": len(context.blocks),
+                    "vulnerability_rate": vulnerability_rate,
+                    "sole_provider_counts": dict(sole_providers),
+                    "n1_pass": len(n1_vulnerable_blocks) == 0,
+                },
+            ))
+
+        # Report sole providers
+        for faculty_id, sole_count in sole_providers.items():
+            faculty_name = "Unknown"
+            for f in context.faculty:
+                if f.id == faculty_id:
+                    faculty_name = f.name
+                    break
+
+            if sole_count >= 3:  # Report faculty who are sole provider for 3+ blocks
+                violations.append(ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity="HIGH" if sole_count >= 5 else "MEDIUM",
+                    message=f"Faculty {faculty_name} is sole provider for {sole_count} blocks - single point of failure risk",
+                    person_id=faculty_id,
+                    details={
+                        "sole_coverage_blocks": sole_count,
+                        "recommendation": "Cross-train backup faculty",
+                    },
+                ))
+
+        return ConstraintResult(
+            satisfied=True,  # Soft constraint
+            violations=violations,
+            penalty=total_penalty,
+        )
+
+
+# =============================================================================
 # CONSTRAINT MANAGER
 # =============================================================================
 
@@ -1684,28 +2243,40 @@ class ConstraintManager:
         manager.add(EquityConstraint(weight=10.0))
         manager.add(ContinuityConstraint(weight=5.0))
 
-        # Resilience-aware soft constraints (disabled by default for backward compatibility)
+        # Tier 1: Resilience-aware soft constraints (disabled by default for backward compatibility)
         manager.add(HubProtectionConstraint(weight=15.0))
         manager.add(UtilizationBufferConstraint(weight=20.0))
+        # Tier 2: Strategic resilience constraints (disabled by default)
+        manager.add(ZoneBoundaryConstraint(weight=12.0))
+        manager.add(PreferenceTrailConstraint(weight=8.0))
+        manager.add(N1VulnerabilityConstraint(weight=25.0))
         # Disabled by default - enabled when resilience data is provided
         manager.disable("HubProtection")
         manager.disable("UtilizationBuffer")
+        manager.disable("ZoneBoundary")
+        manager.disable("PreferenceTrail")
+        manager.disable("N1Vulnerability")
 
         return manager
 
     @classmethod
-    def create_resilience_aware(cls, target_utilization: float = 0.80) -> "ConstraintManager":
+    def create_resilience_aware(
+        cls,
+        target_utilization: float = 0.80,
+        tier: int = 2,
+    ) -> "ConstraintManager":
         """
         Create manager with resilience-aware constraints enabled.
 
         This configuration:
         - Includes all ACGME compliance constraints
-        - Enables hub protection to prevent over-assigning critical faculty
-        - Enables utilization buffer to maintain 20% capacity reserve
+        - Tier 1: Hub protection, utilization buffer
+        - Tier 2: Zone boundaries, preference trails, N-1 vulnerability
         - Suitable for systems with ResilienceService integration
 
         Args:
             target_utilization: Maximum utilization before penalties (default 80%)
+            tier: Maximum tier to enable (1 or 2, default 2)
 
         Returns:
             ConstraintManager with resilience constraints enabled
@@ -1725,9 +2296,20 @@ class ConstraintManager:
         manager.add(EquityConstraint(weight=10.0))
         manager.add(ContinuityConstraint(weight=5.0))
 
-        # Resilience-aware soft constraints (ENABLED)
+        # Tier 1: Core resilience constraints (ENABLED)
         manager.add(HubProtectionConstraint(weight=15.0))
         manager.add(UtilizationBufferConstraint(weight=20.0, target_utilization=target_utilization))
+
+        # Tier 2: Strategic resilience constraints
+        manager.add(ZoneBoundaryConstraint(weight=12.0))
+        manager.add(PreferenceTrailConstraint(weight=8.0))
+        manager.add(N1VulnerabilityConstraint(weight=25.0))
+
+        # Only enable Tier 2 if requested
+        if tier < 2:
+            manager.disable("ZoneBoundary")
+            manager.disable("PreferenceTrail")
+            manager.disable("N1Vulnerability")
 
         return manager
 
