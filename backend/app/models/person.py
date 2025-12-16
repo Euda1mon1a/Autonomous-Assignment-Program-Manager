@@ -45,6 +45,7 @@ class Person(Base):
     assignments = relationship("Assignment", back_populates="person")
     absences = relationship("Absence", back_populates="person")
     call_assignments = relationship("CallAssignment", back_populates="person")
+    procedure_credentials = relationship("ProcedureCredential", back_populates="person", cascade="all, delete-orphan")
 
     __table_args__ = (
         CheckConstraint("type IN ('resident', 'faculty')", name="check_person_type"),
