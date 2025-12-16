@@ -272,7 +272,7 @@ export function ConflictPatternsView({ onPatternSelect }: ConflictPatternsViewPr
     : patterns;
 
   // Get unique types for filter
-  const uniqueTypes = [...new Set(patterns.map((p) => p.type))];
+  const uniqueTypes = Array.from(new Set(patterns.map((p) => p.type)));
 
   return (
     <div className="space-y-6">
