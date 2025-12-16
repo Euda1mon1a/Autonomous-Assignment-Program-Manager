@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.error_codes import ErrorCode, get_error_code_from_message
 from app.services.procedure_service import ProcedureService
 from app.schemas.procedure import (
     ProcedureCreate,
@@ -92,7 +93,10 @@ class ProcedureController:
         )
 
         if result["error"]:
-            if "not found" in result["error"].lower():
+            # Determine appropriate status code using structured error codes
+            error_code = result.get("error_code") or get_error_code_from_message(result["error"])
+
+            if error_code == ErrorCode.NOT_FOUND:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=result["error"],
