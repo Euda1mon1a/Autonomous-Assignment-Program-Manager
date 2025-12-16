@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.error_codes import ErrorCode, get_error_code_from_message
 from app.services.auth_service import AuthService
 from app.schemas.auth import (
     Token,
@@ -50,9 +51,13 @@ class AuthController:
         )
 
         if result["error"]:
-            # Determine appropriate status code
-            if "Admin access required" in result["error"]:
+            # Determine appropriate status code using structured error codes
+            error_code = result.get("error_code") or get_error_code_from_message(result["error"])
+
+            if error_code == ErrorCode.FORBIDDEN:
                 status_code = status.HTTP_403_FORBIDDEN
+            elif error_code == ErrorCode.UNAUTHORIZED:
+                status_code = status.HTTP_401_UNAUTHORIZED
             else:
                 status_code = status.HTTP_400_BAD_REQUEST
 

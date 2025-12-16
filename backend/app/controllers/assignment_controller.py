@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.error_codes import ErrorCode, get_error_code_from_message
 from app.services.assignment_service import AssignmentService
 from app.schemas.assignment import (
     AssignmentCreate,
@@ -95,10 +96,12 @@ class AssignmentController:
         )
 
         if result["error"]:
-            # Determine appropriate status code
-            if "not found" in result["error"].lower():
+            # Determine appropriate status code using structured error codes
+            error_code = result.get("error_code") or get_error_code_from_message(result["error"])
+
+            if error_code == ErrorCode.NOT_FOUND:
                 status_code = status.HTTP_404_NOT_FOUND
-            elif "modified by another user" in result["error"].lower():
+            elif error_code in (ErrorCode.CONFLICT, ErrorCode.CONCURRENT_MODIFICATION):
                 status_code = status.HTTP_409_CONFLICT
             else:
                 status_code = status.HTTP_400_BAD_REQUEST
