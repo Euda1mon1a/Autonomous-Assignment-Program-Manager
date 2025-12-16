@@ -1,0 +1,326 @@
+"""Email service for sending certification expiration reminders.
+
+This service handles sending email notifications for:
+- Certification expiration reminders (6 months, 3 months, 1 month, 2 weeks, 1 week)
+- Compliance summary reports
+
+Configuration is done via environment variables:
+- SMTP_HOST: SMTP server hostname
+- SMTP_PORT: SMTP server port (default: 587)
+- SMTP_USER: SMTP username
+- SMTP_PASSWORD: SMTP password
+- SMTP_FROM_EMAIL: From email address
+- SMTP_FROM_NAME: From name (default: "Residency Scheduler")
+- SMTP_USE_TLS: Use TLS (default: True)
+"""
+
+import smtplib
+import logging
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from typing import List, Optional
+from datetime import date
+
+from app.models.certification import PersonCertification
+from app.models.person import Person
+
+logger = logging.getLogger(__name__)
+
+
+class EmailConfig:
+    """Email configuration from environment variables."""
+
+    def __init__(
+        self,
+        host: str = "localhost",
+        port: int = 587,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+        from_email: str = "noreply@hospital.org",
+        from_name: str = "Residency Scheduler",
+        use_tls: bool = True,
+        enabled: bool = True,
+    ):
+        self.host = host
+        self.port = port
+        self.user = user
+        self.password = password
+        self.from_email = from_email
+        self.from_name = from_name
+        self.use_tls = use_tls
+        self.enabled = enabled
+
+    @classmethod
+    def from_env(cls) -> "EmailConfig":
+        """Load configuration from environment variables."""
+        import os
+        return cls(
+            host=os.getenv("SMTP_HOST", "localhost"),
+            port=int(os.getenv("SMTP_PORT", "587")),
+            user=os.getenv("SMTP_USER"),
+            password=os.getenv("SMTP_PASSWORD"),
+            from_email=os.getenv("SMTP_FROM_EMAIL", "noreply@hospital.org"),
+            from_name=os.getenv("SMTP_FROM_NAME", "Residency Scheduler"),
+            use_tls=os.getenv("SMTP_USE_TLS", "true").lower() == "true",
+            enabled=os.getenv("SMTP_ENABLED", "true").lower() == "true",
+        )
+
+
+class EmailService:
+    """Service for sending emails."""
+
+    def __init__(self, config: Optional[EmailConfig] = None):
+        self.config = config or EmailConfig.from_env()
+
+    def send_email(
+        self,
+        to_email: str,
+        subject: str,
+        body_html: str,
+        body_text: Optional[str] = None,
+    ) -> bool:
+        """
+        Send an email.
+
+        Returns True if successful, False otherwise.
+        """
+        if not self.config.enabled:
+            logger.info(f"Email disabled. Would send to {to_email}: {subject}")
+            return True
+
+        if not to_email:
+            logger.warning("No email address provided, skipping send")
+            return False
+
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = f"{self.config.from_name} <{self.config.from_email}>"
+            msg["To"] = to_email
+
+            # Attach text and HTML versions
+            if body_text:
+                msg.attach(MIMEText(body_text, "plain"))
+            msg.attach(MIMEText(body_html, "html"))
+
+            # Connect and send
+            with smtplib.SMTP(self.config.host, self.config.port) as server:
+                if self.config.use_tls:
+                    server.starttls()
+                if self.config.user and self.config.password:
+                    server.login(self.config.user, self.config.password)
+                server.sendmail(self.config.from_email, to_email, msg.as_string())
+
+            logger.info(f"Email sent to {to_email}: {subject}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to send email to {to_email}: {e}")
+            return False
+
+    def send_certification_reminder(
+        self,
+        person: Person,
+        certification: PersonCertification,
+        days_until_expiration: int,
+    ) -> bool:
+        """Send a certification expiration reminder email."""
+        if not person.email:
+            logger.warning(f"No email for {person.name}, skipping reminder")
+            return False
+
+        cert_name = certification.certification_type.name
+        cert_full_name = certification.certification_type.full_name or cert_name
+        expiration_date = certification.expiration_date.strftime("%B %d, %Y")
+
+        # Determine urgency level for styling
+        if days_until_expiration <= 7:
+            urgency = "URGENT"
+            urgency_color = "#dc3545"  # Red
+        elif days_until_expiration <= 30:
+            urgency = "ACTION REQUIRED"
+            urgency_color = "#fd7e14"  # Orange
+        elif days_until_expiration <= 90:
+            urgency = "REMINDER"
+            urgency_color = "#ffc107"  # Yellow
+        else:
+            urgency = "NOTICE"
+            urgency_color = "#17a2b8"  # Blue
+
+        subject = f"[{urgency}] Your {cert_name} certification expires in {days_until_expiration} days"
+
+        body_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background-color: {urgency_color}; color: white; padding: 20px; text-align: center; }}
+                .content {{ padding: 20px; background-color: #f9f9f9; }}
+                .details {{ background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid {urgency_color}; }}
+                .footer {{ padding: 15px; font-size: 12px; color: #666; text-align: center; }}
+                .btn {{ display: inline-block; padding: 10px 20px; background-color: {urgency_color}; color: white; text-decoration: none; border-radius: 5px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>{urgency}: Certification Expiring</h1>
+                </div>
+                <div class="content">
+                    <p>Dear {person.name},</p>
+
+                    <p>This is a reminder that your <strong>{cert_full_name} ({cert_name})</strong> certification
+                    will expire in <strong>{days_until_expiration} days</strong>.</p>
+
+                    <div class="details">
+                        <p><strong>Certification:</strong> {cert_full_name} ({cert_name})</p>
+                        <p><strong>Expiration Date:</strong> {expiration_date}</p>
+                        <p><strong>Days Remaining:</strong> {days_until_expiration}</p>
+                    </div>
+
+                    <p>Please renew your certification before the expiration date to maintain compliance.</p>
+
+                    <p>If you have already renewed, please update your records in the scheduling system.</p>
+                </div>
+                <div class="footer">
+                    <p>This is an automated message from the Residency Scheduling System.</p>
+                    <p>Please do not reply to this email.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        body_text = f"""
+{urgency}: Certification Expiring
+
+Dear {person.name},
+
+This is a reminder that your {cert_full_name} ({cert_name}) certification
+will expire in {days_until_expiration} days.
+
+Certification: {cert_full_name} ({cert_name})
+Expiration Date: {expiration_date}
+Days Remaining: {days_until_expiration}
+
+Please renew your certification before the expiration date to maintain compliance.
+
+If you have already renewed, please update your records in the scheduling system.
+
+---
+This is an automated message from the Residency Scheduling System.
+        """
+
+        return self.send_email(person.email, subject, body_html, body_text)
+
+    def send_compliance_summary(
+        self,
+        to_email: str,
+        expiring_certs: List[PersonCertification],
+        expired_certs: List[PersonCertification],
+    ) -> bool:
+        """Send a compliance summary email to administrators."""
+        subject = f"Certification Compliance Summary - {date.today().strftime('%B %d, %Y')}"
+
+        # Build expiring list HTML
+        expiring_rows = ""
+        for cert in expiring_certs:
+            expiring_rows += f"""
+            <tr>
+                <td>{cert.person.name}</td>
+                <td>{cert.certification_type.name}</td>
+                <td>{cert.expiration_date.strftime('%Y-%m-%d')}</td>
+                <td>{cert.days_until_expiration} days</td>
+            </tr>
+            """
+
+        # Build expired list HTML
+        expired_rows = ""
+        for cert in expired_certs:
+            expired_rows += f"""
+            <tr style="background-color: #ffe6e6;">
+                <td>{cert.person.name}</td>
+                <td>{cert.certification_type.name}</td>
+                <td>{cert.expiration_date.strftime('%Y-%m-%d')}</td>
+                <td style="color: red;">EXPIRED</td>
+            </tr>
+            """
+
+        body_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 800px; margin: 0 auto; padding: 20px; }}
+                .header {{ background-color: #343a40; color: white; padding: 20px; text-align: center; }}
+                .content {{ padding: 20px; }}
+                table {{ width: 100%; border-collapse: collapse; margin: 15px 0; }}
+                th, td {{ border: 1px solid #ddd; padding: 10px; text-align: left; }}
+                th {{ background-color: #f8f9fa; }}
+                .section {{ margin: 20px 0; }}
+                .section h2 {{ color: #343a40; border-bottom: 2px solid #343a40; padding-bottom: 10px; }}
+                .alert {{ padding: 15px; margin: 15px 0; border-radius: 5px; }}
+                .alert-danger {{ background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }}
+                .alert-warning {{ background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Certification Compliance Summary</h1>
+                    <p>{date.today().strftime('%B %d, %Y')}</p>
+                </div>
+                <div class="content">
+                    {"<div class='alert alert-danger'><strong>" + str(len(expired_certs)) + " certifications have EXPIRED and require immediate attention.</strong></div>" if expired_certs else ""}
+
+                    {"<div class='alert alert-warning'><strong>" + str(len(expiring_certs)) + " certifications are expiring within the next 6 months.</strong></div>" if expiring_certs else ""}
+
+                    {f'''
+                    <div class="section">
+                        <h2>Expired Certifications ({len(expired_certs)})</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Person</th>
+                                    <th>Certification</th>
+                                    <th>Expiration Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {expired_rows}
+                            </tbody>
+                        </table>
+                    </div>
+                    ''' if expired_certs else ''}
+
+                    {f'''
+                    <div class="section">
+                        <h2>Expiring Soon ({len(expiring_certs)})</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Person</th>
+                                    <th>Certification</th>
+                                    <th>Expiration Date</th>
+                                    <th>Time Remaining</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {expiring_rows}
+                            </tbody>
+                        </table>
+                    </div>
+                    ''' if expiring_certs else ''}
+
+                    {'''<p style="color: green;"><strong>All certifications are current!</strong></p>''' if not expired_certs and not expiring_certs else ''}
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        return self.send_email(to_email, subject, body_html)

@@ -53,10 +53,26 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Failed to initialize resilience metrics: {e}")
 
+    # Start certification scheduler for expiration reminders
+    try:
+        from app.services.certification_scheduler import start_scheduler
+        start_scheduler()
+        logger.info("Certification scheduler started")
+    except Exception as e:
+        logger.warning(f"Failed to start certification scheduler: {e}")
+
     yield
 
     # Shutdown
     logger.info("Shutting down Residency Scheduler API")
+
+    # Stop certification scheduler
+    try:
+        from app.services.certification_scheduler import stop_scheduler
+        stop_scheduler()
+        logger.info("Certification scheduler stopped")
+    except Exception as e:
+        logger.warning(f"Failed to stop certification scheduler: {e}")
 
 
 app = FastAPI(
