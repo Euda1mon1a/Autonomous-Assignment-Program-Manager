@@ -286,15 +286,23 @@ class SchedulingEngine:
         """
         Populate resilience data in the scheduling context.
 
-        This fetches:
+        Tier 1 (Critical):
         - Hub scores from hub analysis
         - Current utilization from resilience service
+
+        Tier 2 (Strategic):
         - N-1 vulnerable faculty from contingency analysis
-        - Preference trails from stigmergy (if available)
+        - Preference trails from stigmergy
+        - Zone assignments from blast radius isolation
 
         The data enables resilience-aware constraints to function.
+        Constraints are auto-enabled when their data is available.
         """
         try:
+            # =================================================================
+            # TIER 1: Critical resilience data
+            # =================================================================
+
             # Get hub scores
             hub_scores = self._get_hub_scores(faculty)
             if hub_scores:
@@ -306,7 +314,6 @@ class SchedulingEngine:
                     self.constraint_manager.enable("HubProtection")
 
             # Get current utilization from pre-generation check
-            # This is already calculated in check_health()
             if hasattr(self, '_pre_health_report') and self._pre_health_report:
                 context.current_utilization = self._pre_health_report.utilization.utilization_rate
                 context.target_utilization = self.resilience.config.max_utilization
@@ -315,16 +322,44 @@ class SchedulingEngine:
                 if self.constraint_manager:
                     self.constraint_manager.enable("UtilizationBuffer")
 
-            # Get N-1 vulnerable faculty from latest contingency analysis
+            # =================================================================
+            # TIER 2: Strategic resilience data
+            # =================================================================
+
+            # Get N-1 vulnerable faculty from contingency analysis
             n1_vulnerable = self._get_n1_vulnerable_faculty(faculty, blocks)
             if n1_vulnerable:
                 context.n1_vulnerable_faculty = n1_vulnerable
                 logger.debug(f"Identified {len(n1_vulnerable)} N-1 vulnerable faculty")
 
-            # Get preference trails from stigmergy (for future use)
+            # Always enable N1 constraint - it can work without pre-identified faculty
+            # by analyzing the solution for single points of failure
+            if self.constraint_manager:
+                self.constraint_manager.enable("N1Vulnerability")
+
+            # Get preference trails from stigmergy
             preference_trails = self._get_preference_trails(faculty)
             if preference_trails:
                 context.preference_trails = preference_trails
+                logger.debug(f"Loaded preference trails for {len(preference_trails)} faculty")
+
+                # Enable preference trail constraint
+                if self.constraint_manager:
+                    self.constraint_manager.enable("PreferenceTrail")
+
+            # Get zone assignments from blast radius isolation
+            zone_data = self._get_zone_assignments(faculty, blocks)
+            if zone_data:
+                context.zone_assignments = zone_data.get("faculty_zones", {})
+                context.block_zones = zone_data.get("block_zones", {})
+                logger.debug(
+                    f"Loaded zone data: {len(context.zone_assignments)} faculty, "
+                    f"{len(context.block_zones)} blocks"
+                )
+
+                # Enable zone boundary constraint
+                if self.constraint_manager:
+                    self.constraint_manager.enable("ZoneBoundary")
 
         except Exception as e:
             logger.warning(f"Failed to populate resilience data: {e}")
@@ -400,6 +435,51 @@ class SchedulingEngine:
             logger.debug(f"Could not get preference trails: {e}")
 
         return preference_trails
+
+    def _get_zone_assignments(
+        self,
+        faculty: list[Person],
+        blocks: list[Block],
+    ) -> dict:
+        """
+        Get zone assignment data from blast radius isolation system.
+
+        Returns dict with:
+        - faculty_zones: {faculty_id -> zone_id}
+        - block_zones: {block_id -> zone_id}
+
+        Used to enforce zone boundaries and contain failures.
+        """
+        zone_data = {
+            "faculty_zones": {},
+            "block_zones": {},
+        }
+
+        try:
+            if hasattr(self.resilience, 'blast_radius'):
+                blast_radius = self.resilience.blast_radius
+
+                # Get faculty zone assignments
+                for fac in faculty:
+                    zone = blast_radius.get_faculty_zone(fac.id)
+                    if zone:
+                        zone_data["faculty_zones"][fac.id] = zone.id
+
+                # Get block zone assignments (from rotation template or service type)
+                for block in blocks:
+                    # Blocks may be associated with zones through their rotation template
+                    # or through explicit zone assignment
+                    zone = blast_radius.get_block_zone(block.id)
+                    if zone:
+                        zone_data["block_zones"][block.id] = zone.id
+
+        except Exception as e:
+            logger.debug(f"Could not get zone assignments: {e}")
+
+        # Only return if we have meaningful data
+        if zone_data["faculty_zones"] or zone_data["block_zones"]:
+            return zone_data
+        return None
 
     def _run_solver(
         self,

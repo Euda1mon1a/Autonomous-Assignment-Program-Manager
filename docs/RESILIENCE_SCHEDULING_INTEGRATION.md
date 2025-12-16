@@ -53,8 +53,15 @@ This document describes the integration between the scheduling engine (`scheduli
 │  │  Soft Constraints:                              │ │   │
 │  │   - CoverageConstraint                          │ │   │
 │  │   - EquityConstraint                            │ │   │
+│  │                                                 │ │   │
+│  │  Tier 1 Resilience (Critical):                 │ │   │
 │  │   + HubProtectionConstraint  ◀─────────────────┤ │   │
 │  │   + UtilizationBufferConstraint ◀──────────────┤ │   │
+│  │                                                 │ │   │
+│  │  Tier 2 Resilience (Strategic):                │ │   │
+│  │   + ZoneBoundaryConstraint ◀───────────────────┤ │   │
+│  │   + PreferenceTrailConstraint ◀────────────────┤ │   │
+│  │   + N1VulnerabilityConstraint ◀────────────────┤ │   │
 │  └─────────────────────────────────────────────────┘ │   │
 │                                                      │   │
 └───────────────────────────────────────────────────────┼───┘
@@ -69,6 +76,7 @@ This document describes the integration between the scheduling engine (`scheduli
                     │ contingency        │
                     │ stigmergy          │
                     │ utilization        │
+                    │ blast_radius       │
                     └────────────────────┘
 ```
 
@@ -321,50 +329,89 @@ result = constraint_manager.validate_all(assignments, context)
 }
 ```
 
-## Future Tier 2 Integration
+## Tier 2 Constraints (Implemented)
 
-The following features are prepared for but not yet fully integrated:
+### 5. ZoneBoundaryConstraint
 
-### Zone-Aware Scheduling (Blast Radius)
+`backend/app/scheduling/constraints.py`
 
-```python
-# Future: SchedulingContext will include zone data
-context.zone_assignments = {
-    faculty_1.id: zone_inpatient.id,
-    faculty_2.id: zone_outpatient.id,
-}
-context.block_zones = {
-    block_1.id: zone_inpatient.id,
-    block_2.id: zone_outpatient.id,
-}
+Respects blast radius zone boundaries in scheduling.
 
-# Future: ZoneBoundaryConstraint
-# Penalizes cross-zone assignments to contain failures
+**Pattern (AWS Architecture):**
+- Failures should be contained within defined boundaries ("cells")
+- A problem in one zone cannot propagate to affect others
+- Zone A failure → Zones B and C continue unaffected
+
+**Implementation:**
+- Penalizes assignments where faculty_zone != block_zone
+- Critical zones (inpatient) have higher isolation requirements
+- Auto-enabled when zone data is available
+
+**Example Zones:**
+```
+Zone A: Inpatient (ICU, Wards, Procedures)
+Zone B: Outpatient (Clinics, Consults)
+Zone C: Education (Didactics, Simulation)
 ```
 
-### Preference Trail Integration (Stigmergy)
+**Penalty:** `cross_zone_count × weight (12.0)`
 
+### 6. PreferenceTrailConstraint
+
+`backend/app/scheduling/constraints.py`
+
+Uses stigmergy preference trails for assignment optimization.
+
+**Pattern (Swarm Intelligence):**
+- Individual agents follow pheromone trails
+- Strong trails indicate consistent preference/avoidance
+- Collective optimization emerges from local signals
+
+**Trail Thresholds:**
+- `STRONG_TRAIL_THRESHOLD = 0.6`: Strong signal
+- `WEAK_TRAIL_THRESHOLD = 0.3`: Ignore
+
+**Implementation:**
 ```python
-# Future: Use preference trails in assignment scoring
-context.preference_trails = {
-    faculty_1.id: {
-        "monday_am": 0.8,  # Strong preference
-        "friday_pm": 0.2,  # Avoidance
+# Slot type derived from block: "monday_am", "friday_pm", etc.
+slot_type = f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+
+# Trail strength determines bonus/penalty
+if trail_strength >= 0.6:  # Preference
+    bonus = (trail_strength - 0.5) × 20
+elif trail_strength <= 0.4:  # Avoidance
+    penalty = (0.5 - trail_strength) × 20
+```
+
+### 7. N1VulnerabilityConstraint
+
+`backend/app/scheduling/constraints.py`
+
+Prevents schedules that create single points of failure.
+
+**Pattern (Power Grid N-1):**
+- System must survive loss of any single component
+- No service should depend on exactly one faculty member
+- Redundancy improves resilience
+
+**Implementation:**
+- Penalizes blocks with only 1-2 available faculty
+- Scarcity factor: 1 available = 2x penalty, 2 available = 1x penalty
+- Reports sole providers (faculty who are only coverage for multiple blocks)
+
+**Violation Example:**
+```json
+{
+    "constraint_name": "N1Vulnerability",
+    "severity": "HIGH",
+    "message": "15 blocks have single-point-of-failure coverage (12%)",
+    "details": {
+        "n1_vulnerable_blocks": 15,
+        "vulnerability_rate": 0.12,
+        "sole_provider_counts": {"faculty_1_id": 8, "faculty_2_id": 7},
+        "n1_pass": false
     }
 }
-
-# Future: PreferenceTrailConstraint
-# Rewards assignments matching positive trails
-```
-
-### N-1 Vulnerability as Constraint
-
-```python
-# Future: Penalize schedules that create single points of failure
-context.n1_vulnerable_faculty = {faculty_1.id, faculty_2.id}
-
-# Future: N1VulnerabilityConstraint
-# Prevents any single faculty from being sole coverage for a service
 ```
 
 ## Configuration Reference
@@ -378,20 +425,39 @@ class ResilienceConfig:
     max_utilization: float = 0.80
     warning_threshold: float = 0.70
 
-    # Tier 3: Hub Analysis settings
+    # Hub Analysis settings
     hub_threshold: float = 0.4           # Score to be considered a hub
     critical_hub_threshold: float = 0.6  # Score for critical hub status
 ```
 
 ### Constraint Weights (Defaults)
 
-| Constraint | Weight | Priority | Effect |
-|------------|--------|----------|--------|
-| CoverageConstraint | 1000.0 | HIGH | Maximize block coverage |
-| UtilizationBufferConstraint | 20.0 | HIGH | Maintain 20% buffer |
-| HubProtectionConstraint | 15.0 | MEDIUM | Protect critical faculty |
-| EquityConstraint | 10.0 | MEDIUM | Balance workload |
-| ContinuityConstraint | 5.0 | LOW | Minimize rotation changes |
+| Constraint | Weight | Priority | Tier | Effect |
+|------------|--------|----------|------|--------|
+| CoverageConstraint | 1000.0 | HIGH | - | Maximize block coverage |
+| N1VulnerabilityConstraint | 25.0 | HIGH | 2 | Prevent single points of failure |
+| UtilizationBufferConstraint | 20.0 | HIGH | 1 | Maintain 20% buffer |
+| HubProtectionConstraint | 15.0 | MEDIUM | 1 | Protect critical faculty |
+| ZoneBoundaryConstraint | 12.0 | MEDIUM | 2 | Contain failures to zones |
+| EquityConstraint | 10.0 | MEDIUM | - | Balance workload |
+| PreferenceTrailConstraint | 8.0 | LOW | 2 | Follow learned preferences |
+| ContinuityConstraint | 5.0 | LOW | - | Minimize rotation changes |
+
+### Factory Methods
+
+```python
+# Backward compatible (all resilience constraints disabled)
+ConstraintManager.create_default()
+
+# Tier 1 only (hub protection, utilization buffer)
+ConstraintManager.create_resilience_aware(tier=1)
+
+# Full resilience (Tier 1 + Tier 2)
+ConstraintManager.create_resilience_aware(tier=2)  # default
+
+# Custom utilization target
+ConstraintManager.create_resilience_aware(target_utilization=0.75)
+```
 
 ## Testing
 
