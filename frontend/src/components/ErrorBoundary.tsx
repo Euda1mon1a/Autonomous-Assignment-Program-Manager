@@ -219,7 +219,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     // Store error info in state
     this.setState({ errorInfo });
 
-    // Log error details to console in development
+    // ErrorBoundary should log to console for debugging purposes.
+    // Console logging in error boundaries is appropriate because:
+    // 1. Error boundaries are specifically designed for catching and reporting errors
+    // 2. Console output helps developers diagnose issues during development
+    // 3. In production, this data would typically be sent to an error reporting service
     if (process.env.NODE_ENV === 'development') {
       console.group('%c Error Boundary Caught Error', 'color: #ef4444; font-weight: bold');
       console.error('Error:', error);
