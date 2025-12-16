@@ -124,7 +124,7 @@ class ResilienceEvent(Base):
     related_health_check_id = Column(GUID(), ForeignKey("resilience_health_checks.id"))
 
     ***REMOVED*** Additional context
-    metadata = Column(JSONType())
+    event_metadata = Column(JSONType())
 
     ***REMOVED*** Relationships
     health_check = relationship("ResilienceHealthCheck", backref="events")

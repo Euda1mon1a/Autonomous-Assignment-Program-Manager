@@ -2,11 +2,10 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey, UniqueConstraint, CheckConstraint, Float
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
-from app.db.types import GUID
+from app.db.types import GUID, JSONType
 
 
 class Assignment(Base):
@@ -32,10 +31,10 @@ class Assignment(Base):
     override_acknowledged_at = Column(DateTime)  ***REMOVED*** When user acknowledged ACGME violation
 
     ***REMOVED*** Explainability fields - transparency into scheduling decisions
-    explain_json = Column(JSONB)  ***REMOVED*** Full DecisionExplanation as JSON
+    explain_json = Column(JSONType())  ***REMOVED*** Full DecisionExplanation as JSON
     confidence = Column(Float)  ***REMOVED*** Confidence score 0-1
     score = Column(Float)  ***REMOVED*** Objective score for this assignment
-    alternatives_json = Column(JSONB)  ***REMOVED*** Top alternatives considered (AlternativeCandidate[])
+    alternatives_json = Column(JSONType())  ***REMOVED*** Top alternatives considered (AlternativeCandidate[])
     audit_hash = Column(String(64))  ***REMOVED*** SHA-256 of inputs+outputs for integrity verification
 
     ***REMOVED*** Audit
