@@ -502,3 +502,288 @@ def test_utilization_buffer_respected():
 - [RESILIENCE_FRAMEWORK.md](./RESILIENCE_FRAMEWORK.md) - Full resilience concept documentation
 - [SCHEDULING_OPTIMIZATION.md](./SCHEDULING_OPTIMIZATION.md) - Solver algorithms
 - [TODO_RESILIENCE.md](./TODO_RESILIENCE.md) - Implementation status
+
+---
+
+## Tier 2 Reflection: What Works, What Doesn't Translate
+
+### Successfully Integrated into Constraints
+
+| Resilience Concept | Constraint | Integration Quality |
+|-------------------|------------|---------------------|
+| Hub Vulnerability (Network Theory) | HubProtectionConstraint | ✅ Excellent - direct translation |
+| 80% Utilization (Queuing Theory) | UtilizationBufferConstraint | ✅ Excellent - direct translation |
+| Blast Radius Isolation (AWS) | ZoneBoundaryConstraint | ✅ Good - requires zone setup |
+| Stigmergy Trails (Swarm Intelligence) | PreferenceTrailConstraint | ✅ Good - requires trail history |
+| N-1 Contingency (Power Grid) | N1VulnerabilityConstraint | ✅ Good - works without pre-analysis |
+
+### Resilience Features That Don't Translate to Constraints
+
+Some resilience concepts from the framework don't fit the constraint-based optimization model:
+
+#### 1. Homeostasis/Feedback Loops (Biology)
+
+**Why it doesn't translate:**
+- Operates across multiple scheduling runs, not within a single solve
+- Involves tracking deviation from setpoints over time
+- Requires adjusting weights/targets between runs, not during optimization
+
+**Better integration approach:**
+```python
+# Meta-scheduler that adjusts constraint weights between runs
+class HomeostasisAdjuster:
+    def adjust_for_next_run(self, health_history):
+        # If coverage consistently low, increase CoverageConstraint weight
+        # If burnout indicators high, increase UtilizationBuffer threshold
+        # This adjusts inputs TO the solver, not the solver itself
+        pass
+```
+
+#### 2. Le Chatelier's Principle (Chemistry)
+
+**Why it doesn't translate:**
+- Models stress response and compensation debt over time
+- Predicts equilibrium shifts, doesn't constrain solutions
+- Better suited for advisory/prediction than optimization
+
+**Better integration approach:**
+```python
+# Post-solve advisory: "This schedule requires X compensation,
+# which will create Y burnout debt by month-end"
+class EquilibriumAdvisor:
+    def assess_schedule(self, assignments):
+        stress = calculate_applied_stress(assignments)
+        compensation = stress * 0.5  # Partial compensation
+        debt = compensation * 1.5  # Cost of compensation
+        return SustainabilityReport(stress, compensation, debt)
+```
+
+#### 3. Cognitive Load Management (Psychology)
+
+**Why it doesn't translate:**
+- Affects UI/workflow, not the optimization algorithm
+- Operates on human decision-making, not solver decisions
+- Miller's Law limits apply to coordinators, not software
+
+**Better integration approach:**
+```python
+# Limit manual decisions presented to coordinators
+# Batch schedule changes for approval
+# Provide smart defaults with one-click accept
+# This wraps the scheduler, doesn't change its behavior
+```
+
+### Key Insight: Constraint vs. Advisory vs. Meta-Control
+
+| Type | When Applied | Example |
+|------|--------------|---------|
+| **Constraint** | During single solve | HubProtectionConstraint |
+| **Advisory** | After solve (validation) | Le Chatelier equilibrium analysis |
+| **Meta-Control** | Between solves | Homeostasis weight adjustment |
+
+---
+
+## Tier 3 Preparation: What's Next
+
+### Tier 3 Constraint Candidates
+
+Based on analysis, these could be implemented as constraints:
+
+#### 1. AllostasisConstraint (Cumulative Stress)
+
+**Concept:** Track faculty cumulative stress ("allostatic load") and penalize
+assignments that push individuals into burnout risk.
+
+```python
+class AllostasisConstraint(SoftConstraint):
+    """
+    Prevents assigning overloaded faculty.
+
+    Allostasis (biology): Cumulative wear and tear from chronic stress.
+    Unlike acute stress, allostatic load accumulates and doesn't reset.
+
+    Implementation:
+    - Track rolling stress score per faculty
+    - Penalize assignments to high-allostasis individuals
+    - Encourage recovery time for stressed faculty
+    """
+
+    def validate(self, assignments, context):
+        for faculty_id, allostatic_load in context.allostatic_loads.items():
+            if allostatic_load > self.BURNOUT_THRESHOLD:
+                # Penalize any assignments to this faculty
+                pass
+```
+
+**Data needed in SchedulingContext:**
+- `allostatic_loads: dict[UUID, float]` - Cumulative stress per faculty
+- `recovery_requirements: dict[UUID, int]` - Days off needed
+
+#### 2. EquilibriumShiftConstraint (Le Chatelier Integration)
+
+**Concept:** Penalize schedules that create unsustainable compensation demands.
+
+```python
+class EquilibriumShiftConstraint(SoftConstraint):
+    """
+    Penalizes schedules requiring excessive compensation.
+
+    Le Chatelier: Systems under stress partially compensate,
+    but compensation has costs (overtime, burnout debt).
+
+    Implementation:
+    - Calculate compensation required for schedule
+    - Penalize if compensation_debt exceeds sustainable threshold
+    """
+
+    def validate(self, assignments, context):
+        compensation_debt = calculate_compensation_debt(assignments, context)
+        if compensation_debt > context.sustainable_compensation_limit:
+            # High penalty for unsustainable schedules
+            pass
+```
+
+**Data needed in SchedulingContext:**
+- `baseline_capacity: float` - Normal capacity before stress
+- `sustainable_compensation_limit: float` - Max acceptable debt
+
+#### 3. DecisionComplexityConstraint (Cognitive Load Proxy)
+
+**Concept:** Penalize schedules that are hard for humans to understand/manage.
+
+```python
+class DecisionComplexityConstraint(SoftConstraint):
+    """
+    Penalizes overly complex schedules.
+
+    Cognitive psychology: Complexity increases coordinator burden.
+    Simple, predictable schedules reduce decision fatigue.
+
+    Implementation:
+    - Penalize excessive pattern changes
+    - Reward consistent assignments
+    - Penalize exceptions and special cases
+    """
+
+    def validate(self, assignments, context):
+        complexity_score = calculate_schedule_complexity(assignments)
+        # Changes per week, exceptions, pattern breaks, etc.
+        if complexity_score > self.SIMPLICITY_TARGET:
+            # Penalty proportional to excess complexity
+            pass
+```
+
+**Data needed in SchedulingContext:**
+- `pattern_expectations: dict` - Expected regular patterns
+- `exception_count_limit: int` - Max tolerable exceptions
+
+### Meta-Control Systems (Between Solves)
+
+These would wrap the scheduler, not be constraints:
+
+#### 1. HomeostasisController
+
+```python
+class HomeostasisController:
+    """
+    Adjusts constraint weights between scheduling runs based on
+    historical deviation from setpoints.
+
+    Runs BEFORE generate(), modifies constraint_manager weights.
+    """
+
+    def adjust_weights(self, constraint_manager, health_history):
+        # If coverage consistently below target, increase weight
+        coverage_trend = analyze_trend(health_history, 'coverage')
+        if coverage_trend < -0.05:  # 5% below setpoint trending down
+            coverage_constraint = constraint_manager.get("Coverage")
+            coverage_constraint.weight *= 1.1  # 10% increase
+
+        # If utilization consistently high, lower threshold
+        util_trend = analyze_trend(health_history, 'utilization')
+        if util_trend > 0.85:  # Trending above buffer
+            util_constraint = constraint_manager.get("UtilizationBuffer")
+            util_constraint.target_utilization -= 0.05  # Tighten buffer
+```
+
+#### 2. CognitiveLoadBatcher
+
+```python
+class CognitiveLoadBatcher:
+    """
+    Batches schedule changes to reduce coordinator cognitive load.
+
+    Runs AFTER generate(), before presenting to user.
+    """
+
+    MAX_DECISIONS_PER_BATCH = 7  # Miller's Law
+
+    def batch_for_review(self, changes):
+        # Group similar changes
+        # Prioritize by impact
+        # Provide smart defaults
+        # Return digestible batches
+        pass
+```
+
+### Data Pipeline for Tier 3
+
+To enable Tier 3 constraints, the following data needs to flow from ResilienceService to SchedulingContext:
+
+```
+ResilienceService
+├── homeostasis.py
+│   └── get_allostatic_loads(faculty) → dict[UUID, float]
+│   └── get_recovery_requirements(faculty) → dict[UUID, int]
+│
+├── le_chatelier.py
+│   └── get_baseline_capacity() → float
+│   └── get_compensation_debt() → float
+│
+├── cognitive_load.py
+│   └── get_decision_budget() → int (remaining decisions)
+│   └── get_complexity_limit() → float
+│
+└── → SchedulingContext (extended)
+        + allostatic_loads
+        + recovery_requirements
+        + baseline_capacity
+        + compensation_debt
+        + decision_complexity_limit
+```
+
+### Implementation Priority for Tier 3
+
+| Feature | Impact | Complexity | Priority |
+|---------|--------|------------|----------|
+| AllostasisConstraint | High (prevents burnout) | Medium | 1 |
+| HomeostasisController | High (adaptive scheduling) | Medium | 2 |
+| EquilibriumShiftConstraint | Medium (sustainability) | Low | 3 |
+| CognitiveLoadBatcher | Medium (UX improvement) | Medium | 4 |
+| DecisionComplexityConstraint | Low (nice-to-have) | Low | 5 |
+
+---
+
+## Current Implementation Status
+
+### Completed (Tier 1 + Tier 2)
+
+| Feature | Status | Location |
+|---------|--------|----------|
+| SchedulingContext resilience fields | ✅ Complete | `constraints.py` |
+| HubProtectionConstraint | ✅ Complete | `constraints.py` |
+| UtilizationBufferConstraint | ✅ Complete | `constraints.py` |
+| ZoneBoundaryConstraint | ✅ Complete | `constraints.py` |
+| PreferenceTrailConstraint | ✅ Complete | `constraints.py` |
+| N1VulnerabilityConstraint | ✅ Complete | `constraints.py` |
+| Data population in engine | ✅ Complete | `engine.py` |
+| Auto-enable constraints | ✅ Complete | `engine.py` |
+| Factory methods | ✅ Complete | `constraints.py` |
+
+### Ready for Tier 3
+
+- [ ] AllostasisConstraint
+- [ ] EquilibriumShiftConstraint
+- [ ] DecisionComplexityConstraint
+- [ ] HomeostasisController (meta-control)
+- [ ] CognitiveLoadBatcher (post-processing)
