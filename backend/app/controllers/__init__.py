@@ -12,6 +12,9 @@ from app.controllers.person_controller import PersonController
 from app.controllers.block_controller import BlockController
 from app.controllers.absence_controller import AbsenceController
 from app.controllers.auth_controller import AuthController
+from app.controllers.procedure_controller import ProcedureController
+from app.controllers.credential_controller import CredentialController
+from app.controllers.certification_controller import CertificationController
 
 __all__ = [
     "AssignmentController",
@@ -19,4 +22,7 @@ __all__ = [
     "BlockController",
     "AbsenceController",
     "AuthController",
+    "ProcedureController",
+    "CredentialController",
+    "CertificationController",
 ]
