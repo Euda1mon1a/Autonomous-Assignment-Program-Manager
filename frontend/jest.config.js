@@ -8,6 +8,12 @@ const config = {
     // Map MSW subpath exports for Jest
     '^msw/node$': '<rootDir>/node_modules/msw/lib/node/index.js',
     '^msw$': '<rootDir>/node_modules/msw/lib/core/index.js',
+    // Map @mswjs/interceptors subpath exports for Jest
+    '^@mswjs/interceptors/ClientRequest$': '<rootDir>/node_modules/@mswjs/interceptors/lib/node/interceptors/ClientRequest/index.js',
+    '^@mswjs/interceptors/XMLHttpRequest$': '<rootDir>/node_modules/@mswjs/interceptors/lib/node/interceptors/XMLHttpRequest/index.js',
+    '^@mswjs/interceptors/fetch$': '<rootDir>/node_modules/@mswjs/interceptors/lib/node/interceptors/fetch/index.js',
+    '^@mswjs/interceptors/presets/node$': '<rootDir>/node_modules/@mswjs/interceptors/lib/node/presets/node.js',
+    '^@mswjs/interceptors$': '<rootDir>/node_modules/@mswjs/interceptors/lib/node/index.js',
   },
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
   transform: {
