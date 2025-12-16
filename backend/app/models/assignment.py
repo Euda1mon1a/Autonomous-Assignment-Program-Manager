@@ -14,8 +14,12 @@ class Assignment(Base):
 
     This is the core of the schedule - each assignment says:
     "Person X is doing Activity Y on Block Z in Role R"
+
+    Version history is tracked via SQLAlchemy-Continuum.
+    Access history: assignment.versions
     """
     __tablename__ = "assignments"
+    __versioned__ = {}  # Enable audit trail - tracks all changes with who/what/when
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     block_id = Column(GUID(), ForeignKey("blocks.id", ondelete="CASCADE"), nullable=False)
