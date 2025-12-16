@@ -11,8 +11,15 @@ from fastapi import APIRouter, Depends, Query
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.person import PersonCreate, PersonUpdate, PersonResponse, PersonListResponse
+from app.schemas.procedure_credential import (
+    CredentialListResponse,
+    FacultyCredentialSummary,
+)
+from app.schemas.procedure import ProcedureListResponse
 from app.core.security import get_current_active_user
 from app.controllers.person_controller import PersonController
+from app.controllers.credential_controller import CredentialController
+from app.services.credential_service import CredentialService
 
 router = APIRouter()
 
@@ -90,3 +97,45 @@ def delete_person(
     """Delete a person. Requires authentication."""
     controller = PersonController(db)
     controller.delete_person(person_id)
+
+
+# ============================================================================
+# Credential-related endpoints for faculty
+# ============================================================================
+
+
+@router.get("/{person_id}/credentials", response_model=CredentialListResponse)
+def get_person_credentials(
+    person_id: UUID,
+    status: Optional[str] = Query(None, description="Filter by status"),
+    include_expired: bool = Query(False, description="Include expired credentials"),
+    db=Depends(get_db),
+):
+    """Get all credentials for a faculty member."""
+    controller = CredentialController(db)
+    return controller.list_credentials_for_person(
+        person_id=person_id,
+        status_filter=status,
+        include_expired=include_expired,
+    )
+
+
+@router.get("/{person_id}/credentials/summary", response_model=FacultyCredentialSummary)
+def get_person_credential_summary(
+    person_id: UUID,
+    db=Depends(get_db),
+):
+    """Get a summary of a faculty member's credentials."""
+    controller = CredentialController(db)
+    return controller.get_faculty_summary(person_id)
+
+
+@router.get("/{person_id}/procedures", response_model=ProcedureListResponse)
+def get_person_procedures(
+    person_id: UUID,
+    db=Depends(get_db),
+):
+    """Get all procedures a faculty member is qualified to supervise."""
+    service = CredentialService(db)
+    result = service.list_procedures_for_faculty(person_id)
+    return ProcedureListResponse(items=result["items"], total=result["total"])
