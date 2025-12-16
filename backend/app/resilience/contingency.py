@@ -13,6 +13,12 @@ Cascade failure anatomy:
 4. System experiences rapid, accelerating collapse
 
 This module identifies vulnerabilities before they cause cascades.
+
+Uses NetworkX for advanced graph-based centrality analysis:
+- Betweenness centrality: How often a faculty member is on the shortest path
+- Degree centrality: How connected a faculty member is
+- Eigenvector centrality: Importance based on connections to important nodes
+- PageRank: Google's algorithm adapted for faculty importance
 """
 
 from dataclasses import dataclass, field
@@ -21,6 +27,13 @@ from itertools import combinations
 from typing import Optional
 from uuid import UUID
 import logging
+
+try:
+    import networkx as nx
+    NETWORKX_AVAILABLE = True
+except ImportError:
+    NETWORKX_AVAILABLE = False
+    nx = None
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +98,23 @@ class CentralityScore:
     unique_coverage_slots: int  # Slots only they can fill
     replacement_difficulty: float  # 0.0 to 1.0, higher = harder to replace
     workload_share: float  # What fraction of total work they do
+
+    # NetworkX-based centrality metrics (optional, set when using graph analysis)
+    betweenness: float = 0.0  # How often on shortest paths
+    degree: float = 0.0  # Number of connections
+    eigenvector: float = 0.0  # Importance from important connections
+    pagerank: float = 0.0  # PageRank score
+
+
+@dataclass
+class CascadeSimulation:
+    """Results of simulating a cascade failure."""
+    initial_failures: list[UUID]  ***REMOVED*** who initially failed
+    cascade_steps: list[dict]  # Each step: {step, failed_faculty, reason, remaining}
+    total_failures: int
+    final_coverage: float
+    cascade_length: int  # How many steps before stabilization
+    is_catastrophic: bool  # Did system collapse completely?
 
 
 class ContingencyAnalyzer:
@@ -345,6 +375,383 @@ class ContingencyAnalyzer:
 
         scores.sort(key=lambda s: -s.score)
         return scores
+
+    def build_scheduling_graph(
+        self,
+        faculty: list,
+        blocks: list,
+        assignments: list,
+        services: dict[UUID, list[UUID]],
+    ) -> "nx.Graph":
+        """
+        Build a NetworkX graph representing the scheduling network.
+
+        Graph structure:
+        - Faculty nodes (type='faculty')
+        - Block nodes (type='block')
+        - Service nodes (type='service')
+        - Edges: faculty-block (assignment), faculty-service (credential)
+
+        This enables advanced network analysis like centrality and
+        cascade failure simulation.
+
+        Args:
+            faculty: List of faculty members
+            blocks: List of blocks
+            assignments: List of current assignments
+            services: Dict of service_id -> list of credentialed faculty
+
+        Returns:
+            NetworkX Graph (or None if NetworkX not available)
+        """
+        if not NETWORKX_AVAILABLE:
+            logger.warning("NetworkX not available - graph analysis disabled")
+            return None
+
+        G = nx.Graph()
+
+        # Add faculty nodes
+        for fac in faculty:
+            G.add_node(
+                f"faculty:{fac.id}",
+                type="faculty",
+                faculty_id=fac.id,
+                name=fac.name,
+            )
+
+        # Add block nodes
+        for block in blocks:
+            G.add_node(
+                f"block:{block.id}",
+                type="block",
+                block_id=block.id,
+                date=str(block.date),
+            )
+
+        # Add service nodes
+        for service_id in services:
+            G.add_node(
+                f"service:{service_id}",
+                type="service",
+                service_id=service_id,
+            )
+
+        # Add assignment edges (faculty -> block)
+        for assignment in assignments:
+            G.add_edge(
+                f"faculty:{assignment.person_id}",
+                f"block:{assignment.block_id}",
+                type="assignment",
+            )
+
+        # Add credential edges (faculty -> service)
+        for service_id, faculty_ids in services.items():
+            for fac_id in faculty_ids:
+                G.add_edge(
+                    f"faculty:{fac_id}",
+                    f"service:{service_id}",
+                    type="credential",
+                )
+
+        logger.debug(
+            f"Built scheduling graph: {G.number_of_nodes()} nodes, "
+            f"{G.number_of_edges()} edges"
+        )
+
+        return G
+
+    def calculate_centrality_networkx(
+        self,
+        faculty: list,
+        blocks: list,
+        assignments: list,
+        services: dict[UUID, list[UUID]],
+    ) -> list[CentralityScore]:
+        """
+        Calculate centrality using NetworkX graph algorithms.
+
+        Provides more sophisticated centrality measures:
+        - Betweenness: How often faculty is on shortest path between others
+        - Degree: Raw connection count
+        - Eigenvector: Importance based on connection importance
+        - PageRank: Google's algorithm for importance
+
+        Falls back to basic calculation if NetworkX unavailable.
+
+        Args:
+            faculty: List of faculty members
+            blocks: List of blocks
+            assignments: List of current assignments
+            services: Dict of service_id -> list of credentialed faculty
+
+        Returns:
+            List of CentralityScore with NetworkX metrics
+        """
+        if not NETWORKX_AVAILABLE:
+            logger.warning("NetworkX not available - using basic centrality")
+            return self.calculate_centrality(faculty, assignments, services)
+
+        # Build graph
+        G = self.build_scheduling_graph(faculty, blocks, assignments, services)
+        if G is None:
+            return self.calculate_centrality(faculty, assignments, services)
+
+        # Calculate NetworkX centrality metrics
+        try:
+            betweenness = nx.betweenness_centrality(G)
+            degree = nx.degree_centrality(G)
+            pagerank = nx.pagerank(G, alpha=0.85)
+
+            # Eigenvector can fail on disconnected graphs
+            try:
+                eigenvector = nx.eigenvector_centrality(G, max_iter=1000)
+            except nx.PowerIterationFailedConvergence:
+                eigenvector = {node: 0.0 for node in G.nodes()}
+        except Exception as e:
+            logger.error(f"NetworkX centrality calculation failed: {e}")
+            return self.calculate_centrality(faculty, assignments, services)
+
+        # Build scores
+        scores = []
+        total_assignments = len(assignments)
+        assignment_counts = {}
+        for a in assignments:
+            assignment_counts[a.person_id] = assignment_counts.get(a.person_id, 0) + 1
+
+        for fac in faculty:
+            node_key = f"faculty:{fac.id}"
+
+            # Get NetworkX metrics
+            nx_betweenness = betweenness.get(node_key, 0.0)
+            nx_degree = degree.get(node_key, 0.0)
+            nx_eigenvector = eigenvector.get(node_key, 0.0)
+            nx_pagerank = pagerank.get(node_key, 0.0)
+
+            # Calculate basic metrics
+            services_covered = sum(
+                1 for svc_faculty in services.values()
+                if fac.id in svc_faculty
+            )
+            unique_coverage = sum(
+                1 for svc_faculty in services.values()
+                if svc_faculty == [fac.id]
+            )
+
+            if services_covered > 0:
+                avg_alternatives = sum(
+                    len(svc_faculty) - 1
+                    for svc_faculty in services.values()
+                    if fac.id in svc_faculty
+                ) / services_covered
+                replacement_difficulty = 1.0 / (1.0 + avg_alternatives)
+            else:
+                replacement_difficulty = 0.0
+
+            my_assignments = assignment_counts.get(fac.id, 0)
+            workload_share = my_assignments / total_assignments if total_assignments > 0 else 0.0
+
+            # Combined score using NetworkX metrics
+            # Weight betweenness and pagerank heavily - they capture "hub" importance
+            score = (
+                0.25 * nx_betweenness +
+                0.25 * nx_pagerank +
+                0.15 * nx_degree +
+                0.10 * nx_eigenvector +
+                0.15 * replacement_difficulty +
+                0.10 * workload_share
+            )
+
+            scores.append(CentralityScore(
+                faculty_id=fac.id,
+                faculty_name=fac.name,
+                score=score,
+                services_covered=services_covered,
+                unique_coverage_slots=unique_coverage,
+                replacement_difficulty=replacement_difficulty,
+                workload_share=workload_share,
+                betweenness=nx_betweenness,
+                degree=nx_degree,
+                eigenvector=nx_eigenvector,
+                pagerank=nx_pagerank,
+            ))
+
+        scores.sort(key=lambda s: -s.score)
+        return scores
+
+    def simulate_cascade_failure(
+        self,
+        faculty: list,
+        blocks: list,
+        assignments: list,
+        initial_failures: list[UUID],
+        max_utilization: float = 0.80,
+        overload_threshold: float = 1.2,
+    ) -> CascadeSimulation:
+        """
+        Simulate cascade failure from initial faculty losses.
+
+        Models how initial failures propagate through the system:
+        1. Initial failures remove their capacity
+        2. Remaining faculty absorb load
+        3. If anyone exceeds overload_threshold, they "fail" (burnout/quit)
+        4. Repeat until stable or catastrophic
+
+        Args:
+            faculty: List of faculty members
+            blocks: List of blocks
+            assignments: List of current assignments
+            initial_failures: List of faculty IDs who initially fail
+            max_utilization: Normal max utilization (0.80)
+            overload_threshold: Utilization that triggers cascade (1.2 = 120%)
+
+        Returns:
+            CascadeSimulation with step-by-step cascade details
+        """
+        # Build faculty workload map
+        assignment_counts = {}
+        for a in assignments:
+            assignment_counts[a.person_id] = assignment_counts.get(a.person_id, 0) + 1
+
+        # Track state
+        active_faculty = {fac.id: fac for fac in faculty}
+        failed_ids = set(initial_failures)
+        cascade_steps = []
+
+        # Remove initial failures
+        for fid in initial_failures:
+            if fid in active_faculty:
+                del active_faculty[fid]
+
+        # Calculate initial load redistribution
+        total_load = sum(assignment_counts.get(fid, 0) for fid in failed_ids)
+        remaining_capacity = len(active_faculty)
+
+        step = 0
+        while remaining_capacity > 0:
+            step += 1
+
+            # Calculate load per remaining faculty
+            load_per_faculty = total_load / remaining_capacity if remaining_capacity > 0 else float('inf')
+
+            # Find faculty who would be overloaded
+            new_failures = []
+            for fac_id in list(active_faculty.keys()):
+                base_load = assignment_counts.get(fac_id, 0)
+                # Rough model: each faculty takes equal share of redistributed load
+                effective_load = base_load + (total_load / remaining_capacity)
+
+                # Normal capacity is their current load / max_utilization
+                normal_capacity = base_load / max_utilization if base_load > 0 else 1
+
+                if effective_load > normal_capacity * overload_threshold:
+                    new_failures.append(fac_id)
+
+            if not new_failures:
+                break  # Stable
+
+            # Record cascade step
+            cascade_steps.append({
+                "step": step,
+                "failed_faculty": [str(fid) for fid in new_failures],
+                "reason": f"Overloaded (>{overload_threshold*100:.0f}% capacity)",
+                "remaining": len(active_faculty) - len(new_failures),
+            })
+
+            # Remove newly failed
+            for fid in new_failures:
+                failed_ids.add(fid)
+                total_load += assignment_counts.get(fid, 0)
+                if fid in active_faculty:
+                    del active_faculty[fid]
+
+            remaining_capacity = len(active_faculty)
+
+            # Safety limit
+            if step > len(faculty):
+                break
+
+        # Calculate final state
+        total_assignments = len(assignments)
+        covered = sum(
+            1 for a in assignments
+            if a.person_id in active_faculty
+        )
+        final_coverage = covered / total_assignments if total_assignments > 0 else 0.0
+
+        return CascadeSimulation(
+            initial_failures=initial_failures,
+            cascade_steps=cascade_steps,
+            total_failures=len(failed_ids),
+            final_coverage=final_coverage,
+            cascade_length=step,
+            is_catastrophic=final_coverage < 0.5,
+        )
+
+    def find_critical_failure_points(
+        self,
+        faculty: list,
+        blocks: list,
+        assignments: list,
+        services: dict[UUID, list[UUID]],
+    ) -> list[dict]:
+        """
+        Find faculty whose removal causes cascade failures.
+
+        Combines N-1 analysis with cascade simulation to identify
+        true critical failure points.
+
+        Args:
+            faculty: List of faculty members
+            blocks: List of blocks
+            assignments: List of current assignments
+            services: Dict of service_id -> list of credentialed faculty
+
+        Returns:
+            List of critical points with cascade impact
+        """
+        critical_points = []
+
+        # Get centrality scores
+        if NETWORKX_AVAILABLE:
+            centrality = self.calculate_centrality_networkx(
+                faculty, blocks, assignments, services
+            )
+        else:
+            centrality = self.calculate_centrality(faculty, assignments, services)
+
+        # For top centrality faculty, simulate cascade
+        for score in centrality[:10]:  # Top 10
+            cascade = self.simulate_cascade_failure(
+                faculty, blocks, assignments,
+                initial_failures=[score.faculty_id],
+            )
+
+            if cascade.cascade_length > 0 or cascade.is_catastrophic:
+                critical_points.append({
+                    "faculty_id": str(score.faculty_id),
+                    "faculty_name": score.faculty_name,
+                    "centrality_score": score.score,
+                    "betweenness": score.betweenness,
+                    "pagerank": score.pagerank,
+                    "cascade_length": cascade.cascade_length,
+                    "total_failures": cascade.total_failures,
+                    "final_coverage": cascade.final_coverage,
+                    "is_catastrophic": cascade.is_catastrophic,
+                    "risk_level": (
+                        "critical" if cascade.is_catastrophic else
+                        "high" if cascade.cascade_length > 1 else
+                        "medium"
+                    ),
+                })
+
+        # Sort by risk
+        risk_order = {"critical": 0, "high": 1, "medium": 2}
+        critical_points.sort(key=lambda x: (
+            risk_order.get(x["risk_level"], 3),
+            -x["centrality_score"]
+        ))
+
+        return critical_points
 
     def detect_phase_transition_risk(
         self,
