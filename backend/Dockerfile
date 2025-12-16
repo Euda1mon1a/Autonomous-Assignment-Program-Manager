@@ -1,7 +1,7 @@
 # Backend Dockerfile for Residency Scheduler
 # Python 3.11 slim base image for production
 
-FROM python:3.14-slim AS base
+FROM python:3.11-slim AS base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
