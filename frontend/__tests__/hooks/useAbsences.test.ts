@@ -42,7 +42,7 @@ describe('useAbsences', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/api/absences')
+    expect(mockedApi.get).toHaveBeenCalledWith('/absences')
     expect(result.current.data?.items).toHaveLength(1)
   })
 
@@ -62,7 +62,7 @@ describe('useAbsences', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/api/absences?person_id=1')
+    expect(mockedApi.get).toHaveBeenCalledWith('/absences?person_id=1')
     expect(result.current.data).toEqual(personAbsences)
   })
 
@@ -98,7 +98,7 @@ describe('useAbsences', () => {
     })
 
     expect(mockedApi.get).toHaveBeenCalledTimes(1)
-    expect(mockedApi.get).toHaveBeenCalledWith('/api/absences')
+    expect(mockedApi.get).toHaveBeenCalledWith('/absences')
 
     // Change person ID
     rerender({ personId: 123 })
@@ -107,7 +107,7 @@ describe('useAbsences', () => {
       expect(mockedApi.get).toHaveBeenCalledTimes(2)
     })
 
-    expect(mockedApi.get).toHaveBeenLastCalledWith('/api/absences?person_id=123')
+    expect(mockedApi.get).toHaveBeenLastCalledWith('/absences?person_id=123')
   })
 })
 
