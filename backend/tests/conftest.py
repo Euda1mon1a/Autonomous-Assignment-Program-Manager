@@ -25,6 +25,7 @@ from app.models.assignment import Assignment
 from app.models.rotation_template import RotationTemplate
 from app.models.procedure import Procedure
 from app.models.procedure_credential import ProcedureCredential
+from app.models.certification import CertificationType, PersonCertification
 
 
 # Use in-memory SQLite for tests
