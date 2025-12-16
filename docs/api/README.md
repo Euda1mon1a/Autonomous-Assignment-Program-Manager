@@ -1,5 +1,7 @@
 # Residency Scheduler API Documentation
 
+> **Last Updated:** 2025-12-16
+
 Comprehensive REST API documentation for the Residency Scheduler backend service.
 
 ## Overview
@@ -73,6 +75,9 @@ curl http://localhost:8000/api/people \
 | [Schedule](./endpoints/schedule.md) | `/api/schedule` | Schedule generation and validation |
 | [Settings](./endpoints/settings.md) | `/api/settings` | System configuration |
 | [Export](./endpoints/export.md) | `/api/export` | Data export (CSV, JSON, XLSX) |
+| [Procedures](./endpoints/procedures.md) | `/api/procedures` | Medical procedures requiring supervision |
+| [Credentials](./endpoints/credentials.md) | `/api/credentials` | Faculty procedure credentials |
+| [Certifications](./endpoints/certifications.md) | `/api/certifications` | Personnel certifications (BLS, ACLS, etc.) |
 
 ## API Features
 

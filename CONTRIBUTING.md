@@ -1,5 +1,7 @@
 # Contributing to Residency Scheduler
 
+> **Last Updated:** 2025-12-16
+
 Thank you for your interest in contributing to Residency Scheduler! This document provides guidelines and instructions for contributing to the project.
 
 ## Table of Contents
