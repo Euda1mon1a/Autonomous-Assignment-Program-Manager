@@ -1,12 +1,20 @@
 """Resilience API routes.
 
-Provides REST API endpoints for:
+Tier 1 (Critical) endpoints:
 - System health monitoring
 - Crisis response activation/deactivation
 - Fallback schedule management
 - Load shedding control
 - Vulnerability analysis
 - Historical data retrieval
+
+Tier 2 (Strategic) endpoints:
+- Homeostasis and feedback loop monitoring
+- Allostatic load calculation
+- Scheduling zone management (blast radius)
+- Zone borrowing and incidents
+- Equilibrium analysis (Le Chatelier)
+- Stress and compensation tracking
 """
 from datetime import datetime, date, timedelta
 from typing import Optional
@@ -815,3 +823,774 @@ def _centrality_to_risk(score: float) -> str:
     elif score >= 0.4:
         return "medium"
     return "low"
+
+
+# =============================================================================
+# Tier 2: Homeostasis Endpoints
+# =============================================================================
+
+
+@router.get("/tier2/homeostasis")
+async def get_homeostasis_status(
+    db: Session = Depends(get_db),
+):
+    """
+    Get current homeostasis status including feedback loops and allostatic load.
+
+    Returns status of all feedback loops and detected positive feedback risks.
+    """
+    from app.schemas.resilience import (
+        HomeostasisStatusResponse,
+        FeedbackLoopStatus,
+        SetpointInfo,
+        PositiveFeedbackRiskInfo,
+        AllostasisState as SchemaAllostasisState,
+        DeviationSeverity as SchemaDeviationSeverity,
+    )
+
+    service = get_resilience_service(db)
+
+    # Check homeostasis with default metrics
+    status = service.homeostasis.get_status()
+
+    # Build feedback loop statuses
+    loop_statuses = []
+    for loop in service.homeostasis.feedback_loops.values():
+        current_value = None
+        deviation = None
+        if loop.value_history:
+            current_value = loop.value_history[-1][1]
+            deviation, _ = loop.setpoint.check_deviation(current_value)
+
+        loop_statuses.append(FeedbackLoopStatus(
+            loop_name=loop.name,
+            setpoint=SetpointInfo(
+                name=loop.setpoint.name,
+                description=loop.setpoint.description,
+                target_value=loop.setpoint.target_value,
+                tolerance=loop.setpoint.tolerance,
+                unit=loop.setpoint.unit,
+                is_critical=loop.setpoint.is_critical,
+            ),
+            current_value=current_value,
+            deviation=deviation,
+            deviation_severity=SchemaDeviationSeverity.NONE,
+            consecutive_deviations=loop.consecutive_deviations,
+            trend_direction=loop.get_trend(),
+            is_improving=loop.is_improving(),
+            last_checked=loop.last_checked,
+            total_corrections=loop.total_corrections,
+        ))
+
+    # Build positive feedback risks
+    risk_infos = [
+        PositiveFeedbackRiskInfo(
+            id=risk.id,
+            name=risk.name,
+            description=risk.description,
+            detected_at=risk.detected_at,
+            trigger=risk.trigger,
+            amplification=risk.amplification,
+            consequence=risk.consequence,
+            evidence=risk.evidence,
+            confidence=risk.confidence,
+            severity=SchemaDeviationSeverity(risk.severity.value),
+            intervention=risk.intervention,
+            urgency=risk.urgency,
+        )
+        for risk in service.homeostasis.positive_feedback_risks
+    ]
+
+    return HomeostasisStatusResponse(
+        timestamp=status.timestamp,
+        overall_state=SchemaAllostasisState(status.overall_state.value),
+        feedback_loops_healthy=status.feedback_loops_healthy,
+        feedback_loops_deviating=status.feedback_loops_deviating,
+        active_corrections=status.active_corrections,
+        positive_feedback_risks=status.positive_feedback_risks,
+        average_allostatic_load=status.average_allostatic_load,
+        recommendations=status.recommendations,
+        feedback_loops=loop_statuses,
+        positive_risks=risk_infos,
+    )
+
+
+@router.post("/tier2/homeostasis/check")
+async def check_homeostasis(
+    metrics: dict,
+    db: Session = Depends(get_db),
+):
+    """
+    Check homeostasis with provided metrics.
+
+    Metrics dict should contain setpoint names and current values:
+    {"coverage_rate": 0.92, "faculty_utilization": 0.78}
+    """
+    service = get_resilience_service(db)
+    status = service.check_homeostasis(metrics)
+
+    return {
+        "timestamp": status.timestamp.isoformat(),
+        "overall_state": status.overall_state.value,
+        "feedback_loops_healthy": status.feedback_loops_healthy,
+        "feedback_loops_deviating": status.feedback_loops_deviating,
+        "active_corrections": status.active_corrections,
+        "positive_feedback_risks": status.positive_feedback_risks,
+        "average_allostatic_load": status.average_allostatic_load,
+        "recommendations": status.recommendations,
+    }
+
+
+@router.post("/tier2/allostasis/calculate")
+async def calculate_allostatic_load(
+    entity_id: UUID,
+    entity_type: str,
+    stress_factors: dict,
+    db: Session = Depends(get_db),
+):
+    """
+    Calculate allostatic load for a faculty member or system.
+
+    stress_factors should contain:
+    - consecutive_weekend_calls: int
+    - nights_past_month: int
+    - schedule_changes_absorbed: int
+    - holidays_worked_this_year: int
+    - overtime_hours_month: float
+    - coverage_gap_responses: int
+    - cross_coverage_events: int
+    """
+    from app.schemas.resilience import AllostasisMetricsResponse, AllostasisState as SchemaState
+
+    service = get_resilience_service(db)
+    metrics = service.calculate_allostatic_load(entity_id, entity_type, stress_factors)
+
+    return AllostasisMetricsResponse(
+        entity_id=metrics.entity_id,
+        entity_type=metrics.entity_type,
+        calculated_at=metrics.calculated_at,
+        consecutive_weekend_calls=metrics.consecutive_weekend_calls,
+        nights_past_month=metrics.nights_past_month,
+        schedule_changes_absorbed=metrics.schedule_changes_absorbed,
+        holidays_worked_this_year=metrics.holidays_worked_this_year,
+        overtime_hours_month=metrics.overtime_hours_month,
+        coverage_gap_responses=metrics.coverage_gap_responses,
+        cross_coverage_events=metrics.cross_coverage_events,
+        acute_stress_score=metrics.acute_stress_score,
+        chronic_stress_score=metrics.chronic_stress_score,
+        total_allostatic_load=metrics.total_allostatic_load,
+        state=SchemaState(metrics.state.value),
+        risk_level=metrics.risk_level,
+    )
+
+
+# =============================================================================
+# Tier 2: Blast Radius / Zone Endpoints
+# =============================================================================
+
+
+@router.get("/tier2/zones")
+async def list_zones(
+    db: Session = Depends(get_db),
+):
+    """
+    List all scheduling zones and their current status.
+    """
+    from app.schemas.resilience import (
+        ZoneResponse,
+        ZoneType as SchemaZoneType,
+        ZoneStatus as SchemaZoneStatus,
+        ContainmentLevel as SchemaContainment,
+    )
+
+    service = get_resilience_service(db)
+    zones = []
+
+    for zone in service.blast_radius.zones.values():
+        zones.append(ZoneResponse(
+            id=zone.id,
+            name=zone.name,
+            zone_type=SchemaZoneType(zone.zone_type.value),
+            description=zone.description,
+            services=zone.services,
+            minimum_coverage=zone.minimum_coverage,
+            optimal_coverage=zone.optimal_coverage,
+            priority=zone.priority,
+            status=SchemaZoneStatus(zone.status.value),
+            containment_level=SchemaContainment(zone.containment_level.value),
+            borrowing_limit=zone.borrowing_limit,
+            lending_limit=zone.lending_limit,
+            is_active=True,
+        ))
+
+    return {"zones": zones, "total": len(zones)}
+
+
+@router.get("/tier2/zones/report")
+async def get_blast_radius_report(
+    db: Session = Depends(get_db),
+):
+    """
+    Get comprehensive blast radius containment report.
+
+    Returns health status of all zones and overall containment status.
+    """
+    from app.schemas.resilience import (
+        BlastRadiusReportResponse,
+        ZoneHealthReport as SchemaZoneHealth,
+        ZoneType as SchemaZoneType,
+        ZoneStatus as SchemaZoneStatus,
+        ContainmentLevel as SchemaContainment,
+    )
+
+    service = get_resilience_service(db)
+    report = service.check_all_zones()
+
+    zone_reports = [
+        SchemaZoneHealth(
+            zone_id=zr.zone_id,
+            zone_name=zr.zone_name,
+            zone_type=SchemaZoneType(zr.zone_type.value),
+            checked_at=zr.checked_at,
+            status=SchemaZoneStatus(zr.status.value),
+            containment_level=SchemaContainment(zr.containment_level.value),
+            is_self_sufficient=zr.is_self_sufficient,
+            has_surplus=zr.has_surplus,
+            available_faculty=zr.available_faculty,
+            minimum_required=zr.minimum_required,
+            optimal_required=zr.optimal_required,
+            capacity_ratio=zr.capacity_ratio,
+            faculty_borrowed=zr.faculty_borrowed,
+            faculty_lent=zr.faculty_lent,
+            net_borrowing=zr.net_borrowing,
+            active_incidents=zr.active_incidents,
+            services_affected=zr.services_affected,
+            recommendations=zr.recommendations,
+        )
+        for zr in report.zone_reports
+    ]
+
+    return BlastRadiusReportResponse(
+        generated_at=report.generated_at,
+        total_zones=report.total_zones,
+        zones_healthy=report.zones_healthy,
+        zones_degraded=report.zones_degraded,
+        zones_critical=report.zones_critical,
+        containment_active=report.containment_active,
+        containment_level=SchemaContainment(report.containment_level.value),
+        zones_isolated=report.zones_isolated,
+        active_borrowing_requests=report.active_borrowing_requests,
+        pending_borrowing_requests=report.pending_borrowing_requests,
+        zone_reports=zone_reports,
+        recommendations=report.recommendations,
+    )
+
+
+@router.post("/tier2/zones")
+async def create_zone(
+    name: str,
+    zone_type: str,
+    description: str = "",
+    services: list[str] = None,
+    minimum_coverage: int = 1,
+    optimal_coverage: int = 2,
+    priority: int = 5,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Create a new scheduling zone. Requires authentication.
+    """
+    from app.schemas.resilience import ZoneResponse, ZoneType as SchemaZoneType, ZoneStatus, ContainmentLevel
+    from app.resilience.blast_radius import ZoneType
+
+    type_map = {
+        "inpatient": ZoneType.INPATIENT,
+        "outpatient": ZoneType.OUTPATIENT,
+        "education": ZoneType.EDUCATION,
+        "research": ZoneType.RESEARCH,
+        "admin": ZoneType.ADMINISTRATIVE,
+        "on_call": ZoneType.ON_CALL,
+    }
+
+    service = get_resilience_service(db)
+    zone = service.create_zone(
+        name=name,
+        zone_type=type_map.get(zone_type, ZoneType.INPATIENT),
+        description=description,
+        services=services or [],
+        minimum_coverage=minimum_coverage,
+        optimal_coverage=optimal_coverage,
+        priority=priority,
+    )
+
+    return ZoneResponse(
+        id=zone.id,
+        name=zone.name,
+        zone_type=SchemaZoneType(zone.zone_type.value),
+        description=zone.description,
+        services=zone.services,
+        minimum_coverage=zone.minimum_coverage,
+        optimal_coverage=zone.optimal_coverage,
+        priority=zone.priority,
+        status=ZoneStatus.GREEN,
+        containment_level=ContainmentLevel.NONE,
+        borrowing_limit=zone.borrowing_limit,
+        lending_limit=zone.lending_limit,
+        is_active=True,
+    )
+
+
+@router.post("/tier2/zones/{zone_id}/assign")
+async def assign_faculty_to_zone(
+    zone_id: UUID,
+    faculty_id: UUID,
+    faculty_name: str,
+    role: str = "primary",
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Assign a faculty member to a zone. Requires authentication.
+
+    role must be: "primary", "secondary", or "backup"
+    """
+    service = get_resilience_service(db)
+    success = service.assign_faculty_to_zone(zone_id, faculty_id, faculty_name, role)
+
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to assign faculty to zone")
+
+    return {"success": True, "message": f"Assigned {faculty_name} to zone as {role}"}
+
+
+@router.post("/tier2/zones/incident")
+async def record_zone_incident(
+    zone_id: UUID,
+    incident_type: str,
+    description: str,
+    severity: str,
+    faculty_affected: list[UUID] = None,
+    services_affected: list[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Record an incident affecting a zone. Requires authentication.
+
+    severity must be: "minor", "moderate", "severe", or "critical"
+    """
+    from app.schemas.resilience import ZoneIncidentResponse
+
+    service = get_resilience_service(db)
+    incident = service.record_zone_incident(
+        zone_id=zone_id,
+        incident_type=incident_type,
+        description=description,
+        severity=severity,
+        faculty_affected=faculty_affected,
+        services_affected=services_affected,
+    )
+
+    if not incident:
+        raise HTTPException(status_code=404, detail="Zone not found")
+
+    return ZoneIncidentResponse(
+        id=incident.id,
+        zone_id=incident.zone_id,
+        incident_type=incident.incident_type,
+        description=incident.description,
+        severity=incident.severity,
+        started_at=incident.started_at,
+        faculty_affected=[str(f) for f in incident.faculty_affected],
+        services_affected=incident.services_affected,
+        capacity_lost=incident.capacity_lost,
+        resolved_at=incident.resolved_at,
+        containment_successful=incident.containment_successful,
+    )
+
+
+@router.post("/tier2/zones/containment")
+async def set_containment_level(
+    level: str,
+    reason: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Set system-wide containment level. Requires authentication.
+
+    level must be: "none", "soft", "moderate", "strict", or "lockdown"
+    """
+    from app.resilience.blast_radius import ContainmentLevel
+
+    level_map = {
+        "none": ContainmentLevel.NONE,
+        "soft": ContainmentLevel.SOFT,
+        "moderate": ContainmentLevel.MODERATE,
+        "strict": ContainmentLevel.STRICT,
+        "lockdown": ContainmentLevel.LOCKDOWN,
+    }
+
+    if level not in level_map:
+        raise HTTPException(status_code=400, detail=f"Invalid containment level: {level}")
+
+    service = get_resilience_service(db)
+    service.set_containment_level(level_map[level], reason)
+
+    return {
+        "success": True,
+        "containment_level": level,
+        "reason": reason,
+    }
+
+
+# =============================================================================
+# Tier 2: Le Chatelier / Equilibrium Endpoints
+# =============================================================================
+
+
+@router.get("/tier2/equilibrium")
+async def get_equilibrium_report(
+    db: Session = Depends(get_db),
+):
+    """
+    Get comprehensive equilibrium analysis report.
+
+    Shows current stresses, compensations, and sustainability analysis.
+    """
+    from app.schemas.resilience import (
+        EquilibriumReportResponse,
+        StressResponse,
+        CompensationResponse as SchemaCompResponse,
+        EquilibriumState as SchemaEquilState,
+        StressType as SchemaStressType,
+        CompensationType as SchemaCompType,
+    )
+
+    service = get_resilience_service(db)
+    report = service.get_equilibrium_report()
+
+    stress_responses = [
+        StressResponse(
+            id=s.id,
+            stress_type=SchemaStressType(s.stress_type.value),
+            description=s.description,
+            magnitude=s.magnitude,
+            duration_days=s.duration_days,
+            capacity_impact=s.capacity_impact,
+            demand_impact=s.demand_impact,
+            applied_at=s.applied_at,
+            is_active=s.is_active,
+        )
+        for s in report.active_stresses
+    ]
+
+    comp_responses = [
+        SchemaCompResponse(
+            id=c.id,
+            stress_id=c.stress_id,
+            compensation_type=SchemaCompType(c.compensation_type.value),
+            description=c.description,
+            compensation_magnitude=c.compensation_magnitude,
+            effectiveness=c.effectiveness,
+            initiated_at=c.initiated_at,
+            is_active=c.is_active,
+        )
+        for c in report.active_compensations
+    ]
+
+    return EquilibriumReportResponse(
+        generated_at=report.generated_at,
+        current_equilibrium_state=SchemaEquilState(report.current_equilibrium_state.value),
+        current_capacity=report.current_capacity,
+        current_demand=report.current_demand,
+        current_coverage_rate=report.current_coverage_rate,
+        active_stresses=stress_responses,
+        total_stress_magnitude=report.total_stress_magnitude,
+        active_compensations=comp_responses,
+        total_compensation_magnitude=report.total_compensation_magnitude,
+        compensation_debt=report.compensation_debt,
+        sustainability_score=report.sustainability_score,
+        days_until_equilibrium=report.days_until_equilibrium,
+        days_until_exhaustion=report.days_until_exhaustion,
+        recommendations=report.recommendations,
+    )
+
+
+@router.post("/tier2/stress")
+async def apply_stress(
+    stress_type: str,
+    description: str,
+    magnitude: float,
+    duration_days: int,
+    capacity_impact: float,
+    demand_impact: float = 0.0,
+    is_acute: bool = True,
+    is_reversible: bool = True,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Apply a stress to the system. Requires authentication.
+
+    stress_type must be: "faculty_loss", "demand_surge", "quality_pressure",
+    "time_compression", "resource_scarcity", or "external_pressure"
+    """
+    from app.schemas.resilience import StressResponse, StressType as SchemaStressType
+    from app.resilience.le_chatelier import StressType
+
+    type_map = {
+        "faculty_loss": StressType.FACULTY_LOSS,
+        "demand_surge": StressType.DEMAND_SURGE,
+        "quality_pressure": StressType.QUALITY_PRESSURE,
+        "time_compression": StressType.TIME_COMPRESSION,
+        "resource_scarcity": StressType.RESOURCE_SCARCITY,
+        "external_pressure": StressType.EXTERNAL_PRESSURE,
+    }
+
+    if stress_type not in type_map:
+        raise HTTPException(status_code=400, detail=f"Invalid stress type: {stress_type}")
+
+    service = get_resilience_service(db)
+    stress = service.apply_system_stress(
+        stress_type=type_map[stress_type],
+        description=description,
+        magnitude=magnitude,
+        duration_days=duration_days,
+        capacity_impact=capacity_impact,
+        demand_impact=demand_impact,
+        is_acute=is_acute,
+        is_reversible=is_reversible,
+    )
+
+    return StressResponse(
+        id=stress.id,
+        stress_type=SchemaStressType(stress.stress_type.value),
+        description=stress.description,
+        magnitude=stress.magnitude,
+        duration_days=stress.duration_days,
+        capacity_impact=stress.capacity_impact,
+        demand_impact=stress.demand_impact,
+        applied_at=stress.applied_at,
+        is_active=stress.is_active,
+    )
+
+
+@router.post("/tier2/stress/{stress_id}/resolve")
+async def resolve_stress(
+    stress_id: UUID,
+    resolution_notes: str = "",
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Mark a stress as resolved. Requires authentication.
+    """
+    service = get_resilience_service(db)
+    service.resolve_stress(stress_id, resolution_notes)
+
+    return {"success": True, "stress_id": str(stress_id), "message": "Stress resolved"}
+
+
+@router.post("/tier2/compensation")
+async def initiate_compensation(
+    stress_id: UUID,
+    compensation_type: str,
+    description: str,
+    magnitude: float,
+    effectiveness: float = 0.8,
+    sustainability_days: int = 30,
+    immediate_cost: float = 0.0,
+    hidden_cost: float = 0.0,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Initiate a compensation response to a stress. Requires authentication.
+
+    compensation_type must be: "overtime", "cross_coverage", "deferred_leave",
+    "service_reduction", "efficiency_gain", "backup_activation", or "quality_trade"
+    """
+    from app.schemas.resilience import CompensationResponse as SchemaCompResponse, CompensationType as SchemaCompType
+    from app.resilience.le_chatelier import CompensationType
+
+    type_map = {
+        "overtime": CompensationType.OVERTIME,
+        "cross_coverage": CompensationType.CROSS_COVERAGE,
+        "deferred_leave": CompensationType.DEFERRED_LEAVE,
+        "service_reduction": CompensationType.SERVICE_REDUCTION,
+        "efficiency_gain": CompensationType.EFFICIENCY_GAIN,
+        "backup_activation": CompensationType.BACKUP_ACTIVATION,
+        "quality_trade": CompensationType.QUALITY_TRADE,
+    }
+
+    if compensation_type not in type_map:
+        raise HTTPException(status_code=400, detail=f"Invalid compensation type: {compensation_type}")
+
+    service = get_resilience_service(db)
+    compensation = service.initiate_compensation(
+        stress_id=stress_id,
+        compensation_type=type_map[compensation_type],
+        description=description,
+        magnitude=magnitude,
+        effectiveness=effectiveness,
+        sustainability_days=sustainability_days,
+        immediate_cost=immediate_cost,
+        hidden_cost=hidden_cost,
+    )
+
+    if not compensation:
+        raise HTTPException(status_code=404, detail="Stress not found")
+
+    return SchemaCompResponse(
+        id=compensation.id,
+        stress_id=compensation.stress_id,
+        compensation_type=SchemaCompType(compensation.compensation_type.value),
+        description=compensation.description,
+        compensation_magnitude=compensation.compensation_magnitude,
+        effectiveness=compensation.effectiveness,
+        initiated_at=compensation.initiated_at,
+        is_active=compensation.is_active,
+    )
+
+
+@router.post("/tier2/stress/predict")
+async def predict_stress_response(
+    stress_type: str,
+    magnitude: float,
+    duration_days: int,
+    capacity_impact: float,
+    demand_impact: float = 0.0,
+    db: Session = Depends(get_db),
+):
+    """
+    Predict how the system will respond to a potential stress.
+
+    Use this for planning before actually applying stress.
+    """
+    from app.schemas.resilience import StressPredictionResponse, StressType as SchemaStressType
+    from app.resilience.le_chatelier import StressType
+
+    type_map = {
+        "faculty_loss": StressType.FACULTY_LOSS,
+        "demand_surge": StressType.DEMAND_SURGE,
+        "quality_pressure": StressType.QUALITY_PRESSURE,
+        "time_compression": StressType.TIME_COMPRESSION,
+        "resource_scarcity": StressType.RESOURCE_SCARCITY,
+        "external_pressure": StressType.EXTERNAL_PRESSURE,
+    }
+
+    if stress_type not in type_map:
+        raise HTTPException(status_code=400, detail=f"Invalid stress type: {stress_type}")
+
+    service = get_resilience_service(db)
+    prediction = service.predict_stress_response(
+        stress_type=type_map[stress_type],
+        magnitude=magnitude,
+        duration_days=duration_days,
+        capacity_impact=capacity_impact,
+        demand_impact=demand_impact,
+    )
+
+    return StressPredictionResponse(
+        id=prediction.id,
+        predicted_at=prediction.predicted_at,
+        stress_type=SchemaStressType(prediction.stress_type.value),
+        stress_magnitude=prediction.stress_magnitude,
+        stress_duration_days=prediction.stress_duration_days,
+        predicted_compensation=prediction.predicted_compensation,
+        predicted_new_capacity=prediction.predicted_new_capacity,
+        predicted_coverage_rate=prediction.predicted_coverage_rate,
+        predicted_daily_cost=prediction.predicted_daily_cost,
+        predicted_total_cost=prediction.predicted_total_cost,
+        predicted_burnout_increase=prediction.predicted_burnout_increase,
+        additional_intervention_needed=prediction.additional_intervention_needed,
+        recommended_actions=prediction.recommended_actions,
+        sustainability_assessment=prediction.sustainability_assessment,
+    )
+
+
+@router.post("/tier2/equilibrium/shift")
+async def calculate_equilibrium_shift(
+    original_capacity: float,
+    original_demand: float,
+    db: Session = Depends(get_db),
+):
+    """
+    Calculate the equilibrium shift from original state to current.
+
+    Per Le Chatelier's principle, compensation is always partial
+    and the new equilibrium will be different from the old one.
+    """
+    from app.schemas.resilience import EquilibriumShiftResponse, EquilibriumState as SchemaEquilState
+
+    service = get_resilience_service(db)
+    shift = service.calculate_equilibrium_shift(original_capacity, original_demand)
+
+    return EquilibriumShiftResponse(
+        id=shift.id,
+        calculated_at=shift.calculated_at,
+        original_capacity=shift.original_capacity,
+        original_demand=shift.original_demand,
+        original_coverage_rate=shift.original_coverage_rate,
+        total_capacity_impact=shift.total_capacity_impact,
+        total_demand_impact=shift.total_demand_impact,
+        total_compensation=shift.total_compensation,
+        compensation_efficiency=shift.compensation_efficiency,
+        new_capacity=shift.new_capacity,
+        new_demand=shift.new_demand,
+        new_coverage_rate=shift.new_coverage_rate,
+        sustainable_capacity=shift.sustainable_capacity,
+        compensation_debt=shift.compensation_debt,
+        daily_debt_rate=shift.daily_debt_rate,
+        burnout_risk=shift.burnout_risk,
+        days_until_exhaustion=shift.days_until_exhaustion,
+        equilibrium_state=SchemaEquilState(shift.equilibrium_state.value),
+        is_sustainable=shift.is_sustainable,
+    )
+
+
+# =============================================================================
+# Tier 2: Combined Status Endpoint
+# =============================================================================
+
+
+@router.get("/tier2/status")
+async def get_tier2_status(
+    db: Session = Depends(get_db),
+):
+    """
+    Get combined status of all Tier 2 resilience components.
+
+    Returns summary of homeostasis, blast radius, and equilibrium status.
+    """
+    from app.schemas.resilience import (
+        Tier2StatusResponse,
+        AllostasisState as SchemaAllostasisState,
+        ContainmentLevel as SchemaContainment,
+        EquilibriumState as SchemaEquilState,
+    )
+
+    service = get_resilience_service(db)
+    status = service.get_tier2_status()
+
+    return Tier2StatusResponse(
+        generated_at=datetime.fromisoformat(status["generated_at"]),
+        homeostasis_state=SchemaAllostasisState(status["homeostasis"]["state"]),
+        feedback_loops_healthy=status["homeostasis"]["feedback_loops_healthy"],
+        feedback_loops_deviating=status["homeostasis"]["feedback_loops_deviating"],
+        average_allostatic_load=status["homeostasis"]["average_allostatic_load"],
+        positive_feedback_risks=status["homeostasis"]["positive_feedback_risks"],
+        total_zones=status["blast_radius"]["total_zones"],
+        zones_healthy=status["blast_radius"]["zones_healthy"],
+        zones_critical=status["blast_radius"]["zones_critical"],
+        containment_active=status["blast_radius"]["containment_active"],
+        containment_level=SchemaContainment(status["blast_radius"]["containment_level"]),
+        equilibrium_state=SchemaEquilState(status["equilibrium"]["state"]),
+        current_coverage_rate=status["equilibrium"]["current_coverage_rate"],
+        compensation_debt=status["equilibrium"]["compensation_debt"],
+        sustainability_score=status["equilibrium"]["sustainability_score"],
+        tier2_status=status["tier2_status"],
+        recommendations=status["recommendations"],
+    )
