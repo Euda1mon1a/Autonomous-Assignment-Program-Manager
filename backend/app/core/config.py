@@ -34,6 +34,31 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
+    # Logging Configuration
+    LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+    LOG_FILE: str = ""  # Optional: path to log file
+    LOG_JSON_FORMAT: bool = False  # Use JSON format (recommended for production)
+
+    # Security Middleware
+    SECURITY_HEADERS_ENABLED: bool = True
+    HSTS_ENABLED: bool = True  # HTTP Strict Transport Security
+    HSTS_MAX_AGE: int = 31536000  # 1 year in seconds
+
+    # Compression
+    GZIP_ENABLED: bool = True
+    GZIP_MINIMUM_SIZE: int = 500  # Minimum response size to compress (bytes)
+
+    # Trusted Hosts (empty list disables the middleware)
+    TRUSTED_HOSTS: list[str] = []  # e.g., ["scheduler.hospital.org", "*.hospital.org"]
+
+    # HTTPS Redirect (enable in production behind TLS termination)
+    HTTPS_REDIRECT_ENABLED: bool = False
+
+    # Rate Limiting
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_REQUESTS_PER_MINUTE: int = 60
+    RATE_LIMIT_REQUESTS_PER_HOUR: int = 1000
+
     # Resilience Configuration (Tier 1)
     # Utilization thresholds based on queuing theory (M/M/c queue model)
     # Wait time formula: W ~ rho / (1 - rho), where rho = utilization
