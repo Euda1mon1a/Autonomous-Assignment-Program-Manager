@@ -148,13 +148,18 @@ API types get out of sync between frontend and backend, causing runtime errors.
 - [ ] Test both ends
 
 **Long-term:** Generate frontend types from backend
-```bash
-# Option 1: OpenAPI generator
-openapi-generator generate -i http://localhost:8000/openapi.json -g typescript-axios -o frontend/src/api
 
-# Option 2: Use shared schema package
-# Create packages/shared-types/ with Zod schemas
+**IMPLEMENTED:** Type generation from OpenAPI spec
+```bash
+# Export OpenAPI spec from backend (run from backend/)
+python scripts/export_openapi.py
+
+# Generate TypeScript types (run from frontend/)
+npm run generate:types       # From running backend
+npm run generate:types:file  # From exported openapi.json
 ```
+
+The generated types are saved to `frontend/src/types/generated-api.ts`.
 
 ---
 
