@@ -11,7 +11,12 @@ Implements Tier 1 critical concepts from the resilience framework:
 
 from app.resilience.utilization import UtilizationMonitor, UtilizationThreshold
 from app.resilience.defense_in_depth import DefenseLevel, DefenseInDepth
-from app.resilience.contingency import ContingencyAnalyzer, VulnerabilityReport
+from app.resilience.contingency import (
+    ContingencyAnalyzer,
+    VulnerabilityReport,
+    CascadeSimulation,
+    CentralityScore,
+)
 from app.resilience.static_stability import FallbackScheduler, FallbackScenario
 from app.resilience.sacrifice_hierarchy import (
     SacrificeHierarchy,
@@ -30,6 +35,8 @@ __all__ = [
     # Contingency
     "ContingencyAnalyzer",
     "VulnerabilityReport",
+    "CascadeSimulation",
+    "CentralityScore",
     # Static Stability
     "FallbackScheduler",
     "FallbackScenario",
