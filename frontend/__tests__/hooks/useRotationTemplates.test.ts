@@ -42,7 +42,7 @@ describe('useRotationTemplates', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/api/rotation-templates')
+    expect(mockedApi.get).toHaveBeenCalledWith('/rotation-templates')
     expect(result.current.data?.items).toHaveLength(2)
   })
 
