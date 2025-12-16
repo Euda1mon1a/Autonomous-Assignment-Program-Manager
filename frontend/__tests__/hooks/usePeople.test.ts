@@ -44,7 +44,7 @@ describe('usePeople', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/api/people')
+    expect(mockedApi.get).toHaveBeenCalledWith('/people')
     expect(result.current.data?.items).toHaveLength(2)
   })
 
@@ -63,7 +63,7 @@ describe('usePeople', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/api/people?role=resident')
+    expect(mockedApi.get).toHaveBeenCalledWith('/people?role=resident')
   })
 
   it('should filter by PGY level', async () => {
@@ -81,7 +81,7 @@ describe('usePeople', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/api/people?pgy_level=2')
+    expect(mockedApi.get).toHaveBeenCalledWith('/people?pgy_level=2')
   })
 
   it('should handle API errors', async () => {
@@ -121,7 +121,7 @@ describe('usePeople', () => {
       expect(mockedApi.get).toHaveBeenCalledTimes(2)
     })
 
-    expect(mockedApi.get).toHaveBeenLastCalledWith('/api/people?role=faculty')
+    expect(mockedApi.get).toHaveBeenLastCalledWith('/people?role=faculty')
   })
 })
 
