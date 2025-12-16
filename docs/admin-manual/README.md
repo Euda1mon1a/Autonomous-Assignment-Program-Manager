@@ -11,6 +11,7 @@ This manual covers:
 - Installation and deployment procedures
 - User and permission management
 - System configuration options
+- Data storage locations and persistence
 - Database backup and restore procedures
 - Security best practices
 - Performance tuning and optimization
@@ -22,6 +23,7 @@ This manual covers:
 | [Installation Guide](./installation.md) | Complete installation and deployment instructions |
 | [User Management](./user-management.md) | User administration and permission configuration |
 | [Configuration Guide](./configuration.md) | System configuration options and environment variables |
+| [Data Storage](./data-storage.md) | Where data is stored in different deployment scenarios |
 | [Backup & Restore](./backup-restore.md) | Database backup and disaster recovery procedures |
 | [Security Guide](./security.md) | Security best practices and hardening guidelines |
 | [Performance Tuning](./performance.md) | Performance optimization and monitoring |
