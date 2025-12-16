@@ -55,6 +55,18 @@ Residency Scheduler is a production-ready, full-stack application designed to au
 - Three user roles: Admin, Coordinator, Faculty
 - Activity logging and audit trails
 
+### Resilience Framework
+Built-in system resilience inspired by cross-industry best practices:
+- **80% Utilization Threshold** - Queuing theory prevents cascade failures
+- **N-1/N-2 Contingency Analysis** - Power grid-style vulnerability detection
+- **Defense in Depth** - Nuclear engineering safety levels (GREEN→YELLOW→ORANGE→RED→BLACK)
+- **Static Stability** - Pre-computed fallback schedules for instant crisis response
+- **Sacrifice Hierarchy** - Triage-based load shedding when capacity is constrained
+- **Prometheus Metrics** - Real-time monitoring and alerting
+- **Celery Background Tasks** - Automated health checks and contingency analysis
+
+See [Resilience Framework](docs/RESILIENCE_FRAMEWORK.md) for detailed documentation.
+
 ### Dashboard & Reporting
 - Schedule summary with compliance status
 - Upcoming absences widget
@@ -88,6 +100,10 @@ Residency Scheduler is a production-ready, full-stack application designed to au
 | python-jose | 3.3.0 | JWT token handling |
 | passlib | 1.7.4 | Password hashing (bcrypt) |
 | openpyxl | 3.1.2 | Excel export |
+| NetworkX | 3.0+ | Graph analysis for hub vulnerability |
+| Celery | 5.x | Background task processing |
+| Redis | - | Message broker & result backend |
+| Prometheus | - | Metrics and monitoring |
 
 ### Infrastructure
 | Technology | Version | Purpose |
@@ -163,13 +179,24 @@ npm run dev
 residency-scheduler/
 ├── backend/
 │   ├── app/
-│   │   ├── api/routes/          # API endpoint handlers
-│   │   ├── core/                # Configuration & security
+│   │   ├── api/                 # API layer (routes, dependencies)
+│   │   ├── core/                # Configuration, security, Celery
 │   │   ├── db/                  # Database session management
 │   │   ├── models/              # SQLAlchemy ORM models
+│   │   ├── repositories/        # Data access layer
 │   │   ├── schemas/             # Pydantic validation schemas
+│   │   ├── services/            # Business logic layer
 │   │   ├── scheduling/          # Scheduling engine & validator
-│   │   └── services/            # Business logic layer
+│   │   ├── resilience/          # Resilience framework
+│   │   │   ├── utilization.py   # 80% threshold monitoring
+│   │   │   ├── defense_in_depth.py  # 5-level safety system
+│   │   │   ├── contingency.py   # N-1/N-2 analysis (NetworkX)
+│   │   │   ├── static_stability.py  # Fallback schedules
+│   │   │   ├── sacrifice_hierarchy.py  # Load shedding
+│   │   │   ├── metrics.py       # Prometheus metrics
+│   │   │   ├── tasks.py         # Celery background tasks
+│   │   │   └── service.py       # Resilience service
+│   │   └── notifications/       # Alert delivery
 │   ├── alembic/                 # Database migrations
 │   ├── tests/                   # Backend test suite
 │   ├── Dockerfile
@@ -233,6 +260,7 @@ residency-scheduler/
 | [Architecture](docs/ARCHITECTURE.md) | System design and data flow |
 | [Auth Architecture](docs/AUTH_ARCHITECTURE.md) | Authentication and authorization |
 | [Scheduling Optimization](docs/SCHEDULING_OPTIMIZATION.md) | Algorithm details and strategies |
+| [Resilience Framework](docs/RESILIENCE_FRAMEWORK.md) | Cross-industry resilience concepts |
 
 ### Operations & Development
 | Document | Description |
@@ -242,6 +270,7 @@ residency-scheduler/
 | [Error Handling](docs/ERROR_HANDLING.md) | Error codes and handling patterns |
 | [Caching Strategy](docs/CACHING_STRATEGY.md) | Performance optimization |
 | [Launch Lessons](LAUNCH_LESSONS_LEARNED.md) | Lessons learned from deployment |
+| [Resilience TODO](docs/TODO_RESILIENCE.md) | Human tasks for resilience setup |
 
 ---
 
@@ -280,6 +309,16 @@ PUT    /api/absences/{id} # Update absence
 DELETE /api/absences/{id} # Delete absence
 ```
 
+### Resilience & Monitoring
+```
+GET  /health/resilience              # Resilience system status
+GET  /metrics                        # Prometheus metrics endpoint
+POST /api/resilience/health-check    # Trigger manual health check
+GET  /api/resilience/contingency     # Run N-1/N-2 analysis
+POST /api/resilience/crisis          # Activate crisis response
+GET  /api/resilience/fallbacks       # List available fallback schedules
+```
+
 See [API Reference](docs/API_REFERENCE.md) for complete documentation.
 
 ---
@@ -298,6 +337,12 @@ DEBUG=false
 
 # Frontend
 NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# Redis (for Celery background tasks)
+REDIS_URL=redis://localhost:6379/0
+
+# Prometheus (optional)
+PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
 ```
 
 ---
