@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { useRotationTemplates, useDeleteAssignment } from '@/lib/hooks';
 import type { Assignment, RotationTemplate } from '@/types/api';
 import {
@@ -222,6 +223,7 @@ export function QuickAssignMenu({
   onEditDetails,
 }: QuickAssignMenuProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const canEdit = user?.role === 'admin' || user?.role === 'coordinator';
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -303,11 +305,11 @@ export function QuickAssignMenu({
         await deleteAssignment.mutateAsync(assignment.id);
         onClearAssignment?.();
       } catch (error) {
-        console.error('Failed to clear assignment:', error);
+        toast.error(error instanceof Error ? error.message : 'Failed to clear assignment');
       }
     }
     onClose();
-  }, [assignment, deleteAssignment, onClearAssignment, onClose]);
+  }, [assignment, deleteAssignment, onClearAssignment, onClose, toast]);
 
   const handleEditDetails = useCallback(() => {
     onEditDetails?.();
