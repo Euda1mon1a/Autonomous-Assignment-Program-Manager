@@ -430,13 +430,48 @@ class SchedulingEngine:
         residents: list[Person],
         templates: list[RotationTemplate],
     ):
-        """Convert solver results to Assignment objects."""
+        """Convert solver results to Assignment objects with explanations."""
+        from app.scheduling.explainability import compute_audit_hash
+        from datetime import datetime
+
         for person_id, block_id, template_id in result.assignments:
+            # Get explanation for this assignment if available
+            explanation = result.explanations.get((person_id, block_id))
+
+            # Extract confidence and score from explanation
+            confidence_score = None
+            score = None
+            alternatives_json = None
+
+            if explanation:
+                confidence_score = explanation.get("confidence_score")
+                score = explanation.get("score")
+                alternatives = explanation.get("alternatives", [])
+                if alternatives:
+                    alternatives_json = alternatives[:3]  # Top 3 alternatives
+
+                # Compute audit hash for integrity verification
+                audit_hash = compute_audit_hash(
+                    person_id=person_id,
+                    block_id=block_id,
+                    template_id=template_id,
+                    score=score or 0.0,
+                    algorithm=result.solver_status or "unknown",
+                    timestamp=datetime.utcnow(),
+                )
+            else:
+                audit_hash = None
+
             assignment = Assignment(
                 block_id=block_id,
                 person_id=person_id,
                 rotation_template_id=template_id,
                 role="primary",
+                explain_json=explanation,
+                confidence=confidence_score,
+                score=score,
+                alternatives_json=alternatives_json,
+                audit_hash=audit_hash,
             )
             self.assignments.append(assignment)
 

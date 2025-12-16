@@ -43,6 +43,8 @@ class SolverResult:
         runtime_seconds: float = 0.0,
         solver_status: str = "",
         statistics: dict = None,
+        explanations: dict = None,  # person_id, block_id -> DecisionExplanation
+        random_seed: int = None,
     ):
         self.success = success
         self.assignments = assignments
@@ -51,6 +53,8 @@ class SolverResult:
         self.runtime_seconds = runtime_seconds
         self.solver_status = solver_status
         self.statistics = statistics or {}
+        self.explanations = explanations or {}  # (person_id, block_id) -> explanation dict
+        self.random_seed = random_seed
 
     def __repr__(self):
         return f"SolverResult(success={self.success}, assignments={len(self.assignments)}, status={self.status})"
@@ -607,14 +611,30 @@ class GreedySolver(BaseSolver):
     - Quick initial solutions
     - Simple scheduling scenarios
     - When speed is more important than optimality
+
+    Features:
+    - Generates decision explanations for each assignment
+    - Tracks alternatives considered and rejection reasons
+    - Computes confidence scores based on decision margin
     """
+
+    def __init__(
+        self,
+        constraint_manager: Optional[ConstraintManager] = None,
+        timeout_seconds: float = 60.0,
+        generate_explanations: bool = True,
+    ):
+        super().__init__(constraint_manager, timeout_seconds)
+        self.generate_explanations = generate_explanations
 
     def solve(
         self,
         context: SchedulingContext,
         existing_assignments: list[Assignment] = None,
     ) -> SolverResult:
-        """Solve using greedy algorithm."""
+        """Solve using greedy algorithm with explainability."""
+        from app.scheduling.explainability import ExplainabilityService
+
         start_time = time.time()
 
         # Filter to workday blocks
@@ -626,6 +646,15 @@ class GreedySolver(BaseSolver):
                 assignments=[],
                 status="empty",
                 solver_status="No blocks, residents, or rotation templates",
+            )
+
+        # Initialize explainability service
+        explainability = None
+        if self.generate_explanations:
+            explainability = ExplainabilityService(
+                context=context,
+                constraint_manager=self.constraint_manager,
+                algorithm="greedy",
             )
 
         # Track existing assignments
@@ -655,8 +684,10 @@ class GreedySolver(BaseSolver):
             key=count_eligible,
         )
 
-        # Assign residents
+        # Assign residents with explanations
         assignments = []
+        explanations = {}
+
         for block in sorted_blocks:
             # Find eligible residents
             eligible = [
@@ -667,8 +698,17 @@ class GreedySolver(BaseSolver):
             if not eligible:
                 continue  # No one available
 
-            # Select resident with fewest assignments (equity)
-            selected = min(eligible, key=lambda r: assignment_counts[r.id])
+            # Score each candidate (lower is better for greedy equity)
+            # Score = current assignments (we want to minimize this)
+            candidate_scores = {}
+            for r in eligible:
+                # Invert so higher score = better candidate
+                # Max assignments across all residents - this resident's count
+                max_assigns = max(assignment_counts.values()) if assignment_counts else 0
+                candidate_scores[r.id] = (max_assigns - assignment_counts[r.id]) * 100
+
+            # Select resident with fewest assignments (highest inverted score)
+            selected = max(eligible, key=lambda r: candidate_scores[r.id])
 
             # Select best available template
             template = None
@@ -690,6 +730,22 @@ class GreedySolver(BaseSolver):
                 logger.debug(f"No valid rotation template for resident {selected.name} in block {block.id}")
                 continue
 
+            # Generate explanation for this decision
+            if explainability:
+                explanation = explainability.explain_assignment(
+                    selected_person=selected,
+                    block=block,
+                    template=template,
+                    all_candidates=eligible,
+                    candidate_scores=candidate_scores,
+                    assignment_counts=assignment_counts.copy(),
+                    score_breakdown={
+                        "equity_score": candidate_scores[selected.id],
+                        "coverage": 1000,  # Base coverage value
+                    },
+                )
+                explanations[(selected.id, block.id)] = explanation.model_dump()
+
             assignments.append((
                 selected.id,
                 block.id,
@@ -701,6 +757,11 @@ class GreedySolver(BaseSolver):
         runtime = time.time() - start_time
 
         logger.info(f"Greedy found {len(assignments)} assignments in {runtime:.2f}s")
+
+        # Calculate confidence distribution
+        high_conf = sum(1 for e in explanations.values() if e.get("confidence") == "high")
+        med_conf = sum(1 for e in explanations.values() if e.get("confidence") == "medium")
+        low_conf = sum(1 for e in explanations.values() if e.get("confidence") == "low")
 
         return SolverResult(
             success=True,
@@ -714,7 +775,11 @@ class GreedySolver(BaseSolver):
                 "total_residents": len(context.residents),
                 "total_templates": len(context.templates),
                 "coverage_rate": len(assignments) / len(sorted_blocks) if sorted_blocks else 0,
+                "high_confidence_assignments": high_conf,
+                "medium_confidence_assignments": med_conf,
+                "low_confidence_assignments": low_conf,
             },
+            explanations=explanations,
         )
 
     def _is_available(self, person_id: UUID, block_id: UUID, context: SchedulingContext) -> bool:

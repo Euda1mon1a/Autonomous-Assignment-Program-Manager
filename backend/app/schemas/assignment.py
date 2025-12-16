@@ -1,8 +1,8 @@
 """Assignment schemas."""
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Any
 from uuid import UUID
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class AssignmentBase(BaseModel):
@@ -54,6 +54,10 @@ class AssignmentResponse(AssignmentBase):
     updated_at: datetime
     override_acknowledged_at: Optional[datetime] = None  # When ACGME violation was acknowledged
 
+    # Explainability fields
+    confidence: Optional[float] = Field(None, description="Confidence score 0-1 for this assignment")
+    score: Optional[float] = Field(None, description="Objective score for this assignment")
+
     class Config:
         from_attributes = True
 
@@ -62,3 +66,46 @@ class AssignmentWithWarnings(AssignmentResponse):
     """Schema for assignment response with ACGME validation warnings."""
     acgme_warnings: List[str] = []
     is_compliant: bool = True
+
+
+class AssignmentWithExplanation(AssignmentResponse):
+    """Schema for assignment response with full decision explanation."""
+    explain_json: Optional[dict] = Field(None, description="Full decision explanation JSON")
+    alternatives_json: Optional[List[dict]] = Field(None, description="Top alternatives considered")
+    audit_hash: Optional[str] = Field(None, description="SHA-256 hash for integrity verification")
+
+    # Computed explanation summary
+    confidence_level: Optional[str] = Field(None, description="high/medium/low confidence level")
+    trade_off_summary: Optional[str] = Field(None, description="Plain-English trade-off explanation")
+
+    class Config:
+        from_attributes = True
+
+    @classmethod
+    def from_assignment(cls, assignment, include_explanation: bool = True):
+        """Create from Assignment model with explanation extraction."""
+        data = {
+            "id": assignment.id,
+            "block_id": assignment.block_id,
+            "person_id": assignment.person_id,
+            "rotation_template_id": assignment.rotation_template_id,
+            "role": assignment.role,
+            "activity_override": assignment.activity_override,
+            "notes": assignment.notes,
+            "override_reason": assignment.override_reason,
+            "created_by": assignment.created_by,
+            "created_at": assignment.created_at,
+            "updated_at": assignment.updated_at,
+            "override_acknowledged_at": assignment.override_acknowledged_at,
+            "confidence": assignment.confidence,
+            "score": assignment.score,
+        }
+
+        if include_explanation and assignment.explain_json:
+            data["explain_json"] = assignment.explain_json
+            data["alternatives_json"] = assignment.alternatives_json
+            data["audit_hash"] = assignment.audit_hash
+            data["confidence_level"] = assignment.explain_json.get("confidence")
+            data["trade_off_summary"] = assignment.explain_json.get("trade_off_summary")
+
+        return cls(**data)
