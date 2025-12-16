@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { FileSpreadsheet, Download, Loader2 } from 'lucide-react'
 import { exportToLegacyXlsx } from '@/lib/export'
+import { useToast } from '@/contexts/ToastContext'
 
 interface ExcelExportButtonProps {
   /** Start date in YYYY-MM-DD format */
@@ -33,6 +34,7 @@ export function ExcelExportButton({
 }: ExcelExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   const handleExport = async () => {
     setIsExporting(true)
@@ -41,8 +43,9 @@ export function ExcelExportButton({
     try {
       await exportToLegacyXlsx(startDate, endDate, blockNumber, federalHolidays)
     } catch (err) {
-      console.error('Export failed:', err)
-      setError(err instanceof Error ? err.message : 'Export failed')
+      const errorMessage = err instanceof Error ? err.message : 'Export failed'
+      toast.error(errorMessage)
+      setError(errorMessage)
     } finally {
       setIsExporting(false)
     }
@@ -94,6 +97,7 @@ export function ExcelExportDropdown() {
   const [blockNumber, setBlockNumber] = useState<number | undefined>()
   const [isExporting, setIsExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   // Set default dates to current 4-week block
   const setDefaultDates = () => {
@@ -121,8 +125,9 @@ export function ExcelExportDropdown() {
       await exportToLegacyXlsx(startDate, endDate, blockNumber)
       setIsOpen(false)
     } catch (err) {
-      console.error('Export failed:', err)
-      setError(err instanceof Error ? err.message : 'Export failed')
+      const errorMessage = err instanceof Error ? err.message : 'Export failed'
+      toast.error(errorMessage)
+      setError(errorMessage)
     } finally {
       setIsExporting(false)
     }
