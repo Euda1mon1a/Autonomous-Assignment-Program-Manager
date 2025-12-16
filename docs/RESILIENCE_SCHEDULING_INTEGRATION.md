@@ -53,8 +53,15 @@ This document describes the integration between the scheduling engine (`scheduli
 │  │  Soft Constraints:                              │ │   │
 │  │   - CoverageConstraint                          │ │   │
 │  │   - EquityConstraint                            │ │   │
+│  │                                                 │ │   │
+│  │  Tier 1 Resilience (Critical):                 │ │   │
 │  │   + HubProtectionConstraint  ◀─────────────────┤ │   │
 │  │   + UtilizationBufferConstraint ◀──────────────┤ │   │
+│  │                                                 │ │   │
+│  │  Tier 2 Resilience (Strategic):                │ │   │
+│  │   + ZoneBoundaryConstraint ◀───────────────────┤ │   │
+│  │   + PreferenceTrailConstraint ◀────────────────┤ │   │
+│  │   + N1VulnerabilityConstraint ◀────────────────┤ │   │
 │  └─────────────────────────────────────────────────┘ │   │
 │                                                      │   │
 └───────────────────────────────────────────────────────┼───┘
@@ -69,6 +76,7 @@ This document describes the integration between the scheduling engine (`scheduli
                     │ contingency        │
                     │ stigmergy          │
                     │ utilization        │
+                    │ blast_radius       │
                     └────────────────────┘
 ```
 
@@ -321,50 +329,89 @@ result = constraint_manager.validate_all(assignments, context)
 }
 ```
 
-***REMOVED******REMOVED*** Future Tier 2 Integration
+***REMOVED******REMOVED*** Tier 2 Constraints (Implemented)
 
-The following features are prepared for but not yet fully integrated:
+***REMOVED******REMOVED******REMOVED*** 5. ZoneBoundaryConstraint
 
-***REMOVED******REMOVED******REMOVED*** Zone-Aware Scheduling (Blast Radius)
+`backend/app/scheduling/constraints.py`
 
-```python
-***REMOVED*** Future: SchedulingContext will include zone data
-context.zone_assignments = {
-    faculty_1.id: zone_inpatient.id,
-    faculty_2.id: zone_outpatient.id,
-}
-context.block_zones = {
-    block_1.id: zone_inpatient.id,
-    block_2.id: zone_outpatient.id,
-}
+Respects blast radius zone boundaries in scheduling.
 
-***REMOVED*** Future: ZoneBoundaryConstraint
-***REMOVED*** Penalizes cross-zone assignments to contain failures
+**Pattern (AWS Architecture):**
+- Failures should be contained within defined boundaries ("cells")
+- A problem in one zone cannot propagate to affect others
+- Zone A failure → Zones B and C continue unaffected
+
+**Implementation:**
+- Penalizes assignments where faculty_zone != block_zone
+- Critical zones (inpatient) have higher isolation requirements
+- Auto-enabled when zone data is available
+
+**Example Zones:**
+```
+Zone A: Inpatient (ICU, Wards, Procedures)
+Zone B: Outpatient (Clinics, Consults)
+Zone C: Education (Didactics, Simulation)
 ```
 
-***REMOVED******REMOVED******REMOVED*** Preference Trail Integration (Stigmergy)
+**Penalty:** `cross_zone_count × weight (12.0)`
 
+***REMOVED******REMOVED******REMOVED*** 6. PreferenceTrailConstraint
+
+`backend/app/scheduling/constraints.py`
+
+Uses stigmergy preference trails for assignment optimization.
+
+**Pattern (Swarm Intelligence):**
+- Individual agents follow pheromone trails
+- Strong trails indicate consistent preference/avoidance
+- Collective optimization emerges from local signals
+
+**Trail Thresholds:**
+- `STRONG_TRAIL_THRESHOLD = 0.6`: Strong signal
+- `WEAK_TRAIL_THRESHOLD = 0.3`: Ignore
+
+**Implementation:**
 ```python
-***REMOVED*** Future: Use preference trails in assignment scoring
-context.preference_trails = {
-    faculty_1.id: {
-        "monday_am": 0.8,  ***REMOVED*** Strong preference
-        "friday_pm": 0.2,  ***REMOVED*** Avoidance
+***REMOVED*** Slot type derived from block: "monday_am", "friday_pm", etc.
+slot_type = f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+
+***REMOVED*** Trail strength determines bonus/penalty
+if trail_strength >= 0.6:  ***REMOVED*** Preference
+    bonus = (trail_strength - 0.5) × 20
+elif trail_strength <= 0.4:  ***REMOVED*** Avoidance
+    penalty = (0.5 - trail_strength) × 20
+```
+
+***REMOVED******REMOVED******REMOVED*** 7. N1VulnerabilityConstraint
+
+`backend/app/scheduling/constraints.py`
+
+Prevents schedules that create single points of failure.
+
+**Pattern (Power Grid N-1):**
+- System must survive loss of any single component
+- No service should depend on exactly one faculty member
+- Redundancy improves resilience
+
+**Implementation:**
+- Penalizes blocks with only 1-2 available faculty
+- Scarcity factor: 1 available = 2x penalty, 2 available = 1x penalty
+- Reports sole providers (faculty who are only coverage for multiple blocks)
+
+**Violation Example:**
+```json
+{
+    "constraint_name": "N1Vulnerability",
+    "severity": "HIGH",
+    "message": "15 blocks have single-point-of-failure coverage (12%)",
+    "details": {
+        "n1_vulnerable_blocks": 15,
+        "vulnerability_rate": 0.12,
+        "sole_provider_counts": {"faculty_1_id": 8, "faculty_2_id": 7},
+        "n1_pass": false
     }
 }
-
-***REMOVED*** Future: PreferenceTrailConstraint
-***REMOVED*** Rewards assignments matching positive trails
-```
-
-***REMOVED******REMOVED******REMOVED*** N-1 Vulnerability as Constraint
-
-```python
-***REMOVED*** Future: Penalize schedules that create single points of failure
-context.n1_vulnerable_faculty = {faculty_1.id, faculty_2.id}
-
-***REMOVED*** Future: N1VulnerabilityConstraint
-***REMOVED*** Prevents any single faculty from being sole coverage for a service
 ```
 
 ***REMOVED******REMOVED*** Configuration Reference
@@ -378,20 +425,39 @@ class ResilienceConfig:
     max_utilization: float = 0.80
     warning_threshold: float = 0.70
 
-    ***REMOVED*** Tier 3: Hub Analysis settings
+    ***REMOVED*** Hub Analysis settings
     hub_threshold: float = 0.4           ***REMOVED*** Score to be considered a hub
     critical_hub_threshold: float = 0.6  ***REMOVED*** Score for critical hub status
 ```
 
 ***REMOVED******REMOVED******REMOVED*** Constraint Weights (Defaults)
 
-| Constraint | Weight | Priority | Effect |
-|------------|--------|----------|--------|
-| CoverageConstraint | 1000.0 | HIGH | Maximize block coverage |
-| UtilizationBufferConstraint | 20.0 | HIGH | Maintain 20% buffer |
-| HubProtectionConstraint | 15.0 | MEDIUM | Protect critical faculty |
-| EquityConstraint | 10.0 | MEDIUM | Balance workload |
-| ContinuityConstraint | 5.0 | LOW | Minimize rotation changes |
+| Constraint | Weight | Priority | Tier | Effect |
+|------------|--------|----------|------|--------|
+| CoverageConstraint | 1000.0 | HIGH | - | Maximize block coverage |
+| N1VulnerabilityConstraint | 25.0 | HIGH | 2 | Prevent single points of failure |
+| UtilizationBufferConstraint | 20.0 | HIGH | 1 | Maintain 20% buffer |
+| HubProtectionConstraint | 15.0 | MEDIUM | 1 | Protect critical faculty |
+| ZoneBoundaryConstraint | 12.0 | MEDIUM | 2 | Contain failures to zones |
+| EquityConstraint | 10.0 | MEDIUM | - | Balance workload |
+| PreferenceTrailConstraint | 8.0 | LOW | 2 | Follow learned preferences |
+| ContinuityConstraint | 5.0 | LOW | - | Minimize rotation changes |
+
+***REMOVED******REMOVED******REMOVED*** Factory Methods
+
+```python
+***REMOVED*** Backward compatible (all resilience constraints disabled)
+ConstraintManager.create_default()
+
+***REMOVED*** Tier 1 only (hub protection, utilization buffer)
+ConstraintManager.create_resilience_aware(tier=1)
+
+***REMOVED*** Full resilience (Tier 1 + Tier 2)
+ConstraintManager.create_resilience_aware(tier=2)  ***REMOVED*** default
+
+***REMOVED*** Custom utilization target
+ConstraintManager.create_resilience_aware(target_utilization=0.75)
+```
 
 ***REMOVED******REMOVED*** Testing
 
@@ -436,3 +502,288 @@ def test_utilization_buffer_respected():
 - [RESILIENCE_FRAMEWORK.md](./RESILIENCE_FRAMEWORK.md) - Full resilience concept documentation
 - [SCHEDULING_OPTIMIZATION.md](./SCHEDULING_OPTIMIZATION.md) - Solver algorithms
 - [TODO_RESILIENCE.md](./TODO_RESILIENCE.md) - Implementation status
+
+---
+
+***REMOVED******REMOVED*** Tier 2 Reflection: What Works, What Doesn't Translate
+
+***REMOVED******REMOVED******REMOVED*** Successfully Integrated into Constraints
+
+| Resilience Concept | Constraint | Integration Quality |
+|-------------------|------------|---------------------|
+| Hub Vulnerability (Network Theory) | HubProtectionConstraint | ✅ Excellent - direct translation |
+| 80% Utilization (Queuing Theory) | UtilizationBufferConstraint | ✅ Excellent - direct translation |
+| Blast Radius Isolation (AWS) | ZoneBoundaryConstraint | ✅ Good - requires zone setup |
+| Stigmergy Trails (Swarm Intelligence) | PreferenceTrailConstraint | ✅ Good - requires trail history |
+| N-1 Contingency (Power Grid) | N1VulnerabilityConstraint | ✅ Good - works without pre-analysis |
+
+***REMOVED******REMOVED******REMOVED*** Resilience Features That Don't Translate to Constraints
+
+Some resilience concepts from the framework don't fit the constraint-based optimization model:
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 1. Homeostasis/Feedback Loops (Biology)
+
+**Why it doesn't translate:**
+- Operates across multiple scheduling runs, not within a single solve
+- Involves tracking deviation from setpoints over time
+- Requires adjusting weights/targets between runs, not during optimization
+
+**Better integration approach:**
+```python
+***REMOVED*** Meta-scheduler that adjusts constraint weights between runs
+class HomeostasisAdjuster:
+    def adjust_for_next_run(self, health_history):
+        ***REMOVED*** If coverage consistently low, increase CoverageConstraint weight
+        ***REMOVED*** If burnout indicators high, increase UtilizationBuffer threshold
+        ***REMOVED*** This adjusts inputs TO the solver, not the solver itself
+        pass
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 2. Le Chatelier's Principle (Chemistry)
+
+**Why it doesn't translate:**
+- Models stress response and compensation debt over time
+- Predicts equilibrium shifts, doesn't constrain solutions
+- Better suited for advisory/prediction than optimization
+
+**Better integration approach:**
+```python
+***REMOVED*** Post-solve advisory: "This schedule requires X compensation,
+***REMOVED*** which will create Y burnout debt by month-end"
+class EquilibriumAdvisor:
+    def assess_schedule(self, assignments):
+        stress = calculate_applied_stress(assignments)
+        compensation = stress * 0.5  ***REMOVED*** Partial compensation
+        debt = compensation * 1.5  ***REMOVED*** Cost of compensation
+        return SustainabilityReport(stress, compensation, debt)
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 3. Cognitive Load Management (Psychology)
+
+**Why it doesn't translate:**
+- Affects UI/workflow, not the optimization algorithm
+- Operates on human decision-making, not solver decisions
+- Miller's Law limits apply to coordinators, not software
+
+**Better integration approach:**
+```python
+***REMOVED*** Limit manual decisions presented to coordinators
+***REMOVED*** Batch schedule changes for approval
+***REMOVED*** Provide smart defaults with one-click accept
+***REMOVED*** This wraps the scheduler, doesn't change its behavior
+```
+
+***REMOVED******REMOVED******REMOVED*** Key Insight: Constraint vs. Advisory vs. Meta-Control
+
+| Type | When Applied | Example |
+|------|--------------|---------|
+| **Constraint** | During single solve | HubProtectionConstraint |
+| **Advisory** | After solve (validation) | Le Chatelier equilibrium analysis |
+| **Meta-Control** | Between solves | Homeostasis weight adjustment |
+
+---
+
+***REMOVED******REMOVED*** Tier 3 Preparation: What's Next
+
+***REMOVED******REMOVED******REMOVED*** Tier 3 Constraint Candidates
+
+Based on analysis, these could be implemented as constraints:
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 1. AllostasisConstraint (Cumulative Stress)
+
+**Concept:** Track faculty cumulative stress ("allostatic load") and penalize
+assignments that push individuals into burnout risk.
+
+```python
+class AllostasisConstraint(SoftConstraint):
+    """
+    Prevents assigning overloaded faculty.
+
+    Allostasis (biology): Cumulative wear and tear from chronic stress.
+    Unlike acute stress, allostatic load accumulates and doesn't reset.
+
+    Implementation:
+    - Track rolling stress score per faculty
+    - Penalize assignments to high-allostasis individuals
+    - Encourage recovery time for stressed faculty
+    """
+
+    def validate(self, assignments, context):
+        for faculty_id, allostatic_load in context.allostatic_loads.items():
+            if allostatic_load > self.BURNOUT_THRESHOLD:
+                ***REMOVED*** Penalize any assignments to this faculty
+                pass
+```
+
+**Data needed in SchedulingContext:**
+- `allostatic_loads: dict[UUID, float]` - Cumulative stress per faculty
+- `recovery_requirements: dict[UUID, int]` - Days off needed
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 2. EquilibriumShiftConstraint (Le Chatelier Integration)
+
+**Concept:** Penalize schedules that create unsustainable compensation demands.
+
+```python
+class EquilibriumShiftConstraint(SoftConstraint):
+    """
+    Penalizes schedules requiring excessive compensation.
+
+    Le Chatelier: Systems under stress partially compensate,
+    but compensation has costs (overtime, burnout debt).
+
+    Implementation:
+    - Calculate compensation required for schedule
+    - Penalize if compensation_debt exceeds sustainable threshold
+    """
+
+    def validate(self, assignments, context):
+        compensation_debt = calculate_compensation_debt(assignments, context)
+        if compensation_debt > context.sustainable_compensation_limit:
+            ***REMOVED*** High penalty for unsustainable schedules
+            pass
+```
+
+**Data needed in SchedulingContext:**
+- `baseline_capacity: float` - Normal capacity before stress
+- `sustainable_compensation_limit: float` - Max acceptable debt
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 3. DecisionComplexityConstraint (Cognitive Load Proxy)
+
+**Concept:** Penalize schedules that are hard for humans to understand/manage.
+
+```python
+class DecisionComplexityConstraint(SoftConstraint):
+    """
+    Penalizes overly complex schedules.
+
+    Cognitive psychology: Complexity increases coordinator burden.
+    Simple, predictable schedules reduce decision fatigue.
+
+    Implementation:
+    - Penalize excessive pattern changes
+    - Reward consistent assignments
+    - Penalize exceptions and special cases
+    """
+
+    def validate(self, assignments, context):
+        complexity_score = calculate_schedule_complexity(assignments)
+        ***REMOVED*** Changes per week, exceptions, pattern breaks, etc.
+        if complexity_score > self.SIMPLICITY_TARGET:
+            ***REMOVED*** Penalty proportional to excess complexity
+            pass
+```
+
+**Data needed in SchedulingContext:**
+- `pattern_expectations: dict` - Expected regular patterns
+- `exception_count_limit: int` - Max tolerable exceptions
+
+***REMOVED******REMOVED******REMOVED*** Meta-Control Systems (Between Solves)
+
+These would wrap the scheduler, not be constraints:
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 1. HomeostasisController
+
+```python
+class HomeostasisController:
+    """
+    Adjusts constraint weights between scheduling runs based on
+    historical deviation from setpoints.
+
+    Runs BEFORE generate(), modifies constraint_manager weights.
+    """
+
+    def adjust_weights(self, constraint_manager, health_history):
+        ***REMOVED*** If coverage consistently below target, increase weight
+        coverage_trend = analyze_trend(health_history, 'coverage')
+        if coverage_trend < -0.05:  ***REMOVED*** 5% below setpoint trending down
+            coverage_constraint = constraint_manager.get("Coverage")
+            coverage_constraint.weight *= 1.1  ***REMOVED*** 10% increase
+
+        ***REMOVED*** If utilization consistently high, lower threshold
+        util_trend = analyze_trend(health_history, 'utilization')
+        if util_trend > 0.85:  ***REMOVED*** Trending above buffer
+            util_constraint = constraint_manager.get("UtilizationBuffer")
+            util_constraint.target_utilization -= 0.05  ***REMOVED*** Tighten buffer
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 2. CognitiveLoadBatcher
+
+```python
+class CognitiveLoadBatcher:
+    """
+    Batches schedule changes to reduce coordinator cognitive load.
+
+    Runs AFTER generate(), before presenting to user.
+    """
+
+    MAX_DECISIONS_PER_BATCH = 7  ***REMOVED*** Miller's Law
+
+    def batch_for_review(self, changes):
+        ***REMOVED*** Group similar changes
+        ***REMOVED*** Prioritize by impact
+        ***REMOVED*** Provide smart defaults
+        ***REMOVED*** Return digestible batches
+        pass
+```
+
+***REMOVED******REMOVED******REMOVED*** Data Pipeline for Tier 3
+
+To enable Tier 3 constraints, the following data needs to flow from ResilienceService to SchedulingContext:
+
+```
+ResilienceService
+├── homeostasis.py
+│   └── get_allostatic_loads(faculty) → dict[UUID, float]
+│   └── get_recovery_requirements(faculty) → dict[UUID, int]
+│
+├── le_chatelier.py
+│   └── get_baseline_capacity() → float
+│   └── get_compensation_debt() → float
+│
+├── cognitive_load.py
+│   └── get_decision_budget() → int (remaining decisions)
+│   └── get_complexity_limit() → float
+│
+└── → SchedulingContext (extended)
+        + allostatic_loads
+        + recovery_requirements
+        + baseline_capacity
+        + compensation_debt
+        + decision_complexity_limit
+```
+
+***REMOVED******REMOVED******REMOVED*** Implementation Priority for Tier 3
+
+| Feature | Impact | Complexity | Priority |
+|---------|--------|------------|----------|
+| AllostasisConstraint | High (prevents burnout) | Medium | 1 |
+| HomeostasisController | High (adaptive scheduling) | Medium | 2 |
+| EquilibriumShiftConstraint | Medium (sustainability) | Low | 3 |
+| CognitiveLoadBatcher | Medium (UX improvement) | Medium | 4 |
+| DecisionComplexityConstraint | Low (nice-to-have) | Low | 5 |
+
+---
+
+***REMOVED******REMOVED*** Current Implementation Status
+
+***REMOVED******REMOVED******REMOVED*** Completed (Tier 1 + Tier 2)
+
+| Feature | Status | Location |
+|---------|--------|----------|
+| SchedulingContext resilience fields | ✅ Complete | `constraints.py` |
+| HubProtectionConstraint | ✅ Complete | `constraints.py` |
+| UtilizationBufferConstraint | ✅ Complete | `constraints.py` |
+| ZoneBoundaryConstraint | ✅ Complete | `constraints.py` |
+| PreferenceTrailConstraint | ✅ Complete | `constraints.py` |
+| N1VulnerabilityConstraint | ✅ Complete | `constraints.py` |
+| Data population in engine | ✅ Complete | `engine.py` |
+| Auto-enable constraints | ✅ Complete | `engine.py` |
+| Factory methods | ✅ Complete | `constraints.py` |
+
+***REMOVED******REMOVED******REMOVED*** Ready for Tier 3
+
+- [ ] AllostasisConstraint
+- [ ] EquilibriumShiftConstraint
+- [ ] DecisionComplexityConstraint
+- [ ] HomeostasisController (meta-control)
+- [ ] CognitiveLoadBatcher (post-processing)
