@@ -149,7 +149,9 @@ export async function exportToLegacyXlsx(
     document.body.removeChild(link);
     URL.revokeObjectURL(downloadUrl);
   } catch (error) {
-    console.error('Excel export failed:', error);
-    throw error;
+    // Re-throw to allow UI components to handle the error with user-facing notifications
+    throw error instanceof Error
+      ? error
+      : new Error(`Excel export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
