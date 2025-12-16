@@ -10,6 +10,13 @@ from app.models.user import User
 from app.models.procedure import Procedure
 from app.models.procedure_credential import ProcedureCredential
 from app.models.certification import CertificationType, PersonCertification
+from app.models.settings import ApplicationSettings
+from app.models.notification import (
+    Notification,
+    ScheduledNotificationRecord,
+    NotificationPreferenceRecord,
+)
+from app.models.token_blacklist import TokenBlacklist
 from app.models.resilience import (
     # Tier 1 models
     ResilienceHealthCheck,
@@ -66,6 +73,14 @@ __all__ = [
     # Certification models
     "CertificationType",
     "PersonCertification",
+    # Settings model
+    "ApplicationSettings",
+    # Notification models
+    "Notification",
+    "ScheduledNotificationRecord",
+    "NotificationPreferenceRecord",
+    # Token blacklist
+    "TokenBlacklist",
     # Tier 1 Resilience models
     "ResilienceHealthCheck",
     "ResilienceEvent",

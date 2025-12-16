@@ -4,16 +4,27 @@ Thin routing layer that connects URL paths to controllers.
 All business logic is in the service layer.
 """
 
+from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
+from jose import jwt, JWTError
 
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.auth import Token, UserCreate, UserResponse, UserLogin
-from app.core.security import get_current_user, get_current_active_user, get_admin_user
+from app.core.security import (
+    get_current_user,
+    get_current_active_user,
+    get_admin_user,
+    blacklist_token,
+    oauth2_scheme,
+    ALGORITHM,
+)
+from app.core.config import get_settings
 from app.controllers.auth_controller import AuthController
 
+settings = get_settings()
 router = APIRouter()
 
 
@@ -48,14 +59,41 @@ async def login_json(
 @router.post("/logout")
 async def logout(
     current_user: User = Depends(get_current_active_user),
+    token: str = Depends(oauth2_scheme),
+    db=Depends(get_db),
 ):
     """
-    Logout current user.
+    Logout current user by blacklisting their token.
 
-    Note: JWT tokens are stateless, so this is primarily for client-side
-    token removal. In a production system, you might want to implement
-    a token blacklist.
+    The token will be added to the blacklist and rejected on future requests.
     """
+    if token:
+        try:
+            # Decode token to get jti and expiration
+            payload = jwt.decode(
+                token,
+                settings.SECRET_KEY,
+                algorithms=[ALGORITHM]
+            )
+            jti = payload.get("jti")
+            exp = payload.get("exp")
+
+            if jti and exp:
+                # Convert exp to datetime
+                expires_at = datetime.utcfromtimestamp(exp)
+
+                # Add to blacklist
+                blacklist_token(
+                    db=db,
+                    jti=jti,
+                    expires_at=expires_at,
+                    user_id=current_user.id,
+                    reason="logout"
+                )
+
+        except JWTError:
+            pass  # Token was invalid anyway, no need to blacklist
+
     return {"message": "Successfully logged out"}
 
 

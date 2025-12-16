@@ -14,6 +14,7 @@ class TokenData(BaseModel):
     """Data extracted from JWT token."""
     user_id: Optional[str] = None
     username: Optional[str] = None
+    jti: Optional[str] = None  # JWT ID for blacklist support
 
 
 class UserLogin(BaseModel):
