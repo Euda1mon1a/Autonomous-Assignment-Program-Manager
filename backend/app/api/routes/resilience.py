@@ -121,7 +121,7 @@ def persist_event(
         triggered_by=triggered_by,
         previous_state=previous_state,
         new_state=new_state,
-        metadata=metadata,
+        event_metadata=metadata,
         related_health_check_id=health_check_id,
     )
     db.add(event)
