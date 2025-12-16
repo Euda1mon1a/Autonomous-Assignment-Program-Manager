@@ -24,14 +24,28 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Auto-merge minor and patch updates
+      - name: Auto-merge minor and patch updates (backend/actions only)
+        # LESSON LEARNED: Frontend deps (especially Tailwind) can have breaking changes
+        # Only auto-merge backend and GitHub Actions updates
         if: >-
-          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+          (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor') &&
+          steps.metadata.outputs.directory != '/frontend'
         run: |
           echo "Auto-merging Dependabot PR for ${{ steps.metadata.outputs.dependency-names }}"
           echo "Update type: ${{ steps.metadata.outputs.update-type }}"
+          echo "Directory: ${{ steps.metadata.outputs.directory }}"
           gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Label frontend updates for manual review
+        if: steps.metadata.outputs.directory == '/frontend'
+        run: |
+          echo "Frontend dependency update detected - requires manual review"
+          gh pr edit "$PR_URL" --add-label "manual-review-required"
+          gh pr comment "$PR_URL" --body "This is a frontend dependency update. Please test locally with \`npm run build\` before merging."
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
