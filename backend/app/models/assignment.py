@@ -1,7 +1,8 @@
 """Assignment model - the actual schedule."""
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Text, ForeignKey, UniqueConstraint, CheckConstraint
+from sqlalchemy import Column, String, DateTime, Text, ForeignKey, UniqueConstraint, CheckConstraint, Float
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -29,6 +30,13 @@ class Assignment(Base):
     notes = Column(Text)
     override_reason = Column(Text)  ***REMOVED*** Reason for acknowledging ACGME violations
     override_acknowledged_at = Column(DateTime)  ***REMOVED*** When user acknowledged ACGME violation
+
+    ***REMOVED*** Explainability fields - transparency into scheduling decisions
+    explain_json = Column(JSONB)  ***REMOVED*** Full DecisionExplanation as JSON
+    confidence = Column(Float)  ***REMOVED*** Confidence score 0-1
+    score = Column(Float)  ***REMOVED*** Objective score for this assignment
+    alternatives_json = Column(JSONB)  ***REMOVED*** Top alternatives considered (AlternativeCandidate[])
+    audit_hash = Column(String(64))  ***REMOVED*** SHA-256 of inputs+outputs for integrity verification
 
     ***REMOVED*** Audit
     created_by = Column(String(255))
