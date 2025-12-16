@@ -40,7 +40,7 @@ describe('useSchedule', () => {
     })
 
     expect(mockedApi.get).toHaveBeenCalledWith(
-      '/api/assignments?start_date=2024-02-01&end_date=2024-02-28'
+      '/assignments?start_date=2024-02-01&end_date=2024-02-28'
     )
     expect(result.current.data).toEqual(mockResponses.listAssignments)
   })
@@ -89,7 +89,7 @@ describe('useSchedule', () => {
     })
 
     expect(mockedApi.get).toHaveBeenLastCalledWith(
-      '/api/assignments?start_date=2024-03-01&end_date=2024-03-31'
+      '/assignments?start_date=2024-03-01&end_date=2024-03-31'
     )
   })
 })
