@@ -8,7 +8,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { format } from 'date-fns';
+import { format as formatDate } from 'date-fns';
 import {
   Download,
   FileText,
@@ -110,7 +110,7 @@ function transformForExport(
 ): Record<string, unknown> {
   const base = {
     id: log.id,
-    timestamp: format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm:ss'),
+    timestamp: formatDate(new Date(log.timestamp), 'yyyy-MM-dd HH:mm:ss'),
     user: log.user,
     action: ACTION_TYPE_LABELS[log.action] || log.action,
     entityType: ENTITY_TYPE_LABELS[log.entityType] || log.entityType,
@@ -146,7 +146,7 @@ function generateFilename(
 ): string {
   const dateStr = format === 'pdf'
     ? format.replace(/\//g, '-')
-    : format(new Date(), 'yyyy-MM-dd_HHmmss');
+    : formatDate(new Date(), 'yyyy-MM-dd_HHmmss');
 
   let suffix = '';
   if (filters?.dateRange) {
@@ -185,7 +185,7 @@ function exportLogsToJSON(
  * Generate PDF report content (returns HTML for printing)
  */
 function generatePDFContent(logs: AuditLogEntry[], filters?: AuditLogFilters): string {
-  const dateStr = format(new Date(), 'MMMM d, yyyy');
+  const dateStr = formatDate(new Date(), 'MMMM d, yyyy');
 
   return `
     <!DOCTYPE html>
@@ -232,7 +232,7 @@ function generatePDFContent(logs: AuditLogEntry[], filters?: AuditLogFilters): s
             .map(
               (log) => `
               <tr class="${log.acgmeOverride ? 'acgme-override' : ''}">
-                <td>${format(new Date(log.timestamp), 'MMM d, yyyy HH:mm')}</td>
+                <td>${formatDate(new Date(log.timestamp), 'MMM d, yyyy HH:mm')}</td>
                 <td>${log.user.name}</td>
                 <td>${ACTION_TYPE_LABELS[log.action] || log.action}</td>
                 <td>${ENTITY_TYPE_LABELS[log.entityType]} ${log.entityName ? `(${log.entityName})` : ''}</td>

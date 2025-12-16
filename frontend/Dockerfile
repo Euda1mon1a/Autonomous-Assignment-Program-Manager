@@ -9,7 +9,7 @@ WORKDIR /app
 ***REMOVED*** Dependencies stage - install only when needed
 FROM base AS deps
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --legacy-peer-deps && npm cache clean --force
 
 ***REMOVED*** Builder stage - build the application
 FROM base AS builder

@@ -126,7 +126,7 @@ export function BatchResolution({
 
   const hasCritical = groupedBySeverity.critical.length > 0;
   const uniqueTypes = useMemo(
-    () => [...new Set(conflicts.map((c) => c.type))],
+    () => Array.from(new Set(conflicts.map((c) => c.type))),
     [conflicts]
   );
 

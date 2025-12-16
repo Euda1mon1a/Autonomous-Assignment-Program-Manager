@@ -122,8 +122,8 @@ function compareEntries(
   ];
 
   metaFields.forEach(({ key, label }) => {
-    const val1 = (entry1 as Record<string, unknown>)[key];
-    const val2 = (entry2 as Record<string, unknown>)[key];
+    const val1 = (entry1 as unknown as Record<string, unknown>)[key];
+    const val2 = (entry2 as unknown as Record<string, unknown>)[key];
 
     if (!areValuesEqual(val1, val2)) {
       lines.push({
