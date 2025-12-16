@@ -10,6 +10,7 @@ import logging
 
 from app.core.config import get_settings
 from app.api.routes import api_router
+from app.middleware.audit import AuditContextMiddleware
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -61,6 +62,9 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Failed to start certification scheduler: {e}")
 
+    # Log audit system status (without exposing sensitive config values)
+    logger.info("Audit versioning enabled for: Assignment, Absence, ScheduleRun")
+
     yield
 
     # Shutdown
@@ -92,6 +96,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Audit context middleware - captures user for version history tracking
+app.add_middleware(AuditContextMiddleware)
 
 # Include API routes
 app.include_router(api_router, prefix="/api")

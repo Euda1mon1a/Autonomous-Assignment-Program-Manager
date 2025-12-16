@@ -23,6 +23,7 @@ This manual covers:
 | Document | Description |
 |----------|-------------|
 | [Installation Guide](./installation.md) | Complete installation and deployment instructions |
+| [Service Operations](./service-operations.md) | Starting, stopping, monitoring, and troubleshooting services |
 | [User Management](./user-management.md) | User administration and permission configuration |
 | [Configuration Guide](./configuration.md) | System configuration options and environment variables |
 | [Data Storage](./data-storage.md) | Where data is stored in different deployment scenarios |
@@ -99,9 +100,13 @@ For manual (non-Docker) deployments:
 | Start all services | `docker compose up -d` |
 | Stop all services | `docker compose down` |
 | View logs | `docker compose logs -f` |
+| Check health | `curl http://localhost:8000/health` |
+| Check resilience status | `curl http://localhost:8000/health/resilience` |
+| View metrics | `http://localhost:9090` (Prometheus) |
+| View dashboards | `http://localhost:3001` (Grafana) |
 | Database backup | See [Backup Guide](./backup-restore.md) |
 | Add new user | See [User Management](./user-management.md) |
-| Check health | `curl http://localhost:8000/health` |
+| Service troubleshooting | See [Service Operations](./service-operations.md) |
 
 ### Default Ports
 

@@ -31,6 +31,8 @@ class AuthService:
         - user: The authenticated user
         - access_token: JWT access token
         - token_type: Token type (bearer)
+        - jti: JWT ID (for blacklist support)
+        - expires_at: Token expiration time
         - error: Error message if authentication failed
         """
         user = self.user_repo.get_by_username(username)
@@ -44,9 +46,9 @@ class AuthService:
         user.last_login = datetime.utcnow()
         self.user_repo.commit()
 
-        # Create access token
+        # Create access token with jti for blacklist support
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
+        access_token, jti, expires_at = create_access_token(
             data={"sub": str(user.id), "username": user.username},
             expires_delta=access_token_expires,
         )
@@ -55,6 +57,8 @@ class AuthService:
             "user": user,
             "access_token": access_token,
             "token_type": "bearer",
+            "jti": jti,
+            "expires_at": expires_at,
             "error": None,
         }
 

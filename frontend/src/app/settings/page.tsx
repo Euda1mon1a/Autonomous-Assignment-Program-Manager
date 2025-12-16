@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect, FormEvent } from 'react'
-import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, AlertCircle, Loader2, Calendar } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { format, parseISO } from 'date-fns'
 import { get, put, ApiError } from '@/lib/api'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { HolidayEditModal, Holiday } from '@/components/HolidayEditModal'
 
 interface Settings {
   academicYear: {
@@ -20,6 +22,7 @@ interface Settings {
   scheduling: {
     defaultAlgorithm: 'greedy' | 'min_conflicts' | 'cp_sat'
   }
+  holidays?: Holiday[]
 }
 
 const defaultSettings: Settings = {
@@ -36,6 +39,7 @@ const defaultSettings: Settings = {
   scheduling: {
     defaultAlgorithm: 'greedy',
   },
+  holidays: [],
 }
 
 // API hooks for settings
@@ -65,6 +69,7 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>(defaultSettings)
   const [showSuccess, setShowSuccess] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+  const [isHolidayModalOpen, setIsHolidayModalOpen] = useState(false)
 
   // Load settings from API when fetched
   useEffect(() => {
@@ -89,6 +94,15 @@ export default function SettingsPage() {
     setShowSuccess(false)
   }
 
+  const handleHolidaysSave = (holidays: Holiday[]) => {
+    setSettings((prev) => ({
+      ...prev,
+      holidays,
+    }))
+    setHasChanges(true)
+    setShowSuccess(false)
+  }
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setShowSuccess(false)
@@ -107,6 +121,14 @@ export default function SettingsPage() {
 
   const isSaving = updateSettingsMutation.isPending
   const saveError = updateSettingsMutation.error
+
+  // Get upcoming holidays for display (max 5)
+  const upcomingHolidays = (settings.holidays || [])
+    .filter((h) => h.date >= settings.academicYear.startDate && h.date <= settings.academicYear.endDate)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 5)
+
+  const remainingHolidaysCount = Math.max(0, (settings.holidays || []).length - 5)
 
   // Loading state
   if (isLoadingSettings) {
@@ -293,32 +315,62 @@ export default function SettingsPage() {
 
           {/* Holidays */}
           <div className="card">
-            <h2 className="font-semibold text-lg mb-4">Federal Holidays</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-lg flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-600" />
+                Holidays
+              </h2>
+              <span className="text-sm text-gray-500">
+                {(settings.holidays || []).length} configured
+              </span>
+            </div>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between py-2 border-b">
-                <span>New Years Day</span>
-                <span className="text-gray-500">Jan 1</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span>MLK Day</span>
-                <span className="text-gray-500">3rd Mon Jan</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span>Presidents Day</span>
-                <span className="text-gray-500">3rd Mon Feb</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span>Memorial Day</span>
-                <span className="text-gray-500">Last Mon May</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span>Independence Day</span>
-                <span className="text-gray-500">Jul 4</span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span>+ 5 more holidays</span>
-                <button type="button" className="text-blue-600 hover:underline">Edit</button>
-              </div>
+              {upcomingHolidays.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">
+                  No holidays configured. Click Edit to add holidays.
+                </p>
+              ) : (
+                <>
+                  {upcomingHolidays.map((holiday) => (
+                    <div key={holiday.id} className="flex justify-between py-2 border-b">
+                      <span className="flex items-center gap-2">
+                        {holiday.name}
+                        {holiday.isCustom && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">
+                            Custom
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-gray-500">
+                        {format(parseISO(holiday.date), 'MMM d')}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between py-2">
+                    <span className="text-gray-500">
+                      {remainingHolidaysCount > 0 ? `+ ${remainingHolidaysCount} more holidays` : ''}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsHolidayModalOpen(true)}
+                      className="text-blue-600 hover:underline font-medium"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </>
+              )}
+              {upcomingHolidays.length === 0 && (
+                <div className="flex justify-end py-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsHolidayModalOpen(true)}
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    Add Holidays
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -336,6 +388,16 @@ export default function SettingsPage() {
           </button>
         </div>
       </form>
+
+      {/* Holiday Edit Modal */}
+      <HolidayEditModal
+        isOpen={isHolidayModalOpen}
+        onClose={() => setIsHolidayModalOpen(false)}
+        holidays={settings.holidays || []}
+        onSave={handleHolidaysSave}
+        academicYearStart={settings.academicYear.startDate}
+        academicYearEnd={settings.academicYear.endDate}
+      />
       </div>
     </ProtectedRoute>
   )

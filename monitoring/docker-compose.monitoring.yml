@@ -180,6 +180,36 @@ services:
     depends_on:
       - prometheus
 
+  # Redis Exporter - Cache/Message Broker Metrics
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.55.0
+    container_name: redis-exporter
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    ports:
+      - "9121:9121"
+    networks:
+      - monitoring
+      - app-network
+    depends_on:
+      - prometheus
+
+  # Nginx Exporter - Reverse Proxy Metrics (optional, enable if using nginx)
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:0.11.0
+    container_name: nginx-exporter
+    restart: unless-stopped
+    command:
+      - '-nginx.scrape-uri=http://nginx:8080/stub_status'
+    ports:
+      - "9113:9113"
+    networks:
+      - monitoring
+      - app-network
+    profiles:
+      - nginx  # Only start when nginx profile is active
+
 volumes:
   prometheus_data:
     driver: local

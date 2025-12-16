@@ -2,11 +2,10 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey, UniqueConstraint, CheckConstraint, Float
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
-from app.db.types import GUID
+from app.db.types import GUID, JSONType
 
 
 class Assignment(Base):
@@ -15,8 +14,12 @@ class Assignment(Base):
 
     This is the core of the schedule - each assignment says:
     "Person X is doing Activity Y on Block Z in Role R"
+
+    Version history is tracked via SQLAlchemy-Continuum.
+    Access history: assignment.versions
     """
     __tablename__ = "assignments"
+    __versioned__ = {}  # Enable audit trail - tracks all changes with who/what/when
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     block_id = Column(GUID(), ForeignKey("blocks.id", ondelete="CASCADE"), nullable=False)
@@ -32,10 +35,10 @@ class Assignment(Base):
     override_acknowledged_at = Column(DateTime)  # When user acknowledged ACGME violation
 
     # Explainability fields - transparency into scheduling decisions
-    explain_json = Column(JSONB)  # Full DecisionExplanation as JSON
+    explain_json = Column(JSONType())  # Full DecisionExplanation as JSON
     confidence = Column(Float)  # Confidence score 0-1
     score = Column(Float)  # Objective score for this assignment
-    alternatives_json = Column(JSONB)  # Top alternatives considered (AlternativeCandidate[])
+    alternatives_json = Column(JSONType())  # Top alternatives considered (AlternativeCandidate[])
     audit_hash = Column(String(64))  # SHA-256 of inputs+outputs for integrity verification
 
     # Audit
