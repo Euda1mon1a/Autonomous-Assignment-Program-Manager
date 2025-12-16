@@ -785,3 +785,330 @@ class Tier2StatusResponse(BaseModel):
     # Overall
     tier2_status: str  # healthy, degraded, critical
     recommendations: list[str]
+
+
+# =============================================================================
+# Tier 3 Schemas: Cognitive Load, Stigmergy, Hub Analysis
+# =============================================================================
+
+
+class DecisionComplexity(str, Enum):
+    """Complexity level of a decision."""
+    TRIVIAL = "trivial"
+    SIMPLE = "simple"
+    MODERATE = "moderate"
+    COMPLEX = "complex"
+    STRATEGIC = "strategic"
+
+
+class DecisionCategory(str, Enum):
+    """Category of scheduling decision."""
+    ASSIGNMENT = "assignment"
+    SWAP = "swap"
+    COVERAGE = "coverage"
+    LEAVE = "leave"
+    CONFLICT = "conflict"
+    OVERRIDE = "override"
+    POLICY = "policy"
+    EMERGENCY = "emergency"
+
+
+class CognitiveState(str, Enum):
+    """Current cognitive load state."""
+    FRESH = "fresh"
+    ENGAGED = "engaged"
+    LOADED = "loaded"
+    FATIGUED = "fatigued"
+    DEPLETED = "depleted"
+
+
+class DecisionOutcome(str, Enum):
+    """Outcome of a decision request."""
+    DECIDED = "decided"
+    DEFERRED = "deferred"
+    AUTO_DEFAULT = "auto_default"
+    DELEGATED = "delegated"
+    CANCELLED = "cancelled"
+
+
+class TrailType(str, Enum):
+    """Types of preference trails."""
+    PREFERENCE = "preference"
+    AVOIDANCE = "avoidance"
+    SWAP_AFFINITY = "swap_affinity"
+    WORKLOAD = "workload"
+    SEQUENCE = "sequence"
+
+
+class TrailStrength(str, Enum):
+    """Categorical strength of a trail."""
+    VERY_WEAK = "very_weak"
+    WEAK = "weak"
+    MODERATE = "moderate"
+    STRONG = "strong"
+    VERY_STRONG = "very_strong"
+
+
+class SignalType(str, Enum):
+    """Types of behavioral signals."""
+    EXPLICIT_PREFERENCE = "explicit_preference"
+    ACCEPTED_ASSIGNMENT = "accepted_assignment"
+    REQUESTED_SWAP = "requested_swap"
+    COMPLETED_SWAP = "completed_swap"
+    DECLINED_OFFER = "declined_offer"
+    HIGH_SATISFACTION = "high_satisfaction"
+    LOW_SATISFACTION = "low_satisfaction"
+    PATTERN_DETECTED = "pattern_detected"
+
+
+class HubRiskLevel(str, Enum):
+    """Risk level if this hub is lost."""
+    LOW = "low"
+    MODERATE = "moderate"
+    HIGH = "high"
+    CRITICAL = "critical"
+    CATASTROPHIC = "catastrophic"
+
+
+class HubProtectionStatus(str, Enum):
+    """Current protection status of a hub."""
+    UNPROTECTED = "unprotected"
+    MONITORED = "monitored"
+    PROTECTED = "protected"
+    REDUNDANT = "redundant"
+
+
+class CrossTrainingPriority(str, Enum):
+    """Priority for cross-training a skill."""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+# Cognitive Load Schemas
+
+class CognitiveSessionResponse(BaseModel):
+    """Response for cognitive session."""
+    session_id: UUID
+    user_id: UUID
+    started_at: datetime
+    ended_at: Optional[datetime]
+    max_decisions_before_break: int
+    current_state: CognitiveState
+    decisions_count: int
+    total_cognitive_cost: float
+    should_take_break: bool
+
+
+class DecisionRequest(BaseModel):
+    """Request to create a decision."""
+    category: DecisionCategory
+    complexity: DecisionComplexity
+    description: str = Field(..., min_length=5, max_length=500)
+    options: list[str] = Field(..., min_items=2)
+    recommended_option: Optional[str] = None
+    safe_default: Optional[str] = None
+    is_urgent: bool = False
+
+
+class DecisionResponse(BaseModel):
+    """Response for decision operations."""
+    decision_id: UUID
+    category: DecisionCategory
+    complexity: DecisionComplexity
+    description: str
+    options: list[str]
+    recommended_option: Optional[str]
+    has_safe_default: bool
+    is_urgent: bool
+    estimated_cognitive_cost: float
+
+
+class DecisionQueueResponse(BaseModel):
+    """Status of pending decision queue."""
+    total_pending: int
+    by_complexity: dict
+    by_category: dict
+    urgent_count: int
+    can_auto_decide: int
+    oldest_pending: Optional[datetime]
+    estimated_cognitive_cost: float
+    recommendations: list[str]
+
+
+class CognitiveLoadAnalysis(BaseModel):
+    """Analysis of cognitive load for a schedule."""
+    total_score: float
+    grade: str
+    grade_description: str
+    factors: dict
+    recommendations: list[str]
+
+
+# Stigmergy Schemas
+
+class PreferenceTrailRequest(BaseModel):
+    """Request to record a preference trail."""
+    faculty_id: UUID
+    trail_type: TrailType
+    slot_type: Optional[str] = None
+    slot_id: Optional[UUID] = None
+    target_faculty_id: Optional[UUID] = None
+    strength: float = Field(default=0.5, ge=0.0, le=1.0)
+
+
+class PreferenceTrailResponse(BaseModel):
+    """Response for preference trail operations."""
+    trail_id: UUID
+    faculty_id: UUID
+    trail_type: TrailType
+    strength: float
+    strength_category: TrailStrength
+    slot_type: Optional[str]
+    reinforcement_count: int
+    age_days: float
+
+
+class CollectivePreferenceResponse(BaseModel):
+    """Aggregated preference for a slot or slot type."""
+    found: bool
+    slot_type: Optional[str]
+    total_preference_strength: Optional[float]
+    total_avoidance_strength: Optional[float]
+    net_preference: Optional[float]
+    faculty_count: Optional[int]
+    confidence: Optional[float]
+    is_popular: Optional[bool]
+    is_unpopular: Optional[bool]
+
+
+class StigmergyStatusResponse(BaseModel):
+    """Status of the stigmergy system."""
+    timestamp: datetime
+    total_trails: int
+    active_trails: int
+    trails_by_type: dict
+    average_strength: float
+    average_age_days: float
+    evaporation_debt_hours: float
+    popular_slots: list[str]
+    unpopular_slots: list[str]
+    strong_swap_pairs: int
+    recommendations: list[str]
+
+
+# Hub Analysis Schemas
+
+class FacultyCentralityResponse(BaseModel):
+    """Faculty centrality metrics."""
+    faculty_id: UUID
+    faculty_name: str
+    composite_score: float
+    risk_level: HubRiskLevel
+    is_hub: bool
+    degree_centrality: float
+    betweenness_centrality: float
+    services_covered: int
+    unique_services: int
+    replacement_difficulty: float
+
+
+class HubProfileResponse(BaseModel):
+    """Detailed profile for a hub faculty member."""
+    faculty_id: UUID
+    faculty_name: str
+    risk_level: HubRiskLevel
+    unique_skills: list[str]
+    high_demand_skills: list[str]
+    protection_status: HubProtectionStatus
+    protection_measures: list[str]
+    backup_faculty: list[UUID]
+    risk_factors: list[str]
+    mitigation_actions: list[str]
+
+
+class HubProtectionPlanRequest(BaseModel):
+    """Request to create hub protection plan."""
+    hub_faculty_id: UUID
+    period_start: date
+    period_end: date
+    reason: str = Field(..., min_length=10, max_length=500)
+    workload_reduction: float = Field(default=0.3, ge=0.0, le=1.0)
+    assign_backup: bool = True
+
+
+class HubProtectionPlanResponse(BaseModel):
+    """Response for hub protection plan."""
+    plan_id: UUID
+    hub_faculty_id: UUID
+    hub_faculty_name: str
+    period_start: date
+    period_end: date
+    reason: str
+    workload_reduction: float
+    backup_assigned: bool
+    backup_faculty_ids: list[UUID]
+    status: str
+
+
+class CrossTrainingRecommendationResponse(BaseModel):
+    """Cross-training recommendation."""
+    id: UUID
+    skill: str
+    priority: CrossTrainingPriority
+    reason: str
+    current_holders: list[UUID]
+    recommended_trainees: list[UUID]
+    estimated_training_hours: int
+    risk_reduction: float
+    status: str
+
+
+class HubDistributionResponse(BaseModel):
+    """Hub distribution report."""
+    generated_at: datetime
+    total_faculty: int
+    total_hubs: int
+    catastrophic_hubs: int
+    critical_hubs: int
+    high_risk_hubs: int
+    hub_concentration: float
+    single_points_of_failure: int
+    average_hub_score: float
+    services_with_single_provider: list[str]
+    services_with_dual_coverage: list[str]
+    well_covered_services: list[str]
+    recommendations: list[str]
+
+
+# Combined Tier 3 Status
+
+class Tier3StatusResponse(BaseModel):
+    """Combined status of all Tier 3 resilience components."""
+    generated_at: datetime
+
+    # Cognitive load summary
+    pending_decisions: int
+    urgent_decisions: int
+    estimated_cognitive_cost: float
+    can_auto_decide: int
+
+    # Stigmergy summary
+    total_trails: int
+    active_trails: int
+    average_strength: float
+    popular_slots: list[str]
+    unpopular_slots: list[str]
+
+    # Hub analysis summary
+    total_hubs: int
+    catastrophic_hubs: int
+    critical_hubs: int
+    active_protection_plans: int
+    pending_cross_training: int
+
+    # Overall
+    tier3_status: str  # healthy, warning, degraded
+    issues: list[str]
+    recommendations: list[str]

@@ -12,6 +12,11 @@ Tier 2 Strategic Concepts:
 6. Homeostasis/Feedback Loops (from biology/physiology)
 7. Blast Radius Isolation (zone-based containment from AWS)
 8. Le Chatelier's Principle (equilibrium shifts from chemistry)
+
+Tier 3 Tactical Concepts:
+9. Cognitive Load Management (from psychology/human factors)
+10. Stigmergy/Swarm Intelligence (from biology/AI)
+11. Hub Vulnerability Analysis (from network theory)
 """
 
 # Tier 1 imports
@@ -63,6 +68,40 @@ from app.resilience.le_chatelier import (
     EquilibriumState,
     EquilibriumReport,
     StressResponsePrediction,
+)
+
+# Tier 3 imports
+from app.resilience.cognitive_load import (
+    CognitiveLoadManager,
+    CognitiveSession,
+    CognitiveState,
+    Decision,
+    DecisionCategory,
+    DecisionComplexity,
+    DecisionOutcome,
+    CognitiveLoadReport,
+    DecisionQueueStatus,
+)
+from app.resilience.stigmergy import (
+    StigmergicScheduler,
+    PreferenceTrail,
+    TrailType,
+    TrailStrength,
+    SignalType,
+    CollectivePreference,
+    SwapNetwork,
+    StigmergyStatus,
+)
+from app.resilience.hub_analysis import (
+    HubAnalyzer,
+    FacultyCentrality,
+    HubProfile,
+    HubRiskLevel,
+    HubProtectionStatus,
+    HubProtectionPlan,
+    CrossTrainingRecommendation,
+    CrossTrainingPriority,
+    HubDistributionReport,
 )
 
 # Main service
@@ -117,6 +156,35 @@ __all__ = [
     "EquilibriumState",
     "EquilibriumReport",
     "StressResponsePrediction",
+    # Tier 3: Cognitive Load
+    "CognitiveLoadManager",
+    "CognitiveSession",
+    "CognitiveState",
+    "Decision",
+    "DecisionCategory",
+    "DecisionComplexity",
+    "DecisionOutcome",
+    "CognitiveLoadReport",
+    "DecisionQueueStatus",
+    # Tier 3: Stigmergy
+    "StigmergicScheduler",
+    "PreferenceTrail",
+    "TrailType",
+    "TrailStrength",
+    "SignalType",
+    "CollectivePreference",
+    "SwapNetwork",
+    "StigmergyStatus",
+    # Tier 3: Hub Analysis
+    "HubAnalyzer",
+    "FacultyCentrality",
+    "HubProfile",
+    "HubRiskLevel",
+    "HubProtectionStatus",
+    "HubProtectionPlan",
+    "CrossTrainingRecommendation",
+    "CrossTrainingPriority",
+    "HubDistributionReport",
     # Service
     "ResilienceService",
     "ResilienceConfig",

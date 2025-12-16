@@ -100,6 +100,40 @@ from app.resilience.le_chatelier import (
     StressResponsePrediction,
 )
 
+# Tier 3 imports
+from app.resilience.cognitive_load import (
+    CognitiveLoadManager,
+    CognitiveSession,
+    CognitiveState,
+    Decision,
+    DecisionCategory,
+    DecisionComplexity,
+    DecisionOutcome,
+    CognitiveLoadReport,
+    DecisionQueueStatus,
+)
+from app.resilience.stigmergy import (
+    StigmergicScheduler,
+    PreferenceTrail,
+    TrailType,
+    TrailStrength,
+    SignalType,
+    CollectivePreference,
+    SwapNetwork,
+    StigmergyStatus,
+)
+from app.resilience.hub_analysis import (
+    HubAnalyzer,
+    FacultyCentrality,
+    HubProfile,
+    HubRiskLevel,
+    HubProtectionStatus,
+    HubProtectionPlan,
+    CrossTrainingRecommendation,
+    CrossTrainingPriority,
+    HubDistributionReport,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -162,6 +196,21 @@ class ResilienceConfig:
     compensation_cost_multiplier: float = 1.5
     sustainability_threshold: float = 0.7
 
+    # Tier 3: Cognitive Load settings
+    max_decisions_per_session: int = 7  # Miller's Law
+    auto_decide_when_fatigued: bool = True
+    batch_similar_decisions: bool = True
+
+    # Tier 3: Stigmergy settings
+    preference_evaporation_rate: float = 0.1  # Per day
+    preference_reinforcement_amount: float = 0.1
+    evaporation_interval_hours: float = 24.0
+
+    # Tier 3: Hub Analysis settings
+    hub_threshold: float = 0.4
+    critical_hub_threshold: float = 0.6
+    use_networkx: bool = True
+
 
 class ResilienceService:
     """
@@ -208,6 +257,23 @@ class ResilienceService:
             base_compensation_rate=self.config.base_compensation_rate,
             compensation_cost_multiplier=self.config.compensation_cost_multiplier,
             sustainability_threshold=self.config.sustainability_threshold,
+        )
+
+        # Initialize Tier 3 components
+        self.cognitive_load = CognitiveLoadManager(
+            max_decisions_per_session=self.config.max_decisions_per_session,
+            auto_decide_when_fatigued=self.config.auto_decide_when_fatigued,
+            batch_similar_decisions=self.config.batch_similar_decisions,
+        )
+        self.stigmergy = StigmergicScheduler(
+            evaporation_rate=self.config.preference_evaporation_rate,
+            reinforcement_amount=self.config.preference_reinforcement_amount,
+            evaporation_interval_hours=self.config.evaporation_interval_hours,
+        )
+        self.hub_analyzer = HubAnalyzer(
+            hub_threshold=self.config.hub_threshold,
+            critical_hub_threshold=self.config.critical_hub_threshold,
+            use_networkx=self.config.use_networkx,
         )
 
         # State tracking
@@ -1187,4 +1253,468 @@ class ResilienceService:
             },
             "tier2_status": tier2_status,
             "recommendations": recommendations[:10],  # Top 10 recommendations
+        }
+
+    # =========================================================================
+    # Tier 3: Cognitive Load Methods
+    # =========================================================================
+
+    def start_cognitive_session(self, user_id: UUID) -> CognitiveSession:
+        """
+        Start a new cognitive session for a user.
+
+        Args:
+            user_id: User starting the session
+
+        Returns:
+            New CognitiveSession
+        """
+        session = self.cognitive_load.start_session(user_id)
+
+        self._emit_event("cognitive_session_started", {
+            "session_id": str(session.id),
+            "user_id": str(user_id),
+        })
+
+        return session
+
+    def end_cognitive_session(self, session_id: UUID):
+        """End a cognitive session."""
+        self.cognitive_load.end_session(session_id)
+
+        self._emit_event("cognitive_session_ended", {
+            "session_id": str(session_id),
+        })
+
+    def create_decision(
+        self,
+        category: DecisionCategory,
+        complexity: DecisionComplexity,
+        description: str,
+        options: list[str],
+        recommended_option: str = None,
+        safe_default: str = None,
+        context: dict = None,
+        deadline: datetime = None,
+        is_urgent: bool = False,
+    ) -> Decision:
+        """
+        Create a new decision request.
+
+        Args:
+            category: Type of decision
+            complexity: How complex the decision is
+            description: Human-readable description
+            options: Available choices
+            recommended_option: Suggested choice
+            safe_default: Safe fallback if auto-deciding
+            context: Additional context
+            deadline: When decision is needed by
+            is_urgent: Requires immediate attention
+
+        Returns:
+            Created Decision
+        """
+        return self.cognitive_load.create_decision(
+            category=category,
+            complexity=complexity,
+            description=description,
+            options=options,
+            recommended_option=recommended_option,
+            safe_default=safe_default,
+            context=context,
+            deadline=deadline,
+            is_urgent=is_urgent,
+        )
+
+    def record_decision(
+        self,
+        session_id: UUID,
+        decision_id: UUID,
+        chosen_option: str,
+        decided_by: str,
+        actual_time_seconds: float = None,
+    ):
+        """Record a decision that was made."""
+        self.cognitive_load.record_decision(
+            session_id, decision_id, chosen_option, decided_by, actual_time_seconds
+        )
+
+        self._emit_event("decision_made", {
+            "session_id": str(session_id),
+            "decision_id": str(decision_id),
+            "chosen_option": chosen_option,
+        })
+
+    def get_cognitive_status(self, session_id: UUID) -> Optional[CognitiveLoadReport]:
+        """Get cognitive load status for a session."""
+        return self.cognitive_load.get_session_status(session_id)
+
+    def get_decision_queue_status(self) -> DecisionQueueStatus:
+        """Get status of pending decision queue."""
+        return self.cognitive_load.get_queue_status()
+
+    def get_prioritized_decisions(self) -> list[Decision]:
+        """Get pending decisions in recommended processing order."""
+        return self.cognitive_load.prioritize_decisions()
+
+    def get_decision_batches(self) -> dict[DecisionCategory, list[Decision]]:
+        """Get pending decisions grouped by category for batch processing."""
+        return self.cognitive_load.batch_similar_decisions()
+
+    def calculate_schedule_cognitive_load(
+        self,
+        schedule_changes: list[dict],
+    ) -> dict:
+        """
+        Calculate cognitive load imposed by a schedule on coordinators.
+
+        Args:
+            schedule_changes: List of changes/exceptions
+
+        Returns:
+            Dict with load metrics and recommendations
+        """
+        return self.cognitive_load.calculate_schedule_cognitive_load(schedule_changes)
+
+    # =========================================================================
+    # Tier 3: Stigmergy Methods
+    # =========================================================================
+
+    def record_preference(
+        self,
+        faculty_id: UUID,
+        trail_type: TrailType,
+        slot_id: UUID = None,
+        slot_type: str = None,
+        block_type: str = None,
+        service_type: str = None,
+        target_faculty_id: UUID = None,
+        strength: float = 0.5,
+    ) -> PreferenceTrail:
+        """
+        Record a preference trail for a faculty member.
+
+        Args:
+            faculty_id: Faculty member
+            trail_type: Type of preference
+            slot_id: Specific slot (optional)
+            slot_type: Type of slot pattern (optional)
+            block_type: Type of block (optional)
+            service_type: Type of service (optional)
+            target_faculty_id: For swap affinity (optional)
+            strength: Initial strength
+
+        Returns:
+            The created or updated PreferenceTrail
+        """
+        trail = self.stigmergy.record_preference(
+            faculty_id=faculty_id,
+            trail_type=trail_type,
+            slot_id=slot_id,
+            slot_type=slot_type,
+            block_type=block_type,
+            service_type=service_type,
+            target_faculty_id=target_faculty_id,
+            strength=strength,
+        )
+
+        self._emit_event("preference_recorded", {
+            "trail_id": str(trail.id),
+            "faculty_id": str(faculty_id),
+            "trail_type": trail_type.value,
+        })
+
+        return trail
+
+    def record_behavioral_signal(
+        self,
+        faculty_id: UUID,
+        signal_type: SignalType,
+        slot_id: UUID = None,
+        slot_type: str = None,
+        target_faculty_id: UUID = None,
+        strength_change: float = None,
+    ):
+        """
+        Record a behavioral signal that updates preference trails.
+
+        Args:
+            faculty_id: Faculty member
+            signal_type: Type of signal
+            slot_id: Affected slot
+            slot_type: Affected slot type
+            target_faculty_id: For swap signals
+            strength_change: Override default change amount
+        """
+        self.stigmergy.record_signal(
+            faculty_id=faculty_id,
+            signal_type=signal_type,
+            slot_id=slot_id,
+            slot_type=slot_type,
+            target_faculty_id=target_faculty_id,
+            strength_change=strength_change,
+        )
+
+    def get_collective_preference(
+        self,
+        slot_type: str = None,
+        slot_id: UUID = None,
+    ) -> Optional[CollectivePreference]:
+        """
+        Get aggregated preference for a slot or slot type.
+
+        Args:
+            slot_type: Type of slot to analyze
+            slot_id: Specific slot to analyze
+
+        Returns:
+            CollectivePreference or None
+        """
+        return self.stigmergy.get_collective_preference(slot_type, slot_id)
+
+    def get_faculty_preferences(
+        self,
+        faculty_id: UUID,
+        trail_type: TrailType = None,
+        min_strength: float = 0.1,
+    ) -> list[PreferenceTrail]:
+        """Get all preference trails for a faculty member."""
+        return self.stigmergy.get_faculty_preferences(faculty_id, trail_type, min_strength)
+
+    def get_swap_network(self) -> SwapNetwork:
+        """Get swap affinity network from trails."""
+        return self.stigmergy.get_swap_network()
+
+    def suggest_assignments(
+        self,
+        slot_id: UUID,
+        slot_type: str,
+        available_faculty: list[UUID],
+    ) -> list[tuple[UUID, float, str]]:
+        """
+        Suggest faculty for a slot based on preference trails.
+
+        Args:
+            slot_id: Slot to fill
+            slot_type: Type of slot
+            available_faculty: Faculty who could be assigned
+
+        Returns:
+            List of (faculty_id, score, reason) sorted by preference
+        """
+        return self.stigmergy.suggest_assignments(slot_id, slot_type, available_faculty)
+
+    def get_stigmergy_status(self) -> StigmergyStatus:
+        """Get overall status of the stigmergy system."""
+        return self.stigmergy.get_status()
+
+    def detect_preference_patterns(self) -> dict:
+        """Detect emergent patterns from collective trails."""
+        return self.stigmergy.detect_patterns()
+
+    def evaporate_trails(self, force: bool = False):
+        """Apply evaporation to all preference trails."""
+        self.stigmergy.evaporate_trails(force)
+
+    # =========================================================================
+    # Tier 3: Hub Analysis Methods
+    # =========================================================================
+
+    def analyze_hubs(
+        self,
+        faculty: list,
+        assignments: list,
+        services: dict[UUID, list[UUID]],
+    ) -> list[FacultyCentrality]:
+        """
+        Calculate centrality and identify hub faculty.
+
+        Args:
+            faculty: List of faculty objects
+            assignments: List of assignments
+            services: Service capability mapping
+
+        Returns:
+            List of FacultyCentrality sorted by composite score
+        """
+        results = self.hub_analyzer.calculate_centrality(faculty, assignments, services)
+
+        self._emit_event("hub_analysis_completed", {
+            "total_faculty": len(faculty),
+            "total_hubs": len(self.hub_analyzer.identify_hubs(results)),
+        })
+
+        return results
+
+    def identify_hubs(self) -> list[FacultyCentrality]:
+        """Get identified hub faculty from latest analysis."""
+        return self.hub_analyzer.identify_hubs()
+
+    def get_top_hubs(self, n: int = 5) -> list[FacultyCentrality]:
+        """Get top N most critical hubs."""
+        return self.hub_analyzer.get_top_hubs(n)
+
+    def create_hub_profile(
+        self,
+        faculty_id: UUID,
+        services: dict[UUID, list[UUID]],
+        service_names: dict[UUID, str] = None,
+    ) -> Optional[HubProfile]:
+        """
+        Create detailed profile for a hub faculty member.
+
+        Args:
+            faculty_id: Faculty to profile
+            services: Service capability mapping
+            service_names: Human-readable service names
+
+        Returns:
+            HubProfile or None
+        """
+        return self.hub_analyzer.create_hub_profile(faculty_id, services, service_names)
+
+    def generate_cross_training_recommendations(
+        self,
+        services: dict[UUID, list[UUID]],
+        service_names: dict[UUID, str] = None,
+        all_faculty: list[UUID] = None,
+    ) -> list[CrossTrainingRecommendation]:
+        """
+        Generate cross-training recommendations to reduce hub concentration.
+
+        Args:
+            services: Service capability mapping
+            service_names: Human-readable service names
+            all_faculty: All available faculty for training
+
+        Returns:
+            List of CrossTrainingRecommendation sorted by priority
+        """
+        return self.hub_analyzer.generate_cross_training_recommendations(
+            services, service_names, all_faculty
+        )
+
+    def create_hub_protection_plan(
+        self,
+        hub_faculty_id: UUID,
+        period_start: date,
+        period_end: date,
+        reason: str,
+        workload_reduction: float = 0.3,
+        assign_backup: bool = True,
+    ) -> Optional[HubProtectionPlan]:
+        """
+        Create a protection plan for a hub during a high-risk period.
+
+        Args:
+            hub_faculty_id: Hub to protect
+            period_start: Protection period start
+            period_end: Protection period end
+            reason: Why protection is needed
+            workload_reduction: How much to reduce workload
+            assign_backup: Whether to assign backup faculty
+
+        Returns:
+            HubProtectionPlan or None
+        """
+        plan = self.hub_analyzer.create_protection_plan(
+            hub_faculty_id, period_start, period_end,
+            reason, workload_reduction, assign_backup
+        )
+
+        if plan:
+            self._emit_event("hub_protection_created", {
+                "plan_id": str(plan.id),
+                "hub_faculty_id": str(hub_faculty_id),
+                "period_start": period_start.isoformat(),
+                "period_end": period_end.isoformat(),
+            })
+
+        return plan
+
+    def get_hub_distribution_report(
+        self,
+        services: dict[UUID, list[UUID]],
+        service_names: dict[UUID, str] = None,
+    ) -> HubDistributionReport:
+        """
+        Generate report on hub distribution across the system.
+
+        Args:
+            services: Service capability mapping
+            service_names: Human-readable service names
+
+        Returns:
+            HubDistributionReport
+        """
+        return self.hub_analyzer.get_distribution_report(services, service_names)
+
+    def get_hub_status(self) -> dict:
+        """Get summary status of hub analysis."""
+        return self.hub_analyzer.get_hub_status()
+
+    # =========================================================================
+    # Tier 3: Combined Status
+    # =========================================================================
+
+    def get_tier3_status(self) -> dict:
+        """
+        Get combined status of all Tier 3 resilience components.
+
+        Returns:
+            Dict with combined Tier 3 status
+        """
+        # Cognitive load status
+        queue_status = self.get_decision_queue_status()
+
+        # Stigmergy status
+        stigmergy_status = self.get_stigmergy_status()
+
+        # Hub status
+        hub_status = self.get_hub_status()
+
+        # Determine overall Tier 3 status
+        tier3_issues = []
+
+        if queue_status.urgent_count > 3:
+            tier3_issues.append("Many urgent decisions pending")
+        if queue_status.estimated_cognitive_cost > 10:
+            tier3_issues.append("High decision backlog")
+        if stigmergy_status.average_strength < 0.2:
+            tier3_issues.append("Low preference signal strength")
+        if hub_status.get("hubs_by_risk", {}).get("catastrophic", 0) > 0:
+            tier3_issues.append("Catastrophic hub risk detected")
+
+        if len(tier3_issues) >= 2:
+            tier3_status = "degraded"
+        elif len(tier3_issues) >= 1:
+            tier3_status = "warning"
+        else:
+            tier3_status = "healthy"
+
+        # Build recommendations
+        recommendations = []
+        recommendations.extend(queue_status.recommendations)
+        recommendations.extend(stigmergy_status.recommendations)
+
+        return {
+            "generated_at": datetime.now().isoformat(),
+            "cognitive_load": {
+                "pending_decisions": queue_status.total_pending,
+                "urgent_decisions": queue_status.urgent_count,
+                "estimated_cognitive_cost": queue_status.estimated_cognitive_cost,
+                "can_auto_decide": queue_status.can_auto_decide,
+            },
+            "stigmergy": {
+                "total_trails": stigmergy_status.total_trails,
+                "active_trails": stigmergy_status.active_trails,
+                "average_strength": stigmergy_status.average_strength,
+                "popular_slots": stigmergy_status.popular_slots[:5],
+                "unpopular_slots": stigmergy_status.unpopular_slots[:5],
+            },
+            "hub_analysis": hub_status,
+            "tier3_status": tier3_status,
+            "issues": tier3_issues,
+            "recommendations": recommendations[:10],
         }

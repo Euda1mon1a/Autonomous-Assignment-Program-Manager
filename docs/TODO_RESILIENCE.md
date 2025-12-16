@@ -87,22 +87,39 @@ This document tracks tasks that require human action to complete the resilience 
 
 ## Lower Priority (First 90 Days)
 
-### Tier 2 Implementation
+### Tier 2 Integration (Code Complete)
 
-- [ ] **Implement homeostasis feedback loops**
+- [ ] **Configure homeostasis feedback loops**
   - Connect burnout tracking to scheduling decisions
   - Set up alerts for allostatic load thresholds
   - Build dashboard for faculty stress indicators
 
-- [ ] **Create scheduling "availability zones"**
+- [ ] **Configure scheduling zones**
   - Define zone boundaries (inpatient vs outpatient vs education)
   - Configure zone isolation rules
   - Test blast radius containment
 
-- [ ] **Hub vulnerability analysis**
-  - Run NetworkX centrality analysis
+- [ ] **Configure hub vulnerability analysis**
+  - Run NetworkX centrality analysis via `/api/resilience/tier3/hubs/analyze`
   - Identify top 5 most critical faculty
   - Create mitigation plans for each
+
+### Tier 3 Integration (Code Complete)
+
+- [ ] **Configure cognitive load management**
+  - Set up decision session tracking
+  - Configure auto-decide thresholds
+  - Train coordinators on decision batching
+
+- [ ] **Configure stigmergy preference system**
+  - Enable preference trail recording
+  - Set evaporation rates appropriate for your program
+  - Monitor emergent preference patterns
+
+- [ ] **Set up cross-training recommendations**
+  - Review `/api/resilience/tier3/hubs/cross-training`
+  - Prioritize urgent cross-training needs
+  - Track training completion
 
 ### Documentation & Training
 
@@ -125,11 +142,12 @@ This document tracks tasks that require human action to complete the resilience 
 
 ## Technical Debt / Future Work
 
-### Tier 3 Enhancements
+### Tier 3 UI Integration
 
-- [ ] Implement stigmergy/swarm preference system
-- [ ] Add cognitive load management to scheduler UI
-- [ ] Build predictive models for utilization forecasting
+- [ ] Add cognitive load management indicators to scheduler UI
+- [ ] Build preference trail visualization dashboard
+- [ ] Create hub vulnerability display in faculty management
+- [ ] Add decision queue widget for coordinators
 
 ### Tier 4 Research
 
@@ -154,10 +172,19 @@ This document tracks tasks that require human action to complete the resilience 
 - [x] Document resilience framework concepts
 - [x] Update README with resilience features
 - [x] Create Alembic migration for resilience tables (004_add_resilience_tables.py)
+- [x] Implement Tier 2 strategic resilience modules (homeostasis, blast radius, Le Chatelier)
+- [x] Create Alembic migration for Tier 2 tables (005_add_tier2_resilience_tables.py)
+- [x] Add Tier 2 API endpoints
+- [x] Implement Tier 3 tactical resilience modules (cognitive load, stigmergy, hub analysis)
+- [x] Create Alembic migration for Tier 3 tables (006_add_tier3_resilience_tables.py)
+- [x] Add Tier 3 API endpoints
+- [x] Add Tier 3 schemas
 
 ---
 
 ## Implementation Status
+
+### Tier 1: Critical (Complete)
 
 | Component | Status | Notes |
 |-----------|--------|-------|
@@ -169,6 +196,31 @@ This document tracks tasks that require human action to complete the resilience 
 | Prometheus Metrics | Done | Gauges, counters, histograms |
 | Celery Tasks | Done | Periodic jobs configured |
 | Database Migration | Done | 5 tables for audit trail |
+
+### Tier 2: Strategic (Complete)
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Homeostasis Monitor | Done | Feedback loops, allostatic load tracking |
+| Blast Radius Manager | Done | Zone isolation, borrowing controls |
+| Le Chatelier Analyzer | Done | Equilibrium shifts, stress compensation |
+| Tier 2 API Endpoints | Done | 15+ endpoints |
+| Tier 2 DB Migration | Done | 10 tables |
+
+### Tier 3: Tactical (Complete)
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Cognitive Load Manager | Done | Decision tracking, fatigue prevention |
+| Stigmergy Scheduler | Done | Preference trails, swarm intelligence |
+| Hub Analyzer | Done | Centrality, protection plans, cross-training |
+| Tier 3 API Endpoints | Done | 25+ endpoints |
+| Tier 3 DB Migration | Done | 7 tables |
+
+### Infrastructure (TODO)
+
+| Component | Status | Notes |
+|-----------|--------|-------|
 | Redis Setup | **TODO** | Required for Celery |
 | Prometheus/Grafana | **TODO** | Required for monitoring |
 | Stakeholder Buy-in | **TODO** | Critical for adoption |
@@ -202,6 +254,31 @@ curl http://localhost:8000/health/resilience
 ### View Prometheus Metrics
 ```bash
 curl http://localhost:8000/metrics
+```
+
+### Check Tier 2 Status
+```bash
+curl http://localhost:8000/api/resilience/tier2/status
+```
+
+### Check Tier 3 Status
+```bash
+curl http://localhost:8000/api/resilience/tier3/status
+```
+
+### Run Hub Analysis
+```bash
+curl -X POST http://localhost:8000/api/resilience/tier3/hubs/analyze
+```
+
+### Get Preference Patterns
+```bash
+curl http://localhost:8000/api/resilience/tier3/stigmergy/patterns
+```
+
+### Get Decision Queue
+```bash
+curl http://localhost:8000/api/resilience/tier3/cognitive/queue
 ```
 
 ---
