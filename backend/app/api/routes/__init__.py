@@ -1,7 +1,7 @@
 """API routes."""
 from fastapi import APIRouter
 
-from app.api.routes import people, blocks, rotation_templates, assignments, absences, schedule, settings, auth, export, resilience
+from app.api.routes import people, blocks, rotation_templates, assignments, absences, schedule, settings, auth, export, resilience, procedures, credentials
 
 api_router = APIRouter()
 
@@ -15,3 +15,5 @@ api_router.include_router(settings.router, prefix="/settings", tags=["settings"]
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(export.router, prefix="/export", tags=["export"])
 api_router.include_router(resilience.router, prefix="/resilience", tags=["resilience"])
+api_router.include_router(procedures.router, prefix="/procedures", tags=["procedures"])
+api_router.include_router(credentials.router, prefix="/credentials", tags=["credentials"])
