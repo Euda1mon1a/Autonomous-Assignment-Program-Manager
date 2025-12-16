@@ -10,6 +10,8 @@ from app.repositories.person import PersonRepository
 from app.repositories.block import BlockRepository
 from app.repositories.absence import AbsenceRepository
 from app.repositories.user import UserRepository
+from app.repositories.procedure import ProcedureRepository
+from app.repositories.procedure_credential import ProcedureCredentialRepository
 
 __all__ = [
     "BaseRepository",
@@ -18,4 +20,6 @@ __all__ = [
     "BlockRepository",
     "AbsenceRepository",
     "UserRepository",
+    "ProcedureRepository",
+    "ProcedureCredentialRepository",
 ]

@@ -23,6 +23,8 @@ from app.models.block import Block
 from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.rotation_template import RotationTemplate
+from app.models.procedure import Procedure
+from app.models.procedure_credential import ProcedureCredential
 
 
 # Use in-memory SQLite for tests
