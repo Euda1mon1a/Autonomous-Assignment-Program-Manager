@@ -1,10 +1,19 @@
 """Resilience system database models.
 
 Models for tracking:
+
+Tier 1 (Critical):
 - System health checks
 - Crisis events and responses
 - Load shedding (sacrifice) decisions
 - Fallback schedule activations
+
+Tier 2 (Strategic):
+- Homeostasis feedback loop states
+- Allostatic load tracking
+- Scheduling zones for blast radius isolation
+- Zone incidents and borrowing
+- Equilibrium shifts and stress compensation
 
 These provide the audit trail and historical data needed for
 accountability and post-incident review.
@@ -273,3 +282,399 @@ class VulnerabilityRecord(Base):
 
     def __repr__(self):
         return f"<VulnerabilityRecord(n1={self.n1_pass}, n2={self.n2_pass})>"
+
+
+# =============================================================================
+# Tier 2: Strategic Implementation Models
+# =============================================================================
+
+
+class AllostasisState(str, enum.Enum):
+    """Allostatic state of a faculty member or system."""
+    HOMEOSTASIS = "homeostasis"  # Stable, within normal operating range
+    ALLOSTASIS = "allostasis"    # Actively compensating for stress
+    ALLOSTATIC_LOAD = "allostatic_load"  # Chronic compensation, accumulating wear
+    ALLOSTATIC_OVERLOAD = "allostatic_overload"  # System failing to compensate
+
+
+class ZoneStatus(str, enum.Enum):
+    """Health status of a scheduling zone."""
+    GREEN = "green"         # Fully operational
+    YELLOW = "yellow"       # Operational at minimum
+    ORANGE = "orange"       # Degraded, using backup
+    RED = "red"             # Critical, needs support
+    BLACK = "black"         # Failed, services suspended
+
+
+class ContainmentLevel(str, enum.Enum):
+    """Level of failure containment."""
+    NONE = "none"           # No containment active
+    SOFT = "soft"           # Advisory logging
+    MODERATE = "moderate"   # Require approval
+    STRICT = "strict"       # No cross-zone borrowing
+    LOCKDOWN = "lockdown"   # Zone completely isolated
+
+
+class EquilibriumState(str, enum.Enum):
+    """State of system equilibrium."""
+    STABLE = "stable"           # At sustainable equilibrium
+    COMPENSATING = "compensating"  # Shifting to new equilibrium
+    STRESSED = "stressed"       # Strained but holding
+    UNSUSTAINABLE = "unsustainable"  # Cannot reach stable
+    CRITICAL = "critical"       # Failing to equilibrate
+
+
+class FeedbackLoopState(Base):
+    """
+    Tracks state of homeostasis feedback loops.
+
+    Feedback loops monitor metrics and trigger corrections
+    when deviation from setpoint exceeds tolerance.
+    """
+    __tablename__ = "feedback_loop_states"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    loop_name = Column(String(100), nullable=False)
+    setpoint_name = Column(String(100), nullable=False)
+    timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Setpoint configuration
+    target_value = Column(Float, nullable=False)
+    tolerance = Column(Float, nullable=False)
+    is_critical = Column(Boolean, default=False)
+
+    # Current state
+    current_value = Column(Float)
+    deviation = Column(Float)
+    deviation_severity = Column(String(20))  # none, minor, moderate, major, critical
+    consecutive_deviations = Column(Integer, default=0)
+
+    # Trend analysis
+    trend_direction = Column(String(20))  # stable, increasing, decreasing
+    is_improving = Column(Boolean)
+
+    # Action tracking
+    correction_triggered = Column(Boolean, default=False)
+    correction_type = Column(String(50))
+    correction_effective = Column(Boolean)
+
+    def __repr__(self):
+        return f"<FeedbackLoopState(loop='{self.loop_name}', deviation={self.deviation_severity})>"
+
+
+class AllostasisRecord(Base):
+    """
+    Tracks allostatic load for faculty members and the system.
+
+    Allostatic load is the cumulative cost of chronic stress adaptation.
+    High load indicates burnout risk.
+    """
+    __tablename__ = "allostasis_records"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    entity_id = Column(GUID(), nullable=False)  # Faculty ID or system UUID
+    entity_type = Column(String(20), nullable=False)  # "faculty" or "system"
+    calculated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Stress factors
+    consecutive_weekend_calls = Column(Integer, default=0)
+    nights_past_month = Column(Integer, default=0)
+    schedule_changes_absorbed = Column(Integer, default=0)
+    holidays_worked_this_year = Column(Integer, default=0)
+    overtime_hours_month = Column(Float, default=0.0)
+    coverage_gap_responses = Column(Integer, default=0)
+    cross_coverage_events = Column(Integer, default=0)
+
+    # Calculated scores
+    acute_stress_score = Column(Float, default=0.0)
+    chronic_stress_score = Column(Float, default=0.0)
+    total_allostatic_load = Column(Float, default=0.0)
+
+    # State
+    allostasis_state = Column(String(30))  # AllostasisState enum value
+    risk_level = Column(String(20))  # low, moderate, high, critical
+
+    def __repr__(self):
+        return f"<AllostasisRecord(entity={self.entity_id}, load={self.total_allostatic_load:.1f})>"
+
+
+class PositiveFeedbackAlert(Base):
+    """
+    Alerts for detected positive feedback loops.
+
+    Positive feedback loops amplify problems and destabilize systems.
+    These records track detection and intervention.
+    """
+    __tablename__ = "positive_feedback_alerts"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    name = Column(String(100), nullable=False)
+    description = Column(String(500))
+    detected_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Loop pattern
+    trigger = Column(String(200))
+    amplification = Column(String(200))
+    consequence = Column(String(200))
+
+    # Detection
+    evidence = Column(JSONType())
+    confidence = Column(Float)
+    severity = Column(String(20))
+
+    # Intervention
+    intervention_recommended = Column(String(500))
+    urgency = Column(String(20))  # immediate, soon, monitor
+
+    # Resolution
+    resolved_at = Column(DateTime)
+    resolution_notes = Column(String(500))
+    intervention_effective = Column(Boolean)
+
+    def __repr__(self):
+        return f"<PositiveFeedbackAlert(name='{self.name}', urgency='{self.urgency}')>"
+
+
+class SchedulingZoneRecord(Base):
+    """
+    Configuration and state for scheduling zones.
+
+    Zones provide blast radius isolation - failures in one zone
+    cannot propagate to affect others.
+    """
+    __tablename__ = "scheduling_zones"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    name = Column(String(100), nullable=False)
+    zone_type = Column(String(50), nullable=False)  # inpatient, outpatient, education, etc.
+    description = Column(String(500))
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Services
+    services = Column(StringArrayType())
+
+    # Capacity requirements
+    minimum_coverage = Column(Integer, default=1)
+    optimal_coverage = Column(Integer, default=2)
+    maximum_coverage = Column(Integer, default=5)
+
+    # Current status
+    status = Column(String(20), default="green")  # ZoneStatus enum
+    containment_level = Column(String(20), default="none")  # ContainmentLevel enum
+    last_status_change = Column(DateTime)
+
+    # Borrowing configuration
+    borrowing_limit = Column(Integer, default=2)
+    lending_limit = Column(Integer, default=1)
+    priority = Column(Integer, default=5)
+
+    # Relationships can_borrow_from and can_lend_to stored as arrays
+    can_borrow_from_zones = Column(StringArrayType())
+    can_lend_to_zones = Column(StringArrayType())
+
+    # Metrics
+    total_borrowing_requests = Column(Integer, default=0)
+    total_lending_events = Column(Integer, default=0)
+
+    # Active status
+    is_active = Column(Boolean, default=True)
+
+    def __repr__(self):
+        return f"<SchedulingZoneRecord(name='{self.name}', status='{self.status}')>"
+
+
+class ZoneFacultyAssignmentRecord(Base):
+    """
+    Records faculty assignments to zones.
+    """
+    __tablename__ = "zone_faculty_assignments"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    zone_id = Column(GUID(), ForeignKey("scheduling_zones.id"), nullable=False)
+    faculty_id = Column(GUID(), nullable=False)
+    faculty_name = Column(String(200))
+    role = Column(String(20), nullable=False)  # primary, secondary, backup
+    assigned_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    is_available = Column(Boolean, default=True)
+    removed_at = Column(DateTime)
+
+    # Relationship
+    zone = relationship("SchedulingZoneRecord", backref="faculty_assignments")
+
+    def __repr__(self):
+        return f"<ZoneFacultyAssignment(zone_id={self.zone_id}, role='{self.role}')>"
+
+
+class ZoneBorrowingRecord(Base):
+    """
+    Records cross-zone faculty borrowing requests.
+    """
+    __tablename__ = "zone_borrowing_records"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    requesting_zone_id = Column(GUID(), ForeignKey("scheduling_zones.id"), nullable=False)
+    lending_zone_id = Column(GUID(), ForeignKey("scheduling_zones.id"), nullable=False)
+    faculty_id = Column(GUID(), nullable=False)
+
+    # Request details
+    priority = Column(String(20), nullable=False)  # critical, high, medium, low
+    reason = Column(String(500))
+    duration_hours = Column(Integer)
+    requested_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Approval
+    status = Column(String(20), default="pending")  # pending, approved, denied, completed
+    approved_by = Column(String(100))
+    approved_at = Column(DateTime)
+    denial_reason = Column(String(500))
+
+    # Execution
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    was_effective = Column(Boolean)
+
+    # Relationships
+    requesting_zone = relationship("SchedulingZoneRecord", foreign_keys=[requesting_zone_id])
+    lending_zone = relationship("SchedulingZoneRecord", foreign_keys=[lending_zone_id])
+
+    def __repr__(self):
+        return f"<ZoneBorrowingRecord(status='{self.status}', priority='{self.priority}')>"
+
+
+class ZoneIncidentRecord(Base):
+    """
+    Records incidents affecting scheduling zones.
+    """
+    __tablename__ = "zone_incidents"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    zone_id = Column(GUID(), ForeignKey("scheduling_zones.id"), nullable=False)
+    incident_type = Column(String(50), nullable=False)  # faculty_loss, demand_surge, etc.
+    description = Column(String(500))
+    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    severity = Column(String(20), nullable=False)  # minor, moderate, severe, critical
+
+    # Impact
+    faculty_affected = Column(StringArrayType())
+    capacity_lost = Column(Float, default=0.0)
+    services_affected = Column(StringArrayType())
+
+    # Resolution
+    resolved_at = Column(DateTime)
+    resolution_notes = Column(String(500))
+    containment_successful = Column(Boolean, default=True)
+
+    # Relationship
+    zone = relationship("SchedulingZoneRecord", backref="incidents")
+
+    def __repr__(self):
+        return f"<ZoneIncidentRecord(type='{self.incident_type}', severity='{self.severity}')>"
+
+
+class EquilibriumShiftRecord(Base):
+    """
+    Records equilibrium shifts per Le Chatelier's principle.
+
+    Tracks how the system responds to stress and compensates.
+    """
+    __tablename__ = "equilibrium_shifts"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    calculated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Original state
+    original_capacity = Column(Float, nullable=False)
+    original_demand = Column(Float, nullable=False)
+    original_coverage_rate = Column(Float, nullable=False)
+
+    # Stress applied
+    stress_types = Column(StringArrayType())
+    total_capacity_impact = Column(Float)
+    total_demand_impact = Column(Float)
+
+    # Compensation
+    compensation_types = Column(StringArrayType())
+    total_compensation = Column(Float)
+    compensation_efficiency = Column(Float)
+
+    # New equilibrium
+    new_capacity = Column(Float, nullable=False)
+    new_demand = Column(Float, nullable=False)
+    new_coverage_rate = Column(Float, nullable=False)
+    sustainable_capacity = Column(Float)
+
+    # Costs
+    compensation_debt = Column(Float, default=0.0)
+    daily_debt_rate = Column(Float, default=0.0)
+    burnout_risk = Column(Float, default=0.0)
+    days_until_exhaustion = Column(Integer)
+
+    # State
+    equilibrium_state = Column(String(30))  # EquilibriumState enum
+    is_sustainable = Column(Boolean)
+
+    def __repr__(self):
+        return f"<EquilibriumShiftRecord(state='{self.equilibrium_state}', sustainable={self.is_sustainable})>"
+
+
+class SystemStressRecord(Base):
+    """
+    Records stresses applied to the system.
+    """
+    __tablename__ = "system_stress_records"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    stress_type = Column(String(50), nullable=False)
+    description = Column(String(500))
+    applied_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Quantification
+    magnitude = Column(Float, nullable=False)
+    duration_days = Column(Integer)
+    is_acute = Column(Boolean, default=True)
+    is_reversible = Column(Boolean, default=True)
+
+    # Impact
+    capacity_impact = Column(Float)
+    demand_impact = Column(Float)
+
+    # Status
+    is_active = Column(Boolean, default=True)
+    resolved_at = Column(DateTime)
+    resolution_notes = Column(String(500))
+
+    def __repr__(self):
+        return f"<SystemStressRecord(type='{self.stress_type}', active={self.is_active})>"
+
+
+class CompensationRecord(Base):
+    """
+    Records compensation responses to system stress.
+    """
+    __tablename__ = "compensation_records"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    stress_id = Column(GUID(), ForeignKey("system_stress_records.id"), nullable=False)
+    compensation_type = Column(String(50), nullable=False)
+    description = Column(String(500))
+    initiated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Quantification
+    compensation_magnitude = Column(Float, nullable=False)
+    effectiveness = Column(Float, default=0.8)
+
+    # Costs
+    immediate_cost = Column(Float, default=0.0)
+    hidden_cost = Column(Float, default=0.0)
+    sustainability_days = Column(Integer)
+
+    # Status
+    is_active = Column(Boolean, default=True)
+    ended_at = Column(DateTime)
+    end_reason = Column(String(200))
+
+    # Relationship
+    stress = relationship("SystemStressRecord", backref="compensations")
+
+    def __repr__(self):
+        return f"<CompensationRecord(type='{self.compensation_type}', active={self.is_active})>"
