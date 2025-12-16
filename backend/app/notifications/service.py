@@ -1,4 +1,5 @@
 """Core notification service for schedule alerts and updates."""
+import logging
 import uuid
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
@@ -6,6 +7,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 from app.notifications.templates import (
     NotificationType,
@@ -120,7 +123,8 @@ class NotificationService:
         # Determine which channels to use
         target_channels = channels or rendered.get("channels", ["in_app"])
 
-        # Check user preferences (TODO: load from database)
+        # NOTE: User preference filtering disabled until NotificationPreference model exists
+        # Uncomment when ready:
         # preferences = self._get_user_preferences(recipient_id)
         # if not self._should_send_notification(preferences, notification_type):
         #     return []
@@ -208,8 +212,8 @@ class NotificationService:
             send_at=send_at,
         )
 
-        # TODO: Persist to database for production use
-        # For now, add to in-memory queue
+        # NOTE: Using in-memory queue. For production, persist to database
+        # using ScheduledNotification SQLAlchemy model (not yet created)
         self._scheduled_queue.append(scheduled)
 
         return scheduled
@@ -227,7 +231,7 @@ class NotificationService:
         now = datetime.utcnow()
         sent_count = 0
 
-        # TODO: Load from database instead of in-memory queue
+        # NOTE: Using in-memory queue. Replace with database query when model exists
         due_notifications = [
             n for n in self._scheduled_queue
             if n.send_at <= now and n.status == "pending"
@@ -248,8 +252,12 @@ class NotificationService:
 
             except Exception as e:
                 notification.status = "failed"
-                # TODO: Log error
-                print(f"Failed to send scheduled notification {notification.id}: {e}")
+                logger.error(
+                    "Failed to send scheduled notification %s: %s",
+                    notification.id,
+                    e,
+                    exc_info=True,
+                )
 
         return sent_count
 

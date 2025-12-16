@@ -189,7 +189,7 @@ class ExplainabilityService:
             rotation_name=template.name if template else None,
             eligible_residents=len(all_candidates),
             active_constraints=active_constraints,
-            overrides_in_effect=[],  # TODO: Track active overrides
+            overrides_in_effect=[],  # NOTE: Populate when override tracking is implemented
         )
 
     def _evaluate_constraints(
