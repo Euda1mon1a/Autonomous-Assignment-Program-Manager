@@ -29,6 +29,9 @@ pandas==2.3.3
 numpy==2.3.5
 python-dateutil==2.9.0.post0
 
+# Graph Analysis (for resilience hub vulnerability analysis)
+networkx>=3.0
+
 # Constraint Programming & Optimization
 ortools>=9.8
 pulp>=2.7.0
