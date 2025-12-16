@@ -436,7 +436,7 @@ export function findOverlappingAbsences(
   }
 
   // Check for overlaps within each person's absences
-  for (const [, absences] of personAbsences) {
+  for (const [, absences] of Array.from(personAbsences)) {
     for (let i = 0; i < absences.length; i++) {
       for (let j = i + 1; j < absences.length; j++) {
         const a = absences[i];
