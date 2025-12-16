@@ -134,6 +134,19 @@ from app.resilience.hub_analysis import (
     HubDistributionReport,
 )
 
+# Tier 3 persistence helpers
+from app.resilience.tier3_persistence import (
+    persist_cognitive_session,
+    update_cognitive_session,
+    persist_decision,
+    update_decision_resolution,
+    persist_preference_trail,
+    persist_trail_signal,
+    persist_hub_analysis_results,
+    persist_hub_protection_plan,
+    persist_cross_training_recommendation,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -1271,6 +1284,10 @@ class ResilienceService:
         """
         session = self.cognitive_load.start_session(user_id)
 
+        # Persist to database if available
+        if self.db:
+            persist_cognitive_session(self.db, session)
+
         self._emit_event("cognitive_session_started", {
             "session_id": str(session.id),
             "user_id": str(user_id),
@@ -1281,6 +1298,12 @@ class ResilienceService:
     def end_cognitive_session(self, session_id: UUID):
         """End a cognitive session."""
         self.cognitive_load.end_session(session_id)
+
+        # Update database record if available
+        if self.db:
+            session = self.cognitive_load.sessions.get(session_id)
+            if session:
+                update_cognitive_session(self.db, session)
 
         self._emit_event("cognitive_session_ended", {
             "session_id": str(session_id),
@@ -1315,7 +1338,7 @@ class ResilienceService:
         Returns:
             Created Decision
         """
-        return self.cognitive_load.create_decision(
+        decision = self.cognitive_load.create_decision(
             category=category,
             complexity=complexity,
             description=description,
@@ -1326,6 +1349,12 @@ class ResilienceService:
             deadline=deadline,
             is_urgent=is_urgent,
         )
+
+        # Persist to database if available
+        if self.db:
+            persist_decision(self.db, decision)
+
+        return decision
 
     def record_decision(
         self,
@@ -1339,6 +1368,17 @@ class ResilienceService:
         self.cognitive_load.record_decision(
             session_id, decision_id, chosen_option, decided_by, actual_time_seconds
         )
+
+        # Update database record if available
+        if self.db:
+            update_decision_resolution(
+                self.db, decision_id, DecisionOutcome.DECIDED,
+                chosen_option, decided_by, actual_time_seconds
+            )
+            # Also update the session record
+            session = self.cognitive_load.sessions.get(session_id)
+            if session:
+                update_cognitive_session(self.db, session)
 
         self._emit_event("decision_made", {
             "session_id": str(session_id),
@@ -1419,6 +1459,10 @@ class ResilienceService:
             strength=strength,
         )
 
+        # Persist to database if available
+        if self.db:
+            persist_preference_trail(self.db, trail)
+
         self._emit_event("preference_recorded", {
             "trail_id": str(trail.id),
             "faculty_id": str(faculty_id),
@@ -1447,6 +1491,10 @@ class ResilienceService:
             target_faculty_id: For swap signals
             strength_change: Override default change amount
         """
+        # Get trails before update to track changes
+        affected_trails = self.stigmergy.get_faculty_preferences(faculty_id, min_strength=0.0)
+        old_strengths = {t.id: t.strength for t in affected_trails}
+
         self.stigmergy.record_signal(
             faculty_id=faculty_id,
             signal_type=signal_type,
@@ -1455,6 +1503,19 @@ class ResilienceService:
             target_faculty_id=target_faculty_id,
             strength_change=strength_change,
         )
+
+        # Persist changes if database available
+        if self.db:
+            # Get updated trails and persist them
+            updated_trails = self.stigmergy.get_faculty_preferences(faculty_id, min_strength=0.0)
+            for trail in updated_trails:
+                persist_preference_trail(self.db, trail)
+                # Record signal if strength changed
+                old_strength = old_strengths.get(trail.id, 0.0)
+                if abs(trail.strength - old_strength) > 0.001:
+                    persist_trail_signal(
+                        self.db, trail.id, signal_type.value, trail.strength - old_strength
+                    )
 
     def get_collective_preference(
         self,
@@ -1540,6 +1601,10 @@ class ResilienceService:
         """
         results = self.hub_analyzer.calculate_centrality(faculty, assignments, services)
 
+        # Persist to database if available
+        if self.db:
+            persist_hub_analysis_results(self.db, results)
+
         self._emit_event("hub_analysis_completed", {
             "total_faculty": len(faculty),
             "total_hubs": len(self.hub_analyzer.identify_hubs(results)),
@@ -1591,9 +1656,16 @@ class ResilienceService:
         Returns:
             List of CrossTrainingRecommendation sorted by priority
         """
-        return self.hub_analyzer.generate_cross_training_recommendations(
+        recommendations = self.hub_analyzer.generate_cross_training_recommendations(
             services, service_names, all_faculty
         )
+
+        # Persist to database if available
+        if self.db:
+            for rec in recommendations:
+                persist_cross_training_recommendation(self.db, rec)
+
+        return recommendations
 
     def create_hub_protection_plan(
         self,
@@ -1603,6 +1675,7 @@ class ResilienceService:
         reason: str,
         workload_reduction: float = 0.3,
         assign_backup: bool = True,
+        created_by: str = None,
     ) -> Optional[HubProtectionPlan]:
         """
         Create a protection plan for a hub during a high-risk period.
@@ -1614,6 +1687,7 @@ class ResilienceService:
             reason: Why protection is needed
             workload_reduction: How much to reduce workload
             assign_backup: Whether to assign backup faculty
+            created_by: User creating the plan
 
         Returns:
             HubProtectionPlan or None
@@ -1624,6 +1698,10 @@ class ResilienceService:
         )
 
         if plan:
+            # Persist to database if available
+            if self.db:
+                persist_hub_protection_plan(self.db, plan, created_by)
+
             self._emit_event("hub_protection_created", {
                 "plan_id": str(plan.id),
                 "hub_faculty_id": str(hub_faculty_id),
