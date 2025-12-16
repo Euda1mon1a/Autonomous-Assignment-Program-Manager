@@ -78,7 +78,9 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
 
   const handleSave = async (data: Parameters<typeof createTemplate.mutateAsync>[0]) => {
     if (editingTemplate) {
-      await updateTemplate.mutateAsync({ id: editingTemplate.id, data });
+      // Type assertion needed because create and update schemas have slight differences
+      // in patterns field (create uses Omit<AssignmentPattern, 'id'>[], update uses AssignmentPattern[])
+      await updateTemplate.mutateAsync({ id: editingTemplate.id, data: data as Parameters<typeof updateTemplate.mutateAsync>[0]['data'] });
     } else {
       await createTemplate.mutateAsync(data);
     }
