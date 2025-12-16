@@ -12,6 +12,7 @@ from app.repositories.absence import AbsenceRepository
 from app.repositories.user import UserRepository
 from app.repositories.procedure import ProcedureRepository
 from app.repositories.procedure_credential import ProcedureCredentialRepository
+from app.repositories.certification import CertificationTypeRepository, PersonCertificationRepository
 
 __all__ = [
     "BaseRepository",
@@ -22,4 +23,6 @@ __all__ = [
     "UserRepository",
     "ProcedureRepository",
     "ProcedureCredentialRepository",
+    "CertificationTypeRepository",
+    "PersonCertificationRepository",
 ]
