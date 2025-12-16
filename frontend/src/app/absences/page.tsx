@@ -11,6 +11,7 @@ import { Modal } from '@/components/Modal'
 import { Select, DatePicker, TextArea } from '@/components/forms'
 import { ExportButton } from '@/components/ExportButton'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { useToast } from '@/contexts/ToastContext'
 import type { Absence } from '@/types/api'
 
 const absenceExportColumns = [
@@ -46,6 +47,7 @@ export default function AbsencesPage() {
   const [editAbsenceType, setEditAbsenceType] = useState('')
   const [editNotes, setEditNotes] = useState('')
 
+  const { toast } = useToast()
   const { data: absencesData, isLoading: isAbsencesLoading, isError, error, refetch } = useAbsences()
   const { data: peopleData, isLoading: isPeopleLoading } = usePeople()
   const deleteAbsence = useDeleteAbsence()
@@ -111,7 +113,7 @@ export default function AbsencesPage() {
       })
       handleEditClose()
     } catch (err) {
-      console.error('Failed to update absence:', err)
+      toast.error(err instanceof Error ? err.message : 'Failed to update absence')
     }
   }
 
