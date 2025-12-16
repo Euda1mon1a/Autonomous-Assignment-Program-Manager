@@ -1,0 +1,247 @@
+# ACGME Compliance Alerting Rules
+# Medical Residency Program Compliance Monitoring
+#
+# ACGME Common Program Requirements Reference:
+# - 80-hour weekly limit (averaged over 4 weeks)
+# - 24-hour continuous duty limit (+3 hours for transition)
+# - 1 day off per 7 days (averaged over 4 weeks)
+# - No more than 6 consecutive nights of night float
+# - PGY-1 supervision requirements
+
+groups:
+  - name: acgme_work_hour_compliance
+    interval: 60s
+    rules:
+      # 80-Hour Work Week Violation (Imminent)
+      - alert: ACGMEWorkHoursWarning
+        expr: |
+          resident_weekly_hours_gauge{job="residency-scheduler-backend"} > 72
+        for: 0m
+        labels:
+          severity: warning
+          service: compliance
+          regulation: "ACGME-VI.F.1"
+        annotations:
+          summary: "Resident approaching 80-hour work week limit"
+          description: "Resident {{ $labels.resident_id }} has {{ $value }} hours this week, approaching the 80-hour ACGME limit."
+          runbook_url: "docs/runbooks/acgme-work-hours.md"
+
+      # 80-Hour Work Week Violation (Critical)
+      - alert: ACGMEWorkHoursViolation
+        expr: |
+          resident_weekly_hours_gauge{job="residency-scheduler-backend"} > 80
+        for: 0m
+        labels:
+          severity: critical
+          service: compliance
+          regulation: "ACGME-VI.F.1"
+        annotations:
+          summary: "ACGME 80-hour work week VIOLATION"
+          description: "VIOLATION: Resident {{ $labels.resident_id }} has {{ $value }} hours this week, exceeding the 80-hour ACGME limit."
+          runbook_url: "docs/runbooks/acgme-work-hours.md"
+
+      # 4-Week Average Hours (Warning at 76)
+      - alert: ACGMEAverageHoursWarning
+        expr: |
+          resident_4week_avg_hours_gauge{job="residency-scheduler-backend"} > 76
+        for: 0m
+        labels:
+          severity: warning
+          service: compliance
+          regulation: "ACGME-VI.F.1"
+        annotations:
+          summary: "Resident 4-week average approaching limit"
+          description: "Resident {{ $labels.resident_id }} 4-week average is {{ $value }} hours, approaching the 80-hour limit."
+
+      # 4-Week Average Hours Violation
+      - alert: ACGMEAverageHoursViolation
+        expr: |
+          resident_4week_avg_hours_gauge{job="residency-scheduler-backend"} > 80
+        for: 0m
+        labels:
+          severity: critical
+          service: compliance
+          regulation: "ACGME-VI.F.1"
+        annotations:
+          summary: "ACGME 4-week average VIOLATION"
+          description: "VIOLATION: Resident {{ $labels.resident_id }} 4-week average is {{ $value }} hours, exceeding the 80-hour limit."
+
+  - name: acgme_continuous_duty_compliance
+    interval: 60s
+    rules:
+      # Continuous Duty Warning (> 20 hours)
+      - alert: ACGMEContinuousDutyWarning
+        expr: |
+          resident_continuous_hours_gauge{job="residency-scheduler-backend"} > 20
+        for: 0m
+        labels:
+          severity: warning
+          service: compliance
+          regulation: "ACGME-VI.F.3"
+        annotations:
+          summary: "Resident approaching continuous duty limit"
+          description: "Resident {{ $labels.resident_id }} has been on duty for {{ $value }} hours continuously."
+
+      # Continuous Duty Violation (> 24 hours, or > 27 with transition)
+      - alert: ACGMEContinuousDutyViolation
+        expr: |
+          resident_continuous_hours_gauge{job="residency-scheduler-backend"} > 27
+        for: 0m
+        labels:
+          severity: critical
+          service: compliance
+          regulation: "ACGME-VI.F.3"
+        annotations:
+          summary: "ACGME continuous duty VIOLATION"
+          description: "VIOLATION: Resident {{ $labels.resident_id }} has been on duty for {{ $value }} hours, exceeding 24+3 hour limit."
+
+  - name: acgme_rest_compliance
+    interval: 300s
+    rules:
+      # One Day Off in Seven Warning
+      - alert: ACGMEDayOffWarning
+        expr: |
+          resident_days_since_day_off_gauge{job="residency-scheduler-backend"} >= 6
+        for: 0m
+        labels:
+          severity: warning
+          service: compliance
+          regulation: "ACGME-VI.F.5"
+        annotations:
+          summary: "Resident needs day off soon"
+          description: "Resident {{ $labels.resident_id }} has worked {{ $value }} days without a day off."
+
+      # One Day Off in Seven Violation
+      - alert: ACGMEDayOffViolation
+        expr: |
+          resident_days_since_day_off_gauge{job="residency-scheduler-backend"} > 7
+        for: 0m
+        labels:
+          severity: critical
+          service: compliance
+          regulation: "ACGME-VI.F.5"
+        annotations:
+          summary: "ACGME day off VIOLATION"
+          description: "VIOLATION: Resident {{ $labels.resident_id }} has worked {{ $value }} days without a day off, exceeding 1-in-7 requirement."
+
+      # 4-Week Day Off Average Violation
+      - alert: ACGME4WeekDayOffViolation
+        expr: |
+          resident_4week_days_off_gauge{job="residency-scheduler-backend"} < 4
+        for: 0m
+        labels:
+          severity: critical
+          service: compliance
+          regulation: "ACGME-VI.F.5"
+        annotations:
+          summary: "ACGME 4-week day off VIOLATION"
+          description: "VIOLATION: Resident {{ $labels.resident_id }} has only {{ $value }} days off in 4 weeks, below minimum of 4."
+
+  - name: acgme_night_float_compliance
+    interval: 300s
+    rules:
+      # Consecutive Night Float Warning
+      - alert: ACGMENightFloatWarning
+        expr: |
+          resident_consecutive_night_float_gauge{job="residency-scheduler-backend"} >= 5
+        for: 0m
+        labels:
+          severity: warning
+          service: compliance
+          regulation: "ACGME-VI.F.6"
+        annotations:
+          summary: "Resident approaching night float limit"
+          description: "Resident {{ $labels.resident_id }} has {{ $value }} consecutive nights of night float."
+
+      # Consecutive Night Float Violation
+      - alert: ACGMENightFloatViolation
+        expr: |
+          resident_consecutive_night_float_gauge{job="residency-scheduler-backend"} > 6
+        for: 0m
+        labels:
+          severity: critical
+          service: compliance
+          regulation: "ACGME-VI.F.6"
+        annotations:
+          summary: "ACGME night float VIOLATION"
+          description: "VIOLATION: Resident {{ $labels.resident_id }} has {{ $value }} consecutive nights, exceeding 6-night limit."
+
+  - name: acgme_supervision_compliance
+    interval: 300s
+    rules:
+      # PGY-1 Supervision Warning
+      - alert: ACGMEPGY1SupervisionMissing
+        expr: |
+          pgy1_unsupervised_procedures_total{job="residency-scheduler-backend"} > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: compliance
+          regulation: "ACGME-VI.A.2"
+        annotations:
+          summary: "PGY-1 supervision VIOLATION"
+          description: "VIOLATION: PGY-1 resident {{ $labels.resident_id }} performed {{ $value }} procedures without required supervision."
+
+      # Faculty Coverage Gap
+      - alert: ACGMEFacultyCoverageGap
+        expr: |
+          scheduled_blocks_without_faculty_gauge{job="residency-scheduler-backend"} > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: compliance
+          regulation: "ACGME-VI.A"
+        annotations:
+          summary: "Faculty coverage gap detected"
+          description: "{{ $value }} scheduled blocks lack required faculty coverage."
+
+  - name: acgme_aggregate_compliance
+    interval: 600s
+    rules:
+      # Program-Wide Compliance Score
+      - alert: ACGMEComplianceScoreLow
+        expr: |
+          acgme_compliance_score_gauge{job="residency-scheduler-backend"} < 0.95
+        for: 1h
+        labels:
+          severity: warning
+          service: compliance
+        annotations:
+          summary: "Program compliance score is low"
+          description: "Overall ACGME compliance score is {{ $value | humanizePercentage }}, below 95% target."
+
+      # Program-Wide Compliance Score Critical
+      - alert: ACGMEComplianceScoreCritical
+        expr: |
+          acgme_compliance_score_gauge{job="residency-scheduler-backend"} < 0.90
+        for: 30m
+        labels:
+          severity: critical
+          service: compliance
+        annotations:
+          summary: "Program compliance score CRITICAL"
+          description: "CRITICAL: Overall ACGME compliance score is {{ $value | humanizePercentage }}, below 90% threshold."
+
+      # Total Violations Counter
+      - alert: ACGMEViolationSpike
+        expr: |
+          increase(acgme_violations_total{job="residency-scheduler-backend"}[1h]) > 5
+        for: 0m
+        labels:
+          severity: critical
+          service: compliance
+        annotations:
+          summary: "Spike in ACGME violations"
+          description: "{{ $value }} ACGME violations detected in the last hour. Immediate review required."
+
+      # Daily Violation Summary
+      - alert: ACGMEDailyViolationsSummary
+        expr: |
+          increase(acgme_violations_total{job="residency-scheduler-backend"}[24h]) > 0
+        for: 0m
+        labels:
+          severity: info
+          service: compliance
+        annotations:
+          summary: "Daily ACGME violations summary"
+          description: "{{ $value }} total ACGME violations in the last 24 hours."
