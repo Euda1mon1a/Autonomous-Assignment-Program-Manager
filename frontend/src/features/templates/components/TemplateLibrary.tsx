@@ -76,13 +76,13 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
     setShowEditor(true);
   };
 
-  const handleSave = async (data: Parameters<typeof createTemplate.mutateAsync>[0]) => {
+  const handleSave = async (data: import('../types').ScheduleTemplateCreate | import('../types').ScheduleTemplateUpdate) => {
     if (editingTemplate) {
       // Type assertion needed because create and update schemas have slight differences
       // in patterns field (create uses Omit<AssignmentPattern, 'id'>[], update uses AssignmentPattern[])
       await updateTemplate.mutateAsync({ id: editingTemplate.id, data: data as Parameters<typeof updateTemplate.mutateAsync>[0]['data'] });
     } else {
-      await createTemplate.mutateAsync(data);
+      await createTemplate.mutateAsync(data as import('../types').ScheduleTemplateCreate);
     }
     setShowEditor(false);
     setEditingTemplate(null);
