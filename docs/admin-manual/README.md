@@ -1,5 +1,7 @@
 ***REMOVED*** Residency Scheduler - Administrator Manual
 
+> **Last Updated:** 2025-12-16
+
 ***REMOVED******REMOVED*** Overview
 
 This administrator manual provides comprehensive guidance for deploying, configuring, and maintaining the Residency Scheduler application. It is intended for system administrators, IT staff, and technical personnel responsible for managing the application in production environments.

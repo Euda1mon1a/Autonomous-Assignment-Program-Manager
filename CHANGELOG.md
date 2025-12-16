@@ -127,7 +127,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ***REMOVED******REMOVED*** [Unreleased]
 
-***REMOVED******REMOVED******REMOVED*** Planned Features
+***REMOVED******REMOVED******REMOVED*** Added
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Resilience Framework
+- **Tier 1 Resilience**: Database tables and basic resilience tracking (***REMOVED***129, ***REMOVED***130)
+- **Tier 2 Resilience**: Extended resilience capabilities (***REMOVED***131)
+- **Tier 3 Resilience**: Full database persistence and advanced resilience features (***REMOVED***132, ***REMOVED***133)
+- **Resilience Integration**: Resilience data integrated into scheduling constraints (***REMOVED***136)
+- **Cross-Industry Concepts**: 80% utilization threshold, N-1/N-2 contingency analysis, defense in depth
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Procedure Credentialing
+- **Faculty Credentialing System**: Track procedure credentials for faculty supervision (***REMOVED***135, ***REMOVED***137)
+- **Supervision Tracking**: Ensure credentialed faculty supervise procedures
+- **Database Migration**: Added certification tracking tables (***REMOVED***137)
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Scheduler Improvements
+- **Explainability Module**: Transparent decision-making with explanations for scheduling choices (***REMOVED***138)
+- **Algorithm Documentation**: Detailed scheduling optimization documentation
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Testing Infrastructure
+- **Playwright E2E Tests**: End-to-end tests for complete user journeys (***REMOVED***120)
+- **MSW Test Infrastructure**: Mock Service Worker setup for frontend API mocking (***REMOVED***121)
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Documentation
+- **Data Storage Documentation**: Added to admin manual (***REMOVED***134)
+- **Launch Lessons Learned**: Post-deployment lessons from macOS launch (***REMOVED***113)
+- **ChatGPT Review Topics**: External perspective document for architectural review (***REMOVED***141)
+
+***REMOVED******REMOVED******REMOVED*** Changed
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Architecture
+- **Backend Layered Architecture**: Reorganized backend into clean layered architecture (***REMOVED***124, ***REMOVED***126-128)
+- **Frontend Error Handling**: Replaced console statements with proper error handling (***REMOVED***119)
+- **Notification System**: Added proper logging to notification system (***REMOVED***143)
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Dependencies
+- **Frontend Protection**: Protected frontend deps from breaking updates (***REMOVED***118)
+- **Redis Upgrade**: Bumped redis from 5.0.1 to 7.1.0 (***REMOVED***90)
+
+***REMOVED******REMOVED******REMOVED*** Fixed
+- **Mac Compatibility**: Resolved dependency conflicts and type errors for Mac (***REMOVED***122, ***REMOVED***123)
+- **Docker Build**: Fixed Docker build and TypeScript compilation errors (***REMOVED***112)
+- **Dependabot PRs**: Reviewed and consolidated dependency updates (***REMOVED***111)
+
+---
+
+***REMOVED******REMOVED*** Planned Features
 - Calendar drag-and-drop interface
 - Email notifications for schedule changes
 - Bulk import/export for people and absences

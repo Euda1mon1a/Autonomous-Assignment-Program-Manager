@@ -1,5 +1,7 @@
 ***REMOVED*** Developer Documentation
 
+> **Last Updated:** 2025-12-16
+
 Welcome to the Residency Scheduler developer documentation. This guide provides comprehensive information for developers contributing to or extending the application.
 
 ***REMOVED******REMOVED*** Quick Navigation
