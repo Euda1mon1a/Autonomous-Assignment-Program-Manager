@@ -127,7 +127,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned Features
+### Added
+
+#### Resilience Framework
+- **Tier 1 Resilience**: Database tables and basic resilience tracking (#129, #130)
+- **Tier 2 Resilience**: Extended resilience capabilities (#131)
+- **Tier 3 Resilience**: Full database persistence and advanced resilience features (#132, #133)
+- **Resilience Integration**: Resilience data integrated into scheduling constraints (#136)
+- **Cross-Industry Concepts**: 80% utilization threshold, N-1/N-2 contingency analysis, defense in depth
+
+#### Procedure Credentialing
+- **Faculty Credentialing System**: Track procedure credentials for faculty supervision (#135, #137)
+- **Supervision Tracking**: Ensure credentialed faculty supervise procedures
+- **Database Migration**: Added certification tracking tables (#137)
+
+#### Scheduler Improvements
+- **Explainability Module**: Transparent decision-making with explanations for scheduling choices (#138)
+- **Algorithm Documentation**: Detailed scheduling optimization documentation
+
+#### Testing Infrastructure
+- **Playwright E2E Tests**: End-to-end tests for complete user journeys (#120)
+- **MSW Test Infrastructure**: Mock Service Worker setup for frontend API mocking (#121)
+
+#### Documentation
+- **Data Storage Documentation**: Added to admin manual (#134)
+- **Launch Lessons Learned**: Post-deployment lessons from macOS launch (#113)
+- **ChatGPT Review Topics**: External perspective document for architectural review (#141)
+
+### Changed
+
+#### Architecture
+- **Backend Layered Architecture**: Reorganized backend into clean layered architecture (#124, #126-128)
+- **Frontend Error Handling**: Replaced console statements with proper error handling (#119)
+- **Notification System**: Added proper logging to notification system (#143)
+
+#### Dependencies
+- **Frontend Protection**: Protected frontend deps from breaking updates (#118)
+- **Redis Upgrade**: Bumped redis from 5.0.1 to 7.1.0 (#90)
+
+### Fixed
+- **Mac Compatibility**: Resolved dependency conflicts and type errors for Mac (#122, #123)
+- **Docker Build**: Fixed Docker build and TypeScript compilation errors (#112)
+- **Dependabot PRs**: Reviewed and consolidated dependency updates (#111)
+
+---
+
+## Planned Features
 - Calendar drag-and-drop interface
 - Email notifications for schedule changes
 - Bulk import/export for people and absences

@@ -1,5 +1,7 @@
 # Residency Scheduler User Guide
 
+> **Last Updated:** 2025-12-16
+
 Welcome to the comprehensive user guide for the Residency Scheduler application. This guide provides detailed instructions for managing medical residency schedules while ensuring ACGME compliance.
 
 ---
@@ -16,6 +18,7 @@ Welcome to the comprehensive user guide for the Residency Scheduler application.
 - [Absence Management](absences.md) - Tracking time off, deployments, and leave
 - [ACGME Compliance](compliance.md) - Monitoring regulatory requirements
 - [Schedule Generation](schedule-generation.md) - Creating and managing schedules
+- [Schedule Resilience](resilience.md) - Handling faculty shortages and contingency planning
 - [Exporting Data](exporting-data.md) - Downloading reports and data
 - [Admin Settings](settings.md) - System configuration (Admin only)
 
@@ -63,6 +66,12 @@ Welcome to the comprehensive user guide for the Residency Scheduler application.
 - Constraint-based optimization
 - Absence-aware scheduling
 - Faculty supervision assignment
+
+### Schedule Resilience
+- Faculty shortage planning
+- Contingency schedule activation
+- Workload and stress monitoring
+- Load shedding priority guidance
 
 ### Military Support
 - Deployment tracking

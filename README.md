@@ -1,5 +1,7 @@
 # Residency Scheduler
 
+> **Last Updated:** 2025-12-16
+
 <p align="center">
   <strong>A comprehensive medical residency scheduling system with ACGME compliance validation</strong>
 </p>
@@ -54,6 +56,17 @@ Residency Scheduler is a production-ready, full-stack application designed to au
 - JWT-based authentication with secure password hashing
 - Three user roles: Admin, Coordinator, Faculty
 - Activity logging and audit trails
+
+### Procedure Credentialing
+Track faculty qualifications for supervising medical procedures:
+- **Procedure Definitions**: Define procedures with complexity levels, supervision ratios, and minimum PGY requirements
+- **Faculty Credentials**: Track which faculty are qualified to supervise each procedure
+- **Competency Levels**: Trainee, Qualified, Expert, Master designations
+- **Expiration Tracking**: Automatic alerts for expiring credentials
+- **Certification Management**: Track BLS, ACLS, PALS, and other required certifications
+- **Compliance Monitoring**: Ensure qualified supervisors are scheduled for procedure blocks
+
+See [API Documentation](docs/api/endpoints/credentials.md) for endpoint details.
 
 ### Resilience Framework
 Built-in system resilience inspired by cross-industry best practices:

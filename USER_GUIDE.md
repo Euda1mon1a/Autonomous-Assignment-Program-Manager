@@ -1,5 +1,7 @@
 # Residency Scheduler User Guide
 
+> **Last Updated:** 2025-12-16
+
 This guide explains how to use the Residency Scheduler application for managing medical residency schedules with ACGME compliance.
 
 ---
