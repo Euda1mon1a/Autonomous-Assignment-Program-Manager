@@ -1,0 +1,97 @@
+"""Absence controller for request/response handling."""
+
+from datetime import date
+from typing import Optional
+from uuid import UUID
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.services.absence_service import AbsenceService
+from app.schemas.absence import (
+    AbsenceCreate,
+    AbsenceUpdate,
+    AbsenceResponse,
+)
+
+
+class AbsenceController:
+    """Controller for absence endpoints."""
+
+    def __init__(self, db: Session):
+        self.service = AbsenceService(db)
+
+    def list_absences(
+        self,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        person_id: Optional[UUID] = None,
+        absence_type: Optional[str] = None,
+    ) -> dict:
+        """List absences with optional filters."""
+        return self.service.list_absences(
+            start_date=start_date,
+            end_date=end_date,
+            person_id=person_id,
+            absence_type=absence_type,
+        )
+
+    def get_absence(self, absence_id: UUID) -> AbsenceResponse:
+        """Get a single absence by ID."""
+        absence = self.service.get_absence(absence_id)
+        if not absence:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Absence not found",
+            )
+        return absence
+
+    def create_absence(self, absence_in: AbsenceCreate) -> AbsenceResponse:
+        """Create a new absence."""
+        result = self.service.create_absence(
+            person_id=absence_in.person_id,
+            start_date=absence_in.start_date,
+            end_date=absence_in.end_date,
+            absence_type=absence_in.absence_type,
+            replacement_activity=getattr(absence_in, "replacement_activity", None),
+            deployment_orders=getattr(absence_in, "deployment_orders", False),
+            tdy_location=getattr(absence_in, "tdy_location", None),
+            notes=getattr(absence_in, "notes", None),
+        )
+
+        if result["error"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result["error"],
+            )
+
+        return result["absence"]
+
+    def update_absence(
+        self,
+        absence_id: UUID,
+        absence_in: AbsenceUpdate,
+    ) -> AbsenceResponse:
+        """Update an absence."""
+        update_data = absence_in.model_dump(exclude_unset=True)
+
+        result = self.service.update_absence(
+            absence_id=absence_id,
+            update_data=update_data,
+        )
+
+        if result["error"]:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=result["error"],
+            )
+
+        return result["absence"]
+
+    def delete_absence(self, absence_id: UUID) -> None:
+        """Delete an absence."""
+        result = self.service.delete_absence(absence_id)
+        if result["error"]:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=result["error"],
+            )
