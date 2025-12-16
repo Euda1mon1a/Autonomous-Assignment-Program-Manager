@@ -9,6 +9,11 @@ services:
     ports:
       - "5432:5432"
 
+  # Redis with exposed port for local access
+  redis:
+    ports:
+      - "6379:6379"
+
   # Backend with hot reload
   backend:
     volumes:
