@@ -55,6 +55,18 @@ Residency Scheduler is a production-ready, full-stack application designed to au
 - Three user roles: Admin, Coordinator, Faculty
 - Activity logging and audit trails
 
+***REMOVED******REMOVED******REMOVED*** Resilience Framework
+Built-in system resilience inspired by cross-industry best practices:
+- **80% Utilization Threshold** - Queuing theory prevents cascade failures
+- **N-1/N-2 Contingency Analysis** - Power grid-style vulnerability detection
+- **Defense in Depth** - Nuclear engineering safety levels (GREEN→YELLOW→ORANGE→RED→BLACK)
+- **Static Stability** - Pre-computed fallback schedules for instant crisis response
+- **Sacrifice Hierarchy** - Triage-based load shedding when capacity is constrained
+- **Prometheus Metrics** - Real-time monitoring and alerting
+- **Celery Background Tasks** - Automated health checks and contingency analysis
+
+See [Resilience Framework](docs/RESILIENCE_FRAMEWORK.md) for detailed documentation.
+
 ***REMOVED******REMOVED******REMOVED*** Dashboard & Reporting
 - Schedule summary with compliance status
 - Upcoming absences widget
@@ -88,6 +100,10 @@ Residency Scheduler is a production-ready, full-stack application designed to au
 | python-jose | 3.3.0 | JWT token handling |
 | passlib | 1.7.4 | Password hashing (bcrypt) |
 | openpyxl | 3.1.2 | Excel export |
+| NetworkX | 3.0+ | Graph analysis for hub vulnerability |
+| Celery | 5.x | Background task processing |
+| Redis | - | Message broker & result backend |
+| Prometheus | - | Metrics and monitoring |
 
 ***REMOVED******REMOVED******REMOVED*** Infrastructure
 | Technology | Version | Purpose |
@@ -163,13 +179,24 @@ npm run dev
 residency-scheduler/
 ├── backend/
 │   ├── app/
-│   │   ├── api/routes/          ***REMOVED*** API endpoint handlers
-│   │   ├── core/                ***REMOVED*** Configuration & security
+│   │   ├── api/                 ***REMOVED*** API layer (routes, dependencies)
+│   │   ├── core/                ***REMOVED*** Configuration, security, Celery
 │   │   ├── db/                  ***REMOVED*** Database session management
 │   │   ├── models/              ***REMOVED*** SQLAlchemy ORM models
+│   │   ├── repositories/        ***REMOVED*** Data access layer
 │   │   ├── schemas/             ***REMOVED*** Pydantic validation schemas
+│   │   ├── services/            ***REMOVED*** Business logic layer
 │   │   ├── scheduling/          ***REMOVED*** Scheduling engine & validator
-│   │   └── services/            ***REMOVED*** Business logic layer
+│   │   ├── resilience/          ***REMOVED*** Resilience framework
+│   │   │   ├── utilization.py   ***REMOVED*** 80% threshold monitoring
+│   │   │   ├── defense_in_depth.py  ***REMOVED*** 5-level safety system
+│   │   │   ├── contingency.py   ***REMOVED*** N-1/N-2 analysis (NetworkX)
+│   │   │   ├── static_stability.py  ***REMOVED*** Fallback schedules
+│   │   │   ├── sacrifice_hierarchy.py  ***REMOVED*** Load shedding
+│   │   │   ├── metrics.py       ***REMOVED*** Prometheus metrics
+│   │   │   ├── tasks.py         ***REMOVED*** Celery background tasks
+│   │   │   └── service.py       ***REMOVED*** Resilience service
+│   │   └── notifications/       ***REMOVED*** Alert delivery
 │   ├── alembic/                 ***REMOVED*** Database migrations
 │   ├── tests/                   ***REMOVED*** Backend test suite
 │   ├── Dockerfile
@@ -233,6 +260,7 @@ residency-scheduler/
 | [Architecture](docs/ARCHITECTURE.md) | System design and data flow |
 | [Auth Architecture](docs/AUTH_ARCHITECTURE.md) | Authentication and authorization |
 | [Scheduling Optimization](docs/SCHEDULING_OPTIMIZATION.md) | Algorithm details and strategies |
+| [Resilience Framework](docs/RESILIENCE_FRAMEWORK.md) | Cross-industry resilience concepts |
 
 ***REMOVED******REMOVED******REMOVED*** Operations & Development
 | Document | Description |
@@ -242,6 +270,7 @@ residency-scheduler/
 | [Error Handling](docs/ERROR_HANDLING.md) | Error codes and handling patterns |
 | [Caching Strategy](docs/CACHING_STRATEGY.md) | Performance optimization |
 | [Launch Lessons](LAUNCH_LESSONS_LEARNED.md) | Lessons learned from deployment |
+| [Resilience TODO](docs/TODO_RESILIENCE.md) | Human tasks for resilience setup |
 
 ---
 
@@ -280,6 +309,16 @@ PUT    /api/absences/{id} ***REMOVED*** Update absence
 DELETE /api/absences/{id} ***REMOVED*** Delete absence
 ```
 
+***REMOVED******REMOVED******REMOVED*** Resilience & Monitoring
+```
+GET  /health/resilience              ***REMOVED*** Resilience system status
+GET  /metrics                        ***REMOVED*** Prometheus metrics endpoint
+POST /api/resilience/health-check    ***REMOVED*** Trigger manual health check
+GET  /api/resilience/contingency     ***REMOVED*** Run N-1/N-2 analysis
+POST /api/resilience/crisis          ***REMOVED*** Activate crisis response
+GET  /api/resilience/fallbacks       ***REMOVED*** List available fallback schedules
+```
+
 See [API Reference](docs/API_REFERENCE.md) for complete documentation.
 
 ---
@@ -298,6 +337,12 @@ DEBUG=false
 
 ***REMOVED*** Frontend
 NEXT_PUBLIC_API_URL=http://localhost:8000
+
+***REMOVED*** Redis (for Celery background tasks)
+REDIS_URL=redis://localhost:6379/0
+
+***REMOVED*** Prometheus (optional)
+PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
 ```
 
 ---
