@@ -29,6 +29,20 @@ from app.schemas.procedure_credential import (
     QualifiedFacultyResponse,
     FacultyCredentialSummary,
 )
+from app.schemas.certification import (
+    CertificationTypeCreate,
+    CertificationTypeUpdate,
+    CertificationTypeResponse,
+    CertificationTypeListResponse,
+    PersonCertificationCreate,
+    PersonCertificationUpdate,
+    PersonCertificationResponse,
+    PersonCertificationListResponse,
+    PersonCertificationWithTypeResponse,
+    ExpiringCertificationsListResponse,
+    ComplianceSummaryResponse,
+    PersonComplianceResponse,
+)
 
 __all__ = [
     "PersonCreate",
@@ -73,4 +87,17 @@ __all__ = [
     "CredentialWithProcedureListResponse",
     "QualifiedFacultyResponse",
     "FacultyCredentialSummary",
+    # Certification tracking
+    "CertificationTypeCreate",
+    "CertificationTypeUpdate",
+    "CertificationTypeResponse",
+    "CertificationTypeListResponse",
+    "PersonCertificationCreate",
+    "PersonCertificationUpdate",
+    "PersonCertificationResponse",
+    "PersonCertificationListResponse",
+    "PersonCertificationWithTypeResponse",
+    "ExpiringCertificationsListResponse",
+    "ComplianceSummaryResponse",
+    "PersonComplianceResponse",
 ]
