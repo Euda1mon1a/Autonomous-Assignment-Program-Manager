@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Calendar,
+  CalendarCheck,
   Users,
   FileText,
   CalendarOff,
@@ -25,6 +26,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: Calendar },
+  { href: '/my-schedule', label: 'My Schedule', icon: CalendarCheck },
   { href: '/people', label: 'People', icon: Users },
   { href: '/templates', label: 'Templates', icon: FileText },
   { href: '/absences', label: 'Absences', icon: CalendarOff },
