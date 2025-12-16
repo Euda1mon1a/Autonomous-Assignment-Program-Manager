@@ -7,6 +7,8 @@ from app.models.absence import Absence
 from app.models.call_assignment import CallAssignment
 from app.models.schedule_run import ScheduleRun
 from app.models.user import User
+from app.models.procedure import Procedure
+from app.models.procedure_credential import ProcedureCredential
 from app.models.resilience import (
     # Tier 1 models
     ResilienceHealthCheck,
@@ -57,6 +59,9 @@ __all__ = [
     "CallAssignment",
     "ScheduleRun",
     "User",
+    # Credentialing models
+    "Procedure",
+    "ProcedureCredential",
     # Tier 1 Resilience models
     "ResilienceHealthCheck",
     "ResilienceEvent",
