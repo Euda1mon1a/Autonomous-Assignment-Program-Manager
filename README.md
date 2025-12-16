@@ -219,17 +219,29 @@ residency-scheduler/
 
 ## Documentation
 
+### User Documentation
 | Document | Description |
 |----------|-------------|
-| [Setup Guide](docs/SETUP.md) | Detailed installation and configuration |
+| [User Guide](USER_GUIDE.md) | Complete user guide (single file) |
+| [User Guide (detailed)](docs/user-guide/README.md) | Modular user documentation |
+
+### Technical Documentation
+| Document | Description |
+|----------|-------------|
+| [Setup Guide](docs/SETUP.md) | Installation and configuration |
 | [API Reference](docs/API_REFERENCE.md) | Complete REST API documentation |
 | [Architecture](docs/ARCHITECTURE.md) | System design and data flow |
 | [Auth Architecture](docs/AUTH_ARCHITECTURE.md) | Authentication and authorization |
 | [Scheduling Optimization](docs/SCHEDULING_OPTIMIZATION.md) | Algorithm details and strategies |
-| [Testing Guide](docs/TESTING.md) | Test setup and running tests |
+
+### Operations & Development
+| Document | Description |
+|----------|-------------|
 | [Deployment Guide](docs/DEPLOYMENT.md) | Production deployment instructions |
+| [Testing Guide](docs/TESTING.md) | Test setup and running tests |
 | [Error Handling](docs/ERROR_HANDLING.md) | Error codes and handling patterns |
 | [Caching Strategy](docs/CACHING_STRATEGY.md) | Performance optimization |
+| [Launch Lessons](LAUNCH_LESSONS_LEARNED.md) | Lessons learned from deployment |
 
 ---
 
