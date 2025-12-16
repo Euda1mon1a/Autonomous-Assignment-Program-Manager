@@ -101,6 +101,14 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "jest-environment-jsdom"
         update-types: ["version-update:semver-major"]
+      # LESSON LEARNED: Tailwind v4 has breaking CSS syntax changes
+      # Only allow patch updates for CSS tooling
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "postcss"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "autoprefixer"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
