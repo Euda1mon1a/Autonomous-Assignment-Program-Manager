@@ -1594,3 +1594,734 @@ async def get_tier2_status(
         tier2_status=status["tier2_status"],
         recommendations=status["recommendations"],
     )
+
+
+# =============================================================================
+# Tier 3: Cognitive Load Endpoints
+# =============================================================================
+
+
+@router.post("/tier3/cognitive/session/start")
+async def start_cognitive_session(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Start a new cognitive session for decision-making.
+
+    Tracks cognitive load and prevents decision fatigue.
+    """
+    service = get_resilience_service(db)
+    session = service.start_cognitive_session(user_id)
+
+    return {
+        "session_id": session.id,
+        "user_id": str(user_id),
+        "started_at": session.started_at.isoformat(),
+        "max_decisions_before_break": session.max_decisions_before_break,
+        "current_state": session.current_state.value,
+    }
+
+
+@router.post("/tier3/cognitive/session/{session_id}/end")
+async def end_cognitive_session(
+    session_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """End a cognitive session."""
+    service = get_resilience_service(db)
+    service.end_cognitive_session(session_id)
+
+    return {"success": True, "session_id": str(session_id), "message": "Session ended"}
+
+
+@router.get("/tier3/cognitive/session/{session_id}/status")
+async def get_cognitive_session_status(
+    session_id: UUID,
+    db: Session = Depends(get_db),
+):
+    """
+    Get cognitive load status for a session.
+
+    Returns current state, remaining capacity, and recommendations.
+    """
+    service = get_resilience_service(db)
+    status = service.get_cognitive_status(session_id)
+
+    if not status:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    return {
+        "session_id": str(status.session_id),
+        "user_id": str(status.user_id),
+        "current_state": status.current_state.value,
+        "decisions_this_session": status.decisions_this_session,
+        "cognitive_cost_this_session": status.cognitive_cost_this_session,
+        "remaining_capacity": status.remaining_capacity,
+        "decisions_until_break": status.decisions_until_break,
+        "should_take_break": status.should_take_break,
+        "average_decision_time": status.average_decision_time,
+        "recommendations": status.recommendations,
+    }
+
+
+@router.post("/tier3/cognitive/decision")
+async def create_decision(
+    category: str,
+    complexity: str,
+    description: str,
+    options: list[str],
+    recommended_option: Optional[str] = None,
+    safe_default: Optional[str] = None,
+    is_urgent: bool = False,
+    db: Session = Depends(get_db),
+):
+    """
+    Create a new decision request.
+
+    category: assignment, swap, coverage, leave, conflict, override, policy, emergency
+    complexity: trivial, simple, moderate, complex, strategic
+    """
+    from app.resilience.cognitive_load import DecisionCategory, DecisionComplexity
+
+    category_map = {
+        "assignment": DecisionCategory.ASSIGNMENT,
+        "swap": DecisionCategory.SWAP,
+        "coverage": DecisionCategory.COVERAGE,
+        "leave": DecisionCategory.LEAVE,
+        "conflict": DecisionCategory.CONFLICT,
+        "override": DecisionCategory.OVERRIDE,
+        "policy": DecisionCategory.POLICY,
+        "emergency": DecisionCategory.EMERGENCY,
+    }
+
+    complexity_map = {
+        "trivial": DecisionComplexity.TRIVIAL,
+        "simple": DecisionComplexity.SIMPLE,
+        "moderate": DecisionComplexity.MODERATE,
+        "complex": DecisionComplexity.COMPLEX,
+        "strategic": DecisionComplexity.STRATEGIC,
+    }
+
+    if category not in category_map:
+        raise HTTPException(status_code=400, detail=f"Invalid category: {category}")
+    if complexity not in complexity_map:
+        raise HTTPException(status_code=400, detail=f"Invalid complexity: {complexity}")
+
+    service = get_resilience_service(db)
+    decision = service.create_decision(
+        category=category_map[category],
+        complexity=complexity_map[complexity],
+        description=description,
+        options=options,
+        recommended_option=recommended_option,
+        safe_default=safe_default,
+        is_urgent=is_urgent,
+    )
+
+    return {
+        "decision_id": decision.id,
+        "category": decision.category.value,
+        "complexity": decision.complexity.value,
+        "description": decision.description,
+        "options": decision.options,
+        "recommended_option": decision.recommended_option,
+        "has_safe_default": decision.has_safe_default,
+        "is_urgent": decision.is_urgent,
+        "estimated_cognitive_cost": decision.get_cognitive_cost(),
+    }
+
+
+@router.post("/tier3/cognitive/decision/{decision_id}/resolve")
+async def resolve_decision(
+    decision_id: UUID,
+    session_id: UUID,
+    chosen_option: str,
+    actual_time_seconds: Optional[float] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Record a decision that was made."""
+    service = get_resilience_service(db)
+    service.record_decision(
+        session_id=session_id,
+        decision_id=decision_id,
+        chosen_option=chosen_option,
+        decided_by=str(current_user.id),
+        actual_time_seconds=actual_time_seconds,
+    )
+
+    return {
+        "success": True,
+        "decision_id": str(decision_id),
+        "chosen_option": chosen_option,
+    }
+
+
+@router.get("/tier3/cognitive/queue")
+async def get_decision_queue(
+    db: Session = Depends(get_db),
+):
+    """
+    Get status of pending decision queue.
+
+    Shows pending decisions grouped by complexity and category.
+    """
+    service = get_resilience_service(db)
+    status = service.get_decision_queue_status()
+
+    return {
+        "total_pending": status.total_pending,
+        "by_complexity": status.by_complexity,
+        "by_category": status.by_category,
+        "urgent_count": status.urgent_count,
+        "can_auto_decide": status.can_auto_decide,
+        "oldest_pending": status.oldest_pending.isoformat() if status.oldest_pending else None,
+        "estimated_cognitive_cost": status.estimated_cognitive_cost,
+        "recommendations": status.recommendations,
+    }
+
+
+@router.get("/tier3/cognitive/decisions/prioritized")
+async def get_prioritized_decisions(
+    db: Session = Depends(get_db),
+):
+    """Get pending decisions in recommended processing order."""
+    service = get_resilience_service(db)
+    decisions = service.get_prioritized_decisions()
+
+    return {
+        "decisions": [
+            {
+                "decision_id": d.id,
+                "category": d.category.value,
+                "complexity": d.complexity.value,
+                "description": d.description,
+                "is_urgent": d.is_urgent,
+                "recommended_option": d.recommended_option,
+                "cognitive_cost": d.get_cognitive_cost(),
+            }
+            for d in decisions[:20]
+        ],
+        "total": len(decisions),
+    }
+
+
+@router.post("/tier3/cognitive/schedule/analyze")
+async def analyze_schedule_cognitive_load(
+    schedule_changes: list[dict],
+    db: Session = Depends(get_db),
+):
+    """
+    Calculate cognitive load imposed by a schedule on coordinators.
+
+    schedule_changes: List of dicts with 'type' field describing the change.
+    """
+    service = get_resilience_service(db)
+    result = service.calculate_schedule_cognitive_load(schedule_changes)
+
+    return result
+
+
+# =============================================================================
+# Tier 3: Stigmergy Endpoints
+# =============================================================================
+
+
+@router.post("/tier3/stigmergy/preference")
+async def record_preference(
+    faculty_id: UUID,
+    trail_type: str,
+    slot_type: Optional[str] = None,
+    slot_id: Optional[UUID] = None,
+    target_faculty_id: Optional[UUID] = None,
+    strength: float = 0.5,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Record a preference trail for a faculty member.
+
+    trail_type: preference, avoidance, swap_affinity, workload, sequence
+    """
+    from app.resilience.stigmergy import TrailType
+
+    type_map = {
+        "preference": TrailType.PREFERENCE,
+        "avoidance": TrailType.AVOIDANCE,
+        "swap_affinity": TrailType.SWAP_AFFINITY,
+        "workload": TrailType.WORKLOAD,
+        "sequence": TrailType.SEQUENCE,
+    }
+
+    if trail_type not in type_map:
+        raise HTTPException(status_code=400, detail=f"Invalid trail type: {trail_type}")
+
+    service = get_resilience_service(db)
+    trail = service.record_preference(
+        faculty_id=faculty_id,
+        trail_type=type_map[trail_type],
+        slot_type=slot_type,
+        slot_id=slot_id,
+        target_faculty_id=target_faculty_id,
+        strength=strength,
+    )
+
+    return {
+        "trail_id": trail.id,
+        "faculty_id": str(faculty_id),
+        "trail_type": trail.trail_type.value,
+        "strength": trail.strength,
+        "strength_category": trail.strength_category.value,
+    }
+
+
+@router.post("/tier3/stigmergy/signal")
+async def record_behavioral_signal(
+    faculty_id: UUID,
+    signal_type: str,
+    slot_type: Optional[str] = None,
+    slot_id: Optional[UUID] = None,
+    target_faculty_id: Optional[UUID] = None,
+    db: Session = Depends(get_db),
+):
+    """
+    Record a behavioral signal that updates preference trails.
+
+    signal_type: explicit_preference, accepted_assignment, requested_swap,
+                 completed_swap, declined_offer, high_satisfaction, low_satisfaction
+    """
+    from app.resilience.stigmergy import SignalType
+
+    type_map = {
+        "explicit_preference": SignalType.EXPLICIT_PREFERENCE,
+        "accepted_assignment": SignalType.ACCEPTED_ASSIGNMENT,
+        "requested_swap": SignalType.REQUESTED_SWAP,
+        "completed_swap": SignalType.COMPLETED_SWAP,
+        "declined_offer": SignalType.DECLINED_OFFER,
+        "high_satisfaction": SignalType.HIGH_SATISFACTION,
+        "low_satisfaction": SignalType.LOW_SATISFACTION,
+    }
+
+    if signal_type not in type_map:
+        raise HTTPException(status_code=400, detail=f"Invalid signal type: {signal_type}")
+
+    service = get_resilience_service(db)
+    service.record_behavioral_signal(
+        faculty_id=faculty_id,
+        signal_type=type_map[signal_type],
+        slot_type=slot_type,
+        slot_id=slot_id,
+        target_faculty_id=target_faculty_id,
+    )
+
+    return {"success": True, "signal_type": signal_type, "faculty_id": str(faculty_id)}
+
+
+@router.get("/tier3/stigmergy/collective")
+async def get_collective_preference(
+    slot_type: Optional[str] = None,
+    slot_id: Optional[UUID] = None,
+    db: Session = Depends(get_db),
+):
+    """Get aggregated preference for a slot or slot type."""
+    service = get_resilience_service(db)
+    pref = service.get_collective_preference(slot_type, slot_id)
+
+    if not pref:
+        return {"found": False, "slot_type": slot_type, "slot_id": str(slot_id) if slot_id else None}
+
+    return {
+        "found": True,
+        "slot_type": pref.slot_type,
+        "total_preference_strength": pref.total_preference_strength,
+        "total_avoidance_strength": pref.total_avoidance_strength,
+        "net_preference": pref.net_preference,
+        "faculty_count": pref.faculty_count,
+        "confidence": pref.confidence,
+        "is_popular": pref.is_popular,
+        "is_unpopular": pref.is_unpopular,
+    }
+
+
+@router.get("/tier3/stigmergy/faculty/{faculty_id}/preferences")
+async def get_faculty_preferences(
+    faculty_id: UUID,
+    trail_type: Optional[str] = None,
+    min_strength: float = 0.1,
+    db: Session = Depends(get_db),
+):
+    """Get all preference trails for a faculty member."""
+    from app.resilience.stigmergy import TrailType
+
+    type_map = {
+        "preference": TrailType.PREFERENCE,
+        "avoidance": TrailType.AVOIDANCE,
+        "swap_affinity": TrailType.SWAP_AFFINITY,
+        "workload": TrailType.WORKLOAD,
+        "sequence": TrailType.SEQUENCE,
+    }
+
+    parsed_type = type_map.get(trail_type) if trail_type else None
+
+    service = get_resilience_service(db)
+    trails = service.get_faculty_preferences(faculty_id, parsed_type, min_strength)
+
+    return {
+        "faculty_id": str(faculty_id),
+        "trails": [
+            {
+                "trail_id": t.id,
+                "trail_type": t.trail_type.value,
+                "slot_type": t.slot_type,
+                "strength": t.strength,
+                "strength_category": t.strength_category.value,
+                "reinforcement_count": t.reinforcement_count,
+                "age_days": t.age_days,
+            }
+            for t in trails
+        ],
+        "total": len(trails),
+    }
+
+
+@router.get("/tier3/stigmergy/swap-network")
+async def get_swap_network(
+    db: Session = Depends(get_db),
+):
+    """Get swap affinity network showing faculty pairings."""
+    service = get_resilience_service(db)
+    network = service.get_swap_network()
+
+    edges = [
+        {
+            "faculty1_id": str(f1),
+            "faculty2_id": str(f2),
+            "affinity": affinity,
+            "successful_swaps": network.successful_swaps.get((f1, f2), 0),
+        }
+        for (f1, f2), affinity in network.edges.items()
+    ]
+
+    return {
+        "edges": edges,
+        "total_pairs": len(edges),
+    }
+
+
+@router.post("/tier3/stigmergy/suggest")
+async def suggest_assignments(
+    slot_id: UUID,
+    slot_type: str,
+    available_faculty: list[UUID],
+    db: Session = Depends(get_db),
+):
+    """Suggest faculty for a slot based on preference trails."""
+    service = get_resilience_service(db)
+    suggestions = service.suggest_assignments(slot_id, slot_type, available_faculty)
+
+    return {
+        "suggestions": [
+            {
+                "faculty_id": str(fid),
+                "score": score,
+                "reason": reason,
+            }
+            for fid, score, reason in suggestions
+        ],
+        "total": len(suggestions),
+    }
+
+
+@router.get("/tier3/stigmergy/status")
+async def get_stigmergy_status(
+    db: Session = Depends(get_db),
+):
+    """Get overall status of the stigmergy system."""
+    service = get_resilience_service(db)
+    status = service.get_stigmergy_status()
+
+    return {
+        "timestamp": status.timestamp.isoformat(),
+        "total_trails": status.total_trails,
+        "active_trails": status.active_trails,
+        "trails_by_type": status.trails_by_type,
+        "average_strength": status.average_strength,
+        "average_age_days": status.average_age_days,
+        "evaporation_debt_hours": status.evaporation_debt_hours,
+        "popular_slots": status.popular_slots,
+        "unpopular_slots": status.unpopular_slots,
+        "strong_swap_pairs": status.strong_swap_pairs,
+        "recommendations": status.recommendations,
+    }
+
+
+@router.get("/tier3/stigmergy/patterns")
+async def detect_preference_patterns(
+    db: Session = Depends(get_db),
+):
+    """Detect emergent patterns from collective trails."""
+    service = get_resilience_service(db)
+    patterns = service.detect_preference_patterns()
+
+    return patterns
+
+
+@router.post("/tier3/stigmergy/evaporate")
+async def evaporate_trails(
+    force: bool = False,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Apply evaporation to all preference trails."""
+    service = get_resilience_service(db)
+    service.evaporate_trails(force)
+
+    return {"success": True, "message": "Trail evaporation applied"}
+
+
+# =============================================================================
+# Tier 3: Hub Analysis Endpoints
+# =============================================================================
+
+
+@router.post("/tier3/hubs/analyze")
+async def analyze_hubs(
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    db: Session = Depends(get_db),
+):
+    """
+    Run hub vulnerability analysis on faculty.
+
+    Identifies critical "hub" faculty whose loss would cause disproportionate disruption.
+    """
+    from app.models.person import Person
+    from app.models.assignment import Assignment
+    from app.models.block import Block
+
+    service = get_resilience_service(db)
+
+    # Default date range
+    if start_date is None:
+        start_date = date.today()
+    if end_date is None:
+        end_date = start_date + timedelta(days=30)
+
+    # Load data
+    faculty = db.query(Person).filter(Person.type == "faculty").all()
+    assignments = db.query(Assignment).join(Block).filter(
+        Block.date >= start_date,
+        Block.date <= end_date
+    ).all()
+
+    # Build services mapping (simplified - would need proper implementation)
+    services = {}  # service_id -> [faculty_ids]
+
+    # Run analysis
+    results = service.analyze_hubs(faculty, assignments, services)
+
+    return {
+        "analyzed_at": datetime.utcnow().isoformat(),
+        "total_faculty": len(faculty),
+        "total_hubs": len([r for r in results if r.is_hub]),
+        "hubs": [
+            {
+                "faculty_id": str(r.faculty_id),
+                "faculty_name": r.faculty_name,
+                "composite_score": r.composite_score,
+                "risk_level": r.risk_level.value,
+                "is_hub": r.is_hub,
+                "degree_centrality": r.degree_centrality,
+                "betweenness_centrality": r.betweenness_centrality,
+                "services_covered": r.services_covered,
+                "unique_services": r.unique_services,
+                "replacement_difficulty": r.replacement_difficulty,
+            }
+            for r in results[:20]
+        ],
+    }
+
+
+@router.get("/tier3/hubs/top")
+async def get_top_hubs(
+    n: int = Query(5, ge=1, le=20),
+    db: Session = Depends(get_db),
+):
+    """Get top N most critical hubs."""
+    service = get_resilience_service(db)
+    hubs = service.get_top_hubs(n)
+
+    return {
+        "hubs": [
+            {
+                "faculty_id": str(h.faculty_id),
+                "faculty_name": h.faculty_name,
+                "composite_score": h.composite_score,
+                "risk_level": h.risk_level.value,
+                "unique_services": h.unique_services,
+            }
+            for h in hubs
+        ],
+        "count": len(hubs),
+    }
+
+
+@router.get("/tier3/hubs/{faculty_id}/profile")
+async def get_hub_profile(
+    faculty_id: UUID,
+    db: Session = Depends(get_db),
+):
+    """Get detailed profile for a hub faculty member."""
+    service = get_resilience_service(db)
+
+    # Would need proper services mapping
+    services = {}
+    profile = service.create_hub_profile(faculty_id, services)
+
+    if not profile:
+        raise HTTPException(status_code=404, detail="Hub profile not found")
+
+    return {
+        "faculty_id": str(profile.faculty_id),
+        "faculty_name": profile.faculty_name,
+        "risk_level": profile.risk_level.value,
+        "unique_skills": profile.unique_skills,
+        "high_demand_skills": profile.high_demand_skills,
+        "protection_status": profile.protection_status.value,
+        "protection_measures": profile.protection_measures,
+        "backup_faculty": [str(b) for b in profile.backup_faculty],
+        "risk_factors": profile.risk_factors,
+        "mitigation_actions": profile.mitigation_actions,
+    }
+
+
+@router.get("/tier3/hubs/cross-training")
+async def get_cross_training_recommendations(
+    db: Session = Depends(get_db),
+):
+    """Get cross-training recommendations to reduce hub concentration."""
+    service = get_resilience_service(db)
+
+    # Would need proper services mapping
+    services = {}
+    recommendations = service.generate_cross_training_recommendations(services)
+
+    return {
+        "recommendations": [
+            {
+                "id": str(r.id),
+                "skill": r.skill,
+                "priority": r.priority.value,
+                "reason": r.reason,
+                "current_holders": [str(h) for h in r.current_holders],
+                "recommended_trainees": [str(t) for t in r.recommended_trainees],
+                "estimated_training_hours": r.estimated_training_hours,
+                "risk_reduction": r.risk_reduction,
+                "status": r.status,
+            }
+            for r in recommendations
+        ],
+        "total": len(recommendations),
+    }
+
+
+@router.post("/tier3/hubs/{faculty_id}/protect")
+async def create_hub_protection_plan(
+    faculty_id: UUID,
+    period_start: date,
+    period_end: date,
+    reason: str,
+    workload_reduction: float = 0.3,
+    assign_backup: bool = True,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Create a protection plan for a hub during a high-risk period."""
+    service = get_resilience_service(db)
+
+    plan = service.create_hub_protection_plan(
+        hub_faculty_id=faculty_id,
+        period_start=period_start,
+        period_end=period_end,
+        reason=reason,
+        workload_reduction=workload_reduction,
+        assign_backup=assign_backup,
+    )
+
+    if not plan:
+        raise HTTPException(status_code=404, detail="Faculty is not a hub or not analyzed")
+
+    return {
+        "plan_id": str(plan.id),
+        "hub_faculty_id": str(plan.hub_faculty_id),
+        "hub_faculty_name": plan.hub_faculty_name,
+        "period_start": plan.period_start.isoformat(),
+        "period_end": plan.period_end.isoformat(),
+        "reason": plan.reason,
+        "workload_reduction": plan.workload_reduction,
+        "backup_assigned": plan.backup_assigned,
+        "backup_faculty_ids": [str(b) for b in plan.backup_faculty_ids],
+        "status": plan.status,
+    }
+
+
+@router.get("/tier3/hubs/distribution")
+async def get_hub_distribution_report(
+    db: Session = Depends(get_db),
+):
+    """Get report on hub distribution across the system."""
+    service = get_resilience_service(db)
+
+    # Would need proper services mapping
+    services = {}
+    report = service.get_hub_distribution_report(services)
+
+    return {
+        "generated_at": report.generated_at.isoformat(),
+        "total_faculty": report.total_faculty,
+        "total_hubs": report.total_hubs,
+        "catastrophic_hubs": report.catastrophic_hubs,
+        "critical_hubs": report.critical_hubs,
+        "high_risk_hubs": report.high_risk_hubs,
+        "hub_concentration": report.hub_concentration,
+        "single_points_of_failure": report.single_points_of_failure,
+        "average_hub_score": report.average_hub_score,
+        "services_with_single_provider": report.services_with_single_provider,
+        "services_with_dual_coverage": report.services_with_dual_coverage,
+        "well_covered_services": report.well_covered_services,
+        "recommendations": report.recommendations,
+    }
+
+
+@router.get("/tier3/hubs/status")
+async def get_hub_status(
+    db: Session = Depends(get_db),
+):
+    """Get summary status of hub analysis."""
+    service = get_resilience_service(db)
+    status = service.get_hub_status()
+
+    return status
+
+
+# =============================================================================
+# Tier 3: Combined Status Endpoint
+# =============================================================================
+
+
+@router.get("/tier3/status")
+async def get_tier3_status(
+    db: Session = Depends(get_db),
+):
+    """
+    Get combined status of all Tier 3 resilience components.
+
+    Returns summary of cognitive load, stigmergy, and hub analysis.
+    """
+    service = get_resilience_service(db)
+    status = service.get_tier3_status()
+
+    return status
