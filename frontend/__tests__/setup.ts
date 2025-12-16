@@ -1,30 +1,26 @@
 import '@testing-library/jest-dom'
 
 // ============================================================================
-// MSW Server Setup (Optional - Enable when Jest ESM support improves)
+// MSW Server Setup (Disabled - see note below)
 // ============================================================================
 //
-// MSW v2 requires ESM support which has compatibility issues with Jest.
-// The mock handlers are defined in src/mocks/handlers.ts and can be enabled
-// when using a test runner with better ESM support (like Vitest) or when
-// Jest's ESM support matures.
+// MSW v2 requires Node.js fetch APIs that have compatibility issues with
+// Jest's jsdom environment. The mock handlers are defined in src/mocks/handlers.ts
+// and can be enabled when using a test runner with better ESM/fetch support
+// (like Vitest) or when running in Node.js >= 18 with --experimental-vm-modules.
 //
-// To enable MSW, uncomment the following:
+// For Jest tests, we use jest.mock() to mock API modules directly, which is
+// more reliable and works across all Node.js versions.
+//
+// To enable MSW in the future:
+// 1. Use Node.js >= 18
+// 2. Add --experimental-vm-modules to jest
+// 3. Uncomment the MSW setup below
+//
 // import { server } from '@/mocks/server'
-//
-// beforeAll(() => {
-//   server.listen({ onUnhandledRequest: 'warn' })
-// })
-//
-// afterEach(() => {
-//   server.resetHandlers()
-// })
-//
-// afterAll(() => {
-//   server.close()
-// })
-//
-// For now, tests use jest.mock() for API mocking which works reliably.
+// beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
+// afterEach(() => server.resetHandlers())
+// afterAll(() => server.close())
 
 // ============================================================================
 // Browser API Mocks
