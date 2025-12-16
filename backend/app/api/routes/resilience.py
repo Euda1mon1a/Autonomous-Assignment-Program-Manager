@@ -2249,6 +2249,7 @@ async def create_hub_protection_plan(
         reason=reason,
         workload_reduction=workload_reduction,
         assign_backup=assign_backup,
+        created_by=str(current_user.id),
     )
 
     if not plan:

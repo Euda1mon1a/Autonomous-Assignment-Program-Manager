@@ -678,3 +678,336 @@ class CompensationRecord(Base):
 
     def __repr__(self):
         return f"<CompensationRecord(type='{self.compensation_type}', active={self.is_active})>"
+
+
+# =============================================================================
+# Tier 3: Tactical Enhancement Models
+# =============================================================================
+
+
+class CognitiveState(str, enum.Enum):
+    """Current cognitive load state."""
+    FRESH = "fresh"              # Start of session, full capacity
+    ENGAGED = "engaged"          # Working well, some load
+    LOADED = "loaded"            # Approaching capacity
+    FATIGUED = "fatigued"        # Significantly reduced capacity
+    DEPLETED = "depleted"        # Needs rest, quality compromised
+
+
+class DecisionComplexity(str, enum.Enum):
+    """Complexity level of a decision."""
+    TRIVIAL = "trivial"        # Yes/no, approve/reject
+    SIMPLE = "simple"          # Choose from 2-3 options
+    MODERATE = "moderate"      # Choose from 4-7 options, some analysis
+    COMPLEX = "complex"        # Multiple factors, tradeoffs
+    STRATEGIC = "strategic"    # High stakes, long-term impact
+
+
+class DecisionCategory(str, enum.Enum):
+    """Category of scheduling decision."""
+    ASSIGNMENT = "assignment"      # Who covers what
+    SWAP = "swap"                  # Trade shifts between faculty
+    COVERAGE = "coverage"          # Fill gaps
+    LEAVE = "leave"                # Approve time off
+    CONFLICT = "conflict"          # Resolve scheduling conflicts
+    OVERRIDE = "override"          # Override constraints
+    POLICY = "policy"              # Policy changes
+    EMERGENCY = "emergency"        # Crisis decisions
+
+
+class DecisionOutcome(str, enum.Enum):
+    """Outcome of a decision request."""
+    DECIDED = "decided"          # User made decision
+    DEFERRED = "deferred"        # Postponed for later
+    AUTO_DEFAULT = "auto_default"  # System used default
+    DELEGATED = "delegated"      # Sent to someone else
+    CANCELLED = "cancelled"      # No longer needed
+
+
+class TrailType(str, enum.Enum):
+    """Types of preference trails."""
+    PREFERENCE = "preference"       ***REMOVED*** prefers this slot
+    AVOIDANCE = "avoidance"         ***REMOVED*** avoids this slot
+    SWAP_AFFINITY = "swap_affinity"  # Willing to swap with specific person
+    WORKLOAD = "workload"           # Preferred workload pattern
+    SEQUENCE = "sequence"           # Preferred assignment sequences
+
+
+class HubRiskLevel(str, enum.Enum):
+    """Risk level if this hub is lost."""
+    LOW = "low"            # Easy to cover, multiple backups
+    MODERATE = "moderate"  # Some impact, backups available
+    HIGH = "high"          # Significant impact, limited backups
+    CRITICAL = "critical"  # Major disruption, no viable backups
+    CATASTROPHIC = "catastrophic"  # System failure possible
+
+
+class CrossTrainingPriority(str, enum.Enum):
+    """Priority for cross-training a skill."""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class CognitiveSessionRecord(Base):
+    """
+    Tracks cognitive sessions for decision-making.
+
+    Based on Miller's Law (~7 items) and decision fatigue research.
+    Helps prevent decision fatigue in coordinators.
+    """
+    __tablename__ = "cognitive_sessions"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID(), nullable=False)
+    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    ended_at = Column(DateTime)
+
+    # Configuration
+    max_decisions_before_break = Column(Integer, nullable=False, default=7)
+
+    # Tracking
+    total_cognitive_cost = Column(Float, nullable=False, default=0.0)
+    decisions_count = Column(Integer, nullable=False, default=0)
+    breaks_taken = Column(Integer, nullable=False, default=0)
+
+    # Final state when session ended
+    final_state = Column(String(50))  # CognitiveState enum value
+
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<CognitiveSessionRecord(user={self.user_id}, decisions={self.decisions_count})>"
+
+    @property
+    def is_active(self) -> bool:
+        """Check if session is still active."""
+        return self.ended_at is None
+
+
+class CognitiveDecisionRecord(Base):
+    """
+    Records individual decisions and their cognitive cost.
+
+    Tracks decision requests, outcomes, and time taken to
+    understand cognitive load patterns.
+    """
+    __tablename__ = "cognitive_decisions"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    session_id = Column(GUID(), ForeignKey("cognitive_sessions.id", ondelete="SET NULL"))
+
+    # Decision definition
+    category = Column(String(50), nullable=False)  # DecisionCategory enum
+    complexity = Column(String(50), nullable=False)  # DecisionComplexity enum
+    description = Column(String(1000), nullable=False)
+
+    # Options and guidance
+    options = Column(JSONType())
+    recommended_option = Column(String(255))
+    safe_default = Column(String(255))
+    has_safe_default = Column(Boolean, default=False)
+
+    # Urgency
+    is_urgent = Column(Boolean, default=False)
+    can_defer = Column(Boolean, default=True)
+    deadline = Column(DateTime)
+    context = Column(JSONType())
+
+    # Timing
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Resolution
+    outcome = Column(String(50))  # DecisionOutcome enum
+    chosen_option = Column(String(255))
+    decided_at = Column(DateTime)
+    decided_by = Column(String(255))
+
+    # Cost metrics
+    estimated_cognitive_cost = Column(Float, nullable=False, default=1.0)
+    actual_time_seconds = Column(Float)
+
+    # Relationship
+    session = relationship("CognitiveSessionRecord", backref="decisions")
+
+    def __repr__(self):
+        return f"<CognitiveDecisionRecord(category='{self.category}', outcome='{self.outcome}')>"
+
+
+class PreferenceTrailRecord(Base):
+    """
+    Stores preference trails for stigmergic scheduling.
+
+    Pheromone-like trails that accumulate from faculty behavior
+    and guide scheduling suggestions through indirect coordination.
+    """
+    __tablename__ = "preference_trails"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    faculty_id = Column(GUID(), nullable=False)
+    trail_type = Column(String(50), nullable=False)  # TrailType enum
+
+    # What the trail is about (at least one should be set)
+    slot_id = Column(GUID())
+    slot_type = Column(String(100))
+    block_type = Column(String(100))
+    service_type = Column(String(100))
+    target_faculty_id = Column(GUID())  # For swap affinity
+
+    # Trail strength (0.0 - 1.0)
+    strength = Column(Float, nullable=False, default=0.5)
+    peak_strength = Column(Float, nullable=False, default=0.5)
+
+    # Evaporation configuration
+    evaporation_rate = Column(Float, nullable=False, default=0.1)
+
+    # Statistics
+    reinforcement_count = Column(Integer, nullable=False, default=0)
+
+    # Timestamps
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    last_reinforced = Column(DateTime)
+    last_evaporated = Column(DateTime)
+
+    def __repr__(self):
+        return f"<PreferenceTrailRecord(faculty={self.faculty_id}, type='{self.trail_type}', strength={self.strength:.2f})>"
+
+
+class TrailSignalRecord(Base):
+    """
+    Records individual signals that update preference trails.
+
+    Provides audit trail of how preference trails change over time.
+    """
+    __tablename__ = "trail_signals"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    trail_id = Column(GUID(), ForeignKey("preference_trails.id", ondelete="CASCADE"), nullable=False)
+
+    # Signal details
+    signal_type = Column(String(50), nullable=False)
+    strength_change = Column(Float, nullable=False)
+
+    # Timestamp
+    recorded_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Relationship
+    trail = relationship("PreferenceTrailRecord", backref="signals")
+
+    def __repr__(self):
+        return f"<TrailSignalRecord(signal='{self.signal_type}', change={self.strength_change:+.2f})>"
+
+
+class FacultyCentralityRecord(Base):
+    """
+    Stores faculty centrality scores for hub vulnerability analysis.
+
+    Multiple centrality measures capture different aspects of importance
+    in the scheduling network.
+    """
+    __tablename__ = "faculty_centrality"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    faculty_id = Column(GUID(), nullable=False)
+    faculty_name = Column(String(255), nullable=False)
+    calculated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Centrality scores (0.0 - 1.0 normalized)
+    degree_centrality = Column(Float, nullable=False, default=0.0)
+    betweenness_centrality = Column(Float, nullable=False, default=0.0)
+    eigenvector_centrality = Column(Float, nullable=False, default=0.0)
+    pagerank = Column(Float, nullable=False, default=0.0)
+
+    # Composite score
+    composite_score = Column(Float, nullable=False, default=0.0)
+
+    # Coverage metrics
+    services_covered = Column(Integer, nullable=False, default=0)
+    unique_services = Column(Integer, nullable=False, default=0)
+    total_assignments = Column(Integer, nullable=False, default=0)
+
+    # Replacement difficulty (0.0 easy - 1.0 impossible)
+    replacement_difficulty = Column(Float, nullable=False, default=0.0)
+
+    # Risk assessment
+    risk_level = Column(String(50), nullable=False)  # HubRiskLevel enum
+    is_hub = Column(Boolean, nullable=False, default=False)
+
+    def __repr__(self):
+        return f"<FacultyCentralityRecord(faculty='{self.faculty_name}', score={self.composite_score:.2f}, hub={self.is_hub})>"
+
+
+class HubProtectionPlanRecord(Base):
+    """
+    Stores protection plans for critical hub faculty.
+
+    Plans to protect high-centrality faculty during vulnerable periods
+    through workload reduction and backup assignment.
+    """
+    __tablename__ = "hub_protection_plans"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    hub_faculty_id = Column(GUID(), nullable=False)
+    hub_faculty_name = Column(String(255), nullable=False)
+
+    # Protection period
+    period_start = Column(DateTime, nullable=False)
+    period_end = Column(DateTime, nullable=False)
+    reason = Column(String(1000), nullable=False)
+
+    # Protection measures
+    workload_reduction = Column(Float, nullable=False, default=0.3)
+    backup_assigned = Column(Boolean, nullable=False, default=False)
+    backup_faculty_ids = Column(StringArrayType())
+    critical_only = Column(Boolean, nullable=False, default=False)
+
+    # Status tracking
+    status = Column(String(50), nullable=False, default="planned")  # planned, active, completed
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    activated_at = Column(DateTime)
+    deactivated_at = Column(DateTime)
+    created_by = Column(String(255))
+
+    def __repr__(self):
+        return f"<HubProtectionPlanRecord(faculty='{self.hub_faculty_name}', status='{self.status}')>"
+
+    @property
+    def is_active(self) -> bool:
+        """Check if protection plan is currently active."""
+        return self.status == "active"
+
+
+class CrossTrainingRecommendationRecord(Base):
+    """
+    Stores cross-training recommendations to reduce hub concentration.
+
+    Cross-training distributes capabilities and reduces single points
+    of failure in the scheduling network.
+    """
+    __tablename__ = "cross_training_recommendations"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    skill = Column(String(255), nullable=False)
+
+    # Current state
+    current_holders = Column(StringArrayType())
+    recommended_trainees = Column(StringArrayType())
+
+    # Priority and rationale
+    priority = Column(String(50), nullable=False)  # CrossTrainingPriority enum
+    reason = Column(String(1000), nullable=False)
+
+    # Effort estimation
+    estimated_training_hours = Column(Integer, nullable=False, default=20)
+    risk_reduction = Column(Float, nullable=False, default=0.0)
+
+    # Status tracking
+    status = Column(String(50), nullable=False, default="pending")  # pending, approved, in_progress, completed
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    approved_by = Column(String(255))
+
+    def __repr__(self):
+        return f"<CrossTrainingRecommendationRecord(skill='{self.skill}', priority='{self.priority}')>"
