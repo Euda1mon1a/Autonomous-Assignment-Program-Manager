@@ -44,6 +44,7 @@ from app.scheduling.solvers import (
     BaseSolver,
     SolverResult,
 )
+from app.resilience.service import ResilienceService, ResilienceConfig
 
 
 class SchedulingEngine:
@@ -74,6 +75,7 @@ class SchedulingEngine:
         start_date: date,
         end_date: date,
         constraint_manager: Optional[ConstraintManager] = None,
+        resilience_config: Optional[ResilienceConfig] = None,
     ):
         self.db = db
         self.start_date = start_date
@@ -83,12 +85,19 @@ class SchedulingEngine:
         self.validator = ACGMEValidator(db)
         self.constraint_manager = constraint_manager or ConstraintManager.create_default()
 
+        # Initialize resilience service for health monitoring
+        self.resilience = ResilienceService(
+            db=db,
+            config=resilience_config or ResilienceConfig(),
+        )
+
     def generate(
         self,
         pgy_levels: Optional[list[int]] = None,
         rotation_template_ids: Optional[list[UUID]] = None,
         algorithm: str = "greedy",
         timeout_seconds: float = 60.0,
+        check_resilience: bool = True,
     ) -> dict:
         """
         Generate a complete schedule.
@@ -98,9 +107,10 @@ class SchedulingEngine:
             rotation_template_ids: Filter templates by ID (None = all)
             algorithm: Solver algorithm ('greedy', 'cp_sat', 'pulp', 'hybrid')
             timeout_seconds: Maximum solver runtime
+            check_resilience: Run resilience health check before/after generation
 
         Returns:
-            Dictionary with status, assignments, validation results
+            Dictionary with status, assignments, validation results, and resilience info
         """
         start_time = time.time()
 
@@ -112,6 +122,11 @@ class SchedulingEngine:
         # Issue #3: Transaction boundaries - wrap everything in a single transaction
         # Create an "in_progress" run record first
         run = self._create_initial_run(algorithm)
+
+        # Pre-generation resilience check
+        pre_health_report = None
+        if check_resilience:
+            pre_health_report = self._check_pre_generation_resilience()
 
         try:
             # Step 1: Ensure blocks exist (but don't commit yet)
@@ -174,6 +189,15 @@ class SchedulingEngine:
             self.db.commit()
             self.db.refresh(run)
 
+            # Post-generation resilience check
+            post_health_report = None
+            resilience_warnings = []
+            if check_resilience:
+                post_health_report = self._check_post_generation_resilience(
+                    faculty, blocks, self.assignments
+                )
+                resilience_warnings = self._get_resilience_warnings(post_health_report)
+
             return {
                 "status": "success" if validation.valid else "partial",
                 "message": f"Generated {len(self.assignments)} assignments using {algorithm}",
@@ -182,6 +206,15 @@ class SchedulingEngine:
                 "validation": validation,
                 "run_id": run.id,
                 "solver_stats": solver_result.statistics,
+                "resilience": {
+                    "pre_generation_status": pre_health_report.overall_status if pre_health_report else None,
+                    "post_generation_status": post_health_report.overall_status if post_health_report else None,
+                    "utilization_rate": post_health_report.utilization.utilization_rate if post_health_report else None,
+                    "n1_compliant": post_health_report.n1_pass if post_health_report else None,
+                    "n2_compliant": post_health_report.n2_pass if post_health_report else None,
+                    "warnings": resilience_warnings,
+                    "immediate_actions": post_health_report.immediate_actions if post_health_report else [],
+                },
             }
 
         except Exception as e:
@@ -520,3 +553,122 @@ class SchedulingEngine:
             violations=[],
             coverage_rate=0.0,
         )
+
+    def _check_pre_generation_resilience(self):
+        """
+        Run resilience health check before schedule generation.
+
+        This provides early warning if system is already stressed.
+        """
+        try:
+            faculty = self._get_faculty()
+            blocks = self.db.query(Block).filter(
+                Block.date >= self.start_date,
+                Block.date <= self.end_date,
+            ).all()
+            existing_assignments = self.db.query(Assignment).join(Block).filter(
+                Block.date >= self.start_date,
+                Block.date <= self.end_date,
+            ).all()
+
+            report = self.resilience.check_health(
+                faculty=faculty,
+                blocks=blocks,
+                assignments=existing_assignments,
+            )
+
+            # Log warning if system is stressed
+            if report.overall_status in ("critical", "emergency"):
+                logger.warning(
+                    f"Pre-generation resilience check: {report.overall_status.upper()}. "
+                    f"Utilization: {report.utilization.utilization_rate:.0%}. "
+                    f"Actions: {report.immediate_actions}"
+                )
+            elif report.overall_status == "degraded":
+                logger.info(
+                    f"Pre-generation resilience check: degraded. "
+                    f"Utilization: {report.utilization.utilization_rate:.0%}"
+                )
+
+            return report
+
+        except Exception as e:
+            logger.warning(f"Pre-generation resilience check failed: {e}")
+            return None
+
+    def _check_post_generation_resilience(
+        self,
+        faculty: list[Person],
+        blocks: list[Block],
+        assignments: list[Assignment],
+    ):
+        """
+        Run resilience health check after schedule generation.
+
+        This validates the generated schedule doesn't create stress conditions.
+        """
+        try:
+            report = self.resilience.check_health(
+                faculty=faculty,
+                blocks=blocks,
+                assignments=assignments,
+            )
+
+            # Log if schedule creates concerning conditions
+            if report.overall_status in ("critical", "emergency"):
+                logger.warning(
+                    f"Post-generation resilience check: {report.overall_status.upper()}. "
+                    f"Generated schedule may create stress conditions. "
+                    f"Utilization: {report.utilization.utilization_rate:.0%}"
+                )
+            elif not report.n1_pass:
+                logger.warning(
+                    "Post-generation resilience check: N-1 FAIL. "
+                    "Schedule is vulnerable to single faculty loss."
+                )
+
+            return report
+
+        except Exception as e:
+            logger.warning(f"Post-generation resilience check failed: {e}")
+            return None
+
+    def _get_resilience_warnings(self, health_report) -> list[str]:
+        """Extract actionable warnings from health report."""
+        warnings = []
+
+        if health_report is None:
+            return warnings
+
+        # Utilization warnings
+        if health_report.utilization.level.value in ("ORANGE", "RED", "BLACK"):
+            warnings.append(
+                f"High utilization ({health_report.utilization.utilization_rate:.0%}) - "
+                f"approaching cascade failure risk"
+            )
+
+        # Contingency warnings
+        if not health_report.n1_pass:
+            warnings.append(
+                "N-1 vulnerability: Schedule cannot survive loss of one key faculty member"
+            )
+        if not health_report.n2_pass:
+            warnings.append(
+                "N-2 vulnerability: Schedule cannot survive loss of two faculty members"
+            )
+
+        # Phase transition warning
+        if health_report.phase_transition_risk in ("high", "critical"):
+            warnings.append(
+                f"Phase transition risk is {health_report.phase_transition_risk} - "
+                f"system may experience sudden degradation"
+            )
+
+        # Buffer warning
+        if health_report.utilization.buffer_remaining < 0.10:
+            warnings.append(
+                f"Buffer critically low ({health_report.utilization.buffer_remaining:.0%}) - "
+                f"no capacity for unexpected absences"
+            )
+
+        return warnings
