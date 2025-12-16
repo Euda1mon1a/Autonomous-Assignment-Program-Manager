@@ -47,6 +47,10 @@ class ConstraintType(Enum):
     CONTINUITY = "continuity"
     CALL = "call"
     SPECIALTY = "specialty"
+    # Resilience-aware constraint types
+    RESILIENCE = "resilience"
+    HUB_PROTECTION = "hub_protection"
+    UTILIZATION_BUFFER = "utilization_buffer"
 
 
 @dataclass
@@ -159,6 +163,13 @@ class SchedulingContext:
     """
     Context object containing all data needed for constraint evaluation.
     Passed to constraints to avoid database queries during solving.
+
+    Resilience Integration (Tier 1):
+    - hub_scores: Faculty hub vulnerability scores from network analysis
+    - current_utilization: System utilization rate (target: <0.80)
+    - n1_vulnerable_faculty: Faculty whose loss creates N-1 failure
+    - preference_trails: Stigmergy preference data for soft optimization
+    - zone_assignments: Faculty zone assignments for blast radius isolation
     """
     residents: list  # List of Person objects
     faculty: list    # List of Person objects
@@ -181,6 +192,36 @@ class SchedulingContext:
     start_date: Optional[date] = None
     end_date: Optional[date] = None
 
+    # =========================================================================
+    # Resilience Data (populated by ResilienceService)
+    # =========================================================================
+
+    # Hub vulnerability scores: {faculty_id: composite_score (0.0-1.0)}
+    # Higher scores = more critical = should be protected from over-assignment
+    hub_scores: dict[UUID, float] = field(default_factory=dict)
+
+    # Current system utilization rate (0.0-1.0)
+    # Target: <0.80 to maintain 20% buffer per queuing theory
+    current_utilization: float = 0.0
+
+    # Faculty whose loss creates N-1 vulnerability (single point of failure)
+    n1_vulnerable_faculty: set[UUID] = field(default_factory=set)
+
+    # Preference trails from stigmergy: {faculty_id: {slot_type: strength}}
+    # Used to weight assignments based on learned preferences
+    preference_trails: dict[UUID, dict[str, float]] = field(default_factory=dict)
+
+    # Zone assignments: {faculty_id: zone_id}
+    # For blast radius isolation - faculty should primarily work in their zone
+    zone_assignments: dict[UUID, UUID] = field(default_factory=dict)
+
+    # Block zone assignments: {block_id: zone_id}
+    # Maps blocks to zones for cross-zone penalty calculation
+    block_zones: dict[UUID, UUID] = field(default_factory=dict)
+
+    # Target utilization for buffer constraint (default 80%)
+    target_utilization: float = 0.80
+
     def __post_init__(self):
         """Build lookup dictionaries."""
         self.resident_idx = {r.id: i for i, r in enumerate(self.residents)}
@@ -190,6 +231,23 @@ class SchedulingContext:
         self.blocks_by_date = defaultdict(list)
         for block in self.blocks:
             self.blocks_by_date[block.date].append(block)
+
+    def has_resilience_data(self) -> bool:
+        """Check if resilience data has been populated."""
+        return bool(self.hub_scores) or self.current_utilization > 0
+
+    def get_hub_score(self, faculty_id: UUID) -> float:
+        """Get hub score for faculty (0.0 if not a hub)."""
+        return self.hub_scores.get(faculty_id, 0.0)
+
+    def is_n1_vulnerable(self, faculty_id: UUID) -> bool:
+        """Check if faculty is a single point of failure."""
+        return faculty_id in self.n1_vulnerable_faculty
+
+    def get_preference_strength(self, faculty_id: UUID, slot_type: str) -> float:
+        """Get preference trail strength (0.5 neutral if no data)."""
+        faculty_prefs = self.preference_trails.get(faculty_id, {})
+        return faculty_prefs.get(slot_type, 0.5)
 
 
 # =============================================================================
@@ -1164,6 +1222,335 @@ class PreferenceConstraint(SoftConstraint):
 
 
 # =============================================================================
+# RESILIENCE-AWARE SOFT CONSTRAINTS
+# =============================================================================
+
+class HubProtectionConstraint(SoftConstraint):
+    """
+    Protects hub faculty from over-assignment.
+
+    Network theory shows that scale-free networks (common in organizations)
+    are robust to random failure but extremely vulnerable to hub removal.
+    This constraint distributes load away from critical "hub" faculty.
+
+    Rationale:
+    - Hub faculty cover unique services or are hard to replace
+    - Over-assigning hubs increases systemic risk
+    - If a hub becomes unavailable, the system may fail N-1 analysis
+
+    Implementation:
+    - Penalizes assignments to faculty with high hub scores
+    - Penalty scales with hub_score * assignment_count
+    - Critical hubs (score > 0.6) get 2x penalty multiplier
+    """
+
+    # Hub score thresholds
+    HIGH_HUB_THRESHOLD = 0.4      # Above this = significant hub
+    CRITICAL_HUB_THRESHOLD = 0.6  # Above this = critical hub (2x penalty)
+
+    def __init__(self, weight: float = 15.0):
+        super().__init__(
+            name="HubProtection",
+            constraint_type=ConstraintType.HUB_PROTECTION,
+            weight=weight,
+            priority=ConstraintPriority.MEDIUM,
+        )
+
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+        """
+        Add hub protection penalty to objective.
+
+        For each faculty with hub_score > threshold, add penalty
+        proportional to their assignment count.
+        """
+        x = variables.get("assignments", {})
+
+        if not x or not context.hub_scores:
+            return  # No resilience data available
+
+        total_hub_penalty = 0
+
+        for faculty in context.faculty:
+            f_i = context.resident_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            hub_score = context.get_hub_score(faculty.id)
+            if hub_score < self.HIGH_HUB_THRESHOLD:
+                continue  # Not a hub, no penalty
+
+            # Count assignments to this faculty
+            faculty_vars = [
+                x[f_i, context.block_idx[b.id]]
+                for b in context.blocks
+                if (f_i, context.block_idx[b.id]) in x
+            ]
+
+            if not faculty_vars:
+                continue
+
+            # Penalty multiplier based on hub criticality
+            multiplier = 2.0 if hub_score >= self.CRITICAL_HUB_THRESHOLD else 1.0
+
+            # Create penalty variable
+            faculty_total = sum(faculty_vars)
+            # Scale penalty by hub_score and multiplier
+            penalty_factor = int(hub_score * multiplier * 100)
+            total_hub_penalty += faculty_total * penalty_factor
+
+        if total_hub_penalty:
+            variables["hub_penalty"] = total_hub_penalty
+
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+        """Add hub protection penalty to PuLP model."""
+        import pulp
+        x = variables.get("assignments", {})
+
+        if not x or not context.hub_scores:
+            return
+
+        penalty_terms = []
+
+        for faculty in context.faculty:
+            f_i = context.resident_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            hub_score = context.get_hub_score(faculty.id)
+            if hub_score < self.HIGH_HUB_THRESHOLD:
+                continue
+
+            faculty_vars = [
+                x[f_i, context.block_idx[b.id]]
+                for b in context.blocks
+                if (f_i, context.block_idx[b.id]) in x
+            ]
+
+            if faculty_vars:
+                multiplier = 2.0 if hub_score >= self.CRITICAL_HUB_THRESHOLD else 1.0
+                penalty_factor = hub_score * multiplier
+                penalty_terms.append(pulp.lpSum(faculty_vars) * penalty_factor)
+
+        if penalty_terms:
+            variables["hub_penalty"] = pulp.lpSum(penalty_terms)
+
+    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+        """
+        Validate hub protection and calculate penalty.
+
+        Reports:
+        - Which hubs are over-assigned
+        - Total hub concentration risk
+        """
+        violations = []
+        total_penalty = 0.0
+
+        if not context.hub_scores:
+            return ConstraintResult(satisfied=True, penalty=0.0)
+
+        # Count assignments per faculty
+        faculty_counts = defaultdict(int)
+        for a in assignments:
+            faculty_counts[a.person_id] += 1
+
+        # Calculate average assignments
+        if faculty_counts:
+            avg_assignments = sum(faculty_counts.values()) / len(faculty_counts)
+        else:
+            avg_assignments = 0
+
+        for faculty in context.faculty:
+            hub_score = context.get_hub_score(faculty.id)
+            if hub_score < self.HIGH_HUB_THRESHOLD:
+                continue
+
+            count = faculty_counts.get(faculty.id, 0)
+            multiplier = 2.0 if hub_score >= self.CRITICAL_HUB_THRESHOLD else 1.0
+
+            # Calculate penalty
+            penalty = count * hub_score * multiplier * self.weight
+            total_penalty += penalty
+
+            # Report if hub is over-assigned (> average)
+            if count > avg_assignments * 1.2:  # 20% above average
+                severity = "HIGH" if hub_score >= self.CRITICAL_HUB_THRESHOLD else "MEDIUM"
+                violations.append(ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity=severity,
+                    message=f"Hub faculty {faculty.name} (score={hub_score:.2f}) has {count} assignments (avg={avg_assignments:.1f})",
+                    person_id=faculty.id,
+                    details={
+                        "hub_score": hub_score,
+                        "assignment_count": count,
+                        "average_assignments": avg_assignments,
+                        "is_critical_hub": hub_score >= self.CRITICAL_HUB_THRESHOLD,
+                    },
+                ))
+
+        return ConstraintResult(
+            satisfied=True,  # Soft constraint
+            violations=violations,
+            penalty=total_penalty,
+        )
+
+
+class UtilizationBufferConstraint(SoftConstraint):
+    """
+    Maintains capacity buffer to absorb unexpected demand.
+
+    Based on queuing theory (Erlang-C): wait times increase exponentially
+    as utilization approaches 100%. The 80% threshold provides buffer for:
+    - Unexpected absences
+    - Emergency coverage needs
+    - Surge demand
+
+    Rationale:
+    - At 80% utilization, wait times are manageable
+    - At 90%+, small disturbances cause cascade failures
+    - 20% buffer = "defense in depth" against surprises
+
+    Implementation:
+    - Calculates effective utilization from assignment count
+    - Penalizes schedules that exceed target utilization
+    - Penalty increases sharply above threshold (quadratic)
+    """
+
+    def __init__(self, weight: float = 20.0, target_utilization: float = 0.80):
+        super().__init__(
+            name="UtilizationBuffer",
+            constraint_type=ConstraintType.UTILIZATION_BUFFER,
+            weight=weight,
+            priority=ConstraintPriority.HIGH,
+        )
+        self.target_utilization = target_utilization
+
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+        """
+        Add utilization buffer constraint to CP-SAT model.
+
+        Soft constraint: penalize total assignments above threshold.
+        """
+        x = variables.get("assignments", {})
+
+        if not x:
+            return
+
+        # Calculate maximum safe assignments
+        # Max capacity = faculty * blocks_per_faculty
+        # Safe capacity = max_capacity * target_utilization
+        max_blocks_per_faculty = len(context.blocks)
+        max_capacity = len(context.faculty) * max_blocks_per_faculty
+        safe_capacity = int(max_capacity * context.target_utilization)
+
+        # Sum all assignments
+        total_assignments = sum(x.values())
+
+        # Create over-utilization variable
+        over_util = model.NewIntVar(0, max_capacity, "over_utilization")
+        model.Add(over_util >= total_assignments - safe_capacity)
+        model.Add(over_util >= 0)
+
+        # Quadratic-ish penalty: over_util * over_util is complex in CP-SAT
+        # Use linear approximation with higher weight for large overages
+        variables["utilization_penalty"] = over_util
+
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+        """Add utilization buffer constraint to PuLP model."""
+        import pulp
+        x = variables.get("assignments", {})
+
+        if not x:
+            return
+
+        max_blocks_per_faculty = len(context.blocks)
+        max_capacity = len(context.faculty) * max_blocks_per_faculty
+        safe_capacity = int(max_capacity * context.target_utilization)
+
+        total_assignments = pulp.lpSum(x.values())
+
+        # Over-utilization slack variable
+        over_util = pulp.LpVariable("over_utilization", lowBound=0, cat="Integer")
+        model += over_util >= total_assignments - safe_capacity, "utilization_slack"
+
+        variables["utilization_penalty"] = over_util
+
+    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+        """
+        Validate utilization buffer and calculate penalty.
+
+        Reports:
+        - Current utilization rate
+        - Buffer remaining
+        - Whether in danger zone
+        """
+        violations = []
+
+        # Calculate utilization
+        # This is a simplified calculation - actual would consider
+        # faculty-specific availability
+        total_assignments = len([a for a in assignments if a.role == "primary"])
+        workday_blocks = len([b for b in context.blocks if not b.is_weekend])
+
+        # Capacity = faculty who can work * average available blocks
+        available_faculty = len([
+            f for f in context.faculty
+            if any(
+                context.availability.get(f.id, {}).get(b.id, {}).get("available", True)
+                for b in context.blocks
+            )
+        ])
+
+        if available_faculty == 0 or workday_blocks == 0:
+            return ConstraintResult(satisfied=True, penalty=0.0)
+
+        # Simplified: each faculty can cover 1 block per day on average
+        max_capacity = available_faculty * workday_blocks
+        utilization = total_assignments / max_capacity if max_capacity > 0 else 0
+
+        # Calculate penalty
+        target = context.target_utilization if context.target_utilization else self.target_utilization
+
+        if utilization <= target:
+            penalty = 0.0
+            buffer_remaining = target - utilization
+        else:
+            # Quadratic penalty above threshold
+            over_threshold = utilization - target
+            penalty = (over_threshold ** 2) * self.weight * 100
+            buffer_remaining = 0.0
+
+            # Determine severity based on how far over
+            if utilization >= 0.95:
+                severity = "CRITICAL"
+            elif utilization >= 0.90:
+                severity = "HIGH"
+            else:
+                severity = "MEDIUM"
+
+            violations.append(ConstraintViolation(
+                constraint_name=self.name,
+                constraint_type=self.constraint_type,
+                severity=severity,
+                message=f"Utilization {utilization:.0%} exceeds target {target:.0%} (buffer exhausted)",
+                details={
+                    "utilization_rate": utilization,
+                    "target_utilization": target,
+                    "buffer_remaining": buffer_remaining,
+                    "total_assignments": total_assignments,
+                    "max_capacity": max_capacity,
+                    "danger_zone": utilization >= 0.90,
+                },
+            ))
+
+        return ConstraintResult(
+            satisfied=True,  # Soft constraint
+            violations=violations,
+            penalty=penalty,
+        )
+
+
+# =============================================================================
 # CONSTRAINT MANAGER
 # =============================================================================
 
@@ -1296,6 +1683,51 @@ class ConstraintManager:
         manager.add(CoverageConstraint(weight=1000.0))
         manager.add(EquityConstraint(weight=10.0))
         manager.add(ContinuityConstraint(weight=5.0))
+
+        # Resilience-aware soft constraints (disabled by default for backward compatibility)
+        manager.add(HubProtectionConstraint(weight=15.0))
+        manager.add(UtilizationBufferConstraint(weight=20.0))
+        # Disabled by default - enabled when resilience data is provided
+        manager.disable("HubProtection")
+        manager.disable("UtilizationBuffer")
+
+        return manager
+
+    @classmethod
+    def create_resilience_aware(cls, target_utilization: float = 0.80) -> "ConstraintManager":
+        """
+        Create manager with resilience-aware constraints enabled.
+
+        This configuration:
+        - Includes all ACGME compliance constraints
+        - Enables hub protection to prevent over-assigning critical faculty
+        - Enables utilization buffer to maintain 20% capacity reserve
+        - Suitable for systems with ResilienceService integration
+
+        Args:
+            target_utilization: Maximum utilization before penalties (default 80%)
+
+        Returns:
+            ConstraintManager with resilience constraints enabled
+        """
+        manager = cls()
+
+        # Hard constraints (ACGME compliance)
+        manager.add(AvailabilityConstraint())
+        manager.add(OnePersonPerBlockConstraint())
+        manager.add(EightyHourRuleConstraint())
+        manager.add(OneInSevenRuleConstraint())
+        manager.add(SupervisionRatioConstraint())
+        manager.add(ClinicCapacityConstraint())
+
+        # Soft constraints (optimization)
+        manager.add(CoverageConstraint(weight=1000.0))
+        manager.add(EquityConstraint(weight=10.0))
+        manager.add(ContinuityConstraint(weight=5.0))
+
+        # Resilience-aware soft constraints (ENABLED)
+        manager.add(HubProtectionConstraint(weight=15.0))
+        manager.add(UtilizationBufferConstraint(weight=20.0, target_utilization=target_utilization))
 
         return manager
 

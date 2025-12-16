@@ -124,9 +124,10 @@ class SchedulingEngine:
         run = self._create_initial_run(algorithm)
 
         # Pre-generation resilience check
-        pre_health_report = None
+        # Store as instance attribute for _populate_resilience_data to access
+        self._pre_health_report = None
         if check_resilience:
-            pre_health_report = self._check_pre_generation_resilience()
+            self._pre_health_report = self._check_pre_generation_resilience()
 
         try:
             # Step 1: Ensure blocks exist (but don't commit yet)
@@ -155,8 +156,11 @@ class SchedulingEngine:
                     "run_id": run.id,
                 }
 
-            # Step 4: Create scheduling context
-            context = self._build_context(residents, faculty, blocks, templates)
+            # Step 4: Create scheduling context (with resilience data if available)
+            context = self._build_context(
+                residents, faculty, blocks, templates,
+                include_resilience=check_resilience,
+            )
 
             # Step 5: Run solver
             solver_result = self._run_solver(algorithm, context, timeout_seconds)
@@ -207,13 +211,16 @@ class SchedulingEngine:
                 "run_id": run.id,
                 "solver_stats": solver_result.statistics,
                 "resilience": {
-                    "pre_generation_status": pre_health_report.overall_status if pre_health_report else None,
+                    "pre_generation_status": self._pre_health_report.overall_status if self._pre_health_report else None,
                     "post_generation_status": post_health_report.overall_status if post_health_report else None,
                     "utilization_rate": post_health_report.utilization.utilization_rate if post_health_report else None,
                     "n1_compliant": post_health_report.n1_pass if post_health_report else None,
                     "n2_compliant": post_health_report.n2_pass if post_health_report else None,
                     "warnings": resilience_warnings,
                     "immediate_actions": post_health_report.immediate_actions if post_health_report else [],
+                    # New: Include resilience constraint activity
+                    "resilience_constraints_active": context.has_resilience_data() if context else False,
+                    "hub_faculty_count": len(context.hub_scores) if context else 0,
                 },
             }
 
@@ -238,9 +245,23 @@ class SchedulingEngine:
         faculty: list[Person],
         blocks: list[Block],
         templates: list[RotationTemplate],
+        include_resilience: bool = True,
     ) -> SchedulingContext:
-        """Build scheduling context from database objects."""
-        return SchedulingContext(
+        """
+        Build scheduling context from database objects.
+
+        Args:
+            residents: List of resident Person objects
+            faculty: List of faculty Person objects
+            blocks: List of Block objects for the schedule period
+            templates: List of RotationTemplate objects
+            include_resilience: Whether to populate resilience data
+
+        Returns:
+            SchedulingContext with all data needed for constraint evaluation
+        """
+        # Build base context
+        context = SchedulingContext(
             residents=residents,
             faculty=faculty,
             blocks=blocks,
@@ -249,6 +270,136 @@ class SchedulingEngine:
             start_date=self.start_date,
             end_date=self.end_date,
         )
+
+        # Populate resilience data if available and requested
+        if include_resilience and self.resilience:
+            self._populate_resilience_data(context, faculty, blocks)
+
+        return context
+
+    def _populate_resilience_data(
+        self,
+        context: SchedulingContext,
+        faculty: list[Person],
+        blocks: list[Block],
+    ):
+        """
+        Populate resilience data in the scheduling context.
+
+        This fetches:
+        - Hub scores from hub analysis
+        - Current utilization from resilience service
+        - N-1 vulnerable faculty from contingency analysis
+        - Preference trails from stigmergy (if available)
+
+        The data enables resilience-aware constraints to function.
+        """
+        try:
+            # Get hub scores
+            hub_scores = self._get_hub_scores(faculty)
+            if hub_scores:
+                context.hub_scores = hub_scores
+                logger.debug(f"Loaded hub scores for {len(hub_scores)} faculty")
+
+                # Enable hub protection constraint if we have data
+                if self.constraint_manager:
+                    self.constraint_manager.enable("HubProtection")
+
+            # Get current utilization from pre-generation check
+            # This is already calculated in check_health()
+            if hasattr(self, '_pre_health_report') and self._pre_health_report:
+                context.current_utilization = self._pre_health_report.utilization.utilization_rate
+                context.target_utilization = self.resilience.config.max_utilization
+
+                # Enable utilization buffer constraint
+                if self.constraint_manager:
+                    self.constraint_manager.enable("UtilizationBuffer")
+
+            # Get N-1 vulnerable faculty from latest contingency analysis
+            n1_vulnerable = self._get_n1_vulnerable_faculty(faculty, blocks)
+            if n1_vulnerable:
+                context.n1_vulnerable_faculty = n1_vulnerable
+                logger.debug(f"Identified {len(n1_vulnerable)} N-1 vulnerable faculty")
+
+            # Get preference trails from stigmergy (for future use)
+            preference_trails = self._get_preference_trails(faculty)
+            if preference_trails:
+                context.preference_trails = preference_trails
+
+        except Exception as e:
+            logger.warning(f"Failed to populate resilience data: {e}")
+            # Continue without resilience data - constraints will be no-ops
+
+    def _get_hub_scores(self, faculty: list[Person]) -> dict[UUID, float]:
+        """
+        Get hub vulnerability scores for faculty.
+
+        Returns dict of faculty_id -> composite_score (0.0-1.0).
+        Higher scores indicate more critical "hub" faculty.
+        """
+        hub_scores = {}
+
+        try:
+            # Check if we have cached hub analysis results
+            if hasattr(self.resilience, 'hub_analyzer'):
+                # Get latest centrality data
+                for fac in faculty:
+                    centrality = self.resilience.hub_analyzer.get_faculty_centrality(fac.id)
+                    if centrality:
+                        hub_scores[fac.id] = centrality.composite_score
+        except Exception as e:
+            logger.debug(f"Could not get hub scores: {e}")
+
+        return hub_scores
+
+    def _get_n1_vulnerable_faculty(
+        self,
+        faculty: list[Person],
+        blocks: list[Block],
+    ) -> set[UUID]:
+        """
+        Identify faculty whose loss would cause N-1 failure.
+
+        These are single points of failure - the schedule cannot
+        survive if they become unavailable.
+        """
+        n1_vulnerable = set()
+
+        try:
+            # Use contingency analyzer if available
+            if hasattr(self.resilience, 'contingency'):
+                # This would need existing assignments to analyze
+                # For now, return empty - will be populated after solving
+                pass
+        except Exception as e:
+            logger.debug(f"Could not get N-1 vulnerable faculty: {e}")
+
+        return n1_vulnerable
+
+    def _get_preference_trails(self, faculty: list[Person]) -> dict[UUID, dict[str, float]]:
+        """
+        Get preference trail data from stigmergy system.
+
+        Returns dict of faculty_id -> {slot_type -> strength}.
+        Used for soft preference optimization.
+        """
+        preference_trails = {}
+
+        try:
+            if hasattr(self.resilience, 'stigmergy'):
+                for fac in faculty:
+                    prefs = self.resilience.get_faculty_preferences(fac.id, min_strength=0.3)
+                    if prefs:
+                        faculty_prefs = {}
+                        for trail in prefs:
+                            if trail.slot_type:
+                                faculty_prefs[trail.slot_type] = trail.strength
+                        if faculty_prefs:
+                            preference_trails[fac.id] = faculty_prefs
+        except Exception as e:
+            logger.debug(f"Could not get preference trails: {e}")
+
+        return preference_trails
 
     def _run_solver(
         self,
