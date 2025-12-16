@@ -9,6 +9,7 @@ asyncpg==0.31.0
 psycopg2-binary==2.9.11
 alembic==1.17.2
 sqlalchemy-utils==0.42.1
+sqlalchemy-continuum==1.4.2  # Audit trail / version history for models
 
 # Validation and serialization
 pydantic==2.12.5

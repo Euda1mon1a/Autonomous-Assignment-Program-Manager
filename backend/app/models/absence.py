@@ -18,8 +18,12 @@ class Absence(Base):
     - tdy: Temporary Duty (military)
     - medical: Medical leave
     - family_emergency: Emergency leave
+
+    Version history is tracked via SQLAlchemy-Continuum.
+    Access history: absence.versions
     """
     __tablename__ = "absences"
+    __versioned__ = {}  # Enable audit trail - tracks all changes with who/what/when
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     person_id = Column(GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False)
