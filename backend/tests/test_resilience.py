@@ -637,3 +637,242 @@ class TestResilienceEdgeCases:
         # Should restore in reverse sacrifice order
         # (low priority activities restored last)
         assert len(plan) > 0
+
+
+# ============================================================================
+# Homeostasis Volatility Tracking Tests
+# ============================================================================
+
+from datetime import datetime
+
+from app.resilience.homeostasis import (
+    DeviationSeverity,
+    FeedbackLoop,
+    FeedbackType,
+    HomeostasisMonitor,
+    Setpoint,
+    VolatilityLevel,
+    VolatilityMetrics,
+)
+
+
+class TestFeedbackLoopVolatility:
+    """Tests for FeedbackLoop volatility tracking."""
+
+    def _create_loop_with_history(
+        self,
+        values: list[float],
+        target: float = 0.95,
+        tolerance: float = 0.05,
+    ) -> FeedbackLoop:
+        """Helper to create a feedback loop with value history."""
+        setpoint = Setpoint(
+            id=uuid4(),
+            name="test_metric",
+            description="Test metric",
+            target_value=target,
+            tolerance=tolerance,
+        )
+        loop = FeedbackLoop(
+            id=uuid4(),
+            name="test_loop",
+            description="Test loop",
+            setpoint=setpoint,
+            feedback_type=FeedbackType.NEGATIVE,
+        )
+        for i, val in enumerate(values):
+            loop.record_value(val, datetime(2024, 1, 1, 0, i))
+        return loop
+
+    def test_volatility_stable_values(self):
+        """Test volatility calculation with stable values."""
+        # Very stable values around 0.95
+        values = [0.94, 0.95, 0.95, 0.94, 0.95, 0.95, 0.94, 0.95]
+        loop = self._create_loop_with_history(values)
+
+        volatility = loop.get_volatility()
+        assert volatility < 0.02  # Very low volatility (< 2%)
+
+    def test_volatility_unstable_values(self):
+        """Test volatility calculation with unstable values."""
+        # Highly variable values
+        values = [0.80, 0.95, 0.85, 0.98, 0.75, 0.92, 0.88, 0.96]
+        loop = self._create_loop_with_history(values)
+
+        volatility = loop.get_volatility()
+        assert volatility > 0.05  # Higher volatility (> 5%)
+
+    def test_volatility_insufficient_data(self):
+        """Test volatility with insufficient data returns 0."""
+        values = [0.95, 0.94]  # Only 2 values
+        loop = self._create_loop_with_history(values)
+
+        volatility = loop.get_volatility()
+        assert volatility == 0.0
+
+    def test_jitter_stable(self):
+        """Test jitter with steadily increasing values (low jitter)."""
+        # Steady increase - no direction changes
+        values = [0.90, 0.91, 0.92, 0.93, 0.94, 0.95, 0.96]
+        loop = self._create_loop_with_history(values)
+
+        jitter = loop.get_jitter()
+        assert jitter < 0.2  # Low jitter
+
+    def test_jitter_oscillating(self):
+        """Test jitter with oscillating values (high jitter)."""
+        # Oscillating - many direction changes
+        values = [0.90, 0.95, 0.88, 0.96, 0.85, 0.94, 0.87, 0.95]
+        loop = self._create_loop_with_history(values)
+
+        jitter = loop.get_jitter()
+        assert jitter > 0.5  # High jitter (>50% direction changes)
+
+    def test_momentum_increasing(self):
+        """Test momentum with increasing trend."""
+        values = [0.88, 0.89, 0.90, 0.91, 0.92, 0.93, 0.94, 0.95]
+        loop = self._create_loop_with_history(values)
+
+        momentum = loop.get_momentum()
+        assert momentum > 0  # Positive momentum (increasing)
+
+    def test_momentum_decreasing(self):
+        """Test momentum with decreasing trend."""
+        values = [0.98, 0.96, 0.94, 0.92, 0.90, 0.88, 0.86, 0.84]
+        loop = self._create_loop_with_history(values)
+
+        momentum = loop.get_momentum()
+        assert momentum < 0  # Negative momentum (decreasing)
+
+    def test_momentum_stable(self):
+        """Test momentum with stable values."""
+        values = [0.95, 0.95, 0.94, 0.95, 0.95, 0.94, 0.95, 0.95]
+        loop = self._create_loop_with_history(values)
+
+        momentum = loop.get_momentum()
+        assert abs(momentum) < 0.5  # Near-zero momentum
+
+    def test_distance_to_criticality_at_target(self):
+        """Test distance to criticality at target value."""
+        values = [0.95]  # At target (0.95)
+        loop = self._create_loop_with_history(values, target=0.95, tolerance=0.05)
+
+        distance = loop.get_distance_to_criticality()
+        assert distance == 1.0  # Full distance from critical
+
+    def test_distance_to_criticality_near_threshold(self):
+        """Test distance to criticality near threshold."""
+        # Critical threshold = 5 * 0.05 * 0.95 = 0.2375 deviation
+        # Value of 0.75 = 0.20 deviation from 0.95 target
+        values = [0.75]
+        loop = self._create_loop_with_history(values, target=0.95, tolerance=0.05)
+
+        distance = loop.get_distance_to_criticality()
+        assert 0.1 < distance < 0.5  # Close to critical but not at it
+
+    def test_distance_to_criticality_beyond_threshold(self):
+        """Test distance to criticality beyond threshold."""
+        # Value far from target
+        values = [0.50]
+        loop = self._create_loop_with_history(values, target=0.95, tolerance=0.05)
+
+        distance = loop.get_distance_to_criticality()
+        assert distance == 0.0  # At or beyond critical
+
+    def test_volatility_metrics_stable(self):
+        """Test get_volatility_metrics with stable system."""
+        values = [0.94, 0.95, 0.95, 0.94, 0.95, 0.95, 0.94, 0.95]
+        loop = self._create_loop_with_history(values)
+
+        metrics = loop.get_volatility_metrics()
+
+        assert isinstance(metrics, VolatilityMetrics)
+        assert metrics.level in (VolatilityLevel.STABLE, VolatilityLevel.NORMAL)
+        assert metrics.is_warning is False
+        assert metrics.is_critical is False
+
+    def test_volatility_metrics_critical(self):
+        """Test get_volatility_metrics with critical instability."""
+        # High variance + high jitter + near threshold
+        values = [0.70, 0.90, 0.65, 0.88, 0.60, 0.85, 0.55, 0.82]
+        loop = self._create_loop_with_history(values)
+
+        metrics = loop.get_volatility_metrics()
+
+        assert metrics.is_warning is True
+        # High volatility and jitter
+        assert metrics.volatility > 0.1
+        assert metrics.jitter > 0.3
+
+
+class TestHomeostasisMonitorVolatility:
+    """Tests for HomeostasisMonitor volatility detection."""
+
+    def test_detect_volatility_no_alerts_stable(self):
+        """Test no volatility alerts for stable system."""
+        monitor = HomeostasisMonitor()
+
+        # Add stable values to all loops
+        for loop in monitor.feedback_loops.values():
+            for i in range(10):
+                # Values near target with low variance
+                value = loop.setpoint.target_value + (i % 2) * 0.01
+                loop.record_value(value)
+
+        alerts = monitor.detect_volatility_risks()
+        assert len(alerts) == 0
+
+    def test_detect_volatility_alerts_unstable(self):
+        """Test volatility alerts for unstable system."""
+        monitor = HomeostasisMonitor()
+
+        # Get the coverage_rate loop and add unstable values
+        loop = monitor.get_feedback_loop("coverage_rate")
+        assert loop is not None
+
+        # Add highly variable values that oscillate
+        unstable_values = [0.70, 0.95, 0.65, 0.92, 0.60, 0.90, 0.55, 0.88, 0.50, 0.85]
+        for val in unstable_values:
+            loop.record_value(val)
+
+        alerts = monitor.detect_volatility_risks()
+
+        # Should have at least one alert
+        assert len(alerts) > 0
+        assert alerts[0].feedback_loop_name == "coverage_rate_feedback"
+
+    def test_get_status_includes_volatility(self):
+        """Test get_status includes volatility information."""
+        monitor = HomeostasisMonitor()
+
+        # Add some values to loops
+        for loop in monitor.feedback_loops.values():
+            for i in range(6):
+                loop.record_value(loop.setpoint.target_value)
+
+        status = monitor.get_status()
+
+        # New fields should be present
+        assert hasattr(status, 'feedback_loops_volatile')
+        assert hasattr(status, 'volatility_alerts')
+        assert status.feedback_loops_volatile >= 0
+        assert status.volatility_alerts >= 0
+
+    def test_volatility_affects_overall_state(self):
+        """Test that high volatility can escalate system state."""
+        monitor = HomeostasisMonitor()
+
+        # Add unstable values to multiple loops
+        for loop in monitor.feedback_loops.values():
+            unstable = [0.60, 0.95, 0.50, 0.90, 0.55, 0.92, 0.65, 0.88, 0.70, 0.85]
+            for val in unstable:
+                loop.record_value(val)
+
+        # Detect volatility first
+        monitor.detect_volatility_risks()
+
+        status = monitor.get_status()
+
+        # With high volatility, should not be in pure HOMEOSTASIS
+        # (may be ALLOSTASIS due to volatility even if avg values are OK)
+        assert status.feedback_loops_volatile > 0 or len(monitor.volatility_alerts) > 0
