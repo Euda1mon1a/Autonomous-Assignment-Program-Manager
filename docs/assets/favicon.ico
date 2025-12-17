@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Background circle with coral gradient -->
+  <defs>
+    <linearGradient id="coralGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF8A80"/>
+      <stop offset="100%" style="stop-color:#E57373"/>
+    </linearGradient>
+    <linearGradient id="tealGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4DD0E1"/>
+      <stop offset="100%" style="stop-color:#26A69A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Main circle -->
+  <circle cx="24" cy="24" r="22" fill="url(#coralGradient)"/>
+
+  <!-- Calendar/Schedule icon -->
+  <rect x="12" y="14" width="24" height="20" rx="2" fill="white" opacity="0.95"/>
+  <rect x="12" y="14" width="24" height="6" rx="2" fill="url(#tealGradient)"/>
+
+  <!-- Calendar header dots -->
+  <circle cx="17" cy="12" r="1.5" fill="white"/>
+  <circle cx="31" cy="12" r="1.5" fill="white"/>
+
+  <!-- Grid lines -->
+  <line x1="12" y1="24" x2="36" y2="24" stroke="#E57373" stroke-width="0.5" opacity="0.5"/>
+  <line x1="12" y1="29" x2="36" y2="29" stroke="#E57373" stroke-width="0.5" opacity="0.5"/>
+  <line x1="20" y1="20" x2="20" y2="34" stroke="#E57373" stroke-width="0.5" opacity="0.5"/>
+  <line x1="28" y1="20" x2="28" y2="34" stroke="#E57373" stroke-width="0.5" opacity="0.5"/>
+
+  <!-- Checkmark in one cell -->
+  <path d="M22 26 L25 29 L32 22" stroke="#26A69A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Small plumeria accent -->
+  <circle cx="38" cy="10" r="4" fill="#FFD54F" opacity="0.9"/>
+  <circle cx="36" cy="8" r="2" fill="white" opacity="0.8"/>
+  <circle cx="40" cy="8" r="2" fill="white" opacity="0.8"/>
+  <circle cx="36" cy="12" r="2" fill="white" opacity="0.8"/>
+  <circle cx="40" cy="12" r="2" fill="white" opacity="0.8"/>
+</svg>

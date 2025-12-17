@@ -89,8 +89,8 @@ Residency Scheduler is a **full-stack medical residency scheduling system** desi
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/residency-scheduler.git
-cd residency-scheduler
+git clone https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager.git
+cd Autonomous-Assignment-Program-Manager
 
 # Configure environment
 cp .env.example .env
@@ -158,4 +158,4 @@ See [Getting Started](Getting-Started) for detailed instructions.
 
 ## License
 
-This project is proprietary software for medical residency program management.
+This project is open source under the MIT License. Made with Aloha.
