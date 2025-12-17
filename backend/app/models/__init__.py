@@ -65,6 +65,7 @@ from app.models.settings import ApplicationSettings
 from app.models.swap import SwapApproval, SwapRecord, SwapStatus, SwapType
 from app.models.token_blacklist import TokenBlacklist
 from app.models.user import User
+from app.models.calendar_subscription import CalendarSubscription
 
 __all__ = [
     "Person",
@@ -139,4 +140,6 @@ __all__ = [
     "FacultyCentralityRecord",
     "HubProtectionPlanRecord",
     "CrossTrainingRecommendationRecord",
+    # Calendar Subscription model
+    "CalendarSubscription",
 ]

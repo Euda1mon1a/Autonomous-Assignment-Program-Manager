@@ -2,7 +2,7 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, Field
 
 
 class CalendarExportRequest(BaseModel):
@@ -35,7 +35,8 @@ class CalendarSubscriptionCreate(BaseModel):
     """Schema for creating a calendar subscription."""
 
     person_id: UUID
-    expires_days: int | None = None  # None = never expires
+    label: str | None = Field(None, max_length=255, description="Optional label for the subscription")
+    expires_days: int | None = Field(None, ge=1, le=365, description="Days until expiration (1-365, None = never)")
 
 
 class CalendarSubscriptionResponse(BaseModel):
@@ -43,6 +44,27 @@ class CalendarSubscriptionResponse(BaseModel):
 
     token: str
     subscription_url: str
+    webcal_url: str  # webcal:// protocol URL for calendar apps
     person_id: UUID
-    created_at: datetime
+    label: str | None = None
+    created_at: datetime | None = None
     expires_at: datetime | None = None
+    last_accessed_at: datetime | None = None
+    is_active: bool = True
+
+    class Config:
+        from_attributes = True
+
+
+class CalendarSubscriptionListResponse(BaseModel):
+    """Schema for listing calendar subscriptions."""
+
+    subscriptions: list[CalendarSubscriptionResponse]
+    total: int
+
+
+class CalendarSubscriptionRevokeResponse(BaseModel):
+    """Schema for revoke response."""
+
+    success: bool
+    message: str

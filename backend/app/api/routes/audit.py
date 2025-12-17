@@ -10,9 +10,13 @@ import io
 import json
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
 
+from app.core.security import get_current_active_user
+from app.db.session import get_db
+from app.models.user import User
 from app.schemas.audit import (
     AuditExportConfig,
     AuditLogEntry,
@@ -362,9 +366,11 @@ async def get_audit_logs(
     search: str | None = Query(None, description="Search query"),
     entity_id: str | None = Query(None, description="Filter by specific entity ID"),
     acgme_overrides_only: bool = Query(False, description="Show only ACGME overrides"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
-    Get paginated audit logs with filtering and sorting.
+    Get paginated audit logs with filtering and sorting. Requires authentication.
 
     Supports comprehensive filtering by:
     - Date range
@@ -410,9 +416,13 @@ async def get_audit_logs(
 
 
 @router.get("/logs/{log_id}", response_model=AuditLogEntry)
-async def get_audit_log_by_id(log_id: str):
+async def get_audit_log_by_id(
+    log_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
     """
-    Get a single audit log entry by ID.
+    Get a single audit log entry by ID. Requires authentication.
     """
     # Generate mock data and find the entry
     entries, _ = _generate_mock_audit_entries(page=1, page_size=100)
@@ -428,9 +438,12 @@ async def get_audit_log_by_id(log_id: str):
 async def get_audit_statistics(
     start_date: str | None = Query(None, description="Statistics start date (ISO format)"),
     end_date: str | None = Query(None, description="Statistics end date (ISO format)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get audit statistics grouped by action, entity type, user, and severity.
+    Requires authentication.
 
     Returns aggregate counts and metrics for the specified date range.
     """
@@ -485,9 +498,12 @@ async def get_audit_statistics(
 
 
 @router.get("/users")
-async def get_audit_users():
+async def get_audit_users(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
     """
-    Get list of users who have audit activity.
+    Get list of users who have audit activity. Requires authentication.
 
     Used to populate user filter dropdowns in the UI.
     """
@@ -495,9 +511,14 @@ async def get_audit_users():
 
 
 @router.post("/export")
-async def export_audit_logs(config: AuditExportConfig):
+async def export_audit_logs(
+    config: AuditExportConfig,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
     """
     Export audit logs in the specified format (CSV, JSON, or PDF).
+    Requires authentication.
 
     Returns a downloadable file with filtered audit log data.
     """
@@ -649,9 +670,13 @@ async def export_audit_logs(config: AuditExportConfig):
 
 
 @router.post("/mark-reviewed", status_code=204)
-async def mark_audit_reviewed(request: MarkReviewedRequest):
+async def mark_audit_reviewed(
+    request: MarkReviewedRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
     """
-    Mark audit entries as reviewed for compliance tracking.
+    Mark audit entries as reviewed for compliance tracking. Requires authentication.
 
     This endpoint would typically update the audit entries to include
     review information for ACGME compliance purposes.

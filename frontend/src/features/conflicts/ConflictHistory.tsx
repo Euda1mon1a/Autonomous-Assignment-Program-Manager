@@ -165,10 +165,14 @@ export function ConflictHistoryTimeline({ conflictId }: ConflictHistoryTimelineP
           const colors = getActionColor(entry.action);
 
           return (
-            <div key={entry.id} className="relative flex gap-4">
+            <div
+              key={entry.id}
+              className="relative flex gap-4 animate-fadeInUp"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
               {/* Timeline dot */}
               <div className={`
-                flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center z-10
+                flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center z-10 transition-transform duration-300 hover:scale-110
                 ${colors.bg}
               `}>
                 <ActionIcon className={`w-4 h-4 ${colors.icon}`} />
@@ -355,7 +359,7 @@ function PatternCard({ pattern, onClick }: PatternCardProps) {
 
   return (
     <div
-      className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+      className="border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-0.5 animate-fadeInUp"
       onClick={onClick}
     >
       <div className="p-4">

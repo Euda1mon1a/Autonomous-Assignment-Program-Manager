@@ -1,12 +1,15 @@
 """Comprehensive tests for FacultyPreferenceService."""
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from uuid import uuid4
 
 import pytest
 from sqlalchemy.orm import Session
 
+from app.models.assignment import Assignment
+from app.models.block import Block
 from app.models.faculty_preference import FacultyPreference
 from app.models.person import Person
+from app.models.swap import SwapApproval, SwapRecord, SwapStatus, SwapType
 from app.services.faculty_preference_service import FacultyPreferenceService
 
 
@@ -1359,3 +1362,553 @@ class TestEdgeCases:
         result2 = service2.get_or_create_preferences(faculty_member.id)
 
         assert result2.max_weeks_per_month == 7
+
+
+class TestSwapAutoMatching:
+    """Tests for swap auto-matching functionality."""
+
+    @pytest.fixture
+    def swap_requests(self, db: Session, multiple_faculty: list[Person]) -> list[SwapRecord]:
+        """Create multiple swap requests for testing."""
+        swap1 = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[0].id,
+            source_week=date(2025, 6, 2),
+            target_faculty_id=multiple_faculty[1].id,
+            target_week=date(2025, 6, 9),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.PENDING,
+        )
+        swap2 = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[1].id,
+            source_week=date(2025, 6, 9),
+            target_faculty_id=multiple_faculty[0].id,
+            target_week=date(2025, 6, 2),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.PENDING,
+        )
+        swap3 = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[2].id,
+            source_week=date(2025, 6, 16),
+            target_faculty_id=multiple_faculty[3].id,
+            target_week=date(2025, 6, 23),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.PENDING,
+        )
+        db.add_all([swap1, swap2, swap3])
+        db.commit()
+        for swap in [swap1, swap2, swap3]:
+            db.refresh(swap)
+        return [swap1, swap2, swap3]
+
+    def test_find_best_matches_perfect_mutual_match(
+        self,
+        db: Session,
+        faculty_preference_service: FacultyPreferenceService,
+        swap_requests: list[SwapRecord],
+    ):
+        """Test finding a perfect mutual match between two swap requests."""
+        # swap1 and swap2 are perfect mutual matches
+        matches = faculty_preference_service.find_best_matches(swap_requests[0].id)
+
+        assert len(matches) >= 1
+        assert matches[0]["swap_id"] == swap_requests[1].id
+        assert matches[0]["compatibility_score"] > 0.5  # Should be high score
+        assert "swap_id" in matches[0]
+        assert "compatibility_score" in matches[0]
+        assert "reason" in matches[0]
+
+    def test_find_best_matches_no_matches(
+        self,
+        db: Session,
+        faculty_preference_service: FacultyPreferenceService,
+        multiple_faculty: list[Person],
+    ):
+        """Test finding matches when no viable matches exist."""
+        # Create a swap with no matching counterpart
+        solo_swap = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[0].id,
+            source_week=date(2025, 12, 1),
+            target_faculty_id=multiple_faculty[1].id,
+            target_week=date(2025, 12, 8),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.PENDING,
+        )
+        db.add(solo_swap)
+        db.commit()
+        db.refresh(solo_swap)
+
+        matches = faculty_preference_service.find_best_matches(solo_swap.id)
+
+        assert len(matches) == 0
+
+    def test_find_best_matches_nonexistent_swap(
+        self,
+        db: Session,
+        faculty_preference_service: FacultyPreferenceService,
+    ):
+        """Test finding matches for a non-existent swap request."""
+        fake_id = uuid4()
+
+        with pytest.raises(ValueError, match=f"Swap request {fake_id} not found"):
+            faculty_preference_service.find_best_matches(fake_id)
+
+    def test_find_best_matches_respects_limit(
+        self,
+        db: Session,
+        faculty_preference_service: FacultyPreferenceService,
+        multiple_faculty: list[Person],
+    ):
+        """Test that find_best_matches respects the limit parameter."""
+        # Create multiple swap requests
+        base_swap = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[0].id,
+            source_week=date(2025, 7, 7),
+            target_faculty_id=multiple_faculty[1].id,
+            target_week=date(2025, 7, 14),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.PENDING,
+        )
+        db.add(base_swap)
+
+        # Create several potential matches
+        for i in range(5):
+            match_swap = SwapRecord(
+                id=uuid4(),
+                source_faculty_id=multiple_faculty[i % 4 + 1].id,
+                source_week=date(2025, 7, 14 + i * 7),
+                target_faculty_id=multiple_faculty[0].id,
+                target_week=date(2025, 7, 7),
+                swap_type=SwapType.ONE_TO_ONE,
+                status=SwapStatus.PENDING,
+            )
+            db.add(match_swap)
+
+        db.commit()
+        db.refresh(base_swap)
+
+        matches = faculty_preference_service.find_best_matches(base_swap.id, limit=3)
+
+        assert len(matches) <= 3
+
+
+class TestCalculateCompatibilityScore:
+    """Tests for calculate_compatibility_score method."""
+
+    def test_perfect_match_score(
+        self,
+        db: Session,
+        faculty_preference_service: FacultyPreferenceService,
+        multiple_faculty: list[Person],
+    ):
+        """Test score for perfect mutual match."""
+        swap_a = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[0].id,
+            source_week=date(2025, 8, 4),
+            target_faculty_id=multiple_faculty[1].id,
+            target_week=date(2025, 8, 11),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.PENDING,
+        )
+        swap_b = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[1].id,
+            source_week=date(2025, 8, 11),
+            target_faculty_id=multiple_faculty[0].id,
+            target_week=date(2025, 8, 4),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.PENDING,
+        )
+
+        score = faculty_preference_service.calculate_compatibility_score(swap_a, swap_b)
+
+        # Should be high score due to perfect mutual alignment
+        assert 0.5 <= score <= 1.0
+        assert isinstance(score, float)
+
+    def test_incompatible_blocked_weeks(
+        self,
+        db: Session,
+        faculty_preference_service: FacultyPreferenceService,
+        multiple_faculty: list[Person],
+    ):
+        """Test score when one party has blocked the week they would receive."""
+        # Set up blocking preferences
+        pref_a = FacultyPreference(
+            id=uuid4(),
+            faculty_id=multiple_faculty[0].id,
+            preferred_weeks=[],
+            blocked_weeks=["2025-09-08"],  # Blocks the week they would get from swap_b
+        )
+        db.add(pref_a)
+        db.commit()
+
+        swap_a = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[0].id,
+            source_week=date(2025, 9, 1),
+            target_faculty_id=multiple_faculty[1].id,
+            target_week=date(2025, 9, 8),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.PENDING,
+        )
+        swap_b = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[1].id,
+            source_week=date(2025, 9, 8),
+            target_faculty_id=multiple_faculty[0].id,
+            target_week=date(2025, 9, 1),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.PENDING,
+        )
+
+        score = faculty_preference_service.calculate_compatibility_score(swap_a, swap_b)
+
+        # Should be 0 or very low due to blocking constraint
+        assert score < 0.3  # Blocking accounts for 30% of score
+
+    def test_score_with_preference_alignment(
+        self,
+        db: Session,
+        faculty_preference_service: FacultyPreferenceService,
+        multiple_faculty: list[Person],
+    ):
+        """Test score when preferences align but not perfectly mutual."""
+        # Set up preferences
+        pref_a = FacultyPreference(
+            id=uuid4(),
+            faculty_id=multiple_faculty[0].id,
+            preferred_weeks=["2025-10-06"],  # Wants the week swap_b has
+            blocked_weeks=[],
+        )
+        pref_b = FacultyPreference(
+            id=uuid4(),
+            faculty_id=multiple_faculty[1].id,
+            preferred_weeks=["2025-09-29"],  # Wants the week swap_a has
+            blocked_weeks=[],
+        )
+        db.add_all([pref_a, pref_b])
+        db.commit()
+
+        swap_a = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[0].id,
+            source_week=date(2025, 9, 29),
+            target_faculty_id=multiple_faculty[1].id,
+            target_week=date(2025, 10, 6),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.PENDING,
+        )
+        swap_b = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[1].id,
+            source_week=date(2025, 10, 6),
+            target_faculty_id=multiple_faculty[0].id,
+            target_week=None,  # No specific target, just wants to give up this week
+            swap_type=SwapType.ABSORB,
+            status=SwapStatus.PENDING,
+        )
+
+        score = faculty_preference_service.calculate_compatibility_score(swap_a, swap_b)
+
+        # Should have a reasonable score due to preference alignment
+        assert 0.3 <= score <= 1.0
+
+
+class TestAutoSuggestSwaps:
+    """Tests for auto_suggest_swaps method."""
+
+    @pytest.fixture
+    def blocks_and_assignments(
+        self,
+        db: Session,
+        multiple_faculty: list[Person],
+    ) -> tuple[list[Block], list[Assignment]]:
+        """Create blocks and assignments for testing."""
+        blocks = []
+        assignments = []
+
+        # Create future blocks for next 4 weeks
+        for i in range(4):
+            block = Block(
+                id=uuid4(),
+                name=f"Week {i+1}",
+                start_date=date.today() + timedelta(weeks=i+1),
+                end_date=date.today() + timedelta(weeks=i+1, days=6),
+            )
+            blocks.append(block)
+            db.add(block)
+
+        db.commit()
+        for block in blocks:
+            db.refresh(block)
+
+        # Create assignments for faculty
+        assignment1 = Assignment(
+            id=uuid4(),
+            block_id=blocks[0].id,
+            person_id=multiple_faculty[0].id,
+            role="primary",
+        )
+        assignment2 = Assignment(
+            id=uuid4(),
+            block_id=blocks[1].id,
+            person_id=multiple_faculty[1].id,
+            role="primary",
+        )
+        assignments.extend([assignment1, assignment2])
+        db.add_all(assignments)
+        db.commit()
+        for assignment in assignments:
+            db.refresh(assignment)
+
+        return blocks, assignments
+
+    def test_auto_suggest_swaps_with_blocked_week(
+        self,
+        db: Session,
+        faculty_preference_service: FacultyPreferenceService,
+        multiple_faculty: list[Person],
+        blocks_and_assignments: tuple[list[Block], list[Assignment]],
+    ):
+        """Test auto-suggesting swaps when person has a blocked week."""
+        blocks, assignments = blocks_and_assignments
+
+        # Person 0 has blocks[0] but wants to avoid it
+        # Person 1 has blocks[1] and person 0 prefers it
+        pref_0 = FacultyPreference(
+            id=uuid4(),
+            faculty_id=multiple_faculty[0].id,
+            preferred_weeks=[blocks[1].start_date.isoformat()],
+            blocked_weeks=[blocks[0].start_date.isoformat()],
+        )
+        pref_1 = FacultyPreference(
+            id=uuid4(),
+            faculty_id=multiple_faculty[1].id,
+            preferred_weeks=[blocks[0].start_date.isoformat()],
+            blocked_weeks=[],
+        )
+        db.add_all([pref_0, pref_1])
+        db.commit()
+
+        suggestions = faculty_preference_service.auto_suggest_swaps(multiple_faculty[0].id)
+
+        # Should suggest swapping with person 1
+        assert len(suggestions) >= 1
+        assert "assignment_id" in suggestions[0]
+        assert "benefit_score" in suggestions[0]
+        assert "reason" in suggestions[0]
+        assert suggestions[0]["suggested_partner_id"] == multiple_faculty[1].id
+
+    def test_auto_suggest_swaps_no_suggestions(
+        self,
+        db: Session,
+        faculty_preference_service: FacultyPreferenceService,
+        multiple_faculty: list[Person],
+        blocks_and_assignments: tuple[list[Block], list[Assignment]],
+    ):
+        """Test auto-suggesting swaps when no good suggestions exist."""
+        blocks, assignments = blocks_and_assignments
+
+        # Person 0 has no blocks or preferences
+        pref_0 = FacultyPreference(
+            id=uuid4(),
+            faculty_id=multiple_faculty[0].id,
+            preferred_weeks=[],
+            blocked_weeks=[],
+        )
+        db.add(pref_0)
+        db.commit()
+
+        suggestions = faculty_preference_service.auto_suggest_swaps(multiple_faculty[0].id)
+
+        # Should have no suggestions
+        assert len(suggestions) == 0
+
+    def test_auto_suggest_swaps_respects_limit(
+        self,
+        db: Session,
+        faculty_preference_service: FacultyPreferenceService,
+        multiple_faculty: list[Person],
+        blocks_and_assignments: tuple[list[Block], list[Assignment]],
+    ):
+        """Test that auto_suggest_swaps respects the limit parameter."""
+        suggestions = faculty_preference_service.auto_suggest_swaps(
+            multiple_faculty[0].id,
+            limit=2
+        )
+
+        assert len(suggestions) <= 2
+
+
+class TestLearnFromSwapHistory:
+    """Tests for learn_from_swap_history method."""
+
+    def test_learn_from_swap_history_with_data(
+        self,
+        db: Session,
+        faculty_preference_service: FacultyPreferenceService,
+        multiple_faculty: list[Person],
+    ):
+        """Test learning from swap history with actual data."""
+        # Create swap history
+        swap1 = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[0].id,
+            source_week=date(2025, 5, 5),
+            target_faculty_id=multiple_faculty[1].id,
+            target_week=date(2025, 5, 12),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.APPROVED,
+            requested_at=datetime.utcnow() - timedelta(days=30),
+        )
+        swap2 = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[0].id,
+            source_week=date(2025, 6, 2),
+            target_faculty_id=multiple_faculty[2].id,
+            target_week=date(2025, 6, 9),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.EXECUTED,
+            requested_at=datetime.utcnow() - timedelta(days=60),
+        )
+        db.add_all([swap1, swap2])
+        db.commit()
+
+        # Create approval records
+        approval1 = SwapApproval(
+            id=uuid4(),
+            swap_id=swap1.id,
+            faculty_id=multiple_faculty[0].id,
+            role="source",
+            approved=True,
+            responded_at=datetime.utcnow() - timedelta(days=30),
+        )
+        approval2 = SwapApproval(
+            id=uuid4(),
+            swap_id=swap2.id,
+            faculty_id=multiple_faculty[0].id,
+            role="source",
+            approved=True,
+            responded_at=datetime.utcnow() - timedelta(days=60),
+        )
+        db.add_all([approval1, approval2])
+        db.commit()
+
+        insights = faculty_preference_service.learn_from_swap_history(multiple_faculty[0].id)
+
+        assert "acceptance_rate" in insights
+        assert "commonly_desired_weeks" in insights
+        assert "commonly_avoided_weeks" in insights
+        assert "preferred_partners" in insights
+        assert "rejection_rate" in insights
+        assert "total_swaps" in insights
+        assert insights["total_swaps"] == 2
+        assert insights["acceptance_rate"] == 1.0  # Both approved
+
+    def test_learn_from_swap_history_no_data(
+        self,
+        db: Session,
+        faculty_preference_service: FacultyPreferenceService,
+        multiple_faculty: list[Person],
+    ):
+        """Test learning from swap history with no data."""
+        insights = faculty_preference_service.learn_from_swap_history(multiple_faculty[0].id)
+
+        assert insights["acceptance_rate"] == 0.5  # Neutral default
+        assert insights["commonly_desired_weeks"] == []
+        assert insights["commonly_avoided_weeks"] == []
+        assert insights["preferred_partners"] == []
+        assert insights["rejection_rate"] == 0.5
+        assert insights["total_swaps"] == 0
+
+    def test_learn_from_swap_history_with_rejections(
+        self,
+        db: Session,
+        faculty_preference_service: FacultyPreferenceService,
+        multiple_faculty: list[Person],
+    ):
+        """Test learning from swap history including rejections."""
+        # Create swap history
+        swap1 = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[1].id,
+            source_week=date(2025, 4, 7),
+            target_faculty_id=multiple_faculty[0].id,
+            target_week=date(2025, 4, 14),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.REJECTED,
+            requested_at=datetime.utcnow() - timedelta(days=20),
+        )
+        swap2 = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[0].id,
+            source_week=date(2025, 4, 21),
+            target_faculty_id=multiple_faculty[2].id,
+            target_week=date(2025, 4, 28),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.APPROVED,
+            requested_at=datetime.utcnow() - timedelta(days=40),
+        )
+        db.add_all([swap1, swap2])
+        db.commit()
+
+        # Create approval records (one rejected, one approved)
+        approval1 = SwapApproval(
+            id=uuid4(),
+            swap_id=swap1.id,
+            faculty_id=multiple_faculty[0].id,
+            role="target",
+            approved=False,  # Rejected
+            responded_at=datetime.utcnow() - timedelta(days=20),
+        )
+        approval2 = SwapApproval(
+            id=uuid4(),
+            swap_id=swap2.id,
+            faculty_id=multiple_faculty[0].id,
+            role="source",
+            approved=True,
+            responded_at=datetime.utcnow() - timedelta(days=40),
+        )
+        db.add_all([approval1, approval2])
+        db.commit()
+
+        insights = faculty_preference_service.learn_from_swap_history(multiple_faculty[0].id)
+
+        assert insights["total_swaps"] == 2
+        assert insights["acceptance_rate"] == 0.5  # 1 approved, 1 rejected
+        assert insights["rejection_rate"] == 0.5
+
+    def test_learn_from_swap_history_respects_lookback_period(
+        self,
+        db: Session,
+        faculty_preference_service: FacultyPreferenceService,
+        multiple_faculty: list[Person],
+    ):
+        """Test that learning respects the lookback period."""
+        # Create old swap (outside lookback period)
+        old_swap = SwapRecord(
+            id=uuid4(),
+            source_faculty_id=multiple_faculty[0].id,
+            source_week=date(2024, 1, 1),
+            target_faculty_id=multiple_faculty[1].id,
+            target_week=date(2024, 1, 8),
+            swap_type=SwapType.ONE_TO_ONE,
+            status=SwapStatus.EXECUTED,
+            requested_at=datetime.utcnow() - timedelta(days=400),  # More than 365 days ago
+        )
+        db.add(old_swap)
+        db.commit()
+
+        insights = faculty_preference_service.learn_from_swap_history(
+            multiple_faculty[0].id,
+            lookback_days=365
+        )
+
+        # Should not include the old swap
+        assert insights["total_swaps"] == 0
