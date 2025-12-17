@@ -1,7 +1,7 @@
 # Project Status Assessment
 
 **Generated:** 2025-12-17
-**Updated:** 2025-12-17 (Fourth Parallel Implementation: Route Test Coverage Expansion)
+**Updated:** 2025-12-17 (Added Academic Year Transition & MyEvaluations Integration Plans)
 **Current Branch:** `claude/evaluate-project-status-9lLWa`
 **Overall Status:** 100% Complete - Production Ready with Comprehensive Test Coverage
 
@@ -1565,6 +1565,1233 @@ Current state of feature access across interfaces:
 | Read receipts for notifications | 🟢 Low | 4h | Accountability |
 | Color-blind heatmap mode | 🟢 Low | 2h | Accessibility |
 | Import rollback button | 🟢 Low | 3h | Error recovery |
+
+---
+
+---
+
+## Future Implementation: Academic Year Transition System
+
+> **Priority:** High (operational necessity)
+> **Status:** Not Started — Design documented
+> **Effort:** 8-12 hours
+
+### Problem Statement
+
+No functionality currently exists to handle the annual academic year transition:
+- Promoting residents by PGY level (PGY-1→2, PGY-2→3)
+- Removing/archiving graduating PGY-3 residents
+- Onboarding incoming interns (new PGY-1 class)
+- Onboarding new faculty members
+- Template assignment restrictions by PGY level
+
+### Current State
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| `pgy_level` field on Person | ✅ Exists | Integer 1-3, check constraint enforced |
+| PGY-based API filtering | ✅ Exists | `?pgy_level=2` on various endpoints |
+| Supervision ratios by PGY | ✅ Exists | In ApplicationSettings |
+| **Bulk PGY promotion** | ❌ Missing | No function to increment PGY levels |
+| **Graduation workflow** | ❌ Missing | No archive/soft-delete for graduates |
+| **Intern onboarding** | ❌ Missing | No batch add for new class |
+| **Faculty onboarding** | ❌ Missing | No dedicated workflow |
+| **Template PGY requirements** | ❌ Missing | Templates accept any PGY level |
+
+### Proposed Implementation
+
+#### 1. Database Schema Changes
+
+```python
+# Add to Person model
+cohort_year = Column(Integer, nullable=True)  # e.g., 2024 for class of 2024
+start_date = Column(Date, nullable=True)       # Residency start date
+graduation_date = Column(Date, nullable=True)  # Expected/actual graduation
+is_active = Column(Boolean, default=True)      # Soft delete for graduates
+
+# Add to RotationTemplate model
+applicable_pgy_levels = Column(ARRAY(Integer), nullable=True)  # e.g., [1, 2] for PGY-1/2 only
+min_pgy_level = Column(Integer, nullable=True)                  # Minimum PGY required
+```
+
+#### 2. New Service: `year_transition_service.py`
+
+```python
+class YearTransitionService:
+    """Handles academic year transitions for residency program"""
+
+    async def promote_pgy_cohort(self, academic_year: str) -> PromotionResult:
+        """
+        Promote all residents by one PGY level.
+        - PGY-1 → PGY-2
+        - PGY-2 → PGY-3
+        - PGY-3 → Graduated (is_active=False, graduation_date set)
+        """
+
+    async def graduate_residents(self, person_ids: List[UUID]) -> GraduationResult:
+        """Archive specific residents as graduated"""
+
+    async def onboard_new_interns(self, interns: List[PersonCreate]) -> OnboardingResult:
+        """Bulk add new PGY-1 residents for incoming class"""
+
+    async def onboard_new_faculty(self, faculty: List[PersonCreate]) -> OnboardingResult:
+        """Add new faculty members with credentials setup"""
+
+    async def generate_year_end_report(self, academic_year: str) -> YearEndReport:
+        """Summary of transitions, coverage impact, audit trail"""
+
+    async def preview_transition(self, academic_year: str) -> TransitionPreview:
+        """Dry-run showing what would happen (no commits)"""
+```
+
+#### 3. New API Endpoints
+
+```
+POST /api/transitions/promote-residents
+POST /api/transitions/graduate-residents
+POST /api/transitions/onboard-interns
+POST /api/transitions/onboard-faculty
+GET  /api/transitions/preview?academic_year=2024-2025
+GET  /api/transitions/year-end-report?academic_year=2024-2025
+```
+
+#### 4. Frontend Components
+
+- Year Transition wizard (admin only)
+- Promotion preview with affected residents list
+- Graduation confirmation with archive notice
+- Intern bulk import from CSV/ERAS
+- Faculty onboarding form with credential pre-setup
+
+### Implementation Checklist
+
+- [ ] Database migration for Person model changes (cohort_year, start_date, graduation_date, is_active)
+- [ ] Database migration for RotationTemplate PGY restrictions
+- [ ] Create `YearTransitionService` with all methods
+- [ ] Create API routes with admin-only authorization
+- [ ] Create schemas for transition DTOs
+- [ ] Add comprehensive test coverage
+- [ ] Create frontend Year Transition wizard
+- [ ] Add audit logging for all transition actions
+- [ ] Documentation for coordinators
+
+---
+
+## Future Implementation: Continuity Clinic & Clinic Block Rotations
+
+> **Priority:** High (core scheduling feature)
+> **Status:** Not Started — Design documented
+> **Effort:** 12-16 hours
+
+### Problem Statement
+
+The current system treats every half-day assignment as independent. This doesn't model how residency clinics actually work:
+
+1. **Continuity Clinics** - Residents maintain a protected clinic day (e.g., Wednesday PM) even while on other rotations (ICU, wards, etc.)
+2. **Clinic Block Rotations** - When on "clinic rotation," residents have multiple half-days per week (e.g., Mon/Wed/Fri AM + Tue/Thu PM)
+3. **Session Grouping** - Related clinic sessions should be linked, not independent
+
+### Current State
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| AM/PM half-day blocks | ✅ Works | 730 blocks/year, `time_of_day` field |
+| Activity type "clinic" | ✅ Exists | Recognized in Excel import |
+| **Continuity protection** | ❌ Missing | No way to protect recurring clinic |
+| **Recurring patterns** | ❌ Missing | Each block = separate assignment |
+| **Clinic session grouping** | ❌ Missing | No link between related assignments |
+| **Clinic block rotation** | ❌ Missing | No "4 half-days/week" concept |
+
+### Real-World Scenarios Not Supported
+
+#### Scenario 1: Continuity Clinic
+```
+Dr. Smith is on ICU rotation (Jan 6-19)
+BUT she still needs her Wednesday PM Family Medicine continuity clinic
+Current: No way to express this protection
+Result: Wednesday PM gets overwritten with ICU
+```
+
+#### Scenario 2: Clinic Block Rotation
+```
+Dr. Jones is on "Clinic Block" rotation (Jan 6-19)
+This means: Mon AM, Wed AM, Fri AM clinics + Tue PM, Thu PM clinics
+Current: Must create 10 separate assignments per week manually
+No bundling, no pattern
+```
+
+#### Scenario 3: Protected Days
+```
+PGY-1 residents MUST have Thursday AM continuity clinic
+Even during night float rotation
+Current: No constraint exists to enforce this
+```
+
+### Proposed Implementation
+
+#### 1. New Model: `ClinicSession`
+
+```python
+class ClinicSession(Base):
+    """Groups recurring clinic assignments into a session/series"""
+    __tablename__ = "clinic_sessions"
+
+    id = Column(UUID, primary_key=True)
+    person_id = Column(UUID, ForeignKey("people.id"))
+    rotation_template_id = Column(UUID, ForeignKey("rotation_templates.id"))
+
+    # Recurrence pattern
+    day_of_week = Column(Integer)  # 0=Mon, 1=Tue, ..., 6=Sun
+    time_of_day = Column(String(2))  # 'AM' or 'PM'
+
+    # Date range
+    effective_start = Column(Date)
+    effective_end = Column(Date, nullable=True)  # NULL = ongoing
+
+    # Protection level
+    is_continuity = Column(Boolean, default=False)
+    protection_level = Column(String(20), default='standard')  # 'standard', 'protected', 'mandatory'
+
+    # Relationships
+    assignments = relationship("Assignment", back_populates="clinic_session")
+```
+
+#### 2. Extend `RotationTemplate`
+
+```python
+# Add to RotationTemplate model
+is_clinic_block = Column(Boolean, default=False)
+clinic_sessions_per_week = Column(Integer, nullable=True)  # e.g., 4 for clinic block
+default_clinic_pattern = Column(JSON, nullable=True)  # e.g., {"Mon": "AM", "Wed": "AM", "Fri": "PM"}
+allows_continuity_overlay = Column(Boolean, default=True)  # Can continuity clinic interrupt this rotation?
+```
+
+#### 3. Extend `Assignment`
+
+```python
+# Add to Assignment model
+clinic_session_id = Column(UUID, ForeignKey("clinic_sessions.id"), nullable=True)
+is_continuity_clinic = Column(Boolean, default=False)
+```
+
+#### 4. New Constraint: `ContinuityClinicConstraint`
+
+```python
+class ContinuityClinicConstraint(HardConstraint):
+    """Ensures continuity clinic assignments are never overwritten"""
+
+    def evaluate(self, context: SchedulingContext) -> ConstraintResult:
+        violations = []
+        for person in context.persons:
+            continuity_sessions = self._get_continuity_sessions(person)
+            for session in continuity_sessions:
+                # Check if any non-continuity assignment conflicts
+                conflicting = self._find_conflicts(person, session, context)
+                if conflicting:
+                    violations.append(ConflictViolation(
+                        person=person,
+                        session=session,
+                        conflicting_assignment=conflicting,
+                        message=f"{person.name}'s continuity clinic (Wed PM) conflicts with {conflicting.template.name}"
+                    ))
+        return ConstraintResult(violations=violations)
+```
+
+#### 5. New Service: `ClinicSchedulingService`
+
+```python
+class ClinicSchedulingService:
+    """Manages clinic session creation and assignment"""
+
+    async def create_continuity_session(
+        self,
+        person_id: UUID,
+        template_id: UUID,
+        day_of_week: int,
+        time_of_day: str,
+        start_date: date,
+        end_date: Optional[date] = None
+    ) -> ClinicSession:
+        """Create a recurring continuity clinic session"""
+
+    async def generate_clinic_block_assignments(
+        self,
+        person_id: UUID,
+        template_id: UUID,
+        start_date: date,
+        end_date: date,
+        pattern: Dict[str, str]  # {"Mon": "AM", "Wed": "AM", ...}
+    ) -> List[Assignment]:
+        """Generate all assignments for a clinic block rotation"""
+
+    async def check_continuity_conflicts(
+        self,
+        proposed_assignments: List[Assignment]
+    ) -> List[ContinuityConflict]:
+        """Check if proposed assignments conflict with continuity clinics"""
+```
+
+#### 6. API Endpoints
+
+```
+# Clinic Sessions
+POST   /api/clinic-sessions                    # Create continuity clinic
+GET    /api/clinic-sessions                    # List all sessions
+GET    /api/clinic-sessions/{id}               # Get session with assignments
+DELETE /api/clinic-sessions/{id}               # End a session
+PATCH  /api/clinic-sessions/{id}               # Modify pattern
+
+# Clinic Block Generation
+POST   /api/rotations/generate-clinic-block    # Generate clinic block assignments
+GET    /api/rotations/clinic-patterns          # Get available patterns
+
+# Conflict Checking
+POST   /api/assignments/check-continuity       # Check for continuity conflicts
+GET    /api/people/{id}/continuity-schedule    # Get person's continuity clinics
+```
+
+### UI Components
+
+1. **Continuity Clinic Setup**
+   - Wizard to set up resident continuity clinic (day, time, template)
+   - Visual weekly calendar showing protected slots
+   - Bulk setup for incoming class
+
+2. **Clinic Block Rotation Builder**
+   - Pattern selector (Mon/Wed/Fri, Tue/Thu, custom)
+   - Preview of generated assignments
+   - Conflict detection before save
+
+3. **Schedule View Enhancements**
+   - Visual indicator for continuity clinics (🏥 icon)
+   - Warning when trying to overwrite protected slot
+   - "Protected" badge on continuity assignments
+
+### Implementation Checklist
+
+- [ ] Database migration for `ClinicSession` model
+- [ ] Extend `RotationTemplate` with clinic block fields
+- [ ] Extend `Assignment` with session reference
+- [ ] Create `ContinuityClinicConstraint` hard constraint
+- [ ] Create `ClinicSchedulingService`
+- [ ] Create API routes for clinic sessions
+- [ ] Add conflict checking to assignment creation
+- [ ] Create frontend Continuity Clinic wizard
+- [ ] Create frontend Clinic Block builder
+- [ ] Add visual indicators to schedule views
+- [ ] Comprehensive test coverage
+- [ ] Migration guide for existing schedules
+
+### Example Workflow
+
+**Setting up Dr. Smith's continuity clinic:**
+```
+1. Admin creates ClinicSession:
+   - Person: Dr. Smith
+   - Template: "Family Medicine Continuity"
+   - Day: Wednesday (2)
+   - Time: PM
+   - Start: 2024-07-01 (residency start)
+   - Protection: mandatory
+
+2. System generates Assignment for every Wednesday PM:
+   - 2024-07-03 PM → FM Continuity
+   - 2024-07-10 PM → FM Continuity
+   - ... (all Wednesdays for 3 years)
+
+3. When scheduling Dr. Smith for ICU (Jan 6-19):
+   - System detects Wed Jan 8 PM is protected
+   - ICU assignment skips Wed PM
+   - Dr. Smith: ICU (except Wed PM = Continuity)
+```
+
+---
+
+## Future Enhancement: Template Management GUI Improvements
+
+> **Priority:** Medium (UX improvement)
+> **Status:** Partially Complete — Core exists, drag broken
+> **Effort:** 4-6 hours
+
+### Current Template Management Features
+
+**Location:** `frontend/src/features/templates/` (11 component files)
+
+| Feature | Status | Component |
+|---------|--------|-----------|
+| Template CRUD | ✅ Complete | `TemplateEditor.tsx` |
+| Pattern editor | ✅ Complete | `PatternEditor.tsx` |
+| **Duplicate template** | ✅ Works | `TemplateShareModal.tsx` (duplicate mode) |
+| Preview calendar | ✅ Complete | `TemplatePreview.tsx` |
+| Search/filter | ✅ Complete | `TemplateSearch.tsx` |
+| Grid/list views | ✅ Complete | `TemplateList.tsx`, `TemplateCard.tsx` |
+| Share/visibility | ✅ Complete | `TemplateShareModal.tsx` |
+| Categories | ✅ Complete | `TemplateCategories.tsx` |
+
+### Broken: Drag-and-Drop
+
+| Item | Current State | Issue |
+|------|---------------|-------|
+| Grip icon | ✅ Displays | `GripVertical` from lucide-react |
+| Drag handlers | ❌ Missing | No drag event handlers |
+| Drag library | ❌ Not installed | Need `@dnd-kit/core` or `react-beautiful-dnd` |
+| `reorderPatterns()` | ✅ Exists | Function in `hooks.ts:594-601` but never called |
+
+**Result:** Users see grip handles but cannot drag to reorder patterns.
+
+### Implementation: Add Functional Drag-and-Drop
+
+#### Option 1: dnd-kit (Recommended)
+```bash
+npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
+```
+
+```tsx
+// PatternEditor.tsx enhancement
+import { DndContext, closestCenter } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+
+function SortablePatternItem({ pattern, ...props }) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: pattern.id });
+  // ... render with drag handlers
+}
+
+function PatternEditor({ patterns, onReorder }) {
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      const oldIndex = patterns.findIndex(p => p.id === active.id);
+      const newIndex = patterns.findIndex(p => p.id === over.id);
+      onReorder(oldIndex, newIndex);  // Calls existing reorderPatterns()
+    }
+  };
+
+  return (
+    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={patterns.map(p => p.id)} strategy={verticalListSortingStrategy}>
+        {patterns.map(pattern => <SortablePatternItem key={pattern.id} pattern={pattern} />)}
+      </SortableContext>
+    </DndContext>
+  );
+}
+```
+
+### Missing Features to Add
+
+| Feature | Priority | Effort | Notes |
+|---------|----------|--------|-------|
+| **Functional drag-and-drop** | 🔴 High | 2h | Wire up dnd-kit to existing reorder function |
+| Bulk select/delete | 🟡 Medium | 2h | Multi-select checkboxes on template cards |
+| Template version history | 🟢 Low | 4h | Version field exists, need history table |
+| Usage analytics | 🟢 Low | 3h | Dashboard for `usageCount` data |
+| Drag templates to calendar | 🟢 Low | 6h | Drop template on date to apply |
+
+### Implementation Checklist
+
+- [ ] Install `@dnd-kit/core`, `@dnd-kit/sortable`
+- [ ] Wrap pattern list in `DndContext` and `SortableContext`
+- [ ] Add `useSortable` hook to pattern items
+- [ ] Wire `handleDragEnd` to existing `reorderPatterns()` function
+- [ ] Add visual feedback during drag (opacity, shadow)
+- [ ] Test keyboard accessibility for drag operations
+- [ ] Optional: Add template-to-calendar drag-and-drop
+
+---
+
+## Future Implementation: MSA Clinic Slot Booking Tracker
+
+> **Priority:** High (operational necessity)
+> **Status:** Not Started — Design documented
+> **Effort:** 6-8 hours
+
+### Problem Statement
+
+The scheduler generates **intent** (who should be where), but MSAs must manually open clinic slots in MHS Genesis/Cerner. There's no EHR integration possible, so we need a manual reconciliation layer:
+
+```
+Schedule says: Dr. Smith → Wed PM Clinic
+Reality: Slot not bookable until MSA opens it in Genesis
+Gap: No way to track what's actually opened vs. just scheduled
+```
+
+### Current State
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Schedule generation | ✅ Works | Assignments created |
+| MSA role | ✅ Exists | Role-based filtering implemented |
+| Daily Manifest | ✅ Works | Shows who's scheduled where |
+| **Slot booking status** | ❌ Missing | No "opened in EHR" tracking |
+| **MSA confirmation** | ❌ Missing | No way to mark slots as booked |
+| **Reconciliation view** | ❌ Missing | No scheduled vs. booked comparison |
+
+### Proposed Implementation
+
+#### 1. New Model: `ClinicSlotStatus`
+
+```python
+class ClinicSlotStatus(Base):
+    """Tracks whether scheduled clinic slots are actually opened in EHR"""
+    __tablename__ = "clinic_slot_statuses"
+
+    id = Column(UUID, primary_key=True)
+    assignment_id = Column(UUID, ForeignKey("assignments.id"), unique=True)
+
+    # Booking status
+    status = Column(String(20), default='pending')  # pending, opened, confirmed, cancelled
+    opened_at = Column(DateTime, nullable=True)
+    opened_by_id = Column(UUID, ForeignKey("people.id"), nullable=True)  # MSA who opened it
+
+    # EHR reference (manual entry, not integrated)
+    ehr_clinic_id = Column(String(100), nullable=True)  # Genesis clinic ID if known
+    appointment_slots_opened = Column(Integer, nullable=True)  # How many slots opened
+
+    # Notes
+    notes = Column(Text, nullable=True)  # "Opened 8 slots", "Provider requested fewer", etc.
+
+    # Audit
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, onupdate=datetime.utcnow)
+```
+
+#### 2. Extend Daily Manifest for MSAs
+
+```python
+# Add to daily_manifest.py response
+{
+    "date": "2025-01-15",
+    "locations": [
+        {
+            "clinic_location": "Main Clinic",
+            "time_slots": {
+                "AM": [
+                    {
+                        "person": {"name": "Dr. Smith", "pgy_level": 2},
+                        "activity": "PGY-2 Clinic",
+                        "slot_status": {
+                            "status": "pending",  # or "opened", "confirmed"
+                            "opened_at": null,
+                            "opened_by": null,
+                            "slots_opened": null
+                        }
+                    }
+                ]
+            },
+            "booking_summary": {
+                "total_scheduled": 6,
+                "opened": 4,
+                "pending": 2
+            }
+        }
+    ]
+}
+```
+
+#### 3. MSA Actions API
+
+```
+# Slot Status Management
+POST   /api/clinic-slots/{assignment_id}/open     # Mark slot as opened in EHR
+POST   /api/clinic-slots/{assignment_id}/confirm  # Confirm patients booked
+POST   /api/clinic-slots/{assignment_id}/cancel   # Slot won't be opened
+PATCH  /api/clinic-slots/{assignment_id}          # Update notes/slot count
+
+# Reconciliation Views
+GET    /api/clinic-slots/pending                  # All slots not yet opened
+GET    /api/clinic-slots/by-date?date=2025-01-15  # Status for specific date
+GET    /api/clinic-slots/by-msa/{msa_id}          # Slots opened by specific MSA
+GET    /api/clinic-slots/reconciliation-report    # Scheduled vs. opened summary
+```
+
+#### 4. MSA Dashboard Component
+
+```tsx
+// MSAClinicTracker.tsx
+function MSAClinicTracker() {
+  return (
+    <div>
+      {/* Filter by date, clinic, status */}
+      <DatePicker />
+      <ClinicFilter />
+      <StatusFilter options={['pending', 'opened', 'confirmed']} />
+
+      {/* Slot list with quick actions */}
+      <SlotList>
+        {slots.map(slot => (
+          <SlotCard key={slot.id}>
+            <ProviderInfo>{slot.person.name}</ProviderInfo>
+            <TimeSlot>{slot.block.date} {slot.block.time_of_day}</TimeSlot>
+            <StatusBadge status={slot.status} />
+
+            {/* Quick actions */}
+            {slot.status === 'pending' && (
+              <>
+                <Button onClick={() => markOpened(slot.id)}>
+                  ✓ Opened in Genesis
+                </Button>
+                <Input
+                  placeholder="# slots opened"
+                  type="number"
+                />
+              </>
+            )}
+
+            <NotesField value={slot.notes} />
+          </SlotCard>
+        ))}
+      </SlotList>
+
+      {/* Summary stats */}
+      <ReconciliationSummary>
+        <Stat label="Scheduled" value={12} />
+        <Stat label="Opened" value={8} color="green" />
+        <Stat label="Pending" value={4} color="yellow" />
+      </ReconciliationSummary>
+    </div>
+  );
+}
+```
+
+#### 5. Workflow
+
+```
+1. Schedule generated → Assignments created with slot_status = 'pending'
+
+2. MSA views Daily Manifest (filtered for their clinic)
+   - Sees list of providers scheduled
+   - Each shows status badge (🟡 Pending, 🟢 Opened)
+
+3. MSA opens slot in MHS Genesis (external system)
+   - Then clicks "Mark as Opened" in our system
+   - Optionally enters # of appointment slots opened
+   - Adds notes if needed ("Provider only wants 6 slots")
+
+4. Coordinator can view Reconciliation Report
+   - Shows scheduled vs. opened by clinic, date, provider
+   - Highlights any scheduled slots not yet opened
+   - Useful for ensuring clinics are actually available
+```
+
+### Why No EHR Integration
+
+| System | Integration Status | Reason |
+|--------|-------------------|--------|
+| MHS Genesis | ❌ Not possible | DoD system, no external API access |
+| Cerner | ❌ Not possible | Requires enterprise agreement, HIPAA BAA |
+| RevCycle | ❌ Not possible | Billing system, no scheduling API |
+
+**Reality:** Military/government healthcare systems don't expose APIs for external scheduling tools. Manual reconciliation is the only option.
+
+### Implementation Checklist
+
+- [ ] Database migration for `ClinicSlotStatus` model
+- [ ] Auto-create pending status when assignments created (signal/hook)
+- [ ] API routes for status management
+- [ ] Extend Daily Manifest response with slot status
+- [ ] Create MSA Clinic Tracker dashboard component
+- [ ] Create Reconciliation Report view
+- [ ] Add slot status indicators to schedule views
+- [ ] Role-based permissions (MSA can mark opened, not edit schedule)
+- [ ] Audit logging for status changes
+- [ ] Test coverage
+
+### Role Permissions
+
+| Action | MSA | Coordinator | Admin |
+|--------|-----|-------------|-------|
+| View pending slots | ✅ | ✅ | ✅ |
+| Mark as opened | ✅ | ✅ | ✅ |
+| Edit slot count/notes | ✅ | ✅ | ✅ |
+| View reconciliation report | ❌ | ✅ | ✅ |
+| Override status | ❌ | ✅ | ✅ |
+
+---
+
+## Future Implementation: Resident Elective Preference System
+
+> **Priority:** High (improves resident satisfaction & learning)
+> **Status:** Not Started — Design documented
+> **Effort:** 8-10 hours
+
+### Problem Statement
+
+Subspecialty electives have different learning value depending on the half-day:
+- **Sports Medicine AM** → See post-op patients, better hands-on learning
+- **Sports Medicine PM** → Pre-op consults, less procedural
+- **Derm AM** → Procedures day
+- **Derm PM** → Follow-ups only
+
+Residents should express preferences, coordinator approves, but required clinics must still be satisfied.
+
+### Workflow
+
+```
+1. Resident submits ranked elective preferences for upcoming block
+   - Sees available slots with learning value indicators
+   - System warns if selection violates requirements (e.g., not enough FM clinics)
+
+2. Coordinator reviews all submissions
+   - Sees conflicts (two residents want same slot)
+   - Can approve, deny, or modify
+   - Resolves conflicts by preference rank or manual decision
+
+3. Upon approval → preferences become assignments
+   - Required clinics placed first (continuity, FM minimum)
+   - Then approved electives in rank order
+```
+
+### Current State
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Faculty preference system | ✅ Exists | `FacultyPreference` model for FMIT |
+| **Resident preference** | ❌ Missing | No equivalent for residents |
+| Elective templates | ✅ Exists | Can create elective rotation templates |
+| Required clinic enforcement | ❌ Missing | No "must have X clinics/week" constraint |
+| Preference approval workflow | ❌ Missing | No submit → review → approve flow |
+
+### Proposed Implementation
+
+#### 1. New Model: `ResidentElectivePreference`
+
+```python
+class ResidentElectivePreference(Base):
+    """Resident's ranked preferences for elective slots"""
+    __tablename__ = "resident_elective_preferences"
+
+    id = Column(UUID, primary_key=True)
+    person_id = Column(UUID, ForeignKey("people.id"))
+
+    # What block/period this preference is for
+    academic_block_number = Column(Integer)  # e.g., Block 5
+    academic_year = Column(String(9))  # e.g., "2024-2025"
+
+    # Submission tracking
+    submitted_at = Column(DateTime, nullable=True)
+    status = Column(String(20), default='draft')  # draft, submitted, approved, denied
+
+    # Coordinator review
+    reviewed_by_id = Column(UUID, ForeignKey("people.id"), nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    coordinator_notes = Column(Text, nullable=True)
+
+    # Relationships
+    ranked_choices = relationship("ElectiveChoice", order_by="ElectiveChoice.rank")
+
+
+class ElectiveChoice(Base):
+    """Individual ranked choice within a preference submission"""
+    __tablename__ = "elective_choices"
+
+    id = Column(UUID, primary_key=True)
+    preference_id = Column(UUID, ForeignKey("resident_elective_preferences.id"))
+
+    # The elective slot being requested
+    rotation_template_id = Column(UUID, ForeignKey("rotation_templates.id"))
+    day_of_week = Column(Integer)  # 0=Mon, 6=Sun
+    time_of_day = Column(String(2))  # 'AM' or 'PM'
+
+    # Ranking
+    rank = Column(Integer)  # 1 = first choice, 2 = second, etc.
+
+    # Outcome
+    granted = Column(Boolean, nullable=True)  # null = pending
+    denial_reason = Column(String(255), nullable=True)
+```
+
+#### 2. Extend `RotationTemplate` for Electives
+
+```python
+# Add to RotationTemplate model
+is_elective = Column(Boolean, default=False)
+elective_category = Column(String(50), nullable=True)  # "subspecialty", "research", "admin"
+learning_value_am = Column(Integer, nullable=True)  # 1-5 rating
+learning_value_pm = Column(Integer, nullable=True)  # 1-5 rating
+max_residents_per_session = Column(Integer, nullable=True)
+```
+
+#### 3. Resident Requirements Model
+
+```python
+class ResidentRequirements(Base):
+    """Per-resident or PGY-level requirements"""
+    __tablename__ = "resident_requirements"
+
+    id = Column(UUID, primary_key=True)
+    pgy_level = Column(Integer, nullable=True)  # NULL = applies to specific person
+    person_id = Column(UUID, ForeignKey("people.id"), nullable=True)
+
+    # Clinic requirements per block
+    required_continuity_clinics_per_week = Column(Integer, default=1)
+    required_fm_clinics_per_block = Column(Integer, default=4)
+    max_elective_sessions_per_block = Column(Integer, nullable=True)
+```
+
+#### 4. API Endpoints
+
+```
+# Resident Submission
+GET    /api/elective-preferences/available-slots        # What's open
+POST   /api/elective-preferences                        # Save draft
+POST   /api/elective-preferences/{id}/submit            # Submit for review
+GET    /api/elective-preferences/my-submissions         # Resident's own
+
+# Coordinator Review
+GET    /api/elective-preferences/pending                # Awaiting review
+GET    /api/elective-preferences/conflicts              # Competing requests
+POST   /api/elective-preferences/{id}/approve           # Approve
+POST   /api/elective-preferences/{id}/deny              # Deny with reason
+POST   /api/elective-preferences/bulk-approve           # Approve all non-conflicting
+
+# Requirements Validation
+GET    /api/elective-preferences/requirements-check     # Validate before submit
+```
+
+#### 5. Resident UI: Preference Selector
+
+```tsx
+function ResidentElectiveSelector({ block }) {
+  return (
+    <div>
+      {/* Requirements reminder */}
+      <RequirementsCard>
+        <Requirement met={continuityMet}>1x Continuity Clinic/week</Requirement>
+        <Requirement met={fmClinicsMet}>4x FM Clinics this block</Requirement>
+      </RequirementsCard>
+
+      {/* Available electives with learning value */}
+      <ElectiveGrid>
+        {slots.map(slot => (
+          <ElectiveCard
+            template={slot.template.name}
+            dayTime={`${slot.day} ${slot.time}`}
+            learningValue={slot.learningValue}  // ⭐⭐⭐⭐⭐
+            spotsLeft={slot.capacity - slot.taken}
+            onAdd={() => addToRanking(slot)}
+          />
+        ))}
+      </ElectiveGrid>
+
+      {/* Drag to reorder ranked preferences */}
+      <h3>Your Ranked Preferences</h3>
+      <DraggableRankingList items={rankedChoices} onReorder={setRanking} />
+
+      {/* Validation */}
+      {!requirementsMet && (
+        <Warning>Add required FM clinics before submitting.</Warning>
+      )}
+
+      <SubmitButton disabled={!requirementsMet}>
+        Submit for Coordinator Approval
+      </SubmitButton>
+    </div>
+  );
+}
+```
+
+#### 6. Coordinator UI: Review Dashboard
+
+```tsx
+function ElectivePreferenceReview({ block }) {
+  return (
+    <div>
+      {/* Conflict panel */}
+      {conflicts.length > 0 && (
+        <ConflictPanel>
+          {conflicts.map(c => (
+            <ConflictCard>
+              <SlotInfo>{c.template} - {c.day} {c.time}</SlotInfo>
+              <CompetingResidents>
+                {c.residents.map(r => `${r.name} (Rank #${r.rank})`)}
+              </CompetingResidents>
+              <ResolveButton />
+            </ConflictCard>
+          ))}
+        </ConflictPanel>
+      )}
+
+      {/* All submissions */}
+      <SubmissionList>
+        {submissions.map(sub => (
+          <SubmissionCard>
+            <ResidentName>{sub.person.name} (PGY-{sub.pgy})</ResidentName>
+            <RankedChoices choices={sub.rankedChoices} />
+            <RequirementsBadge met={sub.requirementsMet} />
+            <ApproveButton /> <DenyButton />
+          </SubmissionCard>
+        ))}
+      </SubmissionList>
+
+      <BulkApproveButton disabled={conflicts.length > 0}>
+        Approve All Non-Conflicting
+      </BulkApproveButton>
+    </div>
+  );
+}
+```
+
+### Scheduling Logic
+
+```python
+async def generate_block_schedule(block_number: int):
+    """
+    1. Place required clinics FIRST (continuity, FM minimum)
+    2. Place approved electives in preference rank order
+    3. Fill remaining slots with defaults
+    """
+    for resident in residents:
+        # Step 1: Required clinics
+        await place_continuity_clinic(resident)
+        await place_required_fm_clinics(resident, count=4)
+
+        # Step 2: Approved electives by rank
+        for choice in resident.approved_preferences:
+            if slot_available(choice):
+                await place_elective(resident, choice)
+
+        # Step 3: Fill gaps
+        await fill_remaining_with_defaults(resident)
+```
+
+### Implementation Checklist
+
+- [ ] Database migration for preference models
+- [ ] Extend `RotationTemplate` with elective/learning value fields
+- [ ] Create `ResidentRequirements` model
+- [ ] API routes for submission and review
+- [ ] Resident preference selector UI with drag-to-rank
+- [ ] Coordinator review dashboard with conflict detection
+- [ ] Requirements validation before submission
+- [ ] Scheduling service integration
+- [ ] Email notifications (submitted, approved, denied)
+- [ ] Test coverage
+
+### Role Permissions
+
+| Action | Resident | Coordinator | Admin |
+|--------|----------|-------------|-------|
+| View available electives | ✅ | ✅ | ✅ |
+| Submit own preferences | ✅ | ❌ | ❌ |
+| View all submissions | ❌ | ✅ | ✅ |
+| Approve/deny | ❌ | ✅ | ✅ |
+| Override requirements | ❌ | ✅ | ✅ |
+
+---
+
+## Future Implementation: Resident Call Scheduling System
+
+> **Priority:** High (chief resident workflow)
+> **Status:** Needs Clarification — Partial requirements documented
+> **Effort:** TBD (depends on complexity)
+
+### What We Know
+
+| Component | Description |
+|-----------|-------------|
+| **Night Float** | Covers most nights (dedicated resident on night shift) |
+| **Call nights** | Residents take ≥1 call night/block so night float gets day off |
+| **LND Call** | Labor & Delivery coverage while other residents at academics |
+| **Goal** | Make chief resident's call scheduling job easier |
+
+### Questions Needing Clarification
+
+#### Night Float Structure
+- [ ] How long is night float rotation? (1 week? 2 weeks? 4 weeks?)
+- [ ] Is it a dedicated rotation or overlay on other rotations?
+- [ ] How many nights/week does NF work? (6? Then call covers 7th?)
+- [ ] How many NF residents at a time?
+
+#### Call Distribution
+- [ ] How many call nights per resident per block?
+- [ ] Is call tied to specific rotations? (Only when on clinic block?)
+- [ ] Post-call day off rules? (ACGME requires day off after 24hr)
+- [ ] Home call vs. in-house call?
+
+#### LND Call Specifics
+- [ ] Which residents cover LND? (PGY-1 only? All?)
+- [ ] What times? (Just during academic half-day? Full day?)
+- [ ] Separate from overnight call or same pool?
+
+#### Fairness & Constraints
+- [ ] Equal weeknight vs. weekend call distribution?
+- [ ] Holiday call rules?
+- [ ] "Golden weekends" (entire weekend off)?
+- [ ] Max consecutive call nights?
+
+### Preliminary Model Design
+
+```python
+class CallAssignment(Base):
+    """Resident call duty assignment"""
+    __tablename__ = "call_assignments"
+
+    id = Column(UUID, primary_key=True)
+    person_id = Column(UUID, ForeignKey("people.id"))
+    date = Column(Date)
+
+    # Call type
+    call_type = Column(String(30))  # 'night_float', 'overnight_call', 'lnd_call', 'backup'
+    call_pool = Column(String(30), nullable=True)  # 'floor', 'ob', 'lnd', etc.
+
+    # Timing
+    start_time = Column(Time, nullable=True)  # e.g., 17:00
+    end_time = Column(Time, nullable=True)    # e.g., 07:00 next day
+    is_24hr = Column(Boolean, default=False)
+
+    # Post-call
+    post_call_day_off = Column(Boolean, default=True)
+
+    # Who this covers for
+    covering_for_id = Column(UUID, nullable=True)  # Night float getting day off
+
+
+class CallRule(Base):
+    """Rules governing call distribution"""
+    __tablename__ = "call_rules"
+
+    id = Column(UUID, primary_key=True)
+    pgy_level = Column(Integer, nullable=True)  # NULL = all PGYs
+    rotation_template_id = Column(UUID, nullable=True)  # NULL = all rotations
+
+    # Requirements
+    min_call_nights_per_block = Column(Integer, default=1)
+    max_call_nights_per_block = Column(Integer, nullable=True)
+    max_weekend_calls_per_block = Column(Integer, nullable=True)
+    max_consecutive_call_nights = Column(Integer, default=1)
+
+    # Exemptions
+    exempt_call_types = Column(ARRAY(String), nullable=True)
+```
+
+### Potential Workflow
+
+```
+1. Night Float Rotation
+   - NF is a dedicated rotation (e.g., 2 weeks)
+   - NF works 6 nights/week
+   - 7th night = call resident covers
+
+2. Call Night Assignment
+   - Each non-NF resident takes 1+ call night per block
+   - Covers night float's day off
+   - Gets post-call day off next day
+
+3. LND Academic Coverage
+   - During Wed PM academics, LND still needs coverage
+   - Non-academic resident (on clinic/other) covers LND
+   - Separate from overnight call
+
+4. Chief Resident Dashboard
+   - View all call slots for the month/block
+   - Auto-generate based on fairness rules
+   - Manually adjust as needed
+   - Track weeknight/weekend/holiday counts
+```
+
+### Chief Resident Features
+
+| Feature | Purpose |
+|---------|---------|
+| **Call calendar** | Month view of who's on call |
+| **Auto-distribution** | Generate fair schedule based on rules |
+| **Swap workflow** | Residents request swaps, chief approves |
+| **Call counts** | Dashboard of weeknight/weekend/holiday per person |
+| **Conflict detection** | Warn if call + clinic next day |
+| **NF integration** | Auto-schedule call for NF days off |
+| **Gap detection** | Highlight uncovered nights |
+
+### Critical Edge Case: Inter-Block Post-Call
+
+**Problem:** Post-call status doesn't respect block boundaries.
+
+```
+Block 6: Resident on Night Float rotation
+         - Last night of NF = Sunday night
+         - NF rotation ends
+
+Block 7: New rotation starts Monday
+         - Resident is POST-CALL on Monday (Block 7 Day 1)
+         - But Block 7 rotation template doesn't know about Block 6
+         - Resident gets scheduled for Monday AM clinic = VIOLATION
+```
+
+**Current Gap:** Templates are block-scoped. No mechanism to carry post-call status across block transitions.
+
+**Solution Required:**
+
+```python
+class PostCallCarryover(Base):
+    """Tracks post-call status that spans block boundaries"""
+    __tablename__ = "post_call_carryovers"
+
+    id = Column(UUID, primary_key=True)
+    person_id = Column(UUID, ForeignKey("people.id"))
+
+    # The call/NF shift that caused this
+    source_call_assignment_id = Column(UUID, ForeignKey("call_assignments.id"))
+    source_block_number = Column(Integer)  # e.g., Block 6
+
+    # The day that needs protection
+    post_call_date = Column(Date)  # First day of Block 7
+    affected_block_number = Column(Integer)  # Block 7
+
+    # Status
+    protected = Column(Boolean, default=True)  # Should this day be protected?
+```
+
+**Scheduling Logic:**
+
+```python
+async def check_inter_block_post_call(person_id: UUID, date: date) -> bool:
+    """
+    Before scheduling any assignment, check if person is post-call
+    from a PREVIOUS block's night shift.
+    """
+    # Look at previous day's call assignments
+    previous_night = date - timedelta(days=1)
+
+    # Check if person was on overnight call/NF
+    was_on_call = await db.query(CallAssignment).filter(
+        CallAssignment.person_id == person_id,
+        CallAssignment.date == previous_night,
+        CallAssignment.call_type.in_(['night_float', 'overnight_call'])
+    ).first()
+
+    return was_on_call is not None
+
+
+# In assignment creation:
+if await check_inter_block_post_call(resident.id, assignment_date):
+    if assignment.time_of_day == 'AM':
+        raise ValidationError(
+            f"{resident.name} is post-call from previous block's night shift. "
+            f"Cannot schedule AM assignment on {assignment_date}."
+        )
+```
+
+**UI Warning:**
+
+```tsx
+// In schedule view, highlight inter-block post-call days
+{isInterBlockPostCall && (
+  <PostCallBadge variant="warning">
+    ⚠️ Post-call from Block {previousBlock} Night Float
+  </PostCallBadge>
+)}
+```
+
+### Implementation Checklist
+
+- [ ] Clarify all requirements (see questions above)
+- [ ] Design final `CallAssignment` and `CallRule` models
+- [ ] **Create `PostCallCarryover` model for inter-block transitions**
+- [ ] **Add inter-block post-call validation to assignment creation**
+- [ ] Create call scheduling service with auto-distribution
+- [ ] Build chief resident call dashboard
+- [ ] Add call swap request workflow
+- [ ] Integrate with ACGME compliance checking
+- [ ] Add notification system for call assignments
+- [ ] Test coverage
+
+---
+
+## Future Integration: MyEvaluations API
+
+> **Priority:** Medium (nice-to-have integration)
+> **Status:** Research Required — No public API documentation found
+> **Effort:** Unknown (depends on API availability)
+
+### What is MyEvaluations?
+
+[MyEvaluations](https://www.myevaluations.com/) is a medical education management platform used by 900+ institutions for:
+- Resident/fellow evaluations and milestones
+- Procedure logging and patient logs
+- Clinical hours tracking
+- EPA (Entrustable Professional Activities) portfolios
+- ACGME compliance reporting
+
+### Desired Integration
+
+| Feature | Direction | Use Case |
+|---------|-----------|----------|
+| **Procedure logs** | Read-only | Display resident procedure counts in scheduler |
+| **Evaluations** | Read-only | Show evaluation completion status |
+| **Schedule sync** | Write | Push assignments to MyEvaluations |
+| **Clinical hours** | Read-only | Verify ACGME compliance against our tracking |
+
+### API Research Findings
+
+**From MyEvaluations website (2025-12-17):**
+
+| Integration Type | Availability | Notes |
+|------------------|--------------|-------|
+| Schedule sync (AMION, QGenda, Momentum) | ✅ Supported | Via MySchedule module |
+| SSO (Single Sign-On) | ✅ Supported | Third-party service integration |
+| Clinical Log 3rd Party Integration | ✅ Mentioned | No technical details |
+| EHR/EMR Integration | ✅ Mentioned | "Seamlessly connect your systems" |
+| IRIS/STAR Export | ✅ Supported | Compliance reporting |
+| **Public REST API** | ❓ Unknown | Not documented publicly |
+| **Webhooks** | ❓ Unknown | Not documented publicly |
+| **Developer documentation** | ❌ Not found | Contact required |
+
+### Security & Compliance
+
+MyEvaluations advertises:
+- HIPAA and HITECH compliance
+- SOC 1 & SOC 2 compliance
+- 3072-bit SSL encryption
+- SecurityMetrics verified
+
+### Next Steps
+
+1. **Contact MyEvaluations** at Sales@MyEvaluations.com or (866) 422-0554
+   - Request API documentation
+   - Ask about read-only access for procedure logs and evaluations
+   - Inquire about schedule push capability
+   - Understand authentication requirements (OAuth, API keys, etc.)
+
+2. **If API Available:**
+   - Create `myevaluations_integration_service.py`
+   - Add credentials to environment config
+   - Implement read-only endpoints for procedure/evaluation data
+   - Add to person detail view in frontend
+
+3. **If No API:**
+   - Explore AMION/QGenda integration as intermediary
+   - Consider CSV import/export as fallback
+   - Manual data entry with MyEvaluations as source-of-truth
+
+### Potential Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    MyEvaluations Integration                 │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│   ┌──────────────┐         ┌──────────────────────────┐     │
+│   │  Our System  │ ──────▶ │  MyEvaluations API       │     │
+│   │              │         │  (if available)          │     │
+│   │  Read-only:  │ ◀────── │                          │     │
+│   │  - Procedures│         │  Permissions:            │     │
+│   │  - Evals     │         │  - Read procedures       │     │
+│   │  - Hours     │         │  - Read evaluations      │     │
+│   └──────────────┘         │  - NO write to evals     │     │
+│                            └──────────────────────────┘     │
+│                                                              │
+│   Fallback: CSV import from MyEvaluations reports            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Implementation Checklist (Pending API Confirmation)
+
+- [ ] Contact MyEvaluations for API documentation
+- [ ] Evaluate authentication requirements
+- [ ] Create `myevaluations_client.py` with read-only methods
+- [ ] Add procedure count display to resident profile
+- [ ] Add evaluation status to resident dashboard
+- [ ] Create admin settings for MyEvaluations credentials
+- [ ] Implement caching to minimize API calls
+- [ ] Add error handling for API unavailability
 
 ---
 
