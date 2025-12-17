@@ -18,8 +18,8 @@ This guide covers how to set up a development environment, contribute to the pro
 ***REMOVED******REMOVED******REMOVED*** Clone Repository
 
 ```bash
-git clone https://github.com/your-org/residency-scheduler.git
-cd residency-scheduler
+git clone https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager.git
+cd Autonomous-Assignment-Program-Manager
 ```
 
 ***REMOVED******REMOVED******REMOVED*** Backend Setup

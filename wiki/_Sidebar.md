@@ -26,5 +26,5 @@
 - [localhost:8000/docs](http://localhost:8000/docs) - API Docs
 
 **Resources**
-- [GitHub Repository](https://github.com/your-org/residency-scheduler)
-- [Issue Tracker](https://github.com/your-org/residency-scheduler/issues)
+- [GitHub Repository](https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager)
+- [Issue Tracker](https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager/issues)
