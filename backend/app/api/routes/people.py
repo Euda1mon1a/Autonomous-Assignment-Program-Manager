@@ -34,8 +34,9 @@ def list_people(
     type: str | None = Query(None, description="Filter by type: 'resident' or 'faculty'"),
     pgy_level: int | None = Query(None, description="Filter residents by PGY level"),
     db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """List all people, optionally filtered by type or PGY level."""
+    """List all people, optionally filtered by type or PGY level. Requires authentication."""
     controller = PersonController(db)
     return controller.list_people(type=type, pgy_level=pgy_level)
 
@@ -44,8 +45,9 @@ def list_people(
 def list_residents(
     pgy_level: int | None = Query(None, description="Filter by PGY level (1, 2, or 3)"),
     db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """List all residents, optionally filtered by PGY level."""
+    """List all residents, optionally filtered by PGY level. Requires authentication."""
     controller = PersonController(db)
     return controller.list_residents(pgy_level=pgy_level)
 
@@ -54,8 +56,9 @@ def list_residents(
 def list_faculty(
     specialty: str | None = Query(None, description="Filter by specialty"),
     db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """List all faculty, optionally filtered by specialty."""
+    """List all faculty, optionally filtered by specialty. Requires authentication."""
     controller = PersonController(db)
     return controller.list_faculty(specialty=specialty)
 
@@ -64,8 +67,9 @@ def list_faculty(
 def get_person(
     person_id: UUID,
     db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Get a person by ID."""
+    """Get a person by ID. Requires authentication."""
     controller = PersonController(db)
     return controller.get_person(person_id)
 
@@ -115,8 +119,9 @@ def get_person_credentials(
     status: str | None = Query(None, description="Filter by status"),
     include_expired: bool = Query(False, description="Include expired credentials"),
     db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Get all credentials for a faculty member."""
+    """Get all credentials for a faculty member. Requires authentication."""
     controller = CredentialController(db)
     return controller.list_credentials_for_person(
         person_id=person_id,
@@ -129,8 +134,9 @@ def get_person_credentials(
 def get_person_credential_summary(
     person_id: UUID,
     db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Get a summary of a faculty member's credentials."""
+    """Get a summary of a faculty member's credentials. Requires authentication."""
     controller = CredentialController(db)
     return controller.get_faculty_summary(person_id)
 
@@ -139,8 +145,9 @@ def get_person_credential_summary(
 def get_person_procedures(
     person_id: UUID,
     db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Get all procedures a faculty member is qualified to supervise."""
+    """Get all procedures a faculty member is qualified to supervise. Requires authentication."""
     service = CredentialService(db)
     result = service.list_procedures_for_faculty(person_id)
     return ProcedureListResponse(items=result["items"], total=result["total"])
