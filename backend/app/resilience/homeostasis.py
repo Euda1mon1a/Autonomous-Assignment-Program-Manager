@@ -13,11 +13,19 @@ Positive Feedback (Destabilizing):
 - Deviation from setpoint -> Amplifying action -> Greater deviation
 - Example: Bank run - fear of insolvency -> Withdrawals -> Actual insolvency
 
+Bifurcation/Phase Transition Detection:
+- High volatility often precedes sudden system state changes
+- Jitter (oscillation frequency) indicates approaching instability
+- Distance to criticality measures margin before threshold breach
+- Early warning enables proactive intervention before collapse
+
 This module implements:
 1. Negative feedback loops for coverage, workload, and quality metrics
 2. Detection of positive feedback (burnout spirals, attrition cascades)
 3. Allostatic load tracking (cumulative stress cost)
 4. Setpoint management and deviation monitoring
+5. Volatility tracking for early warning of phase transitions
+6. Distance-to-criticality metrics for bifurcation detection
 """
 
 import logging
@@ -44,6 +52,15 @@ class DeviationSeverity(str, Enum):
     MODERATE = "moderate"  # Noticeable deviation
     MAJOR = "major"        # Significant deviation
     CRITICAL = "critical"  # System stability threatened
+
+
+class VolatilityLevel(str, Enum):
+    """Level of volatility in a metric's values."""
+    STABLE = "stable"          # Low variance, predictable
+    NORMAL = "normal"          # Expected fluctuation
+    ELEVATED = "elevated"      # Higher than normal variance
+    HIGH = "high"              # Concerning instability
+    CRITICAL = "critical"      # Approaching phase transition
 
 
 class CorrectiveActionType(str, Enum):
@@ -102,6 +119,32 @@ class Setpoint:
             return deviation, DeviationSeverity.MAJOR
         else:
             return deviation, DeviationSeverity.CRITICAL
+
+
+@dataclass
+class VolatilityMetrics:
+    """
+    Volatility metrics for detecting system instability.
+
+    High volatility often precedes phase transitions (bifurcations) where
+    small parameter changes produce dramatic shifts. Monitoring volatility
+    provides early warning of approaching instability.
+    """
+    volatility: float  # Coefficient of variation (std_dev / mean)
+    jitter: float  # Oscillation frequency (direction changes / observations)
+    momentum: float  # Rate of change (slope of recent values)
+    distance_to_critical: float  # Distance to critical threshold (0-1 normalized)
+    level: VolatilityLevel  # Categorical classification
+
+    @property
+    def is_warning(self) -> bool:
+        """Whether volatility warrants attention."""
+        return self.level in (VolatilityLevel.ELEVATED, VolatilityLevel.HIGH, VolatilityLevel.CRITICAL)
+
+    @property
+    def is_critical(self) -> bool:
+        """Whether volatility indicates imminent instability."""
+        return self.level == VolatilityLevel.CRITICAL
 
 
 @dataclass
@@ -178,6 +221,174 @@ class FeedbackLoop:
         last_distance = abs(recent[-1] - target)
 
         return last_distance < first_distance
+
+    def get_volatility(self, window_size: int = 20) -> float:
+        """
+        Calculate coefficient of variation (volatility) of recent values.
+
+        Higher values indicate more instability. A stable system typically
+        has volatility < 0.1 (10% coefficient of variation).
+
+        Args:
+            window_size: Number of recent values to analyze
+
+        Returns:
+            Coefficient of variation (std_dev / mean), or 0 if insufficient data
+        """
+        if len(self.value_history) < 3:
+            return 0.0
+
+        recent_values = [v for _, v in self.value_history[-window_size:]]
+        if len(recent_values) < 3:
+            return 0.0
+
+        mean_val = statistics.mean(recent_values)
+        if mean_val == 0:
+            return 0.0
+
+        std_dev = statistics.stdev(recent_values)
+        return std_dev / abs(mean_val)
+
+    def get_jitter(self, window_size: int = 20) -> float:
+        """
+        Calculate jitter (oscillation frequency) of recent values.
+
+        Jitter measures how often values change direction. High jitter
+        indicates unstable oscillation around a value, even if the mean
+        appears stable.
+
+        Args:
+            window_size: Number of recent values to analyze
+
+        Returns:
+            Jitter as ratio of direction changes to observations (0-1)
+        """
+        if len(self.value_history) < 3:
+            return 0.0
+
+        recent_values = [v for _, v in self.value_history[-window_size:]]
+        if len(recent_values) < 3:
+            return 0.0
+
+        # Count direction changes
+        direction_changes = 0
+        for i in range(2, len(recent_values)):
+            prev_delta = recent_values[i - 1] - recent_values[i - 2]
+            curr_delta = recent_values[i] - recent_values[i - 1]
+            # Direction change if sign flips
+            if prev_delta * curr_delta < 0:
+                direction_changes += 1
+
+        return direction_changes / (len(recent_values) - 2)
+
+    def get_momentum(self, window_size: int = 10) -> float:
+        """
+        Calculate momentum (rate of change) of recent values.
+
+        Positive momentum means values are increasing, negative means decreasing.
+        Normalized by the setpoint tolerance for comparability.
+
+        Args:
+            window_size: Number of recent values to analyze
+
+        Returns:
+            Normalized rate of change (positive = increasing, negative = decreasing)
+        """
+        if len(self.value_history) < 2:
+            return 0.0
+
+        recent = self.value_history[-window_size:]
+        if len(recent) < 2:
+            return 0.0
+
+        # Simple linear regression slope
+        n = len(recent)
+        x_vals = list(range(n))
+        y_vals = [v for _, v in recent]
+
+        x_mean = sum(x_vals) / n
+        y_mean = sum(y_vals) / n
+
+        numerator = sum((x - x_mean) * (y - y_mean) for x, y in zip(x_vals, y_vals))
+        denominator = sum((x - x_mean) ** 2 for x in x_vals)
+
+        if denominator == 0:
+            return 0.0
+
+        slope = numerator / denominator
+
+        # Normalize by tolerance threshold
+        tolerance_value = self.setpoint.tolerance * self.setpoint.target_value
+        if tolerance_value > 0:
+            return slope / tolerance_value
+        return slope
+
+    def get_distance_to_criticality(self) -> float:
+        """
+        Calculate normalized distance to critical threshold.
+
+        Returns a value between 0 (at critical) and 1 (at setpoint).
+        Values near 0 indicate approaching a phase transition.
+
+        Returns:
+            Distance to criticality (0 = critical, 1 = at target)
+        """
+        if len(self.value_history) < 1:
+            return 1.0
+
+        current_value = self.value_history[-1][1]
+        target = self.setpoint.target_value
+        critical_threshold = self.setpoint.tolerance * 5 * target  # 5x tolerance = CRITICAL
+
+        deviation = abs(current_value - target)
+        if critical_threshold == 0:
+            return 1.0
+
+        # Normalize: 0 = at critical threshold, 1 = at target
+        distance = max(0.0, 1.0 - (deviation / critical_threshold))
+        return distance
+
+    def get_volatility_metrics(self) -> VolatilityMetrics:
+        """
+        Get comprehensive volatility analysis.
+
+        Combines volatility, jitter, momentum, and distance to criticality
+        into a single assessment of system stability.
+
+        Returns:
+            VolatilityMetrics with all volatility indicators
+        """
+        volatility = self.get_volatility()
+        jitter = self.get_jitter()
+        momentum = self.get_momentum()
+        distance = self.get_distance_to_criticality()
+
+        # Determine volatility level based on multiple factors
+        # Higher volatility + high jitter + low distance = more critical
+        risk_score = (
+            volatility * 2.0 +  # Variance is primary indicator
+            jitter * 1.5 +      # Oscillation amplifies risk
+            (1.0 - distance) * 1.0  # Proximity to threshold
+        )
+
+        if risk_score < 0.2:
+            level = VolatilityLevel.STABLE
+        elif risk_score < 0.5:
+            level = VolatilityLevel.NORMAL
+        elif risk_score < 1.0:
+            level = VolatilityLevel.ELEVATED
+        elif risk_score < 1.5:
+            level = VolatilityLevel.HIGH
+        else:
+            level = VolatilityLevel.CRITICAL
+
+        return VolatilityMetrics(
+            volatility=volatility,
+            jitter=jitter,
+            momentum=momentum,
+            distance_to_critical=distance,
+            level=level,
+        )
 
 
 @dataclass
@@ -306,14 +517,39 @@ class PositiveFeedbackRisk:
 
 
 @dataclass
+class VolatilityAlert:
+    """
+    Alert for high volatility in a feedback loop.
+
+    High volatility often precedes system instability (bifurcation).
+    These alerts trigger before threshold crossings to enable proactive response.
+    """
+    id: UUID
+    feedback_loop_name: str
+    detected_at: datetime
+    volatility_metrics: VolatilityMetrics
+
+    # Alert details
+    description: str
+    evidence: list[str]
+    severity: DeviationSeverity
+
+    # Recommended action
+    intervention: str
+    urgency: str  # "immediate", "soon", "monitor"
+
+
+@dataclass
 class HomeostasisStatus:
     """Overall homeostasis status for the system."""
     timestamp: datetime
     overall_state: AllostasisState
     feedback_loops_healthy: int
     feedback_loops_deviating: int
+    feedback_loops_volatile: int  # NEW: loops with high volatility
     active_corrections: int
     positive_feedback_risks: int
+    volatility_alerts: int  # NEW: count of volatility alerts
     average_allostatic_load: float
     recommendations: list[str]
 
@@ -334,6 +570,7 @@ class HomeostasisMonitor:
         self.setpoints: dict[UUID, Setpoint] = {}
         self.allostasis_metrics: dict[UUID, AllostasisMetrics] = {}
         self.positive_feedback_risks: list[PositiveFeedbackRisk] = []
+        self.volatility_alerts: list[VolatilityAlert] = []  # NEW
         self.corrective_actions: list[CorrectiveAction] = []
         self.correction_handlers: dict[CorrectiveActionType, Callable] = {}
 
@@ -679,6 +916,83 @@ class HomeostasisMonitor:
         self.positive_feedback_risks = risks
         return risks
 
+    def detect_volatility_risks(self) -> list[VolatilityAlert]:
+        """
+        Detect high volatility in feedback loops.
+
+        High volatility often precedes phase transitions (bifurcations) where
+        the system suddenly shifts to a new state. This provides early warning
+        before threshold crossings occur.
+
+        Returns:
+            List of volatility alerts for unstable loops
+        """
+        alerts = []
+
+        for loop in self.feedback_loops.values():
+            if not loop.is_active or len(loop.value_history) < 5:
+                continue
+
+            metrics = loop.get_volatility_metrics()
+
+            # Generate alert if volatility is concerning
+            if metrics.is_warning:
+                evidence = []
+
+                if metrics.volatility > 0.15:
+                    evidence.append(f"High variance: {metrics.volatility:.1%} coefficient of variation")
+                if metrics.jitter > 0.5:
+                    evidence.append(f"High oscillation: {metrics.jitter:.1%} direction changes")
+                if metrics.distance_to_critical < 0.3:
+                    evidence.append(f"Near critical threshold: {metrics.distance_to_critical:.1%} margin")
+                if abs(metrics.momentum) > 1.0:
+                    direction = "increasing" if metrics.momentum > 0 else "decreasing"
+                    evidence.append(f"Rapid {direction}: {abs(metrics.momentum):.1f}x tolerance/interval")
+
+                # Determine severity and urgency
+                if metrics.level == VolatilityLevel.CRITICAL:
+                    severity = DeviationSeverity.CRITICAL
+                    urgency = "immediate"
+                    intervention = (
+                        f"CRITICAL: {loop.setpoint.name} showing phase transition indicators. "
+                        "Freeze non-essential changes, activate contingency protocols."
+                    )
+                elif metrics.level == VolatilityLevel.HIGH:
+                    severity = DeviationSeverity.MAJOR
+                    urgency = "soon"
+                    intervention = (
+                        f"{loop.setpoint.name} unstable. Review recent changes, "
+                        "consider reverting to last stable configuration."
+                    )
+                else:  # ELEVATED
+                    severity = DeviationSeverity.MODERATE
+                    urgency = "monitor"
+                    intervention = (
+                        f"{loop.setpoint.name} showing elevated volatility. "
+                        "Increase monitoring frequency, prepare contingencies."
+                    )
+
+                alert = VolatilityAlert(
+                    id=uuid4(),
+                    feedback_loop_name=loop.name,
+                    detected_at=datetime.now(),
+                    volatility_metrics=metrics,
+                    description=f"High volatility detected in {loop.setpoint.name}",
+                    evidence=evidence,
+                    severity=severity,
+                    intervention=intervention,
+                    urgency=urgency,
+                )
+                alerts.append(alert)
+
+                logger.warning(
+                    f"Volatility alert: {loop.setpoint.name} at {metrics.level.value} "
+                    f"(volatility={metrics.volatility:.2f}, jitter={metrics.jitter:.2f})"
+                )
+
+        self.volatility_alerts = alerts
+        return alerts
+
     def check_all_loops(
         self,
         current_values: dict[str, float],
@@ -719,11 +1033,17 @@ class HomeostasisMonitor:
         # Count loop states
         healthy = 0
         deviating = 0
+        volatile = 0
         for loop in self.feedback_loops.values():
             if loop.consecutive_deviations > 0:
                 deviating += 1
             else:
                 healthy += 1
+            # Check volatility
+            if len(loop.value_history) >= 5:
+                vol_metrics = loop.get_volatility_metrics()
+                if vol_metrics.is_warning:
+                    volatile += 1
 
         # Calculate average allostatic load
         if faculty_metrics:
@@ -735,12 +1055,12 @@ class HomeostasisMonitor:
                 [m.total_allostatic_load for m in self.allostasis_metrics.values()]
             ) if self.allostasis_metrics else 0.0
 
-        # Determine overall state
+        # Determine overall state (volatility can escalate state)
         if avg_load > 80:
             overall_state = AllostasisState.ALLOSTATIC_OVERLOAD
-        elif avg_load > 50:
+        elif avg_load > 50 or volatile > len(self.feedback_loops) // 2:
             overall_state = AllostasisState.ALLOSTATIC_LOAD
-        elif deviating > healthy:
+        elif deviating > healthy or volatile > 0:
             overall_state = AllostasisState.ALLOSTASIS
         else:
             overall_state = AllostasisState.HOMEOSTASIS
@@ -760,13 +1080,22 @@ class HomeostasisMonitor:
             if risk.urgency == "immediate":
                 recommendations.append(f"URGENT: {risk.intervention}")
 
+        # Add volatility-based recommendations
+        for alert in self.volatility_alerts:
+            if alert.urgency == "immediate":
+                recommendations.append(f"VOLATILITY ALERT: {alert.intervention}")
+            elif alert.urgency == "soon" and len(recommendations) < 5:
+                recommendations.append(f"Volatility warning: {alert.feedback_loop_name} unstable")
+
         return HomeostasisStatus(
             timestamp=datetime.now(),
             overall_state=overall_state,
             feedback_loops_healthy=healthy,
             feedback_loops_deviating=deviating,
+            feedback_loops_volatile=volatile,
             active_corrections=len([a for a in self.corrective_actions if a.executed]),
             positive_feedback_risks=len(self.positive_feedback_risks),
+            volatility_alerts=len(self.volatility_alerts),
             average_allostatic_load=avg_load,
             recommendations=recommendations,
         )
