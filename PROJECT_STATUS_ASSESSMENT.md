@@ -1,8 +1,9 @@
 # Project Status Assessment
 
 **Generated:** 2025-12-17
-**Current Branch:** `claude/assess-project-status-Ia9J6`
-**Overall Status:** ~85% Complete - Ready for Integration Phase
+**Updated:** 2025-12-17 (Iron Dome, Views, Integration Planning)
+**Current Branch:** `claude/review-mtf-suggestions-2J89s`
+**Overall Status:** ~90% Backend Complete - Frontend Views & Integration Phase
 
 ---
 
@@ -207,6 +208,280 @@ d4025b2 Claude/fmit health routes m9 xx0 (#186)
 e12b343 Claude/fmit test swap repo m9 xx0 (#188)
 996e26e Claude/fmit test swap notify svc m9 xx0 (#183)
 ```
+
+---
+
+## Newly Implemented: MTF Compliance & Behavioral Analysis
+
+### Iron Dome Module (MTF Compliance)
+
+**Location:** `backend/app/resilience/mtf_compliance.py` + `backend/app/schemas/mtf_compliance.py`
+**Status:** Complete with tests
+
+"Weaponized compliance" for Military Treatment Facilities:
+
+| Component | Purpose |
+|-----------|---------|
+| **DRRS Translator** | Maps LoadSheddingLevel → C-ratings (C-1 to C-5), personnel → P-ratings |
+| **MFR Generator** | Auto-generates Memoranda for Record with SHA-256 hash for liability protection |
+| **Circuit Breaker** | Locks scheduling on N-1 failure, coverage collapse, allostatic overload. Returns HTTP 451 |
+| **RFF Drafter** | Generates Request for Forces documents from cascade predictions |
+
+### Behavioral Network Module (Shadow Org Chart)
+
+**Location:** `backend/app/resilience/behavioral_network.py` + `backend/app/schemas/behavioral_network.py`
+**Status:** Complete with tests
+
+COIN-inspired swap network analysis:
+
+| Component | Purpose |
+|-----------|---------|
+| **Swap Network Analysis** | Maps who trades with whom, burden flow direction |
+| **Role Classification** | POWER_BROKER, MARTYR, EVADER, ISOLATE, STABILIZER |
+| **Burden Equity** | Gini coefficient, weighted shift difficulty, fairness grading |
+| **Martyr Protection** | Auto-blocks burden absorption for at-risk faculty |
+
+---
+
+## Planned: Frontend Views (Prioritized by Ease → QoL Impact)
+
+### P0 - Quick Wins (API contracts below)
+
+#### 1. Daily Manifest ("Where is Everyone NOW")
+
+**Effort:** LOW (grouping query only)
+**Backend:** 85% exists - just needs `GROUP BY location`
+**Value:** CRITICAL for clinic staff
+
+```
+GET /api/assignments/daily-manifest?date=2025-01-15&time_of_day=AM
+
+Response:
+{
+  "date": "2025-01-15",
+  "locations": [
+    {
+      "clinic_location": "Main Clinic",
+      "time_slots": {
+        "AM": [
+          {
+            "person": {"id": "uuid", "name": "Dr. Smith", "pgy_level": 2},
+            "role": "primary",
+            "activity": "PGY-2 Clinic"
+          }
+        ]
+      },
+      "staffing_summary": {"total": 6, "residents": 4, "faculty": 2}
+    }
+  ]
+}
+```
+
+#### 2. Call Roster (Filtered Calendar)
+
+**Effort:** TRIVIAL (query filter only)
+**Backend:** 90% exists
+**Value:** HIGH - nurses need to know who to page
+
+```
+GET /api/assignments?activity_type=on_call&start_date=2025-01-01&end_date=2025-01-31
+
+# Existing endpoint, just needs frontend filter + color coding:
+# Red = Attending, Blue = Senior, Green = Intern
+```
+
+#### 3. My Life Dashboard (Personal Feed)
+
+**Effort:** LOW-MEDIUM
+**Backend:** 75% exists - Calendar export ready, swap integration ready
+**Value:** HIGH - user adoption depends on personal utility
+
+```
+GET /api/me/dashboard?days_ahead=30
+
+Response:
+{
+  "user": {"id": "uuid", "role": "resident"},
+  "upcoming_schedule": [
+    {
+      "date": "2025-01-16",
+      "time_of_day": "AM",
+      "activity": "ICU Rounds",
+      "location": "ICU",
+      "can_trade": true
+    }
+  ],
+  "pending_swaps": [...],
+  "absences": [...],
+  "calendar_sync_url": "webcal://...",
+  "summary": {
+    "next_assignment": "2025-01-16",
+    "workload_next_4_weeks": 40
+  }
+}
+```
+
+### P1 - Medium Effort
+
+#### 4. Block Matrix (Academic Grid)
+
+**Effort:** MEDIUM (needs AcademicBlock model)
+**Gap:** 730 daily blocks not grouped into ~13 rotation periods
+**Value:** HIGH for program coordinators
+
+```
+GET /api/matrix/academic-blocks?pgy_level=2
+
+Response:
+{
+  "columns": [
+    {"block_number": 1, "start_date": "2025-01-06", "end_date": "2025-01-19"}
+  ],
+  "rows": [
+    {"resident_id": "uuid", "name": "Dr. Alice", "pgy_level": 2}
+  ],
+  "cells": [
+    {
+      "row_index": 0, "column_index": 0,
+      "rotation": "FMIT",
+      "hours": 48,
+      "acgme_status": {"compliant": true}
+    }
+  ]
+}
+```
+
+#### 5. Role-Based Views (RN/LPN/MSA)
+
+**Effort:** MEDIUM (new roles + filtering)
+**Gap:** No clinical staff roles, no row-level filtering
+**Value:** HIGH - different staff need different info
+
+**New roles to add:** `rn`, `lpn`, `msa` (or unified `clinical_staff`)
+
+| Role | Sees | Hidden |
+|------|------|--------|
+| admin | Everything | - |
+| coordinator | Schedules, people, conflicts | User management |
+| faculty | Own schedule, swap requests | Other faculty details |
+| rn/lpn/msa | Today's manifest, call roster | Academic blocks, compliance |
+
+### P2 - Higher Effort
+
+#### 6. FMIT Timeline (Gantt-style)
+
+**Effort:** HIGH (needs individual assignment duration tracking)
+**Backend:** 50% exists - week-level tracking, fairness metrics calculated
+**Gap:** Heatmap service aggregates counts, not durations
+
+```
+GET /api/fmit_timeline/academic-year?year=2025
+
+Response:
+{
+  "timeline_data": [
+    {
+      "faculty_id": "uuid",
+      "faculty_name": "Dr. Smith",
+      "weeks_assigned": [
+        {"week_start": "2025-01-06", "week_end": "2025-01-12", "status": "completed"}
+      ],
+      "workload": {
+        "total_weeks": 4,
+        "target_weeks": 4.5,
+        "utilization_percent": 88.9,
+        "is_balanced": true
+      }
+    }
+  ],
+  "aggregate_metrics": {
+    "fairness_index": 0.92,
+    "load_distribution": {"mean": 4.33, "stdev": 0.65}
+  }
+}
+```
+
+---
+
+## Integration Recommendations
+
+### n8n (Self-Hosted Workflow Automation)
+
+**Verdict:** ADD TO STACK - It's the "Chief of Staff"
+**Effort:** 30 min to add to docker-compose
+**Value:** HIGH - handles "boring" integrations (email, webhooks, state machines)
+
+```yaml
+# docker-compose.yml addition
+n8n:
+  image: n8nio/n8n
+  ports:
+    - "5678:5678"
+  environment:
+    - N8N_BASIC_AUTH_ACTIVE=true
+    - N8N_BASIC_AUTH_USER=admin
+    - N8N_BASIC_AUTH_PASSWORD=resilience
+  volumes:
+    - n8n_data:/home/node/.n8n
+```
+
+**Use Cases:**
+
+| Workflow | Without n8n | With n8n |
+|----------|-------------|----------|
+| Email parsing | Python imaplib, MIME handling, retry logic | Drag IMAP trigger node |
+| Liability wait | Build WorkflowSuspension table, cron jobs | Drag "Wait" node, state persisted |
+| Policy changes | Edit code, test, rebuild, redeploy | Move a line in visual editor |
+| Intranet scraping | Write scrapers for SharePoint | Native HTTP/scraper nodes |
+
+**Example: Protocol Omega (Reservist Recruiting)**
+1. Reservist emails: "I can work Tuesday"
+2. n8n IMAP trigger catches email
+3. Regex extracts date
+4. POST to `/api/swaps/offer`
+
+### Slack ChatOps
+
+**Verdict:** ADD - iPhone becomes CLI
+**Effort:** LOW (n8n handles the webhook parsing)
+**Value:** MEDIUM-HIGH - "fix it from Starbucks"
+
+**Commands to implement:**
+
+| Command | Action | API Call |
+|---------|--------|----------|
+| `/scheduler sitrep` | Get current status | `GET /api/resilience/report` |
+| `/scheduler fix-it mode=greedy` | Trigger refactor | `POST /api/schedule/generate` |
+| `/scheduler approve token=abc` | Resume workflow | `POST /api/workflows/{id}/resume` |
+
+**Architecture:** Slack → n8n webhook → Parse command → Call API → Format response → Reply
+
+### Mobile Considerations
+
+**Verdict:** No native app needed - responsive web app already works
+**Frontend:** `MobileNav.tsx` exists, Tailwind responsive classes throughout
+
+**Swap Marketplace** (`SwapMarketplace.tsx`) already renders as card-based feed on mobile.
+
+**One-Tap Swap via SMS/Slack:**
+1. System texts: "Dr. Jones requests swap for Oct 12. Reply APPROVE."
+2. n8n catches reply
+3. POST `/api/swaps/{id}/approve`
+
+---
+
+## Priority Matrix (Ease × QoL)
+
+| Item | Effort | QoL Impact | Priority |
+|------|--------|------------|----------|
+| n8n to docker-compose | 30 min | HIGH | **P0** |
+| Daily Manifest endpoint | 2 hr | CRITICAL | **P0** |
+| Call Roster filter | 30 min | HIGH | **P0** |
+| My Life Dashboard | 3 hr | HIGH | **P0** |
+| Slack `/sitrep` command | 1 hr (via n8n) | MEDIUM | **P1** |
+| Role-based filtering | 4 hr | HIGH | **P1** |
+| Block Matrix | 6 hr | MEDIUM | **P2** |
+| FMIT Timeline | 8 hr | MEDIUM | **P2** |
 
 ---
 
