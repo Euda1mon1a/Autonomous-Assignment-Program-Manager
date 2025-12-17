@@ -1,0 +1,107 @@
+{
+  "name": "Slack Sitrep Command",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-sitrep",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-slack-sitrep",
+      "name": "Slack Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "slack-sitrep-webhook"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/api/resilience/report",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "http-get-sitrep",
+      "name": "Get Resilience Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse the API response and format for Slack\nconst response = $input.first().json;\n\n// Extract key metrics\nconst totalTasks = response.total_tasks || 0;\nconst completedTasks = response.completed_tasks || 0;\nconst failedTasks = response.failed_tasks || 0;\nconst activeTasks = response.active_tasks || 0;\nconst successRate = response.success_rate || 0;\nconst lastUpdate = response.last_update || new Date().toISOString();\n\n// Build Slack block kit message\nconst blocks = [\n  {\n    \"type\": \"header\",\n    \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": \":chart_with_upwards_trend: Scheduler Situation Report\",\n      \"emoji\": true\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"fields\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Total Tasks:*\\n${totalTasks}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Active Tasks:*\\n${activeTasks}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Completed:*\\n${completedTasks}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Failed:*\\n${failedTasks}`\n      }\n    ]\n  },\n  {\n    \"type\": \"section\",\n    \"fields\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Success Rate:*\\n${(successRate * 100).toFixed(1)}%`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Last Update:*\\n${new Date(lastUpdate).toLocaleString()}`\n      }\n    ]\n  },\n  {\n    \"type\": \"divider\"\n  }\n];\n\n// Add recent tasks if available\nif (response.recent_tasks && response.recent_tasks.length > 0) {\n  blocks.push({\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": \"*Recent Tasks:*\"\n    }\n  });\n  \n  response.recent_tasks.slice(0, 5).forEach(task => {\n    const statusEmoji = task.status === 'completed' ? ':white_check_mark:' : \n                       task.status === 'failed' ? ':x:' : ':hourglass:';\n    blocks.push({\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": `${statusEmoji} *${task.name}* (${task.status})\\n_${task.description || 'No description'}_`\n      }\n    });\n  });\n}\n\n// Add health status\nconst healthStatus = response.health_status || 'unknown';\nconst healthEmoji = healthStatus === 'healthy' ? ':white_check_mark:' : \n                   healthStatus === 'degraded' ? ':warning:' : ':x:';\n\nblocks.push({\n  \"type\": \"context\",\n  \"elements\": [\n    {\n      \"type\": \"mrkdwn\",\n      \"text\": `${healthEmoji} System Health: *${healthStatus.toUpperCase()}*`\n    }\n  ]\n});\n\nreturn {\n  json: {\n    response_type: \"in_channel\",\n    blocks: blocks\n  }\n};"
+      },
+      "id": "format-response",
+      "name": "Format Slack Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond to Slack",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [910, 300]
+    }
+  ],
+  "connections": {
+    "Slack Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Resilience Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Resilience Report": {
+      "main": [
+        [
+          {
+            "node": "Format Slack Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Slack Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-17T00:00:00.000Z",
+  "versionId": "1"
+}
