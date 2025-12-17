@@ -68,3 +68,7 @@ freezegun==1.5.5
 ***REMOVED*** Utilities
 python-dotenv==1.2.1
 python-decouple==3.8
+
+***REMOVED*** Visualization
+plotly>=5.18.0
+kaleido>=0.2.1
