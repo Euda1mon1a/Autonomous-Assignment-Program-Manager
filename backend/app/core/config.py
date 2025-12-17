@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str = "your-secret-key-change-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
+    WEBHOOK_SECRET: str = "your-webhook-secret-change-in-production"
+    WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS: int = 300  # 5 minutes
 
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]

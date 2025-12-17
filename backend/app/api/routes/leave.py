@@ -7,12 +7,15 @@ Provides endpoints for:
 - Bulk leave import
 - Webhook for external leave systems
 """
-from datetime import date
+import hmac
+import hashlib
+from datetime import date, datetime
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.core.security import get_current_user
 from app.db.session import get_db
 from app.models.absence import Absence
@@ -31,6 +34,74 @@ from app.schemas.leave import (
 )
 
 router = APIRouter(prefix="/leave", tags=["leave"])
+
+
+async def verify_webhook_signature(
+    request: Request,
+    x_webhook_signature: str | None = Header(None, alias="X-Webhook-Signature"),
+    x_webhook_timestamp: str | None = Header(None, alias="X-Webhook-Timestamp"),
+) -> None:
+    """
+    Verify webhook HMAC signature and timestamp to authenticate webhook requests.
+
+    Args:
+        request: FastAPI request object to read the body
+        x_webhook_signature: HMAC signature from webhook header
+        x_webhook_timestamp: Unix timestamp from webhook header
+
+    Raises:
+        HTTPException: 401 if signature is invalid or missing
+    """
+    settings = get_settings()
+
+    # Check required headers
+    if not x_webhook_signature:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing X-Webhook-Signature header",
+        )
+
+    if not x_webhook_timestamp:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing X-Webhook-Timestamp header",
+        )
+
+    # Validate timestamp to prevent replay attacks
+    try:
+        webhook_time = datetime.fromtimestamp(int(x_webhook_timestamp))
+        current_time = datetime.utcnow()
+        time_difference = abs((current_time - webhook_time).total_seconds())
+
+        if time_difference > settings.WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Webhook timestamp outside acceptable range (possible replay attack)",
+            )
+    except (ValueError, TypeError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid timestamp format: {str(e)}",
+        )
+
+    # Read the raw body for signature verification
+    body = await request.body()
+
+    # Compute expected HMAC signature
+    # Format: HMAC-SHA256(webhook_secret, timestamp + "." + body)
+    message = f"{x_webhook_timestamp}.{body.decode('utf-8')}"
+    expected_signature = hmac.new(
+        settings.WEBHOOK_SECRET.encode('utf-8'),
+        message.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+
+    # Compare signatures using constant-time comparison to prevent timing attacks
+    if not hmac.compare_digest(expected_signature, x_webhook_signature):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid webhook signature",
+        )
 
 
 @router.get("/", response_model=LeaveListResponse)
@@ -237,18 +308,19 @@ def delete_leave(
 
 
 @router.post("/webhook")
-def leave_webhook(
+async def leave_webhook(
     payload: LeaveWebhookPayload,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    _: None = Depends(verify_webhook_signature),
 ):
     """
     Webhook endpoint for external leave systems.
 
     Accepts leave change notifications and triggers conflict detection.
+    Requires valid HMAC signature in X-Webhook-Signature header and
+    timestamp in X-Webhook-Timestamp header for authentication.
     """
-    # TODO: Implement webhook authentication
-
     if payload.event_type == "created":
         # Handle new leave
         pass
