@@ -1,20 +1,20 @@
 """Assignment controller for request/response handling."""
 
 from datetime import date
-from typing import Optional
 from uuid import UUID
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.error_codes import ErrorCode, get_error_code_from_message
-from app.services.assignment_service import AssignmentService
+from app.models.user import User
 from app.schemas.assignment import (
     AssignmentCreate,
-    AssignmentUpdate,
     AssignmentResponse,
+    AssignmentUpdate,
     AssignmentWithWarnings,
 )
-from app.models.user import User
+from app.services.assignment_service import AssignmentService
 
 
 class AssignmentController:
@@ -25,10 +25,10 @@ class AssignmentController:
 
     def list_assignments(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        person_id: Optional[UUID] = None,
-        role: Optional[str] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        person_id: UUID | None = None,
+        role: str | None = None,
     ) -> dict:
         """List assignments with optional filters."""
         return self.service.list_assignments(

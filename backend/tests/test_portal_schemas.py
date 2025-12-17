@@ -1,25 +1,20 @@
 """Tests for portal Pydantic schemas."""
-import pytest
 from datetime import date, datetime, timedelta
 from uuid import uuid4
+
+import pytest
 from pydantic import ValidationError
 
 from app.schemas.portal import (
-    SwapRequestStatus,
-    FMITWeekInfo,
-    MyScheduleResponse,
-    SwapRequestSummary,
-    MySwapsResponse,
-    SwapRequestCreate,
-    SwapRequestResponse,
-    SwapRespondRequest,
-    PreferencesUpdate,
-    PreferencesResponse,
     DashboardAlert,
     DashboardStats,
-    DashboardResponse,
+    FMITWeekInfo,
     MarketplaceEntry,
     MarketplaceResponse,
+    MyScheduleResponse,
+    PreferencesUpdate,
+    SwapRequestCreate,
+    SwapRequestStatus,
 )
 
 

@@ -1,12 +1,16 @@
 """Repository for conflict alert data access."""
-from datetime import date, datetime, timedelta
-from typing import List, Optional, Tuple, Dict
+from datetime import date, timedelta
 from uuid import UUID
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, func
 
-from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus, ConflictSeverity, ConflictType
+from app.models.conflict_alert import (
+    ConflictAlert,
+    ConflictAlertStatus,
+    ConflictSeverity,
+    ConflictType,
+)
 
 
 class ConflictRepository:
@@ -30,8 +34,8 @@ class ConflictRepository:
         fmit_week: date,
         description: str,
         severity: ConflictSeverity = ConflictSeverity.WARNING,
-        leave_id: Optional[UUID] = None,
-        swap_id: Optional[UUID] = None,
+        leave_id: UUID | None = None,
+        swap_id: UUID | None = None,
     ) -> ConflictAlert:
         """Create a new conflict alert."""
         from uuid import uuid4
@@ -52,7 +56,7 @@ class ConflictRepository:
         self.db.refresh(alert)
         return alert
 
-    def get_by_id(self, alert_id: UUID) -> Optional[ConflictAlert]:
+    def get_by_id(self, alert_id: UUID) -> ConflictAlert | None:
         """Get an alert by ID."""
         return self.db.query(ConflictAlert).filter(
             ConflictAlert.id == alert_id
@@ -62,7 +66,7 @@ class ConflictRepository:
         self,
         alert_id: UUID,
         **kwargs
-    ) -> Optional[ConflictAlert]:
+    ) -> ConflictAlert | None:
         """Update an alert with arbitrary fields."""
         alert = self.get_by_id(alert_id)
         if not alert:
@@ -86,7 +90,7 @@ class ConflictRepository:
         self.db.commit()
         return True
 
-    def bulk_delete(self, alert_ids: List[UUID]) -> int:
+    def bulk_delete(self, alert_ids: list[UUID]) -> int:
         """Delete multiple alerts."""
         count = self.db.query(ConflictAlert).filter(
             ConflictAlert.id.in_(alert_ids)
@@ -102,7 +106,7 @@ class ConflictRepository:
         self,
         faculty_id: UUID,
         include_resolved: bool = False,
-    ) -> List[ConflictAlert]:
+    ) -> list[ConflictAlert]:
         """Find alerts for a faculty member."""
         query = self.db.query(ConflictAlert).filter(
             ConflictAlert.faculty_id == faculty_id
@@ -121,8 +125,8 @@ class ConflictRepository:
     def find_by_status(
         self,
         status: ConflictAlertStatus,
-        faculty_id: Optional[UUID] = None,
-    ) -> List[ConflictAlert]:
+        faculty_id: UUID | None = None,
+    ) -> list[ConflictAlert]:
         """Find alerts by status."""
         query = self.db.query(ConflictAlert).filter(
             ConflictAlert.status == status
@@ -137,7 +141,7 @@ class ConflictRepository:
         self,
         severity: ConflictSeverity,
         unresolved_only: bool = True,
-    ) -> List[ConflictAlert]:
+    ) -> list[ConflictAlert]:
         """Find alerts by severity."""
         query = self.db.query(ConflictAlert).filter(
             ConflictAlert.severity == severity
@@ -156,8 +160,8 @@ class ConflictRepository:
     def find_by_week(
         self,
         fmit_week: date,
-        faculty_id: Optional[UUID] = None,
-    ) -> List[ConflictAlert]:
+        faculty_id: UUID | None = None,
+    ) -> list[ConflictAlert]:
         """Find alerts for a specific FMIT week."""
         query = self.db.query(ConflictAlert).filter(
             ConflictAlert.fmit_week == fmit_week
@@ -168,7 +172,7 @@ class ConflictRepository:
 
         return query.all()
 
-    def find_by_leave(self, leave_id: UUID) -> List[ConflictAlert]:
+    def find_by_leave(self, leave_id: UUID) -> list[ConflictAlert]:
         """Find alerts related to a leave record."""
         return self.db.query(ConflictAlert).filter(
             ConflictAlert.leave_id == leave_id
@@ -178,7 +182,7 @@ class ConflictRepository:
         self,
         conflict_type: ConflictType,
         unresolved_only: bool = True,
-    ) -> List[ConflictAlert]:
+    ) -> list[ConflictAlert]:
         """Find alerts by conflict type."""
         query = self.db.query(ConflictAlert).filter(
             ConflictAlert.conflict_type == conflict_type
@@ -197,8 +201,8 @@ class ConflictRepository:
     def find_upcoming(
         self,
         days_ahead: int = 30,
-        faculty_id: Optional[UUID] = None,
-    ) -> List[ConflictAlert]:
+        faculty_id: UUID | None = None,
+    ) -> list[ConflictAlert]:
         """Find alerts for upcoming FMIT weeks."""
         cutoff = date.today() + timedelta(days=days_ahead)
 
@@ -220,13 +224,13 @@ class ConflictRepository:
         self,
         page: int = 1,
         page_size: int = 20,
-        faculty_id: Optional[UUID] = None,
-        status: Optional[ConflictAlertStatus] = None,
-        severity: Optional[ConflictSeverity] = None,
-        conflict_type: Optional[ConflictType] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-    ) -> Tuple[List[ConflictAlert], int]:
+        faculty_id: UUID | None = None,
+        status: ConflictAlertStatus | None = None,
+        severity: ConflictSeverity | None = None,
+        conflict_type: ConflictType | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> tuple[list[ConflictAlert], int]:
         """Find alerts with pagination and filters."""
         query = self.db.query(ConflictAlert)
 
@@ -261,7 +265,7 @@ class ConflictRepository:
         faculty_id: UUID,
         conflict_type: ConflictType,
         fmit_week: date,
-    ) -> Optional[ConflictAlert]:
+    ) -> ConflictAlert | None:
         """Check if a similar unresolved alert exists."""
         return self.db.query(ConflictAlert).filter(
             ConflictAlert.faculty_id == faculty_id,
@@ -279,8 +283,8 @@ class ConflictRepository:
 
     def count_by_status(
         self,
-        faculty_id: Optional[UUID] = None,
-    ) -> Dict[str, int]:
+        faculty_id: UUID | None = None,
+    ) -> dict[str, int]:
         """Count alerts by status."""
         query = self.db.query(
             ConflictAlert.status,
@@ -296,8 +300,8 @@ class ConflictRepository:
     def count_by_severity(
         self,
         unresolved_only: bool = True,
-        faculty_id: Optional[UUID] = None,
-    ) -> Dict[str, int]:
+        faculty_id: UUID | None = None,
+    ) -> dict[str, int]:
         """Count alerts by severity."""
         query = self.db.query(
             ConflictAlert.severity,
@@ -318,7 +322,7 @@ class ConflictRepository:
         result = query.group_by(ConflictAlert.severity).all()
         return {severity.value: count for severity, count in result}
 
-    def count_unresolved(self, faculty_id: Optional[UUID] = None) -> int:
+    def count_unresolved(self, faculty_id: UUID | None = None) -> int:
         """Count unresolved alerts."""
         query = self.db.query(ConflictAlert).filter(
             ConflictAlert.status.in_([

@@ -17,34 +17,31 @@ Algorithms:
 The engine uses a modular constraint system (constraints.py) and pluggable solvers (solvers.py)
 for flexible, maintainable scheduling.
 """
-from datetime import date, timedelta
-from typing import Optional
-from uuid import UUID
-from collections import defaultdict
-import time
 import logging
+import time
+from datetime import date, timedelta
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
-from app.models.person import Person
-from app.models.block import Block
-from app.models.assignment import Assignment
 from app.models.absence import Absence
+from app.models.assignment import Assignment
+from app.models.block import Block
+from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.schedule_run import ScheduleRun
-from app.scheduling.validator import ACGMEValidator
+from app.resilience.service import ResilienceConfig, ResilienceService
 from app.scheduling.constraints import (
     ConstraintManager,
     SchedulingContext,
 )
 from app.scheduling.solvers import (
     SolverFactory,
-    BaseSolver,
     SolverResult,
 )
-from app.resilience.service import ResilienceService, ResilienceConfig
+from app.scheduling.validator import ACGMEValidator
 
 
 class SchedulingEngine:
@@ -74,8 +71,8 @@ class SchedulingEngine:
         db: Session,
         start_date: date,
         end_date: date,
-        constraint_manager: Optional[ConstraintManager] = None,
-        resilience_config: Optional[ResilienceConfig] = None,
+        constraint_manager: ConstraintManager | None = None,
+        resilience_config: ResilienceConfig | None = None,
     ):
         self.db = db
         self.start_date = start_date
@@ -93,8 +90,8 @@ class SchedulingEngine:
 
     def generate(
         self,
-        pgy_levels: Optional[list[int]] = None,
-        rotation_template_ids: Optional[list[UUID]] = None,
+        pgy_levels: list[int] | None = None,
+        rotation_template_ids: list[UUID] | None = None,
         algorithm: str = "greedy",
         timeout_seconds: float = 60.0,
         check_resilience: bool = True,
@@ -625,7 +622,7 @@ class SchedulingEngine:
                     "partial_absence": has_partial_absence,
                 }
 
-    def _get_residents(self, pgy_levels: Optional[list[int]] = None) -> list[Person]:
+    def _get_residents(self, pgy_levels: list[int] | None = None) -> list[Person]:
         """Get residents, optionally filtered by PGY level."""
         query = self.db.query(Person).filter(Person.type == "resident")
 
@@ -639,7 +636,7 @@ class SchedulingEngine:
         return self.db.query(Person).filter(Person.type == "faculty").all()
 
     def _get_rotation_templates(
-        self, template_ids: Optional[list[UUID]] = None
+        self, template_ids: list[UUID] | None = None
     ) -> list[RotationTemplate]:
         """Get rotation templates, optionally filtered by ID."""
         query = self.db.query(RotationTemplate)
@@ -755,7 +752,7 @@ class SchedulingEngine:
         algorithm: str,
         validation,
         runtime: float,
-        solver_result: Optional[SolverResult] = None,
+        solver_result: SolverResult | None = None,
     ):
         """Update run record with generation results."""
         config = {}

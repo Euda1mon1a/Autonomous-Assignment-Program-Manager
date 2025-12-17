@@ -7,14 +7,14 @@ Controllers handle:
 - Response body formatting
 """
 
-from app.controllers.assignment_controller import AssignmentController
-from app.controllers.person_controller import PersonController
-from app.controllers.block_controller import BlockController
 from app.controllers.absence_controller import AbsenceController
+from app.controllers.assignment_controller import AssignmentController
 from app.controllers.auth_controller import AuthController
-from app.controllers.procedure_controller import ProcedureController
-from app.controllers.credential_controller import CredentialController
+from app.controllers.block_controller import BlockController
 from app.controllers.certification_controller import CertificationController
+from app.controllers.credential_controller import CredentialController
+from app.controllers.person_controller import PersonController
+from app.controllers.procedure_controller import ProcedureController
 
 __all__ = [
     "AssignmentController",

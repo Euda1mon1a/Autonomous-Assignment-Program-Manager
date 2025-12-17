@@ -1,16 +1,14 @@
 """Credential service for business logic."""
 
-from typing import Optional, List
-from uuid import UUID
 from datetime import date
+from uuid import UUID
+
 from sqlalchemy.orm import Session
 
-from app.repositories.procedure_credential import ProcedureCredentialRepository
-from app.repositories.procedure import ProcedureRepository
-from app.repositories.person import PersonRepository
 from app.models.procedure_credential import ProcedureCredential
-from app.models.procedure import Procedure
-from app.models.person import Person
+from app.repositories.person import PersonRepository
+from app.repositories.procedure import ProcedureRepository
+from app.repositories.procedure_credential import ProcedureCredentialRepository
 
 
 class CredentialService:
@@ -22,7 +20,7 @@ class CredentialService:
         self.procedure_repo = ProcedureRepository(db)
         self.person_repo = PersonRepository(db)
 
-    def get_credential(self, credential_id: UUID) -> Optional[ProcedureCredential]:
+    def get_credential(self, credential_id: UUID) -> ProcedureCredential | None:
         """Get a single credential by ID."""
         return self.credential_repo.get_by_id(credential_id)
 
@@ -30,14 +28,14 @@ class CredentialService:
         self,
         person_id: UUID,
         procedure_id: UUID,
-    ) -> Optional[ProcedureCredential]:
+    ) -> ProcedureCredential | None:
         """Get a credential for a specific person and procedure."""
         return self.credential_repo.get_by_person_and_procedure(person_id, procedure_id)
 
     def list_credentials_for_person(
         self,
         person_id: UUID,
-        status: Optional[str] = None,
+        status: str | None = None,
         include_expired: bool = False,
     ) -> dict:
         """List all credentials for a person."""
@@ -51,7 +49,7 @@ class CredentialService:
     def list_credentials_for_procedure(
         self,
         procedure_id: UUID,
-        status: Optional[str] = None,
+        status: str | None = None,
         include_expired: bool = False,
     ) -> dict:
         """List all credentials for a procedure (who can supervise it)."""
@@ -118,13 +116,13 @@ class CredentialService:
         procedure_id: UUID,
         status: str = 'active',
         competency_level: str = 'qualified',
-        issued_date: Optional[date] = None,
-        expiration_date: Optional[date] = None,
-        last_verified_date: Optional[date] = None,
-        max_concurrent_residents: Optional[int] = None,
-        max_per_week: Optional[int] = None,
-        max_per_academic_year: Optional[int] = None,
-        notes: Optional[str] = None,
+        issued_date: date | None = None,
+        expiration_date: date | None = None,
+        last_verified_date: date | None = None,
+        max_concurrent_residents: int | None = None,
+        max_per_week: int | None = None,
+        max_per_academic_year: int | None = None,
+        notes: str | None = None,
     ) -> dict:
         """
         Create a new credential for a faculty member.
@@ -201,7 +199,7 @@ class CredentialService:
         self.credential_repo.commit()
         return {"success": True, "error": None}
 
-    def suspend_credential(self, credential_id: UUID, notes: Optional[str] = None) -> dict:
+    def suspend_credential(self, credential_id: UUID, notes: str | None = None) -> dict:
         """Suspend a credential."""
         update_data = {"status": "suspended"}
         if notes:
@@ -264,7 +262,7 @@ class CredentialService:
     def bulk_create_credentials(
         self,
         person_id: UUID,
-        procedure_ids: List[UUID],
+        procedure_ids: list[UUID],
         **credential_defaults,
     ) -> dict:
         """Create credentials for multiple procedures at once."""

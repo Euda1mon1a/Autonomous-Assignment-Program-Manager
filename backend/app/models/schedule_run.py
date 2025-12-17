@@ -1,7 +1,8 @@
 """Schedule run model - audit trail for generated schedules."""
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Date, DateTime, Numeric
+
+from sqlalchemy import Column, Date, DateTime, Integer, Numeric, String
 
 from app.db.base import Base
 from app.db.types import GUID, JSONType

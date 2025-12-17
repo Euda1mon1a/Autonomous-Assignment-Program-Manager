@@ -3,7 +3,8 @@ from datetime import datetime
 from enum import Enum
 from uuid import uuid4
 
-from sqlalchemy import Column, String, DateTime, ForeignKey, Enum as SQLEnum, Text, Date
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 

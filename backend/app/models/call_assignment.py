@@ -1,7 +1,17 @@
 """Call assignment model - overnight and weekend call."""
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, Date, DateTime, ForeignKey, UniqueConstraint, CheckConstraint
+
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base

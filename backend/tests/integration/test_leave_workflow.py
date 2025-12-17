@@ -11,9 +11,10 @@ Tests the end-to-end flow of:
 7. Leave webhook - external system notification
 8. Leave provider switching - database vs external sources
 """
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
+
+import pytest
 
 from app.models.absence import Absence
 from app.models.assignment import Assignment

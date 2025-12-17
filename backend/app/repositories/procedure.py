@@ -1,11 +1,10 @@
 """Procedure repository for database operations."""
 
-from typing import Optional, List
-from uuid import UUID
+
 from sqlalchemy.orm import Session
 
-from app.repositories.base import BaseRepository
 from app.models.procedure import Procedure
+from app.repositories.base import BaseRepository
 
 
 class ProcedureRepository(BaseRepository[Procedure]):
@@ -14,7 +13,7 @@ class ProcedureRepository(BaseRepository[Procedure]):
     def __init__(self, db: Session):
         super().__init__(Procedure, db)
 
-    def get_by_name(self, name: str) -> Optional[Procedure]:
+    def get_by_name(self, name: str) -> Procedure | None:
         """Get a procedure by its name."""
         return (
             self.db.query(Procedure)
@@ -24,11 +23,11 @@ class ProcedureRepository(BaseRepository[Procedure]):
 
     def list_with_filters(
         self,
-        specialty: Optional[str] = None,
-        category: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        complexity_level: Optional[str] = None,
-    ) -> List[Procedure]:
+        specialty: str | None = None,
+        category: str | None = None,
+        is_active: bool | None = None,
+        complexity_level: str | None = None,
+    ) -> list[Procedure]:
         """List procedures with optional filters, ordered by name."""
         query = self.db.query(Procedure)
 
@@ -43,52 +42,52 @@ class ProcedureRepository(BaseRepository[Procedure]):
 
         return query.order_by(Procedure.name).all()
 
-    def list_active(self) -> List[Procedure]:
+    def list_active(self) -> list[Procedure]:
         """List all active procedures."""
         return (
             self.db.query(Procedure)
-            .filter(Procedure.is_active == True)
+            .filter(Procedure.is_active)
             .order_by(Procedure.name)
             .all()
         )
 
-    def list_by_specialty(self, specialty: str) -> List[Procedure]:
+    def list_by_specialty(self, specialty: str) -> list[Procedure]:
         """List all procedures for a given specialty."""
         return (
             self.db.query(Procedure)
             .filter(Procedure.specialty == specialty)
-            .filter(Procedure.is_active == True)
+            .filter(Procedure.is_active)
             .order_by(Procedure.name)
             .all()
         )
 
-    def list_by_category(self, category: str) -> List[Procedure]:
+    def list_by_category(self, category: str) -> list[Procedure]:
         """List all procedures in a given category."""
         return (
             self.db.query(Procedure)
             .filter(Procedure.category == category)
-            .filter(Procedure.is_active == True)
+            .filter(Procedure.is_active)
             .order_by(Procedure.name)
             .all()
         )
 
-    def get_unique_specialties(self) -> List[str]:
+    def get_unique_specialties(self) -> list[str]:
         """Get all unique specialties from procedures."""
         results = (
             self.db.query(Procedure.specialty)
             .filter(Procedure.specialty.isnot(None))
-            .filter(Procedure.is_active == True)
+            .filter(Procedure.is_active)
             .distinct()
             .all()
         )
         return [r[0] for r in results if r[0]]
 
-    def get_unique_categories(self) -> List[str]:
+    def get_unique_categories(self) -> list[str]:
         """Get all unique categories from procedures."""
         results = (
             self.db.query(Procedure.category)
             .filter(Procedure.category.isnot(None))
-            .filter(Procedure.is_active == True)
+            .filter(Procedure.is_active)
             .distinct()
             .all()
         )

@@ -1,15 +1,16 @@
 """Factory for creating leave providers."""
-from typing import Optional
 from pathlib import Path
+
 from sqlalchemy.orm import Session
+
 from app.services.leave_providers.base import LeaveProvider
-from app.services.leave_providers.database import DatabaseLeaveProvider
 from app.services.leave_providers.csv_provider import CSVLeaveProvider
+from app.services.leave_providers.database import DatabaseLeaveProvider
 
 
 class LeaveProviderFactory:
     @staticmethod
-    def create(provider_type: str, db: Optional[Session] = None, file_path: Optional[Path] = None) -> LeaveProvider:
+    def create(provider_type: str, db: Session | None = None, file_path: Path | None = None) -> LeaveProvider:
         if provider_type == "database":
             if db is None:
                 raise ValueError("Database session required for database provider")

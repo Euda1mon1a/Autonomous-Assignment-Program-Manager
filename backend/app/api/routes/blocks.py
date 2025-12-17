@@ -5,22 +5,22 @@ All business logic is in the service layer.
 """
 
 from datetime import date
-from typing import Optional
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query
 
-from app.db.session import get_db
-from app.schemas.block import BlockCreate, BlockResponse, BlockListResponse
 from app.controllers.block_controller import BlockController
+from app.db.session import get_db
+from app.schemas.block import BlockCreate, BlockListResponse, BlockResponse
 
 router = APIRouter()
 
 
 @router.get("", response_model=BlockListResponse)
 def list_blocks(
-    start_date: Optional[date] = Query(None, description="Filter blocks from this date"),
-    end_date: Optional[date] = Query(None, description="Filter blocks until this date"),
-    block_number: Optional[int] = Query(None, description="Filter by academic block number"),
+    start_date: date | None = Query(None, description="Filter blocks from this date"),
+    end_date: date | None = Query(None, description="Filter blocks until this date"),
+    block_number: int | None = Query(None, description="Filter by academic block number"),
     db=Depends(get_db),
 ):
     """List blocks, optionally filtered by date range or block number."""

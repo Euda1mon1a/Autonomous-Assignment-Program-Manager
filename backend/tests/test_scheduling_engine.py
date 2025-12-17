@@ -3,18 +3,19 @@ Tests for the Scheduling Engine.
 
 Tests the core scheduling algorithms and ACGME compliance checking.
 """
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
+
+import pytest
 from sqlalchemy.orm import Session
 
-from app.scheduling.engine import SchedulingEngine
-from app.scheduling.validator import ACGMEValidator
-from app.models.person import Person
-from app.models.block import Block
 from app.models.absence import Absence
 from app.models.assignment import Assignment
+from app.models.block import Block
+from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
+from app.scheduling.engine import SchedulingEngine
+from app.scheduling.validator import ACGMEValidator
 
 
 class TestSchedulingEngineBasics:

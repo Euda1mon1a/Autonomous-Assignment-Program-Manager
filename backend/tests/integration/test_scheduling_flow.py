@@ -8,8 +8,9 @@ Tests the end-to-end flow of:
 4. Running schedule generation
 5. Validating ACGME compliance
 """
-import pytest
 from datetime import date, timedelta
+
+import pytest
 
 
 @pytest.mark.integration

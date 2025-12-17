@@ -1,12 +1,12 @@
 """Comprehensive tests for FacultyPreferenceService."""
-import pytest
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from uuid import uuid4
 
+import pytest
 from sqlalchemy.orm import Session
 
-from app.models.person import Person
 from app.models.faculty_preference import FacultyPreference
+from app.models.person import Person
 from app.services.faculty_preference_service import FacultyPreferenceService
 
 

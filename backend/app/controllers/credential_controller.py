@@ -1,21 +1,20 @@
 """Credential controller for request/response handling."""
 
-from typing import Optional
 from uuid import UUID
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.error_codes import ErrorCode, get_error_code_from_message
-from app.services.credential_service import CredentialService
 from app.schemas.procedure_credential import (
     CredentialCreate,
-    CredentialUpdate,
-    CredentialResponse,
     CredentialListResponse,
-    CredentialWithProcedureListResponse,
-    QualifiedFacultyResponse,
+    CredentialResponse,
+    CredentialUpdate,
     FacultyCredentialSummary,
+    QualifiedFacultyResponse,
 )
+from app.services.credential_service import CredentialService
 
 
 class CredentialController:
@@ -37,7 +36,7 @@ class CredentialController:
     def list_credentials_for_person(
         self,
         person_id: UUID,
-        status_filter: Optional[str] = None,
+        status_filter: str | None = None,
         include_expired: bool = False,
     ) -> CredentialListResponse:
         """List all credentials for a person."""
@@ -51,7 +50,7 @@ class CredentialController:
     def list_credentials_for_procedure(
         self,
         procedure_id: UUID,
-        status_filter: Optional[str] = None,
+        status_filter: str | None = None,
         include_expired: bool = False,
     ) -> CredentialListResponse:
         """List all credentials for a procedure."""
@@ -150,7 +149,7 @@ class CredentialController:
     def suspend_credential(
         self,
         credential_id: UUID,
-        notes: Optional[str] = None,
+        notes: str | None = None,
     ) -> CredentialResponse:
         """Suspend a credential."""
         result = self.service.suspend_credential(credential_id, notes)

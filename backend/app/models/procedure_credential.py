@@ -1,7 +1,17 @@
 """ProcedureCredential model - tracks faculty credentials for procedures."""
 import uuid
-from datetime import datetime, date
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, Date, ForeignKey, Text, UniqueConstraint
+from datetime import date, datetime
+
+from sqlalchemy import (
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -67,13 +77,9 @@ class ProcedureCredential(Base):
         """Check if credential is currently valid."""
         if self.status != 'active':
             return False
-        if self.expiration_date and self.expiration_date < date.today():
-            return False
-        return True
+        return not (self.expiration_date and self.expiration_date < date.today())
 
     @property
     def is_expired(self) -> bool:
         """Check if credential has expired."""
-        if self.expiration_date and self.expiration_date < date.today():
-            return True
-        return False
+        return bool(self.expiration_date and self.expiration_date < date.today())

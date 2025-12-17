@@ -24,14 +24,14 @@ Example usage:
     result = quick_restore(db, backup_id)
 """
 
-from typing import Dict, Any, Optional
 from datetime import date
+from typing import Any
+
 from sqlalchemy.orm import Session
 
 from app.maintenance.backup import BackupService
 from app.maintenance.restore import RestoreService
 from app.maintenance.scheduler import BackupScheduler
-
 
 __all__ = [
     "BackupService",
@@ -77,7 +77,7 @@ def quick_restore(
     mode: str = 'replace',
     dry_run: bool = False,
     backup_dir: str = "backups"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Convenience function to quickly restore from a backup.
 
@@ -169,7 +169,7 @@ def setup_daily_backup(
     hour: int = 2,
     minute: int = 0,
     backup_dir: str = "backups"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Convenience function to set up daily automated backups.
 
@@ -201,7 +201,7 @@ def setup_weekly_backup(
     hour: int = 2,
     minute: int = 0,
     backup_dir: str = "backups"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Convenience function to set up weekly automated backups.
 

@@ -1,6 +1,5 @@
 """Service for managing faculty FMIT scheduling preferences."""
 from datetime import date, datetime
-from typing import List, Optional
 from uuid import UUID, uuid4
 
 from sqlalchemy.orm import Session
@@ -67,16 +66,16 @@ class FacultyPreferenceService:
     def update_preferences(
         self,
         faculty_id: UUID,
-        preferred_weeks: Optional[List[str]] = None,
-        blocked_weeks: Optional[List[str]] = None,
-        max_weeks_per_month: Optional[int] = None,
-        max_consecutive_weeks: Optional[int] = None,
-        min_gap_between_weeks: Optional[int] = None,
-        notify_swap_requests: Optional[bool] = None,
-        notify_schedule_changes: Optional[bool] = None,
-        notify_conflict_alerts: Optional[bool] = None,
-        notify_reminder_days: Optional[int] = None,
-        notes: Optional[str] = None,
+        preferred_weeks: list[str] | None = None,
+        blocked_weeks: list[str] | None = None,
+        max_weeks_per_month: int | None = None,
+        max_consecutive_weeks: int | None = None,
+        min_gap_between_weeks: int | None = None,
+        notify_swap_requests: bool | None = None,
+        notify_schedule_changes: bool | None = None,
+        notify_conflict_alerts: bool | None = None,
+        notify_reminder_days: int | None = None,
+        notes: str | None = None,
     ) -> FacultyPreference:
         """
         Update faculty preferences.
@@ -203,8 +202,8 @@ class FacultyPreferenceService:
     def get_faculty_with_preference_for_week(
         self,
         week_date: date,
-        exclude_faculty_ids: Optional[List[UUID]] = None,
-    ) -> List[UUID]:
+        exclude_faculty_ids: list[UUID] | None = None,
+    ) -> list[UUID]:
         """
         Find faculty who have marked a week as preferred.
 
@@ -226,8 +225,8 @@ class FacultyPreferenceService:
     def get_faculty_without_blocks_for_week(
         self,
         week_date: date,
-        exclude_faculty_ids: Optional[List[UUID]] = None,
-    ) -> List[UUID]:
+        exclude_faculty_ids: list[UUID] | None = None,
+    ) -> list[UUID]:
         """
         Find faculty who haven't blocked a week.
 

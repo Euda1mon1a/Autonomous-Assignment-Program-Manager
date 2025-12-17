@@ -1,15 +1,14 @@
 """Tests for ConflictAlert model."""
-import pytest
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
+from app.models.absence import Absence
 from app.models.conflict_alert import (
     ConflictAlert,
     ConflictAlertStatus,
     ConflictSeverity,
     ConflictType,
 )
-from app.models.absence import Absence
 from app.models.person import Person
 
 

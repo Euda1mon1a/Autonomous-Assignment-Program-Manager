@@ -1,14 +1,14 @@
 """ProcedureCredential repository for database operations."""
 
-from typing import Optional, List
-from uuid import UUID
 from datetime import date
+from uuid import UUID
+
 from sqlalchemy.orm import Session, joinedload
 
-from app.repositories.base import BaseRepository
-from app.models.procedure_credential import ProcedureCredential
-from app.models.procedure import Procedure
 from app.models.person import Person
+from app.models.procedure import Procedure
+from app.models.procedure_credential import ProcedureCredential
+from app.repositories.base import BaseRepository
 
 
 class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
@@ -21,7 +21,7 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
         self,
         person_id: UUID,
         procedure_id: UUID,
-    ) -> Optional[ProcedureCredential]:
+    ) -> ProcedureCredential | None:
         """Get a credential by person and procedure IDs."""
         return (
             self.db.query(ProcedureCredential)
@@ -35,9 +35,9 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
     def list_by_person(
         self,
         person_id: UUID,
-        status: Optional[str] = None,
+        status: str | None = None,
         include_expired: bool = False,
-    ) -> List[ProcedureCredential]:
+    ) -> list[ProcedureCredential]:
         """
         List all credentials for a person.
 
@@ -66,9 +66,9 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
     def list_by_procedure(
         self,
         procedure_id: UUID,
-        status: Optional[str] = None,
+        status: str | None = None,
         include_expired: bool = False,
-    ) -> List[ProcedureCredential]:
+    ) -> list[ProcedureCredential]:
         """
         List all credentials for a procedure (who can supervise it).
 
@@ -97,7 +97,7 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
     def list_active_credentials_for_person(
         self,
         person_id: UUID,
-    ) -> List[ProcedureCredential]:
+    ) -> list[ProcedureCredential]:
         """List all active, non-expired credentials for a person."""
         return (
             self.db.query(ProcedureCredential)
@@ -116,7 +116,7 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
     def list_qualified_faculty_for_procedure(
         self,
         procedure_id: UUID,
-    ) -> List[Person]:
+    ) -> list[Person]:
         """
         Get all faculty members qualified to supervise a specific procedure.
 
@@ -140,7 +140,7 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
     def list_procedures_for_faculty(
         self,
         person_id: UUID,
-    ) -> List[Procedure]:
+    ) -> list[Procedure]:
         """
         Get all procedures a faculty member is qualified to supervise.
 
@@ -174,7 +174,7 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
     def list_expiring_soon(
         self,
         days: int = 30,
-    ) -> List[ProcedureCredential]:
+    ) -> list[ProcedureCredential]:
         """List credentials expiring within the specified number of days."""
         target_date = date.today()
         end_date = date(

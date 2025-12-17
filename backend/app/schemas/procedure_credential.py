@@ -1,7 +1,7 @@
 """ProcedureCredential schemas."""
-from datetime import datetime, date
-from typing import Optional
+from datetime import date, datetime
 from uuid import UUID
+
 from pydantic import BaseModel, field_validator
 
 from app.schemas.procedure import ProcedureSummary
@@ -11,13 +11,13 @@ class CredentialBase(BaseModel):
     """Base credential schema."""
     status: str = 'active'
     competency_level: str = 'qualified'
-    issued_date: Optional[date] = None
-    expiration_date: Optional[date] = None
-    last_verified_date: Optional[date] = None
-    max_concurrent_residents: Optional[int] = None
-    max_per_week: Optional[int] = None
-    max_per_academic_year: Optional[int] = None
-    notes: Optional[str] = None
+    issued_date: date | None = None
+    expiration_date: date | None = None
+    last_verified_date: date | None = None
+    max_concurrent_residents: int | None = None
+    max_per_week: int | None = None
+    max_per_academic_year: int | None = None
+    notes: str | None = None
 
     @field_validator("status")
     @classmethod
@@ -44,18 +44,18 @@ class CredentialCreate(CredentialBase):
 
 class CredentialUpdate(BaseModel):
     """Schema for updating a credential."""
-    status: Optional[str] = None
-    competency_level: Optional[str] = None
-    expiration_date: Optional[date] = None
-    last_verified_date: Optional[date] = None
-    max_concurrent_residents: Optional[int] = None
-    max_per_week: Optional[int] = None
-    max_per_academic_year: Optional[int] = None
-    notes: Optional[str] = None
+    status: str | None = None
+    competency_level: str | None = None
+    expiration_date: date | None = None
+    last_verified_date: date | None = None
+    max_concurrent_residents: int | None = None
+    max_per_week: int | None = None
+    max_per_academic_year: int | None = None
+    notes: str | None = None
 
     @field_validator("status")
     @classmethod
-    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+    def validate_status(cls, v: str | None) -> str | None:
         if v is None:
             return v
         valid_statuses = ('active', 'expired', 'suspended', 'pending')
@@ -65,7 +65,7 @@ class CredentialUpdate(BaseModel):
 
     @field_validator("competency_level")
     @classmethod
-    def validate_competency(cls, v: Optional[str]) -> Optional[str]:
+    def validate_competency(cls, v: str | None) -> str | None:
         if v is None:
             return v
         valid_levels = ('trainee', 'qualified', 'expert', 'master')

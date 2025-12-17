@@ -2,7 +2,6 @@
 from dataclasses import dataclass
 from datetime import date, datetime
 from enum import Enum
-from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -27,8 +26,8 @@ class SwapNotification:
     notification_type: SwapNotificationType
     subject: str
     body: str
-    swap_id: Optional[UUID] = None
-    week: Optional[date] = None
+    swap_id: UUID | None = None
+    week: date | None = None
     created_at: datetime = None
 
     def __post_init__(self):
@@ -46,7 +45,7 @@ class SwapNotificationService:
 
     def __init__(self, db: Session):
         self.db = db
-        self._pending_notifications: List[SwapNotification] = []
+        self._pending_notifications: list[SwapNotification] = []
 
     def notify_swap_request_received(
         self,
@@ -54,8 +53,8 @@ class SwapNotificationService:
         requester_name: str,
         week_offered: date,
         swap_id: UUID,
-        reason: Optional[str] = None,
-    ) -> Optional[SwapNotification]:
+        reason: str | None = None,
+    ) -> SwapNotification | None:
         """
         Notify a faculty member that they received a swap request.
 
@@ -99,7 +98,7 @@ class SwapNotificationService:
         accepter_name: str,
         week: date,
         swap_id: UUID,
-    ) -> Optional[SwapNotification]:
+    ) -> SwapNotification | None:
         """Notify that a swap request was accepted."""
         if not self._should_notify(recipient_faculty_id, "swap_requests"):
             return None
@@ -135,8 +134,8 @@ If you have any questions, please contact the scheduling coordinator.
         rejecter_name: str,
         week: date,
         swap_id: UUID,
-        reason: Optional[str] = None,
-    ) -> Optional[SwapNotification]:
+        reason: str | None = None,
+    ) -> SwapNotification | None:
         """Notify that a swap request was rejected."""
         if not self._should_notify(recipient_faculty_id, "swap_requests"):
             return None
@@ -168,11 +167,11 @@ You can try requesting a swap with another faculty member or posting in the swap
 
     def notify_swap_executed(
         self,
-        faculty_ids: List[UUID],
+        faculty_ids: list[UUID],
         week: date,
         swap_id: UUID,
         details: str,
-    ) -> List[SwapNotification]:
+    ) -> list[SwapNotification]:
         """Notify all parties that a swap was executed."""
         notifications = []
 
@@ -209,11 +208,11 @@ Please review your updated schedule in the portal.
 
     def notify_swap_rolled_back(
         self,
-        faculty_ids: List[UUID],
+        faculty_ids: list[UUID],
         week: date,
         swap_id: UUID,
         reason: str,
-    ) -> List[SwapNotification]:
+    ) -> list[SwapNotification]:
         """Notify all parties that a swap was rolled back."""
         notifications = []
 
@@ -251,7 +250,7 @@ Your schedule has been reverted to its previous state. Please review your schedu
         poster_name: str,
         week_available: date,
         request_id: UUID,
-    ) -> Optional[SwapNotification]:
+    ) -> SwapNotification | None:
         """Notify about a potential marketplace match."""
         if not self._should_notify(recipient_faculty_id, "swap_requests"):
             return None
@@ -321,7 +320,7 @@ View the marketplace in the portal to respond.
 
         return pref_map.get(preference_key, True)
 
-    def _get_faculty_info(self, faculty_id: UUID) -> Optional[dict]:
+    def _get_faculty_info(self, faculty_id: UUID) -> dict | None:
         """Get faculty name and email."""
         from app.models.person import Person
 
@@ -342,7 +341,7 @@ View the marketplace in the portal to respond.
         self,
         requester_name: str,
         week: date,
-        reason: Optional[str] = None,
+        reason: str | None = None,
     ) -> str:
         """Build the body for a swap request notification."""
         return f"""{requester_name} would like to swap their FMIT week.

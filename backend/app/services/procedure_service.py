@@ -1,11 +1,11 @@
 """Procedure service for business logic."""
 
-from typing import Optional, List
 from uuid import UUID
+
 from sqlalchemy.orm import Session
 
-from app.repositories.procedure import ProcedureRepository
 from app.models.procedure import Procedure
+from app.repositories.procedure import ProcedureRepository
 
 
 class ProcedureService:
@@ -15,20 +15,20 @@ class ProcedureService:
         self.db = db
         self.procedure_repo = ProcedureRepository(db)
 
-    def get_procedure(self, procedure_id: UUID) -> Optional[Procedure]:
+    def get_procedure(self, procedure_id: UUID) -> Procedure | None:
         """Get a single procedure by ID."""
         return self.procedure_repo.get_by_id(procedure_id)
 
-    def get_procedure_by_name(self, name: str) -> Optional[Procedure]:
+    def get_procedure_by_name(self, name: str) -> Procedure | None:
         """Get a procedure by its name."""
         return self.procedure_repo.get_by_name(name)
 
     def list_procedures(
         self,
-        specialty: Optional[str] = None,
-        category: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        complexity_level: Optional[str] = None,
+        specialty: str | None = None,
+        category: str | None = None,
+        is_active: bool | None = None,
+        complexity_level: str | None = None,
     ) -> dict:
         """List procedures with optional filters."""
         procedures = self.procedure_repo.list_with_filters(
@@ -49,20 +49,20 @@ class ProcedureService:
         procedures = self.procedure_repo.list_by_specialty(specialty)
         return {"items": procedures, "total": len(procedures)}
 
-    def get_specialties(self) -> List[str]:
+    def get_specialties(self) -> list[str]:
         """Get all unique specialties."""
         return self.procedure_repo.get_unique_specialties()
 
-    def get_categories(self) -> List[str]:
+    def get_categories(self) -> list[str]:
         """Get all unique categories."""
         return self.procedure_repo.get_unique_categories()
 
     def create_procedure(
         self,
         name: str,
-        description: Optional[str] = None,
-        category: Optional[str] = None,
-        specialty: Optional[str] = None,
+        description: str | None = None,
+        category: str | None = None,
+        specialty: str | None = None,
         supervision_ratio: int = 1,
         requires_certification: bool = True,
         complexity_level: str = 'standard',

@@ -1,17 +1,17 @@
 """Block controller for request/response handling."""
 
 from datetime import date
-from typing import Optional
 from uuid import UUID
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.services.block_service import BlockService
 from app.schemas.block import (
     BlockCreate,
-    BlockResponse,
     BlockListResponse,
+    BlockResponse,
 )
+from app.services.block_service import BlockService
 
 
 class BlockController:
@@ -22,9 +22,9 @@ class BlockController:
 
     def list_blocks(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        block_number: Optional[int] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        block_number: int | None = None,
     ) -> BlockListResponse:
         """List blocks with optional filters."""
         result = self.service.list_blocks(

@@ -14,10 +14,10 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.models.person import Person
-from app.models.block import Block
-from app.models.assignment import Assignment
 from app.models.absence import Absence
+from app.models.assignment import Assignment
+from app.models.block import Block
+from app.models.person import Person
 
 
 class EmergencyCoverageService:

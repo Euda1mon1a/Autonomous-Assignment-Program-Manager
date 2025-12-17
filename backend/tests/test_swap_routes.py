@@ -1,7 +1,7 @@
 """Tests for swap API routes."""
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
+
 from fastapi.testclient import TestClient
 
 

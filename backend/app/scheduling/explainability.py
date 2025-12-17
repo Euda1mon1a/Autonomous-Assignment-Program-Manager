@@ -10,21 +10,20 @@ Generates transparent explanations for scheduling decisions, enabling:
 import hashlib
 import json
 from datetime import datetime
-from typing import Optional, Any
 from uuid import UUID
 
-from app.models.person import Person
 from app.models.block import Block
+from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
-from app.scheduling.constraints import SchedulingContext, ConstraintManager
+from app.scheduling.constraints import ConstraintManager, SchedulingContext
 from app.schemas.explainability import (
-    DecisionExplanation,
-    DecisionInputs,
-    ConstraintEvaluation,
-    ConstraintType,
-    ConstraintStatus,
     AlternativeCandidate,
     ConfidenceLevel,
+    ConstraintEvaluation,
+    ConstraintStatus,
+    ConstraintType,
+    DecisionExplanation,
+    DecisionInputs,
 )
 
 
@@ -50,9 +49,9 @@ class ExplainabilityService:
     def __init__(
         self,
         context: SchedulingContext,
-        constraint_manager: Optional[ConstraintManager] = None,
+        constraint_manager: ConstraintManager | None = None,
         algorithm: str = "unknown",
-        random_seed: Optional[int] = None,
+        random_seed: int | None = None,
     ):
         self.context = context
         self.constraint_manager = constraint_manager
@@ -70,11 +69,11 @@ class ExplainabilityService:
         self,
         selected_person: Person,
         block: Block,
-        template: Optional[RotationTemplate],
+        template: RotationTemplate | None,
         all_candidates: list[Person],
         candidate_scores: dict[UUID, float],
         assignment_counts: dict[UUID, int],
-        score_breakdown: Optional[dict[str, float]] = None,
+        score_breakdown: dict[str, float] | None = None,
     ) -> DecisionExplanation:
         """
         Generate a complete explanation for an assignment decision.
@@ -171,7 +170,7 @@ class ExplainabilityService:
     def _build_inputs(
         self,
         block: Block,
-        template: Optional[RotationTemplate],
+        template: RotationTemplate | None,
         all_candidates: list[Person],
     ) -> DecisionInputs:
         """Build the inputs section of the explanation."""
@@ -196,7 +195,7 @@ class ExplainabilityService:
         self,
         person: Person,
         block: Block,
-        template: Optional[RotationTemplate],
+        template: RotationTemplate | None,
     ) -> list[ConstraintEvaluation]:
         """Evaluate all constraints for a potential assignment."""
         evaluations = []
@@ -278,7 +277,7 @@ class ExplainabilityService:
         self,
         selected: Person,
         block: Block,
-        template: Optional[RotationTemplate],
+        template: RotationTemplate | None,
         all_candidates: list[Person],
         candidate_scores: dict[UUID, float],
         assignment_counts: dict[UUID, int],
@@ -394,7 +393,7 @@ class ExplainabilityService:
         self,
         selected: Person,
         block: Block,
-        template: Optional[RotationTemplate],
+        template: RotationTemplate | None,
         alternatives: list[AlternativeCandidate],
         assignment_counts: dict[UUID, int],
         constraints: list[ConstraintEvaluation],
@@ -436,7 +435,7 @@ class ExplainabilityService:
 def compute_audit_hash(
     person_id: UUID,
     block_id: UUID,
-    template_id: Optional[UUID],
+    template_id: UUID | None,
     score: float,
     algorithm: str,
     timestamp: datetime,

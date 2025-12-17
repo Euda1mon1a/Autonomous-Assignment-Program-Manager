@@ -1,7 +1,17 @@
 """Assignment model - the actual schedule."""
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Text, ForeignKey, UniqueConstraint, CheckConstraint, Float
+
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base

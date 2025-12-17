@@ -1,12 +1,12 @@
 """Absence repository for database operations."""
 
 from datetime import date
-from typing import Optional, List
 from uuid import UUID
+
 from sqlalchemy.orm import Session, joinedload
 
-from app.repositories.base import BaseRepository
 from app.models.absence import Absence
+from app.repositories.base import BaseRepository
 
 
 class AbsenceRepository(BaseRepository[Absence]):
@@ -15,7 +15,7 @@ class AbsenceRepository(BaseRepository[Absence]):
     def __init__(self, db: Session):
         super().__init__(Absence, db)
 
-    def get_by_id_with_person(self, id: UUID) -> Optional[Absence]:
+    def get_by_id_with_person(self, id: UUID) -> Absence | None:
         """Get absence with related person loaded."""
         return (
             self.db.query(Absence)
@@ -26,11 +26,11 @@ class AbsenceRepository(BaseRepository[Absence]):
 
     def list_with_filters(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        person_id: Optional[UUID] = None,
-        absence_type: Optional[str] = None,
-    ) -> List[Absence]:
+        start_date: date | None = None,
+        end_date: date | None = None,
+        person_id: UUID | None = None,
+        absence_type: str | None = None,
+    ) -> list[Absence]:
         """List absences with optional filters and eager loading."""
         query = self.db.query(Absence).options(joinedload(Absence.person))
 
@@ -45,7 +45,7 @@ class AbsenceRepository(BaseRepository[Absence]):
 
         return query.order_by(Absence.start_date).all()
 
-    def get_person_ids_absent_on_date(self, on_date: date) -> List[UUID]:
+    def get_person_ids_absent_on_date(self, on_date: date) -> list[UUID]:
         """Get all person IDs who have an absence on a specific date."""
         results = (
             self.db.query(Absence.person_id)
@@ -59,7 +59,7 @@ class AbsenceRepository(BaseRepository[Absence]):
 
     def get_by_person_and_date_range(
         self, person_id: UUID, start_date: date, end_date: date
-    ) -> List[Absence]:
+    ) -> list[Absence]:
         """Get absences for a person that overlap with a date range."""
         return (
             self.db.query(Absence)

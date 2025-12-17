@@ -1,11 +1,10 @@
 """User repository for database operations."""
 
-from typing import Optional, List
-from uuid import UUID
+
 from sqlalchemy.orm import Session
 
-from app.repositories.base import BaseRepository
 from app.models.user import User
+from app.repositories.base import BaseRepository
 
 
 class UserRepository(BaseRepository[User]):
@@ -14,7 +13,7 @@ class UserRepository(BaseRepository[User]):
     def __init__(self, db: Session):
         super().__init__(User, db)
 
-    def get_by_username(self, username: str) -> Optional[User]:
+    def get_by_username(self, username: str) -> User | None:
         """Get a user by username."""
         return (
             self.db.query(User)
@@ -22,7 +21,7 @@ class UserRepository(BaseRepository[User]):
             .first()
         )
 
-    def get_by_email(self, email: str) -> Optional[User]:
+    def get_by_email(self, email: str) -> User | None:
         """Get a user by email."""
         return (
             self.db.query(User)
@@ -30,11 +29,11 @@ class UserRepository(BaseRepository[User]):
             .first()
         )
 
-    def list_ordered_by_username(self) -> List[User]:
+    def list_ordered_by_username(self) -> list[User]:
         """List all users ordered by username."""
         return self.db.query(User).order_by(User.username).all()
 
-    def get_admins(self) -> List[User]:
+    def get_admins(self) -> list[User]:
         """Get all admin users."""
         return (
             self.db.query(User)

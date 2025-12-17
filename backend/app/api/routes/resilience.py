@@ -16,61 +16,60 @@ Tier 2 (Strategic) endpoints:
 - Equilibrium analysis (Le Chatelier)
 - Stress and compensation tracking
 """
-from datetime import datetime, date, timedelta
-from typing import Optional
+from datetime import date, datetime, timedelta
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import desc
 
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import desc
+from sqlalchemy.orm import Session
+
+from app.core.security import get_current_active_user
 from app.db.session import get_db
-from app.models.user import User
 from app.models.resilience import (
-    ResilienceHealthCheck,
+    FallbackActivation,
     ResilienceEvent,
     ResilienceEventType,
+    ResilienceHealthCheck,
     SacrificeDecision,
-    FallbackActivation,
     VulnerabilityRecord,
 )
+from app.models.user import User
 from app.schemas.resilience import (
-    HealthCheckRequest,
-    HealthCheckResponse,
+    CentralityScore,
+    ComprehensiveReportResponse,
     CrisisActivationRequest,
     CrisisDeactivationRequest,
     CrisisResponse,
+    CrisisSeverity,
+    DefenseLevel,
+    EventHistoryItem,
+    EventHistoryResponse,
     FallbackActivationRequest,
-    FallbackDeactivationRequest,
-    FallbackListResponse,
     FallbackActivationResponse,
+    FallbackDeactivationRequest,
     FallbackInfo,
+    FallbackListResponse,
+    FallbackScenario,
+    HealthCheckHistoryItem,
+    HealthCheckHistoryResponse,
+    HealthCheckResponse,
+    LoadSheddingLevel,
     LoadSheddingRequest,
     LoadSheddingStatus,
-    VulnerabilityReportResponse,
-    ComprehensiveReportResponse,
-    CentralityScore,
-    HealthCheckHistoryResponse,
-    HealthCheckHistoryItem,
-    EventHistoryResponse,
-    EventHistoryItem,
-    UtilizationMetrics,
-    RedundancyStatus,
     OverallStatus,
+    RedundancyStatus,
     UtilizationLevel,
-    DefenseLevel,
-    LoadSheddingLevel,
-    FallbackScenario,
-    CrisisSeverity,
+    UtilizationMetrics,
+    VulnerabilityReportResponse,
 )
-from app.core.security import get_current_active_user
 
 router = APIRouter()
 
 
 def get_resilience_service(db: Session):
     """Get or create ResilienceService instance."""
-    from app.resilience.service import ResilienceService
     from app.core.config import get_resilience_config
+    from app.resilience.service import ResilienceService
 
     config = get_resilience_config()
     return ResilienceService(db=db, config=config)
@@ -132,8 +131,8 @@ def persist_event(
 
 @router.get("/health", response_model=HealthCheckResponse)
 async def get_system_health(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
     include_contingency: bool = False,
     persist: bool = True,
     db: Session = Depends(get_db),
@@ -153,9 +152,9 @@ async def get_system_health(
     Set `include_contingency=true` for full N-1/N-2 analysis (slower).
     Set `persist=false` to skip saving to database.
     """
-    from app.models.person import Person
-    from app.models.block import Block
     from app.models.assignment import Assignment
+    from app.models.block import Block
+    from app.models.person import Person
 
     service = get_resilience_service(db)
 
@@ -552,8 +551,8 @@ async def set_load_shedding_level(
 
 @router.get("/vulnerability", response_model=VulnerabilityReportResponse)
 async def get_vulnerability_report(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
     db: Session = Depends(get_db),
 ):
     """
@@ -562,9 +561,9 @@ async def get_vulnerability_report(
     This is computationally intensive for large datasets.
     Use for periodic assessment, not real-time monitoring.
     """
-    from app.models.person import Person
-    from app.models.block import Block
     from app.models.assignment import Assignment
+    from app.models.block import Block
+    from app.models.person import Person
 
     service = get_resilience_service(db)
 
@@ -660,8 +659,8 @@ async def get_vulnerability_report(
 
 @router.get("/report", response_model=ComprehensiveReportResponse)
 async def get_comprehensive_report(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
     db: Session = Depends(get_db),
 ):
     """
@@ -670,9 +669,9 @@ async def get_comprehensive_report(
     Combines all component reports into a single document
     suitable for leadership review or audit.
     """
-    from app.models.person import Person
-    from app.models.block import Block
     from app.models.assignment import Assignment
+    from app.models.block import Block
+    from app.models.person import Person
 
     service = get_resilience_service(db)
 
@@ -709,7 +708,7 @@ async def get_comprehensive_report(
 async def get_health_check_history(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    status: Optional[OverallStatus] = None,
+    status: OverallStatus | None = None,
     db: Session = Depends(get_db),
 ):
     """
@@ -757,7 +756,7 @@ async def get_health_check_history(
 async def get_event_history(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    event_type: Optional[str] = None,
+    event_type: str | None = None,
     db: Session = Depends(get_db),
 ):
     """
@@ -840,12 +839,16 @@ async def get_homeostasis_status(
     Returns status of all feedback loops and detected positive feedback risks.
     """
     from app.schemas.resilience import (
-        HomeostasisStatusResponse,
-        FeedbackLoopStatus,
-        SetpointInfo,
-        PositiveFeedbackRiskInfo,
         AllostasisState as SchemaAllostasisState,
+    )
+    from app.schemas.resilience import (
         DeviationSeverity as SchemaDeviationSeverity,
+    )
+    from app.schemas.resilience import (
+        FeedbackLoopStatus,
+        HomeostasisStatusResponse,
+        PositiveFeedbackRiskInfo,
+        SetpointInfo,
     )
 
     service = get_resilience_service(db)
@@ -960,7 +963,8 @@ async def calculate_allostatic_load(
     - coverage_gap_responses: int
     - cross_coverage_events: int
     """
-    from app.schemas.resilience import AllostasisMetricsResponse, AllostasisState as SchemaState
+    from app.schemas.resilience import AllostasisMetricsResponse
+    from app.schemas.resilience import AllostasisState as SchemaState
 
     service = get_resilience_service(db)
     metrics = service.calculate_allostatic_load(entity_id, entity_type, stress_factors)
@@ -997,10 +1001,16 @@ async def list_zones(
     List all scheduling zones and their current status.
     """
     from app.schemas.resilience import (
-        ZoneResponse,
-        ZoneType as SchemaZoneType,
-        ZoneStatus as SchemaZoneStatus,
         ContainmentLevel as SchemaContainment,
+    )
+    from app.schemas.resilience import (
+        ZoneResponse,
+    )
+    from app.schemas.resilience import (
+        ZoneStatus as SchemaZoneStatus,
+    )
+    from app.schemas.resilience import (
+        ZoneType as SchemaZoneType,
     )
 
     service = get_resilience_service(db)
@@ -1037,10 +1047,18 @@ async def get_blast_radius_report(
     """
     from app.schemas.resilience import (
         BlastRadiusReportResponse,
-        ZoneHealthReport as SchemaZoneHealth,
-        ZoneType as SchemaZoneType,
-        ZoneStatus as SchemaZoneStatus,
+    )
+    from app.schemas.resilience import (
         ContainmentLevel as SchemaContainment,
+    )
+    from app.schemas.resilience import (
+        ZoneHealthReport as SchemaZoneHealth,
+    )
+    from app.schemas.resilience import (
+        ZoneStatus as SchemaZoneStatus,
+    )
+    from app.schemas.resilience import (
+        ZoneType as SchemaZoneType,
     )
 
     service = get_resilience_service(db)
@@ -1101,8 +1119,9 @@ async def create_zone(
     """
     Create a new scheduling zone. Requires authentication.
     """
-    from app.schemas.resilience import ZoneResponse, ZoneType as SchemaZoneType, ZoneStatus, ContainmentLevel
     from app.resilience.blast_radius import ZoneType
+    from app.schemas.resilience import ContainmentLevel, ZoneResponse, ZoneStatus
+    from app.schemas.resilience import ZoneType as SchemaZoneType
 
     type_map = {
         "inpatient": ZoneType.INPATIENT,
@@ -1260,12 +1279,20 @@ async def get_equilibrium_report(
     Shows current stresses, compensations, and sustainability analysis.
     """
     from app.schemas.resilience import (
+        CompensationResponse as SchemaCompResponse,
+    )
+    from app.schemas.resilience import (
+        CompensationType as SchemaCompType,
+    )
+    from app.schemas.resilience import (
         EquilibriumReportResponse,
         StressResponse,
-        CompensationResponse as SchemaCompResponse,
+    )
+    from app.schemas.resilience import (
         EquilibriumState as SchemaEquilState,
+    )
+    from app.schemas.resilience import (
         StressType as SchemaStressType,
-        CompensationType as SchemaCompType,
     )
 
     service = get_resilience_service(db)
@@ -1337,8 +1364,9 @@ async def apply_stress(
     stress_type must be: "faculty_loss", "demand_surge", "quality_pressure",
     "time_compression", "resource_scarcity", or "external_pressure"
     """
-    from app.schemas.resilience import StressResponse, StressType as SchemaStressType
     from app.resilience.le_chatelier import StressType
+    from app.schemas.resilience import StressResponse
+    from app.schemas.resilience import StressType as SchemaStressType
 
     type_map = {
         "faculty_loss": StressType.FACULTY_LOSS,
@@ -1412,8 +1440,9 @@ async def initiate_compensation(
     compensation_type must be: "overtime", "cross_coverage", "deferred_leave",
     "service_reduction", "efficiency_gain", "backup_activation", or "quality_trade"
     """
-    from app.schemas.resilience import CompensationResponse as SchemaCompResponse, CompensationType as SchemaCompType
     from app.resilience.le_chatelier import CompensationType
+    from app.schemas.resilience import CompensationResponse as SchemaCompResponse
+    from app.schemas.resilience import CompensationType as SchemaCompType
 
     type_map = {
         "overtime": CompensationType.OVERTIME,
@@ -1469,8 +1498,9 @@ async def predict_stress_response(
 
     Use this for planning before actually applying stress.
     """
-    from app.schemas.resilience import StressPredictionResponse, StressType as SchemaStressType
     from app.resilience.le_chatelier import StressType
+    from app.schemas.resilience import StressPredictionResponse
+    from app.schemas.resilience import StressType as SchemaStressType
 
     type_map = {
         "faculty_loss": StressType.FACULTY_LOSS,
@@ -1523,7 +1553,8 @@ async def calculate_equilibrium_shift(
     Per Le Chatelier's principle, compensation is always partial
     and the new equilibrium will be different from the old one.
     """
-    from app.schemas.resilience import EquilibriumShiftResponse, EquilibriumState as SchemaEquilState
+    from app.schemas.resilience import EquilibriumShiftResponse
+    from app.schemas.resilience import EquilibriumState as SchemaEquilState
 
     service = get_resilience_service(db)
     shift = service.calculate_equilibrium_shift(original_capacity, original_demand)
@@ -1566,10 +1597,16 @@ async def get_tier2_status(
     Returns summary of homeostasis, blast radius, and equilibrium status.
     """
     from app.schemas.resilience import (
-        Tier2StatusResponse,
         AllostasisState as SchemaAllostasisState,
+    )
+    from app.schemas.resilience import (
         ContainmentLevel as SchemaContainment,
+    )
+    from app.schemas.resilience import (
         EquilibriumState as SchemaEquilState,
+    )
+    from app.schemas.resilience import (
+        Tier2StatusResponse,
     )
 
     service = get_resilience_service(db)
@@ -1673,8 +1710,8 @@ async def create_decision(
     complexity: str,
     description: str,
     options: list[str],
-    recommended_option: Optional[str] = None,
-    safe_default: Optional[str] = None,
+    recommended_option: str | None = None,
+    safe_default: str | None = None,
     is_urgent: bool = False,
     db: Session = Depends(get_db),
 ):
@@ -1739,7 +1776,7 @@ async def resolve_decision(
     decision_id: UUID,
     session_id: UUID,
     chosen_option: str,
-    actual_time_seconds: Optional[float] = None,
+    actual_time_seconds: float | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -1834,9 +1871,9 @@ async def analyze_schedule_cognitive_load(
 async def record_preference(
     faculty_id: UUID,
     trail_type: str,
-    slot_type: Optional[str] = None,
-    slot_id: Optional[UUID] = None,
-    target_faculty_id: Optional[UUID] = None,
+    slot_type: str | None = None,
+    slot_id: UUID | None = None,
+    target_faculty_id: UUID | None = None,
     strength: float = 0.5,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -1882,9 +1919,9 @@ async def record_preference(
 async def record_behavioral_signal(
     faculty_id: UUID,
     signal_type: str,
-    slot_type: Optional[str] = None,
-    slot_id: Optional[UUID] = None,
-    target_faculty_id: Optional[UUID] = None,
+    slot_type: str | None = None,
+    slot_id: UUID | None = None,
+    target_faculty_id: UUID | None = None,
     db: Session = Depends(get_db),
 ):
     """
@@ -1922,8 +1959,8 @@ async def record_behavioral_signal(
 
 @router.get("/tier3/stigmergy/collective")
 async def get_collective_preference(
-    slot_type: Optional[str] = None,
-    slot_id: Optional[UUID] = None,
+    slot_type: str | None = None,
+    slot_id: UUID | None = None,
     db: Session = Depends(get_db),
 ):
     """Get aggregated preference for a slot or slot type."""
@@ -1949,7 +1986,7 @@ async def get_collective_preference(
 @router.get("/tier3/stigmergy/faculty/{faculty_id}/preferences")
 async def get_faculty_preferences(
     faculty_id: UUID,
-    trail_type: Optional[str] = None,
+    trail_type: str | None = None,
     min_strength: float = 0.1,
     db: Session = Depends(get_db),
 ):
@@ -2089,8 +2126,8 @@ async def evaporate_trails(
 
 @router.post("/tier3/hubs/analyze")
 async def analyze_hubs(
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
     db: Session = Depends(get_db),
 ):
     """
@@ -2098,9 +2135,9 @@ async def analyze_hubs(
 
     Identifies critical "hub" faculty whose loss would cause disproportionate disruption.
     """
-    from app.models.person import Person
     from app.models.assignment import Assignment
     from app.models.block import Block
+    from app.models.person import Person
 
     service = get_resilience_service(db)
 

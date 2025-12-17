@@ -1,12 +1,13 @@
 """Settings API routes with database persistence."""
 import logging
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException
+
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.settings import ApplicationSettings
-from app.schemas.settings import SettingsBase, SettingsUpdate, SettingsResponse
+from app.schemas.settings import SettingsBase, SettingsResponse, SettingsUpdate
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

@@ -1,9 +1,8 @@
 """Tests for FMIT swap models."""
-import pytest
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
-from app.models.swap import SwapRecord, SwapApproval, SwapStatus, SwapType
+from app.models.swap import SwapApproval, SwapRecord, SwapStatus, SwapType
 
 
 class TestSwapStatus:
