@@ -1998,6 +1998,215 @@ function PatternEditor({ patterns, onReorder }) {
 
 ---
 
+## Future Implementation: MSA Clinic Slot Booking Tracker
+
+> **Priority:** High (operational necessity)
+> **Status:** Not Started — Design documented
+> **Effort:** 6-8 hours
+
+### Problem Statement
+
+The scheduler generates **intent** (who should be where), but MSAs must manually open clinic slots in MHS Genesis/Cerner. There's no EHR integration possible, so we need a manual reconciliation layer:
+
+```
+Schedule says: Dr. Smith → Wed PM Clinic
+Reality: Slot not bookable until MSA opens it in Genesis
+Gap: No way to track what's actually opened vs. just scheduled
+```
+
+### Current State
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Schedule generation | ✅ Works | Assignments created |
+| MSA role | ✅ Exists | Role-based filtering implemented |
+| Daily Manifest | ✅ Works | Shows who's scheduled where |
+| **Slot booking status** | ❌ Missing | No "opened in EHR" tracking |
+| **MSA confirmation** | ❌ Missing | No way to mark slots as booked |
+| **Reconciliation view** | ❌ Missing | No scheduled vs. booked comparison |
+
+### Proposed Implementation
+
+#### 1. New Model: `ClinicSlotStatus`
+
+```python
+class ClinicSlotStatus(Base):
+    """Tracks whether scheduled clinic slots are actually opened in EHR"""
+    __tablename__ = "clinic_slot_statuses"
+
+    id = Column(UUID, primary_key=True)
+    assignment_id = Column(UUID, ForeignKey("assignments.id"), unique=True)
+
+    # Booking status
+    status = Column(String(20), default='pending')  # pending, opened, confirmed, cancelled
+    opened_at = Column(DateTime, nullable=True)
+    opened_by_id = Column(UUID, ForeignKey("people.id"), nullable=True)  # MSA who opened it
+
+    # EHR reference (manual entry, not integrated)
+    ehr_clinic_id = Column(String(100), nullable=True)  # Genesis clinic ID if known
+    appointment_slots_opened = Column(Integer, nullable=True)  # How many slots opened
+
+    # Notes
+    notes = Column(Text, nullable=True)  # "Opened 8 slots", "Provider requested fewer", etc.
+
+    # Audit
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, onupdate=datetime.utcnow)
+```
+
+#### 2. Extend Daily Manifest for MSAs
+
+```python
+# Add to daily_manifest.py response
+{
+    "date": "2025-01-15",
+    "locations": [
+        {
+            "clinic_location": "Main Clinic",
+            "time_slots": {
+                "AM": [
+                    {
+                        "person": {"name": "Dr. Smith", "pgy_level": 2},
+                        "activity": "PGY-2 Clinic",
+                        "slot_status": {
+                            "status": "pending",  # or "opened", "confirmed"
+                            "opened_at": null,
+                            "opened_by": null,
+                            "slots_opened": null
+                        }
+                    }
+                ]
+            },
+            "booking_summary": {
+                "total_scheduled": 6,
+                "opened": 4,
+                "pending": 2
+            }
+        }
+    ]
+}
+```
+
+#### 3. MSA Actions API
+
+```
+# Slot Status Management
+POST   /api/clinic-slots/{assignment_id}/open     # Mark slot as opened in EHR
+POST   /api/clinic-slots/{assignment_id}/confirm  # Confirm patients booked
+POST   /api/clinic-slots/{assignment_id}/cancel   # Slot won't be opened
+PATCH  /api/clinic-slots/{assignment_id}          # Update notes/slot count
+
+# Reconciliation Views
+GET    /api/clinic-slots/pending                  # All slots not yet opened
+GET    /api/clinic-slots/by-date?date=2025-01-15  # Status for specific date
+GET    /api/clinic-slots/by-msa/{msa_id}          # Slots opened by specific MSA
+GET    /api/clinic-slots/reconciliation-report    # Scheduled vs. opened summary
+```
+
+#### 4. MSA Dashboard Component
+
+```tsx
+// MSAClinicTracker.tsx
+function MSAClinicTracker() {
+  return (
+    <div>
+      {/* Filter by date, clinic, status */}
+      <DatePicker />
+      <ClinicFilter />
+      <StatusFilter options={['pending', 'opened', 'confirmed']} />
+
+      {/* Slot list with quick actions */}
+      <SlotList>
+        {slots.map(slot => (
+          <SlotCard key={slot.id}>
+            <ProviderInfo>{slot.person.name}</ProviderInfo>
+            <TimeSlot>{slot.block.date} {slot.block.time_of_day}</TimeSlot>
+            <StatusBadge status={slot.status} />
+
+            {/* Quick actions */}
+            {slot.status === 'pending' && (
+              <>
+                <Button onClick={() => markOpened(slot.id)}>
+                  ✓ Opened in Genesis
+                </Button>
+                <Input
+                  placeholder="# slots opened"
+                  type="number"
+                />
+              </>
+            )}
+
+            <NotesField value={slot.notes} />
+          </SlotCard>
+        ))}
+      </SlotList>
+
+      {/* Summary stats */}
+      <ReconciliationSummary>
+        <Stat label="Scheduled" value={12} />
+        <Stat label="Opened" value={8} color="green" />
+        <Stat label="Pending" value={4} color="yellow" />
+      </ReconciliationSummary>
+    </div>
+  );
+}
+```
+
+#### 5. Workflow
+
+```
+1. Schedule generated → Assignments created with slot_status = 'pending'
+
+2. MSA views Daily Manifest (filtered for their clinic)
+   - Sees list of providers scheduled
+   - Each shows status badge (🟡 Pending, 🟢 Opened)
+
+3. MSA opens slot in MHS Genesis (external system)
+   - Then clicks "Mark as Opened" in our system
+   - Optionally enters # of appointment slots opened
+   - Adds notes if needed ("Provider only wants 6 slots")
+
+4. Coordinator can view Reconciliation Report
+   - Shows scheduled vs. opened by clinic, date, provider
+   - Highlights any scheduled slots not yet opened
+   - Useful for ensuring clinics are actually available
+```
+
+### Why No EHR Integration
+
+| System | Integration Status | Reason |
+|--------|-------------------|--------|
+| MHS Genesis | ❌ Not possible | DoD system, no external API access |
+| Cerner | ❌ Not possible | Requires enterprise agreement, HIPAA BAA |
+| RevCycle | ❌ Not possible | Billing system, no scheduling API |
+
+**Reality:** Military/government healthcare systems don't expose APIs for external scheduling tools. Manual reconciliation is the only option.
+
+### Implementation Checklist
+
+- [ ] Database migration for `ClinicSlotStatus` model
+- [ ] Auto-create pending status when assignments created (signal/hook)
+- [ ] API routes for status management
+- [ ] Extend Daily Manifest response with slot status
+- [ ] Create MSA Clinic Tracker dashboard component
+- [ ] Create Reconciliation Report view
+- [ ] Add slot status indicators to schedule views
+- [ ] Role-based permissions (MSA can mark opened, not edit schedule)
+- [ ] Audit logging for status changes
+- [ ] Test coverage
+
+### Role Permissions
+
+| Action | MSA | Coordinator | Admin |
+|--------|-----|-------------|-------|
+| View pending slots | ✅ | ✅ | ✅ |
+| Mark as opened | ✅ | ✅ | ✅ |
+| Edit slot count/notes | ✅ | ✅ | ✅ |
+| View reconciliation report | ❌ | ✅ | ✅ |
+| Override status | ❌ | ✅ | ✅ |
+
+---
+
 ## Future Integration: MyEvaluations API
 
 > **Priority:** Medium (nice-to-have integration)
