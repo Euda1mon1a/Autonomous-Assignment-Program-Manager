@@ -11,6 +11,7 @@ from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.models.user import User
+from app.schemas.visualization import TimeRangeType
 from app.services.heatmap_service import HeatmapService
 
 
@@ -168,6 +169,127 @@ def sample_schedule_data(db):
 
 class TestHeatmapService:
     """Test HeatmapService methods."""
+
+    def test_calculate_date_range_week(self):
+        """Test calculating date range for a week."""
+        service = HeatmapService()
+        reference = date(2024, 1, 15)  # Monday
+        time_range = TimeRangeType(
+            range_type="week",
+            reference_date=reference,
+        )
+
+        start, end = service.calculate_date_range(time_range)
+
+        assert start == date(2024, 1, 15)  # Monday
+        assert end == date(2024, 1, 21)  # Sunday
+        assert (end - start).days == 6
+
+    def test_calculate_date_range_week_from_wednesday(self):
+        """Test calculating date range for a week starting from Wednesday."""
+        service = HeatmapService()
+        reference = date(2024, 1, 17)  # Wednesday
+        time_range = TimeRangeType(
+            range_type="week",
+            reference_date=reference,
+        )
+
+        start, end = service.calculate_date_range(time_range)
+
+        assert start == date(2024, 1, 15)  # Monday of that week
+        assert end == date(2024, 1, 21)  # Sunday of that week
+
+    def test_calculate_date_range_month(self):
+        """Test calculating date range for a month."""
+        service = HeatmapService()
+        reference = date(2024, 1, 15)
+        time_range = TimeRangeType(
+            range_type="month",
+            reference_date=reference,
+        )
+
+        start, end = service.calculate_date_range(time_range)
+
+        assert start == date(2024, 1, 1)
+        assert end == date(2024, 1, 31)
+
+    def test_calculate_date_range_month_february(self):
+        """Test calculating date range for February."""
+        service = HeatmapService()
+        reference = date(2024, 2, 15)  # 2024 is leap year
+        time_range = TimeRangeType(
+            range_type="month",
+            reference_date=reference,
+        )
+
+        start, end = service.calculate_date_range(time_range)
+
+        assert start == date(2024, 2, 1)
+        assert end == date(2024, 2, 29)  # Leap year
+
+    def test_calculate_date_range_quarter_q1(self):
+        """Test calculating date range for Q1."""
+        service = HeatmapService()
+        reference = date(2024, 2, 15)  # In Q1
+        time_range = TimeRangeType(
+            range_type="quarter",
+            reference_date=reference,
+        )
+
+        start, end = service.calculate_date_range(time_range)
+
+        assert start == date(2024, 1, 1)
+        assert end == date(2024, 3, 31)
+
+    def test_calculate_date_range_quarter_q4(self):
+        """Test calculating date range for Q4."""
+        service = HeatmapService()
+        reference = date(2024, 11, 15)  # In Q4
+        time_range = TimeRangeType(
+            range_type="quarter",
+            reference_date=reference,
+        )
+
+        start, end = service.calculate_date_range(time_range)
+
+        assert start == date(2024, 10, 1)
+        assert end == date(2024, 12, 31)
+
+    def test_calculate_date_range_custom(self):
+        """Test calculating date range with custom dates."""
+        service = HeatmapService()
+        time_range = TimeRangeType(
+            range_type="custom",
+            start_date=date(2024, 1, 10),
+            end_date=date(2024, 1, 20),
+        )
+
+        start, end = service.calculate_date_range(time_range)
+
+        assert start == date(2024, 1, 10)
+        assert end == date(2024, 1, 20)
+
+    def test_calculate_date_range_custom_missing_dates(self):
+        """Test that custom range requires both dates."""
+        service = HeatmapService()
+        time_range = TimeRangeType(
+            range_type="custom",
+            start_date=date(2024, 1, 10),
+        )
+
+        with pytest.raises(ValueError, match="start_date and end_date required"):
+            service.calculate_date_range(time_range)
+
+    def test_calculate_date_range_invalid_type(self):
+        """Test that invalid range type raises error."""
+        service = HeatmapService()
+        time_range = TimeRangeType(
+            range_type="invalid",
+            reference_date=date(2024, 1, 15),
+        )
+
+        with pytest.raises(ValueError, match="Invalid range_type"):
+            service.calculate_date_range(time_range)
 
     def test_generate_unified_heatmap_by_person(self, db, sample_schedule_data):
         """Test unified heatmap generation grouped by person."""
@@ -493,6 +615,197 @@ class TestVisualizationAPI:
         """Test that visualization endpoints require authentication."""
         response = client.get(
             "/api/v1/visualization/heatmap?start_date=2024-01-01&end_date=2024-01-07"
+        )
+
+        assert response.status_code == 401
+
+    def test_unified_heatmap_with_week_range(
+        self, client, admin_token, sample_schedule_data
+    ):
+        """Test POST /visualization/heatmap/unified with week range."""
+        request_data = {
+            "time_range": {
+                "range_type": "week",
+                "reference_date": sample_schedule_data["start_date"].isoformat(),
+            },
+            "include_fmit": True,
+            "group_by": "person",
+        }
+
+        response = client.post(
+            "/api/v1/visualization/heatmap/unified",
+            json=request_data,
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "data" in data
+        assert "title" in data
+        assert data["title"] == "Person Schedule Heatmap"
+        assert len(data["data"]["x_labels"]) == 7  # 7 days in a week
+
+    def test_unified_heatmap_with_month_range(
+        self, client, admin_token, sample_schedule_data
+    ):
+        """Test POST /visualization/heatmap/unified with month range."""
+        request_data = {
+            "time_range": {
+                "range_type": "month",
+                "reference_date": sample_schedule_data["start_date"].isoformat(),
+            },
+            "include_fmit": True,
+            "group_by": "rotation",
+        }
+
+        response = client.post(
+            "/api/v1/visualization/heatmap/unified",
+            json=request_data,
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "data" in data
+        assert data["title"] == "Rotation Schedule Heatmap"
+        # January has 31 days
+        assert len(data["data"]["x_labels"]) == 31
+
+    def test_unified_heatmap_with_quarter_range(
+        self, client, admin_token, sample_schedule_data
+    ):
+        """Test POST /visualization/heatmap/unified with quarter range."""
+        request_data = {
+            "time_range": {
+                "range_type": "quarter",
+                "reference_date": sample_schedule_data["start_date"].isoformat(),
+            },
+            "include_fmit": False,
+            "group_by": "person",
+        }
+
+        response = client.post(
+            "/api/v1/visualization/heatmap/unified",
+            json=request_data,
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "data" in data
+        # Q1 has 31 + 29 (leap year) + 31 = 91 days in 2024
+        assert len(data["data"]["x_labels"]) == 91
+
+    def test_unified_heatmap_with_custom_range(
+        self, client, admin_token, sample_schedule_data
+    ):
+        """Test POST /visualization/heatmap/unified with custom range."""
+        request_data = {
+            "time_range": {
+                "range_type": "custom",
+                "start_date": sample_schedule_data["start_date"].isoformat(),
+                "end_date": sample_schedule_data["end_date"].isoformat(),
+            },
+            "include_fmit": True,
+            "group_by": "person",
+        }
+
+        response = client.post(
+            "/api/v1/visualization/heatmap/unified",
+            json=request_data,
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "data" in data
+        assert len(data["data"]["x_labels"]) == 7
+
+    def test_unified_heatmap_with_person_filter(
+        self, client, admin_token, sample_schedule_data
+    ):
+        """Test unified heatmap with person filter."""
+        resident1_id = str(sample_schedule_data["residents"][0].id)
+        request_data = {
+            "time_range": {
+                "range_type": "week",
+                "reference_date": sample_schedule_data["start_date"].isoformat(),
+            },
+            "person_ids": [resident1_id],
+            "include_fmit": True,
+            "group_by": "person",
+        }
+
+        response = client.post(
+            "/api/v1/visualization/heatmap/unified",
+            json=request_data,
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["data"]["y_labels"]) == 1
+        assert data["data"]["y_labels"][0] == "Dr. Smith"
+
+    def test_unified_heatmap_invalid_group_by(
+        self, client, admin_token, sample_schedule_data
+    ):
+        """Test unified heatmap with invalid group_by."""
+        request_data = {
+            "time_range": {
+                "range_type": "week",
+                "reference_date": sample_schedule_data["start_date"].isoformat(),
+            },
+            "include_fmit": True,
+            "group_by": "invalid",
+        }
+
+        response = client.post(
+            "/api/v1/visualization/heatmap/unified",
+            json=request_data,
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+
+        assert response.status_code == 400
+        assert "group_by must be 'person' or 'rotation'" in response.json()["detail"]
+
+    def test_unified_heatmap_custom_range_missing_dates(
+        self, client, admin_token
+    ):
+        """Test unified heatmap with custom range missing dates."""
+        request_data = {
+            "time_range": {
+                "range_type": "custom",
+                "start_date": "2024-01-01",
+                # Missing end_date
+            },
+            "include_fmit": True,
+            "group_by": "person",
+        }
+
+        response = client.post(
+            "/api/v1/visualization/heatmap/unified",
+            json=request_data,
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+
+        assert response.status_code == 400
+        assert "start_date and end_date required" in response.json()["detail"]
+
+    def test_unified_heatmap_requires_authentication(self, client):
+        """Test that unified endpoint requires authentication."""
+        request_data = {
+            "time_range": {
+                "range_type": "week",
+                "reference_date": "2024-01-01",
+            },
+            "include_fmit": True,
+            "group_by": "person",
+        }
+
+        response = client.post(
+            "/api/v1/visualization/heatmap/unified",
+            json=request_data,
         )
 
         assert response.status_code == 401

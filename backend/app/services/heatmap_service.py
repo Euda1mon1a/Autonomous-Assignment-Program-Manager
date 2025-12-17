@@ -17,11 +17,67 @@ from app.schemas.visualization import (
     CoverageHeatmapResponse,
     HeatmapData,
     HeatmapResponse,
+    TimeRangeType,
 )
 
 
 class HeatmapService:
     """Service for generating heatmap visualizations."""
+
+    @staticmethod
+    def calculate_date_range(time_range: TimeRangeType) -> tuple[date, date]:
+        """
+        Calculate start and end dates from time range specification.
+
+        Args:
+            time_range: TimeRangeType specification
+
+        Returns:
+            Tuple of (start_date, end_date)
+
+        Raises:
+            ValueError: If range_type is invalid or required dates are missing
+        """
+        range_type = time_range.range_type
+        reference = time_range.reference_date or date.today()
+
+        if range_type == "custom":
+            if not time_range.start_date or not time_range.end_date:
+                raise ValueError("start_date and end_date required for custom range")
+            return time_range.start_date, time_range.end_date
+
+        elif range_type == "week":
+            # Start from Monday of the week containing reference_date
+            start_of_week = reference - timedelta(days=reference.weekday())
+            end_of_week = start_of_week + timedelta(days=6)
+            return start_of_week, end_of_week
+
+        elif range_type == "month":
+            # Start from first day of the month
+            start_of_month = reference.replace(day=1)
+            # Calculate last day of month
+            if reference.month == 12:
+                end_of_month = reference.replace(year=reference.year + 1, month=1, day=1) - timedelta(days=1)
+            else:
+                end_of_month = reference.replace(month=reference.month + 1, day=1) - timedelta(days=1)
+            return start_of_month, end_of_month
+
+        elif range_type == "quarter":
+            # Determine which quarter the reference date is in
+            quarter_month = ((reference.month - 1) // 3) * 3 + 1
+            start_of_quarter = reference.replace(month=quarter_month, day=1)
+
+            # Calculate end of quarter (3 months later, minus 1 day)
+            if quarter_month >= 10:
+                end_month_start = start_of_quarter.replace(year=reference.year + 1, month=((quarter_month + 3) % 12) or 12, day=1)
+            else:
+                end_month_start = start_of_quarter.replace(month=quarter_month + 3, day=1)
+            end_of_quarter = end_month_start - timedelta(days=1)
+
+            return start_of_quarter, end_of_quarter
+
+        else:
+            raise ValueError(f"Invalid range_type: {range_type}. Must be 'week', 'month', 'quarter', or 'custom'")
 
     @staticmethod
     def _get_date_range(start_date: date, end_date: date) -> list[date]:

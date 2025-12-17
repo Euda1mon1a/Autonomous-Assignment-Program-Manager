@@ -173,10 +173,10 @@ export function ManualOverrideModal({
   const isAcgmeViolation = conflict.type === 'acgme_violation';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center animate-fadeIn">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -187,7 +187,7 @@ export function ManualOverrideModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col"
+        className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn"
       >
         {/* Header */}
         <div className={`
@@ -467,8 +467,9 @@ export function ManualOverrideModal({
                   type="submit"
                   disabled={!isValid() || createOverride.isPending}
                   className={`
-                    flex items-center gap-2 px-4 py-2 rounded-lg transition-colors
+                    flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
                     disabled:opacity-50 disabled:cursor-not-allowed
+                    hover:shadow-lg active:scale-95
                     ${isCritical
                       ? 'bg-red-500 text-white hover:bg-red-600'
                       : 'bg-amber-500 text-white hover:bg-amber-600'
