@@ -1313,6 +1313,60 @@ The project has reached **fully production-ready status** after four parallel im
 
 **Recommended next step:** Deploy to production immediately. All major features complete.
 
+---
+
+***REMOVED******REMOVED*** Future Consideration: Creative Coding / Advanced UI
+
+> **Priority:** Low (polish, not functional)
+> **Status:** Evaluated 2025-12-17 — Some items worth exploring, others discarded
+
+***REMOVED******REMOVED******REMOVED*** Context
+
+Evaluated suggestions for "fancy" UI enhancements (WebGL, physics animations, gamification) against actual codebase needs.
+
+***REMOVED******REMOVED******REMOVED*** Current UI Stack
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| **Framer Motion 12.23.26** | ✅ Installed | Used for basic entrance animations (`initial/animate` props) |
+| **Tailwind CSS** | ✅ Complete | "Tactical Glass HUD" aesthetic with backdrop-blur |
+| **Custom Animations** | ✅ Complete | `fadeIn`, `slideInRight`, etc. in globals.css |
+| **Plotly** | ✅ Complete | Heatmap visualization |
+
+***REMOVED******REMOVED******REMOVED*** Evaluated Libraries
+
+| Library | Verdict | Reasoning |
+|---------|---------|-----------|
+| **React Three Fiber (R3F)** | 🟡 Maybe later | 3D is cool but text readability suffers. Medical scheduling needs *clarity* over *wow-factor*. Could explore for non-critical visualizations (network graphs). |
+| **PixiJS** | ❌ Discard | SimCity/gamification aesthetic inappropriate for professional medical scheduler. Chief residents aren't playing games. |
+| **Spline** | ❌ Discard | "3D mascots" add bundle weight for zero UX value in this context. |
+| **Framer Motion (deeper)** | ✅ Worth exploring | Already installed but underutilized. Could add: layout animations, `AnimatePresence` exit animations, spring physics for drag-and-drop in Swap Marketplace. |
+
+***REMOVED******REMOVED******REMOVED*** Potential Enhancements (Low Priority)
+
+1. **Framer Motion Layout Animations**
+   - Use `layout` prop for smooth reordering when shifts change
+   - Add `AnimatePresence` for exit animations on deleted items
+   - Spring physics for Swap Marketplace drag-and-drop
+   - **Effort:** 2-4 hours | **Impact:** Medium (polish)
+
+2. **Subtle WebGL Background** (Optional)
+   - Particle grid or flowing lines behind glass panels
+   - Non-intrusive, adds "premium" feel
+   - **Effort:** 4-6 hours | **Impact:** Low (aesthetic only)
+
+3. **Micro-interactions**
+   - Button hover states with scale transforms
+   - Success/error feedback animations
+   - Loading state transitions
+   - **Effort:** 1-2 hours | **Impact:** Medium (perceived quality)
+
+***REMOVED******REMOVED******REMOVED*** Decision
+
+Focus on **deeper Framer Motion usage** since it's already installed. Avoid adding new heavy dependencies (R3F, PixiJS) that would increase bundle size without functional benefit.
+
+---
+
 **Future opportunity:** The longitudinal analytics framework is now **fully implemented** with:
 - Schedule versioning and metrics persistence
 - Time-series metrics analysis
