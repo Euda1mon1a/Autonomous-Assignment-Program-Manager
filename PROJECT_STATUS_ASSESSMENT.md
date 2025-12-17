@@ -3365,5 +3365,136 @@ These scenarios need **policy decisions**, not code:
 
 ---
 
+***REMOVED******REMOVED*** Gemini Pro Feedback Evaluation (2025-12-17)
+
+**Objective:** Evaluate Gemini Pro's architectural suggestions for achieving 99% autonomous scheduling with human-in-the-loop for high-risk decisions.
+
+**Overall Accuracy:** 49% (22/45 suggestions were accurate or useful)
+
+***REMOVED******REMOVED******REMOVED*** Accuracy by Domain
+
+| Review Topic | Accurate | Inaccurate | Accuracy |
+|--------------|----------|------------|----------|
+| Backend Performance | 3/8 | 5/8 | 37% |
+| Frontend | 3/5 | 2/5 | 60% |
+| Infrastructure | 4/5 | 1/5 | 80% |
+| Database | 2/6 | 4/6 | 33% |
+| Domain (Constraints) | 2/6 | 4/6 | 33% |
+| Testing | 4/6 | 2/6 | 67% |
+| Final Mile | 4/9 | 5/9 | 44% |
+
+***REMOVED******REMOVED******REMOVED*** Already Implemented (Gemini Incorrectly Claimed Missing)
+
+| Feature | Location | Evidence |
+|---------|----------|----------|
+| **Risk Scoring** | `resilience/mtf_compliance.py:472-509` | Multi-factor `_assess_risk_level()` → RiskLevel enum |
+| **Circuit Breaker** | `resilience/mtf_compliance.py` | Full implementation with N-1, coverage, allostatic triggers |
+| **Z-Score Anomaly Detection** | `behavioral_network.py:620` | Used for burden flow analysis |
+| **Notification Strategy Pattern** | `notifications/channels.py:55-79` | ABC with InApp, Email, Webhook implementations |
+| **ACGME Validators** | `validators/advanced_acgme.py` | 406 lines (NOT empty as claimed) |
+| **N+1 Query Prevention** | All repositories | Consistent `joinedload()` usage |
+| **Connection Pooling** | `db/session.py`, `config.py` | Explicit `DB_POOL_*` settings |
+| **Decision Explanations** | `models/assignment.py` | `explain_json`, `alternatives_json`, `confidence`, `score` columns |
+| **CP-SAT Multi-threading** | `solvers.py:473` | `num_search_workers` already configured |
+
+***REMOVED******REMOVED******REMOVED*** Real Gaps Identified
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 🔴 Critical (Pre-99% Automation)
+
+| ***REMOVED*** | Issue | Current State | Required Action | Effort |
+|---|-------|---------------|-----------------|--------|
+| 1 | **Event Loop Blocking** | `async def` routes call sync CPU code | Change to `def` or offload to Celery | 1-2 days |
+| 2 | **In-Memory Cache Incoherence** | `ScheduleCache` uses Python dict | Migrate to Redis (already deployed) | 1 day |
+| 3 | **No Generation Progress Tracking** | 60+ second black box | Add CP-SAT `SolutionCallback` + Redis emit | 1 day |
+| 4 | **No Distributed Locking** | Race conditions on concurrent generation | Add `redis-lock` for year_id | 0.5 day |
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 🟠 High Priority (Trust Building)
+
+| ***REMOVED*** | Issue | Current State | Required Action | Effort |
+|---|-------|---------------|-----------------|--------|
+| 5 | **80-Hour Rule Performance** | 4-level nested loops, O(n³) | Polars/Pandas rolling windows | 2-3 days |
+| 6 | **Static Utilization Buffer** | Hardcoded 0.80 | statsmodels seasonal forecasting | 3-5 days |
+| 7 | **Frontend Drag-Drop Latency** | Waits for API before UI update | React Query optimistic updates | 1 day |
+| 8 | **No Shadow Mode Deployment** | Can't safely test new solver logic | Parallel execution + diff comparison | 2 days |
+| 9 | **Confidence Calibration** | Raw scores, no probability estimates | Platt scaling on override history | 3 days |
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 🟡 Medium Priority (Stability)
+
+| ***REMOVED*** | Issue | Current State | Required Action | Effort |
+|---|-------|---------------|-----------------|--------|
+| 10 | **API Versioning** | `/api/...` without version | Change to `/api/v1/...` | 0.5 day |
+| 11 | **Migration Race Condition** | `alembic upgrade head` in CMD | Init container pattern | 0.5 day |
+| 12 | **Frontend Virtualization** | Plain HTML table | `@tanstack/react-virtual` for scaling | 2 days |
+| 13 | **Property-Based Testing** | Static test cases only | Hypothesis for constraint fuzzing | 2 days |
+| 14 | **FactoryBoy Not Used** | Manual MockPerson classes | Use installed factory-boy | 1 day |
+
+***REMOVED******REMOVED******REMOVED*** Suggestions Rejected
+
+| Suggestion | Reason |
+|------------|--------|
+| **Numba JIT for Greedy Solver** | Not a bottleneck - greedy runs in seconds |
+| **Streamlit Dashboard** | Already have mature React + Plotly frontend |
+| **DuckDB for Validation** | Over-engineering - existing constraint system is modular |
+| **pybreaker for External APIs** | Custom CircuitBreaker already implemented with domain-specific triggers |
+
+***REMOVED******REMOVED******REMOVED*** Key Questions for 99% Automation
+
+These require further investigation/design before implementation:
+
+1. **Confidence Calibration:** How to transform raw solver scores into calibrated probability estimates? What training data defines "success" (no override within 7 days)?
+
+2. **High-Risk Classification:** How to build graduated escalation (0-30% auto, 30-60% batch review, 60-80% async approval, 80-100% sync approval)?
+
+3. **Feedback Loop Architecture:** When humans override, how should the system learn? (Constraint weight adjustment vs. preference learning vs. test case generation)
+
+4. **Edge Case Detection:** How to recognize novel scheduling scenarios the system hasn't seen before?
+
+5. **Shadow Mode Implementation:** Architecture for running two solver versions in parallel and comparing outputs before deployment
+
+***REMOVED******REMOVED******REMOVED*** Autonomy Stack Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    HUMAN-IN-THE-LOOP LAYER                       │
+│  High-Risk Approval │ Override Interface │ Exception Handling   │
+├─────────────────────────────────────────────────────────────────┤
+│                    DECISION INTELLIGENCE                         │
+│  Confidence Calibration │ Risk Scoring [✓] │ Feedback Learning  │
+├─────────────────────────────────────────────────────────────────┤
+│                    RELIABILITY LAYER                             │
+│  Job Management │ Failure Recovery │ Circuit Breakers [✓]       │
+├─────────────────────────────────────────────────────────────────┤
+│                    OBSERVABILITY LAYER                           │
+│  Decision Audit [✓] │ Anomaly Detection [partial] │ Logging     │
+├─────────────────────────────────────────────────────────────────┤
+│                    INFRASTRUCTURE LAYER                          │
+│  API Versioning │ Deployment Safety │ Disaster Recovery         │
+└─────────────────────────────────────────────────────────────────┘
+
+[✓] = Already implemented    [partial] = Partially implemented
+```
+
+***REMOVED******REMOVED******REMOVED*** Implementation Roadmap Summary
+
+**Phase 1: Operational Reliability (Week 1)**
+- Fix event loop blocking
+- Migrate cache to Redis
+- Add progress tracking
+- Add distributed locking
+
+**Phase 2: Performance & Trust (Weeks 2-3)**
+- Vectorize 80-hour constraint
+- Implement seasonal forecasting
+- Add optimistic UI updates
+- Implement shadow mode deployment
+
+**Phase 3: Autonomy Intelligence (Weeks 4-6)**
+- Confidence calibration
+- Graduated escalation
+- Feedback loop architecture
+- Property-based testing
+
+---
+
 *Assessment generated by Claude Opus 4.5*
-*Last updated: 2025-12-17 (Consolidated Human To-Do List Added)*
+*Last updated: 2025-12-17 (Gemini Pro Feedback Evaluation Added)*
