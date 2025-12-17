@@ -1,10 +1,15 @@
 """Notification service for FMIT swap events."""
+import logging
 from dataclasses import dataclass
 from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
 
 from sqlalchemy.orm import Session
+
+from app.services.email_service import EmailService
+
+logger = logging.getLogger(__name__)
 
 
 class SwapNotificationType(str, Enum):
@@ -46,6 +51,7 @@ class SwapNotificationService:
     def __init__(self, db: Session):
         self.db = db
         self._pending_notifications: list[SwapNotification] = []
+        self.email_service = EmailService()
 
     def notify_swap_request_received(
         self,
@@ -285,17 +291,24 @@ View the marketplace in the portal to respond.
         Send all pending notifications.
 
         Returns:
-            Number of notifications sent
+            Number of notifications successfully sent
         """
-        # TODO: Integrate with actual email service
-        # For now, just clear the queue and return count
-        count = len(self._pending_notifications)
+        total_count = len(self._pending_notifications)
+        sent_count = 0
 
         for notification in self._pending_notifications:
-            self._send_notification(notification)
+            try:
+                if self._send_notification(notification):
+                    sent_count += 1
+            except Exception as e:
+                logger.error(
+                    f"Failed to send notification to {notification.recipient_email}: {e}",
+                    exc_info=True
+                )
 
         self._pending_notifications.clear()
-        return count
+        logger.info(f"Sent {sent_count} of {total_count} notifications")
+        return sent_count
 
     def get_pending_count(self) -> int:
         """Get count of pending notifications."""
@@ -353,9 +366,48 @@ Please log in to the faculty portal to accept or decline this request.
 """
 
     def _send_notification(self, notification: SwapNotification) -> bool:
-        """Actually send a notification (placeholder for email integration)."""
-        # TODO: Integrate with email_service.py
-        # For now, just log
-        print(f"[NOTIFICATION] To: {notification.recipient_email}")
-        print(f"  Subject: {notification.subject}")
-        return True
+        """Actually send a notification via email."""
+        try:
+            # Convert plain text body to simple HTML
+            body_html = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .content {{ padding: 20px; background-color: #f9f9f9; white-space: pre-wrap; }}
+                    .footer {{ padding: 15px; font-size: 12px; color: #666; text-align: center; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="content">
+                        {notification.body}
+                    </div>
+                    <div class="footer">
+                        <p>This is an automated message from the FMIT Scheduling System.</p>
+                        <p>Please do not reply to this email.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+
+            success = self.email_service.send_email(
+                to_email=notification.recipient_email,
+                subject=notification.subject,
+                body_html=body_html,
+                body_text=notification.body,
+            )
+
+            if success:
+                logger.debug(f"Notification sent to {notification.recipient_email}: {notification.subject}")
+            else:
+                logger.warning(f"Failed to send notification to {notification.recipient_email}")
+
+            return success
+
+        except Exception as e:
+            logger.error(f"Error sending notification to {notification.recipient_email}: {e}")
+            return False
