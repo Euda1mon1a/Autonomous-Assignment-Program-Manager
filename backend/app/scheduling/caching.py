@@ -52,9 +52,10 @@ class ScheduleCache:
         self.ttl_seconds = ttl_seconds
         self._lock = RLock()
 
-        ***REMOVED*** Redis connection
+        ***REMOVED*** Redis connection with password authentication
         settings = get_settings()
-        self._redis = redis.from_url(settings.REDIS_URL, decode_responses=False)
+        redis_url = settings.redis_url_with_password
+        self._redis = redis.from_url(redis_url, decode_responses=False)
 
         ***REMOVED*** Statistics (per-worker, not shared)
         self._hits = 0

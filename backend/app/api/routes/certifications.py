@@ -10,6 +10,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
+from app.api.dependencies.role_filter import require_admin
 from app.controllers.certification_controller import CertificationController
 from app.core.security import get_current_active_user
 from app.db.session import get_db
@@ -209,12 +210,13 @@ def delete_person_certification(
 def trigger_certification_reminders(
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
 ):
     """
     Manually trigger certification expiration check and send reminders.
 
     This runs the same job that normally runs daily at 6 AM.
-    Requires authentication.
+    Requires admin role.
     """
     from app.services.certification_service import CertificationService
 

@@ -4,6 +4,8 @@ Academic blocks / block matrix API.
 Provides program coordinator view of resident assignments grouped by rotation blocks.
 Thin routing layer that connects URL paths to service layer.
 """
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -12,6 +14,7 @@ from app.schemas.academic_blocks import BlockListResponse, BlockMatrixResponse
 from app.services.academic_block_service import AcademicBlockService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("/matrix/academic-blocks", response_model=BlockMatrixResponse)
@@ -48,14 +51,16 @@ def get_academic_block_matrix(
         )
         return matrix
     except ValueError as e:
+        logger.error(f"Invalid block matrix request: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Invalid request parameters",
         )
     except Exception as e:
+        logger.error(f"Error generating block matrix: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error generating block matrix: {str(e)}",
+            detail="An error occurred generating the block matrix",
         )
 
 
@@ -86,12 +91,14 @@ def list_academic_blocks(
         blocks = service.list_academic_blocks(academic_year=academic_year)
         return blocks
     except ValueError as e:
+        logger.error(f"Invalid academic blocks list request: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Invalid request parameters",
         )
     except Exception as e:
+        logger.error(f"Error listing academic blocks: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error listing academic blocks: {str(e)}",
+            detail="An error occurred listing academic blocks",
         )

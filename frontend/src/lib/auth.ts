@@ -1,12 +1,12 @@
 /**
  * Authentication Library for Residency Scheduler
  *
- * Provides token management and authentication API functions.
+ * Provides authentication API functions.
+ *
+ * Security: Uses httpOnly cookies for JWT tokens to prevent XSS attacks.
+ * Tokens are no longer stored in localStorage.
  */
 import { api, post, get, ApiError } from './api'
-
-// Token storage key (consistent with api.ts interceptor)
-const TOKEN_KEY = 'auth_token'
 
 // ============================================================================
 // Types
@@ -39,47 +39,15 @@ export interface AuthCheckResponse {
 }
 
 // ============================================================================
-// Token Management
-// ============================================================================
-
-/**
- * Get stored authentication token from localStorage
- */
-export function getStoredToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem(TOKEN_KEY)
-}
-
-/**
- * Store authentication token in localStorage
- */
-export function setStoredToken(token: string): void {
-  if (typeof window === 'undefined') return
-  localStorage.setItem(TOKEN_KEY, token)
-}
-
-/**
- * Remove authentication token from localStorage
- */
-export function removeStoredToken(): void {
-  if (typeof window === 'undefined') return
-  localStorage.removeItem(TOKEN_KEY)
-}
-
-/**
- * Check if user has a stored token
- */
-export function hasStoredToken(): boolean {
-  return !!getStoredToken()
-}
-
-// ============================================================================
 // Authentication API Functions
 // ============================================================================
 
 /**
  * Login with username and password
  * POST /api/auth/login with form data
+ *
+ * Security: Token is set as httpOnly cookie by the server.
+ * No client-side token storage needed.
  */
 export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
   // Create form data for OAuth2 password flow
@@ -91,23 +59,24 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
+    withCredentials: true, // Required for cookies
   })
 
-  const data = response.data
-
-  // Store the token
-  if (data.access_token) {
-    setStoredToken(data.access_token)
-  }
-
-  return data
+  return response.data
 }
 
 /**
- * Logout - remove stored token
+ * Logout - call backend to invalidate session and delete cookie
+ *
+ * Security: Clears the httpOnly cookie server-side.
  */
-export function logout(): void {
-  removeStoredToken()
+export async function logout(): Promise<void> {
+  try {
+    await post('/auth/logout', {})
+  } catch (error) {
+    // Even if the request fails, the user should be logged out client-side
+    console.error('Logout error:', error)
+  }
 }
 
 /**
@@ -135,17 +104,15 @@ export async function checkAuth(): Promise<AuthCheckResponse> {
 /**
  * Validate if current token is still valid
  * Returns user if valid, null otherwise
+ *
+ * Security: Checks httpOnly cookie by attempting to fetch current user.
  */
 export async function validateToken(): Promise<User | null> {
-  const token = getStoredToken()
-  if (!token) return null
-
   try {
     const user = await getCurrentUser()
     return user
   } catch (error) {
-    // Token is invalid, remove it
-    removeStoredToken()
+    // Token is invalid or missing
     return null
   }
 }

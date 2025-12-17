@@ -33,6 +33,23 @@ interface CalendarSyncProps {
 type CalendarFormat = 'ics' | 'google' | 'outlook';
 
 // ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Validate calendar URL to prevent XSS attacks
+ */
+function isValidCalendarUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const allowedProtocols = ['webcal:', 'https:', 'http:'];
+    return allowedProtocols.includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
+
+// ============================================================================
 // Component
 // ============================================================================
 
@@ -51,6 +68,11 @@ export function CalendarSync({ className = '' }: CalendarSyncProps) {
       });
 
       if (result.url) {
+        // Validate URL before using it
+        if (!isValidCalendarUrl(result.url)) {
+          throw new Error('Invalid calendar URL');
+        }
+
         // For ICS download or subscription URL
         if (selectedFormat === 'ics') {
           // Trigger download
