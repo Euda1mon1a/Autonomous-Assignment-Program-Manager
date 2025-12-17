@@ -2478,6 +2478,141 @@ async def generate_block_schedule(block_number: int):
 
 ---
 
+## Future Implementation: Resident Call Scheduling System
+
+> **Priority:** High (chief resident workflow)
+> **Status:** Needs Clarification — Partial requirements documented
+> **Effort:** TBD (depends on complexity)
+
+### What We Know
+
+| Component | Description |
+|-----------|-------------|
+| **Night Float** | Covers most nights (dedicated resident on night shift) |
+| **Call nights** | Residents take ≥1 call night/block so night float gets day off |
+| **LND Call** | Labor & Delivery coverage while other residents at academics |
+| **Goal** | Make chief resident's call scheduling job easier |
+
+### Questions Needing Clarification
+
+#### Night Float Structure
+- [ ] How long is night float rotation? (1 week? 2 weeks? 4 weeks?)
+- [ ] Is it a dedicated rotation or overlay on other rotations?
+- [ ] How many nights/week does NF work? (6? Then call covers 7th?)
+- [ ] How many NF residents at a time?
+
+#### Call Distribution
+- [ ] How many call nights per resident per block?
+- [ ] Is call tied to specific rotations? (Only when on clinic block?)
+- [ ] Post-call day off rules? (ACGME requires day off after 24hr)
+- [ ] Home call vs. in-house call?
+
+#### LND Call Specifics
+- [ ] Which residents cover LND? (PGY-1 only? All?)
+- [ ] What times? (Just during academic half-day? Full day?)
+- [ ] Separate from overnight call or same pool?
+
+#### Fairness & Constraints
+- [ ] Equal weeknight vs. weekend call distribution?
+- [ ] Holiday call rules?
+- [ ] "Golden weekends" (entire weekend off)?
+- [ ] Max consecutive call nights?
+
+### Preliminary Model Design
+
+```python
+class CallAssignment(Base):
+    """Resident call duty assignment"""
+    __tablename__ = "call_assignments"
+
+    id = Column(UUID, primary_key=True)
+    person_id = Column(UUID, ForeignKey("people.id"))
+    date = Column(Date)
+
+    # Call type
+    call_type = Column(String(30))  # 'night_float', 'overnight_call', 'lnd_call', 'backup'
+    call_pool = Column(String(30), nullable=True)  # 'floor', 'ob', 'lnd', etc.
+
+    # Timing
+    start_time = Column(Time, nullable=True)  # e.g., 17:00
+    end_time = Column(Time, nullable=True)    # e.g., 07:00 next day
+    is_24hr = Column(Boolean, default=False)
+
+    # Post-call
+    post_call_day_off = Column(Boolean, default=True)
+
+    # Who this covers for
+    covering_for_id = Column(UUID, nullable=True)  # Night float getting day off
+
+
+class CallRule(Base):
+    """Rules governing call distribution"""
+    __tablename__ = "call_rules"
+
+    id = Column(UUID, primary_key=True)
+    pgy_level = Column(Integer, nullable=True)  # NULL = all PGYs
+    rotation_template_id = Column(UUID, nullable=True)  # NULL = all rotations
+
+    # Requirements
+    min_call_nights_per_block = Column(Integer, default=1)
+    max_call_nights_per_block = Column(Integer, nullable=True)
+    max_weekend_calls_per_block = Column(Integer, nullable=True)
+    max_consecutive_call_nights = Column(Integer, default=1)
+
+    # Exemptions
+    exempt_call_types = Column(ARRAY(String), nullable=True)
+```
+
+### Potential Workflow
+
+```
+1. Night Float Rotation
+   - NF is a dedicated rotation (e.g., 2 weeks)
+   - NF works 6 nights/week
+   - 7th night = call resident covers
+
+2. Call Night Assignment
+   - Each non-NF resident takes 1+ call night per block
+   - Covers night float's day off
+   - Gets post-call day off next day
+
+3. LND Academic Coverage
+   - During Wed PM academics, LND still needs coverage
+   - Non-academic resident (on clinic/other) covers LND
+   - Separate from overnight call
+
+4. Chief Resident Dashboard
+   - View all call slots for the month/block
+   - Auto-generate based on fairness rules
+   - Manually adjust as needed
+   - Track weeknight/weekend/holiday counts
+```
+
+### Chief Resident Features
+
+| Feature | Purpose |
+|---------|---------|
+| **Call calendar** | Month view of who's on call |
+| **Auto-distribution** | Generate fair schedule based on rules |
+| **Swap workflow** | Residents request swaps, chief approves |
+| **Call counts** | Dashboard of weeknight/weekend/holiday per person |
+| **Conflict detection** | Warn if call + clinic next day |
+| **NF integration** | Auto-schedule call for NF days off |
+| **Gap detection** | Highlight uncovered nights |
+
+### Implementation Checklist
+
+- [ ] Clarify all requirements (see questions above)
+- [ ] Design final `CallAssignment` and `CallRule` models
+- [ ] Create call scheduling service with auto-distribution
+- [ ] Build chief resident call dashboard
+- [ ] Add call swap request workflow
+- [ ] Integrate with ACGME compliance checking
+- [ ] Add notification system for call assignments
+- [ ] Test coverage
+
+---
+
 ## Future Integration: MyEvaluations API
 
 > **Priority:** Medium (nice-to-have integration)
