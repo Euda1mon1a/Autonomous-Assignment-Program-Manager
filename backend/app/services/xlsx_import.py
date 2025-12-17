@@ -1,0 +1,803 @@
+"""
+Excel import service for clinic schedules.
+
+Parses external clinic schedule Excel files and detects conflicts
+with FMIT/inpatient rotations. Supports simulation mode for conflict
+analysis without database writes.
+"""
+import io
+from dataclasses import dataclass, field
+from datetime import date, datetime, timedelta
+from enum import Enum
+from typing import Optional
+from openpyxl import load_workbook
+from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.cell import Cell
+from sqlalchemy.orm import Session
+
+from app.models.person import Person
+from app.models.absence import Absence
+
+
+class SlotType(Enum):
+    """Types of schedule slots."""
+    CLINIC = "clinic"
+    FMIT = "fmit"
+    OFF = "off"
+    VACATION = "vacation"
+    CONFERENCE = "conference"
+    ADMIN = "admin"
+    UNKNOWN = "unknown"
+
+
+@dataclass
+class ScheduleSlot:
+    """Represents a single half-day slot in the schedule."""
+    provider_name: str
+    date: date
+    time_of_day: str  # "AM" or "PM"
+    slot_type: SlotType
+    raw_value: str
+    location: Optional[str] = None
+    notes: Optional[str] = None
+
+    @property
+    def key(self) -> tuple:
+        """Unique key for this slot."""
+        return (self.provider_name, self.date, self.time_of_day)
+
+
+@dataclass
+class ScheduleConflict:
+    """Represents a scheduling conflict."""
+    provider_name: str
+    date: date
+    time_of_day: str
+    conflict_type: str  # "double_book", "fmit_clinic_overlap", "specialty_unavailable"
+    fmit_assignment: Optional[str] = None
+    clinic_assignment: Optional[str] = None
+    severity: str = "warning"  # "error", "warning", "info"
+    message: str = ""
+
+    def __post_init__(self):
+        if not self.message:
+            self.message = self._generate_message()
+
+    def _generate_message(self) -> str:
+        """Generate a human-readable conflict message."""
+        date_str = self.date.strftime("%a %b %d")
+        if self.conflict_type == "double_book":
+            return f"{self.provider_name} double-booked on {date_str} {self.time_of_day}: FMIT={self.fmit_assignment}, Clinic={self.clinic_assignment}"
+        elif self.conflict_type == "fmit_clinic_overlap":
+            return f"{self.provider_name} has FMIT during clinic on {date_str} {self.time_of_day}"
+        elif self.conflict_type == "specialty_unavailable":
+            return f"{self.provider_name} (specialty provider) unavailable for clinic on {date_str} {self.time_of_day}"
+        elif self.conflict_type == "consecutive_weeks":
+            return f"{self.provider_name} has alternating week pattern causing family hardship"
+        return f"Conflict for {self.provider_name} on {date_str} {self.time_of_day}"
+
+
+@dataclass
+class ProviderSchedule:
+    """Complete schedule for a single provider."""
+    name: str
+    specialties: list[str] = field(default_factory=list)
+    slots: dict[tuple, ScheduleSlot] = field(default_factory=dict)  # key: (date, time_of_day)
+
+    def add_slot(self, slot: ScheduleSlot) -> None:
+        """Add a slot to this provider's schedule."""
+        key = (slot.date, slot.time_of_day)
+        self.slots[key] = slot
+
+    def get_slot(self, d: date, time_of_day: str) -> Optional[ScheduleSlot]:
+        """Get slot for a specific date/time."""
+        return self.slots.get((d, time_of_day))
+
+    def get_fmit_weeks(self) -> list[tuple[date, date]]:
+        """Get list of FMIT week ranges (Mon-Sun)."""
+        fmit_dates = sorted([
+            slot.date for slot in self.slots.values()
+            if slot.slot_type == SlotType.FMIT
+        ])
+
+        if not fmit_dates:
+            return []
+
+        weeks = []
+        current_week_start = None
+        current_week_end = None
+
+        for d in fmit_dates:
+            # Get Monday of this week
+            week_start = d - timedelta(days=d.weekday())
+            week_end = week_start + timedelta(days=6)
+
+            if current_week_start is None:
+                current_week_start = week_start
+                current_week_end = week_end
+            elif week_start != current_week_start:
+                weeks.append((current_week_start, current_week_end))
+                current_week_start = week_start
+                current_week_end = week_end
+
+        if current_week_start:
+            weeks.append((current_week_start, current_week_end))
+
+        return weeks
+
+    def has_alternating_pattern(self) -> bool:
+        """Check if FMIT schedule has week-on/week-off pattern (hard on families)."""
+        weeks = self.get_fmit_weeks()
+        if len(weeks) < 3:
+            return False
+
+        # Check for alternating pattern (gap of exactly 1 week between FMIT weeks)
+        gaps = []
+        for i in range(1, len(weeks)):
+            prev_end = weeks[i-1][1]
+            curr_start = weeks[i][0]
+            gap_days = (curr_start - prev_end).days
+            gaps.append(gap_days)
+
+        # Alternating = gaps of ~7 days (1 week off between FMIT weeks)
+        alternating_count = sum(1 for g in gaps if 6 <= g <= 8)
+        return alternating_count >= 2  # At least 2 alternating gaps
+
+
+@dataclass
+class ImportResult:
+    """Result of importing a schedule file."""
+    success: bool
+    providers: dict[str, ProviderSchedule] = field(default_factory=dict)
+    conflicts: list[ScheduleConflict] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+
+    # Statistics
+    total_slots: int = 0
+    clinic_slots: int = 0
+    fmit_slots: int = 0
+    date_range: tuple[Optional[date], Optional[date]] = (None, None)
+
+    def add_conflict(self, conflict: ScheduleConflict) -> None:
+        """Add a conflict to the result."""
+        self.conflicts.append(conflict)
+
+    def get_conflicts_by_provider(self, provider_name: str) -> list[ScheduleConflict]:
+        """Get all conflicts for a specific provider."""
+        return [c for c in self.conflicts if c.provider_name == provider_name]
+
+    def get_conflicts_by_type(self, conflict_type: str) -> list[ScheduleConflict]:
+        """Get all conflicts of a specific type."""
+        return [c for c in self.conflicts if c.conflict_type == conflict_type]
+
+
+class ClinicScheduleImporter:
+    """
+    Imports clinic schedules from Excel files.
+
+    Supports multiple formats:
+    - Standard format: providers in rows, dates in columns
+    - Transposed format: dates in rows, providers in columns
+
+    Auto-detects format based on header structure.
+    """
+
+    # Common abbreviations for slot types
+    SLOT_TYPE_MAPPING = {
+        # Clinic indicators
+        "c": SlotType.CLINIC,
+        "clinic": SlotType.CLINIC,
+        "pts": SlotType.CLINIC,
+        "patient": SlotType.CLINIC,
+        "appt": SlotType.CLINIC,
+        "sm": SlotType.CLINIC,  # Sports Medicine
+        "sports": SlotType.CLINIC,
+
+        # FMIT indicators
+        "fmit": SlotType.FMIT,
+        "inpt": SlotType.FMIT,
+        "inpatient": SlotType.FMIT,
+        "ward": SlotType.FMIT,
+        "wards": SlotType.FMIT,
+
+        # Off/unavailable
+        "off": SlotType.OFF,
+        "x": SlotType.OFF,
+        "-": SlotType.OFF,
+        "": SlotType.OFF,
+
+        # Vacation/leave
+        "vac": SlotType.VACATION,
+        "vacation": SlotType.VACATION,
+        "lv": SlotType.VACATION,
+        "leave": SlotType.VACATION,
+        "al": SlotType.VACATION,  # Annual leave
+
+        # Conference
+        "conf": SlotType.CONFERENCE,
+        "conference": SlotType.CONFERENCE,
+        "cme": SlotType.CONFERENCE,
+        "mtg": SlotType.CONFERENCE,
+
+        # Admin
+        "admin": SlotType.ADMIN,
+        "adm": SlotType.ADMIN,
+        "office": SlotType.ADMIN,
+    }
+
+    def __init__(self, db: Optional[Session] = None):
+        self.db = db
+        self.known_providers: dict[str, Person] = {}
+
+        if db:
+            self._load_known_providers()
+
+    def _load_known_providers(self) -> None:
+        """Load known providers from database for matching."""
+        if not self.db:
+            return
+
+        people = self.db.query(Person).filter(Person.type == "faculty").all()
+        for person in people:
+            # Store by lowercase name for fuzzy matching
+            self.known_providers[person.name.lower()] = person
+
+    def classify_slot(self, value: str) -> SlotType:
+        """Classify a cell value into a slot type."""
+        if value is None:
+            return SlotType.OFF
+
+        clean = str(value).strip().lower()
+
+        # Direct lookup
+        if clean in self.SLOT_TYPE_MAPPING:
+            return self.SLOT_TYPE_MAPPING[clean]
+
+        # Partial match
+        for key, slot_type in self.SLOT_TYPE_MAPPING.items():
+            if key and key in clean:
+                return slot_type
+
+        return SlotType.UNKNOWN
+
+    def parse_date_from_header(self, value) -> Optional[date]:
+        """Parse a date from various header formats."""
+        if value is None:
+            return None
+
+        # Already a date/datetime
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
+
+        # String formats
+        text = str(value).strip()
+
+        # Try common formats
+        formats = [
+            "%Y-%m-%d",
+            "%m/%d/%Y",
+            "%m/%d/%y",
+            "%d-%b",
+            "%d-%b-%Y",
+            "%b %d",
+            "%b %d, %Y",
+        ]
+
+        for fmt in formats:
+            try:
+                parsed = datetime.strptime(text, fmt)
+                # If year missing, assume current academic year
+                if parsed.year == 1900:
+                    today = date.today()
+                    if parsed.month >= 7:
+                        parsed = parsed.replace(year=today.year if today.month >= 7 else today.year - 1)
+                    else:
+                        parsed = parsed.replace(year=today.year if today.month < 7 else today.year + 1)
+                return parsed.date()
+            except ValueError:
+                continue
+
+        return None
+
+    def detect_format(self, ws: Worksheet) -> dict:
+        """
+        Detect the format of the schedule worksheet.
+
+        Returns dict with:
+        - orientation: "providers_in_rows" or "providers_in_columns"
+        - header_row: row number containing date headers
+        - data_start_row: first row of actual data
+        - provider_col: column containing provider names
+        - date_cols: list of (col_index, date, time_of_day) tuples
+        """
+        # Sample first 10 rows/cols to detect structure
+        max_sample = 15
+
+        # Look for dates in row 1-5
+        date_row = None
+        date_cols = []
+
+        for row_idx in range(1, min(6, ws.max_row + 1)):
+            found_dates = []
+            for col_idx in range(1, min(max_sample, ws.max_column + 1)):
+                cell = ws.cell(row=row_idx, column=col_idx)
+                parsed_date = self.parse_date_from_header(cell.value)
+                if parsed_date:
+                    found_dates.append((col_idx, parsed_date))
+
+            if len(found_dates) >= 3:  # At least 3 dates = likely header row
+                date_row = row_idx
+                date_cols = found_dates
+                break
+
+        if not date_row:
+            # Try transposed format (dates in column A)
+            found_dates = []
+            for row_idx in range(1, min(max_sample, ws.max_row + 1)):
+                cell = ws.cell(row=row_idx, column=1)
+                parsed_date = self.parse_date_from_header(cell.value)
+                if parsed_date:
+                    found_dates.append((row_idx, parsed_date))
+
+            if len(found_dates) >= 3:
+                return {
+                    "orientation": "providers_in_columns",
+                    "date_col": 1,
+                    "header_row": 1,
+                    "date_rows": found_dates,
+                }
+
+        # Find provider column (usually leftmost non-date column)
+        provider_col = 1
+        for col_idx in range(1, min(6, ws.max_column + 1)):
+            cell = ws.cell(row=date_row + 1 if date_row else 2, column=col_idx)
+            if cell.value and isinstance(cell.value, str) and not self.parse_date_from_header(cell.value):
+                # Check if it looks like a name
+                if len(str(cell.value)) > 2:
+                    provider_col = col_idx
+                    break
+
+        # Detect AM/PM columns (dates might have 2 columns each)
+        expanded_date_cols = []
+        for i, (col_idx, d) in enumerate(date_cols):
+            # Check if next column is also for same date (AM/PM split)
+            if i + 1 < len(date_cols):
+                next_col, next_date = date_cols[i + 1]
+                if next_date == d:
+                    expanded_date_cols.append((col_idx, d, "AM"))
+                    expanded_date_cols.append((next_col, d, "PM"))
+                    continue
+
+            # Check row above or below for AM/PM labels
+            am_pm_row = date_row - 1 if date_row > 1 else date_row + 1
+            time_label = ws.cell(row=am_pm_row, column=col_idx).value
+            if time_label and str(time_label).lower().strip() in ["am", "pm"]:
+                expanded_date_cols.append((col_idx, d, str(time_label).upper().strip()))
+            else:
+                # Single column per date - assume full day
+                expanded_date_cols.append((col_idx, d, "AM"))
+
+        return {
+            "orientation": "providers_in_rows",
+            "header_row": date_row or 1,
+            "data_start_row": (date_row or 1) + 1,
+            "provider_col": provider_col,
+            "date_cols": expanded_date_cols if expanded_date_cols else [(c, d, "AM") for c, d in date_cols],
+        }
+
+    def import_worksheet(
+        self,
+        ws: Worksheet,
+        format_hint: Optional[dict] = None
+    ) -> ImportResult:
+        """Import a single worksheet."""
+        result = ImportResult(success=True)
+
+        # Detect or use provided format
+        fmt = format_hint or self.detect_format(ws)
+
+        if fmt["orientation"] == "providers_in_rows":
+            return self._import_providers_in_rows(ws, fmt, result)
+        else:
+            return self._import_providers_in_columns(ws, fmt, result)
+
+    def _import_providers_in_rows(
+        self,
+        ws: Worksheet,
+        fmt: dict,
+        result: ImportResult
+    ) -> ImportResult:
+        """Import format where providers are in rows, dates in columns."""
+
+        provider_col = fmt["provider_col"]
+        date_cols = fmt["date_cols"]
+        data_start_row = fmt["data_start_row"]
+
+        min_date = None
+        max_date = None
+
+        for row_idx in range(data_start_row, ws.max_row + 1):
+            provider_cell = ws.cell(row=row_idx, column=provider_col)
+            provider_name = str(provider_cell.value).strip() if provider_cell.value else ""
+
+            if not provider_name or provider_name.lower() in ["", "none", "null"]:
+                continue
+
+            # Get or create provider schedule
+            if provider_name not in result.providers:
+                result.providers[provider_name] = ProviderSchedule(name=provider_name)
+
+            provider_schedule = result.providers[provider_name]
+
+            # Process each date column
+            for col_idx, slot_date, time_of_day in date_cols:
+                cell = ws.cell(row=row_idx, column=col_idx)
+                raw_value = str(cell.value).strip() if cell.value else ""
+
+                slot_type = self.classify_slot(raw_value)
+
+                slot = ScheduleSlot(
+                    provider_name=provider_name,
+                    date=slot_date,
+                    time_of_day=time_of_day,
+                    slot_type=slot_type,
+                    raw_value=raw_value,
+                )
+
+                provider_schedule.add_slot(slot)
+                result.total_slots += 1
+
+                if slot_type == SlotType.CLINIC:
+                    result.clinic_slots += 1
+                elif slot_type == SlotType.FMIT:
+                    result.fmit_slots += 1
+
+                # Track date range
+                if min_date is None or slot_date < min_date:
+                    min_date = slot_date
+                if max_date is None or slot_date > max_date:
+                    max_date = slot_date
+
+        result.date_range = (min_date, max_date)
+        return result
+
+    def _import_providers_in_columns(
+        self,
+        ws: Worksheet,
+        fmt: dict,
+        result: ImportResult
+    ) -> ImportResult:
+        """Import format where dates are in rows, providers in columns."""
+
+        date_rows = fmt.get("date_rows", [])
+        header_row = fmt.get("header_row", 1)
+
+        # Get provider names from header row
+        providers = []
+        for col_idx in range(2, ws.max_column + 1):
+            cell = ws.cell(row=header_row, column=col_idx)
+            if cell.value:
+                provider_name = str(cell.value).strip()
+                providers.append((col_idx, provider_name))
+                result.providers[provider_name] = ProviderSchedule(name=provider_name)
+
+        min_date = None
+        max_date = None
+
+        # Process each date row
+        for row_idx, slot_date in date_rows:
+            for col_idx, provider_name in providers:
+                cell = ws.cell(row=row_idx, column=col_idx)
+                raw_value = str(cell.value).strip() if cell.value else ""
+
+                slot_type = self.classify_slot(raw_value)
+
+                slot = ScheduleSlot(
+                    provider_name=provider_name,
+                    date=slot_date,
+                    time_of_day="AM",  # Assume full day
+                    slot_type=slot_type,
+                    raw_value=raw_value,
+                )
+
+                result.providers[provider_name].add_slot(slot)
+                result.total_slots += 1
+
+                if slot_type == SlotType.CLINIC:
+                    result.clinic_slots += 1
+                elif slot_type == SlotType.FMIT:
+                    result.fmit_slots += 1
+
+                if min_date is None or slot_date < min_date:
+                    min_date = slot_date
+                if max_date is None or slot_date > max_date:
+                    max_date = slot_date
+
+        result.date_range = (min_date, max_date)
+        return result
+
+    def import_file(
+        self,
+        file_path: Optional[str] = None,
+        file_bytes: Optional[bytes] = None,
+        sheet_name: Optional[str] = None
+    ) -> ImportResult:
+        """
+        Import a schedule from an Excel file.
+
+        Args:
+            file_path: Path to the Excel file
+            file_bytes: Raw bytes of Excel file (for API uploads)
+            sheet_name: Specific sheet to import (None = first sheet)
+
+        Returns:
+            ImportResult with parsed data and any conflicts
+        """
+        try:
+            if file_bytes:
+                wb = load_workbook(io.BytesIO(file_bytes), data_only=True)
+            elif file_path:
+                wb = load_workbook(file_path, data_only=True)
+            else:
+                return ImportResult(
+                    success=False,
+                    errors=["No file path or bytes provided"]
+                )
+
+            # Get worksheet
+            if sheet_name:
+                if sheet_name not in wb.sheetnames:
+                    return ImportResult(
+                        success=False,
+                        errors=[f"Sheet '{sheet_name}' not found. Available: {wb.sheetnames}"]
+                    )
+                ws = wb[sheet_name]
+            else:
+                ws = wb.active
+
+            return self.import_worksheet(ws)
+
+        except Exception as e:
+            return ImportResult(
+                success=False,
+                errors=[f"Failed to parse Excel file: {str(e)}"]
+            )
+
+
+class ConflictDetector:
+    """
+    Detects scheduling conflicts between FMIT and clinic schedules.
+    """
+
+    def __init__(
+        self,
+        fmit_schedule: ImportResult,
+        clinic_schedule: ImportResult,
+        specialty_providers: Optional[dict[str, list[str]]] = None
+    ):
+        """
+        Initialize conflict detector.
+
+        Args:
+            fmit_schedule: Parsed FMIT rotation schedule
+            clinic_schedule: Parsed clinic schedule
+            specialty_providers: Dict of specialty -> provider names (e.g., {"Sports Medicine": ["FAC-PD"]})
+        """
+        self.fmit = fmit_schedule
+        self.clinic = clinic_schedule
+        self.specialty_providers = specialty_providers or {}
+        self.conflicts: list[ScheduleConflict] = []
+
+    def detect_all_conflicts(self) -> list[ScheduleConflict]:
+        """Run all conflict detection checks."""
+        self.conflicts = []
+
+        self._detect_double_bookings()
+        self._detect_specialty_unavailability()
+        self._detect_alternating_patterns()
+
+        return self.conflicts
+
+    def _detect_double_bookings(self) -> None:
+        """Detect when provider is scheduled for both FMIT and clinic."""
+        # Get all providers in both schedules
+        common_providers = set(self.fmit.providers.keys()) & set(self.clinic.providers.keys())
+
+        for provider_name in common_providers:
+            fmit_schedule = self.fmit.providers[provider_name]
+            clinic_schedule = self.clinic.providers[provider_name]
+
+            for key, fmit_slot in fmit_schedule.slots.items():
+                if fmit_slot.slot_type != SlotType.FMIT:
+                    continue
+
+                clinic_slot = clinic_schedule.get_slot(fmit_slot.date, fmit_slot.time_of_day)
+
+                if clinic_slot and clinic_slot.slot_type == SlotType.CLINIC:
+                    self.conflicts.append(ScheduleConflict(
+                        provider_name=provider_name,
+                        date=fmit_slot.date,
+                        time_of_day=fmit_slot.time_of_day,
+                        conflict_type="double_book",
+                        fmit_assignment=fmit_slot.raw_value,
+                        clinic_assignment=clinic_slot.raw_value,
+                        severity="error",
+                    ))
+
+    def _detect_specialty_unavailability(self) -> None:
+        """Detect when specialty provider is unavailable for their specialty clinic."""
+        for specialty, providers in self.specialty_providers.items():
+            for provider_name in providers:
+                if provider_name not in self.fmit.providers:
+                    continue
+
+                fmit_schedule = self.fmit.providers[provider_name]
+
+                for key, slot in fmit_schedule.slots.items():
+                    if slot.slot_type == SlotType.FMIT:
+                        self.conflicts.append(ScheduleConflict(
+                            provider_name=provider_name,
+                            date=slot.date,
+                            time_of_day=slot.time_of_day,
+                            conflict_type="specialty_unavailable",
+                            fmit_assignment=slot.raw_value,
+                            severity="warning",
+                            message=f"{provider_name} ({specialty} specialist) on FMIT on {slot.date.strftime('%b %d')} - no specialty coverage",
+                        ))
+
+    def _detect_alternating_patterns(self) -> None:
+        """Detect week-on/week-off patterns that are hard on families."""
+        for provider_name, schedule in self.fmit.providers.items():
+            if schedule.has_alternating_pattern():
+                weeks = schedule.get_fmit_weeks()
+                week_strs = [f"{w[0].strftime('%b %d')}-{w[1].strftime('%b %d')}" for w in weeks]
+
+                self.conflicts.append(ScheduleConflict(
+                    provider_name=provider_name,
+                    date=weeks[0][0] if weeks else date.today(),
+                    time_of_day="AM",
+                    conflict_type="consecutive_weeks",
+                    severity="warning",
+                    message=f"{provider_name} has alternating week FMIT pattern: {', '.join(week_strs)}. Consider consolidating.",
+                ))
+
+
+def analyze_schedule_conflicts(
+    fmit_file: Optional[str] = None,
+    fmit_bytes: Optional[bytes] = None,
+    clinic_file: Optional[str] = None,
+    clinic_bytes: Optional[bytes] = None,
+    specialty_providers: Optional[dict[str, list[str]]] = None,
+) -> dict:
+    """
+    Analyze conflicts between FMIT rotation and clinic schedules.
+
+    Args:
+        fmit_file: Path to FMIT rotation Excel file
+        fmit_bytes: Bytes of FMIT rotation Excel file
+        clinic_file: Path to clinic schedule Excel file
+        clinic_bytes: Bytes of clinic schedule Excel file
+        specialty_providers: Dict mapping specialty -> provider names
+
+    Returns:
+        Analysis results including conflicts, recommendations
+    """
+    importer = ClinicScheduleImporter()
+
+    # Import FMIT schedule
+    fmit_result = importer.import_file(
+        file_path=fmit_file,
+        file_bytes=fmit_bytes
+    )
+
+    if not fmit_result.success:
+        return {
+            "success": False,
+            "error": f"Failed to import FMIT schedule: {fmit_result.errors}",
+        }
+
+    # Import clinic schedule if provided
+    clinic_result = None
+    if clinic_file or clinic_bytes:
+        clinic_result = importer.import_file(
+            file_path=clinic_file,
+            file_bytes=clinic_bytes
+        )
+
+        if not clinic_result.success:
+            return {
+                "success": False,
+                "error": f"Failed to import clinic schedule: {clinic_result.errors}",
+            }
+
+    # Detect conflicts
+    conflicts = []
+    if clinic_result:
+        detector = ConflictDetector(
+            fmit_schedule=fmit_result,
+            clinic_schedule=clinic_result,
+            specialty_providers=specialty_providers,
+        )
+        conflicts = detector.detect_all_conflicts()
+    else:
+        # Just check FMIT schedule for alternating patterns
+        for provider_name, schedule in fmit_result.providers.items():
+            if schedule.has_alternating_pattern():
+                weeks = schedule.get_fmit_weeks()
+                conflicts.append(ScheduleConflict(
+                    provider_name=provider_name,
+                    date=weeks[0][0] if weeks else date.today(),
+                    time_of_day="AM",
+                    conflict_type="consecutive_weeks",
+                    severity="warning",
+                    message=f"{provider_name} has alternating FMIT pattern - hard on families",
+                ))
+
+    # Build recommendations
+    recommendations = []
+
+    alternating = [c for c in conflicts if c.conflict_type == "consecutive_weeks"]
+    if alternating:
+        recommendations.append({
+            "type": "consolidate_fmit",
+            "providers": [c.provider_name for c in alternating],
+            "message": "Consider consolidating FMIT weeks to reduce alternating patterns",
+        })
+
+    specialty_conflicts = [c for c in conflicts if c.conflict_type == "specialty_unavailable"]
+    if specialty_conflicts:
+        recommendations.append({
+            "type": "specialty_coverage",
+            "providers": list(set(c.provider_name for c in specialty_conflicts)),
+            "message": "Specialty providers on FMIT create clinic coverage gaps",
+        })
+
+    double_books = [c for c in conflicts if c.conflict_type == "double_book"]
+    if double_books:
+        recommendations.append({
+            "type": "resolve_double_booking",
+            "count": len(double_books),
+            "message": f"{len(double_books)} double-booking conflicts must be resolved",
+        })
+
+    return {
+        "success": True,
+        "fmit_schedule": {
+            "providers": list(fmit_result.providers.keys()),
+            "date_range": [
+                fmit_result.date_range[0].isoformat() if fmit_result.date_range[0] else None,
+                fmit_result.date_range[1].isoformat() if fmit_result.date_range[1] else None,
+            ],
+            "total_slots": fmit_result.total_slots,
+            "fmit_slots": fmit_result.fmit_slots,
+        },
+        "clinic_schedule": {
+            "providers": list(clinic_result.providers.keys()) if clinic_result else [],
+            "date_range": [
+                clinic_result.date_range[0].isoformat() if clinic_result and clinic_result.date_range[0] else None,
+                clinic_result.date_range[1].isoformat() if clinic_result and clinic_result.date_range[1] else None,
+            ],
+            "total_slots": clinic_result.total_slots if clinic_result else 0,
+            "clinic_slots": clinic_result.clinic_slots if clinic_result else 0,
+        } if clinic_result else None,
+        "conflicts": [
+            {
+                "provider": c.provider_name,
+                "date": c.date.isoformat(),
+                "time": c.time_of_day,
+                "type": c.conflict_type,
+                "severity": c.severity,
+                "message": c.message,
+            }
+            for c in conflicts
+        ],
+        "recommendations": recommendations,
+        "summary": {
+            "total_conflicts": len(conflicts),
+            "errors": len([c for c in conflicts if c.severity == "error"]),
+            "warnings": len([c for c in conflicts if c.severity == "warning"]),
+        },
+    }
