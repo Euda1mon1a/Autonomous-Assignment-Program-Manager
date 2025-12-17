@@ -680,15 +680,32 @@ async def export_for_research(
 
 ---
 
+### Existing Foundation
+
+**Good news:** `backend/app/analytics/metrics.py` already implements several core metrics:
+
+| Function | Coverage | Notes |
+|----------|----------|-------|
+| `calculate_fairness_index()` | ✅ Complete | Gini coefficient with status thresholds |
+| `calculate_coverage_rate()` | ✅ Complete | Block coverage percentage |
+| `calculate_acgme_compliance_rate()` | ✅ Complete | Violation tracking |
+| `calculate_preference_satisfaction()` | ✅ Complete | Preference matching rate |
+| `calculate_consecutive_duty_stats()` | ✅ Complete | Duty pattern analysis |
+
+**What's missing:** Persistence layer (ScheduleVersion, MetricSnapshot tables) and temporal/longitudinal tracking. The computation logic exists; the versioning infrastructure doesn't.
+
+---
+
 ### Implementation TODOs
 
-#### Phase 1: Metrics Foundation (Low Priority)
-- [ ] Create `backend/app/analytics/` module structure
-- [ ] Implement `FairnessMetrics` computation (Gini coefficient, variance)
-- [ ] Implement `SatisfactionMetrics` computation (preference fulfillment)
-- [ ] Implement `StabilityMetrics` computation (churn rate, ripple factor)
+#### Phase 1: Metrics Foundation (Low Priority) — ~40% Complete
+- [x] Create `backend/app/analytics/` module structure ✅ exists
+- [x] Implement `FairnessMetrics` computation (Gini coefficient) ✅ `calculate_fairness_index()`
+- [x] Implement `SatisfactionMetrics` computation (preference fulfillment) ✅ `calculate_preference_satisfaction()`
+- [ ] Implement `StabilityMetrics` computation (churn rate, ripple factor) — **new work**
 - [ ] Create database migration for `schedule_versions`, `metric_snapshots`, `schedule_diffs`
 - [ ] Add Celery task to compute metrics on schedule changes
+- [ ] Wire existing metrics functions into `ScheduleMetricsComputer` service
 
 #### Phase 2: Historical Analysis (Low Priority)
 - [ ] Leverage SQLAlchemy-Continuum to reconstruct historical schedules
