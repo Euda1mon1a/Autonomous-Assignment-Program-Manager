@@ -1,17 +1,17 @@
 """Tests for leave provider package."""
-import pytest
 from datetime import date, timedelta
 from pathlib import Path
 from uuid import uuid4
 
-from app.services.leave_providers import (
-    LeaveProvider,
-    LeaveRecord,
-    DatabaseLeaveProvider,
-    CSVLeaveProvider,
-    LeaveProviderFactory,
-)
+import pytest
+
 from app.models.absence import Absence
+from app.services.leave_providers import (
+    CSVLeaveProvider,
+    DatabaseLeaveProvider,
+    LeaveProviderFactory,
+    LeaveRecord,
+)
 
 
 class TestLeaveRecord:

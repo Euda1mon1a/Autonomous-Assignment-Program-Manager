@@ -1,7 +1,8 @@
 """User model for authentication."""
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, CheckConstraint
+
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, String
 
 from app.db.base import Base
 from app.db.types import GUID

@@ -5,23 +5,23 @@ All business logic is in the service layer.
 """
 
 from datetime import date
-from typing import Optional
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query
 
-from app.db.session import get_db
-from app.schemas.absence import AbsenceCreate, AbsenceUpdate, AbsenceResponse
 from app.controllers.absence_controller import AbsenceController
+from app.db.session import get_db
+from app.schemas.absence import AbsenceCreate, AbsenceResponse, AbsenceUpdate
 
 router = APIRouter()
 
 
 @router.get("")
 def list_absences(
-    start_date: Optional[date] = Query(None, description="Filter absences starting from"),
-    end_date: Optional[date] = Query(None, description="Filter absences ending by"),
-    person_id: Optional[UUID] = Query(None, description="Filter by person"),
-    absence_type: Optional[str] = Query(None, description="Filter by absence type"),
+    start_date: date | None = Query(None, description="Filter absences starting from"),
+    end_date: date | None = Query(None, description="Filter absences ending by"),
+    person_id: UUID | None = Query(None, description="Filter by person"),
+    absence_type: str | None = Query(None, description="Filter by absence type"),
     db=Depends(get_db),
 ):
     """List absences with optional filters."""

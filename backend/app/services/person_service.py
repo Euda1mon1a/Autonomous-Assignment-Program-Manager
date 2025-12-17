@@ -1,11 +1,11 @@
 """Person service for business logic."""
 
-from typing import Optional, List
 from uuid import UUID
+
 from sqlalchemy.orm import Session
 
-from app.repositories.person import PersonRepository
 from app.models.person import Person
+from app.repositories.person import PersonRepository
 
 
 class PersonService:
@@ -15,25 +15,25 @@ class PersonService:
         self.db = db
         self.person_repo = PersonRepository(db)
 
-    def get_person(self, person_id: UUID) -> Optional[Person]:
+    def get_person(self, person_id: UUID) -> Person | None:
         """Get a single person by ID."""
         return self.person_repo.get_by_id(person_id)
 
     def list_people(
         self,
-        type: Optional[str] = None,
-        pgy_level: Optional[int] = None,
+        type: str | None = None,
+        pgy_level: int | None = None,
     ) -> dict:
         """List people with optional filters."""
         people = self.person_repo.list_with_filters(type=type, pgy_level=pgy_level)
         return {"items": people, "total": len(people)}
 
-    def list_residents(self, pgy_level: Optional[int] = None) -> dict:
+    def list_residents(self, pgy_level: int | None = None) -> dict:
         """List all residents with optional PGY filter."""
         residents = self.person_repo.list_residents(pgy_level=pgy_level)
         return {"items": residents, "total": len(residents)}
 
-    def list_faculty(self, specialty: Optional[str] = None) -> dict:
+    def list_faculty(self, specialty: str | None = None) -> dict:
         """List all faculty with optional specialty filter."""
         faculty = self.person_repo.list_faculty(specialty=specialty)
         return {"items": faculty, "total": len(faculty)}
@@ -42,10 +42,10 @@ class PersonService:
         self,
         name: str,
         type: str,
-        email: Optional[str] = None,
-        pgy_level: Optional[int] = None,
-        target_clinical_blocks: Optional[int] = None,
-        specialties: Optional[List[str]] = None,
+        email: str | None = None,
+        pgy_level: int | None = None,
+        target_clinical_blocks: int | None = None,
+        specialties: list[str] | None = None,
         performs_procedures: bool = False,
     ) -> dict:
         """

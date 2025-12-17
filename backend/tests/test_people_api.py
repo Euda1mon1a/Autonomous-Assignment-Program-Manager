@@ -3,7 +3,6 @@ Tests for the People API endpoints.
 
 Tests CRUD operations for residents and faculty.
 """
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 

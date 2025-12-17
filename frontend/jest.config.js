@@ -19,9 +19,9 @@ const config = {
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
   },
-  // Handle ESM modules from MSW v2
+  // Handle ESM modules from MSW v2 and its dependencies
   transformIgnorePatterns: [
-    'node_modules/(?!(msw|@mswjs)/)',
+    'node_modules/(?!(msw|@mswjs|until-async)/)',
   ],
   collectCoverageFrom: [
     'src/lib/**/*.{ts,tsx}',

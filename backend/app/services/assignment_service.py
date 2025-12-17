@@ -1,15 +1,14 @@
 """Assignment service for business logic."""
 
 from datetime import date, timedelta
-from typing import Optional, List
 from uuid import UUID
+
 from sqlalchemy.orm import Session
 
+from app.models.assignment import Assignment
 from app.repositories.assignment import AssignmentRepository
 from app.repositories.block import BlockRepository
 from app.repositories.person import PersonRepository
-from app.models.assignment import Assignment
-from app.models.person import Person
 from app.scheduling.validator import ACGMEValidator
 
 
@@ -22,16 +21,16 @@ class AssignmentService:
         self.block_repo = BlockRepository(db)
         self.person_repo = PersonRepository(db)
 
-    def get_assignment(self, assignment_id: UUID) -> Optional[Assignment]:
+    def get_assignment(self, assignment_id: UUID) -> Assignment | None:
         """Get a single assignment by ID."""
         return self.assignment_repo.get_by_id(assignment_id)
 
     def list_assignments(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        person_id: Optional[UUID] = None,
-        role: Optional[str] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        person_id: UUID | None = None,
+        role: str | None = None,
     ) -> dict:
         """List assignments with optional filters."""
         assignments = self.assignment_repo.list_with_filters(
@@ -48,10 +47,10 @@ class AssignmentService:
         person_id: UUID,
         role: str,
         created_by: str,
-        override_reason: Optional[str] = None,
-        rotation_template_id: Optional[UUID] = None,
-        activity_type: Optional[str] = None,
-        notes: Optional[str] = None,
+        override_reason: str | None = None,
+        rotation_template_id: UUID | None = None,
+        activity_type: str | None = None,
+        notes: str | None = None,
     ) -> dict:
         """
         Create a new assignment with ACGME validation.
@@ -111,7 +110,7 @@ class AssignmentService:
         assignment_id: UUID,
         update_data: dict,
         expected_updated_at,
-        override_reason: Optional[str] = None,
+        override_reason: str | None = None,
     ) -> dict:
         """
         Update an assignment with optimistic locking.
@@ -176,7 +175,7 @@ class AssignmentService:
     def _validate_acgme(
         self,
         assignment: Assignment,
-        override_reason: Optional[str] = None,
+        override_reason: str | None = None,
     ) -> dict:
         """
         Validate ACGME compliance for a single assignment.

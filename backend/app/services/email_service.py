@@ -14,12 +14,11 @@ Configuration is done via environment variables:
 - SMTP_USE_TLS: Use TLS (default: True)
 """
 
-import smtplib
 import logging
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from typing import List, Optional
+import smtplib
 from datetime import date
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from app.models.certification import PersonCertification
 from app.models.person import Person
@@ -34,8 +33,8 @@ class EmailConfig:
         self,
         host: str = "localhost",
         port: int = 587,
-        user: Optional[str] = None,
-        password: Optional[str] = None,
+        user: str | None = None,
+        password: str | None = None,
         from_email: str = "noreply@hospital.org",
         from_name: str = "Residency Scheduler",
         use_tls: bool = True,
@@ -69,7 +68,7 @@ class EmailConfig:
 class EmailService:
     """Service for sending emails."""
 
-    def __init__(self, config: Optional[EmailConfig] = None):
+    def __init__(self, config: EmailConfig | None = None):
         self.config = config or EmailConfig.from_env()
 
     def send_email(
@@ -77,7 +76,7 @@ class EmailService:
         to_email: str,
         subject: str,
         body_html: str,
-        body_text: Optional[str] = None,
+        body_text: str | None = None,
     ) -> bool:
         """
         Send an email.
@@ -218,8 +217,8 @@ This is an automated message from the Residency Scheduling System.
     def send_compliance_summary(
         self,
         to_email: str,
-        expiring_certs: List[PersonCertification],
-        expired_certs: List[PersonCertification],
+        expiring_certs: list[PersonCertification],
+        expired_certs: list[PersonCertification],
     ) -> bool:
         """Send a compliance summary email to administrators."""
         subject = f"Certification Compliance Summary - {date.today().strftime('%B %d, %Y')}"

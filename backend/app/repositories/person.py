@@ -1,11 +1,11 @@
 """Person repository for database operations."""
 
-from typing import Optional, List
 from uuid import UUID
+
 from sqlalchemy.orm import Session
 
-from app.repositories.base import BaseRepository
 from app.models.person import Person
+from app.repositories.base import BaseRepository
 
 
 class PersonRepository(BaseRepository[Person]):
@@ -16,9 +16,9 @@ class PersonRepository(BaseRepository[Person]):
 
     def list_with_filters(
         self,
-        type: Optional[str] = None,
-        pgy_level: Optional[int] = None,
-    ) -> List[Person]:
+        type: str | None = None,
+        pgy_level: int | None = None,
+    ) -> list[Person]:
         """List people with optional filters, ordered by name."""
         query = self.db.query(Person)
 
@@ -31,8 +31,8 @@ class PersonRepository(BaseRepository[Person]):
 
     def list_residents(
         self,
-        pgy_level: Optional[int] = None,
-    ) -> List[Person]:
+        pgy_level: int | None = None,
+    ) -> list[Person]:
         """List all residents, optionally filtered by PGY level."""
         query = self.db.query(Person).filter(Person.type == "resident")
 
@@ -43,8 +43,8 @@ class PersonRepository(BaseRepository[Person]):
 
     def list_faculty(
         self,
-        specialty: Optional[str] = None,
-    ) -> List[Person]:
+        specialty: str | None = None,
+    ) -> list[Person]:
         """List all faculty, optionally filtered by specialty."""
         query = self.db.query(Person).filter(Person.type == "faculty")
 
@@ -53,7 +53,7 @@ class PersonRepository(BaseRepository[Person]):
 
         return query.order_by(Person.name).all()
 
-    def get_by_type(self, type: str) -> List[Person]:
+    def get_by_type(self, type: str) -> list[Person]:
         """Get all people of a specific type."""
         return (
             self.db.query(Person)
@@ -68,7 +68,7 @@ class PersonRepository(BaseRepository[Person]):
         person_type: str,
         assigned_ids: set[UUID],
         absent_ids: set[UUID],
-    ) -> List[Person]:
+    ) -> list[Person]:
         """
         Get people available for assignment.
 
@@ -92,7 +92,7 @@ class PersonRepository(BaseRepository[Person]):
 
         return query.all()
 
-    def get_by_pgy_level(self, pgy_level: int) -> List[Person]:
+    def get_by_pgy_level(self, pgy_level: int) -> list[Person]:
         """Get all residents at a specific PGY level."""
         return (
             self.db.query(Person)

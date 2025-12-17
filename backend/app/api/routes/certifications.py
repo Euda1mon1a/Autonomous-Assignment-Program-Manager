@@ -4,29 +4,29 @@ Provides endpoints for managing personnel certifications (BLS, ACLS, PALS, etc.)
 with expiration tracking and compliance monitoring.
 """
 
-from typing import Optional
-from uuid import UUID
 from datetime import date
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
+from app.controllers.certification_controller import CertificationController
+from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.certification import (
     CertificationTypeCreate,
-    CertificationTypeUpdate,
-    CertificationTypeResponse,
     CertificationTypeListResponse,
-    PersonCertificationCreate,
-    PersonCertificationUpdate,
-    PersonCertificationResponse,
-    PersonCertificationListResponse,
-    ExpiringCertificationsListResponse,
+    CertificationTypeResponse,
+    CertificationTypeUpdate,
     ComplianceSummaryResponse,
+    ExpiringCertificationsListResponse,
+    PersonCertificationCreate,
+    PersonCertificationListResponse,
+    PersonCertificationResponse,
+    PersonCertificationUpdate,
     PersonComplianceResponse,
 )
-from app.core.security import get_current_active_user
-from app.controllers.certification_controller import CertificationController
 
 router = APIRouter()
 
@@ -169,7 +169,7 @@ class RenewalRequest(BaseModel):
     """Request body for renewing a certification."""
     new_issued_date: date
     new_expiration_date: date
-    new_certification_number: Optional[str] = None
+    new_certification_number: str | None = None
 
 
 @router.post("/{cert_id}/renew", response_model=PersonCertificationResponse)

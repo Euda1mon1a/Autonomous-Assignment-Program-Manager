@@ -2,11 +2,14 @@
 
 These types work with both PostgreSQL (production) and SQLite (testing).
 """
-import uuid
-from sqlalchemy import String, Text
-from sqlalchemy.types import TypeDecorator, CHAR
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB as PG_JSONB, ARRAY as PG_ARRAY
 import json
+import uuid
+
+from sqlalchemy import String, Text
+from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
+from sqlalchemy.dialects.postgresql import JSONB as PG_JSONB
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.types import CHAR, TypeDecorator
 
 
 class GUID(TypeDecorator):
@@ -26,9 +29,7 @@ class GUID(TypeDecorator):
             return dialect.type_descriptor(CHAR(36))
 
     def process_bind_param(self, value, dialect):
-        if value is None:
-            return value
-        elif dialect.name == 'postgresql':
+        if value is None or dialect.name == 'postgresql':
             return value
         else:
             if isinstance(value, uuid.UUID):
@@ -36,9 +37,7 @@ class GUID(TypeDecorator):
             return value
 
     def process_result_value(self, value, dialect):
-        if value is None:
-            return value
-        elif dialect.name == 'postgresql':
+        if value is None or dialect.name == 'postgresql':
             return value
         else:
             if not isinstance(value, uuid.UUID):
@@ -63,17 +62,13 @@ class JSONType(TypeDecorator):
             return dialect.type_descriptor(Text())
 
     def process_bind_param(self, value, dialect):
-        if value is None:
-            return value
-        elif dialect.name == 'postgresql':
+        if value is None or dialect.name == 'postgresql':
             return value
         else:
             return json.dumps(value)
 
     def process_result_value(self, value, dialect):
-        if value is None:
-            return value
-        elif dialect.name == 'postgresql':
+        if value is None or dialect.name == 'postgresql':
             return value
         else:
             if isinstance(value, str):
@@ -98,17 +93,13 @@ class StringArrayType(TypeDecorator):
             return dialect.type_descriptor(Text())
 
     def process_bind_param(self, value, dialect):
-        if value is None:
-            return value
-        elif dialect.name == 'postgresql':
+        if value is None or dialect.name == 'postgresql':
             return value
         else:
             return json.dumps(value)
 
     def process_result_value(self, value, dialect):
-        if value is None:
-            return value
-        elif dialect.name == 'postgresql':
+        if value is None or dialect.name == 'postgresql':
             return value
         else:
             if isinstance(value, str):

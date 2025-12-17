@@ -1,7 +1,7 @@
 """Block schemas."""
 from datetime import date
-from typing import Optional
 from uuid import UUID
+
 from pydantic import BaseModel, field_validator
 
 
@@ -12,7 +12,7 @@ class BlockBase(BaseModel):
     block_number: int
     is_weekend: bool = False
     is_holiday: bool = False
-    holiday_name: Optional[str] = None
+    holiday_name: str | None = None
 
     @field_validator("time_of_day")
     @classmethod

@@ -6,9 +6,9 @@ Tests for:
 - Notification channels
 - Service methods
 """
-import pytest
 from datetime import date, timedelta
-from uuid import uuid4
+
+import pytest
 
 
 @pytest.mark.unit

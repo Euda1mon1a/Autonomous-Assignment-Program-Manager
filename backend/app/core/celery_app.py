@@ -13,9 +13,10 @@ Configuration:
 - Task serialization: JSON
 """
 
+import os
+
 from celery import Celery
 from celery.schedules import crontab
-import os
 
 from app.core.config import get_settings
 

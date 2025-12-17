@@ -12,9 +12,10 @@ Pool settings are configurable via environment variables:
 - DB_POOL_RECYCLE: Connection lifetime (default: 1800s)
 - DB_POOL_PRE_PING: Verify connections (default: True)
 """
+from collections.abc import Generator
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from typing import Generator
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import get_settings
 

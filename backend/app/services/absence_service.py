@@ -1,12 +1,12 @@
 """Absence service for business logic."""
 
 from datetime import date
-from typing import Optional
 from uuid import UUID
+
 from sqlalchemy.orm import Session
 
-from app.repositories.absence import AbsenceRepository
 from app.models.absence import Absence
+from app.repositories.absence import AbsenceRepository
 
 
 class AbsenceService:
@@ -16,16 +16,16 @@ class AbsenceService:
         self.db = db
         self.absence_repo = AbsenceRepository(db)
 
-    def get_absence(self, absence_id: UUID) -> Optional[Absence]:
+    def get_absence(self, absence_id: UUID) -> Absence | None:
         """Get a single absence by ID."""
         return self.absence_repo.get_by_id(absence_id)
 
     def list_absences(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        person_id: Optional[UUID] = None,
-        absence_type: Optional[str] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        person_id: UUID | None = None,
+        absence_type: str | None = None,
     ) -> dict:
         """List absences with optional filters."""
         absences = self.absence_repo.list_with_filters(
@@ -42,10 +42,10 @@ class AbsenceService:
         start_date: date,
         end_date: date,
         absence_type: str,
-        replacement_activity: Optional[str] = None,
+        replacement_activity: str | None = None,
         deployment_orders: bool = False,
-        tdy_location: Optional[str] = None,
-        notes: Optional[str] = None,
+        tdy_location: str | None = None,
+        notes: str | None = None,
     ) -> dict:
         """
         Create a new absence.

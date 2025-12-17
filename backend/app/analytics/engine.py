@@ -1,21 +1,21 @@
 """Core analytics engine for schedule analysis."""
-from typing import Dict, List, Any, Optional
-from datetime import datetime, date, timedelta
-from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
-from collections import defaultdict, Counter
+from collections import defaultdict
+from datetime import date, datetime
+from typing import Any
 
+from sqlalchemy import and_, func
+from sqlalchemy.orm import Session
+
+from app.analytics.metrics import (
+    calculate_acgme_compliance_rate,
+    calculate_coverage_rate,
+    calculate_fairness_index,
+)
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
-from app.models.schedule_run import ScheduleRun
 from app.models.rotation_template import RotationTemplate
-from app.analytics.metrics import (
-    calculate_fairness_index,
-    calculate_coverage_rate,
-    calculate_acgme_compliance_rate,
-    calculate_consecutive_duty_stats
-)
+from app.models.schedule_run import ScheduleRun
 
 
 class AnalyticsEngine:
@@ -34,7 +34,7 @@ class AnalyticsEngine:
         self,
         start_date: date,
         end_date: date
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Comprehensive schedule analysis for a date range.
 
@@ -105,7 +105,7 @@ class AnalyticsEngine:
             "summary": {
                 "total_blocks": len(blocks),
                 "total_assignments": len(assignments),
-                "unique_people": len(set(a.person_id for a in assignments)),
+                "unique_people": len({a.person_id for a in assignments}),
                 "schedule_runs": len(schedule_runs)
             },
             "metrics": {
@@ -124,9 +124,9 @@ class AnalyticsEngine:
 
     def get_resident_workload_distribution(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None
-    ) -> Dict[str, Any]:
+        start_date: date | None = None,
+        end_date: date | None = None
+    ) -> dict[str, Any]:
         """
         Get workload fairness metrics across all residents.
 
@@ -195,9 +195,9 @@ class AnalyticsEngine:
 
     def get_rotation_coverage_stats(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None
-    ) -> Dict[str, Any]:
+        start_date: date | None = None,
+        end_date: date | None = None
+    ) -> dict[str, Any]:
         """
         Get coverage statistics by rotation type.
 
@@ -251,7 +251,7 @@ class AnalyticsEngine:
         self,
         metric: str,
         period: str = "monthly"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get historical trends for a specific metric.
 
@@ -295,7 +295,7 @@ class AnalyticsEngine:
         self,
         run_id_1: str,
         run_id_2: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Compare two schedule versions.
 

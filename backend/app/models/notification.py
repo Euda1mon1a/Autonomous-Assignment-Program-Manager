@@ -1,8 +1,17 @@
 """Notification models for database persistence."""
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, ForeignKey, CheckConstraint
-from sqlalchemy.orm import relationship
+
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 
 from app.db.base import Base
 from app.db.types import GUID, JSONType

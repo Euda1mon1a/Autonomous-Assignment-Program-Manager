@@ -4,21 +4,26 @@ Thin routing layer that connects URL paths to controllers.
 All business logic is in the service layer.
 """
 
-from typing import Optional
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query
 
+from app.controllers.credential_controller import CredentialController
+from app.controllers.person_controller import PersonController
+from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.person import PersonCreate, PersonUpdate, PersonResponse, PersonListResponse
+from app.schemas.person import (
+    PersonCreate,
+    PersonListResponse,
+    PersonResponse,
+    PersonUpdate,
+)
+from app.schemas.procedure import ProcedureListResponse
 from app.schemas.procedure_credential import (
     CredentialListResponse,
     FacultyCredentialSummary,
 )
-from app.schemas.procedure import ProcedureListResponse
-from app.core.security import get_current_active_user
-from app.controllers.person_controller import PersonController
-from app.controllers.credential_controller import CredentialController
 from app.services.credential_service import CredentialService
 
 router = APIRouter()
@@ -26,8 +31,8 @@ router = APIRouter()
 
 @router.get("", response_model=PersonListResponse)
 def list_people(
-    type: Optional[str] = Query(None, description="Filter by type: 'resident' or 'faculty'"),
-    pgy_level: Optional[int] = Query(None, description="Filter residents by PGY level"),
+    type: str | None = Query(None, description="Filter by type: 'resident' or 'faculty'"),
+    pgy_level: int | None = Query(None, description="Filter residents by PGY level"),
     db=Depends(get_db),
 ):
     """List all people, optionally filtered by type or PGY level."""
@@ -37,7 +42,7 @@ def list_people(
 
 @router.get("/residents", response_model=PersonListResponse)
 def list_residents(
-    pgy_level: Optional[int] = Query(None, description="Filter by PGY level (1, 2, or 3)"),
+    pgy_level: int | None = Query(None, description="Filter by PGY level (1, 2, or 3)"),
     db=Depends(get_db),
 ):
     """List all residents, optionally filtered by PGY level."""
@@ -47,7 +52,7 @@ def list_residents(
 
 @router.get("/faculty", response_model=PersonListResponse)
 def list_faculty(
-    specialty: Optional[str] = Query(None, description="Filter by specialty"),
+    specialty: str | None = Query(None, description="Filter by specialty"),
     db=Depends(get_db),
 ):
     """List all faculty, optionally filtered by specialty."""
@@ -107,7 +112,7 @@ def delete_person(
 @router.get("/{person_id}/credentials", response_model=CredentialListResponse)
 def get_person_credentials(
     person_id: UUID,
-    status: Optional[str] = Query(None, description="Filter by status"),
+    status: str | None = Query(None, description="Filter by status"),
     include_expired: bool = Query(False, description="Include expired credentials"),
     db=Depends(get_db),
 ):

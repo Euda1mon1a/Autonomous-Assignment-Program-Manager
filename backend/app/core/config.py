@@ -1,6 +1,7 @@
 """Application configuration."""
-from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -68,7 +69,7 @@ class Settings(BaseSettings):
         case_sensitive = True
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     """Get cached settings instance."""
     return Settings()
@@ -76,8 +77,8 @@ def get_settings() -> Settings:
 
 def get_resilience_config():
     """Get ResilienceConfig from settings."""
-    from app.resilience.service import ResilienceConfig
     from app.resilience.defense_in_depth import DefenseLevel
+    from app.resilience.service import ResilienceConfig
 
     settings = get_settings()
     return ResilienceConfig(

@@ -15,12 +15,11 @@ approaches capacity:
 The 20% buffer absorbs variance, sick days, and emergencies.
 """
 
+import logging
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from enum import Enum
-from typing import Optional
 from uuid import UUID
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +91,7 @@ class UtilizationMonitor:
 
     def __init__(
         self,
-        threshold: Optional[UtilizationThreshold] = None,
+        threshold: UtilizationThreshold | None = None,
     ):
         self.threshold = threshold or UtilizationThreshold()
         self._capacity_cache = {}

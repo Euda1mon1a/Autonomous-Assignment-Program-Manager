@@ -1,29 +1,29 @@
 """Notification system for schedule alerts and updates."""
 from sqlalchemy.orm import Session
 
-from app.notifications.service import (
-    NotificationService,
-    NotificationPreferences,
-    ScheduledNotification,
-    notify_schedule_published,
-    notify_acgme_warning,
-)
-from app.notifications.templates import (
-    NotificationType,
-    NotificationTemplate,
-    get_template,
-    render_notification,
-    NOTIFICATION_TEMPLATES,
-)
 from app.notifications.channels import (
+    AVAILABLE_CHANNELS,
+    DeliveryResult,
+    EmailChannel,
+    InAppChannel,
     NotificationChannel,
     NotificationPayload,
-    DeliveryResult,
-    InAppChannel,
-    EmailChannel,
     WebhookChannel,
     get_channel,
-    AVAILABLE_CHANNELS,
+)
+from app.notifications.service import (
+    NotificationPreferences,
+    NotificationService,
+    ScheduledNotification,
+    notify_acgme_warning,
+    notify_schedule_published,
+)
+from app.notifications.templates import (
+    NOTIFICATION_TEMPLATES,
+    NotificationTemplate,
+    NotificationType,
+    get_template,
+    render_notification,
 )
 
 __all__ = [

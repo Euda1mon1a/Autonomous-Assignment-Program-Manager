@@ -3,30 +3,30 @@
 Provides endpoints for managing medical procedures that require credentialed supervision.
 """
 
-from typing import Optional
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query
 
+from app.controllers.procedure_controller import ProcedureController
+from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.procedure import (
     ProcedureCreate,
-    ProcedureUpdate,
-    ProcedureResponse,
     ProcedureListResponse,
+    ProcedureResponse,
+    ProcedureUpdate,
 )
-from app.core.security import get_current_active_user
-from app.controllers.procedure_controller import ProcedureController
 
 router = APIRouter()
 
 
 @router.get("", response_model=ProcedureListResponse)
 def list_procedures(
-    specialty: Optional[str] = Query(None, description="Filter by specialty"),
-    category: Optional[str] = Query(None, description="Filter by category"),
-    is_active: Optional[bool] = Query(None, description="Filter by active status"),
-    complexity_level: Optional[str] = Query(None, description="Filter by complexity level"),
+    specialty: str | None = Query(None, description="Filter by specialty"),
+    category: str | None = Query(None, description="Filter by category"),
+    is_active: bool | None = Query(None, description="Filter by active status"),
+    complexity_level: str | None = Query(None, description="Filter by complexity level"),
     db=Depends(get_db),
 ):
     """List all procedures with optional filters."""

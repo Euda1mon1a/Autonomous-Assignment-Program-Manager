@@ -1,7 +1,8 @@
 """Application settings model for database persistence."""
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, CheckConstraint
+
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, Integer, String
 
 from app.db.base import Base
 from app.db.types import GUID
