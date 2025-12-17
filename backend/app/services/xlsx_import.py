@@ -16,7 +16,7 @@ from openpyxl.cell import Cell
 from sqlalchemy.orm import Session
 
 from app.models.person import Person
-from app.models.absence import Absence
+from app.models.absence import Absence as AbsenceModel
 
 
 class SlotType(Enum):
@@ -944,6 +944,53 @@ class SwapFinder:
 
         return sorted(results, key=lambda x: -x[1])  # Most cycles first
 
+    @classmethod
+    def from_fmit_file(
+        cls,
+        file_path: Optional[str] = None,
+        file_bytes: Optional[bytes] = None,
+        faculty_targets: Optional[dict[str, "FacultyTarget"]] = None,
+        external_conflicts: Optional[list["ExternalConflict"]] = None,
+        db: Optional[Session] = None,
+        include_absence_conflicts: bool = True,
+        schedule_release_days: int = 90,
+    ) -> "SwapFinder":
+        """
+        Factory method to create SwapFinder from an FMIT schedule file.
+
+        Args:
+            file_path: Path to Excel file
+            file_bytes: Raw bytes of Excel file
+            faculty_targets: Optional faculty target configurations
+            external_conflicts: Optional external conflicts list
+            db: Database session for loading absence conflicts
+            include_absence_conflicts: Whether to include absence records
+            schedule_release_days: Days ahead for schedule flexibility
+
+        Returns:
+            Configured SwapFinder instance
+        """
+        importer = ClinicScheduleImporter(db)
+        result = importer.import_file(file_path=file_path, file_bytes=file_bytes)
+
+        if not result.success:
+            raise ValueError(f"Failed to import schedule: {result.errors}")
+
+        # Build external conflicts list
+        all_conflicts = list(external_conflicts or [])
+
+        # Add absence-based conflicts if requested
+        if include_absence_conflicts and db:
+            absence_conflicts = load_external_conflicts_from_absences(db)
+            all_conflicts.extend(absence_conflicts)
+
+        return cls(
+            fmit_schedule=result,
+            faculty_targets=faculty_targets,
+            external_conflicts=all_conflicts,
+            schedule_release_date=date.today() + timedelta(days=schedule_release_days),
+        )
+
     def suggest_swaps_for_alternating(
         self, faculty: str
     ) -> list[tuple[date, list[SwapCandidate]]]:
@@ -1110,3 +1157,110 @@ def analyze_schedule_conflicts(
             "warnings": len([c for c in conflicts if c.severity == "warning"]),
         },
     }
+
+
+def load_external_conflicts_from_absences(
+    db: Session,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+) -> list[ExternalConflict]:
+    """
+    Load external conflicts from the absence model in the database.
+
+    This integrates the Absence model with the ExternalConflict dataclass,
+    allowing SwapFinder to automatically consider approved leave, TDY,
+    deployments, and conferences when finding swap candidates.
+
+    Args:
+        db: Database session
+        start_date: Optional start of date range to load (defaults to today)
+        end_date: Optional end of date range (defaults to 1 year from now)
+
+    Returns:
+        List of ExternalConflict objects built from absence records
+    """
+    if start_date is None:
+        start_date = date.today()
+    if end_date is None:
+        end_date = date.today() + timedelta(days=365)
+
+    # Query blocking absences within the date range
+    absences = (
+        db.query(AbsenceModel)
+        .join(Person)
+        .filter(
+            AbsenceModel.end_date >= start_date,
+            AbsenceModel.start_date <= end_date,
+        )
+        .all()
+    )
+
+    conflicts = []
+    for absence in absences:
+        # Only include blocking absences
+        if not absence.should_block_assignment:
+            continue
+
+        # Map absence_type to conflict_type
+        conflict_type_map = {
+            "vacation": "leave",
+            "deployment": "deployment",
+            "tdy": "tdy",
+            "medical": "medical",
+            "family_emergency": "leave",
+            "conference": "conference",
+        }
+        conflict_type = conflict_type_map.get(absence.absence_type, "leave")
+
+        # Build description
+        description = absence.notes or ""
+        if absence.tdy_location:
+            description = f"TDY - {absence.tdy_location}"
+        if absence.replacement_activity:
+            description = absence.replacement_activity
+
+        conflicts.append(
+            ExternalConflict(
+                faculty=absence.person.name,
+                start_date=absence.start_date,
+                end_date=absence.end_date,
+                conflict_type=conflict_type,
+                description=description,
+            )
+        )
+
+    return conflicts
+
+
+def absence_to_external_conflict(absence: AbsenceModel) -> Optional[ExternalConflict]:
+    """
+    Convert a single Absence model to an ExternalConflict.
+
+    Returns None if the absence is non-blocking.
+    """
+    if not absence.should_block_assignment:
+        return None
+
+    conflict_type_map = {
+        "vacation": "leave",
+        "deployment": "deployment",
+        "tdy": "tdy",
+        "medical": "medical",
+        "family_emergency": "leave",
+        "conference": "conference",
+    }
+    conflict_type = conflict_type_map.get(absence.absence_type, "leave")
+
+    description = absence.notes or ""
+    if absence.tdy_location:
+        description = f"TDY - {absence.tdy_location}"
+    if absence.replacement_activity:
+        description = absence.replacement_activity
+
+    return ExternalConflict(
+        faculty=absence.person.name,
+        start_date=absence.start_date,
+        end_date=absence.end_date,
+        conflict_type=conflict_type,
+        description=description,
+    )
