@@ -1,6 +1,6 @@
 # Residency Scheduler
 
-> **Last Updated:** 2025-12-16
+> **Last Updated:** 2025-12-17
 
 <p align="center">
   <strong>A comprehensive medical residency scheduling system with ACGME compliance validation</strong>
@@ -54,8 +54,10 @@ Residency Scheduler is a production-ready, full-stack application designed to au
 
 ### User Management
 - JWT-based authentication with secure password hashing
-- Three user roles: Admin, Coordinator, Faculty
+- Rate limiting on authentication endpoints (5 login/min, 3 register/min)
+- Eight user roles: Admin, Coordinator, Faculty, Resident, Clinical Staff, RN, LPN, MSA
 - Activity logging and audit trails
+- Full role-based access control (RBAC) with resource-level filtering
 
 ### Procedure Credentialing
 Track faculty qualifications for supervising medical procedures:
@@ -372,8 +374,15 @@ DEBUG=false
 # Frontend
 NEXT_PUBLIC_API_URL=http://localhost:8000
 
-# Redis (for Celery background tasks)
+# Redis (for Celery background tasks and rate limiting)
 REDIS_URL=redis://localhost:6379/0
+
+# Rate Limiting
+RATE_LIMIT_LOGIN_ATTEMPTS=5
+RATE_LIMIT_LOGIN_WINDOW=60
+RATE_LIMIT_REGISTER_ATTEMPTS=3
+RATE_LIMIT_REGISTER_WINDOW=60
+RATE_LIMIT_ENABLED=true
 
 # Prometheus (optional)
 PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc

@@ -1,13 +1,18 @@
 """Role-based view API."""
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
+from app.core.security import get_current_active_user
+from app.models.user import User
 from app.schemas.role_views import StaffRole, RoleViewConfig, ViewPermissions
 from app.services.role_view_service import RoleViewService
 
 router = APIRouter()
 
 @router.get("/views/permissions/{role}", response_model=ViewPermissions)
-def get_role_permissions(role: StaffRole):
+def get_role_permissions(
+    role: StaffRole,
+    current_user: User = Depends(get_current_active_user)
+):
     """
     Get view permissions for a specific role.
 
@@ -27,7 +32,10 @@ def get_role_permissions(role: StaffRole):
         )
 
 @router.get("/views/config/{role}", response_model=RoleViewConfig)
-def get_role_config(role: StaffRole):
+def get_role_config(
+    role: StaffRole,
+    current_user: User = Depends(get_current_active_user)
+):
     """
     Get complete view configuration for a specific role.
 
@@ -47,33 +55,30 @@ def get_role_config(role: StaffRole):
         )
 
 @router.get("/views/config")
-def get_current_user_view_config():
+def get_current_user_view_config(
+    current_user: User = Depends(get_current_active_user)
+):
     """
     Get view configuration for current user.
-
-    Note: This endpoint requires authentication integration.
-    Currently returns a placeholder response.
-
-    TODO: Integrate with authentication service to get current user's role
 
     Returns:
         RoleViewConfig for the authenticated user
     """
-    # Placeholder implementation - needs auth integration
-    # In a real implementation, you would:
-    # 1. Get current user from auth token/session
-    # 2. Look up user's role from database
-    # 3. Return their role configuration
-
-    # For now, return a sample response
-    return {
-        "message": "This endpoint requires authentication integration",
-        "note": "Integrate with your auth service to retrieve current user's role",
-        "example_usage": "GET /views/config/{role} to get config for a specific role"
-    }
+    try:
+        config = RoleViewService.get_role_config(current_user.role)
+        return config
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve user's role configuration: {str(e)}"
+        )
 
 @router.post("/views/check-access")
-def check_endpoint_access(role: StaffRole, endpoint_category: str):
+def check_endpoint_access(
+    role: StaffRole,
+    endpoint_category: str,
+    current_user: User = Depends(get_current_active_user)
+):
     """
     Check if a role can access a specific endpoint category.
 
@@ -99,7 +104,9 @@ def check_endpoint_access(role: StaffRole, endpoint_category: str):
         )
 
 @router.get("/views/roles", response_model=list)
-def list_all_roles():
+def list_all_roles(
+    current_user: User = Depends(get_current_active_user)
+):
     """
     List all available staff roles.
 
@@ -109,7 +116,9 @@ def list_all_roles():
     return [role.value for role in StaffRole]
 
 @router.get("/views/permissions", response_model=dict)
-def get_all_role_permissions():
+def get_all_role_permissions(
+    current_user: User = Depends(get_current_active_user)
+):
     """
     Get permissions for all roles.
 

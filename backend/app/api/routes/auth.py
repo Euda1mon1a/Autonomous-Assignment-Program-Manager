@@ -12,6 +12,7 @@ from jose import JWTError, jwt
 
 from app.controllers.auth_controller import AuthController
 from app.core.config import get_settings
+from app.core.rate_limit import create_rate_limit_dependency
 from app.core.security import (
     ALGORITHM,
     blacklist_token,
@@ -27,16 +28,31 @@ from app.schemas.auth import Token, UserCreate, UserLogin, UserResponse
 settings = get_settings()
 router = APIRouter()
 
+# Rate limiting dependencies
+rate_limit_login = create_rate_limit_dependency(
+    max_requests=settings.RATE_LIMIT_LOGIN_ATTEMPTS,
+    window_seconds=settings.RATE_LIMIT_LOGIN_WINDOW,
+    key_prefix="login",
+)
+
+rate_limit_register = create_rate_limit_dependency(
+    max_requests=settings.RATE_LIMIT_REGISTER_ATTEMPTS,
+    window_seconds=settings.RATE_LIMIT_REGISTER_WINDOW,
+    key_prefix="register",
+)
+
 
 @router.post("/login", response_model=Token)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db=Depends(get_db),
+    _rate_limit: None = Depends(rate_limit_login),
 ):
     """
     Authenticate user and return JWT token.
 
     Accepts OAuth2 password flow (username + password).
+    Rate limited to prevent brute force attacks.
     """
     controller = AuthController(db)
     return controller.login(form_data.username, form_data.password)
@@ -46,11 +62,13 @@ async def login(
 async def login_json(
     credentials: UserLogin,
     db=Depends(get_db),
+    _rate_limit: None = Depends(rate_limit_login),
 ):
     """
     Authenticate user with JSON body and return JWT token.
 
     Alternative to OAuth2 form-based login.
+    Rate limited to prevent brute force attacks.
     """
     controller = AuthController(db)
     return controller.login(credentials.username, credentials.password)
@@ -110,12 +128,14 @@ async def register_user(
     user_in: UserCreate,
     db=Depends(get_db),
     current_user: User | None = Depends(get_current_user),
+    _rate_limit: None = Depends(rate_limit_register),
 ):
     """
     Register a new user.
 
     - If no users exist, first user becomes admin
     - Otherwise, requires admin to create new users
+    Rate limited to prevent automated account creation attacks.
     """
     controller = AuthController(db)
     return controller.register_user(user_in, current_user)

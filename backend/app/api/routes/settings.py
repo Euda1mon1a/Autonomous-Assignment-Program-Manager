@@ -5,8 +5,10 @@ from datetime import datetime
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.core.security import get_current_active_user, get_admin_user
 from app.db.session import get_db
 from app.models.settings import ApplicationSettings
+from app.models.user import User
 from app.schemas.settings import SettingsBase, SettingsResponse, SettingsUpdate
 
 logger = logging.getLogger(__name__)
@@ -40,14 +42,21 @@ def get_or_create_settings(db: Session) -> ApplicationSettings:
 
 
 @router.get("", response_model=SettingsResponse)
-def get_settings(db: Session = Depends(get_db)):
+def get_settings(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
     """Get current application settings."""
     settings = get_or_create_settings(db)
     return SettingsResponse(**settings.to_dict())
 
 
 @router.post("", response_model=SettingsResponse)
-def update_settings(settings_in: SettingsBase, db: Session = Depends(get_db)):
+def update_settings(
+    settings_in: SettingsBase,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user),
+):
     """Update application settings (full replacement)."""
     settings = get_or_create_settings(db)
 
@@ -65,7 +74,11 @@ def update_settings(settings_in: SettingsBase, db: Session = Depends(get_db)):
 
 
 @router.patch("", response_model=SettingsResponse)
-def patch_settings(settings_in: SettingsUpdate, db: Session = Depends(get_db)):
+def patch_settings(
+    settings_in: SettingsUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user),
+):
     """Partially update application settings."""
     settings = get_or_create_settings(db)
 
@@ -86,7 +99,10 @@ def patch_settings(settings_in: SettingsUpdate, db: Session = Depends(get_db)):
 
 
 @router.delete("", status_code=204)
-def reset_settings(db: Session = Depends(get_db)):
+def reset_settings(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user),
+):
     """Reset settings to defaults."""
     settings = get_or_create_settings(db)
 
