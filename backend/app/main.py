@@ -8,15 +8,65 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from ipaddress import ip_address, ip_network
 
 from app.api.routes import api_router
 from app.core.config import get_settings
+from app.core.exceptions import AppException
 from app.middleware.audit import AuditContextMiddleware
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
+
+
+def _validate_security_config() -> None:
+    """
+    Validate security configuration at startup.
+
+    Checks that SECRET_KEY and WEBHOOK_SECRET are properly set.
+    In production mode (DEBUG=False), raises ValueError if secrets are insecure.
+    In development mode (DEBUG=True), logs warnings.
+    """
+    insecure_defaults = [
+        "",
+        "your-secret-key-change-in-production",
+        "your-webhook-secret-change-in-production",
+    ]
+
+    errors = []
+
+    # Check SECRET_KEY
+    if settings.SECRET_KEY in insecure_defaults:
+        errors.append("SECRET_KEY is not set or uses an insecure default value")
+    elif len(settings.SECRET_KEY) < 32:
+        errors.append(f"SECRET_KEY is too short ({len(settings.SECRET_KEY)} chars, minimum 32)")
+
+    # Check WEBHOOK_SECRET
+    if settings.WEBHOOK_SECRET in insecure_defaults:
+        errors.append("WEBHOOK_SECRET is not set or uses an insecure default value")
+    elif len(settings.WEBHOOK_SECRET) < 32:
+        errors.append(f"WEBHOOK_SECRET is too short ({len(settings.WEBHOOK_SECRET)} chars, minimum 32)")
+
+    if errors:
+        error_msg = "Security configuration errors:\n" + "\n".join(f"  - {e}" for e in errors)
+        if not settings.DEBUG:
+            # Production mode: fail fast
+            raise ValueError(
+                f"{error_msg}\n\n"
+                "Set strong random values for SECRET_KEY and WEBHOOK_SECRET environment variables.\n"
+                "Generate secrets using: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+            )
+        else:
+            # Development mode: warn but allow
+            logger.warning(
+                f"\n{'='*80}\n"
+                f"WARNING: Running in DEBUG mode with insecure configuration!\n"
+                f"{error_msg}\n"
+                f"This is only acceptable for local development.\n"
+                f"{'='*80}\n"
+            )
 
 
 @asynccontextmanager
@@ -30,6 +80,9 @@ async def lifespan(app: FastAPI):
     """
     # Startup
     logger.info("Starting Residency Scheduler API")
+
+    # Validate security configuration at startup
+    _validate_security_config()
 
     # Initialize Prometheus instrumentation
     try:
@@ -86,10 +139,57 @@ app = FastAPI(
     title="Residency Scheduler API",
     description="API for medical residency scheduling with ACGME compliance",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
     lifespan=lifespan,
 )
+
+
+# =============================================================================
+# Global Exception Handlers
+# =============================================================================
+
+
+@app.exception_handler(AppException)
+async def app_exception_handler(request: Request, exc: AppException):
+    """Handle custom application exceptions with user-friendly messages."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.message}
+    )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Handle all unhandled exceptions without leaking internal details."""
+    # Log the full error for debugging
+    logger.error(
+        f"Unhandled exception on {request.method} {request.url.path}: {exc}",
+        exc_info=True
+    )
+
+    # Return generic error to client
+    if settings.DEBUG:
+        # In debug mode, include more details for development
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": str(exc),
+                "type": type(exc).__name__
+            }
+        )
+    else:
+        # In production, hide implementation details
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "An internal error occurred. Please try again later."}
+        )
+
+
+# =============================================================================
+# Middleware Configuration
+# =============================================================================
 
 # CORS middleware
 app.add_middleware(
@@ -112,6 +212,14 @@ if settings.TRUSTED_HOSTS:
 # Audit context middleware - captures user for version history tracking
 app.add_middleware(AuditContextMiddleware)
 
+# Internal network IP ranges for metrics endpoint restriction
+INTERNAL_NETWORKS = [
+    ip_network("127.0.0.0/8"),
+    ip_network("10.0.0.0/8"),
+    ip_network("172.16.0.0/12"),
+    ip_network("192.168.0.0/16"),
+]
+
 # Backwards compatibility redirect - redirect /api/... to /api/v1/...
 @app.middleware("http")
 async def redirect_old_api(request: Request, call_next):
@@ -119,6 +227,28 @@ async def redirect_old_api(request: Request, call_next):
     if request.url.path.startswith("/api/") and not request.url.path.startswith("/api/v1/"):
         new_path = request.url.path.replace("/api/", "/api/v1/", 1)
         return RedirectResponse(url=new_path, status_code=307)
+    return await call_next(request)
+
+
+# Metrics endpoint protection - restrict to internal IPs in production
+@app.middleware("http")
+async def restrict_metrics_endpoint(request: Request, call_next):
+    """Restrict /metrics endpoint to internal networks in production."""
+    if request.url.path == "/metrics" and not settings.DEBUG:
+        try:
+            client_ip = ip_address(request.client.host)
+            is_internal = any(client_ip in network for network in INTERNAL_NETWORKS)
+            if not is_internal:
+                return JSONResponse(
+                    status_code=403,
+                    content={"detail": "Access denied"}
+                )
+        except (ValueError, TypeError):
+            # Invalid IP address
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "Access denied"}
+            )
     return await call_next(request)
 
 # Include API routes

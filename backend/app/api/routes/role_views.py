@@ -1,4 +1,5 @@
 """Role-based view API."""
+import logging
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.core.security import get_current_active_user
@@ -7,6 +8,7 @@ from app.schemas.role_views import StaffRole, RoleViewConfig, ViewPermissions
 from app.services.role_view_service import RoleViewService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 @router.get("/views/permissions/{role}", response_model=ViewPermissions)
 def get_role_permissions(
@@ -28,7 +30,7 @@ def get_role_permissions(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve permissions: {str(e)}"
+            detail="An error occurred retrieving permissions"
         )
 
 @router.get("/views/config/{role}", response_model=RoleViewConfig)
@@ -51,7 +53,7 @@ def get_role_config(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve role configuration: {str(e)}"
+            detail="An error occurred retrieving role configuration"
         )
 
 @router.get("/views/config")
@@ -70,7 +72,7 @@ def get_current_user_view_config(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve user's role configuration: {str(e)}"
+            detail="An error occurred retrieving role configuration"
         )
 
 @router.post("/views/check-access")
@@ -100,7 +102,7 @@ def check_endpoint_access(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to check access: {str(e)}"
+            detail="An error occurred checking access"
         )
 
 @router.get("/views/roles", response_model=list)

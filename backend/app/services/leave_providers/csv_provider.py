@@ -3,12 +3,43 @@ import csv
 from datetime import date, datetime
 from pathlib import Path
 
+from app.core.file_security import validate_file_path, FileSecurityError
 from app.services.leave_providers.base import LeaveProvider, LeaveRecord
+
+# Default allowed directory for CSV files
+# Can be configured via environment or application settings
+ALLOWED_CSV_DIR = Path("data/csv_files")
 
 
 class CSVLeaveProvider(LeaveProvider):
-    def __init__(self, file_path: Path):
-        self.file_path = file_path
+    def __init__(self, file_path: Path, allowed_base_dir: Path | None = None):
+        """
+        Initialize CSV leave provider with path validation.
+
+        Args:
+            file_path: Path to the CSV file containing leave data
+            allowed_base_dir: Optional base directory to validate against.
+                             Defaults to ALLOWED_CSV_DIR constant.
+
+        Raises:
+            FileSecurityError: If file_path is outside the allowed directory
+        """
+        # Use provided base directory or default
+        base_dir = allowed_base_dir or ALLOWED_CSV_DIR
+
+        # Ensure the allowed base directory exists
+        base_dir.mkdir(parents=True, exist_ok=True)
+
+        # Validate that file_path is within the allowed directory
+        try:
+            validated_path = validate_file_path(file_path, base_dir)
+            self.file_path = validated_path
+        except FileSecurityError:
+            # If validation fails, raise with more context
+            raise FileSecurityError(
+                f"CSV file path '{file_path}' must be within allowed directory '{base_dir}'"
+            )
+
         self._records: list[LeaveRecord] = []
 
     def get_conflicts(self, faculty_name: str | None = None, start_date: date | None = None, end_date: date | None = None) -> list[LeaveRecord]:

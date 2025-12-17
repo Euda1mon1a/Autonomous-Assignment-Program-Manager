@@ -67,6 +67,12 @@ export function validateDateRange(start: string, end: string): string | null {
   return null;
 }
 
+const COMMON_PASSWORDS = [
+  'password', 'password123', '123456', '12345678', 'qwerty',
+  'abc123', 'monkey', 'master', 'dragon', 'letmein',
+  'admin', 'welcome', 'login', 'passw0rd', 'password1'
+];
+
 /**
  * Validates password requirements
  * @param password - The password to validate
@@ -77,8 +83,27 @@ export function validatePassword(password: string): string | null {
     return 'Password is required';
   }
 
-  if (password.length < 1) {
-    return 'Password cannot be empty';
+  if (password.length < 12) {
+    return 'Password must be at least 12 characters';
+  }
+
+  if (password.length > 128) {
+    return 'Password must be less than 128 characters';
+  }
+
+  const hasLower = /[a-z]/.test(password);
+  const hasUpper = /[A-Z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+  const complexity = [hasLower, hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
+
+  if (complexity < 3) {
+    return 'Password must contain at least 3 of: lowercase, uppercase, numbers, special characters';
+  }
+
+  if (COMMON_PASSWORDS.includes(password.toLowerCase())) {
+    return 'Password is too common. Please choose a stronger password';
   }
 
   return null;

@@ -1,7 +1,10 @@
 """Schedule generation and validation API routes."""
+import logging
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
+from app.core.file_security import FileValidationError, validate_excel_upload
 from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
@@ -34,6 +37,7 @@ from app.services.xlsx_import import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/generate", response_model=ScheduleResponse)
@@ -135,7 +139,8 @@ def generate_schedule(
         # Re-raise HTTP exceptions
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error generating schedule: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An error occurred generating the schedule")
 
 
 @router.get("/validate", response_model=ValidationResult)
@@ -313,7 +318,16 @@ def analyze_imported_schedules(
     except Exception as e:
         raise HTTPException(
             status_code=400,
-            detail=f"Failed to read FMIT file: {str(e)}"
+            detail="Failed to read uploaded file"
+        )
+
+    # Validate FMIT file
+    try:
+        validate_excel_upload(fmit_bytes, fmit_file.filename)
+    except FileValidationError as e:
+        raise HTTPException(
+            status_code=400,
+            detail="File validation failed"
         )
 
     clinic_bytes = None
@@ -323,7 +337,16 @@ def analyze_imported_schedules(
         except Exception as e:
             raise HTTPException(
                 status_code=400,
-                detail=f"Failed to read clinic file: {str(e)}"
+                detail="Failed to read uploaded file"
+            )
+
+        # Validate clinic file
+        try:
+            validate_excel_upload(clinic_bytes, clinic_file.filename)
+        except FileValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail="File validation failed"
             )
 
     # Run analysis
@@ -380,7 +403,16 @@ def analyze_single_file(
     except Exception as e:
         raise HTTPException(
             status_code=400,
-            detail=f"Failed to read file: {str(e)}"
+            detail="Failed to read uploaded file"
+        )
+
+    # Validate uploaded file
+    try:
+        validate_excel_upload(file_bytes, file.filename)
+    except FileValidationError as e:
+        raise HTTPException(
+            status_code=400,
+            detail="File validation failed"
         )
 
     # Parse specialty providers
@@ -501,7 +533,7 @@ def find_swap_candidates(
     except (json.JSONDecodeError, ValueError) as e:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid request JSON: {str(e)}"
+            detail="Invalid request JSON format"
         )
 
     # Read FMIT file
@@ -510,7 +542,16 @@ def find_swap_candidates(
     except Exception as e:
         raise HTTPException(
             status_code=400,
-            detail=f"Failed to read FMIT file: {str(e)}"
+            detail="Failed to read uploaded file"
+        )
+
+    # Validate FMIT file
+    try:
+        validate_excel_upload(fmit_bytes, fmit_file.filename)
+    except FileValidationError as e:
+        raise HTTPException(
+            status_code=400,
+            detail="File validation failed"
         )
 
     # Build faculty targets dict
@@ -557,9 +598,10 @@ def find_swap_candidates(
             schedule_release_days=request.schedule_release_days,
         )
     except ValueError as e:
+        logger.error(f"Invalid swap finder request: {e}", exc_info=True)
         raise HTTPException(
             status_code=422,
-            detail=str(e)
+            detail="Invalid request parameters"
         )
 
     # Validate target faculty exists in schedule

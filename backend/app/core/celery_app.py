@@ -23,8 +23,12 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-# Redis URL from environment or default
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+# Redis URL from environment or build from settings with password
+# Priority: Use environment variable if set (for Docker), otherwise use settings with password
+REDIS_URL = os.getenv("REDIS_URL")
+if not REDIS_URL:
+    # Fallback to settings with password support for local development
+    REDIS_URL = settings.redis_url_with_password
 
 # Create Celery app
 celery_app = Celery(

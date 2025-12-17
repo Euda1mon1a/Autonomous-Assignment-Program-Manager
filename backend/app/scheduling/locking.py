@@ -43,11 +43,13 @@ class ScheduleGenerationLock:
 
         Args:
             redis_client: Optional Redis client. If not provided, creates one
-                from settings.REDIS_URL.
+                from settings.REDIS_URL with password authentication.
         """
         if redis_client is None:
             settings = get_settings()
-            self.redis = redis.from_url(settings.REDIS_URL)
+            # Use authenticated Redis URL if password is configured
+            redis_url = settings.redis_url_with_password
+            self.redis = redis.from_url(redis_url)
         else:
             self.redis = redis_client
 
