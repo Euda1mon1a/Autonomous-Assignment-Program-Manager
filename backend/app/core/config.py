@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     ***REMOVED*** CORS
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
+    ***REMOVED*** Trusted Hosts (for TrustedHostMiddleware - prevents host header attacks)
+    ***REMOVED*** Empty list disables the middleware; set in production to actual domain(s)
+    TRUSTED_HOSTS: list[str] = []  ***REMOVED*** e.g., ["scheduler.hospital.org", "*.hospital.org"]
+
     ***REMOVED*** Resilience Configuration (Tier 1)
     ***REMOVED*** Utilization thresholds based on queuing theory (M/M/c queue model)
     ***REMOVED*** Wait time formula: W ~ rho / (1 - rho), where rho = utilization
