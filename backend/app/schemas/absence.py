@@ -1,7 +1,7 @@
 """Absence schemas."""
 from datetime import date, datetime
-from typing import Optional
 from uuid import UUID
+
 from pydantic import BaseModel, field_validator, model_validator
 
 
@@ -12,9 +12,9 @@ class AbsenceBase(BaseModel):
     end_date: date
     absence_type: str  # 'vacation', 'deployment', 'tdy', 'medical', 'family_emergency', 'conference'
     deployment_orders: bool = False
-    tdy_location: Optional[str] = None
-    replacement_activity: Optional[str] = None
-    notes: Optional[str] = None
+    tdy_location: str | None = None
+    replacement_activity: str | None = None
+    notes: str | None = None
 
     @field_validator("absence_type")
     @classmethod
@@ -38,13 +38,13 @@ class AbsenceCreate(AbsenceBase):
 
 class AbsenceUpdate(BaseModel):
     """Schema for updating an absence."""
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
-    absence_type: Optional[str] = None
-    deployment_orders: Optional[bool] = None
-    tdy_location: Optional[str] = None
-    replacement_activity: Optional[str] = None
-    notes: Optional[str] = None
+    start_date: date | None = None
+    end_date: date | None = None
+    absence_type: str | None = None
+    deployment_orders: bool | None = None
+    tdy_location: str | None = None
+    replacement_activity: str | None = None
+    notes: str | None = None
 
 
 class AbsenceResponse(AbsenceBase):

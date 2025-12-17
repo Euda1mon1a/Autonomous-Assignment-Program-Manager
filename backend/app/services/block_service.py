@@ -1,12 +1,12 @@
 """Block service for business logic."""
 
 from datetime import date, timedelta
-from typing import Optional, List
 from uuid import UUID
+
 from sqlalchemy.orm import Session
 
-from app.repositories.block import BlockRepository
 from app.models.block import Block
+from app.repositories.block import BlockRepository
 
 
 class BlockService:
@@ -16,15 +16,15 @@ class BlockService:
         self.db = db
         self.block_repo = BlockRepository(db)
 
-    def get_block(self, block_id: UUID) -> Optional[Block]:
+    def get_block(self, block_id: UUID) -> Block | None:
         """Get a single block by ID."""
         return self.block_repo.get_by_id(block_id)
 
     def list_blocks(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        block_number: Optional[int] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        block_number: int | None = None,
     ) -> dict:
         """List blocks with optional filters."""
         blocks = self.block_repo.list_with_filters(
@@ -38,8 +38,8 @@ class BlockService:
         self,
         block_date: date,
         time_of_day: str,
-        block_number: Optional[int] = None,
-        is_weekend: Optional[bool] = None,
+        block_number: int | None = None,
+        is_weekend: bool | None = None,
         is_holiday: bool = False,
     ) -> dict:
         """

@@ -1,5 +1,6 @@
+
 from pydantic import BaseModel, Field
-from typing import Optional
+
 
 class SettingsBase(BaseModel):
     scheduling_algorithm: str = Field(default="greedy", description="Algorithm: greedy, min_conflicts, cp_sat")
@@ -17,16 +18,16 @@ class SettingsCreate(SettingsBase):
     pass
 
 class SettingsUpdate(BaseModel):
-    scheduling_algorithm: Optional[str] = None
-    work_hours_per_week: Optional[int] = None
-    max_consecutive_days: Optional[int] = None
-    min_days_off_per_week: Optional[int] = None
-    pgy1_supervision_ratio: Optional[str] = None
-    pgy2_supervision_ratio: Optional[str] = None
-    pgy3_supervision_ratio: Optional[str] = None
-    enable_weekend_scheduling: Optional[bool] = None
-    enable_holiday_scheduling: Optional[bool] = None
-    default_block_duration_hours: Optional[int] = None
+    scheduling_algorithm: str | None = None
+    work_hours_per_week: int | None = None
+    max_consecutive_days: int | None = None
+    min_days_off_per_week: int | None = None
+    pgy1_supervision_ratio: str | None = None
+    pgy2_supervision_ratio: str | None = None
+    pgy3_supervision_ratio: str | None = None
+    enable_weekend_scheduling: bool | None = None
+    enable_holiday_scheduling: bool | None = None
+    default_block_duration_hours: int | None = None
 
 class SettingsResponse(SettingsBase):
     class Config:

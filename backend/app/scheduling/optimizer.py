@@ -7,12 +7,10 @@ Provides utilities to reduce solver complexity through:
 - Block clustering for batch processing
 - Complexity estimation for solver selection
 """
-from functools import lru_cache
-from typing import Optional
-from uuid import UUID
-from collections import defaultdict
-from datetime import date
 import logging
+from collections import defaultdict
+from functools import lru_cache
+from uuid import UUID
 
 from app.scheduling.constraints import SchedulingContext
 

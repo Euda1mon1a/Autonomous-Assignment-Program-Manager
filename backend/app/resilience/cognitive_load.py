@@ -19,13 +19,13 @@ This module implements:
 6. Cognitive load scoring for schedules
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
-from typing import Optional, Callable, Any
-from uuid import UUID, uuid4
 import logging
 import statistics
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from uuid import UUID, uuid4
 
 logger = logging.getLogger(__name__)
 
@@ -84,28 +84,28 @@ class Decision:
 
     # Options
     options: list[str] = field(default_factory=list)
-    recommended_option: Optional[str] = None
+    recommended_option: str | None = None
     has_safe_default: bool = False
-    safe_default: Optional[str] = None
+    safe_default: str | None = None
 
     # Context
     context: dict = field(default_factory=dict)
     related_decisions: list[UUID] = field(default_factory=list)
 
     # Urgency
-    deadline: Optional[datetime] = None
+    deadline: datetime | None = None
     is_urgent: bool = False
     can_defer: bool = True
 
     # Resolution
-    outcome: Optional[DecisionOutcome] = None
-    chosen_option: Optional[str] = None
-    decided_at: Optional[datetime] = None
-    decided_by: Optional[str] = None
+    outcome: DecisionOutcome | None = None
+    chosen_option: str | None = None
+    decided_at: datetime | None = None
+    decided_by: str | None = None
 
     # Cognitive cost
     estimated_cognitive_cost: float = 1.0  # 1.0 = one "decision unit"
-    actual_time_seconds: Optional[float] = None
+    actual_time_seconds: float | None = None
 
     def get_cognitive_cost(self) -> float:
         """Calculate cognitive cost based on complexity."""
@@ -147,14 +147,14 @@ class CognitiveSession:
     decisions_made: list[Decision] = field(default_factory=list)
     total_cognitive_cost: float = 0.0
     breaks_taken: int = 0
-    last_break_at: Optional[datetime] = None
+    last_break_at: datetime | None = None
 
     # State
     current_state: CognitiveState = CognitiveState.FRESH
     state_changed_at: datetime = field(default_factory=datetime.now)
 
     # Completion
-    ended_at: Optional[datetime] = None
+    ended_at: datetime | None = None
 
     def add_decision(self, decision: Decision):
         """Add a decided decision to session."""
@@ -199,9 +199,7 @@ class CognitiveSession:
         """Whether a break is recommended."""
         if self.current_state in (CognitiveState.FATIGUED, CognitiveState.DEPLETED):
             return True
-        if len(self.decisions_made) >= self.max_decisions_before_break:
-            return True
-        return False
+        return len(self.decisions_made) >= self.max_decisions_before_break
 
 
 @dataclass
@@ -211,7 +209,7 @@ class CognitiveLoadReport:
     generated_at: datetime
 
     # Current session
-    session_id: Optional[UUID]
+    session_id: UUID | None
     current_state: CognitiveState
     decisions_this_session: int
     cognitive_cost_this_session: float
@@ -238,7 +236,7 @@ class DecisionQueueStatus:
     by_category: dict[str, int]
     urgent_count: int
     can_auto_decide: int
-    oldest_pending: Optional[datetime]
+    oldest_pending: datetime | None
     estimated_cognitive_cost: float
     recommendations: list[str] = field(default_factory=list)
 
@@ -480,7 +478,7 @@ class CognitiveLoadManager:
             except Exception as e:
                 logger.error(f"State change handler error: {e}")
 
-    def get_session_status(self, session_id: UUID) -> Optional[CognitiveLoadReport]:
+    def get_session_status(self, session_id: UUID) -> CognitiveLoadReport | None:
         """
         Get cognitive load report for a session.
 

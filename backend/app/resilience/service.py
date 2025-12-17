@@ -29,122 +29,115 @@ Tier 2:
 - LeChatelierAnalyzer (equilibrium, stress compensation)
 """
 
-from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
-from typing import Optional, Callable, Any
-from uuid import UUID
 import logging
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import date, datetime
+from typing import Any
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-# Tier 1 imports
-from app.resilience.utilization import (
-    UtilizationMonitor,
-    UtilizationThreshold,
-    UtilizationLevel,
-    UtilizationMetrics,
+from app.resilience.blast_radius import (
+    BlastRadiusManager,
+    BlastRadiusReport,
+    ContainmentLevel,
+    SchedulingZone,
+    ZoneHealthReport,
+    ZoneIncident,
+    ZoneType,
+)
+from app.resilience.blast_radius import (
+    BorrowingRequest as ZoneBorrowingRequest,
+)
+
+# Tier 3 imports
+from app.resilience.cognitive_load import (
+    CognitiveLoadManager,
+    CognitiveLoadReport,
+    CognitiveSession,
+    Decision,
+    DecisionCategory,
+    DecisionComplexity,
+    DecisionOutcome,
+    DecisionQueueStatus,
+)
+from app.resilience.contingency import (
+    CentralityScore,
+    ContingencyAnalyzer,
+    VulnerabilityReport,
 )
 from app.resilience.defense_in_depth import (
     DefenseInDepth,
     DefenseLevel,
     RedundancyStatus,
 )
-from app.resilience.contingency import (
-    ContingencyAnalyzer,
-    VulnerabilityReport,
-    CentralityScore,
-)
-from app.resilience.static_stability import (
-    FallbackScheduler,
-    FallbackScenario,
-    FallbackSchedule,
-)
-from app.resilience.sacrifice_hierarchy import (
-    SacrificeHierarchy,
-    LoadSheddingLevel,
-    ActivityCategory,
-    Activity,
-)
 
 # Tier 2 imports
 from app.resilience.homeostasis import (
-    HomeostasisMonitor,
     AllostasisMetrics,
     AllostasisState,
-    HomeostasisStatus,
     FeedbackLoop,
-    PositiveFeedbackRisk,
-    CorrectiveAction,
-    DeviationSeverity,
-)
-from app.resilience.blast_radius import (
-    BlastRadiusManager,
-    SchedulingZone,
-    ZoneStatus,
-    ZoneType,
-    ContainmentLevel,
-    BorrowingRequest as ZoneBorrowingRequest,
-    ZoneIncident,
-    ZoneHealthReport,
-    BlastRadiusReport,
-)
-from app.resilience.le_chatelier import (
-    LeChatelierAnalyzer,
-    SystemStress,
-    StressType,
-    CompensationResponse,
-    CompensationType,
-    EquilibriumShift,
-    EquilibriumState,
-    EquilibriumReport,
-    StressResponsePrediction,
-)
-
-# Tier 3 imports
-from app.resilience.cognitive_load import (
-    CognitiveLoadManager,
-    CognitiveSession,
-    CognitiveState,
-    Decision,
-    DecisionCategory,
-    DecisionComplexity,
-    DecisionOutcome,
-    CognitiveLoadReport,
-    DecisionQueueStatus,
-)
-from app.resilience.stigmergy import (
-    StigmergicScheduler,
-    PreferenceTrail,
-    TrailType,
-    TrailStrength,
-    SignalType,
-    CollectivePreference,
-    SwapNetwork,
-    StigmergyStatus,
+    HomeostasisMonitor,
+    HomeostasisStatus,
 )
 from app.resilience.hub_analysis import (
-    HubAnalyzer,
-    FacultyCentrality,
-    HubProfile,
-    HubRiskLevel,
-    HubProtectionStatus,
-    HubProtectionPlan,
     CrossTrainingRecommendation,
-    CrossTrainingPriority,
+    FacultyCentrality,
+    HubAnalyzer,
     HubDistributionReport,
+    HubProfile,
+    HubProtectionPlan,
+)
+from app.resilience.le_chatelier import (
+    CompensationResponse,
+    CompensationType,
+    EquilibriumReport,
+    EquilibriumShift,
+    EquilibriumState,
+    LeChatelierAnalyzer,
+    StressResponsePrediction,
+    StressType,
+    SystemStress,
+)
+from app.resilience.sacrifice_hierarchy import (
+    LoadSheddingLevel,
+    SacrificeHierarchy,
+)
+from app.resilience.static_stability import (
+    FallbackScenario,
+    FallbackSchedule,
+    FallbackScheduler,
+)
+from app.resilience.stigmergy import (
+    CollectivePreference,
+    PreferenceTrail,
+    SignalType,
+    StigmergicScheduler,
+    StigmergyStatus,
+    SwapNetwork,
+    TrailType,
 )
 
 # Tier 3 persistence helpers
 from app.resilience.tier3_persistence import (
     persist_cognitive_session,
-    update_cognitive_session,
+    persist_cross_training_recommendation,
     persist_decision,
-    update_decision_resolution,
-    persist_preference_trail,
-    persist_trail_signal,
     persist_hub_analysis_results,
     persist_hub_protection_plan,
-    persist_cross_training_recommendation,
+    persist_preference_trail,
+    persist_trail_signal,
+    update_cognitive_session,
+    update_decision_resolution,
+)
+
+# Tier 1 imports
+from app.resilience.utilization import (
+    UtilizationLevel,
+    UtilizationMetrics,
+    UtilizationMonitor,
+    UtilizationThreshold,
 )
 
 logger = logging.getLogger(__name__)
@@ -245,8 +238,8 @@ class ResilienceService:
 
     def __init__(
         self,
-        db: Optional[Session] = None,
-        config: Optional[ResilienceConfig] = None,
+        db: Session | None = None,
+        config: ResilienceConfig | None = None,
     ):
         self.db = db
         self.config = config or ResilienceConfig()
@@ -290,9 +283,9 @@ class ResilienceService:
         )
 
         # State tracking
-        self._last_health_check: Optional[datetime] = None
-        self._last_contingency_analysis: Optional[datetime] = None
-        self._last_homeostasis_check: Optional[datetime] = None
+        self._last_health_check: datetime | None = None
+        self._last_contingency_analysis: datetime | None = None
+        self._last_homeostasis_check: datetime | None = None
         self._crisis_mode: bool = False
         self._event_handlers: dict[str, list[Callable]] = {}
 
@@ -305,7 +298,7 @@ class ResilienceService:
         faculty: list,
         blocks: list,
         assignments: list,
-        coverage_requirements: Optional[dict[UUID, int]] = None,
+        coverage_requirements: dict[UUID, int] | None = None,
     ) -> SystemHealthReport:
         """
         Perform comprehensive system health check.
@@ -331,7 +324,7 @@ class ResilienceService:
             available_faculty=faculty,
             required_blocks=required_blocks,
             blocks_per_faculty_per_day=2.0,
-            days_in_period=max(1, len(set(b.date for b in blocks))),
+            days_in_period=max(1, len({b.date for b in blocks})),
         )
 
         # 2. Check redundancy for critical services
@@ -489,7 +482,7 @@ class ResilienceService:
         faculty_total: int,
         is_pcs_season: bool = False,
         is_holiday: bool = False,
-    ) -> Optional[FallbackScenario]:
+    ) -> FallbackScenario | None:
         """
         Get recommended fallback scenario based on current conditions.
 
@@ -513,8 +506,8 @@ class ResilienceService:
     def activate_fallback(
         self,
         scenario: FallbackScenario,
-        approved_by: Optional[str] = None,
-    ) -> Optional[FallbackSchedule]:
+        approved_by: str | None = None,
+    ) -> FallbackSchedule | None:
         """
         Activate a pre-computed fallback schedule.
 
@@ -647,7 +640,7 @@ class ResilienceService:
         assignments: list,
         coverage_requirements: dict,
         current_utilization: float,
-    ) -> Optional[VulnerabilityReport]:
+    ) -> VulnerabilityReport | None:
         """Run contingency analysis if due or if utilization is high."""
         should_run = (
             self._last_contingency_analysis is None or
@@ -673,7 +666,7 @@ class ResilienceService:
         self,
         utilization_level: UtilizationLevel,
         defense_level: DefenseLevel,
-        vulnerability: Optional[VulnerabilityReport],
+        vulnerability: VulnerabilityReport | None,
     ) -> str:
         """Determine overall system status from components."""
         # Check for emergency conditions
@@ -710,7 +703,7 @@ class ResilienceService:
         self,
         overall_status: str,
         utilization: UtilizationMetrics,
-        vulnerability: Optional[VulnerabilityReport],
+        vulnerability: VulnerabilityReport | None,
     ) -> tuple[list[str], list[str]]:
         """Build immediate actions and watch items from analysis."""
         immediate = []
@@ -855,7 +848,7 @@ class ResilienceService:
 
         return metrics
 
-    def get_feedback_loop_status(self, setpoint_name: str) -> Optional[FeedbackLoop]:
+    def get_feedback_loop_status(self, setpoint_name: str) -> FeedbackLoop | None:
         """Get status of a specific feedback loop."""
         return self.homeostasis.get_feedback_loop(setpoint_name)
 
@@ -863,7 +856,7 @@ class ResilienceService:
     # Tier 2: Blast Radius Methods
     # =========================================================================
 
-    def check_zone_health(self, zone_id: UUID) -> Optional[ZoneHealthReport]:
+    def check_zone_health(self, zone_id: UUID) -> ZoneHealthReport | None:
         """
         Check health of a specific scheduling zone.
 
@@ -946,7 +939,7 @@ class ResilienceService:
         priority: str,
         reason: str,
         duration_hours: int = 8,
-    ) -> Optional[ZoneBorrowingRequest]:
+    ) -> ZoneBorrowingRequest | None:
         """Request to borrow faculty from another zone."""
         from app.resilience.blast_radius import BorrowingPriority
 
@@ -983,7 +976,7 @@ class ResilienceService:
         severity: str,
         faculty_affected: list[UUID] = None,
         services_affected: list[str] = None,
-    ) -> Optional[ZoneIncident]:
+    ) -> ZoneIncident | None:
         """Record an incident affecting a zone."""
         incident = self.blast_radius.record_incident(
             zone_id=zone_id,
@@ -1079,7 +1072,7 @@ class ResilienceService:
         sustainability_days: int = 30,
         immediate_cost: float = 0.0,
         hidden_cost: float = 0.0,
-    ) -> Optional[CompensationResponse]:
+    ) -> CompensationResponse | None:
         """
         Initiate a compensation response to a stress.
 
@@ -1386,7 +1379,7 @@ class ResilienceService:
             "chosen_option": chosen_option,
         })
 
-    def get_cognitive_status(self, session_id: UUID) -> Optional[CognitiveLoadReport]:
+    def get_cognitive_status(self, session_id: UUID) -> CognitiveLoadReport | None:
         """Get cognitive load status for a session."""
         return self.cognitive_load.get_session_status(session_id)
 
@@ -1521,7 +1514,7 @@ class ResilienceService:
         self,
         slot_type: str = None,
         slot_id: UUID = None,
-    ) -> Optional[CollectivePreference]:
+    ) -> CollectivePreference | None:
         """
         Get aggregated preference for a slot or slot type.
 
@@ -1625,7 +1618,7 @@ class ResilienceService:
         faculty_id: UUID,
         services: dict[UUID, list[UUID]],
         service_names: dict[UUID, str] = None,
-    ) -> Optional[HubProfile]:
+    ) -> HubProfile | None:
         """
         Create detailed profile for a hub faculty member.
 
@@ -1676,7 +1669,7 @@ class ResilienceService:
         workload_reduction: float = 0.3,
         assign_backup: bool = True,
         created_by: str = None,
-    ) -> Optional[HubProtectionPlan]:
+    ) -> HubProtectionPlan | None:
         """
         Create a protection plan for a hub during a high-risk period.
 

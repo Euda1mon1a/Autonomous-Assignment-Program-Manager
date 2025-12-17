@@ -7,14 +7,14 @@ Validates schedules against ACGME requirements:
 - 24+4 rule (max continuous duty)
 - Supervision ratios
 """
-from datetime import date, timedelta
 from collections import defaultdict
+from datetime import date, timedelta
 
 from sqlalchemy.orm import Session
 
-from app.models.person import Person
-from app.models.block import Block
 from app.models.assignment import Assignment
+from app.models.block import Block
+from app.models.person import Person
 from app.schemas.schedule import ValidationResult, Violation
 
 
@@ -73,11 +73,11 @@ class ACGMEValidator:
             .filter(
                 Block.date >= start_date,
                 Block.date <= end_date,
-                Block.is_weekend == False,
+                not Block.is_weekend,
             )
             .count()
         )
-        assigned_blocks = len(set(a.block_id for a in assignments))
+        assigned_blocks = len({a.block_id for a in assignments})
         coverage_rate = assigned_blocks / total_blocks if total_blocks > 0 else 0.0
 
         return ValidationResult(
@@ -88,7 +88,7 @@ class ACGMEValidator:
             statistics={
                 "total_assignments": len(assignments),
                 "total_blocks": total_blocks,
-                "residents_scheduled": len(set(a.person_id for a in assignments if self._is_resident(a.person_id))),
+                "residents_scheduled": len({a.person_id for a in assignments if self._is_resident(a.person_id)}),
             },
         )
 

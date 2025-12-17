@@ -7,12 +7,12 @@ Provides detailed timing and resource usage tracking:
 - Memory usage tracking
 - Context manager support for automatic timing
 """
+import logging
+import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional, Any
-import time
-import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +22,11 @@ class PhaseMetrics:
     """Metrics for a single phase."""
     name: str
     start_time: float
-    end_time: Optional[float] = None
-    duration: Optional[float] = None
+    end_time: float | None = None
+    duration: float | None = None
     metrics: dict[str, Any] = field(default_factory=dict)
-    memory_start: Optional[float] = None
-    memory_end: Optional[float] = None
+    memory_start: float | None = None
+    memory_end: float | None = None
 
     def finalize(self):
         """Calculate final metrics."""

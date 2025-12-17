@@ -1,17 +1,17 @@
 """Absence controller for request/response handling."""
 
 from datetime import date
-from typing import Optional
 from uuid import UUID
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.services.absence_service import AbsenceService
 from app.schemas.absence import (
     AbsenceCreate,
-    AbsenceUpdate,
     AbsenceResponse,
+    AbsenceUpdate,
 )
+from app.services.absence_service import AbsenceService
 
 
 class AbsenceController:
@@ -22,10 +22,10 @@ class AbsenceController:
 
     def list_absences(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        person_id: Optional[UUID] = None,
-        absence_type: Optional[str] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        person_id: UUID | None = None,
+        absence_type: str | None = None,
     ) -> dict:
         """List absences with optional filters."""
         return self.service.list_absences(

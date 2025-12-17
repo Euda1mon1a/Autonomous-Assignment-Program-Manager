@@ -1,7 +1,7 @@
 """Add application settings table
 
-Revision ID: 009
-Revises: 008
+Revision ID: 009b
+Revises: 009
 Create Date: 2025-12-16 00:00:00.000000
 
 Creates a singleton table for application settings, migrating from
@@ -14,8 +14,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '009'
-down_revision: Union[str, None] = '008'
+revision: str = '009b'
+down_revision: Union[str, None] = '009'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

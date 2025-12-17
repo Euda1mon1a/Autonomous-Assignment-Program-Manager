@@ -1,7 +1,6 @@
 """Notification templates for schedule alerts and updates."""
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional
 from string import Template
 
 
@@ -31,10 +30,10 @@ class NotificationTemplate:
     type: NotificationType
     subject_template: str
     body_template: str
-    channels: List[str]  # e.g., ['in_app', 'email', 'webhook']
+    channels: list[str]  # e.g., ['in_app', 'email', 'webhook']
     priority: str = "normal"  # high, normal, low
 
-    def render_subject(self, data: Dict) -> str:
+    def render_subject(self, data: dict) -> str:
         """
         Render subject template with provided data.
 
@@ -47,7 +46,7 @@ class NotificationTemplate:
         template = Template(self.subject_template)
         return template.safe_substitute(data)
 
-    def render_body(self, data: Dict) -> str:
+    def render_body(self, data: dict) -> str:
         """
         Render body template with provided data.
 
@@ -62,7 +61,7 @@ class NotificationTemplate:
 
 
 # Template Registry
-NOTIFICATION_TEMPLATES: Dict[NotificationType, NotificationTemplate] = {
+NOTIFICATION_TEMPLATES: dict[NotificationType, NotificationTemplate] = {
     NotificationType.SCHEDULE_PUBLISHED: NotificationTemplate(
         type=NotificationType.SCHEDULE_PUBLISHED,
         subject_template="New Schedule Published for $period",
@@ -191,7 +190,7 @@ If you have questions or would like to discuss this, please contact your coordin
 }
 
 
-def get_template(notification_type: NotificationType) -> Optional[NotificationTemplate]:
+def get_template(notification_type: NotificationType) -> NotificationTemplate | None:
     """
     Retrieve a notification template by type.
 
@@ -206,8 +205,8 @@ def get_template(notification_type: NotificationType) -> Optional[NotificationTe
 
 def render_notification(
     notification_type: NotificationType,
-    data: Dict
-) -> Optional[Dict[str, str]]:
+    data: dict
+) -> dict[str, str] | None:
     """
     Render a notification with provided data.
 

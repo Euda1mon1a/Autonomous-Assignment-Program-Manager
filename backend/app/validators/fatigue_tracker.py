@@ -9,15 +9,13 @@ Tracks and predicts resident fatigue based on:
 - Overall workload intensity
 """
 from datetime import date, timedelta
-from collections import defaultdict
-from typing import Optional
 
-from sqlalchemy.orm import Session
 from sqlalchemy import and_
+from sqlalchemy.orm import Session
 
-from app.models.person import Person
-from app.models.block import Block
 from app.models.assignment import Assignment
+from app.models.block import Block
+from app.models.person import Person
 
 
 class FatigueTracker:

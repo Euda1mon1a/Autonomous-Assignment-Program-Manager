@@ -10,41 +10,39 @@ Tests cover:
 6. Resilience Service (orchestration)
 7. Resilience API endpoints
 """
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
 
-from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
-from app.resilience.utilization import (
-    UtilizationMonitor,
-    UtilizationThreshold,
-    UtilizationLevel,
+from app.models.block import Block
+from app.models.person import Person
+from app.resilience.contingency import (
+    ContingencyAnalyzer,
 )
 from app.resilience.defense_in_depth import (
     DefenseInDepth,
     DefenseLevel,
 )
-from app.resilience.contingency import (
-    ContingencyAnalyzer,
-)
-from app.resilience.static_stability import (
-    FallbackScheduler,
-    FallbackScenario,
-)
 from app.resilience.sacrifice_hierarchy import (
-    SacrificeHierarchy,
-    LoadSheddingLevel,
     ActivityCategory,
+    LoadSheddingLevel,
+    SacrificeHierarchy,
 )
 from app.resilience.service import (
-    ResilienceService,
     ResilienceConfig,
+    ResilienceService,
 )
-from app.models.person import Person
-from app.models.block import Block
-
+from app.resilience.static_stability import (
+    FallbackScenario,
+    FallbackScheduler,
+)
+from app.resilience.utilization import (
+    UtilizationLevel,
+    UtilizationMonitor,
+    UtilizationThreshold,
+)
 
 # ============================================================================
 # Utilization Monitor Tests

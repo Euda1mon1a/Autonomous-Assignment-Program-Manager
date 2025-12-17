@@ -8,25 +8,24 @@ subsystem, including:
 - Coverage reports by date range
 - Alert summaries by severity
 """
-from datetime import datetime, date, timedelta
-from typing import Optional, List, Dict
-from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, and_, or_
-from sqlalchemy.orm import Session
+from datetime import date, datetime, timedelta
+
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
+from sqlalchemy import and_
+from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.models.swap import SwapRecord, SwapStatus, SwapType
+from app.models.assignment import Assignment
+from app.models.block import Block
 from app.models.conflict_alert import (
     ConflictAlert,
     ConflictAlertStatus,
     ConflictSeverity,
     ConflictType,
 )
-from app.models.assignment import Assignment
-from app.models.block import Block
 from app.models.person import Person
+from app.models.swap import SwapRecord, SwapStatus, SwapType
 
 router = APIRouter()
 
@@ -44,8 +43,8 @@ class FMITHealthStatus(BaseModel):
     pending_swap_requests: int
     active_conflict_alerts: int
     coverage_percentage: float
-    issues: List[str] = []
-    recommendations: List[str] = []
+    issues: list[str] = []
+    recommendations: list[str] = []
 
 
 class FMITDetailedStatus(BaseModel):
@@ -64,8 +63,8 @@ class FMITDetailedStatus(BaseModel):
     critical_alerts: int
     warning_alerts: int
     info_alerts: int
-    recent_swap_activity: List[Dict]
-    recent_alerts: List[Dict]
+    recent_swap_activity: list[dict]
+    recent_alerts: list[dict]
 
 
 class FMITMetrics(BaseModel):
@@ -76,7 +75,7 @@ class FMITMetrics(BaseModel):
     active_conflict_alerts: int
     coverage_percentage: float
     swap_approval_rate: float
-    average_swap_processing_time_hours: Optional[float]
+    average_swap_processing_time_hours: float | None
     alert_resolution_rate: float
     critical_alerts_count: int
     one_to_one_swaps_count: int
@@ -90,7 +89,7 @@ class CoverageReportItem(BaseModel):
     covered_slots: int
     uncovered_slots: int
     coverage_percentage: float
-    faculty_assigned: List[str]
+    faculty_assigned: list[str]
 
 
 class CoverageReport(BaseModel):
@@ -99,7 +98,7 @@ class CoverageReport(BaseModel):
     end_date: date
     total_weeks: int
     overall_coverage_percentage: float
-    weeks: List[CoverageReportItem]
+    weeks: list[CoverageReportItem]
 
 
 class AlertSummaryBySeverity(BaseModel):
@@ -109,10 +108,10 @@ class AlertSummaryBySeverity(BaseModel):
     warning_count: int
     info_count: int
     total_count: int
-    by_type: Dict[str, int]
-    by_status: Dict[str, int]
-    oldest_unresolved: Optional[datetime]
-    average_resolution_time_hours: Optional[float]
+    by_type: dict[str, int]
+    by_status: dict[str, int]
+    oldest_unresolved: datetime | None
+    average_resolution_time_hours: float | None
 
 
 # ============================================================================
@@ -504,8 +503,8 @@ async def get_fmit_metrics(
 
 @router.get("/coverage", response_model=CoverageReport)
 async def get_coverage_report(
-    start_date: Optional[date] = Query(None, description="Start date (default: today)"),
-    end_date: Optional[date] = Query(None, description="End date (default: 30 days from start)"),
+    start_date: date | None = Query(None, description="Start date (default: today)"),
+    end_date: date | None = Query(None, description="End date (default: 30 days from start)"),
     db: Session = Depends(get_db),
 ):
     """
@@ -565,7 +564,7 @@ async def get_coverage_report(
             covered_slots=covered_count,
             uncovered_slots=total_slots - covered_count,
             coverage_percentage=week_coverage,
-            faculty_assigned=sorted(list(faculty_names)),
+            faculty_assigned=sorted(faculty_names),
         ))
 
         current = week_end + timedelta(days=1)

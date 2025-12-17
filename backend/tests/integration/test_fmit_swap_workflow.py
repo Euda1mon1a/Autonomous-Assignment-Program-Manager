@@ -8,15 +8,16 @@ Tests the complete end-to-end flow of:
 4. External conflict integration
 5. Error handling for invalid requests
 """
-import pytest
-import json
 import io
+import json
 from datetime import date, timedelta
 from uuid import uuid4
+
+import pytest
 from openpyxl import Workbook
 
-from app.models.person import Person
 from app.models.absence import Absence
+from app.models.person import Person
 
 
 @pytest.mark.integration

@@ -1,12 +1,15 @@
 """Service for managing FMIT conflict alerts."""
 from datetime import date, datetime
-from typing import List, Optional
 from uuid import UUID, uuid4
 
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
 
-from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus, ConflictSeverity, ConflictType
+from app.models.conflict_alert import (
+    ConflictAlert,
+    ConflictAlertStatus,
+    ConflictSeverity,
+    ConflictType,
+)
 
 
 class ConflictAlertService:
@@ -27,8 +30,8 @@ class ConflictAlertService:
         fmit_week: date,
         description: str,
         severity: ConflictSeverity = ConflictSeverity.WARNING,
-        leave_id: Optional[UUID] = None,
-        swap_id: Optional[UUID] = None,
+        leave_id: UUID | None = None,
+        swap_id: UUID | None = None,
     ) -> ConflictAlert:
         """
         Create a new conflict alert.
@@ -77,7 +80,7 @@ class ConflictAlertService:
 
         return alert
 
-    def get_alert(self, alert_id: UUID) -> Optional[ConflictAlert]:
+    def get_alert(self, alert_id: UUID) -> ConflictAlert | None:
         """Get an alert by ID."""
         return self.db.query(ConflictAlert).filter(
             ConflictAlert.id == alert_id
@@ -86,9 +89,9 @@ class ConflictAlertService:
     def get_alerts_for_faculty(
         self,
         faculty_id: UUID,
-        status: Optional[ConflictAlertStatus] = None,
+        status: ConflictAlertStatus | None = None,
         include_resolved: bool = False,
-    ) -> List[ConflictAlert]:
+    ) -> list[ConflictAlert]:
         """
         Get alerts for a faculty member.
 
@@ -113,8 +116,8 @@ class ConflictAlertService:
     def get_alerts_for_week(
         self,
         fmit_week: date,
-        faculty_id: Optional[UUID] = None,
-    ) -> List[ConflictAlert]:
+        faculty_id: UUID | None = None,
+    ) -> list[ConflictAlert]:
         """Get all alerts for a specific FMIT week."""
         query = self.db.query(ConflictAlert).filter(
             ConflictAlert.fmit_week == fmit_week
@@ -127,11 +130,11 @@ class ConflictAlertService:
 
     def get_unresolved_alerts(
         self,
-        faculty_id: Optional[UUID] = None,
-        severity: Optional[ConflictSeverity] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-    ) -> List[ConflictAlert]:
+        faculty_id: UUID | None = None,
+        severity: ConflictSeverity | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> list[ConflictAlert]:
         """
         Get unresolved alerts with optional filters.
 
@@ -160,7 +163,7 @@ class ConflictAlertService:
         self,
         alert_id: UUID,
         user_id: UUID,
-    ) -> Optional[ConflictAlert]:
+    ) -> ConflictAlert | None:
         """
         Mark an alert as acknowledged.
 
@@ -188,8 +191,8 @@ class ConflictAlertService:
         self,
         alert_id: UUID,
         user_id: UUID,
-        notes: Optional[str] = None,
-    ) -> Optional[ConflictAlert]:
+        notes: str | None = None,
+    ) -> ConflictAlert | None:
         """
         Mark an alert as resolved.
 
@@ -221,7 +224,7 @@ class ConflictAlertService:
         alert_id: UUID,
         user_id: UUID,
         reason: str,
-    ) -> Optional[ConflictAlert]:
+    ) -> ConflictAlert | None:
         """
         Mark an alert as ignored (false positive).
 
@@ -272,7 +275,7 @@ class ConflictAlertService:
             ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]),
         ).count()
 
-    def get_critical_alerts(self) -> List[ConflictAlert]:
+    def get_critical_alerts(self) -> list[ConflictAlert]:
         """Get all unresolved critical alerts."""
         return self.db.query(ConflictAlert).filter(
             ConflictAlert.severity == ConflictSeverity.CRITICAL,

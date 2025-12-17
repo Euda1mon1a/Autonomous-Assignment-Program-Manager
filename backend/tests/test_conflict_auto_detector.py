@@ -1,10 +1,9 @@
 """Tests for ConflictAutoDetector service."""
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
 
-from app.services.conflict_auto_detector import ConflictAutoDetector, ConflictInfo
 from app.models.absence import Absence
+from app.services.conflict_auto_detector import ConflictAutoDetector, ConflictInfo
 
 
 class TestConflictInfo:

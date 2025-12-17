@@ -11,10 +11,10 @@ Tier 2 (Strategic):
 - Blast radius zones
 - Equilibrium analysis (Le Chatelier)
 """
-from datetime import datetime, date
+from datetime import date, datetime
 from enum import Enum
-from typing import Optional
 from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 
@@ -78,8 +78,8 @@ class CrisisSeverity(str, Enum):
 
 class HealthCheckRequest(BaseModel):
     """Request for system health check."""
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
+    start_date: date | None = None
+    end_date: date | None = None
     include_contingency: bool = Field(
         default=False,
         description="Include N-1/N-2 contingency analysis (slower)"
@@ -173,10 +173,10 @@ class HealthCheckResponse(BaseModel):
 class CrisisResponse(BaseModel):
     """Response from crisis activation/deactivation."""
     crisis_mode: bool
-    severity: Optional[CrisisSeverity] = None
+    severity: CrisisSeverity | None = None
     actions_taken: list[str]
     load_shedding_level: LoadSheddingLevel
-    recovery_plan: Optional[list[str]] = None
+    recovery_plan: list[str] | None = None
 
 
 class FallbackInfo(BaseModel):
@@ -185,8 +185,8 @@ class FallbackInfo(BaseModel):
     description: str
     is_active: bool
     is_precomputed: bool
-    assignments_count: Optional[int] = None
-    coverage_rate: Optional[float] = None
+    assignments_count: int | None = None
+    coverage_rate: float | None = None
     services_reduced: list[str]
     assumptions: list[str]
     activation_count: int
@@ -267,7 +267,7 @@ class HealthCheckHistoryItem(BaseModel):
     overall_status: OverallStatus
     utilization_rate: float
     utilization_level: UtilizationLevel
-    defense_level: Optional[DefenseLevel]
+    defense_level: DefenseLevel | None
     n1_pass: bool
     n2_pass: bool
     crisis_mode: bool
@@ -286,9 +286,9 @@ class EventHistoryItem(BaseModel):
     id: UUID
     timestamp: datetime
     event_type: str
-    severity: Optional[str]
-    reason: Optional[str]
-    triggered_by: Optional[str]
+    severity: str | None
+    reason: str | None
+    triggered_by: str | None
 
 
 class EventHistoryResponse(BaseModel):
@@ -419,13 +419,13 @@ class FeedbackLoopStatus(BaseModel):
     """Status of a feedback loop."""
     loop_name: str
     setpoint: SetpointInfo
-    current_value: Optional[float]
-    deviation: Optional[float]
+    current_value: float | None
+    deviation: float | None
     deviation_severity: DeviationSeverity
     consecutive_deviations: int
     trend_direction: str
     is_improving: bool
-    last_checked: Optional[datetime]
+    last_checked: datetime | None
     total_corrections: int
 
 
@@ -440,7 +440,7 @@ class CorrectiveActionInfo(BaseModel):
     target_value: float
     actual_value: float
     executed: bool
-    effective: Optional[bool]
+    effective: bool | None
 
 
 class AllostasisMetricsResponse(BaseModel):
@@ -586,8 +586,8 @@ class BorrowingResponse(BaseModel):
     reason: str
     status: str
     requested_at: datetime
-    approved_at: Optional[datetime]
-    approved_by: Optional[str]
+    approved_at: datetime | None
+    approved_by: str | None
 
 
 class ZoneIncidentRequest(BaseModel):
@@ -611,7 +611,7 @@ class ZoneIncidentResponse(BaseModel):
     faculty_affected: list[str]
     services_affected: list[str]
     capacity_lost: float
-    resolved_at: Optional[datetime]
+    resolved_at: datetime | None
     containment_successful: bool
 
 
@@ -893,7 +893,7 @@ class CognitiveSessionResponse(BaseModel):
     session_id: UUID
     user_id: UUID
     started_at: datetime
-    ended_at: Optional[datetime]
+    ended_at: datetime | None
     max_decisions_before_break: int
     current_state: CognitiveState
     decisions_count: int
@@ -907,8 +907,8 @@ class DecisionRequest(BaseModel):
     complexity: DecisionComplexity
     description: str = Field(..., min_length=5, max_length=500)
     options: list[str] = Field(..., min_items=2)
-    recommended_option: Optional[str] = None
-    safe_default: Optional[str] = None
+    recommended_option: str | None = None
+    safe_default: str | None = None
     is_urgent: bool = False
 
 
@@ -919,7 +919,7 @@ class DecisionResponse(BaseModel):
     complexity: DecisionComplexity
     description: str
     options: list[str]
-    recommended_option: Optional[str]
+    recommended_option: str | None
     has_safe_default: bool
     is_urgent: bool
     estimated_cognitive_cost: float
@@ -932,7 +932,7 @@ class DecisionQueueResponse(BaseModel):
     by_category: dict
     urgent_count: int
     can_auto_decide: int
-    oldest_pending: Optional[datetime]
+    oldest_pending: datetime | None
     estimated_cognitive_cost: float
     recommendations: list[str]
 
@@ -952,9 +952,9 @@ class PreferenceTrailRequest(BaseModel):
     """Request to record a preference trail."""
     faculty_id: UUID
     trail_type: TrailType
-    slot_type: Optional[str] = None
-    slot_id: Optional[UUID] = None
-    target_faculty_id: Optional[UUID] = None
+    slot_type: str | None = None
+    slot_id: UUID | None = None
+    target_faculty_id: UUID | None = None
     strength: float = Field(default=0.5, ge=0.0, le=1.0)
 
 
@@ -965,7 +965,7 @@ class PreferenceTrailResponse(BaseModel):
     trail_type: TrailType
     strength: float
     strength_category: TrailStrength
-    slot_type: Optional[str]
+    slot_type: str | None
     reinforcement_count: int
     age_days: float
 
@@ -973,14 +973,14 @@ class PreferenceTrailResponse(BaseModel):
 class CollectivePreferenceResponse(BaseModel):
     """Aggregated preference for a slot or slot type."""
     found: bool
-    slot_type: Optional[str]
-    total_preference_strength: Optional[float]
-    total_avoidance_strength: Optional[float]
-    net_preference: Optional[float]
-    faculty_count: Optional[int]
-    confidence: Optional[float]
-    is_popular: Optional[bool]
-    is_unpopular: Optional[bool]
+    slot_type: str | None
+    total_preference_strength: float | None
+    total_avoidance_strength: float | None
+    net_preference: float | None
+    faculty_count: int | None
+    confidence: float | None
+    is_popular: bool | None
+    is_unpopular: bool | None
 
 
 class StigmergyStatusResponse(BaseModel):

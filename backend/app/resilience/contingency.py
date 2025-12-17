@@ -21,12 +21,11 @@ Uses NetworkX for advanced graph-based centrality analysis:
 - PageRank: Google's algorithm adapted for faculty importance
 """
 
+import logging
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from itertools import combinations
-from typing import Optional
 from uuid import UUID
-import logging
 
 try:
     import networkx as nx
@@ -506,7 +505,7 @@ class ContingencyAnalyzer:
             try:
                 eigenvector = nx.eigenvector_centrality(G, max_iter=1000)
             except nx.PowerIterationFailedConvergence:
-                eigenvector = {node: 0.0 for node in G.nodes()}
+                eigenvector = dict.fromkeys(G.nodes(), 0.0)
         except Exception as e:
             logger.error(f"NetworkX centrality calculation failed: {e}")
             return self.calculate_centrality(faculty, assignments, services)
@@ -631,7 +630,7 @@ class ContingencyAnalyzer:
             step += 1
 
             # Calculate load per remaining faculty
-            load_per_faculty = total_load / remaining_capacity if remaining_capacity > 0 else float('inf')
+            total_load / remaining_capacity if remaining_capacity > 0 else float('inf')
 
             # Find faculty who would be overloaded
             new_failures = []

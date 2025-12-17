@@ -20,13 +20,12 @@ This module implements:
 6. Single-point-of-failure detection
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime, date, timedelta
-from enum import Enum
-from typing import Optional, Callable, Any
-from uuid import UUID, uuid4
 import logging
 import statistics
+from dataclasses import dataclass
+from datetime import date, datetime
+from enum import Enum
+from uuid import UUID, uuid4
 
 logger = logging.getLogger(__name__)
 
@@ -183,8 +182,8 @@ class CrossTrainingRecommendation:
     # Status
     created_at: datetime
     status: str = "pending"  # pending, approved, in_progress, completed
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
 
 
 @dataclass
@@ -232,8 +231,8 @@ class HubProtectionPlan:
 
     # Status
     status: str = "planned"  # planned, active, completed
-    activated_at: Optional[datetime] = None
-    deactivated_at: Optional[datetime] = None
+    activated_at: datetime | None = None
+    deactivated_at: datetime | None = None
 
 
 class HubAnalyzer:
@@ -259,7 +258,7 @@ class HubAnalyzer:
         self.protection_plans: dict[UUID, HubProtectionPlan] = {}
         self.cross_training_recommendations: list[CrossTrainingRecommendation] = []
 
-        self._last_analysis: Optional[datetime] = None
+        self._last_analysis: datetime | None = None
 
     def calculate_centrality(
         self,
@@ -480,7 +479,7 @@ class HubAnalyzer:
         faculty_id: UUID,
         services: dict[UUID, list[UUID]],
         service_names: dict[UUID, str] = None,
-    ) -> Optional[HubProfile]:
+    ) -> HubProfile | None:
         """
         Create detailed profile for a hub faculty member.
 
@@ -657,7 +656,7 @@ class HubAnalyzer:
         reason: str,
         workload_reduction: float = 0.3,
         assign_backup: bool = True,
-    ) -> Optional[HubProtectionPlan]:
+    ) -> HubProtectionPlan | None:
         """
         Create a protection plan for a hub during a high-risk period.
 
@@ -833,7 +832,7 @@ class HubAnalyzer:
 
     def activate_protection_plan(self, plan_id: UUID):
         """Activate a protection plan."""
-        for fac_id, plan in self.protection_plans.items():
+        for _fac_id, plan in self.protection_plans.items():
             if plan.id == plan_id:
                 plan.status = "active"
                 plan.activated_at = datetime.now()
@@ -842,7 +841,7 @@ class HubAnalyzer:
 
     def deactivate_protection_plan(self, plan_id: UUID):
         """Deactivate a protection plan."""
-        for fac_id, plan in self.protection_plans.items():
+        for _fac_id, plan in self.protection_plans.items():
             if plan.id == plan_id:
                 plan.status = "completed"
                 plan.deactivated_at = datetime.now()

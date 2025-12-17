@@ -4,9 +4,8 @@ Celery Tasks for Notification Delivery.
 Provides background tasks for sending notifications via various channels.
 """
 
-from datetime import datetime
-from typing import Optional
 import logging
+from datetime import datetime
 
 from celery import shared_task
 
@@ -22,7 +21,7 @@ def send_email(
     to: str,
     subject: str,
     body: str,
-    html: Optional[str] = None,
+    html: str | None = None,
 ) -> dict:
     """
     Send an email notification.

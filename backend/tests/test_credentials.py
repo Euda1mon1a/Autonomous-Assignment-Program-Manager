@@ -8,10 +8,10 @@ Tests cover:
 - Expiration handling
 - API endpoints
 """
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
 
+import pytest
 from sqlalchemy.orm import Session
 
 from app.models.person import Person
@@ -19,9 +19,8 @@ from app.models.procedure import Procedure
 from app.models.procedure_credential import ProcedureCredential
 from app.repositories.procedure import ProcedureRepository
 from app.repositories.procedure_credential import ProcedureCredentialRepository
-from app.services.procedure_service import ProcedureService
 from app.services.credential_service import CredentialService
-
+from app.services.procedure_service import ProcedureService
 
 # ============================================================================
 # Fixtures

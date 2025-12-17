@@ -13,12 +13,12 @@ Each level operates independently, assuming all previous levels have failed.
 The N+2 redundancy rule ensures critical functions survive 2 simultaneous failures.
 """
 
+import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import IntEnum
-from typing import Callable, Optional, Any
-from uuid import UUID
-import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +39,9 @@ class DefenseAction:
     description: str
     level: DefenseLevel
     is_automated: bool = False
-    trigger_condition: Optional[str] = None
-    action_handler: Optional[Callable] = None
-    last_activated: Optional[datetime] = None
+    trigger_condition: str | None = None
+    action_handler: Callable | None = None
+    last_activated: datetime | None = None
     activation_count: int = 0
 
 
@@ -252,7 +252,7 @@ class DefenseInDepth:
         self,
         level: DefenseLevel,
         action_name: str,
-        context: Optional[dict] = None,
+        context: dict | None = None,
     ) -> bool:
         """
         Activate a specific defense action.

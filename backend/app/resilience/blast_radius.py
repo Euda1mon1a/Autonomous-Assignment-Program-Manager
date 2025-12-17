@@ -27,12 +27,12 @@ Example Zones:
 When Zone C loses capacity, Zones A and B continue unaffected.
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
-from typing import Optional, Callable, Any
-from uuid import UUID, uuid4
 import logging
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from uuid import UUID, uuid4
 
 logger = logging.getLogger(__name__)
 
@@ -97,14 +97,14 @@ class BorrowingRequest:
 
     # Approval tracking
     status: str = "pending"  # pending, approved, denied, completed
-    approved_by: Optional[str] = None
-    approved_at: Optional[datetime] = None
-    denial_reason: Optional[str] = None
+    approved_by: str | None = None
+    approved_at: datetime | None = None
+    denial_reason: str | None = None
 
     # Execution tracking
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    was_effective: Optional[bool] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    was_effective: bool | None = None
 
 
 @dataclass
@@ -123,8 +123,8 @@ class ZoneIncident:
     services_affected: list[str] = field(default_factory=list)
 
     # Resolution
-    resolved_at: Optional[datetime] = None
-    resolution_notes: Optional[str] = None
+    resolved_at: datetime | None = None
+    resolution_notes: str | None = None
     containment_successful: bool = True
 
 
@@ -157,7 +157,7 @@ class SchedulingZone:
     # Status
     status: ZoneStatus = ZoneStatus.GREEN
     containment_level: ContainmentLevel = ContainmentLevel.NONE
-    last_status_change: Optional[datetime] = None
+    last_status_change: datetime | None = None
 
     # Borrowing rules
     can_borrow_from: list[UUID] = field(default_factory=list)
@@ -399,7 +399,7 @@ class BlastRadiusManager:
         ]
 
         # Set up borrowing relationships (higher can borrow from lower)
-        for i, zone in enumerate(zones):
+        for _i, zone in enumerate(zones):
             # Can borrow from lower priority zones
             zone.can_borrow_from = [z.id for z in zones if z.priority < zone.priority]
             # Can lend to higher priority zones
@@ -456,7 +456,7 @@ class BlastRadiusManager:
         priority: BorrowingPriority,
         reason: str,
         duration_hours: int = 8,
-    ) -> Optional[BorrowingRequest]:
+    ) -> BorrowingRequest | None:
         """
         Request to borrow faculty from another zone.
 
@@ -594,7 +594,7 @@ class BlastRadiusManager:
         severity: str,
         faculty_affected: list[UUID] = None,
         services_affected: list[str] = None,
-    ) -> Optional[ZoneIncident]:
+    ) -> ZoneIncident | None:
         """
         Record an incident affecting a zone.
 
@@ -696,7 +696,7 @@ class BlastRadiusManager:
             except Exception as e:
                 logger.error(f"Containment handler error: {e}")
 
-    def check_zone_health(self, zone_id: UUID) -> Optional[ZoneHealthReport]:
+    def check_zone_health(self, zone_id: UUID) -> ZoneHealthReport | None:
         """
         Check health of a specific zone.
 
@@ -816,7 +816,7 @@ class BlastRadiusManager:
             recommendations=recommendations,
         )
 
-    def get_zone_by_type(self, zone_type: ZoneType) -> Optional[SchedulingZone]:
+    def get_zone_by_type(self, zone_type: ZoneType) -> SchedulingZone | None:
         """Get first zone of a specific type."""
         for zone in self.zones.values():
             if zone.zone_type == zone_type:

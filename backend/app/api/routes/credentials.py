@@ -3,22 +3,22 @@
 Provides endpoints for managing faculty procedure credentials.
 """
 
-from typing import Optional
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query
 
+from app.controllers.credential_controller import CredentialController
+from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.procedure_credential import (
     CredentialCreate,
-    CredentialUpdate,
-    CredentialResponse,
     CredentialListResponse,
-    QualifiedFacultyResponse,
+    CredentialResponse,
+    CredentialUpdate,
     FacultyCredentialSummary,
+    QualifiedFacultyResponse,
 )
-from app.core.security import get_current_active_user
-from app.controllers.credential_controller import CredentialController
 
 router = APIRouter()
 
@@ -36,7 +36,7 @@ def list_expiring_credentials(
 @router.get("/by-person/{person_id}", response_model=CredentialListResponse)
 def list_credentials_for_person(
     person_id: UUID,
-    status: Optional[str] = Query(None, description="Filter by status"),
+    status: str | None = Query(None, description="Filter by status"),
     include_expired: bool = Query(False, description="Include expired credentials"),
     db=Depends(get_db),
 ):
@@ -52,7 +52,7 @@ def list_credentials_for_person(
 @router.get("/by-procedure/{procedure_id}", response_model=CredentialListResponse)
 def list_credentials_for_procedure(
     procedure_id: UUID,
-    status: Optional[str] = Query(None, description="Filter by status"),
+    status: str | None = Query(None, description="Filter by status"),
     include_expired: bool = Query(False, description="Include expired credentials"),
     db=Depends(get_db),
 ):
@@ -143,7 +143,7 @@ def delete_credential(
 @router.post("/{credential_id}/suspend", response_model=CredentialResponse)
 def suspend_credential(
     credential_id: UUID,
-    notes: Optional[str] = Query(None, description="Suspension notes"),
+    notes: str | None = Query(None, description="Suspension notes"),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):

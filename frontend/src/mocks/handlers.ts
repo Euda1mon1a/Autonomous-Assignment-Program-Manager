@@ -496,6 +496,38 @@ export const handlers = [
     return HttpResponse.json(newTemplate, { status: 201 })
   }),
 
+  http.put(`${API_BASE_URL}/rotation-templates/:id`, async ({ params, request }) => {
+    const template = mockRotationTemplates.find((t) => t.id === params.id)
+
+    if (!template) {
+      return HttpResponse.json(
+        { detail: 'Rotation template not found' },
+        { status: 404 }
+      )
+    }
+
+    const body = await request.json() as Record<string, unknown>
+    const updatedTemplate = {
+      ...template,
+      ...body,
+    }
+
+    return HttpResponse.json(updatedTemplate)
+  }),
+
+  http.delete(`${API_BASE_URL}/rotation-templates/:id`, ({ params }) => {
+    const template = mockRotationTemplates.find((t) => t.id === params.id)
+
+    if (!template) {
+      return HttpResponse.json(
+        { detail: 'Rotation template not found' },
+        { status: 404 }
+      )
+    }
+
+    return new HttpResponse(null, { status: 204 })
+  }),
+
   // Schedule endpoints
   http.post(`${API_BASE_URL}/schedule/generate`, async ({ request }) => {
     const body = await request.json() as Record<string, unknown>

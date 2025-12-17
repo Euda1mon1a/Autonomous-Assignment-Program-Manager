@@ -1,12 +1,11 @@
 """Repository for swap data access."""
 from datetime import date, datetime
-from typing import List, Optional, Tuple
 from uuid import UUID
 
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, func
 
-from app.models.swap import SwapRecord, SwapApproval, SwapStatus, SwapType
+from app.models.swap import SwapApproval, SwapRecord, SwapStatus, SwapType
 
 
 class SwapRepository:
@@ -29,9 +28,9 @@ class SwapRepository:
         source_week: date,
         target_faculty_id: UUID,
         swap_type: SwapType,
-        target_week: Optional[date] = None,
-        reason: Optional[str] = None,
-        requested_by_id: Optional[UUID] = None,
+        target_week: date | None = None,
+        reason: str | None = None,
+        requested_by_id: UUID | None = None,
     ) -> SwapRecord:
         """Create a new swap record."""
         from uuid import uuid4
@@ -53,7 +52,7 @@ class SwapRepository:
         self.db.refresh(swap)
         return swap
 
-    def get_by_id(self, swap_id: UUID) -> Optional[SwapRecord]:
+    def get_by_id(self, swap_id: UUID) -> SwapRecord | None:
         """Get a swap record by ID."""
         return self.db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
 
@@ -61,8 +60,8 @@ class SwapRepository:
         self,
         swap_id: UUID,
         status: SwapStatus,
-        user_id: Optional[UUID] = None,
-    ) -> Optional[SwapRecord]:
+        user_id: UUID | None = None,
+    ) -> SwapRecord | None:
         """Update swap status with appropriate timestamp."""
         swap = self.get_by_id(swap_id)
         if not swap:
@@ -104,7 +103,7 @@ class SwapRepository:
         faculty_id: UUID,
         as_source: bool = True,
         as_target: bool = True,
-    ) -> List[SwapRecord]:
+    ) -> list[SwapRecord]:
         """Find swaps involving a faculty member."""
         conditions = []
         if as_source:
@@ -122,8 +121,8 @@ class SwapRepository:
     def find_by_status(
         self,
         status: SwapStatus,
-        faculty_id: Optional[UUID] = None,
-    ) -> List[SwapRecord]:
+        faculty_id: UUID | None = None,
+    ) -> list[SwapRecord]:
         """Find swaps by status."""
         query = self.db.query(SwapRecord).filter(SwapRecord.status == status)
 
@@ -140,8 +139,8 @@ class SwapRepository:
     def find_by_week(
         self,
         week: date,
-        faculty_id: Optional[UUID] = None,
-    ) -> List[SwapRecord]:
+        faculty_id: UUID | None = None,
+    ) -> list[SwapRecord]:
         """Find swaps for a specific week."""
         query = self.db.query(SwapRecord).filter(
             or_(
@@ -160,7 +159,7 @@ class SwapRepository:
 
         return query.all()
 
-    def find_pending_for_faculty(self, faculty_id: UUID) -> List[SwapRecord]:
+    def find_pending_for_faculty(self, faculty_id: UUID) -> list[SwapRecord]:
         """Find pending swaps where faculty is target (needs response)."""
         return self.db.query(SwapRecord).filter(
             SwapRecord.target_faculty_id == faculty_id,
@@ -169,9 +168,9 @@ class SwapRepository:
 
     def find_recent(
         self,
-        faculty_id: Optional[UUID] = None,
+        faculty_id: UUID | None = None,
         limit: int = 10,
-    ) -> List[SwapRecord]:
+    ) -> list[SwapRecord]:
         """Find recent completed swaps."""
         query = self.db.query(SwapRecord).filter(
             SwapRecord.status == SwapStatus.EXECUTED
@@ -191,11 +190,11 @@ class SwapRepository:
         self,
         page: int = 1,
         page_size: int = 20,
-        faculty_id: Optional[UUID] = None,
-        status: Optional[SwapStatus] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-    ) -> Tuple[List[SwapRecord], int]:
+        faculty_id: UUID | None = None,
+        status: SwapStatus | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> tuple[list[SwapRecord], int]:
         """
         Find swaps with pagination and filters.
 
@@ -250,7 +249,7 @@ class SwapRepository:
         self.db.refresh(approval)
         return approval
 
-    def get_approvals(self, swap_id: UUID) -> List[SwapApproval]:
+    def get_approvals(self, swap_id: UUID) -> list[SwapApproval]:
         """Get all approvals for a swap."""
         return self.db.query(SwapApproval).filter(
             SwapApproval.swap_id == swap_id
@@ -260,8 +259,8 @@ class SwapRepository:
         self,
         approval_id: UUID,
         approved: bool,
-        notes: Optional[str] = None,
-    ) -> Optional[SwapApproval]:
+        notes: str | None = None,
+    ) -> SwapApproval | None:
         """Record response for an approval."""
         approval = self.db.query(SwapApproval).filter(
             SwapApproval.id == approval_id
@@ -290,7 +289,7 @@ class SwapRepository:
     # Statistics
     # ==========================================================================
 
-    def count_by_status(self, faculty_id: Optional[UUID] = None) -> dict:
+    def count_by_status(self, faculty_id: UUID | None = None) -> dict:
         """Count swaps by status."""
         query = self.db.query(
             SwapRecord.status,
@@ -311,8 +310,8 @@ class SwapRepository:
     def count_executed_for_faculty(
         self,
         faculty_id: UUID,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
     ) -> int:
         """Count executed swaps for a faculty member."""
         query = self.db.query(SwapRecord).filter(

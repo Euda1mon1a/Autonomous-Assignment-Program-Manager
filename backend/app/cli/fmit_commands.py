@@ -1,15 +1,15 @@
 """CLI commands for FMIT scheduling management."""
-import typer
 from datetime import date, datetime, timedelta
-from typing import Optional
 from uuid import UUID
+
+import typer
 
 app = typer.Typer(help="FMIT scheduling management commands")
 
 
 @app.command()
 def scan_conflicts(
-    faculty_id: Optional[str] = typer.Option(None, "--faculty", "-f", help="Filter by faculty ID"),
+    faculty_id: str | None = typer.Option(None, "--faculty", "-f", help="Filter by faculty ID"),
     days: int = typer.Option(90, "--days", "-d", help="Days ahead to scan"),
     output: str = typer.Option("table", "--output", "-o", help="Output format: table, json"),
 ):
@@ -63,8 +63,8 @@ def scan_conflicts(
 
 @app.command()
 def list_swaps(
-    status: Optional[str] = typer.Option(None, "--status", "-s", help="Filter by status"),
-    faculty_id: Optional[str] = typer.Option(None, "--faculty", "-f", help="Filter by faculty ID"),
+    status: str | None = typer.Option(None, "--status", "-s", help="Filter by status"),
+    faculty_id: str | None = typer.Option(None, "--faculty", "-f", help="Filter by faculty ID"),
     limit: int = typer.Option(20, "--limit", "-l", help="Maximum records to show"),
 ):
     """
@@ -126,8 +126,8 @@ def list_swaps(
 
 @app.command()
 def list_alerts(
-    faculty_id: Optional[str] = typer.Option(None, "--faculty", "-f", help="Filter by faculty ID"),
-    severity: Optional[str] = typer.Option(None, "--severity", "-s", help="Filter by severity"),
+    faculty_id: str | None = typer.Option(None, "--faculty", "-f", help="Filter by faculty ID"),
+    severity: str | None = typer.Option(None, "--severity", "-s", help="Filter by severity"),
     include_resolved: bool = typer.Option(False, "--include-resolved", "-r", help="Include resolved alerts"),
 ):
     """
@@ -136,7 +136,11 @@ def list_alerts(
     Severity options: critical, warning, info
     """
     from app.db.session import SessionLocal
-    from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus, ConflictSeverity
+    from app.models.conflict_alert import (
+        ConflictAlert,
+        ConflictAlertStatus,
+        ConflictSeverity,
+    )
 
     db = SessionLocal()
     try:
@@ -196,9 +200,13 @@ def stats():
     Displays counts of swaps, alerts, and preferences.
     """
     from app.db.session import SessionLocal
-    from app.models.swap import SwapRecord, SwapStatus
-    from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus, ConflictSeverity
+    from app.models.conflict_alert import (
+        ConflictAlert,
+        ConflictAlertStatus,
+        ConflictSeverity,
+    )
     from app.models.faculty_preference import FacultyPreference
+    from app.models.swap import SwapRecord, SwapStatus
 
     db = SessionLocal()
     try:
@@ -269,9 +277,10 @@ def create_alert(
 
     Useful for testing or manually flagging issues.
     """
-    from app.db.session import SessionLocal
-    from app.models.conflict_alert import ConflictAlert, ConflictType, ConflictSeverity
     from uuid import uuid4
+
+    from app.db.session import SessionLocal
+    from app.models.conflict_alert import ConflictAlert, ConflictSeverity, ConflictType
 
     db = SessionLocal()
     try:

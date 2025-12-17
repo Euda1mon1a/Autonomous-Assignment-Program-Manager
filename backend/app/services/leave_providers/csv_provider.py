@@ -2,16 +2,16 @@
 import csv
 from datetime import date, datetime
 from pathlib import Path
-from typing import List, Optional
+
 from app.services.leave_providers.base import LeaveProvider, LeaveRecord
 
 
 class CSVLeaveProvider(LeaveProvider):
     def __init__(self, file_path: Path):
         self.file_path = file_path
-        self._records: List[LeaveRecord] = []
+        self._records: list[LeaveRecord] = []
 
-    def get_conflicts(self, faculty_name: Optional[str] = None, start_date: Optional[date] = None, end_date: Optional[date] = None) -> List[LeaveRecord]:
+    def get_conflicts(self, faculty_name: str | None = None, start_date: date | None = None, end_date: date | None = None) -> list[LeaveRecord]:
         records = self.get_all_leave(start_date, end_date)
         if faculty_name:
             records = [r for r in records if r.faculty_name == faculty_name]
@@ -21,7 +21,7 @@ class CSVLeaveProvider(LeaveProvider):
         self._records = self._load_csv()
         return len(self._records)
 
-    def get_all_leave(self, start_date: Optional[date] = None, end_date: Optional[date] = None) -> List[LeaveRecord]:
+    def get_all_leave(self, start_date: date | None = None, end_date: date | None = None) -> list[LeaveRecord]:
         if not self._records:
             self._records = self._load_csv()
         records = self._records
@@ -31,11 +31,11 @@ class CSVLeaveProvider(LeaveProvider):
             records = [r for r in records if r.start_date <= end_date]
         return records
 
-    def _load_csv(self) -> List[LeaveRecord]:
+    def _load_csv(self) -> list[LeaveRecord]:
         if not self.file_path.exists():
             return []
         records = []
-        with open(self.file_path, 'r') as f:
+        with open(self.file_path) as f:
             reader = csv.DictReader(f)
             for row in reader:
                 records.append(LeaveRecord(

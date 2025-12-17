@@ -18,11 +18,12 @@ Tier 2 (Strategic):
 These provide the audit trail and historical data needed for
 accountability and post-incident review.
 """
+import enum
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, DateTime, Boolean, Float, ForeignKey, Enum as SQLEnum
+
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
-import enum
 
 from app.db.base import Base
 from app.db.types import GUID, JSONType, StringArrayType

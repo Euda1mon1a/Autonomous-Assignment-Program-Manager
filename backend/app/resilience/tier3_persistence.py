@@ -12,37 +12,32 @@ These functions bridge the in-memory Tier 3 components with database storage.
 
 import uuid
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
 
 from app.models.resilience import (
-    CognitiveSessionRecord,
     CognitiveDecisionRecord,
-    PreferenceTrailRecord,
-    TrailSignalRecord,
+    CognitiveSessionRecord,
+    CrossTrainingRecommendationRecord,
     FacultyCentralityRecord,
     HubProtectionPlanRecord,
-    CrossTrainingRecommendationRecord,
-    DecisionOutcome as DBDecisionOutcome,
+    PreferenceTrailRecord,
+    TrailSignalRecord,
 )
 from app.resilience.cognitive_load import (
     CognitiveSession,
     Decision,
     DecisionOutcome,
-    CognitiveState,
+)
+from app.resilience.hub_analysis import (
+    CrossTrainingRecommendation,
+    FacultyCentrality,
+    HubProtectionPlan,
 )
 from app.resilience.stigmergy import (
     PreferenceTrail,
-    TrailType,
 )
-from app.resilience.hub_analysis import (
-    FacultyCentrality,
-    HubProtectionPlan,
-    CrossTrainingRecommendation,
-)
-
 
 # =============================================================================
 # Cognitive Load Persistence
@@ -77,7 +72,7 @@ def persist_cognitive_session(db: Session, session: CognitiveSession) -> Cogniti
     return record
 
 
-def update_cognitive_session(db: Session, session: CognitiveSession) -> Optional[CognitiveSessionRecord]:
+def update_cognitive_session(db: Session, session: CognitiveSession) -> CognitiveSessionRecord | None:
     """
     Update an existing cognitive session record.
 
@@ -145,7 +140,7 @@ def update_decision_resolution(
     chosen_option: str,
     decided_by: str,
     actual_time_seconds: float = None,
-) -> Optional[CognitiveDecisionRecord]:
+) -> CognitiveDecisionRecord | None:
     """
     Update a decision record with resolution details.
 
@@ -424,7 +419,7 @@ def update_protection_plan_status(
     db: Session,
     plan_id: UUID,
     status: str,
-) -> Optional[HubProtectionPlanRecord]:
+) -> HubProtectionPlanRecord | None:
     """
     Update the status of a protection plan.
 

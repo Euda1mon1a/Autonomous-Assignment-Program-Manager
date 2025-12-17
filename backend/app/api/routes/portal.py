@@ -8,32 +8,27 @@ Provides endpoints for:
 - Dashboard
 - Swap marketplace
 """
-from datetime import date, datetime
-from typing import Optional
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
 from app.core.security import get_current_user
-from app.models.user import User
+from app.db.session import get_db
 from app.models.person import Person
+from app.models.user import User
 from app.schemas.portal import (
+    DashboardResponse,
+    DashboardStats,
+    MarketplaceResponse,
     MyScheduleResponse,
-    FMITWeekInfo,
     MySwapsResponse,
-    SwapRequestSummary,
+    PreferencesResponse,
+    PreferencesUpdate,
     SwapRequestCreate,
     SwapRequestResponse,
     SwapRespondRequest,
-    PreferencesUpdate,
-    PreferencesResponse,
-    DashboardResponse,
-    DashboardStats,
-    DashboardAlert,
-    MarketplaceResponse,
-    MarketplaceEntry,
 )
 
 router = APIRouter(prefix="/portal", tags=["portal"])
@@ -75,7 +70,7 @@ def get_my_swaps(
 
     Returns incoming requests, outgoing requests, and recent completed swaps.
     """
-    faculty = _get_faculty_for_user(db, current_user)
+    _get_faculty_for_user(db, current_user)
 
     # TODO: Query SwapRecord for this faculty
     return MySwapsResponse(
@@ -96,7 +91,7 @@ def create_swap_request(
 
     Can specify a preferred target or let the system find candidates.
     """
-    faculty = _get_faculty_for_user(db, current_user)
+    _get_faculty_for_user(db, current_user)
 
     # TODO: Implement swap request creation
     # 1. Verify week is assigned to this faculty
@@ -123,7 +118,7 @@ def respond_to_swap(
 
     Can accept, reject, or counter-offer with a different week.
     """
-    faculty = _get_faculty_for_user(db, current_user)
+    _get_faculty_for_user(db, current_user)
 
     # TODO: Implement swap response
     return {
@@ -227,7 +222,7 @@ def get_swap_marketplace(
 
     Shows open swap requests from other faculty.
     """
-    faculty = _get_faculty_for_user(db, current_user)
+    _get_faculty_for_user(db, current_user)
 
     # TODO: Query open swap requests
     return MarketplaceResponse(

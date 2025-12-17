@@ -1,88 +1,97 @@
 """Pydantic schemas for API validation."""
-from app.schemas.person import PersonCreate, PersonUpdate, PersonResponse, PersonListResponse
-from app.schemas.block import BlockCreate, BlockResponse, BlockListResponse
-from app.schemas.rotation_template import (
-    RotationTemplateCreate,
-    RotationTemplateUpdate,
-    RotationTemplateResponse,
-    RotationTemplateListResponse,
+from app.schemas.absence import AbsenceCreate, AbsenceResponse, AbsenceUpdate
+from app.schemas.assignment import (
+    AssignmentCreate,
+    AssignmentResponse,
+    AssignmentUpdate,
 )
-from app.schemas.assignment import AssignmentCreate, AssignmentUpdate, AssignmentResponse
-from app.schemas.absence import AbsenceCreate, AbsenceUpdate, AbsenceResponse
-from app.schemas.schedule import ScheduleRequest, ScheduleResponse, ValidationResult
-from app.schemas.settings import SettingsCreate, SettingsUpdate, SettingsResponse
-from app.schemas.auth import Token, TokenData, UserLogin, UserCreate, UserResponse
+from app.schemas.auth import Token, TokenData, UserCreate, UserLogin, UserResponse
+from app.schemas.block import BlockCreate, BlockListResponse, BlockResponse
+from app.schemas.certification import (
+    CertificationTypeCreate,
+    CertificationTypeListResponse,
+    CertificationTypeResponse,
+    CertificationTypeUpdate,
+    ComplianceSummaryResponse,
+    ExpiringCertificationsListResponse,
+    PersonCertificationCreate,
+    PersonCertificationListResponse,
+    PersonCertificationResponse,
+    PersonCertificationUpdate,
+    PersonCertificationWithTypeResponse,
+    PersonComplianceResponse,
+)
+from app.schemas.leave import (
+    BulkLeaveImportRequest,
+    BulkLeaveImportResponse,
+    LeaveCalendarEntry,
+    LeaveCalendarResponse,
+    LeaveCreateRequest,
+    LeaveListResponse,
+    LeaveResponse,
+    LeaveType,
+    LeaveUpdateRequest,
+    LeaveWebhookPayload,
+)
+from app.schemas.person import (
+    PersonCreate,
+    PersonListResponse,
+    PersonResponse,
+    PersonUpdate,
+)
+from app.schemas.portal import (
+    DashboardAlert,
+    DashboardResponse,
+    DashboardStats,
+    FMITWeekInfo,
+    MarketplaceEntry,
+    MarketplaceResponse,
+    MyScheduleResponse,
+    MySwapsResponse,
+    PreferencesResponse,
+    PreferencesUpdate,
+    SwapRequestCreate,
+    SwapRequestResponse,
+    SwapRequestStatus,
+    SwapRequestSummary,
+    SwapRespondRequest,
+)
 from app.schemas.procedure import (
     ProcedureCreate,
-    ProcedureUpdate,
-    ProcedureResponse,
     ProcedureListResponse,
+    ProcedureResponse,
     ProcedureSummary,
+    ProcedureUpdate,
 )
 from app.schemas.procedure_credential import (
     CredentialCreate,
-    CredentialUpdate,
-    CredentialResponse,
     CredentialListResponse,
-    CredentialWithProcedureResponse,
+    CredentialResponse,
+    CredentialUpdate,
     CredentialWithProcedureListResponse,
-    QualifiedFacultyResponse,
+    CredentialWithProcedureResponse,
     FacultyCredentialSummary,
+    QualifiedFacultyResponse,
 )
-from app.schemas.certification import (
-    CertificationTypeCreate,
-    CertificationTypeUpdate,
-    CertificationTypeResponse,
-    CertificationTypeListResponse,
-    PersonCertificationCreate,
-    PersonCertificationUpdate,
-    PersonCertificationResponse,
-    PersonCertificationListResponse,
-    PersonCertificationWithTypeResponse,
-    ExpiringCertificationsListResponse,
-    ComplianceSummaryResponse,
-    PersonComplianceResponse,
+from app.schemas.rotation_template import (
+    RotationTemplateCreate,
+    RotationTemplateListResponse,
+    RotationTemplateResponse,
+    RotationTemplateUpdate,
 )
+from app.schemas.schedule import ScheduleRequest, ScheduleResponse, ValidationResult
+from app.schemas.settings import SettingsCreate, SettingsResponse, SettingsUpdate
 from app.schemas.swap import (
+    SwapApprovalRequest,
+    SwapExecuteRequest,
+    SwapExecuteResponse,
+    SwapHistoryFilter,
+    SwapHistoryResponse,
+    SwapRecordResponse,
+    SwapRollbackRequest,
     SwapStatusSchema,
     SwapTypeSchema,
-    SwapExecuteRequest,
-    SwapApprovalRequest,
-    SwapRollbackRequest,
-    SwapHistoryFilter,
     SwapValidationResult,
-    SwapRecordResponse,
-    SwapExecuteResponse,
-    SwapHistoryResponse,
-)
-from app.schemas.leave import (
-    LeaveType,
-    LeaveWebhookPayload,
-    LeaveCreateRequest,
-    LeaveUpdateRequest,
-    LeaveResponse,
-    LeaveListResponse,
-    LeaveCalendarEntry,
-    LeaveCalendarResponse,
-    BulkLeaveImportRequest,
-    BulkLeaveImportResponse,
-)
-from app.schemas.portal import (
-    SwapRequestStatus,
-    FMITWeekInfo,
-    MyScheduleResponse,
-    SwapRequestSummary,
-    MySwapsResponse,
-    SwapRequestCreate,
-    SwapRequestResponse,
-    SwapRespondRequest,
-    PreferencesUpdate,
-    PreferencesResponse,
-    DashboardAlert,
-    DashboardStats,
-    DashboardResponse,
-    MarketplaceEntry,
-    MarketplaceResponse,
 )
 
 __all__ = [

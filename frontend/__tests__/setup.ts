@@ -14,8 +14,9 @@ import '@testing-library/jest-dom'
 //
 // To enable MSW in the future:
 // 1. Use Node.js >= 18
-// 2. Add --experimental-vm-modules to jest
-// 3. Uncomment the MSW setup below
+// 2. Add extensive polyfills (TextEncoder, ReadableStream, MessagePort, etc.)
+// 3. Configure transformIgnorePatterns for all ESM dependencies
+// 4. Uncomment the MSW setup below
 //
 // import { server } from '@/mocks/server'
 // beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))

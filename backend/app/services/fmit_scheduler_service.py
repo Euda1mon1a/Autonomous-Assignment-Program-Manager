@@ -4,21 +4,19 @@ FMIT Scheduler Orchestration Service.
 Higher-level service that orchestrates FMIT scheduling operations,
 including assignment management, conflict detection, and fair schedule generation.
 """
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from typing import List, Optional, Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from uuid import UUID
-from collections import defaultdict
 
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
 
 from app.services.conflict_auto_detector import ConflictAutoDetector, ConflictInfo
 
 if TYPE_CHECKING:
-    from app.models.assignment import Assignment
-    from app.models.person import Person
     from app.models.block import Block
+    from app.models.person import Person
     from app.models.rotation_template import RotationTemplate
 
 
@@ -29,15 +27,15 @@ class FMITWeekAssignment:
     faculty_name: str
     week_start: date
     week_end: date
-    assignment_ids: List[UUID] = field(default_factory=list)
-    rotation_template_id: Optional[UUID] = None
+    assignment_ids: list[UUID] = field(default_factory=list)
+    rotation_template_id: UUID | None = None
     is_complete: bool = False  # All blocks for the week assigned
 
 
 @dataclass
 class FMITScheduleResult:
     """Result of getting FMIT schedule."""
-    assignments: List[FMITWeekAssignment]
+    assignments: list[FMITWeekAssignment]
     total_weeks: int
     faculty_count: int
     start_date: date
@@ -51,7 +49,7 @@ class FacultyLoadResult:
     faculty_name: str
     year: int
     total_weeks: int
-    week_dates: List[date]
+    week_dates: list[date]
     average_load: float  # Weeks per year
     is_balanced: bool  # Within 1 week of average
 
@@ -61,20 +59,20 @@ class AssignmentResult:
     """Result of assignment operation."""
     success: bool
     message: str
-    assignment_ids: List[UUID] = field(default_factory=list)
-    error_code: Optional[str] = None
-    warnings: List[str] = field(default_factory=list)
+    assignment_ids: list[UUID] = field(default_factory=list)
+    error_code: str | None = None
+    warnings: list[str] = field(default_factory=list)
 
 
 @dataclass
 class ScheduleValidationResult:
     """Result of schedule validation."""
     valid: bool
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    conflicts: List[ConflictInfo] = field(default_factory=list)
-    coverage_gaps: List[date] = field(default_factory=list)
-    back_to_back_issues: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    conflicts: list[ConflictInfo] = field(default_factory=list)
+    coverage_gaps: list[date] = field(default_factory=list)
+    back_to_back_issues: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -84,9 +82,9 @@ class FairScheduleResult:
     message: str
     total_weeks: int
     assignments_created: int
-    faculty_loads: Dict[UUID, int] = field(default_factory=dict)
-    warnings: List[str] = field(default_factory=list)
-    error_code: Optional[str] = None
+    faculty_loads: dict[UUID, int] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
+    error_code: str | None = None
 
 
 class FMITSchedulerService:
@@ -130,7 +128,6 @@ class FMITSchedulerService:
         """
         from app.models.assignment import Assignment
         from app.models.block import Block
-        from app.models.rotation_template import RotationTemplate
         from app.models.person import Person
 
         # Get FMIT rotation template
@@ -157,7 +154,7 @@ class FMITSchedulerService:
         )
 
         # Group assignments by faculty and week
-        week_assignments_map: Dict[tuple, List[Assignment]] = defaultdict(list)
+        week_assignments_map: dict[tuple, list[Assignment]] = defaultdict(list)
         for assignment in assignments:
             week_start = self._get_week_start(assignment.block.date)
             key = (assignment.person_id, week_start)
@@ -198,7 +195,7 @@ class FMITSchedulerService:
     def get_week_assignments(
         self,
         week_date: date,
-    ) -> List[FMITWeekAssignment]:
+    ) -> list[FMITWeekAssignment]:
         """
         Get faculty assigned to a specific week.
 
@@ -233,9 +230,9 @@ class FMITSchedulerService:
         Returns:
             AssignmentResult with success status and created assignment IDs
         """
-        from app.models.person import Person
-        from app.models.block import Block
         from app.models.assignment import Assignment
+        from app.models.block import Block
+        from app.models.person import Person
 
         # Validate faculty exists
         faculty = self.db.query(Person).filter(
@@ -399,8 +396,8 @@ class FMITSchedulerService:
     def get_upcoming_conflicts(
         self,
         days_ahead: int = 90,
-        faculty_id: Optional[UUID] = None,
-    ) -> List[ConflictInfo]:
+        faculty_id: UUID | None = None,
+    ) -> list[ConflictInfo]:
         """
         Get upcoming FMIT conflicts using ConflictAutoDetector.
 
@@ -440,9 +437,9 @@ class FMITSchedulerService:
         Returns:
             FacultyLoadResult with week count and balance analysis
         """
-        from app.models.person import Person
         from app.models.assignment import Assignment
         from app.models.block import Block
+        from app.models.person import Person
 
         # Get faculty
         faculty = self.db.query(Person).filter(
@@ -496,7 +493,7 @@ class FMITSchedulerService:
             week_start = self._get_week_start(assignment.block.date)
             weeks_set.add(week_start)
 
-        week_dates = sorted(list(weeks_set))
+        week_dates = sorted(weeks_set)
         total_weeks = len(week_dates)
 
         # Calculate average load across all faculty
@@ -552,7 +549,7 @@ class FMITSchedulerService:
         total_weeks = 52
 
         # Calculate fair distribution
-        weeks_per_faculty = total_weeks / len(faculty)
+        total_weeks / len(faculty)
 
         # Get existing loads
         faculty_loads = {}
@@ -727,7 +724,7 @@ class FMITSchedulerService:
         self,
         start_date: date,
         end_date: date,
-    ) -> List["Block"]:
+    ) -> list["Block"]:
         """
         Get or create all blocks for a date range.
 
@@ -795,10 +792,10 @@ class FMITSchedulerService:
 
     def _get_eligible_faculty_for_week(
         self,
-        faculty: List["Person"],
+        faculty: list["Person"],
         week_date: date,
-        current_loads: Dict[UUID, int],
-    ) -> List["Person"]:
+        current_loads: dict[UUID, int],
+    ) -> list["Person"]:
         """
         Get faculty eligible for assignment to a specific week.
 
@@ -827,7 +824,7 @@ class FMITSchedulerService:
                 self.db.query(Absence)
                 .filter(
                     Absence.person_id == person.id,
-                    Absence.is_blocking == True,
+                    Absence.is_blocking,
                     Absence.start_date <= week_end,
                     Absence.end_date >= week_start,
                 )

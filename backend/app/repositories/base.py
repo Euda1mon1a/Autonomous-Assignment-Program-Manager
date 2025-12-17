@@ -1,7 +1,8 @@
 """Base repository with common CRUD operations."""
 
-from typing import Generic, TypeVar, Type, Optional, List
+from typing import Generic, TypeVar
 from uuid import UUID
+
 from sqlalchemy.orm import Session
 
 from app.db.base import Base
@@ -17,15 +18,15 @@ class BaseRepository(Generic[ModelType]):
     and can override or extend these methods as needed.
     """
 
-    def __init__(self, model: Type[ModelType], db: Session):
+    def __init__(self, model: type[ModelType], db: Session):
         self.model = model
         self.db = db
 
-    def get_by_id(self, id: UUID) -> Optional[ModelType]:
+    def get_by_id(self, id: UUID) -> ModelType | None:
         """Get a single entity by ID."""
         return self.db.query(self.model).filter(self.model.id == id).first()
 
-    def get_all(self) -> List[ModelType]:
+    def get_all(self) -> list[ModelType]:
         """Get all entities."""
         return self.db.query(self.model).all()
 

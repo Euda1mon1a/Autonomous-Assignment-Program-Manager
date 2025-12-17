@@ -285,7 +285,7 @@ export default function MySchedulePage() {
           <EmptyState
             title="Profile Not Found"
             description="We couldn't find a person profile linked to your account. Please contact your administrator."
-            icon={<Calendar className="w-12 h-12 text-gray-300" />}
+            icon={Calendar}
           />
         )}
 

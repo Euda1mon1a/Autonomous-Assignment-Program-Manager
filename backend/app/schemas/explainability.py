@@ -8,9 +8,9 @@ Provides transparency into scheduling decisions:
 - Confidence in the decision
 """
 from datetime import datetime
-from typing import Optional, Any
-from uuid import UUID
 from enum import Enum
+from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 
@@ -41,7 +41,7 @@ class ConstraintEvaluation(BaseModel):
     status: ConstraintStatus
     weight: float = 1.0
     penalty: float = 0.0  # Penalty incurred (0 if satisfied)
-    details: Optional[str] = None  # Human-readable explanation
+    details: str | None = None  # Human-readable explanation
 
 
 class AlternativeCandidate(BaseModel):
@@ -58,8 +58,8 @@ class DecisionInputs(BaseModel):
     block_id: UUID
     block_date: datetime
     block_time_of_day: str  # "AM" or "PM"
-    rotation_template_id: Optional[UUID] = None
-    rotation_name: Optional[str] = None
+    rotation_template_id: UUID | None = None
+    rotation_name: str | None = None
     eligible_residents: int  # How many residents were eligible
     active_constraints: list[str] = []  # Names of active constraints
     overrides_in_effect: list[str] = []  # Any overrides that applied
@@ -73,7 +73,7 @@ class DecisionExplanation(BaseModel):
     supporting ACGME accountability and fairness audits.
     """
     # Assignment identification
-    assignment_id: Optional[UUID] = None
+    assignment_id: UUID | None = None
     person_id: UUID
     person_name: str
 
@@ -108,7 +108,7 @@ class DecisionExplanation(BaseModel):
     algorithm: str = ""
     solver_version: str = "1.0.0"
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    random_seed: Optional[int] = None
+    random_seed: int | None = None
 
     class Config:
         from_attributes = True
@@ -119,17 +119,17 @@ class AssignmentWithExplanation(BaseModel):
     id: UUID
     block_id: UUID
     person_id: UUID
-    rotation_template_id: Optional[UUID]
+    rotation_template_id: UUID | None
     role: str
-    notes: Optional[str]
-    override_reason: Optional[str]
+    notes: str | None
+    override_reason: str | None
     created_at: datetime
     updated_at: datetime
 
     # Explanation data
-    explanation: Optional[DecisionExplanation] = None
-    confidence: Optional[ConfidenceLevel] = None
-    confidence_score: Optional[float] = None
+    explanation: DecisionExplanation | None = None
+    confidence: ConfidenceLevel | None = None
+    confidence_score: float | None = None
 
     class Config:
         from_attributes = True
@@ -168,4 +168,4 @@ class ExplainabilityReport(BaseModel):
     # Algorithm info
     algorithm_used: str = ""
     solver_runtime_seconds: float = 0.0
-    random_seed: Optional[int] = None
+    random_seed: int | None = None

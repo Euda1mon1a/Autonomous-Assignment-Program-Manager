@@ -1,20 +1,19 @@
 """Comprehensive tests for ConflictAlertService."""
-import pytest
 from datetime import date, datetime, timedelta
-from uuid import UUID, uuid4
+from uuid import uuid4
 
+import pytest
 from sqlalchemy.orm import Session
 
-from app.services.conflict_alert_service import ConflictAlertService
+from app.models.absence import Absence
 from app.models.conflict_alert import (
-    ConflictAlert,
     ConflictAlertStatus,
     ConflictSeverity,
     ConflictType,
 )
 from app.models.person import Person
-from app.models.absence import Absence
 from app.models.user import User
+from app.services.conflict_alert_service import ConflictAlertService
 
 
 @pytest.fixture
