@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { format, startOfWeek, addDays } from 'date-fns'
 import { Calendar, Users, CheckCircle, AlertCircle } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useSchedule, usePeople } from '@/lib/hooks'
 import { EmptyState } from '@/components/EmptyState'
 import { GenerateScheduleDialog } from '@/components/GenerateScheduleDialog'
@@ -41,7 +42,11 @@ export function ScheduleSummary() {
   const isFullyStaffed = residentCoverage >= 80
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="glass-panel p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">This Week&apos;s Schedule</h3>
         <Calendar className="w-5 h-5 text-blue-600" />
@@ -118,6 +123,6 @@ export function ScheduleSummary() {
         defaultStartDate={format(weekStart, 'yyyy-MM-dd')}
         defaultEndDate={format(weekEnd, 'yyyy-MM-dd')}
       />
-    </div>
+    </motion.div>
   )
 }

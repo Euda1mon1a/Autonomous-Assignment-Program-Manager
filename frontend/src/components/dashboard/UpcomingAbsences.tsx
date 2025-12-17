@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { format, addDays, parseISO, isWithinInterval } from 'date-fns'
 import { CalendarOff, User } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useAbsences, usePeople } from '@/lib/hooks'
 import { EmptyState } from '@/components/EmptyState'
 
@@ -53,7 +54,12 @@ export function UpcomingAbsences() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut', delay: 0.3 }}
+      className="glass-panel p-6"
+    >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Upcoming Absences (7 days)</h3>
         <CalendarOff className="w-5 h-5 text-amber-600" />
@@ -105,7 +111,7 @@ export function UpcomingAbsences() {
         </div>
       )}
 
-      <div className="mt-4 pt-4 border-t">
+      <div className="mt-4 pt-4 border-t border-gray-200/50">
         <Link
           href="/absences"
           className="text-sm text-blue-600 hover:text-blue-800 font-medium"
@@ -113,6 +119,6 @@ export function UpcomingAbsences() {
           View All Absences &rarr;
         </Link>
       </div>
-    </div>
+    </motion.div>
   )
 }
