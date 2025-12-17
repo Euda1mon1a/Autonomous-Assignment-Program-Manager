@@ -2207,6 +2207,277 @@ function MSAClinicTracker() {
 
 ---
 
+## Future Implementation: Resident Elective Preference System
+
+> **Priority:** High (improves resident satisfaction & learning)
+> **Status:** Not Started — Design documented
+> **Effort:** 8-10 hours
+
+### Problem Statement
+
+Subspecialty electives have different learning value depending on the half-day:
+- **Sports Medicine AM** → See post-op patients, better hands-on learning
+- **Sports Medicine PM** → Pre-op consults, less procedural
+- **Derm AM** → Procedures day
+- **Derm PM** → Follow-ups only
+
+Residents should express preferences, coordinator approves, but required clinics must still be satisfied.
+
+### Workflow
+
+```
+1. Resident submits ranked elective preferences for upcoming block
+   - Sees available slots with learning value indicators
+   - System warns if selection violates requirements (e.g., not enough FM clinics)
+
+2. Coordinator reviews all submissions
+   - Sees conflicts (two residents want same slot)
+   - Can approve, deny, or modify
+   - Resolves conflicts by preference rank or manual decision
+
+3. Upon approval → preferences become assignments
+   - Required clinics placed first (continuity, FM minimum)
+   - Then approved electives in rank order
+```
+
+### Current State
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Faculty preference system | ✅ Exists | `FacultyPreference` model for FMIT |
+| **Resident preference** | ❌ Missing | No equivalent for residents |
+| Elective templates | ✅ Exists | Can create elective rotation templates |
+| Required clinic enforcement | ❌ Missing | No "must have X clinics/week" constraint |
+| Preference approval workflow | ❌ Missing | No submit → review → approve flow |
+
+### Proposed Implementation
+
+#### 1. New Model: `ResidentElectivePreference`
+
+```python
+class ResidentElectivePreference(Base):
+    """Resident's ranked preferences for elective slots"""
+    __tablename__ = "resident_elective_preferences"
+
+    id = Column(UUID, primary_key=True)
+    person_id = Column(UUID, ForeignKey("people.id"))
+
+    # What block/period this preference is for
+    academic_block_number = Column(Integer)  # e.g., Block 5
+    academic_year = Column(String(9))  # e.g., "2024-2025"
+
+    # Submission tracking
+    submitted_at = Column(DateTime, nullable=True)
+    status = Column(String(20), default='draft')  # draft, submitted, approved, denied
+
+    # Coordinator review
+    reviewed_by_id = Column(UUID, ForeignKey("people.id"), nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    coordinator_notes = Column(Text, nullable=True)
+
+    # Relationships
+    ranked_choices = relationship("ElectiveChoice", order_by="ElectiveChoice.rank")
+
+
+class ElectiveChoice(Base):
+    """Individual ranked choice within a preference submission"""
+    __tablename__ = "elective_choices"
+
+    id = Column(UUID, primary_key=True)
+    preference_id = Column(UUID, ForeignKey("resident_elective_preferences.id"))
+
+    # The elective slot being requested
+    rotation_template_id = Column(UUID, ForeignKey("rotation_templates.id"))
+    day_of_week = Column(Integer)  # 0=Mon, 6=Sun
+    time_of_day = Column(String(2))  # 'AM' or 'PM'
+
+    # Ranking
+    rank = Column(Integer)  # 1 = first choice, 2 = second, etc.
+
+    # Outcome
+    granted = Column(Boolean, nullable=True)  # null = pending
+    denial_reason = Column(String(255), nullable=True)
+```
+
+#### 2. Extend `RotationTemplate` for Electives
+
+```python
+# Add to RotationTemplate model
+is_elective = Column(Boolean, default=False)
+elective_category = Column(String(50), nullable=True)  # "subspecialty", "research", "admin"
+learning_value_am = Column(Integer, nullable=True)  # 1-5 rating
+learning_value_pm = Column(Integer, nullable=True)  # 1-5 rating
+max_residents_per_session = Column(Integer, nullable=True)
+```
+
+#### 3. Resident Requirements Model
+
+```python
+class ResidentRequirements(Base):
+    """Per-resident or PGY-level requirements"""
+    __tablename__ = "resident_requirements"
+
+    id = Column(UUID, primary_key=True)
+    pgy_level = Column(Integer, nullable=True)  # NULL = applies to specific person
+    person_id = Column(UUID, ForeignKey("people.id"), nullable=True)
+
+    # Clinic requirements per block
+    required_continuity_clinics_per_week = Column(Integer, default=1)
+    required_fm_clinics_per_block = Column(Integer, default=4)
+    max_elective_sessions_per_block = Column(Integer, nullable=True)
+```
+
+#### 4. API Endpoints
+
+```
+# Resident Submission
+GET    /api/elective-preferences/available-slots        # What's open
+POST   /api/elective-preferences                        # Save draft
+POST   /api/elective-preferences/{id}/submit            # Submit for review
+GET    /api/elective-preferences/my-submissions         # Resident's own
+
+# Coordinator Review
+GET    /api/elective-preferences/pending                # Awaiting review
+GET    /api/elective-preferences/conflicts              # Competing requests
+POST   /api/elective-preferences/{id}/approve           # Approve
+POST   /api/elective-preferences/{id}/deny              # Deny with reason
+POST   /api/elective-preferences/bulk-approve           # Approve all non-conflicting
+
+# Requirements Validation
+GET    /api/elective-preferences/requirements-check     # Validate before submit
+```
+
+#### 5. Resident UI: Preference Selector
+
+```tsx
+function ResidentElectiveSelector({ block }) {
+  return (
+    <div>
+      {/* Requirements reminder */}
+      <RequirementsCard>
+        <Requirement met={continuityMet}>1x Continuity Clinic/week</Requirement>
+        <Requirement met={fmClinicsMet}>4x FM Clinics this block</Requirement>
+      </RequirementsCard>
+
+      {/* Available electives with learning value */}
+      <ElectiveGrid>
+        {slots.map(slot => (
+          <ElectiveCard
+            template={slot.template.name}
+            dayTime={`${slot.day} ${slot.time}`}
+            learningValue={slot.learningValue}  // ⭐⭐⭐⭐⭐
+            spotsLeft={slot.capacity - slot.taken}
+            onAdd={() => addToRanking(slot)}
+          />
+        ))}
+      </ElectiveGrid>
+
+      {/* Drag to reorder ranked preferences */}
+      <h3>Your Ranked Preferences</h3>
+      <DraggableRankingList items={rankedChoices} onReorder={setRanking} />
+
+      {/* Validation */}
+      {!requirementsMet && (
+        <Warning>Add required FM clinics before submitting.</Warning>
+      )}
+
+      <SubmitButton disabled={!requirementsMet}>
+        Submit for Coordinator Approval
+      </SubmitButton>
+    </div>
+  );
+}
+```
+
+#### 6. Coordinator UI: Review Dashboard
+
+```tsx
+function ElectivePreferenceReview({ block }) {
+  return (
+    <div>
+      {/* Conflict panel */}
+      {conflicts.length > 0 && (
+        <ConflictPanel>
+          {conflicts.map(c => (
+            <ConflictCard>
+              <SlotInfo>{c.template} - {c.day} {c.time}</SlotInfo>
+              <CompetingResidents>
+                {c.residents.map(r => `${r.name} (Rank #${r.rank})`)}
+              </CompetingResidents>
+              <ResolveButton />
+            </ConflictCard>
+          ))}
+        </ConflictPanel>
+      )}
+
+      {/* All submissions */}
+      <SubmissionList>
+        {submissions.map(sub => (
+          <SubmissionCard>
+            <ResidentName>{sub.person.name} (PGY-{sub.pgy})</ResidentName>
+            <RankedChoices choices={sub.rankedChoices} />
+            <RequirementsBadge met={sub.requirementsMet} />
+            <ApproveButton /> <DenyButton />
+          </SubmissionCard>
+        ))}
+      </SubmissionList>
+
+      <BulkApproveButton disabled={conflicts.length > 0}>
+        Approve All Non-Conflicting
+      </BulkApproveButton>
+    </div>
+  );
+}
+```
+
+### Scheduling Logic
+
+```python
+async def generate_block_schedule(block_number: int):
+    """
+    1. Place required clinics FIRST (continuity, FM minimum)
+    2. Place approved electives in preference rank order
+    3. Fill remaining slots with defaults
+    """
+    for resident in residents:
+        # Step 1: Required clinics
+        await place_continuity_clinic(resident)
+        await place_required_fm_clinics(resident, count=4)
+
+        # Step 2: Approved electives by rank
+        for choice in resident.approved_preferences:
+            if slot_available(choice):
+                await place_elective(resident, choice)
+
+        # Step 3: Fill gaps
+        await fill_remaining_with_defaults(resident)
+```
+
+### Implementation Checklist
+
+- [ ] Database migration for preference models
+- [ ] Extend `RotationTemplate` with elective/learning value fields
+- [ ] Create `ResidentRequirements` model
+- [ ] API routes for submission and review
+- [ ] Resident preference selector UI with drag-to-rank
+- [ ] Coordinator review dashboard with conflict detection
+- [ ] Requirements validation before submission
+- [ ] Scheduling service integration
+- [ ] Email notifications (submitted, approved, denied)
+- [ ] Test coverage
+
+### Role Permissions
+
+| Action | Resident | Coordinator | Admin |
+|--------|----------|-------------|-------|
+| View available electives | ✅ | ✅ | ✅ |
+| Submit own preferences | ✅ | ❌ | ❌ |
+| View all submissions | ❌ | ✅ | ✅ |
+| Approve/deny | ❌ | ✅ | ✅ |
+| Override requirements | ❌ | ✅ | ✅ |
+
+---
+
 ## Future Integration: MyEvaluations API
 
 > **Priority:** Medium (nice-to-have integration)
