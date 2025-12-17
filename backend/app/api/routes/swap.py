@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
 from app.db.session import get_db
+from app.models.swap import SwapRecord
 from app.models.user import User
 from app.schemas.swap import (
     SwapExecuteRequest,
@@ -127,15 +128,68 @@ def get_swap_history(
 ):
     """
     Get swap history with optional filters.
+
+    Filters:
+    - faculty_id: Filter by source or target faculty
+    - status: Filter by swap status (pending, executed, rolled_back, etc.)
+    - start_date: Filter swaps with source_week >= start_date
+    - end_date: Filter swaps with source_week <= end_date
     """
-    # TODO: Implement when SwapRecord queries are available
-    # For now, return empty response
+    query = db.query(SwapRecord)
+
+    # Filter by faculty (source or target)
+    if faculty_id:
+        query = query.filter(
+            (SwapRecord.source_faculty_id == faculty_id) |
+            (SwapRecord.target_faculty_id == faculty_id)
+        )
+
+    # Filter by status
+    if status:
+        query = query.filter(SwapRecord.status == status)
+
+    # Filter by date range (using source_week)
+    if start_date:
+        query = query.filter(SwapRecord.source_week >= start_date)
+    if end_date:
+        query = query.filter(SwapRecord.source_week <= end_date)
+
+    # Order by most recent first
+    query = query.order_by(SwapRecord.requested_at.desc())
+
+    # Get total count for pagination
+    total = query.count()
+
+    # Apply pagination
+    swaps = query.offset((page - 1) * page_size).limit(page_size).all()
+
+    # Build response items
+    items = []
+    for swap in swaps:
+        items.append(SwapRecordResponse(
+            id=swap.id,
+            source_faculty_id=swap.source_faculty_id,
+            source_faculty_name=swap.source_faculty.name if swap.source_faculty else "Unknown",
+            source_week=swap.source_week,
+            target_faculty_id=swap.target_faculty_id,
+            target_faculty_name=swap.target_faculty.name if swap.target_faculty else "Unknown",
+            target_week=swap.target_week,
+            swap_type=swap.swap_type,
+            status=swap.status,
+            reason=swap.reason,
+            requested_at=swap.requested_at,
+            executed_at=swap.executed_at,
+        ))
+
+    # Calculate total pages
+    pages = (total + page_size - 1) // page_size if total > 0 else 0
+
     return SwapHistoryResponse(
-        items=[],
-        total=0,
+        items=items,
+        total=total,
         page=page,
         page_size=page_size,
-        pages=0,
+        pages=pages,
     )
 
 
@@ -145,11 +199,36 @@ def get_swap(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Get a specific swap record by ID."""
-    # TODO: Implement when SwapRecord model is queryable
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Swap not found",
+    """
+    Get a specific swap record by ID.
+
+    Returns detailed information about a single swap including:
+    - Source and target faculty names
+    - Swap dates and type
+    - Status and execution times
+    - Reason for the swap
+    """
+    swap = db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
+
+    if not swap:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Swap with ID {swap_id} not found",
+        )
+
+    return SwapRecordResponse(
+        id=swap.id,
+        source_faculty_id=swap.source_faculty_id,
+        source_faculty_name=swap.source_faculty.name if swap.source_faculty else "Unknown",
+        source_week=swap.source_week,
+        target_faculty_id=swap.target_faculty_id,
+        target_faculty_name=swap.target_faculty.name if swap.target_faculty else "Unknown",
+        target_week=swap.target_week,
+        swap_type=swap.swap_type,
+        status=swap.status,
+        reason=swap.reason,
+        requested_at=swap.requested_at,
+        executed_at=swap.executed_at,
     )
 
 
