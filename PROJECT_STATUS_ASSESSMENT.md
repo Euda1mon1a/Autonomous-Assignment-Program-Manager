@@ -1998,6 +1998,350 @@ function PatternEditor({ patterns, onReorder }) {
 
 ---
 
+## Future Implementation: Surrogate/Coverage Dashboard
+
+> **Priority:** High (operational necessity)
+> **Status:** Not Started — Design documented
+> **Effort:** 6-8 hours
+
+### Problem Statement
+
+When faculty are on leave, someone needs to cover their "inbox" — swap requests, notifications, approvals, and schedule-related communications. Currently no mechanism exists for:
+
+```
+Dr. A is on leave for 2 weeks
+Dr. B is designated as surrogate/covering
+Dr. B needs to:
+  - See Dr. A's schedule alongside their own
+  - Respond to swap requests sent to Dr. A
+  - Approve/deny actions on Dr. A's behalf
+  - Receive notifications meant for Dr. A
+```
+
+### Current State
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Leave/absence tracking | ✅ Exists | Leave requests, absences recorded |
+| My Dashboard | ✅ Exists | Shows user's own schedule, swaps |
+| Swap notifications | ✅ Exists | Email + in-app for swap requests |
+| **Surrogate assignment** | ❌ Missing | No way to designate a surrogate |
+| **Combined view** | ❌ Missing | Can't see another person's dashboard |
+| **Notification forwarding** | ❌ Missing | Notifications don't route to surrogate |
+| **Act-on-behalf** | ❌ Missing | Can't respond to swaps for someone else |
+
+### Proposed Implementation
+
+#### 1. New Model: `SurrogateAssignment`
+
+```python
+class SurrogateAssignment(Base):
+    """Tracks who is covering whom during absences"""
+    __tablename__ = "surrogate_assignments"
+
+    id = Column(UUID, primary_key=True)
+
+    # The person on leave
+    principal_id = Column(UUID, ForeignKey("people.id"), nullable=False)
+
+    # The person covering
+    surrogate_id = Column(UUID, ForeignKey("people.id"), nullable=False)
+
+    # Coverage period
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+
+    # What can surrogate do?
+    permissions = Column(JSON, default={
+        "view_schedule": True,
+        "respond_to_swaps": True,
+        "approve_on_behalf": False,  # Requires explicit grant
+        "modify_preferences": False,  # Usually no
+    })
+
+    # Who set this up
+    created_by_id = Column(UUID, ForeignKey("people.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Optional link to leave request
+    leave_request_id = Column(UUID, ForeignKey("leave_requests.id"), nullable=True)
+
+    # Status
+    is_active = Column(Boolean, default=True)
+
+    # Audit
+    notes = Column(Text, nullable=True)  # "Covering inbox while at conference"
+
+    # Relationships
+    principal = relationship("Person", foreign_keys=[principal_id])
+    surrogate = relationship("Person", foreign_keys=[surrogate_id])
+```
+
+#### 2. API Endpoints
+
+```
+# Surrogate Management
+POST   /api/surrogates                           # Create surrogate assignment
+GET    /api/surrogates                           # List all active (admin view)
+GET    /api/surrogates/my-assignments            # Who am I covering?
+GET    /api/surrogates/my-coverages              # Who is covering me?
+DELETE /api/surrogates/{id}                      # End surrogate assignment early
+PATCH  /api/surrogates/{id}                      # Modify dates or permissions
+
+# Surrogate Actions
+GET    /api/surrogates/{principal_id}/dashboard  # View principal's dashboard as surrogate
+GET    /api/surrogates/{principal_id}/inbox      # View principal's pending items
+POST   /api/surrogates/{principal_id}/swaps/{swap_id}/respond  # Respond on behalf
+```
+
+#### 3. Dashboard Enhancements
+
+```tsx
+// SurrogateBanner.tsx - Shows at top of dashboard when covering someone
+function SurrogateBanner({ assignments }: { assignments: SurrogateAssignment[] }) {
+  return (
+    <Alert variant="info">
+      <AlertTitle>You are covering for:</AlertTitle>
+      {assignments.map(a => (
+        <div key={a.id} className="flex items-center gap-2">
+          <Avatar src={a.principal.avatar} />
+          <span>{a.principal.name}</span>
+          <span className="text-muted">({a.start_date} - {a.end_date})</span>
+          <Button size="sm" onClick={() => switchToPrincipal(a.principal_id)}>
+            View Their Dashboard
+          </Button>
+        </div>
+      ))}
+    </Alert>
+  );
+}
+
+// DashboardSwitcher.tsx - Toggle between own view and surrogate view
+function DashboardSwitcher() {
+  const { currentView, setCurrentView, surrogateAssignments } = useSurrogate();
+
+  return (
+    <Select value={currentView} onValueChange={setCurrentView}>
+      <SelectItem value="self">My Dashboard</SelectItem>
+      {surrogateAssignments.map(a => (
+        <SelectItem key={a.principal_id} value={a.principal_id}>
+          {a.principal.name}'s Dashboard (Covering)
+        </SelectItem>
+      ))}
+    </Select>
+  );
+}
+```
+
+#### 4. Notification Routing
+
+```python
+async def route_notification(
+    notification: Notification,
+    recipient_id: UUID
+) -> List[UUID]:
+    """
+    Route notification to recipient AND any active surrogates.
+    """
+    recipients = [recipient_id]
+
+    # Check for active surrogates
+    surrogates = await db.query(SurrogateAssignment).filter(
+        SurrogateAssignment.principal_id == recipient_id,
+        SurrogateAssignment.is_active == True,
+        SurrogateAssignment.start_date <= date.today(),
+        SurrogateAssignment.end_date >= date.today(),
+    ).all()
+
+    for surrogate in surrogates:
+        recipients.append(surrogate.surrogate_id)
+
+        # Mark notification as forwarded
+        notification.metadata["forwarded_to_surrogate"] = True
+        notification.metadata["original_recipient"] = str(recipient_id)
+
+    return recipients
+```
+
+#### 5. Swap Response on Behalf
+
+```python
+async def respond_to_swap_as_surrogate(
+    swap_id: UUID,
+    surrogate_id: UUID,
+    principal_id: UUID,
+    response: SwapResponse
+) -> SwapRecord:
+    """Surrogate responds to swap on principal's behalf"""
+
+    # Verify active surrogate relationship
+    assignment = await verify_surrogate_permission(
+        surrogate_id, principal_id, "respond_to_swaps"
+    )
+    if not assignment:
+        raise PermissionDenied("Not authorized to respond on behalf of this person")
+
+    # Get the swap
+    swap = await get_swap(swap_id)
+    if swap.target_person_id != principal_id:
+        raise ValidationError("This swap is not addressed to the principal")
+
+    # Record response with surrogate attribution
+    swap.response = response.decision  # approve/deny
+    swap.responded_by_id = surrogate_id
+    swap.responded_on_behalf_of_id = principal_id
+    swap.response_notes = f"[Responded by surrogate: {surrogate.name}] {response.notes}"
+    swap.responded_at = datetime.utcnow()
+
+    # Audit log
+    await log_audit(
+        action="swap_response_by_surrogate",
+        actor_id=surrogate_id,
+        target_id=principal_id,
+        details={
+            "swap_id": str(swap_id),
+            "decision": response.decision,
+            "surrogate_assignment_id": str(assignment.id)
+        }
+    )
+
+    return swap
+```
+
+#### 6. Leave Request Integration
+
+When a leave request is approved, prompt for surrogate assignment:
+
+```tsx
+// LeaveApprovalModal.tsx
+function LeaveApprovalModal({ leaveRequest, onApprove }) {
+  const [surrogate, setSurrogate] = useState(null);
+
+  return (
+    <Modal>
+      <ModalHeader>Approve Leave Request</ModalHeader>
+      <ModalBody>
+        <p>{leaveRequest.person.name} is requesting leave from {leaveRequest.start_date} to {leaveRequest.end_date}</p>
+
+        <Divider />
+
+        <h4>Assign Surrogate (Recommended)</h4>
+        <p className="text-muted">Who will cover their inbox and swap requests?</p>
+
+        <PersonSelector
+          value={surrogate}
+          onChange={setSurrogate}
+          excludeIds={[leaveRequest.person_id]}
+          placeholder="Select surrogate..."
+        />
+
+        <Checkbox
+          label="Surrogate can approve swaps on their behalf"
+          checked={canApprove}
+          onChange={setCanApprove}
+        />
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="secondary" onClick={onClose}>Cancel</Button>
+        <Button
+          variant="primary"
+          onClick={() => onApprove({ surrogate_id: surrogate?.id, permissions: { approve_on_behalf: canApprove } })}
+        >
+          Approve Leave {surrogate && "& Assign Surrogate"}
+        </Button>
+      </ModalFooter>
+    </Modal>
+  );
+}
+```
+
+### Workflow
+
+```
+1. Dr. A submits leave request (Jan 15-28)
+
+2. Coordinator approves leave, system prompts:
+   "Who will cover Dr. A's inbox?"
+   → Selects Dr. B
+   → Checks "Can respond to swaps on behalf"
+
+3. System creates SurrogateAssignment:
+   - principal: Dr. A
+   - surrogate: Dr. B
+   - start_date: Jan 15
+   - end_date: Jan 28
+   - permissions: { view_schedule: true, respond_to_swaps: true }
+
+4. Jan 15 arrives, Dr. B logs in:
+   - Sees banner: "You are covering for Dr. A (Jan 15-28)"
+   - Dashboard switcher shows: "My Dashboard" | "Dr. A's Dashboard"
+
+5. Dr. C requests swap with Dr. A for Feb 3:
+   - Notification sent to Dr. A (for record)
+   - Notification ALSO sent to Dr. B (as surrogate)
+   - Dr. B sees in their inbox: "Swap request for Dr. A from Dr. C"
+
+6. Dr. B responds:
+   - Clicks "Approve" on Dr. A's behalf
+   - System logs: "Swap approved by Dr. B (surrogate for Dr. A)"
+   - Dr. C gets notification: "Your swap with Dr. A was approved"
+
+7. Jan 28: Surrogate assignment auto-expires
+   - Dr. B no longer sees Dr. A's dashboard
+   - Dr. A returns, sees audit trail of actions taken
+```
+
+### UI Components Needed
+
+| Component | Purpose |
+|-----------|---------|
+| `SurrogateBanner` | Shows who you're covering at top of dashboard |
+| `DashboardSwitcher` | Toggle between own view and surrogate views |
+| `SurrogateInbox` | Combined inbox showing items from all principals |
+| `ActOnBehalfBadge` | Visual indicator when taking action for someone else |
+| `SurrogateAssignmentModal` | Create/edit surrogate assignments |
+| `LeaveApprovalWithSurrogate` | Enhanced leave approval with surrogate selection |
+| `SurrogateAuditLog` | View all actions taken by/for surrogates |
+
+### Edge Cases
+
+| Scenario | Handling |
+|----------|----------|
+| Dr. B is also on leave | System should warn when selecting surrogate who has overlapping leave |
+| Chain surrogates (A→B→C) | Not supported - surrogate must be available |
+| Dr. A returns early | Can manually end surrogate assignment |
+| Conflicting responses | First response wins; second person sees "already responded" |
+| Surrogate tries to change preferences | Blocked unless explicitly permitted |
+| Principal tries to act while on leave | Allowed - they can still use system if needed |
+
+### Implementation Checklist
+
+- [ ] Database migration for `SurrogateAssignment` model
+- [ ] API routes for surrogate CRUD
+- [ ] Modify notification service to check for surrogates
+- [ ] Add `responded_by_id` and `responded_on_behalf_of_id` to SwapRecord
+- [ ] Create `SurrogateBanner` component
+- [ ] Create `DashboardSwitcher` component
+- [ ] Modify `useMyDashboard` hook to support surrogate view
+- [ ] Integrate surrogate prompt into leave approval flow
+- [ ] Add surrogate section to person detail page
+- [ ] Audit logging for all surrogate actions
+- [ ] Test coverage
+
+### Permissions Matrix
+
+| Action | Self | Surrogate (default) | Surrogate (elevated) | Admin |
+|--------|------|---------------------|----------------------|-------|
+| View schedule | ✅ | ✅ | ✅ | ✅ |
+| View pending swaps | ✅ | ✅ | ✅ | ✅ |
+| Respond to swap requests | ✅ | ✅ | ✅ | ✅ |
+| Approve swaps (if approver role) | ✅ | ❌ | ✅ | ✅ |
+| Modify preferences | ✅ | ❌ | ❌ | ✅ |
+| Change blocked weeks | ✅ | ❌ | ❌ | ✅ |
+| Submit leave request | ✅ | ❌ | ❌ | ✅ |
+
+---
+
 ## Future Implementation: MSA Clinic Slot Booking Tracker
 
 > **Priority:** High (operational necessity)
@@ -2820,5 +3164,206 @@ MyEvaluations advertises:
 
 ---
 
+## 🎯 CONSOLIDATED HUMAN TO-DO LIST (Prioritized)
+
+> **Purpose:** This is the master list of items requiring **human action** — decisions, clarifications, external contacts, and deployment tasks that cannot be automated.
+
+---
+
+### 🔴 P0 - CRITICAL (Pre-Launch Blockers)
+
+These items **must be completed before production deployment**.
+
+#### Security & Access Control
+| Task | Owner | Action Required | Est. Effort |
+|------|-------|-----------------|-------------|
+| **Export endpoint security** | Dev/Admin | Add role checks to `/api/export/*` endpoints - currently anyone can export all data | 2h |
+| **Production secrets setup** | DevOps | Configure production environment variables (JWT secret, webhook secrets, DB credentials) | 1h |
+| **SSL certificates** | DevOps | Provision and configure HTTPS for production domain | 1h |
+
+#### Critical Clarifications Needed (Chief Resident Workflow)
+| Question | Who to Ask | Impact |
+|----------|------------|--------|
+| **Night Float rotation duration** | Chief Resident/PD | Required to design call scheduling system |
+| **Call distribution rules** | Chief Resident/PD | How many call nights per resident per block? |
+| **LND coverage specifics** | Chief Resident/PD | Which residents? What times? |
+| **Post-call day off rules** | PD/ACGME Coord | Critical for inter-block transitions |
+| **Golden weekend policy** | PD | Does program require guaranteed weekends off? |
+
+#### Database & Infrastructure
+| Task | Owner | Action Required | Est. Effort |
+|------|-------|-----------------|-------------|
+| **Run production migrations** | DevOps | Execute `alembic upgrade head` on production DB | 30m |
+| **Redis deployment** | DevOps | Deploy Redis for Celery (configured in docker-compose) | 30m |
+| **Celery worker startup** | DevOps | Start Celery worker + beat scheduler | 30m |
+| **Backup strategy** | DevOps | Configure automated PostgreSQL backups | 2h |
+
+---
+
+### 🟠 P1 - HIGH PRIORITY (Launch Week)
+
+These items should be completed **within first week of launch**.
+
+#### User Onboarding & Training
+| Task | Owner | Action Required | Est. Effort |
+|------|-------|-----------------|-------------|
+| **Designate scheduler champions** | Program Director | Identify 1 champion per department to assist users | 1h meeting |
+| **Create role-specific quick-start guides** | Admin/Training | PDF guides for: Coordinator, Faculty, Resident, RN/LPN/MSA | 4h |
+| **Schedule office hours** | Admin | First 2 weeks post-launch support sessions | 1h |
+| **Define escalation path** | Admin | Who to contact for urgent scheduling issues | 30m |
+| **Prepare rollback plan** | DevOps | Document steps to revert if adoption fails | 1h |
+
+#### External Contacts Required
+| Contact | Purpose | Priority | Notes |
+|---------|---------|----------|-------|
+| **MyEvaluations** | API documentation request | P1 | Email: Sales@MyEvaluations.com or call (866) 422-0554 |
+| **IT/Security** | n8n workflow approval | P1 | May need security review for Slack integration |
+| **MHS Genesis admin** | Clinic ID mappings | P1 | For MSA slot booking tracker |
+
+#### Communication Setup
+| Task | Owner | Action Required | Est. Effort |
+|------|-------|-----------------|-------------|
+| **Email notification templates** | Admin | Create/approve email templates for swap requests, schedule changes | 2h |
+| **Slack workspace setup** | IT Admin | Create channel for scheduler notifications (if using ChatOps) | 30m |
+| **Emergency contact list** | Admin | Define who gets paged for system failures | 30m |
+
+---
+
+### 🟡 P2 - MEDIUM PRIORITY (First Month)
+
+These items improve adoption and user satisfaction.
+
+#### UX Improvements (Dev Team)
+| Task | Priority | Effort | Impact |
+|------|----------|--------|--------|
+| First-time user onboarding wizard | Medium | 8h | Adoption |
+| Notification preferences UI page | Medium | 4h | User control |
+| Mobile "Today" view optimization | Medium | 3h | Daily usage |
+| Expose fairness metrics to all users | Medium | 2h | Trust building |
+| In-app feedback mechanism | Medium | 4h | User voice |
+| Contextual help tooltips | Low | 4h | Discoverability |
+
+#### Data Entry & Validation Enhancements
+| Task | Priority | Effort | Impact |
+|------|----------|--------|--------|
+| Federal holiday API integration | Medium | 3h | Reduces manual entry errors |
+| Autocomplete for person names in imports | Medium | 2h | Reduces typos |
+| Auto-calculate block numbers from dates | Low | 2h | Convenience |
+
+#### Accessibility (For 508 Compliance)
+| Task | Priority | Effort | Notes |
+|------|----------|--------|-------|
+| Color-blind friendly heatmap palette | High | 2h | Critical for accessibility |
+| Full keyboard navigation audit | Medium | 4h | Required for compliance |
+| Screen reader testing (NVDA/VoiceOver) | Medium | 3h | Required for compliance |
+| Focus trap in modals | Low | 2h | UX polish |
+
+---
+
+### 🟢 P3 - NICE TO HAVE (Ongoing)
+
+These are future enhancements with no hard deadline.
+
+#### Feature Implementation (Requires Development)
+| Feature | Effort | Dependencies | Status |
+|---------|--------|--------------|--------|
+| **Surrogate/Coverage Dashboard** | 6-8h | DB migrations | Design complete |
+| Academic Year Transition System | 8-12h | DB migrations | Design complete |
+| Continuity Clinic & Clinic Blocks | 12-16h | DB migrations | Design complete |
+| MSA Clinic Slot Booking Tracker | 6-8h | DB migrations | Design complete |
+| Resident Elective Preference System | 8-10h | DB migrations | Design complete |
+| Resident Call Scheduling System | TBD | Clarifications needed | Partial design |
+| Preference ML system | Unknown | Research needed | Not started |
+
+#### Portal Routes (Backend Wiring)
+These routes exist but return placeholder data:
+
+| Route | Status | What's Missing |
+|-------|--------|----------------|
+| `GET /portal/my/schedule` | Stub | Query actual FMIT weeks |
+| `GET /portal/my/swaps` | Stub | Query SwapRecord model |
+| `POST /portal/my/swaps` | Stub | Implement swap creation |
+| `POST /portal/my/swaps/{id}/respond` | Stub | Implement swap response |
+| `GET /portal/my/preferences` | Stub | Query FacultyPreference |
+| `PUT /portal/my/preferences` | Stub | Update FacultyPreference |
+| `GET /portal/marketplace` | Stub | Query open swaps |
+
+#### Stability Metrics Enhancements
+| Enhancement | Effort | Notes |
+|-------------|--------|-------|
+| Version history lookup (SQLAlchemy-Continuum) | 2h | Placeholder exists |
+| Real violation tracking from ACGMEValidator | 2h | Integration needed |
+| Celery task for automated monitoring | 1h | Hook into existing tasks |
+
+---
+
+### 📋 PRE-LAUNCH CHECKLIST (Copy/Paste for Tracking)
+
+#### Week -1: Infrastructure
+- [ ] Production environment provisioned
+- [ ] SSL certificates installed
+- [ ] Database migrations run
+- [ ] Redis deployed and tested
+- [ ] Celery workers started
+- [ ] Backup strategy confirmed
+- [ ] Monitoring/alerting configured
+
+#### Week -1: Security
+- [ ] Export endpoint role checks added
+- [ ] Production secrets configured
+- [ ] Webhook secrets set for leave system
+- [ ] Admin accounts created
+- [ ] Test RBAC with each role
+
+#### Week 0: Launch Day
+- [ ] Scheduler champions identified and briefed
+- [ ] Quick-start guides distributed
+- [ ] Office hours announced
+- [ ] Escalation path documented
+- [ ] Monitoring dashboards visible
+- [ ] Rollback procedure tested
+
+#### Week 1-2: Early Adoption
+- [ ] Office hours held (daily or every other day)
+- [ ] Collect user feedback
+- [ ] Address critical bugs immediately
+- [ ] Monitor system performance
+- [ ] Track adoption metrics
+
+#### Month 1: Stabilization
+- [ ] Onboarding wizard implemented (if needed)
+- [ ] Notification preferences live
+- [ ] Accessibility audit complete
+- [ ] MyEvaluations API evaluated
+- [ ] Chief resident call system requirements finalized
+
+---
+
+### 📞 KEY CONTACTS FOR DECISIONS
+
+| Role | Purpose | When to Contact |
+|------|---------|-----------------|
+| **Program Director** | Policy decisions, ACGME compliance | Major workflow changes |
+| **Chief Resident** | Call scheduling rules, practical workflows | Call system design |
+| **ACGME Coordinator** | Compliance requirements verification | Before changing rules |
+| **IT/DevOps** | Infrastructure, security, integrations | Deployment, Slack setup |
+| **MyEvaluations Support** | API access inquiry | When ready to integrate |
+
+---
+
+### ⚠️ KNOWN HUMAN BEHAVIOR RISKS
+
+These scenarios need **policy decisions**, not code:
+
+| Scenario | Risk | Decision Needed |
+|----------|------|-----------------|
+| Last-minute swap requests (<7 days) | Coverage gaps | Auto-reject, warn, or allow? |
+| Faculty blocking too many weeks | Unfair burden distribution | Max blocked weeks policy? |
+| Coordinator makes change without notifying | Faculty surprised | Mandatory acknowledgment? |
+| Disputed swap approvals | Conflict between parties | Escalation path? |
+| New hire added mid-year | Fairness baseline disrupted | Prorated expectations? |
+
+---
+
 *Assessment generated by Claude Opus 4.5*
-*Last updated: 2025-12-17 (Human Factors & UX Considerations Added)*
+*Last updated: 2025-12-17 (Consolidated Human To-Do List Added)*
