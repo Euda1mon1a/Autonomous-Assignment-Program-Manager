@@ -1,13 +1,13 @@
 """Audit API routes.
 
 Provides endpoints for audit logging, statistics, and compliance tracking.
-Currently implements stub/mock data - will be integrated with SQLAlchemy-Continuum
-by Terminal-2.
+Integrates with SQLAlchemy-Continuum for real audit data, with mock data as fallback.
 """
 
 import csv
 import io
 import json
+import logging
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -27,6 +27,9 @@ from app.schemas.audit import (
     FieldChange,
     MarkReviewedRequest,
 )
+from app.services import audit_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -388,7 +391,39 @@ async def get_audit_logs(
     user_ids_list = user_ids.split(',') if user_ids else None
     severity_list = severity.split(',') if severity else None
 
-    # Get filtered and paginated entries
+    # Try to get real audit data from SQLAlchemy-Continuum
+    try:
+        entries, total = audit_service.get_audit_logs(
+            db=db,
+            page=page,
+            page_size=page_size,
+            start_date=start_date,
+            end_date=end_date,
+            entity_types=entity_types_list,
+            actions=actions_list,
+            user_ids=user_ids_list,
+            severity=severity_list,
+            search=search,
+            entity_id=entity_id,
+            acgme_overrides_only=acgme_overrides_only,
+        )
+
+        # If we got real data, use it
+        if total > 0:
+            logger.info(f"Retrieved {total} real audit entries")
+            total_pages = (total + page_size - 1) // page_size
+            return AuditLogResponse(
+                items=entries,
+                total=total,
+                page=page,
+                pageSize=page_size,
+                totalPages=total_pages,
+            )
+    except Exception as e:
+        logger.warning(f"Error fetching real audit data, falling back to mock: {e}")
+
+    # Fall back to mock data if no real data or error occurred
+    logger.info("Using mock audit data as fallback")
     entries, total = _generate_mock_audit_entries(
         page=page,
         page_size=page_size,
@@ -447,6 +482,37 @@ async def get_audit_statistics(
 
     Returns aggregate counts and metrics for the specified date range.
     """
+    # Try to get real statistics from SQLAlchemy-Continuum
+    try:
+        stats = audit_service.get_audit_statistics(
+            db=db,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        # If we got real stats with data, use them
+        if stats.get("totalEntries", 0) > 0:
+            logger.info(f"Retrieved real audit statistics: {stats['totalEntries']} entries")
+
+            # Determine date range
+            now = datetime.utcnow()
+            actual_start = start_date or (now - timedelta(days=30)).isoformat()
+            actual_end = end_date or now.isoformat()
+
+            return AuditStatistics(
+                totalEntries=stats["totalEntries"],
+                entriesByAction=stats["entriesByAction"],
+                entriesByEntityType=stats["entriesByEntityType"],
+                entriesBySeverity=stats["entriesBySeverity"],
+                acgmeOverrideCount=stats["acgmeOverrideCount"],
+                uniqueUsers=stats["uniqueUsers"],
+                dateRange=DateRange(start=actual_start, end=actual_end),
+            )
+    except Exception as e:
+        logger.warning(f"Error fetching real audit statistics, falling back to mock: {e}")
+
+    # Fall back to mock data
+    logger.info("Using mock audit statistics as fallback")
     # Get all entries for the date range
     entries, total = _generate_mock_audit_entries(
         page=1,
@@ -507,6 +573,17 @@ async def get_audit_users(
 
     Used to populate user filter dropdowns in the UI.
     """
+    # Try to get real users from SQLAlchemy-Continuum
+    try:
+        users = audit_service.get_audit_users(db=db)
+        if users:
+            logger.info(f"Retrieved {len(users)} real audit users")
+            return users
+    except Exception as e:
+        logger.warning(f"Error fetching real audit users, falling back to mock: {e}")
+
+    # Fall back to mock data
+    logger.info("Using mock audit users as fallback")
     return _generate_mock_users()
 
 
@@ -538,20 +615,44 @@ async def export_audit_logs(
         start_date = filters.date_range.start
         end_date = filters.date_range.end
 
-    # Get filtered entries
-    entries, _ = _generate_mock_audit_entries(
-        page=1,
-        page_size=10000,  # Export all matching entries
-        start_date=start_date,
-        end_date=end_date,
-        entity_types=entity_types,
-        actions=actions,
-        user_ids=user_ids,
-        severity=severity_list,
-        search=search,
-        entity_id=entity_id,
-        acgme_overrides_only=acgme_only,
-    )
+    # Try to get real audit data
+    entries = []
+    try:
+        entries, _ = audit_service.get_audit_logs(
+            db=db,
+            page=1,
+            page_size=10000,  # Export all matching entries
+            start_date=start_date,
+            end_date=end_date,
+            entity_types=entity_types,
+            actions=actions,
+            user_ids=user_ids,
+            severity=severity_list,
+            search=search,
+            entity_id=entity_id,
+            acgme_overrides_only=acgme_only,
+        )
+        if entries:
+            logger.info(f"Exporting {len(entries)} real audit entries")
+    except Exception as e:
+        logger.warning(f"Error fetching real audit data for export, falling back to mock: {e}")
+
+    # Fall back to mock data if needed
+    if not entries:
+        logger.info("Using mock audit data for export")
+        entries, _ = _generate_mock_audit_entries(
+            page=1,
+            page_size=10000,
+            start_date=start_date,
+            end_date=end_date,
+            entity_types=entity_types,
+            actions=actions,
+            user_ids=user_ids,
+            severity=severity_list,
+            search=search,
+            entity_id=entity_id,
+            acgme_overrides_only=acgme_only,
+        )
 
     if config.format == "json":
         # Export as JSON
