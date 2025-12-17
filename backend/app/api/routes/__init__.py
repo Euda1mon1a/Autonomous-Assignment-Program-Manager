@@ -2,7 +2,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import people, blocks, rotation_templates, assignments, absences, schedule, settings, auth, export, resilience, procedures, credentials, certifications
-from app.api.routes import swap, leave, portal
+from app.api.routes import swap, leave, portal, fmit_health
 
 api_router = APIRouter()
 
@@ -23,3 +23,4 @@ api_router.include_router(certifications.router, prefix="/certifications", tags=
 api_router.include_router(swap.router)  # prefix="/swaps" defined in router
 api_router.include_router(leave.router)  # prefix="/leave" defined in router
 api_router.include_router(portal.router)  # prefix="/portal" defined in router
+api_router.include_router(fmit_health.router, prefix="/fmit", tags=["fmit-health"])
