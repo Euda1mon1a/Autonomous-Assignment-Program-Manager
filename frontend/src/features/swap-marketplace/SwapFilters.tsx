@@ -18,11 +18,11 @@ import {
 } from 'lucide-react';
 import type {
   SwapFilters as Filters,
-  SwapStatus,
-  SwapType,
   DateRange,
 } from './types';
 import {
+  SwapStatus,
+  SwapType,
   SWAP_STATUS_LABELS,
   SWAP_TYPE_LABELS,
 } from './types';
@@ -47,14 +47,14 @@ interface QuickDateRange {
 // ============================================================================
 
 const STATUS_OPTIONS: SwapStatus[] = [
-  'pending',
-  'approved',
-  'rejected',
-  'executed',
-  'cancelled',
+  SwapStatus.PENDING,
+  SwapStatus.APPROVED,
+  SwapStatus.REJECTED,
+  SwapStatus.EXECUTED,
+  SwapStatus.CANCELLED,
 ];
 
-const SWAP_TYPE_OPTIONS: SwapType[] = ['one_to_one', 'absorb'];
+const SWAP_TYPE_OPTIONS: SwapType[] = [SwapType.ONE_TO_ONE, SwapType.ABSORB];
 
 const QUICK_DATE_RANGES: QuickDateRange[] = [
   {

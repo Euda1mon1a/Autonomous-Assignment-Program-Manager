@@ -111,12 +111,6 @@ export function HolidayEditModal({
     }
   }, [isOpen, onClose])
 
-  const handleToggleHoliday = (id: string) => {
-    setEditedHolidays((prev) =>
-      prev.map((h) => (h.id === id ? { ...h, disabled: !h.disabled } : h))
-    )
-  }
-
   const handleRemoveHoliday = (id: string) => {
     setEditedHolidays((prev) => prev.filter((h) => h.id !== id))
   }

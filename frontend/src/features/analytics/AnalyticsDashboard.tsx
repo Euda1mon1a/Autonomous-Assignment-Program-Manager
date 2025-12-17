@@ -245,8 +245,12 @@ function AlertCard({
 function AlertsSection({ className = '' }: { className?: string }) {
   const [showAcknowledged, setShowAcknowledged] = useState(false);
   const { data: alerts, isLoading } = useMetricAlerts(showAcknowledged ? undefined : false);
-  const { mutate: acknowledgeAlert } = useAcknowledgeAlert();
-  const { mutate: dismissAlert } = useDismissAlert();
+  const { mutate: acknowledgeAlertMutation } = useAcknowledgeAlert();
+  const { mutate: dismissAlertMutation } = useDismissAlert();
+
+  // Wrap mutation functions to match expected signatures
+  const acknowledgeAlert = (id: string) => acknowledgeAlertMutation({ alertId: id });
+  const dismissAlert = (id: string) => dismissAlertMutation(id);
 
   if (isLoading) {
     return (
