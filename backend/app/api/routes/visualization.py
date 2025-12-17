@@ -5,6 +5,7 @@ and workload visualization.
 """
 
 import io
+import logging
 from datetime import date
 from uuid import UUID
 
@@ -24,6 +25,7 @@ from app.schemas.visualization import (
 from app.services.heatmap_service import HeatmapService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("/heatmap", response_model=HeatmapResponse)
@@ -110,7 +112,8 @@ def get_unified_heatmap_with_time_range(
     try:
         start_date, end_date = service.calculate_date_range(request.time_range)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error(f"Invalid visualization parameters: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail="Invalid request parameters")
 
     # Generate unified heatmap
     result = service.generate_unified_heatmap(
@@ -201,7 +204,8 @@ def get_heatmap_image(
             height=height,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate image: {str(e)}")
+        logger.error(f"Error generating visualization image: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An error occurred generating the image")
 
     # Determine media type
     media_types = {
@@ -352,8 +356,9 @@ def export_heatmap(
                 include_weekends=params.get("include_weekends", False),
             )
     except Exception as e:
+        logger.error(f"Invalid export request parameters: {e}", exc_info=True)
         raise HTTPException(
-            status_code=400, detail=f"Invalid request parameters: {str(e)}"
+            status_code=400, detail="Invalid request parameters"
         )
 
     # Export as image
@@ -366,7 +371,8 @@ def export_heatmap(
             height=request.height,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate image: {str(e)}")
+        logger.error(f"Error generating visualization image: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An error occurred generating the image")
 
     # Determine media type
     media_types = {

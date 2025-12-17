@@ -1,4 +1,5 @@
 """Calendar export API routes."""
+import logging
 from datetime import date, datetime, timedelta
 from typing import Optional
 from uuid import UUID
@@ -18,6 +19,7 @@ from app.schemas.calendar import (
 from app.services.calendar_service import CalendarService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("/export/ics")
@@ -66,7 +68,8 @@ def export_all_calendars(
             },
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate calendar: {str(e)}")
+        logger.error(f"Error generating calendar export: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An error occurred generating the calendar")
 
 
 @router.get("/export/ics/{person_id}")
@@ -111,9 +114,11 @@ def export_person_ics(
             },
         )
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        logger.error(f"Invalid request for calendar export: {e}", exc_info=True)
+        raise HTTPException(status_code=404, detail="Resource not found")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate calendar: {str(e)}")
+        logger.error(f"Error generating calendar export: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An error occurred generating the calendar")
 
 
 @router.get("/export/person/{person_id}")
@@ -158,9 +163,11 @@ def export_person_calendar(
             },
         )
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        logger.error(f"Invalid request for calendar export: {e}", exc_info=True)
+        raise HTTPException(status_code=404, detail="Resource not found")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate calendar: {str(e)}")
+        logger.error(f"Error generating calendar export: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An error occurred generating the calendar")
 
 
 @router.get("/export/rotation/{rotation_id}")
@@ -202,9 +209,11 @@ def export_rotation_calendar(
             },
         )
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        logger.error(f"Invalid request for calendar export: {e}", exc_info=True)
+        raise HTTPException(status_code=404, detail="Resource not found")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate calendar: {str(e)}")
+        logger.error(f"Error generating calendar export: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An error occurred generating the calendar")
 
 
 # =============================================================================
@@ -272,9 +281,11 @@ def create_subscription(
             is_active=subscription.is_active,
         )
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        logger.error(f"Invalid request for calendar subscription: {e}", exc_info=True)
+        raise HTTPException(status_code=404, detail="Resource not found")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create subscription: {str(e)}")
+        logger.error(f"Error creating calendar subscription: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An error occurred creating the subscription")
 
 
 @router.get("/subscribe/{token}")
@@ -339,7 +350,8 @@ def get_subscription_feed(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate feed: {str(e)}")
+        logger.error(f"Error generating calendar feed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An error occurred generating the calendar feed")
 
 
 @router.get("/subscriptions", response_model=CalendarSubscriptionListResponse)

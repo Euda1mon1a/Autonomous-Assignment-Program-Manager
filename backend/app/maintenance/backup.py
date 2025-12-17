@@ -10,6 +10,7 @@ from uuid import UUID
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
+from app.core.file_security import validate_backup_id, validate_file_path, FileSecurityError
 from app.models import Absence, Assignment, Block, Person, RotationTemplate, ScheduleRun
 
 
@@ -166,8 +167,14 @@ class BackupService:
         Returns:
             Path to exported JSON file
         """
+        # Validate backup_id to prevent path traversal
+        backup_id = validate_backup_id(backup_id)
+
         metadata = self._load_metadata(backup_id)
         source_path = self.backup_path / metadata["filename"]
+
+        # Validate source path is within backup directory
+        source_path = validate_file_path(source_path, self.backup_path)
 
         # Read backup data
         if metadata["compressed"]:
@@ -180,6 +187,10 @@ class BackupService:
         # Write uncompressed JSON
         export_filename = f"export_{backup_id}.json"
         export_path = self.backup_path / export_filename
+
+        # Validate export path is within backup directory
+        export_path = validate_file_path(export_path, self.backup_path)
+
         with open(export_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2)
 
@@ -205,9 +216,16 @@ class BackupService:
             True if deletion was successful
         """
         try:
+            # Validate backup_id to prevent path traversal
+            backup_id = validate_backup_id(backup_id)
+
             metadata = self._load_metadata(backup_id)
             backup_file = self.backup_path / metadata["filename"]
             metadata_file = self.backup_path / f"metadata_{backup_id}.json"
+
+            # Validate paths are within backup directory
+            backup_file = validate_file_path(backup_file, self.backup_path)
+            metadata_file = validate_file_path(metadata_file, self.backup_path)
 
             if backup_file.exists():
                 backup_file.unlink()
@@ -279,6 +297,13 @@ class BackupService:
 
     def _load_metadata(self, backup_id: str) -> dict[str, Any]:
         """Load backup metadata from file."""
+        # Validate backup_id to prevent path traversal
+        backup_id = validate_backup_id(backup_id)
+
         metadata_file = self.backup_path / f"metadata_{backup_id}.json"
+
+        # Validate path is within backup directory
+        metadata_file = validate_file_path(metadata_file, self.backup_path)
+
         with open(metadata_file) as f:
             return json.load(f)

@@ -1,7 +1,10 @@
 """Authentication schemas."""
 from uuid import UUID
+import re
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
+
+COMMON_PASSWORDS = {'password', 'password123', '123456', '12345678', 'qwerty', 'admin', 'welcome'}
 
 
 class Token(BaseModel):
@@ -40,6 +43,27 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     role: str = "coordinator"
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        if len(v) < 12:
+            raise ValueError("Password must be at least 12 characters")
+        if len(v) > 128:
+            raise ValueError("Password must be less than 128 characters")
+
+        has_lower = bool(re.search(r'[a-z]', v))
+        has_upper = bool(re.search(r'[A-Z]', v))
+        has_digit = bool(re.search(r'\d', v))
+        has_special = bool(re.search(r'[!@#$%^&*(),.?":{}|<>]', v))
+
+        if sum([has_lower, has_upper, has_digit, has_special]) < 3:
+            raise ValueError("Password must contain at least 3 of: lowercase, uppercase, numbers, special characters")
+
+        if v.lower() in COMMON_PASSWORDS:
+            raise ValueError("Password is too common")
+
+        return v
 
 
 class UserUpdate(BaseModel):

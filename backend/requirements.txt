@@ -19,6 +19,7 @@ email-validator==2.3.0
 # Authentication & Security
 python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
+python-magic>=0.4.27  # File type detection for upload validation
 
 # API Enhancements
 fastapi-pagination==0.15.3

@@ -2,20 +2,25 @@
 import csv
 import io
 import json
+import logging
 from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 
+from app.api.dependencies.role_filter import require_admin
+from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
+from app.models.user import User
 from app.services.xlsx_export import generate_legacy_xlsx
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def generate_csv(headers: list[str], rows: list[list]) -> str:
@@ -50,9 +55,11 @@ def create_json_response(data: list, filename: str) -> StreamingResponse:
 def export_people(
     format: str = Query("csv", description="Export format: csv or json"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
 ):
     """
-    Export all people data.
+    Export all people data. Requires admin role.
 
     Returns CSV or JSON with columns: Name, Type, PGY Level, Email
     """
@@ -88,9 +95,11 @@ def export_absences(
     start_date: date | None = Query(None, description="Filter absences starting from"),
     end_date: date | None = Query(None, description="Filter absences ending by"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
 ):
     """
-    Export absences data.
+    Export absences data. Requires admin role.
 
     Returns CSV or JSON with columns: Person, Type, Start Date, End Date, Notes
     """
@@ -140,9 +149,11 @@ def export_schedule(
     start_date: date = Query(..., description="Schedule start date"),
     end_date: date = Query(..., description="Schedule end date"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
 ):
     """
-    Export schedule data for a date range.
+    Export schedule data for a date range. Requires admin role.
 
     Returns CSV or JSON with columns: Date, Time, Person, Role, Activity
     """
@@ -200,9 +211,11 @@ def export_schedule_xlsx(
     block_number: int | None = Query(None, description="Block number for header (auto-calculated if not provided)"),
     federal_holidays: str | None = Query(None, description="Comma-separated federal holiday dates (YYYY-MM-DD)"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
 ):
     """
-    Export schedule in legacy Excel format.
+    Export schedule in legacy Excel format. Requires admin role.
 
     This generates an Excel file matching the historical format used for
     schedule distribution with:
@@ -231,7 +244,7 @@ def export_schedule_xlsx(
         except ValueError as e:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid date format in federal_holidays. Use YYYY-MM-DD. Error: {str(e)}"
+                detail="Invalid date format in federal_holidays. Use YYYY-MM-DD format"
             )
 
     try:
@@ -245,7 +258,7 @@ def export_schedule_xlsx(
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate Excel file: {str(e)}"
+            detail="An error occurred generating the Excel file"
         )
 
     # Generate filename with date range

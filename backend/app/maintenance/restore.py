@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
+from app.core.file_security import validate_backup_id, validate_file_path, FileSecurityError
 from app.models import Absence, Assignment, Block, Person, RotationTemplate, ScheduleRun
 
 
@@ -251,8 +252,15 @@ class RestoreService:
             Rollback result
         """
         try:
+            # Validate restore_id to prevent path traversal
+            restore_id = validate_backup_id(restore_id)
+
             # Load restore metadata and rollback data
             restore_file = self.backup_path / f"restore_{restore_id}.json"
+
+            # Validate path is within backup directory
+            restore_file = validate_file_path(restore_file, self.backup_path)
+
             with open(restore_file) as f:
                 restore_data = json.load(f)
 
@@ -284,11 +292,21 @@ class RestoreService:
 
     def _load_backup(self, backup_id: str) -> dict[str, Any]:
         """Load backup data from file."""
+        # Validate backup_id to prevent path traversal
+        backup_id = validate_backup_id(backup_id)
+
         metadata_file = self.backup_path / f"metadata_{backup_id}.json"
+
+        # Validate metadata path is within backup directory
+        metadata_file = validate_file_path(metadata_file, self.backup_path)
+
         with open(metadata_file) as f:
             metadata = json.load(f)
 
         backup_file = self.backup_path / metadata["filename"]
+
+        # Validate backup file path is within backup directory
+        backup_file = validate_file_path(backup_file, self.backup_path)
 
         if metadata.get("compressed", False):
             with gzip.open(backup_file, 'rt', encoding='utf-8') as f:
@@ -444,7 +462,14 @@ class RestoreService:
         rollback_data: dict[str, Any]
     ):
         """Save restore metadata and rollback data."""
+        # Validate restore_id to prevent path traversal
+        restore_id = validate_backup_id(restore_id)
+
         restore_file = self.backup_path / f"restore_{restore_id}.json"
+
+        # Validate path is within backup directory
+        restore_file = validate_file_path(restore_file, self.backup_path)
+
         with open(restore_file, 'w') as f:
             json.dump({
                 "metadata": metadata,

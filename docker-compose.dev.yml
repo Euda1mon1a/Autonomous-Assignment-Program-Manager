@@ -9,7 +9,8 @@ services:
     ports:
       - "5432:5432"
 
-  # Redis with exposed port for local access
+  # Redis with exposed port for local access (development only)
+  # Note: Redis password is still required - use REDIS_PASSWORD env var or default 'dev_only_password'
   redis:
     ports:
       - "6379:6379"
