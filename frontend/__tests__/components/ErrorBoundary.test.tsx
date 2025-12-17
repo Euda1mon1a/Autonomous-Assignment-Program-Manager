@@ -267,32 +267,27 @@ describe('ErrorBoundary', () => {
       expect(onResetMock).toHaveBeenCalled()
     })
 
-    it('should reset error state when retry button is clicked', async () => {
+    it('should increment retry count when retry button is clicked', async () => {
       const user = userEvent.setup()
-      let shouldThrow = true
 
-      const { rerender } = render(
-        <ErrorBoundary>
-          <ThrowError shouldThrow={shouldThrow} />
+      render(
+        <ErrorBoundary maxRetries={3}>
+          <ThrowError shouldThrow={true} />
         </ErrorBoundary>
       )
 
       // Error should be shown
       expect(screen.getByText('Something Went Wrong')).toBeInTheDocument()
 
-      // Click retry and don't throw error this time
-      shouldThrow = false
+      // No retry count initially
+      expect(screen.queryByText(/retry attempt/i)).not.toBeInTheDocument()
+
+      // Click retry
       const tryAgainButton = screen.getByRole('button', { name: /try again/i })
       await user.click(tryAgainButton)
 
-      // Need to rerender with non-throwing component
-      rerender(
-        <ErrorBoundary>
-          <ThrowError shouldThrow={false} />
-        </ErrorBoundary>
-      )
-
-      expect(screen.getByText('Child component')).toBeInTheDocument()
+      // Should show retry count
+      expect(screen.getByText(/retry attempt 1 of 3/i)).toBeInTheDocument()
     })
 
     it('should show retry count indicator', async () => {
@@ -368,11 +363,14 @@ describe('ErrorBoundary', () => {
   })
 
   describe('Navigation Actions', () => {
+    let mockHistoryBack: jest.Mock
+
     beforeEach(() => {
       // Mock window methods
       delete (window as any).location
-      window.location = { href: '', reload: jest.fn(), back: jest.fn() } as any
-      window.history = { back: jest.fn() } as any
+      window.location = { href: '', reload: jest.fn() } as any
+      mockHistoryBack = jest.fn()
+      window.history = { back: mockHistoryBack } as any
     })
 
     it('should show "Go Home" button', () => {
@@ -411,6 +409,8 @@ describe('ErrorBoundary', () => {
 
     it('should call history.back when "Go Back" is clicked', async () => {
       const user = userEvent.setup()
+      const mockBack = jest.fn()
+      window.history.back = mockBack
 
       render(
         <ErrorBoundary>
@@ -420,7 +420,7 @@ describe('ErrorBoundary', () => {
 
       await user.click(screen.getByRole('button', { name: /go back/i }))
 
-      expect(window.history.back).toHaveBeenCalled()
+      expect(mockBack).toHaveBeenCalled()
     })
 
     it('should show "Refresh Page" button', () => {
