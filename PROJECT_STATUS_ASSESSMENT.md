@@ -2820,5 +2820,205 @@ MyEvaluations advertises:
 
 ---
 
+## 🎯 CONSOLIDATED HUMAN TO-DO LIST (Prioritized)
+
+> **Purpose:** This is the master list of items requiring **human action** — decisions, clarifications, external contacts, and deployment tasks that cannot be automated.
+
+---
+
+### 🔴 P0 - CRITICAL (Pre-Launch Blockers)
+
+These items **must be completed before production deployment**.
+
+#### Security & Access Control
+| Task | Owner | Action Required | Est. Effort |
+|------|-------|-----------------|-------------|
+| **Export endpoint security** | Dev/Admin | Add role checks to `/api/export/*` endpoints - currently anyone can export all data | 2h |
+| **Production secrets setup** | DevOps | Configure production environment variables (JWT secret, webhook secrets, DB credentials) | 1h |
+| **SSL certificates** | DevOps | Provision and configure HTTPS for production domain | 1h |
+
+#### Critical Clarifications Needed (Chief Resident Workflow)
+| Question | Who to Ask | Impact |
+|----------|------------|--------|
+| **Night Float rotation duration** | Chief Resident/PD | Required to design call scheduling system |
+| **Call distribution rules** | Chief Resident/PD | How many call nights per resident per block? |
+| **LND coverage specifics** | Chief Resident/PD | Which residents? What times? |
+| **Post-call day off rules** | PD/ACGME Coord | Critical for inter-block transitions |
+| **Golden weekend policy** | PD | Does program require guaranteed weekends off? |
+
+#### Database & Infrastructure
+| Task | Owner | Action Required | Est. Effort |
+|------|-------|-----------------|-------------|
+| **Run production migrations** | DevOps | Execute `alembic upgrade head` on production DB | 30m |
+| **Redis deployment** | DevOps | Deploy Redis for Celery (configured in docker-compose) | 30m |
+| **Celery worker startup** | DevOps | Start Celery worker + beat scheduler | 30m |
+| **Backup strategy** | DevOps | Configure automated PostgreSQL backups | 2h |
+
+---
+
+### 🟠 P1 - HIGH PRIORITY (Launch Week)
+
+These items should be completed **within first week of launch**.
+
+#### User Onboarding & Training
+| Task | Owner | Action Required | Est. Effort |
+|------|-------|-----------------|-------------|
+| **Designate scheduler champions** | Program Director | Identify 1 champion per department to assist users | 1h meeting |
+| **Create role-specific quick-start guides** | Admin/Training | PDF guides for: Coordinator, Faculty, Resident, RN/LPN/MSA | 4h |
+| **Schedule office hours** | Admin | First 2 weeks post-launch support sessions | 1h |
+| **Define escalation path** | Admin | Who to contact for urgent scheduling issues | 30m |
+| **Prepare rollback plan** | DevOps | Document steps to revert if adoption fails | 1h |
+
+#### External Contacts Required
+| Contact | Purpose | Priority | Notes |
+|---------|---------|----------|-------|
+| **MyEvaluations** | API documentation request | P1 | Email: Sales@MyEvaluations.com or call (866) 422-0554 |
+| **IT/Security** | n8n workflow approval | P1 | May need security review for Slack integration |
+| **MHS Genesis admin** | Clinic ID mappings | P1 | For MSA slot booking tracker |
+
+#### Communication Setup
+| Task | Owner | Action Required | Est. Effort |
+|------|-------|-----------------|-------------|
+| **Email notification templates** | Admin | Create/approve email templates for swap requests, schedule changes | 2h |
+| **Slack workspace setup** | IT Admin | Create channel for scheduler notifications (if using ChatOps) | 30m |
+| **Emergency contact list** | Admin | Define who gets paged for system failures | 30m |
+
+---
+
+### 🟡 P2 - MEDIUM PRIORITY (First Month)
+
+These items improve adoption and user satisfaction.
+
+#### UX Improvements (Dev Team)
+| Task | Priority | Effort | Impact |
+|------|----------|--------|--------|
+| First-time user onboarding wizard | Medium | 8h | Adoption |
+| Notification preferences UI page | Medium | 4h | User control |
+| Mobile "Today" view optimization | Medium | 3h | Daily usage |
+| Expose fairness metrics to all users | Medium | 2h | Trust building |
+| In-app feedback mechanism | Medium | 4h | User voice |
+| Contextual help tooltips | Low | 4h | Discoverability |
+
+#### Data Entry & Validation Enhancements
+| Task | Priority | Effort | Impact |
+|------|----------|--------|--------|
+| Federal holiday API integration | Medium | 3h | Reduces manual entry errors |
+| Autocomplete for person names in imports | Medium | 2h | Reduces typos |
+| Auto-calculate block numbers from dates | Low | 2h | Convenience |
+
+#### Accessibility (For 508 Compliance)
+| Task | Priority | Effort | Notes |
+|------|----------|--------|-------|
+| Color-blind friendly heatmap palette | High | 2h | Critical for accessibility |
+| Full keyboard navigation audit | Medium | 4h | Required for compliance |
+| Screen reader testing (NVDA/VoiceOver) | Medium | 3h | Required for compliance |
+| Focus trap in modals | Low | 2h | UX polish |
+
+---
+
+### 🟢 P3 - NICE TO HAVE (Ongoing)
+
+These are future enhancements with no hard deadline.
+
+#### Feature Implementation (Requires Development)
+| Feature | Effort | Dependencies | Status |
+|---------|--------|--------------|--------|
+| Academic Year Transition System | 8-12h | DB migrations | Design complete |
+| Continuity Clinic & Clinic Blocks | 12-16h | DB migrations | Design complete |
+| MSA Clinic Slot Booking Tracker | 6-8h | DB migrations | Design complete |
+| Resident Elective Preference System | 8-10h | DB migrations | Design complete |
+| Resident Call Scheduling System | TBD | Clarifications needed | Partial design |
+| Preference ML system | Unknown | Research needed | Not started |
+
+#### Portal Routes (Backend Wiring)
+These routes exist but return placeholder data:
+
+| Route | Status | What's Missing |
+|-------|--------|----------------|
+| `GET /portal/my/schedule` | Stub | Query actual FMIT weeks |
+| `GET /portal/my/swaps` | Stub | Query SwapRecord model |
+| `POST /portal/my/swaps` | Stub | Implement swap creation |
+| `POST /portal/my/swaps/{id}/respond` | Stub | Implement swap response |
+| `GET /portal/my/preferences` | Stub | Query FacultyPreference |
+| `PUT /portal/my/preferences` | Stub | Update FacultyPreference |
+| `GET /portal/marketplace` | Stub | Query open swaps |
+
+#### Stability Metrics Enhancements
+| Enhancement | Effort | Notes |
+|-------------|--------|-------|
+| Version history lookup (SQLAlchemy-Continuum) | 2h | Placeholder exists |
+| Real violation tracking from ACGMEValidator | 2h | Integration needed |
+| Celery task for automated monitoring | 1h | Hook into existing tasks |
+
+---
+
+### 📋 PRE-LAUNCH CHECKLIST (Copy/Paste for Tracking)
+
+#### Week -1: Infrastructure
+- [ ] Production environment provisioned
+- [ ] SSL certificates installed
+- [ ] Database migrations run
+- [ ] Redis deployed and tested
+- [ ] Celery workers started
+- [ ] Backup strategy confirmed
+- [ ] Monitoring/alerting configured
+
+#### Week -1: Security
+- [ ] Export endpoint role checks added
+- [ ] Production secrets configured
+- [ ] Webhook secrets set for leave system
+- [ ] Admin accounts created
+- [ ] Test RBAC with each role
+
+#### Week 0: Launch Day
+- [ ] Scheduler champions identified and briefed
+- [ ] Quick-start guides distributed
+- [ ] Office hours announced
+- [ ] Escalation path documented
+- [ ] Monitoring dashboards visible
+- [ ] Rollback procedure tested
+
+#### Week 1-2: Early Adoption
+- [ ] Office hours held (daily or every other day)
+- [ ] Collect user feedback
+- [ ] Address critical bugs immediately
+- [ ] Monitor system performance
+- [ ] Track adoption metrics
+
+#### Month 1: Stabilization
+- [ ] Onboarding wizard implemented (if needed)
+- [ ] Notification preferences live
+- [ ] Accessibility audit complete
+- [ ] MyEvaluations API evaluated
+- [ ] Chief resident call system requirements finalized
+
+---
+
+### 📞 KEY CONTACTS FOR DECISIONS
+
+| Role | Purpose | When to Contact |
+|------|---------|-----------------|
+| **Program Director** | Policy decisions, ACGME compliance | Major workflow changes |
+| **Chief Resident** | Call scheduling rules, practical workflows | Call system design |
+| **ACGME Coordinator** | Compliance requirements verification | Before changing rules |
+| **IT/DevOps** | Infrastructure, security, integrations | Deployment, Slack setup |
+| **MyEvaluations Support** | API access inquiry | When ready to integrate |
+
+---
+
+### ⚠️ KNOWN HUMAN BEHAVIOR RISKS
+
+These scenarios need **policy decisions**, not code:
+
+| Scenario | Risk | Decision Needed |
+|----------|------|-----------------|
+| Last-minute swap requests (<7 days) | Coverage gaps | Auto-reject, warn, or allow? |
+| Faculty blocking too many weeks | Unfair burden distribution | Max blocked weeks policy? |
+| Coordinator makes change without notifying | Faculty surprised | Mandatory acknowledgment? |
+| Disputed swap approvals | Conflict between parties | Escalation path? |
+| New hire added mid-year | Fairness baseline disrupted | Prorated expectations? |
+
+---
+
 *Assessment generated by Claude Opus 4.5*
-*Last updated: 2025-12-17 (Human Factors & UX Considerations Added)*
+*Last updated: 2025-12-17 (Consolidated Human To-Do List Added)*
