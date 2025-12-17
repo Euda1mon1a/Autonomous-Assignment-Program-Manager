@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { format, startOfWeek, addDays } from 'date-fns'
 import { Calendar, UserPlus, FileText, Zap, FileSpreadsheet, Loader2 } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { GenerateScheduleDialog } from '@/components/GenerateScheduleDialog'
 import { exportToLegacyXlsx } from '@/lib/export'
 
@@ -35,7 +36,12 @@ export function QuickActions() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
+      className="glass-panel p-6"
+    >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
         <Zap className="w-5 h-5 text-amber-500" />
@@ -88,6 +94,6 @@ export function QuickActions() {
         defaultStartDate={startDateStr}
         defaultEndDate={endDateStr}
       />
-    </div>
+    </motion.div>
   )
 }
