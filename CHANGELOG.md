@@ -129,6 +129,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Security Hardening (Session 5 - 2025-12-17)
+- **Authentication on People API**: All 7 endpoints now require authentication (PII protection)
+- **Authentication on Settings API**: GET requires auth, POST/PATCH/DELETE require admin role
+- **Authentication on Role Views API**: All 6 endpoints secured + fixed TODO for auth integration
+- **Rate Limiting System**: Redis-based sliding window rate limiter for brute force protection
+  - Login endpoints: 5 requests per minute
+  - Registration endpoint: 3 requests per minute
+  - HTTP 429 responses with standard rate limit headers
+
+#### Portal API Implementation (Session 5)
+- **Faculty Schedule View**: Query FMIT assignments by week with conflict detection
+- **Swap Management**: Full CRUD for swap requests with auto-find candidates
+- **Swap Response**: Accept/reject with counter-offer support
+- **Faculty Preferences**: Query and update FacultyPreference with partial update support
+- **Marketplace**: Query open swaps with compatibility checking
+- **Swap History API**: Full query support with filtering (faculty, status, date range), pagination
+
+#### Frontend Test Coverage (Session 5)
+- **Analytics Feature Tests**: 165 test cases across 8 files (~2,500 lines)
+  - MetricsCard, FairnessTrend, VersionComparison, WhatIfAnalysis, AnalyticsDashboard
+- **Audit Feature Tests**: 264 test cases across 9 files (~4,200 lines)
+  - AuditLogTable, AuditLogFilters, AuditLogExport, AuditTimeline, ChangeComparison
+- **Swap Marketplace Tests**: 186 test cases across 8 files (~3,100 lines)
+  - SwapRequestCard, SwapFilters, SwapRequestForm, MySwapRequests, SwapMarketplace
+
+#### Backend Service Tests (Session 5)
+- **Absence Service Tests**: 23 test cases for CRUD, date filtering, validation
+- **Assignment Service Tests**: 22 test cases for CRUD, ACGME validation, optimistic locking
+- **Person Service Tests**: 37 test cases for CRUD, filtering by type/PGY/specialty
+- **Block Service Tests**: 31 test cases for CRUD, block generation, date filtering
+
 #### Block Schedule Drag GUI
 - **Resident Academic Year View**: Full academic year (July-June) schedule view for all residents
   - Residents grouped by PGY level (PGY-1, PGY-2, PGY-3)
@@ -196,13 +227,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ~~Calendar drag-and-drop interface~~ ✓ Implemented (Block Schedule Drag GUI)
 - Email notifications for schedule changes
 - Bulk import/export for people and absences
-- Advanced reporting and analytics
-- Schedule conflict resolution wizard
+- ~~Advanced reporting and analytics~~ ✓ Implemented (Analytics Dashboard + Pareto Optimization)
+- ~~Schedule conflict resolution wizard~~ ✓ Implemented (Conflict Auto-Resolver Service)
 - Mobile application (React Native)
 - LDAP/SSO integration
-- Audit log dashboard
+- ~~Audit log dashboard~~ ✓ Implemented (Full Audit API + Frontend)
 - Schedule template cloning
 - Multi-program support
+- ~~Rate limiting for authentication~~ ✓ Implemented (Session 5)
+- ~~Faculty self-service portal~~ ✓ Implemented (Portal API - Session 5)
 
 ---
 
