@@ -93,6 +93,18 @@ from app.schemas.swap import (
     SwapTypeSchema,
     SwapValidationResult,
 )
+from app.schemas.swap_matching import (
+    AutoMatchResult,
+    BatchAutoMatchResult,
+    MatchingAnalytics,
+    MatchingCriteria,
+    MatchingSuggestion,
+    MatchPriority,
+    MatchType,
+    RankedMatch,
+    ScoringBreakdown,
+    SwapMatch,
+)
 
 __all__ = [
     "PersonCreate",
@@ -188,4 +200,15 @@ __all__ = [
     "DashboardResponse",
     "MarketplaceEntry",
     "MarketplaceResponse",
+    # Swap matching schemas
+    "MatchType",
+    "MatchPriority",
+    "SwapMatch",
+    "ScoringBreakdown",
+    "RankedMatch",
+    "AutoMatchResult",
+    "BatchAutoMatchResult",
+    "MatchingCriteria",
+    "MatchingSuggestion",
+    "MatchingAnalytics",
 ]
