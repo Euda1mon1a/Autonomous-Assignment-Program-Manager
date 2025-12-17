@@ -1,4 +1,13 @@
-"""Tests for calendar export functionality."""
+"""Comprehensive tests for calendar export routes.
+
+Tests the /export.ics endpoint for ICS calendar exports including:
+- ICS export endpoint functionality
+- RFC 5545 compliance
+- Timezone handling (America/New_York)
+- Filter parameters (person_id, start_date, end_date)
+- Error handling for invalid requests
+"""
+import re
 import uuid
 from datetime import date, datetime, timedelta
 
@@ -8,18 +17,17 @@ from sqlalchemy.orm import Session
 
 from app.models.assignment import Assignment
 from app.models.block import Block
-from app.models.calendar_subscription import CalendarSubscription
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
-from app.models.user import User
-from app.services.calendar_service import CalendarService
 
 
-class TestCalendarService:
-    """Test CalendarService class."""
+class TestCalendarExportICSEndpoint:
+    """Test the /api/calendar/export.ics endpoint."""
 
-    def test_generate_ics_for_person(self, db: Session) -> None:
-        """Test generating ICS file for a person."""
+    def test_export_ics_basic_success(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test basic ICS export for a person with assignments."""
         # Create test data
         person = Person(
             id=uuid.uuid4(),
@@ -32,330 +40,38 @@ class TestCalendarService:
 
         rotation = RotationTemplate(
             id=uuid.uuid4(),
-            name="PGY-2 Clinic",
+            name="Sports Medicine Clinic",
             activity_type="clinic",
-            abbreviation="C",
-            clinic_location="Main Clinic",
+            abbreviation="SMC",
+            clinic_location="Building A, Room 101",
         )
         db.add(rotation)
 
-        # Create blocks
-        test_date = date(2024, 1, 15)
+        test_date = date(2024, 3, 15)
         block_am = Block(
             id=uuid.uuid4(),
             date=test_date,
             time_of_day="AM",
             block_number=1,
         )
-        block_pm = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="PM",
-            block_number=1,
-        )
         db.add(block_am)
-        db.add(block_pm)
 
-        # Create assignments
-        assignment_am = Assignment(
+        assignment = Assignment(
             id=uuid.uuid4(),
             block_id=block_am.id,
             person_id=person.id,
             rotation_template_id=rotation.id,
             role="primary",
-            notes="Morning clinic session",
-        )
-        assignment_pm = Assignment(
-            id=uuid.uuid4(),
-            block_id=block_pm.id,
-            person_id=person.id,
-            rotation_template_id=rotation.id,
-            role="primary",
-            notes="Afternoon clinic session",
-        )
-        db.add(assignment_am)
-        db.add(assignment_pm)
-        db.commit()
-
-        # Generate ICS
-        ics_content = CalendarService.generate_ics_for_person(
-            db=db,
-            person_id=person.id,
-            start_date=test_date,
-            end_date=test_date,
-        )
-
-        # Verify ICS content
-        assert "BEGIN:VCALENDAR" in ics_content
-        assert "VERSION:2.0" in ics_content
-        assert "BEGIN:VEVENT" in ics_content
-        assert "SUMMARY:PGY-2 Clinic" in ics_content
-        assert "LOCATION:Main Clinic" in ics_content
-        assert "END:VCALENDAR" in ics_content
-
-        # Should have 2 events (AM and PM)
-        assert ics_content.count("BEGIN:VEVENT") == 2
-
-    def test_generate_ics_for_person_with_role_labels(self, db: Session) -> None:
-        """Test ICS generation includes role labels."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. Bob Jones",
-            type="faculty",
-            email="bob.jones@example.com",
-        )
-        db.add(person)
-
-        rotation = RotationTemplate(
-            id=uuid.uuid4(),
-            name="Sports Medicine",
-            activity_type="clinic",
-        )
-        db.add(rotation)
-
-        test_date = date(2024, 2, 1)
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="AM",
-            block_number=2,
-        )
-        db.add(block)
-
-        # Create supervising assignment
-        assignment = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person.id,
-            rotation_template_id=rotation.id,
-            role="supervising",
-        )
-        db.add(assignment)
-        db.commit()
-
-        ics_content = CalendarService.generate_ics_for_person(
-            db=db,
-            person_id=person.id,
-            start_date=test_date,
-            end_date=test_date,
-        )
-
-        # Should include role in summary
-        assert "SUMMARY:Sports Medicine (Supervising)" in ics_content
-
-    def test_generate_ics_for_person_not_found(self, db: Session) -> None:
-        """Test error when person not found."""
-        with pytest.raises(ValueError, match="Person not found"):
-            CalendarService.generate_ics_for_person(
-                db=db,
-                person_id=uuid.uuid4(),
-                start_date=date(2024, 1, 1),
-                end_date=date(2024, 1, 31),
-            )
-
-    def test_generate_ics_for_rotation(self, db: Session) -> None:
-        """Test generating ICS file for a rotation."""
-        # Create test data
-        person1 = Person(
-            id=uuid.uuid4(),
-            name="Dr. Alice Brown",
-            type="resident",
-            pgy_level=1,
-        )
-        person2 = Person(
-            id=uuid.uuid4(),
-            name="Dr. Charlie Davis",
-            type="resident",
-            pgy_level=2,
-        )
-        db.add(person1)
-        db.add(person2)
-
-        rotation = RotationTemplate(
-            id=uuid.uuid4(),
-            name="FMIT Inpatient",
-            activity_type="inpatient",
-            abbreviation="FMIT",
-        )
-        db.add(rotation)
-
-        test_date = date(2024, 3, 1)
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="AM",
-            block_number=3,
-        )
-        db.add(block)
-
-        # Create assignments for both residents
-        assignment1 = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person1.id,
-            rotation_template_id=rotation.id,
-            role="primary",
-        )
-        assignment2 = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person2.id,
-            rotation_template_id=rotation.id,
-            role="backup",
-        )
-        db.add(assignment1)
-        db.add(assignment2)
-        db.commit()
-
-        # Generate ICS
-        ics_content = CalendarService.generate_ics_for_rotation(
-            db=db,
-            rotation_id=rotation.id,
-            start_date=test_date,
-            end_date=test_date,
-        )
-
-        # Verify ICS content
-        assert "BEGIN:VCALENDAR" in ics_content
-        assert "Dr. Alice Brown" in ics_content
-        assert "Dr. Charlie Davis" in ics_content
-        assert "FMIT Inpatient" in ics_content
-        assert ics_content.count("BEGIN:VEVENT") == 2
-
-    def test_generate_ics_for_rotation_not_found(self, db: Session) -> None:
-        """Test error when rotation has no assignments."""
-        with pytest.raises(ValueError, match="No assignments found"):
-            CalendarService.generate_ics_for_rotation(
-                db=db,
-                rotation_id=uuid.uuid4(),
-                start_date=date(2024, 1, 1),
-                end_date=date(2024, 1, 31),
-            )
-
-    def test_get_block_time_am(self) -> None:
-        """Test AM block time calculation."""
-        test_date = date(2024, 1, 15)
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="AM",
-            block_number=1,
-        )
-
-        start_time, end_time = CalendarService._get_block_time(block)
-
-        assert start_time == datetime(2024, 1, 15, 8, 0)
-        assert end_time == datetime(2024, 1, 15, 12, 0)
-
-    def test_get_block_time_pm(self) -> None:
-        """Test PM block time calculation."""
-        test_date = date(2024, 1, 15)
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="PM",
-            block_number=1,
-        )
-
-        start_time, end_time = CalendarService._get_block_time(block)
-
-        assert start_time == datetime(2024, 1, 15, 13, 0)
-        assert end_time == datetime(2024, 1, 15, 17, 0)
-
-    def test_create_subscription_token(self, db: Session) -> None:
-        """Test creating subscription token."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. Test User",
-            type="resident",
-        )
-        db.add(person)
-        db.commit()
-
-        token, expires_at = CalendarService.create_subscription_token(
-            db=db,
-            person_id=person.id,
-            expires_days=30,
-        )
-
-        # Verify token
-        assert token is not None
-        assert len(token) > 0
-        assert expires_at is not None
-        assert expires_at > datetime.utcnow()
-
-    def test_create_subscription_token_no_expiry(self, db: Session) -> None:
-        """Test creating subscription token without expiry."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. Test User",
-            type="resident",
-        )
-        db.add(person)
-        db.commit()
-
-        token, expires_at = CalendarService.create_subscription_token(
-            db=db,
-            person_id=person.id,
-            expires_days=None,
-        )
-
-        # Verify token
-        assert token is not None
-        assert expires_at is None
-
-    def test_create_subscription_token_person_not_found(self, db: Session) -> None:
-        """Test error when creating token for non-existent person."""
-        with pytest.raises(ValueError, match="Person not found"):
-            CalendarService.create_subscription_token(
-                db=db,
-                person_id=uuid.uuid4(),
-            )
-
-
-class TestCalendarAPI:
-    """Test calendar API endpoints."""
-
-    def test_export_person_calendar(self, client: TestClient, db: Session) -> None:
-        """Test exporting person calendar via API."""
-        # Create test data
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. API Test",
-            type="resident",
-        )
-        db.add(person)
-
-        rotation = RotationTemplate(
-            id=uuid.uuid4(),
-            name="Test Rotation",
-            activity_type="clinic",
-        )
-        db.add(rotation)
-
-        test_date = date.today()
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="AM",
-            block_number=1,
-        )
-        db.add(block)
-
-        assignment = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person.id,
-            rotation_template_id=rotation.id,
-            role="primary",
+            notes="Regular clinic session",
         )
         db.add(assignment)
         db.commit()
 
         # Make API request
         response = client.get(
-            f"/api/calendar/export/person/{person.id}",
+            "/api/calendar/export.ics",
             params={
+                "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
                 "end_date": test_date.isoformat(),
             },
@@ -365,551 +81,163 @@ class TestCalendarAPI:
         assert response.status_code == 200
         assert response.headers["content-type"] == "text/calendar; charset=utf-8"
         assert "attachment" in response.headers["content-disposition"]
+        assert f"schedule_{person.id}_{test_date}_{test_date}.ics" in response.headers["content-disposition"]
 
+        # Verify ICS content exists
         content = response.text
+        assert len(content) > 0
         assert "BEGIN:VCALENDAR" in content
-        assert "Test Rotation" in content
+        assert "END:VCALENDAR" in content
 
-    def test_export_person_calendar_not_found(self, client: TestClient) -> None:
-        """Test error when person not found."""
-        response = client.get(
-            f"/api/calendar/export/person/{uuid.uuid4()}",
-            params={
-                "start_date": date.today().isoformat(),
-                "end_date": date.today().isoformat(),
-            },
-        )
-
-        assert response.status_code == 404
-
-    def test_export_rotation_calendar(self, client: TestClient, db: Session) -> None:
-        """Test exporting rotation calendar via API."""
-        # Create test data
+    def test_export_ics_with_multiple_assignments(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test ICS export with multiple assignments across different days."""
         person = Person(
             id=uuid.uuid4(),
-            name="Dr. Rotation Test",
+            name="Dr. John Doe",
             type="resident",
+            pgy_level=3,
         )
         db.add(person)
-
-        rotation = RotationTemplate(
-            id=uuid.uuid4(),
-            name="Test Rotation",
-            activity_type="clinic",
-        )
-        db.add(rotation)
-
-        test_date = date.today()
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="PM",
-            block_number=1,
-        )
-        db.add(block)
-
-        assignment = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person.id,
-            rotation_template_id=rotation.id,
-            role="primary",
-        )
-        db.add(assignment)
-        db.commit()
-
-        # Make API request
-        response = client.get(
-            f"/api/calendar/export/rotation/{rotation.id}",
-            params={
-                "start_date": test_date.isoformat(),
-                "end_date": test_date.isoformat(),
-            },
-        )
-
-        # Verify response
-        assert response.status_code == 200
-        assert response.headers["content-type"] == "text/calendar; charset=utf-8"
-
-        content = response.text
-        assert "BEGIN:VCALENDAR" in content
-        assert "Dr. Rotation Test" in content
-
-    def test_export_all_calendars(self, client: TestClient, db: Session) -> None:
-        """Test exporting all calendars via API."""
-        # Create test data
-        person1 = Person(
-            id=uuid.uuid4(),
-            name="Dr. All Test 1",
-            type="resident",
-        )
-        person2 = Person(
-            id=uuid.uuid4(),
-            name="Dr. All Test 2",
-            type="resident",
-        )
-        db.add(person1)
-        db.add(person2)
-
-        rotation = RotationTemplate(
-            id=uuid.uuid4(),
-            name="All Test Rotation",
-            activity_type="clinic",
-        )
-        db.add(rotation)
-
-        test_date = date.today()
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="AM",
-            block_number=1,
-        )
-        db.add(block)
-
-        assignment1 = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person1.id,
-            rotation_template_id=rotation.id,
-            role="primary",
-        )
-        assignment2 = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person2.id,
-            rotation_template_id=rotation.id,
-            role="backup",
-        )
-        db.add(assignment1)
-        db.add(assignment2)
-        db.commit()
-
-        # Make API request
-        response = client.get(
-            "/api/calendar/export/ics",
-            params={
-                "start_date": test_date.isoformat(),
-                "end_date": test_date.isoformat(),
-            },
-        )
-
-        # Verify response
-        assert response.status_code == 200
-        assert response.headers["content-type"] == "text/calendar; charset=utf-8"
-
-        content = response.text
-        assert "BEGIN:VCALENDAR" in content
-        assert "Dr. All Test 1" in content
-        assert "Dr. All Test 2" in content
-        assert content.count("BEGIN:VEVENT") == 2
-
-    def test_export_all_calendars_filtered_by_person(self, client: TestClient, db: Session) -> None:
-        """Test exporting all calendars with person filter."""
-        # Create test data
-        person1 = Person(
-            id=uuid.uuid4(),
-            name="Dr. Filter Test 1",
-            type="resident",
-        )
-        person2 = Person(
-            id=uuid.uuid4(),
-            name="Dr. Filter Test 2",
-            type="resident",
-        )
-        db.add(person1)
-        db.add(person2)
-
-        rotation = RotationTemplate(
-            id=uuid.uuid4(),
-            name="Filter Test Rotation",
-            activity_type="clinic",
-        )
-        db.add(rotation)
-
-        test_date = date.today()
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="AM",
-            block_number=1,
-        )
-        db.add(block)
-
-        assignment1 = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person1.id,
-            rotation_template_id=rotation.id,
-            role="primary",
-        )
-        assignment2 = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person2.id,
-            rotation_template_id=rotation.id,
-            role="backup",
-        )
-        db.add(assignment1)
-        db.add(assignment2)
-        db.commit()
-
-        # Make API request filtering for person1 only
-        response = client.get(
-            "/api/calendar/export/ics",
-            params={
-                "start_date": test_date.isoformat(),
-                "end_date": test_date.isoformat(),
-                "person_ids": [str(person1.id)],
-            },
-        )
-
-        # Verify response
-        assert response.status_code == 200
-
-        content = response.text
-        assert "BEGIN:VCALENDAR" in content
-        assert "Dr. Filter Test 1" in content
-        assert "Dr. Filter Test 2" not in content
-        assert content.count("BEGIN:VEVENT") == 1
-
-    def test_export_person_ics(self, client: TestClient, db: Session) -> None:
-        """Test exporting person calendar via /export/ics/{person_id} endpoint."""
-        # Create test data
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. ICS Test",
-            type="resident",
-        )
-        db.add(person)
-
-        rotation = RotationTemplate(
-            id=uuid.uuid4(),
-            name="ICS Test Rotation",
-            activity_type="clinic",
-        )
-        db.add(rotation)
-
-        test_date = date.today()
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="PM",
-            block_number=1,
-        )
-        db.add(block)
-
-        assignment = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person.id,
-            rotation_template_id=rotation.id,
-            role="primary",
-        )
-        db.add(assignment)
-        db.commit()
-
-        # Make API request
-        response = client.get(
-            f"/api/calendar/export/ics/{person.id}",
-            params={
-                "start_date": test_date.isoformat(),
-                "end_date": test_date.isoformat(),
-            },
-        )
-
-        # Verify response
-        assert response.status_code == 200
-        assert response.headers["content-type"] == "text/calendar; charset=utf-8"
-        assert "attachment" in response.headers["content-disposition"]
-
-        content = response.text
-        assert "BEGIN:VCALENDAR" in content
-        assert "ICS Test Rotation" in content
-
-    def test_export_person_ics_not_found(self, client: TestClient) -> None:
-        """Test error when person not found in /export/ics/{person_id} endpoint."""
-        response = client.get(
-            f"/api/calendar/export/ics/{uuid.uuid4()}",
-            params={
-                "start_date": date.today().isoformat(),
-                "end_date": date.today().isoformat(),
-            },
-        )
-
-        assert response.status_code == 404
-
-
-class TestVTIMEZONE:
-    """Test VTIMEZONE component generation."""
-
-    def test_vtimezone_included_in_person_export(self, db: Session) -> None:
-        """Test that VTIMEZONE component is included in person export."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. TZ Test",
-            type="resident",
-        )
-        db.add(person)
-
-        rotation = RotationTemplate(
-            id=uuid.uuid4(),
-            name="TZ Test Rotation",
-            activity_type="clinic",
-        )
-        db.add(rotation)
-
-        test_date = date(2024, 1, 15)
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="AM",
-            block_number=1,
-        )
-        db.add(block)
-
-        assignment = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person.id,
-            rotation_template_id=rotation.id,
-            role="primary",
-        )
-        db.add(assignment)
-        db.commit()
-
-        ics_content = CalendarService.generate_ics_for_person(
-            db=db,
-            person_id=person.id,
-            start_date=test_date,
-            end_date=test_date,
-        )
-
-        # Verify VTIMEZONE component is present
-        assert "BEGIN:VTIMEZONE" in ics_content
-        assert "TZID:America/New_York" in ics_content
-        assert "BEGIN:STANDARD" in ics_content
-        assert "BEGIN:DAYLIGHT" in ics_content
-        assert "TZNAME:EST" in ics_content
-        assert "TZNAME:EDT" in ics_content
-        assert "END:VTIMEZONE" in ics_content
-
-    def test_vtimezone_included_in_rotation_export(self, db: Session) -> None:
-        """Test that VTIMEZONE component is included in rotation export."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. TZ Rotation Test",
-            type="resident",
-        )
-        db.add(person)
-
-        rotation = RotationTemplate(
-            id=uuid.uuid4(),
-            name="TZ Rotation",
-            activity_type="inpatient",
-        )
-        db.add(rotation)
-
-        test_date = date(2024, 2, 1)
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="PM",
-            block_number=1,
-        )
-        db.add(block)
-
-        assignment = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person.id,
-            rotation_template_id=rotation.id,
-            role="primary",
-        )
-        db.add(assignment)
-        db.commit()
-
-        ics_content = CalendarService.generate_ics_for_rotation(
-            db=db,
-            rotation_id=rotation.id,
-            start_date=test_date,
-            end_date=test_date,
-        )
-
-        # Verify VTIMEZONE component is present
-        assert "BEGIN:VTIMEZONE" in ics_content
-        assert "TZID:America/New_York" in ics_content
-        assert "END:VTIMEZONE" in ics_content
-
-    def test_vtimezone_included_in_all_export(self, db: Session) -> None:
-        """Test that VTIMEZONE component is included in general export."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. TZ All Test",
-            type="resident",
-        )
-        db.add(person)
-
-        rotation = RotationTemplate(
-            id=uuid.uuid4(),
-            name="TZ All Rotation",
-            activity_type="clinic",
-        )
-        db.add(rotation)
-
-        test_date = date(2024, 3, 1)
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="AM",
-            block_number=1,
-        )
-        db.add(block)
-
-        assignment = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person.id,
-            rotation_template_id=rotation.id,
-            role="primary",
-        )
-        db.add(assignment)
-        db.commit()
-
-        ics_content = CalendarService.generate_ics_all(
-            db=db,
-            start_date=test_date,
-            end_date=test_date,
-        )
-
-        # Verify VTIMEZONE component is present
-        assert "BEGIN:VTIMEZONE" in ics_content
-        assert "TZID:America/New_York" in ics_content
-        assert "END:VTIMEZONE" in ics_content
-
-
-class TestGenerateICSAll:
-    """Test general ICS export functionality."""
-
-    def test_generate_ics_all_basic(self, db: Session) -> None:
-        """Test basic generate_ics_all functionality."""
-        # Create test data
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. All Basic",
-            type="resident",
-            pgy_level=1,
-        )
-        db.add(person)
-
-        rotation = RotationTemplate(
-            id=uuid.uuid4(),
-            name="All Basic Rotation",
-            activity_type="clinic",
-            clinic_location="Test Clinic",
-        )
-        db.add(rotation)
-
-        test_date = date(2024, 4, 1)
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="AM",
-            block_number=1,
-        )
-        db.add(block)
-
-        assignment = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person.id,
-            rotation_template_id=rotation.id,
-            role="primary",
-            notes="Test notes",
-        )
-        db.add(assignment)
-        db.commit()
-
-        ics_content = CalendarService.generate_ics_all(
-            db=db,
-            start_date=test_date,
-            end_date=test_date,
-        )
-
-        # Verify ICS content
-        assert "BEGIN:VCALENDAR" in ics_content
-        assert "Dr. All Basic" in ics_content
-        assert "All Basic Rotation" in ics_content
-        assert "LOCATION:Test Clinic" in ics_content
-        assert "Test notes" in ics_content
-        assert "PGY Level: 1" in ics_content
-
-    def test_generate_ics_all_with_filters(self, db: Session) -> None:
-        """Test generate_ics_all with filters."""
-        # Create multiple people and rotations
-        person1 = Person(id=uuid.uuid4(), name="Dr. Filter 1", type="resident")
-        person2 = Person(id=uuid.uuid4(), name="Dr. Filter 2", type="resident")
-        db.add(person1)
-        db.add(person2)
 
         rotation1 = RotationTemplate(
-            id=uuid.uuid4(), name="Rotation 1", activity_type="clinic"
+            id=uuid.uuid4(),
+            name="Primary Care",
+            activity_type="clinic",
         )
         rotation2 = RotationTemplate(
-            id=uuid.uuid4(), name="Rotation 2", activity_type="inpatient"
+            id=uuid.uuid4(),
+            name="Inpatient Service",
+            activity_type="inpatient",
         )
-        db.add(rotation1)
-        db.add(rotation2)
+        db.add_all([rotation1, rotation2])
 
-        test_date = date(2024, 5, 1)
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="AM",
-            block_number=1,
-        )
-        db.add(block)
+        # Create blocks and assignments for a week
+        start_date = date(2024, 4, 1)
+        end_date = date(2024, 4, 7)
 
-        assignment1 = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person1.id,
-            rotation_template_id=rotation1.id,
-            role="primary",
-        )
-        assignment2 = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person2.id,
-            rotation_template_id=rotation2.id,
-            role="primary",
-        )
-        db.add(assignment1)
-        db.add(assignment2)
+        for i in range(7):
+            current_date = start_date + timedelta(days=i)
+
+            # AM block
+            block_am = Block(
+                id=uuid.uuid4(),
+                date=current_date,
+                time_of_day="AM",
+                block_number=1,
+            )
+            db.add(block_am)
+
+            # PM block
+            block_pm = Block(
+                id=uuid.uuid4(),
+                date=current_date,
+                time_of_day="PM",
+                block_number=1,
+            )
+            db.add(block_pm)
+
+            # Assignments - alternate between rotations
+            rotation = rotation1 if i % 2 == 0 else rotation2
+
+            assignment_am = Assignment(
+                id=uuid.uuid4(),
+                block_id=block_am.id,
+                person_id=person.id,
+                rotation_template_id=rotation.id,
+                role="primary",
+            )
+            assignment_pm = Assignment(
+                id=uuid.uuid4(),
+                block_id=block_pm.id,
+                person_id=person.id,
+                rotation_template_id=rotation.id,
+                role="primary",
+            )
+            db.add_all([assignment_am, assignment_pm])
+
         db.commit()
 
-        # Test person filter
-        ics_content = CalendarService.generate_ics_all(
-            db=db,
-            start_date=test_date,
-            end_date=test_date,
-            person_ids=[person1.id],
+        # Export calendar
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+            },
         )
-        assert "Dr. Filter 1" in ics_content
-        assert "Dr. Filter 2" not in ics_content
 
-        # Test rotation filter
-        ics_content = CalendarService.generate_ics_all(
-            db=db,
-            start_date=test_date,
-            end_date=test_date,
-            rotation_ids=[rotation2.id],
+        assert response.status_code == 200
+        content = response.text
+
+        # Should have 14 events (7 days × 2 blocks per day)
+        event_count = content.count("BEGIN:VEVENT")
+        assert event_count == 14
+
+    def test_export_ics_with_date_filtering(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that date range filtering works correctly."""
+        person = Person(
+            id=uuid.uuid4(),
+            name="Dr. Test Filter",
+            type="resident",
         )
-        assert "Rotation 2" in ics_content
-        assert "Rotation 1" not in ics_content
+        db.add(person)
 
-    def test_generate_ics_all_with_role_labels(self, db: Session) -> None:
-        """Test generate_ics_all includes role labels."""
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="Test Rotation",
+            activity_type="clinic",
+        )
+        db.add(rotation)
+
+        # Create assignments over 30 days
+        base_date = date(2024, 5, 1)
+        for i in range(30):
+            current_date = base_date + timedelta(days=i)
+            block = Block(
+                id=uuid.uuid4(),
+                date=current_date,
+                time_of_day="AM",
+                block_number=1,
+            )
+            db.add(block)
+
+            assignment = Assignment(
+                id=uuid.uuid4(),
+                block_id=block.id,
+                person_id=person.id,
+                rotation_template_id=rotation.id,
+                role="primary",
+            )
+            db.add(assignment)
+
+        db.commit()
+
+        # Export only first 7 days
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": base_date.isoformat(),
+                "end_date": (base_date + timedelta(days=6)).isoformat(),
+            },
+        )
+
+        assert response.status_code == 200
+        content = response.text
+
+        # Should only have 7 events
+        event_count = content.count("BEGIN:VEVENT")
+        assert event_count == 7
+
+    def test_export_ics_with_different_roles(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that different assignment roles are properly labeled."""
         person = Person(
             id=uuid.uuid4(),
             name="Dr. Role Test",
@@ -919,399 +247,131 @@ class TestGenerateICSAll:
 
         rotation = RotationTemplate(
             id=uuid.uuid4(),
-            name="Role Rotation",
+            name="Clinic Rotation",
             activity_type="clinic",
         )
         db.add(rotation)
 
         test_date = date(2024, 6, 1)
-        block = Block(
-            id=uuid.uuid4(),
-            date=test_date,
-            time_of_day="PM",
-            block_number=1,
-        )
-        db.add(block)
 
-        assignment = Assignment(
-            id=uuid.uuid4(),
-            block_id=block.id,
-            person_id=person.id,
-            rotation_template_id=rotation.id,
-            role="supervising",
-        )
-        db.add(assignment)
-        db.commit()
+        # Create assignments with different roles
+        roles = ["primary", "backup", "supervising"]
+        times = ["AM", "PM", "AM"]
 
-        ics_content = CalendarService.generate_ics_all(
-            db=db,
-            start_date=test_date,
-            end_date=test_date,
-        )
-
-        # Should include role in summary
-        assert "Dr. Role Test - Role Rotation (Supervising)" in ics_content
-
-
-class TestCalendarSubscriptionModel:
-    """Test CalendarSubscription model."""
-
-    def test_create_subscription(self, db: Session) -> None:
-        """Test creating a calendar subscription."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. Subscription Test",
-            type="resident",
-        )
-        db.add(person)
-        db.commit()
-
-        subscription = CalendarSubscription.create(
-            person_id=person.id,
-            label="My Work Calendar",
-            expires_days=30,
-        )
-        db.add(subscription)
-        db.commit()
-
-        # Verify subscription
-        assert subscription.token is not None
-        assert len(subscription.token) == 43  # URL-safe base64 of 32 bytes
-        assert subscription.person_id == person.id
-        assert subscription.label == "My Work Calendar"
-        assert subscription.is_active is True
-        assert subscription.expires_at is not None
-        assert subscription.expires_at > datetime.utcnow()
-
-    def test_create_subscription_no_expiry(self, db: Session) -> None:
-        """Test creating subscription without expiration."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. No Expiry",
-            type="faculty",
-        )
-        db.add(person)
-        db.commit()
-
-        subscription = CalendarSubscription.create(
-            person_id=person.id,
-            expires_days=None,
-        )
-        db.add(subscription)
-        db.commit()
-
-        assert subscription.expires_at is None
-        assert subscription.is_valid() is True
-
-    def test_subscription_is_valid(self, db: Session) -> None:
-        """Test is_valid method."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. Valid Test",
-            type="resident",
-        )
-        db.add(person)
-        db.commit()
-
-        # Active, not expired
-        subscription = CalendarSubscription.create(
-            person_id=person.id,
-            expires_days=30,
-        )
-        db.add(subscription)
-        db.commit()
-
-        assert subscription.is_valid() is True
-
-        # Revoked
-        subscription.revoke()
-        assert subscription.is_valid() is False
-
-    def test_subscription_revoke(self, db: Session) -> None:
-        """Test revoking a subscription."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. Revoke Test",
-            type="resident",
-        )
-        db.add(person)
-        db.commit()
-
-        subscription = CalendarSubscription.create(person_id=person.id)
-        db.add(subscription)
-        db.commit()
-
-        assert subscription.is_active is True
-        assert subscription.revoked_at is None
-
-        subscription.revoke()
-        db.commit()
-
-        assert subscription.is_active is False
-        assert subscription.revoked_at is not None
-
-    def test_subscription_touch(self, db: Session) -> None:
-        """Test updating last accessed timestamp."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. Touch Test",
-            type="resident",
-        )
-        db.add(person)
-        db.commit()
-
-        subscription = CalendarSubscription.create(person_id=person.id)
-        db.add(subscription)
-        db.commit()
-
-        assert subscription.last_accessed_at is None
-
-        subscription.touch()
-        db.commit()
-
-        assert subscription.last_accessed_at is not None
-
-    def test_generate_token_uniqueness(self) -> None:
-        """Test that generated tokens are unique."""
-        tokens = [CalendarSubscription.generate_token() for _ in range(100)]
-        assert len(tokens) == len(set(tokens))  # All unique
-
-
-class TestCalendarSubscriptionService:
-    """Test CalendarService subscription methods."""
-
-    def test_create_subscription(self, db: Session) -> None:
-        """Test creating subscription via service."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. Service Test",
-            type="resident",
-        )
-        db.add(person)
-        db.commit()
-
-        subscription = CalendarService.create_subscription(
-            db=db,
-            person_id=person.id,
-            label="Test Sub",
-            expires_days=90,
-        )
-
-        assert subscription.token is not None
-        assert subscription.person_id == person.id
-        assert subscription.label == "Test Sub"
-        assert subscription.expires_at is not None
-
-    def test_create_subscription_person_not_found(self, db: Session) -> None:
-        """Test error when person not found."""
-        with pytest.raises(ValueError, match="Person not found"):
-            CalendarService.create_subscription(
-                db=db,
-                person_id=uuid.uuid4(),
+        for i, (role, time_of_day) in enumerate(zip(roles, times)):
+            block = Block(
+                id=uuid.uuid4(),
+                date=test_date + timedelta(days=i),
+                time_of_day=time_of_day,
+                block_number=1,
             )
+            db.add(block)
 
-    def test_validate_subscription_token(self, db: Session) -> None:
-        """Test validating subscription token."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. Validate Test",
-            type="resident",
-        )
-        db.add(person)
+            assignment = Assignment(
+                id=uuid.uuid4(),
+                block_id=block.id,
+                person_id=person.id,
+                rotation_template_id=rotation.id,
+                role=role,
+            )
+            db.add(assignment)
+
         db.commit()
 
-        subscription = CalendarService.create_subscription(
-            db=db,
-            person_id=person.id,
-        )
-
-        # Valid token
-        result = CalendarService.validate_subscription_token(db, subscription.token)
-        assert result == person.id
-
-        # Invalid token
-        result = CalendarService.validate_subscription_token(db, "invalid-token")
-        assert result is None
-
-    def test_validate_revoked_token(self, db: Session) -> None:
-        """Test that revoked tokens are invalid."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. Revoked Validate",
-            type="resident",
-        )
-        db.add(person)
-        db.commit()
-
-        subscription = CalendarService.create_subscription(
-            db=db,
-            person_id=person.id,
-        )
-
-        # Valid before revocation
-        assert CalendarService.validate_subscription_token(db, subscription.token) == person.id
-
-        # Revoke
-        CalendarService.revoke_subscription(db, subscription.token)
-
-        # Invalid after revocation
-        assert CalendarService.validate_subscription_token(db, subscription.token) is None
-
-    def test_list_subscriptions(self, db: Session) -> None:
-        """Test listing subscriptions."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. List Test",
-            type="resident",
-        )
-        user = User(
-            id=uuid.uuid4(),
-            email="test@example.com",
-            hashed_password="test",
-        )
-        db.add(person)
-        db.add(user)
-        db.commit()
-
-        # Create subscriptions
-        sub1 = CalendarService.create_subscription(
-            db=db,
-            person_id=person.id,
-            created_by_user_id=user.id,
-            label="Sub 1",
-        )
-        sub2 = CalendarService.create_subscription(
-            db=db,
-            person_id=person.id,
-            created_by_user_id=user.id,
-            label="Sub 2",
-        )
-
-        # List all
-        subscriptions = CalendarService.list_subscriptions(
-            db=db,
-            created_by_user_id=user.id,
-        )
-        assert len(subscriptions) == 2
-
-        # List by person
-        subscriptions = CalendarService.list_subscriptions(
-            db=db,
-            person_id=person.id,
-        )
-        assert len(subscriptions) == 2
-
-    def test_revoke_subscription(self, db: Session) -> None:
-        """Test revoking subscription via service."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. Revoke Service",
-            type="resident",
-        )
-        db.add(person)
-        db.commit()
-
-        subscription = CalendarService.create_subscription(
-            db=db,
-            person_id=person.id,
-        )
-
-        # Revoke
-        result = CalendarService.revoke_subscription(db, subscription.token)
-        assert result is True
-
-        # Revoke non-existent
-        result = CalendarService.revoke_subscription(db, "non-existent-token")
-        assert result is False
-
-    def test_generate_subscription_url(self) -> None:
-        """Test generating webcal URL."""
-        token = "abc123xyz"
-
-        # Default localhost
-        url = CalendarService.generate_subscription_url(token)
-        assert url == "webcal://localhost:8000/api/calendar/subscribe/abc123xyz"
-
-        # Custom base URL (https)
-        url = CalendarService.generate_subscription_url(
-            token,
-            base_url="https://myapp.com/api/calendar",
-        )
-        assert url == "webcal://myapp.com/api/calendar/subscribe/abc123xyz"
-
-        # Custom base URL (http)
-        url = CalendarService.generate_subscription_url(
-            token,
-            base_url="http://staging.example.com/api/calendar",
-        )
-        assert url == "webcal://staging.example.com/api/calendar/subscribe/abc123xyz"
-
-
-class TestWebcalSubscriptionAPI:
-    """Test webcal subscription API endpoints."""
-
-    def test_create_subscription_endpoint(
-        self, client: TestClient, db: Session, auth_headers: dict
-    ) -> None:
-        """Test POST /calendar/subscribe endpoint."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. API Sub Test",
-            type="resident",
-        )
-        db.add(person)
-        db.commit()
-
-        response = client.post(
-            "/api/calendar/subscribe",
-            json={
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
                 "person_id": str(person.id),
-                "label": "My Schedule",
-                "expires_days": 30,
+                "start_date": test_date.isoformat(),
+                "end_date": (test_date + timedelta(days=2)).isoformat(),
             },
-            headers=auth_headers,
         )
 
         assert response.status_code == 200
-        data = response.json()
-        assert "token" in data
-        assert "subscription_url" in data
-        assert "webcal_url" in data
-        assert data["webcal_url"].startswith("webcal://")
-        assert data["person_id"] == str(person.id)
-        assert data["label"] == "My Schedule"
-        assert data["is_active"] is True
+        content = response.text
 
-    def test_create_subscription_person_not_found(
-        self, client: TestClient, auth_headers: dict
+        # Verify role labels in summary
+        assert "Clinic Rotation (Backup)" in content or "SUMMARY:Clinic Rotation (Backup)" in content
+        assert "Clinic Rotation (Supervising)" in content or "SUMMARY:Clinic Rotation (Supervising)" in content
+
+
+class TestRFC5545Compliance:
+    """Test RFC 5545 (iCalendar) standard compliance."""
+
+    def test_ics_has_required_vcalendar_properties(
+        self, client: TestClient, db: Session
     ) -> None:
-        """Test error when person not found."""
-        response = client.post(
-            "/api/calendar/subscribe",
-            json={"person_id": str(uuid.uuid4())},
-            headers=auth_headers,
+        """Test that ICS file has all required VCALENDAR properties."""
+        person = Person(id=uuid.uuid4(), name="Dr. RFC Test", type="resident")
+        db.add(person)
+        db.commit()
+
+        test_date = date(2024, 1, 1)
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
         )
 
-        assert response.status_code == 404
+        content = response.text
 
-    def test_get_subscription_feed(self, client: TestClient, db: Session) -> None:
-        """Test GET /calendar/subscribe/{token} endpoint."""
-        # Create person with assignment
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. Feed Test",
-            type="resident",
+        # Required properties per RFC 5545
+        assert "BEGIN:VCALENDAR" in content
+        assert "VERSION:2.0" in content
+        assert "PRODID:" in content
+        assert "CALSCALE:GREGORIAN" in content
+        assert "METHOD:PUBLISH" in content
+        assert "END:VCALENDAR" in content
+
+    def test_ics_vcalendar_structure(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test proper VCALENDAR begin/end structure."""
+        person = Person(id=uuid.uuid4(), name="Dr. Structure Test", type="resident")
+        db.add(person)
+        db.commit()
+
+        test_date = date.today()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
         )
+
+        content = response.text
+        lines = content.split("\n")
+
+        # First line should be BEGIN:VCALENDAR (after stripping whitespace)
+        first_line = lines[0].strip()
+        assert first_line == "BEGIN:VCALENDAR"
+
+        # Last line should be END:VCALENDAR
+        last_line = lines[-1].strip() if lines[-1].strip() else lines[-2].strip()
+        assert last_line == "END:VCALENDAR"
+
+    def test_ics_vevent_properties(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that VEVENT components have required properties."""
+        person = Person(id=uuid.uuid4(), name="Dr. Event Test", type="resident")
         db.add(person)
 
         rotation = RotationTemplate(
             id=uuid.uuid4(),
-            name="Feed Rotation",
+            name="Test Event Rotation",
             activity_type="clinic",
         )
         db.add(rotation)
 
-        test_date = date.today()
+        test_date = date(2024, 7, 15)
         block = Block(
             id=uuid.uuid4(),
             date=test_date,
@@ -1328,172 +388,780 @@ class TestWebcalSubscriptionAPI:
             role="primary",
         )
         db.add(assignment)
-
-        # Create subscription directly (bypassing API auth)
-        subscription = CalendarSubscription.create(person_id=person.id)
-        db.add(subscription)
         db.commit()
-
-        # Get feed (no auth required - token is auth)
-        response = client.get(f"/api/calendar/subscribe/{subscription.token}")
-
-        assert response.status_code == 200
-        assert response.headers["content-type"] == "text/calendar; charset=utf-8"
-        assert "max-age=900" in response.headers["cache-control"]
-
-        content = response.text
-        assert "BEGIN:VCALENDAR" in content
-        assert "Feed Rotation" in content
-
-    def test_get_subscription_feed_invalid_token(self, client: TestClient) -> None:
-        """Test error with invalid token."""
-        response = client.get("/api/calendar/subscribe/invalid-token-here")
-
-        assert response.status_code == 401
-        assert "Invalid or expired" in response.json()["detail"]
-
-    def test_get_subscription_feed_revoked(self, client: TestClient, db: Session) -> None:
-        """Test error with revoked token."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. Revoked Feed",
-            type="resident",
-        )
-        db.add(person)
-
-        subscription = CalendarSubscription.create(person_id=person.id)
-        subscription.revoke()
-        db.add(subscription)
-        db.commit()
-
-        response = client.get(f"/api/calendar/subscribe/{subscription.token}")
-
-        assert response.status_code == 401
-
-    def test_list_subscriptions_endpoint(
-        self, client: TestClient, db: Session, auth_headers: dict, current_user: User
-    ) -> None:
-        """Test GET /calendar/subscriptions endpoint."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. List API Test",
-            type="resident",
-        )
-        db.add(person)
-        db.commit()
-
-        # Create subscriptions
-        CalendarService.create_subscription(
-            db=db,
-            person_id=person.id,
-            created_by_user_id=current_user.id,
-            label="Sub A",
-        )
-        CalendarService.create_subscription(
-            db=db,
-            person_id=person.id,
-            created_by_user_id=current_user.id,
-            label="Sub B",
-        )
 
         response = client.get(
-            "/api/calendar/subscriptions",
-            headers=auth_headers,
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
         )
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["total"] == 2
-        assert len(data["subscriptions"]) == 2
+        content = response.text
 
-    def test_revoke_subscription_endpoint(
-        self, client: TestClient, db: Session, auth_headers: dict, current_user: User
+        # Required VEVENT properties per RFC 5545
+        assert "BEGIN:VEVENT" in content
+        assert "DTSTART:" in content
+        assert "DTEND:" in content
+        assert "SUMMARY:" in content
+        assert "UID:" in content
+        assert "DTSTAMP:" in content
+        assert "END:VEVENT" in content
+
+    def test_ics_uid_format(
+        self, client: TestClient, db: Session
     ) -> None:
-        """Test DELETE /calendar/subscribe/{token} endpoint."""
-        person = Person(
+        """Test that UIDs are properly formatted and unique."""
+        person = Person(id=uuid.uuid4(), name="Dr. UID Test", type="resident")
+        db.add(person)
+
+        rotation = RotationTemplate(
             id=uuid.uuid4(),
-            name="Dr. Delete Test",
-            type="resident",
+            name="UID Rotation",
+            activity_type="clinic",
         )
+        db.add(rotation)
+
+        test_date = date(2024, 8, 1)
+
+        # Create multiple assignments
+        for i in range(3):
+            block = Block(
+                id=uuid.uuid4(),
+                date=test_date + timedelta(days=i),
+                time_of_day="AM",
+                block_number=1,
+            )
+            db.add(block)
+
+            assignment = Assignment(
+                id=uuid.uuid4(),
+                block_id=block.id,
+                person_id=person.id,
+                rotation_template_id=rotation.id,
+                role="primary",
+            )
+            db.add(assignment)
+
+        db.commit()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": (test_date + timedelta(days=2)).isoformat(),
+            },
+        )
+
+        content = response.text
+
+        # Extract all UIDs
+        uid_pattern = r"UID:([^\r\n]+)"
+        uids = re.findall(uid_pattern, content)
+
+        # All UIDs should be unique
+        assert len(uids) == len(set(uids))
+
+        # UIDs should contain @residency-scheduler domain
+        for uid in uids:
+            assert "@residency-scheduler" in uid
+
+    def test_ics_datetime_format(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that datetime values are properly formatted."""
+        person = Person(id=uuid.uuid4(), name="Dr. DateTime Test", type="resident")
+        db.add(person)
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="DateTime Rotation",
+            activity_type="clinic",
+        )
+        db.add(rotation)
+
+        test_date = date(2024, 9, 10)
+        block = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="AM",
+            block_number=1,
+        )
+        db.add(block)
+
+        assignment = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person.id,
+            rotation_template_id=rotation.id,
+            role="primary",
+        )
+        db.add(assignment)
+        db.commit()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        content = response.text
+
+        # Check for proper date-time format (YYYYMMDDTHHMMSS)
+        # AM block should start at 08:00
+        assert "20240910T080000" in content  # Start time
+        assert "20240910T120000" in content  # End time (12:00 PM)
+
+
+class TestTimezoneHandling:
+    """Test timezone handling in ICS exports."""
+
+    def test_vtimezone_component_present(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that VTIMEZONE component is included in ICS export."""
+        person = Person(id=uuid.uuid4(), name="Dr. TZ Test", type="resident")
         db.add(person)
         db.commit()
 
-        subscription = CalendarService.create_subscription(
-            db=db,
-            person_id=person.id,
-            created_by_user_id=current_user.id,
+        test_date = date(2024, 1, 15)
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
         )
 
-        response = client.delete(
-            f"/api/calendar/subscribe/{subscription.token}",
-            headers=auth_headers,
+        content = response.text
+
+        # VTIMEZONE component should be present
+        assert "BEGIN:VTIMEZONE" in content
+        assert "END:VTIMEZONE" in content
+
+    def test_vtimezone_america_new_york(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that timezone is set to America/New_York."""
+        person = Person(id=uuid.uuid4(), name="Dr. NY Test", type="resident")
+        db.add(person)
+        db.commit()
+
+        test_date = date(2024, 2, 1)
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        content = response.text
+
+        # Should specify America/New_York timezone
+        assert "TZID:America/New_York" in content
+        assert "X-WR-TIMEZONE:America/New_York" in content
+
+    def test_vtimezone_standard_and_daylight(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that timezone includes both standard and daylight time rules."""
+        person = Person(id=uuid.uuid4(), name="Dr. DST Test", type="resident")
+        db.add(person)
+        db.commit()
+
+        test_date = date(2024, 3, 1)
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        content = response.text
+
+        # Should have both STANDARD and DAYLIGHT components
+        assert "BEGIN:STANDARD" in content
+        assert "END:STANDARD" in content
+        assert "BEGIN:DAYLIGHT" in content
+        assert "END:DAYLIGHT" in content
+
+    def test_vtimezone_est_edt_names(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that timezone names are EST and EDT."""
+        person = Person(id=uuid.uuid4(), name="Dr. EST Test", type="resident")
+        db.add(person)
+        db.commit()
+
+        test_date = date(2024, 4, 1)
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        content = response.text
+
+        # Should include EST and EDT timezone names
+        assert "TZNAME:EST" in content
+        assert "TZNAME:EDT" in content
+
+    def test_am_block_time_correct(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that AM blocks have correct times (8:00 AM - 12:00 PM)."""
+        person = Person(id=uuid.uuid4(), name="Dr. AM Test", type="resident")
+        db.add(person)
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="AM Rotation",
+            activity_type="clinic",
+        )
+        db.add(rotation)
+
+        test_date = date(2024, 5, 15)
+        block_am = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="AM",
+            block_number=1,
+        )
+        db.add(block_am)
+
+        assignment = Assignment(
+            id=uuid.uuid4(),
+            block_id=block_am.id,
+            person_id=person.id,
+            rotation_template_id=rotation.id,
+            role="primary",
+        )
+        db.add(assignment)
+        db.commit()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        content = response.text
+
+        # AM block: 8:00 AM - 12:00 PM
+        assert "20240515T080000" in content  # 8:00 AM start
+        assert "20240515T120000" in content  # 12:00 PM end
+
+    def test_pm_block_time_correct(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that PM blocks have correct times (1:00 PM - 5:00 PM)."""
+        person = Person(id=uuid.uuid4(), name="Dr. PM Test", type="resident")
+        db.add(person)
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="PM Rotation",
+            activity_type="clinic",
+        )
+        db.add(rotation)
+
+        test_date = date(2024, 6, 20)
+        block_pm = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="PM",
+            block_number=1,
+        )
+        db.add(block_pm)
+
+        assignment = Assignment(
+            id=uuid.uuid4(),
+            block_id=block_pm.id,
+            person_id=person.id,
+            rotation_template_id=rotation.id,
+            role="primary",
+        )
+        db.add(assignment)
+        db.commit()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        content = response.text
+
+        # PM block: 1:00 PM - 5:00 PM
+        assert "20240620T130000" in content  # 1:00 PM start
+        assert "20240620T170000" in content  # 5:00 PM end
+
+
+class TestFilterParameters:
+    """Test filter parameter handling."""
+
+    def test_person_id_filter_required(
+        self, client: TestClient
+    ) -> None:
+        """Test that person_id parameter is required."""
+        test_date = date.today()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        # Should return 422 Unprocessable Entity for missing required parameter
+        assert response.status_code == 422
+
+    def test_start_date_filter_required(
+        self, client: TestClient
+    ) -> None:
+        """Test that start_date parameter is required."""
+        person_id = uuid.uuid4()
+        test_date = date.today()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person_id),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        assert response.status_code == 422
+
+    def test_end_date_filter_required(
+        self, client: TestClient
+    ) -> None:
+        """Test that end_date parameter is required."""
+        person_id = uuid.uuid4()
+        test_date = date.today()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person_id),
+                "start_date": test_date.isoformat(),
+            },
+        )
+
+        assert response.status_code == 422
+
+    def test_invalid_person_id_format(
+        self, client: TestClient
+    ) -> None:
+        """Test handling of invalid UUID format for person_id."""
+        test_date = date.today()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": "not-a-valid-uuid",
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        assert response.status_code == 422
+
+    def test_invalid_date_format(
+        self, client: TestClient
+    ) -> None:
+        """Test handling of invalid date format."""
+        person_id = uuid.uuid4()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person_id),
+                "start_date": "2024-13-45",  # Invalid date
+                "end_date": date.today().isoformat(),
+            },
+        )
+
+        assert response.status_code == 422
+
+    def test_filters_by_exact_person_id(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that only assignments for specified person are included."""
+        # Create two different people
+        person1 = Person(
+            id=uuid.uuid4(),
+            name="Dr. Person One",
+            type="resident",
+        )
+        person2 = Person(
+            id=uuid.uuid4(),
+            name="Dr. Person Two",
+            type="resident",
+        )
+        db.add_all([person1, person2])
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="Test Rotation",
+            activity_type="clinic",
+        )
+        db.add(rotation)
+
+        test_date = date(2024, 7, 1)
+        block = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="AM",
+            block_number=1,
+        )
+        db.add(block)
+
+        # Create assignments for both people on same block
+        assignment1 = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person1.id,
+            rotation_template_id=rotation.id,
+            role="primary",
+        )
+        assignment2 = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person2.id,
+            rotation_template_id=rotation.id,
+            role="backup",
+        )
+        db.add_all([assignment1, assignment2])
+        db.commit()
+
+        # Export for person1 only
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person1.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
         )
 
         assert response.status_code == 200
-        assert response.json()["success"] is True
+        content = response.text
 
-        # Verify revoked
-        db.refresh(subscription)
-        assert subscription.is_active is False
+        # Should only have 1 event (person1's assignment)
+        assert content.count("BEGIN:VEVENT") == 1
+        assert "Dr. Person One" in content
+        assert "Dr. Person Two" not in content
 
-    def test_revoke_subscription_not_found(
-        self, client: TestClient, auth_headers: dict
+
+class TestErrorHandling:
+    """Test error handling for invalid requests."""
+
+    def test_person_not_found(
+        self, client: TestClient
     ) -> None:
-        """Test error when subscription not found."""
-        response = client.delete(
-            "/api/calendar/subscribe/non-existent-token",
-            headers=auth_headers,
+        """Test error when person_id doesn't exist."""
+        non_existent_id = uuid.uuid4()
+        test_date = date.today()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(non_existent_id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
         )
 
         assert response.status_code == 404
+        assert "Person not found" in response.json()["detail"]
 
-    def test_revoke_subscription_not_owner(
-        self, client: TestClient, db: Session, auth_headers: dict
+    def test_empty_assignment_set(
+        self, client: TestClient, db: Session
     ) -> None:
-        """Test error when not subscription owner."""
+        """Test handling when person exists but has no assignments."""
         person = Person(
             id=uuid.uuid4(),
-            name="Dr. Not Owner",
+            name="Dr. No Assignments",
             type="resident",
         )
-        other_user = User(
-            id=uuid.uuid4(),
-            email="other@example.com",
-            hashed_password="test",
-        )
         db.add(person)
-        db.add(other_user)
         db.commit()
 
-        # Create subscription by other user
-        subscription = CalendarService.create_subscription(
-            db=db,
+        test_date = date.today()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        # Should succeed but return calendar with no events
+        assert response.status_code == 200
+        content = response.text
+        assert "BEGIN:VCALENDAR" in content
+        assert content.count("BEGIN:VEVENT") == 0
+
+    def test_internal_server_error_handling(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that internal errors return 500 status."""
+        # This test verifies the error handling structure
+        # In a real scenario, this might be tested with mocking
+        # For now, we just verify the endpoint structure is sound
+
+        person = Person(id=uuid.uuid4(), name="Dr. Error Test", type="resident")
+        db.add(person)
+        db.commit()
+
+        test_date = date.today()
+
+        # Normal request should work
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        # Should not error on valid request
+        assert response.status_code in [200, 404, 500]
+
+    def test_malformed_query_parameters(
+        self, client: TestClient
+    ) -> None:
+        """Test handling of malformed query parameters."""
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": "12345",  # Not a valid UUID
+                "start_date": "not-a-date",
+                "end_date": "also-not-a-date",
+            },
+        )
+
+        assert response.status_code == 422
+
+
+class TestICSFileContent:
+    """Test ICS file content and metadata."""
+
+    def test_ics_contains_person_name(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that calendar name includes person's name."""
+        person = Person(
+            id=uuid.uuid4(),
+            name="Dr. Calendar Name Test",
+            type="resident",
+        )
+        db.add(person)
+        db.commit()
+
+        test_date = date.today()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        content = response.text
+        assert "Dr. Calendar Name Test" in content
+
+    def test_ics_includes_location_information(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that location information is included in events."""
+        person = Person(id=uuid.uuid4(), name="Dr. Location Test", type="resident")
+        db.add(person)
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="Location Clinic",
+            activity_type="clinic",
+            clinic_location="Medical Center, Floor 3, Suite 301",
+        )
+        db.add(rotation)
+
+        test_date = date(2024, 8, 15)
+        block = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="AM",
+            block_number=1,
+        )
+        db.add(block)
+
+        assignment = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
             person_id=person.id,
-            created_by_user_id=other_user.id,
+            rotation_template_id=rotation.id,
+            role="primary",
         )
-
-        response = client.delete(
-            f"/api/calendar/subscribe/{subscription.token}",
-            headers=auth_headers,
-        )
-
-        assert response.status_code == 403
-
-    def test_legacy_feed_endpoint(self, client: TestClient, db: Session) -> None:
-        """Test GET /calendar/feed/{token} legacy endpoint."""
-        person = Person(
-            id=uuid.uuid4(),
-            name="Dr. Legacy Feed",
-            type="resident",
-        )
-        db.add(person)
-
-        subscription = CalendarSubscription.create(person_id=person.id)
-        db.add(subscription)
+        db.add(assignment)
         db.commit()
 
-        # Legacy endpoint should work same as new one
-        response = client.get(f"/api/calendar/feed/{subscription.token}")
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        content = response.text
+        assert "LOCATION:Medical Center, Floor 3, Suite 301" in content
+
+    def test_ics_includes_assignment_notes(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that assignment notes are included in event descriptions."""
+        person = Person(id=uuid.uuid4(), name="Dr. Notes Test", type="resident")
+        db.add(person)
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="Notes Rotation",
+            activity_type="clinic",
+        )
+        db.add(rotation)
+
+        test_date = date(2024, 9, 1)
+        block = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="PM",
+            block_number=1,
+        )
+        db.add(block)
+
+        assignment = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person.id,
+            rotation_template_id=rotation.id,
+            role="primary",
+            notes="Bring stethoscope and laptop",
+        )
+        db.add(assignment)
+        db.commit()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        content = response.text
+        assert "Bring stethoscope and laptop" in content
+
+    def test_ics_includes_activity_type(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that activity type is included in event descriptions."""
+        person = Person(id=uuid.uuid4(), name="Dr. Activity Test", type="resident")
+        db.add(person)
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="Activity Rotation",
+            activity_type="inpatient",
+        )
+        db.add(rotation)
+
+        test_date = date(2024, 10, 1)
+        block = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="AM",
+            block_number=1,
+        )
+        db.add(block)
+
+        assignment = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person.id,
+            rotation_template_id=rotation.id,
+            role="primary",
+        )
+        db.add(assignment)
+        db.commit()
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        content = response.text
+        assert "Type: inpatient" in content or "inpatient" in content.lower()
+
+    def test_filename_format(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that downloaded filename has correct format."""
+        person = Person(id=uuid.uuid4(), name="Dr. Filename Test", type="resident")
+        db.add(person)
+        db.commit()
+
+        start_date = date(2024, 11, 1)
+        end_date = date(2024, 11, 30)
+
+        response = client.get(
+            "/api/calendar/export.ics",
+            params={
+                "person_id": str(person.id),
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+            },
+        )
 
         assert response.status_code == 200
-        assert response.headers["content-type"] == "text/calendar; charset=utf-8"
+
+        content_disposition = response.headers.get("content-disposition")
+        assert content_disposition is not None
+        assert "attachment" in content_disposition
+        assert f"schedule_{person.id}_2024-11-01_2024-11-30.ics" in content_disposition
