@@ -159,11 +159,8 @@ export function useMonthlyOnCallRoster(
   const startDate = format(startOfMonth(month), 'yyyy-MM-dd');
   const endDate = format(endOfMonth(month), 'yyyy-MM-dd');
 
-  return useOnCallAssignments(startDate, endDate, {
-    ...options,
-    // Override the query key to use the month-specific one
-    queryKey: callRosterQueryKeys.byMonth(month) as any,
-  });
+  // Note: The query key is determined by the date range in useOnCallAssignments
+  return useOnCallAssignments(startDate, endDate, options);
 }
 
 /**

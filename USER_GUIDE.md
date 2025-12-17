@@ -1,6 +1,6 @@
 # Residency Scheduler User Guide
 
-> **Last Updated:** 2025-12-16
+> **Last Updated:** 2025-12-17
 
 This guide explains how to use the Residency Scheduler application for managing medical residency schedules with ACGME compliance.
 
@@ -11,17 +11,18 @@ This guide explains how to use the Residency Scheduler application for managing 
 1. [Getting Started](#getting-started)
 2. [User Roles](#user-roles)
 3. [Dashboard](#dashboard)
-4. [People Management](#people-management)
-5. [Rotation Templates](#rotation-templates)
-6. [Absence Management](#absence-management)
-7. [ACGME Compliance](#acgme-compliance)
-8. [Generating Schedules](#generating-schedules)
-9. [Exporting Data](#exporting-data)
-10. [Settings (Admin Only)](#settings-admin-only)
-11. [Common Workflows](#common-workflows)
-12. [Quick Reference Card](#quick-reference-card)
-13. [Glossary](#glossary)
-14. [FAQ](#frequently-asked-questions)
+4. [Schedule Views](#schedule-views)
+5. [People Management](#people-management)
+6. [Rotation Templates](#rotation-templates)
+7. [Absence Management](#absence-management)
+8. [ACGME Compliance](#acgme-compliance)
+9. [Generating Schedules](#generating-schedules)
+10. [Exporting Data](#exporting-data)
+11. [Settings (Admin Only)](#settings-admin-only)
+12. [Common Workflows](#common-workflows)
+13. [Quick Reference Card](#quick-reference-card)
+14. [Glossary](#glossary)
+15. [FAQ](#frequently-asked-questions)
 
 ---
 
@@ -111,6 +112,76 @@ Four buttons for common tasks:
 | **Export Excel** | Downloads current 4-week block as Excel file |
 | **Add Person** | Goes to People page to add resident/faculty |
 | **View Templates** | Goes to Templates page |
+
+---
+
+## Schedule Views
+
+Access the schedule via **Schedule** in the navigation. The schedule page offers multiple view modes to suit different planning needs.
+
+### Standard Views
+
+Use the **View Toggle** buttons (Day, Week, Month, Block) to switch between standard views:
+
+| View | Description |
+|------|-------------|
+| **Day** | Single day with detailed AM/PM assignments |
+| **Week** | 7-day view for weekly planning |
+| **Month** | Calendar month overview |
+| **Block** | 4-week block view (28 days) - default scheduling unit |
+
+### Annual Drag-and-Drop Views
+
+Two specialized views provide **year-at-a-glance** planning with **drag-and-drop** capability:
+
+#### Resident Academic Year View (Res.)
+
+Click the **Res.** button (graduation cap icon) to access:
+- Full academic year view (July 1 - June 30)
+- All residents grouped by PGY level (PGY-1, PGY-2, PGY-3)
+- 52 weeks displayed with month headers and week numbers
+- **Drag-and-drop** to reschedule assignments within a resident's row
+- Compact/normal zoom toggle for different detail levels
+- "Today" button to quickly navigate to current date
+- Color-coded activity types (Clinic, Inpatient, Procedure, Call, Elective, Leave)
+
+**How to use drag-and-drop:**
+1. Click and hold on any assignment cell
+2. Drag horizontally to a new date/time slot in the same row
+3. Release to move the assignment
+4. A toast notification confirms the change
+
+###***REMOVED*** Inpatient Weeks View (Fac.)
+
+Click the **Fac.** button (users icon) to access:
+- Faculty-focused view for managing inpatient service weeks
+- Shows all faculty members sorted by inpatient week count
+- **Summary statistics** at top:
+  - Total inpatient weeks
+  - Average weeks per faculty
+  - Maximum/minimum weeks
+- Toggle between "All" activities or "Inpatient only" filter
+- Same drag-and-drop functionality as resident view
+- Helps ensure equitable distribution of inpatient coverage
+
+### View Navigation
+
+All annual views include:
+- **Academic year selector**: Navigate between years (e.g., AY 2024-2025)
+- **Previous/Next buttons**: Move between academic years
+- **Today button**: Jump to current date
+- **Zoom toggle**: Switch between compact and normal cell sizes
+
+### Legend
+
+Color coding is consistent across all views:
+- **Blue**: Clinic
+- **Purple**: Inpatient
+- **Red**: Procedure
+- **Orange**: Call
+- **Green**: Elective
+- **Amber**: Leave/Vacation
+- **Gray**: Conference
 
 ---
 
@@ -488,10 +559,13 @@ Lists recognized holidays that affect scheduling:
 | Check compliance | Compliance page |
 | Export to Excel | Dashboard → Export Excel |
 | Create rotation type | Templates → New Template |
+| View full year schedule | Schedule → Res. (resident) or Fac. (faculty) |
+| Drag to reschedule | Schedule → Res./Fac. view → drag assignment |
 
 ### Navigation Quick Guide
 
 - **Dashboard** - Home page, overview, quick actions
+- **Schedule** - View/edit schedules (Day/Week/Month/Block/Annual views)
 - **People** - Manage residents and faculty
 - **Templates** - Rotation types and rules
 - **Absences** - Vacation, deployment, sick leave

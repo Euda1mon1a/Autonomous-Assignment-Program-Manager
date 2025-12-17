@@ -129,6 +129,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Block Schedule Drag GUI
+- **Resident Academic Year View**: Full academic year (July-June) schedule view for all residents
+  - Residents grouped by PGY level (PGY-1, PGY-2, PGY-3)
+  - 52 weeks with month headers and week numbers
+  - Drag-and-drop to reschedule assignments within a resident's row
+  - Compact/normal zoom toggle
+  - Today navigation with auto-scroll
+- **Faculty Inpatient Weeks View**: Dedicated view for faculty inpatient service management
+  - Faculty sorted by inpatient week count
+  - Summary statistics (total, average, max, min inpatient weeks)
+  - Toggle between all activities or inpatient-only filter
+  - Drag-and-drop functionality
+- **Drag-and-Drop Infrastructure**: Using dnd-kit library
+  - ScheduleDragProvider context for drag state management
+  - DraggableBlockCell component with visual feedback
+  - Optimistic UI updates with API sync
+  - Toast notifications for success/warning/error feedback
+- **ViewToggle Enhancement**: Added annual view buttons (Res./Fac.) with visual separator
+- **New Dependencies**: @dnd-kit/core, @dnd-kit/utilities, @dnd-kit/sortable, @dnd-kit/modifiers
+
 #### Resilience Framework
 - **Tier 1 Resilience**: Database tables and basic resilience tracking (#129, #130)
 - **Tier 2 Resilience**: Extended resilience capabilities (#131)
@@ -173,7 +193,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## Planned Features
-- Calendar drag-and-drop interface
+- ~~Calendar drag-and-drop interface~~ ✓ Implemented (Block Schedule Drag GUI)
 - Email notifications for schedule changes
 - Bulk import/export for people and absences
 - Advanced reporting and analytics
