@@ -1,0 +1,209 @@
+{
+  "name": "Slack Approve Command",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-approve",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-slack-approve",
+      "name": "Slack Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "slack-approve-webhook"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse Slack command parameters\nconst body = $input.first().json;\nconst text = body.text || '';\n\n// Extract token parameter\nlet token = null;\nconst tokenMatch = text.match(/token=(\\S+)/);\nif (tokenMatch) {\n  token = tokenMatch[1];\n}\n\n// Extract task ID if provided\nlet taskId = null;\nconst taskMatch = text.match(/task=(\\S+)/);\nif (taskMatch) {\n  taskId = taskMatch[1];\n}\n\n// Extract action (approve/deny)\nlet action = 'approve';\nif (text.includes('deny')) {\n  action = 'deny';\n}\n\nif (!token) {\n  return {\n    json: {\n      error: true,\n      message: 'Token is required. Usage: /scheduler approve token=YOUR_TOKEN'\n    }\n  };\n}\n\nreturn {\n  json: {\n    token: token,\n    task_id: taskId,\n    action: action,\n    user: body.user_name,\n    user_id: body.user_id,\n    channel: body.channel_id\n  }\n};"
+      },
+      "id": "parse-approve-parameters",
+      "name": "Parse Approve Parameters",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.error }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-for-errors",
+      "name": "Check for Errors",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/api/scheduler/approve",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "={{ $json.token }}"
+            },
+            {
+              "name": "task_id",
+              "value": "={{ $json.task_id }}"
+            },
+            {
+              "name": "action",
+              "value": "={{ $json.action }}"
+            },
+            {
+              "name": "approved_by",
+              "value": "={{ $json.user }}"
+            },
+            {
+              "name": "approved_by_id",
+              "value": "={{ $json.user_id }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "http-post-approve",
+      "name": "Submit Approval",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [910, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format error response\nconst error = $input.first().json;\n\nconst blocks = [\n  {\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": `:x: *Error:* ${error.message}`\n    }\n  },\n  {\n    \"type\": \"context\",\n    \"elements\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": \"Usage: `/scheduler approve token=YOUR_TOKEN [task=TASK_ID] [deny]`\"\n      }\n    ]\n  }\n];\n\nreturn {\n  json: {\n    response_type: \"ephemeral\",\n    blocks: blocks\n  }\n};"
+      },
+      "id": "format-error-response",
+      "name": "Format Error Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [910, 400]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format the approval response for Slack\nconst response = $input.first().json;\n\nconst action = response.action || 'approve';\nconst taskId = response.task_id || 'all pending';\nconst approvedTasks = response.approved_tasks || 0;\nconst deniedTasks = response.denied_tasks || 0;\nconst status = response.status || 'success';\n\nconst actionEmoji = action === 'approve' ? ':white_check_mark:' : ':x:';\nconst actionText = action === 'approve' ? 'Approved' : 'Denied';\n\nconst blocks = [\n  {\n    \"type\": \"header\",\n    \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": `${actionEmoji} Task ${actionText}`,\n      \"emoji\": true\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"fields\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Task ID:*\\n${taskId}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Status:*\\n${status}`\n      }\n    ]\n  },\n  {\n    \"type\": \"divider\"\n  },\n  {\n    \"type\": \"section\",\n    \"fields\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Tasks Approved:*\\n${approvedTasks}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Tasks Denied:*\\n${deniedTasks}`\n      }\n    ]\n  }\n];\n\n// Add task details if available\nif (response.task_details) {\n  blocks.push({\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": `*Task Details:*\\n${response.task_details}`\n    }\n  });\n}\n\nblocks.push({\n  \"type\": \"context\",\n  \"elements\": [\n    {\n      \"type\": \"mrkdwn\",\n      \"text\": `:information_source: Use `/scheduler sitrep` to view updated status.\"\n    }\n  ]\n});\n\nreturn {\n  json: {\n    response_type: \"in_channel\",\n    blocks: blocks\n  }\n};"
+      },
+      "id": "format-approve-response",
+      "name": "Format Approve Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1130, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-to-webhook-approve",
+      "name": "Respond to Slack",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1350, 300]
+    }
+  ],
+  "connections": {
+    "Slack Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Approve Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Approve Parameters": {
+      "main": [
+        [
+          {
+            "node": "Check for Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Errors": {
+      "main": [
+        [
+          {
+            "node": "Format Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Submit Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Submit Approval": {
+      "main": [
+        [
+          {
+            "node": "Format Approve Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Error Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Approve Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-17T00:00:00.000Z",
+  "versionId": "1"
+}

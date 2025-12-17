@@ -1,0 +1,236 @@
+{
+  "name": "Email Parser for Schedule Requests",
+  "nodes": [
+    {
+      "parameters": {
+        "protocol": "imap",
+        "imapHost": "={{ $env.EMAIL_IMAP_HOST }}",
+        "imapPort": 993,
+        "imapUser": "={{ $env.EMAIL_USER }}",
+        "imapPassword": "={{ $env.EMAIL_PASSWORD }}",
+        "mailbox": "INBOX",
+        "options": {
+          "markSeen": true,
+          "downloadAttachments": true,
+          "filter": {
+            "unseen": true,
+            "subject": "Schedule Request"
+          }
+        }
+      },
+      "id": "email-trigger",
+      "name": "Email Trigger (IMAP)",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse email content for schedule request details\nconst email = $input.first().json;\n\nconst from = email.from?.value?.[0]?.address || email.from;\nconst subject = email.subject || '';\nconst body = email.text || email.html || '';\n\n// Extract schedule request information using regex patterns\nconst extractField = (pattern, text) => {\n  const match = text.match(pattern);\n  return match ? match[1].trim() : null;\n};\n\n// Parse common fields\nconst taskName = extractField(/Task Name[:\\s]+(.+?)(?:\\n|$)/i, body) || \n                extractField(/Subject[:\\s]+(.+?)(?:\\n|$)/i, body) ||\n                subject.replace(/^(Re:|Fwd:|Schedule Request:)/i, '').trim();\n\nconst priority = extractField(/Priority[:\\s]+(high|medium|low)/i, body) || 'medium';\nconst dueDate = extractField(/Due Date[:\\s]+(.+?)(?:\\n|$)/i, body) || \n               extractField(/Deadline[:\\s]+(.+?)(?:\\n|$)/i, body);\n\nconst description = extractField(/Description[:\\s]+([\\s\\S]+?)(?:\\n\\n|$)/i, body) ||\n                   body.substring(0, 500);\n\nconst assignee = extractField(/Assign(?:ed)? To[:\\s]+(.+?)(?:\\n|$)/i, body);\nconst category = extractField(/Category[:\\s]+(.+?)(?:\\n|$)/i, body) || 'general';\n\n// Extract duration estimate\nlet duration = null;\nconst durationMatch = body.match(/Duration[:\\s]+(\\d+)\\s*(hours?|minutes?|days?)/i);\nif (durationMatch) {\n  const value = parseInt(durationMatch[1]);\n  const unit = durationMatch[2].toLowerCase();\n  duration = { value, unit: unit.replace(/s$/, '') };\n}\n\n// Extract dependencies\nconst dependencies = [];\nconst depsMatch = body.match(/Depends On[:\\s]+(.+?)(?:\\n|$)/i);\nif (depsMatch) {\n  dependencies.push(...depsMatch[1].split(/[,;]/).map(d => d.trim()));\n}\n\nreturn {\n  json: {\n    source: 'email',\n    from: from,\n    task_name: taskName,\n    description: description,\n    priority: priority,\n    due_date: dueDate,\n    assignee: assignee,\n    category: category,\n    duration: duration,\n    dependencies: dependencies,\n    raw_email: {\n      subject: subject,\n      from: from,\n      date: email.date\n    },\n    attachments: email.attachments || []\n  }\n};"
+      },
+      "id": "parse-email",
+      "name": "Parse Email Content",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.task_name }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "validate-parsed-data",
+      "name": "Validate Parsed Data",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/api/tasks/create",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $json.task_name }}"
+            },
+            {
+              "name": "description",
+              "value": "={{ $json.description }}"
+            },
+            {
+              "name": "priority",
+              "value": "={{ $json.priority }}"
+            },
+            {
+              "name": "due_date",
+              "value": "={{ $json.due_date }}"
+            },
+            {
+              "name": "assignee",
+              "value": "={{ $json.assignee }}"
+            },
+            {
+              "name": "category",
+              "value": "={{ $json.category }}"
+            },
+            {
+              "name": "duration",
+              "value": "={{ $json.duration }}"
+            },
+            {
+              "name": "dependencies",
+              "value": "={{ $json.dependencies }}"
+            },
+            {
+              "name": "source",
+              "value": "email"
+            },
+            {
+              "name": "created_from_email",
+              "value": "={{ $json.from }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "http-create-task",
+      "name": "Create Task via API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [910, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log invalid email for review\nconst email = $input.first().json;\n\nconsole.log('Invalid email format received:', {\n  from: email.from,\n  subject: email.raw_email?.subject,\n  date: email.raw_email?.date\n});\n\nreturn {\n  json: {\n    status: 'skipped',\n    reason: 'Invalid email format - missing required task name',\n    email: email.raw_email\n  }\n};"
+      },
+      "id": "log-invalid-email",
+      "name": "Log Invalid Email",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [910, 400]
+    },
+    {
+      "parameters": {
+        "authentication": "oauth2",
+        "resource": "message",
+        "operation": "send",
+        "toEmail": "={{ $json.from }}",
+        "subject": "Re: {{ $json.raw_email.subject }}",
+        "message": "=Your schedule request has been received and processed.\n\n**Task Created:**\n- Name: {{ $json.task_name }}\n- Priority: {{ $json.priority }}\n- Due Date: {{ $json.due_date || 'Not specified' }}\n- Task ID: {{ $json.task_id }}\n\nYou can track the progress of this task in the scheduler system.\n\nBest regards,\nAutomated Scheduler System"
+      },
+      "id": "send-confirmation-email",
+      "name": "Send Confirmation Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1130, 200]
+    },
+    {
+      "parameters": {
+        "authentication": "oauth2",
+        "resource": "message",
+        "operation": "send",
+        "toEmail": "={{ $json.email.from }}",
+        "subject": "Re: {{ $json.email.subject }} - Unable to Process",
+        "message": "=We received your email but were unable to process it as a schedule request.\n\nPlease ensure your email includes:\n- Task Name or clear subject line\n- Description of the task\n- (Optional) Priority: high/medium/low\n- (Optional) Due Date\n- (Optional) Assignee\n\nExample format:\n```\nTask Name: Update documentation\nDescription: Update the API documentation with new endpoints\nPriority: medium\nDue Date: 2025-12-31\nAssigned To: John Doe\n```\n\nPlease resend your request with the required information.\n\nBest regards,\nAutomated Scheduler System"
+      },
+      "id": "send-error-email",
+      "name": "Send Error Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1130, 400]
+    }
+  ],
+  "connections": {
+    "Email Trigger (IMAP)": {
+      "main": [
+        [
+          {
+            "node": "Parse Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Email Content": {
+      "main": [
+        [
+          {
+            "node": "Validate Parsed Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Parsed Data": {
+      "main": [
+        [
+          {
+            "node": "Create Task via API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Invalid Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Task via API": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Invalid Email": {
+      "main": [
+        [
+          {
+            "node": "Send Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-17T00:00:00.000Z",
+  "versionId": "1"
+}
