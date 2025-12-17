@@ -29,6 +29,7 @@ class AssignmentController:
         end_date: date | None = None,
         person_id: UUID | None = None,
         role: str | None = None,
+        activity_type: str | None = None,
     ) -> dict:
         """List assignments with optional filters."""
         return self.service.list_assignments(
@@ -36,6 +37,7 @@ class AssignmentController:
             end_date=end_date,
             person_id=person_id,
             role=role,
+            activity_type=activity_type,
         )
 
     def get_assignment(self, assignment_id: UUID) -> AssignmentResponse:

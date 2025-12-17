@@ -53,3 +53,14 @@ export type {
 
 // Dashboard widget showing current user's upcoming assignments
 export { MyScheduleWidget } from './MyScheduleWidget'
+
+/**
+ * On-Call Roster Component
+ *
+ * Component for displaying on-call schedules with color coding.
+ * Designed for nursing staff to quickly identify who to page.
+ */
+
+// Call roster for displaying on-call assignments with seniority color coding
+export { CallRoster } from './CallRoster'
+export type { CallRosterProps } from './CallRoster'
