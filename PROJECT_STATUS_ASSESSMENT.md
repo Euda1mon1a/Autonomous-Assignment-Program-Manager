@@ -2600,10 +2600,92 @@ class CallRule(Base):
 | **NF integration** | Auto-schedule call for NF days off |
 | **Gap detection** | Highlight uncovered nights |
 
+### Critical Edge Case: Inter-Block Post-Call
+
+**Problem:** Post-call status doesn't respect block boundaries.
+
+```
+Block 6: Resident on Night Float rotation
+         - Last night of NF = Sunday night
+         - NF rotation ends
+
+Block 7: New rotation starts Monday
+         - Resident is POST-CALL on Monday (Block 7 Day 1)
+         - But Block 7 rotation template doesn't know about Block 6
+         - Resident gets scheduled for Monday AM clinic = VIOLATION
+```
+
+**Current Gap:** Templates are block-scoped. No mechanism to carry post-call status across block transitions.
+
+**Solution Required:**
+
+```python
+class PostCallCarryover(Base):
+    """Tracks post-call status that spans block boundaries"""
+    __tablename__ = "post_call_carryovers"
+
+    id = Column(UUID, primary_key=True)
+    person_id = Column(UUID, ForeignKey("people.id"))
+
+    # The call/NF shift that caused this
+    source_call_assignment_id = Column(UUID, ForeignKey("call_assignments.id"))
+    source_block_number = Column(Integer)  # e.g., Block 6
+
+    # The day that needs protection
+    post_call_date = Column(Date)  # First day of Block 7
+    affected_block_number = Column(Integer)  # Block 7
+
+    # Status
+    protected = Column(Boolean, default=True)  # Should this day be protected?
+```
+
+**Scheduling Logic:**
+
+```python
+async def check_inter_block_post_call(person_id: UUID, date: date) -> bool:
+    """
+    Before scheduling any assignment, check if person is post-call
+    from a PREVIOUS block's night shift.
+    """
+    # Look at previous day's call assignments
+    previous_night = date - timedelta(days=1)
+
+    # Check if person was on overnight call/NF
+    was_on_call = await db.query(CallAssignment).filter(
+        CallAssignment.person_id == person_id,
+        CallAssignment.date == previous_night,
+        CallAssignment.call_type.in_(['night_float', 'overnight_call'])
+    ).first()
+
+    return was_on_call is not None
+
+
+# In assignment creation:
+if await check_inter_block_post_call(resident.id, assignment_date):
+    if assignment.time_of_day == 'AM':
+        raise ValidationError(
+            f"{resident.name} is post-call from previous block's night shift. "
+            f"Cannot schedule AM assignment on {assignment_date}."
+        )
+```
+
+**UI Warning:**
+
+```tsx
+// In schedule view, highlight inter-block post-call days
+{isInterBlockPostCall && (
+  <PostCallBadge variant="warning">
+    ⚠️ Post-call from Block {previousBlock} Night Float
+  </PostCallBadge>
+)}
+```
+
 ### Implementation Checklist
 
 - [ ] Clarify all requirements (see questions above)
 - [ ] Design final `CallAssignment` and `CallRule` models
+- [ ] **Create `PostCallCarryover` model for inter-block transitions**
+- [ ] **Add inter-block post-call validation to assignment creation**
 - [ ] Create call scheduling service with auto-distribution
 - [ ] Build chief resident call dashboard
 - [ ] Add call swap request workflow
