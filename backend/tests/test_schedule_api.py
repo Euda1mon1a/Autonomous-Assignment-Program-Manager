@@ -3,15 +3,16 @@ Tests for the Schedule API endpoints.
 
 Tests schedule generation, validation, and retrieval.
 """
-import pytest
 from datetime import date, timedelta
+
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.models.person import Person
-from app.models.block import Block
-from app.models.rotation_template import RotationTemplate
 from app.models.assignment import Assignment
+from app.models.block import Block
+from app.models.person import Person
+from app.models.rotation_template import RotationTemplate
 
 
 class TestGenerateSchedule:
@@ -112,8 +113,9 @@ class TestGenerateSchedule:
         db: Session,
     ):
         """Should prevent concurrent schedule generation for overlapping date ranges."""
-        from app.models.schedule_run import ScheduleRun
         from datetime import datetime
+
+        from app.models.schedule_run import ScheduleRun
 
         start_date = date.today()
         end_date = start_date + timedelta(days=6)
@@ -291,7 +293,7 @@ class TestGetSchedule:
         schedule = data["schedule"]
 
         # Should have date keys
-        for date_key in schedule.keys():
+        for date_key in schedule:
             # Each date should have AM and PM keys
             assert "AM" in schedule[date_key] or "PM" in schedule[date_key]
 

@@ -14,13 +14,12 @@ For scheduling, this means:
 - Guaranteed response even if systems are down
 """
 
+import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Optional, Callable, Any
 from uuid import UUID, uuid4
-import json
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +56,7 @@ class FallbackSchedule:
 
     # Status
     is_active: bool = False
-    last_activated: Optional[datetime] = None
+    last_activated: datetime | None = None
     activation_count: int = 0
 
 
@@ -97,7 +96,7 @@ class FallbackScheduler:
     def __init__(self):
         self.fallback_schedules: dict[FallbackScenario, FallbackSchedule] = {}
         self.zones: dict[UUID, SchedulingZone] = {}
-        self._schedule_generator: Optional[Callable] = None
+        self._schedule_generator: Callable | None = None
 
     def register_schedule_generator(
         self,
@@ -223,7 +222,7 @@ class FallbackScheduler:
     def activate_fallback(
         self,
         scenario: FallbackScenario,
-    ) -> Optional[FallbackSchedule]:
+    ) -> FallbackSchedule | None:
         """
         Activate a pre-computed fallback schedule.
 
@@ -282,7 +281,7 @@ class FallbackScheduler:
         """
         results = {}
 
-        for zone_id, zone in self.zones.items():
+        for _zone_id, zone in self.zones.items():
             is_healthy = zone.is_self_sufficient(available_faculty)
             dedicated_available = len(set(zone.dedicated_faculty) & available_faculty)
             backup_available = len(set(zone.backup_faculty) & available_faculty)
@@ -309,7 +308,7 @@ class FallbackScheduler:
         is_pcs_season: bool = False,
         is_holiday: bool = False,
         is_emergency: bool = False,
-    ) -> Optional[FallbackScenario]:
+    ) -> FallbackScenario | None:
         """
         Recommend the best fallback scenario for current situation.
 

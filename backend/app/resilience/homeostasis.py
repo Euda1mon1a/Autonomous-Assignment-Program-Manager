@@ -20,13 +20,13 @@ This module implements:
 4. Setpoint management and deviation monitoring
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import IntEnum, Enum
-from typing import Optional, Callable, Any
-from uuid import UUID, uuid4
 import logging
 import statistics
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from uuid import UUID, uuid4
 
 logger = logging.getLogger(__name__)
 
@@ -121,8 +121,8 @@ class FeedbackLoop:
 
     # Current state
     is_active: bool = True
-    last_checked: Optional[datetime] = None
-    last_correction: Optional[datetime] = None
+    last_checked: datetime | None = None
+    last_correction: datetime | None = None
     consecutive_deviations: int = 0
     total_corrections: int = 0
 
@@ -130,7 +130,7 @@ class FeedbackLoop:
     value_history: list[tuple[datetime, float]] = field(default_factory=list)
     max_history_size: int = 100
 
-    def record_value(self, value: float, timestamp: Optional[datetime] = None):
+    def record_value(self, value: float, timestamp: datetime | None = None):
         """Record a metric value for trend analysis."""
         ts = timestamp or datetime.now()
         self.value_history.append((ts, value))
@@ -195,8 +195,8 @@ class CorrectiveAction:
 
     # Outcome tracking
     executed: bool = False
-    execution_result: Optional[str] = None
-    effective: Optional[bool] = None
+    execution_result: str | None = None
+    effective: bool | None = None
 
 
 @dataclass
@@ -426,7 +426,7 @@ class HomeostasisMonitor:
         self,
         loop_id: UUID,
         current_value: float,
-    ) -> Optional[CorrectiveAction]:
+    ) -> CorrectiveAction | None:
         """
         Check a feedback loop and trigger correction if needed.
 
@@ -705,7 +705,7 @@ class HomeostasisMonitor:
 
     def get_status(
         self,
-        faculty_metrics: Optional[list[AllostasisMetrics]] = None,
+        faculty_metrics: list[AllostasisMetrics] | None = None,
     ) -> HomeostasisStatus:
         """
         Get overall homeostasis status.
@@ -771,14 +771,14 @@ class HomeostasisMonitor:
             recommendations=recommendations,
         )
 
-    def get_setpoint(self, name: str) -> Optional[Setpoint]:
+    def get_setpoint(self, name: str) -> Setpoint | None:
         """Get a setpoint by name."""
         for sp in self.setpoints.values():
             if sp.name == name:
                 return sp
         return None
 
-    def get_feedback_loop(self, setpoint_name: str) -> Optional[FeedbackLoop]:
+    def get_feedback_loop(self, setpoint_name: str) -> FeedbackLoop | None:
         """Get feedback loop for a setpoint."""
         for loop in self.feedback_loops.values():
             if loop.setpoint.name == setpoint_name:

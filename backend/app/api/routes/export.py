@@ -3,16 +3,16 @@ import csv
 import io
 import json
 from datetime import date, datetime
-from typing import Optional, List
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import StreamingResponse, Response
+from fastapi.responses import Response, StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 
 from app.db.session import get_db
-from app.models.person import Person
 from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.block import Block
+from app.models.person import Person
 from app.services.xlsx_export import generate_legacy_xlsx
 
 router = APIRouter()
@@ -85,8 +85,8 @@ def export_people(
 @router.get("/absences")
 def export_absences(
     format: str = Query("csv", description="Export format: csv or json"),
-    start_date: Optional[date] = Query(None, description="Filter absences starting from"),
-    end_date: Optional[date] = Query(None, description="Filter absences ending by"),
+    start_date: date | None = Query(None, description="Filter absences starting from"),
+    end_date: date | None = Query(None, description="Filter absences ending by"),
     db: Session = Depends(get_db),
 ):
     """
@@ -197,8 +197,8 @@ def export_schedule(
 def export_schedule_xlsx(
     start_date: date = Query(..., description="Schedule start date"),
     end_date: date = Query(..., description="Schedule end date"),
-    block_number: Optional[int] = Query(None, description="Block number for header (auto-calculated if not provided)"),
-    federal_holidays: Optional[str] = Query(None, description="Comma-separated federal holiday dates (YYYY-MM-DD)"),
+    block_number: int | None = Query(None, description="Block number for header (auto-calculated if not provided)"),
+    federal_holidays: str | None = Query(None, description="Comma-separated federal holiday dates (YYYY-MM-DD)"),
     db: Session = Depends(get_db),
 ):
     """
@@ -221,7 +221,7 @@ def export_schedule_xlsx(
         Excel file (.xlsx) download
     """
     # Parse federal holidays if provided
-    holidays: List[date] = []
+    holidays: list[date] = []
     if federal_holidays:
         try:
             for date_str in federal_holidays.split(","):

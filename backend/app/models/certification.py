@@ -1,7 +1,18 @@
 """Certification models - track required certifications like BLS, ACLS, PALS, etc."""
 import uuid
-from datetime import datetime, date
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, Date, ForeignKey, Text, UniqueConstraint
+from datetime import date, datetime
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -153,10 +164,7 @@ class PersonCertification(Base):
 
         # Check if reminder already sent
         reminder_field = f"reminder_{days}_sent"
-        if hasattr(self, reminder_field) and getattr(self, reminder_field):
-            return False
-
-        return True
+        return not (hasattr(self, reminder_field) and getattr(self, reminder_field))
 
     def mark_reminder_sent(self, days: int) -> None:
         """Mark a reminder as sent."""

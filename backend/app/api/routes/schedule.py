@@ -1,39 +1,37 @@
 """Schedule generation and validation API routes."""
-from uuid import UUID
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
+from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.schedule import (
-    ScheduleRequest,
-    ScheduleResponse,
-    ValidationResult,
-    EmergencyRequest,
-    EmergencyResponse,
-    SolverStatistics,
-    ImportAnalysisResponse,
-    ScheduleSummary,
-    ConflictItem,
-    Recommendation,
-    ConflictSummary,
-    SwapFinderRequest,
-    SwapFinderResponse,
-    SwapCandidateResponse,
-    AlternatingPatternInfo,
-)
 from app.scheduling.engine import SchedulingEngine
 from app.scheduling.validator import ACGMEValidator
+from app.schemas.schedule import (
+    AlternatingPatternInfo,
+    ConflictItem,
+    ConflictSummary,
+    EmergencyRequest,
+    EmergencyResponse,
+    ImportAnalysisResponse,
+    Recommendation,
+    ScheduleRequest,
+    ScheduleResponse,
+    ScheduleSummary,
+    SolverStatistics,
+    SwapCandidateResponse,
+    SwapFinderRequest,
+    SwapFinderResponse,
+    ValidationResult,
+)
 from app.services.emergency_coverage import EmergencyCoverageService
 from app.services.xlsx_import import (
-    analyze_schedule_conflicts,
-    SwapFinder,
-    FacultyTarget,
     ExternalConflict,
+    FacultyTarget,
+    SwapFinder,
+    analyze_schedule_conflicts,
     load_external_conflicts_from_absences,
 )
-from app.core.security import get_current_active_user
 
 router = APIRouter()
 
@@ -60,6 +58,7 @@ async def generate_schedule(
     - hybrid: Combines CP-SAT and PuLP for best results
     """
     from datetime import datetime, timedelta
+
     from app.models.schedule_run import ScheduleRun
 
     # Issue #1: Double-submit / Re-entrancy protection
@@ -80,8 +79,8 @@ async def generate_schedule(
     if in_progress_run:
         raise HTTPException(
             status_code=409,
-            detail=f"Schedule generation already in progress for overlapping date range. "
-                   f"Please wait for the current run to complete.",
+            detail="Schedule generation already in progress for overlapping date range. "
+                   "Please wait for the current run to complete.",
         )
 
     try:
@@ -212,7 +211,9 @@ async def get_schedule(start_date: str, end_date: str, db: Session = Depends(get
     Returns all assignments with person and rotation template details.
     """
     from datetime import datetime
+
     from sqlalchemy.orm import joinedload
+
     from app.models.assignment import Assignment
     from app.models.block import Block
 
@@ -266,8 +267,8 @@ async def get_schedule(start_date: str, end_date: str, db: Session = Depends(get
 @router.post("/import/analyze", response_model=ImportAnalysisResponse)
 async def analyze_imported_schedules(
     fmit_file: UploadFile = File(..., description="FMIT rotation schedule Excel file"),
-    clinic_file: Optional[UploadFile] = File(None, description="Clinic schedule Excel file (optional)"),
-    specialty_providers: Optional[str] = Form(
+    clinic_file: UploadFile | None = File(None, description="Clinic schedule Excel file (optional)"),
+    specialty_providers: str | None = Form(
         None,
         description="JSON mapping of specialty to providers, e.g., {\"Sports Medicine\": [\"Tagawa\"]}"
     ),
@@ -353,7 +354,7 @@ async def analyze_imported_schedules(
 async def analyze_single_file(
     file: UploadFile = File(..., description="Schedule Excel file to analyze"),
     file_type: str = Form("auto", description="File type: 'fmit', 'clinic', or 'auto' to detect"),
-    specialty_providers: Optional[str] = Form(
+    specialty_providers: str | None = Form(
         None,
         description="JSON mapping of specialty to providers"
     ),
@@ -370,6 +371,7 @@ async def analyze_single_file(
     Returns parsed schedule data without requiring a second file.
     """
     import json
+
     from app.services.xlsx_import import ClinicScheduleImporter
 
     # Read file
@@ -491,7 +493,6 @@ async def find_swap_candidates(
         SwapFinderResponse with ranked candidates and analysis
     """
     import json
-    from datetime import timedelta
 
     # Parse request JSON
     try:

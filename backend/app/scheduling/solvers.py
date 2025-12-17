@@ -8,24 +8,18 @@ This module provides multiple solver implementations:
 
 Each solver uses the modular constraint system from constraints.py.
 """
-from abc import ABC, abstractmethod
-from datetime import date, timedelta
-from typing import Optional, Any
-from uuid import UUID
-from collections import defaultdict
-import time
 import logging
+import time
+from abc import ABC, abstractmethod
+from collections import defaultdict
+from uuid import UUID
 
-from sqlalchemy.orm import Session
-
-from app.models.person import Person
-from app.models.block import Block
 from app.models.assignment import Assignment
+from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.scheduling.constraints import (
     ConstraintManager,
     SchedulingContext,
-    ConstraintResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,7 +31,7 @@ class SolverResult:
     def __init__(
         self,
         success: bool,
-        assignments: list[tuple[UUID, UUID, Optional[UUID]]],  # (person_id, block_id, template_id)
+        assignments: list[tuple[UUID, UUID, UUID | None]],  # (person_id, block_id, template_id)
         status: str,
         objective_value: float = 0.0,
         runtime_seconds: float = 0.0,
@@ -70,7 +64,7 @@ class BaseSolver(ABC):
 
     def __init__(
         self,
-        constraint_manager: Optional[ConstraintManager] = None,
+        constraint_manager: ConstraintManager | None = None,
         timeout_seconds: float = 60.0,
     ):
         self.constraint_manager = constraint_manager or ConstraintManager.create_default()
@@ -98,7 +92,7 @@ class BaseSolver(ABC):
         self,
         resident: Person,
         templates: list[RotationTemplate],
-    ) -> Optional[RotationTemplate]:
+    ) -> RotationTemplate | None:
         """Select appropriate rotation template for a resident."""
         suitable = []
         for template in templates:
@@ -126,7 +120,7 @@ class PuLPSolver(BaseSolver):
 
     def __init__(
         self,
-        constraint_manager: Optional[ConstraintManager] = None,
+        constraint_manager: ConstraintManager | None = None,
         timeout_seconds: float = 60.0,
         solver_backend: str = "PULP_CBC_CMD",
     ):
@@ -342,7 +336,7 @@ class CPSATSolver(BaseSolver):
 
     def __init__(
         self,
-        constraint_manager: Optional[ConstraintManager] = None,
+        constraint_manager: ConstraintManager | None = None,
         timeout_seconds: float = 60.0,
         num_workers: int = 4,
     ):
@@ -547,7 +541,7 @@ class HybridSolver(BaseSolver):
 
     def __init__(
         self,
-        constraint_manager: Optional[ConstraintManager] = None,
+        constraint_manager: ConstraintManager | None = None,
         timeout_seconds: float = 120.0,
         pulp_timeout: float = 30.0,
         cpsat_timeout: float = 60.0,
@@ -620,7 +614,7 @@ class GreedySolver(BaseSolver):
 
     def __init__(
         self,
-        constraint_manager: Optional[ConstraintManager] = None,
+        constraint_manager: ConstraintManager | None = None,
         timeout_seconds: float = 60.0,
         generate_explanations: bool = True,
     ):
@@ -809,7 +803,7 @@ class SolverFactory:
     def create(
         cls,
         name: str,
-        constraint_manager: Optional[ConstraintManager] = None,
+        constraint_manager: ConstraintManager | None = None,
         **kwargs,
     ) -> BaseSolver:
         """

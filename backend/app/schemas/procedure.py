@@ -1,16 +1,16 @@
 """Procedure schemas."""
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
+
 from pydantic import BaseModel, field_validator
 
 
 class ProcedureBase(BaseModel):
     """Base procedure schema."""
     name: str
-    description: Optional[str] = None
-    category: Optional[str] = None  # 'surgical', 'office', 'obstetric', 'clinic'
-    specialty: Optional[str] = None  # 'Sports Medicine', 'OB/GYN', etc.
+    description: str | None = None
+    category: str | None = None  # 'surgical', 'office', 'obstetric', 'clinic'
+    specialty: str | None = None  # 'Sports Medicine', 'OB/GYN', etc.
     supervision_ratio: int = 1
     requires_certification: bool = True
     complexity_level: str = 'standard'
@@ -47,19 +47,19 @@ class ProcedureCreate(ProcedureBase):
 
 class ProcedureUpdate(BaseModel):
     """Schema for updating a procedure."""
-    name: Optional[str] = None
-    description: Optional[str] = None
-    category: Optional[str] = None
-    specialty: Optional[str] = None
-    supervision_ratio: Optional[int] = None
-    requires_certification: Optional[bool] = None
-    complexity_level: Optional[str] = None
-    min_pgy_level: Optional[int] = None
-    is_active: Optional[bool] = None
+    name: str | None = None
+    description: str | None = None
+    category: str | None = None
+    specialty: str | None = None
+    supervision_ratio: int | None = None
+    requires_certification: bool | None = None
+    complexity_level: str | None = None
+    min_pgy_level: int | None = None
+    is_active: bool | None = None
 
     @field_validator("complexity_level")
     @classmethod
-    def validate_complexity(cls, v: Optional[str]) -> Optional[str]:
+    def validate_complexity(cls, v: str | None) -> str | None:
         if v is None:
             return v
         valid_levels = ('basic', 'standard', 'advanced', 'complex')
@@ -69,7 +69,7 @@ class ProcedureUpdate(BaseModel):
 
     @field_validator("min_pgy_level")
     @classmethod
-    def validate_pgy_level(cls, v: Optional[int]) -> Optional[int]:
+    def validate_pgy_level(cls, v: int | None) -> int | None:
         if v is None:
             return v
         if v < 1 or v > 3:
@@ -97,8 +97,8 @@ class ProcedureSummary(BaseModel):
     """Minimal procedure info for embedding in other responses."""
     id: UUID
     name: str
-    specialty: Optional[str] = None
-    category: Optional[str] = None
+    specialty: str | None = None
+    category: str | None = None
 
     class Config:
         from_attributes = True

@@ -3,7 +3,7 @@ import logging
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -31,7 +31,7 @@ class NotificationPayload(BaseModel):
     notification_type: str
     subject: str
     body: str
-    data: Optional[Dict[str, Any]] = None
+    data: dict[str, Any] | None = None
     priority: str = "normal"
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -49,7 +49,7 @@ class DeliveryResult(BaseModel):
     success: bool
     channel: str
     message: str
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 class NotificationChannel(ABC):
@@ -64,7 +64,7 @@ class NotificationChannel(ABC):
     async def deliver(
         self,
         payload: NotificationPayload,
-        db: Optional[Session] = None
+        db: Session | None = None
     ) -> DeliveryResult:
         """
         Deliver a notification through this channel.
@@ -100,7 +100,7 @@ class InAppChannel(NotificationChannel):
     async def deliver(
         self,
         payload: NotificationPayload,
-        db: Optional[Session] = None
+        db: Session | None = None
     ) -> DeliveryResult:
         """
         Store notification in database for in-app display.
@@ -122,7 +122,7 @@ class InAppChannel(NotificationChannel):
         try:
             # NOTE: Database persistence disabled until Notification SQLAlchemy model exists
             # Data structure prepared for future persistence:
-            notification_data = {
+            {
                 "id": str(payload.id),
                 "recipient_id": str(payload.recipient_id),
                 "notification_type": payload.notification_type,
@@ -178,7 +178,7 @@ class EmailChannel(NotificationChannel):
     async def deliver(
         self,
         payload: NotificationPayload,
-        db: Optional[Session] = None
+        db: Session | None = None
     ) -> DeliveryResult:
         """
         Prepare email payload for delivery.
@@ -272,7 +272,7 @@ class WebhookChannel(NotificationChannel):
     services like Slack, Teams, or custom monitoring systems.
     """
 
-    def __init__(self, webhook_url: Optional[str] = None):
+    def __init__(self, webhook_url: str | None = None):
         """
         Initialize webhook channel.
 
@@ -288,7 +288,7 @@ class WebhookChannel(NotificationChannel):
     async def deliver(
         self,
         payload: NotificationPayload,
-        db: Optional[Session] = None
+        db: Session | None = None
     ) -> DeliveryResult:
         """
         Prepare webhook payload for external delivery.
@@ -346,7 +346,7 @@ AVAILABLE_CHANNELS = {
 }
 
 
-def get_channel(channel_name: str, **kwargs) -> Optional[NotificationChannel]:
+def get_channel(channel_name: str, **kwargs) -> NotificationChannel | None:
     """
     Get a notification channel instance by name.
 

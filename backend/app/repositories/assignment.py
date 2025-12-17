@@ -1,13 +1,13 @@
 """Assignment repository for database operations."""
 
 from datetime import date
-from typing import Optional, List
 from uuid import UUID
+
 from sqlalchemy.orm import Session, joinedload
 
-from app.repositories.base import BaseRepository
 from app.models.assignment import Assignment
 from app.models.block import Block
+from app.repositories.base import BaseRepository
 
 
 class AssignmentRepository(BaseRepository[Assignment]):
@@ -16,7 +16,7 @@ class AssignmentRepository(BaseRepository[Assignment]):
     def __init__(self, db: Session):
         super().__init__(Assignment, db)
 
-    def get_by_id_with_relations(self, id: UUID) -> Optional[Assignment]:
+    def get_by_id_with_relations(self, id: UUID) -> Assignment | None:
         """Get assignment with related entities loaded."""
         return (
             self.db.query(Assignment)
@@ -31,7 +31,7 @@ class AssignmentRepository(BaseRepository[Assignment]):
 
     def get_by_block_and_person(
         self, block_id: UUID, person_id: UUID
-    ) -> Optional[Assignment]:
+    ) -> Assignment | None:
         """Check if a person is already assigned to a block."""
         return (
             self.db.query(Assignment)
@@ -44,11 +44,11 @@ class AssignmentRepository(BaseRepository[Assignment]):
 
     def list_with_filters(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        person_id: Optional[UUID] = None,
-        role: Optional[str] = None,
-    ) -> List[Assignment]:
+        start_date: date | None = None,
+        end_date: date | None = None,
+        person_id: UUID | None = None,
+        role: str | None = None,
+    ) -> list[Assignment]:
         """List assignments with optional filters and eager loading."""
         query = self.db.query(Assignment).options(
             joinedload(Assignment.block),
@@ -72,7 +72,7 @@ class AssignmentRepository(BaseRepository[Assignment]):
 
     def get_by_person_and_date_range(
         self, person_id: UUID, start_date: date, end_date: date
-    ) -> List[Assignment]:
+    ) -> list[Assignment]:
         """Get all assignments for a person in a date range."""
         return (
             self.db.query(Assignment)
@@ -85,7 +85,7 @@ class AssignmentRepository(BaseRepository[Assignment]):
             .all()
         )
 
-    def get_by_block_ids(self, block_ids: List[UUID]) -> List[Assignment]:
+    def get_by_block_ids(self, block_ids: list[UUID]) -> list[Assignment]:
         """Get assignments for a list of block IDs."""
         return (
             self.db.query(Assignment)
@@ -93,7 +93,7 @@ class AssignmentRepository(BaseRepository[Assignment]):
             .all()
         )
 
-    def delete_by_block_ids(self, block_ids: List[UUID]) -> int:
+    def delete_by_block_ids(self, block_ids: list[UUID]) -> int:
         """Delete all assignments in the given blocks. Returns count deleted."""
         deleted = (
             self.db.query(Assignment)
@@ -102,7 +102,7 @@ class AssignmentRepository(BaseRepository[Assignment]):
         )
         return deleted
 
-    def get_person_ids_assigned_to_block(self, block_id: UUID) -> List[UUID]:
+    def get_person_ids_assigned_to_block(self, block_id: UUID) -> list[UUID]:
         """Get all person IDs assigned to a specific block."""
         results = (
             self.db.query(Assignment.person_id)

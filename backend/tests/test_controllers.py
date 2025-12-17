@@ -4,20 +4,19 @@ Unit tests for controller layer.
 These tests mock the service layer to test controllers in isolation,
 focusing on request/response handling and HTTP exception conversion.
 """
-import pytest
 from datetime import date, timedelta
-from unittest.mock import MagicMock, patch
-from uuid import uuid4, UUID
+from unittest.mock import MagicMock
+from uuid import uuid4
 
+import pytest
 from fastapi import HTTPException
 
-from app.controllers.person_controller import PersonController
-from app.controllers.auth_controller import AuthController
 from app.controllers.absence_controller import AbsenceController
-from app.schemas.person import PersonCreate, PersonUpdate
-from app.schemas.auth import UserCreate
+from app.controllers.auth_controller import AuthController
+from app.controllers.person_controller import PersonController
 from app.schemas.absence import AbsenceCreate, AbsenceUpdate
-
+from app.schemas.auth import UserCreate
+from app.schemas.person import PersonCreate, PersonUpdate
 
 # ============================================================================
 # PersonController Tests
@@ -1532,9 +1531,7 @@ class TestCredentialControllerFacultySummary:
 from app.controllers.certification_controller import CertificationController
 from app.schemas.certification import (
     CertificationTypeCreate,
-    CertificationTypeUpdate,
     PersonCertificationCreate,
-    PersonCertificationUpdate,
 )
 
 

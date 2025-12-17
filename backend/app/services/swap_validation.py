@@ -1,7 +1,7 @@
 """Swap validation service."""
 from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -20,10 +20,10 @@ class ValidationError:
 @dataclass
 class SwapValidationResult:
     valid: bool
-    errors: List[ValidationError]
-    warnings: List[ValidationError]
+    errors: list[ValidationError]
+    warnings: list[ValidationError]
     back_to_back_conflict: bool = False
-    external_conflict: Optional[str] = None
+    external_conflict: str | None = None
     call_cascade_affected: bool = False
 
 
@@ -38,11 +38,11 @@ class SwapValidationService:
         source_faculty_id: UUID,
         source_week: date,
         target_faculty_id: UUID,
-        target_week: Optional[date] = None,
+        target_week: date | None = None,
     ) -> SwapValidationResult:
         """Validate a proposed swap."""
-        errors: List[ValidationError] = []
-        warnings: List[ValidationError] = []
+        errors: list[ValidationError] = []
+        warnings: list[ValidationError] = []
         back_to_back = False
         external_conflict = None
 
@@ -100,20 +100,20 @@ class SwapValidationService:
         from app.models.person import Person
         return self.db.query(Person).filter(Person.id == faculty_id, Person.type == "faculty").first()
 
-    def _get_faculty_fmit_weeks(self, faculty_id: UUID) -> List[date]:
+    def _get_faculty_fmit_weeks(self, faculty_id: UUID) -> list[date]:
         return []  # Placeholder - needs schedule data source
 
-    def _creates_back_to_back(self, existing_weeks: List[date], new_week: date) -> bool:
+    def _creates_back_to_back(self, existing_weeks: list[date], new_week: date) -> bool:
         from app.services.xlsx_import import has_back_to_back_conflict
         return has_back_to_back_conflict(sorted(existing_weeks + [new_week]))
 
-    def _check_external_conflicts(self, faculty_id: UUID, week: date) -> Optional[str]:
+    def _check_external_conflicts(self, faculty_id: UUID, week: date) -> str | None:
         from app.models.absence import Absence
         week_end = week + timedelta(days=6)
         conflict = self.db.query(Absence).filter(
             Absence.person_id == faculty_id,
             Absence.start_date <= week_end,
             Absence.end_date >= week,
-            Absence.is_blocking == True,
+            Absence.is_blocking,
         ).first()
         return conflict.absence_type if conflict else None

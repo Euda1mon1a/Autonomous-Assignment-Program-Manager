@@ -8,15 +8,15 @@ Tests for:
 - AbsenceService
 - CertificationService
 """
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
 
+import pytest
 from sqlalchemy.orm import Session
 
-from app.models.person import Person
-from app.models.block import Block
 from app.models.absence import Absence
+from app.models.block import Block
+from app.models.person import Person
 
 
 @pytest.mark.unit
@@ -108,7 +108,7 @@ class TestAbsenceQueries:
         # Query blocking absences
         blocking_absences = (
             db.query(Absence)
-            .filter(Absence.is_blocking == True)
+            .filter(Absence.is_blocking)
             .all()
         )
 
@@ -137,7 +137,7 @@ class TestBlockQueries:
 
     def test_filter_weekend_blocks(self, db: Session, sample_blocks: list):
         """Test filtering weekend blocks."""
-        weekend_blocks = db.query(Block).filter(Block.is_weekend == True).all()
+        weekend_blocks = db.query(Block).filter(Block.is_weekend).all()
 
         for block in weekend_blocks:
             assert block.is_weekend is True

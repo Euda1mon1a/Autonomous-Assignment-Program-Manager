@@ -2,19 +2,20 @@
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
-from alembic import context
 
+from alembic import context
 from app.core.config import get_settings
 from app.db.base import Base
 
 # Import all models to register them with Base.metadata
-from app.models import (
-    Person,
-    Block,
-    RotationTemplate,
-    Assignment,
+# These imports are required for autogenerate support even if not directly used
+from app.models import (  # noqa: F401
     Absence,
+    Assignment,
+    Block,
     CallAssignment,
+    Person,
+    RotationTemplate,
     ScheduleRun,
 )
 

@@ -1,15 +1,15 @@
 """Restore service for schedule data."""
-import json
 import gzip
-from datetime import datetime, date
-from pathlib import Path
-from typing import Dict, Any, List, Optional
+import json
 import uuid
+from datetime import date, datetime
+from pathlib import Path
+from typing import Any
 
-from sqlalchemy.orm import Session
 from sqlalchemy import and_
+from sqlalchemy.orm import Session
 
-from app.models import Person, Assignment, Absence, RotationTemplate, ScheduleRun, Block
+from app.models import Absence, Assignment, Block, Person, RotationTemplate, ScheduleRun
 
 
 class RestoreService:
@@ -25,13 +25,13 @@ class RestoreService:
         """
         self.db = db
         self.backup_path = Path(backup_dir)
-        self.restore_history: List[Dict[str, Any]] = []
+        self.restore_history: list[dict[str, Any]] = []
 
     def restore_from_backup(
         self,
         backup_id: str,
-        options: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        options: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Restore data from a backup.
 
@@ -108,7 +108,7 @@ class RestoreService:
         backup_id: str,
         start_date: date,
         end_date: date
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Restore schedule data for a specific date range.
 
@@ -180,7 +180,7 @@ class RestoreService:
                 "restore_id": restore_id,
             }
 
-    def preview_restore(self, backup_id: str) -> Dict[str, Any]:
+    def preview_restore(self, backup_id: str) -> dict[str, Any]:
         """
         Preview what would be restored without making changes.
 
@@ -193,7 +193,7 @@ class RestoreService:
         backup_data = self._load_backup(backup_id)
         return self._preview_restore_result(backup_data, mode='replace')
 
-    def validate_backup(self, backup_id: str) -> Dict[str, Any]:
+    def validate_backup(self, backup_id: str) -> dict[str, Any]:
         """
         Validate backup integrity.
 
@@ -240,7 +240,7 @@ class RestoreService:
                 "error": str(e)
             }
 
-    def rollback_restore(self, restore_id: str) -> Dict[str, Any]:
+    def rollback_restore(self, restore_id: str) -> dict[str, Any]:
         """
         Rollback a previous restore operation.
 
@@ -253,7 +253,7 @@ class RestoreService:
         try:
             # Load restore metadata and rollback data
             restore_file = self.backup_path / f"restore_{restore_id}.json"
-            with open(restore_file, 'r') as f:
+            with open(restore_file) as f:
                 restore_data = json.load(f)
 
             rollback_data = restore_data.get("rollback_data")
@@ -282,10 +282,10 @@ class RestoreService:
 
     # Private helper methods
 
-    def _load_backup(self, backup_id: str) -> Dict[str, Any]:
+    def _load_backup(self, backup_id: str) -> dict[str, Any]:
         """Load backup data from file."""
         metadata_file = self.backup_path / f"metadata_{backup_id}.json"
-        with open(metadata_file, 'r') as f:
+        with open(metadata_file) as f:
             metadata = json.load(f)
 
         backup_file = self.backup_path / metadata["filename"]
@@ -294,10 +294,10 @@ class RestoreService:
             with gzip.open(backup_file, 'rt', encoding='utf-8') as f:
                 return json.load(f)
         else:
-            with open(backup_file, 'r', encoding='utf-8') as f:
+            with open(backup_file, encoding='utf-8') as f:
                 return json.load(f)
 
-    def _replace_restore(self, backup_data: Dict[str, Any]) -> Dict[str, int]:
+    def _replace_restore(self, backup_data: dict[str, Any]) -> dict[str, int]:
         """Perform a replace restore (delete all, then restore)."""
         # Delete all existing data (in correct order due to FK constraints)
         self.db.query(Assignment).delete()
@@ -310,12 +310,12 @@ class RestoreService:
         # Restore all data
         return self._restore_data(backup_data)
 
-    def _merge_restore(self, backup_data: Dict[str, Any]) -> Dict[str, int]:
+    def _merge_restore(self, backup_data: dict[str, Any]) -> dict[str, int]:
         """Perform a merge restore (update existing, add new)."""
         # For merge, we restore data without deleting
         return self._restore_data(backup_data)
 
-    def _restore_data(self, backup_data: Dict[str, Any]) -> Dict[str, int]:
+    def _restore_data(self, backup_data: dict[str, Any]) -> dict[str, int]:
         """Restore data from backup dictionary."""
         counts = {}
 
@@ -333,49 +333,49 @@ class RestoreService:
 
         return counts
 
-    def _restore_people(self, people_data: List[Dict[str, Any]]) -> int:
+    def _restore_people(self, people_data: list[dict[str, Any]]) -> int:
         """Restore people records."""
         for data in people_data:
             person = Person(**self._prepare_model_data(data))
             self.db.merge(person)
         return len(people_data)
 
-    def _restore_rotation_templates(self, templates_data: List[Dict[str, Any]]) -> int:
+    def _restore_rotation_templates(self, templates_data: list[dict[str, Any]]) -> int:
         """Restore rotation template records."""
         for data in templates_data:
             template = RotationTemplate(**self._prepare_model_data(data))
             self.db.merge(template)
         return len(templates_data)
 
-    def _restore_blocks(self, blocks_data: List[Dict[str, Any]]) -> int:
+    def _restore_blocks(self, blocks_data: list[dict[str, Any]]) -> int:
         """Restore block records."""
         for data in blocks_data:
             block = Block(**self._prepare_model_data(data))
             self.db.merge(block)
         return len(blocks_data)
 
-    def _restore_assignments(self, assignments_data: List[Dict[str, Any]]) -> int:
+    def _restore_assignments(self, assignments_data: list[dict[str, Any]]) -> int:
         """Restore assignment records."""
         for data in assignments_data:
             assignment = Assignment(**self._prepare_model_data(data))
             self.db.merge(assignment)
         return len(assignments_data)
 
-    def _restore_absences(self, absences_data: List[Dict[str, Any]]) -> int:
+    def _restore_absences(self, absences_data: list[dict[str, Any]]) -> int:
         """Restore absence records."""
         for data in absences_data:
             absence = Absence(**self._prepare_model_data(data))
             self.db.merge(absence)
         return len(absences_data)
 
-    def _restore_schedule_runs(self, runs_data: List[Dict[str, Any]]) -> int:
+    def _restore_schedule_runs(self, runs_data: list[dict[str, Any]]) -> int:
         """Restore schedule run records."""
         for data in runs_data:
             run = ScheduleRun(**self._prepare_model_data(data))
             self.db.merge(run)
         return len(runs_data)
 
-    def _prepare_model_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _prepare_model_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """Prepare data dictionary for model creation."""
         prepared = {}
         for key, value in data.items():
@@ -391,7 +391,7 @@ class RestoreService:
                 prepared[key] = value
         return prepared
 
-    def _create_restore_point(self, restore_id: str) -> Dict[str, Any]:
+    def _create_restore_point(self, restore_id: str) -> dict[str, Any]:
         """Create a restore point for potential rollback."""
         # Create a snapshot of current data
         return {
@@ -403,7 +403,7 @@ class RestoreService:
             "schedule_runs": [self._model_to_dict(r) for r in self.db.query(ScheduleRun).all()],
         }
 
-    def _model_to_dict(self, model: Any) -> Dict[str, Any]:
+    def _model_to_dict(self, model: Any) -> dict[str, Any]:
         """Convert SQLAlchemy model to dictionary."""
         result = {}
         for column in model.__table__.columns:
@@ -414,7 +414,7 @@ class RestoreService:
                 result[column.name] = value
         return result
 
-    def _preview_restore_result(self, backup_data: Dict[str, Any], mode: str) -> Dict[str, Any]:
+    def _preview_restore_result(self, backup_data: dict[str, Any], mode: str) -> dict[str, Any]:
         """Generate a preview of restore operation."""
         return {
             "dry_run": True,
@@ -440,8 +440,8 @@ class RestoreService:
     def _save_restore_metadata(
         self,
         restore_id: str,
-        metadata: Dict[str, Any],
-        rollback_data: Dict[str, Any]
+        metadata: dict[str, Any],
+        rollback_data: dict[str, Any]
     ):
         """Save restore metadata and rollback data."""
         restore_file = self.backup_path / f"restore_{restore_id}.json"

@@ -10,15 +10,15 @@ Tests the end-to-end flow of:
 6. Swap with leave conflict - validation catches conflict
 7. Swap notification triggers - verify notifications sent
 """
-import pytest
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from uuid import uuid4
 
-from app.models.swap import SwapRecord, SwapStatus, SwapType, SwapApproval
-from app.models.assignment import Assignment
+import pytest
+
 from app.models.absence import Absence
+from app.models.assignment import Assignment
 from app.models.notification import Notification
-from app.models.block import Block
+from app.models.swap import SwapApproval, SwapRecord, SwapStatus, SwapType
 
 
 @pytest.mark.integration

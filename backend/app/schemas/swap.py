@@ -1,7 +1,6 @@
 """Pydantic schemas for FMIT swap API."""
 from datetime import date, datetime
 from enum import Enum
-from typing import Optional, List
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
@@ -25,9 +24,9 @@ class SwapExecuteRequest(BaseModel):
     source_faculty_id: UUID
     source_week: date
     target_faculty_id: UUID
-    target_week: Optional[date] = None
+    target_week: date | None = None
     swap_type: SwapTypeSchema
-    reason: Optional[str] = Field(None, max_length=500)
+    reason: str | None = Field(None, max_length=500)
 
     @field_validator('target_week')
     @classmethod
@@ -39,7 +38,7 @@ class SwapExecuteRequest(BaseModel):
 
 class SwapApprovalRequest(BaseModel):
     approved: bool
-    notes: Optional[str] = Field(None, max_length=500)
+    notes: str | None = Field(None, max_length=500)
 
 
 class SwapRollbackRequest(BaseModel):
@@ -47,20 +46,20 @@ class SwapRollbackRequest(BaseModel):
 
 
 class SwapHistoryFilter(BaseModel):
-    faculty_id: Optional[UUID] = None
-    status: Optional[SwapStatusSchema] = None
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
+    faculty_id: UUID | None = None
+    status: SwapStatusSchema | None = None
+    start_date: date | None = None
+    end_date: date | None = None
     page: int = Field(1, ge=1)
     page_size: int = Field(20, ge=1, le=100)
 
 
 class SwapValidationResult(BaseModel):
     valid: bool
-    errors: List[str] = []
-    warnings: List[str] = []
+    errors: list[str] = []
+    warnings: list[str] = []
     back_to_back_conflict: bool = False
-    external_conflict: Optional[str] = None
+    external_conflict: str | None = None
 
 
 class SwapRecordResponse(BaseModel):
@@ -70,12 +69,12 @@ class SwapRecordResponse(BaseModel):
     source_week: date
     target_faculty_id: UUID
     target_faculty_name: str
-    target_week: Optional[date]
+    target_week: date | None
     swap_type: SwapTypeSchema
     status: SwapStatusSchema
-    reason: Optional[str]
+    reason: str | None
     requested_at: datetime
-    executed_at: Optional[datetime]
+    executed_at: datetime | None
 
     class Config:
         from_attributes = True
@@ -83,13 +82,13 @@ class SwapRecordResponse(BaseModel):
 
 class SwapExecuteResponse(BaseModel):
     success: bool
-    swap_id: Optional[UUID] = None
+    swap_id: UUID | None = None
     message: str
     validation: SwapValidationResult
 
 
 class SwapHistoryResponse(BaseModel):
-    items: List[SwapRecordResponse]
+    items: list[SwapRecordResponse]
     total: int
     page: int
     page_size: int

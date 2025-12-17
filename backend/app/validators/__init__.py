@@ -11,12 +11,11 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from app.schemas.schedule import ValidationResult, Violation
 from app.models.person import Person
+from app.schemas.schedule import ValidationResult, Violation
 
 from .advanced_acgme import AdvancedACGMEValidator
 from .fatigue_tracker import FatigueTracker
-
 
 __all__ = [
     "AdvancedACGMEValidator",
@@ -117,8 +116,8 @@ def validate_schedule(
             )
 
     # Calculate coverage rate (simplified)
-    from app.models.block import Block
     from app.models.assignment import Assignment
+    from app.models.block import Block
 
     total_blocks = (
         db.query(Block)

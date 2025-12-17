@@ -25,13 +25,11 @@ This module implements:
 5. Sustainability analysis
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
-from typing import Optional, Callable, Any
-from uuid import UUID, uuid4
 import logging
-import math
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from uuid import UUID, uuid4
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +88,7 @@ class SystemStress:
 
     # Current status
     is_active: bool = True
-    resolved_at: Optional[datetime] = None
+    resolved_at: datetime | None = None
 
 
 @dataclass
@@ -117,8 +115,8 @@ class CompensationResponse:
 
     # Tracking
     is_active: bool = True
-    ended_at: Optional[datetime] = None
-    end_reason: Optional[str] = None
+    ended_at: datetime | None = None
+    end_reason: str | None = None
 
 
 @dataclass
@@ -215,7 +213,7 @@ class EquilibriumReport:
     total_compensation_magnitude: float
 
     # Equilibrium analysis
-    latest_shift: Optional[EquilibriumShift]
+    latest_shift: EquilibriumShift | None
     compensation_debt: float
     sustainability_score: float  # 0.0 - 1.0
 
@@ -321,7 +319,7 @@ class LeChatelierAnalyzer:
         sustainability_days: int = 30,
         immediate_cost: float = 0.0,
         hidden_cost: float = 0.0,
-    ) -> Optional[CompensationResponse]:
+    ) -> CompensationResponse | None:
         """
         Initiate a compensation response to stress.
 

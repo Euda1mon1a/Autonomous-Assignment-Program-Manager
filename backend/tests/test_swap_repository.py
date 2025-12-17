@@ -1,15 +1,14 @@
 """Tests for SwapRepository."""
-import pytest
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
+import pytest
 from sqlalchemy.orm import Session
 
-from app.repositories.swap_repository import SwapRepository
-from app.models.swap import SwapRecord, SwapApproval, SwapStatus, SwapType
 from app.models.person import Person
+from app.models.swap import SwapStatus, SwapType
 from app.models.user import User
-
+from app.repositories.swap_repository import SwapRepository
 
 # ============================================================================
 # Fixtures

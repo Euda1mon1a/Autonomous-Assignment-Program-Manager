@@ -6,31 +6,27 @@ Tests cover:
 - ConstraintManager composition
 - Solver integration
 """
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
-from unittest.mock import MagicMock
+
+import pytest
 
 from app.scheduling.constraints import (
-    ConstraintManager,
-    SchedulingContext,
-    ConstraintResult,
-    ConstraintViolation,
-    ConstraintPriority,
-    ConstraintType,
     # Hard constraints
     AvailabilityConstraint,
-    OnePersonPerBlockConstraint,
+    ConstraintManager,
+    ConstraintPriority,
+    ConstraintResult,
+    ConstraintType,
+    CoverageConstraint,
     EightyHourRuleConstraint,
-    OneInSevenRuleConstraint,
-    SupervisionRatioConstraint,
-    ClinicCapacityConstraint,
     # Soft constraints
     EquityConstraint,
-    CoverageConstraint,
-    ContinuityConstraint,
+    OneInSevenRuleConstraint,
+    OnePersonPerBlockConstraint,
+    SchedulingContext,
+    SupervisionRatioConstraint,
 )
-
 
 # ============================================================================
 # Test Fixtures

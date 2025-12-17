@@ -8,17 +8,16 @@ Enhanced validation with detailed tracking:
 - PGY-specific requirements
 - Detailed duty hour breakdowns
 """
-from datetime import date, timedelta, datetime
 from collections import defaultdict
-from typing import Optional, Literal
+from datetime import date
 
-from sqlalchemy.orm import Session
 from sqlalchemy import and_
+from sqlalchemy.orm import Session
 
-from app.models.person import Person
-from app.models.block import Block
 from app.models.assignment import Assignment
-from app.schemas.schedule import ValidationResult, Violation
+from app.models.block import Block
+from app.models.person import Person
+from app.schemas.schedule import Violation
 
 
 class AdvancedACGMEValidator:

@@ -19,8 +19,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.services.xlsx_import import (
-    ClinicScheduleImporter,
-    ConflictDetector,
     analyze_schedule_conflicts,
 )
 
@@ -88,7 +86,7 @@ def main():
 
     # FMIT schedule summary
     fmit = result.get("fmit_schedule", {})
-    print(f"\nFMIT Schedule:")
+    print("\nFMIT Schedule:")
     print(f"  Providers: {len(fmit.get('providers', []))}")
     print(f"  Date range: {fmit.get('date_range', [None, None])}")
     print(f"  FMIT slots: {fmit.get('fmit_slots', 0)}")
@@ -99,7 +97,7 @@ def main():
     # Clinic schedule summary
     clinic = result.get("clinic_schedule")
     if clinic:
-        print(f"\nClinic Schedule:")
+        print("\nClinic Schedule:")
         print(f"  Providers: {len(clinic.get('providers', []))}")
         print(f"  Date range: {clinic.get('date_range', [None, None])}")
         print(f"  Clinic slots: {clinic.get('clinic_slots', 0)}")

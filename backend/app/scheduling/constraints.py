@@ -14,14 +14,14 @@ Architecture:
 - SoftConstraint: Constraints with weights for optimization
 - ConstraintManager: Composes and manages constraints for solvers
 """
+import logging
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 from uuid import UUID
-from collections import defaultdict
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -64,8 +64,8 @@ class ConstraintViolation:
     constraint_type: ConstraintType
     severity: str  # CRITICAL, HIGH, MEDIUM, LOW
     message: str
-    person_id: Optional[UUID] = None
-    block_id: Optional[UUID] = None
+    person_id: UUID | None = None
+    block_id: UUID | None = None
     details: dict = field(default_factory=dict)
 
 
@@ -193,8 +193,8 @@ class SchedulingContext:
     existing_assignments: list = field(default_factory=list)
 
     # Date range
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
+    start_date: date | None = None
+    end_date: date | None = None
 
     # =========================================================================
     # Resilience Data (populated by ResilienceService)
@@ -570,7 +570,6 @@ class OneInSevenRuleConstraint(HardConstraint):
 
     def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
         """Enforce max consecutive days."""
-        from ortools.sat.python import cp_model
 
         x = variables.get("assignments", {})
         dates = sorted(context.blocks_by_date.keys())
@@ -800,7 +799,7 @@ class ClinicCapacityConstraint(HardConstraint):
 
     def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
         """Enforce template capacity limits per block."""
-        x = variables.get("assignments", {})
+        variables.get("assignments", {})
         template_vars = variables.get("template_assignments", {})  # (r, b, t) -> var
 
         if not template_vars:
@@ -1101,7 +1100,7 @@ class CoverageConstraint(SoftConstraint):
     def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
         """Calculate coverage rate."""
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
-        assigned_blocks = set(a.block_id for a in assignments)
+        assigned_blocks = {a.block_id for a in assignments}
 
         coverage_rate = len(assigned_blocks) / len(workday_blocks) if workday_blocks else 0
 
@@ -1157,7 +1156,7 @@ class ContinuityConstraint(SoftConstraint):
                     break
 
         total_changes = 0
-        for person_id, date_templates in by_resident.items():
+        for _person_id, date_templates in by_resident.items():
             sorted_dt = sorted(date_templates, key=lambda x: x[0])
             for i in range(1, len(sorted_dt)):
                 if sorted_dt[i][1] != sorted_dt[i-1][1]:

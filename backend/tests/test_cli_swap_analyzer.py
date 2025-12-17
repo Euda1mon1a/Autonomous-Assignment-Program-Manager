@@ -3,16 +3,14 @@ Tests for the swap_analyzer CLI tool.
 
 Tests command-line argument parsing, error handling, and output formatting.
 """
-import pytest
+import json
 import subprocess
 import sys
-import json
-import tempfile
 from datetime import date
 from pathlib import Path
-from io import BytesIO
-from openpyxl import Workbook
 
+import pytest
+from openpyxl import Workbook
 
 # Path to the CLI module
 CLI_MODULE = "app.cli.swap_analyzer"

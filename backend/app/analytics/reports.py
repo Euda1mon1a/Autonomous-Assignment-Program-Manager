@@ -1,21 +1,21 @@
 """Report generation for schedule analytics."""
-from typing import Dict, List, Any, Optional
-from datetime import datetime, date, timedelta
-from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
 from collections import defaultdict
+from datetime import date, datetime, timedelta
+from typing import Any
 
+from sqlalchemy import and_
+from sqlalchemy.orm import Session
+
+from app.analytics.metrics import (
+    calculate_acgme_compliance_rate,
+    calculate_consecutive_duty_stats,
+    calculate_coverage_rate,
+    calculate_fairness_index,
+)
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.models.schedule_run import ScheduleRun
-from app.models.rotation_template import RotationTemplate
-from app.analytics.metrics import (
-    calculate_fairness_index,
-    calculate_coverage_rate,
-    calculate_acgme_compliance_rate,
-    calculate_consecutive_duty_stats
-)
 
 
 class ReportGenerator:
@@ -34,7 +34,7 @@ class ReportGenerator:
         self,
         year: int,
         month: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate monthly summary report.
 
@@ -126,7 +126,7 @@ class ReportGenerator:
             "summary": {
                 "total_blocks": len(blocks),
                 "total_assignments": len(assignments),
-                "unique_residents": len(set(a.person_id for a in assignments)),
+                "unique_residents": len({a.person_id for a in assignments}),
                 "schedule_runs": len(schedule_runs),
                 "acgme_violations": total_violations
             },
@@ -151,7 +151,7 @@ class ReportGenerator:
         person_id: str,
         start_date: date,
         end_date: date
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate individual resident statistics report.
 
@@ -253,7 +253,7 @@ class ReportGenerator:
         self,
         start_date: date,
         end_date: date
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate ACGME compliance summary report.
 
@@ -370,7 +370,7 @@ class ReportGenerator:
         self,
         start_date: date,
         end_date: date
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate workload distribution report.
 
@@ -467,9 +467,9 @@ class ReportGenerator:
 
     def _get_daily_coverage_chart(
         self,
-        blocks: List[Any],
-        assignments: List[Any]
-    ) -> List[Dict[str, Any]]:
+        blocks: list[Any],
+        assignments: list[Any]
+    ) -> list[dict[str, Any]]:
         """Generate daily coverage chart data."""
         coverage_by_date = defaultdict(lambda: {"total": 0, "covered": 0})
 
@@ -492,8 +492,8 @@ class ReportGenerator:
 
     def _get_pgy_level_distribution(
         self,
-        workload_data: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        workload_data: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Generate PGY level distribution chart data."""
         pgy_stats = defaultdict(lambda: {"count": 0, "total_blocks": 0})
 

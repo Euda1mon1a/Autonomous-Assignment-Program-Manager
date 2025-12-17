@@ -8,27 +8,26 @@ Provides endpoints for:
 - Webhook for external leave systems
 """
 from datetime import date
-from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
 from app.core.security import get_current_user
-from app.models.user import User
+from app.db.session import get_db
 from app.models.absence import Absence
 from app.models.person import Person
+from app.models.user import User
 from app.schemas.leave import (
-    LeaveCreateRequest,
-    LeaveUpdateRequest,
-    LeaveResponse,
-    LeaveListResponse,
-    LeaveCalendarResponse,
-    LeaveCalendarEntry,
-    LeaveWebhookPayload,
     BulkLeaveImportRequest,
     BulkLeaveImportResponse,
+    LeaveCalendarEntry,
+    LeaveCalendarResponse,
+    LeaveCreateRequest,
+    LeaveListResponse,
+    LeaveResponse,
+    LeaveUpdateRequest,
+    LeaveWebhookPayload,
 )
 
 router = APIRouter(prefix="/leave", tags=["leave"])
@@ -36,9 +35,9 @@ router = APIRouter(prefix="/leave", tags=["leave"])
 
 @router.get("/", response_model=LeaveListResponse)
 def list_leave(
-    faculty_id: Optional[UUID] = None,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
+    faculty_id: UUID | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
     page: int = 1,
     page_size: int = 20,
     db: Session = Depends(get_db),

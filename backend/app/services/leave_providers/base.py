@@ -2,23 +2,22 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import date
-from typing import List, Optional
 
 
 @dataclass
 class LeaveRecord:
     faculty_name: str
-    faculty_id: Optional[str]
+    faculty_id: str | None
     start_date: date
     end_date: date
     leave_type: str
-    description: Optional[str] = None
+    description: str | None = None
     is_blocking: bool = True
 
 
 class LeaveProvider(ABC):
     @abstractmethod
-    def get_conflicts(self, faculty_name: Optional[str] = None, start_date: Optional[date] = None, end_date: Optional[date] = None) -> List[LeaveRecord]:
+    def get_conflicts(self, faculty_name: str | None = None, start_date: date | None = None, end_date: date | None = None) -> list[LeaveRecord]:
         pass
 
     @abstractmethod
@@ -26,5 +25,5 @@ class LeaveProvider(ABC):
         pass
 
     @abstractmethod
-    def get_all_leave(self, start_date: Optional[date] = None, end_date: Optional[date] = None) -> List[LeaveRecord]:
+    def get_all_leave(self, start_date: date | None = None, end_date: date | None = None) -> list[LeaveRecord]:
         pass

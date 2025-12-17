@@ -1,11 +1,13 @@
 """Tests for swap validation service."""
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
 
-from app.services.swap_validation import SwapValidationService, SwapValidationResult, ValidationError
-from app.models.person import Person
 from app.models.absence import Absence
+from app.services.swap_validation import (
+    SwapValidationResult,
+    SwapValidationService,
+    ValidationError,
+)
 
 
 class TestSwapValidationService:

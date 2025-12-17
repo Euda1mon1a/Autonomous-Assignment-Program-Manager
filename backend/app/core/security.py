@@ -1,19 +1,18 @@
 """Security utilities for authentication and authorization."""
 import uuid
 from datetime import datetime, timedelta
-from typing import Optional
 from uuid import UUID
 
-from jose import JWTError, jwt
-from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db.session import get_db
-from app.models.user import User
 from app.models.token_blacklist import TokenBlacklist
+from app.models.user import User
 from app.schemas.auth import TokenData
 
 settings = get_settings()
@@ -40,7 +39,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(
     data: dict,
-    expires_delta: Optional[timedelta] = None
+    expires_delta: timedelta | None = None
 ) -> tuple[str, str, datetime]:
     """
     Create a JWT access token with jti for blacklist support.
@@ -72,7 +71,7 @@ def create_access_token(
     return encoded_jwt, jti, expire
 
 
-def verify_token(token: str, db: Optional[Session] = None) -> Optional[TokenData]:
+def verify_token(token: str, db: Session | None = None) -> TokenData | None:
     """
     Verify and decode a JWT token.
 
@@ -93,9 +92,8 @@ def verify_token(token: str, db: Optional[Session] = None) -> Optional[TokenData
             return None
 
         # Check if token is blacklisted
-        if db is not None and jti:
-            if TokenBlacklist.is_blacklisted(db, jti):
-                return None
+        if db is not None and jti and TokenBlacklist.is_blacklisted(db, jti):
+            return None
 
         return TokenData(user_id=user_id, username=username, jti=jti)
     except JWTError:
@@ -106,7 +104,7 @@ def blacklist_token(
     db: Session,
     jti: str,
     expires_at: datetime,
-    user_id: Optional[UUID] = None,
+    user_id: UUID | None = None,
     reason: str = "logout"
 ) -> TokenBlacklist:
     """
@@ -133,17 +131,17 @@ def blacklist_token(
     return record
 
 
-def get_user_by_username(db: Session, username: str) -> Optional[User]:
+def get_user_by_username(db: Session, username: str) -> User | None:
     """Get a user by username."""
     return db.query(User).filter(User.username == username).first()
 
 
-def get_user_by_id(db: Session, user_id: UUID) -> Optional[User]:
+def get_user_by_id(db: Session, user_id: UUID) -> User | None:
     """Get a user by ID."""
     return db.query(User).filter(User.id == user_id).first()
 
 
-def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
+def authenticate_user(db: Session, username: str, password: str) -> User | None:
     """
     Authenticate a user with username and password.
 
@@ -166,9 +164,9 @@ def authenticate_user(db: Session, username: str, password: str) -> Optional[Use
 
 
 async def get_current_user(
-    token: Optional[str] = Depends(oauth2_scheme),
+    token: str | None = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
-) -> Optional[User]:
+) -> User | None:
     """
     Get the current authenticated user from JWT token.
 
@@ -194,7 +192,7 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: User | None = Depends(get_current_user)
 ) -> User:
     """
     Require an authenticated active user.

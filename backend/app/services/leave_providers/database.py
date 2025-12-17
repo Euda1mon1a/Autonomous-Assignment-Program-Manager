@@ -1,7 +1,8 @@
 """Database-backed leave provider."""
 from datetime import date, timedelta
-from typing import List, Optional
+
 from sqlalchemy.orm import Session
+
 from app.services.leave_providers.base import LeaveProvider, LeaveRecord
 
 
@@ -9,9 +10,9 @@ class DatabaseLeaveProvider(LeaveProvider):
     def __init__(self, db: Session, cache_ttl_seconds: int = 300):
         self.db = db
         self.cache_ttl = cache_ttl_seconds
-        self._cache: Optional[List[LeaveRecord]] = None
+        self._cache: list[LeaveRecord] | None = None
 
-    def get_conflicts(self, faculty_name: Optional[str] = None, start_date: Optional[date] = None, end_date: Optional[date] = None) -> List[LeaveRecord]:
+    def get_conflicts(self, faculty_name: str | None = None, start_date: date | None = None, end_date: date | None = None) -> list[LeaveRecord]:
         records = self.get_all_leave(start_date, end_date)
         if faculty_name:
             records = [r for r in records if r.faculty_name == faculty_name]
@@ -21,7 +22,7 @@ class DatabaseLeaveProvider(LeaveProvider):
         self._cache = None
         return len(self.get_all_leave())
 
-    def get_all_leave(self, start_date: Optional[date] = None, end_date: Optional[date] = None) -> List[LeaveRecord]:
+    def get_all_leave(self, start_date: date | None = None, end_date: date | None = None) -> list[LeaveRecord]:
         from app.models.absence import Absence
         from app.models.person import Person
 

@@ -2,14 +2,14 @@
 from sqlalchemy.orm import Session
 
 from app.analytics.engine import AnalyticsEngine
-from app.analytics.reports import ReportGenerator
 from app.analytics.metrics import (
-    calculate_fairness_index,
-    calculate_coverage_rate,
     calculate_acgme_compliance_rate,
+    calculate_consecutive_duty_stats,
+    calculate_coverage_rate,
+    calculate_fairness_index,
     calculate_preference_satisfaction,
-    calculate_consecutive_duty_stats
 )
+from app.analytics.reports import ReportGenerator
 
 
 def get_analytics_engine(db: Session) -> AnalyticsEngine:

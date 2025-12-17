@@ -1,7 +1,7 @@
 """Rotation template schemas."""
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
+
 from pydantic import BaseModel
 
 
@@ -9,10 +9,10 @@ class RotationTemplateBase(BaseModel):
     """Base rotation template schema."""
     name: str
     activity_type: str  # 'clinic', 'inpatient', 'procedure', 'conference'
-    abbreviation: Optional[str] = None
-    clinic_location: Optional[str] = None
-    max_residents: Optional[int] = None
-    requires_specialty: Optional[str] = None
+    abbreviation: str | None = None
+    clinic_location: str | None = None
+    max_residents: int | None = None
+    requires_specialty: str | None = None
     requires_procedure_credential: bool = False
     supervision_required: bool = True
     max_supervision_ratio: int = 4
@@ -25,15 +25,15 @@ class RotationTemplateCreate(RotationTemplateBase):
 
 class RotationTemplateUpdate(BaseModel):
     """Schema for updating a rotation template."""
-    name: Optional[str] = None
-    activity_type: Optional[str] = None
-    abbreviation: Optional[str] = None
-    clinic_location: Optional[str] = None
-    max_residents: Optional[int] = None
-    requires_specialty: Optional[str] = None
-    requires_procedure_credential: Optional[bool] = None
-    supervision_required: Optional[bool] = None
-    max_supervision_ratio: Optional[int] = None
+    name: str | None = None
+    activity_type: str | None = None
+    abbreviation: str | None = None
+    clinic_location: str | None = None
+    max_residents: int | None = None
+    requires_specialty: str | None = None
+    requires_procedure_credential: bool | None = None
+    supervision_required: bool | None = None
+    max_supervision_ratio: int | None = None
 
 
 class RotationTemplateResponse(RotationTemplateBase):

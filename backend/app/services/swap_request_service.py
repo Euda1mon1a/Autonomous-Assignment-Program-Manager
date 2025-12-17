@@ -1,30 +1,28 @@
 """Service for managing FMIT swap requests (portal workflow)."""
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
-from typing import List, Optional, Tuple
 from uuid import UUID, uuid4
 
-from sqlalchemy import or_, and_
 from sqlalchemy.orm import Session
 
-from app.models.swap import SwapRecord, SwapStatus, SwapType, SwapApproval
-from app.models.person import Person
 from app.models.assignment import Assignment
 from app.models.block import Block
-from app.services.swap_validation import SwapValidationService, ValidationError
+from app.models.person import Person
+from app.models.swap import SwapRecord, SwapStatus, SwapType
+from app.services.faculty_preference_service import FacultyPreferenceService
 from app.services.swap_executor import SwapExecutor
 from app.services.swap_notification_service import SwapNotificationService
-from app.services.faculty_preference_service import FacultyPreferenceService
+from app.services.swap_validation import SwapValidationService, ValidationError
 
 
 @dataclass
 class RequestResult:
     """Result of creating a swap request."""
     success: bool
-    request_id: Optional[UUID] = None
+    request_id: UUID | None = None
     message: str = ""
-    errors: List[ValidationError] = field(default_factory=list)
-    warnings: List[ValidationError] = field(default_factory=list)
+    errors: list[ValidationError] = field(default_factory=list)
+    warnings: list[ValidationError] = field(default_factory=list)
     candidates_notified: int = 0
 
 
@@ -39,11 +37,11 @@ class RequestDetail:
     source_week: date
     target_faculty_id: UUID
     target_faculty_name: str
-    target_week: Optional[date]
-    reason: Optional[str]
+    target_week: date | None
+    reason: str | None
     requested_at: datetime
-    approved_at: Optional[datetime] = None
-    executed_at: Optional[datetime] = None
+    approved_at: datetime | None = None
+    executed_at: datetime | None = None
     can_cancel: bool = False
     can_respond: bool = False
     needs_approval: bool = False
@@ -54,9 +52,9 @@ class ResponseResult:
     """Result of responding to a swap request."""
     success: bool
     message: str = ""
-    new_request_id: Optional[UUID] = None  # For counter-offers
+    new_request_id: UUID | None = None  # For counter-offers
     executed: bool = False
-    errors: List[ValidationError] = field(default_factory=list)
+    errors: list[ValidationError] = field(default_factory=list)
 
 
 @dataclass
@@ -70,7 +68,7 @@ class CancelResult:
 class MatchResult:
     """Result of auto-matching swap requests."""
     matches_found: int
-    potential_matches: List[Tuple[UUID, UUID]] = field(default_factory=list)
+    potential_matches: list[tuple[UUID, UUID]] = field(default_factory=list)
     message: str = ""
 
 
@@ -97,9 +95,9 @@ class SwapRequestService:
         self,
         requester_id: UUID,
         source_week: date,
-        desired_weeks: Optional[List[date]] = None,
-        reason: Optional[str] = None,
-        target_faculty_id: Optional[UUID] = None,
+        desired_weeks: list[date] | None = None,
+        reason: str | None = None,
+        target_faculty_id: UUID | None = None,
         auto_find_candidates: bool = True,
     ) -> RequestResult:
         """
@@ -238,7 +236,7 @@ class SwapRequestService:
             candidates_notified=1,
         )
 
-    def get_request(self, request_id: UUID) -> Optional[RequestDetail]:
+    def get_request(self, request_id: UUID) -> RequestDetail | None:
         """
         Get details of a specific swap request.
 
@@ -274,7 +272,7 @@ class SwapRequestService:
             needs_approval=swap.status == SwapStatus.PENDING,
         )
 
-    def get_my_requests(self, faculty_id: UUID) -> List[RequestDetail]:
+    def get_my_requests(self, faculty_id: UUID) -> list[RequestDetail]:
         """
         Get all outgoing swap requests for a faculty member.
 
@@ -290,7 +288,7 @@ class SwapRequestService:
 
         return [self._swap_to_detail(swap) for swap in swaps]
 
-    def get_requests_for_me(self, faculty_id: UUID) -> List[RequestDetail]:
+    def get_requests_for_me(self, faculty_id: UUID) -> list[RequestDetail]:
         """
         Get all incoming swap requests targeting a faculty member.
 
@@ -313,8 +311,8 @@ class SwapRequestService:
         request_id: UUID,
         faculty_id: UUID,
         accept: bool,
-        counter_week: Optional[date] = None,
-        notes: Optional[str] = None,
+        counter_week: date | None = None,
+        notes: str | None = None,
     ) -> ResponseResult:
         """
         Respond to a swap request (accept/reject/counter).
@@ -520,7 +518,7 @@ class SwapRequestService:
             message="Swap request cancelled successfully",
         )
 
-    def get_pending_requests(self) -> List[RequestDetail]:
+    def get_pending_requests(self) -> list[RequestDetail]:
         """
         Get all pending swap requests (admin view).
 
@@ -628,7 +626,7 @@ class SwapRequestService:
                 faculty_ids=[swap.source_faculty_id, swap.target_faculty_id],
                 week=swap.source_week,
                 swap_id=request_id,
-                details=f"Matched swap executed successfully",
+                details="Matched swap executed successfully",
             )
             self.notifier.send_pending_notifications()
 
@@ -646,7 +644,7 @@ class SwapRequestService:
 
     # Helper methods
 
-    def _get_faculty(self, faculty_id: UUID) -> Optional[Person]:
+    def _get_faculty(self, faculty_id: UUID) -> Person | None:
         """Get a faculty member by ID."""
         return self.db.query(Person).filter(
             Person.id == faculty_id,
@@ -658,7 +656,7 @@ class SwapRequestService:
         # Look for FMIT assignments in the week
         week_end = week_start + timedelta(days=6)
 
-        assignment = self.db.query(Assignment).join(Block).filter(
+        self.db.query(Assignment).join(Block).filter(
             Assignment.person_id == faculty_id,
             Block.start_date <= week_end,
             Block.end_date >= week_start,
@@ -674,8 +672,8 @@ class SwapRequestService:
         self,
         source_faculty_id: UUID,
         source_week: date,
-        desired_weeks: Optional[List[date]] = None,
-    ) -> List[UUID]:
+        desired_weeks: list[date] | None = None,
+    ) -> list[UUID]:
         """
         Find faculty who might be compatible swap partners.
 

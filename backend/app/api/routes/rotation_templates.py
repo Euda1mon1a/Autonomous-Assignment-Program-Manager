@@ -1,6 +1,6 @@
 """Rotation template API routes."""
-from typing import Optional
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -8,9 +8,9 @@ from app.db.session import get_db
 from app.models.rotation_template import RotationTemplate
 from app.schemas.rotation_template import (
     RotationTemplateCreate,
-    RotationTemplateUpdate,
-    RotationTemplateResponse,
     RotationTemplateListResponse,
+    RotationTemplateResponse,
+    RotationTemplateUpdate,
 )
 
 router = APIRouter()
@@ -18,7 +18,7 @@ router = APIRouter()
 
 @router.get("", response_model=RotationTemplateListResponse)
 def list_rotation_templates(
-    activity_type: Optional[str] = Query(None, description="Filter by activity type"),
+    activity_type: str | None = Query(None, description="Filter by activity type"),
     db: Session = Depends(get_db),
 ):
     """List all rotation templates, optionally filtered by activity type."""

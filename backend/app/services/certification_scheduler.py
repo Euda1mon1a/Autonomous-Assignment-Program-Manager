@@ -23,8 +23,6 @@ Configuration via environment variables:
 
 import logging
 import os
-from datetime import datetime
-from typing import Optional
 
 from sqlalchemy.orm import Session
 
@@ -178,7 +176,7 @@ class CertificationScheduler:
         except Exception as e:
             logger.error(f"Failed to send admin summary: {e}")
 
-    def run_now(self, db: Optional[Session] = None):
+    def run_now(self, db: Session | None = None):
         """
         Run the certification check immediately (for testing/manual trigger).
 
@@ -198,7 +196,7 @@ class CertificationScheduler:
 
 
 # Global scheduler instance
-_scheduler: Optional[CertificationScheduler] = None
+_scheduler: CertificationScheduler | None = None
 
 
 def get_scheduler() -> CertificationScheduler:

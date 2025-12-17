@@ -1,18 +1,18 @@
 import { test, expect, Page } from '@playwright/test';
+import {
+  loginAsUser,
+  loginAsAdmin,
+  loginAsCoordinator,
+  loginAsFaculty,
+  logout,
+  clearStorage,
+  TEST_USERS,
+  TIMEOUTS,
+} from './fixtures/test-data';
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
-/**
- * Login helper function to reduce code duplication
- */
-async function loginAsUser(page: Page, username: string, password: string) {
-  await page.goto('/login');
-  await page.getByLabel('Username').fill(username);
-  await page.getByLabel('Password').fill(password);
-  await page.getByRole('button', { name: 'Sign In' }).click();
-}
 
 /**
  * Verify user is on login page
@@ -30,11 +30,7 @@ async function expectLoginPage(page: Page) {
 test.describe('Authentication', () => {
   test.beforeEach(async ({ page }) => {
     // Clear any stored tokens/session before each test
-    await page.context().clearCookies();
-    await page.evaluate(() => {
-      localStorage.clear();
-      sessionStorage.clear();
-    });
+    await clearStorage(page);
   });
 
   // ==========================================================================
@@ -43,7 +39,7 @@ test.describe('Authentication', () => {
 
   test.describe('Login Flow', () => {
     test('should login with valid credentials and redirect to dashboard', async ({ page }) => {
-      await loginAsUser(page, 'admin', 'admin123');
+      await loginAsUser(page, TEST_USERS.admin.username, TEST_USERS.admin.password);
 
       // Wait for redirect to dashboard
       await page.waitForURL('/', { timeout: 10000 });
@@ -97,7 +93,7 @@ test.describe('Authentication', () => {
       await page.goto('/login');
 
       // Fill username, leave password empty
-      await page.getByLabel('Username').fill('admin');
+      await page.getByLabel('Username').fill(TEST_USERS.admin.username);
 
       // Blur the password field to trigger validation
       await page.getByLabel('Password').focus();
@@ -115,8 +111,8 @@ test.describe('Authentication', () => {
 
     test('should disable submit button while submitting', async ({ page }) => {
       await page.goto('/login');
-      await page.getByLabel('Username').fill('admin');
-      await page.getByLabel('Password').fill('admin123');
+      await page.getByLabel('Username').fill(TEST_USERS.admin.username);
+      await page.getByLabel('Password').fill(TEST_USERS.admin.password);
 
       // Get the submit button
       const submitButton = page.getByRole('button', { name: 'Sign In' });

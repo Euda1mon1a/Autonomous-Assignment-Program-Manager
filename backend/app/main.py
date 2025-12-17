@@ -3,14 +3,15 @@ Residency Scheduler API.
 
 FastAPI application for managing residency program schedules.
 """
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from contextlib import asynccontextmanager
-import logging
 
-from app.core.config import get_settings
 from app.api.routes import api_router
+from app.core.config import get_settings
 from app.middleware.audit import AuditContextMiddleware
 
 settings = get_settings()

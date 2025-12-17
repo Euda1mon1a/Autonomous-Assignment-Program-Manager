@@ -1,13 +1,12 @@
 """Certification repository for database operations."""
 
-from typing import Optional, List
-from uuid import UUID
 from datetime import date, timedelta
+from uuid import UUID
+
 from sqlalchemy.orm import Session, joinedload
 
-from app.repositories.base import BaseRepository
 from app.models.certification import CertificationType, PersonCertification
-from app.models.person import Person
+from app.repositories.base import BaseRepository
 
 
 class CertificationTypeRepository(BaseRepository[CertificationType]):
@@ -16,7 +15,7 @@ class CertificationTypeRepository(BaseRepository[CertificationType]):
     def __init__(self, db: Session):
         super().__init__(CertificationType, db)
 
-    def get_by_name(self, name: str) -> Optional[CertificationType]:
+    def get_by_name(self, name: str) -> CertificationType | None:
         """Get a certification type by name."""
         return (
             self.db.query(CertificationType)
@@ -24,23 +23,23 @@ class CertificationTypeRepository(BaseRepository[CertificationType]):
             .first()
         )
 
-    def list_active(self) -> List[CertificationType]:
+    def list_active(self) -> list[CertificationType]:
         """List all active certification types."""
         return (
             self.db.query(CertificationType)
-            .filter(CertificationType.is_active == True)
+            .filter(CertificationType.is_active)
             .order_by(CertificationType.name)
             .all()
         )
 
-    def list_required_for_person_type(self, person_type: str) -> List[CertificationType]:
+    def list_required_for_person_type(self, person_type: str) -> list[CertificationType]:
         """List certifications required for residents or faculty."""
-        query = self.db.query(CertificationType).filter(CertificationType.is_active == True)
+        query = self.db.query(CertificationType).filter(CertificationType.is_active)
 
         if person_type == "resident":
-            query = query.filter(CertificationType.required_for_residents == True)
+            query = query.filter(CertificationType.required_for_residents)
         elif person_type == "faculty":
-            query = query.filter(CertificationType.required_for_faculty == True)
+            query = query.filter(CertificationType.required_for_faculty)
 
         return query.order_by(CertificationType.name).all()
 
@@ -55,7 +54,7 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
         self,
         person_id: UUID,
         certification_type_id: UUID,
-    ) -> Optional[PersonCertification]:
+    ) -> PersonCertification | None:
         """Get a certification by person and type."""
         return (
             self.db.query(PersonCertification)
@@ -70,7 +69,7 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
         self,
         person_id: UUID,
         include_expired: bool = True,
-    ) -> List[PersonCertification]:
+    ) -> list[PersonCertification]:
         """List all certifications for a person."""
         query = (
             self.db.query(PersonCertification)
@@ -87,7 +86,7 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
         self,
         days: int,
         exact: bool = False,
-    ) -> List[PersonCertification]:
+    ) -> list[PersonCertification]:
         """
         List certifications expiring within N days.
 
@@ -114,7 +113,7 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
 
         return query.order_by(PersonCertification.expiration_date).all()
 
-    def list_needing_reminder(self, days: int) -> List[PersonCertification]:
+    def list_needing_reminder(self, days: int) -> list[PersonCertification]:
         """
         List certifications that need a reminder for a specific threshold.
 
@@ -142,7 +141,7 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
 
         return query.all()
 
-    def list_expired(self) -> List[PersonCertification]:
+    def list_expired(self) -> list[PersonCertification]:
         """List all expired certifications."""
         return (
             self.db.query(PersonCertification)
@@ -158,8 +157,8 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
     def list_by_certification_type(
         self,
         certification_type_id: UUID,
-        status: Optional[str] = None,
-    ) -> List[PersonCertification]:
+        status: str | None = None,
+    ) -> list[PersonCertification]:
         """List all certifications of a specific type."""
         query = (
             self.db.query(PersonCertification)
@@ -209,7 +208,7 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
         self,
         person_id: UUID,
         person_type: str,
-    ) -> List[CertificationType]:
+    ) -> list[CertificationType]:
         """Get certifications a person is missing but should have."""
         # Get required cert types
         cert_type_repo = CertificationTypeRepository(self.db)

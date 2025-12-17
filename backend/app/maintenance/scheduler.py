@@ -1,8 +1,8 @@
 """Automated backup scheduling service."""
-from datetime import datetime, time, timedelta, date
-from typing import Optional, Dict, Any, List
-from pathlib import Path
 import json
+from datetime import datetime, time, timedelta
+from pathlib import Path
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -30,7 +30,7 @@ class BackupScheduler:
         backup_time: time,
         compress: bool = True,
         enabled: bool = True
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Configure daily automated backups.
 
@@ -61,7 +61,7 @@ class BackupScheduler:
         backup_time: time,
         compress: bool = True,
         enabled: bool = True
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Configure weekly full backups.
 
@@ -93,9 +93,9 @@ class BackupScheduler:
 
     def set_retention_policy(
         self,
-        days: Optional[int] = None,
-        count: Optional[int] = None
-    ) -> Dict[str, Any]:
+        days: int | None = None,
+        count: int | None = None
+    ) -> dict[str, Any]:
         """
         Set backup retention policy.
 
@@ -117,7 +117,7 @@ class BackupScheduler:
 
         return policy
 
-    def get_next_scheduled(self) -> Optional[Dict[str, Any]]:
+    def get_next_scheduled(self) -> dict[str, Any] | None:
         """
         Get the next scheduled backup time.
 
@@ -174,7 +174,7 @@ class BackupScheduler:
         # Return the soonest scheduled backup
         return min(next_backups, key=lambda x: x["scheduled_time"])
 
-    def run_pending_backups(self) -> List[Dict[str, Any]]:
+    def run_pending_backups(self) -> list[dict[str, Any]]:
         """
         Execute any backups that are due.
 
@@ -237,7 +237,7 @@ class BackupScheduler:
 
         return results
 
-    def apply_retention_policy(self) -> Dict[str, Any]:
+    def apply_retention_policy(self) -> dict[str, Any]:
         """
         Manually apply retention policy to delete old backups.
 
@@ -246,7 +246,7 @@ class BackupScheduler:
         """
         return self._apply_retention_policy()
 
-    def get_schedule_status(self) -> Dict[str, Any]:
+    def get_schedule_status(self) -> dict[str, Any]:
         """
         Get current scheduler status and configuration.
 
@@ -299,10 +299,10 @@ class BackupScheduler:
 
     # Private helper methods
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         """Load scheduler configuration from file."""
         if self.config_path.exists():
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path) as f:
                 return json.load(f)
         return {}
 
@@ -312,7 +312,7 @@ class BackupScheduler:
         with open(self.config_path, 'w') as f:
             json.dump(self.config, f, indent=2)
 
-    def _should_run_backup(self, schedule: Dict[str, Any], now: datetime) -> bool:
+    def _should_run_backup(self, schedule: dict[str, Any], now: datetime) -> bool:
         """Check if a backup should run based on schedule."""
         last_run_str = schedule.get("last_run")
 
@@ -337,7 +337,7 @@ class BackupScheduler:
 
         return False
 
-    def _apply_retention_policy(self) -> Dict[str, Any]:
+    def _apply_retention_policy(self) -> dict[str, Any]:
         """Apply retention policy to delete old backups."""
         policy = self.config.get("retention_policy", {})
         keep_days = policy.get("keep_days")

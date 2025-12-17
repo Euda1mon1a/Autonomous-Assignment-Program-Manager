@@ -7,9 +7,9 @@ Tests for:
 - Password hashing
 - JWT token handling
 """
+from datetime import timedelta
+
 import pytest
-from datetime import datetime, timedelta
-from unittest.mock import patch
 
 
 @pytest.mark.unit
@@ -158,9 +158,10 @@ class TestTokenPayload:
 
     def test_token_contains_subject(self):
         """Test that token contains subject claim."""
-        from app.core.security import create_access_token
         import jwt
+
         from app.core.config import get_settings
+        from app.core.security import create_access_token
 
         settings = get_settings()
         data = {"sub": "user123"}
@@ -178,9 +179,10 @@ class TestTokenPayload:
 
     def test_token_contains_expiry(self):
         """Test that token contains expiry claim."""
-        from app.core.security import create_access_token
         import jwt
+
         from app.core.config import get_settings
+        from app.core.security import create_access_token
 
         settings = get_settings()
         token = create_access_token({"sub": "user"})

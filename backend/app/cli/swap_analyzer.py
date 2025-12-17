@@ -21,18 +21,14 @@ import argparse
 import sys
 from datetime import date, datetime
 from pathlib import Path
-from typing import Optional
 
 # Add parent to path for imports when running as script
 if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.services.xlsx_import import (
-    SwapFinder,
-    FacultyTarget,
     ExternalConflict,
-    ClinicScheduleImporter,
-    count_alternating_cycles,
+    SwapFinder,
 )
 
 
@@ -115,7 +111,7 @@ def print_alternating_patterns(swap_finder: SwapFinder, threshold: int = 3) -> N
         # Show suggested swaps
         suggestions = swap_finder.suggest_swaps_for_alternating(faculty)
         if suggestions:
-            print(f"  Suggested weeks to swap out:")
+            print("  Suggested weeks to swap out:")
             for week, candidates in suggestions[:3]:  # Show top 3
                 viable_count = sum(1 for c in candidates if c.back_to_back_ok)
                 print(f"    - {week.strftime('%b %d')} ({viable_count} viable candidates)")
@@ -130,7 +126,7 @@ def print_full_analysis(swap_finder: SwapFinder, verbose: bool = False) -> None:
     total_faculty = len(swap_finder.faculty_weeks)
     total_weeks = sum(len(weeks) for weeks in swap_finder.faculty_weeks.values())
 
-    print(f"\nSummary:")
+    print("\nSummary:")
     print(f"  Faculty members: {total_faculty}")
     print(f"  Total FMIT weeks assigned: {total_weeks}")
     print(f"  Average weeks per faculty: {total_weeks / total_faculty:.1f}" if total_faculty else "")

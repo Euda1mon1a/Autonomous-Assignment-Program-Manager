@@ -16,13 +16,13 @@ Usage:
     Version history will then include who made each change.
 """
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from app.db.audit import set_current_user_id, clear_current_user_id
+from app.db.audit import clear_current_user_id, set_current_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class AuditContextMiddleware(BaseHTTPMiddleware):
             # Always clear context after request
             clear_current_user_id()
 
-    async def _extract_user_id(self, request: Request) -> Optional[str]:
+    async def _extract_user_id(self, request: Request) -> str | None:
         """
         Extract user ID from the request.
 

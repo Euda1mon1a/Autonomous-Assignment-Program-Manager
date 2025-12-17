@@ -1,8 +1,9 @@
 """Schedule-related schemas."""
 from datetime import date
 from enum import Enum
-from typing import Optional, Literal
+from typing import Literal
 from uuid import UUID
+
 from pydantic import BaseModel, Field, model_validator
 
 
@@ -18,8 +19,8 @@ class ScheduleRequest(BaseModel):
     """Request schema for schedule generation."""
     start_date: date
     end_date: date
-    pgy_levels: Optional[list[int]] = None  # Filter residents by PGY level
-    rotation_template_ids: Optional[list[UUID]] = None  # Specific templates to use
+    pgy_levels: list[int] | None = None  # Filter residents by PGY level
+    rotation_template_ids: list[UUID] | None = None  # Specific templates to use
     algorithm: SchedulingAlgorithm = SchedulingAlgorithm.GREEDY
     timeout_seconds: float = Field(
         default=60.0,
@@ -43,11 +44,11 @@ class Violation(BaseModel):
     """Schema for a single ACGME violation."""
     type: str  # 'SUPERVISION_RATIO', '80_HOUR', '1_IN_7', etc.
     severity: str  # 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'
-    person_id: Optional[UUID] = None
-    person_name: Optional[str] = None
-    block_id: Optional[UUID] = None
+    person_id: UUID | None = None
+    person_name: str | None = None
+    block_id: UUID | None = None
     message: str
-    details: Optional[dict] = None
+    details: dict | None = None
 
 
 class ValidationResult(BaseModel):
@@ -56,16 +57,16 @@ class ValidationResult(BaseModel):
     total_violations: int
     violations: list[Violation]
     coverage_rate: float  # Percentage of blocks covered
-    statistics: Optional[dict] = None
+    statistics: dict | None = None
 
 
 class SolverStatistics(BaseModel):
     """Statistics from the solver run."""
-    total_blocks: Optional[int] = None
-    total_residents: Optional[int] = None
-    coverage_rate: Optional[float] = None
-    branches: Optional[int] = None  # CP-SAT specific
-    conflicts: Optional[int] = None  # CP-SAT specific
+    total_blocks: int | None = None
+    total_residents: int | None = None
+    coverage_rate: float | None = None
+    branches: int | None = None  # CP-SAT specific
+    conflicts: int | None = None  # CP-SAT specific
 
 
 class ScheduleResponse(BaseModel):
@@ -75,8 +76,8 @@ class ScheduleResponse(BaseModel):
     total_blocks_assigned: int
     total_blocks: int
     validation: ValidationResult
-    run_id: Optional[UUID] = None
-    solver_stats: Optional[SolverStatistics] = None
+    run_id: UUID | None = None
+    solver_stats: SolverStatistics | None = None
     acgme_override_count: int = 0  # Number of acknowledged ACGME overrides
 
 
@@ -108,14 +109,14 @@ class ConflictItem(BaseModel):
     type: str  # 'double_book', 'specialty_unavailable', 'consecutive_weeks'
     severity: str  # 'error', 'warning', 'info'
     message: str
-    fmit_assignment: Optional[str] = None
-    clinic_assignment: Optional[str] = None
+    fmit_assignment: str | None = None
+    clinic_assignment: str | None = None
 
 
 class ScheduleSummary(BaseModel):
     """Summary of an imported schedule."""
     providers: list[str]
-    date_range: list[Optional[str]]  # [start, end] as ISO strings
+    date_range: list[str | None]  # [start, end] as ISO strings
     total_slots: int
     fmit_slots: int = 0
     clinic_slots: int = 0
@@ -124,8 +125,8 @@ class ScheduleSummary(BaseModel):
 class Recommendation(BaseModel):
     """Recommendation for resolving conflicts."""
     type: str  # 'consolidate_fmit', 'specialty_coverage', 'resolve_double_booking'
-    providers: Optional[list[str]] = None
-    count: Optional[int] = None
+    providers: list[str] | None = None
+    count: int | None = None
     message: str
 
 
@@ -139,12 +140,12 @@ class ConflictSummary(BaseModel):
 class ImportAnalysisResponse(BaseModel):
     """Response schema for schedule import and analysis."""
     success: bool
-    error: Optional[str] = None
-    fmit_schedule: Optional[ScheduleSummary] = None
-    clinic_schedule: Optional[ScheduleSummary] = None
+    error: str | None = None
+    fmit_schedule: ScheduleSummary | None = None
+    clinic_schedule: ScheduleSummary | None = None
     conflicts: list[ConflictItem] = []
     recommendations: list[Recommendation] = []
-    summary: Optional[ConflictSummary] = None
+    summary: ConflictSummary | None = None
 
 
 # SwapFinder API Schemas
@@ -200,9 +201,9 @@ class SwapCandidateResponse(BaseModel):
     """Response schema for a single swap candidate."""
     faculty: str
     can_take_week: str  # ISO date
-    gives_week: Optional[str] = None  # ISO date for 1:1 swap
+    gives_week: str | None = None  # ISO date for 1:1 swap
     back_to_back_ok: bool
-    external_conflict: Optional[str] = None
+    external_conflict: str | None = None
     flexibility: str  # "easy", "hard", "very_hard", "impossible"
     reason: str = ""
     rank: int = 0  # 1 = best candidate

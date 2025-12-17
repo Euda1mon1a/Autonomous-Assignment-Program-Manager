@@ -1,17 +1,17 @@
 """Auth controller for request/response handling."""
 
-from typing import Optional
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.error_codes import ErrorCode, get_error_code_from_message
-from app.services.auth_service import AuthService
+from app.models.user import User
 from app.schemas.auth import (
     Token,
     UserCreate,
     UserResponse,
 )
-from app.models.user import User
+from app.services.auth_service import AuthService
 
 
 class AuthController:
@@ -39,7 +39,7 @@ class AuthController:
     def register_user(
         self,
         user_in: UserCreate,
-        current_user: Optional[User] = None,
+        current_user: User | None = None,
     ) -> UserResponse:
         """Register a new user."""
         result = self.service.register_user(
