@@ -97,22 +97,36 @@ DATABASE_URL=postgresql://scheduler:${DB_PASSWORD}@db:5432/residency_scheduler
 DB_POOL_SIZE=10
 DB_POOL_MAX_OVERFLOW=20
 
-# Security
+# Security (REQUIRED - no defaults in production)
+# Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'
 SECRET_KEY=generate-64-char-random-token
+WEBHOOK_SECRET=generate-32-char-random-token
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
 
-# Redis
-REDIS_URL=redis://redis:6379/0
-CELERY_BROKER_URL=redis://redis:6379/0
-CELERY_RESULT_BACKEND=redis://redis:6379/0
+# Redis (password-authenticated)
+REDIS_PASSWORD=your-secure-redis-password
+REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
 
 # API
 CORS_ORIGINS=["http://localhost:3000"]
 NEXT_PUBLIC_API_URL=http://localhost:8000
 
+# Monitoring Services (REQUIRED - no defaults)
+N8N_PASSWORD=your-secure-n8n-password
+GRAFANA_ADMIN_PASSWORD=your-secure-grafana-password
+
 # Environment
 ENVIRONMENT=development
+DEBUG=false  # Set to false in production
 ```
+
+> **SECURITY REQUIREMENTS**:
+> - Application will FAIL to start in production if `SECRET_KEY` or `WEBHOOK_SECRET` are empty/default
+> - Redis requires password authentication via `REDIS_PASSWORD`
+> - N8N and Grafana have no default passwords - must be explicitly set
+> - API docs (`/docs`, `/redoc`) are disabled when `DEBUG=false`
 
 ---
 

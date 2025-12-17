@@ -53,11 +53,21 @@ Residency Scheduler is a production-ready, full-stack application designed to au
 - Automatic availability matrix updates
 
 ### User Management
-- JWT-based authentication with secure password hashing
+- JWT-based authentication with httpOnly secure cookies
 - Rate limiting on authentication endpoints (5 login/min, 3 register/min)
 - Eight user roles: Admin, Coordinator, Faculty, Resident, Clinical Staff, RN, LPN, MSA
 - Activity logging and audit trails
 - Full role-based access control (RBAC) with resource-level filtering
+- Strong password requirements (12+ chars, complexity rules)
+
+### Security Features
+- **Authentication**: httpOnly cookies (XSS-resistant), bcrypt password hashing
+- **Authorization**: Role-based access control with admin endpoint protection
+- **Input Validation**: Pydantic schemas, file upload validation (size, type, content)
+- **Path Security**: Path traversal prevention in file operations
+- **Secret Management**: Startup validation rejects default/weak secrets
+- **Error Handling**: Global exception handler prevents information leakage
+- **API Protection**: Rate limiting, CORS configuration, production doc/metrics restrictions
 
 ### Procedure Credentialing
 Track faculty qualifications for supervising medical procedures:
@@ -365,8 +375,9 @@ See [API Reference](docs/API_REFERENCE.md) for complete documentation.
 # Database Configuration
 DB_PASSWORD=your_secure_password
 
-# Security
-SECRET_KEY=your_secret_key_here_min_32_chars
+# Security (REQUIRED - no defaults allowed in production)
+SECRET_KEY=your_secret_key_here_min_32_chars  # Generate: python -c 'import secrets; print(secrets.token_urlsafe(32))'
+WEBHOOK_SECRET=your_webhook_secret_min_32_chars
 
 # Application Settings
 DEBUG=false
@@ -376,6 +387,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 # Redis (for Celery background tasks and rate limiting)
 REDIS_URL=redis://localhost:6379/0
+REDIS_PASSWORD=your_redis_password  # Required for authenticated Redis
 
 # Rate Limiting
 RATE_LIMIT_LOGIN_ATTEMPTS=5
@@ -384,9 +396,15 @@ RATE_LIMIT_REGISTER_ATTEMPTS=3
 RATE_LIMIT_REGISTER_WINDOW=60
 RATE_LIMIT_ENABLED=true
 
+# Monitoring Services (required - no defaults)
+N8N_PASSWORD=your_n8n_password
+GRAFANA_ADMIN_PASSWORD=your_grafana_password
+
 # Prometheus (optional)
 PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
 ```
+
+> **Security Note**: The application will refuse to start in production (`DEBUG=false`) if `SECRET_KEY` or `WEBHOOK_SECRET` are empty or use default values.
 
 ---
 
