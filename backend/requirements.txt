@@ -9,7 +9,7 @@ asyncpg==0.31.0
 psycopg2-binary==2.9.11
 alembic==1.17.2
 sqlalchemy-utils==0.42.1
-sqlalchemy-continuum==1.4.2  # Audit trail / version history for models
+sqlalchemy-continuum==1.5.2  # Audit trail / version history for models
 
 # Validation and serialization
 pydantic==2.12.5
@@ -38,7 +38,7 @@ ortools>=9.8
 pulp>=2.7.0
 
 # Monitoring & Observability
-sentry-sdk[fastapi]==2.47.0
+sentry-sdk[fastapi]==2.48.0
 prometheus-fastapi-instrumentator==7.1.0
 
 # Reporting & Export
