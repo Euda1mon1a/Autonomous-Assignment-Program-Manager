@@ -143,10 +143,31 @@ export function ConflictResolutionSuggestions({
   // Render loading state
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-          <span className="ml-3 text-gray-600">Analyzing conflict and generating suggestions...</span>
+      <div className="p-6 animate-fadeIn">
+        <div className="space-y-4">
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+            <span className="ml-3 text-gray-600 animate-pulse">Analyzing conflict and generating suggestions...</span>
+          </div>
+          {/* Loading skeleton for suggestions */}
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="p-4 bg-gray-100 rounded-lg border border-gray-200">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
+                  <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full"></div>
+                    <div className="flex gap-2 mt-2">
+                      <div className="h-6 bg-gray-200 rounded w-16"></div>
+                      <div className="h-6 bg-gray-200 rounded w-16"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -207,7 +228,7 @@ export function ConflictResolutionSuggestions({
 
       {/* Suggestions list */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {sortedSuggestions.map((suggestion) => {
+        {sortedSuggestions.map((suggestion, index) => {
           const isSelected = selectedSuggestion === suggestion.id;
           const isExpanded = expandedSuggestion === suggestion.id;
           const MethodIcon = getMethodIcon(suggestion.method);
@@ -216,13 +237,14 @@ export function ConflictResolutionSuggestions({
             <div
               key={suggestion.id}
               className={`
-                rounded-lg border-2 overflow-hidden transition-all cursor-pointer
+                rounded-lg border-2 overflow-hidden transition-all duration-300 cursor-pointer animate-fadeInUp
                 ${isSelected
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                  ? 'border-blue-500 bg-blue-50 shadow-lg scale-[1.02]'
+                  : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
                 }
                 ${suggestion.recommended ? 'ring-2 ring-amber-200' : ''}
               `}
+              style={{ animationDelay: `${index * 100}ms` }}
               onClick={() => setSelectedSuggestion(suggestion.id)}
             >
               {/* Suggestion header */}
@@ -297,7 +319,7 @@ export function ConflictResolutionSuggestions({
 
               {/* Expanded details */}
               {isExpanded && (
-                <div className="px-4 pb-4 pt-0">
+                <div className="px-4 pb-4 pt-0 animate-slideDown">
                   <div className="border-t pt-4 mt-2">
                     {/* Changes */}
                     <div className="mb-4">
@@ -372,7 +394,7 @@ export function ConflictResolutionSuggestions({
             <button
               onClick={handleApply}
               disabled={!selectedSuggestion || applyResolution.isPending}
-              className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-lg active:scale-95"
             >
               {applyResolution.isPending ? (
                 <>

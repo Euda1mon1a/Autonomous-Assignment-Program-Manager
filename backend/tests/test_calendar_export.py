@@ -432,3 +432,520 @@ class TestCalendarAPI:
         content = response.text
         assert "BEGIN:VCALENDAR" in content
         assert "Dr. Rotation Test" in content
+
+    def test_export_all_calendars(self, client: TestClient, db: Session) -> None:
+        """Test exporting all calendars via API."""
+        # Create test data
+        person1 = Person(
+            id=uuid.uuid4(),
+            name="Dr. All Test 1",
+            type="resident",
+        )
+        person2 = Person(
+            id=uuid.uuid4(),
+            name="Dr. All Test 2",
+            type="resident",
+        )
+        db.add(person1)
+        db.add(person2)
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="All Test Rotation",
+            activity_type="clinic",
+        )
+        db.add(rotation)
+
+        test_date = date.today()
+        block = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="AM",
+            block_number=1,
+        )
+        db.add(block)
+
+        assignment1 = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person1.id,
+            rotation_template_id=rotation.id,
+            role="primary",
+        )
+        assignment2 = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person2.id,
+            rotation_template_id=rotation.id,
+            role="backup",
+        )
+        db.add(assignment1)
+        db.add(assignment2)
+        db.commit()
+
+        # Make API request
+        response = client.get(
+            "/api/calendar/export/ics",
+            params={
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        # Verify response
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "text/calendar; charset=utf-8"
+
+        content = response.text
+        assert "BEGIN:VCALENDAR" in content
+        assert "Dr. All Test 1" in content
+        assert "Dr. All Test 2" in content
+        assert content.count("BEGIN:VEVENT") == 2
+
+    def test_export_all_calendars_filtered_by_person(self, client: TestClient, db: Session) -> None:
+        """Test exporting all calendars with person filter."""
+        # Create test data
+        person1 = Person(
+            id=uuid.uuid4(),
+            name="Dr. Filter Test 1",
+            type="resident",
+        )
+        person2 = Person(
+            id=uuid.uuid4(),
+            name="Dr. Filter Test 2",
+            type="resident",
+        )
+        db.add(person1)
+        db.add(person2)
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="Filter Test Rotation",
+            activity_type="clinic",
+        )
+        db.add(rotation)
+
+        test_date = date.today()
+        block = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="AM",
+            block_number=1,
+        )
+        db.add(block)
+
+        assignment1 = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person1.id,
+            rotation_template_id=rotation.id,
+            role="primary",
+        )
+        assignment2 = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person2.id,
+            rotation_template_id=rotation.id,
+            role="backup",
+        )
+        db.add(assignment1)
+        db.add(assignment2)
+        db.commit()
+
+        # Make API request filtering for person1 only
+        response = client.get(
+            "/api/calendar/export/ics",
+            params={
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+                "person_ids": [str(person1.id)],
+            },
+        )
+
+        # Verify response
+        assert response.status_code == 200
+
+        content = response.text
+        assert "BEGIN:VCALENDAR" in content
+        assert "Dr. Filter Test 1" in content
+        assert "Dr. Filter Test 2" not in content
+        assert content.count("BEGIN:VEVENT") == 1
+
+    def test_export_person_ics(self, client: TestClient, db: Session) -> None:
+        """Test exporting person calendar via /export/ics/{person_id} endpoint."""
+        # Create test data
+        person = Person(
+            id=uuid.uuid4(),
+            name="Dr. ICS Test",
+            type="resident",
+        )
+        db.add(person)
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="ICS Test Rotation",
+            activity_type="clinic",
+        )
+        db.add(rotation)
+
+        test_date = date.today()
+        block = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="PM",
+            block_number=1,
+        )
+        db.add(block)
+
+        assignment = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person.id,
+            rotation_template_id=rotation.id,
+            role="primary",
+        )
+        db.add(assignment)
+        db.commit()
+
+        # Make API request
+        response = client.get(
+            f"/api/calendar/export/ics/{person.id}",
+            params={
+                "start_date": test_date.isoformat(),
+                "end_date": test_date.isoformat(),
+            },
+        )
+
+        # Verify response
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "text/calendar; charset=utf-8"
+        assert "attachment" in response.headers["content-disposition"]
+
+        content = response.text
+        assert "BEGIN:VCALENDAR" in content
+        assert "ICS Test Rotation" in content
+
+    def test_export_person_ics_not_found(self, client: TestClient) -> None:
+        """Test error when person not found in /export/ics/{person_id} endpoint."""
+        response = client.get(
+            f"/api/calendar/export/ics/{uuid.uuid4()}",
+            params={
+                "start_date": date.today().isoformat(),
+                "end_date": date.today().isoformat(),
+            },
+        )
+
+        assert response.status_code == 404
+
+
+class TestVTIMEZONE:
+    """Test VTIMEZONE component generation."""
+
+    def test_vtimezone_included_in_person_export(self, db: Session) -> None:
+        """Test that VTIMEZONE component is included in person export."""
+        person = Person(
+            id=uuid.uuid4(),
+            name="Dr. TZ Test",
+            type="resident",
+        )
+        db.add(person)
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="TZ Test Rotation",
+            activity_type="clinic",
+        )
+        db.add(rotation)
+
+        test_date = date(2024, 1, 15)
+        block = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="AM",
+            block_number=1,
+        )
+        db.add(block)
+
+        assignment = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person.id,
+            rotation_template_id=rotation.id,
+            role="primary",
+        )
+        db.add(assignment)
+        db.commit()
+
+        ics_content = CalendarService.generate_ics_for_person(
+            db=db,
+            person_id=person.id,
+            start_date=test_date,
+            end_date=test_date,
+        )
+
+        # Verify VTIMEZONE component is present
+        assert "BEGIN:VTIMEZONE" in ics_content
+        assert "TZID:America/New_York" in ics_content
+        assert "BEGIN:STANDARD" in ics_content
+        assert "BEGIN:DAYLIGHT" in ics_content
+        assert "TZNAME:EST" in ics_content
+        assert "TZNAME:EDT" in ics_content
+        assert "END:VTIMEZONE" in ics_content
+
+    def test_vtimezone_included_in_rotation_export(self, db: Session) -> None:
+        """Test that VTIMEZONE component is included in rotation export."""
+        person = Person(
+            id=uuid.uuid4(),
+            name="Dr. TZ Rotation Test",
+            type="resident",
+        )
+        db.add(person)
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="TZ Rotation",
+            activity_type="inpatient",
+        )
+        db.add(rotation)
+
+        test_date = date(2024, 2, 1)
+        block = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="PM",
+            block_number=1,
+        )
+        db.add(block)
+
+        assignment = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person.id,
+            rotation_template_id=rotation.id,
+            role="primary",
+        )
+        db.add(assignment)
+        db.commit()
+
+        ics_content = CalendarService.generate_ics_for_rotation(
+            db=db,
+            rotation_id=rotation.id,
+            start_date=test_date,
+            end_date=test_date,
+        )
+
+        # Verify VTIMEZONE component is present
+        assert "BEGIN:VTIMEZONE" in ics_content
+        assert "TZID:America/New_York" in ics_content
+        assert "END:VTIMEZONE" in ics_content
+
+    def test_vtimezone_included_in_all_export(self, db: Session) -> None:
+        """Test that VTIMEZONE component is included in general export."""
+        person = Person(
+            id=uuid.uuid4(),
+            name="Dr. TZ All Test",
+            type="resident",
+        )
+        db.add(person)
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="TZ All Rotation",
+            activity_type="clinic",
+        )
+        db.add(rotation)
+
+        test_date = date(2024, 3, 1)
+        block = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="AM",
+            block_number=1,
+        )
+        db.add(block)
+
+        assignment = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person.id,
+            rotation_template_id=rotation.id,
+            role="primary",
+        )
+        db.add(assignment)
+        db.commit()
+
+        ics_content = CalendarService.generate_ics_all(
+            db=db,
+            start_date=test_date,
+            end_date=test_date,
+        )
+
+        # Verify VTIMEZONE component is present
+        assert "BEGIN:VTIMEZONE" in ics_content
+        assert "TZID:America/New_York" in ics_content
+        assert "END:VTIMEZONE" in ics_content
+
+
+class TestGenerateICSAll:
+    """Test general ICS export functionality."""
+
+    def test_generate_ics_all_basic(self, db: Session) -> None:
+        """Test basic generate_ics_all functionality."""
+        # Create test data
+        person = Person(
+            id=uuid.uuid4(),
+            name="Dr. All Basic",
+            type="resident",
+            pgy_level=1,
+        )
+        db.add(person)
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="All Basic Rotation",
+            activity_type="clinic",
+            clinic_location="Test Clinic",
+        )
+        db.add(rotation)
+
+        test_date = date(2024, 4, 1)
+        block = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="AM",
+            block_number=1,
+        )
+        db.add(block)
+
+        assignment = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person.id,
+            rotation_template_id=rotation.id,
+            role="primary",
+            notes="Test notes",
+        )
+        db.add(assignment)
+        db.commit()
+
+        ics_content = CalendarService.generate_ics_all(
+            db=db,
+            start_date=test_date,
+            end_date=test_date,
+        )
+
+        # Verify ICS content
+        assert "BEGIN:VCALENDAR" in ics_content
+        assert "Dr. All Basic" in ics_content
+        assert "All Basic Rotation" in ics_content
+        assert "LOCATION:Test Clinic" in ics_content
+        assert "Test notes" in ics_content
+        assert "PGY Level: 1" in ics_content
+
+    def test_generate_ics_all_with_filters(self, db: Session) -> None:
+        """Test generate_ics_all with filters."""
+        # Create multiple people and rotations
+        person1 = Person(id=uuid.uuid4(), name="Dr. Filter 1", type="resident")
+        person2 = Person(id=uuid.uuid4(), name="Dr. Filter 2", type="resident")
+        db.add(person1)
+        db.add(person2)
+
+        rotation1 = RotationTemplate(
+            id=uuid.uuid4(), name="Rotation 1", activity_type="clinic"
+        )
+        rotation2 = RotationTemplate(
+            id=uuid.uuid4(), name="Rotation 2", activity_type="inpatient"
+        )
+        db.add(rotation1)
+        db.add(rotation2)
+
+        test_date = date(2024, 5, 1)
+        block = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="AM",
+            block_number=1,
+        )
+        db.add(block)
+
+        assignment1 = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person1.id,
+            rotation_template_id=rotation1.id,
+            role="primary",
+        )
+        assignment2 = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person2.id,
+            rotation_template_id=rotation2.id,
+            role="primary",
+        )
+        db.add(assignment1)
+        db.add(assignment2)
+        db.commit()
+
+        # Test person filter
+        ics_content = CalendarService.generate_ics_all(
+            db=db,
+            start_date=test_date,
+            end_date=test_date,
+            person_ids=[person1.id],
+        )
+        assert "Dr. Filter 1" in ics_content
+        assert "Dr. Filter 2" not in ics_content
+
+        # Test rotation filter
+        ics_content = CalendarService.generate_ics_all(
+            db=db,
+            start_date=test_date,
+            end_date=test_date,
+            rotation_ids=[rotation2.id],
+        )
+        assert "Rotation 2" in ics_content
+        assert "Rotation 1" not in ics_content
+
+    def test_generate_ics_all_with_role_labels(self, db: Session) -> None:
+        """Test generate_ics_all includes role labels."""
+        person = Person(
+            id=uuid.uuid4(),
+            name="Dr. Role Test",
+            type="faculty",
+        )
+        db.add(person)
+
+        rotation = RotationTemplate(
+            id=uuid.uuid4(),
+            name="Role Rotation",
+            activity_type="clinic",
+        )
+        db.add(rotation)
+
+        test_date = date(2024, 6, 1)
+        block = Block(
+            id=uuid.uuid4(),
+            date=test_date,
+            time_of_day="PM",
+            block_number=1,
+        )
+        db.add(block)
+
+        assignment = Assignment(
+            id=uuid.uuid4(),
+            block_id=block.id,
+            person_id=person.id,
+            rotation_template_id=rotation.id,
+            role="supervising",
+        )
+        db.add(assignment)
+        db.commit()
+
+        ics_content = CalendarService.generate_ics_all(
+            db=db,
+            start_date=test_date,
+            end_date=test_date,
+        )
+
+        # Should include role in summary
+        assert "Dr. Role Test - Role Rotation (Supervising)" in ics_content

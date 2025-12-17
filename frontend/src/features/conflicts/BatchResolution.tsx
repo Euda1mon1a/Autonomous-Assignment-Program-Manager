@@ -219,10 +219,10 @@ export function BatchResolution({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full animate-fadeIn">
       {/* Header */}
-      <div className="p-4 border-b bg-blue-50">
-        <div className="flex items-center justify-between">
+      <div className="p-4 border-b bg-blue-50 shadow-sm">
+        <div className="flex items-center justify-between animate-slideDown">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Batch Resolution</h2>
             <p className="text-sm text-gray-600">
@@ -231,7 +231,7 @@ export function BatchResolution({
           </div>
           <button
             onClick={onCancel}
-            className="p-2 hover:bg-blue-100 rounded-lg"
+            className="p-2 hover:bg-blue-100 rounded-lg transition-all duration-200 active:scale-95"
             aria-label="Cancel"
           >
             <X className="w-5 h-5 text-gray-500" />
@@ -337,7 +337,7 @@ export function BatchResolution({
         <div className="space-y-2">
           {filteredConflicts
             .sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity])
-            .map((conflict) => {
+            .map((conflict, index) => {
               const styles = getSeverityStyles(conflict.severity);
               const isSelected = selectedIds.has(conflict.id);
 
@@ -345,9 +345,10 @@ export function BatchResolution({
                 <div
                   key={conflict.id}
                   className={`
-                    flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all
-                    ${isSelected ? `${styles.bg} ${styles.border}` : 'bg-white border-gray-200'}
+                    flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all duration-200 animate-fadeInUp
+                    ${isSelected ? `${styles.bg} ${styles.border} shadow-md` : 'bg-white border-gray-200 hover:shadow-sm'}
                   `}
+                  style={{ animationDelay: `${index * 30}ms` }}
                   onClick={() => handleToggleSelect(conflict.id)}
                 >
                   <button
@@ -471,7 +472,7 @@ export function BatchResolution({
             <button
               onClick={handleProcess}
               disabled={selectedIds.size === 0 || !isValid || isProcessing}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-lg active:scale-95"
             >
               {isProcessing ? (
                 <>
@@ -504,10 +505,10 @@ function BatchResolutionResults({
   const successRate = Math.round((results.successful / results.total) * 100);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full animate-fadeIn">
       {/* Header */}
       <div className={`
-        p-4 border-b
+        p-4 border-b shadow-sm animate-slideDown
         ${results.failed === 0 ? 'bg-green-50' : results.successful === 0 ? 'bg-red-50' : 'bg-amber-50'}
       `}>
         <div className="flex items-center gap-3">

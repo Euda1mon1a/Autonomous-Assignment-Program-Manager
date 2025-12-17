@@ -3,7 +3,7 @@ import secrets
 from datetime import date, datetime, timedelta
 from uuid import UUID
 
-from icalendar import Calendar, Event
+from icalendar import Calendar, Event, Timezone, TimezoneStandard, TimezoneDaylight
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.assignment import Assignment
@@ -13,6 +13,38 @@ from app.models.person import Person
 
 class CalendarService:
     """Service for generating ICS calendar files."""
+
+    @staticmethod
+    def _create_timezone() -> Timezone:
+        """
+        Create a proper VTIMEZONE component for America/New_York.
+
+        Returns:
+            Timezone component with standard and daylight time rules
+        """
+        tz = Timezone()
+        tz.add("tzid", "America/New_York")
+
+        # Standard time (EST)
+        tz_standard = TimezoneStandard()
+        tz_standard.add("dtstart", datetime(1970, 11, 1, 2, 0, 0))
+        tz_standard.add("rrule", {"freq": "yearly", "bymonth": 11, "byday": "1su"})
+        tz_standard.add("tzoffsetfrom", timedelta(hours=-4))
+        tz_standard.add("tzoffsetto", timedelta(hours=-5))
+        tz_standard.add("tzname", "EST")
+
+        # Daylight time (EDT)
+        tz_daylight = TimezoneDaylight()
+        tz_daylight.add("dtstart", datetime(1970, 3, 8, 2, 0, 0))
+        tz_daylight.add("rrule", {"freq": "yearly", "bymonth": 3, "byday": "2su"})
+        tz_daylight.add("tzoffsetfrom", timedelta(hours=-5))
+        tz_daylight.add("tzoffsetto", timedelta(hours=-4))
+        tz_daylight.add("tzname", "EDT")
+
+        tz.add_component(tz_standard)
+        tz.add_component(tz_daylight)
+
+        return tz
 
     @staticmethod
     def _get_block_time(block: Block) -> tuple[datetime, datetime]:
@@ -87,6 +119,9 @@ class CalendarService:
         cal.add("method", "PUBLISH")
         cal.add("x-wr-calname", f"{person.name} - Schedule")
         cal.add("x-wr-timezone", "America/New_York")
+
+        # Add proper VTIMEZONE component
+        cal.add_component(CalendarService._create_timezone())
 
         # Add events for each assignment
         for assignment in assignments:
@@ -189,6 +224,9 @@ class CalendarService:
         cal.add("x-wr-calname", f"{rotation_name} - Schedule")
         cal.add("x-wr-timezone", "America/New_York")
 
+        # Add proper VTIMEZONE component
+        cal.add_component(CalendarService._create_timezone())
+
         # Add events for each assignment
         for assignment in assignments:
             event = Event()
@@ -230,6 +268,128 @@ class CalendarService:
                 event.add("location", assignment.rotation_template.clinic_location)
 
             # Add timestamps
+            event.add("dtstamp", datetime.utcnow())
+            event.add("last-modified", assignment.updated_at)
+
+            cal.add_component(event)
+
+        return cal.to_ical().decode("utf-8")
+
+    @staticmethod
+    def generate_ics_all(
+        db: Session,
+        start_date: date,
+        end_date: date,
+        person_ids: list[UUID] | None = None,
+        rotation_ids: list[UUID] | None = None,
+        include_types: list[str] | None = None,
+    ) -> str:
+        """
+        Generate ICS calendar file for all schedules or filtered schedules.
+
+        Args:
+            db: Database session
+            start_date: Start date for export
+            end_date: End date for export
+            person_ids: Optional list of person UUIDs to filter
+            rotation_ids: Optional list of rotation UUIDs to filter
+            include_types: Optional list of activity types to include
+
+        Returns:
+            ICS file content as string
+        """
+        # Query assignments with blocks, rotation templates, and persons
+        query = (
+            db.query(Assignment)
+            .options(
+                joinedload(Assignment.block),
+                joinedload(Assignment.rotation_template),
+                joinedload(Assignment.person),
+            )
+            .join(Block)
+            .filter(
+                Block.date >= start_date,
+                Block.date <= end_date,
+            )
+        )
+
+        # Filter by person IDs if specified
+        if person_ids:
+            query = query.filter(Assignment.person_id.in_(person_ids))
+
+        # Filter by rotation IDs if specified
+        if rotation_ids:
+            query = query.filter(Assignment.rotation_template_id.in_(rotation_ids))
+
+        # Filter by activity types if specified
+        if include_types:
+            query = query.filter(Assignment.rotation_template.has(activity_type=include_types))
+
+        assignments = query.all()
+
+        # Create calendar
+        cal = Calendar()
+        cal.add("prodid", "-//Residency Scheduler//Calendar Export//EN")
+        cal.add("version", "2.0")
+        cal.add("calscale", "GREGORIAN")
+        cal.add("method", "PUBLISH")
+        cal.add("x-wr-calname", "Complete Schedule Export")
+        cal.add("x-wr-timezone", "America/New_York")
+
+        # Add proper VTIMEZONE component
+        cal.add_component(CalendarService._create_timezone())
+
+        # Add events for each assignment
+        for assignment in assignments:
+            event = Event()
+
+            # Get person name
+            person_name = assignment.person.name if assignment.person else "Unknown"
+
+            # Get activity name with role
+            activity_name = assignment.activity_name
+            summary = f"{person_name} - {activity_name}"
+            if assignment.role == "supervising":
+                summary = f"{person_name} - {activity_name} (Supervising)"
+            elif assignment.role == "backup":
+                summary = f"{person_name} - {activity_name} (Backup)"
+
+            event.add("summary", summary)
+
+            # Get block times
+            start_time, end_time = CalendarService._get_block_time(assignment.block)
+            event.add("dtstart", start_time)
+            event.add("dtend", end_time)
+
+            # Add unique identifier
+            uid = f"{assignment.id}@residency-scheduler"
+            event.add("uid", uid)
+
+            # Add description with details
+            description_parts = [
+                f"Person: {person_name}",
+                f"Role: {assignment.role.title()}",
+                f"Block: {assignment.block.display_name}",
+            ]
+
+            if assignment.rotation_template:
+                description_parts.append(f"Type: {assignment.rotation_template.activity_type}")
+                if assignment.rotation_template.clinic_location:
+                    description_parts.append(f"Location: {assignment.rotation_template.clinic_location}")
+
+            if assignment.person and assignment.person.is_resident and assignment.person.pgy_level:
+                description_parts.append(f"PGY Level: {assignment.person.pgy_level}")
+
+            if assignment.notes:
+                description_parts.append(f"Notes: {assignment.notes}")
+
+            event.add("description", "\n".join(description_parts))
+
+            # Add location if available
+            if assignment.rotation_template and assignment.rotation_template.clinic_location:
+                event.add("location", assignment.rotation_template.clinic_location)
+
+            # Add last modified timestamp
             event.add("dtstamp", datetime.utcnow())
             event.add("last-modified", assignment.updated_at)
 

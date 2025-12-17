@@ -114,6 +114,72 @@ class AlertSummaryBySeverity(BaseModel):
     average_resolution_time_hours: float | None
 
 
+class CoverageGap(BaseModel):
+    """Represents a coverage gap with details."""
+    gap_id: str
+    date: date
+    time_of_day: str
+    block_id: str
+    severity: str  # "critical", "high", "medium", "low"
+    days_until: int
+    affected_area: str
+    department: str | None
+    current_assignments: int
+    required_assignments: int
+    gap_size: int
+
+
+class CoverageGapsResponse(BaseModel):
+    """Response for coverage gaps endpoint."""
+    timestamp: datetime
+    total_gaps: int
+    critical_gaps: int
+    high_priority_gaps: int
+    medium_priority_gaps: int
+    low_priority_gaps: int
+    gaps_by_period: dict[str, int]  # "daily", "weekly", "monthly"
+    gaps: list[CoverageGap]
+
+
+class CoverageSuggestion(BaseModel):
+    """Auto-suggested solution for a coverage gap."""
+    gap_id: str
+    suggestion_type: str  # "assign_available", "swap_recommended", "overtime"
+    priority: int  # 1-5, 1 being highest
+    faculty_candidates: list[str]
+    estimated_conflict_score: float
+    reasoning: str
+    alternative_dates: list[date] | None
+
+
+class CoverageSuggestionsResponse(BaseModel):
+    """Response for coverage suggestions endpoint."""
+    timestamp: datetime
+    total_suggestions: int
+    gaps_addressed: int
+    suggestions: list[CoverageSuggestion]
+
+
+class CoverageForecast(BaseModel):
+    """Forecast for future coverage gaps."""
+    forecast_date: date
+    predicted_coverage_percentage: float
+    predicted_gaps: int
+    confidence_level: float  # 0-1
+    trend: str  # "improving", "stable", "declining"
+    risk_factors: list[str]
+
+
+class CoverageForecastResponse(BaseModel):
+    """Response for coverage forecast endpoint."""
+    timestamp: datetime
+    forecast_start_date: date
+    forecast_end_date: date
+    overall_trend: str
+    average_predicted_coverage: float
+    forecasts: list[CoverageForecast]
+
+
 # ============================================================================
 # Helper Functions
 # ============================================================================
@@ -171,6 +237,198 @@ def get_health_status(db: Session) -> str:
         return "degraded"
     else:
         return "healthy"
+
+
+def classify_gap_severity(days_until: int, gap_size: int) -> str:
+    """Classify gap severity based on urgency and size."""
+    if days_until <= 3:
+        return "critical"
+    elif days_until <= 7:
+        return "high" if gap_size > 1 else "medium"
+    elif days_until <= 14:
+        return "medium" if gap_size > 1 else "low"
+    else:
+        return "low"
+
+
+def detect_coverage_gaps(db: Session, start_date: date, end_date: date) -> list[CoverageGap]:
+    """Detect all coverage gaps in the date range."""
+    gaps = []
+    today = date.today()
+
+    # Get all FMIT blocks in range
+    blocks = db.query(Block).filter(
+        and_(
+            Block.date >= start_date,
+            Block.date <= end_date,
+            Block.service_type == "FMIT"
+        )
+    ).all()
+
+    for block in blocks:
+        # Count current assignments for this block
+        assignments = db.query(Assignment).filter(
+            Assignment.block_id == block.id
+        ).all()
+
+        current_count = len(assignments)
+        required_count = 1  # Minimum required for FMIT coverage
+
+        if current_count < required_count:
+            gap_size = required_count - current_count
+            days_until = (block.date - today).days
+            severity = classify_gap_severity(days_until, gap_size)
+
+            # Determine affected area based on rotation template
+            affected_area = "FMIT"
+            department = None
+
+            if assignments:
+                for assignment in assignments:
+                    if assignment.rotation_template:
+                        affected_area = assignment.rotation_template.name
+                        if assignment.rotation_template.requires_specialty:
+                            department = assignment.rotation_template.requires_specialty
+                        break
+
+            gaps.append(CoverageGap(
+                gap_id=f"{block.id}_{block.date}_{block.time_of_day}",
+                date=block.date,
+                time_of_day=block.time_of_day,
+                block_id=str(block.id),
+                severity=severity,
+                days_until=days_until,
+                affected_area=affected_area,
+                department=department,
+                current_assignments=current_count,
+                required_assignments=required_count,
+                gap_size=gap_size,
+            ))
+
+    return gaps
+
+
+def find_available_faculty(db: Session, target_date: date, time_of_day: str) -> list[str]:
+    """Find faculty available for a specific date/time."""
+    # Get all faculty (people with faculty role)
+    all_faculty = db.query(Person).filter(
+        Person.role.in_(["faculty", "attending", "chief"])
+    ).all()
+
+    available = []
+
+    # Find block for target date/time
+    target_block = db.query(Block).filter(
+        and_(
+            Block.date == target_date,
+            Block.time_of_day == time_of_day
+        )
+    ).first()
+
+    if not target_block:
+        return []
+
+    for faculty in all_faculty:
+        # Check if faculty already has assignment on this block
+        existing = db.query(Assignment).filter(
+            and_(
+                Assignment.block_id == target_block.id,
+                Assignment.person_id == faculty.id
+            )
+        ).first()
+
+        if not existing:
+            # Check for conflicts (assignments on other blocks at same time)
+            same_time_blocks = db.query(Block).filter(
+                and_(
+                    Block.date == target_date,
+                    Block.time_of_day == time_of_day
+                )
+            ).all()
+
+            block_ids = [b.id for b in same_time_blocks]
+            conflicts = db.query(Assignment).filter(
+                and_(
+                    Assignment.person_id == faculty.id,
+                    Assignment.block_id.in_(block_ids)
+                )
+            ).count()
+
+            if conflicts == 0:
+                available.append(f"{faculty.first_name} {faculty.last_name}")
+
+    return available
+
+
+def calculate_conflict_score(db: Session, faculty_id: str, target_date: date) -> float:
+    """Calculate a conflict score for assigning faculty to a date (0-1, lower is better)."""
+    score = 0.0
+
+    # Check assignments in surrounding dates (workload balance)
+    week_start = target_date - timedelta(days=target_date.weekday())
+    week_end = week_start + timedelta(days=6)
+
+    week_assignments = db.query(Assignment).join(Block).filter(
+        and_(
+            Assignment.person_id == faculty_id,
+            Block.date >= week_start,
+            Block.date <= week_end
+        )
+    ).count()
+
+    # More assignments = higher score
+    score += min(week_assignments / 10.0, 0.5)
+
+    # Check for adjacent day assignments (prefer spacing)
+    adjacent_dates = [target_date - timedelta(days=1), target_date + timedelta(days=1)]
+    adjacent_assignments = db.query(Assignment).join(Block).filter(
+        and_(
+            Assignment.person_id == faculty_id,
+            Block.date.in_(adjacent_dates)
+        )
+    ).count()
+
+    score += adjacent_assignments * 0.15
+
+    # Check for active alerts
+    active_alerts = db.query(ConflictAlert).filter(
+        and_(
+            ConflictAlert.faculty_id == faculty_id,
+            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
+        )
+    ).count()
+
+    score += min(active_alerts / 5.0, 0.2)
+
+    return min(score, 1.0)
+
+
+def analyze_coverage_trend(db: Session, weeks_back: int = 12) -> str:
+    """Analyze coverage trend over past weeks."""
+    today = date.today()
+    coverage_samples = []
+
+    for i in range(weeks_back):
+        week_start = today - timedelta(days=(weeks_back - i) * 7)
+        week_end = week_start + timedelta(days=6)
+        coverage = calculate_coverage_percentage(db, week_start, week_end)
+        coverage_samples.append(coverage)
+
+    if len(coverage_samples) < 3:
+        return "stable"
+
+    # Calculate trend using simple linear regression
+    recent_avg = sum(coverage_samples[-4:]) / 4
+    older_avg = sum(coverage_samples[:4]) / 4
+
+    diff = recent_avg - older_avg
+
+    if diff > 5:
+        return "improving"
+    elif diff < -5:
+        return "declining"
+    else:
+        return "stable"
 
 
 # ============================================================================
@@ -505,10 +763,16 @@ async def get_fmit_metrics(
 async def get_coverage_report(
     start_date: date | None = Query(None, description="Start date (default: today)"),
     end_date: date | None = Query(None, description="End date (default: 30 days from start)"),
+    period: str = Query("weekly", description="Grouping period: daily, weekly, or monthly"),
     db: Session = Depends(get_db),
 ):
     """
     Get coverage report for FMIT assignments over a date range.
+
+    Enhanced with:
+    - Gap detection by time period (daily, weekly, monthly)
+    - Gap severity classification
+    - Affected areas/departments
 
     Returns week-by-week coverage data showing:
     - Total FMIT slots
@@ -525,14 +789,30 @@ async def get_coverage_report(
     # Calculate overall coverage
     overall_coverage = calculate_coverage_percentage(db, start_date, end_date)
 
-    # Build week-by-week report
+    # Build report based on period
     weeks = []
     current = start_date
 
-    while current <= end_date:
-        week_end = min(current + timedelta(days=6), end_date)
+    # Determine period increment
+    if period == "daily":
+        increment = 1
+    elif period == "monthly":
+        increment = 30
+    else:  # weekly (default)
+        increment = 7
 
-        # Get FMIT blocks for this week
+    while current <= end_date:
+        if period == "monthly":
+            # For monthly, use calendar month boundaries
+            if current.month == 12:
+                week_end = current.replace(year=current.year + 1, month=1, day=1) - timedelta(days=1)
+            else:
+                week_end = current.replace(month=current.month + 1, day=1) - timedelta(days=1)
+            week_end = min(week_end, end_date)
+        else:
+            week_end = min(current + timedelta(days=increment - 1), end_date)
+
+        # Get FMIT blocks for this period
         week_blocks = db.query(Block).filter(
             and_(
                 Block.date >= current,
@@ -567,7 +847,14 @@ async def get_coverage_report(
             faculty_assigned=sorted(faculty_names),
         ))
 
-        current = week_end + timedelta(days=1)
+        if period == "monthly":
+            # Move to first day of next month
+            if current.month == 12:
+                current = current.replace(year=current.year + 1, month=1, day=1)
+            else:
+                current = current.replace(month=current.month + 1, day=1)
+        else:
+            current = week_end + timedelta(days=1)
 
     return CoverageReport(
         start_date=start_date,
@@ -575,6 +862,301 @@ async def get_coverage_report(
         total_weeks=len(weeks),
         overall_coverage_percentage=overall_coverage,
         weeks=weeks,
+    )
+
+
+@router.get("/coverage/gaps", response_model=CoverageGapsResponse)
+async def get_coverage_gaps(
+    start_date: date | None = Query(None, description="Start date (default: today)"),
+    end_date: date | None = Query(None, description="End date (default: 60 days from start)"),
+    severity_filter: str | None = Query(None, description="Filter by severity: critical, high, medium, low"),
+    db: Session = Depends(get_db),
+):
+    """
+    List all coverage gaps with detailed analysis.
+
+    Returns:
+    - All coverage gaps in date range
+    - Gaps classified by severity (critical, high, medium, low)
+    - Affected areas and departments
+    - Gap statistics by time period
+    """
+    timestamp = datetime.utcnow()
+
+    # Default date range
+    if start_date is None:
+        start_date = date.today()
+    if end_date is None:
+        end_date = start_date + timedelta(days=60)
+
+    # Detect all gaps
+    all_gaps = detect_coverage_gaps(db, start_date, end_date)
+
+    # Filter by severity if requested
+    if severity_filter:
+        all_gaps = [gap for gap in all_gaps if gap.severity == severity_filter.lower()]
+
+    # Count gaps by severity
+    critical_gaps = sum(1 for gap in all_gaps if gap.severity == "critical")
+    high_priority_gaps = sum(1 for gap in all_gaps if gap.severity == "high")
+    medium_priority_gaps = sum(1 for gap in all_gaps if gap.severity == "medium")
+    low_priority_gaps = sum(1 for gap in all_gaps if gap.severity == "low")
+
+    # Count gaps by period
+    today = date.today()
+    gaps_by_period = {
+        "daily": sum(1 for gap in all_gaps if gap.days_until <= 1),
+        "weekly": sum(1 for gap in all_gaps if 2 <= gap.days_until <= 7),
+        "monthly": sum(1 for gap in all_gaps if 8 <= gap.days_until <= 30),
+        "future": sum(1 for gap in all_gaps if gap.days_until > 30),
+    }
+
+    return CoverageGapsResponse(
+        timestamp=timestamp,
+        total_gaps=len(all_gaps),
+        critical_gaps=critical_gaps,
+        high_priority_gaps=high_priority_gaps,
+        medium_priority_gaps=medium_priority_gaps,
+        low_priority_gaps=low_priority_gaps,
+        gaps_by_period=gaps_by_period,
+        gaps=all_gaps,
+    )
+
+
+@router.get("/coverage/suggestions", response_model=CoverageSuggestionsResponse)
+async def get_coverage_suggestions(
+    start_date: date | None = Query(None, description="Start date (default: today)"),
+    end_date: date | None = Query(None, description="End date (default: 30 days from start)"),
+    max_suggestions: int = Query(20, description="Maximum number of suggestions to return"),
+    db: Session = Depends(get_db),
+):
+    """
+    Auto-suggest coverage solutions for gaps.
+
+    Returns:
+    - Suggested faculty assignments for each gap
+    - Conflict scores for each suggestion
+    - Alternative dates if primary date has conflicts
+    - Reasoning for each suggestion
+    """
+    timestamp = datetime.utcnow()
+
+    # Default date range
+    if start_date is None:
+        start_date = date.today()
+    if end_date is None:
+        end_date = start_date + timedelta(days=30)
+
+    # Get all gaps in range
+    gaps = detect_coverage_gaps(db, start_date, end_date)
+
+    # Sort gaps by severity (critical first)
+    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    gaps.sort(key=lambda g: (severity_order.get(g.severity, 4), g.days_until))
+
+    suggestions = []
+
+    # Generate suggestions for each gap (up to max_suggestions)
+    for gap in gaps[:max_suggestions]:
+        # Find available faculty for this slot
+        available_faculty = find_available_faculty(db, gap.date, gap.time_of_day)
+
+        if not available_faculty:
+            # No one available - suggest swap
+            suggestion = CoverageSuggestion(
+                gap_id=gap.gap_id,
+                suggestion_type="swap_recommended",
+                priority=1 if gap.severity == "critical" else 2,
+                faculty_candidates=[],
+                estimated_conflict_score=1.0,
+                reasoning=f"No faculty available on {gap.date}. Consider swap with existing assignments.",
+                alternative_dates=None,
+            )
+        else:
+            # Calculate conflict scores for available faculty
+            faculty_scores = []
+            for faculty_name in available_faculty[:5]:  # Top 5 candidates
+                # Get faculty person object
+                name_parts = faculty_name.split()
+                if len(name_parts) >= 2:
+                    person = db.query(Person).filter(
+                        and_(
+                            Person.first_name == name_parts[0],
+                            Person.last_name == " ".join(name_parts[1:])
+                        )
+                    ).first()
+
+                    if person:
+                        score = calculate_conflict_score(db, str(person.id), gap.date)
+                        faculty_scores.append((faculty_name, score))
+
+            # Sort by score (lower is better)
+            faculty_scores.sort(key=lambda x: x[1])
+
+            if faculty_scores:
+                best_score = faculty_scores[0][1]
+                reasoning = f"Recommended: {faculty_scores[0][0]} (conflict score: {best_score:.2f})"
+                if best_score < 0.3:
+                    reasoning += " - Excellent fit, minimal conflicts"
+                elif best_score < 0.6:
+                    reasoning += " - Good fit, some workload considerations"
+                else:
+                    reasoning += " - Available but high workload this week"
+
+                suggestion = CoverageSuggestion(
+                    gap_id=gap.gap_id,
+                    suggestion_type="assign_available",
+                    priority=1 if gap.severity == "critical" else 2,
+                    faculty_candidates=[name for name, _ in faculty_scores],
+                    estimated_conflict_score=best_score,
+                    reasoning=reasoning,
+                    alternative_dates=None,
+                )
+            else:
+                suggestion = CoverageSuggestion(
+                    gap_id=gap.gap_id,
+                    suggestion_type="overtime",
+                    priority=1,
+                    faculty_candidates=available_faculty,
+                    estimated_conflict_score=0.8,
+                    reasoning="Consider overtime or additional coverage arrangements",
+                    alternative_dates=None,
+                )
+
+        suggestions.append(suggestion)
+
+    return CoverageSuggestionsResponse(
+        timestamp=timestamp,
+        total_suggestions=len(suggestions),
+        gaps_addressed=len(suggestions),
+        suggestions=suggestions,
+    )
+
+
+@router.get("/coverage/forecast", response_model=CoverageForecastResponse)
+async def get_coverage_forecast(
+    weeks_ahead: int = Query(12, description="Number of weeks to forecast (1-52)"),
+    db: Session = Depends(get_db),
+):
+    """
+    Predict future coverage gaps based on trends.
+
+    Returns:
+    - Week-by-week coverage predictions
+    - Confidence levels for predictions
+    - Trend analysis (improving, stable, declining)
+    - Risk factors for each forecast period
+    """
+    timestamp = datetime.utcnow()
+    today = date.today()
+
+    # Limit weeks ahead to reasonable range
+    weeks_ahead = min(max(weeks_ahead, 1), 52)
+
+    # Analyze historical trend
+    overall_trend = analyze_coverage_trend(db, weeks_back=12)
+
+    # Calculate baseline coverage from recent weeks
+    recent_coverage = []
+    for i in range(4):
+        week_start = today - timedelta(days=(4 - i) * 7)
+        week_end = week_start + timedelta(days=6)
+        coverage = calculate_coverage_percentage(db, week_start, week_end)
+        recent_coverage.append(coverage)
+
+    baseline_coverage = sum(recent_coverage) / len(recent_coverage)
+
+    # Generate forecasts
+    forecasts = []
+    forecast_coverage_values = []
+
+    for week_num in range(weeks_ahead):
+        forecast_date = today + timedelta(days=week_num * 7)
+        week_end = forecast_date + timedelta(days=6)
+
+        # Adjust prediction based on trend
+        if overall_trend == "improving":
+            trend_adjustment = week_num * 0.5
+        elif overall_trend == "declining":
+            trend_adjustment = -week_num * 0.5
+        else:
+            trend_adjustment = 0
+
+        predicted_coverage = baseline_coverage + trend_adjustment
+        predicted_coverage = max(min(predicted_coverage, 100.0), 0.0)
+
+        # Confidence decreases with time
+        confidence = max(0.9 - (week_num * 0.02), 0.5)
+
+        # Calculate predicted gaps based on expected blocks
+        expected_blocks_per_week = 10  # Assumption
+        predicted_gaps = int(expected_blocks_per_week * (100 - predicted_coverage) / 100)
+
+        # Identify risk factors
+        risk_factors = []
+
+        if predicted_coverage < 85:
+            risk_factors.append("Below target coverage threshold (85%)")
+
+        # Check for upcoming holidays or known conflicts
+        holiday_blocks = db.query(Block).filter(
+            and_(
+                Block.date >= forecast_date,
+                Block.date <= week_end,
+                Block.is_holiday == True
+            )
+        ).count()
+
+        if holiday_blocks > 0:
+            risk_factors.append(f"{holiday_blocks} holiday blocks may reduce availability")
+
+        # Check pending swaps affecting this period
+        pending_swaps_future = db.query(SwapRecord).filter(
+            and_(
+                SwapRecord.status == SwapStatus.PENDING,
+                SwapRecord.created_at <= datetime.combine(week_end, datetime.max.time())
+            )
+        ).count()
+
+        if pending_swaps_future > 5:
+            risk_factors.append(f"{pending_swaps_future} pending swaps may impact schedule")
+
+        if week_num > 8 and confidence < 0.7:
+            risk_factors.append("Long-range forecast - lower confidence")
+
+        # Determine period trend
+        if week_num == 0:
+            period_trend = overall_trend
+        else:
+            prev_coverage = forecasts[-1].predicted_coverage_percentage
+            if predicted_coverage > prev_coverage + 2:
+                period_trend = "improving"
+            elif predicted_coverage < prev_coverage - 2:
+                period_trend = "declining"
+            else:
+                period_trend = "stable"
+
+        forecast = CoverageForecast(
+            forecast_date=forecast_date,
+            predicted_coverage_percentage=predicted_coverage,
+            predicted_gaps=predicted_gaps,
+            confidence_level=confidence,
+            trend=period_trend,
+            risk_factors=risk_factors,
+        )
+
+        forecasts.append(forecast)
+        forecast_coverage_values.append(predicted_coverage)
+
+    avg_predicted_coverage = sum(forecast_coverage_values) / len(forecast_coverage_values)
+
+    return CoverageForecastResponse(
+        timestamp=timestamp,
+        forecast_start_date=today,
+        forecast_end_date=today + timedelta(days=weeks_ahead * 7),
+        overall_trend=overall_trend,
+        average_predicted_coverage=avg_predicted_coverage,
+        forecasts=forecasts,
     )
 
 

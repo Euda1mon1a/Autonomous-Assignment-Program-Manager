@@ -18,6 +18,8 @@ from app.schemas.visualization import (
     CoverageHeatmapResponse,
     ExportRequest,
     HeatmapResponse,
+    TimeRangeType,
+    UnifiedHeatmapRequest,
 )
 from app.services.heatmap_service import HeatmapService
 
@@ -73,6 +75,62 @@ def get_unified_heatmap(
         include_fmit=include_fmit,
         group_by=group_by,
     )
+
+
+@router.post("/heatmap/unified", response_model=HeatmapResponse)
+def get_unified_heatmap_with_time_range(
+    request: UnifiedHeatmapRequest,
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> HeatmapResponse:
+    """
+    Generate unified heatmap with convenient time range specification.
+
+    This endpoint provides an easier way to specify time ranges using
+    predefined periods (week, month, quarter) instead of exact dates.
+    Combines both residency and FMIT schedule data.
+
+    Args:
+        request: UnifiedHeatmapRequest with time range and filter options
+
+    Returns:
+        HeatmapResponse with visualization data
+
+    Raises:
+        HTTPException: If time range specification is invalid
+    """
+    if request.group_by not in ["person", "rotation"]:
+        raise HTTPException(
+            status_code=400, detail="group_by must be 'person' or 'rotation'"
+        )
+
+    service = HeatmapService()
+
+    # Calculate date range from time_range specification
+    try:
+        start_date, end_date = service.calculate_date_range(request.time_range)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Generate unified heatmap
+    result = service.generate_unified_heatmap(
+        db=db,
+        start_date=start_date,
+        end_date=end_date,
+        person_ids=request.person_ids,
+        rotation_ids=request.rotation_ids,
+        include_fmit=request.include_fmit,
+        group_by=request.group_by,
+    )
+
+    # Add calculated date range to metadata
+    if result.metadata is None:
+        result.metadata = {}
+    result.metadata["time_range_type"] = request.time_range.range_type
+    result.metadata["calculated_start_date"] = start_date.isoformat()
+    result.metadata["calculated_end_date"] = end_date.isoformat()
+
+    return result
 
 
 @router.get("/heatmap/image")

@@ -1,5 +1,5 @@
 """Calendar export API routes."""
-from datetime import date
+from datetime import date, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -14,6 +14,102 @@ from app.schemas.calendar import (
 from app.services.calendar_service import CalendarService
 
 router = APIRouter()
+
+
+@router.get("/export/ics")
+def export_all_calendars(
+    start_date: date = Query(..., description="Start date for calendar export"),
+    end_date: date = Query(..., description="End date for calendar export"),
+    person_ids: list[UUID] | None = Query(None, description="Person UUIDs to filter"),
+    rotation_ids: list[UUID] | None = Query(None, description="Rotation UUIDs to filter"),
+    include_types: list[str] | None = Query(None, description="Activity types to include"),
+    db: Session = Depends(get_db),
+) -> Response:
+    """
+    Export complete schedule as ICS file.
+
+    Downloads an ICS file containing all assignments within the date range.
+    Can be filtered by persons, rotations, or activity types.
+    Compatible with Google Calendar, Outlook, and Apple Calendar.
+
+    Args:
+        start_date: Start date for export (YYYY-MM-DD)
+        end_date: End date for export (YYYY-MM-DD)
+        person_ids: Optional list of person UUIDs to filter
+        rotation_ids: Optional list of rotation UUIDs to filter
+        include_types: Optional list of activity types to filter
+        db: Database session
+
+    Returns:
+        ICS file download
+    """
+    try:
+        ics_content = CalendarService.generate_ics_all(
+            db=db,
+            start_date=start_date,
+            end_date=end_date,
+            person_ids=person_ids,
+            rotation_ids=rotation_ids,
+            include_types=include_types,
+        )
+
+        # Return ICS file as download
+        return Response(
+            content=ics_content,
+            media_type="text/calendar",
+            headers={
+                "Content-Disposition": f'attachment; filename="complete_schedule_{start_date}_{end_date}.ics"'
+            },
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate calendar: {str(e)}")
+
+
+@router.get("/export/ics/{person_id}")
+def export_person_ics(
+    person_id: UUID,
+    start_date: date = Query(..., description="Start date for calendar export"),
+    end_date: date = Query(..., description="End date for calendar export"),
+    include_types: list[str] | None = Query(None, description="Activity types to include"),
+    db: Session = Depends(get_db),
+) -> Response:
+    """
+    Export individual's schedule as ICS file.
+
+    Downloads an ICS file containing all assignments for the specified person
+    within the date range. Can be imported into Google Calendar, Outlook, or Apple Calendar.
+
+    Args:
+        person_id: Person UUID
+        start_date: Start date for export (YYYY-MM-DD)
+        end_date: End date for export (YYYY-MM-DD)
+        include_types: Optional list of activity types to filter
+        db: Database session
+
+    Returns:
+        ICS file download
+    """
+    try:
+        ics_content = CalendarService.generate_ics_for_person(
+            db=db,
+            person_id=person_id,
+            start_date=start_date,
+            end_date=end_date,
+            include_types=include_types,
+        )
+
+        # Return ICS file as download
+        return Response(
+            content=ics_content,
+            media_type="text/calendar",
+            headers={
+                "Content-Disposition": f'attachment; filename="schedule_{person_id}_{start_date}_{end_date}.ics"'
+            },
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate calendar: {str(e)}")
 
 
 @router.get("/export/person/{person_id}")

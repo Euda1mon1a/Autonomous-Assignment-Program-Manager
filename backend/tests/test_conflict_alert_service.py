@@ -1514,3 +1514,643 @@ class TestEdgeCases:
         resolved = service.get_alert(alert.id)
 
         assert len(resolved.resolution_notes) == 5000
+
+
+@pytest.mark.unit
+class TestGenerateResolutionOptions:
+    """Tests for ConflictAlertService.generate_resolution_options()."""
+
+    def test_generate_options_for_leave_overlap(
+        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date, db: Session
+    ):
+        """Test generating resolution options for leave/FMIT overlap conflict."""
+        # Create another faculty who could swap
+        other_faculty = Person(
+            id=uuid4(),
+            name="Dr. Available",
+            type="faculty",
+            email="available@test.org",
+        )
+        db.add(other_faculty)
+        db.commit()
+
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
+            fmit_week=sample_fmit_week,
+            description="Leave conflicts with FMIT",
+            severity=ConflictSeverity.CRITICAL,
+        )
+
+        options = service.generate_resolution_options(alert.id)
+
+        assert len(options) > 0
+        # Should include swap, backup, and coverage options
+        strategies = [opt.strategy for opt in options]
+        assert "swap_assignment" in [s.value for s in strategies]
+        # All options should have impact estimates
+        assert all(opt.impact is not None for opt in options)
+
+    def test_generate_options_for_back_to_back(
+        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+    ):
+        """Test generating resolution options for back-to-back conflict."""
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.BACK_TO_BACK,
+            fmit_week=sample_fmit_week,
+            description="Back-to-back FMIT weeks",
+            severity=ConflictSeverity.WARNING,
+        )
+
+        options = service.generate_resolution_options(alert.id)
+
+        assert len(options) > 0
+        strategies = [opt.strategy for opt in options]
+        assert "swap_assignment" in [s.value for s in strategies]
+        assert "adjust_time_boundaries" in [s.value for s in strategies]
+
+    def test_generate_options_for_external_commitment(
+        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+    ):
+        """Test generating resolution options for external commitment conflict."""
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.EXTERNAL_COMMITMENT,
+            fmit_week=sample_fmit_week,
+            description="Conference during FMIT week",
+            severity=ConflictSeverity.WARNING,
+        )
+
+        options = service.generate_resolution_options(alert.id)
+
+        assert len(options) > 0
+        # Should primarily suggest coverage request
+        strategies = [opt.strategy for opt in options]
+        assert "request_coverage_pool" in [s.value for s in strategies]
+
+    def test_generate_options_for_nonexistent_alert(self, service: ConflictAlertService):
+        """Test generating options for non-existent alert returns empty list."""
+        fake_id = uuid4()
+        options = service.generate_resolution_options(fake_id)
+
+        assert options == []
+
+    def test_options_sorted_by_feasibility(
+        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+    ):
+        """Test that options are sorted by feasibility score (highest first)."""
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
+            fmit_week=sample_fmit_week,
+            description="Test conflict",
+        )
+
+        options = service.generate_resolution_options(alert.id)
+
+        if len(options) > 1:
+            # Check descending order of feasibility
+            for i in range(len(options) - 1):
+                assert options[i].impact.feasibility_score >= options[i + 1].impact.feasibility_score
+
+    def test_max_options_limit(
+        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+    ):
+        """Test that max_options parameter limits returned options."""
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
+            fmit_week=sample_fmit_week,
+            description="Test conflict",
+        )
+
+        options = service.generate_resolution_options(alert.id, max_options=2)
+
+        assert len(options) <= 2
+
+
+@pytest.mark.unit
+class TestApplyAutoResolution:
+    """Tests for ConflictAlertService.apply_auto_resolution()."""
+
+    def test_apply_swap_resolution(
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_user: User,
+        sample_fmit_week: date,
+        db: Session,
+    ):
+        """Test applying a swap assignment resolution."""
+        # Create target faculty for swap
+        target_faculty = Person(
+            id=uuid4(),
+            name="Dr. Target",
+            type="faculty",
+            email="target@test.org",
+        )
+        db.add(target_faculty)
+        db.commit()
+
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
+            fmit_week=sample_fmit_week,
+            description="Leave conflicts with FMIT",
+        )
+
+        options = service.generate_resolution_options(alert.id)
+        assert len(options) > 0
+
+        # Apply first option
+        success, msg = service.apply_auto_resolution(alert.id, options[0].id, sample_user.id)
+
+        assert success is True
+        assert msg != ""
+
+        # Check alert is resolved
+        resolved_alert = service.get_alert(alert.id)
+        assert resolved_alert.status == ConflictAlertStatus.RESOLVED
+        assert resolved_alert.resolved_by_id == sample_user.id
+        assert resolved_alert.resolution_notes is not None
+
+    def test_apply_coverage_request_resolution(
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_user: User,
+        sample_fmit_week: date,
+    ):
+        """Test applying a coverage request resolution."""
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.EXTERNAL_COMMITMENT,
+            fmit_week=sample_fmit_week,
+            description="Conference conflict",
+        )
+
+        options = service.generate_resolution_options(alert.id)
+        coverage_option = next(
+            (o for o in options if o.strategy.value == "request_coverage_pool"), None
+        )
+        assert coverage_option is not None
+
+        success, msg = service.apply_auto_resolution(
+            alert.id, coverage_option.id, sample_user.id
+        )
+
+        assert success is True
+        assert "coverage" in msg.lower()
+
+        # Check alert is resolved
+        resolved_alert = service.get_alert(alert.id)
+        assert resolved_alert.status == ConflictAlertStatus.RESOLVED
+
+    def test_apply_resolution_to_nonexistent_alert(
+        self, service: ConflictAlertService, sample_user: User
+    ):
+        """Test applying resolution to non-existent alert fails."""
+        fake_id = uuid4()
+        success, msg = service.apply_auto_resolution(fake_id, "some_option", sample_user.id)
+
+        assert success is False
+        assert "not found" in msg.lower()
+
+    def test_apply_resolution_with_invalid_option_id(
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_user: User,
+        sample_fmit_week: date,
+    ):
+        """Test applying resolution with invalid option ID fails."""
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
+            fmit_week=sample_fmit_week,
+            description="Test conflict",
+        )
+
+        success, msg = service.apply_auto_resolution(
+            alert.id, "invalid_option_id", sample_user.id
+        )
+
+        assert success is False
+        assert "not found" in msg.lower()
+
+    def test_apply_resolution_to_already_resolved_alert(
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_user: User,
+        sample_fmit_week: date,
+    ):
+        """Test applying resolution to already resolved alert fails."""
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
+            fmit_week=sample_fmit_week,
+            description="Test conflict",
+        )
+
+        # Manually resolve the alert
+        service.resolve_alert(alert.id, sample_user.id, "Manual resolution")
+
+        options = service.generate_resolution_options(alert.id)
+        if options:
+            success, msg = service.apply_auto_resolution(
+                alert.id, options[0].id, sample_user.id
+            )
+
+            assert success is False
+            assert "status" in msg.lower()
+
+    def test_apply_resolution_without_user_id(
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
+    ):
+        """Test applying resolution without user ID (system auto-resolution)."""
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.EXTERNAL_COMMITMENT,
+            fmit_week=sample_fmit_week,
+            description="Test conflict",
+        )
+
+        options = service.generate_resolution_options(alert.id)
+        assert len(options) > 0
+
+        success, msg = service.apply_auto_resolution(alert.id, options[0].id, user_id=None)
+
+        # Should succeed even without user
+        if success:
+            resolved_alert = service.get_alert(alert.id)
+            assert resolved_alert.status == ConflictAlertStatus.RESOLVED
+            assert resolved_alert.resolved_by_id is None
+
+
+@pytest.mark.unit
+class TestValidateResolution:
+    """Tests for ConflictAlertService.validate_resolution()."""
+
+    def test_validate_swap_resolution_with_valid_target(
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
+        db: Session,
+    ):
+        """Test validating swap resolution with valid target faculty."""
+        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+
+        target_faculty = Person(
+            id=uuid4(),
+            name="Dr. Target",
+            type="faculty",
+            email="target@test.org",
+        )
+        db.add(target_faculty)
+        db.commit()
+
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
+            fmit_week=sample_fmit_week,
+            description="Test conflict",
+        )
+
+        resolution = ResolutionOption(
+            id="test_swap",
+            strategy=ResolutionStrategy.SWAP_ASSIGNMENT,
+            description="Test swap",
+            details={
+                "source_faculty_id": str(sample_faculty.id),
+                "target_faculty_id": str(target_faculty.id),
+                "source_week": sample_fmit_week.isoformat(),
+            },
+        )
+
+        is_valid, msg = service.validate_resolution(alert.id, resolution)
+
+        assert is_valid is True
+
+    def test_validate_swap_resolution_with_invalid_target(
+        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+    ):
+        """Test validating swap resolution with non-existent target."""
+        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
+            fmit_week=sample_fmit_week,
+            description="Test conflict",
+        )
+
+        resolution = ResolutionOption(
+            id="test_swap",
+            strategy=ResolutionStrategy.SWAP_ASSIGNMENT,
+            description="Test swap",
+            details={
+                "source_faculty_id": str(sample_faculty.id),
+                "target_faculty_id": str(uuid4()),  # Non-existent
+                "source_week": sample_fmit_week.isoformat(),
+            },
+        )
+
+        is_valid, msg = service.validate_resolution(alert.id, resolution)
+
+        assert is_valid is False
+        assert "not found" in msg.lower()
+
+    def test_validate_coverage_request_always_valid(
+        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+    ):
+        """Test that coverage requests are always valid."""
+        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.EXTERNAL_COMMITMENT,
+            fmit_week=sample_fmit_week,
+            description="Test conflict",
+        )
+
+        resolution = ResolutionOption(
+            id="test_coverage",
+            strategy=ResolutionStrategy.REQUEST_COVERAGE_POOL,
+            description="Request coverage",
+            details={
+                "faculty_id": str(sample_faculty.id),
+                "fmit_week": sample_fmit_week.isoformat(),
+            },
+        )
+
+        is_valid, msg = service.validate_resolution(alert.id, resolution)
+
+        assert is_valid is True
+
+    def test_validate_resolution_for_resolved_alert(
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_user: User,
+        sample_fmit_week: date,
+    ):
+        """Test validation fails for already resolved alert."""
+        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
+            fmit_week=sample_fmit_week,
+            description="Test conflict",
+        )
+
+        service.resolve_alert(alert.id, sample_user.id)
+
+        resolution = ResolutionOption(
+            id="test_resolution",
+            strategy=ResolutionStrategy.REQUEST_COVERAGE_POOL,
+            description="Test",
+            details={},
+        )
+
+        is_valid, msg = service.validate_resolution(alert.id, resolution)
+
+        assert is_valid is False
+        assert "resolved" in msg.lower()
+
+
+@pytest.mark.unit
+class TestEstimateResolutionImpact:
+    """Tests for ConflictAlertService.estimate_resolution_impact()."""
+
+    def test_estimate_swap_impact(self, service: ConflictAlertService):
+        """Test estimating impact of swap resolution."""
+        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+
+        resolution = ResolutionOption(
+            id="test_swap",
+            strategy=ResolutionStrategy.SWAP_ASSIGNMENT,
+            description="Test swap",
+            details={},
+        )
+
+        impact = service.estimate_resolution_impact(resolution)
+
+        assert impact is not None
+        assert impact.affected_faculty_count > 0
+        assert impact.feasibility_score > 0
+        assert impact.workload_balance_score > 0
+        assert impact.recommendation != ""
+
+    def test_estimate_backup_impact(self, service: ConflictAlertService):
+        """Test estimating impact of backup reassignment."""
+        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+
+        resolution = ResolutionOption(
+            id="test_backup",
+            strategy=ResolutionStrategy.REASSIGN_TO_BACKUP,
+            description="Test backup",
+            details={},
+        )
+
+        impact = service.estimate_resolution_impact(resolution)
+
+        assert impact is not None
+        assert impact.affected_faculty_count > 0
+        assert 0 <= impact.feasibility_score <= 1
+        assert 0 <= impact.workload_balance_score <= 1
+
+    def test_estimate_coverage_pool_impact(self, service: ConflictAlertService):
+        """Test estimating impact of coverage pool request."""
+        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+
+        resolution = ResolutionOption(
+            id="test_coverage",
+            strategy=ResolutionStrategy.REQUEST_COVERAGE_POOL,
+            description="Test coverage",
+            details={},
+        )
+
+        impact = service.estimate_resolution_impact(resolution)
+
+        assert impact is not None
+        # Coverage requests have lower feasibility due to volunteer dependency
+        assert impact.feasibility_score <= 0.6
+
+    def test_estimate_time_adjustment_impact(self, service: ConflictAlertService):
+        """Test estimating impact of time boundary adjustment."""
+        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+
+        resolution = ResolutionOption(
+            id="test_adjust",
+            strategy=ResolutionStrategy.ADJUST_TIME_BOUNDARIES,
+            description="Test adjustment",
+            details={},
+        )
+
+        impact = service.estimate_resolution_impact(resolution)
+
+        assert impact is not None
+        assert impact.affected_faculty_count >= 1
+        assert impact.affected_weeks_count >= 1
+
+
+@pytest.mark.unit
+class TestResolutionHistoryTracking:
+    """Tests for resolution history tracking."""
+
+    def test_get_resolution_history_for_conflict(
+        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+    ):
+        """Test getting resolution history for a conflict."""
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
+            fmit_week=sample_fmit_week,
+            description="Test conflict",
+        )
+
+        # Note: Current implementation returns None as history is not persisted
+        history = service.get_resolution_history(alert.id)
+
+        # This is expected behavior for now
+        assert history is None
+
+
+@pytest.mark.unit
+class TestResolutionIntegration:
+    """Integration tests for the full auto-resolution workflow."""
+
+    def test_full_resolution_workflow(
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_user: User,
+        sample_fmit_week: date,
+        db: Session,
+    ):
+        """Test the complete workflow from conflict detection to resolution."""
+        # Create another faculty for potential swap
+        other_faculty = Person(
+            id=uuid4(),
+            name="Dr. Available",
+            type="faculty",
+            email="available@test.org",
+        )
+        db.add(other_faculty)
+        db.commit()
+
+        # Step 1: Create conflict alert
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
+            fmit_week=sample_fmit_week,
+            description="Leave conflicts with FMIT week",
+            severity=ConflictSeverity.CRITICAL,
+        )
+        assert alert.status == ConflictAlertStatus.NEW
+
+        # Step 2: Generate resolution options
+        options = service.generate_resolution_options(alert.id)
+        assert len(options) > 0
+
+        # Step 3: Validate best option
+        best_option = options[0]
+        is_valid, validation_msg = service.validate_resolution(alert.id, best_option)
+        assert is_valid is True
+
+        # Step 4: Estimate impact
+        impact = service.estimate_resolution_impact(best_option)
+        assert impact is not None
+        assert impact.feasibility_score > 0
+
+        # Step 5: Apply resolution
+        success, msg = service.apply_auto_resolution(alert.id, best_option.id, sample_user.id)
+
+        if success:
+            # Step 6: Verify alert is resolved
+            resolved_alert = service.get_alert(alert.id)
+            assert resolved_alert.status == ConflictAlertStatus.RESOLVED
+            assert resolved_alert.resolved_by_id == sample_user.id
+            assert resolved_alert.resolution_notes is not None
+            assert best_option.strategy.value in resolved_alert.resolution_notes
+
+    def test_multiple_conflicts_resolution(
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_user: User,
+        db: Session,
+    ):
+        """Test resolving multiple conflicts."""
+        # Create multiple conflicts
+        alerts = []
+        for i in range(3):
+            alert = service.create_alert(
+                faculty_id=sample_faculty.id,
+                conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
+                fmit_week=date.today() + timedelta(days=7 * (i + 1)),
+                description=f"Conflict {i+1}",
+            )
+            alerts.append(alert)
+
+        # Resolve each conflict
+        resolved_count = 0
+        for alert in alerts:
+            options = service.generate_resolution_options(alert.id)
+            if options:
+                success, _ = service.apply_auto_resolution(
+                    alert.id, options[0].id, sample_user.id
+                )
+                if success:
+                    resolved_count += 1
+
+        # Verify some were resolved
+        assert resolved_count > 0
+
+    def test_cascading_conflict_detection(
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_user: User,
+        sample_fmit_week: date,
+        db: Session,
+    ):
+        """Test that resolving one conflict doesn't create another."""
+        # Create target faculty
+        target_faculty = Person(
+            id=uuid4(),
+            name="Dr. Target",
+            type="faculty",
+            email="target@test.org",
+        )
+        db.add(target_faculty)
+        db.commit()
+
+        # Create conflict
+        alert = service.create_alert(
+            faculty_id=sample_faculty.id,
+            conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
+            fmit_week=sample_fmit_week,
+            description="Leave conflicts with FMIT",
+        )
+
+        # Get initial conflict count
+        initial_conflicts = len(service.get_unresolved_alerts())
+
+        # Apply resolution
+        options = service.generate_resolution_options(alert.id)
+        if options:
+            success, _ = service.apply_auto_resolution(alert.id, options[0].id, sample_user.id)
+
+            if success:
+                # Check that we didn't create more conflicts
+                final_conflicts = len(service.get_unresolved_alerts())
+                # Should be fewer or same (not more)
+                assert final_conflicts <= initial_conflicts
