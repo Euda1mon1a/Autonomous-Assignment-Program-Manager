@@ -2,10 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* "Bare Metal" Background - Technical Precision Grid */
+  body {
+    @apply bg-slate-50 text-slate-900;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgb(203 213 225) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+
+  /* Dark Mode (Stealth Mode) */
+  .dark body {
+    @apply bg-slate-950 text-slate-100;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgb(51 65 85) 1px, transparent 0);
+  }
+}
+
 /* Custom styles for the scheduler */
 @layer components {
+  /* "Liquid Glass" Panel - HUD aesthetic */
+  .glass-panel {
+    @apply bg-white/80 backdrop-blur-md border border-white/30 shadow-xl rounded-xl;
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.1),
+      0 2px 4px -2px rgb(0 0 0 / 0.1),
+      inset 0 0 0 1px rgb(255 255 255 / 0.5);
+  }
+
+  /* Glass panel hover state */
+  .glass-panel-interactive {
+    @apply glass-panel transition-all duration-300;
+  }
+  .glass-panel-interactive:hover {
+    @apply -translate-y-0.5;
+    box-shadow:
+      0 8px 12px -2px rgb(0 0 0 / 0.12),
+      0 4px 6px -2px rgb(0 0 0 / 0.08),
+      inset 0 0 0 1px rgb(255 255 255 / 0.6);
+  }
+
+  /* Dark mode glass panel */
+  .dark .glass-panel {
+    @apply bg-slate-900/80 border-slate-700/30;
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.3),
+      0 2px 4px -2px rgb(0 0 0 / 0.2),
+      inset 0 0 0 1px rgb(255 255 255 / 0.1);
+  }
+
   .btn-primary {
     @apply bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors;
+  }
+
+  /* "Liquid" Action Button - responsive glow effect */
+  .btn-liquid {
+    @apply relative overflow-hidden bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300;
+    @apply hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(37,99,235,0.5)];
+    @apply active:scale-95;
   }
 
   .btn-secondary {
@@ -22,6 +76,17 @@
 
   .schedule-cell {
     @apply p-2 border-r cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all;
+  }
+
+  /* Status indicator glow effects */
+  .status-glow-green {
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+  }
+  .status-glow-amber {
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+  }
+  .status-glow-red {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
   }
 }
 
