@@ -6,8 +6,9 @@ FastAPI application for managing residency program schedules.
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.routes import api_router
@@ -111,8 +112,17 @@ if settings.TRUSTED_HOSTS:
 # Audit context middleware - captures user for version history tracking
 app.add_middleware(AuditContextMiddleware)
 
+# Backwards compatibility redirect - redirect /api/... to /api/v1/...
+@app.middleware("http")
+async def redirect_old_api(request: Request, call_next):
+    """Redirect legacy /api routes to /api/v1 for backwards compatibility."""
+    if request.url.path.startswith("/api/") and not request.url.path.startswith("/api/v1/"):
+        new_path = request.url.path.replace("/api/", "/api/v1/", 1)
+        return RedirectResponse(url=new_path, status_code=307)
+    return await call_next(request)
+
 # Include API routes
-app.include_router(api_router, prefix="/api")
+app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/")

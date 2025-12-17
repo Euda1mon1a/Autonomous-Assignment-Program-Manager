@@ -37,7 +37,7 @@ router = APIRouter()
 
 
 @router.post("/generate", response_model=ScheduleResponse)
-async def generate_schedule(
+def generate_schedule(
     request: ScheduleRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -139,7 +139,7 @@ async def generate_schedule(
 
 
 @router.get("/validate", response_model=ValidationResult)
-async def validate_schedule(
+def validate_schedule(
     start_date: str,
     end_date: str,
     db: Session = Depends(get_db),
@@ -204,7 +204,7 @@ async def handle_emergency_coverage(
 
 
 @router.get("/{start_date}/{end_date}")
-async def get_schedule(start_date: str, end_date: str, db: Session = Depends(get_db)):
+def get_schedule(start_date: str, end_date: str, db: Session = Depends(get_db)):
     """
     Get the schedule for a date range.
 
@@ -265,7 +265,7 @@ async def get_schedule(start_date: str, end_date: str, db: Session = Depends(get
 
 
 @router.post("/import/analyze", response_model=ImportAnalysisResponse)
-async def analyze_imported_schedules(
+def analyze_imported_schedules(
     fmit_file: UploadFile = File(..., description="FMIT rotation schedule Excel file"),
     clinic_file: UploadFile | None = File(None, description="Clinic schedule Excel file (optional)"),
     specialty_providers: str | None = Form(
@@ -309,7 +309,7 @@ async def analyze_imported_schedules(
 
     # Read file contents
     try:
-        fmit_bytes = await fmit_file.read()
+        fmit_bytes = fmit_file.file.read()
     except Exception as e:
         raise HTTPException(
             status_code=400,
@@ -319,7 +319,7 @@ async def analyze_imported_schedules(
     clinic_bytes = None
     if clinic_file:
         try:
-            clinic_bytes = await clinic_file.read()
+            clinic_bytes = clinic_file.file.read()
         except Exception as e:
             raise HTTPException(
                 status_code=400,
@@ -351,7 +351,7 @@ async def analyze_imported_schedules(
 
 
 @router.post("/import/analyze-file")
-async def analyze_single_file(
+def analyze_single_file(
     file: UploadFile = File(..., description="Schedule Excel file to analyze"),
     file_type: str = Form("auto", description="File type: 'fmit', 'clinic', or 'auto' to detect"),
     specialty_providers: str | None = Form(
@@ -376,7 +376,7 @@ async def analyze_single_file(
 
     # Read file
     try:
-        file_bytes = await file.read()
+        file_bytes = file.file.read()
     except Exception as e:
         raise HTTPException(
             status_code=400,
@@ -464,7 +464,7 @@ async def analyze_single_file(
 
 
 @router.post("/swaps/find", response_model=SwapFinderResponse)
-async def find_swap_candidates(
+def find_swap_candidates(
     fmit_file: UploadFile = File(..., description="FMIT rotation schedule Excel file"),
     request_json: str = Form(..., description="SwapFinderRequest as JSON string"),
     db: Session = Depends(get_db),
@@ -506,7 +506,7 @@ async def find_swap_candidates(
 
     # Read FMIT file
     try:
-        fmit_bytes = await fmit_file.read()
+        fmit_bytes = fmit_file.file.read()
     except Exception as e:
         raise HTTPException(
             status_code=400,
