@@ -12,7 +12,7 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, configure_mappers
 from sqlalchemy.pool import StaticPool
 
 from app.main import app
@@ -26,6 +26,8 @@ from app.models.rotation_template import RotationTemplate
 from app.models.procedure import Procedure
 from app.models.procedure_credential import ProcedureCredential
 from app.models.certification import CertificationType, PersonCertification
+from app.models.user import User
+from app.core.security import get_password_hash
 
 
 # Use in-memory SQLite for tests
@@ -37,6 +39,9 @@ engine = create_engine(
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Configure mappers to ensure SQLAlchemy-Continuum creates version tables
+configure_mappers()
 
 
 def override_get_db() -> Generator[Session, None, None]:
@@ -73,6 +78,36 @@ def client(db: Session) -> Generator[TestClient, None, None]:
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def admin_user(db: Session) -> User:
+    """Create an admin user for authenticated tests."""
+    user = User(
+        id=uuid4(),
+        username="testadmin",
+        email="testadmin@test.org",
+        hashed_password=get_password_hash("testpass123"),
+        role="admin",
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@pytest.fixture
+def auth_headers(client: TestClient, admin_user: User) -> dict:
+    """Get authentication headers for API requests."""
+    response = client.post(
+        "/api/auth/login/json",
+        json={"username": "testadmin", "password": "testpass123"},
+    )
+    if response.status_code == 200:
+        token = response.json()["access_token"]
+        return {"Authorization": f"Bearer {token}"}
+    return {}
 
 
 # ============================================================================

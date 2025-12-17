@@ -367,6 +367,7 @@ class TestAbsenceIntegration:
             absence_type="deployment",
             deployment_orders=True,
             replacement_activity="Deployed - Middle East",
+            is_blocking=True,  # Must be explicit due to column default
         )
         db.add(absence)
         db.commit()
@@ -460,6 +461,7 @@ class TestSwapFinderAPI:
         self,
         client: TestClient,
         mock_fmit_excel_bytes: bytes,
+        auth_headers: dict,
     ):
         """Should return swap candidates for a faculty/week."""
         import json
@@ -474,6 +476,7 @@ class TestSwapFinderAPI:
             "/api/schedule/swaps/find",
             files={"fmit_file": ("schedule.xlsx", mock_fmit_excel_bytes)},
             data={"request_json": json.dumps(request_data)},
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -488,6 +491,7 @@ class TestSwapFinderAPI:
         self,
         client: TestClient,
         mock_fmit_excel_bytes: bytes,
+        auth_headers: dict,
     ):
         """Should include provided external conflicts in analysis."""
         import json
@@ -511,6 +515,7 @@ class TestSwapFinderAPI:
             "/api/schedule/swaps/find",
             files={"fmit_file": ("schedule.xlsx", mock_fmit_excel_bytes)},
             data={"request_json": json.dumps(request_data)},
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -528,6 +533,7 @@ class TestSwapFinderAPI:
         self,
         client: TestClient,
         mock_fmit_excel_bytes: bytes,
+        auth_headers: dict,
     ):
         """Should return 404 when target faculty not in schedule."""
         import json
@@ -542,6 +548,7 @@ class TestSwapFinderAPI:
             "/api/schedule/swaps/find",
             files={"fmit_file": ("schedule.xlsx", mock_fmit_excel_bytes)},
             data={"request_json": json.dumps(request_data)},
+            headers=auth_headers,
         )
 
         assert response.status_code == 404
@@ -551,12 +558,14 @@ class TestSwapFinderAPI:
         self,
         client: TestClient,
         mock_fmit_excel_bytes: bytes,
+        auth_headers: dict,
     ):
         """Should return 400 for invalid request JSON."""
         response = client.post(
             "/api/schedule/swaps/find",
             files={"fmit_file": ("schedule.xlsx", mock_fmit_excel_bytes)},
             data={"request_json": "not valid json"},
+            headers=auth_headers,
         )
 
         assert response.status_code == 400
@@ -566,6 +575,7 @@ class TestSwapFinderAPI:
         self,
         client: TestClient,
         mock_fmit_excel_bytes: bytes,
+        auth_headers: dict,
     ):
         """Should include alternating pattern analysis in response."""
         import json
@@ -580,6 +590,7 @@ class TestSwapFinderAPI:
             "/api/schedule/swaps/find",
             files={"fmit_file": ("schedule.xlsx", mock_fmit_excel_bytes)},
             data={"request_json": json.dumps(request_data)},
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
