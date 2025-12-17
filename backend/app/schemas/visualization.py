@@ -164,3 +164,44 @@ class ExportRequest(BaseModel):
                 }
             }
         }
+
+
+class TimeRangeType(BaseModel):
+    """Time range specification for heatmap queries."""
+    range_type: str = Field(..., description="Type: 'week', 'month', 'quarter', 'custom'")
+    reference_date: date | None = Field(None, description="Reference date for week/month/quarter (defaults to today)")
+    start_date: date | None = Field(None, description="Custom start date (required for 'custom' range)")
+    end_date: date | None = Field(None, description="Custom end date (required for 'custom' range)")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "range_type": "month",
+                "reference_date": "2024-01-15",
+                "start_date": None,
+                "end_date": None
+            }
+        }
+
+
+class UnifiedHeatmapRequest(BaseModel):
+    """Request schema for unified heatmap with time range support."""
+    time_range: TimeRangeType = Field(..., description="Time range specification")
+    person_ids: list[UUID] | None = Field(None, description="Filter by specific people")
+    rotation_ids: list[UUID] | None = Field(None, description="Filter by specific rotation templates")
+    include_fmit: bool = Field(True, description="Include FMIT swap data in heatmap")
+    group_by: str = Field("person", description="Group heatmap by 'person' or 'rotation'")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "time_range": {
+                    "range_type": "month",
+                    "reference_date": "2024-01-15"
+                },
+                "person_ids": None,
+                "rotation_ids": None,
+                "include_fmit": True,
+                "group_by": "person"
+            }
+        }

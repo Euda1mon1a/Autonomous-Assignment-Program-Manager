@@ -97,14 +97,14 @@ export function MySwapRequests() {
       return (
         <div>
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
               Incoming Requests ({incomingCount})
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600">
               Swap requests from other faculty members that you can accept or reject
             </p>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {data?.incomingRequests.map((swap) => (
               <SwapRequestCard
                 key={swap.id}
@@ -135,14 +135,14 @@ export function MySwapRequests() {
       return (
         <div>
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
               Outgoing Requests ({outgoingCount})
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600">
               Swap requests you've created that are awaiting response
             </p>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {data?.outgoingRequests.map((swap) => (
               <SwapRequestCard
                 key={swap.id}
@@ -173,14 +173,14 @@ export function MySwapRequests() {
     return (
       <div>
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">
             Recent Swaps ({recentCount})
           </h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-xs sm:text-sm text-gray-600">
             Recently completed, rejected, or cancelled swap requests
           </p>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {data?.recentSwaps.map((swap) => (
             <SwapRequestCard
               key={swap.id}
@@ -197,7 +197,7 @@ export function MySwapRequests() {
     <div className="space-y-6">
       {/* Tabs */}
       <div className="border-b border-gray-200">
-        <nav className="flex space-x-8" aria-label="Tabs">
+        <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -207,7 +207,7 @@ export function MySwapRequests() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as MyRequestsTab)}
                 className={`
-                  flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                  flex items-center gap-2 py-4 px-2 sm:px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors
                   ${
                     isActive
                       ? 'border-blue-500 text-blue-600'
@@ -215,12 +215,12 @@ export function MySwapRequests() {
                   }
                 `}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-5 h-5 flex-shrink-0" />
                 <span>{tab.label}</span>
                 {tab.count > 0 && (
                   <span
                     className={`
-                      ml-1 px-2 py-0.5 text-xs font-medium rounded-full
+                      ml-1 px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0
                       ${
                         isActive
                           ? 'bg-blue-100 text-blue-700'
@@ -242,20 +242,20 @@ export function MySwapRequests() {
 
       {/* Summary Stats */}
       {(incomingCount > 0 || outgoingCount > 0) && (
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">Summary</h4>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+        <div className="mt-6 p-3 sm:p-4 bg-blue-50 rounded-lg">
+          <h4 className="text-xs sm:text-sm font-medium text-blue-900 mb-2">Summary</h4>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 text-sm">
             <div>
-              <div className="text-blue-600 font-medium">{incomingCount}</div>
-              <div className="text-blue-800">Incoming requests</div>
+              <div className="text-base sm:text-lg text-blue-600 font-medium">{incomingCount}</div>
+              <div className="text-xs sm:text-sm text-blue-800">Incoming requests</div>
             </div>
             <div>
-              <div className="text-blue-600 font-medium">{outgoingCount}</div>
-              <div className="text-blue-800">Outgoing requests</div>
+              <div className="text-base sm:text-lg text-blue-600 font-medium">{outgoingCount}</div>
+              <div className="text-xs sm:text-sm text-blue-800">Outgoing requests</div>
             </div>
-            <div>
-              <div className="text-blue-600 font-medium">{recentCount}</div>
-              <div className="text-blue-800">Recent swaps</div>
+            <div className="col-span-2 sm:col-span-1">
+              <div className="text-base sm:text-lg text-blue-600 font-medium">{recentCount}</div>
+              <div className="text-xs sm:text-sm text-blue-800">Recent swaps</div>
             </div>
           </div>
         </div>

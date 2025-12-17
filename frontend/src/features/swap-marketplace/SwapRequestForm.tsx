@@ -16,8 +16,9 @@ import {
   MessageSquare,
   Send,
   AlertCircle,
+  Loader2,
 } from 'lucide-react';
-import { useCreateSwapRequest } from './hooks';
+import { useCreateSwapRequest, useAvailableWeeks, useFacultyMembers } from './hooks';
 import type { CreateSwapRequest } from './types';
 
 // ============================================================================
@@ -25,8 +26,6 @@ import type { CreateSwapRequest } from './types';
 // ============================================================================
 
 interface SwapRequestFormProps {
-  availableWeeks?: Array<{ date: string; hasConflict: boolean }>;
-  facultyMembers?: Array<{ id: string; name: string }>;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -36,8 +35,6 @@ interface SwapRequestFormProps {
 // ============================================================================
 
 export function SwapRequestForm({
-  availableWeeks = [],
-  facultyMembers = [],
   onSuccess,
   onCancel,
 }: SwapRequestFormProps) {
@@ -47,6 +44,9 @@ export function SwapRequestForm({
   const [reason, setReason] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Fetch data
+  const { data: availableWeeks = [], isLoading: weeksLoading, error: weeksError } = useAvailableWeeks();
+  const { data: facultyMembers = [], isLoading: facultyLoading, error: facultyError } = useFacultyMembers();
   const createMutation = useCreateSwapRequest();
 
   const validateForm = (): boolean => {
@@ -105,6 +105,47 @@ export function SwapRequestForm({
     setReason('');
     setErrors({});
   };
+
+  // Show loading state while fetching data
+  if (weeksLoading || facultyLoading) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+          <span className="ml-3 text-gray-600">Loading form data...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if data fetching failed
+  if (weeksError || facultyError) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-lg font-semibold text-red-900 mb-1">
+                Error Loading Form Data
+              </h3>
+              <p className="text-red-700">
+                {weeksError?.message || facultyError?.message}
+              </p>
+              {onCancel && (
+                <button
+                  onClick={onCancel}
+                  className="mt-3 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                >
+                  Go Back
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -260,19 +301,28 @@ export function SwapRequestForm({
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200">
+        <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
           <button
             type="submit"
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={createMutation.isPending || availableWeeks.length === 0}
           >
-            <Send className="w-4 h-4" />
-            {createMutation.isPending ? 'Creating...' : 'Create Request'}
+            {createMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                Create Request
+              </>
+            )}
           </button>
           <button
             type="button"
             onClick={onCancel || handleReset}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={createMutation.isPending}
           >
             {onCancel ? 'Cancel' : 'Reset'}

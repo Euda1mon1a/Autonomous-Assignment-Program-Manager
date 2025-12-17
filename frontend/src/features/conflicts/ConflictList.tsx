@@ -250,10 +250,10 @@ export function ConflictList({
           <button
             onClick={handleDetectNew}
             disabled={detectConflicts.isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 transition-all duration-200 hover:shadow-lg active:scale-95"
           >
-            <AlertTriangle className="w-4 h-4" />
-            <span>Detect</span>
+            <AlertTriangle className={`w-4 h-4 ${detectConflicts.isPending ? 'animate-spin' : ''}`} />
+            <span>{detectConflicts.isPending ? 'Detecting...' : 'Detect'}</span>
           </button>
         </div>
 
@@ -414,8 +414,24 @@ export function ConflictList({
       {/* Conflict list */}
       <div className="flex-1 overflow-y-auto p-4">
         {isLoading && conflicts.length === 0 ? (
-          <div className="flex items-center justify-center h-64">
-            <RefreshCw className="w-8 h-8 text-gray-400 animate-spin" />
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="p-4 bg-gray-100 rounded-lg border border-gray-200">
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 bg-gray-200 rounded"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      <div className="flex gap-2 mt-2">
+                        <div className="h-3 bg-gray-200 rounded w-20"></div>
+                        <div className="h-3 bg-gray-200 rounded w-20"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center h-64 text-red-500">
@@ -441,8 +457,12 @@ export function ConflictList({
           </div>
         ) : (
           <div className="space-y-3">
-            {conflicts.map((conflict) => (
-              <div key={conflict.id} className="flex items-start gap-3">
+            {conflicts.map((conflict, index) => (
+              <div
+                key={conflict.id}
+                className="flex items-start gap-3 animate-fadeInUp"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
                 {selectable && (
                   <button
                     onClick={() => handleToggleSelect(conflict)}
