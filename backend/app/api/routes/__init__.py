@@ -10,7 +10,6 @@ from app.api.routes import (
     auth,
     blocks,
     calendar,
-    calendar_export,
     certifications,
     credentials,
     daily_manifest,
@@ -50,7 +49,6 @@ api_router.include_router(procedures.router, prefix="/procedures", tags=["proced
 api_router.include_router(credentials.router, prefix="/credentials", tags=["credentials"])
 api_router.include_router(certifications.router, prefix="/certifications", tags=["certifications"])
 api_router.include_router(calendar.router, prefix="/calendar", tags=["calendar"])
-api_router.include_router(calendar_export.router, prefix="/calendar", tags=["calendar"])
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
 api_router.include_router(analytics.router, tags=["analytics"])
 api_router.include_router(visualization.router, prefix="/visualization", tags=["visualization"])

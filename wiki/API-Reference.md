@@ -753,39 +753,228 @@ GET /api/analytics/workload
 
 ## Calendar
 
-### Export ICS
+The Calendar API provides ICS file export and WebCal subscription functionality for integrating schedules with external calendar applications (Google Calendar, Microsoft Outlook, Apple Calendar).
+
+### ICS Export Endpoints
+
+#### Export All Schedules
 
 ```http
-GET /api/calendar/export.ics
+GET /api/calendar/export/ics
 ```
 
+Export complete schedule as ICS file with optional filters.
+
 **Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `start_date` | date | Yes | Export range start (YYYY-MM-DD) |
+| `end_date` | date | Yes | Export range end (YYYY-MM-DD) |
+| `person_ids` | list[UUID] | No | Filter by specific people |
+| `rotation_ids` | list[UUID] | No | Filter by specific rotations |
+| `include_types` | list[string] | No | Filter by activity types (clinical, administrative, call) |
+
+**Response:** ICS file download (`text/calendar`)
+
+**Example:**
+```http
+GET /api/calendar/export/ics?start_date=2025-01-01&end_date=2025-06-30&include_types=clinical
+```
+
+#### Export Person Schedule
+
+```http
+GET /api/calendar/export/ics/{person_id}
+GET /api/calendar/export/person/{person_id}
+```
+
+Export individual's schedule as ICS file.
+
+**Path Parameters:**
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `person_id` | int | Export for specific person |
-| `start_date` | date | Export range start |
-| `end_date` | date | Export range end |
+| `person_id` | UUID | Person UUID |
 
-### Subscribe to Calendar
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `start_date` | date | Yes | Export range start |
+| `end_date` | date | Yes | Export range end |
+| `include_types` | list[string] | No | Filter by activity types |
+
+**Response:** ICS file download
+
+#### Export Rotation Schedule
+
+```http
+GET /api/calendar/export/rotation/{rotation_id}
+```
+
+Export all assignments for a rotation.
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `rotation_id` | UUID | Rotation template UUID |
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `start_date` | date | Yes | Export range start |
+| `end_date` | date | Yes | Export range end |
+
+### WebCal Subscription Endpoints
+
+WebCal subscriptions provide live-updating calendar feeds that calendar applications can subscribe to.
+
+#### Create Subscription
 
 ```http
 POST /api/calendar/subscribe
 ```
 
+Create a secure webcal subscription URL. **Requires authentication.**
+
 **Request Body:**
 ```json
 {
-  "person_id": 1
+  "person_id": "123e4567-e89b-12d3-a456-426614174000",
+  "label": "My Work Calendar",
+  "expires_days": 365
 }
 ```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `person_id` | UUID | Yes | Person to subscribe to |
+| `label` | string | No | Friendly label for the subscription |
+| `expires_days` | int | No | Days until subscription expires (null = never) |
 
 **Response:**
 ```json
 {
-  "subscription_url": "webcal://domain.com/api/calendar/feed/abc123.ics",
-  "expires_at": null
+  "token": "abc123def456...",
+  "subscription_url": "https://domain.com/api/calendar/subscribe/abc123...",
+  "webcal_url": "webcal://domain.com/api/calendar/subscribe/abc123...",
+  "person_id": "123e4567-e89b-12d3-a456-426614174000",
+  "label": "My Work Calendar",
+  "created_at": "2025-01-15T10:30:00Z",
+  "expires_at": "2026-01-15T10:30:00Z",
+  "last_accessed_at": null,
+  "is_active": true
 }
 ```
+
+#### Get Calendar Feed
+
+```http
+GET /api/calendar/subscribe/{token}
+```
+
+Retrieve the ICS calendar feed. **No authentication required** - the token serves as authentication. This is the endpoint calendar apps poll for updates.
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `token` | string | Subscription token |
+
+**Response:** ICS calendar content with:
+- Assignments from today through 6 months ahead
+- VTIMEZONE component for America/New_York
+- Cache-Control: private, max-age=900 (15-minute refresh)
+
+**Calendar App Integration:**
+- **Google Calendar:** Settings → Add calendar → From URL → paste `webcal://` URL
+- **Apple Calendar:** File → New Calendar Subscription → paste URL
+- **Outlook:** Add calendar → From Internet → paste URL
+
+#### List Subscriptions
+
+```http
+GET /api/calendar/subscriptions
+```
+
+List all subscriptions created by the current user. **Requires authentication.**
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `person_id` | UUID | None | Filter by person |
+| `active_only` | bool | true | Only return active subscriptions |
+
+**Response:**
+```json
+{
+  "subscriptions": [
+    {
+      "token": "abc123...",
+      "subscription_url": "https://...",
+      "webcal_url": "webcal://...",
+      "person_id": "...",
+      "label": "My Calendar",
+      "created_at": "2025-01-15T10:30:00Z",
+      "expires_at": null,
+      "last_accessed_at": "2025-01-16T08:00:00Z",
+      "is_active": true
+    }
+  ],
+  "total": 1
+}
+```
+
+#### Revoke Subscription
+
+```http
+DELETE /api/calendar/subscribe/{token}
+```
+
+Permanently disable a subscription token. **Requires authentication.**
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Subscription revoked successfully"
+}
+```
+
+### ICS File Format
+
+Generated ICS files comply with RFC 5545 and include:
+
+```ics
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Residency Scheduler//Calendar Export//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:John Doe - Schedule
+X-WR-TIMEZONE:America/New_York
+BEGIN:VTIMEZONE
+TZID:America/New_York
+...
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:assignment-uuid@residency-scheduler
+DTSTART:20250115T080000
+DTEND:20250115T120000
+SUMMARY:ICU Rotation (Primary)
+LOCATION:Building A, Room 101
+DESCRIPTION:Role: Primary\nBlock: Week 1 AM\nType: Clinical
+END:VEVENT
+END:VCALENDAR
+```
+
+**Block Time Mapping:**
+| Block | Start | End |
+|-------|-------|-----|
+| AM | 8:00 AM | 12:00 PM |
+| PM | 1:00 PM | 5:00 PM |
+
+**Role Modifiers in SUMMARY:**
+- Primary: `Activity Name`
+- Supervising: `Activity Name (Supervising)`
+- Backup: `Activity Name (Backup)`
 
 ---
 
