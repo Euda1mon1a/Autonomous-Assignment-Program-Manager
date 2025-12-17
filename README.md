@@ -184,6 +184,27 @@ npm install
 npm run dev
 ```
 
+***REMOVED******REMOVED******REMOVED******REMOVED*** Background Tasks (Celery)
+For resilience monitoring and automated tasks:
+
+```bash
+***REMOVED*** Start Redis (required)
+redis-server
+
+***REMOVED*** Start Celery worker and beat scheduler
+cd backend
+../scripts/start-celery.sh both
+
+***REMOVED*** Or start them separately
+../scripts/start-celery.sh worker  ***REMOVED*** Background task worker
+../scripts/start-celery.sh beat    ***REMOVED*** Periodic task scheduler
+
+***REMOVED*** Verify Celery is running
+python verify_celery.py
+```
+
+See [CELERY_SETUP_SUMMARY.md](CELERY_SETUP_SUMMARY.md) for complete configuration details.
+
 ---
 
 ***REMOVED******REMOVED*** Project Structure

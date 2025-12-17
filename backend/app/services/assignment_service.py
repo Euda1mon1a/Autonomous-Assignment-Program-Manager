@@ -31,6 +31,7 @@ class AssignmentService:
         end_date: date | None = None,
         person_id: UUID | None = None,
         role: str | None = None,
+        activity_type: str | None = None,
     ) -> dict:
         """List assignments with optional filters."""
         assignments = self.assignment_repo.list_with_filters(
@@ -38,6 +39,7 @@ class AssignmentService:
             end_date=end_date,
             person_id=person_id,
             role=role,
+            activity_type=activity_type,
         )
         return {"items": assignments, "total": len(assignments)}
 

@@ -29,6 +29,7 @@ def list_assignments(
     end_date: date | None = Query(None, description="Filter until this date"),
     person_id: UUID | None = Query(None, description="Filter by person"),
     role: str | None = Query(None, description="Filter by role"),
+    activity_type: str | None = Query(None, description="Filter by activity type (e.g., on_call, clinic, inpatient)"),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -39,6 +40,7 @@ def list_assignments(
         end_date=end_date,
         person_id=person_id,
         role=role,
+        activity_type=activity_type,
     )
 
 
