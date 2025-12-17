@@ -1,9 +1,8 @@
 """Certification schemas for API validation."""
-from datetime import datetime, date
-from typing import Optional
+from datetime import date, datetime
 from uuid import UUID
-from pydantic import BaseModel, field_validator
 
+from pydantic import BaseModel, field_validator
 
 # ============================================================================
 # Certification Type Schemas
@@ -13,12 +12,12 @@ from pydantic import BaseModel, field_validator
 class CertificationTypeBase(BaseModel):
     """Base certification type schema."""
     name: str
-    full_name: Optional[str] = None
-    description: Optional[str] = None
+    full_name: str | None = None
+    description: str | None = None
     renewal_period_months: int = 24
     required_for_residents: bool = True
     required_for_faculty: bool = True
-    required_for_specialties: Optional[str] = None
+    required_for_specialties: str | None = None
     reminder_days_180: bool = True
     reminder_days_90: bool = True
     reminder_days_30: bool = True
@@ -34,19 +33,19 @@ class CertificationTypeCreate(CertificationTypeBase):
 
 class CertificationTypeUpdate(BaseModel):
     """Schema for updating a certification type."""
-    name: Optional[str] = None
-    full_name: Optional[str] = None
-    description: Optional[str] = None
-    renewal_period_months: Optional[int] = None
-    required_for_residents: Optional[bool] = None
-    required_for_faculty: Optional[bool] = None
-    required_for_specialties: Optional[str] = None
-    reminder_days_180: Optional[bool] = None
-    reminder_days_90: Optional[bool] = None
-    reminder_days_30: Optional[bool] = None
-    reminder_days_14: Optional[bool] = None
-    reminder_days_7: Optional[bool] = None
-    is_active: Optional[bool] = None
+    name: str | None = None
+    full_name: str | None = None
+    description: str | None = None
+    renewal_period_months: int | None = None
+    required_for_residents: bool | None = None
+    required_for_faculty: bool | None = None
+    required_for_specialties: str | None = None
+    reminder_days_180: bool | None = None
+    reminder_days_90: bool | None = None
+    reminder_days_30: bool | None = None
+    reminder_days_14: bool | None = None
+    reminder_days_7: bool | None = None
+    is_active: bool | None = None
 
 
 class CertificationTypeResponse(CertificationTypeBase):
@@ -69,7 +68,7 @@ class CertificationTypeSummary(BaseModel):
     """Minimal certification type info."""
     id: UUID
     name: str
-    full_name: Optional[str] = None
+    full_name: str | None = None
 
     class Config:
         from_attributes = True
@@ -82,14 +81,14 @@ class CertificationTypeSummary(BaseModel):
 
 class PersonCertificationBase(BaseModel):
     """Base person certification schema."""
-    certification_number: Optional[str] = None
+    certification_number: str | None = None
     issued_date: date
     expiration_date: date
     status: str = 'current'
-    verified_by: Optional[str] = None
-    verified_date: Optional[date] = None
-    document_url: Optional[str] = None
-    notes: Optional[str] = None
+    verified_by: str | None = None
+    verified_date: date | None = None
+    document_url: str | None = None
+    notes: str | None = None
 
     @field_validator("status")
     @classmethod
@@ -108,18 +107,18 @@ class PersonCertificationCreate(PersonCertificationBase):
 
 class PersonCertificationUpdate(BaseModel):
     """Schema for updating a person certification."""
-    certification_number: Optional[str] = None
-    issued_date: Optional[date] = None
-    expiration_date: Optional[date] = None
-    status: Optional[str] = None
-    verified_by: Optional[str] = None
-    verified_date: Optional[date] = None
-    document_url: Optional[str] = None
-    notes: Optional[str] = None
+    certification_number: str | None = None
+    issued_date: date | None = None
+    expiration_date: date | None = None
+    status: str | None = None
+    verified_by: str | None = None
+    verified_date: date | None = None
+    document_url: str | None = None
+    notes: str | None = None
 
     @field_validator("status")
     @classmethod
-    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+    def validate_status(cls, v: str | None) -> str | None:
         if v is None:
             return v
         valid_statuses = ('current', 'expiring_soon', 'expired', 'pending')
@@ -173,7 +172,7 @@ class PersonSummary(BaseModel):
     id: UUID
     name: str
     type: str
-    email: Optional[str] = None
+    email: str | None = None
 
     class Config:
         from_attributes = True

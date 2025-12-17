@@ -1,11 +1,9 @@
 """Calendar service for ICS export and subscription."""
 import secrets
 from datetime import date, datetime, timedelta
-from typing import Optional
 from uuid import UUID
 
 from icalendar import Calendar, Event
-from sqlalchemy import and_
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.assignment import Assignment
@@ -39,7 +37,7 @@ class CalendarService:
         person_id: UUID,
         start_date: date,
         end_date: date,
-        include_types: Optional[list[str]] = None,
+        include_types: list[str] | None = None,
     ) -> str:
         """
         Generate ICS calendar file for a person's assignments.
@@ -243,8 +241,8 @@ class CalendarService:
     def create_subscription_token(
         db: Session,
         person_id: UUID,
-        expires_days: Optional[int] = None,
-    ) -> tuple[str, Optional[datetime]]:
+        expires_days: int | None = None,
+    ) -> tuple[str, datetime | None]:
         """
         Create a subscription token for calendar feeds.
 
@@ -276,7 +274,7 @@ class CalendarService:
         return token, expires_at
 
     @staticmethod
-    def validate_subscription_token(db: Session, token: str) -> Optional[UUID]:
+    def validate_subscription_token(db: Session, token: str) -> UUID | None:
         """
         Validate a subscription token and return the person_id.
 

@@ -1,18 +1,18 @@
 """Procedure controller for request/response handling."""
 
-from typing import Optional
 from uuid import UUID
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.error_codes import ErrorCode, get_error_code_from_message
-from app.services.procedure_service import ProcedureService
 from app.schemas.procedure import (
     ProcedureCreate,
-    ProcedureUpdate,
-    ProcedureResponse,
     ProcedureListResponse,
+    ProcedureResponse,
+    ProcedureUpdate,
 )
+from app.services.procedure_service import ProcedureService
 
 
 class ProcedureController:
@@ -23,10 +23,10 @@ class ProcedureController:
 
     def list_procedures(
         self,
-        specialty: Optional[str] = None,
-        category: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        complexity_level: Optional[str] = None,
+        specialty: str | None = None,
+        category: str | None = None,
+        is_active: bool | None = None,
+        complexity_level: str | None = None,
     ) -> ProcedureListResponse:
         """List procedures with optional filters."""
         result = self.service.list_procedures(

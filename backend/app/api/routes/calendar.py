@@ -1,6 +1,5 @@
 """Calendar export API routes."""
 from datetime import date
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -22,7 +21,7 @@ def export_person_calendar(
     person_id: UUID,
     start_date: date = Query(..., description="Start date for calendar export"),
     end_date: date = Query(..., description="End date for calendar export"),
-    include_types: Optional[list[str]] = Query(None, description="Activity types to include"),
+    include_types: list[str] | None = Query(None, description="Activity types to include"),
     db: Session = Depends(get_db),
 ) -> Response:
     """

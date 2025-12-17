@@ -1,11 +1,10 @@
 """Metric definitions and calculations for schedule analytics."""
-from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
-from collections import Counter, defaultdict
 import statistics
+from collections import Counter, defaultdict
+from typing import Any
 
 
-def calculate_fairness_index(assignments: List[Dict[str, Any]]) -> Dict[str, Any]:
+def calculate_fairness_index(assignments: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Calculate fairness index (Gini coefficient) for workload distribution.
 
@@ -72,8 +71,8 @@ def calculate_fairness_index(assignments: List[Dict[str, Any]]) -> Dict[str, Any
     }
 
 
-def calculate_coverage_rate(blocks: List[Dict[str, Any]],
-                            assignments: List[Dict[str, Any]]) -> Dict[str, Any]:
+def calculate_coverage_rate(blocks: list[dict[str, Any]],
+                            assignments: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Calculate percentage of blocks that are covered by assignments.
 
@@ -94,7 +93,7 @@ def calculate_coverage_rate(blocks: List[Dict[str, Any]],
         }
 
     total_blocks = len(blocks)
-    covered_blocks = len(set([a["block_id"] for a in assignments]))
+    covered_blocks = len({a["block_id"] for a in assignments})
     coverage_rate = (covered_blocks / total_blocks) * 100
 
     # Determine status
@@ -119,7 +118,7 @@ def calculate_coverage_rate(blocks: List[Dict[str, Any]],
     }
 
 
-def calculate_acgme_compliance_rate(violations: int, total_checks: int) -> Dict[str, Any]:
+def calculate_acgme_compliance_rate(violations: int, total_checks: int) -> dict[str, Any]:
     """
     Calculate ACGME compliance rate.
 
@@ -164,9 +163,9 @@ def calculate_acgme_compliance_rate(violations: int, total_checks: int) -> Dict[
 
 
 def calculate_preference_satisfaction(
-    assignments: List[Dict[str, Any]],
-    preferences: List[Dict[str, Any]]
-) -> Dict[str, Any]:
+    assignments: list[dict[str, Any]],
+    preferences: list[dict[str, Any]]
+) -> dict[str, Any]:
     """
     Calculate how well assignments match stated preferences.
 
@@ -233,8 +232,8 @@ def calculate_preference_satisfaction(
 
 def calculate_consecutive_duty_stats(
     person_id: str,
-    assignments: List[Dict[str, Any]]
-) -> Dict[str, Any]:
+    assignments: list[dict[str, Any]]
+) -> dict[str, Any]:
     """
     Calculate consecutive duty pattern statistics for a person.
 

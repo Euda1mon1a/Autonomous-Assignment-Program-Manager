@@ -1,7 +1,17 @@
 """Absence model - leave, deployments, TDY."""
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, Date, DateTime, Text, ForeignKey, CheckConstraint
+
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -88,9 +98,5 @@ class Absence(Base):
         if self.absence_type in ("deployment", "tdy"):
             return True
 
-        # Medical leave >7 days is blocking
-        if self.absence_type == "medical" and self.duration_days > 7:
-            return True
-
-        # Everything else is partial (vacation, conference, short medical, etc.)
-        return False
+        # Medical leave >7 days is blocking, everything else is partial
+        return self.absence_type == "medical" and self.duration_days > 7

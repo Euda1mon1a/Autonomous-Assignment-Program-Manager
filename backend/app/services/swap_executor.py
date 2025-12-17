@@ -1,7 +1,6 @@
 """Swap execution service."""
 from dataclasses import dataclass
-from datetime import datetime, date, timedelta
-from typing import Optional
+from datetime import date, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy.orm import Session
@@ -10,16 +9,16 @@ from sqlalchemy.orm import Session
 @dataclass
 class ExecutionResult:
     success: bool
-    swap_id: Optional[UUID] = None
+    swap_id: UUID | None = None
     message: str = ""
-    error_code: Optional[str] = None
+    error_code: str | None = None
 
 
 @dataclass
 class RollbackResult:
     success: bool
     message: str = ""
-    error_code: Optional[str] = None
+    error_code: str | None = None
 
 
 class SwapExecutor:
@@ -35,17 +34,17 @@ class SwapExecutor:
         source_faculty_id: UUID,
         source_week: date,
         target_faculty_id: UUID,
-        target_week: Optional[date],
+        target_week: date | None,
         swap_type: str,
-        reason: Optional[str] = None,
-        executed_by_id: Optional[UUID] = None,
+        reason: str | None = None,
+        executed_by_id: UUID | None = None,
     ) -> ExecutionResult:
         """Execute a swap after validation."""
         try:
             swap_id = uuid4()
 
             # Swap record data (to be persisted when model is wired)
-            swap_data = {
+            {
                 "id": swap_id,
                 "source_faculty_id": source_faculty_id,
                 "source_week": source_week,
@@ -79,7 +78,7 @@ class SwapExecutor:
         self,
         swap_id: UUID,
         reason: str,
-        rolled_back_by_id: Optional[UUID] = None,
+        rolled_back_by_id: UUID | None = None,
     ) -> RollbackResult:
         """Rollback an executed swap within the allowed window."""
         # TODO: Implement when SwapRecord model is wired

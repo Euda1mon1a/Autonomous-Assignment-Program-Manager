@@ -8,10 +8,10 @@ retrieve historical changes to versioned models.
 
 import logging
 from datetime import datetime
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import text, func, and_, or_, select
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
@@ -39,12 +39,12 @@ class AuditRepository:
 
     def get_audit_entries(
         self,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         page: int = 1,
         page_size: int = 50,
         sort_by: str = "changed_at",
         sort_direction: str = "desc",
-    ) -> Tuple[List[Dict[str, Any]], int]:
+    ) -> tuple[list[dict[str, Any]], int]:
         """
         Get audit entries with filtering, pagination, and sorting.
 
@@ -125,7 +125,7 @@ class AuditRepository:
         self,
         entry_id: int,
         entity_type: str,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Get a specific audit entry by its version ID and entity type.
 
@@ -170,9 +170,9 @@ class AuditRepository:
 
     def get_audit_statistics(
         self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-    ) -> Dict[str, Any]:
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> dict[str, Any]:
         """
         Get audit statistics for a date range.
 
@@ -260,7 +260,7 @@ class AuditRepository:
                 "most_active_day": None,
             }
 
-    def get_users_with_audit_activity(self) -> List[Dict[str, Any]]:
+    def get_users_with_audit_activity(self) -> list[dict[str, Any]]:
         """
         Get list of users who have made changes in the audit log.
 
@@ -289,9 +289,9 @@ class AuditRepository:
 
     def mark_entries_reviewed(
         self,
-        entry_ids: List[int],
+        entry_ids: list[int],
         reviewer_id: str,
-        notes: Optional[str] = None,
+        notes: str | None = None,
     ) -> int:
         """
         Mark audit entries as reviewed (placeholder for future feature).
@@ -318,7 +318,7 @@ class AuditRepository:
         self,
         entity_type: str,
         entity_id: UUID,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get complete version history for a specific entity.
 
@@ -365,7 +365,7 @@ class AuditRepository:
         self,
         table_name: str,
         model_name: str,
-        filters: Dict[str, Any],
+        filters: dict[str, Any],
     ) -> text:
         """Build SQL query for audit entries with filters."""
         where_clauses = []
@@ -401,7 +401,7 @@ class AuditRepository:
 
         return text(query_sql)
 
-    def _build_query_params(self, filters: Dict[str, Any]) -> Dict[str, Any]:
+    def _build_query_params(self, filters: dict[str, Any]) -> dict[str, Any]:
         """Build query parameters from filters."""
         params = {}
 
@@ -418,10 +418,10 @@ class AuditRepository:
 
     def _sort_entries(
         self,
-        entries: List[Dict[str, Any]],
+        entries: list[dict[str, Any]],
         sort_by: str,
         sort_direction: str,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Sort audit entries."""
         reverse = sort_direction.lower() == "desc"
 

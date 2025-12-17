@@ -7,13 +7,13 @@ Provides in-memory caching for expensive operations:
 - Constraint validation results
 - Solver intermediate results
 """
+import logging
+from collections import defaultdict
+from datetime import datetime
 from functools import lru_cache
 from threading import RLock
-from typing import Optional, Any
+from typing import Any
 from uuid import UUID
-from collections import defaultdict
-from datetime import datetime, timedelta
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +143,7 @@ class ScheduleCache:
         self._put(cache_key, result)
         return result
 
-    def invalidate(self, keys: Optional[list[str]] = None):
+    def invalidate(self, keys: list[str] | None = None):
         """
         Invalidate cache entries.
 
@@ -214,7 +214,7 @@ class ScheduleCache:
                 "ttl_seconds": self.ttl_seconds,
             }
 
-    def _get(self, key: str) -> Optional[Any]:
+    def _get(self, key: str) -> Any | None:
         """Get value from cache with TTL checking."""
         with self._lock:
             if key not in self._cache:
@@ -261,7 +261,7 @@ class ScheduleCache:
 
 
 # Global cache instance for module-level caching
-_global_cache: Optional[ScheduleCache] = None
+_global_cache: ScheduleCache | None = None
 
 
 def get_global_cache() -> ScheduleCache:

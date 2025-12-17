@@ -8,26 +8,24 @@ Provides endpoints for:
 - Validating proposed swaps
 """
 from datetime import date
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
 from app.core.security import get_current_user
+from app.db.session import get_db
 from app.models.user import User
-from app.services.swap_validation import SwapValidationService
-from app.services.swap_executor import SwapExecutor
 from app.schemas.swap import (
     SwapExecuteRequest,
     SwapExecuteResponse,
-    SwapValidationResult,
-    SwapHistoryFilter,
     SwapHistoryResponse,
     SwapRecordResponse,
     SwapRollbackRequest,
+    SwapValidationResult,
 )
+from app.services.swap_executor import SwapExecutor
+from app.services.swap_validation import SwapValidationService
 
 router = APIRouter(prefix="/swaps", tags=["swaps"])
 
@@ -118,10 +116,10 @@ def validate_swap(
 
 @router.get("/history", response_model=SwapHistoryResponse)
 def get_swap_history(
-    faculty_id: Optional[UUID] = None,
-    status: Optional[str] = None,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
+    faculty_id: UUID | None = None,
+    status: str | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
     page: int = 1,
     page_size: int = 20,
     db: Session = Depends(get_db),

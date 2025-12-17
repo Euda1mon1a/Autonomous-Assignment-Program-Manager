@@ -1,6 +1,15 @@
 """Block model - half-day scheduling blocks."""
 import uuid
-from sqlalchemy import Column, String, Integer, Boolean, Date, UniqueConstraint, CheckConstraint
+
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    Date,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base

@@ -4,23 +4,23 @@ Integration test fixtures.
 Provides fixtures specifically for integration testing that exercise
 the full API stack with realistic data scenarios.
 """
-import pytest
+from collections.abc import Generator
 from datetime import date, timedelta
 from uuid import uuid4
-from typing import Generator
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.main import app
+from app.core.security import get_password_hash
 from app.db.base import Base
 from app.db.session import get_db
-from app.models.person import Person
+from app.main import app
 from app.models.block import Block
+from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.user import User
-from app.core.security import get_password_hash
-from tests.conftest import engine, TestingSessionLocal
+from tests.conftest import TestingSessionLocal, engine
 
 
 @pytest.fixture(scope="function")

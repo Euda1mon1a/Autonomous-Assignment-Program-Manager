@@ -9,22 +9,22 @@ Tests for:
 - Export functionality
 """
 
-import pytest
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from uuid import uuid4
 
+import pytest
 from sqlalchemy.orm import Session
 
-from app.models.assignment import Assignment
 from app.models.absence import Absence
-from app.models.person import Person
+from app.models.assignment import Assignment
 from app.models.block import Block
+from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.repositories.audit_repository import AuditRepository
 from app.services.audit_service import (
-    AuditService,
     AuditLogEntry,
     AuditLogResponse,
+    AuditService,
     AuditStatistics,
 )
 

@@ -1,17 +1,17 @@
 """Authentication service for business logic."""
 
 from datetime import datetime, timedelta
-from typing import Optional
+
 from sqlalchemy.orm import Session
 
-from app.repositories.user import UserRepository
-from app.models.user import User
-from app.core.security import (
-    verify_password,
-    get_password_hash,
-    create_access_token,
-)
 from app.core.config import get_settings
+from app.core.security import (
+    create_access_token,
+    get_password_hash,
+    verify_password,
+)
+from app.models.user import User
+from app.repositories.user import UserRepository
 
 settings = get_settings()
 
@@ -68,7 +68,7 @@ class AuthService:
         email: str,
         password: str,
         role: str = "coordinator",
-        current_user: Optional[User] = None,
+        current_user: User | None = None,
     ) -> dict:
         """
         Register a new user.

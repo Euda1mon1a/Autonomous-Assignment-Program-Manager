@@ -1,6 +1,5 @@
 """Calendar export schemas."""
 from datetime import date, datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, field_validator
@@ -12,7 +11,7 @@ class CalendarExportRequest(BaseModel):
     person_id: UUID
     start_date: date
     end_date: date
-    include_types: Optional[list[str]] = None  # Filter by activity types
+    include_types: list[str] | None = None  # Filter by activity types
 
     @field_validator("end_date")
     @classmethod
@@ -29,14 +28,14 @@ class CalendarSubscriptionToken(BaseModel):
     token: str
     person_id: UUID
     created_at: datetime
-    expires_at: Optional[datetime] = None
+    expires_at: datetime | None = None
 
 
 class CalendarSubscriptionCreate(BaseModel):
     """Schema for creating a calendar subscription."""
 
     person_id: UUID
-    expires_days: Optional[int] = None  # None = never expires
+    expires_days: int | None = None  # None = never expires
 
 
 class CalendarSubscriptionResponse(BaseModel):
@@ -46,4 +45,4 @@ class CalendarSubscriptionResponse(BaseModel):
     subscription_url: str
     person_id: UUID
     created_at: datetime
-    expires_at: Optional[datetime] = None
+    expires_at: datetime | None = None

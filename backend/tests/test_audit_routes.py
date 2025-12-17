@@ -1,6 +1,7 @@
 """Tests for audit API routes."""
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 from fastapi.testclient import TestClient
 
 

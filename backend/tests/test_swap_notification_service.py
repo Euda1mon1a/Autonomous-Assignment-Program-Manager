@@ -1,17 +1,17 @@
 """Tests for SwapNotificationService."""
-import pytest
 from datetime import date, datetime, timedelta
-from unittest.mock import Mock, MagicMock, patch
-from uuid import uuid4, UUID
+from unittest.mock import Mock, patch
+from uuid import uuid4
 
+import pytest
+
+from app.models.faculty_preference import FacultyPreference
+from app.models.person import Person
 from app.services.swap_notification_service import (
-    SwapNotificationService,
     SwapNotification,
+    SwapNotificationService,
     SwapNotificationType,
 )
-from app.models.person import Person
-from app.models.faculty_preference import FacultyPreference
-
 
 # ============================================================================
 # Test Fixtures
@@ -361,7 +361,7 @@ class TestNotifySwapRequestReceived:
 
         assert notification is not None
         # Should generate email from name (note: "Dr. Jane Smith" -> "dr..jane.smith")
-        assert "dr..jane.smith@example.com" == notification.recipient_email
+        assert notification.recipient_email == "dr..jane.smith@example.com"
 
 
 # ============================================================================

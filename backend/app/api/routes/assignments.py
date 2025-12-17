@@ -5,30 +5,30 @@ All business logic is in the service layer.
 """
 
 from datetime import date
-from typing import Optional
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query
 
+from app.controllers.assignment_controller import AssignmentController
+from app.core.security import get_current_active_user, get_scheduler_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.assignment import (
     AssignmentCreate,
-    AssignmentUpdate,
     AssignmentResponse,
+    AssignmentUpdate,
     AssignmentWithWarnings,
 )
-from app.core.security import get_current_active_user, get_scheduler_user
-from app.controllers.assignment_controller import AssignmentController
 
 router = APIRouter()
 
 
 @router.get("")
 def list_assignments(
-    start_date: Optional[date] = Query(None, description="Filter from this date"),
-    end_date: Optional[date] = Query(None, description="Filter until this date"),
-    person_id: Optional[UUID] = Query(None, description="Filter by person"),
-    role: Optional[str] = Query(None, description="Filter by role"),
+    start_date: date | None = Query(None, description="Filter from this date"),
+    end_date: date | None = Query(None, description="Filter until this date"),
+    person_id: UUID | None = Query(None, description="Filter by person"),
+    role: str | None = Query(None, description="Filter by role"),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):

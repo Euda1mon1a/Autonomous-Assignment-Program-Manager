@@ -1,14 +1,16 @@
 """Certification service for business logic."""
 
-from typing import Optional, List
-from uuid import UUID
 from datetime import date, timedelta
+from uuid import UUID
+
 from sqlalchemy.orm import Session
 
-from app.repositories.certification import CertificationTypeRepository, PersonCertificationRepository
-from app.repositories.person import PersonRepository
 from app.models.certification import CertificationType, PersonCertification
-from app.models.person import Person
+from app.repositories.certification import (
+    CertificationTypeRepository,
+    PersonCertificationRepository,
+)
+from app.repositories.person import PersonRepository
 
 
 class CertificationService:
@@ -24,11 +26,11 @@ class CertificationService:
     # Certification Type Operations
     # ========================================================================
 
-    def get_certification_type(self, cert_type_id: UUID) -> Optional[CertificationType]:
+    def get_certification_type(self, cert_type_id: UUID) -> CertificationType | None:
         """Get a certification type by ID."""
         return self.cert_type_repo.get_by_id(cert_type_id)
 
-    def get_certification_type_by_name(self, name: str) -> Optional[CertificationType]:
+    def get_certification_type_by_name(self, name: str) -> CertificationType | None:
         """Get a certification type by name."""
         return self.cert_type_repo.get_by_name(name)
 
@@ -43,8 +45,8 @@ class CertificationService:
     def create_certification_type(
         self,
         name: str,
-        full_name: Optional[str] = None,
-        description: Optional[str] = None,
+        full_name: str | None = None,
+        description: str | None = None,
         renewal_period_months: int = 24,
         required_for_residents: bool = True,
         required_for_faculty: bool = True,
@@ -88,7 +90,7 @@ class CertificationService:
     # Person Certification Operations
     # ========================================================================
 
-    def get_person_certification(self, cert_id: UUID) -> Optional[PersonCertification]:
+    def get_person_certification(self, cert_id: UUID) -> PersonCertification | None:
         """Get a person certification by ID."""
         return self.person_cert_repo.get_by_id(cert_id)
 
@@ -107,9 +109,9 @@ class CertificationService:
         certification_type_id: UUID,
         issued_date: date,
         expiration_date: date,
-        certification_number: Optional[str] = None,
-        verified_by: Optional[str] = None,
-        notes: Optional[str] = None,
+        certification_number: str | None = None,
+        verified_by: str | None = None,
+        notes: str | None = None,
     ) -> dict:
         """Create a certification for a person."""
         # Validate person exists
@@ -182,7 +184,7 @@ class CertificationService:
         cert_id: UUID,
         new_issued_date: date,
         new_expiration_date: date,
-        new_certification_number: Optional[str] = None,
+        new_certification_number: str | None = None,
     ) -> dict:
         """Renew an existing certification with new dates."""
         cert = self.person_cert_repo.get_by_id(cert_id)
@@ -268,7 +270,7 @@ class CertificationService:
             "error": None,
         }
 
-    def get_certifications_needing_reminder(self, days: int) -> List[PersonCertification]:
+    def get_certifications_needing_reminder(self, days: int) -> list[PersonCertification]:
         """Get certifications that need a reminder for a specific threshold."""
         return self.person_cert_repo.list_needing_reminder(days)
 
@@ -295,7 +297,7 @@ class CertificationService:
     def bulk_add_certifications_for_person(
         self,
         person_id: UUID,
-        certification_data: List[dict],
+        certification_data: list[dict],
     ) -> dict:
         """Add multiple certifications for a person at once."""
         results = []

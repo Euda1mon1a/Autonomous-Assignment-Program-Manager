@@ -1,29 +1,28 @@
 """Certification controller for request/response handling."""
 
-from typing import Optional
-from uuid import UUID
 from datetime import date
+from uuid import UUID
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.services.certification_service import CertificationService
 from app.schemas.certification import (
     CertificationTypeCreate,
-    CertificationTypeUpdate,
-    CertificationTypeResponse,
     CertificationTypeListResponse,
-    PersonCertificationCreate,
-    PersonCertificationUpdate,
-    PersonCertificationResponse,
-    PersonCertificationListResponse,
-    PersonCertificationWithTypeListResponse,
-    ExpiringCertificationsListResponse,
-    ExpiringCertificationResponse,
-    ComplianceSummaryResponse,
-    PersonComplianceResponse,
+    CertificationTypeResponse,
     CertificationTypeSummary,
+    CertificationTypeUpdate,
+    ComplianceSummaryResponse,
+    ExpiringCertificationResponse,
+    ExpiringCertificationsListResponse,
+    PersonCertificationCreate,
+    PersonCertificationListResponse,
+    PersonCertificationResponse,
+    PersonCertificationUpdate,
+    PersonComplianceResponse,
+    PersonSummary,
 )
-from app.schemas.certification import PersonSummary
+from app.services.certification_service import CertificationService
 
 
 class CertificationController:
@@ -163,7 +162,7 @@ class CertificationController:
         cert_id: UUID,
         new_issued_date: date,
         new_expiration_date: date,
-        new_certification_number: Optional[str] = None,
+        new_certification_number: str | None = None,
     ) -> PersonCertificationResponse:
         """Renew a certification."""
         result = self.service.renew_certification(

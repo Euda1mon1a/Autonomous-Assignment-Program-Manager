@@ -5,23 +5,23 @@ Currently implements stub/mock data - will be integrated with SQLAlchemy-Continu
 by Terminal-2.
 """
 
-from datetime import datetime, timedelta
-from typing import Optional, List
-from fastapi import APIRouter, Query, HTTPException
-from fastapi.responses import StreamingResponse
-import json
-import io
 import csv
+import io
+import json
+from datetime import datetime, timedelta
+
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import StreamingResponse
 
 from app.schemas.audit import (
+    AuditExportConfig,
     AuditLogEntry,
     AuditLogResponse,
     AuditStatistics,
     AuditUser,
-    AuditExportConfig,
-    MarkReviewedRequest,
-    FieldChange,
     DateRange,
+    FieldChange,
+    MarkReviewedRequest,
 )
 
 router = APIRouter()
@@ -32,7 +32,7 @@ router = APIRouter()
 # ============================================================================
 
 
-def _generate_mock_users() -> List[AuditUser]:
+def _generate_mock_users() -> list[AuditUser]:
     """Generate mock users for filtering."""
     return [
         AuditUser(
@@ -71,16 +71,16 @@ def _generate_mock_users() -> List[AuditUser]:
 def _generate_mock_audit_entries(
     page: int = 1,
     page_size: int = 25,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
-    entity_types: Optional[List[str]] = None,
-    actions: Optional[List[str]] = None,
-    user_ids: Optional[List[str]] = None,
-    severity: Optional[List[str]] = None,
-    search: Optional[str] = None,
-    entity_id: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    entity_types: list[str] | None = None,
+    actions: list[str] | None = None,
+    user_ids: list[str] | None = None,
+    severity: list[str] | None = None,
+    search: str | None = None,
+    entity_id: str | None = None,
     acgme_overrides_only: bool = False,
-) -> tuple[List[AuditLogEntry], int]:
+) -> tuple[list[AuditLogEntry], int]:
     """Generate mock audit entries with filtering."""
 
     users = _generate_mock_users()
@@ -353,14 +353,14 @@ async def get_audit_logs(
     page_size: int = Query(25, ge=1, le=100, description="Items per page"),
     sort_by: str = Query("timestamp", description="Sort field"),
     sort_direction: str = Query("desc", description="Sort direction (asc/desc)"),
-    start_date: Optional[str] = Query(None, description="Filter start date (ISO format)"),
-    end_date: Optional[str] = Query(None, description="Filter end date (ISO format)"),
-    entity_types: Optional[str] = Query(None, description="Comma-separated entity types"),
-    actions: Optional[str] = Query(None, description="Comma-separated action types"),
-    user_ids: Optional[str] = Query(None, description="Comma-separated user IDs"),
-    severity: Optional[str] = Query(None, description="Comma-separated severity levels"),
-    search: Optional[str] = Query(None, description="Search query"),
-    entity_id: Optional[str] = Query(None, description="Filter by specific entity ID"),
+    start_date: str | None = Query(None, description="Filter start date (ISO format)"),
+    end_date: str | None = Query(None, description="Filter end date (ISO format)"),
+    entity_types: str | None = Query(None, description="Comma-separated entity types"),
+    actions: str | None = Query(None, description="Comma-separated action types"),
+    user_ids: str | None = Query(None, description="Comma-separated user IDs"),
+    severity: str | None = Query(None, description="Comma-separated severity levels"),
+    search: str | None = Query(None, description="Search query"),
+    entity_id: str | None = Query(None, description="Filter by specific entity ID"),
     acgme_overrides_only: bool = Query(False, description="Show only ACGME overrides"),
 ):
     """
@@ -426,8 +426,8 @@ async def get_audit_log_by_id(log_id: str):
 
 @router.get("/statistics", response_model=AuditStatistics)
 async def get_audit_statistics(
-    start_date: Optional[str] = Query(None, description="Statistics start date (ISO format)"),
-    end_date: Optional[str] = Query(None, description="Statistics end date (ISO format)"),
+    start_date: str | None = Query(None, description="Statistics start date (ISO format)"),
+    end_date: str | None = Query(None, description="Statistics end date (ISO format)"),
 ):
     """
     Get audit statistics grouped by action, entity type, user, and severity.
@@ -461,7 +461,7 @@ async def get_audit_statistics(
     acgme_override_count = sum(1 for entry in entries if entry.acgme_override)
 
     # Count unique users
-    unique_users = len(set(entry.user.id for entry in entries))
+    unique_users = len({entry.user.id for entry in entries})
 
     # Determine date range
     if entries:
@@ -626,7 +626,7 @@ async def export_audit_logs(config: AuditExportConfig):
             output.write(f"Reason: {entry.reason or 'N/A'}\n")
 
             if entry.acgme_override:
-                output.write(f"ACGME Override: YES\n")
+                output.write("ACGME Override: YES\n")
                 output.write(f"Justification: {entry.acgme_justification or 'N/A'}\n")
 
             if config.include_changes and entry.changes:

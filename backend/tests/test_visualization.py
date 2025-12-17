@@ -1,15 +1,16 @@
 """Tests for visualization API routes and heatmap service."""
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
 
-from app.models.user import User
-from app.models.person import Person
-from app.models.block import Block
+import pytest
+
+from app.core.security import create_access_token, get_password_hash
 from app.models.assignment import Assignment
+from app.models.block import Block
+from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.swap import SwapRecord, SwapStatus, SwapType
-from app.core.security import get_password_hash, create_access_token
+from app.models.user import User
 from app.services.heatmap_service import HeatmapService
 
 

@@ -19,12 +19,11 @@ Activity Sacrifice Order (Most to Least Protected):
 7. Education (Optional) - Pure growth opportunities
 """
 
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import IntEnum
-from typing import Optional
 from uuid import UUID
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +66,7 @@ class Activity:
     category: ActivityCategory
     faculty_hours: float
     is_required: bool = False
-    min_frequency: Optional[str] = None  # e.g., "weekly", "monthly"
+    min_frequency: str | None = None  # e.g., "weekly", "monthly"
     can_be_deferred: bool = True
     deferral_limit_days: int = 30
 
@@ -81,7 +80,7 @@ class SacrificeDecision:
     reason: str
     coverage_before: float
     coverage_after: float
-    approved_by: Optional[str] = None
+    approved_by: str | None = None
     notes: str = ""
 
 
@@ -90,7 +89,7 @@ class LoadSheddingStatus:
     """Current load shedding status."""
     level: LoadSheddingLevel
     level_name: str
-    active_since: Optional[datetime]
+    active_since: datetime | None
     activities_suspended: list[str]
     activities_protected: list[str]
     current_coverage: float
@@ -122,7 +121,7 @@ class SacrificeHierarchy:
 
     def __init__(self):
         self.current_level = LoadSheddingLevel.NORMAL
-        self.level_activated_at: Optional[datetime] = None
+        self.level_activated_at: datetime | None = None
         self.activities: dict[UUID, Activity] = {}
         self.decisions_log: list[SacrificeDecision] = []
         self._suspended_activities: set[UUID] = set()
@@ -215,7 +214,7 @@ class SacrificeHierarchy:
         current_demand: list[Activity],
         available_capacity: float,
         reason: str = "",
-        approved_by: Optional[str] = None,
+        approved_by: str | None = None,
     ) -> tuple[list[Activity], list[Activity]]:
         """
         Remove activities until demand fits capacity.
@@ -279,7 +278,7 @@ class SacrificeHierarchy:
         self,
         level: LoadSheddingLevel,
         reason: str = "",
-        approved_by: Optional[str] = None,
+        approved_by: str | None = None,
     ):
         """
         Activate a specific load shedding level.

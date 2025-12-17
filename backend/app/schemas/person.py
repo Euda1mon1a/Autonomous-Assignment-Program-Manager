@@ -1,7 +1,7 @@
 """Person schemas."""
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
+
 from pydantic import BaseModel, EmailStr, field_validator
 
 
@@ -9,11 +9,11 @@ class PersonBase(BaseModel):
     """Base person schema."""
     name: str
     type: str  # 'resident' or 'faculty'
-    email: Optional[EmailStr] = None
-    pgy_level: Optional[int] = None
+    email: EmailStr | None = None
+    pgy_level: int | None = None
     performs_procedures: bool = False
-    specialties: Optional[list[str]] = None
-    primary_duty: Optional[str] = None
+    specialties: list[str] | None = None
+    primary_duty: str | None = None
 
     @field_validator("type")
     @classmethod
@@ -24,7 +24,7 @@ class PersonBase(BaseModel):
 
     @field_validator("pgy_level")
     @classmethod
-    def validate_pgy_level(cls, v: Optional[int]) -> Optional[int]:
+    def validate_pgy_level(cls, v: int | None) -> int | None:
         if v is not None and (v < 1 or v > 3):
             raise ValueError("pgy_level must be between 1 and 3")
         return v
@@ -37,12 +37,12 @@ class PersonCreate(PersonBase):
 
 class PersonUpdate(BaseModel):
     """Schema for updating a person."""
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    pgy_level: Optional[int] = None
-    performs_procedures: Optional[bool] = None
-    specialties: Optional[list[str]] = None
-    primary_duty: Optional[str] = None
+    name: str | None = None
+    email: EmailStr | None = None
+    pgy_level: int | None = None
+    performs_procedures: bool | None = None
+    specialties: list[str] | None = None
+    primary_duty: str | None = None
 
 
 class PersonResponse(PersonBase):

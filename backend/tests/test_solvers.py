@@ -8,23 +8,23 @@ Tests cover:
 - HybridSolver
 - SolverFactory
 """
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
 
-from app.scheduling.solvers import (
-    GreedySolver,
-    CPSATSolver,
-    PuLPSolver,
-    HybridSolver,
-    SolverFactory,
-    SolverResult,
-)
+import pytest
+
 from app.scheduling.constraints import (
     ConstraintManager,
     SchedulingContext,
 )
-
+from app.scheduling.solvers import (
+    CPSATSolver,
+    GreedySolver,
+    HybridSolver,
+    PuLPSolver,
+    SolverFactory,
+    SolverResult,
+)
 
 # ============================================================================
 # Test Fixtures

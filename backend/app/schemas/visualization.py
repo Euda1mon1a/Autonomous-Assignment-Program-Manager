@@ -1,7 +1,8 @@
 """Visualization schemas for heatmap generation."""
 from datetime import date, datetime
-from typing import List, Optional, Dict, Any
+from typing import Any
 from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 
@@ -9,8 +10,8 @@ class HeatmapRequest(BaseModel):
     """Request schema for heatmap generation."""
     start_date: date = Field(..., description="Start date for heatmap")
     end_date: date = Field(..., description="End date for heatmap")
-    person_ids: Optional[List[UUID]] = Field(None, description="Filter by specific people")
-    rotation_ids: Optional[List[UUID]] = Field(None, description="Filter by specific rotation templates")
+    person_ids: list[UUID] | None = Field(None, description="Filter by specific people")
+    rotation_ids: list[UUID] | None = Field(None, description="Filter by specific rotation templates")
     include_fmit: bool = Field(True, description="Include FMIT swap data in heatmap")
     group_by: str = Field("person", description="Group heatmap by 'person' or 'rotation'")
 
@@ -29,11 +30,11 @@ class HeatmapRequest(BaseModel):
 
 class HeatmapData(BaseModel):
     """Heatmap data structure."""
-    x_labels: List[str] = Field(..., description="X-axis labels (dates)")
-    y_labels: List[str] = Field(..., description="Y-axis labels (people or rotations)")
-    z_values: List[List[float]] = Field(..., description="Matrix of values for heatmap")
+    x_labels: list[str] = Field(..., description="X-axis labels (dates)")
+    y_labels: list[str] = Field(..., description="Y-axis labels (people or rotations)")
+    z_values: list[list[float]] = Field(..., description="Matrix of values for heatmap")
     color_scale: str = Field("Viridis", description="Plotly color scale name")
-    annotations: Optional[List[Dict[str, Any]]] = Field(None, description="Annotations for heatmap cells")
+    annotations: list[dict[str, Any]] | None = Field(None, description="Annotations for heatmap cells")
 
     class Config:
         json_schema_extra = {
@@ -52,7 +53,7 @@ class HeatmapResponse(BaseModel):
     data: HeatmapData = Field(..., description="Heatmap data")
     title: str = Field(..., description="Title for the heatmap")
     generated_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp of generation")
-    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
+    metadata: dict[str, Any] | None = Field(None, description="Additional metadata")
 
     class Config:
         json_schema_extra = {
@@ -75,7 +76,7 @@ class CoverageGap(BaseModel):
     """Represents a coverage gap in the schedule."""
     date: date = Field(..., description="Date of the gap")
     time_of_day: str = Field(..., description="AM or PM")
-    rotation: Optional[str] = Field(None, description="Rotation with gap")
+    rotation: str | None = Field(None, description="Rotation with gap")
     severity: str = Field(..., description="low, medium, high")
 
     class Config:
@@ -93,7 +94,7 @@ class CoverageHeatmapResponse(BaseModel):
     """Response schema for coverage heatmap."""
     data: HeatmapData = Field(..., description="Coverage heatmap data")
     coverage_percentage: float = Field(..., description="Overall coverage percentage", ge=0, le=100)
-    gaps: List[CoverageGap] = Field(default_factory=list, description="List of coverage gaps")
+    gaps: list[CoverageGap] = Field(default_factory=list, description="List of coverage gaps")
     title: str = Field(..., description="Title for the heatmap")
     generated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -124,7 +125,7 @@ class CoverageHeatmapResponse(BaseModel):
 
 class WorkloadRequest(BaseModel):
     """Request schema for workload heatmap."""
-    person_ids: List[UUID] = Field(..., description="People to include in workload analysis")
+    person_ids: list[UUID] = Field(..., description="People to include in workload analysis")
     start_date: date = Field(..., description="Start date")
     end_date: date = Field(..., description="End date")
     include_weekends: bool = Field(False, description="Include weekends in analysis")
@@ -146,7 +147,7 @@ class ExportRequest(BaseModel):
     format: str = Field("png", description="Export format: 'png', 'pdf', 'svg'")
     width: int = Field(1200, description="Width in pixels", gt=0)
     height: int = Field(800, description="Height in pixels", gt=0)
-    request_params: Dict[str, Any] = Field(..., description="Parameters for heatmap generation")
+    request_params: dict[str, Any] = Field(..., description="Parameters for heatmap generation")
 
     class Config:
         json_schema_extra = {

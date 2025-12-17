@@ -6,14 +6,13 @@ creating alerts when overlaps are found.
 """
 from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy.orm import Session
 
 if TYPE_CHECKING:
-    from app.models.absence import Absence
-    from app.models.person import Person
+    pass
 
 
 @dataclass
@@ -23,7 +22,7 @@ class ConflictInfo:
     faculty_name: str
     conflict_type: str  # leave_fmit_overlap, back_to_back, excessive_alternating
     fmit_week: date
-    leave_id: Optional[UUID] = None
+    leave_id: UUID | None = None
     severity: str = "warning"  # critical, warning, info
     description: str = ""
 
@@ -42,7 +41,7 @@ class ConflictAutoDetector:
     def detect_conflicts_for_absence(
         self,
         absence_id: UUID,
-    ) -> List[ConflictInfo]:
+    ) -> list[ConflictInfo]:
         """
         Detect conflicts for a specific absence record.
 
@@ -82,10 +81,10 @@ class ConflictAutoDetector:
 
     def detect_all_conflicts(
         self,
-        faculty_id: Optional[UUID] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-    ) -> List[ConflictInfo]:
+        faculty_id: UUID | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> list[ConflictInfo]:
         """
         Scan for all conflicts in a date range.
 
@@ -98,7 +97,6 @@ class ConflictAutoDetector:
             List of all detected conflicts
         """
         from app.models.absence import Absence
-        from app.models.person import Person
 
         if start_date is None:
             start_date = date.today()
@@ -121,9 +119,9 @@ class ConflictAutoDetector:
 
     def create_conflict_alerts(
         self,
-        conflicts: List[ConflictInfo],
-        created_by_id: Optional[UUID] = None,
-    ) -> List[UUID]:
+        conflicts: list[ConflictInfo],
+        created_by_id: UUID | None = None,
+    ) -> list[UUID]:
         """
         Create ConflictAlert records for detected conflicts.
 
@@ -138,7 +136,7 @@ class ConflictAutoDetector:
         # This will create database records for each conflict
         alert_ids = []
 
-        for conflict in conflicts:
+        for _conflict in conflicts:
             # Placeholder - actual implementation creates ConflictAlert records
             alert_id = uuid4()
             alert_ids.append(alert_id)
@@ -150,7 +148,7 @@ class ConflictAutoDetector:
         faculty_id: UUID,
         start_date: date,
         end_date: date,
-    ) -> List[date]:
+    ) -> list[date]:
         """
         Find FMIT weeks that overlap with a date range.
 
@@ -170,8 +168,8 @@ class ConflictAutoDetector:
     def _check_back_to_back(
         self,
         faculty_id: UUID,
-        fmit_weeks: List[date],
-    ) -> List[ConflictInfo]:
+        fmit_weeks: list[date],
+    ) -> list[ConflictInfo]:
         """Check for back-to-back FMIT conflicts."""
         from app.services.xlsx_import import has_back_to_back_conflict
 

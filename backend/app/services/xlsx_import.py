@@ -9,14 +9,13 @@ import io
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Optional
+
 from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.cell import Cell
 from sqlalchemy.orm import Session
 
-from app.models.person import Person
 from app.models.absence import Absence as AbsenceModel
+from app.models.person import Person
 
 
 class SlotType(Enum):
@@ -38,8 +37,8 @@ class ScheduleSlot:
     time_of_day: str  # "AM" or "PM"
     slot_type: SlotType
     raw_value: str
-    location: Optional[str] = None
-    notes: Optional[str] = None
+    location: str | None = None
+    notes: str | None = None
 
     @property
     def key(self) -> tuple:
@@ -54,8 +53,8 @@ class ScheduleConflict:
     date: date
     time_of_day: str
     conflict_type: str  # "double_book", "fmit_clinic_overlap", "specialty_unavailable"
-    fmit_assignment: Optional[str] = None
-    clinic_assignment: Optional[str] = None
+    fmit_assignment: str | None = None
+    clinic_assignment: str | None = None
     severity: str = "warning"  # "error", "warning", "info"
     message: str = ""
 
@@ -89,7 +88,7 @@ class ProviderSchedule:
         key = (slot.date, slot.time_of_day)
         self.slots[key] = slot
 
-    def get_slot(self, d: date, time_of_day: str) -> Optional[ScheduleSlot]:
+    def get_slot(self, d: date, time_of_day: str) -> ScheduleSlot | None:
         """Get slot for a specific date/time."""
         return self.slots.get((d, time_of_day))
 
@@ -157,7 +156,7 @@ class ImportResult:
     total_slots: int = 0
     clinic_slots: int = 0
     fmit_slots: int = 0
-    date_range: tuple[Optional[date], Optional[date]] = (None, None)
+    date_range: tuple[date | None, date | None] = (None, None)
 
     def add_conflict(self, conflict: ScheduleConflict) -> None:
         """Add a conflict to the result."""
@@ -226,7 +225,7 @@ class ClinicScheduleImporter:
         "office": SlotType.ADMIN,
     }
 
-    def __init__(self, db: Optional[Session] = None):
+    def __init__(self, db: Session | None = None):
         self.db = db
         self.known_providers: dict[str, Person] = {}
 
@@ -261,7 +260,7 @@ class ClinicScheduleImporter:
 
         return SlotType.UNKNOWN
 
-    def parse_date_from_header(self, value) -> Optional[date]:
+    def parse_date_from_header(self, value) -> date | None:
         """Parse a date from various header formats."""
         if value is None:
             return None
@@ -391,7 +390,7 @@ class ClinicScheduleImporter:
     def import_worksheet(
         self,
         ws: Worksheet,
-        format_hint: Optional[dict] = None
+        format_hint: dict | None = None
     ) -> ImportResult:
         """Import a single worksheet."""
         result = ImportResult(success=True)
@@ -521,9 +520,9 @@ class ClinicScheduleImporter:
 
     def import_file(
         self,
-        file_path: Optional[str] = None,
-        file_bytes: Optional[bytes] = None,
-        sheet_name: Optional[str] = None
+        file_path: str | None = None,
+        file_bytes: bytes | None = None,
+        sheet_name: str | None = None
     ) -> ImportResult:
         """
         Import a schedule from an Excel file.
@@ -595,9 +594,9 @@ class SwapCandidate:
     """A potential swap partner for a target week."""
     faculty: str
     can_take_week: date
-    gives_week: Optional[date] = None  # None if absorbing, date if 1:1 swap
+    gives_week: date | None = None  # None if absorbing, date if 1:1 swap
     back_to_back_ok: bool = True
-    external_conflict: Optional[str] = None
+    external_conflict: str | None = None
     flexibility: str = "medium"
     reason: str = ""
 
@@ -684,7 +683,7 @@ class ConflictDetector:
         self,
         fmit_schedule: ImportResult,
         clinic_schedule: ImportResult,
-        specialty_providers: Optional[dict[str, list[str]]] = None
+        specialty_providers: dict[str, list[str]] | None = None
     ):
         """
         Initialize conflict detector.
@@ -718,7 +717,7 @@ class ConflictDetector:
             fmit_schedule = self.fmit.providers[provider_name]
             clinic_schedule = self.clinic.providers[provider_name]
 
-            for key, fmit_slot in fmit_schedule.slots.items():
+            for _key, fmit_slot in fmit_schedule.slots.items():
                 if fmit_slot.slot_type != SlotType.FMIT:
                     continue
 
@@ -744,7 +743,7 @@ class ConflictDetector:
 
                 fmit_schedule = self.fmit.providers[provider_name]
 
-                for key, slot in fmit_schedule.slots.items():
+                for _key, slot in fmit_schedule.slots.items():
                     if slot.slot_type == SlotType.FMIT:
                         self.conflicts.append(ScheduleConflict(
                             provider_name=provider_name,
@@ -788,9 +787,9 @@ class SwapFinder:
     def __init__(
         self,
         fmit_schedule: ImportResult,
-        faculty_targets: Optional[dict[str, FacultyTarget]] = None,
-        external_conflicts: Optional[list[ExternalConflict]] = None,
-        schedule_release_date: Optional[date] = None,
+        faculty_targets: dict[str, FacultyTarget] | None = None,
+        external_conflicts: list[ExternalConflict] | None = None,
+        schedule_release_date: date | None = None,
     ):
         self.fmit = fmit_schedule
         self.faculty_targets = faculty_targets or {}
@@ -808,7 +807,7 @@ class SwapFinder:
 
     def _check_external_conflict(
         self, faculty: str, week_start: date
-    ) -> Optional[ExternalConflict]:
+    ) -> ExternalConflict | None:
         """Check if faculty has external conflict during week."""
         week_end = week_start + timedelta(days=6)
 
@@ -819,7 +818,7 @@ class SwapFinder:
         return None
 
     def _can_take_week(
-        self, faculty: str, week_to_take: date, excluding_week: Optional[date] = None
+        self, faculty: str, week_to_take: date, excluding_week: date | None = None
     ) -> tuple[bool, str]:
         """
         Check if faculty can take a specific week.
@@ -947,11 +946,11 @@ class SwapFinder:
     @classmethod
     def from_fmit_file(
         cls,
-        file_path: Optional[str] = None,
-        file_bytes: Optional[bytes] = None,
-        faculty_targets: Optional[dict[str, "FacultyTarget"]] = None,
-        external_conflicts: Optional[list["ExternalConflict"]] = None,
-        db: Optional[Session] = None,
+        file_path: str | None = None,
+        file_bytes: bytes | None = None,
+        faculty_targets: dict[str, "FacultyTarget"] | None = None,
+        external_conflicts: list["ExternalConflict"] | None = None,
+        db: Session | None = None,
         include_absence_conflicts: bool = True,
         schedule_release_days: int = 90,
     ) -> "SwapFinder":
@@ -1022,11 +1021,11 @@ class SwapFinder:
 
 
 def analyze_schedule_conflicts(
-    fmit_file: Optional[str] = None,
-    fmit_bytes: Optional[bytes] = None,
-    clinic_file: Optional[str] = None,
-    clinic_bytes: Optional[bytes] = None,
-    specialty_providers: Optional[dict[str, list[str]]] = None,
+    fmit_file: str | None = None,
+    fmit_bytes: bytes | None = None,
+    clinic_file: str | None = None,
+    clinic_bytes: bytes | None = None,
+    specialty_providers: dict[str, list[str]] | None = None,
 ) -> dict:
     """
     Analyze conflicts between FMIT rotation and clinic schedules.
@@ -1107,7 +1106,7 @@ def analyze_schedule_conflicts(
     if specialty_conflicts:
         recommendations.append({
             "type": "specialty_coverage",
-            "providers": list(set(c.provider_name for c in specialty_conflicts)),
+            "providers": list({c.provider_name for c in specialty_conflicts}),
             "message": "Specialty providers on FMIT create clinic coverage gaps",
         })
 
@@ -1161,8 +1160,8 @@ def analyze_schedule_conflicts(
 
 def load_external_conflicts_from_absences(
     db: Session,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
 ) -> list[ExternalConflict]:
     """
     Load external conflicts from the absence model in the database.
@@ -1232,7 +1231,7 @@ def load_external_conflicts_from_absences(
     return conflicts
 
 
-def absence_to_external_conflict(absence: AbsenceModel) -> Optional[ExternalConflict]:
+def absence_to_external_conflict(absence: AbsenceModel) -> ExternalConflict | None:
     """
     Convert a single Absence model to an ExternalConflict.
 

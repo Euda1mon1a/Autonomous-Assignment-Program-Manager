@@ -1,8 +1,8 @@
 """Core notification service for schedule alerts and updates."""
 import logging
 import uuid
-from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any
+from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -10,21 +10,20 @@ from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
+from app.models.notification import (
+    Notification,
+    NotificationPreferenceRecord,
+    ScheduledNotificationRecord,
+)
+from app.notifications.channels import (
+    DeliveryResult,
+    NotificationPayload,
+    get_channel,
+)
 from app.notifications.templates import (
     NotificationType,
     get_template,
     render_notification,
-)
-from app.notifications.channels import (
-    NotificationChannel,
-    NotificationPayload,
-    DeliveryResult,
-    get_channel,
-)
-from app.models.notification import (
-    Notification,
-    ScheduledNotificationRecord,
-    NotificationPreferenceRecord,
 )
 
 
@@ -44,7 +43,7 @@ class ScheduledNotification(BaseModel):
     id: UUID = Field(default_factory=uuid.uuid4)
     recipient_id: UUID
     notification_type: NotificationType
-    data: Dict[str, Any]
+    data: dict[str, Any]
     send_at: datetime
     status: str = "pending"
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -62,8 +61,8 @@ class NotificationPreferences(BaseModel):
         quiet_hours_end: End of quiet hours
     """
     user_id: UUID
-    enabled_channels: List[str] = ["in_app", "email"]
-    notification_types: Dict[str, bool] = Field(
+    enabled_channels: list[str] = ["in_app", "email"]
+    notification_types: dict[str, bool] = Field(
         default_factory=lambda: {
             NotificationType.SCHEDULE_PUBLISHED.value: True,
             NotificationType.ASSIGNMENT_CHANGED.value: True,
@@ -74,8 +73,8 @@ class NotificationPreferences(BaseModel):
             NotificationType.ABSENCE_REJECTED.value: True,
         }
     )
-    quiet_hours_start: Optional[int] = None  # Hour (0-23)
-    quiet_hours_end: Optional[int] = None  # Hour (0-23)
+    quiet_hours_start: int | None = None  # Hour (0-23)
+    quiet_hours_end: int | None = None  # Hour (0-23)
 
 
 class NotificationService:
@@ -102,9 +101,9 @@ class NotificationService:
         self,
         recipient_id: UUID,
         notification_type: NotificationType,
-        data: Dict[str, Any],
-        channels: Optional[List[str]] = None
-    ) -> List[DeliveryResult]:
+        data: dict[str, Any],
+        channels: list[str] | None = None
+    ) -> list[DeliveryResult]:
         """
         Send a single notification immediately.
 
@@ -191,11 +190,11 @@ class NotificationService:
 
     async def send_bulk(
         self,
-        recipient_ids: List[UUID],
+        recipient_ids: list[UUID],
         notification_type: NotificationType,
-        data: Dict[str, Any],
-        channels: Optional[List[str]] = None
-    ) -> Dict[str, List[DeliveryResult]]:
+        data: dict[str, Any],
+        channels: list[str] | None = None
+    ) -> dict[str, list[DeliveryResult]]:
         """
         Send the same notification to multiple recipients.
 
@@ -224,7 +223,7 @@ class NotificationService:
         self,
         recipient_id: UUID,
         notification_type: NotificationType,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         send_at: datetime
     ) -> ScheduledNotification:
         """
@@ -333,7 +332,7 @@ class NotificationService:
         user_id: UUID,
         limit: int = 50,
         unread_only: bool = True
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Fetch pending/unread notifications for a user.
 
@@ -351,7 +350,7 @@ class NotificationService:
         )
 
         if unread_only:
-            query = query.filter(Notification.is_read == False)
+            query = query.filter(not Notification.is_read)
 
         notifications = (
             query.order_by(Notification.created_at.desc())
@@ -373,7 +372,7 @@ class NotificationService:
             for n in notifications
         ]
 
-    def mark_as_read(self, notification_ids: List[UUID]) -> int:
+    def mark_as_read(self, notification_ids: list[UUID]) -> int:
         """
         Mark notifications as read.
 
@@ -500,13 +499,13 @@ class NotificationService:
 
 async def notify_schedule_published(
     db: Session,
-    recipient_ids: List[UUID],
+    recipient_ids: list[UUID],
     period: str,
     coverage_rate: float,
     total_assignments: int,
     violations_count: int,
     publisher_name: str
-) -> Dict[str, List[DeliveryResult]]:
+) -> dict[str, list[DeliveryResult]]:
     """
     Send schedule published notifications to multiple recipients.
 
@@ -547,7 +546,7 @@ async def notify_acgme_warning(
     person_name: str,
     violation_details: str,
     recommended_action: str
-) -> List[DeliveryResult]:
+) -> list[DeliveryResult]:
     """
     Send ACGME compliance warning notification.
 

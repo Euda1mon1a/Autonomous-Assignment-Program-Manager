@@ -4,31 +4,26 @@ Pytest configuration and fixtures for backend tests.
 Provides test database setup, API client, and common fixtures
 for testing the Residency Scheduler API.
 """
-import os
-import pytest
+from collections.abc import Generator
 from datetime import date, timedelta
-from typing import Generator
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session, configure_mappers
+from sqlalchemy.orm import Session, configure_mappers, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.main import app
+from app.core.security import get_password_hash
 from app.db.base import Base
 from app.db.session import get_db
-from app.models.person import Person
-from app.models.block import Block
+from app.main import app
 from app.models.absence import Absence
 from app.models.assignment import Assignment
+from app.models.block import Block
+from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
-from app.models.procedure import Procedure
-from app.models.procedure_credential import ProcedureCredential
-from app.models.certification import CertificationType, PersonCertification
 from app.models.user import User
-from app.core.security import get_password_hash
-
 
 # Use in-memory SQLite for tests
 TEST_DATABASE_URL = "sqlite:///:memory:"

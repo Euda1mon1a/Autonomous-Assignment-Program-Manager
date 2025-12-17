@@ -1,7 +1,8 @@
 """Token blacklist model for JWT invalidation."""
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Index
+
+from sqlalchemy import Column, DateTime, Index, String
 
 from app.db.base import Base
 from app.db.types import GUID

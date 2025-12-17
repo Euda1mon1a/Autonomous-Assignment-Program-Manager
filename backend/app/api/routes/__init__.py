@@ -1,8 +1,28 @@
 """API routes."""
 from fastapi import APIRouter
 
-from app.api.routes import people, blocks, rotation_templates, assignments, absences, schedule, settings, auth, export, resilience, procedures, credentials, certifications, calendar, audit, visualization
-from app.api.routes import swap, leave, portal, fmit_health
+from app.api.routes import (
+    absences,
+    assignments,
+    audit,
+    auth,
+    blocks,
+    calendar,
+    certifications,
+    credentials,
+    export,
+    fmit_health,
+    leave,
+    people,
+    portal,
+    procedures,
+    resilience,
+    rotation_templates,
+    schedule,
+    settings,
+    swap,
+    visualization,
+)
 
 api_router = APIRouter()
 

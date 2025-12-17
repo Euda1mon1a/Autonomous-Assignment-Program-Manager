@@ -21,14 +21,14 @@ This module implements:
 6. Emergent schedule patterns
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
-from typing import Optional, Callable, Any
-from uuid import UUID, uuid4
 import logging
-import statistics
 import math
+import statistics
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any
+from uuid import UUID, uuid4
 
 logger = logging.getLogger(__name__)
 
@@ -76,11 +76,11 @@ class PreferenceTrail:
     trail_type: TrailType
 
     # What the trail is about
-    slot_id: Optional[UUID] = None       # Specific slot
-    slot_type: Optional[str] = None      # Type of slot (e.g., "monday_am")
-    block_type: Optional[str] = None     # Type of block
-    service_type: Optional[str] = None   # Type of service
-    target_faculty_id: Optional[UUID] = None  # For swap affinity
+    slot_id: UUID | None = None       # Specific slot
+    slot_type: str | None = None      # Type of slot (e.g., "monday_am")
+    block_type: str | None = None     # Type of block
+    service_type: str | None = None   # Type of service
+    target_faculty_id: UUID | None = None  # For swap affinity
 
     # Trail strength (0.0 - 1.0)
     strength: float = 0.5
@@ -382,11 +382,7 @@ class StigmergicScheduler:
         elif signal_type in (
             SignalType.REQUESTED_SWAP,
             SignalType.LOW_SATISFACTION,
-        ):
-            trail_type = TrailType.AVOIDANCE
-            strengthen = True
-
-        elif signal_type == SignalType.DECLINED_OFFER:
+        ) or signal_type == SignalType.DECLINED_OFFER:
             trail_type = TrailType.AVOIDANCE
             strengthen = True
 
@@ -451,7 +447,7 @@ class StigmergicScheduler:
         self,
         slot_type: str = None,
         slot_id: UUID = None,
-    ) -> Optional[CollectivePreference]:
+    ) -> CollectivePreference | None:
         """
         Get aggregated preference for a slot or slot type.
 
@@ -470,9 +466,7 @@ class StigmergicScheduler:
         relevant_trails = []
 
         for trail in self.trails.values():
-            if slot_id and trail.slot_id == slot_id:
-                relevant_trails.append(trail)
-            elif slot_type and trail.slot_type == slot_type:
+            if slot_id and trail.slot_id == slot_id or slot_type and trail.slot_type == slot_type:
                 relevant_trails.append(trail)
 
         if not relevant_trails:
@@ -564,7 +558,7 @@ class StigmergicScheduler:
             if not trail.target_faculty_id:
                 continue
 
-            pair = tuple(sorted([str(trail.faculty_id), str(trail.target_faculty_id)]))
+            tuple(sorted([str(trail.faculty_id), str(trail.target_faculty_id)]))
             pair_uuids = (trail.faculty_id, trail.target_faculty_id)
 
             if pair_uuids not in edges:
@@ -762,7 +756,7 @@ class StigmergicScheduler:
         block_type: str = None,
         service_type: str = None,
         target_faculty_id: UUID = None,
-    ) -> Optional[PreferenceTrail]:
+    ) -> PreferenceTrail | None:
         """Find an existing trail matching the criteria."""
         trail_ids = self._trails_by_faculty.get(faculty_id, [])
 

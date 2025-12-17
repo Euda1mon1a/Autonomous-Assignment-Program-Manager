@@ -1,17 +1,17 @@
 """Person controller for request/response handling."""
 
-from typing import Optional
 from uuid import UUID
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.services.person_service import PersonService
 from app.schemas.person import (
     PersonCreate,
-    PersonUpdate,
-    PersonResponse,
     PersonListResponse,
+    PersonResponse,
+    PersonUpdate,
 )
+from app.services.person_service import PersonService
 
 
 class PersonController:
@@ -22,8 +22,8 @@ class PersonController:
 
     def list_people(
         self,
-        type: Optional[str] = None,
-        pgy_level: Optional[int] = None,
+        type: str | None = None,
+        pgy_level: int | None = None,
     ) -> PersonListResponse:
         """List people with optional filters."""
         result = self.service.list_people(type=type, pgy_level=pgy_level)
@@ -31,7 +31,7 @@ class PersonController:
 
     def list_residents(
         self,
-        pgy_level: Optional[int] = None,
+        pgy_level: int | None = None,
     ) -> PersonListResponse:
         """List all residents with optional PGY filter."""
         result = self.service.list_residents(pgy_level=pgy_level)
@@ -39,7 +39,7 @@ class PersonController:
 
     def list_faculty(
         self,
-        specialty: Optional[str] = None,
+        specialty: str | None = None,
     ) -> PersonListResponse:
         """List all faculty with optional specialty filter."""
         result = self.service.list_faculty(specialty=specialty)

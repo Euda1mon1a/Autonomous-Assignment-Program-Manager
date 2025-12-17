@@ -25,17 +25,17 @@ Info:
 - resilience_info: Build/version info
 """
 
-from typing import Optional
 import logging
+from typing import Optional
 
 try:
     from prometheus_client import (
-        Gauge,
-        Counter,
-        Histogram,
-        Info,
         REGISTRY,
         CollectorRegistry,
+        Counter,
+        Gauge,
+        Histogram,
+        Info,
     )
     PROMETHEUS_AVAILABLE = True
 except ImportError:
@@ -355,7 +355,7 @@ class ResilienceMetrics:
 
 
 # Global metrics instance
-_metrics: Optional[ResilienceMetrics] = None
+_metrics: ResilienceMetrics | None = None
 
 
 def get_metrics() -> ResilienceMetrics:

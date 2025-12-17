@@ -11,9 +11,8 @@ Provides automated background tasks for:
 Tasks integrate with the ResilienceService and update Prometheus metrics.
 """
 
-from datetime import date, datetime, timedelta
-from typing import Optional
 import logging
+from datetime import date, datetime, timedelta
 
 from celery import shared_task
 from sqlalchemy.orm import Session
@@ -47,11 +46,11 @@ def periodic_health_check(self) -> dict:
 
     Updates Prometheus metrics and triggers alerts if needed.
     """
-    from app.resilience.service import ResilienceService
-    from app.resilience.metrics import get_metrics
-    from app.models.person import Person
-    from app.models.block import Block
     from app.models.assignment import Assignment
+    from app.models.block import Block
+    from app.models.person import Person
+    from app.resilience.metrics import get_metrics
+    from app.resilience.service import ResilienceService
 
     logger.info("Starting periodic health check")
     metrics = get_metrics()
@@ -91,7 +90,7 @@ def periodic_health_check(self) -> dict:
             metrics.update_contingency_status(health.n1_pass, health.n2_pass)
             metrics.update_faculty_counts(
                 total=len(faculty),
-                on_duty=len([f for f in faculty]),  # Would filter by availability
+                on_duty=len(list(faculty)),  # Would filter by availability
             )
             metrics.update_active_fallbacks(len(health.active_fallbacks))
 
@@ -147,11 +146,11 @@ def run_contingency_analysis(
 
     Returns vulnerability report.
     """
+    from app.models.assignment import Assignment
+    from app.models.block import Block
+    from app.models.person import Person
     from app.resilience.contingency import ContingencyAnalyzer
     from app.resilience.metrics import get_metrics
-    from app.models.person import Person
-    from app.models.block import Block
-    from app.models.assignment import Assignment
 
     logger.info(f"Starting contingency analysis for next {days_ahead} days")
     metrics = get_metrics()
@@ -250,7 +249,7 @@ def precompute_fallback_schedules(
 
     These pre-computed schedules enable instant crisis response.
     """
-    from app.resilience.static_stability import FallbackScheduler, FallbackScenario
+    from app.resilience.static_stability import FallbackScenario, FallbackScheduler
 
     logger.info(f"Starting fallback precomputation for next {days_ahead} days")
 
@@ -321,9 +320,9 @@ def generate_utilization_forecast(
     Uses known absences (PCS, leave, TDY) to forecast
     utilization and identify high-risk periods.
     """
-    from app.resilience.utilization import UtilizationMonitor
-    from app.models.person import Person
     from app.models.absence import Absence
+    from app.models.person import Person
+    from app.resilience.utilization import UtilizationMonitor
 
     logger.info(f"Generating utilization forecast for next {days_ahead} days")
 
@@ -419,7 +418,7 @@ def generate_utilization_forecast(
 def send_resilience_alert(
     level: str,
     message: str,
-    details: Optional[dict] = None,
+    details: dict | None = None,
 ) -> dict:
     """
     Send resilience alert via configured channels.
@@ -434,18 +433,16 @@ def send_resilience_alert(
     - Email (for warning and above)
     - Webhook (if configured)
     """
+    from uuid import uuid4
+
     from app.notifications.channels import (
-        InAppChannel,
-        EmailChannel,
-        WebhookChannel,
         NotificationPayload,
     )
-    from uuid import uuid4
 
     logger.info(f"Sending resilience alert: {level} - {message}")
 
     # Create payload
-    payload = NotificationPayload(
+    NotificationPayload(
         recipient_id=uuid4(),  # Would be admin user ID
         notification_type=f"resilience_alert_{level}",
         subject=f"[RESILIENCE {level.upper()}] {message[:50]}",
@@ -489,7 +486,7 @@ def activate_crisis_response(
     self,
     severity: str,
     reason: str,
-    approved_by: Optional[str] = None,
+    approved_by: str | None = None,
 ) -> dict:
     """
     Activate crisis response mode via background task.
@@ -497,8 +494,8 @@ def activate_crisis_response(
     This allows crisis activation to be triggered programmatically
     or via API without blocking the request.
     """
-    from app.resilience.service import ResilienceService
     from app.resilience.metrics import get_metrics
+    from app.resilience.service import ResilienceService
 
     logger.warning(f"Activating crisis response: {severity} - {reason}")
     metrics = get_metrics()

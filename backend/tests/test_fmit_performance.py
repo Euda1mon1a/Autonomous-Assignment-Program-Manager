@@ -7,20 +7,20 @@ completes within acceptable time limits.
 import sys
 import time
 from datetime import date, timedelta
-from typing import List
+
 import pytest
 
 # Add parent directory to path for imports
 sys.path.insert(0, '/home/user/Autonomous-Assignment-Program-Manager/backend')
 
 from app.services.xlsx_import import (
-    SwapFinder,
+    ExternalConflict,
+    FacultyTarget,
     ImportResult,
     ProviderSchedule,
     ScheduleSlot,
     SlotType,
-    FacultyTarget,
-    ExternalConflict,
+    SwapFinder,
 )
 
 
@@ -129,7 +129,7 @@ def generate_external_conflicts(
     num_faculty: int,
     num_conflicts: int,
     start_date: date
-) -> List[ExternalConflict]:
+) -> list[ExternalConflict]:
     """Generate random external conflicts for testing."""
     conflicts = []
 
@@ -291,7 +291,7 @@ class TestSwapFinderPerformance:
         finder_size = sys.getsizeof(finder)
 
         print(f"\n{'='*60}")
-        print(f"Memory Efficiency Test (100 faculty, 52 weeks)")
+        print("Memory Efficiency Test (100 faculty, 52 weeks)")
         print(f"{'='*60}")
         print(f"  ImportResult size:   ~{result_size:,} bytes")
         print(f"  SwapFinder size:     ~{finder_size:,} bytes")
@@ -310,7 +310,7 @@ class TestSwapFinderPerformance:
             candidates = finder.find_swap_candidates("Faculty_000", week)
             assert len(candidates) >= 0  # Just verify it works
 
-        print(f"  ✓ Completed 10 swap searches successfully")
+        print("  ✓ Completed 10 swap searches successfully")
 
     def test_worst_case_scenario(self):
         """Test worst-case scenario: many conflicts, tight constraints."""
@@ -347,7 +347,7 @@ class TestSwapFinderPerformance:
         min_time = min(search_times)
 
         print(f"\n{'='*60}")
-        print(f"Worst-Case Scenario Test (50 faculty, 100 conflicts)")
+        print("Worst-Case Scenario Test (50 faculty, 100 conflicts)")
         print(f"{'='*60}")
         print(f"  Searches performed:  {len(search_times)}")
         print(f"  Average time:        {avg_time*1000:.1f}ms")
@@ -371,10 +371,10 @@ class TestSwapFinderPerformance:
         elapsed_time = time.time() - start_time
 
         print(f"\n{'='*60}")
-        print(f"find_excessive_alternating Performance")
+        print("find_excessive_alternating Performance")
         print(f"{'='*60}")
         print(f"  Execution time:      {elapsed_time*1000:.1f}ms")
-        print(f"  Faculty analyzed:    50")
+        print("  Faculty analyzed:    50")
         print(f"  Excessive patterns:  {len(excessive)}")
 
         # Should complete very quickly
@@ -408,7 +408,7 @@ class TestSwapFinderPerformance:
         avg_time = total_time / len(all_candidates)
 
         print(f"\n{'='*60}")
-        print(f"Concurrent Searches Test")
+        print("Concurrent Searches Test")
         print(f"{'='*60}")
         print(f"  Total searches:      {len(all_candidates)}")
         print(f"  Total time:          {total_time:.3f}s")
@@ -461,7 +461,7 @@ class TestScheduleDataStructures:
         weeks_time = time.time() - weeks_start
 
         print(f"\n{'='*60}")
-        print(f"ProviderSchedule Performance")
+        print("ProviderSchedule Performance")
         print(f"{'='*60}")
         print(f"  Add 728 slots:       {add_time*1000:.1f}ms")
         print(f"  1000 lookups:        {lookup_time*1000:.1f}ms")
@@ -505,7 +505,7 @@ class TestScheduleDataStructures:
         query_time = time.time() - query_start
 
         print(f"\n{'='*60}")
-        print(f"ImportResult Performance")
+        print("ImportResult Performance")
         print(f"{'='*60}")
         print(f"  Add 100 providers:   {add_time*1000:.1f}ms")
         print(f"  Add 1000 conflicts:  {conflict_time*1000:.1f}ms")

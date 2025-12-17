@@ -1,7 +1,8 @@
 """Person model - residents and faculty."""
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, CheckConstraint
+
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base

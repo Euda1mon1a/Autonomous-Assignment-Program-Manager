@@ -1,6 +1,6 @@
 """Authentication schemas."""
-from typing import Optional
 from uuid import UUID
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -12,9 +12,9 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     """Data extracted from JWT token."""
-    user_id: Optional[str] = None
-    username: Optional[str] = None
-    jti: Optional[str] = None  # JWT ID for blacklist support
+    user_id: str | None = None
+    username: str | None = None
+    jti: str | None = None  # JWT ID for blacklist support
 
 
 class UserLogin(BaseModel):
@@ -33,9 +33,9 @@ class UserCreate(BaseModel):
 
 class UserUpdate(BaseModel):
     """User update request."""
-    email: Optional[EmailStr] = None
-    password: Optional[str] = None
-    role: Optional[str] = None
+    email: EmailStr | None = None
+    password: str | None = None
+    role: str | None = None
 
 
 class UserResponse(BaseModel):

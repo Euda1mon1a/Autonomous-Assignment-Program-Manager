@@ -8,26 +8,25 @@ Tests cover:
 - Alternative candidate tracking
 - Audit hash computation
 """
-import pytest
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
-from app.scheduling.explainability import (
-    ExplainabilityService,
-    compute_audit_hash,
-)
+import pytest
+
 from app.scheduling.constraints import (
     ConstraintManager,
     SchedulingContext,
 )
-from app.scheduling.solvers import GreedySolver, SolverResult
-from app.schemas.explainability import (
-    DecisionExplanation,
-    ConfidenceLevel,
-    ConstraintType,
-    ConstraintStatus,
+from app.scheduling.explainability import (
+    ExplainabilityService,
+    compute_audit_hash,
 )
-
+from app.scheduling.solvers import GreedySolver
+from app.schemas.explainability import (
+    ConfidenceLevel,
+    ConstraintStatus,
+    DecisionExplanation,
+)
 
 # ============================================================================
 # Test Fixtures

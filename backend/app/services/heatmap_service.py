@@ -1,13 +1,11 @@
 """Heatmap service for schedule visualization using Plotly."""
 from datetime import date, timedelta
-from typing import List, Optional, Dict, Any, Tuple
+from typing import Any
 from uuid import UUID
-import io
 
-from sqlalchemy import and_, func
-from sqlalchemy.orm import Session
 import plotly.graph_objects as go
 import plotly.io as pio
+from sqlalchemy.orm import Session
 
 from app.models.assignment import Assignment
 from app.models.block import Block
@@ -15,10 +13,10 @@ from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.swap import SwapRecord, SwapStatus
 from app.schemas.visualization import (
+    CoverageGap,
+    CoverageHeatmapResponse,
     HeatmapData,
     HeatmapResponse,
-    CoverageHeatmapResponse,
-    CoverageGap,
 )
 
 
@@ -26,7 +24,7 @@ class HeatmapService:
     """Service for generating heatmap visualizations."""
 
     @staticmethod
-    def _get_date_range(start_date: date, end_date: date) -> List[date]:
+    def _get_date_range(start_date: date, end_date: date) -> list[date]:
         """Generate list of dates in range."""
         dates = []
         current = start_date
@@ -38,7 +36,7 @@ class HeatmapService:
     @staticmethod
     def _get_blocks_in_range(
         db: Session, start_date: date, end_date: date
-    ) -> List[Block]:
+    ) -> list[Block]:
         """Get all blocks in date range."""
         return (
             db.query(Block)
@@ -52,9 +50,9 @@ class HeatmapService:
         db: Session,
         start_date: date,
         end_date: date,
-        person_ids: Optional[List[UUID]] = None,
-        rotation_ids: Optional[List[UUID]] = None,
-    ) -> List[Assignment]:
+        person_ids: list[UUID] | None = None,
+        rotation_ids: list[UUID] | None = None,
+    ) -> list[Assignment]:
         """Get all assignments in date range with optional filters."""
         query = (
             db.query(Assignment)
@@ -73,7 +71,7 @@ class HeatmapService:
     @staticmethod
     def _get_swap_records_in_range(
         db: Session, start_date: date, end_date: date
-    ) -> List[SwapRecord]:
+    ) -> list[SwapRecord]:
         """Get all FMIT swap records in date range."""
         return (
             db.query(SwapRecord)
@@ -90,8 +88,8 @@ class HeatmapService:
         db: Session,
         start_date: date,
         end_date: date,
-        person_ids: Optional[List[UUID]] = None,
-        rotation_ids: Optional[List[UUID]] = None,
+        person_ids: list[UUID] | None = None,
+        rotation_ids: list[UUID] | None = None,
         include_fmit: bool = True,
         group_by: str = "person",
     ) -> HeatmapResponse:
@@ -119,7 +117,7 @@ class HeatmapService:
         )
 
         # Build assignment map: (person_id or rotation_id, date) -> count
-        assignment_map: Dict[Tuple[Any, date], int] = {}
+        assignment_map: dict[tuple[Any, date], int] = {}
 
         for assignment in assignments:
             block_date = assignment.block.date
@@ -138,7 +136,7 @@ class HeatmapService:
                 )
             else:
                 # Get all people with assignments in range
-                entity_ids = set(a.person_id for a in assignments)
+                entity_ids = {a.person_id for a in assignments}
                 entities = (
                     db.query(Person).filter(Person.id.in_(entity_ids)).all()
                     if entity_ids
@@ -155,11 +153,11 @@ class HeatmapService:
                 )
             else:
                 # Get all rotation templates with assignments in range
-                entity_ids = set(
+                entity_ids = {
                     a.rotation_template_id
                     for a in assignments
                     if a.rotation_template_id
-                )
+                }
                 entities = (
                     db.query(RotationTemplate)
                     .filter(RotationTemplate.id.in_(entity_ids))
@@ -180,7 +178,7 @@ class HeatmapService:
             z_values.append(row)
 
         # Include FMIT swap data if requested
-        metadata: Dict[str, Any] = {
+        metadata: dict[str, Any] = {
             "total_assignments": len(assignments),
             "date_range_days": len(dates),
             "entities_count": len(y_labels),
@@ -229,11 +227,11 @@ class HeatmapService:
         rotation_ids = [r.id for r in rotations]
 
         # Get all blocks and assignments in range
-        blocks = self._get_blocks_in_range(db, start_date, end_date)
+        self._get_blocks_in_range(db, start_date, end_date)
         assignments = self._get_assignments_in_range(db, start_date, end_date)
 
         # Build coverage map: (rotation_id, date) -> assignment count
-        coverage_map: Dict[Tuple[UUID, date], int] = {}
+        coverage_map: dict[tuple[UUID, date], int] = {}
         for assignment in assignments:
             if assignment.rotation_template_id:
                 key = (assignment.rotation_template_id, assignment.block.date)
@@ -242,9 +240,9 @@ class HeatmapService:
         # Build z_values matrix (coverage level: 0 = no coverage, 1+ = covered)
         # Normalize to 0-1 scale for visualization
         z_values = []
-        gaps: List[CoverageGap] = []
+        gaps: list[CoverageGap] = []
 
-        for rotation_id, rotation in zip(rotation_ids, rotations):
+        for rotation_id, rotation in zip(rotation_ids, rotations, strict=False):
             row = []
             for d in dates:
                 count = coverage_map.get((rotation_id, d), 0)
@@ -295,7 +293,7 @@ class HeatmapService:
     def generate_person_workload_heatmap(
         self,
         db: Session,
-        person_ids: List[UUID],
+        person_ids: list[UUID],
         start_date: date,
         end_date: date,
         include_weekends: bool = False,
@@ -331,7 +329,7 @@ class HeatmapService:
         )
 
         # Build workload map: (person_id, date) -> block count
-        workload_map: Dict[Tuple[UUID, date], int] = {}
+        workload_map: dict[tuple[UUID, date], int] = {}
         for assignment in assignments:
             key = (assignment.person_id, assignment.block.date)
             workload_map[key] = workload_map.get(key, 0) + 1
@@ -409,8 +407,8 @@ class HeatmapService:
             yaxis_title="",
             width=width,
             height=height,
-            font=dict(size=10),
-            xaxis=dict(tickangle=-45),
+            font={"size": 10},
+            xaxis={"tickangle": -45},
         )
 
         # Export to bytes
@@ -426,7 +424,7 @@ class HeatmapService:
         return img_bytes
 
     @staticmethod
-    def create_plotly_figure(data: HeatmapData, title: str) -> Dict[str, Any]:
+    def create_plotly_figure(data: HeatmapData, title: str) -> dict[str, Any]:
         """
         Create Plotly figure configuration for frontend rendering.
 
@@ -451,8 +449,8 @@ class HeatmapService:
             title=title,
             xaxis_title="Date",
             yaxis_title="",
-            font=dict(size=10),
-            xaxis=dict(tickangle=-45),
+            font={"size": 10},
+            xaxis={"tickangle": -45},
         )
 
         return fig.to_dict()

@@ -6,17 +6,16 @@ Format: 4-week block view with AM/PM columns per day, color-coded rotations.
 """
 import io
 from datetime import date, timedelta
-from typing import Optional
+
 from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from sqlalchemy.orm import Session, joinedload
 
-from app.models.person import Person
+from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.block import Block
-from app.models.absence import Absence
-
+from app.models.person import Person
 
 # Color definitions (ARGB format for openpyxl)
 COLORS = {
@@ -105,7 +104,7 @@ class LegacyXlsxExporter:
         block_number: int,
         start_date: date,
         end_date: date,
-        federal_holidays: Optional[list[date]] = None
+        federal_holidays: list[date] | None = None
     ) -> None:
         """Generate a single block sheet in legacy format."""
 
@@ -390,7 +389,7 @@ class LegacyXlsxExporter:
         self,
         academic_year_start: date,
         num_blocks: int = 13,
-        federal_holidays: Optional[list[date]] = None
+        federal_holidays: list[date] | None = None
     ) -> None:
         """Generate all block sheets for a full academic year."""
 
@@ -415,8 +414,8 @@ def generate_legacy_xlsx(
     db: Session,
     start_date: date,
     end_date: date,
-    block_number: Optional[int] = None,
-    federal_holidays: Optional[list[date]] = None
+    block_number: int | None = None,
+    federal_holidays: list[date] | None = None
 ) -> bytes:
     """
     Generate legacy format Excel export.

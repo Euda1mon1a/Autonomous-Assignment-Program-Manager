@@ -4,24 +4,22 @@ Provides endpoints for generating schedule heatmaps, coverage analysis,
 and workload visualization.
 """
 
-from datetime import date
-from typing import Optional, List
-from uuid import UUID
-from fastapi import APIRouter, Depends, Query, HTTPException, Response
-from fastapi.responses import StreamingResponse
 import io
+from datetime import date
+from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi.responses import StreamingResponse
+
+from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
-from app.core.security import get_current_active_user
-from app.services.heatmap_service import HeatmapService
 from app.schemas.visualization import (
-    HeatmapRequest,
-    HeatmapResponse,
     CoverageHeatmapResponse,
-    WorkloadRequest,
     ExportRequest,
+    HeatmapResponse,
 )
+from app.services.heatmap_service import HeatmapService
 
 router = APIRouter()
 
@@ -30,8 +28,8 @@ router = APIRouter()
 def get_unified_heatmap(
     start_date: date = Query(..., description="Start date for heatmap"),
     end_date: date = Query(..., description="End date for heatmap"),
-    person_ids: Optional[List[UUID]] = Query(None, description="Filter by person IDs"),
-    rotation_ids: Optional[List[UUID]] = Query(
+    person_ids: list[UUID] | None = Query(None, description="Filter by person IDs"),
+    rotation_ids: list[UUID] | None = Query(
         None, description="Filter by rotation template IDs"
     ),
     include_fmit: bool = Query(True, description="Include FMIT swap data"),
@@ -81,8 +79,8 @@ def get_unified_heatmap(
 def get_heatmap_image(
     start_date: date = Query(..., description="Start date for heatmap"),
     end_date: date = Query(..., description="End date for heatmap"),
-    person_ids: Optional[List[UUID]] = Query(None, description="Filter by person IDs"),
-    rotation_ids: Optional[List[UUID]] = Query(
+    person_ids: list[UUID] | None = Query(None, description="Filter by person IDs"),
+    rotation_ids: list[UUID] | None = Query(
         None, description="Filter by rotation template IDs"
     ),
     include_fmit: bool = Query(True, description="Include FMIT swap data"),
@@ -197,7 +195,7 @@ def get_coverage_heatmap(
 
 @router.get("/workload", response_model=HeatmapResponse)
 def get_workload_heatmap(
-    person_ids: List[UUID] = Query(..., description="Person IDs for workload analysis"),
+    person_ids: list[UUID] = Query(..., description="Person IDs for workload analysis"),
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
     include_weekends: bool = Query(False, description="Include weekends in analysis"),

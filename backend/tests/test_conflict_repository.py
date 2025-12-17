@@ -1,22 +1,19 @@
 """Comprehensive tests for ConflictRepository."""
-import pytest
 from datetime import date, datetime, timedelta
-from uuid import uuid4, UUID
-from typing import List
+from uuid import UUID, uuid4
 
+import pytest
 from sqlalchemy.orm import Session
 
-from app.repositories.conflict_repository import ConflictRepository
+from app.models.absence import Absence
 from app.models.conflict_alert import (
-    ConflictAlert,
     ConflictAlertStatus,
     ConflictSeverity,
     ConflictType,
 )
 from app.models.person import Person
-from app.models.absence import Absence
 from app.models.user import User
-
+from app.repositories.conflict_repository import ConflictRepository
 
 # ============================================================================
 # Fixtures

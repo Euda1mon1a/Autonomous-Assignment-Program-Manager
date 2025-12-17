@@ -3,30 +3,28 @@ Tests for FMIT scheduling domain model.
 
 Tests SwapFinder, ExternalConflict integration, and the swap finder API.
 """
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.models.person import Person
 from app.models.absence import Absence
+from app.models.person import Person
 from app.services.xlsx_import import (
-    SwapFinder,
-    FacultyTarget,
     ExternalConflict,
     ImportResult,
     ProviderSchedule,
     ScheduleSlot,
     SlotType,
-    has_back_to_back_conflict,
+    SwapFinder,
+    absence_to_external_conflict,
     count_alternating_cycles,
     get_schedule_flexibility,
+    has_back_to_back_conflict,
     load_external_conflicts_from_absences,
-    absence_to_external_conflict,
 )
-
 
 # ============================================================================
 # Unit Tests for Constraint Detection
@@ -421,6 +419,7 @@ class TestSwapFinderAPI:
     def mock_fmit_excel_bytes(self) -> bytes:
         """Create a minimal mock Excel file for testing."""
         import io
+
         from openpyxl import Workbook
 
         wb = Workbook()
@@ -618,8 +617,9 @@ class TestSwapFinderSchemas:
 
     def test_external_conflict_input_validates_dates(self):
         """Should reject invalid date ranges."""
-        from app.schemas.schedule import ExternalConflictInput
         import pytest
+
+        from app.schemas.schedule import ExternalConflictInput
 
         with pytest.raises(ValueError):
             ExternalConflictInput(

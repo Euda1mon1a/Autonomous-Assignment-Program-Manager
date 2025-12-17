@@ -1,7 +1,7 @@
 """Add notification tables
 
 Revision ID: 010
-Revises: 009
+Revises: 009b
 Create Date: 2025-12-16 00:00:00.000000
 
 Creates tables for notification system:
@@ -17,7 +17,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '010'
-down_revision: Union[str, None] = '009'
+down_revision: Union[str, None] = '009b'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

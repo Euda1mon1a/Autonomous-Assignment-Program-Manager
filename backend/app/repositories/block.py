@@ -1,12 +1,12 @@
 """Block repository for database operations."""
 
 from datetime import date
-from typing import Optional, List
 from uuid import UUID
+
 from sqlalchemy.orm import Session
 
-from app.repositories.base import BaseRepository
 from app.models.block import Block
+from app.repositories.base import BaseRepository
 
 
 class BlockRepository(BaseRepository[Block]):
@@ -17,10 +17,10 @@ class BlockRepository(BaseRepository[Block]):
 
     def list_with_filters(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        block_number: Optional[int] = None,
-    ) -> List[Block]:
+        start_date: date | None = None,
+        end_date: date | None = None,
+        block_number: int | None = None,
+    ) -> list[Block]:
         """List blocks with optional filters, ordered by date and time."""
         query = self.db.query(Block)
 
@@ -35,7 +35,7 @@ class BlockRepository(BaseRepository[Block]):
 
     def get_by_date_and_time(
         self, date: date, time_of_day: str
-    ) -> Optional[Block]:
+    ) -> Block | None:
         """Get a block by date and time of day."""
         return (
             self.db.query(Block)
@@ -48,7 +48,7 @@ class BlockRepository(BaseRepository[Block]):
 
     def get_ids_in_date_range(
         self, start_date: date, end_date: date
-    ) -> List[UUID]:
+    ) -> list[UUID]:
         """Get all block IDs in a date range."""
         results = (
             self.db.query(Block.id)
@@ -74,7 +74,7 @@ class BlockRepository(BaseRepository[Block]):
             is not None
         )
 
-    def bulk_create(self, blocks: List[dict]) -> List[Block]:
+    def bulk_create(self, blocks: list[dict]) -> list[Block]:
         """Create multiple blocks at once."""
         db_blocks = [Block(**b) for b in blocks]
         self.db.add_all(db_blocks)

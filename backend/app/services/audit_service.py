@@ -30,7 +30,7 @@ import csv
 import io
 import logging
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -49,8 +49,8 @@ class AuditLogEntry(BaseModel):
     entity_id: str
     transaction_id: int
     operation: str
-    changed_at: Optional[datetime]
-    changed_by: Optional[str]
+    changed_at: datetime | None
+    changed_by: str | None
 
     class Config:
         from_attributes = True
@@ -58,7 +58,7 @@ class AuditLogEntry(BaseModel):
 
 class AuditLogResponse(BaseModel):
     """Response for audit log query."""
-    items: List[AuditLogEntry]
+    items: list[AuditLogEntry]
     total: int
     page: int
     page_size: int
@@ -68,10 +68,10 @@ class AuditLogResponse(BaseModel):
 class AuditStatistics(BaseModel):
     """Audit statistics summary."""
     total_changes: int
-    changes_by_entity: Dict[str, int]
-    changes_by_operation: Dict[str, int]
-    changes_by_user: Dict[str, int]
-    most_active_day: Optional[str]
+    changes_by_entity: dict[str, int]
+    changes_by_operation: dict[str, int]
+    changes_by_user: dict[str, int]
+    most_active_day: str | None
 
 
 class AuditService:
@@ -90,9 +90,9 @@ class AuditService:
     def query_audit_logs(
         self,
         db: Session,
-        filters: Optional[Dict[str, Any]] = None,
-        pagination: Optional[Dict[str, int]] = None,
-        sort: Optional[Dict[str, str]] = None,
+        filters: dict[str, Any] | None = None,
+        pagination: dict[str, int] | None = None,
+        sort: dict[str, str] | None = None,
     ) -> AuditLogResponse:
         """
         Query audit logs with filters, pagination, and sorting.
@@ -149,7 +149,7 @@ class AuditService:
         db: Session,
         entity_type: str,
         entity_id: UUID,
-    ) -> List[AuditLogEntry]:
+    ) -> list[AuditLogEntry]:
         """
         Get complete version history for a specific entity.
 
@@ -181,8 +181,8 @@ class AuditService:
         self,
         db: Session,
         user_id: str,
-        date_range: Optional[Tuple[datetime, datetime]] = None,
-    ) -> List[AuditLogEntry]:
+        date_range: tuple[datetime, datetime] | None = None,
+    ) -> list[AuditLogEntry]:
         """
         Get audit activity for a specific user.
 
@@ -213,7 +213,7 @@ class AuditService:
     def export_audit_logs(
         self,
         db: Session,
-        config: Dict[str, Any],
+        config: dict[str, Any],
     ) -> bytes:
         """
         Export audit logs to CSV or Excel format.
@@ -258,7 +258,7 @@ class AuditService:
     def calculate_statistics(
         self,
         db: Session,
-        date_range: Optional[Tuple[datetime, datetime]] = None,
+        date_range: tuple[datetime, datetime] | None = None,
     ) -> AuditStatistics:
         """
         Calculate audit statistics for a date range.
@@ -375,7 +375,7 @@ class AuditService:
     def get_recent_changes(
         db: Session,
         hours: int = 24,
-        model_type: Optional[str] = None,
+        model_type: str | None = None,
     ) -> list[dict]:
         """
         Get recent changes across all tracked models.
@@ -447,7 +447,7 @@ class AuditService:
     def get_changes_by_user(
         db: Session,
         user_id: str,
-        since: Optional[datetime] = None,
+        since: datetime | None = None,
         limit: int = 50,
     ) -> list[dict]:
         """
@@ -477,7 +477,7 @@ class AuditService:
             ]
             model_names = ["assignment", "absence", "schedule_run", "swap_record"]
 
-            for table, model in zip(tables, model_names):
+            for table, model in zip(tables, model_names, strict=False):
                 try:
                     query = text(f"""
                         SELECT v.id, v.transaction_id, v.operation_type, t.issued_at
@@ -517,7 +517,7 @@ class AuditService:
         db: Session,
         entity_type: str,
         entity_id: UUID,
-    ) -> Optional[List[AuditLogEntry]]:
+    ) -> list[AuditLogEntry] | None:
         """Get detailed history directly from the model's versions."""
         model_map = {
             "assignment": "app.models.assignment.Assignment",
@@ -563,8 +563,8 @@ class AuditService:
 
     def _export_to_csv(
         self,
-        entries: List[Dict[str, Any]],
-        columns: List[str],
+        entries: list[dict[str, Any]],
+        columns: list[str],
     ) -> bytes:
         """Export audit entries to CSV format."""
         output = io.StringIO()
@@ -583,8 +583,8 @@ class AuditService:
 
     def _export_to_excel(
         self,
-        entries: List[Dict[str, Any]],
-        columns: List[str],
+        entries: list[dict[str, Any]],
+        columns: list[str],
     ) -> bytes:
         """Export audit entries to Excel format (requires openpyxl)."""
         try:

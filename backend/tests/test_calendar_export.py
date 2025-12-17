@@ -1,6 +1,6 @@
 """Tests for calendar export functionality."""
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 import pytest
 from fastapi.testclient import TestClient

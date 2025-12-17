@@ -1,7 +1,8 @@
 """Tests for faculty portal API routes."""
-import pytest
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from uuid import uuid4
+
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -222,8 +223,8 @@ class TestMarketplaceEndpoint:
 @pytest.fixture
 def faculty_user(db, sample_faculty):
     """Create a user linked to a faculty member."""
-    from app.models.user import User
     from app.core.security import get_password_hash
+    from app.models.user import User
 
     # Create user with same email as faculty
     user = User(

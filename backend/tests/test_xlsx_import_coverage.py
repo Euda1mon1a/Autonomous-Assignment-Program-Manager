@@ -4,19 +4,19 @@ Comprehensive coverage tests for xlsx_import.py module.
 Tests SlotType classification, ProviderSchedule, date parsing,
 and ClinicScheduleImporter functionality.
 """
-import pytest
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from io import BytesIO
+
+import pytest
 from openpyxl import Workbook
 
 from app.services.xlsx_import import (
-    SlotType,
-    ScheduleSlot,
-    ProviderSchedule,
     ClinicScheduleImporter,
     ImportResult,
+    ProviderSchedule,
+    ScheduleSlot,
+    SlotType,
 )
-
 
 # ============================================================================
 # SlotType Classification Tests

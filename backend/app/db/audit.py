@@ -17,7 +17,6 @@ Example:
 """
 import logging
 from contextvars import ContextVar
-from typing import Optional
 
 from sqlalchemy_continuum import make_versioned
 from sqlalchemy_continuum.plugins import PropertyModTrackerPlugin
@@ -26,15 +25,15 @@ logger = logging.getLogger(__name__)
 
 # Context variable to store current user ID for audit trail
 # This is set by the audit middleware on each request
-_current_user_id: ContextVar[Optional[str]] = ContextVar("current_user_id", default=None)
+_current_user_id: ContextVar[str | None] = ContextVar("current_user_id", default=None)
 
 
-def get_current_user_id() -> Optional[str]:
+def get_current_user_id() -> str | None:
     """Get the current user ID from context (set by middleware)."""
     return _current_user_id.get()
 
 
-def set_current_user_id(user_id: Optional[str]) -> None:
+def set_current_user_id(user_id: str | None) -> None:
     """Set the current user ID in context (called by middleware)."""
     _current_user_id.set(user_id)
 
