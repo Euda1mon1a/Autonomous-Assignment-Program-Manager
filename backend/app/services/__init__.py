@@ -48,4 +48,7 @@ __all__ = [
     "FacultyPreferenceService",
     "ConflictAlertService",
     "SwapNotificationService",
+    # Phase 5 services
+    "FMITSchedulerService",
+    "SwapRequestService",
 ]
