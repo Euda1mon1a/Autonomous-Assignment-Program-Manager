@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.assignment import Assignment
 from app.models.block import Block
+from app.models.calendar_subscription import CalendarSubscription
 from app.models.person import Person
 
 
@@ -398,40 +399,44 @@ class CalendarService:
         return cal.to_ical().decode("utf-8")
 
     @staticmethod
-    def create_subscription_token(
+    def create_subscription(
         db: Session,
         person_id: UUID,
+        created_by_user_id: UUID | None = None,
+        label: str | None = None,
         expires_days: int | None = None,
-    ) -> tuple[str, datetime | None]:
+    ) -> CalendarSubscription:
         """
-        Create a subscription token for calendar feeds.
+        Create a calendar subscription for webcal feeds.
 
         Args:
             db: Database session
             person_id: Person UUID
+            created_by_user_id: User creating the subscription
+            label: Optional label for the subscription
             expires_days: Optional number of days until expiration
 
         Returns:
-            Tuple of (token, expires_at)
+            CalendarSubscription instance
         """
         # Verify person exists
         person = db.query(Person).filter(Person.id == person_id).first()
         if not person:
             raise ValueError(f"Person not found: {person_id}")
 
-        # Generate secure token
-        token = secrets.token_urlsafe(32)
+        # Create subscription
+        subscription = CalendarSubscription.create(
+            person_id=person_id,
+            created_by_user_id=created_by_user_id,
+            label=label,
+            expires_days=expires_days,
+        )
 
-        # Calculate expiration
-        expires_at = None
-        if expires_days:
-            expires_at = datetime.utcnow() + timedelta(days=expires_days)
+        db.add(subscription)
+        db.commit()
+        db.refresh(subscription)
 
-        # In a real implementation, we would store this in a database table
-        # For now, we encode person_id in the token (in production, use a proper token store)
-        # This is a simplified implementation for demonstration
-
-        return token, expires_at
+        return subscription
 
     @staticmethod
     def validate_subscription_token(db: Session, token: str) -> UUID | None:
@@ -445,7 +450,130 @@ class CalendarService:
         Returns:
             Person UUID if valid, None otherwise
         """
-        # In a real implementation, this would query a database table
-        # For now, this is a placeholder that would need proper token storage
-        # This is simplified for demonstration purposes
-        return None
+        subscription = (
+            db.query(CalendarSubscription)
+            .filter(CalendarSubscription.token == token)
+            .first()
+        )
+
+        if not subscription or not subscription.is_valid():
+            return None
+
+        # Update last accessed timestamp
+        subscription.touch()
+        db.commit()
+
+        return subscription.person_id
+
+    @staticmethod
+    def get_subscription(db: Session, token: str) -> CalendarSubscription | None:
+        """
+        Get a subscription by token.
+
+        Args:
+            db: Database session
+            token: Subscription token
+
+        Returns:
+            CalendarSubscription or None
+        """
+        return (
+            db.query(CalendarSubscription)
+            .filter(CalendarSubscription.token == token)
+            .first()
+        )
+
+    @staticmethod
+    def list_subscriptions(
+        db: Session,
+        person_id: UUID | None = None,
+        created_by_user_id: UUID | None = None,
+        active_only: bool = True,
+    ) -> list[CalendarSubscription]:
+        """
+        List calendar subscriptions.
+
+        Args:
+            db: Database session
+            person_id: Filter by person
+            created_by_user_id: Filter by creator
+            active_only: Only return active subscriptions
+
+        Returns:
+            List of CalendarSubscription
+        """
+        query = db.query(CalendarSubscription)
+
+        if person_id:
+            query = query.filter(CalendarSubscription.person_id == person_id)
+        if created_by_user_id:
+            query = query.filter(CalendarSubscription.created_by_user_id == created_by_user_id)
+        if active_only:
+            query = query.filter(CalendarSubscription.is_active == True)
+
+        return query.order_by(CalendarSubscription.created_at.desc()).all()
+
+    @staticmethod
+    def revoke_subscription(db: Session, token: str) -> bool:
+        """
+        Revoke a calendar subscription.
+
+        Args:
+            db: Database session
+            token: Subscription token
+
+        Returns:
+            True if revoked, False if not found
+        """
+        subscription = (
+            db.query(CalendarSubscription)
+            .filter(CalendarSubscription.token == token)
+            .first()
+        )
+
+        if not subscription:
+            return False
+
+        subscription.revoke()
+        db.commit()
+
+        return True
+
+    @staticmethod
+    def generate_subscription_url(token: str, base_url: str | None = None) -> str:
+        """
+        Generate the webcal subscription URL.
+
+        Args:
+            token: Subscription token
+            base_url: Base URL for the API (defaults to localhost)
+
+        Returns:
+            Full webcal:// URL
+        """
+        if not base_url:
+            base_url = "http://localhost:8000/api/calendar"
+
+        # Convert http:// to webcal:// for calendar app compatibility
+        webcal_base = base_url.replace("https://", "webcal://").replace("http://", "webcal://")
+
+        return f"{webcal_base}/subscribe/{token}"
+
+    # Legacy compatibility method
+    @staticmethod
+    def create_subscription_token(
+        db: Session,
+        person_id: UUID,
+        expires_days: int | None = None,
+    ) -> tuple[str, datetime | None]:
+        """
+        Legacy method for creating subscription tokens.
+
+        Use create_subscription() for full functionality.
+        """
+        subscription = CalendarService.create_subscription(
+            db=db,
+            person_id=person_id,
+            expires_days=expires_days,
+        )
+        return subscription.token, subscription.expires_at
