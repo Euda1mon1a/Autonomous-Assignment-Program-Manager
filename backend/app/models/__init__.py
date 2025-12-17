@@ -17,6 +17,14 @@ from app.models.notification import (
     NotificationPreferenceRecord,
 )
 from app.models.token_blacklist import TokenBlacklist
+from app.models.swap import SwapRecord, SwapApproval, SwapStatus, SwapType
+from app.models.conflict_alert import (
+    ConflictAlert,
+    ConflictAlertStatus,
+    ConflictSeverity,
+    ConflictType,
+)
+from app.models.faculty_preference import FacultyPreference
 from app.models.resilience import (
     ***REMOVED*** Tier 1 models
     ResilienceHealthCheck,
@@ -81,6 +89,18 @@ __all__ = [
     "NotificationPreferenceRecord",
     ***REMOVED*** Token blacklist
     "TokenBlacklist",
+    ***REMOVED*** FMIT Swap models
+    "SwapRecord",
+    "SwapApproval",
+    "SwapStatus",
+    "SwapType",
+    ***REMOVED*** Conflict Alert models
+    "ConflictAlert",
+    "ConflictAlertStatus",
+    "ConflictSeverity",
+    "ConflictType",
+    ***REMOVED*** Faculty Preference model
+    "FacultyPreference",
     ***REMOVED*** Tier 1 Resilience models
     "ResilienceHealthCheck",
     "ResilienceEvent",
