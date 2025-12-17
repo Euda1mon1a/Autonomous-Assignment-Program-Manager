@@ -26,8 +26,8 @@ The easiest way to run Residency Scheduler is using Docker Compose.
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/residency-scheduler.git
-cd residency-scheduler
+git clone https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager.git
+cd Autonomous-Assignment-Program-Manager
 
 # Copy environment file
 cp .env.example .env
@@ -371,7 +371,7 @@ If you encounter issues:
 
 1. Check the [Troubleshooting](Troubleshooting) guide
 2. Review logs: `docker-compose logs -f [service_name]`
-3. Search existing [GitHub Issues](https://github.com/your-org/residency-scheduler/issues)
+3. Search existing [GitHub Issues](https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager/issues)
 4. Open a new issue with:
    - Steps to reproduce
    - Expected vs actual behavior
