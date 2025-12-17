@@ -48,6 +48,7 @@ class AssignmentRepository(BaseRepository[Assignment]):
         end_date: date | None = None,
         person_id: UUID | None = None,
         role: str | None = None,
+        activity_type: str | None = None,
     ) -> list[Assignment]:
         """List assignments with optional filters and eager loading."""
         query = self.db.query(Assignment).options(
@@ -67,6 +68,9 @@ class AssignmentRepository(BaseRepository[Assignment]):
             query = query.filter(Assignment.person_id == person_id)
         if role:
             query = query.filter(Assignment.role == role)
+        if activity_type:
+            # Filter by activity_type in the rotation_template
+            query = query.filter(Assignment.rotation_template.has(activity_type=activity_type))
 
         return query.all()
 

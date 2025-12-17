@@ -10,6 +10,11 @@ from app.analytics.metrics import (
     calculate_preference_satisfaction,
 )
 from app.analytics.reports import ReportGenerator
+from app.analytics.stability_metrics import (
+    StabilityMetrics,
+    StabilityMetricsComputer,
+    compute_stability_metrics,
+)
 
 
 def get_analytics_engine(db: Session) -> AnalyticsEngine:
@@ -42,6 +47,8 @@ __all__ = [
     # Classes
     "AnalyticsEngine",
     "ReportGenerator",
+    "StabilityMetrics",
+    "StabilityMetricsComputer",
     # Factory functions
     "get_analytics_engine",
     "get_report_generator",
@@ -51,4 +58,5 @@ __all__ = [
     "calculate_acgme_compliance_rate",
     "calculate_preference_satisfaction",
     "calculate_consecutive_duty_stats",
+    "compute_stability_metrics",
 ]

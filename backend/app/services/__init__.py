@@ -20,6 +20,7 @@ from app.services.leave_providers import (
     LeaveRecord,
 )
 from app.services.person_service import PersonService
+from app.services.role_filter_service import RoleFilterService, UserRole, ResourceType
 from app.services.swap_executor import ExecutionResult, RollbackResult, SwapExecutor
 from app.services.swap_notification_service import SwapNotificationService
 from app.services.swap_request_service import SwapRequestService
@@ -31,6 +32,10 @@ __all__ = [
     "BlockService",
     "AbsenceService",
     "AuthService",
+    # Role-based filtering
+    "RoleFilterService",
+    "UserRole",
+    "ResourceType",
     # FMIT Swap services
     "SwapValidationService",
     "SwapValidationResult",
