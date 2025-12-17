@@ -34,6 +34,13 @@ class Settings(BaseSettings):
     WEBHOOK_SECRET: str = "your-webhook-secret-change-in-production"
     WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS: int = 300  ***REMOVED*** 5 minutes
 
+    ***REMOVED*** Rate Limiting (per IP address)
+    RATE_LIMIT_LOGIN_ATTEMPTS: int = 5  ***REMOVED*** Maximum login attempts per minute
+    RATE_LIMIT_LOGIN_WINDOW: int = 60  ***REMOVED*** Time window in seconds (1 minute)
+    RATE_LIMIT_REGISTER_ATTEMPTS: int = 3  ***REMOVED*** Maximum registration attempts per minute
+    RATE_LIMIT_REGISTER_WINDOW: int = 60  ***REMOVED*** Time window in seconds (1 minute)
+    RATE_LIMIT_ENABLED: bool = True  ***REMOVED*** Enable/disable rate limiting globally
+
     ***REMOVED*** CORS
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
