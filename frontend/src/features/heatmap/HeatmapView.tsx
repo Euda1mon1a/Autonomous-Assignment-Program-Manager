@@ -220,9 +220,9 @@ export function HeatmapView({
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
       <Plot
-        data={plotData}
+        data={plotData as any}
         layout={plotLayout}
-        config={plotConfig}
+        config={plotConfig as any}
         onClick={handleClick}
         style={{ width, height }}
         useResizeHandler={true}

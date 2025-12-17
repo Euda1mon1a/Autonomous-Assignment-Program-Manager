@@ -291,12 +291,7 @@ export default function MySchedulePage() {
 
         {!isLoading && !error && currentPerson && (
           <PersonalScheduleCard
-            person={{
-              id: currentPerson.id,
-              name: currentPerson.name,
-              type: currentPerson.type,
-              pgy_level: currentPerson.pgy_level,
-            }}
+            person={currentPerson}
             assignments={myAssignments}
             startDate={dateRange.start}
             endDate={dateRange.end}

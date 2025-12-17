@@ -19,8 +19,9 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  TooltipProps,
 } from 'recharts';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CustomTooltipProps = { active?: boolean; payload?: any[]; label?: string };
 import { TrendingUp, TrendingDown, Info, BarChart3, Activity } from 'lucide-react';
 import { useFairnessTrend, usePgyEquity } from './hooks';
 import type { TimePeriod, TrendDirection } from './types';
@@ -46,7 +47,7 @@ type MetricType = 'gini' | 'variance' | 'equity' | 'all';
 /**
  * Custom tooltip for charts
  */
-function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
+function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) {
     return null;
   }
