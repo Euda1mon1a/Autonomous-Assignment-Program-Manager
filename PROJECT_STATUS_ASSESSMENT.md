@@ -1677,6 +1677,236 @@ GET  /api/transitions/year-end-report?academic_year=2024-2025
 
 ---
 
+## Future Implementation: Continuity Clinic & Clinic Block Rotations
+
+> **Priority:** High (core scheduling feature)
+> **Status:** Not Started — Design documented
+> **Effort:** 12-16 hours
+
+### Problem Statement
+
+The current system treats every half-day assignment as independent. This doesn't model how residency clinics actually work:
+
+1. **Continuity Clinics** - Residents maintain a protected clinic day (e.g., Wednesday PM) even while on other rotations (ICU, wards, etc.)
+2. **Clinic Block Rotations** - When on "clinic rotation," residents have multiple half-days per week (e.g., Mon/Wed/Fri AM + Tue/Thu PM)
+3. **Session Grouping** - Related clinic sessions should be linked, not independent
+
+### Current State
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| AM/PM half-day blocks | ✅ Works | 730 blocks/year, `time_of_day` field |
+| Activity type "clinic" | ✅ Exists | Recognized in Excel import |
+| **Continuity protection** | ❌ Missing | No way to protect recurring clinic |
+| **Recurring patterns** | ❌ Missing | Each block = separate assignment |
+| **Clinic session grouping** | ❌ Missing | No link between related assignments |
+| **Clinic block rotation** | ❌ Missing | No "4 half-days/week" concept |
+
+### Real-World Scenarios Not Supported
+
+#### Scenario 1: Continuity Clinic
+```
+Dr. Smith is on ICU rotation (Jan 6-19)
+BUT she still needs her Wednesday PM Family Medicine continuity clinic
+Current: No way to express this protection
+Result: Wednesday PM gets overwritten with ICU
+```
+
+#### Scenario 2: Clinic Block Rotation
+```
+Dr. Jones is on "Clinic Block" rotation (Jan 6-19)
+This means: Mon AM, Wed AM, Fri AM clinics + Tue PM, Thu PM clinics
+Current: Must create 10 separate assignments per week manually
+No bundling, no pattern
+```
+
+#### Scenario 3: Protected Days
+```
+PGY-1 residents MUST have Thursday AM continuity clinic
+Even during night float rotation
+Current: No constraint exists to enforce this
+```
+
+### Proposed Implementation
+
+#### 1. New Model: `ClinicSession`
+
+```python
+class ClinicSession(Base):
+    """Groups recurring clinic assignments into a session/series"""
+    __tablename__ = "clinic_sessions"
+
+    id = Column(UUID, primary_key=True)
+    person_id = Column(UUID, ForeignKey("people.id"))
+    rotation_template_id = Column(UUID, ForeignKey("rotation_templates.id"))
+
+    # Recurrence pattern
+    day_of_week = Column(Integer)  # 0=Mon, 1=Tue, ..., 6=Sun
+    time_of_day = Column(String(2))  # 'AM' or 'PM'
+
+    # Date range
+    effective_start = Column(Date)
+    effective_end = Column(Date, nullable=True)  # NULL = ongoing
+
+    # Protection level
+    is_continuity = Column(Boolean, default=False)
+    protection_level = Column(String(20), default='standard')  # 'standard', 'protected', 'mandatory'
+
+    # Relationships
+    assignments = relationship("Assignment", back_populates="clinic_session")
+```
+
+#### 2. Extend `RotationTemplate`
+
+```python
+# Add to RotationTemplate model
+is_clinic_block = Column(Boolean, default=False)
+clinic_sessions_per_week = Column(Integer, nullable=True)  # e.g., 4 for clinic block
+default_clinic_pattern = Column(JSON, nullable=True)  # e.g., {"Mon": "AM", "Wed": "AM", "Fri": "PM"}
+allows_continuity_overlay = Column(Boolean, default=True)  # Can continuity clinic interrupt this rotation?
+```
+
+#### 3. Extend `Assignment`
+
+```python
+# Add to Assignment model
+clinic_session_id = Column(UUID, ForeignKey("clinic_sessions.id"), nullable=True)
+is_continuity_clinic = Column(Boolean, default=False)
+```
+
+#### 4. New Constraint: `ContinuityClinicConstraint`
+
+```python
+class ContinuityClinicConstraint(HardConstraint):
+    """Ensures continuity clinic assignments are never overwritten"""
+
+    def evaluate(self, context: SchedulingContext) -> ConstraintResult:
+        violations = []
+        for person in context.persons:
+            continuity_sessions = self._get_continuity_sessions(person)
+            for session in continuity_sessions:
+                # Check if any non-continuity assignment conflicts
+                conflicting = self._find_conflicts(person, session, context)
+                if conflicting:
+                    violations.append(ConflictViolation(
+                        person=person,
+                        session=session,
+                        conflicting_assignment=conflicting,
+                        message=f"{person.name}'s continuity clinic (Wed PM) conflicts with {conflicting.template.name}"
+                    ))
+        return ConstraintResult(violations=violations)
+```
+
+#### 5. New Service: `ClinicSchedulingService`
+
+```python
+class ClinicSchedulingService:
+    """Manages clinic session creation and assignment"""
+
+    async def create_continuity_session(
+        self,
+        person_id: UUID,
+        template_id: UUID,
+        day_of_week: int,
+        time_of_day: str,
+        start_date: date,
+        end_date: Optional[date] = None
+    ) -> ClinicSession:
+        """Create a recurring continuity clinic session"""
+
+    async def generate_clinic_block_assignments(
+        self,
+        person_id: UUID,
+        template_id: UUID,
+        start_date: date,
+        end_date: date,
+        pattern: Dict[str, str]  # {"Mon": "AM", "Wed": "AM", ...}
+    ) -> List[Assignment]:
+        """Generate all assignments for a clinic block rotation"""
+
+    async def check_continuity_conflicts(
+        self,
+        proposed_assignments: List[Assignment]
+    ) -> List[ContinuityConflict]:
+        """Check if proposed assignments conflict with continuity clinics"""
+```
+
+#### 6. API Endpoints
+
+```
+# Clinic Sessions
+POST   /api/clinic-sessions                    # Create continuity clinic
+GET    /api/clinic-sessions                    # List all sessions
+GET    /api/clinic-sessions/{id}               # Get session with assignments
+DELETE /api/clinic-sessions/{id}               # End a session
+PATCH  /api/clinic-sessions/{id}               # Modify pattern
+
+# Clinic Block Generation
+POST   /api/rotations/generate-clinic-block    # Generate clinic block assignments
+GET    /api/rotations/clinic-patterns          # Get available patterns
+
+# Conflict Checking
+POST   /api/assignments/check-continuity       # Check for continuity conflicts
+GET    /api/people/{id}/continuity-schedule    # Get person's continuity clinics
+```
+
+### UI Components
+
+1. **Continuity Clinic Setup**
+   - Wizard to set up resident continuity clinic (day, time, template)
+   - Visual weekly calendar showing protected slots
+   - Bulk setup for incoming class
+
+2. **Clinic Block Rotation Builder**
+   - Pattern selector (Mon/Wed/Fri, Tue/Thu, custom)
+   - Preview of generated assignments
+   - Conflict detection before save
+
+3. **Schedule View Enhancements**
+   - Visual indicator for continuity clinics (🏥 icon)
+   - Warning when trying to overwrite protected slot
+   - "Protected" badge on continuity assignments
+
+### Implementation Checklist
+
+- [ ] Database migration for `ClinicSession` model
+- [ ] Extend `RotationTemplate` with clinic block fields
+- [ ] Extend `Assignment` with session reference
+- [ ] Create `ContinuityClinicConstraint` hard constraint
+- [ ] Create `ClinicSchedulingService`
+- [ ] Create API routes for clinic sessions
+- [ ] Add conflict checking to assignment creation
+- [ ] Create frontend Continuity Clinic wizard
+- [ ] Create frontend Clinic Block builder
+- [ ] Add visual indicators to schedule views
+- [ ] Comprehensive test coverage
+- [ ] Migration guide for existing schedules
+
+### Example Workflow
+
+**Setting up Dr. Smith's continuity clinic:**
+```
+1. Admin creates ClinicSession:
+   - Person: Dr. Smith
+   - Template: "Family Medicine Continuity"
+   - Day: Wednesday (2)
+   - Time: PM
+   - Start: 2024-07-01 (residency start)
+   - Protection: mandatory
+
+2. System generates Assignment for every Wednesday PM:
+   - 2024-07-03 PM → FM Continuity
+   - 2024-07-10 PM → FM Continuity
+   - ... (all Wednesdays for 3 years)
+
+3. When scheduling Dr. Smith for ICU (Jan 6-19):
+   - System detects Wed Jan 8 PM is protected
+   - ICU assignment skips Wed PM
+   - Dr. Smith: ICU (except Wed PM = Continuity)
+```
+
+---
+
 ## Future Integration: MyEvaluations API
 
 > **Priority:** Medium (nice-to-have integration)
