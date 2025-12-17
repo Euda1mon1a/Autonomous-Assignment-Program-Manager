@@ -251,10 +251,10 @@ export function ConflictCard({
   return (
     <div
       className={`
-        rounded-lg border overflow-hidden transition-all
+        rounded-lg border overflow-hidden transition-all duration-300
         ${severityStyles.bg} ${severityStyles.border}
-        ${isSelected ? 'ring-2 ring-blue-500' : ''}
-        hover:shadow-md
+        ${isSelected ? 'ring-2 ring-blue-500 shadow-lg' : ''}
+        hover:shadow-md hover:-translate-y-0.5 cursor-pointer
       `}
     >
       {/* Header */}
@@ -418,7 +418,7 @@ export function ConflictCard({
 
       {/* Expanded details */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-0">
+        <div className="px-4 pb-4 pt-0 animate-slideDown">
           <div className="border-t border-gray-200/50 pt-4 mt-2">
             {/* Affected assignments */}
             {conflict.affected_assignment_ids.length > 0 && (
@@ -477,7 +477,7 @@ export function ConflictCard({
                       e.stopPropagation();
                       onViewSuggestions(conflict);
                     }}
-                    className="flex-1 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all duration-200 hover:shadow-lg active:scale-95 text-sm font-medium flex items-center justify-center gap-2"
                   >
                     <Lightbulb className="w-4 h-4" />
                     View Suggestions
@@ -489,7 +489,7 @@ export function ConflictCard({
                       e.stopPropagation();
                       onResolve(conflict);
                     }}
-                    className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 hover:shadow-lg active:scale-95 text-sm font-medium flex items-center justify-center gap-2"
                   >
                     <Check className="w-4 h-4" />
                     Resolve

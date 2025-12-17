@@ -159,38 +159,40 @@ export function SwapFilters({ filters, onFiltersChange, isLoading }: SwapFilters
   ].filter(Boolean).length;
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
+    <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Filter className="w-5 h-5 text-gray-500" />
-          <h3 className="text-lg font-semibold">Filters</h3>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <Filter className="w-5 h-5 text-gray-500 flex-shrink-0" />
+          <h3 className="text-base sm:text-lg font-semibold truncate">Filters</h3>
           {activeFilterCount > 0 && (
-            <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
+            <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap">
               {activeFilterCount}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           {hasActiveFilters && (
             <button
               onClick={handleReset}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              className="flex items-center gap-1 px-2 sm:px-3 py-1.5 text-xs sm:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
               disabled={isLoading}
+              title="Reset all filters"
             >
-              <RotateCcw className="w-4 h-4" />
-              Reset
+              <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Reset</span>
             </button>
           )}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+            className="flex items-center gap-1 px-2 sm:px-3 py-1.5 text-xs sm:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+            title={isExpanded ? 'Collapse filters' : 'Expand filters'}
           >
             <ChevronDown
-              className={`w-4 h-4 transition-transform ${
+              className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${
                 isExpanded ? 'rotate-180' : ''
               }`}
             />
-            {isExpanded ? 'Collapse' : 'Expand'}
+            <span className="hidden sm:inline">{isExpanded ? 'Collapse' : 'Expand'}</span>
           </button>
         </div>
       </div>

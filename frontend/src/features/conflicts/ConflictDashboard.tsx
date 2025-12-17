@@ -114,11 +114,11 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
   const trendingUp = statistics?.trending_up ?? false;
 
   return (
-    <div className="h-full flex flex-col bg-gray-100">
+    <div className="h-full flex flex-col bg-gray-100 animate-fadeIn">
       {/* Header with statistics */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b shadow-sm">
         <div className="px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 animate-slideDown">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Conflict Resolution</h1>
               <p className="text-sm text-gray-500 mt-1">
@@ -127,7 +127,7 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
             </div>
             <button
               onClick={() => refetchConflicts()}
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:shadow-md active:scale-95"
             >
               <RefreshCw className="w-4 h-4" />
               Refresh
@@ -200,13 +200,14 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left panel - List */}
         <div className={`
           ${activeView === 'batch' ? 'hidden' : 'flex'}
           flex-col bg-white border-r
-          ${selectedConflict ? 'w-1/2' : 'w-full'}
-          transition-all duration-200
+          ${selectedConflict ? 'md:w-1/2' : 'w-full'}
+          ${selectedConflict ? 'hidden md:flex' : 'flex'}
+          transition-all duration-300 ease-in-out
         `}>
           <ConflictList
             initialFilters={initialFilters}
@@ -223,9 +224,9 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
 
         {/* Right panel - Details/Suggestions/History */}
         {selectedConflict && activeView !== 'batch' && (
-          <div className="w-1/2 flex flex-col bg-white">
+          <div className="w-full md:w-1/2 flex flex-col bg-white animate-slideInRight">
             {/* Panel header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
+            <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50 shadow-sm">
               <div className="flex items-center gap-2">
                 {activeView === 'suggestions' && (
                   <>
@@ -351,15 +352,17 @@ function StatCard({ label, value, icon: Icon, color, loading }: StatCardProps) {
   const styles = colorStyles[color];
 
   return (
-    <div className={`p-4 rounded-lg ${styles.bg}`}>
+    <div className={`p-4 rounded-lg ${styles.bg} transition-all duration-300 hover:shadow-md hover:scale-105 animate-fadeInUp`}>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm text-gray-600">{label}</span>
-        <Icon className={`w-5 h-5 ${styles.icon}`} />
+        <span className="text-sm text-gray-600 font-medium">{label}</span>
+        <Icon className={`w-5 h-5 ${styles.icon} transition-transform duration-300 hover:scale-110`} />
       </div>
       {loading ? (
-        <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+        <div className="space-y-2 animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-20"></div>
+        </div>
       ) : (
-        <p className={`text-2xl font-bold ${styles.text}`}>{value}</p>
+        <p className={`text-2xl font-bold ${styles.text} transition-colors duration-300`}>{value}</p>
       )}
     </div>
   );
@@ -382,17 +385,17 @@ function NavTab({ label, icon: Icon, isActive, onClick, badge }: NavTabProps) {
     <button
       onClick={onClick}
       className={`
-        flex items-center gap-2 py-3 px-1 border-b-2 text-sm font-medium transition-colors
+        flex items-center gap-2 py-3 px-1 border-b-2 text-sm font-medium transition-all duration-200
         ${isActive
           ? 'border-blue-500 text-blue-600'
           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
         }
       `}
     >
-      <Icon className="w-4 h-4" />
+      <Icon className={`w-4 h-4 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} />
       {label}
       {badge !== undefined && badge > 0 && (
-        <span className="px-1.5 py-0.5 text-xs bg-red-100 text-red-700 rounded-full">
+        <span className="px-1.5 py-0.5 text-xs bg-red-100 text-red-700 rounded-full animate-pulse">
           {badge}
         </span>
       )}

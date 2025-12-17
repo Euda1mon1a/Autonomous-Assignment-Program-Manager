@@ -189,6 +189,42 @@ export function useFacultyPreferences(
   });
 }
 
+/**
+ * Fetch available weeks for the current user to swap
+ */
+export function useAvailableWeeks(
+  options?: Omit<UseQueryOptions<Array<{ date: string; hasConflict: boolean }>, ApiError>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery<Array<{ date: string; hasConflict: boolean }>, ApiError>({
+    queryKey: ['swaps', 'available-weeks'] as const,
+    queryFn: async () => {
+      const response = await get<any>('/portal/my/available-weeks');
+      return response.weeks || [];
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    ...options,
+  });
+}
+
+/**
+ * Fetch list of faculty members for targeted swap requests
+ */
+export function useFacultyMembers(
+  options?: Omit<UseQueryOptions<Array<{ id: string; name: string }>, ApiError>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery<Array<{ id: string; name: string }>, ApiError>({
+    queryKey: ['swaps', 'faculty-members'] as const,
+    queryFn: async () => {
+      const response = await get<any>('/portal/faculty');
+      return response.faculty || [];
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    ...options,
+  });
+}
+
 // ============================================================================
 // Mutation Hooks
 // ============================================================================

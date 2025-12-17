@@ -38,6 +38,8 @@ export {
   useRejectSwap,
   useCancelSwap,
   useFacultyPreferences,
+  useAvailableWeeks,
+  useFacultyMembers,
   swapQueryKeys,
 } from './hooks';
 

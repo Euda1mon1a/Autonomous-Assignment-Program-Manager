@@ -108,24 +108,24 @@ export function SwapMarketplace() {
           {!isLoading && !error && marketplaceData && (
             <>
               {/* Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="text-2xl font-bold text-blue-600">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
+                  <div className="text-xl sm:text-2xl font-bold text-blue-600">
                     {marketplaceData.total}
                   </div>
-                  <div className="text-sm text-blue-800">Available Swaps</div>
+                  <div className="text-xs sm:text-sm text-blue-800">Available Swaps</div>
                 </div>
-                <div className="bg-green-50 rounded-lg p-4">
-                  <div className="text-2xl font-bold text-green-600">
+                <div className="bg-green-50 rounded-lg p-3 sm:p-4">
+                  <div className="text-xl sm:text-2xl font-bold text-green-600">
                     {marketplaceData.entries.filter((e) => e.isCompatible).length}
                   </div>
-                  <div className="text-sm text-green-800">Compatible with You</div>
+                  <div className="text-xs sm:text-sm text-green-800">Compatible with You</div>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-4">
-                  <div className="text-2xl font-bold text-purple-600">
+                <div className="bg-purple-50 rounded-lg p-3 sm:p-4">
+                  <div className="text-xl sm:text-2xl font-bold text-purple-600">
                     {marketplaceData.myPostings}
                   </div>
-                  <div className="text-sm text-purple-800">Your Postings</div>
+                  <div className="text-xs sm:text-sm text-purple-800">Your Postings</div>
                 </div>
               </div>
 
@@ -149,11 +149,11 @@ export function SwapMarketplace() {
               ) : (
                 <div>
                   <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                       Available Swap Requests ({marketplaceData.entries.length})
                     </h3>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     {marketplaceData.entries.map((entry) => (
                       <SwapRequestCard
                         key={entry.requestId}
@@ -187,11 +187,11 @@ export function SwapMarketplace() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
       {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Swap Marketplace</h1>
-        <p className="text-gray-600">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Swap Marketplace</h1>
+        <p className="text-sm sm:text-base text-gray-600">
           Browse available swap opportunities, manage your requests, and create new swap requests
         </p>
       </div>
@@ -199,7 +199,7 @@ export function SwapMarketplace() {
       {/* Tabs */}
       <div className="mb-6">
         <div className="border-b border-gray-200">
-          <nav className="flex space-x-8" aria-label="Tabs">
+          <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -209,7 +209,7 @@ export function SwapMarketplace() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`
-                    group flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                    group flex items-center gap-2 py-4 px-2 sm:px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors
                     ${
                       isActive
                         ? 'border-blue-500 text-blue-600'
@@ -218,8 +218,9 @@ export function SwapMarketplace() {
                   `}
                   title={tab.description}
                 >
-                  <Icon className="w-5 h-5" />
-                  <span>{tab.label}</span>
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
                 </button>
               );
             })}
@@ -231,43 +232,43 @@ export function SwapMarketplace() {
       <div>{renderTabContent()}</div>
 
       {/* Help Section */}
-      <div className="mt-12 p-6 bg-gray-50 rounded-lg">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">
+      <div className="mt-8 sm:mt-12 p-4 sm:p-6 bg-gray-50 rounded-lg">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
           How the Swap Marketplace Works
         </h3>
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+              <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
                 1
               </div>
-              <h4 className="font-medium text-gray-900">Browse & Filter</h4>
+              <h4 className="font-medium text-gray-900 text-sm sm:text-base">Browse & Filter</h4>
             </div>
-            <p className="text-sm text-gray-600 ml-10">
+            <p className="text-xs sm:text-sm text-gray-600 ml-10">
               View available swap requests from other faculty members. Filter by date, status,
               and compatibility with your schedule.
             </p>
           </div>
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+              <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
                 2
               </div>
-              <h4 className="font-medium text-gray-900">Create Request</h4>
+              <h4 className="font-medium text-gray-900 text-sm sm:text-base">Create Request</h4>
             </div>
-            <p className="text-sm text-gray-600 ml-10">
+            <p className="text-xs sm:text-sm text-gray-600 ml-10">
               Create a swap request for one of your assigned FMIT weeks. Choose to target
               specific faculty or let the system find candidates.
             </p>
           </div>
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+              <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
                 3
               </div>
-              <h4 className="font-medium text-gray-900">Accept & Execute</h4>
+              <h4 className="font-medium text-gray-900 text-sm sm:text-base">Accept & Execute</h4>
             </div>
-            <p className="text-sm text-gray-600 ml-10">
+            <p className="text-xs sm:text-sm text-gray-600 ml-10">
               Review incoming requests and accept or reject them. Once accepted, the system
               will process the swap and update schedules.
             </p>
