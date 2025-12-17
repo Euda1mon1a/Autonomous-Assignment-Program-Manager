@@ -94,6 +94,10 @@ RUN groupadd --gid 1001 $APP_GROUP && \
 # Copy application code
 COPY --chown=$APP_USER:$APP_GROUP backend/ .
 
+# Copy migration script
+COPY --chown=$APP_USER:$APP_GROUP .docker/migrate.sh /app/migrate.sh
+RUN chmod +x /app/migrate.sh
+
 # Security: Remove unnecessary files
 RUN rm -rf \
     tests/ \
@@ -130,5 +134,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 # Use dumb-init as PID 1 for proper signal handling
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-# Run database migrations and start uvicorn with production settings
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4 --loop uvloop --http httptools --no-access-log"]
+# Start uvicorn with production settings (migrations run separately via migrate.sh)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--loop", "uvloop", "--http", "httptools", "--no-access-log"]

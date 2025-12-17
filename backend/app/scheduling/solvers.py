@@ -8,10 +8,12 @@ This module provides multiple solver implementations:
 
 Each solver uses the modular constraint system from constraints.py.
 """
+import json
 import logging
 import time
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from typing import Optional
 from uuid import UUID
 
 from app.models.assignment import Assignment
@@ -319,6 +321,92 @@ class PuLPSolver(BaseSolver):
         )
 
 
+class SolverProgressCallback:
+    """
+    Progress callback for CP-SAT solver that stores updates in Redis.
+
+    This callback is invoked by OR-Tools whenever a new solution is found,
+    allowing us to track progress and provide real-time feedback to users.
+    """
+
+    def __init__(self, task_id: str, redis_client):
+        """
+        Initialize the progress callback.
+
+        Args:
+            task_id: Unique identifier for the solver task
+            redis_client: Redis client for storing progress data
+        """
+        try:
+            from ortools.sat.python import cp_model
+
+            # Create a dynamic class that inherits from CpSolverSolutionCallback
+            class _ProgressCallback(cp_model.CpSolverSolutionCallback):
+                def __init__(self, task_id: str, redis_client):
+                    super().__init__()
+                    self.task_id = task_id
+                    self.redis = redis_client
+                    self.solution_count = 0
+                    self.start_time = time.time()
+
+                def on_solution_callback(self):
+                    """Called by OR-Tools when a new solution is found."""
+                    self.solution_count += 1
+                    elapsed = time.time() - self.start_time
+
+                    # Get current objective value and best bound
+                    current_obj = self.ObjectiveValue()
+                    best_bound = self.BestObjectiveBound()
+
+                    # Calculate optimality gap (0-100%)
+                    # Gap = |best_bound - current_obj| / |best_bound| * 100
+                    gap = 0.0
+                    if best_bound != 0:
+                        gap = abs(best_bound - current_obj) / abs(best_bound) * 100
+
+                    # Estimate progress (inverse of gap, capped at 99% until optimal)
+                    # Progress = 100 - gap, but cap at 99% for non-optimal solutions
+                    progress_pct = min(100 - gap, 99.0)
+
+                    progress_data = {
+                        "solutions_found": self.solution_count,
+                        "current_objective": current_obj,
+                        "best_bound": best_bound,
+                        "optimality_gap_pct": round(gap, 2),
+                        "progress_pct": round(progress_pct, 2),
+                        "elapsed_seconds": round(elapsed, 2),
+                        "status": "solving",
+                        "timestamp": time.time(),
+                    }
+
+                    try:
+                        # Store in Redis with 5 minute expiry
+                        self.redis.setex(
+                            f"solver_progress:{self.task_id}",
+                            300,  # 5 minutes TTL
+                            json.dumps(progress_data)
+                        )
+                        logger.debug(
+                            f"Progress update for task {self.task_id}: "
+                            f"{self.solution_count} solutions, "
+                            f"{progress_pct:.1f}% progress, "
+                            f"gap={gap:.2f}%"
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to store progress in Redis: {e}")
+
+            # Store the callback instance
+            self._callback = _ProgressCallback(task_id, redis_client)
+
+        except ImportError:
+            logger.warning("OR-Tools not available, progress callback disabled")
+            self._callback = None
+
+    def get_callback(self):
+        """Get the underlying OR-Tools callback object."""
+        return self._callback
+
+
 class CPSATSolver(BaseSolver):
     """
     Constraint Programming solver using Google OR-Tools CP-SAT.
@@ -339,9 +427,13 @@ class CPSATSolver(BaseSolver):
         constraint_manager: ConstraintManager | None = None,
         timeout_seconds: float = 60.0,
         num_workers: int = 4,
+        task_id: Optional[str] = None,
+        redis_client = None,
     ):
         super().__init__(constraint_manager, timeout_seconds)
         self.num_workers = num_workers
+        self.task_id = task_id
+        self.redis_client = redis_client
 
     def solve(
         self,
@@ -472,8 +564,46 @@ class CPSATSolver(BaseSolver):
         solver.parameters.max_time_in_seconds = self.timeout_seconds
         solver.parameters.num_search_workers = self.num_workers
 
-        status = solver.Solve(model)
+        # Create progress callback if Redis client is available
+        callback = None
+        if self.task_id and self.redis_client:
+            try:
+                callback_wrapper = SolverProgressCallback(self.task_id, self.redis_client)
+                callback = callback_wrapper.get_callback()
+                logger.info(f"Progress tracking enabled for task {self.task_id}")
+            except Exception as e:
+                logger.warning(f"Failed to create progress callback: {e}")
+
+        # Solve with or without callback
+        if callback:
+            status = solver.Solve(model, callback)
+        else:
+            status = solver.Solve(model)
+
         runtime = time.time() - start_time
+
+        # Store final status in Redis if callback was used
+        if self.task_id and self.redis_client:
+            try:
+                status_name = solver.StatusName(status)
+                final_data = {
+                    "solutions_found": callback.solution_count if callback else 0,
+                    "current_objective": solver.ObjectiveValue() if status in [cp_model.OPTIMAL, cp_model.FEASIBLE] else 0,
+                    "best_bound": solver.BestObjectiveBound() if status in [cp_model.OPTIMAL, cp_model.FEASIBLE] else 0,
+                    "optimality_gap_pct": 0.0 if status == cp_model.OPTIMAL else None,
+                    "progress_pct": 100.0 if status == cp_model.OPTIMAL else 99.0,
+                    "elapsed_seconds": round(runtime, 2),
+                    "status": "completed" if status in [cp_model.OPTIMAL, cp_model.FEASIBLE] else "failed",
+                    "solver_status": status_name,
+                    "timestamp": time.time(),
+                }
+                self.redis_client.setex(
+                    f"solver_progress:{self.task_id}",
+                    300,  # 5 minutes TTL
+                    json.dumps(final_data)
+                )
+            except Exception as e:
+                logger.error(f"Failed to store final status in Redis: {e}")
 
         # Check solution status
         status_name = solver.StatusName(status)
@@ -522,6 +652,44 @@ class CPSATSolver(BaseSolver):
                 "conflicts": solver.NumConflicts(),
             },
         )
+
+    @staticmethod
+    def get_progress(task_id: str, redis_client) -> Optional[dict]:
+        """
+        Query the current progress of a solver task from Redis.
+
+        Args:
+            task_id: Unique identifier for the solver task
+            redis_client: Redis client for retrieving progress data
+
+        Returns:
+            Dictionary with progress information, or None if not found
+
+        Example response:
+            {
+                "solutions_found": 5,
+                "current_objective": 1234,
+                "best_bound": 1250,
+                "optimality_gap_pct": 1.28,
+                "progress_pct": 98.72,
+                "elapsed_seconds": 15.3,
+                "status": "solving",  # or "completed" / "failed"
+                "solver_status": "OPTIMAL",  # OR-Tools status name
+                "timestamp": 1234567890.123
+            }
+        """
+        if not redis_client:
+            return None
+
+        try:
+            key = f"solver_progress:{task_id}"
+            data = redis_client.get(key)
+            if data:
+                return json.loads(data)
+            return None
+        except Exception as e:
+            logger.error(f"Failed to retrieve progress from Redis: {e}")
+            return None
 
 
 class HybridSolver(BaseSolver):

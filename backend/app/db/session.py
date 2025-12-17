@@ -13,6 +13,7 @@ Pool settings are configurable via environment variables:
 - DB_POOL_PRE_PING: Verify connections (default: True)
 """
 from collections.abc import Generator
+from contextlib import asynccontextmanager, contextmanager
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -41,3 +42,46 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+@contextmanager
+def task_session_scope():
+    """
+    Provide a transactional scope for Celery tasks.
+
+    Usage:
+        @celery_app.task
+        def my_task():
+            with task_session_scope() as session:
+                # Do database work
+                session.query(...)
+                # Auto-commits on success, rollback on error
+
+    This ensures:
+    - Session is always closed (no connection leaks)
+    - Transaction is rolled back on exceptions
+    - Explicit commit on success
+    """
+    session = SessionLocal()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@asynccontextmanager
+async def async_task_session_scope():
+    """Async version of task_session_scope for async tasks."""
+    session = SessionLocal()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()

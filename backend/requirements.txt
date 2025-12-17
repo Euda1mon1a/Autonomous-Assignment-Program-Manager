@@ -67,6 +67,7 @@ httpx==0.28.1
 factory-boy==3.3.3
 faker==38.2.0
 freezegun==1.5.5
+hypothesis==6.122.3
 
 # Utilities
 python-dotenv==1.2.1
