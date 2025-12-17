@@ -3,7 +3,7 @@ import secrets
 from datetime import date, datetime, timedelta
 from uuid import UUID
 
-from icalendar import Calendar, Event, Timezone, TimezoneStandard, TimezoneDaylight
+from icalendar import Calendar, Event, Timezone, TimezoneStandard
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.assignment import Assignment
@@ -18,32 +18,22 @@ class CalendarService:
     @staticmethod
     def _create_timezone() -> Timezone:
         """
-        Create a proper VTIMEZONE component for America/New_York.
+        Create a proper VTIMEZONE component for Pacific/Honolulu (HST).
 
         Returns:
-            Timezone component with standard and daylight time rules
+            Timezone component for Hawaii Standard Time (no DST)
         """
         tz = Timezone()
-        tz.add("tzid", "America/New_York")
+        tz.add("tzid", "Pacific/Honolulu")
 
-        # Standard time (EST)
+        # Hawaii Standard Time (HST) - UTC-10, no daylight saving time
         tz_standard = TimezoneStandard()
-        tz_standard.add("dtstart", datetime(1970, 11, 1, 2, 0, 0))
-        tz_standard.add("rrule", {"freq": "yearly", "bymonth": 11, "byday": "1su"})
-        tz_standard.add("tzoffsetfrom", timedelta(hours=-4))
-        tz_standard.add("tzoffsetto", timedelta(hours=-5))
-        tz_standard.add("tzname", "EST")
-
-        # Daylight time (EDT)
-        tz_daylight = TimezoneDaylight()
-        tz_daylight.add("dtstart", datetime(1970, 3, 8, 2, 0, 0))
-        tz_daylight.add("rrule", {"freq": "yearly", "bymonth": 3, "byday": "2su"})
-        tz_daylight.add("tzoffsetfrom", timedelta(hours=-5))
-        tz_daylight.add("tzoffsetto", timedelta(hours=-4))
-        tz_daylight.add("tzname", "EDT")
+        tz_standard.add("dtstart", datetime(1970, 1, 1, 0, 0, 0))
+        tz_standard.add("tzoffsetfrom", timedelta(hours=-10))
+        tz_standard.add("tzoffsetto", timedelta(hours=-10))
+        tz_standard.add("tzname", "HST")
 
         tz.add_component(tz_standard)
-        tz.add_component(tz_daylight)
 
         return tz
 
@@ -119,7 +109,7 @@ class CalendarService:
         cal.add("calscale", "GREGORIAN")
         cal.add("method", "PUBLISH")
         cal.add("x-wr-calname", f"{person.name} - Schedule")
-        cal.add("x-wr-timezone", "America/New_York")
+        cal.add("x-wr-timezone", "Pacific/Honolulu")
 
         # Add proper VTIMEZONE component
         cal.add_component(CalendarService._create_timezone())
@@ -223,7 +213,7 @@ class CalendarService:
         cal.add("calscale", "GREGORIAN")
         cal.add("method", "PUBLISH")
         cal.add("x-wr-calname", f"{rotation_name} - Schedule")
-        cal.add("x-wr-timezone", "America/New_York")
+        cal.add("x-wr-timezone", "Pacific/Honolulu")
 
         # Add proper VTIMEZONE component
         cal.add_component(CalendarService._create_timezone())
@@ -335,7 +325,7 @@ class CalendarService:
         cal.add("calscale", "GREGORIAN")
         cal.add("method", "PUBLISH")
         cal.add("x-wr-calname", "Complete Schedule Export")
-        cal.add("x-wr-timezone", "America/New_York")
+        cal.add("x-wr-timezone", "Pacific/Honolulu")
 
         # Add proper VTIMEZONE component
         cal.add_component(CalendarService._create_timezone())

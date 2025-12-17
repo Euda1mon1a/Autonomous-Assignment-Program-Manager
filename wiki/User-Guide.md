@@ -356,15 +356,51 @@ Export schedules to Excel:
 
 ### Calendar Export (ICS)
 
-Subscribe to schedules in your calendar app:
+Download your schedule as an ICS file for one-time import:
 
 1. Go to **My Schedule** (or any person's profile)
-2. Click **Calendar Sync**
-3. Copy the ICS URL
-4. Add to your calendar app:
-   - **Google Calendar**: Other calendars → From URL
-   - **Outlook**: Add calendar → From Internet
-   - **Apple Calendar**: File → New Calendar Subscription
+2. Click **Calendar Sync** button
+3. Select **ICS File Download**
+4. Choose how many weeks ahead to include (4-52 weeks)
+5. Click **Sync Now**
+6. Import the downloaded `.ics` file into your calendar app
+
+### WebCal Subscription (Live Updates)
+
+Subscribe to a live-updating calendar feed that automatically syncs:
+
+1. Go to **My Schedule**
+2. Click **Calendar Sync** button
+3. The system generates a secure subscription URL
+4. Copy the `webcal://` URL provided
+5. Add to your calendar app:
+
+**Google Calendar:**
+1. Open Google Calendar on desktop
+2. Click "+" next to "Other calendars"
+3. Select "From URL"
+4. Paste the `webcal://` URL
+5. Click "Add calendar"
+
+**Apple Calendar (macOS/iOS):**
+1. Open Calendar app
+2. File → New Calendar Subscription (macOS) or
+   Settings → Calendar → Accounts → Add Account → Other (iOS)
+3. Paste the URL
+4. Click "Subscribe"
+
+**Microsoft Outlook:**
+1. Open Outlook Calendar
+2. Click "Add calendar" → "From Internet"
+3. Paste the URL
+4. Click "OK"
+
+**Subscription Features:**
+- Automatically refreshes every 15 minutes
+- Shows assignments 6 months ahead
+- Includes location, role, and notes
+- Secure token-based authentication
+- Can be revoked at any time from settings
 
 ### PDF Reports
 
