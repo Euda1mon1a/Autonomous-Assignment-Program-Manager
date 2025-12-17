@@ -1,24 +1,16 @@
-# MkDocs configuration for Residency Scheduler documentation
-# Build: mkdocs build
-# Serve locally: mkdocs serve
-# Deploy to GitHub Pages: mkdocs gh-deploy
-
 site_name: Residency Scheduler Documentation
 site_description: Medical residency scheduling system with ACGME compliance
 site_author: Residency Scheduler Team
-site_url: https://example.com/docs/
+site_url: ""
 
-# Repository
-repo_name: residency-scheduler
+repo_name: Euda1mon1a/Autonomous-Assignment-Program-Manager
 repo_url: https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager
 edit_uri: edit/main/docs/
 
-# Theme configuration
 theme:
   name: material
   language: en
   palette:
-    # Light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: indigo
@@ -26,7 +18,6 @@ theme:
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-    # Dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: indigo
@@ -39,155 +30,30 @@ theme:
     - navigation.tracking
     - navigation.tabs
     - navigation.sections
-    - navigation.expand
     - navigation.top
     - search.suggest
     - search.highlight
     - content.code.copy
     - content.action.edit
-  icon:
-    repo: fontawesome/brands/github
 
-# Plugins
 plugins:
-  - search:
-      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+  - search
   - minify:
       minify_html: true
 
-# Extensions
 markdown_extensions:
-  - abbr
   - admonition
-  - attr_list
-  - def_list
-  - footnotes
-  - md_in_html
   - toc:
       permalink: true
-      toc_depth: 3
-  - pymdownx.arithmatex:
-      generic: true
-  - pymdownx.betterem:
-      smart_enable: all
-  - pymdownx.caret
+  - pymdownx.highlight
+  - pymdownx.superfences
   - pymdownx.details
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
-  - pymdownx.highlight:
-      anchor_linenums: true
-      line_spans: __span
-      pygments_lang_class: true
-  - pymdownx.inlinehilite
-  - pymdownx.keys
-  - pymdownx.mark
-  - pymdownx.smartsymbols
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.tasklist:
-      custom_checkbox: true
-  - pymdownx.tilde
-  - tables
 
-# Navigation structure
 nav:
   - Home: index.md
-
   - User Guide:
-    - Overview: user-guide/README.md
-    - Getting Started: user-guide/getting-started.md
-    - Dashboard: user-guide/dashboard.md
-    - People Management: user-guide/people-management.md
-    - Rotation Templates: user-guide/templates.md
-    - Absence Management: user-guide/absences.md
-    - ACGME Compliance: user-guide/compliance.md
-    - Schedule Generation: user-guide/schedule-generation.md
-    - Schedule Resilience: user-guide/resilience.md
-    - Exporting Data: user-guide/exporting-data.md
-    - Admin Settings: user-guide/settings.md
-    - Common Workflows: user-guide/common-workflows.md
-    - Troubleshooting: user-guide/troubleshooting.md
-    - FAQ: user-guide/faq.md
-    - Glossary: user-guide/glossary.md
-
-  - Administrator Manual:
-    - Overview: admin-manual/README.md
-    - Installation: admin-manual/installation.md
-    - Service Operations: admin-manual/service-operations.md
-    - User Management: admin-manual/user-management.md
-    - Configuration: admin-manual/configuration.md
-    - Data Storage: admin-manual/data-storage.md
-    - Backup & Restore: admin-manual/backup-restore.md
-    - Security: admin-manual/security.md
-    - Performance Tuning: admin-manual/performance.md
-
-  - API Reference:
-    - Overview: api/README.md
-    - Authentication: api/authentication.md
-    - Error Handling: api/errors.md
-    - Rate Limiting: api/rate-limiting.md
-    - API Versioning: api/versioning.md
-    - Schemas: api/schemas.md
-    - Endpoints:
-      - Auth: api/endpoints/auth.md
-      - People: api/endpoints/people.md
-      - Blocks: api/endpoints/blocks.md
-      - Rotation Templates: api/endpoints/rotation-templates.md
-      - Assignments: api/endpoints/assignments.md
-      - Absences: api/endpoints/absences.md
-      - Schedule: api/endpoints/schedule.md
-      - Settings: api/endpoints/settings.md
-      - Export: api/endpoints/export.md
-      - Procedures: api/endpoints/procedures.md
-      - Credentials: api/endpoints/credentials.md
-      - Certifications: api/endpoints/certifications.md
-
-  - Operational Runbooks:
-    - Overview: runbooks/README.md
-    - API Service Down: runbooks/api-down.md
-    - High Error Rate: runbooks/high-error-rate.md
-    - Database Issues: runbooks/database-issues.md
-    - ACGME Work Hours: runbooks/acgme-work-hours.md
-    - Infrastructure: runbooks/infrastructure.md
-    - Resilience Alerts: runbooks/resilience-alerts.md
-
-  - Developer Guide:
-    - Overview: development/README.md
-    - Environment Setup: development/environment-setup.md
-    - Architecture: development/architecture.md
-    - Development Workflow: development/workflow.md
-    - Testing: development/testing.md
-    - Code Style: development/code-style.md
-    - Contributing: development/contributing.md
-
-  - Technical References:
-    - Setup Guide: SETUP.md
-    - Deployment: DEPLOYMENT.md
-    - Deployment Checklist: DEPLOYMENT_CHECKLIST.md
-    - Infrastructure Guide: INFRASTRUCTURE_GUIDE.md
-    - API Reference (Legacy): API_REFERENCE.md
-    - Authentication Architecture: AUTH_ARCHITECTURE.md
-    - Caching Strategy: CACHING_STRATEGY.md
-    - Error Handling: ERROR_HANDLING.md
-    - Frontend Guide: FRONTEND.md
-    - Testing Guide: TESTING.md
-    - FMIT Scheduling Domain: FMIT_SCHEDULING_DOMAIN.md
-    - Resilience Framework: RESILIENCE_FRAMEWORK.md
-    - Resilience Integration: RESILIENCE_SCHEDULING_INTEGRATION.md
-    - Scheduling Optimization: SCHEDULING_OPTIMIZATION.md
-
-# Extra configuration
-extra:
-  social:
-    - icon: fontawesome/brands/github
-      link: https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager
-  generator: false
-
-# Copyright
-copyright: Copyright &copy; 2024 Residency Scheduler Team
+      - Overview: user-guide/README.md
+  - Admin Manual:
+      - Overview: admin-manual/README.md
+  - Development:
+      - Overview: development/README.md
