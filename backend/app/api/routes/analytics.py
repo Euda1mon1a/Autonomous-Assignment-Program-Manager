@@ -168,7 +168,7 @@ async def get_current_metrics(
         logger.error(f"Error getting current metrics: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to retrieve current metrics: {str(e)}"
+            detail="An error occurred retrieving metrics"
         )
 
 
@@ -285,7 +285,7 @@ async def get_metrics_history(
         logger.error(f"Error getting metrics history: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to retrieve metrics history: {str(e)}"
+            detail="An error occurred retrieving metrics history"
         )
 
 
@@ -410,7 +410,7 @@ async def get_fairness_trend(
         logger.error(f"Error getting fairness trend: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to retrieve fairness trend: {str(e)}"
+            detail="An error occurred retrieving fairness trend"
         )
 
 
@@ -545,7 +545,7 @@ async def compare_versions(
         logger.error(f"Error comparing versions: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to compare versions: {str(e)}"
+            detail="An error occurred comparing versions"
         )
 
 
@@ -700,7 +700,7 @@ async def what_if_analysis(
         logger.error(f"Error in what-if analysis: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to perform what-if analysis: {str(e)}"
+            detail="An error occurred performing what-if analysis"
         )
 
 
@@ -891,5 +891,5 @@ async def export_for_research(
         logger.error(f"Error exporting research data: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to export research data: {str(e)}"
+            detail="An error occurred exporting research data"
         )

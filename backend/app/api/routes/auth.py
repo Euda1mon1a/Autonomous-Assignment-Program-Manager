@@ -6,7 +6,7 @@ All business logic is in the service layer.
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 
@@ -44,6 +44,7 @@ rate_limit_register = create_rate_limit_dependency(
 
 @router.post("/login", response_model=Token)
 async def login(
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db=Depends(get_db),
     _rate_limit: None = Depends(rate_limit_login),
@@ -53,13 +54,29 @@ async def login(
 
     Accepts OAuth2 password flow (username + password).
     Rate limited to prevent brute force attacks.
+
+    Security: Token is set as httpOnly cookie to prevent XSS attacks.
     """
     controller = AuthController(db)
-    return controller.login(form_data.username, form_data.password)
+    token_response = controller.login(form_data.username, form_data.password)
+
+    # Set token as httpOnly cookie for XSS protection
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {token_response.access_token}",
+        httponly=True,
+        secure=not settings.DEBUG,  # Secure in production
+        samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/",
+    )
+
+    return token_response
 
 
 @router.post("/login/json", response_model=Token)
 async def login_json(
+    response: Response,
     credentials: UserLogin,
     db=Depends(get_db),
     _rate_limit: None = Depends(rate_limit_login),
@@ -69,13 +86,29 @@ async def login_json(
 
     Alternative to OAuth2 form-based login.
     Rate limited to prevent brute force attacks.
+
+    Security: Token is set as httpOnly cookie to prevent XSS attacks.
     """
     controller = AuthController(db)
-    return controller.login(credentials.username, credentials.password)
+    token_response = controller.login(credentials.username, credentials.password)
+
+    # Set token as httpOnly cookie for XSS protection
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {token_response.access_token}",
+        httponly=True,
+        secure=not settings.DEBUG,  # Secure in production
+        samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/",
+    )
+
+    return token_response
 
 
 @router.post("/logout")
 async def logout(
+    response: Response,
     current_user: User = Depends(get_current_active_user),
     token: str = Depends(oauth2_scheme),
     db=Depends(get_db),
@@ -84,6 +117,7 @@ async def logout(
     Logout current user by blacklisting their token.
 
     The token will be added to the blacklist and rejected on future requests.
+    Security: Deletes the httpOnly cookie containing the JWT token.
     """
     if token:
         try:
@@ -111,6 +145,9 @@ async def logout(
 
         except JWTError:
             pass  # Token was invalid anyway, no need to blacklist
+
+    # Delete the httpOnly cookie
+    response.delete_cookie(key="access_token", path="/")
 
     return {"message": "Successfully logged out"}
 

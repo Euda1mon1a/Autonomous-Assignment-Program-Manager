@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timedelta
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -164,20 +164,34 @@ def authenticate_user(db: Session, username: str, password: str) -> User | None:
 
 
 async def get_current_user(
+    request: Request,
     token: str | None = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ) -> User | None:
     """
     Get the current authenticated user from JWT token.
 
+    Security: Checks httpOnly cookie first, then falls back to Authorization header.
+    This prevents XSS attacks while maintaining backward compatibility.
+
     Args:
-        token: JWT token from Authorization header
+        request: FastAPI request object to access cookies
+        token: JWT token from Authorization header (fallback)
         db: Database session
 
     Returns:
         User object if authenticated, None otherwise
     """
-    if not token:
+    # Priority 1: Check httpOnly cookie (secure against XSS)
+    cookie_token = request.cookies.get("access_token")
+    if cookie_token:
+        # PGY2-01ie format is "Bearer <token>", extract the token
+        if cookie_token.startswith("Bearer "):
+            token = cookie_token[7:]
+        else:
+            token = cookie_token
+    # Priority 2: Fall back to Authorization header (for API clients)
+    elif not token:
         return None
 
     token_data = verify_token(token, db)

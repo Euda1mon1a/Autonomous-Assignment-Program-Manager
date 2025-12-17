@@ -129,6 +129,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Comprehensive Security Hardening (Session 6 - 2025-12-17)
+- **Path Traversal Prevention**: New `file_security.py` module with path validation, backup ID sanitization
+- **httpOnly PGY2-01ie Authentication**: Migrated JWT from localStorage to secure httpOnly cookies
+- **File Upload Validation**: Size limits, extension checks, magic byte verification for Excel uploads
+- **Password Strength Enforcement**: 12+ chars, 3/4 complexity types, common password blacklist
+- **Admin Authorization**: Added `require_admin()` to 13 endpoints across 5 route files
+- **Global Exception Handler**: Prevents error message leakage, logs full errors server-side
+- **Redis Authentication**: Password-protected Redis with `--requirepass` in all configurations
+- **API Documentation Protection**: `/docs`, `/redoc` disabled in production, IP-restricted metrics
+- **XSS Fixes**: HTML escaping in PDF exports, URL validation for calendar sync
+
+### Security
+- **Secret Validation**: Startup validation rejects insecure/default SECRET_KEY and WEBHOOK_SECRET
+- **Default Credentials Removed**: N8N "resilience", Grafana "admin" defaults eliminated
+- **CORS Hardening**: Explicit method/header whitelists recommended
+- **Monitoring Protection**: Prometheus admin API disabled, metrics restricted to internal IPs
+- **Custom Exceptions**: Safe exception classes prevent internal details exposure
+
 #### Security Hardening (Session 5 - 2025-12-17)
 - **Authentication on People API**: All 7 endpoints now require authentication (PII protection)
 - **Authentication on Settings API**: GET requires auth, POST/PATCH/DELETE require admin role

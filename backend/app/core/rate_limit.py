@@ -36,8 +36,10 @@ class RateLimiter:
         """
         if redis_client is None:
             try:
+                # Use authenticated Redis URL if password is configured
+                redis_url = settings.redis_url_with_password
                 self.redis = redis.from_url(
-                    settings.REDIS_URL,
+                    redis_url,
                     decode_responses=True,
                     socket_connect_timeout=5,
                     socket_timeout=5,

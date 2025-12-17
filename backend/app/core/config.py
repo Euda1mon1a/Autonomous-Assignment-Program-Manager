@@ -1,6 +1,7 @@
 """Application configuration."""
 from functools import lru_cache
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -24,14 +25,29 @@ class Settings(BaseSettings):
     DB_POOL_PRE_PING: bool = True  # Verify connections before use
 
     # Redis / Celery Configuration
+    REDIS_PASSWORD: str = ""
     REDIS_URL: str = "redis://localhost:6379/0"
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"
 
+    @property
+    def redis_url_with_password(self) -> str:
+        """
+        Get Redis URL with password authentication if REDIS_PASSWORD is set.
+
+        Returns:
+            str: Redis URL with password embedded if password is configured,
+                 otherwise returns the base REDIS_URL.
+        """
+        if self.REDIS_PASSWORD:
+            # Insert password into URL (format: redis://:password@host:port/db)
+            return self.REDIS_URL.replace("redis://", f"redis://:{self.REDIS_PASSWORD}@")
+        return self.REDIS_URL
+
     # Security
-    SECRET_KEY: str = "your-secret-key-change-in-production"
+    SECRET_KEY: str = ""
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
-    WEBHOOK_SECRET: str = "your-webhook-secret-change-in-production"
+    WEBHOOK_SECRET: str = ""
     WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS: int = 300  # 5 minutes
 
     # Rate Limiting (per IP address)
@@ -72,6 +88,32 @@ class Settings(BaseSettings):
     # Alert settings
     RESILIENCE_ALERT_RECIPIENTS: list[str] = []  # Email addresses for alerts
     RESILIENCE_SLACK_CHANNEL: str = ""  # Slack channel for alerts (optional)
+
+    @field_validator('SECRET_KEY', 'WEBHOOK_SECRET')
+    @classmethod
+    def validate_secrets(cls, v: str, info) -> str:
+        """Validate that secrets are not using insecure default values."""
+        field_name = info.field_name
+        insecure_defaults = [
+            "",
+            "your-secret-key-change-in-production",
+            "your-webhook-secret-change-in-production",
+        ]
+
+        if v in insecure_defaults:
+            raise ValueError(
+                f"{field_name} must be set to a secure value. "
+                f"Set the {field_name} environment variable to a strong random value."
+            )
+
+        # Check minimum length (at least 32 characters for production secrets)
+        if len(v) < 32:
+            raise ValueError(
+                f"{field_name} must be at least 32 characters long for security. "
+                f"Current length: {len(v)}"
+            )
+
+        return v
 
     class Config:
         env_file = ".env"

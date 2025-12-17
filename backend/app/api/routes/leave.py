@@ -9,14 +9,16 @@ Provides endpoints for:
 """
 import hmac
 import hashlib
+import logging
 from datetime import date, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies.role_filter import require_admin
 from app.core.config import get_settings
-from app.core.security import get_current_user
+from app.core.security import get_current_active_user, get_current_user
 from app.db.session import get_db
 from app.models.absence import Absence
 from app.models.person import Person
@@ -34,6 +36,7 @@ from app.schemas.leave import (
 )
 
 router = APIRouter(prefix="/leave", tags=["leave"])
+logger = logging.getLogger(__name__)
 
 
 async def verify_webhook_signature(
@@ -79,9 +82,10 @@ async def verify_webhook_signature(
                 detail="Webhook timestamp outside acceptable range (possible replay attack)",
             )
     except (ValueError, TypeError) as e:
+        logger.error(f"Invalid webhook timestamp format: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid timestamp format: {str(e)}",
+            detail="Invalid timestamp format",
         )
 
     # Read the raw body for signature verification
@@ -338,10 +342,11 @@ async def leave_webhook(
 def bulk_import_leave(
     request: BulkLeaveImportRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
 ):
     """
-    Bulk import leave records.
+    Bulk import leave records. Requires admin role.
 
     Useful for syncing from external systems.
     """

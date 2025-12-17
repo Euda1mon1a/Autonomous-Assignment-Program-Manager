@@ -29,14 +29,21 @@ DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@localhost:5432/residency_sched
 ### Security Settings
 
 ```env
-# JWT signing key - REQUIRED
-# Generate with: openssl rand -hex 32
+# JWT signing key - REQUIRED (no default in production)
+# Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'
 # Minimum 32 characters, recommended 64+ characters
+# Application will FAIL to start in production if this is empty or uses default
 SECRET_KEY=your_64_character_random_secret_key_here
+
+# Webhook signature verification key - REQUIRED (no default in production)
+# Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'
+WEBHOOK_SECRET=your_webhook_secret_key_here
 
 # Token expiration in minutes (default: 1440 = 24 hours)
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
 ```
+
+> **Security Note**: In production mode (`DEBUG=false`), the application validates that `SECRET_KEY` and `WEBHOOK_SECRET` are set and not using default/placeholder values. Startup will fail with a clear error message if validation fails.
 
 ### Frontend Configuration
 
@@ -80,12 +87,18 @@ TRUSTED_HOSTS=["localhost", "your-domain.com"]
 # Redis connection URL
 REDIS_URL=redis://localhost:6379/0
 
-# Celery broker URL (typically same as Redis)
-CELERY_BROKER_URL=redis://localhost:6379/0
+# Redis password - REQUIRED for production
+# Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'
+REDIS_PASSWORD=your_redis_password_here
+
+# Celery broker URL (password automatically embedded from REDIS_PASSWORD)
+CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@localhost:6379/0
 
 # Celery result backend
-CELERY_RESULT_BACKEND=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@localhost:6379/0
 ```
+
+> **Security Note**: Redis now requires password authentication. The application automatically constructs authenticated Redis URLs using `REDIS_PASSWORD`.
 
 ---
 
@@ -399,6 +412,20 @@ server {
 
 ---
 
+## Monitoring Services
+
+```env
+# N8N workflow automation password - REQUIRED (no default)
+N8N_PASSWORD=your_secure_n8n_password
+
+# Grafana admin password - REQUIRED (no default)
+GRAFANA_ADMIN_PASSWORD=your_secure_grafana_password
+```
+
+> **Security Note**: Default passwords for N8N and Grafana have been removed. These services will fail to start without explicit password configuration.
+
+---
+
 ## Secrets Management
 
 ### Best Practices
@@ -407,11 +434,26 @@ server {
 2. **Use environment variables** for all sensitive data
 3. **Rotate secrets regularly**, especially `SECRET_KEY`
 4. **Use different secrets** for each environment
+5. **Never use default/placeholder secrets** in production
+
+### Required Secrets (No Defaults Allowed)
+
+| Secret | Purpose | Generation Command |
+|--------|---------|-------------------|
+| `SECRET_KEY` | JWT token signing | `python -c 'import secrets; print(secrets.token_urlsafe(32))'` |
+| `WEBHOOK_SECRET` | Webhook HMAC verification | `python -c 'import secrets; print(secrets.token_urlsafe(32))'` |
+| `REDIS_PASSWORD` | Redis authentication | `python -c 'import secrets; print(secrets.token_urlsafe(32))'` |
+| `N8N_PASSWORD` | N8N admin access | `python -c 'import secrets; print(secrets.token_urlsafe(16))'` |
+| `GRAFANA_ADMIN_PASSWORD` | Grafana admin access | `python -c 'import secrets; print(secrets.token_urlsafe(16))'` |
+| `DB_PASSWORD` | Database authentication | `openssl rand -base64 24` |
 
 ### Generating Secrets
 
 ```bash
-# Generate a secure SECRET_KEY
+# Generate a secure SECRET_KEY (64 characters)
+python -c 'import secrets; print(secrets.token_urlsafe(32))'
+
+# Alternative using openssl
 openssl rand -hex 32
 
 # Generate a database password

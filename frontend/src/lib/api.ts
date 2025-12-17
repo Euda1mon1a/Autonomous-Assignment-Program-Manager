@@ -75,18 +75,14 @@ function createApiClient(): AxiosInstance {
     // Issue #4: Timeout mismatch - increased from 30s to 120s to match backend
     // Schedule generation can take longer with constraint solving algorithms
     timeout: 120000, // 120 second timeout (2 minutes)
+    // Security: Enable credentials to send httpOnly cookies
+    withCredentials: true,
   })
 
-  // Request interceptor - attach auth token if available
+  // Request interceptor - no longer needed for auth token
+  // Tokens are sent automatically via httpOnly cookies
   client.interceptors.request.use(
     (config) => {
-      // Get token from localStorage if available
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('auth_token')
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`
-        }
-      }
       return config
     },
     (error) => Promise.reject(error)
@@ -108,10 +104,9 @@ function createApiClient(): AxiosInstance {
       }
 
       if (typeof window !== 'undefined') {
-        // Handle 401 - clear auth and redirect to login
+        // Handle 401 - redirect to login
+        // Security: No need to clear localStorage since tokens are in httpOnly cookies
         if (apiError.status === 401) {
-          localStorage.removeItem('auth_token')
-          localStorage.removeItem('user')
           window.location.href = '/login'
         }
 

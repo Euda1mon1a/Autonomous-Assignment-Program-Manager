@@ -23,6 +23,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
+from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.resilience import (
@@ -226,9 +227,10 @@ async def activate_crisis_response(
     request: CrisisActivationRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
 ):
     """
-    Activate crisis response mode. Requires authentication.
+    Activate crisis response mode. Requires admin role.
 
     Severity levels:
     - minor: Yellow level - suspend optional activities
@@ -267,9 +269,10 @@ async def deactivate_crisis_response(
     request: CrisisDeactivationRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
 ):
     """
-    Deactivate crisis response and begin recovery. Requires authentication.
+    Deactivate crisis response and begin recovery. Requires admin role.
 
     Recovery is gradual - services are restored in reverse sacrifice order.
     """
@@ -340,9 +343,10 @@ async def activate_fallback(
     request: FallbackActivationRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
 ):
     """
-    Activate a pre-computed fallback schedule. Requires authentication.
+    Activate a pre-computed fallback schedule. Requires admin role.
 
     This instantly switches to the fallback schedule without recomputation.
     """
@@ -414,10 +418,11 @@ async def deactivate_fallback(
     request: FallbackDeactivationRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
 ):
     """
     Deactivate a fallback schedule and return to normal operations.
-    Requires authentication.
+    Requires admin role.
     """
     service = get_resilience_service(db)
 
@@ -487,9 +492,10 @@ async def set_load_shedding_level(
     request: LoadSheddingRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
 ):
     """
-    Manually set load shedding level. Requires authentication.
+    Manually set load shedding level. Requires admin role.
 
     This overrides automatic load shedding decisions.
     """

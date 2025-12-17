@@ -1,5 +1,6 @@
 """Unified heatmap API routes combining residency and FMIT schedules."""
 import io
+import logging
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -22,6 +23,7 @@ from app.schemas.unified_heatmap import (
 from app.services.unified_heatmap_service import UnifiedHeatmapService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("/heatmap/data", response_model=UnifiedCoverageResponse)
@@ -76,9 +78,10 @@ def get_heatmap_data(
         )
         return UnifiedCoverageResponse(**data)
     except Exception as e:
+        logger.error(f"Error generating heatmap data: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate heatmap data: {str(e)}",
+            detail="An error occurred generating heatmap data",
         )
 
 
@@ -124,9 +127,10 @@ def post_heatmap_data(
         )
         return UnifiedCoverageResponse(**data)
     except Exception as e:
+        logger.error(f"Error generating heatmap data: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate heatmap data: {str(e)}",
+            detail="An error occurred generating heatmap data",
         )
 
 
@@ -182,9 +186,10 @@ def render_heatmap(
         )
         return HTMLResponse(content=html_content)
     except Exception as e:
+        logger.error(f"Error rendering heatmap: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to render heatmap: {str(e)}",
+            detail="An error occurred rendering the heatmap",
         )
 
 
@@ -230,9 +235,10 @@ def post_render_heatmap(
         )
         return HTMLResponse(content=html_content)
     except Exception as e:
+        logger.error(f"Error rendering heatmap: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to render heatmap: {str(e)}",
+            detail="An error occurred rendering the heatmap",
         )
 
 
@@ -296,11 +302,13 @@ def export_heatmap(
             height=height,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error(f"Invalid heatmap export parameters: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail="Invalid request parameters")
     except Exception as e:
+        logger.error(f"Error exporting heatmap: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to export heatmap: {str(e)}",
+            detail="An error occurred exporting the heatmap",
         )
 
     # Determine media type
@@ -372,11 +380,13 @@ def post_export_heatmap(
             height=request.height,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error(f"Invalid heatmap export parameters: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail="Invalid request parameters")
     except Exception as e:
+        logger.error(f"Error exporting heatmap: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to export heatmap: {str(e)}",
+            detail="An error occurred exporting the heatmap",
         )
 
     # Determine media type
@@ -438,9 +448,10 @@ def get_person_coverage_data(
         )
         return PersonCoverageResponse(**data)
     except Exception as e:
+        logger.error(f"Error generating person coverage data: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate person coverage data: {str(e)}",
+            detail="An error occurred generating person coverage data",
         )
 
 
@@ -478,9 +489,10 @@ def post_person_coverage_data(
         )
         return PersonCoverageResponse(**data)
     except Exception as e:
+        logger.error(f"Error generating person coverage data: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate person coverage data: {str(e)}",
+            detail="An error occurred generating person coverage data",
         )
 
 
@@ -520,9 +532,10 @@ def get_weekly_fmit_data(
         )
         return WeeklyFMITResponse(**data)
     except Exception as e:
+        logger.error(f"Error generating weekly FMIT data: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate weekly FMIT data: {str(e)}",
+            detail="An error occurred generating weekly FMIT data",
         )
 
 
@@ -558,7 +571,8 @@ def post_weekly_fmit_data(
         )
         return WeeklyFMITResponse(**data)
     except Exception as e:
+        logger.error(f"Error generating weekly FMIT data: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate weekly FMIT data: {str(e)}",
+            detail="An error occurred generating weekly FMIT data",
         )

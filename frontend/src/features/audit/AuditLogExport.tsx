@@ -102,6 +102,19 @@ const CSV_COLUMNS: Column[] = [
 // ============================================================================
 
 /**
+ * Escape HTML special characters to prevent XSS attacks
+ */
+function escapeHTML(str: string | null | undefined): string {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/**
  * Transform audit log entry for export
  */
 function transformForExport(
@@ -214,7 +227,7 @@ function generatePDFContent(logs: AuditLogEntry[], filters?: AuditLogFilters): s
       <div class="meta">
         <p>Generated: ${dateStr}</p>
         <p>Total Records: ${logs.length}</p>
-        ${filters?.dateRange ? `<p>Date Range: ${filters.dateRange.start} to ${filters.dateRange.end}</p>` : ''}
+        ${filters?.dateRange ? `<p>Date Range: ${escapeHTML(filters.dateRange.start)} to ${escapeHTML(filters.dateRange.end)}</p>` : ''}
       </div>
       <table>
         <thead>
@@ -233,11 +246,11 @@ function generatePDFContent(logs: AuditLogEntry[], filters?: AuditLogFilters): s
               (log) => `
               <tr class="${log.acgmeOverride ? 'acgme-override' : ''}">
                 <td>${formatDate(new Date(log.timestamp), 'MMM d, yyyy HH:mm')}</td>
-                <td>${log.user.name}</td>
-                <td>${ACTION_TYPE_LABELS[log.action] || log.action}</td>
-                <td>${ENTITY_TYPE_LABELS[log.entityType]} ${log.entityName ? `(${log.entityName})` : ''}</td>
-                <td class="severity-${log.severity}">${log.severity}</td>
-                <td>${log.reason || '-'}</td>
+                <td>${escapeHTML(log.user.name)}</td>
+                <td>${ACTION_TYPE_LABELS[log.action] || escapeHTML(log.action)}</td>
+                <td>${ENTITY_TYPE_LABELS[log.entityType]} ${log.entityName ? `(${escapeHTML(log.entityName)})` : ''}</td>
+                <td class="severity-${log.severity}">${escapeHTML(log.severity)}</td>
+                <td>${escapeHTML(log.reason || '-')}</td>
               </tr>
             `
             )
