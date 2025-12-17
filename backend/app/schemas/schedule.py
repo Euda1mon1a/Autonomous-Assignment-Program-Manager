@@ -96,3 +96,52 @@ class EmergencyResponse(BaseModel):
     coverage_gaps: int
     requires_manual_review: bool
     details: list[dict]
+
+
+# Import/Conflict Analysis Schemas
+
+class ConflictItem(BaseModel):
+    """Schema for a single scheduling conflict."""
+    provider: str
+    date: str
+    time: str
+    type: str  # 'double_book', 'specialty_unavailable', 'consecutive_weeks'
+    severity: str  # 'error', 'warning', 'info'
+    message: str
+    fmit_assignment: Optional[str] = None
+    clinic_assignment: Optional[str] = None
+
+
+class ScheduleSummary(BaseModel):
+    """Summary of an imported schedule."""
+    providers: list[str]
+    date_range: list[Optional[str]]  # [start, end] as ISO strings
+    total_slots: int
+    fmit_slots: int = 0
+    clinic_slots: int = 0
+
+
+class Recommendation(BaseModel):
+    """Recommendation for resolving conflicts."""
+    type: str  # 'consolidate_fmit', 'specialty_coverage', 'resolve_double_booking'
+    providers: Optional[list[str]] = None
+    count: Optional[int] = None
+    message: str
+
+
+class ConflictSummary(BaseModel):
+    """Summary of conflicts found."""
+    total_conflicts: int
+    errors: int
+    warnings: int
+
+
+class ImportAnalysisResponse(BaseModel):
+    """Response schema for schedule import and analysis."""
+    success: bool
+    error: Optional[str] = None
+    fmit_schedule: Optional[ScheduleSummary] = None
+    clinic_schedule: Optional[ScheduleSummary] = None
+    conflicts: list[ConflictItem] = []
+    recommendations: list[Recommendation] = []
+    summary: Optional[ConflictSummary] = None

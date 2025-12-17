@@ -1,6 +1,7 @@
 """Schedule generation and validation API routes."""
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -12,10 +13,16 @@ from app.schemas.schedule import (
     EmergencyRequest,
     EmergencyResponse,
     SolverStatistics,
+    ImportAnalysisResponse,
+    ScheduleSummary,
+    ConflictItem,
+    Recommendation,
+    ConflictSummary,
 )
 from app.scheduling.engine import SchedulingEngine
 from app.scheduling.validator import ACGMEValidator
 from app.services.emergency_coverage import EmergencyCoverageService
+from app.services.xlsx_import import analyze_schedule_conflicts
 from app.core.security import get_current_active_user
 
 router = APIRouter()
@@ -243,4 +250,202 @@ async def get_schedule(start_date: str, end_date: str, db: Session = Depends(get
         "end_date": end_date,
         "schedule": schedule_by_date,
         "total_assignments": len(assignments),
+    }
+
+
+@router.post("/import/analyze", response_model=ImportAnalysisResponse)
+async def analyze_imported_schedules(
+    fmit_file: UploadFile = File(..., description="FMIT rotation schedule Excel file"),
+    clinic_file: Optional[UploadFile] = File(None, description="Clinic schedule Excel file (optional)"),
+    specialty_providers: Optional[str] = Form(
+        None,
+        description="JSON mapping of specialty to providers, e.g., {\"Sports Medicine\": [\"Tagawa\"]}"
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    Import and analyze schedules for conflicts.
+
+    Upload Excel files containing FMIT rotation and clinic schedules.
+    The system will detect:
+    - Double-bookings (same provider scheduled for FMIT and clinic)
+    - Specialty unavailability (specialty provider on FMIT creates clinic gap)
+    - Alternating patterns (week-on/week-off that's hard on families)
+
+    This is an analysis-only endpoint - no data is written to the database.
+    Use this to identify conflicts before finalizing schedules.
+
+    Args:
+        fmit_file: Excel file with FMIT rotation schedule
+        clinic_file: Excel file with clinic schedule (optional)
+        specialty_providers: JSON string mapping specialty to provider names
+
+    Returns:
+        Analysis results with conflicts and recommendations
+    """
+    import json
+
+    # Parse specialty providers if provided
+    specialty_map = None
+    if specialty_providers:
+        try:
+            specialty_map = json.loads(specialty_providers)
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid specialty_providers JSON format"
+            )
+
+    # Read file contents
+    try:
+        fmit_bytes = await fmit_file.read()
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to read FMIT file: {str(e)}"
+        )
+
+    clinic_bytes = None
+    if clinic_file:
+        try:
+            clinic_bytes = await clinic_file.read()
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Failed to read clinic file: {str(e)}"
+            )
+
+    # Run analysis
+    result = analyze_schedule_conflicts(
+        fmit_bytes=fmit_bytes,
+        clinic_bytes=clinic_bytes,
+        specialty_providers=specialty_map,
+    )
+
+    if not result["success"]:
+        raise HTTPException(
+            status_code=422,
+            detail=result.get("error", "Analysis failed")
+        )
+
+    # Build response
+    return ImportAnalysisResponse(
+        success=True,
+        fmit_schedule=ScheduleSummary(**result["fmit_schedule"]) if result.get("fmit_schedule") else None,
+        clinic_schedule=ScheduleSummary(**result["clinic_schedule"]) if result.get("clinic_schedule") else None,
+        conflicts=[ConflictItem(**c) for c in result.get("conflicts", [])],
+        recommendations=[Recommendation(**r) for r in result.get("recommendations", [])],
+        summary=ConflictSummary(**result["summary"]) if result.get("summary") else None,
+    )
+
+
+@router.post("/import/analyze-file")
+async def analyze_single_file(
+    file: UploadFile = File(..., description="Schedule Excel file to analyze"),
+    file_type: str = Form("auto", description="File type: 'fmit', 'clinic', or 'auto' to detect"),
+    specialty_providers: Optional[str] = Form(
+        None,
+        description="JSON mapping of specialty to providers"
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    Quick analysis of a single schedule file.
+
+    Upload an Excel file to detect:
+    - Schedule structure (providers, date range, slot types)
+    - Alternating week patterns
+    - Specialty provider assignments
+
+    Returns parsed schedule data without requiring a second file.
+    """
+    import json
+    from app.services.xlsx_import import ClinicScheduleImporter
+
+    # Read file
+    try:
+        file_bytes = await file.read()
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to read file: {str(e)}"
+        )
+
+    # Parse specialty providers
+    specialty_map = None
+    if specialty_providers:
+        try:
+            specialty_map = json.loads(specialty_providers)
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid specialty_providers JSON format"
+            )
+
+    # Import the file
+    importer = ClinicScheduleImporter(db)
+    result = importer.import_file(file_bytes=file_bytes)
+
+    if not result.success:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Failed to parse file: {result.errors}"
+        )
+
+    # Check for alternating patterns
+    alternating_providers = []
+    for provider_name, schedule in result.providers.items():
+        if schedule.has_alternating_pattern():
+            weeks = schedule.get_fmit_weeks()
+            alternating_providers.append({
+                "name": provider_name,
+                "fmit_weeks": [
+                    {"start": w[0].isoformat(), "end": w[1].isoformat()}
+                    for w in weeks
+                ],
+                "pattern": "alternating",
+                "recommendation": "Consider consolidating FMIT weeks"
+            })
+
+    # Build provider summary
+    provider_summary = []
+    for provider_name, schedule in result.providers.items():
+        fmit_slots = sum(1 for s in schedule.slots.values() if s.slot_type.value == "fmit")
+        clinic_slots = sum(1 for s in schedule.slots.values() if s.slot_type.value == "clinic")
+
+        # Check if specialty provider
+        specialties = []
+        if specialty_map:
+            for specialty, providers in specialty_map.items():
+                if provider_name in providers:
+                    specialties.append(specialty)
+
+        provider_summary.append({
+            "name": provider_name,
+            "total_slots": len(schedule.slots),
+            "fmit_slots": fmit_slots,
+            "clinic_slots": clinic_slots,
+            "specialties": specialties,
+            "fmit_weeks": [
+                {"start": w[0].isoformat(), "end": w[1].isoformat()}
+                for w in schedule.get_fmit_weeks()
+            ],
+        })
+
+    return {
+        "success": True,
+        "file_name": file.filename,
+        "date_range": {
+            "start": result.date_range[0].isoformat() if result.date_range[0] else None,
+            "end": result.date_range[1].isoformat() if result.date_range[1] else None,
+        },
+        "statistics": {
+            "total_providers": len(result.providers),
+            "total_slots": result.total_slots,
+            "fmit_slots": result.fmit_slots,
+            "clinic_slots": result.clinic_slots,
+        },
+        "providers": provider_summary,
+        "alternating_patterns": alternating_providers,
+        "warnings": result.warnings,
     }
