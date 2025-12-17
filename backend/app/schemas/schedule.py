@@ -145,3 +145,84 @@ class ImportAnalysisResponse(BaseModel):
     conflicts: list[ConflictItem] = []
     recommendations: list[Recommendation] = []
     summary: Optional[ConflictSummary] = None
+
+
+# SwapFinder API Schemas
+
+class FacultyTargetInput(BaseModel):
+    """Input schema for faculty target configuration."""
+    name: str
+    target_weeks: int = Field(default=6, ge=0, le=52)
+    role: Literal["faculty", "chief", "pd", "adjunct"] = "faculty"
+    current_weeks: int = Field(default=0, ge=0)
+
+
+class ExternalConflictInput(BaseModel):
+    """Input schema for external conflicts (leave, conferences, etc.)."""
+    faculty: str
+    start_date: date
+    end_date: date
+    conflict_type: Literal["leave", "conference", "tdy", "training", "deployment", "medical"]
+    description: str = ""
+
+    @model_validator(mode='after')
+    def validate_dates(self) -> 'ExternalConflictInput':
+        if self.start_date > self.end_date:
+            raise ValueError("start_date must be before or equal to end_date")
+        return self
+
+
+class SwapFinderRequest(BaseModel):
+    """Request schema for finding swap candidates."""
+    target_faculty: str = Field(..., description="Faculty member looking to offload a week")
+    target_week: date = Field(..., description="Monday of the week to offload")
+    faculty_targets: list[FacultyTargetInput] = Field(
+        default=[],
+        description="Faculty target week allocations (optional - enhances ranking)"
+    )
+    external_conflicts: list[ExternalConflictInput] = Field(
+        default=[],
+        description="Known external conflicts (leave, conferences, etc.)"
+    )
+    include_absence_conflicts: bool = Field(
+        default=True,
+        description="Cross-reference with database absence records"
+    )
+    schedule_release_days: int = Field(
+        default=90,
+        ge=0,
+        le=365,
+        description="Days ahead that clinic schedules are released"
+    )
+
+
+class SwapCandidateResponse(BaseModel):
+    """Response schema for a single swap candidate."""
+    faculty: str
+    can_take_week: str  # ISO date
+    gives_week: Optional[str] = None  # ISO date for 1:1 swap
+    back_to_back_ok: bool
+    external_conflict: Optional[str] = None
+    flexibility: str  # "easy", "hard", "very_hard", "impossible"
+    reason: str = ""
+    rank: int = 0  # 1 = best candidate
+
+
+class AlternatingPatternInfo(BaseModel):
+    """Info about faculty with excessive alternating patterns."""
+    faculty: str
+    cycle_count: int
+    fmit_weeks: list[str]  # ISO dates
+    recommendation: str
+
+
+class SwapFinderResponse(BaseModel):
+    """Response schema for swap finder results."""
+    success: bool
+    target_faculty: str
+    target_week: str
+    candidates: list[SwapCandidateResponse]
+    total_candidates: int
+    viable_candidates: int  # Candidates with no back-to-back issues
+    alternating_patterns: list[AlternatingPatternInfo] = []
+    message: str = ""

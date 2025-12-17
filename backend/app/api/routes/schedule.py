@@ -18,11 +18,21 @@ from app.schemas.schedule import (
     ConflictItem,
     Recommendation,
     ConflictSummary,
+    SwapFinderRequest,
+    SwapFinderResponse,
+    SwapCandidateResponse,
+    AlternatingPatternInfo,
 )
 from app.scheduling.engine import SchedulingEngine
 from app.scheduling.validator import ACGMEValidator
 from app.services.emergency_coverage import EmergencyCoverageService
-from app.services.xlsx_import import analyze_schedule_conflicts
+from app.services.xlsx_import import (
+    analyze_schedule_conflicts,
+    SwapFinder,
+    FacultyTarget,
+    ExternalConflict,
+    load_external_conflicts_from_absences,
+)
 from app.core.security import get_current_active_user
 
 router = APIRouter()
@@ -449,3 +459,163 @@ async def analyze_single_file(
         "alternating_patterns": alternating_providers,
         "warnings": result.warnings,
     }
+
+
+@router.post("/swaps/find", response_model=SwapFinderResponse)
+async def find_swap_candidates(
+    fmit_file: UploadFile = File(..., description="FMIT rotation schedule Excel file"),
+    request_json: str = Form(..., description="SwapFinderRequest as JSON string"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Find swap candidates for an FMIT week.
+
+    Given a faculty member and week they want to offload, this endpoint:
+    1. Parses the FMIT schedule from the uploaded Excel file
+    2. Cross-references with database absence records (if enabled)
+    3. Finds all faculty who could take the target week
+    4. Ranks candidates by viability (back-to-back conflicts, external conflicts, flexibility)
+
+    The response includes:
+    - Ranked list of swap candidates with details
+    - Whether they can do a 1:1 swap or must absorb
+    - Any external conflicts (leave, TDY, etc.)
+    - Faculty with excessive alternating patterns
+
+    Args:
+        fmit_file: Excel file with FMIT rotation schedule
+        request_json: SwapFinderRequest serialized as JSON
+
+    Returns:
+        SwapFinderResponse with ranked candidates and analysis
+    """
+    import json
+    from datetime import timedelta
+
+    # Parse request JSON
+    try:
+        request_data = json.loads(request_json)
+        request = SwapFinderRequest(**request_data)
+    except (json.JSONDecodeError, ValueError) as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid request JSON: {str(e)}"
+        )
+
+    # Read FMIT file
+    try:
+        fmit_bytes = await fmit_file.read()
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to read FMIT file: {str(e)}"
+        )
+
+    # Build faculty targets dict
+    faculty_targets = {
+        ft.name: FacultyTarget(
+            name=ft.name,
+            target_weeks=ft.target_weeks,
+            role=ft.role,
+            current_weeks=ft.current_weeks,
+        )
+        for ft in request.faculty_targets
+    }
+
+    # Build external conflicts list
+    external_conflicts = [
+        ExternalConflict(
+            faculty=ec.faculty,
+            start_date=ec.start_date,
+            end_date=ec.end_date,
+            conflict_type=ec.conflict_type,
+            description=ec.description,
+        )
+        for ec in request.external_conflicts
+    ]
+
+    # Add absence-based conflicts if requested
+    if request.include_absence_conflicts:
+        try:
+            absence_conflicts = load_external_conflicts_from_absences(db)
+            external_conflicts.extend(absence_conflicts)
+        except Exception as e:
+            # Log but don't fail - absence integration is optional
+            import logging
+            logging.warning(f"Failed to load absence conflicts: {e}")
+
+    try:
+        # Create SwapFinder from file
+        swap_finder = SwapFinder.from_fmit_file(
+            file_bytes=fmit_bytes,
+            faculty_targets=faculty_targets if faculty_targets else None,
+            external_conflicts=external_conflicts if external_conflicts else None,
+            db=db if request.include_absence_conflicts else None,
+            include_absence_conflicts=False,  # Already loaded above
+            schedule_release_days=request.schedule_release_days,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=str(e)
+        )
+
+    # Validate target faculty exists in schedule
+    if request.target_faculty not in swap_finder.faculty_weeks:
+        available = list(swap_finder.faculty_weeks.keys())
+        raise HTTPException(
+            status_code=404,
+            detail=f"Faculty '{request.target_faculty}' not found in schedule. "
+                   f"Available: {', '.join(available[:10])}{'...' if len(available) > 10 else ''}"
+        )
+
+    # Find swap candidates
+    candidates = swap_finder.find_swap_candidates(
+        target_faculty=request.target_faculty,
+        target_week=request.target_week,
+    )
+
+    # Find alternating patterns
+    alternating = swap_finder.find_excessive_alternating(threshold=3)
+
+    # Build response
+    candidate_responses = []
+    for rank, candidate in enumerate(candidates, 1):
+        candidate_responses.append(
+            SwapCandidateResponse(
+                faculty=candidate.faculty,
+                can_take_week=candidate.can_take_week.isoformat(),
+                gives_week=candidate.gives_week.isoformat() if candidate.gives_week else None,
+                back_to_back_ok=candidate.back_to_back_ok,
+                external_conflict=candidate.external_conflict,
+                flexibility=candidate.flexibility,
+                reason=candidate.reason,
+                rank=rank,
+            )
+        )
+
+    alternating_info = []
+    for faculty, cycle_count in alternating:
+        weeks = swap_finder.faculty_weeks.get(faculty, [])
+        alternating_info.append(
+            AlternatingPatternInfo(
+                faculty=faculty,
+                cycle_count=cycle_count,
+                fmit_weeks=[w.isoformat() for w in sorted(weeks)],
+                recommendation="Consider consolidating FMIT weeks to reduce family burden",
+            )
+        )
+
+    viable_count = sum(1 for c in candidates if c.back_to_back_ok and not c.external_conflict)
+
+    return SwapFinderResponse(
+        success=True,
+        target_faculty=request.target_faculty,
+        target_week=request.target_week.isoformat(),
+        candidates=candidate_responses,
+        total_candidates=len(candidates),
+        viable_candidates=viable_count,
+        alternating_patterns=alternating_info,
+        message=f"Found {viable_count} viable swap candidates out of {len(candidates)} total",
+    )
