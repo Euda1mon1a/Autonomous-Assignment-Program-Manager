@@ -567,6 +567,114 @@ class ClinicScheduleImporter:
             )
 
 
+@dataclass
+class FacultyTarget:
+    """Target FMIT week allocation for a faculty member."""
+    name: str
+    target_weeks: int = 6
+    role: str = "faculty"  ***REMOVED*** "chief", "pd", "adjunct", "faculty"
+    current_weeks: int = 0
+
+    @property
+    def flexibility(self) -> str:
+        """How flexible this faculty is for taking additional weeks."""
+        if self.role == "chief":
+            return "low"  ***REMOVED*** Already at minimum
+        elif self.role == "pd":
+            return "emergency_only"  ***REMOVED*** Secret weapon
+        elif self.role == "adjunct":
+            return "unreliable"
+        elif self.current_weeks < self.target_weeks:
+            return "high"  ***REMOVED*** Under target, should take more
+        else:
+            return "medium"  ***REMOVED*** At target, can swap 1:1
+
+
+@dataclass
+class SwapCandidate:
+    """A potential swap partner for a target week."""
+    faculty: str
+    can_take_week: date
+    gives_week: Optional[date] = None  ***REMOVED*** None if absorbing, date if 1:1 swap
+    back_to_back_ok: bool = True
+    external_conflict: Optional[str] = None
+    flexibility: str = "medium"
+    reason: str = ""
+
+
+@dataclass
+class ExternalConflict:
+    """External constraint preventing assignment."""
+    faculty: str
+    start_date: date
+    end_date: date
+    conflict_type: str  ***REMOVED*** "leave", "conference", "tdy", "training"
+    description: str = ""
+
+
+def has_back_to_back_conflict(faculty_weeks: list[date]) -> bool:
+    """
+    Check if any two FMIT weeks are consecutive.
+
+    FMIT weeks include mandatory Fri/Sat call, creating continuous duty.
+    Back-to-back weeks = 14+ consecutive days with embedded 24hr shifts.
+    """
+    if len(faculty_weeks) < 2:
+        return False
+
+    sorted_weeks = sorted(faculty_weeks)
+    for i in range(len(sorted_weeks) - 1):
+        gap_days = (sorted_weeks[i + 1] - sorted_weeks[i]).days
+        if gap_days <= 7:
+            return True
+    return False
+
+
+def count_alternating_cycles(weeks: list[date]) -> int:
+    """
+    Count consecutive week-on/week-off patterns.
+
+    Returns the number of times FMIT weeks alternate with 1-2 week gaps.
+    3+ alternating cycles in a row = family hardship pattern.
+    """
+    if len(weeks) < 2:
+        return 0
+
+    sorted_weeks = sorted(weeks)
+    cycles = 0
+
+    for i in range(len(sorted_weeks) - 1):
+        gap_days = (sorted_weeks[i + 1] - sorted_weeks[i]).days
+        ***REMOVED*** 7-21 days = 1-2 week gap = alternating pattern
+        if 7 < gap_days <= 21:
+            cycles += 1
+
+    return cycles
+
+
+def get_schedule_flexibility(target_date: date, release_horizon_days: int = 90) -> str:
+    """
+    Determine how easy it is to change a scheduled date.
+
+    Args:
+        target_date: The date being evaluated
+        release_horizon_days: Days ahead clinic schedules are released
+
+    Returns:
+        "impossible", "very_hard", "hard", or "easy"
+    """
+    days_until = (target_date - date.today()).days
+
+    if days_until < 0:
+        return "impossible"  ***REMOVED*** Past
+    elif days_until < 14:
+        return "very_hard"  ***REMOVED*** Imminent
+    elif days_until < release_horizon_days:
+        return "hard"  ***REMOVED*** Already released to patients
+    else:
+        return "easy"  ***REMOVED*** Not yet released
+
+
 class ConflictDetector:
     """
     Detects scheduling conflicts between FMIT and clinic schedules.
@@ -663,6 +771,207 @@ class ConflictDetector:
                     severity="warning",
                     message=f"{provider_name} has alternating week FMIT pattern: {', '.join(week_strs)}. Consider consolidating.",
                 ))
+
+
+class SwapFinder:
+    """
+    Finds valid swap candidates for FMIT weeks.
+
+    Given a target faculty member and week to offload, identifies which
+    other faculty could take that week, considering:
+    - Back-to-back constraints
+    - External conflicts (leave, conferences)
+    - Target week distribution
+    - Schedule flexibility (clinic release dates)
+    """
+
+    def __init__(
+        self,
+        fmit_schedule: ImportResult,
+        faculty_targets: Optional[dict[str, FacultyTarget]] = None,
+        external_conflicts: Optional[list[ExternalConflict]] = None,
+        schedule_release_date: Optional[date] = None,
+    ):
+        self.fmit = fmit_schedule
+        self.faculty_targets = faculty_targets or {}
+        self.external_conflicts = external_conflicts or []
+        self.schedule_release_date = schedule_release_date or (
+            date.today() + timedelta(days=90)
+        )
+
+        ***REMOVED*** Build faculty week mapping
+        self.faculty_weeks: dict[str, list[date]] = {}
+        for name, schedule in self.fmit.providers.items():
+            weeks = schedule.get_fmit_weeks()
+            ***REMOVED*** Use Monday of each week as the canonical date
+            self.faculty_weeks[name] = [w[0] for w in weeks]
+
+    def _check_external_conflict(
+        self, faculty: str, week_start: date
+    ) -> Optional[ExternalConflict]:
+        """Check if faculty has external conflict during week."""
+        week_end = week_start + timedelta(days=6)
+
+        for conflict in self.external_conflicts:
+            if conflict.faculty == faculty:
+                if conflict.start_date <= week_end and conflict.end_date >= week_start:
+                    return conflict
+        return None
+
+    def _can_take_week(
+        self, faculty: str, week_to_take: date, excluding_week: Optional[date] = None
+    ) -> tuple[bool, str]:
+        """
+        Check if faculty can take a specific week.
+
+        Args:
+            faculty: Faculty name
+            week_to_take: Monday of the week to potentially take
+            excluding_week: If doing 1:1 swap, the week being given up
+
+        Returns:
+            (can_take, reason) tuple
+        """
+        current_weeks = self.faculty_weeks.get(faculty, [])
+
+        ***REMOVED*** Build test schedule
+        test_weeks = [w for w in current_weeks if w != excluding_week]
+        test_weeks.append(week_to_take)
+
+        ***REMOVED*** Check back-to-back
+        if has_back_to_back_conflict(test_weeks):
+            return False, "back_to_back_conflict"
+
+        ***REMOVED*** Check external conflicts
+        if conflict := self._check_external_conflict(faculty, week_to_take):
+            return False, f"{conflict.conflict_type}: {conflict.description}"
+
+        return True, "ok"
+
+    def find_swap_candidates(
+        self,
+        target_faculty: str,
+        target_week: date,
+    ) -> list[SwapCandidate]:
+        """
+        Find all faculty who could take a given week.
+
+        Args:
+            target_faculty: Faculty wanting to offload the week
+            target_week: Monday of the week to offload
+
+        Returns:
+            List of SwapCandidate objects, sorted by viability
+        """
+        candidates = []
+
+        for faculty, weeks in self.faculty_weeks.items():
+            if faculty == target_faculty:
+                continue
+
+            ***REMOVED*** Get faculty metadata
+            meta = self.faculty_targets.get(
+                faculty, FacultyTarget(name=faculty, current_weeks=len(weeks))
+            )
+
+            ***REMOVED*** Skip unreliable faculty
+            if meta.flexibility == "unreliable":
+                continue
+
+            ***REMOVED*** Check if can take the target week (absorb scenario)
+            can_take, reason = self._can_take_week(faculty, target_week)
+
+            ***REMOVED*** Find potential give-back weeks for 1:1 swap
+            give_weeks = []
+            if can_take:
+                for w in weeks:
+                    ***REMOVED*** Only consider weeks after release date (flexible)
+                    if w <= self.schedule_release_date:
+                        continue
+
+                    ***REMOVED*** Check if target can take this week
+                    target_current = self.faculty_weeks.get(target_faculty, [])
+                    target_test = [tw for tw in target_current if tw != target_week]
+                    target_test.append(w)
+
+                    if not has_back_to_back_conflict(target_test):
+                        ***REMOVED*** Check target doesn't have external conflict
+                        if not self._check_external_conflict(target_faculty, w):
+                            give_weeks.append(w)
+
+            ***REMOVED*** Check external conflicts for target week
+            ext_conflict = self._check_external_conflict(faculty, target_week)
+
+            candidates.append(
+                SwapCandidate(
+                    faculty=faculty,
+                    can_take_week=target_week,
+                    gives_week=give_weeks[0] if give_weeks else None,
+                    back_to_back_ok=can_take,
+                    external_conflict=ext_conflict.conflict_type if ext_conflict else None,
+                    flexibility=get_schedule_flexibility(target_week),
+                    reason=reason if not can_take else "",
+                )
+            )
+
+        ***REMOVED*** Sort by viability (best candidates first)
+        return sorted(
+            candidates,
+            key=lambda c: (
+                not c.back_to_back_ok,  ***REMOVED*** Back-to-back issues (worst)
+                c.external_conflict is not None,  ***REMOVED*** External conflicts
+                c.gives_week is None,  ***REMOVED*** Absorb-only (prefer 1:1)
+                c.flexibility == "low",  ***REMOVED*** Low flexibility
+            ),
+        )
+
+    def find_excessive_alternating(self, threshold: int = 3) -> list[tuple[str, int]]:
+        """
+        Find faculty with excessive alternating patterns.
+
+        Args:
+            threshold: Number of alternating cycles to flag
+
+        Returns:
+            List of (faculty_name, cycle_count) tuples
+        """
+        results = []
+
+        for faculty, weeks in self.faculty_weeks.items():
+            cycles = count_alternating_cycles(weeks)
+            if cycles >= threshold:
+                results.append((faculty, cycles))
+
+        return sorted(results, key=lambda x: -x[1])  ***REMOVED*** Most cycles first
+
+    def suggest_swaps_for_alternating(
+        self, faculty: str
+    ) -> list[tuple[date, list[SwapCandidate]]]:
+        """
+        Suggest swaps to reduce alternating pattern for a faculty member.
+
+        Returns list of (week_to_offload, candidates) tuples.
+        """
+        weeks = self.faculty_weeks.get(faculty, [])
+        if not weeks:
+            return []
+
+        sorted_weeks = sorted(weeks)
+        suggestions = []
+
+        ***REMOVED*** Find weeks in the middle of alternating stretches
+        for i in range(1, len(sorted_weeks) - 1):
+            prev_gap = (sorted_weeks[i] - sorted_weeks[i - 1]).days
+            next_gap = (sorted_weeks[i + 1] - sorted_weeks[i]).days
+
+            ***REMOVED*** This week is in an alternating stretch
+            if 7 < prev_gap <= 21 and 7 < next_gap <= 21:
+                candidates = self.find_swap_candidates(faculty, sorted_weeks[i])
+                valid_candidates = [c for c in candidates if c.back_to_back_ok]
+                if valid_candidates:
+                    suggestions.append((sorted_weeks[i], valid_candidates))
+
+        return suggestions
 
 
 def analyze_schedule_conflicts(
