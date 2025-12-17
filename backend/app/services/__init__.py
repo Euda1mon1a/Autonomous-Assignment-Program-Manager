@@ -18,6 +18,7 @@ from app.services.leave_providers import (
     CSVLeaveProvider,
     LeaveProviderFactory,
 )
+from app.services.conflict_auto_detector import ConflictAutoDetector, ConflictInfo
 
 __all__ = [
     "AssignmentService",
@@ -37,4 +38,7 @@ __all__ = [
     "DatabaseLeaveProvider",
     "CSVLeaveProvider",
     "LeaveProviderFactory",
+    # Conflict detection
+    "ConflictAutoDetector",
+    "ConflictInfo",
 ]
