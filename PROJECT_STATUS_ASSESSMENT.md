@@ -1376,5 +1376,222 @@ Focus on **deeper Framer Motion usage** since it's already installed. Avoid addi
 
 ---
 
+***REMOVED******REMOVED*** Human Factors & UX Considerations (The Last 0.01%)
+
+> **Priority:** Critical for adoption
+> **Status:** Documented for consideration
+> **Context:** Technical implementation is 99.99% complete. Real-world deployment requires anticipating messy human behaviors, edge cases, and UX friction.
+
+***REMOVED******REMOVED******REMOVED*** GUI vs CLI Capability Matrix by Role
+
+Current state of feature access across interfaces:
+
+| Capability | GUI | CLI | Gap Analysis |
+|------------|:---:|:---:|--------------|
+| **Schedule Viewing** | ✓ All roles | ✗ | CLI has no schedule viewing commands |
+| **XLSX Export** | ✓ All roles (unprotected) | ✗ | Export API lacks role-based access control |
+| **XLSX Import** | ✓ All roles | ✗ | No CLI import capability |
+| **Swap Requests** | ✓ Faculty/Resident | ✗ | CLI focused on admin analysis |
+| **Conflict Scanning** | ✓ Admin/Coord | ✓ | Parity achieved |
+| **Alert Management** | ✓ Admin | ✓ | Parity achieved |
+| **Feature Requests** | ✗ | ✗ | External (GitHub Issues only) |
+| **User Feedback** | ✗ | ✗ | No in-app feedback mechanism |
+| **Settings** | ✓ Admin only | ✗ | No CLI settings management |
+
+**Identified Gaps:**
+1. Export endpoints (`/api/export/*`) have **no role-based access control** - security concern
+2. CLI is admin-only; no self-service commands for faculty/residents
+3. No in-app feedback or feature request submission
+
+---
+
+***REMOVED******REMOVED******REMOVED*** Onboarding & Training Friction Points
+
+| User Type | Expected Friction | Mitigation Needed |
+|-----------|-------------------|-------------------|
+| **Program Coordinator** | Learning 4 scheduling algorithms, constraint weights | Guided wizard, sensible defaults, "explain this" tooltips |
+| **Chief Resident** | Understanding swap approval workflow | In-app tutorial, status tracking |
+| **Faculty** | Preference submission timing, blocked week rules | Calendar integration prompts, deadline reminders |
+| **PGY-1 Resident** | First exposure to scheduling system | Mobile-friendly "My Schedule" view, push notifications |
+| **Clinic Staff (RN/LPN)** | Limited view feels restrictive | Clear explanation of role-based access, "today only" rationale |
+
+**Missing:**
+- [ ] First-time user walkthrough / onboarding flow
+- [ ] Contextual help tooltips throughout UI
+- [ ] "Why can't I see X?" explanations for role-restricted content
+- [ ] Video tutorials or documentation links in Help page
+
+---
+
+***REMOVED******REMOVED******REMOVED*** Anticipated Human Behavior Edge Cases
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 1. Last-Minute Swap Chaos
+**Scenario:** Faculty member requests swap 24 hours before FMIT week.
+**Current:** System allows request, manual approval required.
+**Risk:** Cascade of coverage gaps if approved without analysis.
+**Mitigation needed:**
+- [ ] Warning banner for swaps within 7-day window
+- [ ] Auto-run conflict detection before swap approval
+- [ ] "Emergency swap" workflow with expedited approval
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 2. Preference Gaming
+**Scenario:** Faculty blocks all undesirable weeks, creating unfair burden distribution.
+**Current:** No limit on blocked weeks per faculty.
+**Risk:** Gini coefficient spikes, martyr pattern emerges.
+**Mitigation needed:**
+- [ ] Maximum blocked weeks per academic year (configurable)
+- [ ] Fairness dashboard visible to all faculty
+- [ ] "You've blocked X weeks, average is Y" feedback
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 3. The Phantom Edit
+**Scenario:** Coordinator makes schedule change, forgets to notify affected parties.
+**Current:** Audit log captures change, but no auto-notification.
+**Risk:** Faculty shows up to wrong assignment.
+**Mitigation needed:**
+- [ ] Auto-notify on any assignment change affecting user
+- [ ] "Confirm you've seen this change" acknowledgment
+- [ ] Daily digest email option for schedule changes
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 4. Mobile-First Reality
+**Scenario:** Residents check schedule exclusively on phone between patients.
+**Current:** Responsive design exists but not optimized for quick glances.
+**Risk:** Poor mobile UX → users stop checking → surprises.
+**Mitigation needed:**
+- [ ] "Today" view as default on mobile (not full calendar)
+- [ ] Push notifications for upcoming assignments
+- [ ] One-tap swap request from mobile
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 5. The "I Didn't Know" Defense
+**Scenario:** Faculty claims they never saw schedule/swap request.
+**Current:** Audit log proves delivery, but no read receipts.
+**Risk:** Disputes over accountability.
+**Mitigation needed:**
+- [ ] Read receipt tracking for critical notifications
+- [ ] "Acknowledged" button for schedule assignments
+- [ ] Escalation workflow if no acknowledgment within X days
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 6. Bulk Error Recovery
+**Scenario:** Coordinator imports wrong XLSX, corrupts schedule.
+**Current:** Audit trail exists, but no easy "undo import" button.
+**Risk:** Manual rollback is tedious and error-prone.
+**Mitigation needed:**
+- [ ] Import preview with "dry run" mode (exists in BulkImportModal)
+- [ ] One-click rollback to previous schedule version
+- [ ] Import sandbox for testing before commit
+
+---
+
+***REMOVED******REMOVED******REMOVED*** Communication & Notification Preferences
+
+| Channel | Status | User Control Needed |
+|---------|--------|---------------------|
+| Email | ✅ Implemented (EmailService) | Frequency preferences (immediate/daily digest/none) |
+| In-App | ✅ Toast notifications | Persistence preferences (dismiss vs require action) |
+| SMS | ❌ Not implemented | Opt-in for critical alerts only |
+| Slack | ✅ Via n8n workflows | Channel preferences, DM vs channel |
+| Calendar (ICS) | ✅ Export available | Auto-sync frequency, which calendars |
+| Push (Mobile) | ❌ Not implemented | PWA or native app requirement |
+
+**Missing User Preferences:**
+- [ ] Notification settings page in UI
+- [ ] Per-notification-type preferences (swaps vs schedule changes vs alerts)
+- [ ] Quiet hours / Do Not Disturb settings
+- [ ] Delegation during absence (forward my notifications to X)
+
+---
+
+***REMOVED******REMOVED******REMOVED*** Accessibility Considerations
+
+| Requirement | Status | Notes |
+|-------------|--------|-------|
+| Keyboard navigation | ⚠️ Partial | Most components accessible, modals need focus trap |
+| Screen reader support | ⚠️ Partial | ARIA labels on main components, needs audit |
+| Color contrast | ✅ Good | Tailwind defaults meet WCAG AA |
+| Color-blind modes | ❌ Missing | Heatmaps rely heavily on color |
+| Font scaling | ✅ Good | Relative units used |
+| Reduced motion | ⚠️ Partial | Framer Motion respects `prefers-reduced-motion`, needs verification |
+
+**Priority fixes:**
+- [ ] Color-blind friendly palette option for heatmaps
+- [ ] Full keyboard navigation audit
+- [ ] Screen reader testing with NVDA/VoiceOver
+
+---
+
+***REMOVED******REMOVED******REMOVED*** Data Entry Error Prevention
+
+| Input Type | Current Validation | Human Error Risk | Enhancement |
+|------------|-------------------|------------------|-------------|
+| Date ranges | ✅ End > Start | Medium | Calendar picker with visual range |
+| Person names | ⚠️ Freeform in some imports | High (typos) | Autocomplete from known people |
+| PGY levels | ✅ Enum validation | Low | - |
+| Email addresses | ✅ Format validation | Medium | Domain allowlist for organization |
+| Block numbers | ⚠️ Manual entry | High | Auto-calculate from dates |
+| Holiday dates | ⚠️ Manual YYYY-MM-DD | High | Federal holiday API integration |
+
+---
+
+***REMOVED******REMOVED******REMOVED*** Trust & Adoption Factors
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Why Users Might Resist
+
+| Concern | Reality | Communication Needed |
+|---------|---------|---------------------|
+| "Algorithm is unfair" | Gini coefficient tracked, fairness visible | Dashboard showing fairness metrics prominently |
+| "System makes mistakes" | Human review still required | Clear "pending approval" states, nothing auto-executes |
+| "I lose control" | Preferences honored, swaps available | Emphasize preference submission, swap marketplace |
+| "Too complicated" | Role-based views simplify | Tailored onboarding per role |
+| "What if it breaks?" | 3-tier resilience, manual fallback | Visible system health status, "we're monitoring" assurance |
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Building Trust
+
+- [ ] Fairness dashboard visible to all users (not just admins)
+- [ ] "How was I scheduled?" explanation per assignment (explain_json exposed)
+- [ ] Public changelog of algorithm/constraint changes
+- [ ] Comparison view: "Your schedule vs peer average"
+- [ ] Opt-in beta for new features before forced rollout
+
+---
+
+***REMOVED******REMOVED******REMOVED*** Outstanding UX Debt
+
+| Item | Severity | Effort | Impact |
+|------|----------|--------|--------|
+| Role-based export access control | 🔴 High | 2h | Security |
+| In-app feedback/feature request | 🟡 Medium | 4h | User voice |
+| Onboarding wizard | 🟡 Medium | 8h | Adoption |
+| Notification preferences UI | 🟡 Medium | 4h | User control |
+| Mobile "Today" view optimization | 🟡 Medium | 3h | Daily usage |
+| Read receipts for notifications | 🟢 Low | 4h | Accountability |
+| Color-blind heatmap mode | 🟢 Low | 2h | Accessibility |
+| Import rollback button | 🟢 Low | 3h | Error recovery |
+
+---
+
+***REMOVED******REMOVED******REMOVED*** Recommended Pre-Launch Checklist
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Technical (Already Complete ✅)
+- [x] All API routes tested
+- [x] ACGME compliance validation
+- [x] Audit logging
+- [x] Role-based access control
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Human Factors (Needs Attention ⚠️)
+- [ ] Security: Add role checks to `/api/export/*` endpoints
+- [ ] Onboarding: Create first-time user flow
+- [ ] Communication: Build notification preferences page
+- [ ] Mobile: Optimize "My Schedule" for phone glances
+- [ ] Trust: Expose fairness metrics to non-admin users
+- [ ] Feedback: Add in-app feedback mechanism (or GitHub Issues link)
+- [ ] Documentation: Role-specific quick-start guides
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Go-Live Support
+- [ ] Designated "scheduler champion" per department
+- [ ] Office hours for first 2 weeks post-launch
+- [ ] Escalation path for urgent issues
+- [ ] Rollback plan if adoption fails
+
+---
+
 *Assessment generated by Claude Opus 4.5*
-*Last updated: 2025-12-17 (Fourth Parallel Implementation Complete - 40 features total, 800+ new tests)*
+*Last updated: 2025-12-17 (Human Factors & UX Considerations Added)*
