@@ -1907,6 +1907,97 @@ GET    /api/people/{id}/continuity-schedule    # Get person's continuity clinics
 
 ---
 
+## Future Enhancement: Template Management GUI Improvements
+
+> **Priority:** Medium (UX improvement)
+> **Status:** Partially Complete — Core exists, drag broken
+> **Effort:** 4-6 hours
+
+### Current Template Management Features
+
+**Location:** `frontend/src/features/templates/` (11 component files)
+
+| Feature | Status | Component |
+|---------|--------|-----------|
+| Template CRUD | ✅ Complete | `TemplateEditor.tsx` |
+| Pattern editor | ✅ Complete | `PatternEditor.tsx` |
+| **Duplicate template** | ✅ Works | `TemplateShareModal.tsx` (duplicate mode) |
+| Preview calendar | ✅ Complete | `TemplatePreview.tsx` |
+| Search/filter | ✅ Complete | `TemplateSearch.tsx` |
+| Grid/list views | ✅ Complete | `TemplateList.tsx`, `TemplateCard.tsx` |
+| Share/visibility | ✅ Complete | `TemplateShareModal.tsx` |
+| Categories | ✅ Complete | `TemplateCategories.tsx` |
+
+### Broken: Drag-and-Drop
+
+| Item | Current State | Issue |
+|------|---------------|-------|
+| Grip icon | ✅ Displays | `GripVertical` from lucide-react |
+| Drag handlers | ❌ Missing | No drag event handlers |
+| Drag library | ❌ Not installed | Need `@dnd-kit/core` or `react-beautiful-dnd` |
+| `reorderPatterns()` | ✅ Exists | Function in `hooks.ts:594-601` but never called |
+
+**Result:** Users see grip handles but cannot drag to reorder patterns.
+
+### Implementation: Add Functional Drag-and-Drop
+
+#### Option 1: dnd-kit (Recommended)
+```bash
+npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
+```
+
+```tsx
+// PatternEditor.tsx enhancement
+import { DndContext, closestCenter } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+
+function SortablePatternItem({ pattern, ...props }) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: pattern.id });
+  // ... render with drag handlers
+}
+
+function PatternEditor({ patterns, onReorder }) {
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      const oldIndex = patterns.findIndex(p => p.id === active.id);
+      const newIndex = patterns.findIndex(p => p.id === over.id);
+      onReorder(oldIndex, newIndex);  // Calls existing reorderPatterns()
+    }
+  };
+
+  return (
+    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={patterns.map(p => p.id)} strategy={verticalListSortingStrategy}>
+        {patterns.map(pattern => <SortablePatternItem key={pattern.id} pattern={pattern} />)}
+      </SortableContext>
+    </DndContext>
+  );
+}
+```
+
+### Missing Features to Add
+
+| Feature | Priority | Effort | Notes |
+|---------|----------|--------|-------|
+| **Functional drag-and-drop** | 🔴 High | 2h | Wire up dnd-kit to existing reorder function |
+| Bulk select/delete | 🟡 Medium | 2h | Multi-select checkboxes on template cards |
+| Template version history | 🟢 Low | 4h | Version field exists, need history table |
+| Usage analytics | 🟢 Low | 3h | Dashboard for `usageCount` data |
+| Drag templates to calendar | 🟢 Low | 6h | Drop template on date to apply |
+
+### Implementation Checklist
+
+- [ ] Install `@dnd-kit/core`, `@dnd-kit/sortable`
+- [ ] Wrap pattern list in `DndContext` and `SortableContext`
+- [ ] Add `useSortable` hook to pattern items
+- [ ] Wire `handleDragEnd` to existing `reorderPatterns()` function
+- [ ] Add visual feedback during drag (opacity, shadow)
+- [ ] Test keyboard accessibility for drag operations
+- [ ] Optional: Add template-to-calendar drag-and-drop
+
+---
+
 ## Future Integration: MyEvaluations API
 
 > **Priority:** Medium (nice-to-have integration)
