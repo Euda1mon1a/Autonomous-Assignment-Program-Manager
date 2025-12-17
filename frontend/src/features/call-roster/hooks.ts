@@ -53,6 +53,7 @@ function buildAssignmentsQueryString(filters: {
   end_date?: string;
   person_id?: string;
   role?: string;
+  activity_type?: string;
 }): string {
   const params = new URLSearchParams();
 
@@ -67,6 +68,9 @@ function buildAssignmentsQueryString(filters: {
   }
   if (filters.role) {
     params.set('role', filters.role);
+  }
+  if (filters.activity_type) {
+    params.set('activity_type', filters.activity_type);
   }
 
   return params.toString();
@@ -127,6 +131,7 @@ export function useOnCallAssignments(
   const queryString = buildAssignmentsQueryString({
     start_date: startDate,
     end_date: endDate,
+    activity_type: 'on_call', // Use server-side filtering for better performance
   });
 
   return useQuery<CallAssignment[], ApiError>({
@@ -175,6 +180,7 @@ export function useTodayOnCall(
       const queryString = buildAssignmentsQueryString({
         start_date: today,
         end_date: today,
+        activity_type: 'on_call', // Use server-side filtering for better performance
       });
       const response = await get<AssignmentsResponse>(
         `/assignments${queryString ? `?${queryString}` : ''}`
@@ -201,6 +207,7 @@ export function usePersonOnCallAssignments(
     start_date: startDate,
     end_date: endDate,
     person_id: personId,
+    activity_type: 'on_call', // Use server-side filtering for better performance
   });
 
   return useQuery<CallAssignment[], ApiError>({

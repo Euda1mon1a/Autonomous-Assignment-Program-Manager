@@ -472,3 +472,150 @@ class TestOptimisticLocking:
         )
         assert response.status_code == 409
         assert "modified by another user" in response.json()["detail"]
+
+
+class TestAssignmentFiltering:
+    """Test assignment filtering functionality."""
+
+    def test_filter_by_activity_type(self, client, sample_data, admin_token, db):
+        """Test filtering assignments by activity_type."""
+        # Create rotation templates with different activity types
+        on_call_template = RotationTemplate(
+            id=uuid4(),
+            name="On Call",
+            activity_type="on_call",
+            abbreviation="OC",
+            supervision_required=True,
+        )
+        clinic_template = RotationTemplate(
+            id=uuid4(),
+            name="Clinic",
+            activity_type="clinic",
+            abbreviation="CL",
+            supervision_required=True,
+        )
+        inpatient_template = RotationTemplate(
+            id=uuid4(),
+            name="Inpatient",
+            activity_type="inpatient",
+            abbreviation="IP",
+            supervision_required=True,
+        )
+        db.add_all([on_call_template, clinic_template, inpatient_template])
+        db.commit()
+
+        # Create assignments with different activity types
+        blocks = sample_data["blocks"][:6]
+        resident_id = str(sample_data["resident"].id)
+
+        # Create 2 on_call, 2 clinic, 2 inpatient assignments
+        templates = [on_call_template, on_call_template, clinic_template,
+                    clinic_template, inpatient_template, inpatient_template]
+
+        for block, template in zip(blocks, templates):
+            client.post(
+                "/api/assignments",
+                headers={"Authorization": f"Bearer {admin_token}"},
+                json={
+                    "block_id": str(block.id),
+                    "person_id": resident_id,
+                    "rotation_template_id": str(template.id),
+                    "role": "primary",
+                },
+            )
+
+        # Test filtering by on_call
+        response = client.get(
+            "/api/assignments",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            params={"activity_type": "on_call"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["items"]) == 2
+        for item in data["items"]:
+            assert item["rotation_template"]["activity_type"] == "on_call"
+
+        # Test filtering by clinic
+        response = client.get(
+            "/api/assignments",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            params={"activity_type": "clinic"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["items"]) == 2
+        for item in data["items"]:
+            assert item["rotation_template"]["activity_type"] == "clinic"
+
+        # Test filtering by inpatient
+        response = client.get(
+            "/api/assignments",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            params={"activity_type": "inpatient"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["items"]) == 2
+        for item in data["items"]:
+            assert item["rotation_template"]["activity_type"] == "inpatient"
+
+        # Test with no filter - should return all assignments
+        response = client.get(
+            "/api/assignments",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        # Should have at least 6 assignments (could have more from sample_data)
+        assert len(data["items"]) >= 6
+
+    def test_filter_by_activity_type_with_date_range(self, client, sample_data, admin_token, db):
+        """Test combining activity_type filter with date range."""
+        # Create an on_call template
+        on_call_template = RotationTemplate(
+            id=uuid4(),
+            name="On Call",
+            activity_type="on_call",
+            abbreviation="OC",
+            supervision_required=True,
+        )
+        db.add(on_call_template)
+        db.commit()
+
+        # Create assignments spanning multiple dates
+        today = date.today()
+        blocks = sample_data["blocks"][:4]
+        resident_id = str(sample_data["resident"].id)
+
+        for block in blocks:
+            client.post(
+                "/api/assignments",
+                headers={"Authorization": f"Bearer {admin_token}"},
+                json={
+                    "block_id": str(block.id),
+                    "person_id": resident_id,
+                    "rotation_template_id": str(on_call_template.id),
+                    "role": "primary",
+                },
+            )
+
+        # Test filtering by activity_type and date range
+        start_date = today.isoformat()
+        end_date = (today + timedelta(days=2)).isoformat()
+
+        response = client.get(
+            "/api/assignments",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            params={
+                "activity_type": "on_call",
+                "start_date": start_date,
+                "end_date": end_date,
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        # Should return assignments within the date range that are on_call
+        assert len(data["items"]) >= 1
+        for item in data["items"]:
+            assert item["rotation_template"]["activity_type"] == "on_call"
