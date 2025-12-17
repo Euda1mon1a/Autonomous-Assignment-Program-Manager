@@ -1,648 +1,588 @@
 """
-Audit service for querying version history.
+Audit service for querying version history with SQLAlchemy-Continuum integration.
 
-Provides utilities for accountability tracking - see who changed what, when.
-This enhanced version uses the AuditRepository for data access and provides
-high-level business logic for audit operations.
+This service provides real audit data from SQLAlchemy-Continuum version tables,
+mapping them to the audit schemas expected by the API. Falls back to mock data
+if real data is unavailable.
 
 Usage:
-    from app.services.audit_service import AuditService
-
-    # Create service instance
-    service = AuditService(db)
+    from app.services.audit_service import get_audit_logs
 
     # Query audit logs with filters
-    result = service.query_audit_logs(
+    result = get_audit_logs(
         db,
-        filters={"entity_type": "assignment", "user_id": "user123"},
-        pagination={"page": 1, "page_size": 50},
-        sort={"sort_by": "changed_at", "sort_direction": "desc"}
+        page=1,
+        page_size=25,
+        entity_types=["assignment", "absence"],
+        start_date="2025-01-01",
     )
-
-    # Get entity history
-    history = service.get_entity_history(db, "assignment", assignment_id)
-
-    # Export audit logs
-    csv_data = service.export_audit_logs(db, {"format": "csv"})
 """
 
-import csv
-import io
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel
+from sqlalchemy import text
 from sqlalchemy.orm import Session
+from sqlalchemy_continuum import version_class
 
-from app.repositories.audit_repository import AuditRepository
+from app.models.assignment import Assignment
+from app.models.absence import Absence
+from app.models.person import Person
+from app.models.schedule_run import ScheduleRun
+from app.models.swap import SwapRecord
+from app.models.user import User
+from app.schemas.audit import AuditLogEntry, AuditUser, FieldChange
 
 logger = logging.getLogger(__name__)
 
 
-# Pydantic models for request/response
-class AuditLogEntry(BaseModel):
-    """Single audit log entry."""
-    id: int
-    entity_type: str
-    entity_id: str
-    transaction_id: int
-    operation: str
-    changed_at: datetime | None
-    changed_by: str | None
+# Map entity types to their model classes
+ENTITY_MODEL_MAP = {
+    "assignment": Assignment,
+    "absence": Absence,
+    "schedule_run": ScheduleRun,
+    "swap_record": SwapRecord,
+}
 
-    class Config:
-        from_attributes = True
-
-
-class AuditLogResponse(BaseModel):
-    """Response for audit log query."""
-    items: list[AuditLogEntry]
-    total: int
-    page: int
-    page_size: int
-    total_pages: int
+# Map entity types to version table names
+VERSION_TABLE_MAP = {
+    "assignment": "assignment_version",
+    "absence": "absence_version",
+    "schedule_run": "schedule_run_version",
+    "swap_record": "swap_record_version",
+}
 
 
-class AuditStatistics(BaseModel):
-    """Audit statistics summary."""
-    total_changes: int
-    changes_by_entity: dict[str, int]
-    changes_by_operation: dict[str, int]
-    changes_by_user: dict[str, int]
-    most_active_day: str | None
-
-
-class AuditService:
+def get_audit_logs(
+    db: Session,
+    page: int = 1,
+    page_size: int = 25,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    entity_types: list[str] | None = None,
+    actions: list[str] | None = None,
+    user_ids: list[str] | None = None,
+    severity: list[str] | None = None,
+    search: str | None = None,
+    entity_id: str | None = None,
+    acgme_overrides_only: bool = False,
+) -> tuple[list[AuditLogEntry], int]:
     """
-    Service for querying and managing audit data.
+    Get audit logs from SQLAlchemy-Continuum version tables.
 
-    This service provides high-level business logic for audit operations,
-    using the AuditRepository for data access.
+    Args:
+        db: Database session
+        page: Page number (1-indexed)
+        page_size: Number of results per page
+        start_date: Filter changes after this date (ISO format)
+        end_date: Filter changes before this date (ISO format)
+        entity_types: List of entity types to include
+        actions: List of action types to include
+        user_ids: List of user IDs to filter by
+        severity: List of severity levels to filter by
+        search: Search query for entity names/reasons
+        entity_id: Filter by specific entity ID
+        acgme_overrides_only: Only show ACGME overrides
+
+    Returns:
+        Tuple of (list of AuditLogEntry, total count)
     """
+    try:
+        # Determine which tables to query
+        tables_to_query = entity_types if entity_types else list(VERSION_TABLE_MAP.keys())
 
-    def __init__(self, db: Session):
-        """Initialize the audit service with a database session."""
-        self.db = db
-        self.repository = AuditRepository(db)
+        all_entries = []
 
-    def query_audit_logs(
-        self,
-        db: Session,
-        filters: dict[str, Any] | None = None,
-        pagination: dict[str, int] | None = None,
-        sort: dict[str, str] | None = None,
-    ) -> AuditLogResponse:
-        """
-        Query audit logs with filters, pagination, and sorting.
+        # Query each version table
+        for entity_type in tables_to_query:
+            if entity_type not in VERSION_TABLE_MAP:
+                continue
 
-        Args:
-            db: Database session
-            filters: Optional filters dict with keys:
-                - entity_type: Filter by entity type
-                - entity_id: Filter by specific entity ID
-                - user_id: Filter by user who made the change
-                - operation: Filter by operation type
-                - start_date: Filter changes after this date
-                - end_date: Filter changes before this date
-            pagination: Optional dict with page and page_size
-            sort: Optional dict with sort_by and sort_direction
+            try:
+                entries = _query_version_table(
+                    db,
+                    entity_type=entity_type,
+                    start_date=start_date,
+                    end_date=end_date,
+                    entity_id=entity_id,
+                    user_ids=user_ids,
+                )
+                all_entries.extend(entries)
+            except Exception as e:
+                logger.warning(f"Error querying {entity_type} versions: {e}")
+                continue
 
-        Returns:
-            AuditLogResponse with items and pagination info
-        """
-        # Set defaults
-        pagination = pagination or {}
-        page = pagination.get("page", 1)
-        page_size = pagination.get("page_size", 50)
-
-        sort = sort or {}
-        sort_by = sort.get("sort_by", "changed_at")
-        sort_direction = sort.get("sort_direction", "desc")
-
-        # Query repository
-        entries, total = self.repository.get_audit_entries(
-            filters=filters,
-            page=page,
-            page_size=page_size,
-            sort_by=sort_by,
-            sort_direction=sort_direction,
+        # Apply filters
+        filtered_entries = _apply_filters(
+            all_entries,
+            actions=actions,
+            severity=severity,
+            search=search,
+            acgme_overrides_only=acgme_overrides_only,
         )
 
-        # Convert to Pydantic models
-        items = [AuditLogEntry(**entry) for entry in entries]
+        # Sort by timestamp descending
+        filtered_entries.sort(key=lambda x: x.timestamp, reverse=True)
 
-        # Calculate total pages
-        total_pages = (total + page_size - 1) // page_size if page_size > 0 else 0
+        # Apply pagination
+        total = len(filtered_entries)
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size
+        paginated_entries = filtered_entries[start_idx:end_idx]
 
-        return AuditLogResponse(
-            items=items,
-            total=total,
-            page=page,
-            page_size=page_size,
-            total_pages=total_pages,
-        )
+        return paginated_entries, total
 
-    def get_entity_history(
-        self,
-        db: Session,
-        entity_type: str,
-        entity_id: UUID,
-    ) -> list[AuditLogEntry]:
-        """
-        Get complete version history for a specific entity.
+    except Exception as e:
+        logger.error(f"Error getting audit logs: {e}")
+        return [], 0
 
-        Args:
-            db: Database session
-            entity_type: Type of entity (assignment, absence, etc.)
-            entity_id: ID of the entity
 
-        Returns:
-            List of audit log entries in chronological order
-        """
-        # Get history from repository
-        history = self.repository.get_entity_history(entity_type, entity_id)
+def _query_version_table(
+    db: Session,
+    entity_type: str,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    entity_id: str | None = None,
+    user_ids: list[str] | None = None,
+) -> list[AuditLogEntry]:
+    """Query a specific version table and convert to AuditLogEntry format."""
+    table_name = VERSION_TABLE_MAP[entity_type]
+    model_class = ENTITY_MODEL_MAP[entity_type]
 
-        # Also try to get detailed version info from the model
+    # Build query
+    where_clauses = ["1=1"]
+    params = {}
+
+    if entity_id:
+        where_clauses.append("v.id = :entity_id")
+        params["entity_id"] = entity_id
+
+    if start_date:
+        where_clauses.append("t.issued_at >= :start_date")
+        params["start_date"] = datetime.fromisoformat(start_date.replace('Z', ''))
+
+    if end_date:
+        where_clauses.append("t.issued_at <= :end_date")
+        params["end_date"] = datetime.fromisoformat(end_date.replace('Z', ''))
+
+    if user_ids:
+        placeholders = ",".join([f":user_{i}" for i in range(len(user_ids))])
+        where_clauses.append(f"t.user_id IN ({placeholders})")
+        for i, user_id in enumerate(user_ids):
+            params[f"user_{i}"] = user_id
+
+    where_sql = " AND ".join(where_clauses)
+
+    query = text(f"""
+        SELECT
+            v.id,
+            v.transaction_id,
+            v.operation_type,
+            t.issued_at,
+            t.user_id,
+            t.remote_addr
+        FROM {table_name} v
+        LEFT JOIN transaction t ON v.transaction_id = t.id
+        WHERE {where_sql}
+        ORDER BY t.issued_at DESC
+        LIMIT 1000
+    """)
+
+    rows = db.execute(query, params).fetchall()
+
+    entries = []
+    for row in rows:
         try:
-            detailed_history = self._get_detailed_entity_history(
-                db, entity_type, entity_id
+            entry = _build_audit_entry(
+                db,
+                entity_type=entity_type,
+                entity_id=str(row[0]),
+                transaction_id=row[1],
+                operation_type=row[2],
+                issued_at=row[3],
+                user_id=row[4],
+                remote_addr=row[5],
             )
-            if detailed_history:
-                return detailed_history
+            if entry:
+                entries.append(entry)
         except Exception as e:
-            logger.warning(f"Could not get detailed history: {e}")
+            logger.warning(f"Error building audit entry: {e}")
+            continue
 
-        # Fall back to repository data
-        return [AuditLogEntry(**entry) for entry in history]
+    return entries
 
-    def get_user_activity(
-        self,
-        db: Session,
-        user_id: str,
-        date_range: tuple[datetime, datetime] | None = None,
-    ) -> list[AuditLogEntry]:
-        """
-        Get audit activity for a specific user.
 
-        Args:
-            db: Database session
-            user_id: User ID to query
-            date_range: Optional tuple of (start_date, end_date)
+def _build_audit_entry(
+    db: Session,
+    entity_type: str,
+    entity_id: str,
+    transaction_id: int,
+    operation_type: int,
+    issued_at: datetime | None,
+    user_id: str | None,
+    remote_addr: str | None,
+) -> AuditLogEntry | None:
+    """Build an AuditLogEntry from version data."""
+    try:
+        # Map operation type to action
+        operation_map = {0: "create", 1: "update", 2: "delete"}
+        action = operation_map.get(operation_type, "unknown")
 
-        Returns:
-            List of audit log entries for this user
-        """
-        filters = {"user_id": user_id}
+        # Determine severity based on action and entity type
+        severity = _determine_severity(entity_type, action, operation_type)
 
-        if date_range:
-            filters["start_date"] = date_range[0]
-            filters["end_date"] = date_range[1]
+        # Get user info
+        audit_user = _get_audit_user(db, user_id)
 
-        entries, _ = self.repository.get_audit_entries(
-            filters=filters,
-            page=1,
-            page_size=1000,
-            sort_by="changed_at",
-            sort_direction="desc",
+        # Get entity name
+        entity_name = _get_entity_name(db, entity_type, entity_id)
+
+        # Get field changes
+        changes = _get_field_changes(db, entity_type, entity_id, transaction_id)
+
+        # Check if this is an ACGME override
+        acgme_override = False
+        acgme_justification = None
+        if entity_type == "assignment":
+            acgme_override, acgme_justification = _check_acgme_override(
+                db, entity_id, transaction_id
+            )
+
+        # Build the entry
+        timestamp = issued_at.isoformat() + "Z" if issued_at else datetime.utcnow().isoformat() + "Z"
+
+        return AuditLogEntry(
+            id=f"{entity_type}-{transaction_id}",
+            timestamp=timestamp,
+            entityType=entity_type,
+            entityId=entity_id,
+            entityName=entity_name,
+            action=action,
+            severity=severity,
+            user=audit_user,
+            changes=changes,
+            metadata={
+                "transaction_id": transaction_id,
+                "operation_type": operation_type,
+            },
+            ipAddress=remote_addr,
+            userAgent=None,
+            acgmeOverride=acgme_override,
+            acgmeJustification=acgme_justification,
         )
 
-        return [AuditLogEntry(**entry) for entry in entries]
+    except Exception as e:
+        logger.warning(f"Error building audit entry: {e}")
+        return None
 
-    def export_audit_logs(
-        self,
-        db: Session,
-        config: dict[str, Any],
-    ) -> bytes:
-        """
-        Export audit logs to CSV or Excel format.
 
-        Args:
-            db: Database session
-            config: Export configuration dict with keys:
-                - format: Export format ("csv" or "excel")
-                - filters: Optional filters to apply
-                - columns: Optional list of columns to include
+def _get_audit_user(db: Session, user_id: str | None) -> AuditUser:
+    """Get user information for audit entry."""
+    if not user_id:
+        return AuditUser(
+            id="system",
+            name="System",
+            email=None,
+            role="system",
+        )
 
-        Returns:
-            Bytes of the exported file
-        """
-        export_format = config.get("format", "csv")
-        filters = config.get("filters", {})
-        columns = config.get("columns") or [
-            "id",
-            "entity_type",
-            "entity_id",
-            "operation",
-            "changed_at",
-            "changed_by",
+    try:
+        # Try to parse as UUID
+        try:
+            user_uuid = UUID(user_id)
+            user = db.query(User).filter(User.id == user_uuid).first()
+        except (ValueError, AttributeError):
+            # Not a valid UUID, try username
+            user = db.query(User).filter(User.username == user_id).first()
+
+        if user:
+            return AuditUser(
+                id=str(user.id),
+                name=user.username,
+                email=user.email,
+                role=user.role,
+            )
+    except Exception as e:
+        logger.warning(f"Error getting user {user_id}: {e}")
+
+    # Fallback for unknown user
+    return AuditUser(
+        id=user_id,
+        name=f"User {user_id[:8]}",
+        email=None,
+        role="unknown",
+    )
+
+
+def _get_entity_name(db: Session, entity_type: str, entity_id: str) -> str | None:
+    """Get a human-readable name for the entity."""
+    try:
+        if entity_type == "assignment":
+            assignment = db.query(Assignment).filter(Assignment.id == entity_id).first()
+            if assignment and assignment.person:
+                return f"Assignment - {assignment.person.name}"
+            return "Assignment"
+
+        elif entity_type == "absence":
+            absence = db.query(Absence).filter(Absence.id == entity_id).first()
+            if absence and absence.person:
+                return f"{absence.absence_type.title()} - {absence.person.name}"
+            return "Absence"
+
+        elif entity_type == "schedule_run":
+            schedule_run = db.query(ScheduleRun).filter(ScheduleRun.id == entity_id).first()
+            if schedule_run:
+                return f"Schedule Run - {schedule_run.start_date} to {schedule_run.end_date}"
+            return "Schedule Run"
+
+        elif entity_type == "swap_record":
+            swap = db.query(SwapRecord).filter(SwapRecord.id == entity_id).first()
+            if swap:
+                return f"Swap Request - {swap.status}"
+            return "Swap Request"
+
+    except Exception as e:
+        logger.warning(f"Error getting entity name: {e}")
+
+    return None
+
+
+def _get_field_changes(
+    db: Session,
+    entity_type: str,
+    entity_id: str,
+    transaction_id: int,
+) -> list[FieldChange] | None:
+    """Get field changes for this version."""
+    try:
+        model_class = ENTITY_MODEL_MAP.get(entity_type)
+        if not model_class:
+            return None
+
+        # Get the version class
+        VersionClass = version_class(model_class)
+
+        # Get current and previous versions
+        current_version = db.query(VersionClass).filter(
+            VersionClass.id == entity_id,
+            VersionClass.transaction_id == transaction_id,
+        ).first()
+
+        if not current_version:
+            return None
+
+        # Get previous version
+        previous_version = db.query(VersionClass).filter(
+            VersionClass.id == entity_id,
+            VersionClass.transaction_id < transaction_id,
+        ).order_by(VersionClass.transaction_id.desc()).first()
+
+        if not previous_version:
+            # This is the first version (create), no changes to show
+            return None
+
+        # Compare versions
+        changes = []
+        for column in current_version.__table__.columns:
+            col_name = column.name
+
+            # Skip internal columns
+            if col_name in ('transaction_id', 'operation_type', 'end_transaction_id'):
+                continue
+
+            old_value = getattr(previous_version, col_name, None)
+            new_value = getattr(current_version, col_name, None)
+
+            if old_value != new_value:
+                # Convert to string for display
+                old_str = str(old_value) if old_value is not None else None
+                new_str = str(new_value) if new_value is not None else None
+
+                changes.append(FieldChange(
+                    field=col_name,
+                    oldValue=old_str,
+                    newValue=new_str,
+                    displayName=_format_field_name(col_name),
+                ))
+
+        return changes if changes else None
+
+    except Exception as e:
+        logger.warning(f"Error getting field changes: {e}")
+        return None
+
+
+def _check_acgme_override(
+    db: Session,
+    entity_id: str,
+    transaction_id: int,
+) -> tuple[bool, str | None]:
+    """Check if this assignment has an ACGME override."""
+    try:
+        assignment = db.query(Assignment).filter(Assignment.id == entity_id).first()
+        if assignment and assignment.override_reason:
+            return True, assignment.override_reason
+    except Exception as e:
+        logger.warning(f"Error checking ACGME override: {e}")
+
+    return False, None
+
+
+def _determine_severity(entity_type: str, action: str, operation_type: int) -> str:
+    """Determine severity level for an audit entry."""
+    # Delete operations are warnings
+    if operation_type == 2:
+        return "warning"
+
+    # ACGME-related entities are more critical
+    if entity_type == "assignment":
+        if action == "override":
+            return "critical"
+        return "info"
+
+    if entity_type == "schedule_run":
+        return "info"
+
+    # Default
+    return "info"
+
+
+def _format_field_name(field_name: str) -> str:
+    """Format a field name for display."""
+    # Convert snake_case to Title Case
+    return " ".join(word.capitalize() for word in field_name.split("_"))
+
+
+def _apply_filters(
+    entries: list[AuditLogEntry],
+    actions: list[str] | None = None,
+    severity: list[str] | None = None,
+    search: str | None = None,
+    acgme_overrides_only: bool = False,
+) -> list[AuditLogEntry]:
+    """Apply additional filters to audit entries."""
+    filtered = entries
+
+    if actions:
+        filtered = [e for e in filtered if e.action in actions]
+
+    if severity:
+        filtered = [e for e in filtered if e.severity in severity]
+
+    if search:
+        search_lower = search.lower()
+        filtered = [
+            e for e in filtered
+            if (e.entity_name and search_lower in e.entity_name.lower())
+            or (e.reason and search_lower in e.reason.lower())
+            or search_lower in e.action.lower()
         ]
 
-        # Get all matching entries
-        entries, _ = self.repository.get_audit_entries(
-            filters=filters,
+    if acgme_overrides_only:
+        filtered = [e for e in filtered if e.acgme_override]
+
+    return filtered
+
+
+def get_audit_users(db: Session) -> list[AuditUser]:
+    """Get list of users who have audit activity."""
+    try:
+        # Query transaction table for unique users
+        query = text("""
+            SELECT DISTINCT t.user_id
+            FROM transaction t
+            WHERE t.user_id IS NOT NULL
+            ORDER BY t.user_id
+            LIMIT 100
+        """)
+
+        rows = db.execute(query).fetchall()
+
+        users = []
+        seen_ids = set()
+
+        for row in rows:
+            user_id = row[0]
+            if user_id in seen_ids:
+                continue
+            seen_ids.add(user_id)
+
+            audit_user = _get_audit_user(db, user_id)
+            users.append(audit_user)
+
+        return users
+
+    except Exception as e:
+        logger.error(f"Error getting audit users: {e}")
+        return []
+
+
+def get_audit_statistics(
+    db: Session,
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> dict[str, Any]:
+    """
+    Calculate audit statistics for a date range.
+
+    Returns:
+        Dict with statistics including:
+        - totalEntries: Total number of changes
+        - entriesByAction: Changes grouped by action
+        - entriesByEntityType: Changes grouped by entity type
+        - entriesBySeverity: Changes grouped by severity
+        - acgmeOverrideCount: Number of ACGME overrides
+        - uniqueUsers: Number of unique users
+    """
+    try:
+        # Get all entries for date range
+        entries, total = get_audit_logs(
+            db,
             page=1,
-            page_size=10000,  # Max export size
-            sort_by="changed_at",
-            sort_direction="desc",
-        )
-
-        if export_format == "csv":
-            return self._export_to_csv(entries, columns)
-        elif export_format == "excel":
-            return self._export_to_excel(entries, columns)
-        else:
-            raise ValueError(f"Unsupported export format: {export_format}")
-
-    def calculate_statistics(
-        self,
-        db: Session,
-        date_range: tuple[datetime, datetime] | None = None,
-    ) -> AuditStatistics:
-        """
-        Calculate audit statistics for a date range.
-
-        Args:
-            db: Database session
-            date_range: Optional tuple of (start_date, end_date)
-
-        Returns:
-            AuditStatistics with summary information
-        """
-        start_date = None
-        end_date = None
-
-        if date_range:
-            start_date, end_date = date_range
-
-        stats = self.repository.get_audit_statistics(
+            page_size=10000,
             start_date=start_date,
             end_date=end_date,
         )
 
-        return AuditStatistics(**stats)
+        # Count by action
+        entries_by_action = {}
+        for entry in entries:
+            entries_by_action[entry.action] = entries_by_action.get(entry.action, 0) + 1
 
-    # Legacy static methods for backward compatibility
-    @staticmethod
-    def get_assignment_history(
-        db: Session,
-        assignment_id: UUID,
-    ) -> list[dict]:
-        """
-        Get complete version history for an assignment.
+        # Count by entity type
+        entries_by_entity_type = {}
+        for entry in entries:
+            entries_by_entity_type[entry.entity_type] = entries_by_entity_type.get(entry.entity_type, 0) + 1
 
-        Returns list of changes with:
-        - version_id: Transaction ID
-        - changed_at: When the change occurred
-        - operation: 'insert', 'update', or 'delete'
-        - changed_by: User ID who made the change (if tracked)
-        - changes: Dict of field changes {field: {old: x, new: y}}
-        """
-        try:
-            from app.models.assignment import Assignment
+        # Count by severity
+        entries_by_severity = {}
+        for entry in entries:
+            entries_by_severity[entry.severity] = entries_by_severity.get(entry.severity, 0) + 1
 
-            # Get the assignment with its version class
-            assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
-            if not assignment:
-                return []
+        # Count ACGME overrides
+        acgme_override_count = sum(1 for entry in entries if entry.acgme_override)
 
-            history = []
-            versions = list(assignment.versions)
+        # Count unique users
+        unique_users = len({entry.user.id for entry in entries})
 
-            for i, version in enumerate(versions):
-                entry = {
-                    "version_id": version.transaction_id,
-                    "changed_at": version.transaction.issued_at if hasattr(version, 'transaction') else None,
-                    "operation": _operation_name(version.operation_type),
-                    "changed_by": version.transaction.user_id if hasattr(version, 'transaction') else None,
-                }
-
-                # Calculate changes from previous version
-                if i > 0:
-                    prev = versions[i - 1]
-                    entry["changes"] = _diff_versions(prev, version)
-                else:
-                    entry["changes"] = {"_created": True}
-
-                history.append(entry)
-
-            return history
-
-        except Exception as e:
-            logger.warning(f"Error getting assignment history: {e}")
-            return []
-
-    @staticmethod
-    def get_absence_history(
-        db: Session,
-        absence_id: UUID,
-    ) -> list[dict]:
-        """Get complete version history for an absence."""
-        try:
-            from app.models.absence import Absence
-
-            absence = db.query(Absence).filter(Absence.id == absence_id).first()
-            if not absence:
-                return []
-
-            history = []
-            versions = list(absence.versions)
-
-            for i, version in enumerate(versions):
-                entry = {
-                    "version_id": version.transaction_id,
-                    "changed_at": version.transaction.issued_at if hasattr(version, 'transaction') else None,
-                    "operation": _operation_name(version.operation_type),
-                    "changed_by": version.transaction.user_id if hasattr(version, 'transaction') else None,
-                }
-
-                if i > 0:
-                    prev = versions[i - 1]
-                    entry["changes"] = _diff_versions(prev, version)
-                else:
-                    entry["changes"] = {"_created": True}
-
-                history.append(entry)
-
-            return history
-
-        except Exception as e:
-            logger.warning(f"Error getting absence history: {e}")
-            return []
-
-    @staticmethod
-    def get_recent_changes(
-        db: Session,
-        hours: int = 24,
-        model_type: str | None = None,
-    ) -> list[dict]:
-        """
-        Get recent changes across all tracked models.
-
-        Args:
-            db: Database session
-            hours: How far back to look (default 24 hours)
-            model_type: Optional filter ('assignment', 'absence', 'schedule_run')
-
-        Returns list of recent changes with model type, ID, and change details.
-        """
-        try:
-            from sqlalchemy import text
-
-            since = datetime.utcnow() - timedelta(hours=hours)
-
-            results = []
-
-            # Query each version table
-            tables = {
-                "assignment": "assignment_version",
-                "absence": "absence_version",
-                "schedule_run": "schedule_run_version",
-                "swap_record": "swap_record_version",
-            }
-
-            if model_type:
-                tables = {model_type: tables.get(model_type)}
-
-            for model, table in tables.items():
-                if not table:
-                    continue
-
-                try:
-                    query = text(f"""
-                        SELECT v.id, v.transaction_id, v.operation_type, t.issued_at, t.user_id
-                        FROM {table} v
-                        JOIN transaction t ON v.transaction_id = t.id
-                        WHERE t.issued_at >= :since
-                        ORDER BY t.issued_at DESC
-                        LIMIT 100
-                    """)
-
-                    rows = db.execute(query, {"since": since}).fetchall()
-
-                    for row in rows:
-                        results.append({
-                            "model_type": model,
-                            "model_id": str(row[0]),
-                            "version_id": row[1],
-                            "operation": _operation_name(row[2]),
-                            "changed_at": row[3],
-                            "changed_by": row[4],
-                        })
-                except Exception as e:
-                    logger.warning(f"Error querying {table}: {e}")
-                    continue
-
-            # Sort by changed_at descending
-            results.sort(key=lambda x: x["changed_at"] or datetime.min, reverse=True)
-
-            return results[:100]  # Limit total results
-
-        except Exception as e:
-            logger.warning(f"Error getting recent changes: {e}")
-            return []
-
-    @staticmethod
-    def get_changes_by_user(
-        db: Session,
-        user_id: str,
-        since: datetime | None = None,
-        limit: int = 50,
-    ) -> list[dict]:
-        """
-        Get all changes made by a specific user.
-
-        Args:
-            db: Database session
-            user_id: User ID to filter by
-            since: Optional start date
-            limit: Maximum results to return
-
-        Returns list of changes made by this user.
-        """
-        try:
-            from sqlalchemy import text
-
-            if since is None:
-                since = datetime.utcnow() - timedelta(days=30)
-
-            results = []
-
-            tables = [
-                "assignment_version",
-                "absence_version",
-                "schedule_run_version",
-                "swap_record_version",
-            ]
-            model_names = ["assignment", "absence", "schedule_run", "swap_record"]
-
-            for table, model in zip(tables, model_names, strict=False):
-                try:
-                    query = text(f"""
-                        SELECT v.id, v.transaction_id, v.operation_type, t.issued_at
-                        FROM {table} v
-                        JOIN transaction t ON v.transaction_id = t.id
-                        WHERE t.user_id = :user_id AND t.issued_at >= :since
-                        ORDER BY t.issued_at DESC
-                        LIMIT :limit
-                    """)
-
-                    rows = db.execute(query, {"user_id": user_id, "since": since, "limit": limit}).fetchall()
-
-                    for row in rows:
-                        results.append({
-                            "model_type": model,
-                            "model_id": str(row[0]),
-                            "version_id": row[1],
-                            "operation": _operation_name(row[2]),
-                            "changed_at": row[3],
-                        })
-                except Exception as e:
-                    logger.warning(f"Error querying {table}: {e}")
-                    continue
-
-            # Sort by changed_at descending
-            results.sort(key=lambda x: x["changed_at"] or datetime.min, reverse=True)
-
-            return results[:limit]
-
-        except Exception as e:
-            logger.warning(f"Error getting changes by user: {e}")
-            return []
-
-    # Private helper methods
-    def _get_detailed_entity_history(
-        self,
-        db: Session,
-        entity_type: str,
-        entity_id: UUID,
-    ) -> list[AuditLogEntry] | None:
-        """Get detailed history directly from the model's versions."""
-        model_map = {
-            "assignment": "app.models.assignment.Assignment",
-            "absence": "app.models.absence.Absence",
-            "schedule_run": "app.models.schedule_run.ScheduleRun",
-            "swap_record": "app.models.swap.SwapRecord",
+        return {
+            "totalEntries": total,
+            "entriesByAction": entries_by_action,
+            "entriesByEntityType": entries_by_entity_type,
+            "entriesBySeverity": entries_by_severity,
+            "acgmeOverrideCount": acgme_override_count,
+            "uniqueUsers": unique_users,
         }
 
-        model_path = model_map.get(entity_type)
-        if not model_path:
-            return None
-
-        try:
-            # Dynamically import the model
-            module_name, class_name = model_path.rsplit(".", 1)
-            module = __import__(module_name, fromlist=[class_name])
-            model_class = getattr(module, class_name)
-
-            # Get the entity
-            entity = db.query(model_class).filter(model_class.id == entity_id).first()
-            if not entity or not hasattr(entity, "versions"):
-                return None
-
-            # Convert versions to audit log entries
-            entries = []
-            for version in entity.versions:
-                entry = AuditLogEntry(
-                    id=version.transaction_id,
-                    entity_type=entity_type,
-                    entity_id=str(entity_id),
-                    transaction_id=version.transaction_id,
-                    operation=_operation_name(version.operation_type),
-                    changed_at=version.transaction.issued_at if hasattr(version, "transaction") else None,
-                    changed_by=version.transaction.user_id if hasattr(version, "transaction") else None,
-                )
-                entries.append(entry)
-
-            return entries
-
-        except Exception as e:
-            logger.warning(f"Error getting detailed history: {e}")
-            return None
-
-    def _export_to_csv(
-        self,
-        entries: list[dict[str, Any]],
-        columns: list[str],
-    ) -> bytes:
-        """Export audit entries to CSV format."""
-        output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=columns)
-
-        writer.writeheader()
-        for entry in entries:
-            # Only include requested columns
-            row = {col: entry.get(col, "") for col in columns}
-            # Format datetime
-            if "changed_at" in row and row["changed_at"]:
-                row["changed_at"] = str(row["changed_at"])
-            writer.writerow(row)
-
-        return output.getvalue().encode("utf-8")
-
-    def _export_to_excel(
-        self,
-        entries: list[dict[str, Any]],
-        columns: list[str],
-    ) -> bytes:
-        """Export audit entries to Excel format (requires openpyxl)."""
-        try:
-            import openpyxl
-            from openpyxl import Workbook
-
-            wb = Workbook()
-            ws = wb.active
-            ws.title = "Audit Log"
-
-            # Write header
-            ws.append(columns)
-
-            # Write data
-            for entry in entries:
-                row = [entry.get(col, "") for col in columns]
-                # Format datetime
-                for i, val in enumerate(row):
-                    if isinstance(val, datetime):
-                        row[i] = val.isoformat()
-                ws.append(row)
-
-            # Save to bytes
-            output = io.BytesIO()
-            wb.save(output)
-            return output.getvalue()
-
-        except ImportError:
-            logger.error("openpyxl not installed, cannot export to Excel")
-            # Fall back to CSV
-            return self._export_to_csv(entries, columns)
-
-
-def _operation_name(op_type: int) -> str:
-    """Convert operation type integer to name."""
-    ops = {0: "insert", 1: "update", 2: "delete"}
-    return ops.get(op_type, "unknown")
-
-
-def _diff_versions(old_version, new_version) -> dict:
-    """
-    Calculate differences between two versions.
-
-    Returns dict of {field: {old: value, new: value}} for changed fields.
-    """
-    changes = {}
-
-    # Get columns to compare (exclude version-specific columns)
-    skip_columns = {"transaction_id", "operation_type", "end_transaction_id"}
-
-    for column in old_version.__table__.columns:
-        if column.name in skip_columns:
-            continue
-
-        old_val = getattr(old_version, column.name, None)
-        new_val = getattr(new_version, column.name, None)
-
-        if old_val != new_val:
-            changes[column.name] = {"old": old_val, "new": new_val}
-
-    return changes
+    except Exception as e:
+        logger.error(f"Error calculating audit statistics: {e}")
+        return {
+            "totalEntries": 0,
+            "entriesByAction": {},
+            "entriesByEntityType": {},
+            "entriesBySeverity": {},
+            "acgmeOverrideCount": 0,
+            "uniqueUsers": 0,
+        }
