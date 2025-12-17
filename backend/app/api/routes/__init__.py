@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from app.api.routes import (
     absences,
     academic_blocks,
+    analytics,
     assignments,
     audit,
     auth,
@@ -15,6 +16,7 @@ from app.api.routes import (
     daily_manifest,
     export,
     fmit_health,
+    fmit_timeline,
     leave,
     me_dashboard,
     people,
@@ -50,6 +52,7 @@ api_router.include_router(certifications.router, prefix="/certifications", tags=
 api_router.include_router(calendar.router, prefix="/calendar", tags=["calendar"])
 api_router.include_router(calendar_export.router, prefix="/calendar", tags=["calendar"])
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
+api_router.include_router(analytics.router, tags=["analytics"])
 api_router.include_router(visualization.router, prefix="/visualization", tags=["visualization"])
 api_router.include_router(unified_heatmap.router, prefix="/unified-heatmap", tags=["unified-heatmap"])
 # FMIT scheduling routes
@@ -57,5 +60,6 @@ api_router.include_router(swap.router)  # prefix="/swaps" defined in router
 api_router.include_router(leave.router)  # prefix="/leave" defined in router
 api_router.include_router(portal.router)  # prefix="/portal" defined in router
 api_router.include_router(fmit_health.router, prefix="/fmit", tags=["fmit-health"])
+api_router.include_router(fmit_timeline.router, prefix="/fmit_timeline", tags=["fmit-timeline"])
 api_router.include_router(daily_manifest.router, prefix="/assignments", tags=["daily-manifest"])
 api_router.include_router(role_views.router, prefix="/views", tags=["role-views"])
