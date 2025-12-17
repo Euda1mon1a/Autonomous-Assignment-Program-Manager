@@ -183,46 +183,91 @@ class ClinicScheduleImporter:
     """
 
     ***REMOVED*** Common abbreviations for slot types
+    ***REMOVED*** -------------------------------------------------------------------------
+    ***REMOVED*** SLOT TYPE MAPPING
+    ***REMOVED*** Maps cell values to schedule slot types. Direct lookups are checked
+    ***REMOVED*** first, then fuzzy matching (number stripping, prefix matching).
+    ***REMOVED*** -------------------------------------------------------------------------
     SLOT_TYPE_MAPPING = {
-        ***REMOVED*** Clinic indicators
+        ***REMOVED*** --- CLINIC (Schedulable patient care) ---
         "c": SlotType.CLINIC,
+        "cc": SlotType.CLINIC,       ***REMOVED*** Continuity Clinic
+        "clc": SlotType.CLINIC,
         "clinic": SlotType.CLINIC,
+        "cv": SlotType.CLINIC,       ***REMOVED*** Virtual Clinic
         "pts": SlotType.CLINIC,
         "patient": SlotType.CLINIC,
         "appt": SlotType.CLINIC,
-        "sm": SlotType.CLINIC,  ***REMOVED*** Sports Medicine
+        "sm": SlotType.CLINIC,       ***REMOVED*** Sports Medicine
+        "asm": SlotType.CLINIC,      ***REMOVED*** Advanced Sports Medicine
         "sports": SlotType.CLINIC,
+        "pr": SlotType.CLINIC,       ***REMOVED*** Procedures
+        "vas": SlotType.CLINIC,      ***REMOVED*** Vasectomy Clinic
+        "pedc": SlotType.CLINIC,     ***REMOVED*** Peds Clinic
+        "pedsp": SlotType.CLINIC,    ***REMOVED*** Peds Specialty
+        "hv": SlotType.CLINIC,       ***REMOVED*** Home Visit
+        "hc": SlotType.CLINIC,       ***REMOVED*** Home Care
+        "c-i": SlotType.CLINIC,      ***REMOVED*** Clinic Internship
+        "rcc": SlotType.CLINIC,      ***REMOVED*** Resident Continuity Clinic
 
-        ***REMOVED*** FMIT indicators
+        ***REMOVED*** --- FMIT / INPATIENT (Blocks clinic availability) ---
         "fmit": SlotType.FMIT,
+        "nf": SlotType.FMIT,         ***REMOVED*** Night Float
+        "nicu": SlotType.FMIT,       ***REMOVED*** NICU rotation
+        "pedw": SlotType.FMIT,       ***REMOVED*** Peds Ward
+        "imw": SlotType.FMIT,        ***REMOVED*** IM Ward
         "inpt": SlotType.FMIT,
         "inpatient": SlotType.FMIT,
         "ward": SlotType.FMIT,
         "wards": SlotType.FMIT,
+        "er": SlotType.FMIT,         ***REMOVED*** ER shifts block clinic
+        "kap": SlotType.FMIT,        ***REMOVED*** Kapiolani (offsite hospital)
+        "straub": SlotType.FMIT,     ***REMOVED*** Straub (offsite hospital)
+        "oic": SlotType.FMIT,        ***REMOVED*** Officer In Charge (on-call)
 
-        ***REMOVED*** Off/unavailable
+        ***REMOVED*** --- OFF / UNAVAILABLE (Do not schedule) ---
         "off": SlotType.OFF,
+        "pc": SlotType.OFF,          ***REMOVED*** Post Call
+        "do": SlotType.OFF,          ***REMOVED*** Day Off
+        "w": SlotType.OFF,           ***REMOVED*** Weekend (context: Sat/Sun cells)
         "x": SlotType.OFF,
         "-": SlotType.OFF,
         "": SlotType.OFF,
+        "fed": SlotType.OFF,         ***REMOVED*** Federal Holiday
+        "hol": SlotType.OFF,         ***REMOVED*** Holiday
 
-        ***REMOVED*** Vacation/leave
+        ***REMOVED*** --- VACATION / LEAVE ---
         "vac": SlotType.VACATION,
         "vacation": SlotType.VACATION,
         "lv": SlotType.VACATION,
         "leave": SlotType.VACATION,
-        "al": SlotType.VACATION,  ***REMOVED*** Annual leave
+        "al": SlotType.VACATION,     ***REMOVED*** Annual Leave
+        "dep": SlotType.VACATION,    ***REMOVED*** Deployment
+        "tdy": SlotType.VACATION,    ***REMOVED*** TDY (temporary duty)
 
-        ***REMOVED*** Conference
+        ***REMOVED*** --- CONFERENCE / ACADEMIC (Protected time) ---
         "conf": SlotType.CONFERENCE,
         "conference": SlotType.CONFERENCE,
         "cme": SlotType.CONFERENCE,
         "mtg": SlotType.CONFERENCE,
+        "lec": SlotType.CONFERENCE,  ***REMOVED*** Lecture
+        "sim": SlotType.CONFERENCE,  ***REMOVED*** Simulation
+        "usafp": SlotType.CONFERENCE,
+        "hafp": SlotType.CONFERENCE,
+        "facdev": SlotType.CONFERENCE,  ***REMOVED*** Faculty Development
 
-        ***REMOVED*** Admin
+        ***REMOVED*** --- ADMIN (Administrative time) ---
         "admin": SlotType.ADMIN,
         "adm": SlotType.ADMIN,
         "office": SlotType.ADMIN,
+        "gme": SlotType.ADMIN,       ***REMOVED*** GME Time
+        "rsh": SlotType.ADMIN,       ***REMOVED*** Research
+        "pi": SlotType.ADMIN,        ***REMOVED*** Process Improvement
+        "at": SlotType.ADMIN,        ***REMOVED*** Admin Time
+        "pcat": SlotType.ADMIN,      ***REMOVED*** Patient Care Admin Team
+        "fac": SlotType.ADMIN,       ***REMOVED*** Faculty (administrative)
+        "dm": SlotType.ADMIN,        ***REMOVED*** Department Meeting
+        "dfm": SlotType.ADMIN,       ***REMOVED*** DFM administrative
     }
 
     def __init__(self, db: Session | None = None):
@@ -243,20 +288,63 @@ class ClinicScheduleImporter:
             self.known_providers[person.name.lower()] = person
 
     def classify_slot(self, value: str) -> SlotType:
-        """Classify a cell value into a slot type."""
+        """
+        Classify a cell value into a slot type with fuzzy matching.
+
+        Matching order:
+        1. Handle compound codes (e.g., "PC/OFF") - prioritize restrictive types
+        2. Direct lookup in mapping
+        3. Strip trailing numbers (e.g., "C30" -> "C")
+        4. Prefix matching for longer keys (2+ chars)
+        5. Fallback heuristics for common terms
+        """
         if value is None:
             return SlotType.OFF
 
+        ***REMOVED*** Normalize: lowercase, strip whitespace
         clean = str(value).strip().lower()
 
-        ***REMOVED*** Direct lookup
+        if not clean:
+            return SlotType.OFF
+
+        ***REMOVED*** 1. Handle compound codes like "PC/OFF" or "C/CV"
+        if "/" in clean:
+            parts = clean.split("/")
+            ***REMOVED*** Prioritize restrictive types (safety first)
+            for part in parts:
+                part = part.strip()
+                if part in self.SLOT_TYPE_MAPPING:
+                    slot_type = self.SLOT_TYPE_MAPPING[part]
+                    if slot_type in (SlotType.FMIT, SlotType.OFF, SlotType.VACATION):
+                        return slot_type
+            ***REMOVED*** Otherwise classify first part
+            first_part = parts[0].strip()
+            if first_part:
+                return self.classify_slot(first_part)
+
+        ***REMOVED*** 2. Direct lookup
         if clean in self.SLOT_TYPE_MAPPING:
             return self.SLOT_TYPE_MAPPING[clean]
 
-        ***REMOVED*** Partial match
+        ***REMOVED*** 3. Strip trailing numbers (e.g., "C30" -> "C", "FMIT2" -> "FMIT")
+        clean_no_nums = "".join(c for c in clean if not c.isdigit())
+        if clean_no_nums and clean_no_nums in self.SLOT_TYPE_MAPPING:
+            return self.SLOT_TYPE_MAPPING[clean_no_nums]
+
+        ***REMOVED*** 4. Prefix matching - only for keys with 2+ chars to avoid false positives
         for key, slot_type in self.SLOT_TYPE_MAPPING.items():
-            if key and key in clean:
+            if len(key) >= 2 and clean.startswith(key):
                 return slot_type
+
+        ***REMOVED*** 5. Fallback heuristics for common terms
+        if "call" in clean:
+            return SlotType.FMIT
+        if "clinic" in clean:
+            return SlotType.CLINIC
+        if "leave" in clean or "vacation" in clean:
+            return SlotType.VACATION
+        if "conf" in clean:
+            return SlotType.CONFERENCE
 
         return SlotType.UNKNOWN
 
