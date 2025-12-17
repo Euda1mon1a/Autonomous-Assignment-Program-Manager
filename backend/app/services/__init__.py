@@ -19,6 +19,9 @@ from app.services.leave_providers import (
     LeaveProviderFactory,
 )
 from app.services.conflict_auto_detector import ConflictAutoDetector, ConflictInfo
+from app.services.faculty_preference_service import FacultyPreferenceService
+from app.services.conflict_alert_service import ConflictAlertService
+from app.services.swap_notification_service import SwapNotificationService
 
 __all__ = [
     "AssignmentService",
@@ -41,4 +44,11 @@ __all__ = [
     # Conflict detection
     "ConflictAutoDetector",
     "ConflictInfo",
+    # Phase 4 services
+    "FacultyPreferenceService",
+    "ConflictAlertService",
+    "SwapNotificationService",
+    # Phase 5 services
+    "FMITSchedulerService",
+    "SwapRequestService",
 ]

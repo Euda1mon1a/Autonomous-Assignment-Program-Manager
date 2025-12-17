@@ -13,6 +13,8 @@ from app.repositories.user import UserRepository
 from app.repositories.procedure import ProcedureRepository
 from app.repositories.procedure_credential import ProcedureCredentialRepository
 from app.repositories.certification import CertificationTypeRepository, PersonCertificationRepository
+from app.repositories.swap_repository import SwapRepository
+from app.repositories.conflict_repository import ConflictRepository
 
 __all__ = [
     "BaseRepository",
@@ -25,4 +27,7 @@ __all__ = [
     "ProcedureCredentialRepository",
     "CertificationTypeRepository",
     "PersonCertificationRepository",
+    # FMIT repositories
+    "SwapRepository",
+    "ConflictRepository",
 ]
