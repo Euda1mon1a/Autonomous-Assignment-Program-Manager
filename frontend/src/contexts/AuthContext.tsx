@@ -14,7 +14,6 @@ import {
   login as authLogin,
   logout as authLogout,
   validateToken,
-  hasStoredToken,
 } from '@/lib/auth'
 
 // ============================================================================
@@ -26,7 +25,7 @@ interface AuthContextType {
   isLoading: boolean
   isAuthenticated: boolean
   login: (credentials: LoginCredentials) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   refreshUser: () => Promise<void>
 }
 
@@ -51,15 +50,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const isAuthenticated = !!user
 
   // Validate token and load user on mount
+  // Security: Checks httpOnly cookie automatically via validateToken
   useEffect(() => {
     async function initAuth() {
-      if (hasStoredToken()) {
-        try {
-          const validatedUser = await validateToken()
-          setUser(validatedUser)
-        } catch {
-          // Token validation failed, user remains null
-        }
+      try {
+        const validatedUser = await validateToken()
+        setUser(validatedUser)
+      } catch {
+        // Token validation failed, user remains null
       }
       setIsLoading(false)
     }
@@ -79,21 +77,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [])
 
   // Logout function
-  const logout = useCallback(() => {
-    authLogout()
+  // Security: Calls backend to invalidate session and clear httpOnly cookie
+  const logout = useCallback(async () => {
+    await authLogout()
     setUser(null)
   }, [])
 
   // Refresh user data
+  // Security: Checks httpOnly cookie automatically via validateToken
   const refreshUser = useCallback(async () => {
-    if (hasStoredToken()) {
-      try {
-        const validatedUser = await validateToken()
-        setUser(validatedUser)
-      } catch {
-        // Token no longer valid
-        logout()
-      }
+    try {
+      const validatedUser = await validateToken()
+      setUser(validatedUser)
+    } catch {
+      // Token no longer valid
+      logout()
     }
   }, [logout])
 

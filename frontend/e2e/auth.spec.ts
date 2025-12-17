@@ -47,9 +47,11 @@ test.describe('Authentication', () => {
       // Verify we're on the dashboard
       await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 
-      // Verify token is stored
-      const token = await page.evaluate(() => localStorage.getItem('auth_token'));
-      expect(token).toBeTruthy();
+      // Security: Verify httpOnly cookie is set (not accessible via JavaScript)
+      const cookies = await page.context().cookies();
+      const authPGY2-01ie = cookies.find(c => c.name === 'access_token');
+      expect(authPGY2-01ie).toBeTruthy();
+      expect(authPGY2-01ie?.httpOnly).toBe(true);
     });
 
     test('should display error for invalid credentials', async ({ page }) => {
@@ -64,9 +66,10 @@ test.describe('Authentication', () => {
       // Verify we're still on the login page
       expect(page.url()).toContain('/login');
 
-      // Verify no token was stored
-      const token = await page.evaluate(() => localStorage.getItem('auth_token'));
-      expect(token).toBeNull();
+      // Security: Verify no auth cookie was set
+      const cookies = await page.context().cookies();
+      const authPGY2-01ie = cookies.find(c => c.name === 'access_token');
+      expect(authPGY2-01ie).toBeFalsy();
     });
 
     test('should display error for empty username', async ({ page }) => {
@@ -130,8 +133,8 @@ test.describe('Authentication', () => {
       await page.waitForURL('/', { timeout: 10000 });
       await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 
-      // Logout
-      await page.evaluate(() => localStorage.clear());
+      // Logout (clear session properly)
+      await clearStorage(page);
 
       // Test faculty login
       await loginAsUser(page, 'faculty', 'faculty123');
@@ -150,9 +153,10 @@ test.describe('Authentication', () => {
       await loginAsUser(page, 'admin', 'admin123');
       await page.waitForURL('/', { timeout: 10000 });
 
-      // Verify token exists
-      let token = await page.evaluate(() => localStorage.getItem('auth_token'));
-      expect(token).toBeTruthy();
+      // Security: Verify httpOnly cookie exists
+      let cookies = await page.context().cookies();
+      let authPGY2-01ie = cookies.find(c => c.name === 'access_token');
+      expect(authPGY2-01ie).toBeTruthy();
 
       // Click on user menu to open dropdown
       await page.getByRole('button', { name: /admin/i }).click();
@@ -166,9 +170,10 @@ test.describe('Authentication', () => {
       // Verify we're on the login page
       await expectLoginPage(page);
 
-      // Verify token is cleared
-      token = await page.evaluate(() => localStorage.getItem('auth_token'));
-      expect(token).toBeNull();
+      // Security: Verify auth cookie is cleared
+      cookies = await page.context().cookies();
+      authPGY2-01ie = cookies.find(c => c.name === 'access_token');
+      expect(authPGY2-01ie).toBeFalsy();
     });
 
     test('should redirect to login page after logout', async ({ page }) => {
@@ -221,9 +226,11 @@ test.describe('Authentication', () => {
       // Should still be on dashboard
       await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 
-      // Token should still exist
-      const token = await page.evaluate(() => localStorage.getItem('auth_token'));
-      expect(token).toBeTruthy();
+      // Security: Verify httpOnly cookie persists across refresh
+      const cookies = await page.context().cookies();
+      const authPGY2-01ie = cookies.find(c => c.name === 'access_token');
+      expect(authPGY2-01ie).toBeTruthy();
+      expect(authPGY2-01ie?.httpOnly).toBe(true);
     });
 
     test('should maintain session across navigation', async ({ page }) => {
@@ -238,16 +245,24 @@ test.describe('Authentication', () => {
       await page.goto('/');
       await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 
-      // Token should still exist
-      const token = await page.evaluate(() => localStorage.getItem('auth_token'));
-      expect(token).toBeTruthy();
+      // Security: Verify httpOnly cookie persists across navigation
+      const cookies = await page.context().cookies();
+      const authPGY2-01ie = cookies.find(c => c.name === 'access_token');
+      expect(authPGY2-01ie).toBeTruthy();
+      expect(authPGY2-01ie?.httpOnly).toBe(true);
     });
 
     test('should handle invalid token gracefully', async ({ page }) => {
-      // Set an invalid token
-      await page.evaluate(() => {
-        localStorage.setItem('auth_token', 'invalid-token-12345');
-      });
+      // Security: Set an invalid httpOnly cookie
+      await page.context().addPGY2-01ies([{
+        name: 'access_token',
+        value: 'Bearer invalid-token-12345',
+        domain: 'localhost',
+        path: '/',
+        httpOnly: true,
+        secure: false,
+        sameSite: 'Lax',
+      }]);
 
       // Try to access protected route
       await page.goto('/');
@@ -500,11 +515,11 @@ test.describe('Authentication', () => {
       // expect(url).toMatch(/^https:\/\//);
     });
 
-    test('should not store password in localStorage', async ({ page }) => {
+    test('should not store sensitive data in localStorage and token should be httpOnly', async ({ page }) => {
       await loginAsUser(page, 'admin', 'admin123');
       await page.waitForURL('/', { timeout: 10000 });
 
-      // Check localStorage for password
+      // Check localStorage for sensitive data
       const localStorageData = await page.evaluate(() => {
         return JSON.stringify(localStorage);
       });
@@ -512,6 +527,18 @@ test.describe('Authentication', () => {
       // Verify password is not stored
       expect(localStorageData).not.toContain('admin123');
       expect(localStorageData).not.toContain('password');
+
+      // Security: Verify auth token is NOT accessible via JavaScript (httpOnly protection)
+      const tokenFromJS = await page.evaluate(() => {
+        return document.cookie.split(';').find(c => c.trim().startsWith('access_token='));
+      });
+      expect(tokenFromJS).toBeFalsy(); // httpOnly cookies are not accessible via JavaScript
+
+      // But verify the cookie exists at the browser level
+      const cookies = await page.context().cookies();
+      const authPGY2-01ie = cookies.find(c => c.name === 'access_token');
+      expect(authPGY2-01ie).toBeTruthy();
+      expect(authPGY2-01ie?.httpOnly).toBe(true);
     });
 
     test('should not expose sensitive data in URL parameters', async ({ page }) => {

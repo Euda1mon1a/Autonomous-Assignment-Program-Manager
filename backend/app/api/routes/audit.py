@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
+from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
@@ -592,10 +593,11 @@ async def export_audit_logs(
     config: AuditExportConfig,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
 ):
     """
     Export audit logs in the specified format (CSV, JSON, or PDF).
-    Requires authentication.
+    Requires admin role.
 
     Returns a downloadable file with filtered audit log data.
     """
@@ -775,9 +777,10 @@ async def mark_audit_reviewed(
     request: MarkReviewedRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
 ):
     """
-    Mark audit entries as reviewed for compliance tracking. Requires authentication.
+    Mark audit entries as reviewed for compliance tracking. Requires admin role.
 
     This endpoint would typically update the audit entries to include
     review information for ACGME compliance purposes.
