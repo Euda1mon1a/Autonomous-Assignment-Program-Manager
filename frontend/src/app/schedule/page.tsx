@@ -6,10 +6,11 @@ import { useQuery } from '@tanstack/react-query'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { BlockNavigation } from '@/components/schedule/BlockNavigation'
 import { ScheduleGrid } from '@/components/schedule/ScheduleGrid'
-import { ViewToggle, ScheduleView, useScheduleView } from '@/components/schedule/ViewToggle'
+import { ViewToggle, useScheduleView } from '@/components/schedule/ViewToggle'
 import { MonthView } from '@/components/schedule/MonthView'
 import { WeekView } from '@/components/schedule/WeekView'
 import { DayView } from '@/components/schedule/DayView'
+import { ResidentAcademicYearView, FacultyInpatientWeeksView } from '@/components/schedule/drag'
 import { get } from '@/lib/api'
 import { usePeople, useRotationTemplates, ListResponse } from '@/lib/hooks'
 import type { Assignment, Block, RotationTemplate } from '@/types/api'
@@ -273,26 +274,34 @@ export default function SchedulePage() {
               onDateChange={handleDateChange}
             />
           )}
+          {currentView === 'resident-year' && (
+            <ResidentAcademicYearView />
+          )}
+          {currentView === 'faculty-inpatient' && (
+            <FacultyInpatientWeeksView />
+          )}
         </div>
 
-        {/* Footer */}
-        <div className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-2">
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <span>
-              {currentView === 'block'
-                ? 'Hover over assignments to see details. Click on a cell to view or edit.'
-                : 'Click on a day to view details. Use the view toggle to switch between views.'}
-            </span>
-            <span className="hidden sm:inline">
-              {currentView === 'block' && (
-                <>Showing {Math.ceil((dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24)) + 1} days</>
-              )}
-              {currentView === 'month' && format(currentDate, 'MMMM yyyy')}
-              {currentView === 'week' && `Week of ${format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'MMM d')}`}
-              {currentView === 'day' && format(currentDate, 'EEEE, MMMM d, yyyy')}
-            </span>
+        {/* Footer - only show for standard views, annual views have their own */}
+        {!['resident-year', 'faculty-inpatient'].includes(currentView) && (
+          <div className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-2">
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>
+                {currentView === 'block'
+                  ? 'Hover over assignments to see details. Click on a cell to view or edit.'
+                  : 'Click on a day to view details. Use the view toggle to switch between views.'}
+              </span>
+              <span className="hidden sm:inline">
+                {currentView === 'block' && (
+                  <>Showing {Math.ceil((dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24)) + 1} days</>
+                )}
+                {currentView === 'month' && format(currentDate, 'MMMM yyyy')}
+                {currentView === 'week' && `Week of ${format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'MMM d')}`}
+                {currentView === 'day' && format(currentDate, 'EEEE, MMMM d, yyyy')}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </ProtectedRoute>
   )
