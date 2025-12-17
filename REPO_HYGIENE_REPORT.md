@@ -20,7 +20,7 @@ The ICS (iCalendar) export functionality is **production-ready** with the follow
 | Feature | Status | Location |
 |---------|--------|----------|
 | RFC 5545 Compliance | Complete | `calendar_service.py:1-400` |
-| VTIMEZONE Component | Complete | America/New_York with DST handling |
+| VTIMEZONE Component | Complete | Pacific/Honolulu (HST, UTC-10, no DST) |
 | Person Schedule Export | Complete | `/api/calendar/export/ics/{person_id}` |
 | Rotation Schedule Export | Complete | `/api/calendar/export/rotation/{rotation_id}` |
 | Bulk Export with Filters | Complete | `/api/calendar/export/ics` |

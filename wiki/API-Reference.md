@@ -880,7 +880,7 @@ Retrieve the ICS calendar feed. **No authentication required** - the token serve
 
 **Response:** ICS calendar content with:
 - Assignments from today through 6 months ahead
-- VTIMEZONE component for America/New_York
+- VTIMEZONE component for Pacific/Honolulu (HST)
 - Cache-Control: private, max-age=900 (15-minute refresh)
 
 **Calendar App Integration:**
@@ -949,10 +949,15 @@ PRODID:-//Residency Scheduler//Calendar Export//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 X-WR-CALNAME:John Doe - Schedule
-X-WR-TIMEZONE:America/New_York
+X-WR-TIMEZONE:Pacific/Honolulu
 BEGIN:VTIMEZONE
-TZID:America/New_York
-...
+TZID:Pacific/Honolulu
+BEGIN:STANDARD
+DTSTART:19700101T000000
+TZOFFSETFROM:-1000
+TZOFFSETTO:-1000
+TZNAME:HST
+END:STANDARD
 END:VTIMEZONE
 BEGIN:VEVENT
 UID:assignment-uuid@residency-scheduler
