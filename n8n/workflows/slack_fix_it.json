@@ -1,0 +1,149 @@
+{
+  "name": "Slack Fix-It Command",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-fix-it",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-slack-fix-it",
+      "name": "Slack Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "slack-fix-it-webhook"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse Slack command parameters\nconst body = $input.first().json;\nconst text = body.text || '';\n\n// Extract mode parameter (default to 'greedy')\nlet mode = 'greedy';\nconst modeMatch = text.match(/mode=(\\w+)/);\nif (modeMatch) {\n  mode = modeMatch[1];\n}\n\n// Extract other parameters\nlet maxRetries = 3;\nconst retriesMatch = text.match(/retries=(\\d+)/);\nif (retriesMatch) {\n  maxRetries = parseInt(retriesMatch[1]);\n}\n\nlet autoApprove = false;\nif (text.includes('auto-approve')) {\n  autoApprove = true;\n}\n\nreturn {\n  json: {\n    mode: mode,\n    max_retries: maxRetries,\n    auto_approve: autoApprove,\n    user: body.user_name,\n    channel: body.channel_id\n  }\n};"
+      },
+      "id": "parse-parameters",
+      "name": "Parse Command Parameters",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/api/scheduler/fix-it",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "mode",
+              "value": "={{ $json.mode }}"
+            },
+            {
+              "name": "max_retries",
+              "value": "={{ $json.max_retries }}"
+            },
+            {
+              "name": "auto_approve",
+              "value": "={{ $json.auto_approve }}"
+            },
+            {
+              "name": "initiated_by",
+              "value": "={{ $json.user }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "http-post-fix-it",
+      "name": "Trigger Fix-It Mode",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format the fix-it response for Slack\nconst response = $input.first().json;\nconst params = $input.first().json;\n\nconst mode = params.mode || 'greedy';\nconst tasksFixed = response.tasks_fixed || 0;\nconst tasksRetried = response.tasks_retried || 0;\nconst tasksSkipped = response.tasks_skipped || 0;\nconst executionId = response.execution_id || 'unknown';\n\nconst blocks = [\n  {\n    \"type\": \"header\",\n    \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": \":wrench: Fix-It Mode Initiated\",\n      \"emoji\": true\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"fields\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Mode:*\\n${mode}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Execution ID:*\\n${executionId}`\n      }\n    ]\n  },\n  {\n    \"type\": \"divider\"\n  },\n  {\n    \"type\": \"section\",\n    \"fields\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Tasks Fixed:*\\n${tasksFixed}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Tasks Retried:*\\n${tasksRetried}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Tasks Skipped:*\\n${tasksSkipped}`\n      }\n    ]\n  },\n  {\n    \"type\": \"context\",\n    \"elements\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": \":information_source: Fix-it process is running in the background. Use `/scheduler sitrep` to check progress.\"\n      }\n    ]\n  }\n];\n\nreturn {\n  json: {\n    response_type: \"in_channel\",\n    blocks: blocks\n  }\n};"
+      },
+      "id": "format-fix-it-response",
+      "name": "Format Fix-It Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [910, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-to-webhook-fix-it",
+      "name": "Respond to Slack",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1130, 300]
+    }
+  ],
+  "connections": {
+    "Slack Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Command Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Command Parameters": {
+      "main": [
+        [
+          {
+            "node": "Trigger Fix-It Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Fix-It Mode": {
+      "main": [
+        [
+          {
+            "node": "Format Fix-It Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Fix-It Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-17T00:00:00.000Z",
+  "versionId": "1"
+}

@@ -6,6 +6,7 @@ Sets up Celery for background task processing including:
 - Automated fallback precomputation
 - Contingency analysis
 - Alert notifications
+- Schedule metrics computation and snapshots
 
 Configuration:
 - Broker: Redis (default: redis://localhost:6379/0)
@@ -33,6 +34,7 @@ celery_app = Celery(
     include=[
         "app.resilience.tasks",
         "app.notifications.tasks",
+        "app.tasks.schedule_metrics_tasks",
     ],
 )
 
@@ -88,12 +90,44 @@ celery_app.conf.update(
             "schedule": crontab(hour=6, minute=0),
             "options": {"queue": "resilience"},
         },
+
+        # Schedule Metrics - Hourly snapshots during business hours
+        "schedule-metrics-hourly-snapshot": {
+            "task": "app.tasks.schedule_metrics_tasks.snapshot_metrics",
+            "schedule": crontab(hour="8-18", minute=0, day_of_week="1-5"),
+            "kwargs": {"period_days": 90},
+            "options": {"queue": "metrics"},
+        },
+
+        # Schedule Metrics - Daily cleanup at 3 AM
+        "schedule-metrics-daily-cleanup": {
+            "task": "app.tasks.schedule_metrics_tasks.cleanup_old_snapshots",
+            "schedule": crontab(hour=3, minute=30),
+            "kwargs": {"retention_days": 365},
+            "options": {"queue": "metrics"},
+        },
+
+        # Schedule Metrics - Weekly fairness report on Monday at 7 AM
+        "schedule-metrics-weekly-fairness-report": {
+            "task": "app.tasks.schedule_metrics_tasks.generate_fairness_trend_report",
+            "schedule": crontab(hour=7, minute=0, day_of_week=1),
+            "kwargs": {"weeks_back": 12},
+            "options": {"queue": "metrics"},
+        },
+
+        # Schedule Metrics - Daily full computation at 5 AM
+        "schedule-metrics-daily-computation": {
+            "task": "app.tasks.schedule_metrics_tasks.compute_schedule_metrics",
+            "schedule": crontab(hour=5, minute=0),
+            "options": {"queue": "metrics"},
+        },
     },
 
     # Task routes
     task_routes={
         "app.resilience.tasks.*": {"queue": "resilience"},
         "app.notifications.tasks.*": {"queue": "notifications"},
+        "app.tasks.schedule_metrics_tasks.*": {"queue": "metrics"},
     },
 
     # Task queues
@@ -101,6 +135,7 @@ celery_app.conf.update(
         "default": {},
         "resilience": {},
         "notifications": {},
+        "metrics": {},
     },
 )
 
