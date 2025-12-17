@@ -5,6 +5,7 @@
  * to display on-call schedules with color-coded seniority levels.
  */
 
+import { useState } from 'react'
 import { CallRoster } from './CallRoster'
 import { addDays, startOfWeek, endOfWeek } from 'date-fns'
 
@@ -69,8 +70,8 @@ export function CustomDateRangeRoster() {
  * Example 4: Embedded in a page with user-controlled date picker
  */
 export function InteractiveCallRoster() {
-  const [startDate, setStartDate] = React.useState(new Date())
-  const [endDate, setEndDate] = React.useState(addDays(new Date(), 30))
+  const [startDate, setStartDate] = useState(new Date())
+  const [endDate, setEndDate] = useState(addDays(new Date(), 30))
 
   return (
     <div className="p-6 space-y-6">
