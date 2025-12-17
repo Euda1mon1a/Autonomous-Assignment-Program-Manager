@@ -2,9 +2,9 @@
 
 import React, { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Calendar, CalendarDays, LayoutGrid, Columns } from 'lucide-react'
+import { Calendar, CalendarDays, LayoutGrid, Columns, Users, GraduationCap } from 'lucide-react'
 
-export type ScheduleView = 'day' | 'week' | 'month' | 'block'
+export type ScheduleView = 'day' | 'week' | 'month' | 'block' | 'resident-year' | 'faculty-inpatient'
 
 export interface ViewToggleProps {
   currentView: ScheduleView
@@ -13,11 +13,13 @@ export interface ViewToggleProps {
 
 const VIEW_STORAGE_KEY = 'schedule-view-preference'
 
-const viewOptions: { value: ScheduleView; label: string; icon: React.ReactNode }[] = [
-  { value: 'day', label: 'Day', icon: <Calendar className="w-4 h-4" /> },
-  { value: 'week', label: 'Week', icon: <Columns className="w-4 h-4" /> },
-  { value: 'month', label: 'Month', icon: <CalendarDays className="w-4 h-4" /> },
-  { value: 'block', label: 'Block', icon: <LayoutGrid className="w-4 h-4" /> },
+const viewOptions: { value: ScheduleView; label: string; shortLabel: string; icon: React.ReactNode; group?: string }[] = [
+  { value: 'day', label: 'Day', shortLabel: 'Day', icon: <Calendar className="w-4 h-4" /> },
+  { value: 'week', label: 'Week', shortLabel: 'Week', icon: <Columns className="w-4 h-4" /> },
+  { value: 'month', label: 'Month', shortLabel: 'Month', icon: <CalendarDays className="w-4 h-4" /> },
+  { value: 'block', label: 'Block', shortLabel: 'Block', icon: <LayoutGrid className="w-4 h-4" /> },
+  { value: 'resident-year', label: 'Resident Year', shortLabel: 'Res.', icon: <GraduationCap className="w-4 h-4" />, group: 'annual' },
+  { value: 'faculty-inpatient', label: 'Faculty Inpatient', shortLabel: 'Fac.', icon: <Users className="w-4 h-4" />, group: 'annual' },
 ]
 
 export function ViewToggle({ currentView, onChange }: ViewToggleProps) {
@@ -49,34 +51,68 @@ export function ViewToggle({ currentView, onChange }: ViewToggleProps) {
     onChange(view)
   }
 
+  // Group options for visual separation
+  const standardViews = viewOptions.filter(o => !o.group)
+  const annualViews = viewOptions.filter(o => o.group === 'annual')
+
   return (
-    <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
-      {viewOptions.map((option) => (
-        <button
-          key={option.value}
-          onClick={() => handleViewChange(option.value)}
-          className={`
-            inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium
-            transition-all duration-150 ease-in-out
-            ${
-              currentView === option.value
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-            }
-          `}
-          aria-pressed={currentView === option.value}
-          title={`Switch to ${option.label} view`}
-        >
-          {option.icon}
-          <span className="hidden sm:inline">{option.label}</span>
-        </button>
-      ))}
+    <div className="inline-flex items-center gap-1">
+      {/* Standard views */}
+      <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+        {standardViews.map((option) => (
+          <button
+            key={option.value}
+            onClick={() => handleViewChange(option.value)}
+            className={`
+              inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium
+              transition-all duration-150 ease-in-out
+              ${
+                currentView === option.value
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }
+            `}
+            aria-pressed={currentView === option.value}
+            title={`Switch to ${option.label} view`}
+          >
+            {option.icon}
+            <span className="hidden sm:inline">{option.shortLabel}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Separator */}
+      <div className="w-px h-6 bg-gray-300 mx-1" />
+
+      {/* Annual drag views */}
+      <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+        {annualViews.map((option) => (
+          <button
+            key={option.value}
+            onClick={() => handleViewChange(option.value)}
+            className={`
+              inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium
+              transition-all duration-150 ease-in-out
+              ${
+                currentView === option.value
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }
+            `}
+            aria-pressed={currentView === option.value}
+            title={`Switch to ${option.label} view (drag-and-drop)`}
+          >
+            {option.icon}
+            <span className="hidden lg:inline">{option.shortLabel}</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
 
 function isValidView(view: string): view is ScheduleView {
-  return ['day', 'week', 'month', 'block'].includes(view)
+  return ['day', 'week', 'month', 'block', 'resident-year', 'faculty-inpatient'].includes(view)
 }
 
 // Hook for managing view state with localStorage and URL sync

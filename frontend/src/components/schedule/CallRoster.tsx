@@ -123,13 +123,13 @@ export function CallRoster({ startDate, endDate, showOnlyOnCall = true }: CallRo
   }, [templatesData])
 
   // Process and filter assignments
-  const onCallAssignments = useMemo<OnCallAssignment[]>(() => {
+  const onCallAssignments = useMemo((): OnCallAssignment[] => {
     if (!assignmentsData?.items || !peopleMap.size) {
       return []
     }
 
     const assignments = assignmentsData.items
-      .map((assignment) => {
+      .map((assignment): OnCallAssignment | null => {
         const person = peopleMap.get(assignment.person_id)
         if (!person) return null
 
