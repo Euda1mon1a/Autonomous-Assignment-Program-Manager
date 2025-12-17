@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { ShieldCheck, ShieldAlert, AlertTriangle, ShieldOff } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useValidateSchedule } from '@/lib/hooks'
 import { EmptyState } from '@/components/EmptyState'
 
@@ -19,7 +20,12 @@ export function ComplianceAlert() {
   const hasNoData = !validation || validation.valid === undefined
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut', delay: 0.2 }}
+      className="glass-panel p-6"
+    >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Compliance Status</h3>
         {isClean ? (
@@ -90,7 +96,7 @@ export function ComplianceAlert() {
         </div>
       )}
 
-      <div className="mt-4 pt-4 border-t">
+      <div className="mt-4 pt-4 border-t border-gray-200/50">
         <Link
           href="/compliance"
           className="text-sm text-blue-600 hover:text-blue-800 font-medium"
@@ -98,6 +104,6 @@ export function ComplianceAlert() {
           View Compliance Details &rarr;
         </Link>
       </div>
-    </div>
+    </motion.div>
   )
 }

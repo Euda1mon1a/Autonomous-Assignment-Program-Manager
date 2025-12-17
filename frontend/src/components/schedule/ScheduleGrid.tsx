@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { format, eachDayOfInterval, isWeekend } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
 import { get } from '@/lib/api'
 import { usePeople, useRotationTemplates, ListResponse } from '@/lib/hooks'
 import type { Person, RotationTemplate, Assignment, Block } from '@/types/api'
@@ -231,11 +232,16 @@ export function ScheduleGrid({ startDate, endDate }: ScheduleGridProps) {
   const todayStr = format(new Date(), 'yyyy-MM-dd')
 
   return (
-    <div className="overflow-auto border border-gray-200 rounded-lg shadow-sm">
-      <table className="min-w-full divide-y divide-gray-200">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="glass-panel overflow-auto"
+    >
+      <table className="min-w-full divide-y divide-gray-200/50">
         <ScheduleHeader days={days} />
 
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-white/50 divide-y divide-gray-200/50">
           {personGroups.map((group, groupIndex) => (
             <PersonGroupRows
               key={group.label}
@@ -249,7 +255,7 @@ export function ScheduleGrid({ startDate, endDate }: ScheduleGridProps) {
           ))}
         </tbody>
       </table>
-    </div>
+    </motion.div>
   )
 }
 
