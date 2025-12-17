@@ -5,6 +5,7 @@ FastAPI application for managing residency program schedules.
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
 import logging
 
@@ -96,6 +97,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Trusted host middleware - prevents host header attacks (production only)
+if settings.TRUSTED_HOSTS:
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=settings.TRUSTED_HOSTS,
+    )
+    # Log count only, not actual values (security: avoid exposing infrastructure)
+    logger.info(f"Trusted hosts middleware enabled. {len(settings.TRUSTED_HOSTS)} host(s) configured.")
 
 # Audit context middleware - captures user for version history tracking
 app.add_middleware(AuditContextMiddleware)
