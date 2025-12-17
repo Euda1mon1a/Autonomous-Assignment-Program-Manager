@@ -7,8 +7,13 @@ const config: Config = {
     './src/features/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'SF Mono', 'Menlo', 'Consolas', 'monospace'],
+      },
       colors: {
         // Custom colors for schedule activities
         clinic: {
@@ -30,6 +35,17 @@ const config: Config = {
           light: '***REMOVED***fef3c7',
           DEFAULT: '***REMOVED***f59e0b',
           dark: '***REMOVED***d97706',
+        },
+        // Tactical/Medical semantic colors
+        scrub: {
+          light: '***REMOVED***d1fae5',
+          DEFAULT: '***REMOVED***10b981',
+          dark: '***REMOVED***047857',
+        },
+        sterile: {
+          light: '***REMOVED***f8fafc',
+          DEFAULT: '***REMOVED***f1f5f9',
+          dark: '***REMOVED***e2e8f0',
         },
       },
     },
