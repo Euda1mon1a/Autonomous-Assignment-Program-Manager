@@ -122,6 +122,38 @@ services:
       - no-new-privileges:true
 
   # ===========================================================================
+  # Database Migrations (Init Container)
+  # ===========================================================================
+  # Uncomment this service to run migrations as an init container before app starts.
+  # This prevents race conditions when running multiple backend replicas.
+  #
+  # migrate:
+  #   build:
+  #     context: ..
+  #     dockerfile: .docker/backend.Dockerfile
+  #   image: residency-scheduler-backend:${IMAGE_TAG:-latest}
+  #   container_name: rs-migrate-prod
+  #   command: /app/migrate.sh
+  #   restart: "no"
+  #
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #
+  #   environment:
+  #     DATABASE_URL: postgresql://${DB_USER:-scheduler}:${DB_PASSWORD}@db:5432/${DB_NAME:-residency_scheduler}
+  #
+  #   networks:
+  #     - backend-network
+  #
+  #   # Security
+  #   read_only: true
+  #   tmpfs:
+  #     - /tmp
+  #   security_opt:
+  #     - no-new-privileges:true
+
+  # ===========================================================================
   # FastAPI Backend
   # ===========================================================================
   backend:
@@ -139,6 +171,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      # Uncomment to ensure migrations complete before backend starts:
+      # migrate:
+      #   condition: service_completed_successfully
 
     environment:
       # Database

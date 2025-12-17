@@ -96,16 +96,52 @@ export function ScheduleDragProvider({
     mutationFn: async ({ assignmentId, newBlockId }: { assignmentId: string; newBlockId: string }) => {
       return put<Assignment>(`/assignments/${assignmentId}`, { block_id: newBlockId })
     },
+
+    // Optimistic update - update UI immediately
+    onMutate: async ({ assignmentId, newBlockId }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['assignments'] })
+
+      // Snapshot previous value for rollback
+      const previousAssignments = queryClient.getQueryData(['assignments'])
+
+      // Optimistically update cache
+      queryClient.setQueryData(['assignments'], (old: any) => {
+        if (!old?.items) return old
+        return {
+          ...old,
+          items: old.items.map((assign: Assignment) =>
+            assign.id === assignmentId
+              ? { ...assign, block_id: newBlockId }
+              : assign
+          )
+        }
+      })
+
+      // Return context for rollback
+      return { previousAssignments }
+    },
+
     onSuccess: (data, variables) => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['assignments'] })
       setFeedback({ type: 'success', message: 'Assignment moved successfully' })
       onAssignmentMove?.(variables.assignmentId, variables.newBlockId)
       setTimeout(() => setFeedback(null), 3000)
     },
-    onError: (error: Error) => {
-      setFeedback({ type: 'error', message: error.message || 'Failed to move assignment' })
+
+    // Rollback on error
+    onError: (err, variables, context) => {
+      if (context?.previousAssignments) {
+        queryClient.setQueryData(['assignments'], context.previousAssignments)
+      }
+      // Show error toast
+      const errorMessage = (err as Error).message || 'Failed to move assignment'
+      setFeedback({ type: 'error', message: `Move failed - changes reverted: ${errorMessage}` })
       setTimeout(() => setFeedback(null), 5000)
+    },
+
+    // Refetch after success or error to ensure sync
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['assignments'] })
     },
   })
 

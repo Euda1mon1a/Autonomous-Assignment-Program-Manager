@@ -1,13 +1,14 @@
 """
 Caching Layer for Scheduling Engine.
 
-Provides in-memory caching for expensive operations:
+Provides Redis-based caching for expensive operations:
 - Availability matrix lookups
 - Assignment count calculations
 - Constraint validation results
 - Solver intermediate results
 """
 import logging
+import pickle
 from collections import defaultdict
 from datetime import datetime
 from functools import lru_cache
@@ -15,19 +16,25 @@ from threading import RLock
 from typing import Any
 from uuid import UUID
 
+import redis
+
+from app.core.config import get_settings
+
 logger = logging.getLogger(__name__)
 
 
 class ScheduleCache:
     """
-    Thread-safe in-memory cache for scheduling operations.
+    Redis-backed cache for scheduling operations.
 
     Features:
-    - LRU eviction policy
-    - Selective cache invalidation
+    - Shared cache across uvicorn workers
     - TTL-based expiration
+    - Selective cache invalidation
     - Pre-warming for common queries
     """
+
+    KEY_PREFIX = "scheduler_cache:"
 
     def __init__(
         self,
@@ -38,17 +45,18 @@ class ScheduleCache:
         Initialize cache.
 
         Args:
-            max_size: Maximum number of cached entries
+            max_size: Maximum number of cached entries (unused with Redis)
             ttl_seconds: Time-to-live for cached entries (default: 1 hour)
         """
         self.max_size = max_size
         self.ttl_seconds = ttl_seconds
         self._lock = RLock()
 
-        # Cache storage: key -> (value, timestamp)
-        self._cache: dict[str, tuple[Any, datetime]] = {}
+        # Redis connection
+        settings = get_settings()
+        self._redis = redis.from_url(settings.REDIS_URL, decode_responses=False)
 
-        # Statistics
+        # Statistics (per-worker, not shared)
         self._hits = 0
         self._misses = 0
 
@@ -150,17 +158,24 @@ class ScheduleCache:
         Args:
             keys: Specific keys to invalidate (None = clear all)
         """
-        with self._lock:
-            if keys is None:
-                # Clear entire cache
-                self._cache.clear()
-                logger.info("Cache cleared completely")
-            else:
-                # Remove specific keys
-                for key in keys:
-                    if key in self._cache:
-                        del self._cache[key]
-                logger.info(f"Invalidated {len(keys)} cache entries")
+        if keys is None:
+            # Clear all scheduler cache entries
+            pattern = f"{self.KEY_PREFIX}*"
+            cursor = 0
+            deleted_count = 0
+            while True:
+                cursor, matched_keys = self._redis.scan(cursor, match=pattern, count=100)
+                if matched_keys:
+                    self._redis.delete(*matched_keys)
+                    deleted_count += len(matched_keys)
+                if cursor == 0:
+                    break
+            logger.info(f"Cache cleared completely ({deleted_count} entries)")
+        else:
+            # Remove specific keys
+            prefixed_keys = [f"{self.KEY_PREFIX}{key}" for key in keys]
+            deleted = self._redis.delete(*prefixed_keys)
+            logger.info(f"Invalidated {deleted} cache entries")
 
     def warm_cache(
         self,
@@ -192,7 +207,11 @@ class ScheduleCache:
                 availability,
             )
 
-        logger.info(f"Cache warmed with {len(self._cache)} entries")
+        # Get approximate cache size from Redis
+        pattern = f"{self.KEY_PREFIX}*"
+        cursor, keys = self._redis.scan(0, match=pattern, count=1000)
+        cache_size = len(keys)
+        logger.info(f"Cache warmed with ~{cache_size} entries")
 
     def get_stats(self) -> dict[str, Any]:
         """
@@ -205,8 +224,13 @@ class ScheduleCache:
             total_requests = self._hits + self._misses
             hit_rate = self._hits / total_requests if total_requests > 0 else 0
 
+            # Get approximate cache size from Redis
+            pattern = f"{self.KEY_PREFIX}*"
+            cursor, keys = self._redis.scan(0, match=pattern, count=1000)
+            cache_size = len(keys)
+
             return {
-                "size": len(self._cache),
+                "size": cache_size,
                 "max_size": self.max_size,
                 "hits": self._hits,
                 "misses": self._misses,
@@ -215,44 +239,42 @@ class ScheduleCache:
             }
 
     def _get(self, key: str) -> Any | None:
-        """Get value from cache with TTL checking."""
-        with self._lock:
-            if key not in self._cache:
-                self._misses += 1
+        """Get value from cache."""
+        prefixed_key = f"{self.KEY_PREFIX}{key}"
+
+        try:
+            data = self._redis.get(prefixed_key)
+            if data is None:
+                with self._lock:
+                    self._misses += 1
                 return None
 
-            value, timestamp = self._cache[key]
+            # Deserialize
+            value = pickle.loads(data)
 
-            # Check TTL
-            age = (datetime.now() - timestamp).total_seconds()
-            if age > self.ttl_seconds:
-                del self._cache[key]
-                self._misses += 1
-                return None
-
-            self._hits += 1
+            with self._lock:
+                self._hits += 1
             return value
 
+        except Exception as e:
+            logger.error(f"Cache get error for key {key}: {e}")
+            with self._lock:
+                self._misses += 1
+            return None
+
     def _put(self, key: str, value: Any):
-        """Put value in cache with eviction."""
-        with self._lock:
-            # Evict oldest if at capacity
-            if len(self._cache) >= self.max_size:
-                self._evict_oldest()
+        """Put value in cache with TTL."""
+        prefixed_key = f"{self.KEY_PREFIX}{key}"
 
-            self._cache[key] = (value, datetime.now())
+        try:
+            # Serialize with pickle
+            data = pickle.dumps(value)
 
-    def _evict_oldest(self):
-        """Evict oldest cache entry (simple FIFO)."""
-        if not self._cache:
-            return
+            # Store with TTL
+            self._redis.setex(prefixed_key, self.ttl_seconds, data)
 
-        # Find oldest entry
-        oldest_key = min(
-            self._cache.keys(),
-            key=lambda k: self._cache[k][1],
-        )
-        del self._cache[oldest_key]
+        except Exception as e:
+            logger.error(f"Cache put error for key {key}: {e}")
 
     @staticmethod
     def _create_key(*parts) -> str:
