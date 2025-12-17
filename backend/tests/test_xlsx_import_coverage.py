@@ -71,30 +71,67 @@ class TestSlotTypeClassification:
             assert importer.classify_slot(value) == SlotType.ADMIN, f"Failed for: {value}"
 
     def test_classify_unknown_value(self, importer):
-        """Should return UNKNOWN for unrecognized values or OFF for partial matches."""
-        ***REMOVED*** Note: "xyz" contains "x" which maps to OFF, so it's not UNKNOWN
-        ***REMOVED*** "random" and "123" should be UNKNOWN as they don't contain any mapped substrings
+        """Should return UNKNOWN for truly unrecognized values."""
         assert importer.classify_slot("random") == SlotType.UNKNOWN
         assert importer.classify_slot("123") == SlotType.UNKNOWN
         assert importer.classify_slot("???") == SlotType.UNKNOWN
+        ***REMOVED*** "xyz" is now UNKNOWN - prefix matching requires 2+ char keys
+        ***REMOVED*** and "x" is only 1 char, so no false positives
+        assert importer.classify_slot("xyz") == SlotType.UNKNOWN
 
-        ***REMOVED*** "xyz" contains "x" which maps to OFF via partial matching
-        assert importer.classify_slot("xyz") == SlotType.OFF
+    def test_classify_prefix_match(self, importer):
+        """Should match values starting with known prefixes (2+ chars)."""
+        ***REMOVED*** Prefix matching for codes starting with known keys
+        ***REMOVED*** This avoids false positives from substring matching
 
-    def test_classify_partial_match(self, importer):
-        """Should match partial strings based on substring matching."""
-        ***REMOVED*** Partial matching finds the first substring in dictionary iteration order
-        ***REMOVED*** Use test cases that clearly match one type without conflicts
-
-        ***REMOVED*** These contain "fmit" which should match FMIT
-        assert importer.classify_slot("on-fmit") == SlotType.FMIT
+        ***REMOVED*** Starts with "fmit" -> FMIT
         assert importer.classify_slot("fmit-rotation") == SlotType.FMIT
+        assert importer.classify_slot("fmit2") == SlotType.FMIT
 
-        ***REMOVED*** These contain "ward"/"wards" which should match FMIT
+        ***REMOVED*** Starts with "ward"/"wards" -> FMIT
         assert importer.classify_slot("wards-only") == SlotType.FMIT
 
-        ***REMOVED*** Direct clinic matches
+        ***REMOVED*** Starts with "appt" -> CLINIC
         assert importer.classify_slot("appt-only") == SlotType.CLINIC
+
+        ***REMOVED*** Starts with "conf" -> CONFERENCE
+        assert importer.classify_slot("conference-room") == SlotType.CONFERENCE
+
+    def test_classify_number_stripping(self, importer):
+        """Should strip trailing numbers and match base code."""
+        ***REMOVED*** C30 -> C -> CLINIC
+        assert importer.classify_slot("C30") == SlotType.CLINIC
+        assert importer.classify_slot("FMIT2") == SlotType.FMIT
+        assert importer.classify_slot("ward1") == SlotType.FMIT
+
+    def test_classify_compound_codes(self, importer):
+        """Should handle slash-separated compound codes."""
+        ***REMOVED*** PC/OFF -> should prioritize OFF (restrictive)
+        assert importer.classify_slot("PC/OFF") == SlotType.OFF
+        ***REMOVED*** C/CV -> both are CLINIC, first wins
+        assert importer.classify_slot("C/CV") == SlotType.CLINIC
+        ***REMOVED*** FMIT/C -> FMIT is restrictive, should win
+        assert importer.classify_slot("FMIT/C") == SlotType.FMIT
+
+    def test_classify_real_schedule_codes(self, importer):
+        """Should correctly classify actual codes from real schedule files."""
+        ***REMOVED*** These codes appeared in actual faculty schedule Excel files
+        real_codes = {
+            "AT": SlotType.ADMIN,      ***REMOVED*** Admin Time
+            "CV": SlotType.CLINIC,     ***REMOVED*** Virtual Clinic
+            "DO": SlotType.OFF,        ***REMOVED*** Day Off
+            "GME": SlotType.ADMIN,     ***REMOVED*** GME Time
+            "HOL": SlotType.OFF,       ***REMOVED*** Holiday
+            "LEC": SlotType.CONFERENCE,  ***REMOVED*** Lecture
+            "NF": SlotType.FMIT,       ***REMOVED*** Night Float
+            "OIC": SlotType.FMIT,      ***REMOVED*** Officer In Charge
+            "PC": SlotType.OFF,        ***REMOVED*** Post Call (NOT clinic!)
+            "PCAT": SlotType.ADMIN,    ***REMOVED*** Patient Care Admin Team
+            "W": SlotType.OFF,         ***REMOVED*** Weekend
+        }
+        for code, expected in real_codes.items():
+            result = importer.classify_slot(code)
+            assert result == expected, f"Code '{code}' classified as {result}, expected {expected}"
 
     def test_classify_case_insensitive(self, importer):
         """Should be case-insensitive in classification."""
