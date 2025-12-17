@@ -1,0 +1,346 @@
+/*
+ * Extra CSS customizations for Residency Scheduler Documentation
+ */
+
+/* ========================================
+   Typography Enhancements
+   ======================================== */
+
+.md-typeset {
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+
+.md-typeset h1 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.md-typeset h2 {
+  font-weight: 600;
+  margin-top: 2.5rem;
+}
+
+.md-typeset h3 {
+  font-weight: 600;
+  color: var(--md-default-fg-color);
+}
+
+/* ========================================
+   Content Width Adjustments
+   ======================================== */
+
+.md-grid {
+  max-width: 1400px;
+}
+
+/* ========================================
+   Image Styling
+   ======================================== */
+
+.md-typeset img {
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.md-typeset img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Screenshots with border */
+.md-typeset img.screenshot {
+  border: 1px solid var(--md-default-fg-color--lightest);
+}
+
+/* ========================================
+   Horizontal Rule
+   ======================================== */
+
+.md-typeset hr {
+  border: none;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--hawaii-coral) 20%,
+    var(--hawaii-ocean-teal) 80%,
+    transparent
+  );
+  margin: 3rem 0;
+}
+
+/* ========================================
+   List Styling
+   ======================================== */
+
+.md-typeset ul:not(.md-nav__list) li::marker {
+  color: var(--hawaii-coral);
+}
+
+.md-typeset ol li::marker {
+  color: var(--hawaii-ocean-teal);
+  font-weight: 600;
+}
+
+/* Task list checkboxes */
+.md-typeset .task-list-item input[type="checkbox"]:checked {
+  background-color: var(--hawaii-tropical-green);
+  border-color: var(--hawaii-tropical-green);
+}
+
+/* ========================================
+   Navigation Improvements
+   ======================================== */
+
+/* Smoother sidebar scrolling */
+.md-sidebar__scrollwrap {
+  scroll-behavior: smooth;
+}
+
+/* Navigation icons */
+.md-nav__icon::before {
+  background-color: var(--hawaii-ocean-teal);
+}
+
+/* ========================================
+   Source Code File Headers
+   ======================================== */
+
+.md-typeset pre > code[data-filename]::before {
+  content: attr(data-filename);
+  display: block;
+  background: var(--hawaii-coral);
+  color: white;
+  padding: 0.5rem 1rem;
+  margin: -1rem -1rem 1rem -1rem;
+  border-radius: 8px 8px 0 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* ========================================
+   API Endpoint Badges
+   ======================================== */
+
+.endpoint-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--md-code-font-family);
+  text-transform: uppercase;
+}
+
+.endpoint-badge.get {
+  background-color: #81C784;
+  color: #1B5E20;
+}
+
+.endpoint-badge.post {
+  background-color: #4FC3F7;
+  color: #01579B;
+}
+
+.endpoint-badge.put {
+  background-color: #FFD54F;
+  color: #F57F17;
+}
+
+.endpoint-badge.patch {
+  background-color: #BA68C8;
+  color: #4A148C;
+}
+
+.endpoint-badge.delete {
+  background-color: #E57373;
+  color: #B71C1C;
+}
+
+/* ========================================
+   Version History Timeline
+   ======================================== */
+
+.version-timeline {
+  border-left: 3px solid var(--hawaii-ocean-teal);
+  padding-left: 1.5rem;
+  margin-left: 0.5rem;
+}
+
+.version-item {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.version-item::before {
+  content: "";
+  position: absolute;
+  left: -1.75rem;
+  top: 0.25rem;
+  width: 12px;
+  height: 12px;
+  background: var(--hawaii-coral);
+  border-radius: 50%;
+  border: 3px solid var(--md-default-bg-color);
+}
+
+.version-item.latest::before {
+  width: 16px;
+  height: 16px;
+  left: -1.85rem;
+  animation: pulse 2s infinite;
+}
+
+/* ========================================
+   Glossary/Definition Lists
+   ======================================== */
+
+.md-typeset dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1rem;
+}
+
+.md-typeset dt {
+  font-weight: 600;
+  color: var(--hawaii-coral);
+}
+
+.md-typeset dd {
+  margin-left: 0;
+}
+
+/* ========================================
+   Announcement Banner
+   ======================================== */
+
+.md-banner {
+  background: var(--hawaii-sunset-gradient);
+  color: white;
+}
+
+.md-banner a {
+  color: white;
+  text-decoration: underline;
+}
+
+/* ========================================
+   Keyboard Shortcuts Table
+   ======================================== */
+
+.shortcuts-table td:first-child {
+  white-space: nowrap;
+}
+
+/* ========================================
+   Mobile Optimizations
+   ======================================== */
+
+@media screen and (max-width: 600px) {
+  .md-typeset {
+    font-size: 0.8rem;
+  }
+
+  .md-typeset h1 {
+    font-size: 1.6rem;
+  }
+
+  .md-typeset h2 {
+    font-size: 1.3rem;
+  }
+
+  .md-typeset table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+/* ========================================
+   Dark Mode Table Adjustments
+   ======================================== */
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) {
+  background-color: var(--md-default-bg-color--light);
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) tr:nth-child(even) {
+  background-color: var(--md-default-bg-color);
+}
+
+/* ========================================
+   Copy Notification
+   ======================================== */
+
+.md-clipboard::after {
+  background-color: var(--hawaii-tropical-green);
+}
+
+/* ========================================
+   Progress Indicator
+   ======================================== */
+
+.progress-bar {
+  height: 8px;
+  background-color: var(--md-default-bg-color--lighter);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--hawaii-ocean-gradient);
+  transition: width 0.3s ease;
+}
+
+/* ========================================
+   Social Links in Footer
+   ======================================== */
+
+.md-social__link svg {
+  fill: currentColor;
+  transition: transform 0.2s;
+}
+
+.md-social__link:hover svg {
+  transform: scale(1.2);
+}
+
+/* ========================================
+   Tooltip Styling
+   ======================================== */
+
+.md-tooltip {
+  background-color: var(--md-default-bg-color);
+  border: 1px solid var(--hawaii-coral);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* ========================================
+   Focus States for Accessibility
+   ======================================== */
+
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--hawaii-ocean-teal);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   Logo Animation
+   ======================================== */
+
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  transition: transform 0.3s ease;
+}
+
+.md-header__button.md-logo:hover img,
+.md-header__button.md-logo:hover svg {
+  transform: rotate(-5deg) scale(1.1);
+}
