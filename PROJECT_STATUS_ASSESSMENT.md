@@ -1,7 +1,7 @@
 # Project Status Assessment
 
 **Generated:** 2025-12-17
-**Updated:** 2025-12-17 (Fourth Parallel Implementation: Route Test Coverage Expansion)
+**Updated:** 2025-12-17 (Added Academic Year Transition & MyEvaluations Integration Plans)
 **Current Branch:** `claude/evaluate-project-status-9lLWa`
 **Overall Status:** 100% Complete - Production Ready with Comprehensive Test Coverage
 
@@ -1565,6 +1565,215 @@ Current state of feature access across interfaces:
 | Read receipts for notifications | 🟢 Low | 4h | Accountability |
 | Color-blind heatmap mode | 🟢 Low | 2h | Accessibility |
 | Import rollback button | 🟢 Low | 3h | Error recovery |
+
+---
+
+---
+
+## Future Implementation: Academic Year Transition System
+
+> **Priority:** High (operational necessity)
+> **Status:** Not Started — Design documented
+> **Effort:** 8-12 hours
+
+### Problem Statement
+
+No functionality currently exists to handle the annual academic year transition:
+- Promoting residents by PGY level (PGY-1→2, PGY-2→3)
+- Removing/archiving graduating PGY-3 residents
+- Onboarding incoming interns (new PGY-1 class)
+- Onboarding new faculty members
+- Template assignment restrictions by PGY level
+
+### Current State
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| `pgy_level` field on Person | ✅ Exists | Integer 1-3, check constraint enforced |
+| PGY-based API filtering | ✅ Exists | `?pgy_level=2` on various endpoints |
+| Supervision ratios by PGY | ✅ Exists | In ApplicationSettings |
+| **Bulk PGY promotion** | ❌ Missing | No function to increment PGY levels |
+| **Graduation workflow** | ❌ Missing | No archive/soft-delete for graduates |
+| **Intern onboarding** | ❌ Missing | No batch add for new class |
+| **Faculty onboarding** | ❌ Missing | No dedicated workflow |
+| **Template PGY requirements** | ❌ Missing | Templates accept any PGY level |
+
+### Proposed Implementation
+
+#### 1. Database Schema Changes
+
+```python
+# Add to Person model
+cohort_year = Column(Integer, nullable=True)  # e.g., 2024 for class of 2024
+start_date = Column(Date, nullable=True)       # Residency start date
+graduation_date = Column(Date, nullable=True)  # Expected/actual graduation
+is_active = Column(Boolean, default=True)      # Soft delete for graduates
+
+# Add to RotationTemplate model
+applicable_pgy_levels = Column(ARRAY(Integer), nullable=True)  # e.g., [1, 2] for PGY-1/2 only
+min_pgy_level = Column(Integer, nullable=True)                  # Minimum PGY required
+```
+
+#### 2. New Service: `year_transition_service.py`
+
+```python
+class YearTransitionService:
+    """Handles academic year transitions for residency program"""
+
+    async def promote_pgy_cohort(self, academic_year: str) -> PromotionResult:
+        """
+        Promote all residents by one PGY level.
+        - PGY-1 → PGY-2
+        - PGY-2 → PGY-3
+        - PGY-3 → Graduated (is_active=False, graduation_date set)
+        """
+
+    async def graduate_residents(self, person_ids: List[UUID]) -> GraduationResult:
+        """Archive specific residents as graduated"""
+
+    async def onboard_new_interns(self, interns: List[PersonCreate]) -> OnboardingResult:
+        """Bulk add new PGY-1 residents for incoming class"""
+
+    async def onboard_new_faculty(self, faculty: List[PersonCreate]) -> OnboardingResult:
+        """Add new faculty members with credentials setup"""
+
+    async def generate_year_end_report(self, academic_year: str) -> YearEndReport:
+        """Summary of transitions, coverage impact, audit trail"""
+
+    async def preview_transition(self, academic_year: str) -> TransitionPreview:
+        """Dry-run showing what would happen (no commits)"""
+```
+
+#### 3. New API Endpoints
+
+```
+POST /api/transitions/promote-residents
+POST /api/transitions/graduate-residents
+POST /api/transitions/onboard-interns
+POST /api/transitions/onboard-faculty
+GET  /api/transitions/preview?academic_year=2024-2025
+GET  /api/transitions/year-end-report?academic_year=2024-2025
+```
+
+#### 4. Frontend Components
+
+- Year Transition wizard (admin only)
+- Promotion preview with affected residents list
+- Graduation confirmation with archive notice
+- Intern bulk import from CSV/ERAS
+- Faculty onboarding form with credential pre-setup
+
+### Implementation Checklist
+
+- [ ] Database migration for Person model changes (cohort_year, start_date, graduation_date, is_active)
+- [ ] Database migration for RotationTemplate PGY restrictions
+- [ ] Create `YearTransitionService` with all methods
+- [ ] Create API routes with admin-only authorization
+- [ ] Create schemas for transition DTOs
+- [ ] Add comprehensive test coverage
+- [ ] Create frontend Year Transition wizard
+- [ ] Add audit logging for all transition actions
+- [ ] Documentation for coordinators
+
+---
+
+## Future Integration: MyEvaluations API
+
+> **Priority:** Medium (nice-to-have integration)
+> **Status:** Research Required — No public API documentation found
+> **Effort:** Unknown (depends on API availability)
+
+### What is MyEvaluations?
+
+[MyEvaluations](https://www.myevaluations.com/) is a medical education management platform used by 900+ institutions for:
+- Resident/fellow evaluations and milestones
+- Procedure logging and patient logs
+- Clinical hours tracking
+- EPA (Entrustable Professional Activities) portfolios
+- ACGME compliance reporting
+
+### Desired Integration
+
+| Feature | Direction | Use Case |
+|---------|-----------|----------|
+| **Procedure logs** | Read-only | Display resident procedure counts in scheduler |
+| **Evaluations** | Read-only | Show evaluation completion status |
+| **Schedule sync** | Write | Push assignments to MyEvaluations |
+| **Clinical hours** | Read-only | Verify ACGME compliance against our tracking |
+
+### API Research Findings
+
+**From MyEvaluations website (2025-12-17):**
+
+| Integration Type | Availability | Notes |
+|------------------|--------------|-------|
+| Schedule sync (AMION, QGenda, Momentum) | ✅ Supported | Via MySchedule module |
+| SSO (Single Sign-On) | ✅ Supported | Third-party service integration |
+| Clinical Log 3rd Party Integration | ✅ Mentioned | No technical details |
+| EHR/EMR Integration | ✅ Mentioned | "Seamlessly connect your systems" |
+| IRIS/STAR Export | ✅ Supported | Compliance reporting |
+| **Public REST API** | ❓ Unknown | Not documented publicly |
+| **Webhooks** | ❓ Unknown | Not documented publicly |
+| **Developer documentation** | ❌ Not found | Contact required |
+
+### Security & Compliance
+
+MyEvaluations advertises:
+- HIPAA and HITECH compliance
+- SOC 1 & SOC 2 compliance
+- 3072-bit SSL encryption
+- SecurityMetrics verified
+
+### Next Steps
+
+1. **Contact MyEvaluations** at Sales@MyEvaluations.com or (866) 422-0554
+   - Request API documentation
+   - Ask about read-only access for procedure logs and evaluations
+   - Inquire about schedule push capability
+   - Understand authentication requirements (OAuth, API keys, etc.)
+
+2. **If API Available:**
+   - Create `myevaluations_integration_service.py`
+   - Add credentials to environment config
+   - Implement read-only endpoints for procedure/evaluation data
+   - Add to person detail view in frontend
+
+3. **If No API:**
+   - Explore AMION/QGenda integration as intermediary
+   - Consider CSV import/export as fallback
+   - Manual data entry with MyEvaluations as source-of-truth
+
+### Potential Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    MyEvaluations Integration                 │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│   ┌──────────────┐         ┌──────────────────────────┐     │
+│   │  Our System  │ ──────▶ │  MyEvaluations API       │     │
+│   │              │         │  (if available)          │     │
+│   │  Read-only:  │ ◀────── │                          │     │
+│   │  - Procedures│         │  Permissions:            │     │
+│   │  - Evals     │         │  - Read procedures       │     │
+│   │  - Hours     │         │  - Read evaluations      │     │
+│   └──────────────┘         │  - NO write to evals     │     │
+│                            └──────────────────────────┘     │
+│                                                              │
+│   Fallback: CSV import from MyEvaluations reports            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Implementation Checklist (Pending API Confirmation)
+
+- [ ] Contact MyEvaluations for API documentation
+- [ ] Evaluate authentication requirements
+- [ ] Create `myevaluations_client.py` with read-only methods
+- [ ] Add procedure count display to resident profile
+- [ ] Add evaluation status to resident dashboard
+- [ ] Create admin settings for MyEvaluations credentials
+- [ ] Implement caching to minimize API calls
+- [ ] Add error handling for API unavailability
 
 ---
 
