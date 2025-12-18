@@ -30,12 +30,29 @@ Resources provide read-only access to scheduling data:
 
 ## Available Tools
 
+### Synchronous Tools
+
 Tools enable active operations and analyses:
 
 - **validate_schedule** - Validate a schedule against ACGME work hour rules
 - **run_contingency_analysis** - Analyze impact of faculty absences or emergencies
 - **detect_conflicts** - Identify scheduling conflicts and auto-resolution options
 - **analyze_swap_candidates** - Find optimal swap matches for schedule changes
+
+### Async Task Management Tools
+
+Background task tools for long-running operations using Celery:
+
+- **start_background_task** - Start a background task (resilience analysis, metrics computation, etc.)
+- **get_task_status** - Poll task status and retrieve results
+- **cancel_task** - Cancel a running or queued task
+- **list_active_tasks** - List all currently active tasks
+
+**Supported Task Types:**
+- Resilience tasks: health check, contingency analysis, fallback precomputation, utilization forecast
+- Metrics tasks: schedule metrics computation, snapshots, cleanup, fairness reports
+
+See [ASYNC_TOOLS.md](./ASYNC_TOOLS.md) for comprehensive documentation and examples.
 
 ## Installation
 
@@ -52,6 +69,26 @@ The MCP server connects to the same database as the main application. Set these 
 DATABASE_URL=postgresql://user:password@localhost:5432/residency_scheduler
 API_BASE_URL=http://localhost:8000  # Optional: for API integration
 ```
+
+### For Async Task Management
+
+To use async task tools, you also need:
+
+1. **Redis** - Celery message broker
+   ```bash
+   docker-compose up -d redis
+   ```
+
+2. **Celery Worker** - Background task processor
+   ```bash
+   cd backend
+   ../scripts/start-celery.sh worker
+   ```
+
+3. **PYTHONPATH** - Include backend directory
+   ```bash
+   export PYTHONPATH=/path/to/backend:$PYTHONPATH
+   ```
 
 ## Running the Server
 
@@ -81,13 +118,19 @@ Add to your MCP client configuration:
 ```
 mcp-server/
 ├── README.md                          # This file
+├── ASYNC_TOOLS.md                     # Async task tools documentation
 ├── pyproject.toml                     # Python project configuration
+├── examples/
+│   └── async_task_example.py          # Example usage of async tools
+├── tests/
+│   └── test_async_tools.py            # Unit tests for async tools
 └── src/
     └── scheduler_mcp/
         ├── __init__.py                # Package initialization
         ├── server.py                  # Main MCP server entry point
         ├── resources.py               # Resource definitions
-        └── tools.py                   # Tool definitions
+        ├── tools.py                   # Tool definitions
+        └── async_tools.py             # Async task management tools
 ```
 
 ### Adding New Tools

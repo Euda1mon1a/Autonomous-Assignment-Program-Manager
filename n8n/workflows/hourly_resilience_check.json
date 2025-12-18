@@ -1,0 +1,522 @@
+{
+  "name": "Hourly Resilience Health Check",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/api/v1/resilience/health",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "http-health-check",
+      "name": "Get Resilience Health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/api/v1/resilience/load-shedding",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "http-load-shedding",
+      "name": "Get Load Shedding Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [470, 500]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse health check response and enrichment data\nconst healthData = $input.first().json;\nconst loadSheddingData = $input.all()[1]?.json || {};\n\n// Extract key metrics\nconst timestamp = healthData.timestamp || new Date().toISOString();\nconst overallStatus = healthData.overall_status || 'unknown';\nconst utilizationRate = healthData.utilization?.utilization_rate || 0;\nconst utilizationLevel = healthData.utilization?.level || 'UNKNOWN';\nconst bufferRemaining = healthData.utilization?.buffer_remaining || 0;\nconst defenseLevel = healthData.defense_level || 'UNKNOWN';\nconst loadSheddingLevel = healthData.load_shedding_level || loadSheddingData.level || 'NORMAL';\nconst crisisMode = healthData.crisis_mode || false;\nconst n1Pass = healthData.n1_pass !== false;\nconst n2Pass = healthData.n2_pass !== false;\nconst phaseTransitionRisk = healthData.phase_transition_risk || 'low';\nconst activeFallbacks = healthData.active_fallbacks || [];\nconst immediateActions = healthData.immediate_actions || [];\nconst watchItems = healthData.watch_items || [];\nconst redundancyStatus = healthData.redundancy_status || [];\n\n// Map overall status to severity for routing\nconst severityMap = {\n  'healthy': 'GREEN',\n  'warning': 'YELLOW',\n  'degraded': 'ORANGE',\n  'critical': 'RED',\n  'emergency': 'BLACK'\n};\n\nconst severity = severityMap[overallStatus] || 'YELLOW';\n\n// Map defense level to emoji\nconst defenseEmoji = {\n  'PREVENTION': ':shield:',\n  'CONTROL': ':warning:',\n  'SAFETY_SYSTEMS': ':rotating_light:',\n  'CONTAINMENT': ':fire:',\n  'EMERGENCY': ':sos:'\n};\n\n// Map utilization level to emoji and color\nconst utilizationEmoji = {\n  'GREEN': ':white_check_mark:',\n  'YELLOW': ':large_orange_diamond:',\n  'ORANGE': ':warning:',\n  'RED': ':red_circle:',\n  'BLACK': ':skull:'\n};\n\n// Calculate degradation (would need previous hour's data from database)\n// For now, set to null - implement trend analysis later\nconst degradationTrend = null;\n\n// Check for critical conditions\nconst isCritical = severity === 'RED' || severity === 'BLACK' || crisisMode;\nconst isWarning = severity === 'YELLOW' || severity === 'ORANGE';\nconst hasImmediateActions = immediateActions.length > 0;\nconst hasRedundancyIssues = redundancyStatus.some(r => r.status === 'N+0' || r.status === 'BELOW');\nconst hasPhaseTransitionRisk = ['high', 'critical'].includes(phaseTransitionRisk);\n\n// Build enriched data object\nreturn {\n  json: {\n    timestamp,\n    overallStatus,\n    severity,\n    utilizationRate,\n    utilizationLevel,\n    utilizationEmoji: utilizationEmoji[utilizationLevel] || ':question:',\n    bufferRemaining,\n    defenseLevel,\n    defenseEmoji: defenseEmoji[defenseLevel] || ':shield:',\n    loadSheddingLevel,\n    crisisMode,\n    n1Pass,\n    n2Pass,\n    phaseTransitionRisk,\n    activeFallbacks,\n    activeFallbacksCount: activeFallbacks.length,\n    immediateActions,\n    immediateActionsCount: immediateActions.length,\n    watchItems,\n    watchItemsCount: watchItems.length,\n    redundancyStatus,\n    \n    // Flags for routing\n    isCritical,\n    isWarning,\n    hasImmediateActions,\n    hasRedundancyIssues,\n    hasPhaseTransitionRisk,\n    degradationTrend,\n    \n    // Original data for reference\n    rawHealthData: healthData,\n    rawLoadSheddingData: loadSheddingData\n  }\n};"
+      },
+      "id": "function-parse-data",
+      "name": "Parse and Enrich Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Build Slack Block Kit message based on severity\nconst data = $input.first().json;\n\n// Color coding for Slack attachments\nconst severityColors = {\n  'GREEN': '#36a64f',\n  'YELLOW': '#FFA500',\n  'ORANGE': '#FF8C00',\n  'RED': '#FF0000',\n  'BLACK': '#800080'\n};\n\nconst color = severityColors[data.severity] || '#808080';\n\n// Build header with emoji indicator\nconst statusEmojis = {\n  'GREEN': ':white_check_mark:',\n  'YELLOW': ':large_orange_diamond:',\n  'ORANGE': ':warning:',\n  'RED': ':rotating_light:',\n  'BLACK': ':sos:'\n};\n\nconst statusEmoji = statusEmojis[data.severity];\nconst headerText = `${statusEmoji} Resilience Health Check - ${data.severity}`;\n\n// Build blocks\nconst blocks = [\n  {\n    \"type\": \"header\",\n    \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": headerText,\n      \"emoji\": true\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"fields\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Overall Status:*\\n${data.overallStatus.toUpperCase()}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Timestamp:*\\n${new Date(data.timestamp).toLocaleString()}`\n      }\n    ]\n  },\n  {\n    \"type\": \"divider\"\n  },\n  {\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": `*Utilization Metrics*`\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"fields\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Utilization Rate:*\\n${(data.utilizationRate * 100).toFixed(1)}%`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Level:*\\n${data.utilizationEmoji} ${data.utilizationLevel}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Buffer Remaining:*\\n${(data.bufferRemaining * 100).toFixed(1)}%`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Defense Level:*\\n${data.defenseEmoji} ${data.defenseLevel}`\n      }\n    ]\n  },\n  {\n    \"type\": \"divider\"\n  },\n  {\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": `*System Status*`\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"fields\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Crisis Mode:*\\n${data.crisisMode ? ':fire: ACTIVE' : ':white_check_mark: Inactive'}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Load Shedding:*\\n${data.loadSheddingLevel}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*N-1 Compliant:*\\n${data.n1Pass ? ':white_check_mark:' : ':x:'}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*N-2 Compliant:*\\n${data.n2Pass ? ':white_check_mark:' : ':x:'}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Phase Transition Risk:*\\n${data.phaseTransitionRisk.toUpperCase()}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Active Fallbacks:*\\n${data.activeFallbacksCount}`\n      }\n    ]\n  }\n];\n\n// Add redundancy issues if any\nif (data.hasRedundancyIssues) {\n  blocks.push({\n    \"type\": \"divider\"\n  });\n  blocks.push({\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": `:warning: *Redundancy Issues Detected*`\n    }\n  });\n  \n  const criticalRedundancy = data.redundancyStatus.filter(r => r.status === 'BELOW' || r.status === 'N+0');\n  criticalRedundancy.slice(0, 3).forEach(r => {\n    blocks.push({\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": `• *${r.service || 'Unknown'}*: ${r.status} (${r.available}/${r.minimum_required} required)`\n      }\n    });\n  });\n}\n\n// Add immediate actions if any\nif (data.immediateActionsCount > 0) {\n  blocks.push({\n    \"type\": \"divider\"\n  });\n  blocks.push({\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": `:rotating_light: *Immediate Actions Required (${data.immediateActionsCount})*`\n    }\n  });\n  \n  data.immediateActions.slice(0, 5).forEach(action => {\n    blocks.push({\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": `• ${action}`\n      }\n    });\n  });\n}\n\n// Add watch items if present and not too many blocks\nif (data.watchItemsCount > 0 && blocks.length < 40) {\n  blocks.push({\n    \"type\": \"divider\"\n  });\n  blocks.push({\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": `:eyes: *Watch Items (${data.watchItemsCount})*`\n    }\n  });\n  \n  data.watchItems.slice(0, 3).forEach(item => {\n    blocks.push({\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": `• ${item}`\n      }\n    });\n  });\n}\n\n// Add active fallbacks if any\nif (data.activeFallbacksCount > 0) {\n  blocks.push({\n    \"type\": \"divider\"\n  });\n  blocks.push({\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": `:warning: *Active Fallback Schedules (${data.activeFallbacksCount})*`\n    }\n  });\n  \n  data.activeFallbacks.forEach(fb => {\n    blocks.push({\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": `• ${fb}`\n      }\n    });\n  });\n}\n\n// Add context footer\nblocks.push({\n  \"type\": \"context\",\n  \"elements\": [\n    {\n      \"type\": \"mrkdwn\",\n      \"text\": `Checked at ${new Date(data.timestamp).toLocaleString()} | View full report: ${process.env.API_BASE_URL}/resilience/dashboard`\n    }\n  ]\n});\n\nreturn {\n  json: {\n    blocks,\n    text: `${headerText} - ${data.overallStatus}`,\n    attachments: [\n      {\n        color: color,\n        fallback: `Resilience Health: ${data.severity} - ${data.overallStatus}`\n      }\n    ]\n  }\n};"
+      },
+      "id": "function-format-slack",
+      "name": "Format Slack Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [910, 300]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.severity }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "GREEN"
+            },
+            {
+              "value2": "YELLOW"
+            },
+            {
+              "value2": "ORANGE"
+            },
+            {
+              "value2": "RED"
+            },
+            {
+              "value2": "BLACK"
+            }
+          ]
+        },
+        "fallbackOutput": 1
+      },
+      "id": "switch-severity",
+      "name": "Route by Severity",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [1130, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// GREEN - Log only, no alerts\nconst data = $input.first().json;\n\nreturn {\n  json: {\n    action: 'log_only',\n    severity: 'GREEN',\n    message: `Resilience health check: ${data.overallStatus} - All systems nominal`,\n    timestamp: data.timestamp,\n    metrics: {\n      utilizationRate: data.utilizationRate,\n      bufferRemaining: data.bufferRemaining,\n      defenseLevel: data.defenseLevel\n    }\n  }\n};"
+      },
+      "id": "function-green-action",
+      "name": "GREEN - Log Only",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1350, 100]
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "url": "={{ $env.SLACK_WEBHOOK_OPS }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "http-slack-yellow",
+      "name": "Slack Warning (Ops)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1350, 250]
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "url": "={{ $env.SLACK_WEBHOOK_OPS }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "http-slack-orange",
+      "name": "Slack Alert (Ops)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1350, 400]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Build email for coordinators (ORANGE level)\nconst prevData = $input.first().json;\nconst slackData = prevData.rawHealthData || prevData;\n\nconst emailBody = `\nResilient Scheduler - ORANGE Alert\n\nOverall Status: ${prevData.overallStatus?.toUpperCase() || 'DEGRADED'}\nTimestamp: ${new Date(prevData.timestamp).toLocaleString()}\n\n=== UTILIZATION ===\nUtilization Rate: ${(prevData.utilizationRate * 100).toFixed(1)}%\nBuffer Remaining: ${(prevData.bufferRemaining * 100).toFixed(1)}%\nLevel: ${prevData.utilizationLevel}\n\n=== SYSTEM STATUS ===\nDefense Level: ${prevData.defenseLevel}\nLoad Shedding: ${prevData.loadSheddingLevel}\nCrisis Mode: ${prevData.crisisMode ? 'ACTIVE' : 'Inactive'}\nN-1 Compliant: ${prevData.n1Pass ? 'Yes' : 'NO'}\nN-2 Compliant: ${prevData.n2Pass ? 'Yes' : 'NO'}\nPhase Transition Risk: ${prevData.phaseTransitionRisk?.toUpperCase()}\n\n=== IMMEDIATE ACTIONS (${prevData.immediateActionsCount || 0}) ===\n${(prevData.immediateActions || []).map((a, i) => `${i+1}. ${a}`).join('\\n')}\n\n=== WATCH ITEMS (${prevData.watchItemsCount || 0}) ===\n${(prevData.watchItems || []).slice(0, 5).map((a, i) => `${i+1}. ${a}`).join('\\n')}\n\nView full dashboard: ${process.env.API_BASE_URL}/resilience/dashboard\n`;\n\nreturn {\n  json: {\n    to: process.env.COORDINATOR_EMAILS,\n    subject: `[ORANGE ALERT] Residency Scheduler Resilience Warning`,\n    body: emailBody,\n    html: emailBody.replace(/\\n/g, '<br>'),\n    priority: 'high'\n  }\n};"
+      },
+      "id": "function-email-orange",
+      "name": "Format Email (Orange)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1570, 400]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.SMTP_FROM_EMAIL || 'scheduler@example.com' }}",
+        "toEmail": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "priority": "high"
+        }
+      },
+      "id": "email-send-orange",
+      "name": "Send Email (Orange)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1790, 400],
+      "credentials": {
+        "smtp": {
+          "id": "smtp-credentials",
+          "name": "SMTP Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "url": "={{ $env.SLACK_WEBHOOK_OPS }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "http-slack-red",
+      "name": "Slack Critical Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1350, 550]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Build critical email for RED/BLACK level\nconst prevData = $input.first().json;\n\nconst emailBody = `\n⚠️ CRITICAL ALERT ⚠️\nResilient Scheduler - ${prevData.severity} Alert\n\nOverall Status: ${prevData.overallStatus?.toUpperCase() || 'CRITICAL'}\nTimestamp: ${new Date(prevData.timestamp).toLocaleString()}\n\nCRITICAL CONDITIONS:\n${prevData.crisisMode ? '🔥 CRISIS MODE ACTIVE\\n' : ''}\n${!prevData.n1Pass ? '❌ N-1 CONTINGENCY FAILURE\\n' : ''}\n${!prevData.n2Pass ? '❌ N-2 CONTINGENCY FAILURE\\n' : ''}\n${prevData.hasPhaseTransitionRisk ? '⚠️ PHASE TRANSITION RISK: ' + prevData.phaseTransitionRisk?.toUpperCase() + '\\n' : ''}\n\n=== UTILIZATION ===\nUtilization Rate: ${(prevData.utilizationRate * 100).toFixed(1)}%\nBuffer Remaining: ${(prevData.bufferRemaining * 100).toFixed(1)}%\nLevel: ${prevData.utilizationLevel}\n\n=== SYSTEM STATUS ===\nDefense Level: ${prevData.defenseLevel}\nLoad Shedding: ${prevData.loadSheddingLevel}\nActive Fallbacks: ${prevData.activeFallbacksCount}\n\n=== IMMEDIATE ACTIONS REQUIRED (${prevData.immediateActionsCount || 0}) ===\n${(prevData.immediateActions || []).map((a, i) => `${i+1}. ${a}`).join('\\n')}\n\n${prevData.hasRedundancyIssues ? '=== REDUNDANCY ISSUES ===\\n' + (prevData.redundancyStatus || []).filter(r => r.status === 'BELOW' || r.status === 'N+0').map(r => `❌ ${r.service}: ${r.status} (${r.available}/${r.minimum_required})`).join('\\n') : ''}\n\nURGENT: Leadership notification required.\nView full dashboard: ${process.env.API_BASE_URL}/resilience/dashboard\n`;\n\nreturn {\n  json: {\n    to: process.env.COORDINATOR_EMAILS,\n    subject: `[${prevData.severity} CRITICAL] Residency Scheduler Emergency`,\n    body: emailBody,\n    html: emailBody.replace(/\\n/g, '<br>'),\n    priority: 'urgent'\n  }\n};"
+      },
+      "id": "function-email-red",
+      "name": "Format Email (Red/Black)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1570, 550]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.SMTP_FROM_EMAIL || 'scheduler@example.com' }}",
+        "toEmail": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "priority": "high"
+        }
+      },
+      "id": "email-send-red",
+      "name": "Send Email (Red/Black)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1790, 550],
+      "credentials": {
+        "smtp": {
+          "id": "smtp-credentials",
+          "name": "SMTP Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $env.PAGERDUTY_KEY }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-pagerduty-configured",
+      "name": "PagerDuty Configured?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1570, 700]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Build PagerDuty event\nconst prevData = $input.first().json;\n\nreturn {\n  json: {\n    routing_key: process.env.PAGERDUTY_KEY,\n    event_action: 'trigger',\n    payload: {\n      summary: `[${prevData.severity}] Resilience Health Critical - ${prevData.overallStatus}`,\n      severity: prevData.severity === 'BLACK' ? 'critical' : 'error',\n      source: 'resilience-scheduler',\n      timestamp: prevData.timestamp,\n      component: 'resilience-monitoring',\n      group: 'scheduler',\n      class: 'health-check',\n      custom_details: {\n        overall_status: prevData.overallStatus,\n        severity_level: prevData.severity,\n        utilization_rate: `${(prevData.utilizationRate * 100).toFixed(1)}%`,\n        buffer_remaining: `${(prevData.bufferRemaining * 100).toFixed(1)}%`,\n        defense_level: prevData.defenseLevel,\n        load_shedding: prevData.loadSheddingLevel,\n        crisis_mode: prevData.crisisMode,\n        n1_compliant: prevData.n1Pass,\n        n2_compliant: prevData.n2Pass,\n        phase_transition_risk: prevData.phaseTransitionRisk,\n        immediate_actions: prevData.immediateActions?.slice(0, 3),\n        dashboard_url: `${process.env.API_BASE_URL}/resilience/dashboard`\n      }\n    },\n    links: [\n      {\n        href: `${process.env.API_BASE_URL}/resilience/dashboard`,\n        text: 'View Dashboard'\n      }\n    ]\n  }\n};"
+      },
+      "id": "function-pagerduty",
+      "name": "Format PagerDuty Event",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1790, 650]
+    },
+    {
+      "parameters": {
+        "url": "https://events.pagerduty.com/v2/enqueue",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "http-pagerduty",
+      "name": "Send to PagerDuty",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2010, 650]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Store metrics for trend analysis\n// This would ideally write to a database or time-series store\n// For now, just prepare the data structure\n\nconst data = $input.first().json;\n\nconst metricsRecord = {\n  timestamp: data.timestamp,\n  overall_status: data.overallStatus,\n  severity: data.severity,\n  utilization_rate: data.utilizationRate,\n  utilization_level: data.utilizationLevel,\n  buffer_remaining: data.bufferRemaining,\n  defense_level: data.defenseLevel,\n  load_shedding_level: data.loadSheddingLevel,\n  crisis_mode: data.crisisMode,\n  n1_pass: data.n1Pass,\n  n2_pass: data.n2Pass,\n  phase_transition_risk: data.phaseTransitionRisk,\n  active_fallbacks_count: data.activeFallbacksCount,\n  immediate_actions_count: data.immediateActionsCount,\n  watch_items_count: data.watchItemsCount,\n  has_redundancy_issues: data.hasRedundancyIssues\n};\n\n// Could POST to a metrics endpoint or database here\n// For now, just return the structured data\n\nreturn {\n  json: {\n    action: 'log_metrics',\n    record: metricsRecord\n  }\n};"
+      },
+      "id": "function-log-metrics",
+      "name": "Log Metrics for Trends",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1350, 850]
+    }
+  ],
+  "connections": {
+    "Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Get Resilience Health",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Load Shedding Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Resilience Health": {
+      "main": [
+        [
+          {
+            "node": "Parse and Enrich Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Load Shedding Status": {
+      "main": [
+        [
+          {
+            "node": "Parse and Enrich Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse and Enrich Data": {
+      "main": [
+        [
+          {
+            "node": "Format Slack Message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Metrics for Trends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Slack Message": {
+      "main": [
+        [
+          {
+            "node": "Route by Severity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Severity": {
+      "main": [
+        [
+          {
+            "node": "GREEN - Log Only",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack Warning (Ops)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack Alert (Ops)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Format Email (Orange)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack Critical Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Format Email (Red/Black)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "PagerDuty Configured?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack Critical Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Format Email (Red/Black)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "PagerDuty Configured?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Email (Orange)": {
+      "main": [
+        [
+          {
+            "node": "Send Email (Orange)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Email (Red/Black)": {
+      "main": [
+        [
+          {
+            "node": "Send Email (Red/Black)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PagerDuty Configured?": {
+      "main": [
+        [
+          {
+            "node": "Format PagerDuty Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format PagerDuty Event": {
+      "main": [
+        [
+          {
+            "node": "Send to PagerDuty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "timezone": "America/New_York"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "resilience",
+      "id": "resilience"
+    },
+    {
+      "name": "monitoring",
+      "id": "monitoring"
+    },
+    {
+      "name": "alerts",
+      "id": "alerts"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-18T00:00:00.000Z",
+  "versionId": "1",
+  "meta": {
+    "instanceId": "resilience-scheduler"
+  }
+}

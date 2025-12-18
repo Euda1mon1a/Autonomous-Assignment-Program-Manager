@@ -1,0 +1,397 @@
+# Prometheus Alerting Rules for Residency Scheduler System
+#
+# This file defines alerts for critical system conditions including:
+# - High utilization (>80% threshold from queuing theory)
+# - Defense level degradation
+# - Celery task failures
+# - ACGME compliance violations
+# - Schedule coverage gaps
+#
+# Deployment:
+#   1. Copy to: /etc/prometheus/rules/scheduler_alerts.yml
+#   2. Update prometheus.yml to include:
+#      rule_files:
+#        - /etc/prometheus/rules/*.yml
+#   3. Reload: systemctl reload prometheus (or docker-compose restart prometheus)
+#   4. Verify: http://prometheus:9090/alerts
+
+groups:
+  - name: scheduler_resilience
+    interval: 30s
+    rules:
+      # === CRITICAL: System Utilization Alerts ===
+
+      - alert: HighUtilization
+        expr: resilience_utilization_rate{component="overall"} > 0.80
+        for: 5m
+        labels:
+          severity: warning
+          component: resilience
+          tier: tier1
+        annotations:
+          summary: "System utilization exceeds 80% threshold"
+          description: "Utilization is {{ $value | humanizePercentage }} (threshold: 80%). Queuing theory indicates cascade failure risk. Current defense level: {{ query \"resilience_defense_level\" | first | value }}"
+          runbook_url: "https://docs.scheduler.example.com/runbooks/high-utilization"
+          dashboard: "https://grafana.example.com/d/resilience-metrics"
+
+      - alert: CriticalUtilization
+        expr: resilience_utilization_rate{component="overall"} > 0.90
+        for: 2m
+        labels:
+          severity: critical
+          component: resilience
+          tier: tier1
+          page: "true"
+        annotations:
+          summary: "CRITICAL: System utilization exceeds 90%"
+          description: "Utilization is {{ $value | humanizePercentage }} (critical threshold: 90%). Immediate action required to prevent cascade failure. Defense level: {{ query \"resilience_defense_level\" | first | value }}"
+          runbook_url: "https://docs.scheduler.example.com/runbooks/critical-utilization"
+          action_required: "Activate load shedding, review staff availability, consider fallback schedules"
+
+      # === Defense-in-Depth Level Alerts ===
+
+      - alert: DefenseLevelDegraded
+        expr: resilience_defense_level >= 2
+        for: 10m
+        labels:
+          severity: warning
+          component: resilience
+        annotations:
+          summary: "Defense level elevated from Prevention"
+          description: "Defense-in-Depth level is {{ $value }} (1=Prevention, 2=Detection, 3=Response, 4=Recovery, 5=Emergency). System has detected potential issues."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/defense-levels"
+
+      - alert: DefenseLevelCritical
+        expr: resilience_defense_level >= 4
+        for: 5m
+        labels:
+          severity: critical
+          component: resilience
+          page: "true"
+        annotations:
+          summary: "CRITICAL: Defense level at Recovery or Emergency"
+          description: "Defense-in-Depth level is {{ $value }} (4=Recovery, 5=Emergency). System is in crisis response mode. Fallback schedules may be active."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/crisis-response"
+          action_required: "Review active fallbacks, assess incident severity, coordinate with clinical leadership"
+
+      # === N-1/N-2 Contingency Alerts ===
+
+      - alert: N1ContingencyFailed
+        expr: resilience_n1_compliant == 0
+        for: 15m
+        labels:
+          severity: warning
+          component: resilience
+          compliance: acgme
+        annotations:
+          summary: "N-1 contingency analysis failed"
+          description: "System cannot maintain operations if one faculty member becomes unavailable. Redundancy below acceptable level."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/contingency-failure"
+          action_required: "Review staff availability, consider reducing non-essential activities, evaluate recruitment needs"
+
+      - alert: N2ContingencyFailed
+        expr: resilience_n2_compliant == 0
+        for: 5m
+        labels:
+          severity: info
+          component: resilience
+          compliance: acgme
+        annotations:
+          summary: "N-2 contingency analysis failed"
+          description: "System cannot maintain operations if two faculty members become unavailable. This is expected during high-utilization periods but should be monitored."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/contingency-failure"
+
+      - alert: BothContingenciesFailed
+        expr: resilience_n1_compliant == 0 and resilience_n2_compliant == 0
+        for: 30m
+        labels:
+          severity: critical
+          component: resilience
+          compliance: acgme
+          page: "true"
+        annotations:
+          summary: "CRITICAL: Both N-1 and N-2 contingency checks failed"
+          description: "System lacks adequate redundancy. Cannot withstand loss of any faculty member while maintaining ACGME compliance."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/no-redundancy"
+          action_required: "URGENT: Review staffing levels, activate contingency protocols, notify program director"
+
+      # === Coverage Alerts ===
+
+      - alert: ScheduleCoverageGap
+        expr: resilience_coverage_rate < 0.95
+        for: 10m
+        labels:
+          severity: warning
+          component: scheduling
+        annotations:
+          summary: "Schedule coverage below 95%"
+          description: "Current coverage: {{ $value | humanizePercentage }}. Some blocks may not have adequate assignments."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/coverage-gap"
+
+      - alert: CriticalCoverageGap
+        expr: resilience_coverage_rate < 0.85
+        for: 5m
+        labels:
+          severity: critical
+          component: scheduling
+          page: "true"
+        annotations:
+          summary: "CRITICAL: Schedule coverage below 85%"
+          description: "Current coverage: {{ $value | humanizePercentage }}. Significant coverage gaps present. Patient care may be affected."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/critical-coverage-gap"
+          action_required: "Immediate schedule review required, consider activating fallback schedules"
+
+      # === Faculty Availability Alerts ===
+
+      - alert: LowFacultyAvailability
+        expr: resilience_faculty_available{type="on_duty"} < 5
+        for: 15m
+        labels:
+          severity: warning
+          component: staffing
+        annotations:
+          summary: "Low faculty availability"
+          description: "Only {{ $value }} faculty members available. Monitor utilization closely."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/low-staffing"
+
+      - alert: CriticalFacultyShortage
+        expr: resilience_faculty_available{type="on_duty"} < 3
+        for: 5m
+        labels:
+          severity: critical
+          component: staffing
+          page: "true"
+        annotations:
+          summary: "CRITICAL: Severe faculty shortage"
+          description: "Only {{ $value }} faculty members available. Immediate staffing action required."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/critical-staffing"
+          action_required: "Contact on-call staff, review leave schedules, activate emergency staffing protocols"
+
+      # === Load Shedding Alerts ===
+
+      - alert: LoadSheddingActive
+        expr: resilience_load_shedding_level > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: resilience
+        annotations:
+          summary: "Load shedding active"
+          description: "Load shedding level {{ $value }}. Non-essential activities are being suspended. {{ query \"resilience_suspended_activities\" | first | value }} activities currently suspended."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/load-shedding"
+
+      - alert: CriticalLoadShedding
+        expr: resilience_load_shedding_level >= 4
+        for: 2m
+        labels:
+          severity: critical
+          component: resilience
+          page: "true"
+        annotations:
+          summary: "CRITICAL: Severe load shedding in effect"
+          description: "Load shedding level {{ $value }} (4=High, 5=Critical). Most non-essential activities suspended. {{ query \"resilience_suspended_activities\" | first | value }} activities affected."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/critical-load-shedding"
+          action_required: "Review suspended activities, communicate with affected staff, assess duration"
+
+  - name: scheduler_compliance
+    interval: 1m
+    rules:
+      # === ACGME Compliance Alerts ===
+
+      - alert: ACGMEViolationDetected
+        expr: rate(schedule_violations_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          component: compliance
+          compliance: acgme
+          page: "true"
+        annotations:
+          summary: "ACGME compliance violation detected"
+          description: "Violation type: {{ $labels.violation_type }}. Rate: {{ $value | humanize }} violations/sec. Immediate corrective action required."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/acgme-violation"
+          action_required: "Review schedule for violations, correct assignments, document remediation"
+
+      - alert: HighViolationRate
+        expr: sum(rate(schedule_violations_total[1h])) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: compliance
+          compliance: acgme
+        annotations:
+          summary: "Elevated ACGME violation rate"
+          description: "{{ $value | humanize }} violations per second over past hour. Review scheduling logic and constraints."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/high-violation-rate"
+
+  - name: scheduler_tasks
+    interval: 1m
+    rules:
+      # === Celery Task Alerts ===
+
+      - alert: CeleryTaskFailureRate
+        expr: (rate(celery_task_failure_total[5m]) / (rate(celery_task_success_total[5m]) + rate(celery_task_failure_total[5m]))) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          component: celery
+        annotations:
+          summary: "High Celery task failure rate"
+          description: "Task failure rate: {{ $value | humanizePercentage }} (threshold: 5%). Task: {{ $labels.task }}"
+          runbook_url: "https://docs.scheduler.example.com/runbooks/task-failures"
+
+      - alert: CeleryTaskFailureRateCritical
+        expr: (rate(celery_task_failure_total[5m]) / (rate(celery_task_success_total[5m]) + rate(celery_task_failure_total[5m]))) > 0.20
+        for: 5m
+        labels:
+          severity: critical
+          component: celery
+          page: "true"
+        annotations:
+          summary: "CRITICAL: Very high Celery task failure rate"
+          description: "Task failure rate: {{ $value | humanizePercentage }} (critical threshold: 20%). Task: {{ $labels.task }}. Background processing severely degraded."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/critical-task-failures"
+          action_required: "Check worker logs, verify Redis connectivity, review task queue health"
+
+      - alert: CeleryQueueBacklog
+        expr: celery_queue_length > 100
+        for: 15m
+        labels:
+          severity: warning
+          component: celery
+        annotations:
+          summary: "Celery queue backlog"
+          description: "Queue {{ $labels.queue }} has {{ $value }} pending tasks. Workers may be overloaded."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/queue-backlog"
+
+      - alert: CeleryQueueBacklogCritical
+        expr: celery_queue_length > 500
+        for: 5m
+        labels:
+          severity: critical
+          component: celery
+          page: "true"
+        annotations:
+          summary: "CRITICAL: Severe Celery queue backlog"
+          description: "Queue {{ $labels.queue }} has {{ $value }} pending tasks. System may be unable to process background jobs in timely manner."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/critical-queue-backlog"
+          action_required: "Scale up workers, investigate slow tasks, consider clearing low-priority tasks"
+
+      - alert: CeleryNoWorkers
+        expr: celery_workers == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: celery
+          page: "true"
+        annotations:
+          summary: "CRITICAL: No Celery workers active"
+          description: "No Celery workers are running. Background tasks (resilience checks, N-1/N-2 analysis, notifications) will not be processed."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/no-workers"
+          action_required: "Start Celery workers immediately, check worker health, verify Redis connectivity"
+
+      - alert: ResilienceHealthCheckStale
+        expr: time() - resilience_health_check_duration_seconds > 1200
+        for: 5m
+        labels:
+          severity: warning
+          component: resilience
+        annotations:
+          summary: "Resilience health check is stale"
+          description: "No resilience health check has run in over 20 minutes. Scheduled task may be failing."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/stale-health-check"
+          action_required: "Check Celery beat scheduler, review health check task logs"
+
+  - name: scheduler_performance
+    interval: 1m
+    rules:
+      # === Performance Alerts ===
+
+      - alert: SlowScheduleGeneration
+        expr: histogram_quantile(0.95, rate(schedule_generation_duration_seconds_bucket[5m])) > 60
+        for: 10m
+        labels:
+          severity: warning
+          component: performance
+        annotations:
+          summary: "Slow schedule generation"
+          description: "95th percentile schedule generation time: {{ $value | humanizeDuration }}. Algorithm: {{ $labels.algorithm }}. May impact user experience."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/slow-generation"
+
+      - alert: ScheduleGenerationFailures
+        expr: rate(schedule_generation_total{outcome="failure"}[10m]) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          component: scheduling
+        annotations:
+          summary: "Schedule generation failures occurring"
+          description: "{{ $value | humanize }} schedule generation failures per second. Algorithm: {{ $labels.algorithm }}"
+          runbook_url: "https://docs.scheduler.example.com/runbooks/generation-failures"
+
+      - alert: HighContingencyAnalysisDuration
+        expr: histogram_quantile(0.95, rate(resilience_contingency_analysis_duration_seconds_bucket[15m])) > 120
+        for: 15m
+        labels:
+          severity: warning
+          component: resilience
+        annotations:
+          summary: "N-1/N-2 contingency analysis is slow"
+          description: "95th percentile analysis time: {{ $value | humanizeDuration }}. May indicate performance degradation or increased system complexity."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/slow-contingency-analysis"
+
+  - name: scheduler_security
+    interval: 1m
+    rules:
+      # === Security & Authentication Alerts ===
+
+      - alert: HighAuthFailureRate
+        expr: rate(auth_verification_failures_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "High authentication failure rate"
+          description: "{{ $value | humanize }} authentication failures per second. Reason: {{ $labels.reason }}. Possible brute force attack."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/auth-failures"
+
+      - alert: SuspiciousAuthActivity
+        expr: rate(auth_verification_failures_total{reason="invalid_signature"}[5m]) > 0.5
+        for: 2m
+        labels:
+          severity: critical
+          component: security
+          page: "true"
+        annotations:
+          summary: "CRITICAL: Suspicious authentication activity"
+          description: "{{ $value | humanize }} invalid signature failures per second. Possible token tampering or attack."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/suspicious-auth"
+          action_required: "Review access logs, check for compromised tokens, consider rate limiting"
+
+      - alert: HighTokenBlacklistRate
+        expr: rate(auth_tokens_blacklisted_total[10m]) > 0.5
+        for: 5m
+        labels:
+          severity: info
+          component: security
+        annotations:
+          summary: "High token blacklist rate"
+          description: "{{ $value | humanize }} tokens blacklisted per second. Reason: {{ $labels.reason }}. Monitor for anomalies."
+          runbook_url: "https://docs.scheduler.example.com/runbooks/token-blacklist"
+
+# Alert Severity Levels:
+#
+# - info: Informational, no immediate action required
+# - warning: Requires attention, not urgent
+# - critical: Immediate action required
+# - page: "true" label indicates oncall should be paged
+#
+# Runbook URLs should be updated to match your documentation site
+# Dashboard URLs should point to your Grafana instance
+#
+# Integration with Alertmanager:
+# Configure /etc/prometheus/alertmanager.yml to route alerts to:
+# - PagerDuty for critical/page alerts
+# - Slack for warning alerts
+# - Email for info alerts
