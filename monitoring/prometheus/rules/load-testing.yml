@@ -1,0 +1,456 @@
+# Load Testing Alerting and Recording Rules
+# Performance Monitoring and SLO Tracking Under Load
+#
+# SLO Definitions:
+# - API P95 latency: < 500ms (normal), < 2s (under load)
+# - Schedule generation P95: < 300s (5 minutes)
+# - ACGME validation P95: < 5s
+# - Error rate: < 1% (normal), < 5% (under load)
+# - Availability: 99.9%
+# - Connection pool: < 90% utilization
+#
+# Recording rules are evaluated first to optimize alert evaluation performance.
+
+groups:
+  # Recording Rules - Pre-compute expensive queries for efficient alerting
+  - name: load_testing_recording_rules
+    interval: 15s
+    rules:
+      # API Request Rate by Endpoint
+      - record: api:request_rate:5m
+        expr: |
+          sum(rate(http_requests_total{job="residency-scheduler-backend"}[5m])) by (method, path, status)
+
+      # API Request Rate (Total)
+      - record: api:request_rate_total:5m
+        expr: |
+          sum(rate(http_requests_total{job="residency-scheduler-backend"}[5m]))
+
+      # API P50 Latency (Median)
+      - record: api:latency_p50:5m
+        expr: |
+          histogram_quantile(0.50,
+            sum(rate(http_request_duration_seconds_bucket{job="residency-scheduler-backend"}[5m])) by (le, method, path)
+          )
+
+      # API P95 Latency (95th percentile)
+      - record: api:latency_p95:5m
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{job="residency-scheduler-backend"}[5m])) by (le, method, path)
+          )
+
+      # API P99 Latency (99th percentile)
+      - record: api:latency_p99:5m
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_seconds_bucket{job="residency-scheduler-backend"}[5m])) by (le, method, path)
+          )
+
+      # API P95 Latency (Aggregate - across all endpoints)
+      - record: api:latency_p95_aggregate:5m
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{job="residency-scheduler-backend"}[5m])) by (le)
+          )
+
+      # Error Rate (5xx errors / total requests)
+      - record: api:error_rate:5m
+        expr: |
+          sum(rate(http_requests_total{job="residency-scheduler-backend",status=~"5.."}[5m]))
+          /
+          sum(rate(http_requests_total{job="residency-scheduler-backend"}[5m]))
+
+      # Client Error Rate (4xx errors / total requests)
+      - record: api:client_error_rate:5m
+        expr: |
+          sum(rate(http_requests_total{job="residency-scheduler-backend",status=~"4.."}[5m]))
+          /
+          sum(rate(http_requests_total{job="residency-scheduler-backend"}[5m]))
+
+      # Success Rate (2xx + 3xx / total)
+      - record: api:success_rate:5m
+        expr: |
+          sum(rate(http_requests_total{job="residency-scheduler-backend",status=~"[23].."}[5m]))
+          /
+          sum(rate(http_requests_total{job="residency-scheduler-backend"}[5m]))
+
+      # Database Connection Pool Utilization
+      - record: db:pool_utilization:5m
+        expr: |
+          pg_stat_activity_count / pg_settings_max_connections
+
+      # Database Active Connections
+      - record: db:active_connections:5m
+        expr: |
+          avg(pg_stat_activity_count)
+
+      # Schedule Generation P95 Duration
+      - record: schedule:generation_p95:15m
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(schedule_generation_duration_seconds_bucket{job="residency-scheduler-backend"}[15m])) by (le)
+          )
+
+      # ACGME Validation P95 Duration
+      - record: acgme:validation_p95:5m
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(acgme_validation_duration_seconds_bucket{job="residency-scheduler-backend"}[5m])) by (le)
+          )
+
+      # Request Throughput (requests per second)
+      - record: api:throughput:1m
+        expr: |
+          sum(rate(http_requests_total{job="residency-scheduler-backend"}[1m]))
+
+  # Load Testing Alert Rules
+  - name: load_testing_performance_alerts
+    interval: 30s
+    rules:
+      # API P95 Latency Warning (Normal Load)
+      - alert: LoadTestLatencyWarning
+        expr: api:latency_p95_aggregate:5m > 0.5 and api:latency_p95_aggregate:5m <= 2
+        for: 2m
+        labels:
+          severity: warning
+          service: backend
+          category: performance
+        annotations:
+          summary: "API P95 latency elevated during load test"
+          description: "P95 latency is {{ $value | humanizeDuration }}, exceeding normal 500ms threshold but within 2s load threshold."
+          runbook_url: "docs/runbooks/load-testing-latency.md"
+
+      # API P95 Latency Critical (Load Test Failure)
+      - alert: LoadTestLatencyDegradation
+        expr: api:latency_p95_aggregate:5m > 2
+        for: 2m
+        labels:
+          severity: critical
+          service: backend
+          category: performance
+        annotations:
+          summary: "P95 latency exceeded 2s during load test"
+          description: "CRITICAL: P95 latency is {{ $value | humanizeDuration }}, exceeding maximum acceptable threshold of 2 seconds."
+          runbook_url: "docs/runbooks/load-testing-latency.md"
+
+      # Endpoint-Specific Latency Degradation
+      - alert: LoadTestEndpointLatencySlow
+        expr: api:latency_p95:5m > 3
+        for: 3m
+        labels:
+          severity: warning
+          service: backend
+          category: performance
+        annotations:
+          summary: "Specific endpoint latency degraded"
+          description: "Endpoint {{ $labels.method }} {{ $labels.path }} P95 latency is {{ $value | humanizeDuration }}."
+          runbook_url: "docs/runbooks/load-testing-latency.md"
+
+      # High Error Rate Warning (1-5%)
+      - alert: LoadTestErrorRateWarning
+        expr: api:error_rate:5m > 0.01 and api:error_rate:5m <= 0.05
+        for: 2m
+        labels:
+          severity: warning
+          service: backend
+          category: reliability
+        annotations:
+          summary: "Error rate elevated during load test"
+          description: "Error rate is {{ $value | humanizePercentage }}, exceeding normal 1% threshold."
+          runbook_url: "docs/runbooks/load-testing-errors.md"
+
+      # Critical Error Rate (>5%)
+      - alert: LoadTestErrorRateCritical
+        expr: api:error_rate:5m > 0.05
+        for: 1m
+        labels:
+          severity: critical
+          service: backend
+          category: reliability
+        annotations:
+          summary: "CRITICAL: Error rate exceeded 5% during load test"
+          description: "CRITICAL: Error rate is {{ $value | humanizePercentage }}, exceeding maximum threshold of 5%."
+          runbook_url: "docs/runbooks/load-testing-errors.md"
+
+      # Availability SLO Breach (< 99.9%)
+      - alert: LoadTestAvailabilitySLOBreach
+        expr: api:success_rate:5m < 0.999
+        for: 5m
+        labels:
+          severity: critical
+          service: backend
+          category: reliability
+        annotations:
+          summary: "Availability SLO breached during load test"
+          description: "Success rate is {{ $value | humanizePercentage }}, below 99.9% SLO."
+          runbook_url: "docs/runbooks/load-testing-availability.md"
+
+  # Database and Connection Management Alerts
+  - name: load_testing_database_alerts
+    interval: 30s
+    rules:
+      # Connection Pool Warning (70-90%)
+      - alert: LoadTestConnectionPoolHigh
+        expr: db:pool_utilization:5m > 0.7 and db:pool_utilization:5m <= 0.9
+        for: 3m
+        labels:
+          severity: warning
+          service: database
+          category: capacity
+        annotations:
+          summary: "Database connection pool utilization high"
+          description: "Connection pool is {{ $value | humanizePercentage }} utilized, approaching saturation."
+          runbook_url: "docs/runbooks/load-testing-database.md"
+
+      # Connection Pool Saturation (>90%)
+      - alert: LoadTestConnectionPoolSaturation
+        expr: db:pool_utilization:5m > 0.9
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+          category: capacity
+        annotations:
+          summary: "CRITICAL: Database connection pool saturated"
+          description: "CRITICAL: Connection pool is {{ $value | humanizePercentage }} utilized. New requests may fail."
+          runbook_url: "docs/runbooks/load-testing-database.md"
+
+      # Database Query Latency Under Load
+      - alert: LoadTestDatabaseSlowQueries
+        expr: |
+          rate(pg_stat_activity_max_tx_duration{datname!~"template.*"}[5m]) > 30
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+          category: performance
+        annotations:
+          summary: "Database queries slow under load"
+          description: "Long-running queries detected ({{ $value | humanizeDuration }}) during load test."
+          runbook_url: "docs/runbooks/load-testing-database.md"
+
+  # Scheduling-Specific Load Testing Alerts
+  - name: load_testing_scheduling_alerts
+    interval: 60s
+    rules:
+      # Schedule Generation SLO Breach (> 5 minutes P95)
+      - alert: LoadTestScheduleGenerationSLOBreach
+        expr: schedule:generation_p95:15m > 300
+        for: 5m
+        labels:
+          severity: critical
+          service: scheduling
+          category: performance
+        annotations:
+          summary: "Schedule generation SLO breached during load test"
+          description: "Schedule generation P95 is {{ $value | humanizeDuration }}, exceeding 5 minute SLO."
+          runbook_url: "docs/runbooks/load-testing-scheduling.md"
+
+      # Schedule Generation Warning (3-5 minutes P95)
+      - alert: LoadTestScheduleGenerationSlow
+        expr: schedule:generation_p95:15m > 180 and schedule:generation_p95:15m <= 300
+        for: 5m
+        labels:
+          severity: warning
+          service: scheduling
+          category: performance
+        annotations:
+          summary: "Schedule generation slower than expected"
+          description: "Schedule generation P95 is {{ $value | humanizeDuration }}, approaching 5 minute SLO."
+          runbook_url: "docs/runbooks/load-testing-scheduling.md"
+
+      # ACGME Validation Performance
+      - alert: LoadTestACGMEValidationSlow
+        expr: acgme:validation_p95:5m > 5
+        for: 3m
+        labels:
+          severity: warning
+          service: compliance
+          category: performance
+        annotations:
+          summary: "ACGME validation slow under load"
+          description: "ACGME validation P95 is {{ $value | humanizeDuration }}, exceeding 5 second threshold."
+          runbook_url: "docs/runbooks/load-testing-acgme.md"
+
+      # ACGME Validation Critical Slowness
+      - alert: LoadTestACGMEValidationCritical
+        expr: acgme:validation_p95:5m > 10
+        for: 2m
+        labels:
+          severity: critical
+          service: compliance
+          category: performance
+        annotations:
+          summary: "ACGME validation critically slow"
+          description: "CRITICAL: ACGME validation P95 is {{ $value | humanizeDuration }}, severely degraded."
+          runbook_url: "docs/runbooks/load-testing-acgme.md"
+
+  # Rate Limiting and Protection Alerts
+  - name: load_testing_rate_limit_alerts
+    interval: 30s
+    rules:
+      # Rate Limiting Not Triggering (Potential Security Issue)
+      - alert: LoadTestRateLimitNotTriggering
+        expr: |
+          increase(rate_limit_triggered_total{job="residency-scheduler-backend"}[5m]) == 0
+          and
+          increase(http_requests_total{job="residency-scheduler-backend"}[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: security
+          category: rate_limiting
+        annotations:
+          summary: "Rate limiting not triggering during high load"
+          description: "Over 1000 requests in 5 minutes but no rate limits triggered. Rate limiting may be misconfigured."
+          runbook_url: "docs/runbooks/load-testing-rate-limit.md"
+
+      # Excessive Rate Limiting (May indicate attack or misconfiguration)
+      - alert: LoadTestExcessiveRateLimiting
+        expr: |
+          (
+            sum(rate(rate_limit_triggered_total{job="residency-scheduler-backend"}[5m]))
+            /
+            sum(rate(http_requests_total{job="residency-scheduler-backend"}[5m]))
+          ) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+          service: security
+          category: rate_limiting
+        annotations:
+          summary: "Excessive rate limiting during load test"
+          description: "Over 50% of requests are being rate limited. May indicate attack or limits too strict."
+          runbook_url: "docs/runbooks/load-testing-rate-limit.md"
+
+  # Idempotency and Data Integrity Alerts
+  - name: load_testing_idempotency_alerts
+    interval: 30s
+    rules:
+      # Idempotency Failures (Duplicate Creation)
+      - alert: LoadTestIdempotencyFailures
+        expr: increase(idempotency_duplicate_created_total{job="residency-scheduler-backend"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: backend
+          category: data_integrity
+        annotations:
+          summary: "CRITICAL: Idempotency failures detected"
+          description: "CRITICAL: {{ $value }} duplicate resource creations detected. Idempotency keys not working correctly."
+          runbook_url: "docs/runbooks/load-testing-idempotency.md"
+
+      # Idempotency Key Reuse Success
+      - alert: LoadTestIdempotencyKeyReuseHigh
+        expr: increase(idempotency_key_reused_total{job="residency-scheduler-backend"}[5m]) > 100
+        for: 2m
+        labels:
+          severity: info
+          service: backend
+          category: idempotency
+        annotations:
+          summary: "High idempotency key reuse during load test"
+          description: "{{ $value }} idempotent requests in last 5 minutes. Expected during retry-heavy load testing."
+          runbook_url: "docs/runbooks/load-testing-idempotency.md"
+
+  # Throughput and Capacity Alerts
+  - name: load_testing_capacity_alerts
+    interval: 30s
+    rules:
+      # Throughput Baseline Recording
+      - alert: LoadTestThroughputBaseline
+        expr: api:throughput:1m > 100
+        for: 1m
+        labels:
+          severity: info
+          service: backend
+          category: capacity
+        annotations:
+          summary: "High throughput recorded during load test"
+          description: "System handling {{ $value | printf \"%.0f\" }} requests/second. Recording for capacity planning."
+          runbook_url: "docs/runbooks/load-testing-capacity.md"
+
+      # Request Queue Building Up (if exposed)
+      - alert: LoadTestRequestQueueBacklog
+        expr: |
+          http_request_queue_depth{job="residency-scheduler-backend"} > 50
+        for: 2m
+        labels:
+          severity: warning
+          service: backend
+          category: capacity
+        annotations:
+          summary: "Request queue backlog building"
+          description: "{{ $value }} requests queued. System may be at capacity."
+          runbook_url: "docs/runbooks/load-testing-capacity.md"
+
+  # Celery Background Task Performance
+  - name: load_testing_celery_alerts
+    interval: 60s
+    rules:
+      # Celery Queue Depth High
+      - alert: LoadTestCeleryQueueDepthHigh
+        expr: |
+          celery_queue_length{job="residency-scheduler-backend"} > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: celery
+          category: performance
+        annotations:
+          summary: "Celery queue depth high during load test"
+          description: "Celery queue '{{ $labels.queue }}' has {{ $value }} pending tasks."
+          runbook_url: "docs/runbooks/load-testing-celery.md"
+
+      # Celery Task Execution Time High
+      - alert: LoadTestCeleryTasksSlow
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(celery_task_duration_seconds_bucket{job="residency-scheduler-backend"}[5m])) by (le, task)
+          ) > 60
+        for: 5m
+        labels:
+          severity: warning
+          service: celery
+          category: performance
+        annotations:
+          summary: "Celery tasks executing slowly"
+          description: "Task '{{ $labels.task }}' P95 duration is {{ $value | humanizeDuration }}."
+          runbook_url: "docs/runbooks/load-testing-celery.md"
+
+  # Memory and Resource Leaks
+  - name: load_testing_resource_alerts
+    interval: 60s
+    rules:
+      # Memory Growth During Load Test
+      - alert: LoadTestMemoryGrowth
+        expr: |
+          (
+            (process_resident_memory_bytes{job="residency-scheduler-backend"} - process_resident_memory_bytes{job="residency-scheduler-backend"} offset 10m)
+            /
+            process_resident_memory_bytes{job="residency-scheduler-backend"} offset 10m
+          ) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          service: backend
+          category: resource_leak
+        annotations:
+          summary: "Memory growth during load test"
+          description: "Memory usage increased by {{ $value | humanizePercentage }} in 10 minutes. Possible memory leak."
+          runbook_url: "docs/runbooks/load-testing-memory.md"
+
+      # File Descriptor Exhaustion Risk
+      - alert: LoadTestFileDescriptorsHigh
+        expr: |
+          (process_open_fds{job="residency-scheduler-backend"} / process_max_fds{job="residency-scheduler-backend"}) > 0.8
+        for: 5m
+        labels:
+          severity: critical
+          service: backend
+          category: resource_leak
+        annotations:
+          summary: "File descriptor usage high"
+          description: "Using {{ $value | humanizePercentage }} of available file descriptors. May exhaust soon."
+          runbook_url: "docs/runbooks/load-testing-resources.md"
