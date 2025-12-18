@@ -1,5 +1,6 @@
 """Automated backup scheduling service."""
 import json
+import logging
 from datetime import datetime, time, timedelta
 from pathlib import Path
 from typing import Any
@@ -7,6 +8,15 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.maintenance.backup import BackupService
+
+# Import custom exceptions
+from app.maintenance import (
+    BackupError,
+    ScheduleConfigurationError,
+    ScheduleExecutionError,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class BackupScheduler:
@@ -19,11 +29,22 @@ class BackupScheduler:
         Args:
             db: Database session
             backup_dir: Directory to store backups
+
+        Raises:
+            ScheduleConfigurationError: If configuration cannot be loaded
         """
         self.db = db
         self.backup_service = BackupService(db, backup_dir)
         self.config_path = Path(backup_dir) / "scheduler_config.json"
-        self.config = self._load_config()
+
+        try:
+            self.config = self._load_config()
+            logger.info(f"Initialized BackupScheduler with config: {self.config_path}")
+        except Exception as e:
+            logger.error(f"Error loading scheduler configuration: {e}")
+            raise ScheduleConfigurationError(
+                f"Failed to load scheduler configuration: {e}"
+            ) from e
 
     def schedule_daily_backup(
         self,
@@ -41,7 +62,18 @@ class BackupScheduler:
 
         Returns:
             Schedule configuration
+
+        Raises:
+            ScheduleConfigurationError: If configuration save fails
         """
+        if not isinstance(backup_time, time):
+            logger.error(f"Invalid backup_time type: {type(backup_time)}")
+            raise ScheduleConfigurationError(
+                f"backup_time must be a datetime.time object, got {type(backup_time)}"
+            )
+
+        logger.info(f"Scheduling daily backup at {backup_time.isoformat()}")
+
         schedule = {
             "type": "daily",
             "time": backup_time.isoformat(),
@@ -50,10 +82,16 @@ class BackupScheduler:
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        self.config["daily_backup"] = schedule
-        self._save_config()
-
-        return schedule
+        try:
+            self.config["daily_backup"] = schedule
+            self._save_config()
+            logger.info(f"Daily backup scheduled successfully at {backup_time}")
+            return schedule
+        except Exception as e:
+            logger.error(f"Error saving daily backup schedule: {e}")
+            raise ScheduleConfigurationError(
+                f"Failed to save daily backup schedule: {e}"
+            ) from e
 
     def schedule_weekly_backup(
         self,
@@ -73,9 +111,28 @@ class BackupScheduler:
 
         Returns:
             Schedule configuration
+
+        Raises:
+            ScheduleConfigurationError: If validation fails or configuration save fails
         """
-        if not 0 <= day_of_week <= 6:
-            raise ValueError("day_of_week must be between 0 (Monday) and 6 (Sunday)")
+        # Validate day_of_week
+        if not isinstance(day_of_week, int) or not 0 <= day_of_week <= 6:
+            logger.error(f"Invalid day_of_week: {day_of_week}")
+            raise ScheduleConfigurationError(
+                f"day_of_week must be an integer between 0 (Monday) and 6 (Sunday), got {day_of_week}"
+            )
+
+        # Validate backup_time
+        if not isinstance(backup_time, time):
+            logger.error(f"Invalid backup_time type: {type(backup_time)}")
+            raise ScheduleConfigurationError(
+                f"backup_time must be a datetime.time object, got {type(backup_time)}"
+            )
+
+        day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        logger.info(
+            f"Scheduling weekly backup on {day_names[day_of_week]} at {backup_time.isoformat()}"
+        )
 
         schedule = {
             "type": "weekly",
@@ -86,10 +143,18 @@ class BackupScheduler:
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        self.config["weekly_backup"] = schedule
-        self._save_config()
-
-        return schedule
+        try:
+            self.config["weekly_backup"] = schedule
+            self._save_config()
+            logger.info(
+                f"Weekly backup scheduled successfully on {day_names[day_of_week]} at {backup_time}"
+            )
+            return schedule
+        except Exception as e:
+            logger.error(f"Error saving weekly backup schedule: {e}")
+            raise ScheduleConfigurationError(
+                f"Failed to save weekly backup schedule: {e}"
+            ) from e
 
     def set_retention_policy(
         self,
@@ -105,17 +170,45 @@ class BackupScheduler:
 
         Returns:
             Retention policy configuration
+
+        Raises:
+            ScheduleConfigurationError: If validation fails or configuration save fails
         """
+        # Validate days
+        if days is not None and (not isinstance(days, int) or days <= 0):
+            logger.error(f"Invalid retention days: {days}")
+            raise ScheduleConfigurationError(
+                f"Retention days must be a positive integer, got {days}"
+            )
+
+        # Validate count
+        if count is not None and (not isinstance(count, int) or count <= 0):
+            logger.error(f"Invalid retention count: {count}")
+            raise ScheduleConfigurationError(
+                f"Retention count must be a positive integer, got {count}"
+            )
+
+        if days is None and count is None:
+            logger.warning("Setting retention policy with no limits")
+
+        logger.info(f"Setting retention policy: keep_days={days}, keep_count={count}")
+
         policy = {
             "keep_days": days,
             "keep_count": count,
             "updated_at": datetime.utcnow().isoformat(),
         }
 
-        self.config["retention_policy"] = policy
-        self._save_config()
-
-        return policy
+        try:
+            self.config["retention_policy"] = policy
+            self._save_config()
+            logger.info("Retention policy saved successfully")
+            return policy
+        except Exception as e:
+            logger.error(f"Error saving retention policy: {e}")
+            raise ScheduleConfigurationError(
+                f"Failed to save retention policy: {e}"
+            ) from e
 
     def get_next_scheduled(self) -> dict[str, Any] | None:
         """
@@ -180,13 +273,19 @@ class BackupScheduler:
 
         Returns:
             List of backup results
+
+        Note:
+            This method does not raise exceptions. All errors are captured
+            in the returned results list with status='failed'.
         """
         now = datetime.utcnow()
         results = []
+        logger.info("Checking for pending backups")
 
         # Check and run daily backup
         daily = self.config.get("daily_backup", {})
         if daily.get("enabled") and self._should_run_backup(daily, now):
+            logger.info("Running scheduled daily backup")
             try:
                 backup_result = self.backup_service.create_backup(
                     backup_type='full',
@@ -199,17 +298,30 @@ class BackupScheduler:
                     "timestamp": now.isoformat()
                 })
                 daily["last_run"] = now.isoformat()
-            except Exception as e:
+                logger.info(f"Daily backup completed successfully: {backup_result['backup_id']}")
+            except BackupError as e:
+                logger.error(f"Backup error during daily backup: {e}")
                 results.append({
                     "type": "daily",
                     "status": "failed",
                     "error": str(e),
+                    "error_type": type(e).__name__,
+                    "timestamp": now.isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Unexpected error during daily backup: {e}")
+                results.append({
+                    "type": "daily",
+                    "status": "failed",
+                    "error": str(e),
+                    "error_type": type(e).__name__,
                     "timestamp": now.isoformat()
                 })
 
         # Check and run weekly backup
         weekly = self.config.get("weekly_backup", {})
         if weekly.get("enabled") and self._should_run_backup(weekly, now):
+            logger.info("Running scheduled weekly backup")
             try:
                 backup_result = self.backup_service.create_backup(
                     backup_type='full',
@@ -222,18 +334,40 @@ class BackupScheduler:
                     "timestamp": now.isoformat()
                 })
                 weekly["last_run"] = now.isoformat()
-            except Exception as e:
+                logger.info(f"Weekly backup completed successfully: {backup_result['backup_id']}")
+            except BackupError as e:
+                logger.error(f"Backup error during weekly backup: {e}")
                 results.append({
                     "type": "weekly",
                     "status": "failed",
                     "error": str(e),
+                    "error_type": type(e).__name__,
+                    "timestamp": now.isoformat()
+                })
+            except Exception as e:
+                logger.error(f"Unexpected error during weekly backup: {e}")
+                results.append({
+                    "type": "weekly",
+                    "status": "failed",
+                    "error": str(e),
+                    "error_type": type(e).__name__,
                     "timestamp": now.isoformat()
                 })
 
         # Apply retention policy after backups
         if results:
-            self._apply_retention_policy()
-            self._save_config()
+            logger.info("Applying retention policy after scheduled backups")
+            try:
+                self._apply_retention_policy()
+                self._save_config()
+            except Exception as e:
+                logger.error(f"Error applying retention policy: {e}")
+                # Don't fail the whole operation if retention policy fails
+
+        if not results:
+            logger.debug("No pending backups to run")
+        else:
+            logger.info(f"Completed {len(results)} scheduled backup(s)")
 
         return results
 
@@ -300,17 +434,57 @@ class BackupScheduler:
     # Private helper methods
 
     def _load_config(self) -> dict[str, Any]:
-        """Load scheduler configuration from file."""
+        """
+        Load scheduler configuration from file.
+
+        Returns:
+            Configuration dictionary (empty dict if file doesn't exist)
+
+        Raises:
+            ScheduleConfigurationError: If config file is corrupted
+        """
         if self.config_path.exists():
-            with open(self.config_path) as f:
-                return json.load(f)
-        return {}
+            try:
+                with open(self.config_path, encoding='utf-8') as f:
+                    config = json.load(f)
+                logger.debug(f"Loaded scheduler configuration from {self.config_path}")
+                return config
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON in scheduler config file: {e}")
+                raise ScheduleConfigurationError(
+                    f"Scheduler configuration file contains invalid JSON: {e}"
+                ) from e
+            except (OSError, IOError) as e:
+                logger.error(f"Error reading scheduler config file: {e}")
+                raise ScheduleConfigurationError(
+                    f"Failed to read scheduler configuration: {e}"
+                ) from e
+        else:
+            logger.debug("No existing scheduler configuration found, starting with empty config")
+            return {}
 
     def _save_config(self):
-        """Save scheduler configuration to file."""
-        self.config_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.config_path, 'w') as f:
-            json.dump(self.config, f, indent=2)
+        """
+        Save scheduler configuration to file.
+
+        Raises:
+            ScheduleConfigurationError: If config file cannot be saved
+        """
+        try:
+            self.config_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.config_path, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, indent=2)
+            logger.debug(f"Saved scheduler configuration to {self.config_path}")
+        except PermissionError as e:
+            logger.error(f"Permission denied writing scheduler config: {e}")
+            raise ScheduleConfigurationError(
+                f"Permission denied writing scheduler configuration: {e}"
+            ) from e
+        except (OSError, IOError) as e:
+            logger.error(f"Error writing scheduler config file: {e}")
+            raise ScheduleConfigurationError(
+                f"Failed to save scheduler configuration: {e}"
+            ) from e
 
     def _should_run_backup(self, schedule: dict[str, Any], now: datetime) -> bool:
         """Check if a backup should run based on schedule."""

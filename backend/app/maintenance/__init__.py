@@ -29,6 +29,93 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+
+# Custom Exceptions
+class MaintenanceError(Exception):
+    """Base exception for all maintenance module errors."""
+    pass
+
+
+class BackupError(MaintenanceError):
+    """Base exception for backup-related errors."""
+    pass
+
+
+class BackupCreationError(BackupError):
+    """Raised when backup creation fails."""
+    pass
+
+
+class BackupReadError(BackupError):
+    """Raised when reading a backup file fails."""
+    pass
+
+
+class BackupWriteError(BackupError):
+    """Raised when writing a backup file fails."""
+    pass
+
+
+class BackupNotFoundError(BackupError):
+    """Raised when a requested backup cannot be found."""
+    pass
+
+
+class BackupValidationError(BackupError):
+    """Raised when backup validation fails."""
+    pass
+
+
+class BackupPermissionError(BackupError):
+    """Raised when backup operation lacks necessary permissions."""
+    pass
+
+
+class BackupStorageError(BackupError):
+    """Raised when there are storage issues (e.g., disk space)."""
+    pass
+
+
+class RestoreError(MaintenanceError):
+    """Base exception for restore-related errors."""
+    pass
+
+
+class RestoreValidationError(RestoreError):
+    """Raised when restore validation fails."""
+    pass
+
+
+class RestoreDataError(RestoreError):
+    """Raised when restore data is corrupted or invalid."""
+    pass
+
+
+class RestorePermissionError(RestoreError):
+    """Raised when restore operation lacks necessary permissions."""
+    pass
+
+
+class RestoreRollbackError(RestoreError):
+    """Raised when restore rollback operation fails."""
+    pass
+
+
+class SchedulerError(MaintenanceError):
+    """Base exception for scheduler-related errors."""
+    pass
+
+
+class ScheduleConfigurationError(SchedulerError):
+    """Raised when schedule configuration is invalid."""
+    pass
+
+
+class ScheduleExecutionError(SchedulerError):
+    """Raised when scheduled backup execution fails."""
+    pass
+
+
 from app.maintenance.backup import BackupService
 from app.maintenance.restore import RestoreService
 from app.maintenance.scheduler import BackupScheduler
@@ -39,6 +126,24 @@ __all__ = [
     "BackupScheduler",
     "quick_backup",
     "quick_restore",
+    # Exceptions
+    "MaintenanceError",
+    "BackupError",
+    "BackupCreationError",
+    "BackupReadError",
+    "BackupWriteError",
+    "BackupNotFoundError",
+    "BackupValidationError",
+    "BackupPermissionError",
+    "BackupStorageError",
+    "RestoreError",
+    "RestoreValidationError",
+    "RestoreDataError",
+    "RestorePermissionError",
+    "RestoreRollbackError",
+    "SchedulerError",
+    "ScheduleConfigurationError",
+    "ScheduleExecutionError",
 ]
 
 

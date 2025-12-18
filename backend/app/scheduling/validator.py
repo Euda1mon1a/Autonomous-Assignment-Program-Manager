@@ -19,7 +19,37 @@ from app.schemas.schedule import ValidationResult, Violation
 
 
 class ACGMEValidator:
-    """ACGME compliance checking."""
+    """
+    ACGME compliance validator for residency schedules.
+
+    Validates schedules against ACGME (Accreditation Council for Graduate
+    Medical Education) requirements, ensuring resident safety and educational
+    quality through duty hour limits and supervision standards.
+
+    ACGME Requirements Enforced:
+        - 80-hour rule: Max 80 hours/week averaged over 4 weeks
+        - 1-in-7 rule: At least one 24-hour period off every 7 days
+        - Supervision ratios: Adequate faculty supervision based on PGY level
+
+    Clinical Context:
+        ACGME violations can result in:
+        - Program citations and warnings
+        - Loss of accreditation
+        - Patient safety concerns
+        - Resident burnout and fatigue
+
+    Constants:
+        MAX_WEEKLY_HOURS (int): Maximum hours per week (80)
+        HOURS_PER_HALF_DAY (int): Hours per AM/PM block (6)
+        ROLLING_WINDOW_WEEKS (int): Window for averaging hours (4 weeks)
+
+    Example:
+        >>> validator = ACGMEValidator(db)
+        >>> result = validator.validate_all(start_date, end_date)
+        >>> if not result.valid:
+        ...     for violation in result.violations:
+        ...         print(f"VIOLATION: {violation.message}")
+    """
 
     # Constants
     MAX_WEEKLY_HOURS = 80
@@ -27,13 +57,61 @@ class ACGMEValidator:
     ROLLING_WINDOW_WEEKS = 4
 
     def __init__(self, db: Session):
+        """
+        Initialize ACGME validator.
+
+        Args:
+            db: SQLAlchemy database session for querying assignments
+        """
         self.db = db
 
     def validate_all(self, start_date: date, end_date: date) -> ValidationResult:
         """
-        Run all ACGME validation checks.
+        Run all ACGME validation checks for a schedule period.
 
-        Returns comprehensive validation result with violations.
+        Performs comprehensive validation of all residents in the schedule,
+        checking 80-hour rule, 1-in-7 rule, and supervision ratios.
+
+        Args:
+            start_date: Start date of validation period
+            end_date: End date of validation period (inclusive)
+
+        Returns:
+            ValidationResult with:
+                - valid (bool): True if no critical violations found
+                - total_violations (int): Count of all violations
+                - violations (list): List of Violation objects with details
+                - coverage_rate (float): Percentage of blocks assigned (0-100)
+                - statistics (dict): Summary statistics
+
+        Validation Process:
+            1. Query all residents and assignments in date range
+            2. For each resident:
+               - Check 80-hour rule compliance (rolling 4-week windows)
+               - Check 1-in-7 rule compliance (max consecutive days)
+            3. Check supervision ratios for all blocks
+            4. Calculate coverage rate
+            5. Aggregate results into ValidationResult
+
+        Example:
+            >>> validator = ACGMEValidator(db)
+            >>> result = validator.validate_all(
+            ...     start_date=date(2025, 1, 1),
+            ...     end_date=date(2025, 1, 31)
+            ... )
+            >>> print(f"Valid: {result.valid}")
+            >>> print(f"Coverage: {result.coverage_rate:.1f}%")
+            >>> print(f"Violations: {result.total_violations}")
+            >>>
+            >>> if result.total_violations > 0:
+            ...     critical = [v for v in result.violations if v.severity == "CRITICAL"]
+            ...     print(f"Critical violations: {len(critical)}")
+
+        Note:
+            Violations are categorized by severity:
+            - CRITICAL: ACGME compliance violations (must fix immediately)
+            - HIGH: Serious issues (should fix soon)
+            - MEDIUM: Minor issues (good to address)
         """
         violations = []
 
