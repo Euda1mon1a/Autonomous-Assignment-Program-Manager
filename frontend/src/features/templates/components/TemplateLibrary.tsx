@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Plus, LayoutGrid, List, BookOpen } from 'lucide-react';
-import type { ScheduleTemplate, TemplatePreviewConfig, TemplateCategory } from '../types';
+import type { ScheduleTemplate, TemplatePreviewConfig, TemplateCategory, ScheduleTemplateCreate, ScheduleTemplateUpdate } from '../types';
 import {
   useTemplates,
   useTemplateFilters,
@@ -76,11 +76,11 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
     setShowEditor(true);
   };
 
-  const handleSave = async (data: Parameters<typeof createTemplate.mutateAsync>[0]) => {
+  const handleSave = async (data: ScheduleTemplateCreate | ScheduleTemplateUpdate) => {
     if (editingTemplate) {
-      await updateTemplate.mutateAsync({ id: editingTemplate.id, data });
+      await updateTemplate.mutateAsync({ id: editingTemplate.id, data: data as any });
     } else {
-      await createTemplate.mutateAsync(data);
+      await createTemplate.mutateAsync(data as ScheduleTemplateCreate);
     }
     setShowEditor(false);
     setEditingTemplate(null);

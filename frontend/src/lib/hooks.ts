@@ -57,6 +57,7 @@ export interface ScheduleGenerateRequest {
   pgy_levels?: number[]
   rotation_template_ids?: string[]
   algorithm?: 'greedy' | 'min_conflicts' | 'cp_sat'
+  timeout_seconds?: number
 }
 
 export interface ScheduleGenerateResponse {
@@ -66,6 +67,7 @@ export interface ScheduleGenerateResponse {
   total_blocks: number
   validation: ValidationResult
   run_id?: string
+  solver_stats?: { total_residents?: number; coverage_rate?: number; solve_time?: number; iterations?: number; [key: string]: unknown }
 }
 
 

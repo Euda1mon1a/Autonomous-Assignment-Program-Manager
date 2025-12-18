@@ -3,7 +3,7 @@
  *
  * Provides token management and authentication API functions.
  */
-import { api, post, get, ApiError } from './api'
+import { api, get } from './api'
 
 // Token storage key (consistent with api.ts interceptor)
 const TOKEN_KEY = 'auth_token'
@@ -25,6 +25,11 @@ export interface User {
 export interface LoginCredentials {
   username: string
   password: string
+}
+
+export interface TokenResponse {
+  access_token: string
+  token_type: string
 }
 
 export interface LoginResponse {
@@ -79,7 +84,7 @@ export function hasStoredToken(): boolean {
 
 /**
  * Login with username and password
- * POST /api/auth/login with form data
+ * POST /api/auth/login with form data, then fetch user
  */
 export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
   // Create form data for OAuth2 password flow
@@ -87,20 +92,27 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
   formData.append('username', credentials.username)
   formData.append('password', credentials.password)
 
-  const response = await api.post<LoginResponse>('/auth/login', formData, {
+  const response = await api.post<TokenResponse>('/auth/login', formData, {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
   })
 
-  const data = response.data
+  const tokenData = response.data
 
   // Store the token
-  if (data.access_token) {
-    setStoredToken(data.access_token)
+  if (tokenData.access_token) {
+    setStoredToken(tokenData.access_token)
   }
 
-  return data
+  // Fetch user info with the new token
+  const user = await getCurrentUser()
+
+  return {
+    access_token: tokenData.access_token,
+    token_type: tokenData.token_type,
+    user,
+  }
 }
 
 /**

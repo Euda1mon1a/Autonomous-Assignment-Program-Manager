@@ -40,7 +40,7 @@ const timeoutOptions = [
   { value: '300', label: '5 minutes (Maximum)' },
 ];
 
-type Algorithm = 'greedy' | 'cp_sat' | 'pulp' | 'hybrid';
+type Algorithm = 'greedy' | 'cp_sat' | 'min_conflicts';
 
 export function GenerateScheduleDialog({
   isOpen,
