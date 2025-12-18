@@ -159,22 +159,67 @@ class SchedulingOptimizer:
     @lru_cache(maxsize=128)
     def estimate_complexity(self, context: SchedulingContext) -> dict[str, float]:
         """
-        Estimate problem complexity to choose appropriate solver.
+        Estimate problem complexity to recommend appropriate solver.
 
-        Complexity factors:
-        - Variable count: residents × blocks × templates
-        - Constraint density: ratio of constraints to variables
-        - Availability sparsity: ratio of unavailable slots
+        Analyzes the scheduling problem to estimate computational complexity
+        and recommend the most suitable solver algorithm. This helps avoid
+        timeouts and ensures good performance.
+
+        Complexity Factors:
+            1. **Variable Count**: residents × blocks × templates
+               - Determines search space size
+               - More variables = harder problem
+
+            2. **Constraint Density**: constraints / variables
+               - Higher density = more restricted search space
+               - Can make problem easier (pruning) or harder (conflicts)
+
+            3. **Availability Sparsity**: unavailable_slots / total_slots
+               - More unavailability = smaller search space (easier)
+               - Sparsity > 0.3 significantly reduces complexity
+
+        Complexity Score (0-100):
+            - **0-20**: Simple problem
+              - Recommended: "greedy" solver
+              - Expected runtime: <1 second
+
+            - **20-50**: Moderate complexity
+              - Recommended: "pulp" solver
+              - Expected runtime: 1-10 seconds
+
+            - **50-75**: Complex problem
+              - Recommended: "cp_sat" solver
+              - Expected runtime: 10-60 seconds
+
+            - **75-100**: Very complex problem
+              - Recommended: "hybrid" solver
+              - Expected runtime: 60-300 seconds
 
         Args:
-            context: Scheduling context (must be hashable for caching)
+            context: SchedulingContext with residents, blocks, templates, availability
+                    (Note: LRU cache requires hashable inputs - in practice,
+                    pass summary statistics instead of full context)
 
         Returns:
-            Dictionary with complexity metrics:
-            - score: Overall complexity score (0-100)
-            - variables: Estimated variable count
-            - constraints: Estimated constraint count
-            - recommended_solver: Suggested solver algorithm
+            dict: Complexity analysis with:
+                - score (float): Complexity score (0-100)
+                - variables (int): Estimated decision variable count
+                - constraints (int): Estimated constraint count
+                - sparsity (float): Availability sparsity (0.0-1.0)
+                - recommended_solver (str): Suggested algorithm name
+
+        Example:
+            >>> optimizer = SchedulingOptimizer()
+            >>> complexity = optimizer.estimate_complexity(context)
+            >>> print(f"Complexity: {complexity['score']:.1f}")
+            >>> print(f"Recommended: {complexity['recommended_solver']}")
+            >>> # Output:
+            >>> # Complexity: 35.2
+            >>> # Recommended: pulp
+
+        Note:
+            This is a heuristic estimate. Actual solving difficulty may vary
+            based on constraint interactions and problem structure.
         """
         # Note: This requires context to be hashable, which it's not by default
         # In practice, we'd pass summary stats instead
