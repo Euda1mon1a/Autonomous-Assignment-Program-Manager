@@ -444,3 +444,138 @@ def test_metrics_with_version_id(mock_db_session, mock_assignments):
     metrics = computer.compute_stability_metrics(version_id=version_id)
 
     assert metrics.version_id == version_id
+
+
+# ============================================================================
+# Test New Implementations (SQLAlchemy-Continuum Integration)
+# ============================================================================
+
+def test_get_previous_assignments_no_history(mock_db_session, mock_assignments):
+    """Test _get_previous_assignments when no version history exists."""
+    # Mock db.execute to return no results
+    class MockExecuteResult:
+        def fetchone(self):
+            return None
+
+    mock_db_session.execute = lambda query, params=None: MockExecuteResult()
+
+    computer = StabilityMetricsComputer(mock_db_session)
+    previous = computer._get_previous_assignments(mock_assignments, None, None)
+
+    # Should return empty list when no history
+    assert previous == []
+
+
+def test_get_previous_assignments_empty_input(mock_db_session):
+    """Test _get_previous_assignments with empty input."""
+    computer = StabilityMetricsComputer(mock_db_session)
+    previous = computer._get_previous_assignments([], None, None)
+
+    # Should return empty list for empty input
+    assert previous == []
+
+
+def test_count_new_violations_no_assignments(mock_db_session):
+    """Test _count_new_violations with no assignments."""
+    computer = StabilityMetricsComputer(mock_db_session)
+    violations = computer._count_new_violations([], [])
+
+    # Should return 0 for no assignments
+    assert violations == 0
+
+
+def test_count_new_violations_error_handling(mock_db_session, mock_assignments):
+    """Test _count_new_violations handles errors gracefully."""
+    # Mock db.query to raise an exception
+    def mock_query_error(model):
+        raise Exception("Database error")
+
+    original_query = mock_db_session.query
+    mock_db_session.query = mock_query_error
+
+    computer = StabilityMetricsComputer(mock_db_session)
+    violations = computer._count_new_violations([], mock_assignments)
+
+    # Should return 0 on error (fall back gracefully)
+    assert violations == 0
+
+    # Restore original query
+    mock_db_session.query = original_query
+
+
+def test_days_since_major_change_no_history(mock_db_session):
+    """Test _days_since_major_change when no transaction history exists."""
+    # Mock db.execute to return empty results
+    class MockExecuteResult:
+        def fetchall(self):
+            return []
+
+    mock_db_session.execute = lambda query, params=None: MockExecuteResult()
+
+    computer = StabilityMetricsComputer(mock_db_session)
+    days = computer._days_since_major_change()
+
+    # Should return 0 when no history
+    assert days == 0
+
+
+def test_days_since_major_change_with_reference_date(mock_db_session):
+    """Test _days_since_major_change with custom reference date."""
+    from datetime import date
+
+    # Mock db.execute to return empty results
+    class MockExecuteResult:
+        def fetchall(self):
+            return []
+
+    mock_db_session.execute = lambda query, params=None: MockExecuteResult()
+
+    computer = StabilityMetricsComputer(mock_db_session)
+    reference_date = date(2025, 6, 1)
+    days = computer._days_since_major_change(reference_date=reference_date)
+
+    # Should complete without error
+    assert isinstance(days, int)
+    assert days >= 0
+
+
+def test_version_history_integration_fallback(mock_db_session, mock_assignments):
+    """Test that version history methods fall back gracefully on errors."""
+    # Mock execute to raise an exception
+    def mock_execute_error(query, params=None):
+        raise Exception("Database connection error")
+
+    mock_db_session.execute = mock_execute_error
+
+    computer = StabilityMetricsComputer(mock_db_session)
+
+    # Test _get_previous_assignments
+    previous = computer._get_previous_assignments(mock_assignments, None, None)
+    assert previous == []  # Should fall back to empty list
+
+    # Test _days_since_major_change
+    days = computer._days_since_major_change()
+    assert days == 0  # Should fall back to 0
+
+
+def test_compute_with_version_history_fallback(mock_db_session, mock_assignments):
+    """Test full compute_stability_metrics with version history fallback."""
+    # Set up mock to simulate no version history
+    class MockExecuteResult:
+        def fetchone(self):
+            return None
+        def fetchall(self):
+            return []
+
+    mock_db_session.execute = lambda query, params=None: MockExecuteResult()
+    mock_db_session.set_assignments(mock_assignments)
+
+    computer = StabilityMetricsComputer(mock_db_session)
+    metrics = computer.compute_stability_metrics()
+
+    # Should complete successfully even without version history
+    assert metrics.total_assignments == len(mock_assignments)
+    assert metrics.assignments_changed == 0  # No previous version to compare
+    assert metrics.churn_rate == 0.0
+    assert metrics.days_since_major_change == 0
+    assert metrics.new_violations == 0

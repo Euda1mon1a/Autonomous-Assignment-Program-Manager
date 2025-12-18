@@ -121,3 +121,17 @@ Export to Excel, PDF, and calendar formats.
 - **Documentation**: Browse the sections above
 - **Support**: Contact your system administrator
 - **Issues**: [Report bugs](https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager/issues) via GitHub
+
+---
+
+## Related Documentation
+
+- **[User Workflows Guide](../guides/user-workflows.md)** - Comprehensive workflow examples
+- **[Scheduling Workflow](../guides/scheduling-workflow.md)** - Detailed scheduling guide
+- **[Swap Management](../guides/swap-management.md)** - Complete swap system guide
+- **[Resilience Framework](../guides/resilience-framework.md)** - Understanding system resilience
+- **[Getting Started](../getting-started/index.md)** - Installation and setup
+- **[Admin Manual](../admin-manual/index.md)** - System administration
+- **[API Reference](../api/index.md)** - API integration
+- **[Troubleshooting](../troubleshooting.md)** - Common issues
+- **[Documentation Index](../README.md)** - Complete documentation map

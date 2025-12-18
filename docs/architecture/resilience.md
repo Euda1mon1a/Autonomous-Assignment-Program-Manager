@@ -55,3 +55,12 @@ Celery tasks run continuously:
 - Health checks every 5 minutes
 - Contingency analysis every 4 hours
 - Alert notifications as needed
+
+---
+
+## Related Documentation
+
+- **[Complete Resilience Framework Guide](../guides/resilience-framework.md)** - Comprehensive implementation details
+- **[System Architecture](overview.md)** - Overall system design
+- **[Backend Architecture](backend.md)** - Backend implementation details
+- **[Operations Metrics](../operations/metrics.md)** - Monitoring and metrics
