@@ -2,7 +2,14 @@
 
 import { useState, useMemo } from 'react';
 import { Plus, LayoutGrid, List, BookOpen } from 'lucide-react';
-import type { ScheduleTemplate, TemplatePreviewConfig, TemplateCategory } from '../types';
+import type {
+  ScheduleTemplate,
+  TemplatePreviewConfig,
+  TemplateCategory,
+  ScheduleTemplateCreate,
+  ScheduleTemplateUpdate,
+  PredefinedTemplate
+} from '../types';
 import {
   useTemplates,
   useTemplateFilters,
@@ -59,7 +66,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
   // Calculate category counts
   const categoryCounts = useMemo(() => {
     if (!templatesData?.items) return {} as Record<TemplateCategory, number>;
-    return templatesData.items.reduce((acc, t) => {
+    return templatesData.items.reduce((acc: Record<TemplateCategory, number>, t: ScheduleTemplate) => {
       acc[t.category] = (acc[t.category] || 0) + 1;
       return acc;
     }, {} as Record<TemplateCategory, number>);
@@ -76,13 +83,13 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
     setShowEditor(true);
   };
 
-  const handleSave = async (data: import('../types').ScheduleTemplateCreate | import('../types').ScheduleTemplateUpdate) => {
+  const handleSave = async (data: ScheduleTemplateCreate | ScheduleTemplateUpdate) => {
     if (editingTemplate) {
       // Type assertion needed because create and update schemas have slight differences
       // in patterns field (create uses Omit<AssignmentPattern, 'id'>[], update uses AssignmentPattern[])
-      await updateTemplate.mutateAsync({ id: editingTemplate.id, data: data as Parameters<typeof updateTemplate.mutateAsync>[0]['data'] });
+      await updateTemplate.mutateAsync({ id: editingTemplate.id, data: data as ScheduleTemplateUpdate });
     } else {
-      await createTemplate.mutateAsync(data as import('../types').ScheduleTemplateCreate);
+      await createTemplate.mutateAsync(data as ScheduleTemplateCreate);
     }
     setShowEditor(false);
     setEditingTemplate(null);
@@ -245,7 +252,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
             Import these pre-built templates to your library and customize them to your needs.
           </p>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {predefinedTemplates?.map((template) => (
+            {predefinedTemplates?.map((template: PredefinedTemplate) => (
               <PredefinedTemplateCard
                 key={template.templateKey}
                 template={template}
