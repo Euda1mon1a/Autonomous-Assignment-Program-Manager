@@ -34,6 +34,7 @@ from app.schemas.leave import (
     LeaveUpdateRequest,
     LeaveWebhookPayload,
 )
+from app.services.conflict_auto_detector import ConflictAutoDetector
 
 router = APIRouter(prefix="/leave", tags=["leave"])
 logger = logging.getLogger(__name__)
@@ -176,9 +177,20 @@ def get_leave_calendar(
     entries = []
     conflict_count = 0
 
+    ***REMOVED*** Initialize conflict detector
+    conflict_detector = ConflictAutoDetector(db)
+
     for absence in absences:
-        ***REMOVED*** TODO: Check for FMIT conflicts when schedule data is available
+        ***REMOVED*** Check for FMIT conflicts using the conflict detector service
         has_conflict = False
+        conflicts = conflict_detector.detect_conflicts_for_absence(absence.id)
+
+        ***REMOVED*** Check if any conflicts are FMIT-related
+        if conflicts:
+            has_conflict = any(
+                c.conflict_type == "leave_fmit_overlap"
+                for c in conflicts
+            )
 
         entry = LeaveCalendarEntry(
             faculty_id=absence.person_id,
@@ -233,8 +245,9 @@ def create_leave(
     db.commit()
     db.refresh(absence)
 
-    ***REMOVED*** TODO: Trigger conflict detection in background
-    ***REMOVED*** background_tasks.add_task(detect_conflicts, absence.id)
+    ***REMOVED*** Trigger conflict detection in background using Celery
+    from app.notifications.tasks import detect_leave_conflicts
+    background_tasks.add_task(detect_leave_conflicts.delay, str(absence.id))
 
     return LeaveResponse(
         id=absence.id,
