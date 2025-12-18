@@ -1,7 +1,9 @@
 """Schedule generation and validation API routes."""
 import logging
+import uuid
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.core.file_security import FileValidationError, validate_excel_upload
@@ -28,6 +30,10 @@ from app.schemas.schedule import (
     ValidationResult,
 )
 from app.services.emergency_coverage import EmergencyCoverageService
+from app.services.idempotency_service import (
+    IdempotencyService,
+    extract_idempotency_params,
+)
 from app.services.xlsx_import import (
     ExternalConflict,
     FacultyTarget,
@@ -45,9 +51,20 @@ def generate_schedule(
     request: ScheduleRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
+    idempotency_key: str | None = Header(
+        None,
+        alias="Idempotency-Key",
+        description="Unique key to prevent duplicate schedule generations. "
+                    "If the same key is sent with identical parameters, "
+                    "the cached result will be returned."
+    ),
 ):
     """
     Generate schedule for a date range. Requires authentication.
+
+    Supports idempotency via the Idempotency-Key header. If the same key
+    is sent with identical request parameters, the cached result will be
+    returned instead of generating a new schedule.
 
     Uses the scheduling engine with constraint-based optimization:
     1. Load absences and build availability matrix
@@ -65,6 +82,74 @@ def generate_schedule(
 
     from app.models.schedule_run import ScheduleRun
 
+    # Initialize idempotency service
+    idempotency_service = IdempotencyService(db)
+    idempotency_request = None
+
+    # Extract request parameters for hashing
+    request_params = {
+        "start_date": request.start_date.isoformat(),
+        "end_date": request.end_date.isoformat(),
+        "algorithm": request.algorithm.value,
+        "pgy_levels": request.pgy_levels,
+        "rotation_template_ids": [str(x) for x in request.rotation_template_ids] if request.rotation_template_ids else None,
+        "timeout_seconds": request.timeout_seconds,
+    }
+
+    # If idempotency key provided, check for existing request
+    if idempotency_key:
+        body_hash = idempotency_service.compute_body_hash(
+            extract_idempotency_params(request_params)
+        )
+
+        # Check for key conflict (same key, different body)
+        conflict = idempotency_service.check_key_conflict(idempotency_key, body_hash)
+        if conflict:
+            raise HTTPException(
+                status_code=422,
+                detail="Idempotency key was already used with different request parameters. "
+                       "Use a new key for different requests.",
+            )
+
+        # Check for existing request with same key and body
+        existing = idempotency_service.get_existing_request(idempotency_key, body_hash)
+        if existing:
+            if existing.is_pending:
+                # Request is still being processed
+                raise HTTPException(
+                    status_code=409,
+                    detail="A request with this idempotency key is currently being processed. "
+                           "Please wait for it to complete.",
+                )
+            elif existing.is_completed and existing.response_body:
+                # Return cached response
+                logger.info(f"Returning cached response for idempotency key: {idempotency_key[:8]}...")
+                status_code = int(existing.response_status_code or 200)
+                return JSONResponse(
+                    status_code=status_code,
+                    content=existing.response_body,
+                    headers={"X-Idempotency-Replayed": "true"},
+                )
+            elif existing.is_failed:
+                # Return cached error response
+                logger.info(f"Returning cached error for idempotency key: {idempotency_key[:8]}...")
+                status_code = int(existing.response_status_code or 500)
+                raise HTTPException(
+                    status_code=status_code,
+                    detail=existing.error_message or "Previous request failed",
+                )
+
+        # Create new idempotency request record
+        try:
+            idempotency_request = idempotency_service.create_request(
+                idempotency_key=idempotency_key,
+                body_hash=body_hash,
+                request_params=request_params,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to create idempotency record: {e}")
+            # Continue without idempotency tracking
+
     # Issue #1: Double-submit / Re-entrancy protection
     # Check for in-progress generations for overlapping date ranges
     recent_cutoff = datetime.utcnow() - timedelta(minutes=5)
@@ -81,11 +166,19 @@ def generate_schedule(
     )
 
     if in_progress_run:
-        raise HTTPException(
-            status_code=409,
-            detail="Schedule generation already in progress for overlapping date range. "
-                   "Please wait for the current run to complete.",
+        error_msg = (
+            "Schedule generation already in progress for overlapping date range. "
+            "Please wait for the current run to complete."
         )
+        if idempotency_request:
+            idempotency_service.mark_failed(
+                idempotency_request,
+                error_message=error_msg,
+                response_body={"detail": error_msg},
+                response_status_code=409,
+            )
+            db.commit()
+        raise HTTPException(status_code=409, detail=error_msg)
 
     try:
         engine = SchedulingEngine(db, request.start_date, request.end_date)
@@ -124,14 +217,42 @@ def generate_schedule(
         # Return 207 Multi-Status for partial success (some assignments created but with violations)
         # Return 422 for validation errors or complete failure
         if result["status"] == "failed":
-            raise HTTPException(status_code=422, detail=result["message"])
+            error_msg = result["message"]
+            if idempotency_request:
+                idempotency_service.mark_failed(
+                    idempotency_request,
+                    error_message=error_msg,
+                    response_body={"detail": error_msg},
+                    response_status_code=422,
+                )
+                db.commit()
+            raise HTTPException(status_code=422, detail=error_msg)
         elif result["status"] == "partial":
             # Use 207 Multi-Status for partial success
-            from fastapi.responses import JSONResponse
+            response_body = response.model_dump(mode="json")
+            if idempotency_request:
+                idempotency_service.mark_completed(
+                    idempotency_request,
+                    result_ref=result.get("run_id"),
+                    response_body=response_body,
+                    response_status_code=207,
+                )
+                db.commit()
             return JSONResponse(
                 status_code=207,
-                content=response.model_dump(),
+                content=response_body,
             )
+
+        # Success - cache the response
+        response_body = response.model_dump(mode="json")
+        if idempotency_request:
+            idempotency_service.mark_completed(
+                idempotency_request,
+                result_ref=result.get("run_id"),
+                response_body=response_body,
+                response_status_code=200,
+            )
+            db.commit()
 
         return response
 
@@ -140,7 +261,19 @@ def generate_schedule(
         raise
     except Exception as e:
         logger.error(f"Error generating schedule: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="An error occurred generating the schedule")
+        error_msg = "An error occurred generating the schedule"
+        if idempotency_request:
+            idempotency_service.mark_failed(
+                idempotency_request,
+                error_message=str(e),
+                response_body={"detail": error_msg},
+                response_status_code=500,
+            )
+            try:
+                db.commit()
+            except Exception:
+                db.rollback()
+        raise HTTPException(status_code=500, detail=error_msg)
 
 
 @router.get("/validate", response_model=ValidationResult)
