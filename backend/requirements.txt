@@ -19,6 +19,7 @@ email-validator==2.3.0
 # Authentication & Security
 python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
+bcrypt>=4.0.1,<5.0.0  # Pin bcrypt version for passlib 1.7.4 compatibility (prevents "password cannot be longer than 72 bytes" errors)
 python-magic>=0.4.27  # File type detection for upload validation
 
 # API Enhancements

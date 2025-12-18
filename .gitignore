@@ -89,3 +89,4 @@ nginx/ssl/*.crt
 nginx/ssl/*.csr
 !nginx/ssl/.gitkeep
 nginx/certbot/
+.env.local
