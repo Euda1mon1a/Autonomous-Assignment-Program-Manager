@@ -13,14 +13,23 @@ interface AbsenceListProps {
 }
 
 const typeColors: Record<string, string> = {
+  // Planned leave
   vacation: 'bg-green-100 text-green-800',
+  conference: 'bg-blue-100 text-blue-800',
+  // Medical
   sick: 'bg-red-100 text-red-800',
   medical: 'bg-red-100 text-red-800',
-  conference: 'bg-blue-100 text-blue-800',
-  personal: 'bg-purple-100 text-purple-800',
+  convalescent: 'bg-red-200 text-red-900',
+  maternity_paternity: 'bg-pink-100 text-pink-800',
+  // Emergency (blocking - Hawaii reality)
   family_emergency: 'bg-purple-100 text-purple-800',
+  emergency_leave: 'bg-purple-200 text-purple-900',
+  bereavement: 'bg-gray-200 text-gray-800',
+  // Military
   deployment: 'bg-orange-100 text-orange-800',
   tdy: 'bg-yellow-100 text-yellow-800',
+  // Fallback
+  personal: 'bg-purple-100 text-purple-800',
 }
 
 export function AbsenceList({ absences, people, onEdit, onDelete }: AbsenceListProps) {

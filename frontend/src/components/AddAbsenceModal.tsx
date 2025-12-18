@@ -22,15 +22,24 @@ interface FormErrors {
 }
 
 const absenceTypeOptions = [
+  // Planned leave
   { value: 'vacation', label: 'Vacation' },
+  { value: 'conference', label: 'Conference' },
+  // Medical
+  { value: 'sick', label: 'Sick' },
+  { value: 'medical', label: 'Medical Leave' },
+  { value: 'convalescent', label: 'Convalescent' },
+  { value: 'maternity_paternity', label: 'Parental Leave' },
+  // Emergency (blocking - Hawaii reality: 7+ days travel)
+  { value: 'family_emergency', label: 'Family Emergency' },
+  { value: 'emergency_leave', label: 'Emergency Leave' },
+  { value: 'bereavement', label: 'Bereavement' },
+  // Military
   { value: 'deployment', label: 'Deployment' },
   { value: 'tdy', label: 'TDY' },
-  { value: 'medical', label: 'Medical' },
-  { value: 'family_emergency', label: 'Family Emergency' },
-  { value: 'conference', label: 'Conference' },
 ];
 
-type AbsenceType = 'vacation' | 'deployment' | 'tdy' | 'medical' | 'family_emergency' | 'conference';
+type AbsenceType = 'vacation' | 'deployment' | 'tdy' | 'medical' | 'family_emergency' | 'conference' | 'sick' | 'bereavement' | 'emergency_leave' | 'convalescent' | 'maternity_paternity';
 
 export function AddAbsenceModal({ isOpen, onClose, preselectedPersonId }: AddAbsenceModalProps) {
   const [personId, setPersonId] = useState(preselectedPersonId || '');

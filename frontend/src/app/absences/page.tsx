@@ -23,15 +23,24 @@ const absenceExportColumns = [
 ]
 
 type ViewMode = 'calendar' | 'list'
-type AbsenceTypeFilter = 'all' | 'vacation' | 'sick' | 'conference' | 'personal' | 'medical' | 'deployment' | 'tdy' | 'family_emergency'
+type AbsenceTypeFilter = 'all' | 'vacation' | 'sick' | 'conference' | 'personal' | 'medical' | 'deployment' | 'tdy' | 'family_emergency' | 'bereavement' | 'emergency_leave' | 'convalescent' | 'maternity_paternity'
 
 const absenceTypeOptions = [
+  // Planned leave
   { value: 'vacation', label: 'Vacation' },
+  { value: 'conference', label: 'Conference' },
+  // Medical
+  { value: 'sick', label: 'Sick' },
+  { value: 'medical', label: 'Medical Leave' },
+  { value: 'convalescent', label: 'Convalescent' },
+  { value: 'maternity_paternity', label: 'Parental Leave' },
+  // Emergency (blocking - Hawaii reality: 7+ days travel)
+  { value: 'family_emergency', label: 'Family Emergency' },
+  { value: 'emergency_leave', label: 'Emergency Leave' },
+  { value: 'bereavement', label: 'Bereavement' },
+  // Military
   { value: 'deployment', label: 'Deployment' },
   { value: 'tdy', label: 'TDY' },
-  { value: 'medical', label: 'Medical' },
-  { value: 'family_emergency', label: 'Family Emergency' },
-  { value: 'conference', label: 'Conference' },
 ]
 
 export default function AbsencesPage() {
