@@ -211,6 +211,8 @@ nav:
       - Frontend Design: architecture/frontend.md
       - Resilience Framework: architecture/resilience.md
       - Database Schema: architecture/database.md
+      - Expert Consultation Protocol: architecture/expert-consultation-protocol.md
+      - Consultation Log: architecture/CONSULTATION_LOG.md
   - Development:
       - development/index.md
       - Setup: development/setup.md
