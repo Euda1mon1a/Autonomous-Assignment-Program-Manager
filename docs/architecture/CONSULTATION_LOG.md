@@ -107,6 +107,14 @@ Most recent entries should appear first (reverse chronological order).
 
 ## Advisor Performance Summary
 
+### Claude (via claude.ai) - The Humanist
+| Metric | Value |
+|--------|-------|
+| Total Consultations | 0 |
+| Actionable Rate | - |
+| Average Applicability | - |
+| Specialties | User Empathy, Ethics, Communication, UX |
+
 ### ChatGPT 5.x Pro
 | Metric | Value |
 |--------|-------|

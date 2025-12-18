@@ -79,6 +79,47 @@ This protocol formalizes what has proven effective in practice.
 | **ChatGPT 5.x Pro** | Broad knowledge, strong reasoning, excellent at explaining trade-offs | Architecture decisions, API design, best practices |
 | **Gemini 3.0 Pro** | Deep technical knowledge, Google ecosystem expertise, code analysis | Performance optimization, complex algorithms, GCP integrations |
 | **Perplexity Labs** | Real-time web access, citation-backed research, up-to-date information | Library versions, recent best practices, security advisories |
+| **Claude** (via claude.ai) | Nuanced human understanding, ethics, empathy, communication | UX decisions, user empathy, ethical considerations, soft questions |
+
+### The Humanist Advisor
+
+While technical advisors excel at *how* to build something, **Claude** (consulted via claude.ai as a separate instance) serves as the **humanist philosopher** of the council - addressing questions that require understanding the human condition:
+
+| Domain | Example Questions |
+|--------|-------------------|
+| **User Empathy** | "How will a stressed chief resident feel using this interface at 2 AM?" |
+| **Ethics** | "Is this feature potentially harmful? What are the second-order effects?" |
+| **Communication** | "How should error messages be worded to reduce anxiety?" |
+| **Organizational Dynamics** | "How will this change affect the power dynamics between attendings and residents?" |
+| **Accessibility** | "What barriers might users with disabilities face?" |
+| **Trust & Safety** | "Could this feature be misused? How do we design for good-faith users while preventing abuse?" |
+
+This creates a natural division:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    ADVISORY SPECIALIZATIONS                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   TECHNICAL QUESTIONS              HUMAN QUESTIONS                   │
+│   ──────────────────              ────────────────                   │
+│   • ChatGPT → Architecture        • Claude → User empathy            │
+│   • Gemini → Performance          • Claude → Ethics & safety         │
+│   • Perplexity → Current info     • Claude → Communication           │
+│                                   • User → Domain expertise          │
+│                                   • User → Organizational context    │
+│                                                                      │
+│   "How should we build this?"     "Should we build this?"            │
+│   "What's the optimal approach?"  "How will people feel about this?" │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Why Claude for soft questions?**
+- Training emphasis on helpfulness, harmlessness, and honesty
+- Strong at nuanced ethical reasoning without false equivalence
+- Excellent at considering multiple stakeholder perspectives
+- Faster than human reflection, but with human-like consideration
 
 ### Secondary Advisors (Domain-Specific)
 
@@ -354,6 +395,42 @@ Ensuring no vulnerabilities in [specific area].
 Vulnerability assessment with remediation steps.
 ```
 
+### Template E: Human & Ethical Considerations (for Claude)
+
+```markdown
+## Consultation Request: Human Considerations
+
+### Context
+Building [feature] for [user type] in [domain context].
+
+### The Challenge
+Understanding the human impact of [specific design decision].
+
+### The Users
+- **Primary users:** [Who will use this directly]
+- **Affected parties:** [Who else is impacted]
+- **Power dynamics:** [Relevant authority relationships]
+
+### Current Design
+[Description of the proposed approach]
+
+### Specific Questions
+1. How might a [specific user persona] feel when encountering this?
+2. What unintended consequences could this create?
+3. Are there accessibility or equity concerns?
+4. How could this be misused, and how do we prevent that?
+5. What's the most empathetic way to handle [edge case]?
+
+### Scenarios to Consider
+- Best case: [Ideal usage]
+- Stress case: [User under pressure]
+- Edge case: [Unusual but possible situation]
+- Adversarial case: [Bad-faith usage]
+
+### Preferred Response Format
+Stakeholder analysis with specific recommendations for human-centered design.
+```
+
 ---
 
 ## Integration with Development Workflow
@@ -493,6 +570,33 @@ Every quarter (or 20 consultations), analyze:
 ---
 
 ## Appendix A: Advisor-Specific Guidelines
+
+### Claude (via claude.ai) - The Humanist
+
+**Strengths:**
+- Exceptional at understanding user perspectives and emotions
+- Strong ethical reasoning without false balance
+- Excellent at considering second-order effects
+- Natural language for error messages and user communication
+- Thoughtful about accessibility and inclusion
+
+**Best Practices:**
+- Frame questions around specific user personas
+- Ask about "how would X feel when..." scenarios
+- Request consideration of multiple stakeholders
+- Ask for potential unintended consequences
+- Use for reviewing user-facing copy and error messages
+
+**Caveats:**
+- May be overly cautious (calibrate for your risk tolerance)
+- Different Claude instance may have different context; provide sufficient background
+
+**Example Questions:**
+- "A resident just got denied their vacation request. How should the notification be worded?"
+- "We're adding a feature that shows comparative performance. What are the psychological risks?"
+- "Is it ethical to auto-approve swaps that meet all criteria, or should humans always be in the loop?"
+
+---
 
 ### ChatGPT 5.x Pro
 
