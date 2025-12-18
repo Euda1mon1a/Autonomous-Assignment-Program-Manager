@@ -6,6 +6,7 @@ Provides background tasks for sending notifications via various channels.
 
 import logging
 from datetime import datetime
+from uuid import UUID
 
 from celery import shared_task
 
@@ -71,3 +72,64 @@ def send_webhook(
         "url": url,
         "status": "queued",
     }
+
+
+@shared_task(
+    name="app.notifications.tasks.detect_leave_conflicts",
+    max_retries=3,
+    default_retry_delay=60,
+)
+def detect_leave_conflicts(
+    absence_id: str,
+) -> dict:
+    """
+    Background task to detect conflicts after leave creation/approval.
+
+    This task:
+    1. Checks for FMIT schedule conflicts with the leave
+    2. Creates conflict alerts for any detected issues
+    3. Notifies affected faculty if configured
+
+    Args:
+        absence_id: UUID of the absence record to check
+
+    Returns:
+        Dict with conflict detection results
+    """
+    from app.db.session import get_db
+    from app.services.conflict_auto_detector import ConflictAutoDetector
+
+    logger.info(f"Detecting conflicts for leave {absence_id}")
+
+    try:
+        # Get database session
+        db = next(get_db())
+
+        # Initialize conflict detector
+        detector = ConflictAutoDetector(db)
+
+        # Detect conflicts for this absence
+        conflicts = detector.detect_conflicts_for_absence(UUID(absence_id))
+
+        # Create conflict alerts if any found
+        alert_ids = []
+        if conflicts:
+            alert_ids = detector.create_conflict_alerts(conflicts)
+            logger.info(
+                f"Created {len(alert_ids)} conflict alerts for leave {absence_id}"
+            )
+
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "absence_id": absence_id,
+            "conflicts_found": len(conflicts),
+            "alerts_created": len(alert_ids),
+            "status": "completed",
+        }
+
+    except Exception as e:
+        logger.error(
+            f"Error detecting conflicts for leave {absence_id}: {e}",
+            exc_info=True,
+        )
+        raise

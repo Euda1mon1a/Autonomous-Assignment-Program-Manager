@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
+from app.models.rotation_template import RotationTemplate
 from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.services.faculty_preference_service import FacultyPreferenceService
 from app.services.swap_executor import SwapExecutor
@@ -652,21 +653,42 @@ class SwapRequestService:
         ).first()
 
     def _is_week_assigned_to_faculty(self, faculty_id: UUID, week_start: date) -> bool:
-        """Check if a week is assigned to a faculty member."""
-        # Look for FMIT assignments in the week
+        """
+        Check if a week is assigned to a faculty member as FMIT coverage.
+
+        Args:
+            faculty_id: The faculty member's UUID
+            week_start: The start date of the week (typically Monday)
+
+        Returns:
+            True if the faculty has FMIT assignments for this week, False otherwise
+        """
+        # Calculate week end date
         week_end = week_start + timedelta(days=6)
 
-        self.db.query(Assignment).join(Block).filter(
-            Assignment.person_id == faculty_id,
-            Block.start_date <= week_end,
-            Block.end_date >= week_start,
-            # Assuming FMIT rotation has specific identifier
-            # This might need adjustment based on actual data model
+        # Find FMIT rotation template
+        fmit_template = self.db.query(RotationTemplate).filter(
+            RotationTemplate.name == "FMIT"
         ).first()
 
-        # For now, return True as placeholder
-        # TODO: Implement proper FMIT week verification
-        return True
+        if not fmit_template:
+            # No FMIT template configured - cannot verify
+            return False
+
+        # Query for FMIT assignments in the specified week
+        assignment = (
+            self.db.query(Assignment)
+            .join(Block, Assignment.block_id == Block.id)
+            .filter(
+                Assignment.person_id == faculty_id,
+                Assignment.rotation_template_id == fmit_template.id,
+                Block.date >= week_start,
+                Block.date <= week_end,
+            )
+            .first()
+        )
+
+        return assignment is not None
 
     def _find_compatible_candidates(
         self,
