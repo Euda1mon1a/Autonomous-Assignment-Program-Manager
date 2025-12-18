@@ -13,13 +13,15 @@ nginx/
 ├── conf.d/
 │   ├── upstreams.conf           ***REMOVED*** Load balancing upstream definitions
 │   ├── default.conf             ***REMOVED*** Main server configuration (HTTPS)
+│   ├── load-testing.conf        ***REMOVED*** Load testing configuration
 │   └── default-dev.conf.example ***REMOVED*** Development configuration template
 ├── snippets/
 │   ├── ssl-params.conf          ***REMOVED*** SSL/TLS parameters
 │   ├── security-headers.conf    ***REMOVED*** Security headers
 │   ├── proxy-params.conf        ***REMOVED*** Proxy settings
 │   ├── websocket-params.conf    ***REMOVED*** WebSocket proxy settings
-│   └── static-cache.conf        ***REMOVED*** Static file caching
+│   ├── static-cache.conf        ***REMOVED*** Static file caching
+│   └── loadtest-locations.conf  ***REMOVED*** Load testing location blocks
 ├── scripts/
 │   ├── init-letsencrypt.sh      ***REMOVED*** Initialize Let's Encrypt certificates
 │   ├── renew-certificates.sh    ***REMOVED*** Renew certificates (cron job)
@@ -107,6 +109,92 @@ nginx/
 | `login` | 5 req/min | Authentication (brute force protection) |
 | `schedule_gen` | 1 req/10s | Schedule generation (resource protection) |
 
+***REMOVED******REMOVED******REMOVED*** Load Testing Support
+
+The nginx configuration includes dedicated support for authorized load testing with relaxed rate limits and enhanced connection pooling.
+
+**Features:**
+- **Header-based authentication**: Requires `X-Load-Test-Key` header
+- **IP whitelisting**: Restricted to internal networks and CI/CD servers
+- **Relaxed rate limits**: 100 req/s for load test endpoints (vs 30 req/s normal)
+- **Enhanced connection pooling**: 100 keepalive connections with 10,000 requests/connection
+- **Detailed logging**: JSON format with timing metrics for performance analysis
+
+**Setup:**
+
+1. **Configure load test secret**:
+   ```bash
+   ***REMOVED*** Generate secure key
+   python -c 'import secrets; print(secrets.token_urlsafe(32))'
+
+   ***REMOVED*** Edit nginx/conf.d/load-testing.conf
+   ***REMOVED*** Replace YOUR_LOAD_TEST_SECRET_KEY with generated key
+   ```
+
+2. **Add CI/CD server IPs** (edit `nginx/conf.d/load-testing.conf`):
+   ```nginx
+   geo $load_test_whitelist {
+       default 0;
+       ***REMOVED*** Add your CI/CD server IPs
+       203.0.113.0/24 1;    ***REMOVED*** Jenkins/GitLab CI
+   }
+   ```
+
+3. **Enable load test locations** (edit `nginx/conf.d/default.conf`):
+   ```nginx
+   server {
+       ...
+       ***REMOVED*** Add this line inside the server block
+       include /etc/nginx/snippets/loadtest-locations.conf;
+       ...
+   }
+   ```
+
+**Usage:**
+
+```bash
+***REMOVED*** Example curl request
+curl -H "X-Load-Test-Key: YOUR_SECRET" \
+     http://localhost/api/loadtest/schedule/list
+
+***REMOVED*** Example K6 load test
+import http from 'k6/http';
+export default function() {
+  const params = {
+    headers: { 'X-Load-Test-Key': 'YOUR_SECRET' }
+  };
+  http.get('http://localhost/api/loadtest/persons', params);
+}
+```
+
+**Load Test Rate Limits:**
+
+| Zone | Rate | Purpose |
+|------|------|---------|
+| `loadtest_general` | 50 req/s | General load test endpoints |
+| `loadtest_api` | 100 req/s | API load testing |
+| `loadtest_schedule` | 10 req/min | Schedule generation testing |
+
+**Monitoring:**
+
+```bash
+***REMOVED*** View load test logs
+tail -f /var/log/nginx/loadtest.log
+
+***REMOVED*** Check nginx status
+curl http://localhost/nginx_status
+
+***REMOVED*** Monitor backend metrics during load test
+curl http://localhost/api/loadtest/metrics
+```
+
+**Security Checklist:**
+- ✓ Load test secret key is NOT the default value
+- ✓ IP whitelist includes ONLY trusted networks
+- ✓ Load test endpoints are NOT exposed to public internet
+- ✓ Firewall rules prevent external access to `/api/loadtest/*` routes
+- ✓ Load test key is stored in environment variables, not in code
+
 ***REMOVED******REMOVED*** Configuration Reference
 
 ***REMOVED******REMOVED******REMOVED*** Environment Variables
@@ -186,11 +274,13 @@ limit_req zone=api burst=100 nodelay;
 | `nginx.conf` | DevOps | Main configuration - rarely changes |
 | `conf.d/upstreams.conf` | DevOps | Load balancing - scale adjustments |
 | `conf.d/default.conf` | DevOps | Server blocks - routing changes |
+| `conf.d/load-testing.conf` | DevOps/QA | Load testing configuration |
 | `snippets/ssl-params.conf` | DevOps | SSL settings - security updates |
 | `snippets/security-headers.conf` | DevOps/Security | Security headers |
 | `snippets/proxy-params.conf` | DevOps | Proxy settings |
 | `snippets/websocket-params.conf` | DevOps | WebSocket config |
 | `snippets/static-cache.conf` | DevOps | Caching rules |
+| `snippets/loadtest-locations.conf` | DevOps/QA | Load testing locations |
 | `scripts/*` | DevOps | Automation scripts |
 | `Dockerfile` | DevOps | Container image |
 

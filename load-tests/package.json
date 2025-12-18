@@ -1,0 +1,53 @@
+{
+  "name": "residency-scheduler-load-tests",
+  "version": "1.0.0",
+  "description": "k6 load testing suite for Residency Scheduler API",
+  "private": true,
+  "scripts": {
+    "test": "k6 run scenarios/smoke-test.js",
+    "test:smoke": "k6 run scenarios/smoke-test.js",
+    "test:load": "k6 run scenarios/load-test.js",
+    "test:stress": "k6 run scenarios/stress-test.js",
+    "test:spike": "k6 run scenarios/spike-test.js",
+    "test:soak": "k6 run scenarios/soak-test.js",
+    "test:auth": "k6 run scenarios/auth-test.js",
+    "test:people": "k6 run scenarios/people-test.js",
+    "test:assignments": "k6 run scenarios/assignments-test.js",
+    "test:acgme": "k6 run scenarios/acgme-compliance-test.js",
+    "test:all": "npm run test:smoke && npm run test:load && npm run test:stress",
+    "test:docker": "docker-compose -f docker-compose.k6.yml --profile load-testing up --abort-on-container-exit",
+    "test:docker:smoke": "docker-compose -f docker-compose.k6.yml --profile load-testing run --rm k6 run /load-tests/scenarios/smoke-test.js",
+    "test:docker:load": "docker-compose -f docker-compose.k6.yml --profile load-testing run --rm k6 run /load-tests/scenarios/load-test.js",
+    "test:docker:stress": "docker-compose -f docker-compose.k6.yml --profile load-testing run --rm k6 run /load-tests/scenarios/stress-test.js",
+    "test:docker:spike": "docker-compose -f docker-compose.k6.yml --profile load-testing run --rm k6 run /load-tests/scenarios/spike-test.js",
+    "test:docker:soak": "docker-compose -f docker-compose.k6.yml --profile load-testing run --rm k6 run /load-tests/scenarios/soak-test.js",
+    "test:with-metrics": "docker-compose -f docker-compose.k6.yml --profile load-testing-metrics up",
+    "metrics:up": "docker-compose -f docker-compose.k6.yml --profile load-testing-metrics up -d influxdb grafana-k6",
+    "metrics:down": "docker-compose -f docker-compose.k6.yml --profile load-testing-metrics down",
+    "clean": "rm -rf results/*.json results/*.html",
+    "report": "k6 inspect results/test-results.json",
+    "help": "echo 'Available commands:\n  npm run test:smoke - Quick functionality test\n  npm run test:load - Standard load test\n  npm run test:stress - Stress test to find limits\n  npm run test:spike - Spike test for sudden traffic\n  npm run test:soak - Long-running stability test\n  npm run test:docker:* - Run tests in Docker\n  npm run metrics:up - Start InfluxDB + Grafana\n  npm run clean - Clean result files'"
+  },
+  "keywords": [
+    "k6",
+    "load-testing",
+    "performance",
+    "api-testing",
+    "residency-scheduler"
+  ],
+  "author": "Residency Scheduler Team",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "k6": "^0.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/residency-scheduler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/residency-scheduler/issues"
+  }
+}
