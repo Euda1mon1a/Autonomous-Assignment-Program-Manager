@@ -16,7 +16,7 @@ class RotationTemplate(Base):
     Templates define activity patterns like:
     - PGY-1 Clinic (max 4 residents, supervision required)
     - Sports Medicine (requires specialty faculty)
-    - FMIT Inpatient (24/7 coverage)
+    - FMIT Inpatient (24/7 coverage, NOT leave-eligible)
     """
     __tablename__ = "rotation_templates"
 
@@ -24,6 +24,12 @@ class RotationTemplate(Base):
     name = Column(String(255), nullable=False)  ***REMOVED*** e.g., "PGY-1 Clinic", "FMIT", "Sports Medicine"
     activity_type = Column(String(255), nullable=False)  ***REMOVED*** "clinic", "inpatient", "procedure", "conference"
     abbreviation = Column(String(10))  ***REMOVED*** For Excel export: "C", "FMIT", "LEC"
+
+    ***REMOVED*** Leave eligibility
+    ***REMOVED*** True = scheduled leave is allowed on this rotation (most electives, clinic)
+    ***REMOVED*** False = leave not normally allowed, requires coverage (FMIT, inpatient coverage)
+    ***REMOVED*** Emergency absences still generate conflict alerts regardless of this setting
+    leave_eligible = Column(Boolean, default=True, nullable=False)
 
     ***REMOVED*** Clinic constraints
     clinic_location = Column(String(255))  ***REMOVED*** "Main Clinic", "Procedure Clinic"
