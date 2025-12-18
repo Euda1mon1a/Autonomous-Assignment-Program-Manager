@@ -1,23 +1,16 @@
 # =============================================================================
 # Nginx Reverse Proxy Dockerfile
 # =============================================================================
-# Production-ready nginx image with security hardening and performance
-# optimizations for the Residency Scheduler application.
+# Docker Hardened Image (DHI) with minimal attack surface
+# Requires: docker login (Docker Hub credentials) to pull from dhi.io
 # =============================================================================
 
-FROM nginx:1.25-alpine
+FROM dhi.io/nginx:1.27
 
 # Labels
 LABEL maintainer="Residency Scheduler Team"
 LABEL description="Nginx reverse proxy for Residency Scheduler"
 LABEL version="1.0"
-
-# Install required packages
-RUN apk add --no-cache \
-    openssl \
-    tzdata \
-    curl \
-    && rm -rf /var/cache/apk/*
 
 # Create required directories
 RUN mkdir -p \
@@ -38,10 +31,6 @@ COPY snippets/ /etc/nginx/snippets/
 # Copy SSL directory (may contain dhparam.pem)
 COPY ssl/ /etc/nginx/ssl/
 
-# Create non-root user for nginx workers
-RUN addgroup -g 101 -S nginx 2>/dev/null || true \
-    && adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx 2>/dev/null || true
-
 # Set proper permissions
 RUN chown -R nginx:nginx /var/cache/nginx \
     && chown -R nginx:nginx /var/log/nginx \
@@ -51,9 +40,9 @@ RUN chown -R nginx:nginx /var/cache/nginx \
 # Create error pages
 RUN echo '<!DOCTYPE html><html><head><title>503 Service Unavailable</title></head><body><h1>Service Temporarily Unavailable</h1><p>Please try again later.</p></body></html>' > /usr/share/nginx/html/50x.html
 
-# Health check
+# Health check using nginx's built-in status (no curl in distroless)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/health || exit 1
+    CMD nginx -t 2>/dev/null || exit 1
 
 # Expose ports
 EXPOSE 80 443
