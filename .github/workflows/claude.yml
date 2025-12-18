@@ -1,0 +1,146 @@
+***REMOVED*** GitHub Actions Workflow for Claude Code Background Tasks
+***REMOVED***
+***REMOVED*** This workflow enables Claude to assist with code reviews, issue analysis,
+***REMOVED*** and automated tasks for the medical residency scheduling application.
+***REMOVED*** Claude helps ensure ACGME compliance requirements are maintained across changes.
+
+name: Claude Code Assistant
+
+***REMOVED*** Workflow Triggers
+***REMOVED*** Configure when Claude should be invoked to assist with the codebase
+on:
+  ***REMOVED*** Trigger when someone comments on an issue and @mentions claude
+  ***REMOVED*** Useful for getting Claude's input on bugs, features, or questions
+  issue_comment:
+    types: [created]
+
+  ***REMOVED*** Trigger when someone comments on a pull request review and @mentions claude
+  ***REMOVED*** Allows Claude to provide targeted feedback on specific code sections
+  pull_request_review_comment:
+    types: [created]
+
+  ***REMOVED*** Trigger when the "claude" label is added to an issue
+  ***REMOVED*** Enables explicit tagging of issues that need Claude's analysis
+  issues:
+    types: [labeled]
+
+  ***REMOVED*** Trigger on pull request events for automated code review
+  ***REMOVED*** Claude will auto-review PRs to check ACGME compliance and code quality
+  pull_request:
+    types: [opened, synchronize]
+
+***REMOVED*** Permissions
+***REMOVED*** Define what actions Claude can perform in the repository
+permissions:
+  contents: write           ***REMOVED*** Read/write access to repository contents
+  issues: write            ***REMOVED*** Create and update issues and comments
+  pull-requests: write     ***REMOVED*** Review and comment on pull requests
+
+***REMOVED*** Workflow Jobs
+jobs:
+  ***REMOVED*** Job 1: Handle @mentions of Claude in comments
+  ***REMOVED*** Responds when users explicitly request Claude's assistance
+  claude-assistant:
+    name: Claude Assistant on Mention
+    runs-on: ubuntu-latest
+
+    ***REMOVED*** Only run this job when Claude is @mentioned in a comment
+    ***REMOVED*** or when the "claude" label is added to an issue
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'issues' && github.event.label.name == 'claude')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ***REMOVED*** Fetch full history for better context analysis
+          fetch-depth: 0
+
+      - name: Run Claude Code Action
+        uses: anthropics/claude-code-action@v1
+        with:
+          ***REMOVED*** Anthropic API key for Claude access
+          ***REMOVED*** Store this as a repository secret in Settings > Secrets and variables > Actions
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+          ***REMOVED*** Context about the project to help Claude provide better assistance
+          ***REMOVED*** Emphasizes ACGME compliance requirements for medical residency scheduling
+          system_prompt: |
+            You are assisting with a medical residency scheduling application.
+
+            Key context:
+            - This application manages resident schedules and duty hours
+            - ACGME compliance is critical for all scheduling logic
+            - Pay special attention to duty hour limits, rest periods, and workload distribution
+            - Ensure changes maintain compliance with medical education regulations
+
+            When reviewing code or responding to issues:
+            - Verify ACGME duty hour requirements are respected
+            - Check for proper error handling in scheduling logic
+            - Validate that changes don't introduce compliance violations
+            - Consider edge cases in shift scheduling and coverage
+
+  ***REMOVED*** Job 2: Automated PR Review
+  ***REMOVED*** Claude automatically reviews all new pull requests and updates
+  claude-pr-review:
+    name: Automated PR Review
+    runs-on: ubuntu-latest
+
+    ***REMOVED*** Only run on pull request events
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ***REMOVED*** Fetch the PR branch and base for comparison
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Fetch base branch for comparison
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Claude PR Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+          ***REMOVED*** Task: Perform comprehensive code review
+          task: review
+
+          ***REMOVED*** System prompt specific to PR reviews
+          ***REMOVED*** Focuses on ACGME compliance and medical application requirements
+          system_prompt: |
+            You are performing an automated code review for a medical residency scheduling application.
+
+            Review focus areas:
+            1. ACGME Compliance:
+               - Duty hour limits (80 hours/week averaged over 4 weeks)
+               - Maximum shift lengths (24 hours + 4 hours for transitions)
+               - Minimum rest periods between shifts (8-14 hours depending on context)
+               - One day off per week (24 hours free of clinical work)
+
+            2. Code Quality:
+               - Proper error handling for scheduling conflicts
+               - Database transaction integrity for schedule updates
+               - Adequate test coverage for scheduling logic
+               - Clear documentation of complex scheduling algorithms
+
+            3. Security & Privacy:
+               - Protected Health Information (PHI) handling
+               - Proper authentication/authorization for schedule access
+               - Audit logging for schedule modifications
+
+            4. Performance:
+               - Efficient queries for schedule generation
+               - Proper caching for frequently accessed data
+               - Scalability considerations for multiple residency programs
+
+            Provide constructive feedback with specific suggestions for improvement.
+            Highlight any potential ACGME compliance issues as high priority.
+
+          ***REMOVED*** Base branch for diff comparison
+          base_branch: ${{ github.event.pull_request.base.ref }}
