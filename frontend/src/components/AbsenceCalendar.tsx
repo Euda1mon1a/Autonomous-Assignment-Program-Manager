@@ -22,14 +22,23 @@ interface AbsenceCalendarProps {
 }
 
 const typeColors: Record<string, { bg: string; border: string; text: string }> = {
+  // Planned leave
   vacation: { bg: 'bg-green-100', border: 'border-green-500', text: 'text-green-700' },
+  conference: { bg: 'bg-blue-100', border: 'border-blue-500', text: 'text-blue-700' },
+  // Medical
   sick: { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-700' },
   medical: { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-700' },
-  conference: { bg: 'bg-blue-100', border: 'border-blue-500', text: 'text-blue-700' },
-  personal: { bg: 'bg-purple-100', border: 'border-purple-500', text: 'text-purple-700' },
+  convalescent: { bg: 'bg-red-200', border: 'border-red-600', text: 'text-red-800' },
+  maternity_paternity: { bg: 'bg-pink-100', border: 'border-pink-500', text: 'text-pink-700' },
+  // Emergency (blocking - Hawaii reality)
   family_emergency: { bg: 'bg-purple-100', border: 'border-purple-500', text: 'text-purple-700' },
+  emergency_leave: { bg: 'bg-purple-200', border: 'border-purple-600', text: 'text-purple-800' },
+  bereavement: { bg: 'bg-gray-200', border: 'border-gray-600', text: 'text-gray-800' },
+  // Military
   deployment: { bg: 'bg-orange-100', border: 'border-orange-500', text: 'text-orange-700' },
   tdy: { bg: 'bg-yellow-100', border: 'border-yellow-500', text: 'text-yellow-700' },
+  // Fallback
+  personal: { bg: 'bg-purple-100', border: 'border-purple-500', text: 'text-purple-700' },
 }
 
 function getInitials(name: string): string {
