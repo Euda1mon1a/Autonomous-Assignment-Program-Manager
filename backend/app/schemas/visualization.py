@@ -1,5 +1,5 @@
 """Visualization schemas for heatmap generation."""
-from datetime import date, datetime
+import datetime
 from typing import Any
 from uuid import UUID
 
@@ -8,8 +8,8 @@ from pydantic import BaseModel, Field
 
 class HeatmapRequest(BaseModel):
     """Request schema for heatmap generation."""
-    start_date: date = Field(..., description="Start date for heatmap")
-    end_date: date = Field(..., description="End date for heatmap")
+    start_date: datetime.date = Field(..., description="Start date for heatmap")
+    end_date: datetime.date = Field(..., description="End date for heatmap")
     person_ids: list[UUID] | None = Field(None, description="Filter by specific people")
     rotation_ids: list[UUID] | None = Field(None, description="Filter by specific rotation templates")
     include_fmit: bool = Field(True, description="Include FMIT swap data in heatmap")
@@ -52,7 +52,10 @@ class HeatmapResponse(BaseModel):
     """Response schema for heatmap."""
     data: HeatmapData = Field(..., description="Heatmap data")
     title: str = Field(..., description="Title for the heatmap")
-    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp of generation")
+    generated_at: datetime.datetime = Field(
+        default_factory=datetime.datetime.utcnow,
+        description="Timestamp of generation",
+    )
     metadata: dict[str, Any] | None = Field(None, description="Additional metadata")
 
     class Config:
@@ -74,7 +77,7 @@ class HeatmapResponse(BaseModel):
 
 class CoverageGap(BaseModel):
     """Represents a coverage gap in the schedule."""
-    date: date = Field(..., description="Date of the gap")
+    date: datetime.date = Field(..., description="Date of the gap")
     time_of_day: str = Field(..., description="AM or PM")
     rotation: str | None = Field(None, description="Rotation with gap")
     severity: str = Field(..., description="low, medium, high")
@@ -96,7 +99,9 @@ class CoverageHeatmapResponse(BaseModel):
     coverage_percentage: float = Field(..., description="Overall coverage percentage", ge=0, le=100)
     gaps: list[CoverageGap] = Field(default_factory=list, description="List of coverage gaps")
     title: str = Field(..., description="Title for the heatmap")
-    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    generated_at: datetime.datetime = Field(
+        default_factory=datetime.datetime.utcnow
+    )
 
     class Config:
         json_schema_extra = {
@@ -126,8 +131,8 @@ class CoverageHeatmapResponse(BaseModel):
 class WorkloadRequest(BaseModel):
     """Request schema for workload heatmap."""
     person_ids: list[UUID] = Field(..., description="People to include in workload analysis")
-    start_date: date = Field(..., description="Start date")
-    end_date: date = Field(..., description="End date")
+    start_date: datetime.date = Field(..., description="Start date")
+    end_date: datetime.date = Field(..., description="End date")
     include_weekends: bool = Field(False, description="Include weekends in analysis")
 
     class Config:
@@ -169,9 +174,16 @@ class ExportRequest(BaseModel):
 class TimeRangeType(BaseModel):
     """Time range specification for heatmap queries."""
     range_type: str = Field(..., description="Type: 'week', 'month', 'quarter', 'custom'")
-    reference_date: date | None = Field(None, description="Reference date for week/month/quarter (defaults to today)")
-    start_date: date | None = Field(None, description="Custom start date (required for 'custom' range)")
-    end_date: date | None = Field(None, description="Custom end date (required for 'custom' range)")
+    reference_date: datetime.date | None = Field(
+        None,
+        description="Reference date for week/month/quarter (defaults to today)",
+    )
+    start_date: datetime.date | None = Field(
+        None, description="Custom start date (required for 'custom' range)"
+    )
+    end_date: datetime.date | None = Field(
+        None, description="Custom end date (required for 'custom' range)"
+    )
 
     class Config:
         json_schema_extra = {

@@ -31,7 +31,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
+from typing import Any, Callable
 from uuid import UUID, uuid4
 
 logger = logging.getLogger(__name__)
@@ -527,7 +527,7 @@ class BehavioralNetworkAnalyzer:
             analyzed_at=datetime.now(),
             period_start=period_start,
             period_end=period_end,
-            total_swaps=sum(e.swap_count for e in self.edges.values()) // 2,
+            total_swaps=sum(e.swap_count for e in self.edges.values()),
             total_faculty=len(self.nodes),
         )
 
@@ -614,6 +614,16 @@ class BehavioralNetworkAnalyzer:
                 if node.swap_count == 0 and node.requests_made == 0 and node.requests_received == 0:
                     node.behavioral_role = BehavioralRole.ISOLATE
                     node.role_confidence = 1.0
+                continue
+
+            burden_ratio = (
+                node.burden_absorbed / max(1.0, node.burden_offloaded)
+            ) if node.burden_offloaded or node.burden_absorbed else 0
+
+            # Identify martyrs based on heavy burden absorption even in small samples
+            if burden_ratio >= 2:
+                node.behavioral_role = BehavioralRole.MARTYR
+                node.role_confidence = min(1.0, burden_ratio / 5)
                 continue
 
             # Calculate z-score for burden flow
@@ -852,7 +862,7 @@ class ShadowOrgChartService:
     def build_from_swap_records(
         self,
         swap_records: list[dict],
-        burden_calculator: callable | None = None,
+        burden_calculator: Callable | None = None,
     ):
         """
         Build network from swap records.
