@@ -529,7 +529,7 @@ async def generate_schedule(
 
     - **start_date**: Beginning of the scheduling period
     - **end_date**: End of the scheduling period
-    - **algorithm**: Scheduling algorithm to use (greedy, min_conflicts, cp_sat)
+    - **algorithm**: Scheduling algorithm to use (greedy, cp_sat, pulp, hybrid)
 
     Returns the generated schedule with compliance validation results.
     """

@@ -1,0 +1,60 @@
+***REMOVED*** =============================================================================
+***REMOVED*** Backend Dockerfile for LOCAL DEVELOPMENT
+***REMOVED*** =============================================================================
+***REMOVED*** This uses standard Docker Hub Python images (no authentication required)
+***REMOVED*** Optimized for development with hot reload support
+***REMOVED***
+***REMOVED*** Key differences from production Dockerfile:
+***REMOVED***   - Uses python:3.12-slim instead of dhi.io/python:3.12
+***REMOVED***   - Single-stage build (no distroless, easier debugging)
+***REMOVED***   - Runs as root (simpler volume permissions in dev)
+***REMOVED***   - Installs dev dependencies
+***REMOVED***   - Supports hot reload with uvicorn --reload
+***REMOVED*** =============================================================================
+
+FROM python:3.12-slim
+
+***REMOVED*** Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+***REMOVED*** Install system dependencies
+***REMOVED*** - gcc, libpq-dev: Required for psycopg2 compilation
+***REMOVED*** - curl: Useful for debugging/health checks
+***REMOVED*** - postgresql-client: Useful for DB debugging
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    libpq5 \
+    curl \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+***REMOVED*** Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
+
+***REMOVED*** Install development-only dependencies (optional)
+***REMOVED*** Uncomment if you have a requirements-dev.txt file
+***REMOVED*** COPY requirements-dev.txt .
+***REMOVED*** RUN pip install -r requirements-dev.txt
+
+***REMOVED*** Copy application code
+***REMOVED*** Note: In docker-compose.local.yml, this directory is mounted as a volume
+***REMOVED*** so changes to source code will be reflected immediately
+COPY . .
+
+***REMOVED*** Expose port
+EXPOSE 8000
+
+***REMOVED*** Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+***REMOVED*** Default command (can be overridden in docker-compose.local.yml)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

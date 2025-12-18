@@ -48,6 +48,10 @@ export interface AuthCheckResponse {
  *
  * Security: Token is set as httpOnly cookie by the server.
  * No client-side token storage needed.
+ *
+ * This function performs two steps:
+ * 1. Authenticates and sets the token (httpOnly cookie)
+ * 2. Fetches the user profile data
  */
 export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
   // Create form data for OAuth2 password flow
@@ -55,14 +59,32 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
   formData.append('username', credentials.username)
   formData.append('password', credentials.password)
 
-  const response = await api.post<LoginResponse>('/auth/login', formData, {
+  // Step 1: Authenticate and get token (set as httpOnly cookie)
+  const tokenResponse = await api.post<{ access_token: string; token_type: string }>('/auth/login', formData, {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     withCredentials: true, // Required for cookies
   })
 
-  return response.data
+  // Step 2: Fetch user data using the newly set token
+  try {
+    const user = await getCurrentUser()
+
+    return {
+      access_token: tokenResponse.data.access_token,
+      token_type: tokenResponse.data.token_type,
+      user,
+    }
+  } catch (error) {
+    // Login succeeded (token is set in cookie), but failed to fetch user data
+    // This is a partial success - the user is authenticated but we can't get their details
+    console.error('Failed to fetch user data after successful login:', error)
+
+    // Throw a descriptive error for the UI to handle
+    // The user can try refreshing the page since the cookie is set
+    throw new Error('Authentication succeeded but failed to load user profile. Please refresh the page.')
+  }
 }
 
 /**

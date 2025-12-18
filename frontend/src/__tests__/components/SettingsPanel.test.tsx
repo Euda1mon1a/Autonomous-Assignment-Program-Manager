@@ -127,8 +127,9 @@ function SettingsPanel({ onSave }: SettingsPanelProps) {
             onChange={(e) => handleChange('scheduling', 'defaultAlgorithm', e.target.value)}
           >
             <option value="greedy">Greedy (Fast)</option>
-            <option value="min_conflicts">Min Conflicts (Balanced)</option>
-            <option value="cp_sat">CP-SAT (Optimal)</option>
+            <option value="cp_sat">CP-SAT (Optimal, OR-Tools)</option>
+            <option value="pulp">PuLP (Linear Programming)</option>
+            <option value="hybrid">Hybrid (CP-SAT + PuLP)</option>
           </select>
         </label>
       </div>

@@ -3,6 +3,19 @@
 ***REMOVED*** Requires: docker login (Docker Hub credentials) to pull from dhi.io
 
 ***REMOVED*** =============================================================================
+***REMOVED*** Python Version Selection: 3.12
+***REMOVED*** =============================================================================
+***REMOVED*** Python 3.12 is chosen for ortools compatibility and security:
+***REMOVED*** - ortools>=9.8 officially supports Python 3.9, 3.10, 3.11, 3.12, and 3.13
+***REMOVED*** - Python 3.12 provides pre-built wheels for ortools on Linux x86-64
+***REMOVED*** - DHI (Docker Hardened Images) 3.12 offers ~95% fewer CVEs vs standard images
+***REMOVED*** - All other dependencies (FastAPI, SQLAlchemy, etc.) support Python 3.12
+***REMOVED***
+***REMOVED*** Verified compatibility (as of 2025-12-18):
+***REMOVED*** - ortools 9.14.6206 (latest) includes cp312 wheels for Linux x86-64
+***REMOVED*** - Source: https://pypi.org/project/ortools/
+***REMOVED***
+***REMOVED*** =============================================================================
 ***REMOVED*** Build Stage - includes compilers and build tools
 ***REMOVED*** =============================================================================
 FROM dhi.io/python:3.12-dev AS builder
