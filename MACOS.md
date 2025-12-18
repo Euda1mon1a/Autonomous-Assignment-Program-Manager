@@ -236,6 +236,55 @@ Then open http://localhost:3000 and log in.
 
 ---
 
+## Contributing Discoveries Back
+
+**IMPORTANT:** If you encounter and solve a new issue, or discover something useful during deployment, commit it back to the repo so future sessions benefit.
+
+### When to Contribute
+
+- Fixed an undocumented issue
+- Found a better command or approach
+- Encountered a new macOS-specific gotcha
+- Updated a dependency version that matters
+
+### How to Contribute
+
+```bash
+# 1. Create a branch (if not already on one)
+git checkout -b fix/macos-<brief-description>
+
+# 2. Update the relevant file:
+#    - New issue/fix → Add to "Common Issues & Fixes" section in this file
+#    - New command → Add to "Essential Commands" section
+#    - Major discovery → Update docs/getting-started/macos-deploy.md
+
+# 3. Commit with clear message
+git add -A
+git commit -m "docs(macos): Add fix for <issue description>"
+
+# 4. Push to remote
+git push -u origin fix/macos-<brief-description>
+
+# 5. Tell the user the branch name so they can create a PR
+```
+
+### What to Document
+
+For each discovery, include:
+1. **Symptom** - What error/problem did you see?
+2. **Cause** - Why did it happen? (if known)
+3. **Fix** - The command(s) that solved it
+
+Example format for this file:
+```markdown
+### <Issue name>
+```bash
+<fix command>
+```
+```
+
+---
+
 ## Full Documentation
 
 For detailed instructions, see:
