@@ -1,0 +1,333 @@
+version: '3.8'
+
+# =============================================================================
+# LOCAL DEVELOPMENT Docker Compose Configuration
+# =============================================================================
+# This file uses standard Docker Hub images (no authentication required)
+# and is optimized for local development with hot-reload and exposed ports
+#
+# USAGE:
+#   docker-compose -f docker-compose.local.yml up --build
+#   docker-compose -f docker-compose.local.yml down
+#   docker-compose -f docker-compose.local.yml logs -f backend
+#
+# FIRST TIME SETUP:
+#   1. Copy .env.local.example (see bottom of file) to .env.local
+#   2. Run: docker-compose -f docker-compose.local.yml up --build
+#   3. Access:
+#      - Frontend: http://localhost:3000
+#      - Backend API: http://localhost:8000
+#      - API Docs: http://localhost:8000/docs
+#      - PostgreSQL: localhost:5432
+#      - Redis: localhost:6379
+#      - n8n: http://localhost:5678
+#
+# HOT RELOAD:
+#   - Backend: Source code is mounted as volume, uvicorn auto-reloads
+#   - Frontend: Source code is mounted, Next.js dev server auto-reloads
+#
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # PostgreSQL Database
+  # ===========================================================================
+  db:
+    image: postgres:15-alpine
+    container_name: scheduler-local-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: scheduler
+      POSTGRES_PASSWORD: local_dev_password
+      POSTGRES_DB: residency_scheduler
+    ports:
+      - "5432:5432"  # Exposed for direct DB access (e.g., pgAdmin, DBeaver)
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scheduler -d residency_scheduler"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app-network
+
+  # ===========================================================================
+  # Redis - Message Broker & Cache
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: scheduler-local-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"  # Exposed for debugging with redis-cli or RedisInsight
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass local_dev_redis_pass
+    volumes:
+      - redis_local_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "local_dev_redis_pass", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - app-network
+
+  # ===========================================================================
+  # FastAPI Backend (Development Mode with Hot Reload)
+  # ===========================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.local
+    container_name: scheduler-local-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql://scheduler:local_dev_password@db:5432/residency_scheduler
+
+      # Redis
+      REDIS_PASSWORD: local_dev_redis_pass
+      REDIS_URL: redis://:local_dev_redis_pass@redis:6379/0
+
+      # Celery
+      CELERY_BROKER_URL: redis://:local_dev_redis_pass@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:local_dev_redis_pass@redis:6379/0
+
+      # Security (DEV ONLY - generate proper secrets for production)
+      SECRET_KEY: local_dev_secret_key_not_for_production_use_only_12345678901234567890
+
+      # Development settings
+      DEBUG: "true"
+      ENVIRONMENT: development
+
+      # CORS
+      CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000"]'
+
+      # Logging
+      LOG_LEVEL: DEBUG
+    ports:
+      - "8000:8000"  # FastAPI server
+      - "5678:5678"  # Optional: debugpy remote debugging (if configured)
+    volumes:
+      # Mount source code for hot reload
+      - ./backend:/app
+      # Don't override these directories
+      - /app/__pycache__
+      - /app/.pytest_cache
+      - backend_local_venv:/app/venv
+    networks:
+      - app-network
+    command: >
+      sh -c "
+        echo 'Running database migrations...' &&
+        alembic upgrade head &&
+        echo 'Starting FastAPI development server with hot reload...' &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+
+  # ===========================================================================
+  # Celery Worker (Background Tasks)
+  # ===========================================================================
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.local
+    container_name: scheduler-local-celery-worker
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://scheduler:local_dev_password@db:5432/residency_scheduler
+      REDIS_PASSWORD: local_dev_redis_pass
+      REDIS_URL: redis://:local_dev_redis_pass@redis:6379/0
+      CELERY_BROKER_URL: redis://:local_dev_redis_pass@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:local_dev_redis_pass@redis:6379/0
+      SECRET_KEY: local_dev_secret_key_not_for_production_use_only_12345678901234567890
+      DEBUG: "true"
+      LOG_LEVEL: DEBUG
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+      - backend_local_venv:/app/venv
+    networks:
+      - app-network
+    command: celery -A app.core.celery_app worker --loglevel=debug -Q default,resilience,notifications
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.core.celery_app inspect ping -d celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ===========================================================================
+  # Celery Beat Scheduler (Periodic Tasks)
+  # ===========================================================================
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.local
+    container_name: scheduler-local-celery-beat
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://scheduler:local_dev_password@db:5432/residency_scheduler
+      REDIS_PASSWORD: local_dev_redis_pass
+      REDIS_URL: redis://:local_dev_redis_pass@redis:6379/0
+      CELERY_BROKER_URL: redis://:local_dev_redis_pass@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:local_dev_redis_pass@redis:6379/0
+      SECRET_KEY: local_dev_secret_key_not_for_production_use_only_12345678901234567890
+      DEBUG: "true"
+      LOG_LEVEL: DEBUG
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+      - backend_local_venv:/app/venv
+    networks:
+      - app-network
+    command: celery -A app.core.celery_app beat --loglevel=debug
+
+  # ===========================================================================
+  # Next.js Frontend (Development Mode with Hot Reload)
+  # ===========================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.local
+    container_name: scheduler-local-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      # Backend API URL
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+
+      # Development settings
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: 1
+
+      # Enable hot reload
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "3000:3000"  # Next.js dev server
+    volumes:
+      # Mount source code for hot reload
+      - ./frontend:/app
+      # Don't override these directories
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - app-network
+    command: npm run dev
+
+  # ===========================================================================
+  # n8n - Workflow Automation (Optional)
+  # ===========================================================================
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: scheduler-local-n8n
+    restart: unless-stopped
+    ports:
+      - "5679:5678"  # Changed to 5679 to avoid conflict with backend debugpy
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=local_dev_n8n_password
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5679
+      - GENERIC_TIMEZONE=America/New_York
+      - N8N_LOG_LEVEL=debug
+    volumes:
+      - n8n_local_data:/home/node/.n8n
+    networks:
+      - app-network
+
+# =============================================================================
+# Volumes - Local Development Data
+# =============================================================================
+volumes:
+  postgres_local_data:
+    driver: local
+  redis_local_data:
+    driver: local
+  n8n_local_data:
+    driver: local
+  backend_local_venv:
+    driver: local
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  app-network:
+    driver: bridge
+
+# =============================================================================
+# .env.local TEMPLATE
+# =============================================================================
+# Create this file at the root of the project as .env.local
+# This is for local development only - simpler passwords are acceptable
+#
+# -----------------------------------------------------------------------------
+# .env.local contents:
+# -----------------------------------------------------------------------------
+#
+# # Database
+# DB_PASSWORD=local_dev_password
+#
+# # Redis
+# REDIS_PASSWORD=local_dev_redis_pass
+#
+# # Security (DEV ONLY - generate proper secrets for production)
+# SECRET_KEY=local_dev_secret_key_not_for_production_use_only_12345678901234567890
+#
+# # Development
+# DEBUG=true
+# ENVIRONMENT=development
+#
+# # CORS
+# CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
+#
+# # Frontend
+# NEXT_PUBLIC_API_URL=http://localhost:8000
+#
+# # n8n (optional)
+# N8N_USER=admin
+# N8N_PASSWORD=local_dev_n8n_password
+# N8N_WEBHOOK_URL=http://localhost:5679
+#
+# -----------------------------------------------------------------------------
+# End of .env.local template
+# -----------------------------------------------------------------------------
+
+# =============================================================================
+# DOCKERFILE.LOCAL FILES REQUIRED
+# =============================================================================
+# This docker-compose.local.yml references Dockerfile.local files that need
+# to be created in ./backend/ and ./frontend/ directories.
+#
+# These should use standard Docker Hub images (python:3.12-slim, node:22-alpine)
+# instead of the dhi.io images used in production Dockerfiles.
+#
+# See the note below for creating these files.
+# =============================================================================

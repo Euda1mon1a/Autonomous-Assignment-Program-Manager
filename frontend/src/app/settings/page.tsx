@@ -1,45 +1,36 @@
 'use client'
 
 import { useState, useEffect, FormEvent } from 'react'
-import { CheckCircle, AlertCircle, Loader2, Calendar } from 'lucide-react'
+import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { format, parseISO } from 'date-fns'
-import { get, put, ApiError } from '@/lib/api'
+import { get, post, ApiError } from '@/lib/api'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
-import { HolidayEditModal, Holiday } from '@/components/HolidayEditModal'
 
+// Backend schema - matches backend/app/schemas/settings.py
 interface Settings {
-  academicYear: {
-    startDate: string
-    endDate: string
-    blockDuration: number
-  }
-  acgme: {
-    maxWeeklyHours: number
-    pgy1SupervisionRatio: number
-    pgy23SupervisionRatio: number
-  }
-  scheduling: {
-    defaultAlgorithm: 'greedy' | 'min_conflicts' | 'cp_sat'
-  }
-  holidays?: Holiday[]
+  scheduling_algorithm: 'greedy' | 'min_conflicts' | 'cp_sat'
+  work_hours_per_week: number
+  max_consecutive_days: number
+  min_days_off_per_week: number
+  pgy1_supervision_ratio: string  // Format: "1:2"
+  pgy2_supervision_ratio: string  // Format: "1:4"
+  pgy3_supervision_ratio: string  // Format: "1:4"
+  enable_weekend_scheduling: boolean
+  enable_holiday_scheduling: boolean
+  default_block_duration_hours: number
 }
 
 const defaultSettings: Settings = {
-  academicYear: {
-    startDate: '2024-07-01',
-    endDate: '2025-06-30',
-    blockDuration: 28,
-  },
-  acgme: {
-    maxWeeklyHours: 80,
-    pgy1SupervisionRatio: 2,
-    pgy23SupervisionRatio: 4,
-  },
-  scheduling: {
-    defaultAlgorithm: 'greedy',
-  },
-  holidays: [],
+  scheduling_algorithm: 'greedy',
+  work_hours_per_week: 80,
+  max_consecutive_days: 6,
+  min_days_off_per_week: 1,
+  pgy1_supervision_ratio: '1:2',
+  pgy2_supervision_ratio: '1:4',
+  pgy3_supervision_ratio: '1:4',
+  enable_weekend_scheduling: true,
+  enable_holiday_scheduling: false,
+  default_block_duration_hours: 4,
 }
 
 // API hooks for settings
@@ -55,7 +46,7 @@ function useUpdateSettings() {
   const queryClient = useQueryClient()
 
   return useMutation<Settings, ApiError, Settings>({
-    mutationFn: (data) => put<Settings>('/settings', data),
+    mutationFn: (data) => post<Settings>('/settings', data),
     onSuccess: (data) => {
       queryClient.setQueryData(['settings'], data)
     },
@@ -69,7 +60,6 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>(defaultSettings)
   const [showSuccess, setShowSuccess] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
-  const [isHolidayModalOpen, setIsHolidayModalOpen] = useState(false)
 
   // Load settings from API when fetched
   useEffect(() => {
@@ -78,26 +68,13 @@ export default function SettingsPage() {
     }
   }, [fetchedSettings])
 
-  const updateSettings = <K extends keyof Settings>(
-    section: K,
-    field: keyof Settings[K],
-    value: Settings[K][keyof Settings[K]]
+  const updateSetting = <K extends keyof Settings>(
+    field: K,
+    value: Settings[K]
   ) => {
     setSettings((prev) => ({
       ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: value,
-      },
-    }))
-    setHasChanges(true)
-    setShowSuccess(false)
-  }
-
-  const handleHolidaysSave = (holidays: Holiday[]) => {
-    setSettings((prev) => ({
-      ...prev,
-      holidays,
+      [field]: value,
     }))
     setHasChanges(true)
     setShowSuccess(false)
@@ -121,14 +98,6 @@ export default function SettingsPage() {
 
   const isSaving = updateSettingsMutation.isPending
   const saveError = updateSettingsMutation.error
-
-  // Get upcoming holidays for display (max 5)
-  const upcomingHolidays = (settings.holidays || [])
-    .filter((h) => h.date >= settings.academicYear.startDate && h.date <= settings.academicYear.endDate)
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, 5)
-
-  const remainingHolidaysCount = Math.max(0, (settings.holidays || []).length - 5)
 
   // Loading state
   if (isLoadingSettings) {
@@ -182,110 +151,124 @@ export default function SettingsPage() {
 
       <form onSubmit={handleSubmit}>
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Academic Year Settings */}
+          {/* Work Hours Settings */}
           <div className="card">
-            <h2 className="font-semibold text-lg mb-4">Academic Year</h2>
+            <h2 className="font-semibold text-lg mb-4">Work Hours</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  className="input-field w-full"
-                  value={settings.academicYear.startDate}
-                  onChange={(e) =>
-                    updateSettings('academicYear', 'startDate', e.target.value)
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  className="input-field w-full"
-                  value={settings.academicYear.endDate}
-                  onChange={(e) =>
-                    updateSettings('academicYear', 'endDate', e.target.value)
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Block Duration (days)
+                  Max Work Hours per Week
                 </label>
                 <input
                   type="number"
                   className="input-field w-full"
-                  value={settings.academicYear.blockDuration}
+                  value={settings.work_hours_per_week}
                   onChange={(e) =>
-                    updateSettings('academicYear', 'blockDuration', parseInt(e.target.value) || 28)
+                    updateSetting('work_hours_per_week', parseInt(e.target.value) || 80)
+                  }
+                  min={40}
+                  max={100}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  ACGME standard is 80 hours per week
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Max Consecutive Days
+                </label>
+                <input
+                  type="number"
+                  className="input-field w-full"
+                  value={settings.max_consecutive_days}
+                  onChange={(e) =>
+                    updateSetting('max_consecutive_days', parseInt(e.target.value) || 6)
                   }
                   min={1}
-                  max={365}
+                  max={7}
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Maximum days before requiring a day off
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Min Days Off per Week
+                </label>
+                <input
+                  type="number"
+                  className="input-field w-full"
+                  value={settings.min_days_off_per_week}
+                  onChange={(e) =>
+                    updateSetting('min_days_off_per_week', parseInt(e.target.value) || 1)
+                  }
+                  min={1}
+                  max={3}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  ACGME requires at least 1 day off per week
+                </p>
               </div>
             </div>
           </div>
 
-          {/* ACGME Settings */}
+          {/* Supervision Ratios */}
           <div className="card">
-            <h2 className="font-semibold text-lg mb-4">ACGME Settings</h2>
+            <h2 className="font-semibold text-lg mb-4">Supervision Ratios</h2>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Max Weekly Hours
-                </label>
-                <input
-                  type="number"
-                  className="input-field w-full"
-                  value={settings.acgme.maxWeeklyHours}
-                  onChange={(e) =>
-                    updateSettings('acgme', 'maxWeeklyHours', parseInt(e.target.value) || 80)
-                  }
-                  min={1}
-                  max={168}
-                />
-              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   PGY-1 Supervision Ratio
                 </label>
                 <select
                   className="input-field w-full"
-                  value={settings.acgme.pgy1SupervisionRatio}
+                  value={settings.pgy1_supervision_ratio}
                   onChange={(e) =>
-                    updateSettings('acgme', 'pgy1SupervisionRatio', parseInt(e.target.value))
+                    updateSetting('pgy1_supervision_ratio', e.target.value)
                   }
                 >
-                  <option value={2}>1:2 (1 faculty per 2 residents)</option>
-                  <option value={1}>1:1 (1 faculty per resident)</option>
+                  <option value="1:1">1:1 (1 faculty per resident)</option>
+                  <option value="1:2">1:2 (1 faculty per 2 residents)</option>
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  PGY-2/3 Supervision Ratio
+                  PGY-2 Supervision Ratio
                 </label>
                 <select
                   className="input-field w-full"
-                  value={settings.acgme.pgy23SupervisionRatio}
+                  value={settings.pgy2_supervision_ratio}
                   onChange={(e) =>
-                    updateSettings('acgme', 'pgy23SupervisionRatio', parseInt(e.target.value))
+                    updateSetting('pgy2_supervision_ratio', e.target.value)
                   }
                 >
-                  <option value={4}>1:4 (1 faculty per 4 residents)</option>
-                  <option value={3}>1:3 (1 faculty per 3 residents)</option>
-                  <option value={2}>1:2 (1 faculty per 2 residents)</option>
+                  <option value="1:2">1:2 (1 faculty per 2 residents)</option>
+                  <option value="1:3">1:3 (1 faculty per 3 residents)</option>
+                  <option value="1:4">1:4 (1 faculty per 4 residents)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  PGY-3 Supervision Ratio
+                </label>
+                <select
+                  className="input-field w-full"
+                  value={settings.pgy3_supervision_ratio}
+                  onChange={(e) =>
+                    updateSetting('pgy3_supervision_ratio', e.target.value)
+                  }
+                >
+                  <option value="1:2">1:2 (1 faculty per 2 residents)</option>
+                  <option value="1:3">1:3 (1 faculty per 3 residents)</option>
+                  <option value="1:4">1:4 (1 faculty per 4 residents)</option>
                 </select>
               </div>
             </div>
           </div>
 
-          {/* Scheduling Algorithm */}
+          {/* Scheduling Settings */}
           <div className="card">
-            <h2 className="font-semibold text-lg mb-4">Scheduling Algorithm</h2>
+            <h2 className="font-semibold text-lg mb-4">Scheduling</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -293,11 +276,10 @@ export default function SettingsPage() {
                 </label>
                 <select
                   className="input-field w-full"
-                  value={settings.scheduling.defaultAlgorithm}
+                  value={settings.scheduling_algorithm}
                   onChange={(e) =>
-                    updateSettings(
-                      'scheduling',
-                      'defaultAlgorithm',
+                    updateSetting(
+                      'scheduling_algorithm',
                       e.target.value as 'greedy' | 'min_conflicts' | 'cp_sat'
                     )
                   }
@@ -310,67 +292,54 @@ export default function SettingsPage() {
                   Greedy is fastest, CP-SAT finds optimal solution but slower
                 </p>
               </div>
-            </div>
-          </div>
-
-          {/* Holidays */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-lg flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600" />
-                Holidays
-              </h2>
-              <span className="text-sm text-gray-500">
-                {(settings.holidays || []).length} configured
-              </span>
-            </div>
-            <div className="space-y-2 text-sm">
-              {upcomingHolidays.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">
-                  No holidays configured. Click Edit to add holidays.
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Default Block Duration (hours)
+                </label>
+                <input
+                  type="number"
+                  className="input-field w-full"
+                  value={settings.default_block_duration_hours}
+                  onChange={(e) =>
+                    updateSetting('default_block_duration_hours', parseInt(e.target.value) || 4)
+                  }
+                  min={1}
+                  max={12}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Standard scheduling block duration
                 </p>
-              ) : (
-                <>
-                  {upcomingHolidays.map((holiday) => (
-                    <div key={holiday.id} className="flex justify-between py-2 border-b">
-                      <span className="flex items-center gap-2">
-                        {holiday.name}
-                        {holiday.isCustom && (
-                          <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">
-                            Custom
-                          </span>
-                        )}
-                      </span>
-                      <span className="text-gray-500">
-                        {format(parseISO(holiday.date), 'MMM d')}
-                      </span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between py-2">
-                    <span className="text-gray-500">
-                      {remainingHolidaysCount > 0 ? `+ ${remainingHolidaysCount} more holidays` : ''}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setIsHolidayModalOpen(true)}
-                      className="text-blue-600 hover:underline font-medium"
-                    >
-                      Edit
-                    </button>
-                  </div>
-                </>
-              )}
-              {upcomingHolidays.length === 0 && (
-                <div className="flex justify-end py-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsHolidayModalOpen(true)}
-                    className="text-blue-600 hover:underline font-medium"
-                  >
-                    Add Holidays
-                  </button>
-                </div>
-              )}
+              </div>
+              <div>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300"
+                    checked={settings.enable_weekend_scheduling}
+                    onChange={(e) =>
+                      updateSetting('enable_weekend_scheduling', e.target.checked)
+                    }
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Enable Weekend Scheduling
+                  </span>
+                </label>
+              </div>
+              <div>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300"
+                    checked={settings.enable_holiday_scheduling}
+                    onChange={(e) =>
+                      updateSetting('enable_holiday_scheduling', e.target.checked)
+                    }
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Enable Holiday Scheduling
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -388,16 +357,6 @@ export default function SettingsPage() {
           </button>
         </div>
       </form>
-
-      {/* Holiday Edit Modal */}
-      <HolidayEditModal
-        isOpen={isHolidayModalOpen}
-        onClose={() => setIsHolidayModalOpen(false)}
-        holidays={settings.holidays || []}
-        onSave={handleHolidaysSave}
-        academicYearStart={settings.academicYear.startDate}
-        academicYearEnd={settings.academicYear.endDate}
-      />
       </div>
     </ProtectedRoute>
   )
