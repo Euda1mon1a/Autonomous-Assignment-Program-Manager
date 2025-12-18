@@ -365,6 +365,22 @@ kill -9 <PID>
 
 ---
 
+***REMOVED******REMOVED*** Platform-Specific Guides
+
+***REMOVED******REMOVED******REMOVED*** macOS Users
+
+For a comprehensive macOS-specific deployment guide with Homebrew, Docker Desktop, and Terminal commands, see:
+
+**[macOS Deploy Guide](../docs/getting-started/macos-deploy.md)** - Complete guide covering:
+- Homebrew installation and prerequisites
+- Docker Desktop setup
+- Quick deploy (5 minutes)
+- Full local development setup
+- macOS-specific troubleshooting
+- Useful commands reference
+
+---
+
 ***REMOVED******REMOVED*** Getting Help
 
 If you encounter issues:
