@@ -158,6 +158,96 @@ npm run test:coverage
 
 ---
 
+## Load Testing
+
+Comprehensive load testing infrastructure using k6 and pytest for performance validation.
+
+### k6 Load Tests
+
+```bash
+cd load-tests
+
+# Install dependencies
+npm install
+
+# Run smoke test (quick validation)
+npm run test:smoke
+
+# Run load test (50 VUs, 5 min)
+npm run test:load
+
+# Run stress test (200 VUs, 10 min)
+npm run test:stress
+
+# Run specific scenario
+k6 run scenarios/schedule-generation.js
+k6 run scenarios/concurrent-users.js
+k6 run scenarios/api-baseline.js
+
+# With custom options
+k6 run --vus 50 --duration 5m scenarios/concurrent-users.js
+
+# Docker execution
+npm run test:docker:load
+```
+
+### pytest Performance Tests
+
+```bash
+cd backend
+
+# Run all performance tests
+pytest -m performance -v
+
+# Run specific performance test suites
+pytest tests/performance/test_acgme_load.py -v      # ACGME validation
+pytest tests/performance/test_connection_pool.py -v  # DB connection pool
+pytest tests/performance/test_idempotency_load.py -v # Idempotency
+
+# Run resilience load tests
+pytest tests/resilience/test_resilience_load.py -v
+
+# Exclude slow tests
+pytest -m "performance and not slow" -v
+```
+
+### Load Test Scenarios
+
+| Scenario | Tool | Purpose | Target |
+|----------|------|---------|--------|
+| API Baseline | k6 | Establish latency baselines | p95 < 500ms |
+| Concurrent Users | k6 | Multi-user simulation | 100 VUs |
+| Schedule Generation | k6 | Stress test generation | p95 < 30s |
+| Rate Limit Attack | k6 | Security validation | 429 in < 10 req |
+| ACGME Performance | pytest | Compliance validation | 100 residents < 5s |
+| Connection Pool | pytest | Pool saturation | No crashes |
+| Idempotency | pytest | Duplicate prevention | 100 req → 1 record |
+
+### Performance Test Markers
+
+| Marker | Description |
+|--------|-------------|
+| `@pytest.mark.performance` | Performance-focused tests |
+| `@pytest.mark.slow` | Long-running tests (> 30s) |
+| `@pytest.mark.resilience` | Resilience framework tests |
+
+### SLO Targets
+
+| Metric | Normal | Under Load |
+|--------|--------|------------|
+| API P95 Latency | < 500ms | < 2s |
+| Schedule Generation | < 180s | < 300s |
+| ACGME Validation | < 2s | < 5s |
+| Error Rate | < 0.1% | < 1% |
+
+### Documentation
+
+- **[Load Testing Guide](/docs/operations/LOAD_TESTING.md)** - Comprehensive guide
+- **[Nginx Setup](/nginx/LOAD_TESTING_SETUP.md)** - Nginx configuration
+- **[k6 README](/load-tests/README.md)** - k6 scenarios documentation
+
+---
+
 ## Test Markers
 
 Backend tests use pytest markers for categorization:
