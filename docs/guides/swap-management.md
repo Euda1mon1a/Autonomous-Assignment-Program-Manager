@@ -64,12 +64,3 @@ All swaps are validated against ACGME rules:
 
 !!! danger "Compliance Violations"
     Swaps that would create ACGME violations are blocked automatically.
-
----
-
-## Related Documentation
-
-- **[Swap Management Guide](../guides/swap-management.md)** - Detailed swap workflow guide
-- **[User Workflows](../guides/user-workflows.md)** - Complete user guide with swap examples
-- **[Compliance Monitoring](compliance.md)** - Understanding ACGME compliance
-- **[API: Swaps](../api/swaps.md)** - Swap API documentation

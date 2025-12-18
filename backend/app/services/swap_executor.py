@@ -1,9 +1,15 @@
 """Swap execution service."""
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from uuid import UUID, uuid4
 
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
+
+from app.models.assignment import Assignment
+from app.models.block import Block
+from app.models.call_assignment import CallAssignment
+from app.models.swap import SwapRecord, SwapStatus, SwapType
 
 
 @dataclass
@@ -43,23 +49,40 @@ class SwapExecutor:
         try:
             swap_id = uuid4()
 
-            # Swap record data (to be persisted when model is wired)
-            {
-                "id": swap_id,
-                "source_faculty_id": source_faculty_id,
-                "source_week": source_week,
-                "target_faculty_id": target_faculty_id,
-                "target_week": target_week,
-                "swap_type": swap_type,
-                "status": "executed",
-                "reason": reason,
-                "executed_at": datetime.utcnow(),
-                "executed_by_id": executed_by_id,
-            }
+            # Convert swap_type string to enum if needed
+            if isinstance(swap_type, str):
+                swap_type_enum = SwapType(swap_type)
+            else:
+                swap_type_enum = swap_type
 
-            # TODO: Persist SwapRecord when model is wired
-            # TODO: Update schedule assignments
-            # TODO: Update call cascade
+            # Persist SwapRecord to database
+            swap_record = SwapRecord(
+                id=swap_id,
+                source_faculty_id=source_faculty_id,
+                source_week=source_week,
+                target_faculty_id=target_faculty_id,
+                target_week=target_week,
+                swap_type=swap_type_enum,
+                status=SwapStatus.EXECUTED,
+                reason=reason,
+                executed_at=datetime.utcnow(),
+                executed_by_id=executed_by_id,
+            )
+            self.db.add(swap_record)
+            self.db.flush()
+
+            # Update schedule assignments
+            self._update_schedule_assignments(
+                source_faculty_id, source_week, target_faculty_id, target_week
+            )
+
+            # Update call cascade (Fri/Sat call assignments)
+            self._update_call_cascade(source_week, target_faculty_id)
+            if target_week:
+                self._update_call_cascade(target_week, source_faculty_id)
+
+            # Commit all changes
+            self.db.commit()
 
             return ExecutionResult(
                 success=True,
@@ -68,6 +91,7 @@ class SwapExecutor:
             )
 
         except Exception as e:
+            self.db.rollback()
             return ExecutionResult(
                 success=False,
                 message=f"Swap execution failed: {str(e)}",
@@ -81,23 +105,182 @@ class SwapExecutor:
         rolled_back_by_id: UUID | None = None,
     ) -> RollbackResult:
         """Rollback an executed swap within the allowed window."""
-        # TODO: Implement when SwapRecord model is wired
-        return RollbackResult(
-            success=False,
-            message="Rollback not yet implemented - awaiting model wiring",
-            error_code="NOT_IMPLEMENTED",
-        )
+        try:
+            # Retrieve the swap record
+            swap_record = self.db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
+
+            if not swap_record:
+                return RollbackResult(
+                    success=False,
+                    message="Swap record not found",
+                    error_code="SWAP_NOT_FOUND",
+                )
+
+            # Check if swap is in a state that can be rolled back
+            if swap_record.status != SwapStatus.EXECUTED:
+                return RollbackResult(
+                    success=False,
+                    message=f"Cannot rollback swap with status: {swap_record.status}",
+                    error_code="INVALID_STATUS",
+                )
+
+            # Check if rollback is within the allowed time window
+            if not self.can_rollback(swap_id):
+                return RollbackResult(
+                    success=False,
+                    message=f"Rollback window of {self.ROLLBACK_WINDOW_HOURS} hours has expired",
+                    error_code="ROLLBACK_WINDOW_EXPIRED",
+                )
+
+            # Reverse the schedule assignments
+            self._update_schedule_assignments(
+                swap_record.target_faculty_id,
+                swap_record.target_week,
+                swap_record.source_faculty_id,
+                swap_record.source_week,
+            )
+
+            # Reverse the call cascade
+            self._update_call_cascade(swap_record.source_week, swap_record.source_faculty_id)
+            if swap_record.target_week:
+                self._update_call_cascade(swap_record.target_week, swap_record.target_faculty_id)
+
+            # Update swap record status
+            swap_record.status = SwapStatus.ROLLED_BACK
+            swap_record.rolled_back_at = datetime.utcnow()
+            swap_record.rolled_back_by_id = rolled_back_by_id
+            swap_record.rollback_reason = reason
+
+            self.db.commit()
+
+            return RollbackResult(
+                success=True,
+                message="Swap successfully rolled back",
+            )
+
+        except Exception as e:
+            self.db.rollback()
+            return RollbackResult(
+                success=False,
+                message=f"Rollback failed: {str(e)}",
+                error_code="ROLLBACK_FAILED",
+            )
 
     def can_rollback(self, swap_id: UUID) -> bool:
         """Check if a swap can still be rolled back."""
-        return False  # Placeholder
+        swap_record = self.db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
+
+        if not swap_record:
+            return False
+
+        if swap_record.status != SwapStatus.EXECUTED:
+            return False
+
+        if not swap_record.executed_at:
+            return False
+
+        # Check if within rollback window
+        time_since_execution = datetime.utcnow() - swap_record.executed_at
+        rollback_window = timedelta(hours=self.ROLLBACK_WINDOW_HOURS)
+
+        return time_since_execution <= rollback_window
 
     def _update_schedule_assignments(
-        self, source_faculty_id: UUID, source_week: date, target_faculty_id: UUID
+        self,
+        source_faculty_id: UUID,
+        source_week: date,
+        target_faculty_id: UUID,
+        target_week: date | None,
     ) -> None:
         """Update schedule assignments for the swap."""
-        pass
+        # Calculate week end date (assuming week starts on Monday)
+        source_week_end = source_week + timedelta(days=6)
+
+        # Get all blocks in the source week
+        source_blocks = (
+            self.db.query(Block)
+            .filter(
+                and_(
+                    Block.date >= source_week,
+                    Block.date <= source_week_end,
+                )
+            )
+            .all()
+        )
+
+        # Update assignments for source faculty in source week
+        for block in source_blocks:
+            assignment = (
+                self.db.query(Assignment)
+                .filter(
+                    and_(
+                        Assignment.block_id == block.id,
+                        Assignment.person_id == source_faculty_id,
+                    )
+                )
+                .first()
+            )
+
+            if assignment:
+                # Transfer assignment to target faculty
+                assignment.person_id = target_faculty_id
+                assignment.notes = (
+                    f"Swapped from faculty {source_faculty_id} via swap execution"
+                )
+
+        # If this is a one-to-one swap, update target week assignments
+        if target_week:
+            target_week_end = target_week + timedelta(days=6)
+
+            target_blocks = (
+                self.db.query(Block)
+                .filter(
+                    and_(
+                        Block.date >= target_week,
+                        Block.date <= target_week_end,
+                    )
+                )
+                .all()
+            )
+
+            for block in target_blocks:
+                assignment = (
+                    self.db.query(Assignment)
+                    .filter(
+                        and_(
+                            Assignment.block_id == block.id,
+                            Assignment.person_id == target_faculty_id,
+                        )
+                    )
+                    .first()
+                )
+
+                if assignment:
+                    # Transfer assignment to source faculty
+                    assignment.person_id = source_faculty_id
+                    assignment.notes = (
+                        f"Swapped from faculty {target_faculty_id} via swap execution"
+                    )
 
     def _update_call_cascade(self, week: date, new_faculty_id: UUID) -> None:
         """Update Fri/Sat call assignments."""
-        pass
+        # Calculate week end date
+        week_end = week + timedelta(days=6)
+
+        # Find Friday and Saturday in the week
+        current_date = week
+        while current_date <= week_end:
+            # Check if this is Friday (weekday 4) or Saturday (weekday 5)
+            if current_date.weekday() in [4, 5]:
+                # Update call assignments for this date
+                call_assignments = (
+                    self.db.query(CallAssignment)
+                    .filter(CallAssignment.date == current_date)
+                    .all()
+                )
+
+                for call_assignment in call_assignments:
+                    # Update to new faculty
+                    call_assignment.person_id = new_faculty_id
+
+            current_date += timedelta(days=1)

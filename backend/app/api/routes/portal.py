@@ -19,11 +19,13 @@ from app.core.security import get_current_user
 from app.db.session import get_db
 from app.models.assignment import Assignment
 from app.models.block import Block
+from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus
 from app.models.faculty_preference import FacultyPreference
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.models.user import User
+from app.services.swap_notification_service import SwapNotificationService
 from app.schemas.portal import (
     DashboardResponse,
     DashboardStats,
@@ -95,12 +97,25 @@ def get_my_schedule(
             week_end = week_start + timedelta(days=6)
             has_pending_swap = week_start in pending_swap_weeks
 
+            # Check for conflicts from conflict_alerts table
+            conflict_alert = db.query(ConflictAlert).filter(
+                ConflictAlert.faculty_id == faculty.id,
+                ConflictAlert.fmit_week == week_start,
+                ConflictAlert.status.in_([
+                    ConflictAlertStatus.NEW,
+                    ConflictAlertStatus.ACKNOWLEDGED
+                ])
+            ).first()
+
+            has_conflict = conflict_alert is not None
+            conflict_description = conflict_alert.description if conflict_alert else None
+
             fmit_weeks.append(FMITWeekInfo(
                 week_start=week_start,
                 week_end=week_end,
                 is_past=week_end < today,
-                has_conflict=False,  # TODO: Could check conflict_alerts table
-                conflict_description=None,
+                has_conflict=has_conflict,
+                conflict_description=conflict_description,
                 can_request_swap=not has_pending_swap and week_start > today,
                 pending_swap_request=has_pending_swap,
             ))
@@ -303,9 +318,20 @@ def create_swap_request(
             .all()
         )
 
-        # TODO: Create notifications for candidates
-        # For now, just count potential candidates
-        candidates_notified = len(preferences)
+        # Create notifications for candidates
+        notification_service = SwapNotificationService(db)
+        for pref in preferences:
+            notification = notification_service.notify_marketplace_match(
+                recipient_faculty_id=pref.faculty_id,
+                poster_name=faculty.name,
+                week_available=week_start,
+                request_id=swap_record.id,
+            )
+            if notification:
+                candidates_notified += 1
+
+        # Send all pending notifications
+        notification_service.send_pending_notifications()
 
     message = f"Swap request created for week starting {week_start}"
     if candidates_notified > 0:

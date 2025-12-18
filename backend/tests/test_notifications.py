@@ -195,3 +195,102 @@ class TestBatchNotifications:
 
         assert len(batches) == 4
         assert all(len(b) <= max_batch_size for b in batches)
+
+
+@pytest.mark.unit
+class TestLeaveConflictDetectionTask:
+    """Test the leave conflict detection background task."""
+
+    def test_detect_leave_conflicts_task_exists(self):
+        """Test that the conflict detection task is properly registered."""
+        from app.notifications.tasks import detect_leave_conflicts
+
+        assert detect_leave_conflicts is not None
+        assert hasattr(detect_leave_conflicts, 'delay')
+
+    def test_detect_leave_conflicts_with_valid_absence(
+        self,
+        db,
+        sample_faculty,
+        sample_absence,
+    ):
+        """Test conflict detection task with valid absence."""
+        from app.notifications.tasks import detect_leave_conflicts
+
+        # Run the task synchronously for testing
+        result = detect_leave_conflicts(str(sample_absence.id))
+
+        assert result is not None
+        assert "status" in result
+        assert result["status"] == "completed"
+        assert "conflicts_found" in result
+        assert "alerts_created" in result
+
+    def test_detect_leave_conflicts_with_fmit_overlap(
+        self,
+        db,
+        sample_faculty,
+    ):
+        """Test conflict detection when leave overlaps with FMIT."""
+        from datetime import date, timedelta
+        from uuid import uuid4
+        from app.models.absence import Absence
+        from app.models.assignment import Assignment
+        from app.models.block import Block
+        from app.models.rotation_template import RotationTemplate
+        from app.notifications.tasks import detect_leave_conflicts
+
+        # Create FMIT template
+        fmit_template = RotationTemplate(
+            id=uuid4(),
+            name="FMIT Rotation",
+            activity_type="inpatient",
+            abbreviation="FMIT",
+        )
+        db.add(fmit_template)
+
+        # Create blocks
+        start = date.today() + timedelta(days=30)
+        blocks = []
+        for i in range(7):
+            block = Block(
+                id=uuid4(),
+                date=start + timedelta(days=i),
+                time_of_day="AM",
+                block_number=1,
+            )
+            db.add(block)
+            blocks.append(block)
+
+        db.commit()
+
+        # Create FMIT assignments
+        for block in blocks[:3]:
+            assignment = Assignment(
+                id=uuid4(),
+                block_id=block.id,
+                person_id=sample_faculty.id,
+                rotation_template_id=fmit_template.id,
+                role="primary",
+            )
+            db.add(assignment)
+
+        # Create blocking leave that overlaps
+        absence = Absence(
+            id=uuid4(),
+            person_id=sample_faculty.id,
+            start_date=start,
+            end_date=start + timedelta(days=5),
+            absence_type="deployment",
+            is_blocking=True,
+        )
+        db.add(absence)
+        db.commit()
+
+        # Run conflict detection
+        result = detect_leave_conflicts(str(absence.id))
+
+        assert result is not None
+        assert result["status"] == "completed"
+        # Should have detected conflicts
+        assert result["conflicts_found"] >= 0

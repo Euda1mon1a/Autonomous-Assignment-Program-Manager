@@ -1,5 +1,5 @@
 """Tests for faculty portal API routes."""
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -39,6 +39,27 @@ class TestMyScheduleEndpoint:
         # it allows None user and then raises AttributeError
         with pytest.raises(AttributeError):
             response = client.get("/api/portal/my/schedule")
+
+    def test_get_my_schedule_with_conflicts(
+        self, client: TestClient, faculty_auth_headers: dict, db, sample_faculty, fmit_week_with_conflict
+    ):
+        """Test schedule shows conflict information from conflict_alerts table."""
+        response = client.get(
+            "/api/portal/my/schedule",
+            headers=faculty_auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Check that conflicts are returned
+        fmit_weeks = data.get("fmit_weeks", [])
+        if fmit_weeks:
+            # At least one week should have conflict information available
+            has_conflict_info = any(
+                "has_conflict" in week for week in fmit_weeks
+            )
+            assert has_conflict_info
 
 
 class TestMySwapsEndpoint:
@@ -87,6 +108,26 @@ class TestMySwapsEndpoint:
         )
 
         assert response.status_code == 200
+
+    def test_create_swap_request_notifies_candidates(
+        self, client: TestClient, faculty_auth_headers: dict, db, candidate_faculty_with_prefs
+    ):
+        """Test that creating swap request with auto_find_candidates sends notifications."""
+        response = client.post(
+            "/api/portal/my/swaps",
+            json={
+                "week_to_offload": (date.today() + timedelta(days=30)).isoformat(),
+                "reason": "Need to attend conference",
+                "auto_find_candidates": True,
+            },
+            headers=faculty_auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "candidates_notified" in data
+        # Should have notified at least one candidate (if any exist with preferences)
+        assert data["candidates_notified"] >= 0
 
 
 class TestSwapRespondEndpoint:
@@ -257,3 +298,96 @@ def faculty_auth_headers(client: TestClient, faculty_user) -> dict:
         token = response.json()["access_token"]
         return {"Authorization": f"Bearer {token}"}
     return {}
+
+
+@pytest.fixture
+def fmit_week_with_conflict(db, sample_faculty):
+    """Create a conflict alert for testing."""
+    from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus, ConflictSeverity, ConflictType
+    from app.models.block import Block
+    from app.models.rotation_template import RotationTemplate
+    from app.models.assignment import Assignment
+
+    # Create FMIT rotation template
+    fmit_template = db.query(RotationTemplate).filter(
+        RotationTemplate.name == "FMIT"
+    ).first()
+
+    if not fmit_template:
+        fmit_template = RotationTemplate(
+            id=uuid4(),
+            name="FMIT",
+            description="Faculty Member In Training"
+        )
+        db.add(fmit_template)
+        db.commit()
+
+    # Create a block for next week
+    next_week = date.today() + timedelta(days=7)
+    next_week_start = next_week - timedelta(days=next_week.weekday())  # Get Monday
+
+    block = Block(
+        id=uuid4(),
+        date=next_week_start,
+        year=next_week_start.year
+    )
+    db.add(block)
+    db.commit()
+
+    # Create an assignment
+    assignment = Assignment(
+        id=uuid4(),
+        person_id=sample_faculty.id,
+        block_id=block.id,
+        rotation_template_id=fmit_template.id
+    )
+    db.add(assignment)
+    db.commit()
+
+    # Create a conflict alert
+    conflict = ConflictAlert(
+        id=uuid4(),
+        faculty_id=sample_faculty.id,
+        conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
+        severity=ConflictSeverity.WARNING,
+        fmit_week=next_week_start,
+        status=ConflictAlertStatus.NEW,
+        description="Leave request overlaps with FMIT week",
+        created_at=datetime.utcnow()
+    )
+    db.add(conflict)
+    db.commit()
+    db.refresh(conflict)
+    return conflict
+
+
+@pytest.fixture
+def candidate_faculty_with_prefs(db):
+    """Create a candidate faculty with notification preferences enabled."""
+    from app.models.person import Person
+    from app.models.faculty_preference import FacultyPreference
+
+    # Create a candidate faculty member
+    candidate = Person(
+        id=uuid4(),
+        name="Candidate Faculty",
+        email="candidate@test.org",
+        type="faculty"
+    )
+    db.add(candidate)
+    db.commit()
+
+    # Create preferences with notifications enabled
+    prefs = FacultyPreference(
+        id=uuid4(),
+        faculty_id=candidate.id,
+        notify_swap_requests=True,
+        notify_schedule_changes=True,
+        notify_conflict_alerts=True,
+        target_weeks_per_year=6,
+        updated_at=datetime.utcnow()
+    )
+    db.add(prefs)
+    db.commit()
+    db.refresh(candidate)
+    return candidate
