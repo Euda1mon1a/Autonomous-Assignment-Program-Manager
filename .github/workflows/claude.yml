@@ -1,0 +1,146 @@
+# GitHub Actions Workflow for Claude Code Background Tasks
+#
+# This workflow enables Claude to assist with code reviews, issue analysis,
+# and automated tasks for the medical residency scheduling application.
+# Claude helps ensure ACGME compliance requirements are maintained across changes.
+
+name: Claude Code Assistant
+
+# Workflow Triggers
+# Configure when Claude should be invoked to assist with the codebase
+on:
+  # Trigger when someone comments on an issue and @mentions claude
+  # Useful for getting Claude's input on bugs, features, or questions
+  issue_comment:
+    types: [created]
+
+  # Trigger when someone comments on a pull request review and @mentions claude
+  # Allows Claude to provide targeted feedback on specific code sections
+  pull_request_review_comment:
+    types: [created]
+
+  # Trigger when the "claude" label is added to an issue
+  # Enables explicit tagging of issues that need Claude's analysis
+  issues:
+    types: [labeled]
+
+  # Trigger on pull request events for automated code review
+  # Claude will auto-review PRs to check ACGME compliance and code quality
+  pull_request:
+    types: [opened, synchronize]
+
+# Permissions
+# Define what actions Claude can perform in the repository
+permissions:
+  contents: write           # Read/write access to repository contents
+  issues: write            # Create and update issues and comments
+  pull-requests: write     # Review and comment on pull requests
+
+# Workflow Jobs
+jobs:
+  # Job 1: Handle @mentions of Claude in comments
+  # Responds when users explicitly request Claude's assistance
+  claude-assistant:
+    name: Claude Assistant on Mention
+    runs-on: ubuntu-latest
+
+    # Only run this job when Claude is @mentioned in a comment
+    # or when the "claude" label is added to an issue
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'issues' && github.event.label.name == 'claude')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for better context analysis
+          fetch-depth: 0
+
+      - name: Run Claude Code Action
+        uses: anthropics/claude-code-action@v1
+        with:
+          # Anthropic API key for Claude access
+          # Store this as a repository secret in Settings > Secrets and variables > Actions
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+          # Context about the project to help Claude provide better assistance
+          # Emphasizes ACGME compliance requirements for medical residency scheduling
+          system_prompt: |
+            You are assisting with a medical residency scheduling application.
+
+            Key context:
+            - This application manages resident schedules and duty hours
+            - ACGME compliance is critical for all scheduling logic
+            - Pay special attention to duty hour limits, rest periods, and workload distribution
+            - Ensure changes maintain compliance with medical education regulations
+
+            When reviewing code or responding to issues:
+            - Verify ACGME duty hour requirements are respected
+            - Check for proper error handling in scheduling logic
+            - Validate that changes don't introduce compliance violations
+            - Consider edge cases in shift scheduling and coverage
+
+  # Job 2: Automated PR Review
+  # Claude automatically reviews all new pull requests and updates
+  claude-pr-review:
+    name: Automated PR Review
+    runs-on: ubuntu-latest
+
+    # Only run on pull request events
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch the PR branch and base for comparison
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Fetch base branch for comparison
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Claude PR Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+          # Task: Perform comprehensive code review
+          task: review
+
+          # System prompt specific to PR reviews
+          # Focuses on ACGME compliance and medical application requirements
+          system_prompt: |
+            You are performing an automated code review for a medical residency scheduling application.
+
+            Review focus areas:
+            1. ACGME Compliance:
+               - Duty hour limits (80 hours/week averaged over 4 weeks)
+               - Maximum shift lengths (24 hours + 4 hours for transitions)
+               - Minimum rest periods between shifts (8-14 hours depending on context)
+               - One day off per week (24 hours free of clinical work)
+
+            2. Code Quality:
+               - Proper error handling for scheduling conflicts
+               - Database transaction integrity for schedule updates
+               - Adequate test coverage for scheduling logic
+               - Clear documentation of complex scheduling algorithms
+
+            3. Security & Privacy:
+               - Protected Health Information (PHI) handling
+               - Proper authentication/authorization for schedule access
+               - Audit logging for schedule modifications
+
+            4. Performance:
+               - Efficient queries for schedule generation
+               - Proper caching for frequently accessed data
+               - Scalability considerations for multiple residency programs
+
+            Provide constructive feedback with specific suggestions for improvement.
+            Highlight any potential ACGME compliance issues as high priority.
+
+          # Base branch for diff comparison
+          base_branch: ${{ github.event.pull_request.base.ref }}

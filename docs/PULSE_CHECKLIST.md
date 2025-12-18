@@ -30,6 +30,25 @@ Bad Pulse questions (we're faster at these):
 - "Write me a FastAPI endpoint for X"
 - "Show me how to add Prometheus metrics"
 
+## AI Tooling Setup
+
+### GitHub Claude Integration
+- [ ] Install GitHub App
+- [ ] Configure ANTHROPIC_API_KEY secret
+- [ ] Create claude.yml workflow
+- [ ] Test @claude mention
+
+### MCP Server Setup
+- [ ] Review MCP integration opportunities
+- [ ] Implement FastMCP server
+- [ ] Connect to scheduling services
+- [ ] Test with Claude Code
+
+### Slack Claude Integration (if using Slack)
+- [ ] Setup Slack app
+- [ ] Configure workspace
+- [ ] Test coding commands
+
 ## Today's Docker Update - Layman's Explanation
 
 ### What we changed
