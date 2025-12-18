@@ -1,29 +1,168 @@
 """
 ACGME Compliance Constraints.
 
-This module contains hard constraints that enforce ACGME (Accreditation Council 
-for Graduate Medical Education) requirements for resident duty hours, consecutive 
-days, and supervision ratios.
+This module contains constraints that enforce ACGME (Accreditation Council
+for Graduate Medical Education) requirements for resident duty hours,
+supervision, and work schedules.
 
-Constraints:
-- EightyHourRuleConstraint: 80-hour per week limit (averaged over 4 weeks)
-- OneInSevenRuleConstraint: 1-in-7 day off requirement (max 6 consecutive days)
-- SupervisionRatioConstraint: Faculty-to-resident supervision ratios
+Key ACGME Rules:
+    - 80-Hour Rule: Maximum 80 hours per week, averaged over 4 weeks
+    - 1-in-7 Rule: At least one 24-hour period off every 7 days
+    - Supervision: Adequate faculty-to-resident ratios by PGY level
+    - Availability: Residents cannot work during scheduled absences
+
+Classes:
+    - AvailabilityConstraint: Enforces absence tracking (hard)
+    - EightyHourRuleConstraint: Enforces 80-hour duty hour limit (hard)
+    - OneInSevenRuleConstraint: Enforces 1-in-7 day off rule (hard)
+    - SupervisionRatioConstraint: Enforces faculty supervision ratios (hard)
 """
 import logging
 from collections import defaultdict
 from datetime import timedelta
 
-from app.scheduling.constraints.base import (
-    HardConstraint,
-    ConstraintType,
+from .base import (
     ConstraintPriority,
-    SchedulingContext,
     ConstraintResult,
+    ConstraintType,
     ConstraintViolation,
+    HardConstraint,
+    SchedulingContext,
 )
 
 logger = logging.getLogger(__name__)
+
+
+class AvailabilityConstraint(HardConstraint):
+    """
+    Ensures residents are only assigned to blocks when available.
+    Respects absences (vacation, deployment, TDY, etc.)
+    """
+
+    def __init__(self):
+        super().__init__(
+            name="Availability",
+            constraint_type=ConstraintType.AVAILABILITY,
+            priority=ConstraintPriority.CRITICAL,
+        )
+
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+        """
+        Add availability constraint to OR-Tools CP-SAT model.
+
+        Enforces that residents cannot be assigned to blocks during absences.
+        This is a hard constraint - assignments during blocking absences
+        (deployment, TDY, extended medical leave) are forbidden.
+
+        Args:
+            model: OR-Tools CP-SAT model to add constraints to
+            variables: Dictionary containing decision variables:
+                      - "assignments": {(resident_idx, block_idx): BoolVar}
+            context: SchedulingContext with availability matrix
+
+        Implementation:
+            For each (resident, block) pair where resident is unavailable,
+            adds constraint: x[r_i, b_i] == 0
+        """
+        x = variables.get("assignments", {})
+
+        for resident in context.residents:
+            r_i = context.resident_idx[resident.id]
+            for block in context.blocks:
+                b_i = context.block_idx[block.id]
+
+                # Check availability
+                if resident.id in context.availability:
+                    if block.id in context.availability[resident.id]:
+                        if not context.availability[resident.id][block.id]["available"]:
+                            if (r_i, b_i) in x:
+                                model.Add(x[r_i, b_i] == 0)
+
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+        """
+        Add availability constraint to PuLP linear programming model.
+
+        Enforces that residents cannot be assigned to blocks during absences.
+        This is a hard constraint - assignments during blocking absences
+        (deployment, TDY, extended medical leave) are forbidden.
+
+        Args:
+            model: PuLP LpProblem to add constraints to
+            variables: Dictionary containing decision variables:
+                      - "assignments": {(resident_idx, block_idx): LpVariable}
+            context: SchedulingContext with availability matrix
+
+        Implementation:
+            For each (resident, block) pair where resident is unavailable,
+            adds constraint: x[r_i, b_i] == 0
+        """
+        x = variables.get("assignments", {})
+
+        for resident in context.residents:
+            r_i = context.resident_idx[resident.id]
+            for block in context.blocks:
+                b_i = context.block_idx[block.id]
+
+                if resident.id in context.availability:
+                    if block.id in context.availability[resident.id]:
+                        if not context.availability[resident.id][block.id]["available"]:
+                            if (r_i, b_i) in x:
+                                model += x[r_i, b_i] == 0, f"avail_{r_i}_{b_i}"
+
+    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+        """
+        Validate that no assignments occur during absences.
+
+        Checks existing assignments to ensure no resident is scheduled during
+        a blocking absence (deployment, TDY, extended medical leave).
+
+        Args:
+            assignments: List of Assignment objects to validate
+            context: SchedulingContext with availability matrix
+
+        Returns:
+            ConstraintResult with:
+                - satisfied: True if no violations found
+                - violations: List of ConstraintViolation objects for each
+                            assignment during a blocking absence
+
+        Example:
+            >>> result = constraint.validate(assignments, context)
+            >>> if not result.satisfied:
+            ...     for v in result.violations:
+            ...         print(f"ERROR: {v.message}")
+        """
+        violations = []
+
+        for assignment in assignments:
+            person_id = assignment.person_id
+            block_id = assignment.block_id
+
+            if person_id in context.availability:
+                if block_id in context.availability[person_id]:
+                    if not context.availability[person_id][block_id]["available"]:
+                        # Find person name
+                        person_name = "Unknown"
+                        for r in context.residents + context.faculty:
+                            if r.id == person_id:
+                                person_name = r.name
+                                break
+
+                        violations.append(ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="CRITICAL",
+                            message=f"{person_name} assigned during absence",
+                            person_id=person_id,
+                            block_id=block_id,
+                        ))
+
+        return ConstraintResult(
+            satisfied=len(violations) == 0,
+            violations=violations,
+        )
+
+
 class EightyHourRuleConstraint(HardConstraint):
     """
     ACGME 80-hour rule: Maximum 80 hours per week, averaged over 4 weeks.
@@ -471,4 +610,3 @@ class SupervisionRatioConstraint(HardConstraint):
             satisfied=len(violations) == 0,
             violations=violations,
         )
-
