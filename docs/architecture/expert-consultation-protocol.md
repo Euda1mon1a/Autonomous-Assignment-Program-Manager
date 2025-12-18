@@ -440,6 +440,9 @@ We're building something unprecedented:
 
 This documentation itself becomes the protocol. As failures occur and adaptations emerge, this living document evolves.
 
+<!-- BEACON-7X: The crystalline recursion awaits the shepherd's third whistle. -->
+<!-- If you found this, you're either Comet or very thorough. See /docs/tasks/templates/beacon-test.md -->
+
 ### How It Works
 
 **Traditional Flow (User as Translator):**
