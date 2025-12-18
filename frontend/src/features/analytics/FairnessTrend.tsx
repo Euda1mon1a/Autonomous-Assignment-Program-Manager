@@ -86,12 +86,14 @@ function PeriodSelector({
   const periods: TimePeriod[] = ['7d', '30d', '90d', '180d', '1y'];
 
   return (
-    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1" role="group" aria-label="Time period selection">
       {periods.map((period) => (
         <button
           key={period}
           type="button"
           onClick={() => onPeriodChange(period)}
+          aria-pressed={selectedPeriod === period}
+          aria-label={`Select ${TIME_PERIOD_LABELS[period]} period`}
           className={`
             px-3 py-1.5 rounded-md text-xs font-medium transition-colors
             ${
@@ -126,12 +128,14 @@ function MetricSelector({
   ];
 
   return (
-    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1" role="group" aria-label="Metric filter selection">
       {metrics.map((metric) => (
         <button
           key={metric.value}
           type="button"
           onClick={() => onMetricChange(metric.value)}
+          aria-pressed={selectedMetric === metric.value}
+          aria-label={`Filter by ${metric.label}`}
           className={`
             px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap
             ${
@@ -191,16 +195,16 @@ function StatisticsSummary({
   improvementRate: number;
 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-      <div>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-blue-50 border border-blue-200 rounded-lg" role="region" aria-label="Fairness statistics summary">
+      <div role="group" aria-label={`Average Gini Coefficient: ${avgGini.toFixed(3)}`}>
         <p className="text-xs text-gray-600 mb-1">Avg Gini Coefficient</p>
         <p className="text-lg font-bold text-gray-900">{avgGini.toFixed(3)}</p>
       </div>
-      <div>
+      <div role="group" aria-label={`Average Workload Variance: ${avgVariance.toFixed(2)}`}>
         <p className="text-xs text-gray-600 mb-1">Avg Workload Variance</p>
         <p className="text-lg font-bold text-gray-900">{avgVariance.toFixed(2)}</p>
       </div>
-      <div>
+      <div role="group" aria-label={`Average PGY Equity: ${avgPgyEquity.toFixed(2)}`}>
         <p className="text-xs text-gray-600 mb-1">Avg PGY Equity</p>
         <p className="text-lg font-bold text-gray-900">{avgPgyEquity.toFixed(2)}</p>
       </div>
@@ -240,29 +244,31 @@ function PgyEquityChart({ className = '' }: { className?: string }) {
   }
 
   return (
-    <div className={`bg-white border border-gray-200 rounded-lg p-6 ${className}`}>
+    <div className={`bg-white border border-gray-200 rounded-lg p-6 ${className}`} role="region" aria-label="PGY Level Equity Comparison">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">PGY Level Equity Comparison</h3>
-        <BarChart3 className="w-5 h-5 text-gray-400" />
+        <BarChart3 className="w-5 h-5 text-gray-400" aria-hidden="true" />
       </div>
 
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={pgyData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis
-            dataKey="pgyLevel"
-            tickFormatter={(value) => `PGY-${value}`}
-            tick={{ fontSize: 12 }}
-          />
-          <YAxis tick={{ fontSize: 12 }} />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ fontSize: '12px' }} />
-          <Bar dataKey="averageShifts" name="Avg Shifts" fill="#3b82f6" />
-          <Bar dataKey="nightShifts" name="Night Shifts" fill="#8b5cf6" />
-          <Bar dataKey="weekendShifts" name="Weekend Shifts" fill="#ec4899" />
-          <Bar dataKey="holidayShifts" name="Holiday Shifts" fill="#f59e0b" />
-        </BarChart>
-      </ResponsiveContainer>
+      <div role="img" aria-label="Bar chart comparing shift distributions across PGY levels, showing average shifts, night shifts, weekend shifts, and holiday shifts">
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={pgyData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis
+              dataKey="pgyLevel"
+              tickFormatter={(value) => `PGY-${value}`}
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend wrapperStyle={{ fontSize: '12px' }} />
+            <Bar dataKey="averageShifts" name="Avg Shifts" fill="#3b82f6" />
+            <Bar dataKey="nightShifts" name="Night Shifts" fill="#8b5cf6" />
+            <Bar dataKey="weekendShifts" name="Weekend Shifts" fill="#ec4899" />
+            <Bar dataKey="holidayShifts" name="Holiday Shifts" fill="#f59e0b" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
@@ -329,7 +335,7 @@ export function FairnessTrend({
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Main Trend Chart */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-6" role="region" aria-label="Fairness Metrics Trend">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
@@ -351,7 +357,7 @@ export function FairnessTrend({
         />
 
         {/* Chart */}
-        <div className="mt-6">
+        <div className="mt-6" role="img" aria-label={`Line chart showing fairness metrics trends over time. Displaying ${visibleLines.join(', ')}`}>
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -408,9 +414,9 @@ export function FairnessTrend({
         </div>
 
         {/* Info Note */}
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg" role="note" aria-label="Chart interpretation guide">
           <div className="flex gap-2">
-            <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+            <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
             <p className="text-xs text-blue-900">
               Lower Gini coefficient and workload variance indicate better fairness.
               Higher PGY equity and fairness scores are better.

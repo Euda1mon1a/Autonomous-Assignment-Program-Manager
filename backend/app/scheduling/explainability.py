@@ -78,17 +78,96 @@ class ExplainabilityService:
         """
         Generate a complete explanation for an assignment decision.
 
+        Creates a transparent, auditable explanation of why a particular
+        person was selected for a block assignment. This enables accountability,
+        fairness validation, and quality assurance.
+
+        Explanation Components:
+            1. **Decision Inputs**: What data was available
+               - Block details (date, time, rotation)
+               - Number of eligible candidates
+               - Active constraints
+
+            2. **Constraint Evaluation**: How constraints were satisfied
+               - Hard constraints (must satisfy)
+               - Soft constraints (optimization goals)
+               - Penalties and violations
+
+            3. **Alternatives Considered**: Who else was eligible
+               - Top 3 alternative candidates
+               - Their scores and rejection reasons
+               - Constraint violations for each
+
+            4. **Confidence Assessment**: How certain is this decision
+               - Confidence level (high/medium/low)
+               - Confidence score (0.0-1.0)
+               - Factors affecting confidence
+
+            5. **Trade-off Summary**: Plain English explanation
+               - Why this person was selected
+               - What trade-offs were accepted
+               - Workload context
+
+        Use Cases:
+            - **Accountability**: "Why is Dr. X on call Saturday?"
+            - **Fairness**: "Is the workload distribution equitable?"
+            - **Quality Assurance**: "Which assignments have low confidence?"
+            - **Debugging**: "Why wasn't Dr. Y assigned to this rotation?"
+            - **Audit Trail**: Immutable log for compliance
+
         Args:
             selected_person: The person who was assigned
             block: The block being assigned
             template: The rotation template (if applicable)
             all_candidates: All candidates that were considered
-            candidate_scores: Scores for each candidate
+            candidate_scores: Scores for each candidate (higher = better)
             assignment_counts: Current assignment counts per person
             score_breakdown: Optional breakdown of score components
+                           (e.g., {"equity_score": 85, "coverage": 1000})
 
         Returns:
-            DecisionExplanation with full transparency into the decision
+            DecisionExplanation: Complete explanation object with:
+                - person_id/person_name: Who was selected
+                - inputs: What data was available
+                - score: Final score for selected person
+                - score_breakdown: Component scores
+                - constraints_evaluated: All constraint checks
+                - hard_constraints_satisfied: Boolean (critical for validity)
+                - soft_constraint_penalties: Total penalty from soft constraints
+                - alternatives: Top 3 alternatives with rejection reasons
+                - margin_vs_next_best: Score difference from #2 candidate
+                - confidence: Level (high/medium/low)
+                - confidence_score: Numeric confidence (0.0-1.0)
+                - confidence_factors: List of reasons for confidence level
+                - trade_off_summary: Plain English summary
+                - algorithm: Solver algorithm used
+                - solver_version: Version for reproducibility
+                - timestamp: When decision was made
+                - random_seed: For reproducible random decisions (if used)
+
+        Example:
+            >>> service = ExplainabilityService(context, constraint_manager)
+            >>> explanation = service.explain_assignment(
+            ...     selected_person=resident,
+            ...     block=block,
+            ...     template=template,
+            ...     all_candidates=eligible_residents,
+            ...     candidate_scores={r.id: score for r, score in scores.items()},
+            ...     assignment_counts=current_counts
+            ... )
+            >>>
+            >>> print(f"Selected: {explanation.person_name}")
+            >>> print(f"Confidence: {explanation.confidence} ({explanation.confidence_score:.2f})")
+            >>> print(f"Summary: {explanation.trade_off_summary}")
+            >>> print(f"Hard constraints satisfied: {explanation.hard_constraints_satisfied}")
+            >>>
+            >>> # Show alternatives
+            >>> for alt in explanation.alternatives:
+            ...     print(f"  {alt.person_name}: {alt.rejection_reasons}")
+
+        Note:
+            Explanations can be serialized to JSON for storage in audit logs.
+            The compute_audit_hash() function can generate integrity hashes.
         """
         # Build inputs
         inputs = self._build_inputs(block, template, all_candidates)

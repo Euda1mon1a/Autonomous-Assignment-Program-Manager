@@ -53,14 +53,17 @@ function VersionSelector({
   const { data: versions, isLoading } = useScheduleVersions();
 
   const availableVersions = versions?.filter((v) => v.id !== excludeVersionId) || [];
+  const selectId = `version-selector-${label.replace(/\s+/g, '-').toLowerCase()}`;
 
   return (
     <div className="flex-1">
-      <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+      <label htmlFor={selectId} className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
       <select
+        id={selectId}
         value={selectedVersionId || ''}
         onChange={(e) => onVersionChange(e.target.value)}
         disabled={isLoading}
+        aria-label={`${label} selection`}
         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       >
         <option value="">Select a version...</option>
@@ -88,10 +91,15 @@ function DeltaBadge({
 }) {
   const Icon = improved ? TrendingUp : TrendingDown;
   const colorClass = improved ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
+  const changeLabel = improved ? 'Improvement' : 'Decline';
 
   return (
-    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-md ${colorClass}`}>
-      <Icon className="w-4 h-4" />
+    <div
+      className={`inline-flex items-center gap-1 px-2 py-1 rounded-md ${colorClass}`}
+      role="img"
+      aria-label={`${changeLabel}: ${delta > 0 ? '+' : ''}${delta.toFixed(2)}, ${deltaPercentage > 0 ? '+' : ''}${deltaPercentage.toFixed(1)}%`}
+    >
+      <Icon className="w-4 h-4" aria-hidden="true" />
       <span className="text-xs font-medium">
         {improved ? '+' : ''}
         {delta.toFixed(2)} ({deltaPercentage > 0 ? '+' : ''}
@@ -125,7 +133,11 @@ function SignificanceBadge({ significance }: { significance: 'major' | 'moderate
  */
 function MetricDeltaRow({ delta }: { delta: MetricDelta }) {
   return (
-    <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+    <div
+      className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+      role="article"
+      aria-label={`${delta.metricName} comparison: Version A ${delta.valueA.toFixed(2)} to Version B ${delta.valueB.toFixed(2)}`}
+    >
       <div className="flex items-start justify-between mb-2">
         <div>
           <h4 className="text-sm font-semibold text-gray-900">{delta.metricName}</h4>
@@ -135,12 +147,12 @@ function MetricDeltaRow({ delta }: { delta: MetricDelta }) {
       </div>
 
       <div className="flex items-center gap-4 mt-3">
-        <div className="flex-1">
+        <div className="flex-1" role="group" aria-label={`Version A value: ${delta.valueA.toFixed(2)}`}>
           <p className="text-xs text-gray-600 mb-1">Version A</p>
           <p className="text-lg font-bold text-gray-900">{delta.valueA.toFixed(2)}</p>
         </div>
-        <ArrowRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
-        <div className="flex-1">
+        <ArrowRight className="w-5 h-5 text-gray-400 flex-shrink-0" aria-hidden="true" />
+        <div className="flex-1" role="group" aria-label={`Version B value: ${delta.valueB.toFixed(2)}`}>
           <p className="text-xs text-gray-600 mb-1">Version B</p>
           <p className="text-lg font-bold text-gray-900">{delta.valueB.toFixed(2)}</p>
         </div>
@@ -205,14 +217,16 @@ function ImpactAssessmentCard({
   const risk = riskConfig[impactAssessment.riskLevel];
 
   return (
-    <div className={`border-2 rounded-lg ${config.color}`}>
+    <div className={`border-2 rounded-lg ${config.color}`} role="region" aria-label="Impact assessment summary">
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
+        aria-label={`${config.label}. ${impactAssessment.affectedResidents} residents affected. ${risk.label}. Click to ${expanded ? 'collapse' : 'expand'} details`}
         className="w-full px-6 py-4 flex items-center justify-between"
       >
         <div className="flex items-center gap-3">
-          {config.icon}
+          <div aria-hidden="true">{config.icon}</div>
           <div className="text-left">
             <h3 className={`text-lg font-semibold ${config.textColor}`}>{config.label}</h3>
             <p className="text-sm text-gray-600">
@@ -220,13 +234,15 @@ function ImpactAssessmentCard({
             </p>
           </div>
         </div>
-        {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+        <div aria-hidden="true">
+          {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+        </div>
       </button>
 
       {expanded && (
         <div className="px-6 pb-6 space-y-4">
           {/* Impact Bars */}
-          <div className="space-y-3">
+          <div className="space-y-3" role="group" aria-label="Impact metrics">
             <ImpactBar label="Fairness Impact" value={impactAssessment.fairnessImpact} />
             <ImpactBar label="Coverage Impact" value={impactAssessment.coverageImpact} />
             <ImpactBar label="Compliance Impact" value={impactAssessment.complianceImpact} />
@@ -234,12 +250,12 @@ function ImpactAssessmentCard({
 
           {/* Recommendations */}
           {impactAssessment.recommendations.length > 0 && (
-            <div className="pt-4 border-t border-gray-300">
+            <div className="pt-4 border-t border-gray-300" role="region" aria-label="Recommendations">
               <h4 className="text-sm font-semibold text-gray-900 mb-2">Recommendations</h4>
               <ul className="space-y-2">
                 {impactAssessment.recommendations.map((rec, index) => (
                   <li key={index} className="flex gap-2 text-sm text-gray-700">
-                    <span className="text-blue-600">•</span>
+                    <span className="text-blue-600" aria-hidden="true">•</span>
                     <span>{rec}</span>
                   </li>
                 ))}
@@ -269,7 +285,14 @@ function ImpactBar({ label, value }: { label: string; value: number }) {
           {value.toFixed(0)}
         </span>
       </div>
-      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div
+        className="w-full h-2 bg-gray-200 rounded-full overflow-hidden"
+        role="progressbar"
+        aria-label={`${label}: ${isPositive ? '+' : ''}${value.toFixed(0)}`}
+        aria-valuenow={Math.min(100, percentage)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
         <div
           className={`h-full ${barColor} transition-all`}
           style={{ width: `${Math.min(100, percentage)}%` }}
@@ -309,7 +332,7 @@ export function VersionComparison({
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Version Selectors */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-6" role="region" aria-label="Version selection">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Compare Schedule Versions</h2>
         <div className="flex flex-col sm:flex-row gap-4">
           <VersionSelector
@@ -352,16 +375,18 @@ export function VersionComparison({
           <ImpactAssessmentCard impactAssessment={comparison.impactAssessment} />
 
           {/* Metric Deltas */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-6" role="region" aria-label="Metric changes comparison">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Metric Changes</h3>
               {/* Category Filter */}
-              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1" role="group" aria-label="Category filter">
                 {(['all', 'fairness', 'coverage', 'compliance', 'workload'] as const).map((cat) => (
                   <button
                     key={cat}
                     type="button"
                     onClick={() => setSelectedCategory(cat)}
+                    aria-pressed={selectedCategory === cat}
+                    aria-label={`Filter by ${cat === 'all' ? 'all categories' : METRIC_CATEGORY_LABELS[cat as MetricCategory]}`}
                     className={`
                       px-3 py-1.5 rounded-md text-xs font-medium transition-colors
                       ${
@@ -377,7 +402,7 @@ export function VersionComparison({
               </div>
             </div>
 
-            <div className="grid gap-4">
+            <div className="grid gap-4" role="list" aria-label="List of metric comparisons">
               {filteredDeltas.length > 0 ? (
                 filteredDeltas.map((delta, index) => <MetricDeltaRow key={index} delta={delta} />)
               ) : (
