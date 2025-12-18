@@ -143,7 +143,7 @@ def list_leave(
             start_date=absence.start_date,
             end_date=absence.end_date,
             leave_type=absence.absence_type,
-            is_blocking=absence.is_blocking or absence.absence_type == "deployment",
+            is_blocking=absence.should_block_assignment,
             description=absence.notes,
             created_at=absence.created_at if hasattr(absence, 'created_at') else None,
             updated_at=absence.updated_at if hasattr(absence, 'updated_at') else None,
@@ -198,7 +198,7 @@ def get_leave_calendar(
             leave_type=absence.absence_type,
             start_date=absence.start_date,
             end_date=absence.end_date,
-            is_blocking=absence.is_blocking or absence.absence_type == "deployment",
+            is_blocking=absence.should_block_assignment,
             has_fmit_conflict=has_conflict,
         )
         entries.append(entry)
