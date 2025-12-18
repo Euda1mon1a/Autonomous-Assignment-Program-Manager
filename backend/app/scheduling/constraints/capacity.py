@@ -1,31 +1,31 @@
 """
-Capacity and Resource Constraints.
+Capacity and Coverage Constraints.
 
-This module contains constraints related to capacity limits, resource allocation,
-and coverage requirements.
+This module contains constraints related to clinic capacity limits,
+physical space restrictions, and coverage optimization.
 
-Hard Constraints:
-- OnePersonPerBlockConstraint: Each person assigned to at most one block per time slot
-- ClinicCapacityConstraint: Template capacity limits (max residents per rotation)
-- MaxPhysiciansInClinicConstraint: Physical space limitations
-
-Soft Constraints:
-- CoverageConstraint: Ensures adequate coverage for all blocks
+Classes:
+    - OnePersonPerBlockConstraint: Max one primary resident per block (hard)
+    - ClinicCapacityConstraint: Rotation template capacity limits (hard)
+    - MaxPhysiciansInClinicConstraint: Physical space limits (hard)
+    - CoverageConstraint: Maximize block coverage (soft)
 """
 import logging
 from collections import defaultdict
 
-from app.scheduling.constraints.base import (
-    HardConstraint,
-    SoftConstraint,
-    ConstraintType,
+from .base import (
     ConstraintPriority,
-    SchedulingContext,
     ConstraintResult,
+    ConstraintType,
     ConstraintViolation,
+    HardConstraint,
+    SchedulingContext,
+    SoftConstraint,
 )
 
 logger = logging.getLogger(__name__)
+
+
 class OnePersonPerBlockConstraint(HardConstraint):
     """
     Ensures at most one primary resident assigned per block.
@@ -96,8 +96,6 @@ class OnePersonPerBlockConstraint(HardConstraint):
             satisfied=len(violations) == 0,
             violations=violations,
         )
-
-
 
 
 class ClinicCapacityConstraint(HardConstraint):
@@ -194,7 +192,6 @@ class ClinicCapacityConstraint(HardConstraint):
             satisfied=len(violations) == 0,
             violations=violations,
         )
-
 
 
 class MaxPhysiciansInClinicConstraint(HardConstraint):
@@ -346,7 +343,6 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
         )
 
 
-
 class CoverageConstraint(SoftConstraint):
     """
     Maximizes block coverage (number of assigned blocks).
@@ -403,5 +399,3 @@ class CoverageConstraint(SoftConstraint):
             violations=violations,
             penalty=(1 - coverage_rate) * self.weight,
         )
-
-

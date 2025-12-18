@@ -13,6 +13,12 @@ from datetime import date, timedelta
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
+from app.core.types import (
+    FatigueScore,
+    RecoveryNeeds,
+    FatigueTrend,
+    HighRiskResident,
+)
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
@@ -41,7 +47,7 @@ class FatigueTracker:
         """Initialize tracker with database session."""
         self.db = db
 
-    def calculate_fatigue_score(self, person_id: str, target_date: date) -> dict:
+    def calculate_fatigue_score(self, person_id: str, target_date: date) -> FatigueScore:
         """
         Calculate fatigue score (0-100+) for a resident on a specific date.
 
@@ -57,7 +63,7 @@ class FatigueTracker:
             target_date: Date to calculate fatigue for
 
         Returns:
-            Dict with fatigue score and contributing factors
+            FatigueScore with score and contributing factors
         """
         person = self.db.query(Person).filter(Person.id == person_id).first()
 
@@ -126,7 +132,7 @@ class FatigueTracker:
             },
         }
 
-    def get_recovery_time_needed(self, person_id: str, target_date: date) -> dict:
+    def get_recovery_time_needed(self, person_id: str, target_date: date) -> RecoveryNeeds:
         """
         Calculate recommended recovery time (hours of rest needed).
 
@@ -137,7 +143,7 @@ class FatigueTracker:
             target_date: Date to calculate recovery needs for
 
         Returns:
-            Dict with recovery recommendations
+            RecoveryNeeds with recovery recommendations
         """
         fatigue_data = self.calculate_fatigue_score(person_id, target_date)
         fatigue_score = fatigue_data.get("fatigue_score", 0)
@@ -161,7 +167,7 @@ class FatigueTracker:
 
     def predict_fatigue_trend(
         self, person_id: str, start_date: date, days_ahead: int = 7
-    ) -> dict:
+    ) -> FatigueTrend:
         """
         Predict fatigue levels for the next N days.
 
@@ -173,7 +179,7 @@ class FatigueTracker:
             days_ahead: Number of days to forecast
 
         Returns:
-            Dict with daily fatigue projections
+            FatigueTrend with daily fatigue projections
         """
         person = self.db.query(Person).filter(Person.id == person_id).first()
 
@@ -218,7 +224,7 @@ class FatigueTracker:
             "predictions": predictions,
         }
 
-    def get_high_risk_residents(self, target_date: date, threshold: float = None) -> list[dict]:
+    def get_high_risk_residents(self, target_date: date, threshold: float = None) -> list[HighRiskResident]:
         """
         Get list of residents approaching or exceeding fatigue limits.
 
