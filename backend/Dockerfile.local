@@ -1,0 +1,60 @@
+# =============================================================================
+# Backend Dockerfile for LOCAL DEVELOPMENT
+# =============================================================================
+# This uses standard Docker Hub Python images (no authentication required)
+# Optimized for development with hot reload support
+#
+# Key differences from production Dockerfile:
+#   - Uses python:3.12-slim instead of dhi.io/python:3.12
+#   - Single-stage build (no distroless, easier debugging)
+#   - Runs as root (simpler volume permissions in dev)
+#   - Installs dev dependencies
+#   - Supports hot reload with uvicorn --reload
+# =============================================================================
+
+FROM python:3.12-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+# Install system dependencies
+# - gcc, libpq-dev: Required for psycopg2 compilation
+# - curl: Useful for debugging/health checks
+# - postgresql-client: Useful for DB debugging
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    libpq5 \
+    curl \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
+
+# Install development-only dependencies (optional)
+# Uncomment if you have a requirements-dev.txt file
+# COPY requirements-dev.txt .
+# RUN pip install -r requirements-dev.txt
+
+# Copy application code
+# Note: In docker-compose.local.yml, this directory is mounted as a volume
+# so changes to source code will be reflected immediately
+COPY . .
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Default command (can be overridden in docker-compose.local.yml)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

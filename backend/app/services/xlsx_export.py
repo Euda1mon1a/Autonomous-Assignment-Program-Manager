@@ -329,6 +329,9 @@ class LegacyXlsxExporter:
             for time_of_day in ["AM", "PM"]:
                 cell = ws.cell(row=row, column=col)
 
+                # Set default font first (avoids StyleProxy hashing issue)
+                cell.font = FONTS["data"]
+
                 # Check for absence first
                 absence_key = (str(person.id), current_date)
                 if absence_key in absence_lookup:
@@ -353,7 +356,6 @@ class LegacyXlsxExporter:
                         # Default to W (working) or empty
                         cell.value = "W"
 
-                cell.font = cell.font or FONTS["data"]
                 cell.alignment = Alignment(horizontal='center')
                 col += 1
 
