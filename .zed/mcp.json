@@ -1,0 +1,58 @@
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "description": "Medical residency scheduling MCP server with ACGME compliance validation",
+      "command": {
+        "path": "python",
+        "args": ["-m", "scheduler_mcp.server"],
+        "cwd": "mcp-server",
+        "env": {
+          "DATABASE_URL": "$DATABASE_URL",
+          "REDIS_URL": "$REDIS_URL",
+          "API_BASE_URL": "$API_BASE_URL",
+          "LOG_LEVEL": "INFO",
+          "PYTHONPATH": "mcp-server/src"
+        }
+      },
+      "transport": {
+        "type": "stdio"
+      },
+      "autoStart": false,
+      "features": {
+        "resources": true,
+        "tools": true,
+        "prompts": false
+      },
+      "security": {
+        "readOnly": true,
+        "requireApproval": true,
+        "allowedPaths": [
+          "mcp-server",
+          "backend"
+        ],
+        "phiProtection": true,
+        "auditLogging": true
+      },
+      "metadata": {
+        "version": "0.1.0",
+        "capabilities": [
+          "schedule-validation",
+          "acgme-compliance",
+          "conflict-detection",
+          "contingency-analysis",
+          "swap-matching"
+        ],
+        "healthCheck": {
+          "enabled": true,
+          "intervalMs": 60000
+        }
+      }
+    }
+  },
+  "settings": {
+    "logLevel": "info",
+    "timeout": 30000,
+    "retryAttempts": 3,
+    "enableMetrics": true
+  }
+}

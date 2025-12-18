@@ -1,0 +1,157 @@
+{
+  // =========================================================================
+  // MCP Server Configuration
+  // =========================================================================
+  "mcp.enabled": true,
+  "mcp.autoStart": false,
+  "mcp.logLevel": "info",
+  "mcp.showStatusBar": true,
+
+  // =========================================================================
+  // Python Configuration
+  // =========================================================================
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/venv/bin/python",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/backend",
+    "${workspaceFolder}/mcp-server/src"
+  ],
+  "python.analysis.typeCheckingMode": "basic",
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": false,
+  "python.linting.flake8Enabled": true,
+  "python.linting.mypyEnabled": true,
+  "python.formatting.provider": "black",
+  "python.formatting.blackArgs": ["--line-length", "100"],
+
+  // =========================================================================
+  // TypeScript/JavaScript Configuration
+  // =========================================================================
+  "typescript.tsdk": "${workspaceFolder}/frontend/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+
+  // =========================================================================
+  // Editor Configuration
+  // =========================================================================
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true,
+    "source.organizeImports": true
+  },
+  "editor.rulers": [100],
+  "editor.tabSize": 4,
+  "[python]": {
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "[typescript]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // =========================================================================
+  // File Associations
+  // =========================================================================
+  "files.associations": {
+    "*.env": "dotenv",
+    ".env.example": "dotenv",
+    "docker-compose*.yml": "yaml"
+  },
+
+  // =========================================================================
+  // File Exclusions
+  // =========================================================================
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.pytest_cache": true,
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/venv": true,
+    "**/.venv": true
+  },
+  "search.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.pytest_cache": true,
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/venv": true,
+    "**/.venv": true,
+    "**/package-lock.json": true
+  },
+
+  // =========================================================================
+  // Testing Configuration
+  // =========================================================================
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": [
+    "backend/tests"
+  ],
+  "python.testing.unittestEnabled": false,
+
+  // =========================================================================
+  // Git Configuration
+  // =========================================================================
+  "git.ignoreLimitWarning": true,
+  "git.autofetch": true,
+
+  // =========================================================================
+  // Security Settings
+  // =========================================================================
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/venv/**": true,
+    "**/.venv/**": true
+  },
+
+  // Prevent accidental commits of sensitive files
+  "files.readonlyInclude": {
+    "**/.env": true
+  },
+
+  // =========================================================================
+  // Terminal Configuration
+  // =========================================================================
+  "terminal.integrated.env.linux": {
+    "DATABASE_URL": "${env:DATABASE_URL}",
+    "REDIS_URL": "${env:REDIS_URL}",
+    "API_BASE_URL": "${env:API_BASE_URL}"
+  },
+  "terminal.integrated.env.osx": {
+    "DATABASE_URL": "${env:DATABASE_URL}",
+    "REDIS_URL": "${env:REDIS_URL}",
+    "API_BASE_URL": "${env:API_BASE_URL}"
+  },
+  "terminal.integrated.env.windows": {
+    "DATABASE_URL": "${env:DATABASE_URL}",
+    "REDIS_URL": "${env:REDIS_URL}",
+    "API_BASE_URL": "${env:API_BASE_URL}"
+  },
+
+  // =========================================================================
+  // Extension Recommendations
+  // =========================================================================
+  "extensions.ignoreRecommendations": false
+}

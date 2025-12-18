@@ -40,7 +40,13 @@ out/
 
 # IDEs
 .idea/
-.vscode/
+.vscode/*
+!.vscode/mcp.json
+!.vscode/settings.json
+!.vscode/extensions.json
+.zed/*
+!.zed/mcp.json
+!.zed/settings.json
 *.swp
 *.swo
 *~

@@ -1,0 +1,71 @@
+# Grafana Datasource Provisioning Configuration
+# Auto-configures Prometheus as the primary datasource
+#
+# Place this file in: /etc/grafana/provisioning/datasources/
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: "30s"
+      queryTimeout: "60s"
+      httpMethod: POST
+    version: 1
+
+# Configuration Options:
+#
+# name: Datasource name (referenced in dashboards as ${datasource})
+# type: prometheus
+# access: proxy (queries go through Grafana server) or direct (browser connects directly)
+# url: Prometheus server URL
+#   - Docker: http://prometheus:9090
+#   - Bare-metal: http://localhost:9090
+#   - Remote: http://prometheus.example.com:9090
+# isDefault: true makes this the default datasource
+# editable: true allows editing in Grafana UI
+# jsonData.timeInterval: Scrape interval (should match Prometheus config)
+# jsonData.queryTimeout: Maximum query duration
+# jsonData.httpMethod: POST recommended for complex queries
+
+# For Docker Compose:
+# Ensure services are on same network:
+#
+# services:
+#   prometheus:
+#     image: prom/prometheus:latest
+#     networks:
+#       - monitoring
+#
+#   grafana:
+#     image: grafana/grafana:latest
+#     networks:
+#       - monitoring
+#
+# networks:
+#   monitoring:
+#     driver: bridge
+
+# For authentication (if Prometheus has auth enabled):
+#
+# basicAuth: true
+# basicAuthUser: admin
+# secureJsonData:
+#   basicAuthPassword: "password"
+
+# For TLS (if Prometheus uses HTTPS):
+#
+# jsonData:
+#   tlsAuth: false
+#   tlsAuthWithCACert: false
+#   tlsSkipVerify: true  # Only for development!
+
+# Deployment:
+#   1. Bare-metal: sudo cp prometheus.yml /etc/grafana/provisioning/datasources/
+#   2. Docker: Mount as volume in docker-compose.yml
+#   3. Verify: Grafana UI -> Configuration -> Data Sources
