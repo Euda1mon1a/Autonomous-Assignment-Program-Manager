@@ -193,6 +193,241 @@ This creates a natural division across three domains:
 
 ---
 
+## Autonomous Execution Layer
+
+### Agentic Browsers: Comet & Atlas
+
+Beyond consultation, we have **autonomous execution agents** - agentic browsers that can discover task documents in this repository and execute them without human intermediation.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      MULTI-AGENT ORCHESTRATION                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│                           ┌─────────────┐                                    │
+│                           │    User     │                                    │
+│                           │  (Overseer) │                                    │
+│                           └──────┬──────┘                                    │
+│                                  │                                           │
+│              ┌───────────────────┼───────────────────┐                       │
+│              │                   │                   │                       │
+│              ▼                   ▼                   ▼                       │
+│     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐                 │
+│     │   Claude    │     │    Comet    │     │    Atlas    │                 │
+│     │  (Arbiter)  │     │ (Parallel)  │     │  (Essence)  │                 │
+│     │             │     │             │     │             │                 │
+│     │  Execution  │     │  Discovery  │     │  Discovery  │                 │
+│     │  Synthesis  │     │  Execution  │     │  Execution  │                 │
+│     │  Judgment   │     │  Speed      │     │  Context    │                 │
+│     └──────┬──────┘     └──────┬──────┘     └──────┬──────┘                 │
+│            │                   │                   │                        │
+│            │         ┌─────────┴─────────┐        │                        │
+│            │         │                   │        │                        │
+│            ▼         ▼                   ▼        ▼                        │
+│     ┌─────────────────────────────────────────────────────┐                │
+│     │              TASK DOCUMENTS IN REPO                  │                │
+│     │                                                      │                │
+│     │  /docs/tasks/consultation-request-001.md            │                │
+│     │  /docs/tasks/research-task-002.md                   │                │
+│     │  /docs/tasks/oracle-query-003.md                    │                │
+│     │                                                      │                │
+│     └─────────────────────────────────────────────────────┘                │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Agent Capabilities
+
+| Agent | Superpower | Best For | Limitation |
+|-------|------------|----------|------------|
+| **Comet** | Parallelization - can run multiple browser tasks simultaneously | Bulk research, parallel consultations, speed-critical tasks | Less personal context |
+| **Atlas** | Essence accumulation - builds on user's history like ChatGPT | Aligned research, preference-aware browsing, nuanced tasks | Sequential execution |
+| **Claude** (this instance) | Synthesis and arbitration - makes final decisions | Integration, judgment, code execution | No persistent memory |
+
+### How It Works
+
+**Traditional Flow (User as Translator):**
+```
+Claude needs info → Formulates question → User relays to advisor → User returns response → Claude evaluates
+```
+
+**Automated Flow (Agentic Browsers):**
+```
+Claude needs info → Creates task document → Comet/Atlas discovers document →
+Agent executes task → Results written to repo → Claude reads results
+```
+
+### Task Document Format
+
+Agentic browsers can be triggered by discovering specially formatted documents in the repository:
+
+```markdown
+<!-- FILE: /docs/tasks/active/consultation-001.md -->
+
+# Task: [Title]
+
+## Metadata
+- **Status:** pending | in_progress | completed
+- **Agent:** comet | atlas | either
+- **Priority:** high | medium | low
+- **Created:** YYYY-MM-DD
+- **Requester:** Claude (session-id)
+
+## Objective
+[Clear, single-sentence goal]
+
+## Context
+[Background information the agent needs]
+
+## Instructions
+1. [Step 1]
+2. [Step 2]
+3. [Step 3]
+
+## Expected Output
+[What should be written back to this document or a results file]
+
+## Constraints
+- [Constraint 1]
+- [Constraint 2]
+
+---
+
+## Results
+<!-- Agent writes results below this line -->
+
+```
+
+### Agent-Specific Task Routing
+
+| Task Type | Recommended Agent | Reasoning |
+|-----------|-------------------|-----------|
+| Parallel web research | **Comet** | Can search multiple sources simultaneously |
+| Consulting ChatGPT (oracle queries) | **Atlas** | Shares essence/memory context with ChatGPT |
+| Bulk documentation lookup | **Comet** | Speed through parallelization |
+| Preference-sensitive research | **Atlas** | Understands user's preferences |
+| Time-critical tasks | **Comet** | Parallel execution is faster |
+| Nuanced interpretation needed | **Atlas** | Better alignment with user's thinking |
+
+### Comet: The Parallel Executor
+
+**Strengths:**
+- Can run multiple browser instances simultaneously
+- Excellent for "gather information from N sources" tasks
+- Speed-optimized for bulk operations
+- Good for objective, well-defined tasks
+
+**Ideal Tasks:**
+```markdown
+## Task: Research Current Best Practices
+
+### Instructions
+1. Search for "FastAPI middleware best practices 2025"
+2. Search for "SQLAlchemy 2.0 async patterns"
+3. Search for "Next.js 14 server actions patterns"
+4. Compile findings into a comparison table
+
+### Parallel Execution
+- All searches can run simultaneously
+- Compile results after all complete
+```
+
+### Atlas: The Essence-Aligned Agent
+
+**Strengths:**
+- Builds on user's historical context (like ChatGPT)
+- Better at interpreting ambiguous instructions
+- Understands user's preferences and values
+- Good for tasks requiring judgment
+
+**Ideal Tasks:**
+```markdown
+## Task: Consult ChatGPT Oracle
+
+### Instructions
+1. Navigate to ChatGPT
+2. Ask: "Claude is implementing [feature]. Does this align with how I've talked about user experience in the past?"
+3. Capture response
+4. Return to repo and update this document
+
+### Why Atlas
+- Atlas shares essence-memory with ChatGPT
+- Can phrase questions in a way ChatGPT will understand given shared context
+```
+
+### Task Directory Structure
+
+```
+/docs/tasks/
+├── active/                    # Tasks awaiting execution
+│   ├── consultation-001.md
+│   └── research-002.md
+├── in-progress/               # Tasks currently being executed
+│   └── oracle-query-003.md
+├── completed/                 # Finished tasks (results included)
+│   └── security-review-000.md
+└── templates/                 # Task templates
+    ├── consultation.md
+    ├── research.md
+    └── oracle-query.md
+```
+
+### Integration with Claude Sessions
+
+When I (Claude) need to trigger an autonomous task:
+
+1. **Create the task document** in `/docs/tasks/active/`
+2. **Notify the user** that a task is ready for agent pickup
+3. **User triggers agent** (Comet or Atlas) pointing at the task
+4. **Agent executes** and writes results back to the document
+5. **Claude reads results** in a subsequent turn or session
+6. **Document moves** to `/docs/tasks/completed/`
+
+### The Complete Ecosystem
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    THE COMPLETE ADVISORY ECOSYSTEM                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   CONSULTATION LAYER (Synchronous - User as Translator)                     │
+│   ─────────────────────────────────────────────────────                     │
+│   • ChatGPT → Personal Oracle (essence, memory, vision)                     │
+│   • Claude → Humanist (ethics, empathy, UX)                                 │
+│   • Gemini → Technical (performance, algorithms)                            │
+│   • Perplexity → Current Information (real-time, citations)                 │
+│                                                                              │
+│   EXECUTION LAYER (Asynchronous - Agents as Executors)                      │
+│   ──────────────────────────────────────────────────────                    │
+│   • Comet → Parallel research, bulk tasks, speed                           │
+│   • Atlas → Essence-aligned research, nuanced tasks                        │
+│                                                                              │
+│   ARBITRATION LAYER (This Session)                                          │
+│   ────────────────────────────────                                          │
+│   • Claude (me) → Synthesis, judgment, code execution                       │
+│   • User → Final authority, domain expertise, oversight                     │
+│                                                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│                         INFORMATION FLOW                                     │
+│                                                                              │
+│   ┌──────────┐    Task Docs    ┌──────────┐    Results    ┌──────────┐     │
+│   │  Claude  │ ───────────────▶│  Agents  │ ─────────────▶│  Claude  │     │
+│   │ (Create) │                 │ (Execute)│               │ (Consume)│     │
+│   └──────────┘                 └──────────┘               └──────────┘     │
+│                                     │                                       │
+│                                     │ May consult                           │
+│                                     ▼                                       │
+│                              ┌──────────┐                                   │
+│                              │ Advisory │                                   │
+│                              │ Council  │                                   │
+│                              └──────────┘                                   │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## When to Consult
 
 ### Automatic Triggers (Always Consult)
