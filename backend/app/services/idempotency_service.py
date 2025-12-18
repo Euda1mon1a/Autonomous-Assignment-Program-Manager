@@ -211,6 +211,46 @@ class IdempotencyService:
 
         return deleted
 
+    def timeout_stale_pending(self, timeout_minutes: int = 10, batch_size: int = 100) -> int:
+        """
+        Mark stale pending requests as failed.
+
+        Requests stuck in PENDING state for longer than timeout_minutes are
+        likely orphaned (e.g., worker crashed mid-processing). This prevents
+        them from blocking future requests with the same idempotency key.
+
+        Args:
+            timeout_minutes: Minutes after which pending requests are considered stale
+            batch_size: Maximum number of records to update per call
+
+        Returns:
+            Number of records marked as failed
+        """
+        cutoff = datetime.utcnow() - timedelta(minutes=timeout_minutes)
+
+        stale_requests = (
+            self.db.query(IdempotencyRequest)
+            .filter(
+                IdempotencyRequest.status == IdempotencyStatus.PENDING.value,
+                IdempotencyRequest.created_at < cutoff,
+            )
+            .limit(batch_size)
+            .all()
+        )
+
+        count = 0
+        for request in stale_requests:
+            request.status = IdempotencyStatus.FAILED.value
+            request.completed_at = datetime.utcnow()
+            request.error_message = f"Request timed out after {timeout_minutes} minutes"
+            count += 1
+
+        if count > 0:
+            self.db.commit()
+            logger.warning(f"Timed out {count} stale pending idempotency requests")
+
+        return count
+
 
 def extract_idempotency_params(request_data: dict) -> dict:
     """

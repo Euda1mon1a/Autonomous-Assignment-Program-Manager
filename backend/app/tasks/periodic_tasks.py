@@ -1,7 +1,14 @@
 """
-Periodic Task Configuration for Schedule Metrics.
+Periodic Task Configuration for Schedule Metrics and Cleanup.
 
-Defines Celery Beat schedules for automated metrics computation:
+Defines Celery Beat schedules for:
+
+Cleanup tasks (prevents unbounded table growth):
+- Hourly cleanup of expired idempotency requests
+- Hourly cleanup of expired token blacklist entries
+- Every 5 min: timeout stale pending idempotency requests (>10 min old)
+
+Metrics tasks:
 - Hourly metrics snapshots during business hours (8 AM - 6 PM)
 - Daily cleanup of old snapshots at 3 AM
 - Weekly fairness trend report on Monday at 7 AM
@@ -10,6 +17,53 @@ These schedules should be registered in celery_app.py beat_schedule.
 """
 
 from celery.schedules import crontab
+
+# Celery beat schedule for cleanup tasks (idempotency, token blacklist)
+CLEANUP_BEAT_SCHEDULE = {
+    # Hourly cleanup of expired idempotency requests
+    "cleanup-idempotency-hourly": {
+        "task": "app.tasks.cleanup_tasks.cleanup_idempotency_requests",
+        "schedule": crontab(
+            minute=15,  # Quarter past every hour
+            hour="*",
+        ),
+        "kwargs": {
+            "batch_size": 1000,
+        },
+        "options": {
+            "queue": "cleanup",
+            "expires": 3600,
+        },
+    },
+    # Hourly cleanup of expired token blacklist entries
+    "cleanup-token-blacklist-hourly": {
+        "task": "app.tasks.cleanup_tasks.cleanup_token_blacklist",
+        "schedule": crontab(
+            minute=20,  # 20 past every hour
+            hour="*",
+        ),
+        "options": {
+            "queue": "cleanup",
+            "expires": 3600,
+        },
+    },
+    # Every 5 minutes: timeout stale pending idempotency requests
+    "timeout-stale-pending-requests": {
+        "task": "app.tasks.cleanup_tasks.timeout_stale_pending_requests",
+        "schedule": crontab(
+            minute="*/5",  # Every 5 minutes
+        ),
+        "kwargs": {
+            "timeout_minutes": 10,  # Requests pending > 10 min are stale
+            "batch_size": 100,
+        },
+        "options": {
+            "queue": "cleanup",
+            "expires": 300,
+        },
+    },
+}
+
 
 # Celery beat schedule for schedule metrics tasks
 SCHEDULE_METRICS_BEAT_SCHEDULE = {
@@ -93,6 +147,50 @@ def get_schedule_metrics_beat_schedule() -> dict:
         )
     """
     return SCHEDULE_METRICS_BEAT_SCHEDULE
+
+
+def get_cleanup_beat_schedule() -> dict:
+    """
+    Get the beat schedule configuration for cleanup tasks.
+
+    Returns:
+        Dict with beat schedule configuration for:
+        - Idempotency request cleanup (hourly)
+        - Token blacklist cleanup (hourly)
+        - Stale pending request timeout (every 5 minutes)
+
+    Usage:
+        In celery_app.py:
+
+        from app.tasks.periodic_tasks import get_cleanup_beat_schedule
+
+        celery_app.conf.beat_schedule.update(
+            get_cleanup_beat_schedule()
+        )
+    """
+    return CLEANUP_BEAT_SCHEDULE
+
+
+def get_all_beat_schedules() -> dict:
+    """
+    Get combined beat schedule for all periodic tasks.
+
+    Returns:
+        Dict with all beat schedules merged
+
+    Usage:
+        In celery_app.py:
+
+        from app.tasks.periodic_tasks import get_all_beat_schedules
+
+        celery_app.conf.beat_schedule.update(
+            get_all_beat_schedules()
+        )
+    """
+    combined = {}
+    combined.update(CLEANUP_BEAT_SCHEDULE)
+    combined.update(SCHEDULE_METRICS_BEAT_SCHEDULE)
+    return combined
 
 
 # Alternative schedules for different deployment scenarios
@@ -219,12 +317,23 @@ SCHEDULE_METRICS_TASK_ROUTES = {
     "app.tasks.schedule_metrics_tasks.*": {"queue": "metrics"},
 }
 
+CLEANUP_TASK_ROUTES = {
+    "app.tasks.cleanup_tasks.*": {"queue": "cleanup"},
+}
+
 
 # Queue configuration for metrics tasks
 SCHEDULE_METRICS_TASK_QUEUES = {
     "metrics": {
         "exchange": "metrics",
         "routing_key": "metrics",
+    },
+}
+
+CLEANUP_TASK_QUEUES = {
+    "cleanup": {
+        "exchange": "cleanup",
+        "routing_key": "cleanup",
     },
 }
 
@@ -251,6 +360,40 @@ SCHEDULE_METRICS_TASK_CONFIG = {
     "task_compression": "gzip",  # Compress large result payloads
     "result_compression": "gzip",
 }
+
+
+def configure_celery_for_cleanup(celery_app):
+    """
+    Configure Celery app with cleanup tasks.
+
+    This adds periodic cleanup for:
+    - Expired idempotency requests (hourly)
+    - Expired token blacklist entries (hourly)
+    - Stale pending requests (every 5 minutes)
+
+    Args:
+        celery_app: Celery application instance
+
+    Usage:
+        from app.core.celery_app import celery_app
+        from app.tasks.periodic_tasks import configure_celery_for_cleanup
+
+        configure_celery_for_cleanup(celery_app)
+    """
+    # Update beat schedule
+    celery_app.conf.beat_schedule.update(
+        get_cleanup_beat_schedule()
+    )
+
+    # Update task routes
+    if not hasattr(celery_app.conf, 'task_routes'):
+        celery_app.conf.task_routes = {}
+    celery_app.conf.task_routes.update(CLEANUP_TASK_ROUTES)
+
+    # Update task queues
+    if not hasattr(celery_app.conf, 'task_queues'):
+        celery_app.conf.task_queues = {}
+    celery_app.conf.task_queues.update(CLEANUP_TASK_QUEUES)
 
 
 def configure_celery_for_schedule_metrics(celery_app):
@@ -286,3 +429,22 @@ def configure_celery_for_schedule_metrics(celery_app):
 
     # Apply additional configuration
     celery_app.conf.update(SCHEDULE_METRICS_TASK_CONFIG)
+
+
+def configure_celery_for_all_periodic_tasks(celery_app):
+    """
+    Configure Celery app with all periodic tasks (metrics + cleanup).
+
+    This is the recommended function for production deployments.
+
+    Args:
+        celery_app: Celery application instance
+
+    Usage:
+        from app.core.celery_app import celery_app
+        from app.tasks.periodic_tasks import configure_celery_for_all_periodic_tasks
+
+        configure_celery_for_all_periodic_tasks(celery_app)
+    """
+    configure_celery_for_cleanup(celery_app)
+    configure_celery_for_schedule_metrics(celery_app)

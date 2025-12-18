@@ -1,22 +1,20 @@
 # Frontend Dockerfile for Residency Scheduler
-# Node 22 LTS Alpine with multi-stage build for minimal production image
+# Docker Hardened Image (DHI) with multi-stage build for minimal attack surface
+# Requires: docker login (Docker Hub credentials) to pull from dhi.io
 
-# Base stage
-FROM node:22-alpine AS base
-RUN apk add --no-cache libc6-compat
+# =============================================================================
+# Build Stage - includes npm and build tools
+# =============================================================================
+FROM dhi.io/node:22-dev AS builder
 WORKDIR /app
 
-# Dependencies stage - install only when needed
-FROM base AS deps
+# Copy package files for dependency installation
 COPY package.json package-lock.json* ./
+
+# Install dependencies
 RUN npm ci --legacy-peer-deps && npm cache clean --force
 
-# Builder stage - build the application
-FROM base AS builder
-WORKDIR /app
-
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
+# Copy application source
 COPY . .
 
 # Disable Next.js telemetry during build
@@ -25,40 +23,30 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Build the application
 RUN npm run build
 
-# Production stage - minimal runtime image
-FROM base AS runner
+# =============================================================================
+# Runtime Stage - minimal distroless image (~95% fewer CVEs)
+# =============================================================================
+FROM dhi.io/node:22 AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production \
-    NEXT_TELEMETRY_DISABLED=1
-
-# Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs \
-    && adduser --system --uid 1001 nextjs
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=3000 \
+    HOSTNAME="0.0.0.0"
 
 # Copy public assets
 COPY --from=builder /app/public ./public
 
-# Create .next directory and set permissions
-RUN mkdir .next && chown nextjs:nodejs .next
-
 # Copy standalone build output (leverages Next.js output tracing for minimal size)
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Switch to non-root user
-USER nextjs
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
 # Expose port
 EXPOSE 3000
 
-# Set hostname to listen on all interfaces
-ENV PORT=3000 \
-    HOSTNAME="0.0.0.0"
-
-# Health check
+# Health check using Node (no wget in distroless)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+    CMD node -e "require('http').get('http://localhost:3000/', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
 # Start the application
 CMD ["node", "server.js"]
