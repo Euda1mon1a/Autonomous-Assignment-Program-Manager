@@ -167,6 +167,61 @@ Most recent entries should appear first (reverse chronological order).
 
 ---
 
+## Brittleness Log
+
+> *"It will break, but I will review, consult you and we can incorporate."*
+
+Track failures here. Each failure is a learning opportunity.
+
+### Failure Entry Template
+```markdown
+### F-[XXX]: [Brief Description]
+
+**Date:** YYYY-MM-DD
+**Cascade/Task:** [Link to task document]
+**Failure Mode:**
+- [ ] Platform changed access rules
+- [ ] Agent misinterpreted task
+- [ ] Cascade timing issue
+- [ ] Advisor hallucinated
+- [ ] Other: [describe]
+
+**What Happened:**
+[Description of the failure]
+
+**Root Cause:**
+[Analysis after investigation]
+
+**Adaptation Made:**
+[How we updated the system in response]
+
+**Status:** documented | analyzed | adapted | resolved
+```
+
+### Logged Failures
+*None yet. The system is new. Failures will come, and we'll learn from them.*
+
+---
+
+## Agent Access Matrix Updates
+
+Track changes to platform restrictions here.
+
+| Date | Change | Discovered By | Adaptation |
+|------|--------|---------------|------------|
+| 2025-12-18 | Initial matrix documented | User | Baseline established |
+
+### Current Matrix (as of 2025-12-18)
+| Agent | ChatGPT | Perplexity | Gemini | Claude | Claude Code |
+|-------|---------|------------|--------|--------|-------------|
+| Comet | ✅ | ❌ | ✅ | ✅ | ✅ |
+| Atlas | ❌ | ✅ | ✅ | ✅ | ✅ |
+| User | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+*Update this table when platform restrictions change.*
+
+---
+
 ## Document History
 
 | Version | Date | Author | Changes |

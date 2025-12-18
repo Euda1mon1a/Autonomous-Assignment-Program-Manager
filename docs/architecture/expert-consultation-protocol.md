@@ -244,6 +244,202 @@ Beyond consultation, we have **autonomous execution agents** - agentic browsers 
 | **Atlas** | Essence accumulation - builds on user's history like ChatGPT | Aligned research, preference-aware browsing, nuanced tasks | Sequential execution |
 | **Claude** (this instance) | Synthesis and arbitration - makes final decisions | Integration, judgment, code execution | No persistent memory |
 
+### Platform Access Constraints
+
+**Critical:** Same-company restrictions prevent certain agent-advisor combinations.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        AGENT ACCESS MATRIX                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│                    │ ChatGPT │ Perplexity │ Gemini │ Claude │ Claude Code │ │
+│   ─────────────────┼─────────┼────────────┼────────┼────────┼─────────────│ │
+│   Comet            │   ✅    │     ❌     │   ✅   │   ✅   │     ✅      │ │
+│   Atlas (OpenAI)   │   ❌    │     ✅     │   ✅   │   ✅   │     ✅      │ │
+│   User (manual)    │   ✅    │     ✅     │   ✅   │   ✅   │     ✅      │ │
+│                                                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   KEY INSIGHT: Constraints create complementary coverage                     │
+│                                                                              │
+│   • Need ChatGPT oracle? → Route through Comet                              │
+│   • Need Perplexity research? → Route through Atlas                         │
+│   • Need both? → Cascade: Comet → ChatGPT, Atlas → Perplexity              │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### The Agent Mesh
+
+This isn't a limitation - it's an **emergent architecture**. The constraints force complementary routing:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         THE AGENT MESH                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│                           ┌─────────────┐                                    │
+│                           │    User     │                                    │
+│                           │ (Universal) │                                    │
+│                           └──────┬──────┘                                    │
+│                                  │                                           │
+│                    ┌─────────────┴─────────────┐                             │
+│                    │                           │                             │
+│                    ▼                           ▼                             │
+│           ┌─────────────┐             ┌─────────────┐                        │
+│           │    Comet    │             │    Atlas    │                        │
+│           │             │             │   (OpenAI)  │                        │
+│           └──────┬──────┘             └──────┬──────┘                        │
+│                  │                           │                               │
+│       ┌──────────┼──────────┐     ┌──────────┼──────────┐                   │
+│       │          │          │     │          │          │                   │
+│       ▼          ▼          ▼     ▼          ▼          ▼                   │
+│   ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐              │
+│   │ChatGPT│ │Gemini │ │Claude │ │Perplex│ │Gemini │ │Claude │              │
+│   │Oracle │ │       │ │       │ │ ity   │ │       │ │       │              │
+│   └───────┘ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘              │
+│       ▲                             ▲                                        │
+│       │                             │                                        │
+│       └─── Comet's exclusive ───────┴─── Atlas's exclusive                  │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Cascade Patterns
+
+**Organic systems prompting synthetic systems, leading to cascades:**
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         CASCADE PATTERNS                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  PATTERN 1: Parallel Diverge-Converge                                       │
+│  ─────────────────────────────────────                                      │
+│                                                                              │
+│     ┌──────────┐                                                            │
+│     │  Claude  │ Creates two task docs                                      │
+│     │ (Origin) │                                                            │
+│     └────┬─────┘                                                            │
+│          │                                                                   │
+│    ┌─────┴─────┐                                                            │
+│    ▼           ▼                                                            │
+│  ┌─────┐    ┌─────┐                                                         │
+│  │Comet│    │Atlas│  Execute in parallel                                    │
+│  └──┬──┘    └──┬──┘                                                         │
+│     │          │                                                            │
+│     ▼          ▼                                                            │
+│  ┌──────┐  ┌────────┐                                                       │
+│  │ChatGP│  │Perplex-│  Each queries its exclusive advisor                   │
+│  │Oracle│  │ity     │                                                       │
+│  └──┬───┘  └───┬────┘                                                       │
+│     │          │                                                            │
+│     └────┬─────┘                                                            │
+│          ▼                                                                   │
+│     ┌──────────┐                                                            │
+│     │  Claude  │ Synthesizes both results                                   │
+│     │(Arbiter) │                                                            │
+│     └──────────┘                                                            │
+│                                                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  PATTERN 2: Sequential Cascade                                              │
+│  ────────────────────────────────                                           │
+│                                                                              │
+│     Claude → Comet → ChatGPT → (result) →                                  │
+│              Comet → Gemini (with ChatGPT context) → (result) →            │
+│              Claude (synthesize)                                            │
+│                                                                              │
+│  Use when: Second query depends on first query's result                     │
+│                                                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  PATTERN 3: Cross-Pollination                                               │
+│  ────────────────────────────────                                           │
+│                                                                              │
+│     Comet → ChatGPT: "What does user prefer for X?"                        │
+│                  ↓                                                           │
+│     Atlas → Claude: "Given this preference, evaluate Y"                     │
+│                  ↓                                                           │
+│     Comet → Gemini: "Implement Z using this evaluation"                    │
+│                  ↓                                                           │
+│     Claude (arbiter): Final synthesis                                       │
+│                                                                              │
+│  Use when: Different advisors contribute different expertise                │
+│                                                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  PATTERN 4: Validation Loop                                                 │
+│  ──────────────────────────────                                             │
+│                                                                              │
+│     Comet → ChatGPT: "Is this aligned with user's vision?"                 │
+│                  ↓                                                           │
+│     IF misaligned:                                                          │
+│         Atlas → Perplexity: "Current best practices for alternative?"      │
+│         Loop back to ChatGPT validation                                     │
+│     ELSE:                                                                   │
+│         Proceed with implementation                                         │
+│                                                                              │
+│  Use when: Need iterative refinement with validation                        │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Brittleness Philosophy
+
+> *"It will break, but I will review, consult you and we can incorporate."*
+
+This system is intentionally **brittle by design**. We embrace this:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    BRITTLENESS AS A FEATURE                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   ENTERPRISE APPROACH          │    OUR APPROACH                            │
+│   ──────────────────           │    ────────────                            │
+│   • Robust infrastructure      │    • Organic emergence                     │
+│   • Formal protocols           │    • Adaptive protocols                    │
+│   • Failure prevention         │    • Failure as feedback                   │
+│   • Closed systems             │    • Open experimentation                  │
+│   • Capital-intensive          │    • Resource-creative                     │
+│                                │                                            │
+│   "Don't break"                │    "Break → Learn → Adapt"                │
+│                                                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   WHEN IT BREAKS (and it will):                                             │
+│                                                                              │
+│   1. Document the failure in CONSULTATION_LOG.md                            │
+│   2. Identify the failure mode:                                             │
+│      - Platform changed access rules?                                       │
+│      - Agent misinterpreted task?                                           │
+│      - Cascade timing issue?                                                │
+│      - Advisor hallucinated?                                                │
+│   3. Consult Claude (me) for analysis                                       │
+│   4. Update routing rules or task templates                                 │
+│   5. The system evolves                                                     │
+│                                                                              │
+│   This is ORGANIC LEARNING, not engineering failure.                        │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Novel Territory
+
+> *"I don't know of anyone working on anything like this at the consumer level."*
+
+We're building something unprecedented:
+
+- **Multi-agent orchestration** across competing platforms
+- **Organic-synthetic integration** (human essence + AI execution)
+- **Cascade consultation** (things prompting things)
+- **Constraint-driven architecture** (platform limits → emergent design)
+- **Brittleness-embracing iteration** (fail fast, learn faster)
+
+This documentation itself becomes the protocol. As failures occur and adaptations emerge, this living document evolves.
+
 ### How It Works
 
 **Traditional Flow (User as Translator):**
@@ -302,12 +498,38 @@ Agentic browsers can be triggered by discovering specially formatted documents i
 
 | Task Type | Recommended Agent | Reasoning |
 |-----------|-------------------|-----------|
+| **ChatGPT oracle queries** | **Comet** | Atlas CANNOT access ChatGPT (same company) |
+| **Perplexity research** | **Atlas** | Comet CANNOT access Perplexity |
 | Parallel web research | **Comet** | Can search multiple sources simultaneously |
-| Consulting ChatGPT (oracle queries) | **Atlas** | Shares essence/memory context with ChatGPT |
 | Bulk documentation lookup | **Comet** | Speed through parallelization |
 | Preference-sensitive research | **Atlas** | Understands user's preferences |
 | Time-critical tasks | **Comet** | Parallel execution is faster |
 | Nuanced interpretation needed | **Atlas** | Better alignment with user's thinking |
+| Gemini technical queries | **Either** | Both have access |
+| Claude humanist queries | **Either** | Both have access |
+
+### Routing Decision Tree
+
+```
+Need to consult an advisor?
+│
+├─► ChatGPT (Oracle)?
+│   └─► MUST use Comet (Atlas blocked)
+│
+├─► Perplexity (Current info)?
+│   └─► MUST use Atlas (Comet blocked)
+│
+├─► Gemini (Technical)?
+│   ├─► Speed priority? → Comet
+│   └─► Nuance priority? → Atlas
+│
+├─► Claude (Humanist)?
+│   ├─► Speed priority? → Comet
+│   └─► Nuance priority? → Atlas
+│
+└─► Multiple advisors needed?
+    └─► Use CASCADE PATTERN (see above)
+```
 
 ### Comet: The Parallel Executor
 
