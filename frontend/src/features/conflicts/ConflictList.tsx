@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   Search,
   Filter,
@@ -105,6 +105,8 @@ export function ConflictList({
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
+  const conflictRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   // Queries
   const {
@@ -185,6 +187,56 @@ export function ConflictList({
       end_date: today.toISOString().split('T')[0],
     });
   }, [detectConflicts]);
+
+  // Keyboard navigation for conflict list
+  useEffect(() => {
+    if (!conflicts.length) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if user is typing in an input field
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
+
+      switch (e.key) {
+        case 'ArrowDown':
+        case 'j':
+          e.preventDefault();
+          setFocusedIndex(prev => {
+            const next = prev < conflicts.length - 1 ? prev + 1 : prev;
+            conflictRefs.current.get(next)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return next;
+          });
+          break;
+        case 'ArrowUp':
+        case 'k':
+          e.preventDefault();
+          setFocusedIndex(prev => {
+            const next = prev > 0 ? prev - 1 : 0;
+            conflictRefs.current.get(next)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return next;
+          });
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (focusedIndex >= 0 && focusedIndex < conflicts.length) {
+            const conflict = conflicts[focusedIndex];
+            onConflictSelect?.(conflict);
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          setFocusedIndex(-1);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [conflicts, focusedIndex, onConflictSelect]);
+
+  // Reset focus when conflicts change
+  useEffect(() => {
+    setFocusedIndex(-1);
+  }, [filters, searchQuery, sort]);
 
   // Active filter count
   const activeFilterCount = useMemo(() => {
@@ -460,12 +512,30 @@ export function ConflictList({
             {conflicts.map((conflict, index) => (
               <div
                 key={conflict.id}
-                className="flex items-start gap-3 animate-fadeInUp"
+                ref={(el) => {
+                  if (el) {
+                    conflictRefs.current.set(index, el);
+                  } else {
+                    conflictRefs.current.delete(index);
+                  }
+                }}
+                tabIndex={0}
+                className={`
+                  flex items-start gap-3 animate-fadeInUp transition-all rounded-lg
+                  ${focusedIndex === index ? 'ring-2 ring-blue-500 ring-offset-2' : ''}
+                `}
                 style={{ animationDelay: `${index * 50}ms` }}
+                onFocus={() => setFocusedIndex(index)}
+                onClick={() => setFocusedIndex(index)}
+                role="button"
+                aria-label={`Conflict: ${conflict.description}`}
               >
                 {selectable && (
                   <button
-                    onClick={() => handleToggleSelect(conflict)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleSelect(conflict);
+                    }}
                     className="flex-shrink-0 mt-4 p-1 rounded hover:bg-gray-100"
                     aria-label={
                       selectedIds.has(conflict.id) ? 'Deselect' : 'Select'

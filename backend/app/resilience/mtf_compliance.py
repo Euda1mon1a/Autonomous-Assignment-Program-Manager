@@ -26,6 +26,13 @@ from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
+from app.resilience.mtf_types import (
+    CascadePrediction,
+    PositiveFeedbackRisk,
+    ProjectionWithoutSupport,
+    SupportingMetrics,
+    SystemHealthState,
+)
 from app.schemas.mtf_compliance import (
     CircuitBreakerState,
     CircuitBreakerTrigger,
@@ -332,7 +339,7 @@ class MFRGenerator:
         self,
         mfr_type: MFRType,
         subject: str,
-        system_state: dict[str, Any],
+        system_state: SystemHealthState | dict[str, Any],
         scheduler_name: str,
         scheduler_objection: str | None = None,
         priority: MFRPriority = MFRPriority.ROUTINE,
@@ -385,6 +392,9 @@ class MFRGenerator:
         hash_content = f"{mfr_id}{now.isoformat()}{header}{body}"
         document_hash = hashlib.sha256(hash_content.encode()).hexdigest()
 
+        # Convert system_state to dict for snapshot
+        state_snapshot = system_state.to_dict() if isinstance(system_state, SystemHealthState) else system_state
+
         return MFRDocument(
             id=mfr_id,
             generated_at=now,
@@ -396,7 +406,7 @@ class MFRGenerator:
             findings=findings,
             risk_assessment=risk_assessment,
             recommendations=recommendations,
-            system_state_snapshot=system_state,
+            system_state_snapshot=state_snapshot,
             document_hash=document_hash,
             risk_level=risk_level,
             requires_commander_signature=template["requires_signature"],
@@ -405,27 +415,44 @@ class MFRGenerator:
 
     def _extract_findings(
         self,
-        system_state: dict[str, Any],
+        system_state: SystemHealthState | dict[str, Any],
         additional: list[str] | None,
     ) -> list[str]:
         """Extract findings from system state."""
         findings = []
 
+        # Handle both SystemHealthState and dict
+        if isinstance(system_state, SystemHealthState):
+            n1_pass = system_state.n1_pass
+            n2_pass = system_state.n2_pass
+            load_level = system_state.load_shedding_level
+            coverage = system_state.coverage_rate
+            avg_load = system_state.average_allostatic_load
+            eq_state = system_state.equilibrium_state
+            phase_risk = system_state.phase_transition_risk
+        else:
+            n1_pass = system_state.get("n1_pass", True)
+            n2_pass = system_state.get("n2_pass", True)
+            load_level = system_state.get("load_shedding_level")
+            coverage = system_state.get("coverage_rate", 1.0)
+            avg_load = system_state.get("average_allostatic_load", 0)
+            eq_state = system_state.get("equilibrium_state")
+            phase_risk = system_state.get("phase_transition_risk", "low")
+
         # N-1/N-2 analysis
-        if not system_state.get("n1_pass", True):
+        if not n1_pass:
             findings.append(
                 "N-1 VULNERABILITY: System will fail to maintain coverage if ANY single "
                 "faculty member is unavailable. Single point of failure exists."
             )
 
-        if not system_state.get("n2_pass", True):
+        if not n2_pass:
             findings.append(
                 "N-2 VULNERABILITY: System will fail catastrophically if two faculty "
                 "members are simultaneously unavailable. Fatal pairs identified."
             )
 
         # Load shedding
-        load_level = system_state.get("load_shedding_level")
         if load_level and load_level not in ("NORMAL", LoadSheddingLevel.NORMAL):
             findings.append(
                 f"LOAD SHEDDING ACTIVE: Operating at {load_level} level. "
@@ -433,7 +460,6 @@ class MFRGenerator:
             )
 
         # Coverage
-        coverage = system_state.get("coverage_rate", 1.0)
         if coverage < 0.90:
             findings.append(
                 f"COVERAGE DEGRADED: Current coverage at {coverage*100:.0f}%, "
@@ -441,7 +467,6 @@ class MFRGenerator:
             )
 
         # Allostatic load
-        avg_load = system_state.get("average_allostatic_load", 0)
         if avg_load > 60:
             findings.append(
                 f"STAFF OVERLOAD: Average allostatic load at {avg_load:.0f}/100. "
@@ -449,7 +474,6 @@ class MFRGenerator:
             )
 
         # Equilibrium
-        eq_state = system_state.get("equilibrium_state")
         if eq_state in ("unsustainable", "critical", EquilibriumState.UNSUSTAINABLE, EquilibriumState.CRITICAL):
             findings.append(
                 "UNSUSTAINABLE OPERATIONS: Current staffing model mathematically cannot "
@@ -457,7 +481,6 @@ class MFRGenerator:
             )
 
         # Phase transition risk
-        phase_risk = system_state.get("phase_transition_risk", "low")
         if phase_risk in ("high", "critical"):
             findings.append(
                 f"PHASE TRANSITION RISK: {phase_risk.upper()}. System is approaching "
@@ -469,16 +492,29 @@ class MFRGenerator:
 
         return findings
 
-    def _assess_risk_level(self, system_state: dict[str, Any]) -> RiskLevel:
+    def _assess_risk_level(self, system_state: SystemHealthState | dict[str, Any]) -> RiskLevel:
         """Assess overall risk level from system state."""
         risk_score = 0
 
-        if not system_state.get("n1_pass", True):
+        # Handle both SystemHealthState and dict
+        if isinstance(system_state, SystemHealthState):
+            n1_pass = system_state.n1_pass
+            n2_pass = system_state.n2_pass
+            coverage = system_state.coverage_rate
+            avg_load = system_state.average_allostatic_load
+            eq_state = system_state.equilibrium_state
+        else:
+            n1_pass = system_state.get("n1_pass", True)
+            n2_pass = system_state.get("n2_pass", True)
+            coverage = system_state.get("coverage_rate", 1.0)
+            avg_load = system_state.get("average_allostatic_load", 0)
+            eq_state = system_state.get("equilibrium_state", "stable")
+
+        if not n1_pass:
             risk_score += 3
-        if not system_state.get("n2_pass", True):
+        if not n2_pass:
             risk_score += 2
 
-        coverage = system_state.get("coverage_rate", 1.0)
         if coverage < 0.70:
             risk_score += 4
         elif coverage < 0.80:
@@ -486,13 +522,11 @@ class MFRGenerator:
         elif coverage < 0.90:
             risk_score += 2
 
-        avg_load = system_state.get("average_allostatic_load", 0)
         if avg_load > 80:
             risk_score += 3
         elif avg_load > 60:
             risk_score += 2
 
-        eq_state = system_state.get("equilibrium_state", "stable")
         if eq_state in ("critical", EquilibriumState.CRITICAL):
             risk_score += 4
         elif eq_state in ("unsustainable", EquilibriumState.UNSUSTAINABLE):
@@ -510,7 +544,7 @@ class MFRGenerator:
 
     def _generate_risk_assessment(
         self,
-        system_state: dict[str, Any],
+        system_state: SystemHealthState | dict[str, Any],
         risk_level: RiskLevel,
     ) -> str:
         """Generate risk assessment narrative."""
@@ -551,7 +585,7 @@ class MFRGenerator:
     def _generate_body(
         self,
         mfr_type: MFRType,
-        system_state: dict[str, Any],
+        system_state: SystemHealthState | dict[str, Any],
         scheduler_name: str,
         scheduler_objection: str | None,
         findings: list[str],
@@ -595,7 +629,7 @@ class MFRGenerator:
     def _generate_recommendations(
         self,
         mfr_type: MFRType,
-        system_state: dict[str, Any],
+        system_state: SystemHealthState | dict[str, Any],
         risk_level: RiskLevel,
     ) -> list[str]:
         """Generate recommendations based on MFR type and risk level."""
@@ -605,16 +639,24 @@ class MFRGenerator:
             recs.append("IMMEDIATE: Notify Commander and DIO of conditions")
             recs.append("IMMEDIATE: Initiate Safety Stand-Down protocol if not already active")
 
-        if not system_state.get("n1_pass", True):
+        # Handle both SystemHealthState and dict
+        if isinstance(system_state, SystemHealthState):
+            n1_pass = system_state.n1_pass
+            coverage = system_state.coverage_rate
+            avg_load = system_state.average_allostatic_load
+        else:
+            n1_pass = system_state.get("n1_pass", True)
+            coverage = system_state.get("coverage_rate", 1.0)
+            avg_load = system_state.get("average_allostatic_load", 0)
+
+        if not n1_pass:
             recs.append("Request cross-leveling of personnel from adjacent units")
             recs.append("Activate reserve/backup coverage pools")
 
-        coverage = system_state.get("coverage_rate", 1.0)
         if coverage < 0.85:
             recs.append("Consider diversion of non-emergency cases to partner facilities")
             recs.append("Implement graduated return-to-normal coverage plan")
 
-        avg_load = system_state.get("average_allostatic_load", 0)
         if avg_load > 60:
             recs.append("Implement mandatory rest periods for high-load personnel")
             recs.append("Defer all non-essential administrative requirements")
@@ -725,7 +767,7 @@ class CircuitBreaker:
         average_allostatic_load: float,
         volatility_level: str,
         compensation_debt: float,
-        positive_feedback_risks: list[dict] | None = None,
+        positive_feedback_risks: list[PositiveFeedbackRisk | dict] | None = None,
     ) -> tuple[bool, CircuitBreakerTrigger | None, str | None]:
         """
         Check conditions and trip circuit breaker if thresholds breached.
@@ -775,9 +817,11 @@ class CircuitBreaker:
             details = f"Compensation debt ({compensation_debt:.0f}) exceeds sustainable threshold"
 
         elif positive_feedback_risks:
+            # Handle both PositiveFeedbackRisk and dict
             high_confidence_risks = [
                 r for r in positive_feedback_risks
-                if r.get("confidence", 0) > self.THRESHOLDS["positive_feedback_confidence"]
+                if (r.confidence if isinstance(r, PositiveFeedbackRisk) else r.get("confidence", 0))
+                > self.THRESHOLDS["positive_feedback_confidence"]
             ]
             if high_confidence_risks:
                 trigger = CircuitBreakerTrigger.POSITIVE_FEEDBACK_CASCADE
@@ -946,8 +990,8 @@ class RFFDocument:
     execution: str
     sustainment: str
     command_and_signal: str
-    supporting_metrics: dict[str, Any]
-    projected_without_support: dict[str, Any]
+    supporting_metrics: SupportingMetrics
+    projected_without_support: ProjectionWithoutSupport
     document_hash: str
 
 
@@ -975,8 +1019,8 @@ class RFFDrafter:
         personnel_count: int,
         duration_days: int,
         justification: str,
-        system_state: dict[str, Any],
-        cascade_prediction: dict[str, Any] | None = None,
+        system_state: SystemHealthState | dict[str, Any],
+        cascade_prediction: CascadePrediction | dict[str, Any] | None = None,
         uic: str | None = None,
     ) -> RFFDocument:
         """
@@ -1061,8 +1105,8 @@ class RFFDrafter:
 
     def _generate_situation(
         self,
-        system_state: dict[str, Any],
-        cascade_prediction: dict[str, Any] | None,
+        system_state: SystemHealthState | dict[str, Any],
+        cascade_prediction: CascadePrediction | dict[str, Any] | None,
     ) -> str:
         """Generate Situation paragraph."""
         situation = "\n1. SITUATION:\n\n"
@@ -1070,19 +1114,32 @@ class RFFDrafter:
         situation += "   a. General: Unit experiencing critical personnel shortage "
         situation += "affecting mission capability.\n\n"
 
-        coverage = system_state.get("coverage_rate", 1.0)
+        # Handle both SystemHealthState and dict
+        if isinstance(system_state, SystemHealthState):
+            coverage = system_state.coverage_rate
+            n1_pass = system_state.n1_pass
+            load = system_state.average_allostatic_load
+        else:
+            coverage = system_state.get("coverage_rate", 1.0)
+            n1_pass = system_state.get("n1_pass", True)
+            load = system_state.get("average_allostatic_load", 0)
+
         situation += f"   b. Current Status:\n"
         situation += f"      - Coverage Rate: {coverage*100:.0f}%\n"
 
-        if not system_state.get("n1_pass", True):
+        if not n1_pass:
             situation += "      - N-1 Analysis: FAILED (single point of failure exists)\n"
 
-        load = system_state.get("average_allostatic_load", 0)
         if load > 50:
             situation += f"      - Personnel Stress Level: {load:.0f}/100 (elevated)\n"
 
         if cascade_prediction:
-            days_to_failure = cascade_prediction.get("days_until_exhaustion", 999)
+            # Handle both CascadePrediction and dict
+            if isinstance(cascade_prediction, CascadePrediction):
+                days_to_failure = cascade_prediction.days_until_exhaustion
+            else:
+                days_to_failure = cascade_prediction.get("days_until_exhaustion", 999)
+
             if days_to_failure < 30:
                 situation += f"\n   c. CRITICAL: Based on cascade analysis, unit will reach\n"
                 situation += f"      mission failure state in {days_to_failure} days without intervention.\n"
@@ -1092,7 +1149,7 @@ class RFFDrafter:
     def _generate_mission_impact(
         self,
         missions: list[MissionType],
-        system_state: dict[str, Any],
+        system_state: SystemHealthState | dict[str, Any],
     ) -> str:
         """Generate Mission Impact paragraph."""
         impact = "\n2. MISSION IMPACT:\n\n"
@@ -1101,14 +1158,21 @@ class RFFDrafter:
         for mission in missions:
             impact += f"      - {mission.value.replace('_', ' ').title()}\n"
 
-        load_level = system_state.get("load_shedding_level", "NORMAL")
+        # Handle both SystemHealthState and dict
+        if isinstance(system_state, SystemHealthState):
+            load_level = system_state.load_shedding_level
+            eq_state = system_state.equilibrium_state
+        else:
+            load_level = system_state.get("load_shedding_level", "NORMAL")
+            eq_state = system_state.get("equilibrium_state", "stable")
+
         if load_level not in ("NORMAL", LoadSheddingLevel.NORMAL):
             impact += f"\n   b. Current Load Shedding: {load_level}\n"
             impact += "      Non-essential services have been suspended.\n"
 
-        eq_state = system_state.get("equilibrium_state", "stable")
-        if eq_state in ("unsustainable", "critical"):
-            impact += f"\n   c. CRITICAL: Current operational tempo is {eq_state.upper()}.\n"
+        if eq_state in ("unsustainable", "critical", EquilibriumState.UNSUSTAINABLE, EquilibriumState.CRITICAL):
+            eq_str = eq_state.value if hasattr(eq_state, 'value') else str(eq_state)
+            impact += f"\n   c. CRITICAL: Current operational tempo is {eq_str.upper()}.\n"
             impact += "      Unit cannot maintain mission without additional resources.\n"
 
         return impact
@@ -1160,58 +1224,81 @@ class RFFDrafter:
 
         return command
 
-    def _compile_metrics(self, system_state: dict[str, Any]) -> dict[str, Any]:
+    def _compile_metrics(self, system_state: SystemHealthState | dict[str, Any]) -> SupportingMetrics:
         """Compile supporting metrics for the RFF."""
-        return {
-            "coverage_rate": system_state.get("coverage_rate"),
-            "n1_pass": system_state.get("n1_pass"),
-            "n2_pass": system_state.get("n2_pass"),
-            "load_shedding_level": str(system_state.get("load_shedding_level")),
-            "average_allostatic_load": system_state.get("average_allostatic_load"),
-            "equilibrium_state": str(system_state.get("equilibrium_state")),
-            "compensation_debt": system_state.get("compensation_debt"),
-            "snapshot_timestamp": datetime.now().isoformat(),
-        }
+        # Handle both SystemHealthState and dict
+        if isinstance(system_state, SystemHealthState):
+            return SupportingMetrics(
+                coverage_rate=system_state.coverage_rate,
+                n1_pass=system_state.n1_pass,
+                n2_pass=system_state.n2_pass,
+                load_shedding_level=str(system_state.load_shedding_level),
+                average_allostatic_load=system_state.average_allostatic_load,
+                equilibrium_state=str(system_state.equilibrium_state),
+                compensation_debt=system_state.compensation_debt,
+                snapshot_timestamp=datetime.now().isoformat(),
+            )
+        else:
+            return SupportingMetrics(
+                coverage_rate=system_state.get("coverage_rate"),
+                n1_pass=system_state.get("n1_pass"),
+                n2_pass=system_state.get("n2_pass"),
+                load_shedding_level=str(system_state.get("load_shedding_level")),
+                average_allostatic_load=system_state.get("average_allostatic_load"),
+                equilibrium_state=str(system_state.get("equilibrium_state")),
+                compensation_debt=system_state.get("compensation_debt"),
+                snapshot_timestamp=datetime.now().isoformat(),
+            )
 
     def _project_without_support(
         self,
-        system_state: dict[str, Any],
-        cascade_prediction: dict[str, Any] | None,
+        system_state: SystemHealthState | dict[str, Any],
+        cascade_prediction: CascadePrediction | dict[str, Any] | None,
         duration: int,
-    ) -> dict[str, Any]:
+    ) -> ProjectionWithoutSupport:
         """Project what happens without the requested support."""
-        projection = {
-            "timeline_days": duration,
-            "outcomes": [],
-        }
+        outcomes: list[str] = []
 
         days_to_fail = 999
         if cascade_prediction:
-            days_to_fail = cascade_prediction.get("days_until_exhaustion", 999)
+            if isinstance(cascade_prediction, CascadePrediction):
+                days_to_fail = cascade_prediction.days_until_exhaustion
+            else:
+                days_to_fail = cascade_prediction.get("days_until_exhaustion", 999)
 
+        mission_failure_likely = False
         if days_to_fail < duration:
-            projection["outcomes"].append(
+            outcomes.append(
                 f"Day {days_to_fail}: System exhaustion - compensation mechanisms fail"
             )
-            projection["outcomes"].append(
+            outcomes.append(
                 f"Day {days_to_fail + 7}: Estimated ACGME citation risk"
             )
-            projection["mission_failure_likely"] = True
-        else:
-            projection["mission_failure_likely"] = False
+            mission_failure_likely = True
 
-        load = system_state.get("average_allostatic_load", 0)
+        # Handle both SystemHealthState and dict
+        if isinstance(system_state, SystemHealthState):
+            load = system_state.average_allostatic_load
+            n1_pass = system_state.n1_pass
+        else:
+            load = system_state.get("average_allostatic_load", 0)
+            n1_pass = system_state.get("n1_pass", True)
+
         if load > 60:
-            projection["outcomes"].append(
+            outcomes.append(
                 "Ongoing: Faculty burnout accelerating - attrition risk elevated"
             )
 
-        if not system_state.get("n1_pass", True):
-            projection["outcomes"].append(
+        if not n1_pass:
+            outcomes.append(
                 "Continuous: Single faculty absence = immediate coverage gaps"
             )
 
-        return projection
+        return ProjectionWithoutSupport(
+            timeline_days=duration,
+            outcomes=outcomes,
+            mission_failure_likely=mission_failure_likely,
+        )
 
 
 # =============================================================================
@@ -1302,7 +1389,7 @@ class IronDomeService:
         average_allostatic_load: float,
         volatility_level: str,
         compensation_debt: float,
-        positive_feedback_risks: list[dict] | None = None,
+        positive_feedback_risks: list[PositiveFeedbackRisk | dict] | None = None,
     ) -> dict[str, Any]:
         """
         Check circuit breaker and trip if thresholds breached.
@@ -1334,7 +1421,7 @@ class IronDomeService:
     def generate_risk_mfr(
         self,
         subject: str,
-        system_state: dict[str, Any],
+        system_state: SystemHealthState | dict[str, Any],
         scheduler_name: str,
         scheduler_objection: str | None = None,
     ) -> MFRDocument:
@@ -1359,7 +1446,7 @@ class IronDomeService:
         self,
         reason: str,
         initiator: str,
-        system_state: dict[str, Any],
+        system_state: SystemHealthState | dict[str, Any],
     ) -> tuple[MFRDocument, dict[str, Any]]:
         """
         Initiate a safety stand-down.
@@ -1400,8 +1487,8 @@ class IronDomeService:
         personnel_count: int,
         duration_days: int,
         justification: str,
-        system_state: dict[str, Any],
-        cascade_prediction: dict[str, Any] | None = None,
+        system_state: SystemHealthState | dict[str, Any],
+        cascade_prediction: CascadePrediction | dict[str, Any] | None = None,
     ) -> RFFDocument:
         """
         Draft a Request for Forces document.

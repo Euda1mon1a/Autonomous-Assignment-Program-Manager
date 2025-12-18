@@ -42,7 +42,48 @@ export const peopleQueryKeys = {
 // ============================================================================
 
 /**
- * Fetch list of people with optional filters
+ * Fetches a list of people with optional filtering by role and PGY level.
+ *
+ * This hook retrieves people records including residents, faculty, and staff.
+ * Supports filtering by role (resident, faculty, staff) and PGY level for
+ * residents. Used for building person selectors, directories, and reports.
+ *
+ * @param filters - Optional filters for role and PGY level
+ * @param options - Optional React Query configuration options
+ * @returns Query result containing:
+ *   - `data`: List of people matching the filters
+ *   - `isLoading`: Whether the fetch is in progress
+ *   - `error`: Any error that occurred
+ *   - `refetch`: Function to manually refetch people
+ *
+ * @example
+ * ```tsx
+ * function PeopleDirectory() {
+ *   const { data, isLoading } = usePeople({ role: 'resident' });
+ *
+ *   if (isLoading) return <Spinner />;
+ *
+ *   return (
+ *     <PeopleGrid
+ *       people={data.items}
+ *       total={data.total}
+ *     />
+ *   );
+ * }
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Filter by PGY level
+ * function PGY3Residents() {
+ *   const { data } = usePeople({ role: 'resident', pgy_level: 3 });
+ *   return <ResidentList residents={data.items} />;
+ * }
+ * ```
+ *
+ * @see usePerson - For fetching a single person
+ * @see useResidents - Specialized hook for residents only
+ * @see useFaculty - Specialized hook for faculty only
  */
 export function usePeople(
   filters?: PeopleFilters,
@@ -63,7 +104,39 @@ export function usePeople(
 }
 
 /**
- * Fetch a single person by ID
+ * Fetches detailed information for a specific person.
+ *
+ * This hook retrieves complete details for a single person including
+ * name, role, contact information, PGY level (if resident), specialty,
+ * and preferences. Used for profile pages, editing, and detailed views.
+ *
+ * @param id - The UUID of the person to fetch
+ * @param options - Optional React Query configuration options
+ * @returns Query result containing:
+ *   - `data`: The person record with all details
+ *   - `isLoading`: Whether the fetch is in progress
+ *   - `error`: Any error that occurred
+ *   - `refetch`: Function to manually refetch the person
+ *
+ * @example
+ * ```tsx
+ * function PersonProfile({ personId }: Props) {
+ *   const { data, isLoading, error } = usePerson(personId);
+ *
+ *   if (isLoading) return <ProfileSkeleton />;
+ *   if (error) return <ErrorMessage error={error} />;
+ *
+ *   return (
+ *     <ProfileCard
+ *       person={data}
+ *       onEdit={() => navigate(`/people/${personId}/edit`)}
+ *     />
+ *   );
+ * }
+ * ```
+ *
+ * @see usePeople - For fetching multiple people
+ * @see useUpdatePerson - For modifying person details
  */
 export function usePerson(
   id: string,
@@ -80,7 +153,50 @@ export function usePerson(
 }
 
 /**
- * Fetch residents with optional PGY level filter
+ * Fetches residents with optional filtering by PGY level.
+ *
+ * This specialized hook retrieves only residents, with optional filtering
+ * by post-graduate year (PGY) level. Useful for building resident-specific
+ * selectors, cohort views, and PGY-based reports.
+ *
+ * @param pgyLevel - Optional PGY level to filter residents (1-7)
+ * @param options - Optional React Query configuration options
+ * @returns Query result containing:
+ *   - `data`: List of residents matching the PGY level
+ *   - `isLoading`: Whether the fetch is in progress
+ *   - `error`: Any error that occurred
+ *   - `refetch`: Function to manually refetch residents
+ *
+ * @example
+ * ```tsx
+ * function ResidentSelector({ onSelect }: Props) {
+ *   const { data, isLoading } = useResidents();
+ *
+ *   if (isLoading) return <SelectSkeleton />;
+ *
+ *   return (
+ *     <Select label="Select Resident" onChange={onSelect}>
+ *       {data.items.map(resident => (
+ *         <option key={resident.id} value={resident.id}>
+ *           {resident.name} (PGY-{resident.pgy_level})
+ *         </option>
+ *       ))}
+ *     </Select>
+ *   );
+ * }
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Fetch only PGY-1 residents
+ * function InternList() {
+ *   const { data } = useResidents(1);
+ *   return <ResidentGrid residents={data.items} title="Interns" />;
+ * }
+ * ```
+ *
+ * @see usePeople - For fetching all people including non-residents
+ * @see useFaculty - For fetching faculty members
  */
 export function useResidents(
   pgyLevel?: number,
@@ -98,7 +214,50 @@ export function useResidents(
 }
 
 /**
- * Fetch faculty with optional specialty filter
+ * Fetches faculty members with optional filtering by specialty.
+ *
+ * This specialized hook retrieves only faculty members, with optional
+ * filtering by medical specialty. Used for building faculty-specific
+ * selectors, attending assignment forms, and specialty-based views.
+ *
+ * @param specialty - Optional specialty to filter faculty (e.g., "Cardiology")
+ * @param options - Optional React Query configuration options
+ * @returns Query result containing:
+ *   - `data`: List of faculty matching the specialty
+ *   - `isLoading`: Whether the fetch is in progress
+ *   - `error`: Any error that occurred
+ *   - `refetch`: Function to manually refetch faculty
+ *
+ * @example
+ * ```tsx
+ * function AttendingSelector({ onSelect }: Props) {
+ *   const { data, isLoading } = useFaculty();
+ *
+ *   if (isLoading) return <SelectSkeleton />;
+ *
+ *   return (
+ *     <Select label="Select Attending" onChange={onSelect}>
+ *       {data.items.map(faculty => (
+ *         <option key={faculty.id} value={faculty.id}>
+ *           {faculty.name} - {faculty.specialty}
+ *         </option>
+ *       ))}
+ *     </Select>
+ *   );
+ * }
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Fetch only cardiology faculty
+ * function CardiologyFaculty() {
+ *   const { data } = useFaculty('Cardiology');
+ *   return <FacultyList faculty={data.items} specialty="Cardiology" />;
+ * }
+ * ```
+ *
+ * @see usePeople - For fetching all people including non-faculty
+ * @see useResidents - For fetching residents
  */
 export function useFaculty(
   specialty?: string,
@@ -116,7 +275,47 @@ export function useFaculty(
 }
 
 /**
- * Create a new person
+ * Creates a new person record in the system.
+ *
+ * This mutation hook adds a new resident, faculty member, or staff person
+ * to the system. Required fields typically include name, role, and contact
+ * information. For residents, PGY level is required. Automatically refreshes
+ * all people-related queries.
+ *
+ * @returns Mutation object containing:
+ *   - `mutate`: Function to create a person
+ *   - `mutateAsync`: Async version returning a Promise
+ *   - `isLoading`: Whether creation is in progress
+ *   - `error`: Any error that occurred (e.g., duplicate email)
+ *   - `data`: The created person with generated ID
+ *
+ * @example
+ * ```tsx
+ * function NewPersonForm() {
+ *   const { mutate, isLoading } = useCreatePerson();
+ *
+ *   const handleSubmit = (formData: PersonCreate) => {
+ *     mutate(formData, {
+ *       onSuccess: (newPerson) => {
+ *         toast.success(`Added ${newPerson.name}`);
+ *         navigate(`/people/${newPerson.id}`);
+ *       },
+ *       onError: (error) => {
+ *         if (error.status === 409) {
+ *           toast.error('Email already exists');
+ *         } else {
+ *           toast.error(`Failed to add person: ${error.message}`);
+ *         }
+ *       },
+ *     });
+ *   };
+ *
+ *   return <PersonForm onSubmit={handleSubmit} loading={isLoading} />;
+ * }
+ * ```
+ *
+ * @see useUpdatePerson - For modifying existing people
+ * @see usePeople - List is auto-refreshed after creation
  */
 export function useCreatePerson() {
   const queryClient = useQueryClient()
@@ -132,7 +331,63 @@ export function useCreatePerson() {
 }
 
 /**
- * Update an existing person
+ * Updates an existing person record with new details.
+ *
+ * This mutation hook modifies person information such as contact details,
+ * role changes, PGY level advancement, or preferences. Automatically
+ * refreshes all related queries to maintain UI consistency.
+ *
+ * @returns Mutation object containing:
+ *   - `mutate`: Function to update a person
+ *   - `mutateAsync`: Async version returning a Promise
+ *   - `isLoading`: Whether update is in progress
+ *   - `error`: Any error that occurred
+ *   - `data`: The updated person
+ *
+ * @example
+ * ```tsx
+ * function EditPersonForm({ personId }: Props) {
+ *   const { mutate, isLoading } = useUpdatePerson();
+ *   const { data: person } = usePerson(personId);
+ *
+ *   const handleUpdate = (updates: PersonUpdate) => {
+ *     mutate(
+ *       { id: personId, data: updates },
+ *       {
+ *         onSuccess: () => {
+ *           toast.success('Profile updated');
+ *           navigate(`/people/${personId}`);
+ *         },
+ *         onError: (error) => {
+ *           toast.error(`Update failed: ${error.message}`);
+ *         },
+ *       }
+ *     );
+ *   };
+ *
+ *   return <PersonForm initialData={person} onSubmit={handleUpdate} />;
+ * }
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Advance resident to next PGY level
+ * function AdvancePGYButton({ resident }: Props) {
+ *   const { mutate } = useUpdatePerson();
+ *
+ *   const handleAdvance = () => {
+ *     mutate({
+ *       id: resident.id,
+ *       data: { pgy_level: resident.pgy_level + 1 },
+ *     });
+ *   };
+ *
+ *   return <Button onClick={handleAdvance}>Advance to PGY-{resident.pgy_level + 1}</Button>;
+ * }
+ * ```
+ *
+ * @see usePerson - Query is auto-refreshed after update
+ * @see useCreatePerson - For creating new people
  */
 export function useUpdatePerson() {
   const queryClient = useQueryClient()
@@ -149,7 +404,56 @@ export function useUpdatePerson() {
 }
 
 /**
- * Delete a person
+ * Deletes a person record from the system.
+ *
+ * This mutation hook permanently removes a person. Use with caution as
+ * this may be irreversible depending on backend constraints. People with
+ * existing assignments or absences may not be deletable to maintain
+ * data integrity.
+ *
+ * @returns Mutation object containing:
+ *   - `mutate`: Function to delete a person by ID
+ *   - `mutateAsync`: Async version returning a Promise
+ *   - `isLoading`: Whether deletion is in progress
+ *   - `error`: Any error that occurred (e.g., person has assignments)
+ *
+ * @example
+ * ```tsx
+ * function PersonActions({ person }: Props) {
+ *   const { mutate, isLoading } = useDeletePerson();
+ *
+ *   const handleDelete = () => {
+ *     if (confirm(`Delete ${person.name}? This cannot be undone.`)) {
+ *       mutate(person.id, {
+ *         onSuccess: () => {
+ *           toast.success('Person removed');
+ *           navigate('/people');
+ *         },
+ *         onError: (error) => {
+ *           if (error.status === 409) {
+ *             toast.error('Cannot delete: person has existing assignments');
+ *           } else {
+ *             toast.error(`Failed to delete: ${error.message}`);
+ *           }
+ *         },
+ *       });
+ *     }
+ *   };
+ *
+ *   return (
+ *     <Button
+ *       onClick={handleDelete}
+ *       loading={isLoading}
+ *       variant="danger"
+ *     >
+ *       Delete Person
+ *     </Button>
+ *   );
+ * }
+ * ```
+ *
+ * @see usePeople - List is auto-refreshed after deletion
+ * @see useCreatePerson - For adding new people
  */
 export function useDeletePerson() {
   const queryClient = useQueryClient()

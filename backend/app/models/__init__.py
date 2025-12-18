@@ -11,6 +11,8 @@ from app.models.conflict_alert import (
     ConflictSeverity,
     ConflictType,
 )
+from app.models.email_log import EmailLog, EmailStatus
+from app.models.email_template import EmailTemplate, EmailTemplateType
 from app.models.faculty_preference import FacultyPreference
 from app.models.notification import (
     Notification,
@@ -92,6 +94,11 @@ __all__ = [
     "Notification",
     "ScheduledNotificationRecord",
     "NotificationPreferenceRecord",
+    # Email notification models
+    "EmailLog",
+    "EmailStatus",
+    "EmailTemplate",
+    "EmailTemplateType",
     # Token blacklist
     "TokenBlacklist",
     # FMIT Swap models

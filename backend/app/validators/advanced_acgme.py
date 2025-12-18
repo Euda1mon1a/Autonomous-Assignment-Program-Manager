@@ -14,6 +14,7 @@ from datetime import date
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
+from app.core.types import DutyHoursBreakdown
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
@@ -316,7 +317,7 @@ class AdvancedACGMEValidator:
 
     def calculate_duty_hours_breakdown(
         self, person_id: str, start_date: date, end_date: date
-    ) -> dict:
+    ) -> DutyHoursBreakdown:
         """
         Calculate detailed duty hours breakdown.
 
@@ -333,7 +334,7 @@ class AdvancedACGMEValidator:
             end_date: End of period
 
         Returns:
-            Dict with detailed breakdown
+            DutyHoursBreakdown with detailed breakdown
         """
         person = self.db.query(Person).filter(Person.id == person_id).first()
 

@@ -27,6 +27,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy_continuum import version_class
 
+from app.core.types import AuditStatistics
 from app.models.assignment import Assignment
 from app.models.absence import Absence
 from app.models.person import Person
@@ -523,12 +524,12 @@ def get_audit_statistics(
     db: Session,
     start_date: str | None = None,
     end_date: str | None = None,
-) -> dict[str, Any]:
+) -> AuditStatistics:
     """
     Calculate audit statistics for a date range.
 
     Returns:
-        Dict with statistics including:
+        AuditStatistics with:
         - totalEntries: Total number of changes
         - entriesByAction: Changes grouped by action
         - entriesByEntityType: Changes grouped by entity type
