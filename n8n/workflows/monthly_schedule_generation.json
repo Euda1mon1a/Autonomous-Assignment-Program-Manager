@@ -1,0 +1,1086 @@
+{
+  "name": "Monthly Schedule Generation Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 1 * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger-monthly",
+      "name": "Cron Trigger - 1st of Month 6AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 200]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "monthly-schedule-generate",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-manual-trigger",
+      "name": "Manual Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 400],
+      "webhookId": "monthly-schedule-webhook"
+    },
+    {
+      "parameters": {},
+      "id": "merge-triggers",
+      "name": "Merge Triggers",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Initialize workflow context\nconst timestamp = new Date().toISOString();\nconst executionId = $execution.id || `exec-${Date.now()}`;\nconst triggerSource = $node.name.includes('Cron') ? 'scheduled' : 'manual';\n\nreturn {\n  json: {\n    execution_id: executionId,\n    trigger_source: triggerSource,\n    started_at: timestamp,\n    retry_count: 0,\n    max_retries: 3,\n    poll_attempts: 0,\n    max_poll_attempts: 60\n  }\n};"
+      },
+      "id": "init-context",
+      "name": "Initialize Context",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/api/v1/scheduler/sitrep",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "check-system-health",
+      "name": "Check System Health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [910, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.health_status }}",
+              "operation": "equals",
+              "value2": "healthy"
+            }
+          ]
+        }
+      },
+      "id": "if-system-healthy",
+      "name": "IF System Healthy",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1130, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/api/v1/persons",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "fetch-roster",
+      "name": "Fetch Faculty/Resident Roster",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1350, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/api/v1/acgme/constraints",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "validate-acgme-constraints",
+      "name": "Validate ACGME Constraints",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1570, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.constraints_configured }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-constraints-valid",
+      "name": "IF Constraints Configured",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1790, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Prepare schedule generation request\nconst context = $('Initialize Context').first().json;\nconst roster = $('Fetch Faculty/Resident Roster').first().json;\n\n// Calculate target month (next month from today)\nconst today = new Date();\nconst targetMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);\n\nreturn {\n  json: {\n    execution_id: context.execution_id,\n    target_month: targetMonth.toISOString().slice(0, 7),\n    generation_mode: 'full',\n    validate_acgme: true,\n    auto_resolve_conflicts: true,\n    optimization_level: 'balanced',\n    initiated_by: 'n8n_automation',\n    metadata: {\n      trigger_source: context.trigger_source,\n      roster_count: roster.total || 0\n    }\n  }\n};"
+      },
+      "id": "prepare-generation-request",
+      "name": "Prepare Generation Request",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [2010, 100]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/api/v1/schedule/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "target_month",
+              "value": "={{ $json.target_month }}"
+            },
+            {
+              "name": "generation_mode",
+              "value": "={{ $json.generation_mode }}"
+            },
+            {
+              "name": "validate_acgme",
+              "value": "={{ $json.validate_acgme }}"
+            },
+            {
+              "name": "auto_resolve_conflicts",
+              "value": "={{ $json.auto_resolve_conflicts }}"
+            },
+            {
+              "name": "optimization_level",
+              "value": "={{ $json.optimization_level }}"
+            },
+            {
+              "name": "initiated_by",
+              "value": "={{ $json.initiated_by }}"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ $json.metadata }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "trigger-schedule-generation",
+      "name": "Trigger Schedule Generation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2230, 100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.task_id }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "if-task-created",
+      "name": "IF Task Created",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2450, 100]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Initialize polling state\nconst response = $input.first().json;\nconst context = $('Initialize Context').first().json;\n\nreturn {\n  json: {\n    task_id: response.task_id,\n    execution_id: context.execution_id,\n    poll_attempts: 0,\n    max_poll_attempts: context.max_poll_attempts,\n    poll_interval_seconds: 10,\n    task_status: 'pending'\n  }\n};"
+      },
+      "id": "init-polling",
+      "name": "Initialize Polling",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [2670, 0]
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "id": "wait-before-poll",
+      "name": "Wait Before Polling",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [2890, 0]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/api/v1/tasks/{{ $json.task_id }}/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "poll-task-status",
+      "name": "Poll Task Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [3110, 0],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "// Update polling state\nconst current = $input.first().json;\nconst polling = $('Initialize Polling').first().json;\n\nconst pollAttempts = (current.poll_attempts || polling.poll_attempts) + 1;\nconst taskStatus = current.status || 'pending';\n\nreturn {\n  json: {\n    task_id: polling.task_id,\n    execution_id: polling.execution_id,\n    poll_attempts: pollAttempts,\n    max_poll_attempts: polling.max_poll_attempts,\n    poll_interval_seconds: polling.poll_interval_seconds,\n    task_status: taskStatus,\n    task_data: current\n  }\n};"
+      },
+      "id": "update-poll-state",
+      "name": "Update Poll State",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [3330, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.task_status }}",
+              "operation": "equals",
+              "value2": "completed"
+            }
+          ]
+        }
+      },
+      "id": "if-task-completed",
+      "name": "IF Task Completed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [3550, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.task_status }}",
+              "operation": "equals",
+              "value2": "failed"
+            }
+          ]
+        }
+      },
+      "id": "if-task-failed",
+      "name": "IF Task Failed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [3550, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.poll_attempts }}",
+              "operation": "larger",
+              "value2": "={{ $json.max_poll_attempts }}"
+            }
+          ]
+        }
+      },
+      "id": "if-poll-timeout",
+      "name": "IF Poll Timeout",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [3550, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/api/v1/schedule/validate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "schedule_id",
+              "value": "={{ $json.task_data.result.schedule_id }}"
+            },
+            {
+              "name": "validation_level",
+              "value": "strict"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "validate-schedule",
+      "name": "Validate Schedule ACGME",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [3770, -100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.violations_count }}",
+              "operation": "equal",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "id": "if-no-violations",
+      "name": "IF No Violations",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [3990, -100]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Check if we should retry\nconst context = $('Initialize Context').first().json;\nconst validation = $input.first().json;\n\nconst retryCount = (context.retry_count || 0) + 1;\nconst shouldRetry = retryCount <= context.max_retries;\n\nreturn {\n  json: {\n    should_retry: shouldRetry,\n    retry_count: retryCount,\n    max_retries: context.max_retries,\n    violations: validation.violations || [],\n    violations_count: validation.violations_count || 0\n  }\n};"
+      },
+      "id": "check-retry-logic",
+      "name": "Check Retry Logic",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [4210, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.should_retry }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-should-retry",
+      "name": "IF Should Retry",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [4430, 0]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format success notification for Slack\nconst validation = $('Validate Schedule ACGME').first().json;\nconst taskData = $('Update Poll State').first().json.task_data;\nconst context = $('Initialize Context').first().json;\n\nconst scheduleId = taskData.result?.schedule_id || 'unknown';\nconst targetMonth = $('Prepare Generation Request').first().json.target_month;\nconst assignmentsCount = taskData.result?.assignments_count || 0;\nconst executionTime = taskData.result?.execution_time_seconds || 0;\n\nconst blocks = [\n  {\n    \"type\": \"header\",\n    \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": \":white_check_mark: Monthly Schedule Generated Successfully\",\n      \"emoji\": true\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"fields\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Target Month:*\\n${targetMonth}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Schedule ID:*\\n${scheduleId}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Assignments:*\\n${assignmentsCount}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Execution Time:*\\n${executionTime.toFixed(2)}s`\n      }\n    ]\n  },\n  {\n    \"type\": \"divider\"\n  },\n  {\n    \"type\": \"section\",\n    \"fields\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `:shield: *ACGME Compliance:* PASS`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `:muscle: *Violations:* 0`\n      }\n    ]\n  },\n  {\n    \"type\": \"context\",\n    \"elements\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `Triggered by: ${context.trigger_source} | Execution ID: ${context.execution_id}`\n      }\n    ]\n  }\n];\n\nreturn {\n  json: {\n    channel: $env.SLACK_CHANNEL || '#scheduling',\n    text: `Monthly schedule for ${targetMonth} generated successfully`,\n    blocks: blocks\n  }\n};"
+      },
+      "id": "format-success-notification",
+      "name": "Format Success Notification",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [4210, -200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "channel",
+              "value": "={{ $json.channel }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "blocks",
+              "value": "={{ JSON.stringify($json.blocks) }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "send-success-slack",
+      "name": "Send Success to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [4430, -200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/api/v1/schedule/metadata",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "schedule_id",
+              "value": "={{ $('Update Poll State').first().json.task_data.result.schedule_id }}"
+            },
+            {
+              "name": "execution_id",
+              "value": "={{ $('Initialize Context').first().json.execution_id }}"
+            },
+            {
+              "name": "generation_source",
+              "value": "n8n_automation"
+            },
+            {
+              "name": "trigger_type",
+              "value": "={{ $('Initialize Context').first().json.trigger_source }}"
+            },
+            {
+              "name": "completed_at",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "store-metadata",
+      "name": "Store Generation Metadata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [4650, -200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format failure notification for Slack\nconst retryInfo = $input.first().json;\nconst context = $('Initialize Context').first().json;\n\nconst violationsCount = retryInfo.violations_count || 0;\nconst retryCount = retryInfo.retry_count;\nconst maxRetries = retryInfo.max_retries;\n\nlet message = '';\nlet emoji = ':warning:';\n\nif (retryInfo.should_retry) {\n  message = `Schedule generation failed validation (${violationsCount} violations). Retrying... (Attempt ${retryCount}/${maxRetries})`;\n  emoji = ':repeat:';\n} else {\n  message = `Schedule generation failed after ${maxRetries} attempts. Manual intervention required.`;\n  emoji = ':x:';\n}\n\nconst blocks = [\n  {\n    \"type\": \"header\",\n    \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": `${emoji} Schedule Generation Issue`,\n      \"emoji\": true\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": message\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"fields\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Violations:*\\n${violationsCount}`\n      },\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `*Retry Count:*\\n${retryCount}/${maxRetries}`\n      }\n    ]\n  },\n  {\n    \"type\": \"context\",\n    \"elements\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": `Execution ID: ${context.execution_id}`\n      }\n    ]\n  }\n];\n\nif (retryInfo.violations && retryInfo.violations.length > 0) {\n  const violationsText = retryInfo.violations\n    .slice(0, 5)\n    .map(v => `• ${v.type}: ${v.description}`)\n    .join('\\n');\n  \n  blocks.splice(2, 0, {\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": `*Top Violations:*\\n${violationsText}`\n    }\n  });\n}\n\nreturn {\n  json: {\n    channel: $env.SLACK_CHANNEL || '#scheduling-alerts',\n    text: message,\n    blocks: blocks,\n    should_retry: retryInfo.should_retry\n  }\n};"
+      },
+      "id": "format-failure-notification",
+      "name": "Format Failure Notification",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [4650, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "channel",
+              "value": "={{ $json.channel }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "blocks",
+              "value": "={{ JSON.stringify($json.blocks) }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "send-failure-slack",
+      "name": "Send Alert to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [4870, 0]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format system unhealthy notification\nconst healthCheck = $input.first().json;\n\nconst blocks = [\n  {\n    \"type\": \"header\",\n    \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": \":x: Schedule Generation Aborted\",\n      \"emoji\": true\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": `System health check failed. Current status: *${healthCheck.health_status || 'unknown'}*`\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": \":warning: *Action Required:* Check system status before scheduling generation.\"\n    }\n  }\n];\n\nreturn {\n  json: {\n    channel: $env.SLACK_CHANNEL || '#scheduling-alerts',\n    text: 'Schedule generation aborted due to system health check failure',\n    blocks: blocks\n  }\n};"
+      },
+      "id": "format-system-error",
+      "name": "Format System Error",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1350, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "channel",
+              "value": "={{ $json.channel }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "blocks",
+              "value": "={{ JSON.stringify($json.blocks) }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "send-system-error-slack",
+      "name": "Alert System Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1570, 400]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format constraints error notification\nconst blocks = [\n  {\n    \"type\": \"header\",\n    \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": \":x: ACGME Constraints Not Configured\",\n      \"emoji\": true\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": \"Cannot generate schedule. ACGME constraints are not properly configured.\"\n    }\n  },\n  {\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": \":warning: *Action Required:* Configure ACGME constraints before schedule generation.\"\n    }\n  }\n];\n\nreturn {\n  json: {\n    channel: $env.SLACK_CHANNEL || '#scheduling-alerts',\n    text: 'Schedule generation aborted - ACGME constraints not configured',\n    blocks: blocks\n  }\n};"
+      },
+      "id": "format-constraints-error",
+      "name": "Format Constraints Error",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [2010, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "channel",
+              "value": "={{ $json.channel }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "blocks",
+              "value": "={{ JSON.stringify($json.blocks) }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "send-constraints-error-slack",
+      "name": "Alert Constraints Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2230, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"accepted\", \"message\": \"Schedule generation initiated\", \"execution_id\": $('Initialize Context').first().json.execution_id } }}"
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [910, 500]
+    }
+  ],
+  "connections": {
+    "Cron Trigger - 1st of Month 6AM": {
+      "main": [
+        [
+          {
+            "node": "Merge Triggers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Merge Triggers",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Triggers": {
+      "main": [
+        [
+          {
+            "node": "Initialize Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Context": {
+      "main": [
+        [
+          {
+            "node": "Check System Health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check System Health": {
+      "main": [
+        [
+          {
+            "node": "IF System Healthy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF System Healthy": {
+      "main": [
+        [
+          {
+            "node": "Fetch Faculty/Resident Roster",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format System Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Faculty/Resident Roster": {
+      "main": [
+        [
+          {
+            "node": "Validate ACGME Constraints",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate ACGME Constraints": {
+      "main": [
+        [
+          {
+            "node": "IF Constraints Configured",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Constraints Configured": {
+      "main": [
+        [
+          {
+            "node": "Prepare Generation Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Constraints Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Generation Request": {
+      "main": [
+        [
+          {
+            "node": "Trigger Schedule Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Schedule Generation": {
+      "main": [
+        [
+          {
+            "node": "IF Task Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Task Created": {
+      "main": [
+        [
+          {
+            "node": "Initialize Polling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Polling": {
+      "main": [
+        [
+          {
+            "node": "Wait Before Polling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Before Polling": {
+      "main": [
+        [
+          {
+            "node": "Poll Task Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Task Status": {
+      "main": [
+        [
+          {
+            "node": "Update Poll State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Poll State": {
+      "main": [
+        [
+          {
+            "node": "IF Task Completed",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IF Task Failed",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IF Poll Timeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Task Completed": {
+      "main": [
+        [
+          {
+            "node": "Validate Schedule ACGME",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait Before Polling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Task Failed": {
+      "main": [
+        [
+          {
+            "node": "Check Retry Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Poll Timeout": {
+      "main": [
+        [
+          {
+            "node": "Format Failure Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Schedule ACGME": {
+      "main": [
+        [
+          {
+            "node": "IF No Violations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF No Violations": {
+      "main": [
+        [
+          {
+            "node": "Format Success Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Retry Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Retry Logic": {
+      "main": [
+        [
+          {
+            "node": "IF Should Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Should Retry": {
+      "main": [
+        [
+          {
+            "node": "Prepare Generation Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Failure Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Success Notification": {
+      "main": [
+        [
+          {
+            "node": "Send Success to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Success to Slack": {
+      "main": [
+        [
+          {
+            "node": "Store Generation Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Failure Notification": {
+      "main": [
+        [
+          {
+            "node": "Send Alert to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format System Error": {
+      "main": [
+        [
+          {
+            "node": "Alert System Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Constraints Error": {
+      "main": [
+        [
+          {
+            "node": "Alert Constraints Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "scheduling"
+    },
+    {
+      "name": "automation"
+    },
+    {
+      "name": "monthly"
+    }
+  ],
+  "triggerCount": 2,
+  "updatedAt": "2025-12-18T00:00:00.000Z",
+  "versionId": "1"
+}

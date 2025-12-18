@@ -25,6 +25,7 @@ from app.api.routes import (
     role_views,
     rotation_templates,
     schedule,
+    scheduler_ops,
     settings,
     swap,
     unified_heatmap,
@@ -45,6 +46,7 @@ api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(me_dashboard.router, prefix="/me", tags=["dashboard"])
 api_router.include_router(export.router, prefix="/export", tags=["export"])
 api_router.include_router(resilience.router, prefix="/resilience", tags=["resilience"])
+api_router.include_router(scheduler_ops.router, prefix="/scheduler", tags=["scheduler-ops"])
 api_router.include_router(procedures.router, prefix="/procedures", tags=["procedures"])
 api_router.include_router(credentials.router, prefix="/credentials", tags=["credentials"])
 api_router.include_router(certifications.router, prefix="/certifications", tags=["certifications"])

@@ -1,4 +1,10 @@
 # Grafana Dashboard Provisioning Configuration
+# This file configures Grafana to automatically load dashboards from the filesystem
+#
+# Dashboards Included:
+# - scheduler_overview.json: Main system health and performance dashboard
+# - resilience_metrics.json: Resilience framework monitoring (Defense-in-Depth, N-1/N-2)
+# - celery_tasks.json: Background task execution monitoring
 
 apiVersion: 1
 
@@ -14,3 +20,47 @@ providers:
     options:
       path: /etc/grafana/dashboards
       foldersFromFilesStructure: true
+
+# Configuration Options Explained:
+#
+# name: Display name for the dashboard provider
+# orgId: Grafana organization ID (1 is default)
+# folder: Grafana folder name to organize dashboards
+# folderUid: Unique identifier for the folder
+# type: file (load from filesystem) or http (load from URL)
+# disableDeletion: false allows deletion from UI, true prevents it
+# updateIntervalSeconds: How often to check for dashboard updates (30s)
+# allowUiUpdates: true allows editing dashboards in Grafana UI
+# path: Filesystem path containing dashboard JSON files
+# foldersFromFilesStructure: Create folders based on subdirectories
+
+# Docker Compose Volume Mapping:
+# Add this to docker-compose.yml under grafana service:
+#
+# grafana:
+#   image: grafana/grafana:latest
+#   volumes:
+#     - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+#     - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+#     - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+
+# Deployment Instructions:
+#
+# 1. For bare-metal Grafana:
+#    sudo cp dashboards.yml /etc/grafana/provisioning/dashboards/
+#    sudo mkdir -p /etc/grafana/dashboards
+#    sudo cp ../dashboards/*.json /etc/grafana/dashboards/
+#    sudo chown -R grafana:grafana /etc/grafana/dashboards
+#    sudo systemctl restart grafana-server
+#
+# 2. For Docker Compose:
+#    Ensure volume mappings above are in docker-compose.yml
+#    docker-compose restart grafana
+#
+# 3. Verify:
+#    Navigate to Grafana UI -> Dashboards -> Browse
+#    Look for "Residency Scheduler" folder with 3 dashboards
+
+# Required Datasource:
+# Ensure Prometheus datasource is configured with name "Prometheus"
+# Create: /etc/grafana/provisioning/datasources/prometheus.yml

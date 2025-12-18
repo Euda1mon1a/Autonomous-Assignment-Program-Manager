@@ -1,0 +1,694 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "resilience-metrics",
+    "title": "Resilience Framework Metrics",
+    "description": "Detailed resilience monitoring: Defense-in-Depth, N-1/N-2 analysis, load shedding",
+    "tags": ["resilience", "healthcare", "contingency"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "1m",
+    "time": {
+      "from": "now-12h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["30s", "1m", "5m", "15m", "30m", "1h"],
+      "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "datasource",
+          "type": "datasource",
+          "query": "prometheus",
+          "current": {
+            "value": "Prometheus",
+            "text": "Prometheus"
+          }
+        }
+      ]
+    },
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "type": "gauge",
+        "title": "System Utilization (80% Threshold)",
+        "targets": [
+          {
+            "expr": "resilience_utilization_rate{component=\"overall\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 0.7, "color": "yellow"},
+                {"value": 0.8, "color": "orange"},
+                {"value": 0.9, "color": "red"},
+                {"value": 0.95, "color": "dark-red"}
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "options": {
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true,
+          "text": {
+            "titleSize": 14,
+            "valueSize": 32
+          }
+        },
+        "pluginVersion": "9.0.0"
+      },
+      {
+        "id": 2,
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "type": "stat",
+        "title": "Defense Level Status",
+        "targets": [
+          {
+            "expr": "resilience_defense_level",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "min": 1,
+            "max": 5,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 1, "color": "green"},
+                {"value": 2, "color": "yellow"},
+                {"value": 3, "color": "orange"},
+                {"value": 4, "color": "red"},
+                {"value": 5, "color": "dark-red"}
+              ]
+            },
+            "mappings": [
+              {"type": "value", "value": 1, "text": "LEVEL 1: Prevention\n(Proactive Monitoring)"},
+              {"type": "value", "value": 2, "text": "LEVEL 2: Detection\n(Early Warning Active)"},
+              {"type": "value", "value": 3, "text": "LEVEL 3: Response\n(Load Shedding)"},
+              {"type": "value", "value": 4, "text": "LEVEL 4: Recovery\n(Fallback Active)"},
+              {"type": "value", "value": 5, "text": "LEVEL 5: Emergency\n(Crisis Mode)"}
+            ]
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value"
+        }
+      },
+      {
+        "id": 3,
+        "gridPos": {
+          "h": 10,
+          "w": 24,
+          "x": 0,
+          "y": 10
+        },
+        "type": "timeseries",
+        "title": "Defense Level History (Time Series)",
+        "targets": [
+          {
+            "expr": "resilience_defense_level",
+            "refId": "A",
+            "legendFormat": "Defense Level"
+          },
+          {
+            "expr": "resilience_utilization_level",
+            "refId": "B",
+            "legendFormat": "Utilization Level"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "min": 0,
+            "max": 5,
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "stepAfter",
+              "lineWidth": 3,
+              "fillOpacity": 20,
+              "showPoints": "always",
+              "pointSize": 5
+            }
+          }
+        },
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "table",
+            "placement": "bottom",
+            "calcs": ["lastNotNull", "min", "max"]
+          }
+        }
+      },
+      {
+        "id": 4,
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 0,
+          "y": 20
+        },
+        "type": "stat",
+        "title": "N-1 Contingency Status",
+        "targets": [
+          {
+            "expr": "resilience_n1_compliant",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            },
+            "mappings": [
+              {"type": "value", "value": 0, "text": "FAILED"},
+              {"type": "value", "value": 1, "text": "PASSED"}
+            ]
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "textMode": "value"
+        }
+      },
+      {
+        "id": 5,
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 6,
+          "y": 20
+        },
+        "type": "stat",
+        "title": "N-2 Contingency Status",
+        "targets": [
+          {
+            "expr": "resilience_n2_compliant",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            },
+            "mappings": [
+              {"type": "value", "value": 0, "text": "FAILED"},
+              {"type": "value", "value": 1, "text": "PASSED"}
+            ]
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "textMode": "value"
+        }
+      },
+      {
+        "id": 6,
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 20
+        },
+        "type": "stat",
+        "title": "Capacity Buffer Remaining",
+        "targets": [
+          {
+            "expr": "resilience_buffer_remaining",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 0.1, "color": "orange"},
+                {"value": 0.2, "color": "yellow"},
+                {"value": 0.3, "color": "green"}
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area"
+        }
+      },
+      {
+        "id": 7,
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 20
+        },
+        "type": "stat",
+        "title": "Load Shedding Level",
+        "targets": [
+          {
+            "expr": "resilience_load_shedding_level",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "min": 0,
+            "max": 5,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 2, "color": "yellow"},
+                {"value": 3, "color": "orange"},
+                {"value": 4, "color": "red"},
+                {"value": 5, "color": "dark-red"}
+              ]
+            },
+            "mappings": [
+              {"type": "value", "value": 0, "text": "NORMAL"},
+              {"type": "value", "value": 1, "text": "Level 1"},
+              {"type": "value", "value": 2, "text": "Level 2"},
+              {"type": "value", "value": 3, "text": "Level 3"},
+              {"type": "value", "value": 4, "text": "Level 4"},
+              {"type": "value", "value": 5, "text": "CRITICAL"}
+            ]
+          }
+        },
+        "options": {
+          "colorMode": "background"
+        }
+      },
+      {
+        "id": 8,
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 0,
+          "y": 28
+        },
+        "type": "timeseries",
+        "title": "Faculty Availability",
+        "targets": [
+          {
+            "expr": "resilience_faculty_available{type=\"total\"}",
+            "refId": "A",
+            "legendFormat": "Total Faculty"
+          },
+          {
+            "expr": "resilience_faculty_available{type=\"on_duty\"}",
+            "refId": "B",
+            "legendFormat": "On Duty"
+          },
+          {
+            "expr": "resilience_faculty_available{type=\"on_leave\"}",
+            "refId": "C",
+            "legendFormat": "On Leave"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10,
+              "lineWidth": 2
+            }
+          }
+        },
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "table",
+            "placement": "bottom",
+            "calcs": ["lastNotNull", "mean"]
+          }
+        }
+      },
+      {
+        "id": 9,
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 12,
+          "y": 28
+        },
+        "type": "timeseries",
+        "title": "Coverage Rate & Utilization",
+        "targets": [
+          {
+            "expr": "resilience_coverage_rate",
+            "refId": "A",
+            "legendFormat": "Coverage Rate"
+          },
+          {
+            "expr": "resilience_utilization_rate{component=\"overall\"}",
+            "refId": "B",
+            "legendFormat": "Utilization Rate"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 20,
+              "lineWidth": 2
+            }
+          }
+        },
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
+        }
+      },
+      {
+        "id": 10,
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 0,
+          "y": 38
+        },
+        "type": "timeseries",
+        "title": "Crisis Activations (Cumulative)",
+        "targets": [
+          {
+            "expr": "resilience_crisis_activations_total",
+            "refId": "A",
+            "legendFormat": "{{severity}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "stepAfter",
+              "fillOpacity": 0,
+              "lineWidth": 2,
+              "showPoints": "always"
+            }
+          }
+        },
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "table",
+            "placement": "bottom",
+            "calcs": ["lastNotNull", "delta"]
+          }
+        }
+      },
+      {
+        "id": 11,
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 12,
+          "y": 38
+        },
+        "type": "timeseries",
+        "title": "Fallback Schedule Activations",
+        "targets": [
+          {
+            "expr": "resilience_fallback_activations_total",
+            "refId": "A",
+            "legendFormat": "{{scenario}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "stepAfter",
+              "fillOpacity": 0,
+              "lineWidth": 2,
+              "showPoints": "always"
+            }
+          }
+        },
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "table",
+            "placement": "bottom",
+            "calcs": ["lastNotNull", "delta"]
+          }
+        }
+      },
+      {
+        "id": 12,
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 0,
+          "y": 48
+        },
+        "type": "timeseries",
+        "title": "Health Check Duration",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(resilience_health_check_duration_seconds_bucket[5m]))",
+            "refId": "A",
+            "legendFormat": "p95"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(resilience_health_check_duration_seconds_bucket[5m]))",
+            "refId": "B",
+            "legendFormat": "p50"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10
+            }
+          }
+        },
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
+        }
+      },
+      {
+        "id": 13,
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 12,
+          "y": 48
+        },
+        "type": "timeseries",
+        "title": "Contingency Analysis Duration",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(resilience_contingency_analysis_duration_seconds_bucket[5m]))",
+            "refId": "A",
+            "legendFormat": "p95"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(resilience_contingency_analysis_duration_seconds_bucket[5m]))",
+            "refId": "B",
+            "legendFormat": "p50"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10
+            }
+          }
+        },
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
+        }
+      },
+      {
+        "id": 14,
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 58
+        },
+        "type": "stat",
+        "title": "Active Fallback Schedules",
+        "targets": [
+          {
+            "expr": "resilience_active_fallbacks",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "decimals": 0,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 2, "color": "orange"}
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area"
+        }
+      },
+      {
+        "id": 15,
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 58
+        },
+        "type": "stat",
+        "title": "Suspended Activities",
+        "targets": [
+          {
+            "expr": "resilience_suspended_activities",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "decimals": 0,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 5, "color": "orange"},
+                {"value": 10, "color": "red"}
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area"
+        }
+      },
+      {
+        "id": 16,
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 58
+        },
+        "type": "stat",
+        "title": "Health Check Failures (24h)",
+        "targets": [
+          {
+            "expr": "increase(resilience_health_check_failures_total[24h])",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "decimals": 0,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 5, "color": "red"}
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "background"
+        }
+      }
+    ]
+  }
+}
