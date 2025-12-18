@@ -1,7 +1,8 @@
 """Application configuration."""
+import secrets
 from functools import lru_cache
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -45,9 +46,9 @@ class Settings(BaseSettings):
         return self.REDIS_URL
 
     # Security
-    SECRET_KEY: str = ""
+    SECRET_KEY: str = Field(default_factory=lambda: secrets.token_urlsafe(64))
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
-    WEBHOOK_SECRET: str = ""
+    WEBHOOK_SECRET: str = Field(default_factory=lambda: secrets.token_urlsafe(64))
     WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS: int = 300  # 5 minutes
 
     # Rate Limiting (per IP address)
