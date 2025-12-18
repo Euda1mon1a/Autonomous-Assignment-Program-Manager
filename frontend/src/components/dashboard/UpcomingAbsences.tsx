@@ -8,21 +8,39 @@ import { useAbsences, usePeople } from '@/lib/hooks'
 import { EmptyState } from '@/components/EmptyState'
 
 const absenceTypeBadgeColors: Record<string, string> = {
+  // Planned leave
   vacation: 'bg-blue-100 text-blue-800',
+  conference: 'bg-green-100 text-green-800',
+  // Medical
+  sick: 'bg-red-100 text-red-800',
+  medical: 'bg-red-100 text-red-800',
+  convalescent: 'bg-red-200 text-red-900',
+  maternity_paternity: 'bg-pink-100 text-pink-800',
+  // Emergency (blocking - Hawaii reality)
+  family_emergency: 'bg-orange-100 text-orange-800',
+  emergency_leave: 'bg-orange-200 text-orange-900',
+  bereavement: 'bg-gray-200 text-gray-800',
+  // Military
   deployment: 'bg-purple-100 text-purple-800',
   tdy: 'bg-indigo-100 text-indigo-800',
-  medical: 'bg-red-100 text-red-800',
-  family_emergency: 'bg-orange-100 text-orange-800',
-  conference: 'bg-green-100 text-green-800',
 }
 
 const absenceTypeLabels: Record<string, string> = {
+  // Planned leave
   vacation: 'Vacation',
+  conference: 'Conference',
+  // Medical
+  sick: 'Sick',
+  medical: 'Medical',
+  convalescent: 'Convalescent',
+  maternity_paternity: 'Parental Leave',
+  // Emergency (blocking - Hawaii reality)
+  family_emergency: 'Family Emergency',
+  emergency_leave: 'Emergency',
+  bereavement: 'Bereavement',
+  // Military
   deployment: 'Deployment',
   tdy: 'TDY',
-  medical: 'Medical',
-  family_emergency: 'Emergency',
-  conference: 'Conference',
 }
 
 export function UpcomingAbsences() {

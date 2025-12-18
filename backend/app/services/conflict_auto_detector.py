@@ -71,7 +71,7 @@ class ConflictAutoDetector:
         conflicts = []
 
         # Check for FMIT overlap if absence is blocking
-        if absence.is_blocking or absence.absence_type == "deployment":
+        if absence.should_block_assignment:
             fmit_conflicts = self._find_fmit_overlaps(
                 absence.person_id,
                 absence.start_date,

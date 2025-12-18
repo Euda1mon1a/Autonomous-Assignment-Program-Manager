@@ -7,12 +7,31 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class LeaveType(str, Enum):
+    """
+    Leave/absence types with Hawaii-appropriate defaults.
+
+    Blocking types (person cannot be assigned during absence):
+    - deployment, tdy, family_emergency, bereavement, emergency_leave,
+      convalescent, maternity_paternity
+
+    Duration-based blocking:
+    - medical (>7 days), sick (>3 days)
+
+    Non-blocking (tracked but doesn't prevent assignment):
+    - vacation, conference
+    """
     VACATION = "vacation"
     TDY = "tdy"
     DEPLOYMENT = "deployment"
     CONFERENCE = "conference"
     MEDICAL = "medical"
     FAMILY_EMERGENCY = "family_emergency"
+    # New types (Hawaii-appropriate)
+    BEREAVEMENT = "bereavement"
+    EMERGENCY_LEAVE = "emergency_leave"
+    SICK = "sick"
+    CONVALESCENT = "convalescent"
+    MATERNITY_PATERNITY = "maternity_paternity"
 
 
 class LeaveWebhookPayload(BaseModel):
