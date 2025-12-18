@@ -7,11 +7,14 @@ This document tracks all TODO, FIXME, and HACK comments found in the codebase th
 | Category | Count | Priority | Completed |
 |----------|-------|----------|-----------|
 | Swap Service TODOs | 5 | High | 5/5 ✅ |
-| Stability Metrics TODOs | 3 | Medium | 0/3 |
+| Stability Metrics TODOs | 3 | Medium | 3/3 ✅ |
 | Leave Routes TODOs | 2 | Medium | 2/2 ✅ |
-| Portal Routes TODOs | 2 | Low | 0/2 |
-| Other TODOs | 1 | Low | 0/1 |
-| **Total** | **13** | - | **7/13 (54%)** |
+| Portal Routes TODOs | 2 | Low | 2/2 ✅ |
+| Other TODOs | 1 | Low | 1/1 ✅ |
+| **Total** | **13** | - | **13/13 (100%)** ✅ |
+
+> **Status:** All backend implementation TODOs have been resolved as of 2025-12-18.
+> See `SESSION_8_PARALLEL_PRIORITIES.md` for next improvement priorities.
 
 ---
 
@@ -79,32 +82,35 @@ This document tracks all TODO, FIXME, and HACK comments found in the codebase th
 
 ## Medium Priority - Stability Metrics
 
-### 6. Version History Lookup
+### 6. Version History Lookup ✅ COMPLETED
 **Location:** `backend/app/analytics/stability_metrics.py:222`
-```python
-# TODO: Implement version history lookup using SQLAlchemy-Continuum
-```
-**Description:** Implement schedule version history lookup for change tracking and rollback capabilities.
-**Dependencies:** SQLAlchemy-Continuum integration
-**Assignee:** TBD
+**Status:** COMPLETED (2025-12-18)
+**Description:** Implemented schedule version history lookup using SQLAlchemy-Continuum for change tracking.
+**Implementation:**
+- Added `_get_previous_assignments()` method using SQLAlchemy-Continuum version_class
+- Queries assignment_version table for previous transaction states
+- Handles edge cases for first version and missing history
+**Assignee:** Terminal 6
 
-### 7. ACGME Validator Integration
+### 7. ACGME Validator Integration ✅ COMPLETED
 **Location:** `backend/app/analytics/stability_metrics.py:520`
-```python
-# TODO: Integrate with app.scheduling.validator.ACGMEValidator
-```
-**Description:** Connect stability metrics with the ACGME compliance validator for comprehensive compliance checking.
-**Dependencies:** ACGMEValidator service
-**Assignee:** TBD
+**Status:** COMPLETED (2025-12-18)
+**Description:** Integrated stability metrics with ACGME compliance validator.
+**Implementation:**
+- Integrated validation into stability analysis pipeline
+- Compliance checks now factor into stability scores
+- Added rotation coverage and N-1 vulnerability analysis
+**Assignee:** Terminal 6
 
-### 8. Schedule Version History Query
+### 8. Schedule Version History Query ✅ COMPLETED
 **Location:** `backend/app/analytics/stability_metrics.py:544`
-```python
-# TODO: Implement by querying schedule version history
-```
-**Description:** Query historical schedule versions for analytics and reporting purposes.
-**Dependencies:** Version history table
-**Assignee:** TBD
+**Status:** COMPLETED (2025-12-18)
+**Description:** Implemented historical schedule version queries for analytics.
+**Implementation:**
+- Query infrastructure for schedule history now in place
+- Used for change detection and stability trend analysis
+- Supports person-level and rotation-level granularity
+**Assignee:** Terminal 6
 
 ---
 
@@ -135,23 +141,27 @@ This document tracks all TODO, FIXME, and HACK comments found in the codebase th
 
 ## Low Priority - Portal Routes
 
-### 11. Conflict Checking for Available Weeks
+### 11. Conflict Checking for Available Weeks ✅ COMPLETED
 **Location:** `backend/app/api/routes/portal.py:102`
-```python
-has_conflict=False,  # TODO: Could check conflict_alerts table
-```
-**Description:** Enhancement to check the conflict_alerts table when returning available weeks.
-**Dependencies:** conflict_alerts table query
-**Assignee:** TBD
+**Status:** COMPLETED (2025-12-18)
+**Description:** Added conflict_alerts table query when returning available weeks.
+**Implementation:**
+- Query ConflictAlert table for faculty_id and fmit_week
+- Filter by NEW and ACKNOWLEDGED statuses
+- Set has_conflict flag and conflict_description in FMITWeekInfo response
+- Integrated into portal endpoint response
+**Assignee:** Terminal 2
 
-### 12. Candidate Notifications
+### 12. Candidate Notifications ✅ COMPLETED
 **Location:** `backend/app/api/routes/portal.py:306`
-```python
-# TODO: Create notifications for candidates
-```
-**Description:** Create notification system to alert swap candidates when they match a swap request.
-**Dependencies:** Notification service
-**Assignee:** TBD
+**Status:** COMPLETED (2025-12-18)
+**Description:** Implemented notification system for swap candidates.
+**Implementation:**
+- Created SwapNotificationService with notify_marketplace_match() method
+- Triggered when auto_find_candidates is enabled in swap request
+- Queries FacultyPreference for candidates with notify_swap_requests enabled
+- Creates notifications for all matching candidates
+**Assignee:** Terminal 2
 
 ---
 
@@ -179,15 +189,29 @@ has_conflict=False,  # TODO: Could check conflict_alerts table
 | #3 Update Call Cascade | ✅ Completed | Terminal 1 | 2025-12-18 |
 | #4 SwapRecord Integration | ✅ Completed | Terminal 1 | 2025-12-18 |
 | #5 FMIT Verification | ✅ Completed | Terminal 5 | 2025-12-18 |
-| #6 Version History | Pending | - | - |
-| #7 ACGME Integration | Pending | - | - |
-| #8 Schedule History Query | Pending | - | - |
+| #6 Version History | ✅ Completed | Terminal 6 | 2025-12-18 |
+| #7 ACGME Integration | ✅ Completed | Terminal 6 | 2025-12-18 |
+| #8 Schedule History Query | ✅ Completed | Terminal 6 | 2025-12-18 |
 | #9 FMIT Conflict Check | ✅ Completed | Terminal 3 | 2025-12-18 |
 | #10 Background Conflicts | ✅ Completed | Terminal 3 | 2025-12-18 |
-| #11 Conflict Table Check | Pending | - | - |
-| #12 Candidate Notifications | Pending | - | - |
+| #11 Conflict Table Check | ✅ Completed | Terminal 2 | 2025-12-18 |
+| #12 Candidate Notifications | ✅ Completed | Terminal 2 | 2025-12-18 |
+
+---
+
+## Summary
+
+**All 13 TODOs have been successfully completed as of 2025-12-18.**
+
+The focus now shifts to:
+- Code quality improvements (type safety, query optimization)
+- v1.1.0 feature preparation (email notifications, bulk import)
+- Test coverage expansion
+- Documentation updates
+
+See `SESSION_8_PARALLEL_PRIORITIES.md` in the repository root for the next set of 10 parallel workstreams.
 
 ---
 
 *Last updated: 2025-12-18*
-*Generated by automated TODO scanning*
+*Status: 100% Complete*
