@@ -236,8 +236,93 @@ These interconnected ideas reveal that "going from complexity to simplicity" is 
 
 ---
 
+## Application to Residency Scheduling PI/QI Research
+
+The theoretical framework above has direct, non-trivial applications to the longitudinal scheduling analytics module planned for this system. The schedule grid—residents × time blocks—is literally a cellular lattice evolving under constraint-based rules. The resilience framework already implements CA-like dynamics without the formal nomenclature.
+
+### Mapping CA Concepts to Existing Infrastructure
+
+| CA Concept | Codebase Implementation | PI/QI Metric |
+|------------|------------------------|--------------|
+| **Cascade simulation** | `contingency.py:580-687` | `StabilityMetrics.ripple_factor` |
+| **Extinction vortex** | `cascade_scenario.py` (burnout loop) | Departure rate exceeds hiring rate threshold |
+| **Stigmergy / trail evaporation** | `stigmergy.py` | Emergent preference patterns over time |
+| **Zone status propagation** | `blast_radius.py` (GREEN→BLACK) | Containment activation depth |
+| **Behavioral roles** | `behavioral_network.py` (martyr/evader) | Burden cascade endpoints |
+
+### StabilityMetrics.ripple_factor as Cascade Depth
+
+The `ripple_factor` metric—"how far changes cascade (avg hops in dependency graph)"—is precisely what block cellular automata formalize. A single faculty absence propagates through:
+
+1. **Immediate neighbors**: Coverage gaps in affected blocks
+2. **Secondary cascade**: Survivors absorb load → utilization spikes
+3. **Tertiary effects**: Overloaded survivors trigger ACGME violations or departures
+4. **Potential vortex**: If departure rate exceeds replacement, positive feedback ensues
+
+CA theory provides the mathematical toolkit to quantify cascade depth, predict phase transitions (stable → chaotic), and identify **critical points** where small interventions prevent large failures.
+
+### Garden of Eden Analysis for Schedule Feasibility
+
+Some schedule configurations are **Garden of Eden states**—they cannot arise from any valid sequence of swaps, assignments, or transitions from the current state. Identifying these unreachable configurations has policy implications:
+
+- A "perfectly fair" schedule may be mathematically unreachable given current constraints
+- Certain absence patterns create irreversible coverage gaps
+- The predecessor problem: "What minimal intervention 6 months ago would have prevented this cascade?"
+
+This connects to `n1_vulnerability_score`: schedules adjacent to Garden of Eden states are fragile—one perturbation pushes them into unrecoverable territory.
+
+### Reversibility for Recovery Path Analysis
+
+The cascade simulations show failure propagation *forward*. Reversibility analysis asks the inverse: **given a collapsed state, what's the minimal intervention sequence to restore stability?**
+
+Proposed extension to `contingency.py`:
+
+```python
+def find_recovery_path(
+    current_state: ScheduleState,
+    target_state: ScheduleState,  # e.g., all zones GREEN
+    max_interventions: int = 5
+) -> List[Intervention]:
+    """
+    Uses predecessor-style analysis to find minimal
+    action sequence (hires, swaps, load redistribution)
+    that reverses a cascade.
+
+    Returns empty list if target is Garden of Eden
+    (unreachable from current state).
+    """
+```
+
+This transforms reactive crisis management into **predictive recovery planning**.
+
+### Neural CA for Learning Swap Dynamics
+
+The stigmergy module already captures preference signals. Neural CA techniques could extend this:
+
+- **Learn** what swap patterns lead to stable, equitable schedules
+- **Discover** emergent rules that weren't explicitly programmed
+- **Predict** which proposed swaps will trigger cascade effects
+
+Training data: historical swap sequences paired with resulting stability metrics.
+
+### Publication Potential
+
+*"Modeling Medical Schedule Stability as Reversible Cellular Automata: A Framework for Quantifying Cascade Risk and Recovery Paths in Graduate Medical Education"*
+
+Novel contributions:
+1. First application of CA formalism to ACGME-compliant scheduling
+2. Garden of Eden analysis for healthcare workforce planning
+3. Extinction vortex as phase transition in staffing dynamics
+4. Reversibility-based recovery path algorithms
+5. Neural CA for learning scheduling heuristics from historical data
+
+The existing resilience framework provides empirical validation—the theory explains *why* the cascade simulations work and suggests principled extensions.
+
+---
+
 ## Document History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2025-12-18 | Claude | Initial research document |
+| 1.1 | 2025-12-18 | Claude | Added PI/QI application section with codebase mappings |
