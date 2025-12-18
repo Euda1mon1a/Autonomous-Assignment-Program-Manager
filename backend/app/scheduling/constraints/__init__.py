@@ -1,108 +1,113 @@
 """
-Constraints Module - Re-exports for Backward Compatibility.
+Modular Constraint System for Residency Scheduling.
 
-This module provides a clean API for importing constraint classes while maintaining
-backward compatibility with existing code that imports from the old monolithic
-constraints.py file.
+This package provides a flexible, composable constraint system that can be used
+with multiple solvers (OR-Tools CP-SAT, PuLP, custom algorithms).
 
-Usage:
-    from app.scheduling.constraints import (
-        ConstraintManager,
-        SchedulingContext,
-        EightyHourRuleConstraint,
-        AvailabilityConstraint,
-    )
+Constraint Types:
+- Hard Constraints: Must be satisfied (ACGME rules, availability, capacity)
+- Soft Constraints: Should be optimized (preferences, equity, continuity)
 
-The constraints are now organized into domain-specific modules:
-- base: Core classes, enums, ConstraintManager, SchedulingContext
-- acgme_constraints: ACGME compliance (duty hours, supervision)
-- time_constraints: Availability and time-based rules
-- capacity_constraints: Capacity limits and coverage
-- custom_constraints: Equity, continuity, preferences, resilience
-- faculty_constraints: Faculty-specific constraints (placeholder)
+Architecture:
+- Constraint: Base class defining the interface
+- HardConstraint: Constraints that must be satisfied
+- SoftConstraint: Constraints with weights for optimization
+- ConstraintManager: Composes and manages constraints for solvers
+
+All classes are re-exported from this module to maintain backward compatibility
+with existing code that imports directly from the constraints module.
+
+Example:
+    >>> from backend.app.scheduling.constraints import ConstraintManager
+    >>> from backend.app.scheduling.constraints import AvailabilityConstraint
+    >>> 
+    >>> manager = ConstraintManager.create_default()
+    >>> manager.add(AvailabilityConstraint())
 """
 
-***REMOVED*** Base classes, enums, and infrastructure
-from app.scheduling.constraints.base import (
-    ***REMOVED*** Enums
-    ConstraintPriority,
-    ConstraintType,
-    ***REMOVED*** Dataclasses
-    ConstraintViolation,
-    ConstraintResult,
-    SchedulingContext,
-    ***REMOVED*** Base classes
+***REMOVED*** Base classes and types
+from .base import (
     Constraint,
+    ConstraintPriority,
+    ConstraintResult,
+    ConstraintType,
+    ConstraintViolation,
     HardConstraint,
+    SchedulingContext,
     SoftConstraint,
-    ***REMOVED*** Manager
-    ConstraintManager,
 )
 
 ***REMOVED*** ACGME compliance constraints
-from app.scheduling.constraints.acgme_constraints import (
+from .acgme import (
+    AvailabilityConstraint,
     EightyHourRuleConstraint,
     OneInSevenRuleConstraint,
     SupervisionRatioConstraint,
 )
 
-***REMOVED*** Time-based constraints
-from app.scheduling.constraints.time_constraints import (
-    AvailabilityConstraint,
-    WednesdayAMInternOnlyConstraint,
-)
-
-***REMOVED*** Capacity constraints
-from app.scheduling.constraints.capacity_constraints import (
-    OnePersonPerBlockConstraint,
+***REMOVED*** Capacity and coverage constraints
+from .capacity import (
     ClinicCapacityConstraint,
-    MaxPhysiciansInClinicConstraint,
     CoverageConstraint,
+    MaxPhysiciansInClinicConstraint,
+    OnePersonPerBlockConstraint,
 )
 
-***REMOVED*** Custom/business constraints
-from app.scheduling.constraints.custom_constraints import (
-    EquityConstraint,
-    ContinuityConstraint,
-    PreferenceConstraint,
+***REMOVED*** Temporal constraints
+from .temporal import WednesdayAMInternOnlyConstraint
+
+***REMOVED*** and preference constraints
+from .faculty import PreferenceConstraint
+
+***REMOVED*** Equity and continuity constraints
+from .equity import ContinuityConstraint, EquityConstraint
+
+***REMOVED*** Resilience-aware constraints
+from .resilience import (
     HubProtectionConstraint,
+    N1VulnerabilityConstraint,
+    PreferenceTrailConstraint,
     UtilizationBufferConstraint,
     ZoneBoundaryConstraint,
-    PreferenceTrailConstraint,
-    N1VulnerabilityConstraint,
 )
 
-***REMOVED*** Define what gets exported with "from constraints import *"
+***REMOVED*** Constraint manager
+from .manager import ConstraintManager
+
+***REMOVED*** Define __all__ for explicit exports
 __all__ = [
-    ***REMOVED*** Base
+    ***REMOVED*** Base classes and types
+    "Constraint",
     "ConstraintPriority",
+    "ConstraintResult",
     "ConstraintType",
     "ConstraintViolation",
-    "ConstraintResult",
-    "SchedulingContext",
-    "Constraint",
     "HardConstraint",
+    "SchedulingContext",
     "SoftConstraint",
-    "ConstraintManager",
-    ***REMOVED*** ACGME
+    ***REMOVED*** ACGME constraints
+    "AvailabilityConstraint",
     "EightyHourRuleConstraint",
     "OneInSevenRuleConstraint",
     "SupervisionRatioConstraint",
-    ***REMOVED*** Time
-    "AvailabilityConstraint",
-    "WednesdayAMInternOnlyConstraint",
-    ***REMOVED*** Capacity
-    "OnePersonPerBlockConstraint",
+    ***REMOVED*** Capacity constraints
     "ClinicCapacityConstraint",
-    "MaxPhysiciansInClinicConstraint",
     "CoverageConstraint",
-    ***REMOVED*** Custom
-    "EquityConstraint",
-    "ContinuityConstraint",
+    "MaxPhysiciansInClinicConstraint",
+    "OnePersonPerBlockConstraint",
+    ***REMOVED*** Temporal constraints
+    "WednesdayAMInternOnlyConstraint",
+    ***REMOVED*** constraints
     "PreferenceConstraint",
+    ***REMOVED*** Equity constraints
+    "ContinuityConstraint",
+    "EquityConstraint",
+    ***REMOVED*** Resilience constraints
     "HubProtectionConstraint",
+    "N1VulnerabilityConstraint",
+    "PreferenceTrailConstraint",
     "UtilizationBufferConstraint",
     "ZoneBoundaryConstraint",
-    "PreferenceTrailConstraint",
-    "N1VulnerabilityConstraint",
+    ***REMOVED*** Manager
+    "ConstraintManager",
 ]

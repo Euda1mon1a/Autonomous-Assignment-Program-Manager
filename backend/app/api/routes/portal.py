@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.security import get_current_user
 from app.db.session import get_db
@@ -65,10 +65,11 @@ def get_my_schedule(
 
     fmit_weeks = []
     if fmit_template:
-        ***REMOVED*** Get all FMIT assignments for this faculty
+        ***REMOVED*** Get all FMIT assignments for this faculty (eager load block to avoid N+1)
         assignments = (
             db.query(Assignment)
             .join(Block, Assignment.block_id == Block.id)
+            .options(joinedload(Assignment.block))
             .filter(
                 Assignment.person_id == faculty.id,
                 Assignment.rotation_template_id == fmit_template.id,
@@ -149,9 +150,11 @@ def get_my_swaps(
     faculty = _get_faculty_for_user(db, current_user)
 
     ***REMOVED*** Query SwapRecord for this faculty
+    ***REMOVED*** Eager load faculty relationships to avoid N+1 queries
     ***REMOVED*** Incoming requests: where this faculty is the target and status is pending
     incoming_swaps = (
         db.query(SwapRecord)
+        .options(joinedload(SwapRecord.source_faculty), joinedload(SwapRecord.target_faculty))
         .filter(
             SwapRecord.target_faculty_id == faculty.id,
             SwapRecord.status == SwapStatus.PENDING,
@@ -163,6 +166,7 @@ def get_my_swaps(
     ***REMOVED*** Outgoing requests: where this faculty is the source and status is pending
     outgoing_swaps = (
         db.query(SwapRecord)
+        .options(joinedload(SwapRecord.source_faculty), joinedload(SwapRecord.target_faculty))
         .filter(
             SwapRecord.source_faculty_id == faculty.id,
             SwapRecord.status == SwapStatus.PENDING,
@@ -175,6 +179,7 @@ def get_my_swaps(
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     recent_swaps = (
         db.query(SwapRecord)
+        .options(joinedload(SwapRecord.source_faculty), joinedload(SwapRecord.target_faculty))
         .filter(
             (SwapRecord.source_faculty_id == faculty.id) | (SwapRecord.target_faculty_id == faculty.id),
             SwapRecord.status.in_([SwapStatus.EXECUTED, SwapStatus.APPROVED, SwapStatus.REJECTED]),
@@ -644,8 +649,10 @@ def get_swap_marketplace(
     ***REMOVED*** Query open swap requests for marketplace
     ***REMOVED*** Get all PENDING swaps that are open to the marketplace
     ***REMOVED*** (either ABSORB type or not yet accepted)
+    ***REMOVED*** Eager load source_faculty to avoid N+1 when building entries
     open_swaps = (
         db.query(SwapRecord)
+        .options(joinedload(SwapRecord.source_faculty))
         .filter(
             SwapRecord.status == SwapStatus.PENDING,
             SwapRecord.source_faculty_id != faculty.id,  ***REMOVED*** Exclude current user's own requests
@@ -671,9 +678,11 @@ def get_swap_marketplace(
 
     faculty_scheduled_weeks = set()
     if fmit_template:
+        ***REMOVED*** Eager load block to avoid N+1 when accessing block.date
         assignments = (
             db.query(Assignment)
             .join(Block, Assignment.block_id == Block.id)
+            .options(joinedload(Assignment.block))
             .filter(
                 Assignment.person_id == faculty.id,
                 Assignment.rotation_template_id == fmit_template.id,

@@ -3,6 +3,7 @@ import './globals.css'
 import { Providers } from './providers'
 import { Navigation } from '@/components/Navigation'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { KeyboardShortcutHelp } from '@/components/common/KeyboardShortcutHelp'
 
 export const metadata: Metadata = {
   title: 'Residency Scheduler',
@@ -48,6 +49,7 @@ export default function RootLayout({
                 </div>
               </main>
             </div>
+            <KeyboardShortcutHelp />
           </ErrorBoundary>
         </Providers>
       </body>

@@ -1,0 +1,59 @@
+"""Email log model for tracking email notifications."""
+import enum
+import uuid
+from datetime import datetime
+
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
+
+from app.db.base import Base
+from app.db.types import GUID
+
+
+class EmailStatus(str, enum.Enum):
+    """Email delivery status."""
+    QUEUED = "queued"
+    SENT = "sent"
+    FAILED = "failed"
+    BOUNCED = "bounced"
+
+
+class EmailLog(Base):
+    """
+    Tracks email notifications sent from the system.
+
+    This model maintains a complete audit trail of all emails sent,
+    including delivery status, retry attempts, and error tracking.
+    """
+    __tablename__ = "email_logs"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+
+    ***REMOVED*** Optional link to notification (for in-app notifications that also send email)
+    notification_id = Column(
+        GUID(),
+        ForeignKey("notifications.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
+
+    ***REMOVED*** Email details
+    recipient_email = Column(String(255), nullable=False, index=True)
+    subject = Column(String(500), nullable=False)
+    body_html = Column(Text, nullable=True)
+    body_text = Column(Text, nullable=True)
+
+    ***REMOVED*** Delivery tracking
+    status = Column(Enum(EmailStatus), default=EmailStatus.QUEUED, nullable=False, index=True)
+    error_message = Column(Text, nullable=True)
+    sent_at = Column(DateTime, nullable=True)
+    retry_count = Column(Integer, default=0, nullable=False)
+
+    ***REMOVED*** Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    ***REMOVED*** Relationship
+    notification = relationship("Notification", back_populates="email_logs")
+
+    def __repr__(self) -> str:
+        return f"<EmailLog(id={self.id}, recipient='{self.recipient_email}', status='{self.status}')>"
