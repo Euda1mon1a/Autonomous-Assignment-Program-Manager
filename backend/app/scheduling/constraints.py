@@ -1087,6 +1087,318 @@ class ClinicCapacityConstraint(HardConstraint):
         )
 
 
+class MaxPhysiciansInClinicConstraint(HardConstraint):
+    """
+    Ensures physical space limitations are respected.
+
+    Maximum number of physicians (faculty + residents combined) allowed
+    in clinic at any one time, regardless of role or PGY level.
+
+    This is a physical space constraint - the clinic can only accommodate
+    a limited number of providers simultaneously.
+
+    Default: 6 physicians maximum per clinic session (AM or PM).
+    """
+
+    def __init__(self, max_physicians: int = 6):
+        """
+        Initialize the constraint.
+
+        Args:
+            max_physicians: Maximum providers allowed in clinic per session.
+                           Default is 6.
+        """
+        super().__init__(
+            name="MaxPhysiciansInClinic",
+            constraint_type=ConstraintType.CAPACITY,
+            priority=ConstraintPriority.HIGH,
+        )
+        self.max_physicians = max_physicians
+
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+        """Enforce maximum physicians per clinic block."""
+        x = variables.get("assignments", {})
+        template_vars = variables.get("template_assignments", {})
+
+        if not x and not template_vars:
+            return
+
+        # Identify clinic templates
+        clinic_template_ids = {
+            t.id for t in context.templates
+            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+        }
+
+        if not clinic_template_ids:
+            return  # No clinic templates defined
+
+        # For each block, sum all clinic assignments (residents + faculty)
+        for block in context.blocks:
+            b_i = context.block_idx[block.id]
+            clinic_vars = []
+
+            # Collect resident assignments to clinic templates
+            if template_vars:
+                for template in context.templates:
+                    if template.id in clinic_template_ids:
+                        t_i = context.template_idx[template.id]
+                        for r in context.residents:
+                            r_i = context.resident_idx[r.id]
+                            if (r_i, b_i, t_i) in template_vars:
+                                clinic_vars.append(template_vars[r_i, b_i, t_i])
+
+            # Faculty assignments are typically handled post-hoc,
+            # but if faculty variables exist, include them
+            faculty_vars = variables.get("faculty_assignments", {})
+            if faculty_vars:
+                for f in context.faculty:
+                    f_i = context.faculty_idx.get(f.id)
+                    if f_i is not None and (f_i, b_i) in faculty_vars:
+                        clinic_vars.append(faculty_vars[f_i, b_i])
+
+            if clinic_vars:
+                model.Add(sum(clinic_vars) <= self.max_physicians)
+
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+        """Enforce maximum physicians per clinic block using PuLP."""
+        import pulp
+
+        template_vars = variables.get("template_assignments", {})
+
+        if not template_vars:
+            return
+
+        clinic_template_ids = {
+            t.id for t in context.templates
+            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+        }
+
+        if not clinic_template_ids:
+            return
+
+        constraint_count = 0
+        for block in context.blocks:
+            b_i = context.block_idx[block.id]
+            clinic_vars = []
+
+            for template in context.templates:
+                if template.id in clinic_template_ids:
+                    t_i = context.template_idx[template.id]
+                    for r in context.residents:
+                        r_i = context.resident_idx[r.id]
+                        if (r_i, b_i, t_i) in template_vars:
+                            clinic_vars.append(template_vars[(r_i, b_i, t_i)])
+
+            if clinic_vars:
+                model += (
+                    pulp.lpSum(clinic_vars) <= self.max_physicians,
+                    f"max_physicians_clinic_{b_i}_{constraint_count}"
+                )
+                constraint_count += 1
+
+    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+        """Check maximum physicians in clinic per block."""
+        violations = []
+
+        # Identify clinic templates
+        clinic_template_ids = {
+            t.id for t in context.templates
+            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+        }
+
+        if not clinic_template_ids:
+            return ConstraintResult(satisfied=True, violations=[])
+
+        # Count all persons (faculty + residents) per clinic block
+        by_block = defaultdict(int)
+        for a in assignments:
+            if a.rotation_template_id in clinic_template_ids:
+                by_block[a.block_id] += 1
+
+        # Check limits
+        block_dates = {b.id: (b.date, b.time_of_day) for b in context.blocks}
+
+        for block_id, count in by_block.items():
+            if count > self.max_physicians:
+                block_info = block_dates.get(block_id, ("Unknown", "Unknown"))
+                violations.append(ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity="HIGH",
+                    message=f"Clinic has {count} physicians on {block_info[0]} {block_info[1]} (max: {self.max_physicians})",
+                    block_id=block_id,
+                    details={"count": count, "limit": self.max_physicians},
+                ))
+
+        return ConstraintResult(
+            satisfied=len(violations) == 0,
+            violations=violations,
+        )
+
+
+class WednesdayAMInternOnlyConstraint(HardConstraint):
+    """
+    Ensures Wednesday morning clinic is staffed by interns (PGY-1) only.
+
+    Wednesday morning is continuity clinic day for interns. This protected
+    time allows them to maintain longitudinal patient relationships and
+    should not be disrupted by PGY-2/3 resident assignments.
+
+    Faculty supervision is still required per supervision ratios.
+
+    Note: Rare exceptions may be needed - the constraint can be disabled
+    for specific blocks if necessary.
+    """
+
+    WEDNESDAY = 2  # Python weekday: Monday=0, Tuesday=1, Wednesday=2
+
+    def __init__(self):
+        """Initialize the constraint."""
+        super().__init__(
+            name="WednesdayAMInternOnly",
+            constraint_type=ConstraintType.ROTATION,
+            priority=ConstraintPriority.HIGH,
+        )
+
+    def _is_wednesday_am(self, block) -> bool:
+        """Check if a block is Wednesday AM."""
+        return (
+            hasattr(block, 'date') and
+            block.date.weekday() == self.WEDNESDAY and
+            block.time_of_day == 'AM'
+        )
+
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+        """Prevent non-intern assignments on Wednesday AM."""
+        template_vars = variables.get("template_assignments", {})
+
+        if not template_vars:
+            return
+
+        # Identify clinic templates
+        clinic_template_ids = {
+            t.id for t in context.templates
+            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+        }
+
+        if not clinic_template_ids:
+            return
+
+        # Get PGY levels for residents
+        pgy_levels = {r.id: r.pgy_level for r in context.residents}
+
+        # For Wednesday AM blocks, prevent non-PGY-1 clinic assignments
+        for block in context.blocks:
+            if not self._is_wednesday_am(block):
+                continue
+
+            b_i = context.block_idx[block.id]
+
+            for template in context.templates:
+                if template.id not in clinic_template_ids:
+                    continue
+
+                t_i = context.template_idx[template.id]
+
+                for r in context.residents:
+                    # Skip PGY-1 (they are allowed)
+                    if pgy_levels.get(r.id) == 1:
+                        continue
+
+                    r_i = context.resident_idx[r.id]
+                    if (r_i, b_i, t_i) in template_vars:
+                        # Force non-intern to 0 on Wednesday AM clinic
+                        model.Add(template_vars[r_i, b_i, t_i] == 0)
+
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+        """Prevent non-intern assignments on Wednesday AM using PuLP."""
+        template_vars = variables.get("template_assignments", {})
+
+        if not template_vars:
+            return
+
+        clinic_template_ids = {
+            t.id for t in context.templates
+            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+        }
+
+        if not clinic_template_ids:
+            return
+
+        pgy_levels = {r.id: r.pgy_level for r in context.residents}
+
+        for block in context.blocks:
+            if not self._is_wednesday_am(block):
+                continue
+
+            b_i = context.block_idx[block.id]
+
+            for template in context.templates:
+                if template.id not in clinic_template_ids:
+                    continue
+
+                t_i = context.template_idx[template.id]
+
+                for r in context.residents:
+                    if pgy_levels.get(r.id) == 1:
+                        continue
+
+                    r_i = context.resident_idx[r.id]
+                    if (r_i, b_i, t_i) in template_vars:
+                        model += (
+                            template_vars[(r_i, b_i, t_i)] == 0,
+                            f"wed_am_intern_only_{r_i}_{b_i}_{t_i}"
+                        )
+
+    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+        """Check that Wednesday AM clinic has only interns."""
+        violations = []
+
+        # Build lookup tables
+        clinic_template_ids = {
+            t.id for t in context.templates
+            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+        }
+
+        if not clinic_template_ids:
+            return ConstraintResult(satisfied=True, violations=[])
+
+        pgy_levels = {r.id: r.pgy_level for r in context.residents}
+        resident_names = {r.id: r.name for r in context.residents}
+        block_info = {b.id: b for b in context.blocks}
+
+        for a in assignments:
+            # Only check clinic assignments
+            if a.rotation_template_id not in clinic_template_ids:
+                continue
+
+            # Only check resident assignments (not faculty)
+            if a.person_id not in pgy_levels:
+                continue
+
+            block = block_info.get(a.block_id)
+            if not block or not self._is_wednesday_am(block):
+                continue
+
+            # Check if resident is NOT PGY-1
+            pgy = pgy_levels.get(a.person_id)
+            if pgy and pgy != 1:
+                violations.append(ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity="HIGH",
+                    message=f"PGY-{pgy} resident {resident_names.get(a.person_id, 'Unknown')} assigned to Wednesday AM clinic on {block.date}",
+                    person_id=a.person_id,
+                    block_id=a.block_id,
+                    details={"pgy_level": pgy, "date": str(block.date)},
+                ))
+
+        return ConstraintResult(
+            satisfied=len(violations) == 0,
+            violations=violations,
+        )
+
+
 # =============================================================================
 # SOFT CONSTRAINTS - Optimization
 # =============================================================================
@@ -2601,6 +2913,8 @@ class ConstraintManager:
         manager.add(OneInSevenRuleConstraint())
         manager.add(SupervisionRatioConstraint())
         manager.add(ClinicCapacityConstraint())
+        manager.add(MaxPhysiciansInClinicConstraint())
+        manager.add(WednesdayAMInternOnlyConstraint())
 
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))
@@ -2654,6 +2968,8 @@ class ConstraintManager:
         manager.add(OneInSevenRuleConstraint())
         manager.add(SupervisionRatioConstraint())
         manager.add(ClinicCapacityConstraint())
+        manager.add(MaxPhysiciansInClinicConstraint())
+        manager.add(WednesdayAMInternOnlyConstraint())
 
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))

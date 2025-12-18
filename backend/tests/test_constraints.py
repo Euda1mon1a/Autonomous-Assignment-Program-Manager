@@ -22,10 +22,12 @@ from app.scheduling.constraints import (
     EightyHourRuleConstraint,
     # Soft constraints
     EquityConstraint,
+    MaxPhysiciansInClinicConstraint,
     OneInSevenRuleConstraint,
     OnePersonPerBlockConstraint,
     SchedulingContext,
     SupervisionRatioConstraint,
+    WednesdayAMInternOnlyConstraint,
 )
 
 # ============================================================================
@@ -62,11 +64,12 @@ class MockAssignment:
 
 class MockTemplate:
     """Mock rotation template for testing."""
-    def __init__(self, id=None, name="Test Rotation", max_residents=None, requires_procedure_credential=False):
+    def __init__(self, id=None, name="Test Rotation", max_residents=None, requires_procedure_credential=False, activity_type=None):
         self.id = id or uuid4()
         self.name = name
         self.max_residents = max_residents
         self.requires_procedure_credential = requires_procedure_credential
+        self.activity_type = activity_type
 
 
 @pytest.fixture
@@ -567,3 +570,463 @@ class TestConstraintIntegration:
         assert isinstance(result, ConstraintResult)
         # The result should indicate validation status
         assert result.satisfied is not None
+
+
+# ============================================================================
+# Max Physicians In Clinic Constraint Tests
+# ============================================================================
+
+class TestMaxPhysiciansInClinicConstraint:
+    """Tests for MaxPhysiciansInClinicConstraint."""
+
+    @pytest.fixture
+    def clinic_context(self):
+        """Create a context with clinic templates for testing."""
+        residents = [
+            MockPerson(name=f"Resident {i}", pgy_level=(i % 3) + 1)
+            for i in range(8)
+        ]
+        faculty = [
+            MockPerson(name=f"Faculty {i}", person_type="faculty", pgy_level=None)
+            for i in range(4)
+        ]
+
+        # Create blocks for one day
+        start_date = date(2024, 1, 8)  # A Monday
+        blocks = [
+            MockBlock(block_date=start_date, time_of_day="AM"),
+            MockBlock(block_date=start_date, time_of_day="PM"),
+        ]
+
+        # Create clinic template
+        clinic_template = MockTemplate(name="Clinic", activity_type="clinic")
+        templates = [clinic_template]
+
+        context = SchedulingContext(
+            residents=residents,
+            faculty=faculty,
+            blocks=blocks,
+            templates=templates,
+            start_date=start_date,
+            end_date=start_date,
+        )
+
+        # Set all as available
+        for person in residents + faculty:
+            context.availability[person.id] = {}
+            for b in blocks:
+                context.availability[person.id][b.id] = {"available": True, "replacement": None}
+
+        return context, clinic_template
+
+    def test_validate_under_limit(self, clinic_context):
+        """Test validation passes when under the limit."""
+        context, clinic_template = clinic_context
+        constraint = MaxPhysiciansInClinicConstraint(max_physicians=6)
+
+        # Assign 5 people to clinic (under limit of 6)
+        block = context.blocks[0]
+        assignments = [
+            MockAssignment(
+                person_id=context.residents[i].id,
+                block_id=block.id,
+                rotation_template_id=clinic_template.id,
+            )
+            for i in range(5)
+        ]
+
+        result = constraint.validate(assignments, context)
+
+        assert result.satisfied is True
+        assert len(result.violations) == 0
+
+    def test_validate_at_limit(self, clinic_context):
+        """Test validation passes when exactly at the limit."""
+        context, clinic_template = clinic_context
+        constraint = MaxPhysiciansInClinicConstraint(max_physicians=6)
+
+        # Assign exactly 6 people to clinic
+        block = context.blocks[0]
+        assignments = [
+            MockAssignment(
+                person_id=context.residents[i].id,
+                block_id=block.id,
+                rotation_template_id=clinic_template.id,
+            )
+            for i in range(6)
+        ]
+
+        result = constraint.validate(assignments, context)
+
+        assert result.satisfied is True
+        assert len(result.violations) == 0
+
+    def test_validate_over_limit(self, clinic_context):
+        """Test validation fails when over the limit."""
+        context, clinic_template = clinic_context
+        constraint = MaxPhysiciansInClinicConstraint(max_physicians=6)
+
+        # Assign 7 people to clinic (over limit of 6)
+        block = context.blocks[0]
+        assignments = [
+            MockAssignment(
+                person_id=context.residents[i].id,
+                block_id=block.id,
+                rotation_template_id=clinic_template.id,
+            )
+            for i in range(7)
+        ]
+
+        result = constraint.validate(assignments, context)
+
+        assert result.satisfied is False
+        assert len(result.violations) == 1
+        assert result.violations[0].severity == "HIGH"
+        assert "7 physicians" in result.violations[0].message
+        assert "max: 6" in result.violations[0].message
+
+    def test_validate_counts_faculty_and_residents(self, clinic_context):
+        """Test that both faculty and residents are counted."""
+        context, clinic_template = clinic_context
+        constraint = MaxPhysiciansInClinicConstraint(max_physicians=6)
+
+        block = context.blocks[0]
+        # 4 residents + 3 faculty = 7 (over limit)
+        assignments = [
+            MockAssignment(
+                person_id=context.residents[i].id,
+                block_id=block.id,
+                rotation_template_id=clinic_template.id,
+            )
+            for i in range(4)
+        ] + [
+            MockAssignment(
+                person_id=context.faculty[i].id,
+                block_id=block.id,
+                rotation_template_id=clinic_template.id,
+            )
+            for i in range(3)
+        ]
+
+        result = constraint.validate(assignments, context)
+
+        assert result.satisfied is False
+        assert len(result.violations) == 1
+
+    def test_validate_per_block_independence(self, clinic_context):
+        """Test that each block is checked independently."""
+        context, clinic_template = clinic_context
+        constraint = MaxPhysiciansInClinicConstraint(max_physicians=6)
+
+        # AM block: 5 people (under limit)
+        # PM block: 7 people (over limit)
+        am_block = context.blocks[0]
+        pm_block = context.blocks[1]
+
+        assignments = [
+            MockAssignment(
+                person_id=context.residents[i].id,
+                block_id=am_block.id,
+                rotation_template_id=clinic_template.id,
+            )
+            for i in range(5)
+        ] + [
+            MockAssignment(
+                person_id=context.residents[i].id,
+                block_id=pm_block.id,
+                rotation_template_id=clinic_template.id,
+            )
+            for i in range(7)
+        ]
+
+        result = constraint.validate(assignments, context)
+
+        assert result.satisfied is False
+        assert len(result.violations) == 1  # Only PM block violates
+
+    def test_validate_ignores_non_clinic_templates(self, clinic_context):
+        """Test that non-clinic templates are not counted."""
+        context, clinic_template = clinic_context
+        constraint = MaxPhysiciansInClinicConstraint(max_physicians=6)
+
+        # Add a non-clinic template
+        research_template = MockTemplate(name="Research", activity_type="research")
+        context.templates.append(research_template)
+        context.template_idx[research_template.id] = len(context.templates) - 1
+
+        block = context.blocks[0]
+        # 5 in clinic + 3 in research = 8 total, but only 5 in clinic
+        assignments = [
+            MockAssignment(
+                person_id=context.residents[i].id,
+                block_id=block.id,
+                rotation_template_id=clinic_template.id,
+            )
+            for i in range(5)
+        ] + [
+            MockAssignment(
+                person_id=context.residents[i].id,
+                block_id=block.id,
+                rotation_template_id=research_template.id,
+            )
+            for i in range(5, 8)
+        ]
+
+        result = constraint.validate(assignments, context)
+
+        assert result.satisfied is True
+
+
+# ============================================================================
+# Wednesday AM Intern Only Constraint Tests
+# ============================================================================
+
+class TestWednesdayAMInternOnlyConstraint:
+    """Tests for WednesdayAMInternOnlyConstraint."""
+
+    @pytest.fixture
+    def wednesday_context(self):
+        """Create a context with Wednesday blocks for testing."""
+        # Create residents with different PGY levels
+        residents = [
+            MockPerson(name="Intern 1", pgy_level=1),
+            MockPerson(name="Intern 2", pgy_level=1),
+            MockPerson(name="PGY-2 Resident", pgy_level=2),
+            MockPerson(name="PGY-3 Resident", pgy_level=3),
+        ]
+        faculty = [
+            MockPerson(name="Faculty 1", person_type="faculty", pgy_level=None),
+        ]
+
+        # Create blocks including Wednesday
+        # date(2024, 1, 3) is a Wednesday
+        wednesday = date(2024, 1, 3)
+        monday = date(2024, 1, 1)
+
+        blocks = [
+            MockBlock(block_date=monday, time_of_day="AM"),
+            MockBlock(block_date=monday, time_of_day="PM"),
+            MockBlock(block_date=wednesday, time_of_day="AM"),  # Target block
+            MockBlock(block_date=wednesday, time_of_day="PM"),
+        ]
+
+        # Create clinic template
+        clinic_template = MockTemplate(name="Clinic", activity_type="clinic")
+        templates = [clinic_template]
+
+        context = SchedulingContext(
+            residents=residents,
+            faculty=faculty,
+            blocks=blocks,
+            templates=templates,
+            start_date=monday,
+            end_date=wednesday,
+        )
+
+        # Set all as available
+        for person in residents + faculty:
+            context.availability[person.id] = {}
+            for b in blocks:
+                context.availability[person.id][b.id] = {"available": True, "replacement": None}
+
+        return context, clinic_template
+
+    def test_validate_intern_on_wednesday_am(self, wednesday_context):
+        """Test that PGY-1 on Wednesday AM passes."""
+        context, clinic_template = wednesday_context
+        constraint = WednesdayAMInternOnlyConstraint()
+
+        # Find Wednesday AM block
+        wed_am_block = [b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"][0]
+
+        # Assign intern to Wednesday AM clinic
+        intern = [r for r in context.residents if r.pgy_level == 1][0]
+        assignments = [
+            MockAssignment(
+                person_id=intern.id,
+                block_id=wed_am_block.id,
+                rotation_template_id=clinic_template.id,
+            )
+        ]
+
+        result = constraint.validate(assignments, context)
+
+        assert result.satisfied is True
+        assert len(result.violations) == 0
+
+    def test_validate_pgy2_on_wednesday_am_fails(self, wednesday_context):
+        """Test that PGY-2 on Wednesday AM fails."""
+        context, clinic_template = wednesday_context
+        constraint = WednesdayAMInternOnlyConstraint()
+
+        # Find Wednesday AM block
+        wed_am_block = [b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"][0]
+
+        # Assign PGY-2 to Wednesday AM clinic
+        pgy2 = [r for r in context.residents if r.pgy_level == 2][0]
+        assignments = [
+            MockAssignment(
+                person_id=pgy2.id,
+                block_id=wed_am_block.id,
+                rotation_template_id=clinic_template.id,
+            )
+        ]
+
+        result = constraint.validate(assignments, context)
+
+        assert result.satisfied is False
+        assert len(result.violations) == 1
+        assert "PGY-2" in result.violations[0].message
+        assert "Wednesday AM clinic" in result.violations[0].message
+
+    def test_validate_pgy3_on_wednesday_am_fails(self, wednesday_context):
+        """Test that PGY-3 on Wednesday AM fails."""
+        context, clinic_template = wednesday_context
+        constraint = WednesdayAMInternOnlyConstraint()
+
+        # Find Wednesday AM block
+        wed_am_block = [b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"][0]
+
+        # Assign PGY-3 to Wednesday AM clinic
+        pgy3 = [r for r in context.residents if r.pgy_level == 3][0]
+        assignments = [
+            MockAssignment(
+                person_id=pgy3.id,
+                block_id=wed_am_block.id,
+                rotation_template_id=clinic_template.id,
+            )
+        ]
+
+        result = constraint.validate(assignments, context)
+
+        assert result.satisfied is False
+        assert len(result.violations) == 1
+        assert "PGY-3" in result.violations[0].message
+
+    def test_validate_pgy2_on_wednesday_pm_passes(self, wednesday_context):
+        """Test that PGY-2 on Wednesday PM passes (no restriction)."""
+        context, clinic_template = wednesday_context
+        constraint = WednesdayAMInternOnlyConstraint()
+
+        # Find Wednesday PM block
+        wed_pm_block = [b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "PM"][0]
+
+        # Assign PGY-2 to Wednesday PM clinic (should be allowed)
+        pgy2 = [r for r in context.residents if r.pgy_level == 2][0]
+        assignments = [
+            MockAssignment(
+                person_id=pgy2.id,
+                block_id=wed_pm_block.id,
+                rotation_template_id=clinic_template.id,
+            )
+        ]
+
+        result = constraint.validate(assignments, context)
+
+        assert result.satisfied is True
+        assert len(result.violations) == 0
+
+    def test_validate_pgy2_on_monday_am_passes(self, wednesday_context):
+        """Test that PGY-2 on Monday AM passes (not Wednesday)."""
+        context, clinic_template = wednesday_context
+        constraint = WednesdayAMInternOnlyConstraint()
+
+        # Find Monday AM block
+        mon_am_block = [b for b in context.blocks if b.date.weekday() == 0 and b.time_of_day == "AM"][0]
+
+        # Assign PGY-2 to Monday AM clinic (should be allowed)
+        pgy2 = [r for r in context.residents if r.pgy_level == 2][0]
+        assignments = [
+            MockAssignment(
+                person_id=pgy2.id,
+                block_id=mon_am_block.id,
+                rotation_template_id=clinic_template.id,
+            )
+        ]
+
+        result = constraint.validate(assignments, context)
+
+        assert result.satisfied is True
+        assert len(result.violations) == 0
+
+    def test_validate_faculty_on_wednesday_am_passes(self, wednesday_context):
+        """Test that faculty on Wednesday AM passes (they supervise)."""
+        context, clinic_template = wednesday_context
+        constraint = WednesdayAMInternOnlyConstraint()
+
+        # Find Wednesday AM block
+        wed_am_block = [b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"][0]
+
+        # Assign faculty to Wednesday AM clinic
+        faculty = context.faculty[0]
+        assignments = [
+            MockAssignment(
+                person_id=faculty.id,
+                block_id=wed_am_block.id,
+                rotation_template_id=clinic_template.id,
+                role="supervising",
+            )
+        ]
+
+        result = constraint.validate(assignments, context)
+
+        assert result.satisfied is True
+        assert len(result.violations) == 0
+
+    def test_validate_ignores_non_clinic_templates(self, wednesday_context):
+        """Test that non-clinic templates are not checked."""
+        context, clinic_template = wednesday_context
+        constraint = WednesdayAMInternOnlyConstraint()
+
+        # Add a non-clinic template
+        research_template = MockTemplate(name="Research", activity_type="research")
+        context.templates.append(research_template)
+        context.template_idx[research_template.id] = len(context.templates) - 1
+
+        # Find Wednesday AM block
+        wed_am_block = [b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"][0]
+
+        # Assign PGY-2 to Wednesday AM research (not clinic - should be allowed)
+        pgy2 = [r for r in context.residents if r.pgy_level == 2][0]
+        assignments = [
+            MockAssignment(
+                person_id=pgy2.id,
+                block_id=wed_am_block.id,
+                rotation_template_id=research_template.id,
+            )
+        ]
+
+        result = constraint.validate(assignments, context)
+
+        assert result.satisfied is True
+        assert len(result.violations) == 0
+
+    def test_validate_multiple_violations(self, wednesday_context):
+        """Test that multiple violations are caught."""
+        context, clinic_template = wednesday_context
+        constraint = WednesdayAMInternOnlyConstraint()
+
+        # Find Wednesday AM block
+        wed_am_block = [b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"][0]
+
+        # Assign both PGY-2 and PGY-3 to Wednesday AM clinic
+        pgy2 = [r for r in context.residents if r.pgy_level == 2][0]
+        pgy3 = [r for r in context.residents if r.pgy_level == 3][0]
+
+        assignments = [
+            MockAssignment(
+                person_id=pgy2.id,
+                block_id=wed_am_block.id,
+                rotation_template_id=clinic_template.id,
+            ),
+            MockAssignment(
+                person_id=pgy3.id,
+                block_id=wed_am_block.id,
+                rotation_template_id=clinic_template.id,
+            ),
+        ]
+
+        result = constraint.validate(assignments, context)
+
+        assert result.satisfied is False
+        assert len(result.violations) == 2
