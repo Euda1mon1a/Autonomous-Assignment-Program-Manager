@@ -318,6 +318,21 @@ Novel contributions:
 
 The existing resilience framework provides empirical validation—the theory explains *why* the cascade simulations work and suggests principled extensions.
 
+### Next Steps
+
+| Priority | Action | Effort | Dependency |
+|----------|--------|--------|------------|
+| **Now** | Reference this doc in `contingency.py` docstrings | 5 min | None |
+| **When PI/QI ships** | Implement `find_recovery_path()` using predecessor analysis | 2-3 days | PI/QI metrics module |
+| **When PI/QI ships** | Add Garden of Eden detection to `n1_vulnerability_score` | 1 day | Metrics computer |
+| **Research phase** | Train neural CA on historical swap data | 1-2 weeks | 6+ months of swap history |
+| **Publication** | Draft paper outline using this document as scaffold | — | Sufficient longitudinal data |
+
+**Not actionable (theoretical background only):**
+- Sections on thermodynamics, Landauer's principle, QCA hardware
+- Detailed CA construction methods (block CA, second-order CA)
+- Cryptographic applications
+
 ---
 
 ## Document History
@@ -326,3 +341,4 @@ The existing resilience framework provides empirical validation—the theory exp
 |---------|------|--------|---------|
 | 1.0 | 2025-12-18 | Claude | Initial research document |
 | 1.1 | 2025-12-18 | Claude | Added PI/QI application section with codebase mappings |
+| 1.2 | 2025-12-18 | Claude | Added actionable next steps table |
