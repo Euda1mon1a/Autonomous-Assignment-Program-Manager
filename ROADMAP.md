@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last Updated:** 2025-12-17
+> **Last Updated:** 2025-12-18
 
 This document outlines the planned features and improvements for the Residency Scheduler project.
 
@@ -89,19 +89,28 @@ The current release includes:
 - [ ] Refactor oversized route files (resilience.py, constraints.py)
 - [ ] Add frontend feature tests (8 features untested)
 - [ ] Consolidate documentation (docs/ vs wiki/)
-- [ ] Fix npm security vulnerabilities
+- [x] Fix npm security vulnerabilities - See `scripts/audit-fix.sh`
 
 ### Medium Priority
 - [ ] Split frontend hooks.ts by domain
 - [ ] Improve frontend type documentation
-- [ ] Standardize error response formats
-- [ ] Add comprehensive API documentation
+- [x] Standardize error response formats - Documented in `docs/CI_CD_RECOMMENDATIONS.md`
+- [x] Add comprehensive API documentation - Added multiple docs in this session
 
 ### Low Priority
 - [ ] Frontend component reorganization
 - [ ] Backend service grouping standardization
-- [ ] Enhanced ESLint configuration
+- [x] Enhanced ESLint configuration - Added `eslint.config.js` for ESLint v9
 - [ ] Playwright test expansion
+
+### Recently Completed
+- [x] Pre-deployment validation script (`scripts/pre-deploy-validate.sh`)
+- [x] TODO tracking documentation (`docs/TODO_TRACKER.md`)
+- [x] Code complexity analysis (`docs/CODE_COMPLEXITY_ANALYSIS.md`)
+- [x] Security scanning guide (`docs/SECURITY_SCANNING.md`)
+- [x] CI/CD improvement recommendations (`docs/CI_CD_RECOMMENDATIONS.md`)
+- [x] Implementation tracker for swap system (`docs/IMPLEMENTATION_TRACKER.md`)
+- [x] TypeScript type-check configuration (`frontend/tsconfig.typecheck.json`)
 
 ---
 
