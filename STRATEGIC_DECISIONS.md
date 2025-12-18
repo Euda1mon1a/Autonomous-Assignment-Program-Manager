@@ -1,8 +1,28 @@
 # Strategic Decisions: Direction & Priorities
 
-> **Status:** Requires Human Input
+> **Status:** ✅ DECISIONS MADE (2025-12-18)
 > **Generated:** 2025-12-18
 > **Purpose:** Document key strategic decisions for project direction
+
+---
+
+## Executive Summary: Decisions Made
+
+| # | Decision | Choice | Notes |
+|---|----------|--------|-------|
+| 1 | Target User | **Single residency → Multi-program** | Start single, expand to hospital-wide |
+| 2 | Next Feature | **Email Notifications** | Priority on mobile calendar (ics/webcal) |
+| 3 | Deployment | **Self-hosted** | May use Render later based on adoption |
+| 4 | Integration | **MyEvaluations** | EMR integration will never happen |
+| 5 | License | **MIT** | Fully open source |
+| 6 | Market Focus | **Military Medicine** | Unique needs, specialized features |
+| 7 | AI/ML | **Push automation to limit** | ML for program analytics, test if LLM needed |
+
+### Key Insights
+- **Mobile calendar access is critical** - Residents want schedules on phones (ics/webcal)
+- **Excel export sufficient for some** - Not everyone needs full app access
+- **Military-first** - Optimize for DoD/VA program requirements
+- **Automation maximized** - Push scheduling automation as far as possible
 
 ---
 
@@ -223,19 +243,17 @@ Blockers: [Any dependencies or concerns]
 
 ---
 
-## Recommended Path (Default)
+## Confirmed Path (Human Decision - 2025-12-18)
 
-If no input is provided, the following defaults will be used:
-
-| Decision | Default Choice | Rationale |
-|----------|---------------|-----------|
-| 1. Target User | **A: Single Institution** | Simplest path, prove value |
-| 2. Next Feature | **Email Notifications** | High value, low effort |
-| 3. Deployment | **A: Self-Hosted** | No infrastructure commitment |
-| 4. Integration | **Calendar (iCal)** | Already partially done |
-| 5. License | **MIT (Open Source)** | Community building |
-| 6. Market Focus | **C: Dual-Market** | Keep optionality |
-| 7. AI Investment | **None for v1.1** | Focus on stability |
+| Decision | Choice | Implementation Priority |
+|----------|--------|------------------------|
+| 1. Target User | **B: Multi-Program** | Start single residency, architect for hospital-wide expansion |
+| 2. Next Feature | **Email Notifications** | v1.1.0 - Include ics/webcal for mobile calendar sync |
+| 3. Deployment | **A: Self-Hosted** | Document for self-hosting, evaluate Render for future |
+| 4. Integration | **MyEvaluations** | v1.2.0 - Bidirectional sync with evaluation system |
+| 5. License | **MIT** | Add LICENSE file, enable community contributions |
+| 6. Market Focus | **A: Military-Primary** | Optimize for DoD/VA, military-specific features first |
+| 7. AI Investment | **ML Analytics + Max Automation** | Push automation limits, ML for program insights, evaluate LLM later |
 
 ---
 
