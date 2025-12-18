@@ -1,0 +1,8 @@
+***REMOVED*** Ignore all test results
+*.json
+*.html
+*.xml
+*.csv
+
+***REMOVED*** But keep the directory
+!.gitignore

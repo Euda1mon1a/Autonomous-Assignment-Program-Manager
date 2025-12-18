@@ -461,6 +461,40 @@ SELECT * FROM persons WHERE role = 'RESIDENT';
 SELECT * FROM blocks WHERE date >= CURRENT_DATE LIMIT 10;
 ```
 
+***REMOVED******REMOVED******REMOVED*** Load Testing
+
+```bash
+***REMOVED*** k6 Load Tests (from load-tests/ directory)
+cd load-tests
+npm install                           ***REMOVED*** Install dependencies
+npm run test:smoke                    ***REMOVED*** Quick validation (1 min)
+npm run test:load                     ***REMOVED*** Standard load test (5 min, 50 VUs)
+npm run test:stress                   ***REMOVED*** Stress test (10 min, 200 VUs)
+
+***REMOVED*** Run specific k6 scenarios
+k6 run scenarios/api-baseline.js      ***REMOVED*** Establish latency baselines
+k6 run scenarios/concurrent-users.js  ***REMOVED*** Multi-user simulation
+k6 run scenarios/schedule-generation.js  ***REMOVED*** Schedule gen stress
+k6 run scenarios/rate-limit-attack.js ***REMOVED*** Security testing
+
+***REMOVED*** Custom k6 options
+k6 run --vus 50 --duration 5m scenarios/concurrent-users.js
+
+***REMOVED*** pytest Performance Tests (from backend/ directory)
+cd backend
+pytest -m performance                 ***REMOVED*** All performance tests
+pytest -m "performance and not slow"  ***REMOVED*** Fast performance tests only
+pytest tests/performance/test_acgme_load.py -v      ***REMOVED*** ACGME validation
+pytest tests/performance/test_connection_pool.py -v ***REMOVED*** DB connection pool
+pytest tests/performance/test_idempotency_load.py -v ***REMOVED*** Idempotency
+pytest tests/resilience/test_resilience_load.py -v  ***REMOVED*** Resilience framework
+
+***REMOVED*** Docker-based load testing
+cd load-tests
+npm run test:docker:smoke             ***REMOVED*** Run in container
+npm run test:docker:load              ***REMOVED*** Full load test in container
+```
+
 ---
 
 ***REMOVED******REMOVED*** Files and Patterns to Never Modify
