@@ -461,6 +461,40 @@ SELECT * FROM persons WHERE role = 'RESIDENT';
 SELECT * FROM blocks WHERE date >= CURRENT_DATE LIMIT 10;
 ```
 
+### Load Testing
+
+```bash
+# k6 Load Tests (from load-tests/ directory)
+cd load-tests
+npm install                           # Install dependencies
+npm run test:smoke                    # Quick validation (1 min)
+npm run test:load                     # Standard load test (5 min, 50 VUs)
+npm run test:stress                   # Stress test (10 min, 200 VUs)
+
+# Run specific k6 scenarios
+k6 run scenarios/api-baseline.js      # Establish latency baselines
+k6 run scenarios/concurrent-users.js  # Multi-user simulation
+k6 run scenarios/schedule-generation.js  # Schedule gen stress
+k6 run scenarios/rate-limit-attack.js # Security testing
+
+# Custom k6 options
+k6 run --vus 50 --duration 5m scenarios/concurrent-users.js
+
+# pytest Performance Tests (from backend/ directory)
+cd backend
+pytest -m performance                 # All performance tests
+pytest -m "performance and not slow"  # Fast performance tests only
+pytest tests/performance/test_acgme_load.py -v      # ACGME validation
+pytest tests/performance/test_connection_pool.py -v # DB connection pool
+pytest tests/performance/test_idempotency_load.py -v # Idempotency
+pytest tests/resilience/test_resilience_load.py -v  # Resilience framework
+
+# Docker-based load testing
+cd load-tests
+npm run test:docker:smoke             # Run in container
+npm run test:docker:load              # Full load test in container
+```
+
 ---
 
 ## Files and Patterns to Never Modify
