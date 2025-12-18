@@ -6,9 +6,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { get, post, ApiError } from '@/lib/api'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
-// Backend schema - matches backend/app/schemas/settings.py
+// Backend schema - matches backend/app/schemas/settings.py and SchedulingAlgorithm enum
+// Available algorithms: greedy, cp_sat, pulp, hybrid (NOT min_conflicts - no implementation exists)
 interface Settings {
-  scheduling_algorithm: 'greedy' | 'min_conflicts' | 'cp_sat'
+  scheduling_algorithm: 'greedy' | 'cp_sat' | 'pulp' | 'hybrid'
   work_hours_per_week: number
   max_consecutive_days: number
   min_days_off_per_week: number
@@ -280,16 +281,17 @@ export default function SettingsPage() {
                   onChange={(e) =>
                     updateSetting(
                       'scheduling_algorithm',
-                      e.target.value as 'greedy' | 'min_conflicts' | 'cp_sat'
+                      e.target.value as 'greedy' | 'cp_sat' | 'pulp' | 'hybrid'
                     )
                   }
                 >
                   <option value="greedy">Greedy (Fast)</option>
-                  <option value="min_conflicts">Min Conflicts (Balanced)</option>
-                  <option value="cp_sat">CP-SAT (Optimal)</option>
+                  <option value="cp_sat">CP-SAT (Optimal, OR-Tools)</option>
+                  <option value="pulp">PuLP (Linear Programming)</option>
+                  <option value="hybrid">Hybrid (CP-SAT + PuLP)</option>
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Greedy is fastest, CP-SAT finds optimal solution but slower
+                  Greedy is fastest. CP-SAT guarantees ACGME compliance. Hybrid combines both.
                 </p>
               </div>
               <div>
