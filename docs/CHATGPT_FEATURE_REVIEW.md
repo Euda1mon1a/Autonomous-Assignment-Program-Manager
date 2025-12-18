@@ -75,10 +75,105 @@ Pulse delivers personalized morning briefings based on chats, memory, and connec
 
 ## Next Steps
 
-1. [ ] Test Codex on a medium-complexity feature branch
-2. [ ] Evaluate PR quality against our CONTRIBUTING.md standards
+1. [x] Test Codex on a medium-complexity feature branch
+2. [x] Evaluate PR quality against our CONTRIBUTING.md standards
 3. [ ] Assess Pulse calendar integration feasibility
 4. [ ] Compare autonomous task completion times
+
+---
+
+## Codex Evaluation Results (2025-12-18)
+
+We tested Codex on a task to "Locate tasks in agents.md" which resulted in changes across 6 backend files. Here's what we learned:
+
+### What Codex Does Well ✅
+
+| Task Type | Example | Quality |
+|-----------|---------|---------|
+| **Bug fixes** | Removed incorrect `// 2` division in swap counting | Excellent |
+| **Import corrections** | Fixed non-existent module paths (`app.api.deps` → `app.core.security`) | Excellent |
+| **Type hint fixes** | `callable` → `Callable`, explicit `datetime.date` annotations | Good |
+| **Defensive coding** | Added null-safety (`??` operators), `.filter(Boolean)` | Good |
+| **Security defaults** | Auto-generate secrets instead of empty strings | Good (with caveats) |
+
+### What Codex Does Poorly ❌
+
+| Task Type | Example | Problem |
+|-----------|---------|---------|
+| **Large service rewrites** | Attempted to replace 589-line audit_service.py | Gutted working code, replaced with stubs returning empty data |
+| **Domain-specific logic** | Removed ACGME compliance checking, user resolution | Didn't understand business requirements |
+| **Complete implementations** | New `AuditService` class had stub methods: `return []` | Passes tests but breaks functionality |
+
+### Key Finding: Test-Passing ≠ Correctness
+
+Codex ran `pytest backend/tests/test_audit_service.py` and it passed. However, the tests only covered basic operations—the 400+ lines of lost business logic (user resolution, entity names, ACGME override detection) were never tested.
+
+**Lesson:** Codex optimizes for test passage, not functional correctness.
+
+---
+
+## Codex Usage Guidelines
+
+### RECOMMENDED Tasks for Codex
+
+```
+✅ Fix import errors and module path issues
+✅ Fix type annotation problems (mypy errors)
+✅ Fix obvious bugs caught by tests (off-by-one, null checks)
+✅ Update dependencies and fix deprecation warnings
+✅ Standardize code formatting and style issues
+✅ Add null-safety and defensive coding patterns
+✅ Fix linter warnings and static analysis issues
+```
+
+### AVOID Giving Codex These Tasks
+
+```
+❌ Rewrite or refactor entire service files
+❌ Add new features requiring domain knowledge
+❌ Modify business logic (ACGME rules, scheduling constraints)
+❌ Change architectural patterns
+❌ Consolidate or merge related modules
+❌ Implement complex validation logic
+```
+
+### Codex Task Prompt Template
+
+When assigning tasks to Codex, use this structure:
+
+```markdown
+## Task Type: Bug Fix / Import Fix / Type Annotation Fix
+
+## Scope: (specific file paths only)
+- backend/app/core/config.py
+- backend/app/models/calendar_subscription.py
+
+## Specific Instructions:
+- Fix the import error on line X
+- Do NOT modify business logic
+- Do NOT add new classes or methods
+- Do NOT refactor surrounding code
+
+## Testing:
+- Run: pytest backend/tests/test_specific_file.py
+- Verify: imports resolve correctly
+
+## Constraints:
+- Changes should be < 20 lines total
+- Preserve all existing functionality
+- Do not remove any code unless it's clearly dead
+```
+
+### Review Checklist for Codex PRs
+
+Before accepting any Codex changes:
+
+- [ ] **Line count sanity check**: Large additions (+100 lines) require manual review
+- [ ] **Imports preserved**: No schema/model classes redefined locally
+- [ ] **Stub detection**: Search for `return []` or `return {}` patterns
+- [ ] **Business logic intact**: Compare functions before/after
+- [ ] **Test coverage**: Does the test suite actually cover the changed logic?
+- [ ] **Domain concepts**: Are ACGME, compliance, scheduling terms still present?
 
 ---
 
