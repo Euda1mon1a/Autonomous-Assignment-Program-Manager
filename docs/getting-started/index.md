@@ -100,6 +100,11 @@ Detailed installation instructions for all platforms.
 </div>
 
 <div class="feature-card" markdown>
+### :material-apple: [macOS Deploy Guide](macos-deploy.md)
+Complete macOS deployment via Terminal.
+</div>
+
+<div class="feature-card" markdown>
 ### :material-rocket-launch: [Quick Start](quickstart.md)
 First steps after installation.
 </div>
@@ -126,6 +131,7 @@ Environment variables and settings.
 ## Related Documentation
 
 - **[Installation Guide](installation.md)** - Detailed installation steps
+- **[macOS Deploy Guide](macos-deploy.md)** - Complete macOS Terminal deployment
 - **[Configuration](configuration.md)** - Environment variables and settings
 - **[Quick Start](quickstart.md)** - First steps after installation
 - **[User Guide](../user-guide/index.md)** - Using the application

@@ -297,6 +297,7 @@ residency-scheduler/
 |----------|-------------|
 | [User Guide](USER_GUIDE.md) | Complete user guide |
 | [Getting Started](docs/getting-started/index.md) | Installation and quickstart |
+| [macOS Deploy Guide](docs/getting-started/macos-deploy.md) | Complete macOS Terminal deployment |
 | [Configuration](docs/getting-started/configuration.md) | Environment setup |
 
 ### Technical Reference
