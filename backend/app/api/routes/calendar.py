@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_active_user
+from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.calendar import (
