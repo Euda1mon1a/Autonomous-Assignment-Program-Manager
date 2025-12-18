@@ -6,10 +6,17 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.models.assignment import Assignment
+from app.models.settings import OverrideReasonCode
 from app.repositories.assignment import AssignmentRepository
 from app.repositories.block import BlockRepository
 from app.repositories.person import PersonRepository
 from app.scheduling.validator import ACGMEValidator
+from app.services.freeze_horizon_service import (
+    FreezeCheckResult,
+    FreezeHorizonService,
+    FreezeHorizonViolation,
+    FreezeOverrideRequest,
+)
 
 
 class AssignmentService:
@@ -20,6 +27,7 @@ class AssignmentService:
         self.assignment_repo = AssignmentRepository(db)
         self.block_repo = BlockRepository(db)
         self.person_repo = PersonRepository(db)
+        self.freeze_service = FreezeHorizonService(db)
 
     def get_assignment(self, assignment_id: UUID) -> Assignment | None:
         """Get a single assignment by ID."""
@@ -53,22 +61,60 @@ class AssignmentService:
         rotation_template_id: UUID | None = None,
         activity_type: str | None = None,
         notes: str | None = None,
+        # Freeze horizon override parameters
+        freeze_override_reason_code: OverrideReasonCode | None = None,
+        freeze_override_reason_text: str | None = None,
+        initiating_module: str = "manual",
     ) -> dict:
         """
-        Create a new assignment with ACGME validation.
+        Create a new assignment with ACGME validation and freeze horizon check.
 
         Returns dict with:
         - assignment: The created assignment
         - acgme_warnings: List of ACGME compliance warnings
         - is_compliant: Whether the assignment is ACGME compliant
+        - freeze_status: Freeze horizon check result
         - error: Error message if creation failed
         """
+        # Get block to check freeze horizon
+        block = self.block_repo.get_by_id(block_id)
+        if not block:
+            return {
+                "assignment": None,
+                "error": "Block not found",
+                "freeze_status": None,
+            }
+
+        # Check freeze horizon
+        freeze_override = None
+        if freeze_override_reason_code and freeze_override_reason_text:
+            freeze_override = FreezeOverrideRequest(
+                reason_code=freeze_override_reason_code,
+                reason_text=freeze_override_reason_text,
+                initiated_by=created_by,
+                initiating_module=initiating_module,
+            )
+
+        try:
+            freeze_result = self.freeze_service.enforce_freeze_or_override(
+                block_date=block.date,
+                override_request=freeze_override,
+                block_id=block_id,
+            )
+        except FreezeHorizonViolation as e:
+            return {
+                "assignment": None,
+                "error": e.check_result.message,
+                "freeze_status": e.check_result.to_dict(),
+            }
+
         # Check for duplicate
         existing = self.assignment_repo.get_by_block_and_person(block_id, person_id)
         if existing:
             return {
                 "assignment": None,
                 "error": "Person already assigned to this block",
+                "freeze_status": freeze_result.to_dict(),
             }
 
         # Build assignment data
@@ -88,6 +134,16 @@ class AssignmentService:
         # Create assignment
         assignment = self.assignment_repo.create(assignment_data)
 
+        # Update audit record with assignment ID if freeze was overridden
+        if freeze_result.is_frozen and freeze_override:
+            self.freeze_service.create_audit_record(
+                assignment_id=assignment.id,
+                block_id=block_id,
+                block_date=block.date,
+                freeze_result=freeze_result,
+                override_request=freeze_override,
+            )
+
         # Validate ACGME compliance
         validation = self._validate_acgme(assignment, override_reason)
 
@@ -104,6 +160,7 @@ class AssignmentService:
             "assignment": assignment,
             "acgme_warnings": validation["warnings"],
             "is_compliant": validation["is_compliant"],
+            "freeze_status": freeze_result.to_dict(),
             "error": None,
         }
 
@@ -113,19 +170,54 @@ class AssignmentService:
         update_data: dict,
         expected_updated_at,
         override_reason: str | None = None,
+        # Freeze horizon override parameters
+        freeze_override_reason_code: OverrideReasonCode | None = None,
+        freeze_override_reason_text: str | None = None,
+        updated_by: str = "unknown",
+        initiating_module: str = "manual",
     ) -> dict:
         """
-        Update an assignment with optimistic locking.
+        Update an assignment with optimistic locking and freeze horizon check.
 
         Returns dict with:
         - assignment: The updated assignment
         - acgme_warnings: List of ACGME compliance warnings
         - is_compliant: Whether the assignment is ACGME compliant
+        - freeze_status: Freeze horizon check result
         - error: Error message if update failed
         """
         assignment = self.assignment_repo.get_by_id(assignment_id)
         if not assignment:
-            return {"assignment": None, "error": "Assignment not found"}
+            return {"assignment": None, "error": "Assignment not found", "freeze_status": None}
+
+        # Get block for freeze horizon check
+        block = self.block_repo.get_by_id(assignment.block_id)
+        if not block:
+            return {"assignment": None, "error": "Block not found", "freeze_status": None}
+
+        # Check freeze horizon
+        freeze_override = None
+        if freeze_override_reason_code and freeze_override_reason_text:
+            freeze_override = FreezeOverrideRequest(
+                reason_code=freeze_override_reason_code,
+                reason_text=freeze_override_reason_text,
+                initiated_by=updated_by,
+                initiating_module=initiating_module,
+            )
+
+        try:
+            freeze_result = self.freeze_service.enforce_freeze_or_override(
+                block_date=block.date,
+                override_request=freeze_override,
+                assignment_id=assignment_id,
+                block_id=assignment.block_id,
+            )
+        except FreezeHorizonViolation as e:
+            return {
+                "assignment": None,
+                "error": e.check_result.message,
+                "freeze_status": e.check_result.to_dict(),
+            }
 
         # Optimistic locking check
         if assignment.updated_at != expected_updated_at:
@@ -133,6 +225,7 @@ class AssignmentService:
                 "assignment": None,
                 "error": f"Assignment has been modified by another user. "
                 f"Current version: {assignment.updated_at}, Your version: {expected_updated_at}",
+                "freeze_status": freeze_result.to_dict(),
             }
 
         # Update assignment
@@ -154,25 +247,111 @@ class AssignmentService:
             "assignment": assignment,
             "acgme_warnings": validation["warnings"],
             "is_compliant": validation["is_compliant"],
+            "freeze_status": freeze_result.to_dict(),
             "error": None,
         }
 
-    def delete_assignment(self, assignment_id: UUID) -> dict:
-        """Delete an assignment."""
+    def delete_assignment(
+        self,
+        assignment_id: UUID,
+        # Freeze horizon override parameters
+        freeze_override_reason_code: OverrideReasonCode | None = None,
+        freeze_override_reason_text: str | None = None,
+        deleted_by: str = "unknown",
+        initiating_module: str = "manual",
+    ) -> dict:
+        """Delete an assignment with freeze horizon check."""
         assignment = self.assignment_repo.get_by_id(assignment_id)
         if not assignment:
-            return {"success": False, "error": "Assignment not found"}
+            return {"success": False, "error": "Assignment not found", "freeze_status": None}
+
+        # Get block for freeze horizon check
+        block = self.block_repo.get_by_id(assignment.block_id)
+        if not block:
+            return {"success": False, "error": "Block not found", "freeze_status": None}
+
+        # Check freeze horizon
+        freeze_override = None
+        if freeze_override_reason_code and freeze_override_reason_text:
+            freeze_override = FreezeOverrideRequest(
+                reason_code=freeze_override_reason_code,
+                reason_text=freeze_override_reason_text,
+                initiated_by=deleted_by,
+                initiating_module=initiating_module,
+            )
+
+        try:
+            freeze_result = self.freeze_service.enforce_freeze_or_override(
+                block_date=block.date,
+                override_request=freeze_override,
+                assignment_id=assignment_id,
+                block_id=assignment.block_id,
+            )
+        except FreezeHorizonViolation as e:
+            return {
+                "success": False,
+                "error": e.check_result.message,
+                "freeze_status": e.check_result.to_dict(),
+            }
 
         self.assignment_repo.delete(assignment)
         self.assignment_repo.commit()
-        return {"success": True, "error": None}
+        return {"success": True, "error": None, "freeze_status": freeze_result.to_dict()}
 
-    def delete_assignments_bulk(self, start_date: date, end_date: date) -> dict:
-        """Delete all assignments in a date range."""
+    def delete_assignments_bulk(
+        self,
+        start_date: date,
+        end_date: date,
+        # Freeze horizon override parameters
+        freeze_override_reason_code: OverrideReasonCode | None = None,
+        freeze_override_reason_text: str | None = None,
+        deleted_by: str = "unknown",
+        initiating_module: str = "planning",
+    ) -> dict:
+        """
+        Delete all assignments in a date range with freeze horizon check.
+
+        For bulk operations, we check if ANY assignments fall within the freeze horizon.
+        If so, ALL deletions require override (or we reject the entire operation).
+        """
         block_ids = self.block_repo.get_ids_in_date_range(start_date, end_date)
+
+        # Check freeze horizon for the entire date range
+        settings = self.freeze_service.get_settings()
+        today = date.today()
+        freeze_end = today + timedelta(days=settings.freeze_horizon_days)
+
+        # Any overlap with freeze horizon?
+        has_frozen_assignments = start_date <= freeze_end
+
+        if has_frozen_assignments and settings.freeze_scope != "none":
+            # Need override for bulk delete that touches freeze horizon
+            freeze_override = None
+            if freeze_override_reason_code and freeze_override_reason_text:
+                freeze_override = FreezeOverrideRequest(
+                    reason_code=freeze_override_reason_code,
+                    reason_text=freeze_override_reason_text,
+                    initiated_by=deleted_by,
+                    initiating_module=initiating_module,
+                )
+
+            # Use earliest affected date for freeze check
+            check_date = max(start_date, today)
+            try:
+                freeze_result = self.freeze_service.enforce_freeze_or_override(
+                    block_date=check_date,
+                    override_request=freeze_override,
+                )
+            except FreezeHorizonViolation as e:
+                return {
+                    "deleted": 0,
+                    "error": f"Bulk delete blocked: {e.check_result.message}",
+                    "freeze_status": e.check_result.to_dict(),
+                }
+
         deleted_count = self.assignment_repo.delete_by_block_ids(block_ids)
         self.assignment_repo.commit()
-        return {"deleted": deleted_count}
+        return {"deleted": deleted_count, "error": None, "freeze_status": None}
 
     def _validate_acgme(
         self,
