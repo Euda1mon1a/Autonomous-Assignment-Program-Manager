@@ -1,0 +1,185 @@
+{
+  // =========================================================================
+  // MCP Server Configuration
+  // =========================================================================
+  "mcp": {
+    "enabled": true,
+    "autoStart": false,
+    "logLevel": "info"
+  },
+
+  // =========================================================================
+  // Language Configuration
+  // =========================================================================
+  "languages": {
+    "Python": {
+      "tab_size": 4,
+      "format_on_save": "on",
+      "formatter": "black",
+      "language_servers": ["pyright"],
+      "code_actions_on_format": {
+        "source.organizeImports": true
+      }
+    },
+    "TypeScript": {
+      "tab_size": 2,
+      "format_on_save": "on",
+      "formatter": "prettier",
+      "code_actions_on_format": {
+        "source.organizeImports": true,
+        "source.fixAll.eslint": true
+      }
+    },
+    "TSX": {
+      "tab_size": 2,
+      "format_on_save": "on",
+      "formatter": "prettier",
+      "code_actions_on_format": {
+        "source.organizeImports": true,
+        "source.fixAll.eslint": true
+      }
+    },
+    "JavaScript": {
+      "tab_size": 2,
+      "format_on_save": "on",
+      "formatter": "prettier"
+    },
+    "JSON": {
+      "tab_size": 2,
+      "format_on_save": "on",
+      "formatter": "prettier"
+    }
+  },
+
+  // =========================================================================
+  // Editor Configuration
+  // =========================================================================
+  "theme": "One Dark",
+  "buffer_font_family": "JetBrains Mono",
+  "buffer_font_size": 14,
+  "ui_font_size": 16,
+  "tab_size": 4,
+  "soft_wrap": "editor_width",
+  "show_whitespaces": "selection",
+  "tab_bar": {
+    "show": true
+  },
+  "scrollbar": {
+    "show": "auto"
+  },
+  "vertical_scroll_margin": 3,
+  "relative_line_numbers": false,
+  "cursor_blink": true,
+  "hover_popover_enabled": true,
+  "confirm_quit": true,
+
+  // =========================================================================
+  // LSP Configuration
+  // =========================================================================
+  "lsp": {
+    "pyright": {
+      "settings": {
+        "python.analysis.typeCheckingMode": "basic",
+        "python.analysis.extraPaths": [
+          "backend",
+          "mcp-server/src"
+        ],
+        "python.pythonPath": "backend/venv/bin/python"
+      }
+    },
+    "typescript-language-server": {
+      "initialization_options": {
+        "preferences": {
+          "importModuleSpecifier": "non-relative"
+        }
+      }
+    }
+  },
+
+  // =========================================================================
+  // File Configuration
+  // =========================================================================
+  "file_types": {
+    ".env": "Shell Script",
+    ".env.example": "Shell Script",
+    "docker-compose*.yml": "YAML"
+  },
+
+  // =========================================================================
+  // Project Configuration
+  // =========================================================================
+  "project_panel": {
+    "dock": "left",
+    "default_width": 240
+  },
+  "outline_panel": {
+    "dock": "right",
+    "default_width": 240
+  },
+
+  // =========================================================================
+  // Git Configuration
+  // =========================================================================
+  "git": {
+    "git_gutter": "tracked_files",
+    "inline_blame": {
+      "enabled": true
+    }
+  },
+
+  // =========================================================================
+  // Terminal Configuration
+  // =========================================================================
+  "terminal": {
+    "shell": {
+      "program": "/bin/bash"
+    },
+    "env": {
+      "DATABASE_URL": "$DATABASE_URL",
+      "REDIS_URL": "$REDIS_URL",
+      "API_BASE_URL": "$API_BASE_URL"
+    },
+    "dock": "bottom",
+    "default_height": 320,
+    "font_family": "JetBrains Mono",
+    "font_size": 14,
+    "blinking": "terminal_controlled",
+    "alternate_scroll": "on",
+    "option_as_meta": false,
+    "copy_on_select": false,
+    "button": false,
+    "toolbar": {
+      "title": true
+    }
+  },
+
+  // =========================================================================
+  // Search Configuration
+  // =========================================================================
+  "search": {
+    "whole_word": false,
+    "case_sensitive": false,
+    "include_ignored": false,
+    "regex": false
+  },
+
+  // =========================================================================
+  // Auto-save Configuration
+  // =========================================================================
+  "autosave": "on_focus_change",
+
+  // =========================================================================
+  // Collaboration Configuration
+  // =========================================================================
+  "collaboration_panel": {
+    "dock": "left"
+  },
+
+  // =========================================================================
+  // Telemetry
+  // =========================================================================
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
+  }
+}
