@@ -21,6 +21,17 @@ from app.schemas.certification import (
     PersonCertificationWithTypeResponse,
     PersonComplianceResponse,
 )
+from app.schemas.email import (
+    EmailLogCreate,
+    EmailLogListResponse,
+    EmailLogRead,
+    EmailLogUpdate,
+    EmailTemplateCreate,
+    EmailTemplateListResponse,
+    EmailTemplateRead,
+    EmailTemplateSummary,
+    EmailTemplateUpdate,
+)
 from app.schemas.leave import (
     BulkLeaveImportRequest,
     BulkLeaveImportResponse,
@@ -162,6 +173,16 @@ __all__ = [
     "ExpiringCertificationsListResponse",
     "ComplianceSummaryResponse",
     "PersonComplianceResponse",
+    # Email notification schemas
+    "EmailLogCreate",
+    "EmailLogUpdate",
+    "EmailLogRead",
+    "EmailLogListResponse",
+    "EmailTemplateCreate",
+    "EmailTemplateUpdate",
+    "EmailTemplateRead",
+    "EmailTemplateListResponse",
+    "EmailTemplateSummary",
     # FMIT Swap schemas
     "SwapStatusSchema",
     "SwapTypeSchema",

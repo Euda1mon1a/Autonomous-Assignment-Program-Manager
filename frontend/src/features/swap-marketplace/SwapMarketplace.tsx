@@ -8,7 +8,7 @@
  * and creating new swap requests.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ShoppingCart,
   List,
@@ -31,6 +31,8 @@ import type { MarketplaceTab, SwapFilters as Filters } from './types';
 export function SwapMarketplace() {
   const [activeTab, setActiveTab] = useState<MarketplaceTab>('browse');
   const [filters, setFilters] = useState<Filters>({});
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+  const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const { data: marketplaceData, isLoading, error, refetch } = useSwapMarketplace(filters, {
     enabled: activeTab === 'browse',
@@ -65,6 +67,51 @@ export function SwapMarketplace() {
   const handleCreateSuccess = () => {
     setActiveTab('my-requests');
   };
+
+  // Keyboard navigation for browse tab
+  useEffect(() => {
+    if (activeTab !== 'browse' || !marketplaceData?.entries.length) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if user is typing in an input field
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
+
+      const entries = marketplaceData.entries;
+
+      switch (e.key) {
+        case 'ArrowDown':
+        case 'j':
+          e.preventDefault();
+          setSelectedIndex(prev => {
+            const next = prev < entries.length - 1 ? prev + 1 : prev;
+            cardRefs.current.get(next)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return next;
+          });
+          break;
+        case 'ArrowUp':
+        case 'k':
+          e.preventDefault();
+          setSelectedIndex(prev => {
+            const next = prev > 0 ? prev - 1 : 0;
+            cardRefs.current.get(next)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return next;
+          });
+          break;
+        case 'Escape':
+          e.preventDefault();
+          setSelectedIndex(-1);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab, marketplaceData?.entries.length]);
+
+  // Reset selection when changing tabs or data
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [activeTab, filters]);
 
   const renderTabContent = () => {
     if (activeTab === 'browse') {
@@ -154,12 +201,31 @@ export function SwapMarketplace() {
                     </h3>
                   </div>
                   <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                    {marketplaceData.entries.map((entry) => (
-                      <SwapRequestCard
+                    {marketplaceData.entries.map((entry, index) => (
+                      <div
                         key={entry.requestId}
-                        marketplaceEntry={entry}
-                        onActionComplete={() => refetch()}
-                      />
+                        ref={(el) => {
+                          if (el) {
+                            cardRefs.current.set(index, el);
+                          } else {
+                            cardRefs.current.delete(index);
+                          }
+                        }}
+                        tabIndex={0}
+                        className={`
+                          transition-all rounded-lg
+                          ${selectedIndex === index ? 'ring-2 ring-blue-500 ring-offset-2' : ''}
+                        `}
+                        onFocus={() => setSelectedIndex(index)}
+                        onClick={() => setSelectedIndex(index)}
+                        role="button"
+                        aria-label={`Swap request from ${entry.requestingFacultyName}`}
+                      >
+                        <SwapRequestCard
+                          marketplaceEntry={entry}
+                          onActionComplete={() => refetch()}
+                        />
+                      </div>
                     ))}
                   </div>
                 </div>

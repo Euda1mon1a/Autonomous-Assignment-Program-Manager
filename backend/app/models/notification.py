@@ -12,6 +12,7 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 from app.db.types import GUID, JSONType
@@ -52,6 +53,9 @@ class Notification(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    # Relationships
+    email_logs = relationship("EmailLog", back_populates="notification")
 
     __table_args__ = (
         CheckConstraint(

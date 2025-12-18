@@ -2,7 +2,8 @@
 
 > **Generated:** 2025-12-18
 > **Branch:** `claude/parallel-work-setup-eHn0Z`
-> **Status:** Ready for parallel execution
+> **Status:** ARCHIVED - Superseded by SESSION_9_PARALLEL_PRIORITIES.md
+> **Next:** See `SESSION_9_PARALLEL_PRIORITIES.md` for current priorities
 
 ---
 

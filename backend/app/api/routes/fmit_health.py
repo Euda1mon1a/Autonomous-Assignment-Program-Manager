@@ -13,7 +13,7 @@ from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy import and_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.db.session import get_db
 from app.models.assignment import Assignment
@@ -257,6 +257,7 @@ def detect_coverage_gaps(db: Session, start_date: date, end_date: date) -> list[
     today = date.today()
 
     # Get all FMIT blocks in range
+    # Eager load assignments and rotation_template to avoid N+1 queries
     blocks = db.query(Block).filter(
         and_(
             Block.date >= start_date,
@@ -265,11 +266,24 @@ def detect_coverage_gaps(db: Session, start_date: date, end_date: date) -> list[
         )
     ).all()
 
+    # Build a map of block_id -> assignments to avoid N+1
+    block_ids = [block.id for block in blocks]
+    assignments_by_block = {}
+    if block_ids:
+        all_assignments = (
+            db.query(Assignment)
+            .options(joinedload(Assignment.rotation_template))
+            .filter(Assignment.block_id.in_(block_ids))
+            .all()
+        )
+        for assignment in all_assignments:
+            if assignment.block_id not in assignments_by_block:
+                assignments_by_block[assignment.block_id] = []
+            assignments_by_block[assignment.block_id].append(assignment)
+
     for block in blocks:
-        # Count current assignments for this block
-        assignments = db.query(Assignment).filter(
-            Assignment.block_id == block.id
-        ).all()
+        # Get assignments for this block from our map
+        assignments = assignments_by_block.get(block.id, [])
 
         current_count = len(assignments)
         required_count = 1  # Minimum required for FMIT coverage
@@ -823,18 +837,35 @@ async def get_coverage_report(
 
         total_slots = len(week_blocks)
 
-        # Get covered blocks (with assignments)
+        # Eager load assignments and person to avoid N+1 queries
         covered_count = 0
         faculty_names = set()
 
-        for block in week_blocks:
-            assignments = db.query(Assignment).filter(Assignment.block_id == block.id).all()
-            if assignments:
-                covered_count += 1
-                for assignment in assignments:
-                    person = db.query(Person).filter(Person.id == assignment.person_id).first()
-                    if person:
-                        faculty_names.add(f"{person.first_name} {person.last_name}")
+        if week_blocks:
+            block_ids = [b.id for b in week_blocks]
+            # Load all assignments with person eager-loaded for this period's blocks
+            week_assignments = (
+                db.query(Assignment)
+                .options(joinedload(Assignment.person))
+                .filter(Assignment.block_id.in_(block_ids))
+                .all()
+            )
+
+            # Build map of block_id -> assignments
+            block_assignment_map = {}
+            for assignment in week_assignments:
+                if assignment.block_id not in block_assignment_map:
+                    block_assignment_map[assignment.block_id] = []
+                block_assignment_map[assignment.block_id].append(assignment)
+
+            # Count coverage and collect faculty names
+            for block in week_blocks:
+                assignments = block_assignment_map.get(block.id, [])
+                if assignments:
+                    covered_count += 1
+                    for assignment in assignments:
+                        if assignment.person:
+                            faculty_names.add(f"{assignment.person.first_name} {assignment.person.last_name}")
 
         week_coverage = (covered_count / total_slots * 100.0) if total_slots > 0 else 100.0
 
