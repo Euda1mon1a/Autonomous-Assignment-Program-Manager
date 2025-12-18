@@ -1,6 +1,6 @@
 ***REMOVED*** Residency Scheduler
 
-> **Last Updated:** 2025-12-17
+> **Last Updated:** 2025-12-18
 
 <p align="center">
   <strong>A comprehensive medical residency scheduling system with ACGME compliance validation</strong>
@@ -317,6 +317,10 @@ residency-scheduler/
 | [Caching Strategy](docs/CACHING_STRATEGY.md) | Performance optimization |
 | [Launch Lessons](LAUNCH_LESSONS_LEARNED.md) | Lessons learned from deployment |
 | [Resilience TODO](docs/TODO_RESILIENCE.md) | Human tasks for resilience setup |
+| [TODO Tracker](docs/TODO_TRACKER.md) | Backend implementation TODOs |
+| [Code Complexity](docs/CODE_COMPLEXITY_ANALYSIS.md) | Complexity analysis report |
+| [Security Scanning](docs/SECURITY_SCANNING.md) | Security tools and practices |
+| [CI/CD Recommendations](docs/CI_CD_RECOMMENDATIONS.md) | Pipeline improvements |
 
 ---
 
@@ -423,7 +427,12 @@ pytest --cov=app --cov-report=html  ***REMOVED*** With coverage
 cd frontend
 npm test                        ***REMOVED*** Unit tests
 npm run test:coverage           ***REMOVED*** With coverage
+npm run test:ci                 ***REMOVED*** CI-optimized tests
 npm run test:e2e                ***REMOVED*** E2E tests
+npm run type-check              ***REMOVED*** TypeScript check (source only)
+npm run lint:fix                ***REMOVED*** Auto-fix lint issues
+npm run validate                ***REMOVED*** Run all checks (type-check, lint, test)
+npm run audit                   ***REMOVED*** Security vulnerability check
 ```
 
 ---
