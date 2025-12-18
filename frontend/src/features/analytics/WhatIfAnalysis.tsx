@@ -59,6 +59,7 @@ function ChangeTypeSelector({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value as ChangeType)}
+      aria-label="Select change type"
       className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
     >
       {changeTypes.map((type) => (
@@ -84,16 +85,19 @@ function ChangeEditor({
   onRemove: () => void;
   index: number;
 }) {
+  const descriptionId = `change-${index}-description`;
+  const parametersId = `change-${index}-parameters`;
+
   return (
-    <div className="p-4 border border-gray-300 rounded-lg bg-gray-50">
+    <div className="p-4 border border-gray-300 rounded-lg bg-gray-50" role="group" aria-label={`Change ${index + 1}`}>
       <div className="flex items-start gap-3 mb-3">
-        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold flex-shrink-0">
+        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold flex-shrink-0" aria-hidden="true">
           {index + 1}
         </div>
         <div className="flex-1 space-y-3">
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Change Type</label>
+              <label htmlFor={`change-${index}-type`} className="block text-xs font-medium text-gray-700 mb-1">Change Type</label>
               <ChangeTypeSelector
                 value={change.type}
                 onChange={(type) => onUpdate({ ...change, type })}
@@ -102,6 +106,7 @@ function ChangeEditor({
             <button
               type="button"
               onClick={onRemove}
+              aria-label={`Remove change ${index + 1}`}
               className="mt-6 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Remove change"
             >
@@ -110,20 +115,23 @@ function ChangeEditor({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+            <label htmlFor={descriptionId} className="block text-xs font-medium text-gray-700 mb-1">Description</label>
             <input
+              id={descriptionId}
               type="text"
               value={change.description}
               onChange={(e) => onUpdate({ ...change, description: e.target.value })}
               placeholder="Describe the proposed change..."
+              aria-required="true"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           {/* Simplified parameters - in real implementation would be dynamic based on type */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Parameters (JSON)</label>
+            <label htmlFor={parametersId} className="block text-xs font-medium text-gray-700 mb-1">Parameters (JSON)</label>
             <textarea
+              id={parametersId}
               value={JSON.stringify(change.parameters, null, 2)}
               onChange={(e) => {
                 try {
@@ -135,6 +143,7 @@ function ChangeEditor({
               }}
               placeholder='{"resident_id": "123", "date": "2024-01-15"}'
               rows={3}
+              aria-label="Change parameters in JSON format"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -178,9 +187,9 @@ function WarningItem({
   const style = config[warning.severity];
 
   return (
-    <div className={`p-4 border rounded-lg ${style.bg}`}>
+    <div className={`p-4 border rounded-lg ${style.bg}`} role="alert" aria-live="polite">
       <div className="flex gap-3">
-        {style.icon}
+        <div aria-hidden="true">{style.icon}</div>
         <div className="flex-1">
           <p className={`text-sm font-semibold ${style.text} mb-1`}>{warning.message}</p>
           <p className="text-xs text-gray-600 mb-2">Affects: {warning.affectedEntity}</p>
@@ -217,6 +226,8 @@ function ConstraintImpactItem({
       className={`p-4 border rounded-lg ${
         constraint.violated ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'
       }`}
+      role="article"
+      aria-label={`${constraint.constraintName} constraint impact: ${constraint.violated ? 'Violated' : 'Not violated'}`}
     >
       <div className="flex items-start justify-between mb-2">
         <div>
@@ -224,23 +235,25 @@ function ConstraintImpactItem({
           <p className="text-xs text-gray-600">{constraint.constraintType}</p>
         </div>
         {constraint.violated && (
-          <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 border border-red-300 rounded">
+          <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 border border-red-300 rounded" role="status">
             {constraint.violationSeverity?.toUpperCase()} VIOLATION
           </span>
         )}
       </div>
 
       <div className="flex items-center gap-3 mt-3">
-        <div className="flex-1">
+        <div className="flex-1" role="group" aria-label={`Current value: ${constraint.currentValue.toFixed(2)}`}>
           <p className="text-xs text-gray-600 mb-1">Current</p>
           <p className="text-base font-bold text-gray-900">{constraint.currentValue.toFixed(2)}</p>
         </div>
-        {isIncrease ? (
-          <TrendingUp className="w-5 h-5 text-gray-400" />
-        ) : (
-          <TrendingDown className="w-5 h-5 text-gray-400" />
-        )}
-        <div className="flex-1">
+        <div aria-hidden="true">
+          {isIncrease ? (
+            <TrendingUp className="w-5 h-5 text-gray-400" />
+          ) : (
+            <TrendingDown className="w-5 h-5 text-gray-400" />
+          )}
+        </div>
+        <div className="flex-1" role="group" aria-label={`Projected value: ${constraint.projectedValue.toFixed(2)}`}>
           <p className="text-xs text-gray-600 mb-1">Projected</p>
           <p className="text-base font-bold text-gray-900">{constraint.projectedValue.toFixed(2)}</p>
         </div>
@@ -249,6 +262,7 @@ function ConstraintImpactItem({
             className={`text-xs font-medium ${
               constraint.violated ? 'text-red-600' : 'text-gray-600'
             }`}
+            aria-label={`Change: ${isIncrease ? '+' : ''}${changePercentage.toFixed(1)}%`}
           >
             {isIncrease ? '+' : ''}
             {changePercentage.toFixed(1)}%
@@ -308,13 +322,17 @@ function ResultsPanel({
             ? 'bg-green-50 border-green-200'
             : 'bg-red-50 border-red-200'
         }`}
+        role="region"
+        aria-label={`Analysis recommendation: ${recommendation.approved ? 'Recommended' : 'Not recommended'}`}
       >
         <div className="flex items-start gap-3 mb-3">
-          {recommendation.approved ? (
-            <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
-          ) : (
-            <XCircle className="w-6 h-6 text-red-600 flex-shrink-0" />
-          )}
+          <div aria-hidden="true">
+            {recommendation.approved ? (
+              <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
+            ) : (
+              <XCircle className="w-6 h-6 text-red-600 flex-shrink-0" />
+            )}
+          </div>
           <div className="flex-1">
             <h3 className="text-lg font-bold text-gray-900 mb-1">
               {recommendation.approved ? 'Recommended' : 'Not Recommended'}
@@ -324,12 +342,12 @@ function ResultsPanel({
         </div>
 
         {recommendation.alternatives && recommendation.alternatives.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-300">
+          <div className="mt-4 pt-4 border-t border-gray-300" role="region" aria-label="Alternative approaches">
             <h4 className="text-sm font-semibold text-gray-900 mb-2">Alternative Approaches</h4>
             <ul className="space-y-1">
               {recommendation.alternatives.map((alt, index) => (
                 <li key={index} className="text-sm text-gray-700 flex gap-2">
-                  <span className="text-blue-600">•</span>
+                  <span className="text-blue-600" aria-hidden="true">•</span>
                   <span>{alt}</span>
                 </li>
               ))}
@@ -342,7 +360,14 @@ function ResultsPanel({
             <span className="text-sm text-gray-700">Prediction Confidence</span>
             <span className="text-sm font-bold text-gray-900">{predictedImpact.confidence}%</span>
           </div>
-          <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden"
+            role="progressbar"
+            aria-label="Prediction confidence"
+            aria-valuenow={predictedImpact.confidence}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
             <div
               className="h-full bg-blue-500 transition-all"
               style={{ width: `${predictedImpact.confidence}%` }}
@@ -353,7 +378,7 @@ function ResultsPanel({
 
       {/* Warnings */}
       {predictedImpact.warnings.length > 0 && (
-        <div>
+        <div role="region" aria-label="Analysis warnings">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Warnings</h3>
           <div className="space-y-3">
             {predictedImpact.warnings.map((warning, index) => (
@@ -365,7 +390,7 @@ function ResultsPanel({
 
       {/* Constraint Impacts */}
       {predictedImpact.constraints.length > 0 && (
-        <div>
+        <div role="region" aria-label="Constraint impacts">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Constraint Impacts</h3>
           <div className="space-y-3">
             {predictedImpact.constraints.map((constraint, index) => (
@@ -377,22 +402,31 @@ function ResultsPanel({
 
       {/* Metric Deltas */}
       {predictedImpact.comparisonToBaseline.length > 0 && (
-        <div>
+        <div role="region" aria-label="Predicted metric changes">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Predicted Metric Changes</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {predictedImpact.comparisonToBaseline.map((delta, index) => (
-              <div key={index} className="p-4 border border-gray-200 rounded-lg bg-white">
+              <div
+                key={index}
+                className="p-4 border border-gray-200 rounded-lg bg-white"
+                role="article"
+                aria-label={`${delta.metricName}: ${delta.improved ? 'improved' : 'declined'} by ${delta.delta.toFixed(2)}`}
+              >
                 <p className="text-sm font-semibold text-gray-900 mb-2">{delta.metricName}</p>
                 <div
                   className={`inline-flex items-center gap-1 px-2 py-1 rounded-md ${
                     delta.improved ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
                   }`}
+                  role="img"
+                  aria-label={`${delta.improved ? 'Improvement' : 'Decline'}: ${delta.delta.toFixed(2)}, ${delta.deltaPercentage.toFixed(1)}%`}
                 >
-                  {delta.improved ? (
-                    <TrendingUp className="w-4 h-4" />
-                  ) : (
-                    <TrendingDown className="w-4 h-4" />
-                  )}
+                  <div aria-hidden="true">
+                    {delta.improved ? (
+                      <TrendingUp className="w-4 h-4" />
+                    ) : (
+                      <TrendingDown className="w-4 h-4" />
+                    )}
+                  </div>
                   <span className="text-sm font-medium">
                     {delta.improved ? '+' : ''}
                     {delta.delta.toFixed(2)} ({delta.deltaPercentage > 0 ? '+' : ''}
@@ -460,7 +494,7 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Configuration */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-6" role="region" aria-label="What-If Analysis configuration">
         <h2 className="text-xl font-bold text-gray-900 mb-4">What-If Analysis</h2>
         <p className="text-sm text-gray-600 mb-6">
           Predict the impact of proposed changes to your schedule before implementing them.
@@ -469,10 +503,12 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
         <div className="space-y-4">
           {/* Base Version Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Base Version</label>
+            <label htmlFor="base-version-select" className="block text-sm font-medium text-gray-700 mb-2">Base Version</label>
             <select
+              id="base-version-select"
               value={selectedVersionId}
               onChange={(e) => setSelectedVersionId(e.target.value)}
+              aria-label="Select base version for analysis"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Select a version...</option>
@@ -487,12 +523,14 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
           {/* Analysis Scope */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Analysis Scope</label>
-            <div className="flex gap-2">
+            <div className="flex gap-2" role="group" aria-label="Analysis scope selection">
               {(['immediate', 'week', 'month', 'quarter'] as const).map((scope) => (
                 <button
                   key={scope}
                   type="button"
                   onClick={() => setAnalysisScope(scope)}
+                  aria-pressed={analysisScope === scope}
+                  aria-label={`Set analysis scope to ${scope}`}
                   className={`
                     flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors
                     ${
@@ -511,26 +549,27 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
       </div>
 
       {/* Proposed Changes */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-6" role="region" aria-label="Proposed changes">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Proposed Changes</h3>
           <button
             type="button"
             onClick={handleAddChange}
+            aria-label="Add a new proposed change"
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4" aria-hidden="true" />
             Add Change
           </button>
         </div>
 
         {changes.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
-            <Info className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+            <Info className="w-12 h-12 mx-auto mb-3 text-gray-400" aria-hidden="true" />
             <p>No changes added yet. Click "Add Change" to get started.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4" role="list" aria-label="List of proposed changes">
             {changes.map((change, index) => (
               <ChangeEditor
                 key={index}
@@ -549,9 +588,11 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
             type="button"
             onClick={handleRunAnalysis}
             disabled={!canRunAnalysis || isPending}
+            aria-label={isPending ? 'Running analysis' : 'Run what-if analysis'}
+            aria-disabled={!canRunAnalysis || isPending}
             className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
-            <Play className="w-5 h-5" />
+            <Play className="w-5 h-5" aria-hidden="true" />
             {isPending ? 'Running Analysis...' : 'Run What-If Analysis'}
           </button>
         </div>
@@ -569,7 +610,7 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
 
       {/* Results */}
       {result && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="bg-white border border-gray-200 rounded-lg p-6" role="region" aria-label="Analysis results" aria-live="polite">
           <h3 className="text-xl font-bold text-gray-900 mb-6">Analysis Results</h3>
           <ResultsPanel result={result} />
         </div>

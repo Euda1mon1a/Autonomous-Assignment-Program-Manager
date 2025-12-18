@@ -68,11 +68,15 @@ function ViewTabs({
   ];
 
   return (
-    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 overflow-x-auto">
+    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 overflow-x-auto" role="tablist" aria-label="Dashboard views">
       {tabs.map((tab) => (
         <button
           key={tab.value}
           type="button"
+          role="tab"
+          aria-selected={currentView === tab.value}
+          aria-controls={`${tab.value}-panel`}
+          aria-label={tab.label}
           onClick={() => onViewChange(tab.value)}
           className={`
             flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap
@@ -83,7 +87,7 @@ function ViewTabs({
             }
           `}
         >
-          {tab.icon}
+          <span aria-hidden="true">{tab.icon}</span>
           <span className="hidden sm:inline">{tab.label}</span>
         </button>
       ))}
@@ -106,20 +110,20 @@ function QuickStats({
   criticalCount: number;
 }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <div className="p-4 bg-white border border-gray-200 rounded-lg">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4" role="region" aria-label="Quick statistics summary">
+      <div className="p-4 bg-white border border-gray-200 rounded-lg" role="group" aria-label={`Total metrics: ${totalMetrics}`}>
         <p className="text-xs text-gray-600 mb-1">Total Metrics</p>
         <p className="text-2xl font-bold text-gray-900">{totalMetrics}</p>
       </div>
-      <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+      <div className="p-4 bg-green-50 border border-green-200 rounded-lg" role="group" aria-label={`Excellent metrics: ${excellentCount}`}>
         <p className="text-xs text-green-700 mb-1">Excellent</p>
         <p className="text-2xl font-bold text-green-900">{excellentCount}</p>
       </div>
-      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg" role="group" aria-label={`Warning metrics: ${warningCount}`}>
         <p className="text-xs text-yellow-700 mb-1">Warnings</p>
         <p className="text-2xl font-bold text-yellow-900">{warningCount}</p>
       </div>
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg" role="group" aria-label={`Critical metrics: ${criticalCount}`}>
         <p className="text-xs text-red-700 mb-1">Critical</p>
         <p className="text-2xl font-bold text-red-900">{criticalCount}</p>
       </div>
@@ -160,7 +164,7 @@ function AlertCard({
   const config = priorityConfig[alert.priority];
 
   return (
-    <div className={`border-2 rounded-lg ${config.bg}`}>
+    <div className={`border-2 rounded-lg ${config.bg}`} role="alert" aria-live="polite" aria-atomic="true">
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1">
@@ -175,11 +179,12 @@ function AlertCard({
                     ? 'bg-orange-100 text-orange-700'
                     : 'bg-red-100 text-red-700'
                 }`}
+                role="status"
               >
                 {alert.priority}
               </span>
               {alert.acknowledged && (
-                <span className="px-2 py-1 text-xs font-medium bg-gray-200 text-gray-700 rounded">
+                <span className="px-2 py-1 text-xs font-medium bg-gray-200 text-gray-700 rounded" role="status">
                   Acknowledged
                 </span>
               )}
@@ -190,20 +195,22 @@ function AlertCard({
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
+            aria-expanded={expanded}
+            aria-label={`${expanded ? 'Collapse' : 'Expand'} alert details for ${alert.metricName}`}
             className="p-1 hover:bg-white rounded transition-colors"
           >
-            {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            {expanded ? <ChevronUp className="w-5 h-5" aria-hidden="true" /> : <ChevronDown className="w-5 h-5" aria-hidden="true" />}
           </button>
         </div>
 
         {expanded && (
           <div className="mt-4 pt-4 border-t border-gray-300 space-y-3">
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
+              <div role="group" aria-label={`Current value: ${alert.currentValue.toFixed(2)}`}>
                 <p className="text-gray-600">Current Value</p>
                 <p className="font-semibold text-gray-900">{alert.currentValue.toFixed(2)}</p>
               </div>
-              <div>
+              <div role="group" aria-label={`Threshold value: ${alert.thresholdValue.toFixed(2)}`}>
                 <p className="text-gray-600">Threshold</p>
                 <p className="font-semibold text-gray-900">{alert.thresholdValue.toFixed(2)}</p>
               </div>
@@ -214,11 +221,12 @@ function AlertCard({
                 {new Date(alert.triggeredAt).toLocaleString()}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2" role="group" aria-label="Alert actions">
               {!alert.acknowledged && (
                 <button
                   type="button"
                   onClick={() => onAcknowledge(alert.id)}
+                  aria-label={`Acknowledge ${alert.metricName} alert`}
                   className="flex-1 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
                 >
                   Acknowledge
@@ -227,6 +235,7 @@ function AlertCard({
               <button
                 type="button"
                 onClick={() => onDismiss(alert.id)}
+                aria-label={`Dismiss ${alert.metricName} alert`}
                 className="flex-1 px-3 py-2 bg-white border border-gray-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium"
               >
                 Dismiss
@@ -254,7 +263,7 @@ function AlertsSection({ className = '' }: { className?: string }) {
 
   if (isLoading) {
     return (
-      <div className={`bg-white border border-gray-200 rounded-lg p-6 ${className}`}>
+      <div className={`bg-white border border-gray-200 rounded-lg p-6 ${className}`} role="region" aria-label="Metric alerts" aria-busy="true">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-300 rounded w-32 mb-4" />
           <div className="space-y-3">
@@ -270,26 +279,28 @@ function AlertsSection({ className = '' }: { className?: string }) {
   const acknowledgedAlerts = alerts?.filter((a) => a.acknowledged) || [];
 
   return (
-    <div className={`bg-white border border-gray-200 rounded-lg p-6 ${className}`}>
+    <div className={`bg-white border border-gray-200 rounded-lg p-6 ${className}`} role="region" aria-label="Metric alerts">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Metric Alerts</h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600" role="status">
             {activeAlerts.length} active alert{activeAlerts.length !== 1 ? 's' : ''}
           </p>
         </div>
         <button
           type="button"
           onClick={() => setShowAcknowledged(!showAcknowledged)}
+          aria-pressed={showAcknowledged}
+          aria-label={`${showAcknowledged ? 'Hide' : 'Show'} acknowledged alerts`}
           className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
         >
-          {showAcknowledged ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          {showAcknowledged ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
           {showAcknowledged ? 'Hide' : 'Show'} Acknowledged
         </button>
       </div>
 
       {alerts && alerts.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-3" role="list" aria-label="List of metric alerts">
           {activeAlerts.map((alert) => (
             <AlertCard
               key={alert.id}
@@ -310,7 +321,7 @@ function AlertsSection({ className = '' }: { className?: string }) {
         </div>
       ) : (
         <div className="text-center py-8 text-gray-500">
-          <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+          <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" aria-hidden="true" />
           <p>No alerts at this time</p>
         </div>
       )}
@@ -360,7 +371,7 @@ export function AnalyticsDashboard({ className = '' }: AnalyticsDashboardProps) 
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-6" role="banner">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">Analytics Dashboard</h1>
@@ -368,23 +379,27 @@ export function AnalyticsDashboard({ className = '' }: AnalyticsDashboardProps) 
               Monitor schedule fairness, coverage, and compliance metrics
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" role="group" aria-label="Dashboard actions">
             <button
               type="button"
               onClick={handleRefresh}
               disabled={isRefreshing}
+              aria-label={isRefreshing ? 'Refreshing metrics' : 'Refresh metrics'}
+              aria-busy={isRefreshing}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300"
             >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
               <span className="hidden sm:inline">Refresh</span>
             </button>
             <button
               type="button"
               onClick={handleExport}
               disabled={isExporting}
+              aria-label={isExporting ? 'Exporting analytics' : 'Export analytics'}
+              aria-busy={isExporting}
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4" aria-hidden="true" />
               <span className="hidden sm:inline">Export</span>
             </button>
           </div>
@@ -396,7 +411,7 @@ export function AnalyticsDashboard({ className = '' }: AnalyticsDashboardProps) 
 
       {/* Content based on view */}
       {currentView === 'overview' && (
-        <>
+        <div role="tabpanel" id="overview-panel" aria-labelledby="overview-tab">
           {/* Quick Stats */}
           {metrics && (
             <QuickStats
@@ -408,16 +423,16 @@ export function AnalyticsDashboard({ className = '' }: AnalyticsDashboardProps) 
           )}
 
           {/* Metrics Grid */}
-          <div>
+          <div role="region" aria-label="Key metrics">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Key Metrics</h2>
             {metricsLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" aria-busy="true" aria-label="Loading metrics">
                 {[...Array(7)].map((_, i) => (
                   <MetricsCardSkeleton key={i} />
                 ))}
               </div>
             ) : metricsError ? (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-6" role="alert">
                 <p className="text-sm text-red-600">Failed to load metrics</p>
               </div>
             ) : metrics ? (
@@ -437,28 +452,28 @@ export function AnalyticsDashboard({ className = '' }: AnalyticsDashboardProps) 
           <AlertsSection />
 
           {/* Quick Trend Preview */}
-          <div>
+          <div role="region" aria-label="Fairness trends preview">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Fairness Trends</h2>
             <FairnessTrend months={1} showPgyComparison={false} />
           </div>
-        </>
+        </div>
       )}
 
       {currentView === 'trends' && (
-        <div>
+        <div role="tabpanel" id="trends-panel" aria-labelledby="trends-tab">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Detailed Trends</h2>
           <FairnessTrend months={3} showPgyComparison={true} />
         </div>
       )}
 
       {currentView === 'comparison' && (
-        <div>
+        <div role="tabpanel" id="comparison-panel" aria-labelledby="comparison-tab">
           <VersionComparison />
         </div>
       )}
 
       {currentView === 'whatif' && (
-        <div>
+        <div role="tabpanel" id="whatif-panel" aria-labelledby="whatif-tab">
           <WhatIfAnalysis />
         </div>
       )}

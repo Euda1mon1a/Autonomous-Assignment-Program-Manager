@@ -1,105 +1,121 @@
 // Core types for the Residency Scheduler
+// Re-exports from api.ts with additional view-specific types
 
-export interface Person {
-  id: string
-  name: string
-  type: 'resident' | 'faculty'
-  email?: string
-  pgy_level?: number
-  performs_procedures?: boolean
-  specialties?: string[]
-  primary_duty?: string
-  created_at: string
-  updated_at: string
+// Re-export all types and enums from api.ts
+export * from './api';
+
+// Import specific types for use in view-specific interfaces
+import {
+  UUID,
+  DateString,
+  DateTimeString,
+  PersonType,
+  TimeOfDay,
+  AssignmentRole
+} from './api';
+
+// ============================================================================
+// View-Specific Types
+// ============================================================================
+
+/**
+ * Detailed schedule response organized by date and time of day
+ * Used for calendar/grid view of the schedule
+ */
+export interface ScheduleViewResponse {
+  /** Start date of the schedule period */
+  start_date: DateString;
+  /** End date of the schedule period */
+  end_date: DateString;
+  /** Schedule organized by date, then by time of day (AM/PM) */
+  schedule: Record<DateString, {
+    /** Assignments for the morning shift */
+    AM: AssignmentDetail[];
+    /** Assignments for the afternoon/evening shift */
+    PM: AssignmentDetail[];
+  }>;
+  /** Total number of assignments in the schedule */
+  total_assignments: number;
 }
 
-export interface Block {
-  id: string
-  date: string
-  time_of_day: 'AM' | 'PM'
-  block_number: number
-  is_weekend: boolean
-  is_holiday: boolean
-  holiday_name?: string
-}
-
-export interface RotationTemplate {
-  id: string
-  name: string
-  activity_type: string
-  abbreviation?: string
-  clinic_location?: string
-  max_residents?: number
-  requires_specialty?: string
-  requires_procedure_credential: boolean
-  supervision_required: boolean
-  max_supervision_ratio: number
-  created_at: string
-}
-
-export interface Assignment {
-  id: string
-  block_id: string
-  person_id: string
-  rotation_template_id?: string
-  role: 'primary' | 'supervising' | 'backup'
-  activity_override?: string
-  notes?: string
-  created_by?: string
-  created_at: string
-  updated_at: string
-}
-
-export interface Absence {
-  id: string
-  person_id: string
-  start_date: string
-  end_date: string
-  absence_type: 'vacation' | 'deployment' | 'tdy' | 'medical' | 'family_emergency' | 'conference'
-  deployment_orders: boolean
-  tdy_location?: string
-  replacement_activity?: string
-  notes?: string
-  created_at: string
-}
-
-export interface Violation {
-  type: string
-  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
-  person_id?: string
-  person_name?: string
-  block_id?: string
-  message: string
-  details?: Record<string, unknown>
-}
-
-export interface ValidationResult {
-  valid: boolean
-  total_violations: number
-  violations: Violation[]
-  coverage_rate: number
-  statistics?: Record<string, unknown>
-}
-
-export interface ScheduleResponse {
-  start_date: string
-  end_date: string
-  schedule: Record<string, {
-    AM: AssignmentDetail[]
-    PM: AssignmentDetail[]
-  }>
-  total_assignments: number
-}
-
+/**
+ * Detailed information about an assignment for display purposes
+ * Includes denormalized person information for efficient rendering
+ */
 export interface AssignmentDetail {
-  id: string
+  /** Assignment ID */
+  id: UUID;
+  /** Person information (denormalized) */
   person: {
-    id: string
-    name: string
-    type: string
-    pgy_level: number | null
-  }
-  role: string
-  activity: string
-  abbreviation: string
+    /** Person ID */
+    id: UUID;
+    /** Full name */
+    name: string;
+    /** Type of person (resident or faculty) */
+    type: PersonType;
+    /** Post-graduate year level (for residents) */
+    pgy_level: number | null;
+  };
+  /** Role in this assignment */
+  role: AssignmentRole;
+  /** Activity/rotation name */
+  activity: string;
+  /** Short abbreviation for display */
+  abbreviation: string;
+}
+
+/**
+ * Person information with additional computed fields for display
+ */
+export interface PersonWithStats {
+  /** Person ID */
+  id: UUID;
+  /** Full name */
+  name: string;
+  /** Email address */
+  email: string | null;
+  /** Type of person */
+  type: PersonType;
+  /** Post-graduate year level */
+  pgy_level: number | null;
+  /** Whether credentialed for procedures */
+  performs_procedures: boolean;
+  /** Medical specialties */
+  specialties: string[] | null;
+  /** Primary duty assignment */
+  primary_duty: string | null;
+  /** Record creation timestamp */
+  created_at: DateTimeString;
+  /** Record update timestamp */
+  updated_at: DateTimeString;
+  /** Total number of assignments (computed) */
+  total_assignments?: number;
+  /** Number of upcoming assignments (computed) */
+  upcoming_assignments?: number;
+  /** Whether the person has any current absences (computed) */
+  has_current_absence?: boolean;
+}
+
+/**
+ * Block information with assignment count for display
+ */
+export interface BlockWithAssignments {
+  /** Block ID */
+  id: UUID;
+  /** Date of the block */
+  date: DateString;
+  /** Time period */
+  time_of_day: TimeOfDay;
+  /** Block number */
+  block_number: number;
+  /** Whether this is a weekend */
+  is_weekend: boolean;
+  /** Whether this is a holiday */
+  is_holiday: boolean;
+  /** Holiday name if applicable */
+  holiday_name: string | null;
+  /** Number of assignments in this block (computed) */
+  assignment_count?: number;
+  /** Whether this block is fully staffed (computed) */
+  is_fully_staffed?: boolean;
 }

@@ -100,6 +100,27 @@ function formatValue(value: number, unit: string): string {
 export function MetricsCard({ metric, onClick, className = '', compact = false }: MetricsCardProps) {
   const bgColor = getStatusBgColor(metric.status);
   const isClickable = !!onClick;
+  const cardId = `metric-card-${metric.name.replace(/\s+/g, '-').toLowerCase()}`;
+  const descriptionId = `${cardId}-description`;
+  const thresholdId = `${cardId}-threshold`;
+
+  const getStatusLabel = (status: MetricStatus): string => {
+    switch (status) {
+      case 'excellent':
+        return 'Excellent status';
+      case 'good':
+        return 'Good status';
+      case 'warning':
+        return 'Warning status';
+      case 'critical':
+        return 'Critical status';
+    }
+  };
+
+  const getTrendLabel = (trend: TrendDirection, value: number): string => {
+    const direction = trend === 'up' ? 'increased' : trend === 'down' ? 'decreased' : 'remained stable';
+    return `Trend: ${direction} by ${Math.abs(value).toFixed(1)}% from last period`;
+  };
 
   if (compact) {
     return (
@@ -107,6 +128,7 @@ export function MetricsCard({ metric, onClick, className = '', compact = false }
         type="button"
         onClick={onClick}
         disabled={!isClickable}
+        aria-label={`${metric.name}: ${formatValue(metric.value, metric.unit)}. ${getStatusLabel(metric.status)}. ${getTrendLabel(metric.trend, metric.trendValue)}`}
         className={`
           w-full text-left p-3 rounded-lg border-2 transition-all
           ${bgColor}
@@ -125,7 +147,7 @@ export function MetricsCard({ metric, onClick, className = '', compact = false }
             </div>
           </div>
           <div className="flex items-center gap-2 ml-2">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1" role="img" aria-label={getTrendLabel(metric.trend, metric.trendValue)}>
               {getTrendIcon(metric.trend, metric.trendValue)}
               <span className={`text-xs font-medium ${
                 metric.trend === 'up' ? 'text-green-600' :
@@ -135,7 +157,9 @@ export function MetricsCard({ metric, onClick, className = '', compact = false }
                 {Math.abs(metric.trendValue).toFixed(1)}%
               </span>
             </div>
-            {getStatusIcon(metric.status)}
+            <div role="img" aria-label={getStatusLabel(metric.status)}>
+              {getStatusIcon(metric.status)}
+            </div>
           </div>
         </div>
       </button>
@@ -147,6 +171,9 @@ export function MetricsCard({ metric, onClick, className = '', compact = false }
       type="button"
       onClick={onClick}
       disabled={!isClickable}
+      id={cardId}
+      aria-label={`${metric.name} metric card`}
+      aria-describedby={`${descriptionId} ${metric.threshold ? thresholdId : ''}`}
       className={`
         w-full text-left p-6 rounded-xl border-2 transition-all
         ${bgColor}
@@ -158,15 +185,15 @@ export function MetricsCard({ metric, onClick, className = '', compact = false }
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-medium text-gray-700 mb-1">{metric.name}</h3>
-          <p className="text-xs text-gray-500 line-clamp-2">{metric.description}</p>
+          <p id={descriptionId} className="text-xs text-gray-500 line-clamp-2">{metric.description}</p>
         </div>
-        <div className="ml-3">
+        <div className="ml-3" role="img" aria-label={getStatusLabel(metric.status)}>
           {getStatusIcon(metric.status)}
         </div>
       </div>
 
       {/* Value */}
-      <div className="flex items-baseline gap-2 mb-3">
+      <div className="flex items-baseline gap-2 mb-3" role="status" aria-label={`Current value: ${formatValue(metric.value, metric.unit)}`}>
         <span className="text-4xl font-bold text-gray-900">
           {formatValue(metric.value, metric.unit)}
         </span>
@@ -176,7 +203,7 @@ export function MetricsCard({ metric, onClick, className = '', compact = false }
       </div>
 
       {/* Trend */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" role="img" aria-label={getTrendLabel(metric.trend, metric.trendValue)}>
         {getTrendIcon(metric.trend, metric.trendValue)}
         <span className={`text-sm font-medium ${
           metric.trend === 'up' ? 'text-green-600' :
@@ -191,22 +218,29 @@ export function MetricsCard({ metric, onClick, className = '', compact = false }
 
       {/* Threshold indicator (if available) */}
       {metric.threshold && (
-        <div className="mt-4 pt-4 border-t border-gray-300">
+        <div className="mt-4 pt-4 border-t border-gray-300" id={thresholdId}>
           <div className="flex items-center justify-between text-xs text-gray-600">
             <span>Threshold</span>
             <div className="flex gap-3">
               <span className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                {metric.threshold.warning}
+                <div className="w-2 h-2 rounded-full bg-yellow-500" aria-hidden="true" />
+                <span aria-label={`Warning threshold: ${metric.threshold.warning}`}>{metric.threshold.warning}</span>
               </span>
               <span className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full bg-red-500" />
-                {metric.threshold.critical}
+                <div className="w-2 h-2 rounded-full bg-red-500" aria-hidden="true" />
+                <span aria-label={`Critical threshold: ${metric.threshold.critical}`}>{metric.threshold.critical}</span>
               </span>
             </div>
           </div>
           {/* Progress bar */}
-          <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden"
+            role="progressbar"
+            aria-label={`Metric progress toward threshold`}
+            aria-valuenow={metric.value}
+            aria-valuemin={0}
+            aria-valuemax={metric.threshold.critical || 100}
+          >
             <div
               className={`h-full transition-all ${
                 metric.status === 'excellent' ? 'bg-green-500' :
