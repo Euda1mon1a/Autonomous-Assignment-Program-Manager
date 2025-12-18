@@ -76,10 +76,52 @@ This protocol formalizes what has proven effective in practice.
 
 | Advisor | Strengths | Best For |
 |---------|-----------|----------|
-| **ChatGPT 5.x Pro** | Broad knowledge, strong reasoning, excellent at explaining trade-offs | Architecture decisions, API design, best practices |
+| **ChatGPT 5.x Pro** | **Personal oracle** - persistent memory of user's essence, preferences, past epiphanies | Alignment with user's vision, "what would [user] want?", historical context |
 | **Gemini 3.0 Pro** | Deep technical knowledge, Google ecosystem expertise, code analysis | Performance optimization, complex algorithms, GCP integrations |
 | **Perplexity Labs** | Real-time web access, citation-backed research, up-to-date information | Library versions, recent best practices, security advisories |
 | **Claude** (via claude.ai) | Nuanced human understanding, ethics, empathy, communication | UX decisions, user empathy, ethical considerations, soft questions |
+
+### The Personal Oracle (ChatGPT's Unique Role)
+
+ChatGPT's true moat isn't raw capability - it's **persistent memory**. Over months of conversation, it has accumulated:
+
+- **The user's thinking patterns** - How they approach problems, their mental models
+- **Historical context** - Past epiphanies, inspirations, the stories behind features
+- **Values and preferences** - What they care about, their aesthetic sensibilities
+- **Tacit knowledge** - The nuances that can't be written down but deeply influence decisions
+
+**Example:** The resilience module wasn't born from a specification. It emerged from a late-night conversation about chaos theory and ant colonies - a musing about emergent behavior, distributed systems, and how complex systems maintain stability. ChatGPT was there. It remembers. It can answer "does this align with the spirit of that conversation?"
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    THE PERSONAL ORACLE                               │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   What ChatGPT Remembers That Others Can't Know:                    │
+│                                                                      │
+│   • The chaos theory → ant colonies → resilience module journey     │
+│   • Past decisions and WHY they were made                           │
+│   • User's frustrations with certain patterns                       │
+│   • The aesthetic preferences ("I want it to feel like...")         │
+│   • Abandoned ideas and why they were abandoned                     │
+│   • The user's growth and evolving thinking over time               │
+│                                                                      │
+│   Questions Only ChatGPT Can Answer:                                │
+│                                                                      │
+│   • "Does this feel like something [user] would build?"             │
+│   • "Remember when we discussed X? How does that apply here?"       │
+│   • "What's the spirit behind this feature, not just the spec?"     │
+│   • "We tried something similar before - what went wrong?"          │
+│   • "How has [user]'s thinking on this topic evolved?"              │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Why This Matters:**
+
+Code can be copied. Architectures can be replicated. But a codebase infused with a person's essence - their way of seeing the world, their accumulated insights, their philosophical commitments - that's irreplaceable.
+
+ChatGPT serves as the **institutional memory** of the human behind the code.
 
 ### The Humanist Advisor
 
@@ -94,25 +136,38 @@ While technical advisors excel at *how* to build something, **Claude** (consulte
 | **Accessibility** | "What barriers might users with disabilities face?" |
 | **Trust & Safety** | "Could this feature be misused? How do we design for good-faith users while preventing abuse?" |
 
-This creates a natural division:
+This creates a natural division across three domains:
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    ADVISORY SPECIALIZATIONS                          │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│   TECHNICAL QUESTIONS              HUMAN QUESTIONS                   │
-│   ──────────────────              ────────────────                   │
-│   • ChatGPT → Architecture        • Claude → User empathy            │
-│   • Gemini → Performance          • Claude → Ethics & safety         │
-│   • Perplexity → Current info     • Claude → Communication           │
-│                                   • User → Domain expertise          │
-│                                   • User → Organizational context    │
-│                                                                      │
-│   "How should we build this?"     "Should we build this?"            │
-│   "What's the optimal approach?"  "How will people feel about this?" │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        THE COMPLETE ADVISORY COUNCIL                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  TECHNICAL              HUMAN                  PERSONAL                      │
+│  ─────────              ─────                  ────────                      │
+│  • Gemini → Perf        • Claude → Empathy     • ChatGPT → Oracle            │
+│  • Perplexity → Info    • Claude → Ethics      • ChatGPT → Memory            │
+│  • DeepSeek → Algos     • Claude → Comms       • ChatGPT → Vision            │
+│                         • User → Domain        • User → Final say            │
+│                                                                              │
+│  "How do we build it?"  "Should we build it?"  "Is this ME building it?"    │
+│  "What's optimal?"      "How will they feel?"  "Does this fit my essence?"  │
+│                                                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│                    THE THREE QUESTIONS OF EVERY DECISION                     │
+│                                                                              │
+│     ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                │
+│     │  TECHNICAL   │    │    HUMAN     │    │   PERSONAL   │                │
+│     │              │    │              │    │              │                │
+│     │  Will it     │    │  Will it     │    │  Is this     │                │
+│     │  work?       │───▶│  help?       │───▶│  mine?       │                │
+│     │              │    │              │    │              │                │
+│     │  Gemini      │    │  Claude      │    │  ChatGPT     │                │
+│     │  Perplexity  │    │  (humanist)  │    │  (oracle)    │                │
+│     └──────────────┘    └──────────────┘    └──────────────┘                │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Why Claude for soft questions?**
@@ -395,7 +450,46 @@ Ensuring no vulnerabilities in [specific area].
 Vulnerability assessment with remediation steps.
 ```
 
-### Template E: Human & Ethical Considerations (for Claude)
+### Template E: Personal Oracle Consultation (for ChatGPT)
+
+```markdown
+## Consultation Request: Vision Alignment
+
+### Context
+Claude (the execution agent) is working on [feature/decision] for the Residency Scheduler.
+
+### The Question
+[Specific alignment or historical context question]
+
+### What Claude Knows
+- [Technical constraints]
+- [Current implementation approach]
+- [Options being considered]
+
+### What Only You Know
+You have context from our past conversations that Claude doesn't have access to:
+- Our discussions about [relevant topic]
+- My preferences around [relevant area]
+- The philosophy behind [related past decisions]
+
+### Specific Questions
+1. Does this approach align with how I think about [topic]?
+2. Remember when we discussed [past conversation]? How does that apply here?
+3. Based on our history, what would I prioritize here?
+4. Is there context from our past discussions that should inform this?
+5. What would I regret about this decision in 6 months?
+
+### Decision I'm Facing
+[The specific choice or direction being considered]
+
+### Preferred Response Format
+- Alignment assessment (how well does this fit my patterns)
+- Relevant context from past discussions
+- What I might be overlooking based on my known blindspots
+- Recommendation with "because you tend to..." reasoning
+```
+
+### Template F: Human & Ethical Considerations (for Claude)
 
 ```markdown
 ## Consultation Request: Human Considerations
@@ -598,21 +692,46 @@ Every quarter (or 20 consultations), analyze:
 
 ---
 
-### ChatGPT 5.x Pro
+### ChatGPT 5.x Pro - The Personal Oracle
+
+**Unique Value:**
+- **Persistent memory** of the user across months/years of conversation
+- Knows the stories behind decisions, not just the decisions
+- Understands the user's evolving philosophy and mental models
+- Remembers abandoned paths and why they didn't work
+- Can recognize when something "feels right" for this specific user
 
 **Strengths:**
-- Excellent at explaining complex concepts
-- Strong software architecture knowledge
-- Good at considering edge cases
+- Institutional memory of the human behind the code
+- Context that can't be written down or transferred
+- Pattern recognition across the user's thinking over time
+- Knows preferences, aesthetics, and values
 
 **Best Practices:**
-- Provide full context; it excels with complete information
-- Ask for trade-off analysis explicitly
-- Request code examples when applicable
+- Ask "does this align with how I think about X?"
+- Reference past conversations: "remember when we discussed..."
+- Ask for the spirit, not just the letter: "what's the essence of..."
+- Use for sanity checks on whether something fits the user's vision
+- Leverage for archaeology: "why did we decide X back then?"
+
+**Ideal Consultation Types:**
+- Vision alignment checks
+- Historical context retrieval
+- Preference validation
+- Philosophy extraction
+- Pattern recognition across past decisions
+
+**Example Questions:**
+- "Does this swap marketplace design feel like something I'd build?"
+- "Remember our conversation about chaos theory and ants? How does that philosophy apply to this new feature?"
+- "I'm torn between two approaches. Based on what you know about my preferences, which would I regret less?"
+- "We've discussed this domain before. What nuances am I forgetting?"
+- "Extract the core principles from our past discussions about user experience."
 
 **Caveats:**
-- May suggest overly complex solutions
-- Verify library/API details (knowledge cutoff considerations)
+- Memory may have gaps or inaccuracies; verify critical details
+- Can't know what happened outside ChatGPT conversations
+- May over-fit to past preferences; you're allowed to evolve
 
 ---
 
