@@ -723,20 +723,46 @@ class SchedulingEngine:
         return run
 
     def _delete_existing_assignments(self):
-        """Delete existing assignments for the date range to avoid duplicates."""
-        # Get all block IDs in the date range
-        blocks = self.db.query(Block).filter(
-            Block.date >= self.start_date,
-            Block.date <= self.end_date,
-        ).all()
+        """
+        Delete existing assignments for the date range to avoid duplicates.
+
+        Uses row-level locking (SELECT FOR UPDATE) to prevent concurrent
+        schedule generations from racing. This ensures that only one
+        generation can modify assignments for a given date range at a time.
+        """
+        # Get all block IDs in the date range with row-level lock
+        # The FOR UPDATE lock ensures exclusive access to these blocks
+        # during the transaction, preventing concurrent generations from
+        # creating conflicting assignments
+        blocks = (
+            self.db.query(Block)
+            .filter(
+                Block.date >= self.start_date,
+                Block.date <= self.end_date,
+            )
+            .with_for_update(nowait=False)  # Wait for lock rather than fail immediately
+            .all()
+        )
         block_ids = [block.id for block in blocks]
 
         if block_ids:
-            # Delete assignments for these blocks
-            deleted_count = self.db.query(Assignment).filter(
-                Assignment.block_id.in_(block_ids)
-            ).delete(synchronize_session=False)
-            logger.info(f"Deleted {deleted_count} existing assignments for date range")
+            # Lock and delete existing assignments for these blocks
+            # We select first to acquire locks, then delete
+            existing_assignments = (
+                self.db.query(Assignment)
+                .filter(Assignment.block_id.in_(block_ids))
+                .with_for_update(nowait=False)
+                .all()
+            )
+            deleted_count = len(existing_assignments)
+
+            for assignment in existing_assignments:
+                self.db.delete(assignment)
+
+            logger.info(
+                f"Deleted {deleted_count} existing assignments for date range "
+                f"({self.start_date} to {self.end_date}) with row-level locking"
+            )
 
     def _update_run_status(self, run: ScheduleRun, status: str, total_assigned: int, violations: int, runtime: float):
         """Update run record with final status."""

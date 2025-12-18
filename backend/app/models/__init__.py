@@ -1,6 +1,7 @@
 """Database models."""
 from app.models.absence import Absence
 from app.models.assignment import Assignment
+from app.models.idempotency import IdempotencyRequest, IdempotencyStatus
 from app.models.block import Block
 from app.models.call_assignment import CallAssignment
 from app.models.certification import CertificationType, PersonCertification
@@ -76,6 +77,9 @@ __all__ = [
     "CallAssignment",
     "ScheduleRun",
     "User",
+    # Idempotency models
+    "IdempotencyRequest",
+    "IdempotencyStatus",
     # Credentialing models
     "Procedure",
     "ProcedureCredential",
