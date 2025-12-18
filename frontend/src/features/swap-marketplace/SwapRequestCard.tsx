@@ -106,9 +106,10 @@ export function SwapRequestCard({
           onClick={() => {
             // Handle viewing details or requesting swap
           }}
+          aria-label={`View details for swap from ${marketplaceEntry.requestingFacultyName}`}
         >
           View Details
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
     );
@@ -242,15 +243,16 @@ export function SwapRequestCard({
               onClick={() => setActionMode('accept')}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={acceptMutation.isPending || rejectMutation.isPending || cancelMutation.isPending}
+              aria-label="Accept swap request"
             >
               {acceptMutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                   Processing...
                 </>
               ) : (
                 <>
-                  <CheckCircle className="w-4 h-4" />
+                  <CheckCircle className="w-4 h-4" aria-hidden="true" />
                   Accept
                 </>
               )}
@@ -261,15 +263,16 @@ export function SwapRequestCard({
               onClick={() => setActionMode('reject')}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={acceptMutation.isPending || rejectMutation.isPending || cancelMutation.isPending}
+              aria-label="Reject swap request"
             >
               {rejectMutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                   Processing...
                 </>
               ) : (
                 <>
-                  <XCircle className="w-4 h-4" />
+                  <XCircle className="w-4 h-4" aria-hidden="true" />
                   Reject
                 </>
               )}
@@ -280,15 +283,16 @@ export function SwapRequestCard({
               onClick={handleCancel}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={acceptMutation.isPending || rejectMutation.isPending || cancelMutation.isPending}
+              aria-label="Cancel swap request"
             >
               {cancelMutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                   Cancelling...
                 </>
               ) : (
                 <>
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-4 h-4" aria-hidden="true" />
                   Cancel
                 </>
               )}
@@ -317,9 +321,10 @@ export function SwapRequestCard({
                   : 'bg-red-600 hover:bg-red-700'
               }`}
               disabled={acceptMutation.isPending || rejectMutation.isPending}
+              aria-label={`Confirm ${actionMode === 'accept' ? 'accept' : 'reject'} swap request`}
             >
               {(acceptMutation.isPending || rejectMutation.isPending) && (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
               )}
               {acceptMutation.isPending || rejectMutation.isPending
                 ? 'Processing...'
@@ -332,6 +337,7 @@ export function SwapRequestCard({
               }}
               className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={acceptMutation.isPending || rejectMutation.isPending}
+              aria-label="Cancel action"
             >
               Cancel
             </button>
