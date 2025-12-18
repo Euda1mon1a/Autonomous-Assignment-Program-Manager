@@ -1,0 +1,542 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "scheduler-overview",
+    "title": "Scheduler System Overview",
+    "description": "Main dashboard for residency scheduler system health and performance",
+    "tags": ["scheduler", "overview", "healthcare"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["10s", "30s", "1m", "5m", "15m", "30m", "1h"],
+      "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d"]
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "datasource",
+          "type": "datasource",
+          "query": "prometheus",
+          "current": {
+            "value": "Prometheus",
+            "text": "Prometheus"
+          }
+        }
+      ]
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "Deployments",
+          "datasource": "${datasource}",
+          "enable": true,
+          "expr": "changes(resilience_info[5m]) > 0",
+          "iconColor": "blue",
+          "tagKeys": "deployment"
+        }
+      ]
+    },
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "type": "stat",
+        "title": "System Utilization",
+        "targets": [
+          {
+            "expr": "resilience_utilization_rate{component=\"overall\"}",
+            "refId": "A",
+            "legendFormat": "Utilization"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 0.7, "color": "yellow"},
+                {"value": 0.8, "color": "orange"},
+                {"value": 0.9, "color": "red"}
+              ]
+            }
+          }
+        },
+        "options": {
+          "orientation": "horizontal",
+          "textMode": "value_and_name",
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "center"
+        }
+      },
+      {
+        "id": 2,
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "type": "gauge",
+        "title": "Defense Level",
+        "targets": [
+          {
+            "expr": "resilience_defense_level",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "min": 1,
+            "max": 5,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 1, "color": "green"},
+                {"value": 2, "color": "yellow"},
+                {"value": 3, "color": "orange"},
+                {"value": 4, "color": "red"},
+                {"value": 5, "color": "dark-red"}
+              ]
+            },
+            "mappings": [
+              {"type": "value", "value": 1, "text": "Level 1: Prevention"},
+              {"type": "value", "value": 2, "text": "Level 2: Detection"},
+              {"type": "value", "value": 3, "text": "Level 3: Response"},
+              {"type": "value", "value": 4, "text": "Level 4: Recovery"},
+              {"type": "value", "value": 5, "text": "Level 5: Emergency"}
+            ]
+          }
+        },
+        "options": {
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        }
+      },
+      {
+        "id": 3,
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 0,
+          "y": 8
+        },
+        "type": "stat",
+        "title": "Schedule Coverage",
+        "targets": [
+          {
+            "expr": "resilience_coverage_rate",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 0.85, "color": "yellow"},
+                {"value": 0.95, "color": "green"}
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area"
+        }
+      },
+      {
+        "id": 4,
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 6,
+          "y": 8
+        },
+        "type": "stat",
+        "title": "ACGME Compliance",
+        "targets": [
+          {
+            "expr": "(resilience_n1_compliant + resilience_n2_compliant) / 2",
+            "refId": "A",
+            "legendFormat": "Compliance Score"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 0.5, "color": "yellow"},
+                {"value": 1, "color": "green"}
+              ]
+            },
+            "mappings": [
+              {"type": "value", "value": 0, "text": "Non-Compliant"},
+              {"type": "value", "value": 0.5, "text": "N-1 Only"},
+              {"type": "value", "value": 1, "text": "Fully Compliant"}
+            ]
+          }
+        },
+        "options": {
+          "colorMode": "background"
+        }
+      },
+      {
+        "id": 5,
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 8
+        },
+        "type": "stat",
+        "title": "Faculty Available",
+        "targets": [
+          {
+            "expr": "resilience_faculty_available{type=\"on_duty\"}",
+            "refId": "A",
+            "legendFormat": "On Duty"
+          },
+          {
+            "expr": "resilience_faculty_available{type=\"total\"}",
+            "refId": "B",
+            "legendFormat": "Total"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "decimals": 0
+          }
+        },
+        "options": {
+          "colorMode": "value",
+          "graphMode": "none"
+        }
+      },
+      {
+        "id": 6,
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 8
+        },
+        "type": "stat",
+        "title": "Active Fallback Schedules",
+        "targets": [
+          {
+            "expr": "resilience_active_fallbacks",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "decimals": 0,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"}
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "background"
+        }
+      },
+      {
+        "id": 7,
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        },
+        "type": "timeseries",
+        "title": "Utilization Over Time",
+        "targets": [
+          {
+            "expr": "resilience_utilization_rate{component=\"overall\"}",
+            "refId": "A",
+            "legendFormat": "Utilization"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10,
+              "lineWidth": 2
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "transparent"},
+                {"value": 0.8, "color": "red"}
+              ]
+            }
+          }
+        },
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
+        }
+      },
+      {
+        "id": 8,
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        },
+        "type": "timeseries",
+        "title": "Schedule Operations Rate",
+        "targets": [
+          {
+            "expr": "rate(schedule_generation_total{outcome=\"success\"}[5m])",
+            "refId": "A",
+            "legendFormat": "Successful - {{algorithm}}"
+          },
+          {
+            "expr": "rate(schedule_generation_total{outcome=\"failure\"}[5m])",
+            "refId": "B",
+            "legendFormat": "Failed - {{algorithm}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10
+            }
+          }
+        },
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
+        }
+      },
+      {
+        "id": 9,
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 0,
+          "y": 26
+        },
+        "type": "timeseries",
+        "title": "ACGME Violations",
+        "targets": [
+          {
+            "expr": "rate(schedule_violations_total[5m])",
+            "refId": "A",
+            "legendFormat": "{{violation_type}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "custom": {
+              "drawStyle": "bars",
+              "fillOpacity": 100
+            }
+          }
+        },
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
+        }
+      },
+      {
+        "id": 10,
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 12,
+          "y": 26
+        },
+        "type": "timeseries",
+        "title": "Task Queue Depth",
+        "targets": [
+          {
+            "expr": "celery_queue_length",
+            "refId": "A",
+            "legendFormat": "{{queue}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "none",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 20
+            }
+          }
+        },
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
+        }
+      },
+      {
+        "id": 11,
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 36
+        },
+        "type": "stat",
+        "title": "Authentication Success Rate (24h)",
+        "targets": [
+          {
+            "expr": "sum(rate(auth_tokens_issued_total[24h])) / (sum(rate(auth_tokens_issued_total[24h])) + sum(rate(auth_verification_failures_total[24h])))",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 0.95, "color": "yellow"},
+                {"value": 0.99, "color": "green"}
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "background"
+        }
+      },
+      {
+        "id": 12,
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 36
+        },
+        "type": "stat",
+        "title": "Idempotency Cache Hit Rate (1h)",
+        "targets": [
+          {
+            "expr": "sum(rate(idempotency_requests_total{outcome=\"cache_hit\"}[1h])) / sum(rate(idempotency_requests_total[1h]))",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "yellow"},
+                {"value": 0.5, "color": "green"}
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "value"
+        }
+      },
+      {
+        "id": 13,
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 36
+        },
+        "type": "stat",
+        "title": "Avg Schedule Generation Time",
+        "targets": [
+          {
+            "expr": "rate(schedule_generation_duration_seconds_sum[5m]) / rate(schedule_generation_duration_seconds_count[5m])",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "decimals": 2,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 30, "color": "yellow"},
+                {"value": 60, "color": "red"}
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "value"
+        }
+      }
+    ]
+  }
+}
