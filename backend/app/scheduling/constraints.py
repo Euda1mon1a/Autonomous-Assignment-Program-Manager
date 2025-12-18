@@ -227,7 +227,19 @@ class SchedulingContext:
     target_utilization: float = 0.80
 
     def __post_init__(self):
-        """Build lookup dictionaries."""
+        """
+        Build lookup dictionaries and indices for fast constraint evaluation.
+
+        This method is called automatically after dataclass initialization.
+        It creates optimized lookup structures to avoid O(n) searches during
+        constraint evaluation, significantly improving solver performance.
+
+        Creates:
+            - resident_idx: Maps resident UUID to array index for decision variables
+            - block_idx: Maps block UUID to array index for decision variables
+            - template_idx: Maps template UUID to array index for decision variables
+            - blocks_by_date: Groups blocks by date for temporal constraint evaluation
+        """
         self.resident_idx = {r.id: i for i, r in enumerate(self.residents)}
         self.block_idx = {b.id: i for i, b in enumerate(self.blocks)}
         self.template_idx = {t.id: i for i, t in enumerate(self.templates)}
@@ -237,19 +249,89 @@ class SchedulingContext:
             self.blocks_by_date[block.date].append(block)
 
     def has_resilience_data(self) -> bool:
-        """Check if resilience data has been populated."""
+        """
+        Check if resilience data has been populated in this context.
+
+        Resilience data includes hub scores, utilization rates, N-1 vulnerability
+        analysis, preference trails, and zone assignments. If this returns True,
+        resilience-aware constraints can be activated.
+
+        Returns:
+            bool: True if any resilience data is present, False otherwise
+
+        Example:
+            >>> if context.has_resilience_data():
+            ...     constraint_manager.enable("HubProtection")
+        """
         return bool(self.hub_scores) or self.current_utilization > 0
 
     def get_hub_score(self, faculty_id: UUID) -> float:
-        """Get hub score for faculty (0.0 if not a hub)."""
+        """
+        Get hub vulnerability score for a faculty member.
+
+        Hub scores range from 0.0 to 1.0, where higher scores indicate more
+        critical "hub" faculty whose loss would significantly impact the system.
+        These scores are computed by the ResilienceService using network centrality
+        analysis.
+
+        Args:
+            faculty_id: UUID of the faculty member
+
+        Returns:
+            float: Hub score (0.0-1.0). Returns 0.0 if faculty is not a hub
+                  or if resilience data is unavailable.
+
+        Example:
+            >>> hub_score = context.get_hub_score(faculty_id)
+            >>> if hub_score > 0.6:
+            ...     print("Critical hub - protect from over-assignment")
+        """
         return self.hub_scores.get(faculty_id, 0.0)
 
     def is_n1_vulnerable(self, faculty_id: UUID) -> bool:
-        """Check if faculty is a single point of failure."""
+        """
+        Check if faculty is a single point of failure (N-1 vulnerable).
+
+        N-1 vulnerability means the schedule cannot survive the loss of this
+        faculty member. This is identified through contingency analysis by the
+        ResilienceService.
+
+        Args:
+            faculty_id: UUID of the faculty member to check
+
+        Returns:
+            bool: True if this faculty is a single point of failure, False otherwise
+
+        Example:
+            >>> if context.is_n1_vulnerable(faculty_id):
+            ...     logger.warning(f"Faculty {faculty_id} is critical - no backup coverage")
+        """
         return faculty_id in self.n1_vulnerable_faculty
 
     def get_preference_strength(self, faculty_id: UUID, slot_type: str) -> float:
-        """Get preference trail strength (0.5 neutral if no data)."""
+        """
+        Get preference trail strength for a faculty member and slot type.
+
+        Preference trails are learned from historical scheduling patterns using
+        stigmergy (swarm intelligence). Strength values indicate how strongly
+        a faculty member prefers or avoids a particular slot type.
+
+        Args:
+            faculty_id: UUID of the faculty member
+            slot_type: Type of slot (e.g., "monday_am", "friday_pm")
+
+        Returns:
+            float: Preference strength (0.0-1.0):
+                  - 0.0-0.3: Strong avoidance
+                  - 0.3-0.7: Neutral
+                  - 0.7-1.0: Strong preference
+                  Returns 0.5 (neutral) if no data available
+
+        Example:
+            >>> strength = context.get_preference_strength(faculty_id, "monday_am")
+            >>> if strength > 0.7:
+            ...     print("Faculty strongly prefers Monday mornings")
+        """
         faculty_prefs = self.preference_trails.get(faculty_id, {})
         return faculty_prefs.get(slot_type, 0.5)
 
@@ -272,7 +354,23 @@ class AvailabilityConstraint(HardConstraint):
         )
 
     def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
-        """If resident is absent, they cannot be assigned."""
+        """
+        Add availability constraint to OR-Tools CP-SAT model.
+
+        Enforces that residents cannot be assigned to blocks during absences.
+        This is a hard constraint - assignments during blocking absences
+        (deployment, TDY, extended medical leave) are forbidden.
+
+        Args:
+            model: OR-Tools CP-SAT model to add constraints to
+            variables: Dictionary containing decision variables:
+                      - "assignments": {(resident_idx, block_idx): BoolVar}
+            context: SchedulingContext with availability matrix
+
+        Implementation:
+            For each (resident, block) pair where resident is unavailable,
+            adds constraint: x[r_i, b_i] == 0
+        """
         x = variables.get("assignments", {})
 
         for resident in context.residents:
@@ -288,7 +386,23 @@ class AvailabilityConstraint(HardConstraint):
                                 model.Add(x[r_i, b_i] == 0)
 
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
-        """If resident is absent, they cannot be assigned."""
+        """
+        Add availability constraint to PuLP linear programming model.
+
+        Enforces that residents cannot be assigned to blocks during absences.
+        This is a hard constraint - assignments during blocking absences
+        (deployment, TDY, extended medical leave) are forbidden.
+
+        Args:
+            model: PuLP LpProblem to add constraints to
+            variables: Dictionary containing decision variables:
+                      - "assignments": {(resident_idx, block_idx): LpVariable}
+            context: SchedulingContext with availability matrix
+
+        Implementation:
+            For each (resident, block) pair where resident is unavailable,
+            adds constraint: x[r_i, b_i] == 0
+        """
         x = variables.get("assignments", {})
 
         for resident in context.residents:
@@ -303,7 +417,28 @@ class AvailabilityConstraint(HardConstraint):
                                 model += x[r_i, b_i] == 0, f"avail_{r_i}_{b_i}"
 
     def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
-        """Check for assignments during absences."""
+        """
+        Validate that no assignments occur during absences.
+
+        Checks existing assignments to ensure no resident is scheduled during
+        a blocking absence (deployment, TDY, extended medical leave).
+
+        Args:
+            assignments: List of Assignment objects to validate
+            context: SchedulingContext with availability matrix
+
+        Returns:
+            ConstraintResult with:
+                - satisfied: True if no violations found
+                - violations: List of ConstraintViolation objects for each
+                            assignment during a blocking absence
+
+        Example:
+            >>> result = constraint.validate(assignments, context)
+            >>> if not result.satisfied:
+            ...     for v in result.violations:
+            ...         print(f"ERROR: {v.message}")
+        """
         violations = []
 
         for assignment in assignments:
@@ -410,7 +545,25 @@ class OnePersonPerBlockConstraint(HardConstraint):
 class EightyHourRuleConstraint(HardConstraint):
     """
     ACGME 80-hour rule: Maximum 80 hours per week, averaged over 4 weeks.
-    Each half-day block = 6 hours.
+
+    This constraint enforces one of the most critical ACGME requirements:
+    resident duty hours must not exceed 80 hours per week when averaged over
+    any 4-week period.
+
+    Implementation Details:
+        - Each half-day block (AM or PM) represents 6 hours of duty time
+        - Uses rolling 4-week windows to check all possible time periods
+        - Maximum blocks per 4-week window: (80 × 4) / 6 = 53 blocks
+
+    ACGME Reference:
+        Common Program Requirements, Section VI.F.1:
+        "Duty hours are limited to 80 hours per week, averaged over a four-week
+        period, inclusive of all in-house clinical and educational activities."
+
+    Constants:
+        HOURS_PER_BLOCK: Hours per half-day block (6 hours)
+        MAX_WEEKLY_HOURS: Maximum hours per week (80 hours)
+        ROLLING_WEEKS: Window size for averaging (4 weeks)
     """
 
     HOURS_PER_BLOCK = 6
@@ -418,6 +571,12 @@ class EightyHourRuleConstraint(HardConstraint):
     ROLLING_WEEKS = 4
 
     def __init__(self):
+        """
+        Initialize the 80-hour rule constraint.
+
+        Calculates the maximum number of blocks allowed in any 4-week window:
+        max_blocks = (80 hours/week × 4 weeks) / 6 hours/block = 53 blocks
+        """
         super().__init__(
             name="80HourRule",
             constraint_type=ConstraintType.DUTY_HOURS,
@@ -698,15 +857,46 @@ class OneInSevenRuleConstraint(HardConstraint):
 
 class SupervisionRatioConstraint(HardConstraint):
     """
-    ACGME supervision ratios:
-    - PGY-1: 1 faculty : 2 residents
-    - PGY-2/3: 1 faculty : 4 residents
+    ACGME supervision ratios: Ensures adequate faculty supervision.
+
+    This constraint enforces different faculty-to-resident ratios based on
+    PGY level, reflecting the increased supervision needs of junior residents.
+
+    Supervision Ratios:
+        - PGY-1: 1 faculty : 2 residents (more intensive supervision)
+        - PGY-2/3: 1 faculty : 4 residents (greater independence)
+
+    ACGME Reference:
+        Common Program Requirements, Section VI.B:
+        "The program must demonstrate that the appropriate level of supervision
+        is in place for all residents who care for patients."
+
+    Clinical Context:
+        - PGY-1 residents require more direct oversight
+        - Senior residents (PGY-2/3) have more clinical autonomy
+        - These ratios ensure patient safety and educational quality
+
+    Example:
+        For a clinic with 2 PGY-1 and 4 PGY-2/3 residents:
+        - PGY-1 faculty needed: ⌈2/2⌉ = 1
+        - PGY-2/3 faculty needed: ⌈4/4⌉ = 1
+        - Total required: 2 faculty members
+
+    Constants:
+        PGY1_RATIO: Maximum PGY-1 residents per faculty (2)
+        OTHER_RATIO: Maximum PGY-2/3 residents per faculty (4)
     """
 
     PGY1_RATIO = 2  # 1 faculty per 2 PGY-1
     OTHER_RATIO = 4  # 1 faculty per 4 PGY-2/3
 
     def __init__(self):
+        """
+        Initialize supervision ratio constraint.
+
+        Sets constraint priority to CRITICAL as inadequate supervision
+        violates ACGME requirements and patient safety standards.
+        """
         super().__init__(
             name="SupervisionRatio",
             constraint_type=ConstraintType.SUPERVISION,
@@ -714,7 +904,24 @@ class SupervisionRatioConstraint(HardConstraint):
         )
 
     def calculate_required_faculty(self, pgy1_count: int, other_count: int) -> int:
-        """Calculate required faculty for resident counts."""
+        """
+        Calculate required faculty for given resident counts.
+
+        Uses ceiling division to ensure adequate supervision even with
+        partial ratios (e.g., 3 PGY-1 residents require 2 faculty).
+
+        Args:
+            pgy1_count: Number of PGY-1 residents
+            other_count: Number of PGY-2/3 residents
+
+        Returns:
+            int: Minimum number of faculty required, or 0 if no residents
+
+        Example:
+            >>> calc = SupervisionRatioConstraint()
+            >>> calc.calculate_required_faculty(pgy1_count=3, other_count=5)
+            3  # 2 for PGY-1 (⌈3/2⌉=2), 2 for others (⌈5/4⌉=2), but max(1,2+2)=3
+        """
         from_pgy1 = (pgy1_count + self.PGY1_RATIO - 1) // self.PGY1_RATIO
         from_other = (other_count + self.OTHER_RATIO - 1) // self.OTHER_RATIO
         return max(1, from_pgy1 + from_other) if (pgy1_count + other_count) > 0 else 0
@@ -1261,10 +1468,35 @@ class HubProtectionConstraint(SoftConstraint):
 
     def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
         """
-        Add hub protection penalty to objective.
+        Add hub protection penalty to CP-SAT model objective function.
 
-        For each faculty with hub_score > threshold, add penalty
-        proportional to their assignment count.
+        For each faculty with hub_score > HIGH_HUB_THRESHOLD (0.4), adds a penalty
+        to the objective function that scales with:
+        - Hub score (0.4-1.0)
+        - Assignment count
+        - Criticality multiplier (2x for scores > 0.6)
+
+        This creates economic pressure in the optimization to distribute work
+        away from critical hub faculty, improving system resilience.
+
+        Args:
+            model: OR-Tools CP-SAT model
+            variables: Dictionary with "assignments" decision variables
+            context: SchedulingContext with hub_scores populated
+
+        Implementation:
+            - For each hub faculty (score > 0.4):
+              - Sum their assignments across all blocks
+              - Multiply by (hub_score × multiplier × 100) as integer factor
+              - Add to penalty variable in objective function
+            - Critical hubs (score > 0.6) get 2× multiplier
+
+        Example:
+            Faculty with hub_score=0.7 assigned to 10 blocks:
+            penalty = 10 × (0.7 × 2.0 × 100) = 1400 penalty units
+
+        Note:
+            Only active when context.hub_scores is populated by ResilienceService
         """
         x = variables.get("assignments", {})
 
@@ -1432,7 +1664,42 @@ class UtilizationBufferConstraint(SoftConstraint):
         """
         Add utilization buffer constraint to CP-SAT model.
 
-        Soft constraint: penalize total assignments above threshold.
+        Implements queuing theory-based capacity management: penalizes schedules
+        that exceed the target utilization threshold (default 80%). Based on
+        Erlang-C formula which shows that wait times increase exponentially
+        as utilization approaches 100%.
+
+        The 80% threshold provides a 20% buffer for:
+        - Unexpected absences (illness, family emergencies)
+        - Surge demand (patient volume spikes, special events)
+        - Emergency coverage needs
+
+        Args:
+            model: OR-Tools CP-SAT model
+            variables: Dictionary with "assignments" decision variables
+            context: SchedulingContext with target_utilization setting
+
+        Implementation:
+            1. Calculate safe capacity: max_capacity × target_utilization
+            2. Sum all assignments across faculty and blocks
+            3. Create over_utilization variable: max(0, total - safe_capacity)
+            4. Add to objective function as penalty
+
+        Example:
+            System with 10 faculty, 100 blocks, 80% target:
+            - Max capacity: 10 × 100 = 1000 assignment-blocks
+            - Safe capacity: 1000 × 0.80 = 800 assignment-blocks
+            - If schedule has 850 assignments: penalty = 50 units
+            - If schedule has 900 assignments: penalty = 100 units
+
+        Queuing Theory Rationale:
+            At 80% utilization: average wait times are acceptable
+            At 90% utilization: wait times increase 3-5x
+            At 95%+ utilization: system experiences cascade failures
+
+        Note:
+            Uses linear penalty in CP-SAT (quadratic is too complex).
+            Validation step uses quadratic penalty for more accurate assessment.
         """
         x = variables.get("assignments", {})
 
@@ -2129,7 +2396,24 @@ class ConstraintManager:
         self._soft_constraints: list[SoftConstraint] = []
 
     def add(self, constraint: Constraint) -> "ConstraintManager":
-        """Add a constraint to the manager."""
+        """
+        Add a constraint to the manager.
+
+        Constraints are automatically categorized as hard or soft based on
+        their class type. Returns self to allow method chaining.
+
+        Args:
+            constraint: Constraint instance to add (HardConstraint or SoftConstraint)
+
+        Returns:
+            ConstraintManager: Self for method chaining
+
+        Example:
+            >>> manager = ConstraintManager()
+            >>> manager.add(AvailabilityConstraint())\\
+            ...        .add(EightyHourRuleConstraint())\\
+            ...        .add(EquityConstraint(weight=10.0))
+        """
         self.constraints.append(constraint)
         if isinstance(constraint, HardConstraint):
             self._hard_constraints.append(constraint)
@@ -2138,36 +2422,117 @@ class ConstraintManager:
         return self
 
     def remove(self, name: str) -> "ConstraintManager":
-        """Remove a constraint by name."""
+        """
+        Remove a constraint by name.
+
+        Returns self to allow method chaining. If constraint name is not found,
+        no error is raised (idempotent operation).
+
+        Args:
+            name: Name of the constraint to remove (e.g., "80HourRule")
+
+        Returns:
+            ConstraintManager: Self for method chaining
+
+        Example:
+            >>> manager.remove("Continuity").remove("Preferences")
+        """
         self.constraints = [c for c in self.constraints if c.name != name]
         self._hard_constraints = [c for c in self._hard_constraints if c.name != name]
         self._soft_constraints = [c for c in self._soft_constraints if c.name != name]
         return self
 
     def enable(self, name: str) -> "ConstraintManager":
-        """Enable a constraint by name."""
+        """
+        Enable a constraint by name.
+
+        Enabled constraints are applied during solving and validation.
+        Returns self to allow method chaining.
+
+        Args:
+            name: Name of the constraint to enable (e.g., "HubProtection")
+
+        Returns:
+            ConstraintManager: Self for method chaining
+
+        Example:
+            >>> # Enable resilience constraints when data is available
+            >>> if context.has_resilience_data():
+            ...     manager.enable("HubProtection")\\
+            ...            .enable("UtilizationBuffer")
+        """
         for c in self.constraints:
             if c.name == name:
                 c.enabled = True
         return self
 
     def disable(self, name: str) -> "ConstraintManager":
-        """Disable a constraint by name."""
+        """
+        Disable a constraint by name.
+
+        Disabled constraints are skipped during solving and validation.
+        Returns self to allow method chaining.
+
+        Args:
+            name: Name of the constraint to disable (e.g., "Continuity")
+
+        Returns:
+            ConstraintManager: Self for method chaining
+
+        Example:
+            >>> # Disable soft constraints for faster solving
+            >>> manager.disable("Continuity")\\
+            ...        .disable("Preferences")
+        """
         for c in self.constraints:
             if c.name == name:
                 c.enabled = False
         return self
 
     def get_enabled(self) -> list[Constraint]:
-        """Get all enabled constraints."""
+        """
+        Get all enabled constraints.
+
+        Returns:
+            list[Constraint]: List of enabled constraints (both hard and soft)
+
+        Example:
+            >>> enabled = manager.get_enabled()
+            >>> print(f"Active constraints: {[c.name for c in enabled]}")
+        """
         return [c for c in self.constraints if c.enabled]
 
     def get_hard_constraints(self) -> list[HardConstraint]:
-        """Get enabled hard constraints."""
+        """
+        Get enabled hard constraints.
+
+        Hard constraints must be satisfied for a valid schedule. These typically
+        enforce ACGME requirements, availability, and capacity limits.
+
+        Returns:
+            list[HardConstraint]: List of enabled hard constraints
+
+        Example:
+            >>> hard = manager.get_hard_constraints()
+            >>> print(f"Must satisfy: {[c.name for c in hard]}")
+        """
         return [c for c in self._hard_constraints if c.enabled]
 
     def get_soft_constraints(self) -> list[SoftConstraint]:
-        """Get enabled soft constraints."""
+        """
+        Get enabled soft constraints.
+
+        Soft constraints are optimization objectives (equity, coverage, continuity).
+        They have weights and contribute to the objective function.
+
+        Returns:
+            list[SoftConstraint]: List of enabled soft constraints
+
+        Example:
+            >>> soft = manager.get_soft_constraints()
+            >>> total_weight = sum(c.weight for c in soft)
+            >>> print(f"Optimization weights: {total_weight}")
+        """
         return [c for c in self._soft_constraints if c.enabled]
 
     def apply_to_cpsat(

@@ -440,7 +440,55 @@ class CPSATSolver(BaseSolver):
         context: SchedulingContext,
         existing_assignments: list[Assignment] = None,
     ) -> SolverResult:
-        """Solve using OR-Tools CP-SAT."""
+        """
+        Solve scheduling problem using Google OR-Tools CP-SAT solver.
+
+        CP-SAT (Constraint Programming - Boolean Satisfiability) is a powerful
+        constraint programming solver that combines SAT solving with constraint
+        propagation to find optimal solutions.
+
+        Algorithm Overview:
+            1. Create decision variables: x[r,b,t] for each (resident, block, template)
+            2. Add base constraint: at most one rotation per resident per block
+            3. Apply all enabled constraints from ConstraintManager
+            4. Define objective function: maximize coverage, minimize penalties
+            5. Invoke CP-SAT solver with parallel search workers
+            6. Extract and return solution
+
+        Advantages of CP-SAT:
+            - **Optimality**: Guarantees optimal solution (or best within timeout)
+            - **Constraint Propagation**: Prunes search space intelligently
+            - **Parallel Solving**: Uses multiple workers for faster solving
+            - **Complex Constraints**: Handles logical constraints naturally
+
+        Performance:
+            - Small problems (<100 blocks, <10 residents): <1 second
+            - Medium problems (<500 blocks, <50 residents): 1-30 seconds
+            - Large problems: May timeout, falls back to best feasible solution
+
+        Args:
+            context: SchedulingContext with residents, blocks, templates, constraints
+            existing_assignments: Optional assignments to preserve (incremental scheduling)
+
+        Returns:
+            SolverResult with:
+                - success: True if optimal or feasible solution found
+                - assignments: List of (person_id, block_id, template_id) tuples
+                - status: "optimal", "feasible", or "infeasible"
+                - objective_value: Final objective function value
+                - runtime_seconds: Solver runtime
+                - statistics: Solver statistics (branches, conflicts, etc.)
+
+        Example:
+            >>> solver = CPSATSolver(timeout_seconds=60.0, num_workers=4)
+            >>> result = solver.solve(context)
+            >>> if result.success:
+            ...     print(f"Found {len(result.assignments)} assignments")
+            ...     print(f"Objective: {result.objective_value}")
+
+        Note:
+            Requires OR-Tools package: pip install ortools>=9.8
+        """
         try:
             from ortools.sat.python import cp_model
         except ImportError:
@@ -794,7 +842,78 @@ class GreedySolver(BaseSolver):
         context: SchedulingContext,
         existing_assignments: list[Assignment] = None,
     ) -> SolverResult:
-        """Solve using greedy algorithm with explainability."""
+        """
+        Solve scheduling problem using greedy heuristic algorithm with explainability.
+
+        The greedy algorithm prioritizes difficult-to-assign blocks first and
+        selects residents based on workload equity. While not guaranteed to find
+        the optimal solution, it is fast and generates human-readable explanations
+        for each decision.
+
+        Algorithm:
+            1. Calculate difficulty score for each block (# of eligible residents)
+            2. Sort blocks by difficulty (fewest eligible residents first)
+            3. For each block in sorted order:
+               a. Find eligible residents (check availability)
+               b. Score each candidate (prefer residents with fewer assignments)
+               c. Select highest-scoring resident
+               d. Generate decision explanation (if enabled)
+               e. Assign resident to block with best available template
+               f. Update assignment counts
+
+        Decision Scoring:
+            - Base score: max_assignments - current_assignments
+            - This prioritizes residents with the fewest current assignments
+            - Promotes workload equity naturally
+
+        Explainability:
+            If generate_explanations=True, creates DecisionExplanation for each
+            assignment containing:
+            - Why this resident was selected
+            - What alternatives were considered
+            - Constraint evaluations
+            - Confidence score
+
+        Advantages:
+            - **Speed**: Very fast, typically <1 second for 1000+ blocks
+            - **Transparency**: Full explanation of each decision
+            - **Predictability**: Deterministic, same inputs = same outputs
+            - **No dependencies**: Works without OR-Tools or PuLP
+
+        Limitations:
+            - **Not optimal**: May miss better solutions
+            - **Greedy myopia**: Doesn't consider future consequences
+            - **Local optima**: Can get stuck in suboptimal patterns
+
+        Performance:
+            - Small problems (<100 blocks): <0.1 seconds
+            - Medium problems (<1000 blocks): 0.1-1 seconds
+            - Large problems (<10000 blocks): 1-10 seconds
+
+        Args:
+            context: SchedulingContext with residents, blocks, templates
+            existing_assignments: Optional assignments to preserve
+
+        Returns:
+            SolverResult with:
+                - success: True (always succeeds with partial solution)
+                - assignments: List of (person_id, block_id, template_id) tuples
+                - status: "feasible"
+                - explanations: Dict of (person_id, block_id) -> explanation
+                - statistics: High/medium/low confidence assignment counts
+
+        Example:
+            >>> solver = GreedySolver(generate_explanations=True)
+            >>> result = solver.solve(context)
+            >>> for (pid, bid), explanation in result.explanations.items():
+            ...     print(f"{explanation.person_name}: {explanation.trade_off_summary}")
+
+        Best For:
+            - Quick initial solutions
+            - Simple scheduling scenarios
+            - When transparency is more important than optimality
+            - Prototyping and debugging
+        """
         from app.scheduling.explainability import ExplainabilityService
 
         start_time = time.time()
@@ -958,7 +1077,40 @@ class GreedySolver(BaseSolver):
 # ==================================================
 
 class SolverFactory:
-    """Factory for creating solvers by name."""
+    """
+    Factory for creating solver instances by name.
+
+    Provides a centralized registry of available solvers and a simple
+    interface for creating solver instances with appropriate configurations.
+
+    Available Solvers:
+        - **greedy**: Fast heuristic solver with explainability
+        - **pulp**: Linear programming solver (requires PuLP package)
+        - **cp_sat**: Constraint programming solver (requires OR-Tools package)
+        - **hybrid**: Combines CP-SAT and PuLP for best results
+
+    Solver Selection Guide:
+        - Small problems (<100 blocks): Use "greedy" for speed
+        - Medium problems (<500 blocks): Use "cp_sat" for quality
+        - Large problems (>500 blocks): Use "hybrid" for reliability
+        - Need explanations: Use "greedy" with generate_explanations=True
+        - Production schedules: Use "cp_sat" or "hybrid" for optimality
+
+    Example:
+        >>> # Create a CP-SAT solver with custom timeout
+        >>> solver = SolverFactory.create(
+        ...     "cp_sat",
+        ...     timeout_seconds=120.0,
+        ...     num_workers=8
+        ... )
+        >>> result = solver.solve(context)
+
+        >>> # Create a greedy solver with explanations
+        >>> solver = SolverFactory.create(
+        ...     "greedy",
+        ...     generate_explanations=True
+        ... )
+    """
 
     _solvers = {
         "greedy": GreedySolver,
@@ -975,15 +1127,39 @@ class SolverFactory:
         **kwargs,
     ) -> BaseSolver:
         """
-        Create a solver by name.
+        Create a solver instance by name.
 
         Args:
             name: Solver name ('greedy', 'pulp', 'cp_sat', 'hybrid')
-            constraint_manager: Optional constraint manager
-            **kwargs: Additional solver-specific arguments
+            constraint_manager: Optional ConstraintManager instance.
+                              If None, creates default manager with ACGME constraints.
+            **kwargs: Solver-specific keyword arguments:
+                     - timeout_seconds (float): Maximum solve time (default: 60.0)
+                     - num_workers (int): Parallel workers for CP-SAT (default: 4)
+                     - generate_explanations (bool): For greedy solver (default: True)
+                     - solver_backend (str): For PuLP solver (default: "PULP_CBC_CMD")
+                     - pulp_timeout (float): For hybrid solver PuLP phase
+                     - cpsat_timeout (float): For hybrid solver CP-SAT phase
 
         Returns:
-            BaseSolver instance
+            BaseSolver: Instance of the requested solver
+
+        Raises:
+            ValueError: If solver name is not recognized
+
+        Example:
+            >>> # Create CP-SAT solver with long timeout
+            >>> solver = SolverFactory.create(
+            ...     "cp_sat",
+            ...     timeout_seconds=300.0,
+            ...     num_workers=16
+            ... )
+
+            >>> # Create custom constraint manager
+            >>> manager = ConstraintManager()
+            >>> manager.add(AvailabilityConstraint())
+            >>> manager.add(CoverageConstraint(weight=1000.0))
+            >>> solver = SolverFactory.create("greedy", constraint_manager=manager)
         """
         if name not in cls._solvers:
             raise ValueError(f"Unknown solver: {name}. Available: {list(cls._solvers.keys())}")

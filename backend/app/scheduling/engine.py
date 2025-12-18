@@ -364,10 +364,37 @@ class SchedulingEngine:
 
     def _get_hub_scores(self, faculty: list[Person]) -> dict[UUID, float]:
         """
-        Get hub vulnerability scores for faculty.
+        Get hub vulnerability scores for faculty from network analysis.
 
-        Returns dict of faculty_id -> composite_score (0.0-1.0).
-        Higher scores indicate more critical "hub" faculty.
+        Hub scores are computed by the ResilienceService using network centrality
+        metrics (degree, betweenness, closeness) to identify critical "hub"
+        faculty whose loss would significantly impact the system.
+
+        Network Theory Context:
+            Scale-free networks (common in organizations) are:
+            - Robust to random failures
+            - Extremely vulnerable to targeted hub removal
+            - Hub faculty cover unique services or specialties
+            - Over-assigning hubs increases systemic risk
+
+        Args:
+            faculty: List of faculty Person objects
+
+        Returns:
+            dict[UUID, float]: Mapping of faculty_id to hub score (0.0-1.0)
+                - 0.0-0.4: Low hub score, not critical
+                - 0.4-0.6: Moderate hub, should be somewhat protected
+                - 0.6-1.0: Critical hub, strongly protect from over-assignment
+                Returns empty dict if hub analysis data unavailable
+
+        Example:
+            >>> hub_scores = self._get_hub_scores(faculty)
+            >>> critical_hubs = {fid: score for fid, score in hub_scores.items() if score > 0.6}
+            >>> print(f"Found {len(critical_hubs)} critical hub faculty")
+
+        Note:
+            Called during context building if resilience integration is enabled.
+            Scores are cached in the scheduling context for constraint evaluation.
         """
         hub_scores = {}
 
@@ -556,22 +583,46 @@ class SchedulingEngine:
 
     def _build_availability_matrix(self):
         """
-        Build availability matrix from absences.
+        Build availability matrix from absences in the database.
+
+        This method queries all absences that overlap with the scheduling period
+        and constructs a matrix indicating whether each person is available for
+        each block. This is a critical preprocessing step that enables fast
+        constraint evaluation during solving.
 
         Matrix structure:
-        {
-            person_id: {
-                block_id: {
-                    'available': bool,
-                    'replacement': str (activity shown when absent),
-                    'partial_absence': bool (has partial absence but available)
+            {
+                person_id (UUID): {
+                    block_id (UUID): {
+                        'available' (bool): True if person can be assigned,
+                        'replacement' (str): Activity displayed in calendar (e.g., "TDY"),
+                        'partial_absence' (bool): True if person has non-blocking absence
+                    }
                 }
             }
-        }
 
-        Logic:
-        - Blocking absences (deployment, TDY, extended medical) -> available = False
-        - Partial absences (vacation day, conference, appointment) -> available = True, partial_absence = True
+        Absence Classification Logic:
+            - **Blocking absences** (deployment, TDY, extended medical):
+              - available = False
+              - Person CANNOT be assigned to this block
+              - Enforced by AvailabilityConstraint (hard constraint)
+
+            - **Partial absences** (vacation day, conference, appointment):
+              - available = True
+              - Person CAN be assigned (they can work partial day)
+              - partial_absence = True (tracked for informational purposes)
+              - Calendar shows replacement activity but assignment is allowed
+
+        Performance:
+            - Pre-computes all availability checks: O(people × blocks × absences)
+            - Enables O(1) lookup during constraint evaluation
+            - Reduces solver time by avoiding database queries during solving
+
+        Example:
+            >>> # After building availability matrix:
+            >>> is_available = self.availability_matrix[resident_id][block_id]["available"]
+            >>> if is_available:
+            ...     # Can assign resident to this block
         """
         # Get all people
         people = self.db.query(Person).all()
@@ -648,11 +699,46 @@ class SchedulingEngine:
 
     def _assign_faculty(self, faculty: list[Person], blocks: list[Block]):
         """
-        Assign faculty supervision based on ACGME ratios.
+        Assign faculty supervision based on ACGME supervision ratios.
 
-        Rules:
-        - PGY-1: 1 faculty : 2 residents
-        - PGY-2/3: 1 faculty : 4 residents
+        This method implements the second phase of scheduling: after residents
+        are assigned to blocks, faculty are assigned to provide supervision
+        according to ACGME requirements.
+
+        ACGME Supervision Ratios:
+            - PGY-1 residents: 1 faculty : 2 residents (intensive supervision)
+            - PGY-2/3 residents: 1 faculty : 4 residents (greater autonomy)
+
+        Algorithm:
+            1. Group existing resident assignments by block
+            2. For each block with residents:
+               a. Count PGY-1 vs. PGY-2/3 residents
+               b. Calculate required faculty: ⌈PGY1/2⌉ + ⌈Others/4⌉
+               c. Find available faculty (check availability matrix)
+               d. Select least-loaded faculty to balance workload
+               e. Create "supervising" role assignments
+
+        Load Balancing:
+            Faculty are sorted by current assignment count and selected in order
+            to distribute supervision burden equitably across all faculty.
+
+        Args:
+            faculty: List of Person objects with type="faculty"
+            blocks: List of Block objects in the scheduling period
+
+        Side Effects:
+            Appends faculty Assignment objects to self.assignments with role="supervising"
+
+        Example:
+            Block with 2 PGY-1 and 4 PGY-2/3 residents:
+            - PGY-1 faculty needed: ⌈2/2⌉ = 1
+            - PGY-2/3 faculty needed: ⌈4/4⌉ = 1
+            - Total: 2 faculty assigned to supervise this block
+
+        Note:
+            This method is separate from the main constraint solver because
+            faculty assignment is a post-processing step that depends on
+            resident assignments being finalized first.
         """
         # Group assignments by block
         assignments_by_block = {}
