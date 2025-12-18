@@ -90,7 +90,7 @@ Built-in system resilience inspired by cross-industry best practices:
 - **Prometheus Metrics** - Real-time monitoring and alerting
 - **Celery Background Tasks** - Automated health checks and contingency analysis
 
-See [Resilience Framework](docs/RESILIENCE_FRAMEWORK.md) for detailed documentation.
+See [Resilience Framework](docs/guides/resilience-framework.md) for detailed documentation.
 
 ### Dashboard & Reporting
 - Schedule summary with compliance status
@@ -215,7 +215,7 @@ cd backend
 python verify_celery.py
 ```
 
-See [CELERY_SETUP_SUMMARY.md](CELERY_SETUP_SUMMARY.md) for complete configuration details.
+See [Celery Setup](docs/archived/CELERY_SETUP_SUMMARY.md) for configuration reference.
 
 ---
 
@@ -292,35 +292,38 @@ residency-scheduler/
 
 ## Documentation
 
-### User Documentation
+### Getting Started
 | Document | Description |
 |----------|-------------|
-| [User Guide](USER_GUIDE.md) | Complete user guide (single file) |
-| [User Guide (detailed)](docs/user-guide/README.md) | Modular user documentation |
+| [User Guide](USER_GUIDE.md) | Complete user guide |
+| [Getting Started](docs/getting-started/index.md) | Installation and quickstart |
+| [Configuration](docs/getting-started/configuration.md) | Environment setup |
 
-### Technical Documentation
+### Technical Reference
 | Document | Description |
 |----------|-------------|
-| [Setup Guide](docs/SETUP.md) | Installation and configuration |
-| [API Reference](docs/API_REFERENCE.md) | Complete REST API documentation |
-| [Architecture](docs/ARCHITECTURE.md) | System design and data flow |
-| [Auth Architecture](docs/AUTH_ARCHITECTURE.md) | Authentication and authorization |
-| [Scheduling Optimization](docs/SCHEDULING_OPTIMIZATION.md) | Algorithm details and strategies |
-| [Resilience Framework](docs/RESILIENCE_FRAMEWORK.md) | Cross-industry resilience concepts |
+| [Architecture Overview](ARCHITECTURE.md) | System design and data flow |
+| [API Documentation](docs/api/index.md) | REST API reference |
+| [Resilience Framework](docs/guides/resilience-framework.md) | Cross-industry resilience concepts |
+| [Development Setup](docs/development/setup.md) | Local development environment |
 
-### Operations & Development
+### Operations
 | Document | Description |
 |----------|-------------|
-| [Deployment Guide](docs/DEPLOYMENT.md) | Production deployment instructions |
-| [Testing Guide](docs/TESTING.md) | Test setup and running tests |
-| [Error Handling](docs/ERROR_HANDLING.md) | Error codes and handling patterns |
-| [Caching Strategy](docs/CACHING_STRATEGY.md) | Performance optimization |
-| [Launch Lessons](LAUNCH_LESSONS_LEARNED.md) | Lessons learned from deployment |
-| [Resilience TODO](docs/TODO_RESILIENCE.md) | Human tasks for resilience setup |
-| [TODO Tracker](docs/TODO_TRACKER.md) | Backend implementation TODOs |
-| [Code Complexity](docs/CODE_COMPLEXITY_ANALYSIS.md) | Complexity analysis report |
-| [Security Scanning](docs/SECURITY_SCANNING.md) | Security tools and practices |
-| [CI/CD Recommendations](docs/CI_CD_RECOMMENDATIONS.md) | Pipeline improvements |
+| [Admin Manual](docs/admin-manual/README.md) | System administration guide |
+| [Security Scanning](docs/operations/SECURITY_SCANNING.md) | Security tools and practices |
+| [Metrics & Monitoring](docs/operations/metrics.md) | Prometheus metrics reference |
+| [Deployment](docs/operations/DEPLOYMENT_PROMPT.md) | Production deployment |
+
+### Planning & Status
+| Document | Description |
+|----------|-------------|
+| [Roadmap](ROADMAP.md) | Feature roadmap and milestones |
+| [Strategic Decisions](STRATEGIC_DECISIONS.md) | Key project decisions |
+| [Human TODO](HUMAN_TODO.md) | Tasks requiring human action |
+
+### Archived Documentation
+Historical session logs, implementation summaries, and reports are preserved in [docs/archived/](docs/archived/README.md).
 
 ---
 
