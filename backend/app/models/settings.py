@@ -1,11 +1,39 @@
 """Application settings model for database persistence."""
 import uuid
 from datetime import datetime
+from enum import Enum
 
 from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, Integer, String
 
 from app.db.base import Base
 from app.db.types import GUID
+
+
+class FreezeScope(str, Enum):
+    """Policy for freeze horizon enforcement.
+
+    NONE: No freeze enforcement (legacy behavior)
+    NON_EMERGENCY_ONLY: Allow emergency overrides without additional approval
+    ALL_CHANGES_REQUIRE_OVERRIDE: All changes within freeze horizon require explicit override
+    """
+    NONE = "none"
+    NON_EMERGENCY_ONLY = "non_emergency_only"
+    ALL_CHANGES_REQUIRE_OVERRIDE = "all_changes_require_override"
+
+
+class OverrideReasonCode(str, Enum):
+    """Structured reason codes for freeze horizon overrides.
+
+    These map to operational realities in medical scheduling.
+    """
+    SICK_CALL = "sick_call"           # Faculty/resident called in sick
+    DEPLOYMENT = "deployment"          # Military deployment order
+    SAFETY = "safety"                  # Patient or staff safety concern
+    COVERAGE_GAP = "coverage_gap"      # Critical coverage gap discovered
+    EMERGENCY_LEAVE = "emergency_leave"  # Family emergency, bereavement
+    ADMINISTRATIVE = "administrative"   # Admin-directed change
+    CRISIS_MODE = "crisis_mode"        # System in crisis mode
+    OTHER = "other"                    # Requires free-text justification
 
 
 class ApplicationSettings(Base):
@@ -41,6 +69,16 @@ class ApplicationSettings(Base):
     enable_holiday_scheduling = Column(Boolean, nullable=False, default=False)
     default_block_duration_hours = Column(Integer, nullable=False, default=4)
 
+    # Freeze horizon settings
+    # Number of days before an assignment where changes are restricted
+    freeze_horizon_days = Column(Integer, nullable=False, default=7)
+    # Policy for freeze enforcement
+    freeze_scope = Column(
+        String(50),
+        nullable=False,
+        default=FreezeScope.NON_EMERGENCY_ONLY.value
+    )
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -66,6 +104,14 @@ class ApplicationSettings(Base):
             "default_block_duration_hours >= 1 AND default_block_duration_hours <= 12",
             name="check_block_duration"
         ),
+        CheckConstraint(
+            "freeze_horizon_days >= 0 AND freeze_horizon_days <= 30",
+            name="check_freeze_horizon"
+        ),
+        CheckConstraint(
+            "freeze_scope IN ('none', 'non_emergency_only', 'all_changes_require_override')",
+            name="check_freeze_scope"
+        ),
     )
 
     def __repr__(self):
@@ -84,4 +130,6 @@ class ApplicationSettings(Base):
             "enable_weekend_scheduling": self.enable_weekend_scheduling,
             "enable_holiday_scheduling": self.enable_holiday_scheduling,
             "default_block_duration_hours": self.default_block_duration_hours,
+            "freeze_horizon_days": self.freeze_horizon_days,
+            "freeze_scope": self.freeze_scope,
         }
