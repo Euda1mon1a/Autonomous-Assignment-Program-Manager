@@ -17,6 +17,12 @@ from app.schemas.auth import TokenData
 
 settings = get_settings()
 
+# Import observability metrics (optional - graceful degradation)
+try:
+    from app.core.observability import metrics as obs_metrics
+except ImportError:
+    obs_metrics = None
+
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -68,6 +74,11 @@ def create_access_token(
     })
 
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+
+    # Record metric
+    if obs_metrics:
+        obs_metrics.record_token_issued("access")
+
     return encoded_jwt, jti, expire
 
 
@@ -89,14 +100,27 @@ def verify_token(token: str, db: Session | None = None) -> TokenData | None:
         jti: str = payload.get("jti")
 
         if user_id is None:
+            if obs_metrics:
+                obs_metrics.record_auth_failure("missing_sub")
             return None
 
         # Check if token is blacklisted
         if db is not None and jti and TokenBlacklist.is_blacklisted(db, jti):
+            if obs_metrics:
+                obs_metrics.record_auth_failure("blacklisted")
             return None
 
         return TokenData(user_id=user_id, username=username, jti=jti)
-    except JWTError:
+    except JWTError as e:
+        if obs_metrics:
+            # Categorize the error
+            error_str = str(e).lower()
+            if "expired" in error_str:
+                obs_metrics.record_auth_failure("expired")
+            elif "signature" in error_str:
+                obs_metrics.record_auth_failure("invalid_signature")
+            else:
+                obs_metrics.record_auth_failure("malformed")
         return None
 
 
@@ -128,6 +152,11 @@ def blacklist_token(
     )
     db.add(record)
     db.commit()
+
+    # Record metric
+    if obs_metrics:
+        obs_metrics.record_token_blacklisted(reason)
+
     return record
 
 
