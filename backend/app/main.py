@@ -212,6 +212,14 @@ if settings.TRUSTED_HOSTS:
 # Audit context middleware - captures user for version history tracking
 app.add_middleware(AuditContextMiddleware)
 
+# Request ID middleware - adds X-Request-ID for distributed tracing
+try:
+    from app.core.observability import RequestIDMiddleware
+    app.add_middleware(RequestIDMiddleware)
+    logger.info("Request ID middleware enabled for distributed tracing")
+except ImportError:
+    logger.warning("observability module not available - X-Request-ID disabled")
+
 # Internal network IP ranges for metrics endpoint restriction
 INTERNAL_NETWORKS = [
     ip_network("127.0.0.0/8"),

@@ -42,6 +42,12 @@ from app.services.xlsx_import import (
     load_external_conflicts_from_absences,
 )
 
+# Import observability metrics (optional - graceful degradation)
+try:
+    from app.core.observability import metrics as obs_metrics
+except ImportError:
+    obs_metrics = None
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
@@ -105,6 +111,8 @@ def generate_schedule(
         # Check for key conflict (same key, different body)
         conflict = idempotency_service.check_key_conflict(idempotency_key, body_hash)
         if conflict:
+            if obs_metrics:
+                obs_metrics.record_idempotency_conflict()
             raise HTTPException(
                 status_code=422,
                 detail="Idempotency key was already used with different request parameters. "
@@ -116,6 +124,8 @@ def generate_schedule(
         if existing:
             if existing.is_pending:
                 # Request is still being processed
+                if obs_metrics:
+                    obs_metrics.record_idempotency_pending()
                 raise HTTPException(
                     status_code=409,
                     detail="A request with this idempotency key is currently being processed. "
@@ -123,6 +133,8 @@ def generate_schedule(
                 )
             elif existing.is_completed and existing.response_body:
                 # Return cached response
+                if obs_metrics:
+                    obs_metrics.record_idempotency_hit()
                 logger.info(f"Returning cached response for idempotency key: {idempotency_key[:8]}...")
                 status_code = int(existing.response_status_code or 200)
                 return JSONResponse(
@@ -132,6 +144,8 @@ def generate_schedule(
                 )
             elif existing.is_failed:
                 # Return cached error response
+                if obs_metrics:
+                    obs_metrics.record_idempotency_hit()
                 logger.info(f"Returning cached error for idempotency key: {idempotency_key[:8]}...")
                 status_code = int(existing.response_status_code or 500)
                 raise HTTPException(
@@ -139,7 +153,9 @@ def generate_schedule(
                     detail=existing.error_message or "Previous request failed",
                 )
 
-        # Create new idempotency request record
+        # Create new idempotency request record (cache miss)
+        if obs_metrics:
+            obs_metrics.record_idempotency_miss()
         try:
             idempotency_request = idempotency_service.create_request(
                 idempotency_key=idempotency_key,
@@ -180,16 +196,26 @@ def generate_schedule(
             db.commit()
         raise HTTPException(status_code=409, detail=error_msg)
 
+    algorithm = request.algorithm.value
     try:
         engine = SchedulingEngine(db, request.start_date, request.end_date)
 
-        # Generate schedule with selected algorithm
-        result = engine.generate(
-            pgy_levels=request.pgy_levels,
-            rotation_template_ids=request.rotation_template_ids,
-            algorithm=request.algorithm.value,
-            timeout_seconds=request.timeout_seconds,
-        )
+        # Generate schedule with selected algorithm (timed for metrics)
+        if obs_metrics:
+            with obs_metrics.time_schedule_generation(algorithm):
+                result = engine.generate(
+                    pgy_levels=request.pgy_levels,
+                    rotation_template_ids=request.rotation_template_ids,
+                    algorithm=algorithm,
+                    timeout_seconds=request.timeout_seconds,
+                )
+        else:
+            result = engine.generate(
+                pgy_levels=request.pgy_levels,
+                rotation_template_ids=request.rotation_template_ids,
+                algorithm=algorithm,
+                timeout_seconds=request.timeout_seconds,
+            )
 
         # Build solver statistics if available
         solver_stats = None
@@ -217,6 +243,8 @@ def generate_schedule(
         # Return 207 Multi-Status for partial success (some assignments created but with violations)
         # Return 422 for validation errors or complete failure
         if result["status"] == "failed":
+            if obs_metrics:
+                obs_metrics.record_schedule_failure(algorithm)
             error_msg = result["message"]
             if idempotency_request:
                 idempotency_service.mark_failed(
@@ -229,6 +257,8 @@ def generate_schedule(
             raise HTTPException(status_code=422, detail=error_msg)
         elif result["status"] == "partial":
             # Use 207 Multi-Status for partial success
+            if obs_metrics:
+                obs_metrics.record_schedule_success(algorithm, result.get("total_assigned", 0))
             response_body = response.model_dump(mode="json")
             if idempotency_request:
                 idempotency_service.mark_completed(
@@ -243,7 +273,9 @@ def generate_schedule(
                 content=response_body,
             )
 
-        # Success - cache the response
+        # Success - record metrics and cache the response
+        if obs_metrics:
+            obs_metrics.record_schedule_success(algorithm, result.get("total_assigned", 0))
         response_body = response.model_dump(mode="json")
         if idempotency_request:
             idempotency_service.mark_completed(
@@ -260,6 +292,8 @@ def generate_schedule(
         # Re-raise HTTP exceptions
         raise
     except Exception as e:
+        if obs_metrics:
+            obs_metrics.record_schedule_failure(algorithm)
         logger.error(f"Error generating schedule: {e}", exc_info=True)
         error_msg = "An error occurred generating the schedule"
         if idempotency_request:
