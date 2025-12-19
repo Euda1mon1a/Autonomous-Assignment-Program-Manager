@@ -9,7 +9,7 @@ The Model Context Protocol (MCP) presents a strategic opportunity to expose the 
 - Provide real-time schedule insights to administrators and faculty
 - Automate routine schedule validation and conflict resolution workflows
 - Support data-driven decision-making through accessible analytics
-- Ensure HIPAA compliance through read-only data exposure and secure tools
+- Ensure data security through read-only data exposure and secure tools
 
 **Strategic Value:**
 - Reduce administrative burden on program coordinators
@@ -33,7 +33,7 @@ The Model Context Protocol (MCP) is an open standard developed by Anthropic that
 - **Security-first design** with authentication, authorization, and audit logging
 - **Resource discovery** enabling dynamic capability enumeration
 - **Streaming support** for large datasets and real-time updates
-- **Healthcare-ready** with support for HIPAA-compliant implementations
+- **Production-ready** with support for secure implementations
 
 **Example Use Cases:**
 - "Show me the FMIT schedule for next quarter"
@@ -377,7 +377,7 @@ Tools enable AI assistants to perform actions safely, with appropriate validatio
   - `notification_ids` (list): Tracking IDs
 - **Safety:**
   - Rate limiting to prevent spam
-  - PHI/PII redaction in logs
+  - PII redaction in logs
   - Delivery confirmation
 - **Use Cases:**
   - "Notify faculty of schedule change"
@@ -483,7 +483,7 @@ Tools enable AI assistants to perform actions safely, with appropriate validatio
 │  └────────────────────────────────────────────────────────────┘    │
 │  ┌────────────────────────────────────────────────────────────┐    │
 │  │                   Audit & Logging                           │    │
-│  │  • All requests logged • PHI detection • HIPAA compliance   │    │
+│  │  • All requests logged • Data protection • Security        │    │
 │  └────────────────────────────────────────────────────────────┘    │
 └────────────────────────────────┬────────────────────────────────────┘
                                  │
@@ -534,7 +534,7 @@ Tools enable AI assistants to perform actions safely, with appropriate validatio
 - **Authentication & Authorization:** JWT validation, RBAC, audit logging
 - **Resource Registry:** Exposes read-only data resources with schemas
 - **Tool Registry:** Exposes executable tools with parameter validation
-- **Audit & Logging:** HIPAA-compliant logging of all operations
+- **Audit & Logging:** Secure logging of all operations
 - **Rate Limiting:** Prevents abuse and ensures fair resource allocation
 
 **Backend Service Layer:**
@@ -577,13 +577,13 @@ Tools enable AI assistants to perform actions safely, with appropriate validatio
 
 4. **Audit Infrastructure**
    - Request/response logging
-   - PHI detection and redaction
-   - HIPAA compliance verification
+   - PII detection and redaction
+   - Security compliance verification
 
 **Success Criteria:**
 - Claude Desktop can authenticate and query basic schedule data
 - All requests logged with audit trail
-- No PHI exposure in logs
+- No sensitive data exposure in logs
 - <500ms average response time for resources
 
 ### Phase 2: Core Resources (2-3 weeks)
@@ -689,7 +689,7 @@ Tools enable AI assistants to perform actions safely, with appropriate validatio
 1. **Security Audit**
    - Third-party security review
    - Penetration testing
-   - HIPAA compliance verification
+   - Security compliance verification
 
 2. **Performance Tuning**
    - Load testing (1000+ concurrent users)
@@ -725,16 +725,16 @@ Tools enable AI assistants to perform actions safely, with appropriate validatio
 
 ---
 
-## Security Considerations for Healthcare Data
+## Security Considerations
 
-### HIPAA Compliance Requirements
+### Security Requirements
 
-**Protected Health Information (PHI) Safeguards:**
+**Data Safeguards:**
 
 1. **Data Minimization**
    - Resources expose only necessary data
    - Aggregated metrics preferred over individual records
-   - No unnecessary PHI in responses
+   - No unnecessary sensitive data in responses
 
 2. **Access Controls**
    - **Authentication:** JWT tokens with short expiration
@@ -756,7 +756,7 @@ Tools enable AI assistants to perform actions safely, with appropriate validatio
      - Parameters (sanitized)
      - Response status
      - Client IP and user agent
-   - **Retention:** 7 years minimum (HIPAA requirement)
+   - **Retention:** As required by compliance policies
 
 4. **Encryption**
    - **In Transit:** TLS 1.3 minimum for all connections
@@ -764,18 +764,18 @@ Tools enable AI assistants to perform actions safely, with appropriate validatio
    - **Tokens:** Encrypted JWT with RS256 algorithm
    - **Secrets:** Stored in HashiCorp Vault or AWS Secrets Manager
 
-### PHI Detection and Redaction
+### PII Detection and Redaction
 
-**Automated PHI Detection:**
-- Pattern matching for names, SSNs, medical record numbers
+**Automated PII Detection:**
+- Pattern matching for names and identifiers
 - NER (Named Entity Recognition) for person names in free text
 - Automatic redaction in logs and error messages
 - Example: `Dr. Smith` → `Dr. [REDACTED]` in logs
 
 **Data Classification:**
-- **Public:** Aggregated metrics (no PHI)
+- **Public:** Aggregated metrics (no PII)
 - **Internal:** Pseudonymized data (IDs only)
-- **Confidential:** Full PHI (restricted access, full audit)
+- **Confidential:** Full personal data (restricted access, full audit)
 
 ### Security Architecture
 
@@ -800,7 +800,7 @@ Tools enable AI assistants to perform actions safely, with appropriate validatio
 ┌─────────────────────────────────────────────┐
 │  Layer 3: Data Security                     │
 │  • Data classification enforcement          │
-│  • PHI detection and redaction              │
+│  • PII detection and redaction              │
 │  • Query result filtering by permission     │
 │  • Encryption at rest                       │
 └─────────────────────────────────────────────┘
@@ -816,22 +816,22 @@ Tools enable AI assistants to perform actions safely, with appropriate validatio
 
 ### Compliance Controls
 
-**HIPAA Administrative Safeguards:**
+**Administrative Safeguards:**
 - **Risk Assessment:** Annual security risk analysis
-- **Workforce Training:** HIPAA training for all developers
+- **Workforce Training:** Security training for all developers
 - **Contingency Plan:** Disaster recovery and backup procedures
-- **Business Associate Agreements:** For all third-party services
+- **Vendor Agreements:** For all third-party services
 
-**HIPAA Technical Safeguards:**
+**Technical Safeguards:**
 - **Access Control:** Unique user identification, emergency access procedure
 - **Audit Controls:** Hardware, software, and procedural mechanisms to record access
 - **Integrity Controls:** Mechanisms to ensure data has not been altered
 - **Transmission Security:** Encryption for data in transit
 
-**HIPAA Physical Safeguards:**
+**Physical Safeguards:**
 - **Facility Access:** Controlled access to server locations
 - **Workstation Security:** Secure workstation use policies
-- **Device Security:** Encryption on all devices with PHI access
+- **Device Security:** Encryption on all devices with data access
 
 ### Incident Response
 
@@ -839,13 +839,13 @@ Tools enable AI assistants to perform actions safely, with appropriate validatio
 1. **Detection:** Automated alerts for suspicious activity
 2. **Containment:** Automatic rate limiting and IP blocking
 3. **Investigation:** Audit log analysis
-4. **Notification:** HIPAA breach notification if required (within 60 days)
+4. **Notification:** Breach notification as required by policy
 5. **Remediation:** Patch vulnerabilities, update policies
 6. **Post-Incident Review:** Root cause analysis and prevention
 
 **Breach Criteria:**
-- Unauthorized access to PHI
-- PHI disclosed to unauthorized party
+- Unauthorized access to sensitive data
+- Data disclosed to unauthorized party
 - Data integrity compromise
 - Availability compromise (ransomware, etc.)
 
@@ -860,7 +860,7 @@ Tools enable AI assistants to perform actions safely, with appropriate validatio
 
 **Example:**
 ```python
-# BAD: Exposes full PHI
+# BAD: Exposes full PII
 {
   "person": {
     "name": "Dr. Jane Smith",
@@ -887,12 +887,12 @@ MCP integration represents a strategic opportunity to unlock the value of our so
 - **Improve Decision Quality:** Provide instant access to complex analytics and what-if scenarios
 - **Accelerate Conflict Resolution:** Surface issues proactively and suggest validated solutions
 - **Ensure Compliance:** Continuous ACGME monitoring with real-time alerts
-- **Protect Healthcare Data:** HIPAA-compliant design with defense-in-depth security
+- **Protect User Data:** Defense-in-depth security design
 
 **Next Steps:**
 1. Executive review and approval for Phase 1 implementation
 2. Security architecture review with InfoSec team
-3. HIPAA compliance review with legal and compliance teams
+3. Security compliance review with legal and compliance teams
 4. Assign engineering resources for 6-month implementation timeline
 5. Establish success metrics and KPIs for ROI tracking
 

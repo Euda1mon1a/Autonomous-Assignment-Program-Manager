@@ -199,7 +199,7 @@ GitHub Actions workflow included in `docs/operations/LOAD_TESTING.md`:
 
 ## Healthcare-Specific Considerations
 
-1. **HIPAA Compliance**: All test data is synthetic; no real PHI used
+1. **Data Security**: All test data is synthetic; no real user data used
 2. **ACGME Validation**: Tests verify compliance rules function correctly under load
 3. **Audit Logging**: Load test activity tracked separately
 4. **Disaster Recovery**: Tests validate fallback schedule deployment

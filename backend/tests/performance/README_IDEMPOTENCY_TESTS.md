@@ -95,9 +95,9 @@ pytest -m performance tests/performance/test_idempotency_load.py
 5. **Expiry Behavior**: Expired keys allow new record creation
 6. **Cleanup Efficiency**: Cleanup function removes only expired records
 
-## Healthcare Context
+## Scheduling Context
 
-Idempotency is **critical** for HIPAA-compliant healthcare applications:
+Idempotency is **critical** for reliable scheduling applications:
 
 - **Data Integrity**: Prevents duplicate schedule generations
 - **ACGME Compliance**: Avoids double-booking violations

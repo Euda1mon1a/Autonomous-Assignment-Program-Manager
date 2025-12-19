@@ -1,7 +1,7 @@
 """Add schedule analytics tables
 
 Revision ID: 013
-Revises: 012
+Revises: 011
 Create Date: 2025-12-17 00:00:00.000000
 
 Creates tables for schedule analytics and version tracking:
@@ -23,7 +23,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '013'
-down_revision: Union[str, None] = '012'
+down_revision: Union[str, None] = '011'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

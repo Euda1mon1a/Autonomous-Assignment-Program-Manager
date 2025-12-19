@@ -1064,11 +1064,11 @@ docker stats backend-1 backend-2 backend-3
 
 ## Healthcare-Specific Considerations
 
-### HIPAA Compliance During Testing
+### Data Security During Testing
 
-**No Real PHI in Load Tests:**
+**No Real User Data in Load Tests:**
 - ❌ **Never** use production database for load testing
-- ❌ **Never** use real patient/resident names, SSNs, medical data
+- ❌ **Never** use real user names, personal identifiers
 - ✅ Use synthetic test data (`scripts/seed_test_data.py`)
 - ✅ Anonymize any data if seeding from production samples
 

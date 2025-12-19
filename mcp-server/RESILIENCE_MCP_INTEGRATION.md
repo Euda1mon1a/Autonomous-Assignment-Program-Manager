@@ -378,8 +378,8 @@ result = await check_mtf_compliance_tool(
 
 ## Security & Compliance Considerations
 
-### HIPAA Compliance
-- Tools do NOT expose PHI (Protected Health Information)
+### Data Security
+- Tools do NOT expose sensitive personal data
 - Only aggregate metrics and anonymized data
 - Faculty IDs are opaque UUIDs, not names (in actual use)
 
