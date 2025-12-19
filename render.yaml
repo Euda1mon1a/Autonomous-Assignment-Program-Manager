@@ -1,0 +1,129 @@
+***REMOVED*** Render Blueprint for Residency Scheduler - Full Stack
+***REMOVED*** Documentation: https://render.com/docs/blueprint-spec
+***REMOVED***
+***REMOVED*** Deploy with: Connect repo to Render, select this blueprint
+***REMOVED*** All services will be created and linked automatically
+
+services:
+  ***REMOVED*** ==========================================================================
+  ***REMOVED*** Frontend - Next.js Application
+  ***REMOVED*** ==========================================================================
+  - type: web
+    name: residency-scheduler-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    plan: starter
+    healthCheckPath: /
+    envVars:
+      ***REMOVED*** Set this manually in Render dashboard after deployment:
+      ***REMOVED*** Value should be: https://residency-scheduler-backend.onrender.com
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+
+  ***REMOVED*** ==========================================================================
+  ***REMOVED*** Backend - FastAPI Application
+  ***REMOVED*** ==========================================================================
+  - type: web
+    name: residency-scheduler-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      ***REMOVED*** Database - auto-linked from Render PostgreSQL
+      - key: DATABASE_URL
+        fromDatabase:
+          name: residency-db
+          property: connectionString
+      ***REMOVED*** Redis - auto-linked from Render Redis
+      - key: REDIS_URL
+        fromService:
+          name: residency-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          name: residency-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          name: residency-redis
+          type: redis
+          property: connectionString
+      ***REMOVED*** Security - auto-generated secrets (32+ chars)
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEBHOOK_SECRET
+        generateValue: true
+      ***REMOVED*** Application settings
+      - key: DEBUG
+        value: "false"
+      - key: ENVIRONMENT
+        value: production
+      ***REMOVED*** CORS - allow frontend origin
+      - key: CORS_ORIGINS
+        value: '["https://residency-scheduler-frontend.onrender.com"]'
+      ***REMOVED*** Rate limiting
+      - key: RATE_LIMIT_ENABLED
+        value: "true"
+
+  ***REMOVED*** ==========================================================================
+  ***REMOVED*** Celery Worker - Background Task Processing
+  ***REMOVED*** ==========================================================================
+  - type: worker
+    name: residency-scheduler-worker
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: residency-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: residency-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          name: residency-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          name: residency-redis
+          type: redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "false"
+    dockerCommand: celery -A app.core.celery_app worker --loglevel=info -Q default,resilience,notifications,metrics
+
+  ***REMOVED*** ==========================================================================
+  ***REMOVED*** Redis - Message Broker and Cache
+  ***REMOVED*** ==========================================================================
+  - type: redis
+    name: residency-redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []  ***REMOVED*** Only allow internal access
+
+***REMOVED*** ==========================================================================
+***REMOVED*** PostgreSQL Database
+***REMOVED*** ==========================================================================
+databases:
+  - name: residency-db
+    plan: starter
+    databaseName: residency_scheduler
+    user: scheduler
+    ipAllowList: []  ***REMOVED*** Only allow internal access
