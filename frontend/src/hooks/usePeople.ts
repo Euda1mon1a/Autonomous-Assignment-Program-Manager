@@ -16,11 +16,63 @@ import type {
 // Types
 // ============================================================================
 
+/**
+ * Person role types in the residency system
+ */
+export type PersonType = 'resident' | 'faculty'
+
+/**
+ * Person status types
+ */
+export type PersonStatus = 'active' | 'inactive' | 'on_leave'
+
+/**
+ * Certification status types
+ */
+export type CertificationStatus = 'current' | 'expiring_soon' | 'expired' | 'pending'
+
+/**
+ * Certification type for BLS, ACLS, PALS, etc.
+ */
+export interface CertificationType {
+  id: string
+  name: string
+  full_name?: string
+}
+
+/**
+ * Person certification record
+ */
+export interface PersonCertification {
+  id: string
+  person_id: string
+  certification_type_id: string
+  certification_number?: string
+  issued_date: string
+  expiration_date: string
+  status: CertificationStatus
+  verified_by?: string
+  verified_date?: string
+  document_url?: string
+  days_until_expiration: number
+  is_expired: boolean
+  is_expiring_soon: boolean
+  created_at: string
+  updated_at: string
+  certification_type?: CertificationType
+}
+
+/**
+ * Generic list response with pagination
+ */
 export interface ListResponse<T> {
   items: T[]
   total: number
 }
 
+/**
+ * Filters for querying people
+ */
 export interface PeopleFilters {
   role?: string
   pgy_level?: number
@@ -35,6 +87,7 @@ export const peopleQueryKeys = {
   person: (id: string) => ['people', id] as const,
   residents: (pgyLevel?: number) => ['residents', pgyLevel] as const,
   faculty: (specialty?: string) => ['faculty', specialty] as const,
+  certifications: (personId: string) => ['certifications', 'person', personId] as const,
 }
 
 // ============================================================================
@@ -465,5 +518,90 @@ export function useDeletePerson() {
       queryClient.invalidateQueries({ queryKey: ['residents'] })
       queryClient.invalidateQueries({ queryKey: ['faculty'] })
     },
+  })
+}
+
+/**
+ * Fetches certifications for a specific person (BLS, ACLS, PALS, etc.).
+ *
+ * This hook retrieves all certification records for a given person, including
+ * certification type, issue/expiration dates, status, and expiration warnings.
+ * Used for displaying certification status, compliance checking, and renewal
+ * tracking for residents and faculty.
+ *
+ * @param personId - The UUID of the person whose certifications to fetch
+ * @param options - Optional React Query configuration options
+ * @returns Query result containing:
+ *   - `data`: List of certifications with type details and expiration info
+ *   - `isLoading`: Whether the fetch is in progress
+ *   - `error`: Any error that occurred
+ *   - `refetch`: Function to manually refetch certifications
+ *
+ * @example
+ * ```tsx
+ * function PersonCertifications({ personId }: Props) {
+ *   const { data, isLoading, error } = useCertifications(personId);
+ *
+ *   if (isLoading) return <CertificationsSkeleton />;
+ *   if (error) return <ErrorMessage error={error} />;
+ *
+ *   const expiringSoon = data.items.filter(cert => cert.is_expiring_soon);
+ *   const expired = data.items.filter(cert => cert.is_expired);
+ *
+ *   return (
+ *     <div>
+ *       <h2>Certifications</h2>
+ *       {expiringSoon.length > 0 && (
+ *         <Alert variant="warning">
+ *           {expiringSoon.length} certification(s) expiring soon
+ *         </Alert>
+ *       )}
+ *       {expired.length > 0 && (
+ *         <Alert variant="danger">
+ *           {expired.length} certification(s) expired
+ *         </Alert>
+ *       )}
+ *       <CertificationsList certifications={data.items} />
+ *     </div>
+ *   );
+ * }
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Display certification badges
+ * function CertificationBadges({ personId }: Props) {
+ *   const { data } = useCertifications(personId);
+ *
+ *   return (
+ *     <div className="flex gap-2">
+ *       {data?.items.map(cert => (
+ *         <Badge
+ *           key={cert.id}
+ *           variant={cert.is_expired ? 'danger' : cert.is_expiring_soon ? 'warning' : 'success'}
+ *         >
+ *           {cert.certification_type?.name}
+ *           {cert.is_expiring_soon && ` (${cert.days_until_expiration}d)`}
+ *         </Badge>
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ *
+ * @see usePerson - For fetching person details
+ * @see useUpdatePerson - Certifications are part of person compliance
+ */
+export function useCertifications(
+  personId: string,
+  options?: Omit<UseQueryOptions<ListResponse<PersonCertification>, ApiError>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery<ListResponse<PersonCertification>, ApiError>({
+    queryKey: peopleQueryKeys.certifications(personId),
+    queryFn: () => get<ListResponse<PersonCertification>>(`/certifications/by-person/${personId}`),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    enabled: !!personId,
+    ...options,
   })
 }

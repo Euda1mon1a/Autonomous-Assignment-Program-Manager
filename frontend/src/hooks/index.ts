@@ -7,6 +7,23 @@
  */
 
 // ============================================================================
+// Authentication Hooks
+// ============================================================================
+export {
+  useAuth,
+  useLogin,
+  useLogout,
+  useUser,
+  useAuthCheck,
+  useValidateSession,
+  usePermissions,
+  useRole,
+  authQueryKeys,
+  type UserRole,
+  type Permission,
+} from './useAuth'
+
+// ============================================================================
 // Schedule Hooks
 // ============================================================================
 export {
@@ -39,8 +56,14 @@ export {
   useCreatePerson,
   useUpdatePerson,
   useDeletePerson,
+  useCertifications,
   peopleQueryKeys,
   type PeopleFilters,
+  type PersonType,
+  type PersonStatus,
+  type CertificationStatus,
+  type CertificationType,
+  type PersonCertification,
 } from './usePeople'
 
 // ============================================================================
@@ -66,6 +89,32 @@ export {
 } from './useResilience'
 
 // ============================================================================
+// Swap Hooks
+// ============================================================================
+export {
+  useSwapRequest,
+  useSwapList,
+  useSwapCandidates,
+  useSwapCreate,
+  useSwapApprove,
+  useSwapReject,
+  useAutoMatch,
+  swapQueryKeys,
+  SwapStatus,
+  SwapType,
+  type SwapRequest,
+  type SwapCreateRequest,
+  type SwapCreateResponse,
+  type SwapApproveRequest,
+  type SwapRejectRequest,
+  type SwapActionResponse,
+  type SwapCandidate,
+  type AutoMatchRequest,
+  type AutoMatchResponse,
+  type SwapFilters,
+} from './useSwaps'
+
+// ============================================================================
 // Shared Types
 // ============================================================================
 export type { ListResponse } from './useSchedule'
@@ -74,6 +123,11 @@ export type { ListResponse } from './useSchedule'
 // Query Keys (backward compatibility)
 // ============================================================================
 export const queryKeys = {
+  // Auth-related keys
+  authUser: () => ['auth', 'user'] as const,
+  authCheck: () => ['auth', 'check'] as const,
+  authValidate: () => ['auth', 'validate'] as const,
+
   // Schedule-related keys
   schedule: (startDate: string, endDate: string) => ['schedule', startDate, endDate] as const,
   rotationTemplates: (activityType?: string) => ['rotation-templates', activityType] as const,
@@ -86,8 +140,15 @@ export const queryKeys = {
   person: (id: string) => ['people', id] as const,
   residents: (pgyLevel?: number) => ['residents', pgyLevel] as const,
   faculty: (specialty?: string) => ['faculty', specialty] as const,
+  certifications: (personId: string) => ['certifications', 'person', personId] as const,
 
   // Absence-related keys
   absences: (filters?: AbsenceFilters) => ['absences', filters] as const,
   absence: (id: string) => ['absences', id] as const,
+
+  // Swap-related keys
+  swaps: (filters?: SwapFilters) => ['swaps', 'list', filters] as const,
+  swap: (id: string) => ['swaps', 'detail', id] as const,
+  swapCandidates: (sourceId: string, sourceWeek: string) =>
+    ['swaps', 'candidates', sourceId, sourceWeek] as const,
 }
