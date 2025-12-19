@@ -6,6 +6,12 @@
  * and error handling for all API endpoints.
  */
 
+// Import types needed for queryKeys object
+import type { AssignmentFilters } from './useSchedule'
+import type { PeopleFilters } from './usePeople'
+import type { AbsenceFilters } from './useAbsences'
+import type { SwapFilters } from './useSwaps'
+
 // ============================================================================
 // Authentication Hooks
 // ============================================================================
