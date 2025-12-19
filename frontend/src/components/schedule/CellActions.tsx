@@ -7,7 +7,7 @@ import {
   useUpdateAssignment,
   useDeleteAssignment,
 } from '@/lib/hooks';
-import type { Assignment, AssignmentCreate, AssignmentUpdate } from '@/types/api';
+import { AssignmentRole, type Assignment, type AssignmentCreate, type AssignmentUpdate } from '@/types/api';
 
 // ============================================================================
 // Types
@@ -117,7 +117,7 @@ export function useCellActions(options: UseCellActionsOptions = {}): UseCellActi
       await createMutation.mutateAsync({
         block_id: blockId,
         person_id: personId,
-        role: 'primary',
+        role: AssignmentRole.PRIMARY,
         activity_override: 'OFF',
         created_by: user?.id,
       });
