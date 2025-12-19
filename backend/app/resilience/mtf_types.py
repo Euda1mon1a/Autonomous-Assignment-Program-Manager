@@ -87,11 +87,13 @@ class SystemHealthState:
 
     # Staff stress metrics
     average_allostatic_load: float
-    overloaded_faculty_count: int = 0
 
-    # System state
+    # System state (required - no defaults)
     load_shedding_level: LoadSheddingLevel | str
     equilibrium_state: EquilibriumState | str
+
+    # Fields with defaults (must come after required fields)
+    overloaded_faculty_count: int = 0
 
     # Financial/compensatory metrics
     compensation_debt: float = 0.0
