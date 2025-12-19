@@ -1,7 +1,7 @@
 """Add FMIT Phase 2 tables
 
-Revision ID: 012
-Revises: 011
+Revision ID: 018
+Revises: 017
 Create Date: 2024-12-17
 
 Tables added:
@@ -9,6 +9,9 @@ Tables added:
 - swap_approvals: Swap approval workflow
 - conflict_alerts: Schedule conflict alerts
 - faculty_preferences: Faculty FMIT preferences
+
+Note: This migration was moved after 017_add_users_table because
+it references users.id in foreign key constraints.
 """
 from typing import Sequence, Union
 
@@ -17,8 +20,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '012'
-down_revision: Union[str, None] = '011'
+revision: str = '018'
+down_revision: Union[str, None] = '017'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
