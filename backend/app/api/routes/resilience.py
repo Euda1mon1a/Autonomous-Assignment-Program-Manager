@@ -19,9 +19,9 @@ Tier 2 (Strategic) endpoints:
 import logging
 import time
 from datetime import date, datetime, timedelta
-from uuid import UUID
 
 logger = logging.getLogger(__name__)
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc
@@ -140,6 +140,9 @@ async def get_system_health(
     end_date: date | None = None,
     include_contingency: bool = False,
     persist: bool = True,
+    max_faculty: int | None = Query(None, ge=1, description="Optional limit for faculty records"),
+    max_blocks: int | None = Query(None, ge=1, description="Optional limit for block records"),
+    max_assignments: int | None = Query(None, ge=1, description="Optional limit for assignment records"),
     db: Session = Depends(get_db),
 ):
     """
@@ -156,6 +159,10 @@ async def get_system_health(
 
     Set `include_contingency=true` for full N-1/N-2 analysis (slower).
     Set `persist=false` to skip saving to database.
+
+    Optional limits (max_faculty, max_blocks, max_assignments) can be set for
+    performance tuning. By default, no limits are applied to ensure accurate
+    resilience calculations.
     """
     from app.models.assignment import Assignment
     from app.models.block import Block
@@ -169,24 +176,22 @@ async def get_system_health(
     if end_date is None:
         end_date = start_date + timedelta(days=30)
 
-    # Load data for analysis - no limit to ensure accurate health assessment
+    # Load data for analysis - apply optional limits if specified
     query_start = time.time()
-    faculty = (
-        db.query(Person)
-        .filter(Person.type == "faculty")
-        .order_by(Person.id)
-        .all()
-    )
-    blocks = (
-        db.query(Block)
-        .filter(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
-        .order_by(Block.date, Block.id)
-        .all()
-    )
-    assignments = (
+    faculty_query = db.query(Person).filter(Person.type == "faculty").order_by(Person.id)
+    if max_faculty:
+        faculty_query = faculty_query.limit(max_faculty)
+    faculty = faculty_query.all()
+
+    blocks_query = db.query(Block).filter(
+        Block.date >= start_date,
+        Block.date <= end_date
+    ).order_by(Block.date, Block.id)
+    if max_blocks:
+        blocks_query = blocks_query.limit(max_blocks)
+    blocks = blocks_query.all()
+
+    assignments_query = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -199,8 +204,10 @@ async def get_system_health(
             Block.date <= end_date
         )
         .order_by(Block.date, Assignment.id)
-        .all()
     )
+    if max_assignments:
+        assignments_query = assignments_query.limit(max_assignments)
+    assignments = assignments_query.all()
     query_time = time.time() - query_start
 
     logger.info(
@@ -593,6 +600,9 @@ async def set_load_shedding_level(
 async def get_vulnerability_report(
     start_date: date | None = None,
     end_date: date | None = None,
+    max_faculty: int | None = Query(None, ge=1, description="Optional limit for faculty records"),
+    max_blocks: int | None = Query(None, ge=1, description="Optional limit for block records"),
+    max_assignments: int | None = Query(None, ge=1, description="Optional limit for assignment records"),
     db: Session = Depends(get_db),
 ):
     """
@@ -600,6 +610,10 @@ async def get_vulnerability_report(
 
     This is computationally intensive for large datasets.
     Use for periodic assessment, not real-time monitoring.
+
+    Optional limits (max_faculty, max_blocks, max_assignments) can be set for
+    performance tuning. By default, no limits are applied to ensure accurate
+    vulnerability analysis.
     """
     from app.models.assignment import Assignment
     from app.models.block import Block
@@ -613,24 +627,22 @@ async def get_vulnerability_report(
     if end_date is None:
         end_date = start_date + timedelta(days=30)
 
-    # Load data - no limit to ensure complete vulnerability analysis
+    # Load data - apply optional limits if specified
     query_start = time.time()
-    faculty = (
-        db.query(Person)
-        .filter(Person.type == "faculty")
-        .order_by(Person.id)
-        .all()
-    )
-    blocks = (
-        db.query(Block)
-        .filter(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
-        .order_by(Block.date, Block.id)
-        .all()
-    )
-    assignments = (
+    faculty_query = db.query(Person).filter(Person.type == "faculty").order_by(Person.id)
+    if max_faculty:
+        faculty_query = faculty_query.limit(max_faculty)
+    faculty = faculty_query.all()
+
+    blocks_query = db.query(Block).filter(
+        Block.date >= start_date,
+        Block.date <= end_date
+    ).order_by(Block.date, Block.id)
+    if max_blocks:
+        blocks_query = blocks_query.limit(max_blocks)
+    blocks = blocks_query.all()
+
+    assignments_query = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -643,8 +655,10 @@ async def get_vulnerability_report(
             Block.date <= end_date
         )
         .order_by(Block.date, Assignment.id)
-        .all()
     )
+    if max_assignments:
+        assignments_query = assignments_query.limit(max_assignments)
+    assignments = assignments_query.all()
     query_time = time.time() - query_start
 
     logger.info(
@@ -731,6 +745,9 @@ async def get_vulnerability_report(
 async def get_comprehensive_report(
     start_date: date | None = None,
     end_date: date | None = None,
+    max_faculty: int | None = Query(None, ge=1, description="Optional limit for faculty records"),
+    max_blocks: int | None = Query(None, ge=1, description="Optional limit for block records"),
+    max_assignments: int | None = Query(None, ge=1, description="Optional limit for assignment records"),
     db: Session = Depends(get_db),
 ):
     """
@@ -738,6 +755,10 @@ async def get_comprehensive_report(
 
     Combines all component reports into a single document
     suitable for leadership review or audit.
+
+    Optional limits (max_faculty, max_blocks, max_assignments) can be set for
+    performance tuning. By default, no limits are applied to ensure accurate
+    reporting.
     """
     from app.models.assignment import Assignment
     from app.models.block import Block
@@ -751,24 +772,22 @@ async def get_comprehensive_report(
     if end_date is None:
         end_date = start_date + timedelta(days=30)
 
-    # Load data - no limit to ensure complete comprehensive report
+    # Load data - apply optional limits if specified
     query_start = time.time()
-    faculty = (
-        db.query(Person)
-        .filter(Person.type == "faculty")
-        .order_by(Person.id)
-        .all()
-    )
-    blocks = (
-        db.query(Block)
-        .filter(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
-        .order_by(Block.date, Block.id)
-        .all()
-    )
-    assignments = (
+    faculty_query = db.query(Person).filter(Person.type == "faculty").order_by(Person.id)
+    if max_faculty:
+        faculty_query = faculty_query.limit(max_faculty)
+    faculty = faculty_query.all()
+
+    blocks_query = db.query(Block).filter(
+        Block.date >= start_date,
+        Block.date <= end_date
+    ).order_by(Block.date, Block.id)
+    if max_blocks:
+        blocks_query = blocks_query.limit(max_blocks)
+    blocks = blocks_query.all()
+
+    assignments_query = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -781,8 +800,10 @@ async def get_comprehensive_report(
             Block.date <= end_date
         )
         .order_by(Block.date, Assignment.id)
-        .all()
     )
+    if max_assignments:
+        assignments_query = assignments_query.limit(max_assignments)
+    assignments = assignments_query.all()
     query_time = time.time() - query_start
 
     logger.info(
@@ -2228,12 +2249,17 @@ async def evaporate_trails(
 async def analyze_hubs(
     start_date: date | None = None,
     end_date: date | None = None,
+    max_faculty: int | None = Query(None, ge=1, description="Optional limit for faculty records"),
+    max_assignments: int | None = Query(None, ge=1, description="Optional limit for assignment records"),
     db: Session = Depends(get_db),
 ):
     """
     Run hub vulnerability analysis on faculty.
 
     Identifies critical "hub" faculty whose loss would cause disproportionate disruption.
+
+    Optional limits (max_faculty, max_assignments) can be set for performance tuning.
+    By default, no limits are applied to ensure accurate hub analysis.
     """
     from app.models.assignment import Assignment
     from app.models.block import Block
@@ -2247,15 +2273,14 @@ async def analyze_hubs(
     if end_date is None:
         end_date = start_date + timedelta(days=30)
 
-    # Load data - no limit to ensure complete hub analysis
+    # Load data - apply optional limits if specified
     query_start = time.time()
-    faculty = (
-        db.query(Person)
-        .filter(Person.type == "faculty")
-        .order_by(Person.id)
-        .all()
-    )
-    assignments = (
+    faculty_query = db.query(Person).filter(Person.type == "faculty").order_by(Person.id)
+    if max_faculty:
+        faculty_query = faculty_query.limit(max_faculty)
+    faculty = faculty_query.all()
+
+    assignments_query = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -2268,8 +2293,10 @@ async def analyze_hubs(
             Block.date <= end_date
         )
         .order_by(Block.date, Assignment.id)
-        .all()
     )
+    if max_assignments:
+        assignments_query = assignments_query.limit(max_assignments)
+    assignments = assignments_query.all()
     query_time = time.time() - query_start
 
     logger.info(
