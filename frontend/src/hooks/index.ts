@@ -128,6 +128,30 @@ export type { ListResponse } from './useSchedule'
 // ============================================================================
 // Query Keys (backward compatibility)
 // ============================================================================
+
+/**
+ * Centralized query key factory for React Query cache management.
+ *
+ * This object provides type-safe query keys for all domain entities in the
+ * residency scheduler. Using consistent query keys enables React Query to
+ * properly cache, invalidate, and refetch data across the application.
+ *
+ * @deprecated Use domain-specific query key factories instead:
+ * - `authQueryKeys` from './useAuth'
+ * - `scheduleQueryKeys` from './useSchedule'
+ * - `peopleQueryKeys` from './usePeople'
+ * - `absenceQueryKeys` from './useAbsences'
+ * - `swapQueryKeys` from './useSwaps'
+ *
+ * @example
+ * ```tsx
+ * // Invalidate all schedule queries
+ * queryClient.invalidateQueries({ queryKey: queryKeys.schedule('2024-01-01', '2024-01-31') });
+ *
+ * // Invalidate all people queries
+ * queryClient.invalidateQueries({ queryKey: ['people'] });
+ * ```
+ */
 export const queryKeys = {
   // Auth-related keys
   authUser: () => ['auth', 'user'] as const,

@@ -338,14 +338,16 @@ export function useFaculty(
  * @returns Mutation object containing:
  *   - `mutate`: Function to create a person
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether creation is in progress
+ *   - `isPending`: Whether creation is in progress
+ *   - `isSuccess`: Whether creation completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred (e.g., duplicate email)
  *   - `data`: The created person with generated ID
  *
  * @example
  * ```tsx
  * function NewPersonForm() {
- *   const { mutate, isLoading } = useCreatePerson();
+ *   const { mutate, isPending } = useCreatePerson();
  *
  *   const handleSubmit = (formData: PersonCreate) => {
  *     mutate(formData, {
@@ -363,7 +365,7 @@ export function useFaculty(
  *     });
  *   };
  *
- *   return <PersonForm onSubmit={handleSubmit} loading={isLoading} />;
+ *   return <PersonForm onSubmit={handleSubmit} loading={isPending} />;
  * }
  * ```
  *
@@ -393,14 +395,16 @@ export function useCreatePerson() {
  * @returns Mutation object containing:
  *   - `mutate`: Function to update a person
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether update is in progress
+ *   - `isPending`: Whether update is in progress
+ *   - `isSuccess`: Whether update completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred
  *   - `data`: The updated person
  *
  * @example
  * ```tsx
  * function EditPersonForm({ personId }: Props) {
- *   const { mutate, isLoading } = useUpdatePerson();
+ *   const { mutate, isPending } = useUpdatePerson();
  *   const { data: person } = usePerson(personId);
  *
  *   const handleUpdate = (updates: PersonUpdate) => {
@@ -467,13 +471,15 @@ export function useUpdatePerson() {
  * @returns Mutation object containing:
  *   - `mutate`: Function to delete a person by ID
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether deletion is in progress
+ *   - `isPending`: Whether deletion is in progress
+ *   - `isSuccess`: Whether deletion completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred (e.g., person has assignments)
  *
  * @example
  * ```tsx
  * function PersonActions({ person }: Props) {
- *   const { mutate, isLoading } = useDeletePerson();
+ *   const { mutate, isPending } = useDeletePerson();
  *
  *   const handleDelete = () => {
  *     if (confirm(`Delete ${person.name}? This cannot be undone.`)) {
@@ -496,7 +502,7 @@ export function useUpdatePerson() {
  *   return (
  *     <Button
  *       onClick={handleDelete}
- *       loading={isLoading}
+ *       loading={isPending}
  *       variant="danger"
  *     >
  *       Delete Person
