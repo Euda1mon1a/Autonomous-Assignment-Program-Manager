@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.core.security import get_current_user
 from app.db.session import get_db
@@ -85,10 +85,15 @@ def get_my_schedule(
             week_map[week_start].append(assignment)
 
         # Check for pending swap requests for this faculty
-        pending_swaps = db.query(SwapRecord).filter(
-            SwapRecord.source_faculty_id == faculty.id,
-            SwapRecord.status == SwapStatus.PENDING,
-        ).all()
+        pending_swaps = (
+            db.query(SwapRecord)
+            .options(joinedload(SwapRecord.source_faculty))
+            .filter(
+                SwapRecord.source_faculty_id == faculty.id,
+                SwapRecord.status == SwapStatus.PENDING,
+            )
+            .all()
+        )
 
         pending_swap_weeks = {swap.source_week for swap in pending_swaps}
 
@@ -99,14 +104,19 @@ def get_my_schedule(
             has_pending_swap = week_start in pending_swap_weeks
 
             # Check for conflicts from conflict_alerts table
-            conflict_alert = db.query(ConflictAlert).filter(
-                ConflictAlert.faculty_id == faculty.id,
-                ConflictAlert.fmit_week == week_start,
-                ConflictAlert.status.in_([
-                    ConflictAlertStatus.NEW,
-                    ConflictAlertStatus.ACKNOWLEDGED
-                ])
-            ).first()
+            conflict_alert = (
+                db.query(ConflictAlert)
+                .options(joinedload(ConflictAlert.faculty))
+                .filter(
+                    ConflictAlert.faculty_id == faculty.id,
+                    ConflictAlert.fmit_week == week_start,
+                    ConflictAlert.status.in_([
+                        ConflictAlertStatus.NEW,
+                        ConflictAlertStatus.ACKNOWLEDGED
+                    ])
+                )
+                .first()
+            )
 
             has_conflict = conflict_alert is not None
             conflict_description = conflict_alert.description if conflict_alert else None
@@ -252,6 +262,11 @@ def create_swap_request(
     assignments = (
         db.query(Assignment)
         .join(Block, Assignment.block_id == Block.id)
+        .options(
+            joinedload(Assignment.block),
+            joinedload(Assignment.person),
+            joinedload(Assignment.rotation_template)
+        )
         .filter(
             Assignment.person_id == faculty.id,
             Assignment.rotation_template_id == fmit_template.id,
@@ -268,11 +283,19 @@ def create_swap_request(
         )
 
     # Check if there's already a pending swap for this week
-    existing_swap = db.query(SwapRecord).filter(
-        SwapRecord.source_faculty_id == faculty.id,
-        SwapRecord.source_week == week_start,
-        SwapRecord.status == SwapStatus.PENDING,
-    ).first()
+    existing_swap = (
+        db.query(SwapRecord)
+        .options(
+            joinedload(SwapRecord.source_faculty),
+            joinedload(SwapRecord.target_faculty)
+        )
+        .filter(
+            SwapRecord.source_faculty_id == faculty.id,
+            SwapRecord.source_week == week_start,
+            SwapRecord.status == SwapStatus.PENDING,
+        )
+        .first()
+    )
 
     if existing_swap:
         raise HTTPException(
@@ -316,10 +339,12 @@ def create_swap_request(
         # - Have notification preferences enabled
         preferences = (
             db.query(FacultyPreference)
+            .options(joinedload(FacultyPreference.faculty))
             .filter(
                 FacultyPreference.faculty_id != faculty.id,
                 FacultyPreference.notify_swap_requests == True,
             )
+            .limit(100)
             .all()
         )
 
@@ -366,7 +391,15 @@ def respond_to_swap(
 
     # Implement swap response
     # Query the swap record
-    swap = db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
+    swap = (
+        db.query(SwapRecord)
+        .options(
+            joinedload(SwapRecord.source_faculty),
+            joinedload(SwapRecord.target_faculty)
+        )
+        .filter(SwapRecord.id == swap_id)
+        .first()
+    )
 
     if not swap:
         raise HTTPException(
@@ -442,9 +475,12 @@ def get_my_preferences(
     faculty = _get_faculty_for_user(db, current_user)
 
     # Query FacultyPreference for this faculty
-    preferences = db.query(FacultyPreference).filter(
-        FacultyPreference.faculty_id == faculty.id
-    ).first()
+    preferences = (
+        db.query(FacultyPreference)
+        .options(joinedload(FacultyPreference.faculty))
+        .filter(FacultyPreference.faculty_id == faculty.id)
+        .first()
+    )
 
     # Return defaults if no preferences exist
     if not preferences:
@@ -509,9 +545,12 @@ def update_my_preferences(
 
     # Update FacultyPreference
     # Query existing preferences or create new
-    preferences = db.query(FacultyPreference).filter(
-        FacultyPreference.faculty_id == faculty.id
-    ).first()
+    preferences = (
+        db.query(FacultyPreference)
+        .options(joinedload(FacultyPreference.faculty))
+        .filter(FacultyPreference.faculty_id == faculty.id)
+        .first()
+    )
 
     if not preferences:
         # Create new preferences record

@@ -373,14 +373,16 @@ export function useSwapCandidates(
  * @returns Mutation object containing:
  *   - `mutate`: Function to create a swap request
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether the creation is in progress
+ *   - `isPending`: Whether the creation is in progress
+ *   - `isSuccess`: Whether creation completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred (e.g., conflicts, validation)
  *   - `data`: The creation response with request ID
  *
  * @example
  * ```tsx
  * function CreateSwapForm() {
- *   const { mutate, isLoading } = useSwapCreate();
+ *   const { mutate, isPending } = useSwapCreate();
  *
  *   const handleSubmit = (formData: SwapCreateRequest) => {
  *     mutate(formData, {
@@ -397,7 +399,7 @@ export function useSwapCandidates(
  *     });
  *   };
  *
- *   return <SwapForm onSubmit={handleSubmit} loading={isLoading} />;
+ *   return <SwapForm onSubmit={handleSubmit} loading={isPending} />;
  * }
  * ```
  *
@@ -451,14 +453,16 @@ export function useSwapCreate() {
  * @returns Mutation object containing:
  *   - `mutate`: Function to approve a swap request
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether approval is in progress
+ *   - `isPending`: Whether approval is in progress
+ *   - `isSuccess`: Whether approval completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred (e.g., validation failure)
  *   - `data`: The approval response with updated swap status
  *
  * @example
  * ```tsx
  * function SwapApprovalCard({ swap }: Props) {
- *   const { mutate, isLoading } = useSwapApprove();
+ *   const { mutate, isPending } = useSwapApprove();
  *
  *   const handleApprove = () => {
  *     mutate(
@@ -488,7 +492,7 @@ export function useSwapCreate() {
  *       <SwapDetails swap={swap} />
  *       <ApproveButton
  *         onClick={handleApprove}
- *         loading={isLoading}
+ *         loading={isPending}
  *         disabled={swap.status !== 'pending'}
  *       />
  *     </Card>
@@ -526,14 +530,16 @@ export function useSwapApprove() {
  * @returns Mutation object containing:
  *   - `mutate`: Function to reject a swap request
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether rejection is in progress
+ *   - `isPending`: Whether rejection is in progress
+ *   - `isSuccess`: Whether rejection completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred
  *   - `data`: The rejection response with updated swap status
  *
  * @example
  * ```tsx
  * function SwapRejectDialog({ swap }: Props) {
- *   const { mutate, isLoading } = useSwapReject();
+ *   const { mutate, isPending } = useSwapReject();
  *   const [reason, setReason] = useState('');
  *
  *   const handleReject = () => {
@@ -559,7 +565,7 @@ export function useSwapApprove() {
  *         value={reason}
  *         onChange={setReason}
  *       />
- *       <RejectButton onClick={handleReject} loading={isLoading} />
+ *       <RejectButton onClick={handleReject} loading={isPending} />
  *     </Dialog>
  *   );
  * }
@@ -593,14 +599,16 @@ export function useSwapReject() {
  * @returns Mutation object containing:
  *   - `mutate`: Function to trigger auto-matching
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether matching is in progress
+ *   - `isPending`: Whether matching is in progress
+ *   - `isSuccess`: Whether matching completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred
  *   - `data`: Auto-match results with ranked candidates
  *
  * @example
  * ```tsx
  * function AutoMatchDialog({ facultyId, week }: Props) {
- *   const { mutate, isLoading, data } = useAutoMatch();
+ *   const { mutate, isPending, data } = useAutoMatch();
  *
  *   const handleAutoMatch = () => {
  *     mutate(
@@ -626,7 +634,7 @@ export function useSwapReject() {
  *
  *   return (
  *     <Dialog>
- *       <AutoMatchButton onClick={handleAutoMatch} loading={isLoading} />
+ *       <AutoMatchButton onClick={handleAutoMatch} loading={isPending} />
  *       {data && (
  *         <CandidateRankingList
  *           candidates={data.candidates}
