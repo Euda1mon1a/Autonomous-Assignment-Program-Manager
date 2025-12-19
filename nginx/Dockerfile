@@ -1,11 +1,10 @@
 # =============================================================================
 # Nginx Reverse Proxy Dockerfile
 # =============================================================================
-# Docker Hardened Image (DHI) with minimal attack surface
-# Requires: docker login (Docker Hub credentials) to pull from dhi.io
+# Alpine-based image for minimal attack surface
 # =============================================================================
 
-FROM dhi.io/nginx:1.27
+FROM nginx:1.27-alpine
 
 # Labels
 LABEL maintainer="Residency Scheduler Team"
