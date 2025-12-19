@@ -36,10 +36,24 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db() -> Generator[Session, None, None]:
-    """Get database session dependency."""
+    """
+    Get database session dependency for FastAPI routes.
+
+    Provides a transactional session that:
+    - Rolls back uncommitted changes on exception (prevents dirty state)
+    - Always closes the connection (prevents connection leaks)
+
+    Routes should call db.commit() explicitly when they want to persist changes.
+
+    Note: This follows the same pattern as task_session_scope() but without
+    auto-commit, since FastAPI routes handle commits explicitly.
+    """
     db = SessionLocal()
     try:
         yield db
+    except Exception:
+        db.rollback()  # Clean up dirty state on exception
+        raise
     finally:
         db.close()
 
