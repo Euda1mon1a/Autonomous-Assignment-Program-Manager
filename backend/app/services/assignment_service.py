@@ -3,7 +3,8 @@
 from datetime import date, timedelta
 from uuid import UUID
 
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.assignment import Assignment
 from app.models.settings import OverrideReasonCode
@@ -30,8 +31,14 @@ class AssignmentService:
         self.freeze_service = FreezeHorizonService(db)
 
     def get_assignment(self, assignment_id: UUID) -> Assignment | None:
-        """Get a single assignment by ID."""
-        return self.assignment_repo.get_by_id(assignment_id)
+        """
+        Get a single assignment by ID with eager loading.
+
+        N+1 Optimization: Uses selectinload to eagerly fetch related Person, Block,
+        and RotationTemplate entities in a single query batch, preventing N+1 queries
+        when accessing assignment.person, assignment.block, or assignment.rotation_template.
+        """
+        return self.assignment_repo.get_by_id_with_relations(assignment_id)
 
     def list_assignments(
         self,
@@ -41,7 +48,13 @@ class AssignmentService:
         role: str | None = None,
         activity_type: str | None = None,
     ) -> dict:
-        """List assignments with optional filters."""
+        """
+        List assignments with optional filters.
+
+        N+1 Optimization: The repository's list_with_filters method uses joinedload
+        to eagerly fetch Person, Block, and RotationTemplate relationships, preventing
+        N+1 queries when iterating over results.
+        """
         assignments = self.assignment_repo.list_with_filters(
             start_date=start_date,
             end_date=end_date,

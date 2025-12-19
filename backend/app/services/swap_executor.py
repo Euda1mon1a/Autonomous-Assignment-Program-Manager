@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta
 from uuid import UUID, uuid4
 
 from sqlalchemy import and_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.assignment import Assignment
 from app.models.block import Block
@@ -192,13 +192,21 @@ class SwapExecutor:
         target_faculty_id: UUID,
         target_week: date | None,
     ) -> None:
-        """Update schedule assignments for the swap."""
+        """
+        Update schedule assignments for the swap.
+
+        N+1 Optimization: Uses selectinload to eagerly fetch assignments for all
+        blocks in the week range, preventing N+1 queries when iterating over blocks
+        to find and update assignments.
+        """
         # Calculate week end date (assuming week starts on Monday)
         source_week_end = source_week + timedelta(days=6)
 
-        # Get all blocks in the source week
+        # Get all blocks in the source week with eager-loaded assignments
+        # N+1 Optimization: Load blocks with their assignments in a single batch query
         source_blocks = (
             self.db.query(Block)
+            .options(selectinload(Block.assignments))
             .filter(
                 and_(
                     Block.date >= source_week,
@@ -209,31 +217,24 @@ class SwapExecutor:
         )
 
         # Update assignments for source faculty in source week
+        # N+1 Optimization: Assignments are already loaded, no additional queries needed
         for block in source_blocks:
-            assignment = (
-                self.db.query(Assignment)
-                .filter(
-                    and_(
-                        Assignment.block_id == block.id,
-                        Assignment.person_id == source_faculty_id,
+            for assignment in block.assignments:
+                if assignment.person_id == source_faculty_id:
+                    # Transfer assignment to target faculty
+                    assignment.person_id = target_faculty_id
+                    assignment.notes = (
+                        f"Swapped from faculty {source_faculty_id} via swap execution"
                     )
-                )
-                .first()
-            )
-
-            if assignment:
-                # Transfer assignment to target faculty
-                assignment.person_id = target_faculty_id
-                assignment.notes = (
-                    f"Swapped from faculty {source_faculty_id} via swap execution"
-                )
 
         # If this is a one-to-one swap, update target week assignments
         if target_week:
             target_week_end = target_week + timedelta(days=6)
 
+            # N+1 Optimization: Eager load assignments for target week blocks
             target_blocks = (
                 self.db.query(Block)
+                .options(selectinload(Block.assignments))
                 .filter(
                     and_(
                         Block.date >= target_week,
@@ -243,27 +244,24 @@ class SwapExecutor:
                 .all()
             )
 
+            # N+1 Optimization: Assignments are already loaded
             for block in target_blocks:
-                assignment = (
-                    self.db.query(Assignment)
-                    .filter(
-                        and_(
-                            Assignment.block_id == block.id,
-                            Assignment.person_id == target_faculty_id,
+                for assignment in block.assignments:
+                    if assignment.person_id == target_faculty_id:
+                        # Transfer assignment to source faculty
+                        assignment.person_id = source_faculty_id
+                        assignment.notes = (
+                            f"Swapped from faculty {target_faculty_id} via swap execution"
                         )
-                    )
-                    .first()
-                )
-
-                if assignment:
-                    # Transfer assignment to source faculty
-                    assignment.person_id = source_faculty_id
-                    assignment.notes = (
-                        f"Swapped from faculty {target_faculty_id} via swap execution"
-                    )
 
     def _update_call_cascade(self, week: date, new_faculty_id: UUID) -> None:
-        """Update Fri/Sat call assignments."""
+        """
+        Update Fri/Sat call assignments.
+
+        N+1 Optimization: Uses selectinload to eagerly fetch person relationships
+        for call assignments, though in this case we're only updating person_id.
+        Included for consistency and potential future use.
+        """
         # Calculate week end date
         week_end = week + timedelta(days=6)
 
@@ -273,8 +271,10 @@ class SwapExecutor:
             # Check if this is Friday (weekday 4) or Saturday (weekday 5)
             if current_date.weekday() in [4, 5]:
                 # Update call assignments for this date
+                # N+1 Optimization: Eager load person relationship
                 call_assignments = (
                     self.db.query(CallAssignment)
+                    .options(selectinload(CallAssignment.person))
                     .filter(CallAssignment.date == current_date)
                     .all()
                 )

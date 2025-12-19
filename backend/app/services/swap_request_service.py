@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from uuid import UUID, uuid4
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.assignment import Assignment
 from app.models.block import Block
@@ -241,28 +241,36 @@ class SwapRequestService:
         """
         Get details of a specific swap request.
 
+        N+1 Optimization: Uses selectinload to eagerly fetch source_faculty and
+        target_faculty relationships, avoiding separate queries for each faculty member.
+
         Args:
             request_id: The swap request ID
 
         Returns:
             RequestDetail or None if not found
         """
-        swap = self.db.query(SwapRecord).filter(SwapRecord.id == request_id).first()
+        swap = (
+            self.db.query(SwapRecord)
+            .options(
+                selectinload(SwapRecord.source_faculty),
+                selectinload(SwapRecord.target_faculty),
+            )
+            .filter(SwapRecord.id == request_id)
+            .first()
+        )
         if not swap:
             return None
-
-        source_faculty = self._get_faculty(swap.source_faculty_id)
-        target_faculty = self._get_faculty(swap.target_faculty_id)
 
         return RequestDetail(
             id=swap.id,
             status=swap.status,
             swap_type=swap.swap_type,
             source_faculty_id=swap.source_faculty_id,
-            source_faculty_name=source_faculty.name if source_faculty else "Unknown",
+            source_faculty_name=swap.source_faculty.name if swap.source_faculty else "Unknown",
             source_week=swap.source_week,
             target_faculty_id=swap.target_faculty_id,
-            target_faculty_name=target_faculty.name if target_faculty else "Unknown",
+            target_faculty_name=swap.target_faculty.name if swap.target_faculty else "Unknown",
             target_week=swap.target_week,
             reason=swap.reason,
             requested_at=swap.requested_at,
@@ -277,15 +285,26 @@ class SwapRequestService:
         """
         Get all outgoing swap requests for a faculty member.
 
+        N+1 Optimization: Uses selectinload to eagerly fetch source_faculty and
+        target_faculty for all swap records in a single batch query, preventing
+        N+1 queries when converting swaps to details.
+
         Args:
             faculty_id: The faculty member's ID
 
         Returns:
             List of outgoing RequestDetail records
         """
-        swaps = self.db.query(SwapRecord).filter(
-            SwapRecord.source_faculty_id == faculty_id
-        ).order_by(SwapRecord.requested_at.desc()).all()
+        swaps = (
+            self.db.query(SwapRecord)
+            .options(
+                selectinload(SwapRecord.source_faculty),
+                selectinload(SwapRecord.target_faculty),
+            )
+            .filter(SwapRecord.source_faculty_id == faculty_id)
+            .order_by(SwapRecord.requested_at.desc())
+            .all()
+        )
 
         return [self._swap_to_detail(swap) for swap in swaps]
 
@@ -293,17 +312,29 @@ class SwapRequestService:
         """
         Get all incoming swap requests targeting a faculty member.
 
+        N+1 Optimization: Uses selectinload to eagerly fetch source_faculty and
+        target_faculty for all swap records, preventing N+1 queries.
+
         Args:
             faculty_id: The faculty member's ID
 
         Returns:
             List of incoming RequestDetail records
         """
-        swaps = self.db.query(SwapRecord).filter(
-            SwapRecord.target_faculty_id == faculty_id,
-            SwapRecord.source_faculty_id != faculty_id,  # Exclude self-requests
-            SwapRecord.status == SwapStatus.PENDING,
-        ).order_by(SwapRecord.requested_at.desc()).all()
+        swaps = (
+            self.db.query(SwapRecord)
+            .options(
+                selectinload(SwapRecord.source_faculty),
+                selectinload(SwapRecord.target_faculty),
+            )
+            .filter(
+                SwapRecord.target_faculty_id == faculty_id,
+                SwapRecord.source_faculty_id != faculty_id,  # Exclude self-requests
+                SwapRecord.status == SwapStatus.PENDING,
+            )
+            .order_by(SwapRecord.requested_at.desc())
+            .all()
+        )
 
         return [self._swap_to_detail(swap) for swap in swaps]
 
@@ -523,18 +554,31 @@ class SwapRequestService:
         """
         Get all pending swap requests (admin view).
 
+        N+1 Optimization: Uses selectinload to eagerly fetch source_faculty and
+        target_faculty for all pending swaps, preventing N+1 queries.
+
         Returns:
             List of all pending RequestDetail records
         """
-        swaps = self.db.query(SwapRecord).filter(
-            SwapRecord.status == SwapStatus.PENDING
-        ).order_by(SwapRecord.requested_at.desc()).all()
+        swaps = (
+            self.db.query(SwapRecord)
+            .options(
+                selectinload(SwapRecord.source_faculty),
+                selectinload(SwapRecord.target_faculty),
+            )
+            .filter(SwapRecord.status == SwapStatus.PENDING)
+            .order_by(SwapRecord.requested_at.desc())
+            .all()
+        )
 
         return [self._swap_to_detail(swap) for swap in swaps]
 
     def auto_match_requests(self) -> MatchResult:
         """
         Find compatible pairs of swap requests.
+
+        N+1 Optimization: Uses selectinload to eagerly fetch source_faculty and
+        target_faculty relationships for efficient matching algorithm.
 
         Looks for mutual swaps where:
         - Faculty A wants to offload week X
@@ -545,9 +589,15 @@ class SwapRequestService:
         Returns:
             MatchResult with potential matches
         """
-        pending_swaps = self.db.query(SwapRecord).filter(
-            SwapRecord.status == SwapStatus.PENDING
-        ).all()
+        pending_swaps = (
+            self.db.query(SwapRecord)
+            .options(
+                selectinload(SwapRecord.source_faculty),
+                selectinload(SwapRecord.target_faculty),
+            )
+            .filter(SwapRecord.status == SwapStatus.PENDING)
+            .all()
+        )
 
         matches = []
 
@@ -656,6 +706,10 @@ class SwapRequestService:
         """
         Check if a week is assigned to a faculty member as FMIT coverage.
 
+        N+1 Optimization: Uses selectinload to eagerly fetch person and block
+        relationships if the assignment exists, though this is a boolean check
+        so the optimization is minimal. Included for consistency.
+
         Args:
             faculty_id: The faculty member's UUID
             week_start: The start date of the week (typically Monday)
@@ -676,8 +730,13 @@ class SwapRequestService:
             return False
 
         # Query for FMIT assignments in the specified week
+        # N+1 Optimization: Eager load person and block in case assignment is returned
         assignment = (
             self.db.query(Assignment)
+            .options(
+                selectinload(Assignment.person),
+                selectinload(Assignment.block),
+            )
             .join(Block, Assignment.block_id == Block.id)
             .filter(
                 Assignment.person_id == faculty_id,
@@ -735,19 +794,22 @@ class SwapRequestService:
         return candidates[:5]  # Limit to top 5 candidates
 
     def _swap_to_detail(self, swap: SwapRecord) -> RequestDetail:
-        """Convert SwapRecord to RequestDetail."""
-        source_faculty = self._get_faculty(swap.source_faculty_id)
-        target_faculty = self._get_faculty(swap.target_faculty_id)
+        """
+        Convert SwapRecord to RequestDetail.
 
+        N+1 Optimization: This method now accesses swap.source_faculty and
+        swap.target_faculty directly (which should be eagerly loaded by the caller)
+        instead of making separate database queries via _get_faculty.
+        """
         return RequestDetail(
             id=swap.id,
             status=swap.status,
             swap_type=swap.swap_type,
             source_faculty_id=swap.source_faculty_id,
-            source_faculty_name=source_faculty.name if source_faculty else "Unknown",
+            source_faculty_name=swap.source_faculty.name if swap.source_faculty else "Unknown",
             source_week=swap.source_week,
             target_faculty_id=swap.target_faculty_id,
-            target_faculty_name=target_faculty.name if target_faculty else "Unknown",
+            target_faculty_name=swap.target_faculty.name if swap.target_faculty else "Unknown",
             target_week=swap.target_week,
             reason=swap.reason,
             requested_at=swap.requested_at,
