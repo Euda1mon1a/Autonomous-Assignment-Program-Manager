@@ -1,27 +1,24 @@
 ***REMOVED*** =============================================================================
 ***REMOVED*** Nginx Reverse Proxy Dockerfile
 ***REMOVED*** =============================================================================
-***REMOVED*** Docker Hardened Image (DHI) with minimal attack surface
-***REMOVED*** Requires: docker login (Docker Hub credentials) to pull from dhi.io
+***REMOVED*** Alpine-based image for minimal attack surface
 ***REMOVED*** =============================================================================
 
-FROM dhi.io/nginx:1.27
+FROM nginx:1.27-alpine
 
 ***REMOVED*** Labels
 LABEL maintainer="Residency Scheduler Team"
 LABEL description="Nginx reverse proxy for Residency Scheduler"
 LABEL version="1.0"
 
-***REMOVED*** Create required directories
+***REMOVED*** Create required directories and remove default config in single layer
 RUN mkdir -p \
     /var/www/certbot \
     /var/www/html \
     /etc/nginx/ssl \
     /etc/nginx/snippets \
-    /var/log/nginx
-
-***REMOVED*** Remove default nginx configuration
-RUN rm -f /etc/nginx/conf.d/default.conf
+    /var/log/nginx \
+    && rm -f /etc/nginx/conf.d/default.conf
 
 ***REMOVED*** Copy nginx configuration files
 COPY nginx.conf /etc/nginx/nginx.conf
