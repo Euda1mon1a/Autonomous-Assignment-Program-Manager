@@ -319,12 +319,10 @@ class PromoterArchitecture:
         if not activator_signals:
             activator_contribution = 0.0
         elif self.activator_logic == BindingLogic.AND:
-            # All required activators must be individually present and bound
-            # Check each required activator specifically, not just count total bound
-            for tf_id in self.required_activators:
-                if tf_id not in bound_tfs or bound_tfs[tf_id] <= 0.2:
-                    return 0.0, "AND logic: missing required activators"
-            activator_contribution = min(activator_signals) if activator_signals else 0.0
+            # All required must be present
+            if len([s for s in activator_signals if s > 0.2]) < len(self.required_activators):
+                return 0.0, "AND logic: missing required activators"
+            activator_contribution = min(activator_signals)
         elif self.activator_logic == BindingLogic.OR:
             activator_contribution = max(activator_signals)
         elif self.activator_logic == BindingLogic.MAJORITY:

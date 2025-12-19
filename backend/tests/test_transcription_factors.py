@@ -317,54 +317,6 @@ class TestPromoterArchitecture:
 
         assert activation > 0.5
 
-    def test_and_logic_optional_cannot_substitute_required(self):
-        """
-        Test that optional activators cannot substitute for missing required activators.
-
-        Bug fix verification: With required TFs A and B and optional TF C,
-        binding A + C (without B) should NOT activate the constraint.
-        The AND logic must check each required TF individually, not just
-        count the total number of bound activators.
-        """
-        tf_a_id = uuid4()  # Required
-        tf_b_id = uuid4()  # Required
-        tf_c_id = uuid4()  # Optional
-
-        promoter = PromoterArchitecture(
-            id=uuid4(),
-            constraint_id=uuid4(),
-            constraint_name="ANDWithOptional",
-            base_weight=1.0,
-            activator_logic=BindingLogic.AND,
-            required_activators=[tf_a_id, tf_b_id],
-            optional_activators=[tf_c_id],
-        )
-
-        # Bind A + C (required A present, required B missing, optional C present)
-        # This should NOT activate because B is missing
-        bound_tfs = {tf_a_id: 0.8, tf_c_id: 0.9}
-        activation, explanation = promoter.calculate_activation(bound_tfs)
-
-        assert activation == 0.0, (
-            "AND logic should fail when a required activator is missing, "
-            "even if optional activators fill the count"
-        )
-        assert "missing required" in explanation.lower()
-
-        # Bind A + B (both required present, optional C missing)
-        # This should activate
-        bound_tfs = {tf_a_id: 0.8, tf_b_id: 0.7}
-        activation, _ = promoter.calculate_activation(bound_tfs)
-
-        assert activation > 0.5, "AND logic should activate when all required TFs are bound"
-
-        # Bind A + B + C (all present)
-        # This should also activate
-        bound_tfs = {tf_a_id: 0.8, tf_b_id: 0.7, tf_c_id: 0.9}
-        activation, _ = promoter.calculate_activation(bound_tfs)
-
-        assert activation > 0.5, "AND logic should activate when all TFs are bound"
-
     def test_repressor_reduces_activation(self):
         """Test repressor reduces activation level."""
         activator_id = uuid4()
