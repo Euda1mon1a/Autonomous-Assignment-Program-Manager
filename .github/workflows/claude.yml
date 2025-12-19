@@ -130,7 +130,7 @@ jobs:
                - Clear documentation of complex scheduling algorithms
 
             3. Security & Privacy:
-               - Protected Health Information (PHI) handling
+               - Proper data handling and protection
                - Proper authentication/authorization for schedule access
                - Audit logging for schedule modifications
 
