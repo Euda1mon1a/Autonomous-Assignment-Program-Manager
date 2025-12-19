@@ -4,7 +4,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import { Modal } from '@/components/Modal';
 import { Input, Select } from '@/components/forms';
 import { useUpdatePerson } from '@/lib/hooks';
-import type { Person, PersonUpdate } from '@/types/api';
+import { PersonType, type Person, type PersonUpdate } from '@/types/api';
 
 interface EditPersonModalProps {
   isOpen: boolean;
@@ -33,7 +33,7 @@ const pgyOptions = [
 export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [type, setType] = useState<'resident' | 'faculty'>('resident');
+  const [type, setType] = useState<PersonType>(PersonType.RESIDENT);
   const [pgyLevel, setPgyLevel] = useState('1');
   const [performsProcedures, setPerformsProcedures] = useState(false);
   const [specialties, setSpecialties] = useState('');
@@ -64,7 +64,7 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
       newErrors.email = 'Please enter a valid email address';
     }
 
-    if (type === 'resident') {
+    if (type === PersonType.RESIDENT) {
       const pgyNum = parseInt(pgyLevel);
       if (isNaN(pgyNum) || pgyNum < 1 || pgyNum > 3) {
         newErrors.pgy_level = 'PGY level must be between 1 and 3';
@@ -86,7 +86,7 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
       name: name.trim(),
       type,
       email: email.trim() || undefined,
-      pgy_level: type === 'resident' ? parseInt(pgyLevel) : undefined,
+      pgy_level: type === PersonType.RESIDENT ? parseInt(pgyLevel) : undefined,
       performs_procedures: performsProcedures,
       specialties: specialties ? specialties.split(',').map(s => s.trim()).filter(Boolean) : undefined,
     };
@@ -136,11 +136,11 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
         <Select
           label="Type"
           value={type}
-          onChange={(e) => setType(e.target.value as 'resident' | 'faculty')}
+          onChange={(e) => setType(e.target.value as PersonType)}
           options={typeOptions}
         />
 
-        {type === 'resident' && (
+        {type === PersonType.RESIDENT && (
           <Select
             label="PGY Level"
             value={pgyLevel}

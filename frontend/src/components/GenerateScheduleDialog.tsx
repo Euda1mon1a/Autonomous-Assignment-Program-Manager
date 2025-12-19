@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import { Modal } from './Modal';
 import { Select, DatePicker } from './forms';
 import { useGenerateSchedule } from '@/lib/hooks';
+import { SchedulingAlgorithm } from '@/types/api';
 import { CheckCircle, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface GenerateScheduleDialogProps {
@@ -40,8 +41,6 @@ const timeoutOptions = [
   { value: '300', label: '5 minutes (Maximum)' },
 ];
 
-type Algorithm = 'greedy' | 'cp_sat' | 'pulp' | 'hybrid';
-
 export function GenerateScheduleDialog({
   isOpen,
   onClose,
@@ -50,7 +49,7 @@ export function GenerateScheduleDialog({
 }: GenerateScheduleDialogProps) {
   const [startDate, setStartDate] = useState(defaultStartDate || '');
   const [endDate, setEndDate] = useState(defaultEndDate || '');
-  const [algorithm, setAlgorithm] = useState<Algorithm>('greedy');
+  const [algorithm, setAlgorithm] = useState<SchedulingAlgorithm>(SchedulingAlgorithm.GREEDY);
   const [timeout, setTimeout] = useState('60');
   const [pgyLevelFilter, setPgyLevelFilter] = useState('all');
   const [errors, setErrors] = useState<FormErrors>({});
@@ -105,7 +104,7 @@ export function GenerateScheduleDialog({
   const handleClose = () => {
     setStartDate(defaultStartDate || '');
     setEndDate(defaultEndDate || '');
-    setAlgorithm('greedy');
+    setAlgorithm(SchedulingAlgorithm.GREEDY);
     setTimeout('60');
     setPgyLevelFilter('all');
     setErrors({});
@@ -266,7 +265,7 @@ export function GenerateScheduleDialog({
             <Select
               label="Algorithm"
               value={algorithm}
-              onChange={(e) => setAlgorithm(e.target.value as Algorithm)}
+              onChange={(e) => setAlgorithm(e.target.value as SchedulingAlgorithm)}
               options={algorithmOptions}
             />
             <p className="text-xs text-gray-500 mt-1">
