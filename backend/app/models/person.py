@@ -44,7 +44,7 @@ class Person(Base):
 
     # Relationships
     assignments = relationship("Assignment", back_populates="person")
-    absences = relationship("Absence", back_populates="person")
+    absences = relationship("Absence", back_populates="person", foreign_keys="[Absence.person_id]")
     call_assignments = relationship("CallAssignment", back_populates="person")
     procedure_credentials = relationship("ProcedureCredential", back_populates="person", cascade="all, delete-orphan")
     certifications = relationship("PersonCertification", back_populates="person", cascade="all, delete-orphan")
