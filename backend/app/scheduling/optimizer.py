@@ -274,13 +274,39 @@ class SchedulingOptimizer:
         else:
             recommended = "hybrid"
 
+        # Check if quantum-inspired solver might be beneficial
+        # Quantum-inspired approaches excel at:
+        # - Large problems with many local minima
+        # - Problems where approximate solutions are acceptable
+        # - High-complexity problems that timeout classical solvers
+        quantum_recommended = score >= 60 or variables > 50000
+
         return {
             "score": round(score, 2),
             "variables": variables,
             "constraints": constraints,
             "sparsity": round(sparsity, 3),
             "recommended_solver": recommended,
+            "quantum_recommended": quantum_recommended,
+            "available_solvers": self._get_available_solvers(),
         }
+
+    def _get_available_solvers(self) -> list[str]:
+        """Get list of available solver algorithms."""
+        solvers = ["greedy", "pulp", "cp_sat", "hybrid"]
+
+        # Check for quantum-inspired solvers
+        try:
+            from app.scheduling.quantum import get_quantum_library_status
+            status = get_quantum_library_status()
+            if status.get("dwave_samplers") or status.get("pyqubo"):
+                solvers.append("quantum_inspired")
+            if status.get("dwave_system"):
+                solvers.append("quantum_hardware")
+        except ImportError:
+            pass
+
+        return solvers
 
     def _filter_active_residents(self, context: SchedulingContext) -> list:
         """Filter residents who have at least one available block."""

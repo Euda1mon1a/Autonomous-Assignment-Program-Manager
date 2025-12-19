@@ -80,7 +80,7 @@ The system **automates** this process using constraint-based algorithms while ma
 |--------|-------------|--------------|
 | **A: Single Institution** | Optimize for one residency program | Simplest deployment, focused features |
 | **B: Multi-Program** | Support multiple specialties within one institution | Shared infrastructure, program isolation |
-| **C: Multi-Institutional SaaS** | Enterprise offering across hospitals | Multi-tenancy, HIPAA compliance, pricing |
+| **C: Multi-Institutional SaaS** | Enterprise offering across hospitals | Multi-tenancy, data isolation, pricing |
 
 **Current Architecture Fit:**
 - Option A: Fully supported today
@@ -120,11 +120,11 @@ The system **automates** this process using constraint-based algorithms while ma
 | Option | Description | Implications |
 |--------|-------------|--------------|
 | **A: Self-Hosted** | Customers run their own infrastructure | Documentation-heavy, less control |
-| **B: Cloud SaaS** | Managed infrastructure | Hosting costs, HIPAA compliance |
+| **B: Cloud SaaS** | Managed infrastructure | Hosting costs, data security |
 | **C: Hybrid** | Both options with data portability | More complexity, wider market |
 
 **Considerations:**
-- Healthcare data sensitivity (HIPAA)
+- Data sensitivity and security
 - IT department preferences (control vs convenience)
 - Support model (on-call vs. ticket-based)
 
@@ -234,7 +234,7 @@ Blockers: [Any dependencies or concerns]
 ### Strategic Decisions (Shape roadmap)
 4. What is the 12-month revenue goal?
 5. Is there a target customer/institution already identified?
-6. Are there compliance requirements beyond ACGME (HIPAA, etc.)?
+6. Are there compliance requirements beyond ACGME?
 
 ### Resource Questions
 7. How many parallel development streams can be sustained?
@@ -267,7 +267,7 @@ Blockers: [Any dependencies or concerns]
 ### If Decision 1 = C (Multi-Institutional SaaS)
 - Prioritize SSO/LDAP in v1.2.0
 - Add multi-tenancy architecture
-- Plan HIPAA compliance audit
+- Plan security audit
 
 ### If Decision 2 = Mobile App (jumped ahead)
 - Create `/api/v2/` mobile-optimized endpoints

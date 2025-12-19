@@ -59,8 +59,37 @@ from .temporal import WednesdayAMInternOnlyConstraint
 # Faculty and preference constraints
 from .faculty import PreferenceConstraint
 
+# Faculty role-based constraints
+from .faculty_role import (
+    FacultyRoleClinicConstraint,
+    SMFacultyClinicConstraint,
+)
+
+# FMIT constraints
+from .fmit import (
+    FMITMandatoryCallConstraint,
+    FMITWeekBlockingConstraint,
+    PostFMITRecoveryConstraint,
+    get_fmit_week_dates,
+    is_sun_thurs,
+)
+
 # Equity and continuity constraints
 from .equity import ContinuityConstraint, EquityConstraint
+
+# Sports Medicine coordination constraints
+from .sports_medicine import SMResidentFacultyAlignmentConstraint
+
+# Post-call assignment constraints
+from .post_call import PostCallAutoAssignmentConstraint
+
+# Call equity and preference constraints
+from .call_equity import (
+    DeptChiefWednesdayPreferenceConstraint,
+    SundayCallEquityConstraint,
+    TuesdayCallPreferenceConstraint,
+    WeekdayCallEquityConstraint,
+)
 
 # Resilience-aware constraints
 from .resilience import (
@@ -99,9 +128,27 @@ __all__ = [
     "WednesdayAMInternOnlyConstraint",
     # Faculty constraints
     "PreferenceConstraint",
+    # Faculty role constraints
+    "FacultyRoleClinicConstraint",
+    "SMFacultyClinicConstraint",
+    # FMIT constraints
+    "FMITMandatoryCallConstraint",
+    "FMITWeekBlockingConstraint",
+    "PostFMITRecoveryConstraint",
+    "get_fmit_week_dates",
+    "is_sun_thurs",
     # Equity constraints
     "ContinuityConstraint",
     "EquityConstraint",
+    # Sports Medicine coordination constraints
+    "SMResidentFacultyAlignmentConstraint",
+    # Post-call assignment constraints
+    "PostCallAutoAssignmentConstraint",
+    # Call equity and preference constraints
+    "DeptChiefWednesdayPreferenceConstraint",
+    "SundayCallEquityConstraint",
+    "TuesdayCallPreferenceConstraint",
+    "WeekdayCallEquityConstraint",
     # Resilience constraints
     "HubProtectionConstraint",
     "N1VulnerabilityConstraint",

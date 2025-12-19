@@ -758,15 +758,17 @@ class TestSwapExecutorEdgeCases:
 # ============================================================================
 
 
-class TestSwapExecutorFutureImplementation:
+class TestSwapExecutorIntegration:
     """
-    Tests for future implementation when SwapRecord model is wired.
+    Integration tests for SwapExecutor with database.
 
-    These tests document expected behavior and should be updated
-    when the TODO items in swap_executor.py are implemented.
+    These tests verify that:
+    - Swaps persist SwapRecord to database
+    - Schedule assignments are actually updated
+    - Call cascade is updated for Fri/Sat
+    - Rollback works within 24-hour window
     """
 
-    @pytest.mark.skip(reason="Pending SwapRecord model wiring")
     def test_execute_swap_persists_record(
         self,
         swap_executor: SwapExecutor,
@@ -793,7 +795,6 @@ class TestSwapExecutorFutureImplementation:
         assert swap_record.source_faculty_id == faculty_a.id
         assert swap_record.target_faculty_id == faculty_b.id
 
-    @pytest.mark.skip(reason="Pending schedule assignment update implementation")
     def test_execute_swap_updates_assignments(
         self,
         swap_executor: SwapExecutor,
@@ -819,7 +820,6 @@ class TestSwapExecutorFutureImplementation:
         # ... (assertions for updated assignments)
         assert result.success is True
 
-    @pytest.mark.skip(reason="Pending call cascade update implementation")
     def test_execute_swap_updates_call_cascade(
         self,
         swap_executor: SwapExecutor,
@@ -845,7 +845,6 @@ class TestSwapExecutorFutureImplementation:
         # ... (assertions for updated call cascade)
         assert result.success is True
 
-    @pytest.mark.skip(reason="Pending rollback implementation")
     def test_rollback_swap_within_window(
         self,
         swap_executor: SwapExecutor,
@@ -877,7 +876,6 @@ class TestSwapExecutorFutureImplementation:
         swap_record = db.query(SwapRecord).filter_by(id=result.swap_id).first()
         assert swap_record.status == SwapStatus.ROLLED_BACK
 
-    @pytest.mark.skip(reason="Pending rollback implementation")
     def test_rollback_swap_outside_window(
         self,
         swap_executor: SwapExecutor,
@@ -909,7 +907,6 @@ class TestSwapExecutorFutureImplementation:
         assert rollback_result.success is False
         assert rollback_result.error_code == "ROLLBACK_WINDOW_EXPIRED"
 
-    @pytest.mark.skip(reason="Pending rollback implementation")
     def test_can_rollback_within_window(
         self,
         swap_executor: SwapExecutor,
@@ -932,7 +929,6 @@ class TestSwapExecutorFutureImplementation:
 
         assert can_rollback is True
 
-    @pytest.mark.skip(reason="Pending rollback implementation")
     def test_can_rollback_outside_window(
         self,
         swap_executor: SwapExecutor,

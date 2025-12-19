@@ -159,7 +159,7 @@ Trigger → Health Check → Fetch Roster → Validate Constraints
 **Security Features:**
 - Read-only mode by default
 - User approval required for modifications
-- PHI protection enabled
+- Data protection enabled
 - Audit logging active
 
 ---
