@@ -1,14 +1,12 @@
 # Backend Dockerfile for Residency Scheduler
-# Docker Hardened Image (DHI) with multi-stage build for minimal attack surface
-# Requires: docker login (Docker Hub credentials) to pull from dhi.io
+# Multi-stage build for minimal attack surface and optimized image size
 
 # =============================================================================
 # Python Version Selection: 3.12
 # =============================================================================
-# Python 3.12 is chosen for ortools compatibility and security:
+# Python 3.12 is chosen for ortools compatibility:
 # - ortools>=9.8 officially supports Python 3.9, 3.10, 3.11, 3.12, and 3.13
 # - Python 3.12 provides pre-built wheels for ortools on Linux x86-64
-# - DHI (Docker Hardened Images) 3.12 offers ~95% fewer CVEs vs standard images
 # - All other dependencies (FastAPI, SQLAlchemy, etc.) support Python 3.12
 #
 # Verified compatibility (as of 2025-12-18):
@@ -18,7 +16,7 @@
 # =============================================================================
 # Build Stage - includes compilers and build tools
 # =============================================================================
-FROM dhi.io/python:3.12-dev AS builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
@@ -32,14 +30,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 
 # Install Python dependencies into a virtual environment
+# Combined into fewer layers for better caching
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip --no-cache-dir \
+    && pip install --no-cache-dir -r requirements.txt
 
 # =============================================================================
-# Runtime Stage - minimal distroless image (~95% fewer CVEs)
+# Runtime Stage - minimal production image
 # =============================================================================
-FROM dhi.io/python:3.12 AS runtime
+FROM python:3.12-slim AS runtime
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
