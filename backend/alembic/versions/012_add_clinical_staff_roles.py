@@ -1,7 +1,7 @@
 """add clinical staff roles
 
-Revision ID: 012_add_clinical_staff_roles
-Revises: 011_add_token_blacklist
+Revision ID: 012
+Revises: 011
 Create Date: 2025-12-17
 
 Description:
@@ -13,8 +13,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '012_add_clinical_staff_roles'
-down_revision = '011_add_token_blacklist'
+revision = '012'
+down_revision = '011'
 branch_labels = None
 depends_on = None
 
