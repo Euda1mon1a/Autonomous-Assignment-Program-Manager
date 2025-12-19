@@ -1,8 +1,29 @@
 ***REMOVED*** Architectural Disconnects & Hidden Issues
 
 > **Document Created:** 2025-12-19
+> **Last Verified:** 2025-12-19
 > **Purpose:** Document "needles in haystacks" - architectural disconnects, orphaned code, and critical issues discovered through deep cross-cutting analysis
 > **Action Required:** These issues should be addressed in a separate session
+
+---
+
+***REMOVED******REMOVED*** STATUS UPDATE (2025-12-19)
+
+Several issues documented below have been **RESOLVED**. See `docs/PRIORITY_LIST.md` for the current, verified priority list.
+
+***REMOVED******REMOVED******REMOVED*** RESOLVED ISSUES:
+- *****REMOVED***6 Unauthenticated Routes** - FIXED: All 4 routes now have `get_current_active_user` dependency
+- *****REMOVED***4 SwapExecutor Facade** - FIXED: `_update_schedule_assignments()` and `_update_call_cascade()` now have real implementations
+- *****REMOVED***2 Resilience Disabled by Default** - PARTIALLY FIXED: Tier 1 constraints (HubProtection, UtilizationBuffer) now enabled by default
+
+***REMOVED******REMOVED******REMOVED*** ALSO NOW RESOLVED (2025-12-19):
+- *****REMOVED***14 API Session No Rollback** - FIXED: `get_db()` now calls `db.rollback()` on exception
+- *****REMOVED***1 Email Disconnect** - FIXED: `send_email` task now uses `EmailService` for real SMTP delivery
+- *****REMOVED***10 Celery Retry Broken** - FIXED: All tasks now use `bind=True`, `autoretry_for`, and `retry_backoff`
+- *****REMOVED***11 Timezone Issues** - FIXED: All tasks now use `datetime.utcnow()`
+
+***REMOVED******REMOVED******REMOVED*** ALL CRITICAL ISSUES RESOLVED
+See `docs/PRIORITY_LIST.md` for complete status.
 
 ---
 
