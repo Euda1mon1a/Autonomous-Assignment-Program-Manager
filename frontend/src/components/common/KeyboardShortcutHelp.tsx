@@ -53,7 +53,7 @@ export function KeyboardShortcutHelp() {
 
   if (!isOpen) return null;
 
-  const categories = [...new Set(shortcuts.map(s => s.category))];
+  const categories = Array.from(new Set(shortcuts.map(s => s.category)));
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setIsOpen(false)}>
