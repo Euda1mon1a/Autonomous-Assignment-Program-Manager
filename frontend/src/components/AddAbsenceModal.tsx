@@ -5,7 +5,7 @@ import { Modal } from './Modal';
 import { Input, Select, TextArea, DatePicker } from './forms';
 import { useCreateAbsence, usePeople } from '@/lib/hooks';
 import { validateRequired, validateDateRange } from '@/lib/validation';
-import type { AbsenceCreate } from '@/types/api';
+import { AbsenceType, type AbsenceCreate } from '@/types/api';
 
 interface AddAbsenceModalProps {
   isOpen: boolean;
@@ -39,11 +39,9 @@ const absenceTypeOptions = [
   { value: 'tdy', label: 'TDY' },
 ];
 
-type AbsenceType = 'vacation' | 'deployment' | 'tdy' | 'medical' | 'family_emergency' | 'conference' | 'sick' | 'bereavement' | 'emergency_leave' | 'convalescent' | 'maternity_paternity';
-
 export function AddAbsenceModal({ isOpen, onClose, preselectedPersonId }: AddAbsenceModalProps) {
   const [personId, setPersonId] = useState(preselectedPersonId || '');
-  const [absenceType, setAbsenceType] = useState<AbsenceType>('vacation');
+  const [absenceType, setAbsenceType] = useState<AbsenceType>(AbsenceType.VACATION);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [deploymentOrders, setDeploymentOrders] = useState(false);
@@ -111,8 +109,8 @@ export function AddAbsenceModal({ isOpen, onClose, preselectedPersonId }: AddAbs
       absence_type: absenceType,
       start_date: startDate,
       end_date: endDate,
-      ...(absenceType === 'deployment' && { deployment_orders: deploymentOrders }),
-      ...(absenceType === 'tdy' && tdyLocation && { tdy_location: tdyLocation }),
+      ...(absenceType === AbsenceType.DEPLOYMENT && { deployment_orders: deploymentOrders }),
+      ...(absenceType === AbsenceType.TDY && tdyLocation && { tdy_location: tdyLocation }),
       ...(notes && { notes }),
     };
 
@@ -126,7 +124,7 @@ export function AddAbsenceModal({ isOpen, onClose, preselectedPersonId }: AddAbs
 
   const handleClose = () => {
     setPersonId(preselectedPersonId || '');
-    setAbsenceType('vacation');
+    setAbsenceType(AbsenceType.VACATION);
     setStartDate('');
     setEndDate('');
     setDeploymentOrders(false);
@@ -177,7 +175,7 @@ export function AddAbsenceModal({ isOpen, onClose, preselectedPersonId }: AddAbs
           />
         </div>
 
-        {absenceType === 'deployment' && (
+        {absenceType === AbsenceType.DEPLOYMENT && (
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -192,7 +190,7 @@ export function AddAbsenceModal({ isOpen, onClose, preselectedPersonId }: AddAbs
           </div>
         )}
 
-        {absenceType === 'tdy' && (
+        {absenceType === AbsenceType.TDY && (
           <Input
             label="TDY Location"
             value={tdyLocation}
