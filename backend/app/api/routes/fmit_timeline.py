@@ -14,7 +14,7 @@ import statistics
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import and_, func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.core.security import get_current_active_user
 from app.db.session import get_db
@@ -101,13 +101,24 @@ def get_faculty_weekly_assignments(
     Groups assignments by week and calculates status.
     """
     # Get all assignments for this faculty in date range
-    assignments = db.query(Assignment).join(Block).filter(
-        and_(
-            Assignment.person_id == faculty_id,
-            Block.date >= start_date,
-            Block.date <= end_date
+    assignments = (
+        db.query(Assignment)
+        .join(Block)
+        .options(
+            joinedload(Assignment.block),
+            joinedload(Assignment.person),
+            joinedload(Assignment.rotation_template)
         )
-    ).all()
+        .filter(
+            and_(
+                Assignment.person_id == faculty_id,
+                Block.date >= start_date,
+                Block.date <= end_date
+            )
+        )
+        .limit(100)
+        .all()
+    )
 
     # Group by week
     weeks_map = {}
@@ -189,18 +200,23 @@ def get_all_faculty_timelines(
 ) -> list[FacultyTimeline]:
     """Get timeline data for all faculty members (or specific faculty)."""
     # Get all faculty with FMIT assignments in the date range
-    query = db.query(Person).join(Assignment).join(Block).filter(
-        and_(
-            Person.type == "faculty",
-            Block.date >= start_date,
-            Block.date <= end_date
+    query = (
+        db.query(Person)
+        .join(Assignment)
+        .join(Block)
+        .filter(
+            and_(
+                Person.type == "faculty",
+                Block.date >= start_date,
+                Block.date <= end_date
+            )
         )
     )
 
     if faculty_filter:
         query = query.filter(Person.id == faculty_filter)
 
-    faculty_list = query.distinct().all()
+    faculty_list = query.distinct().limit(100).all()
 
     timelines = []
     for faculty in faculty_list:
@@ -416,13 +432,25 @@ async def get_weekly_view(
     week_start, week_end = get_week_bounds(week_start)
 
     # Get all assignments for this week
-    assignments = db.query(Assignment).join(Block).join(Person).filter(
-        and_(
-            Block.date >= week_start,
-            Block.date <= week_end,
-            Person.type == "faculty"
+    assignments = (
+        db.query(Assignment)
+        .join(Block)
+        .join(Person)
+        .options(
+            joinedload(Assignment.block),
+            joinedload(Assignment.person),
+            joinedload(Assignment.rotation_template)
         )
-    ).all()
+        .filter(
+            and_(
+                Block.date >= week_start,
+                Block.date <= week_end,
+                Person.type == "faculty"
+            )
+        )
+        .limit(100)
+        .all()
+    )
 
     # Group assignments by faculty
     faculty_assignments = {}
@@ -535,18 +563,23 @@ async def get_gantt_data(
         end_date = end_date or ay_end
 
     # Get faculty timelines
-    query = db.query(Person).join(Assignment).join(Block).filter(
-        and_(
-            Person.type == "faculty",
-            Block.date >= start_date,
-            Block.date <= end_date
+    query = (
+        db.query(Person)
+        .join(Assignment)
+        .join(Block)
+        .filter(
+            and_(
+                Person.type == "faculty",
+                Block.date >= start_date,
+                Block.date <= end_date
+            )
         )
     )
 
     if faculty_ids:
         query = query.filter(Person.id.in_(faculty_ids))
 
-    faculty_list = query.distinct().all()
+    faculty_list = query.distinct().limit(100).all()
 
     groups = []
     all_tasks = []

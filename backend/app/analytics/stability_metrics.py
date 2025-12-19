@@ -14,7 +14,7 @@ Key Metrics:
 
 import logging
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from typing import Any, Optional
 from uuid import UUID
@@ -32,6 +32,18 @@ try:
 except ImportError:
     HAS_NETWORKX = False
     logger.warning("NetworkX not installed - ripple factor will use basic methods")
+
+
+@dataclass
+class ChurnData:
+    """Result of schedule churn rate calculation."""
+
+    changed_count: int
+    churn_rate: float
+    added: list[Any]
+    removed: list[Any]
+    modified: list[tuple[Any, Any]]
+    changes: list[tuple[str, Any, Any]]
 
 
 @dataclass
@@ -183,7 +195,7 @@ class StabilityMetricsComputer:
 
         # Calculate ripple factor using dependency analysis
         ripple_factor = self._calculate_ripple_factor(
-            churn_data["changes"],
+            churn_data.changes,
             current_assignments
         )
 
@@ -197,8 +209,8 @@ class StabilityMetricsComputer:
         days_since_major = self._days_since_major_change(start_date)
 
         return StabilityMetrics(
-            assignments_changed=churn_data["changed_count"],
-            churn_rate=churn_data["churn_rate"],
+            assignments_changed=churn_data.changed_count,
+            churn_rate=churn_data.churn_rate,
             ripple_factor=ripple_factor,
             n1_vulnerability_score=n1_vulnerability,
             new_violations=new_violations,
@@ -210,10 +222,10 @@ class StabilityMetricsComputer:
 
     def _get_previous_assignments(
         self,
-        current_assignments: list,
+        current_assignments: list[Any],
         start_date: Optional[date],
         end_date: Optional[date],
-    ) -> list:
+    ) -> list[Any]:
         """
         Get previous version of assignments for comparison.
 
@@ -318,9 +330,9 @@ class StabilityMetricsComputer:
 
     def _calculate_churn_rate(
         self,
-        old_assignments: list,
-        new_assignments: list,
-    ) -> dict[str, Any]:
+        old_assignments: list[Any],
+        new_assignments: list[Any],
+    ) -> ChurnData:
         """
         Calculate schedule churn rate by comparing two assignment sets.
 
@@ -329,24 +341,18 @@ class StabilityMetricsComputer:
             new_assignments: Current version of assignments
 
         Returns:
-            Dict with:
-                - changed_count: Number of assignments that changed
-                - churn_rate: Percentage of schedule that changed (0.0-1.0)
-                - added: List of newly added assignments
-                - removed: List of removed assignments
-                - modified: List of modified assignments
-                - changes: List of all change tuples for ripple analysis
+            ChurnData with changed count, churn rate, added/removed/modified assignments.
         """
         if not old_assignments:
             # First version - all assignments are "new"
-            return {
-                "changed_count": 0,
-                "churn_rate": 0.0,
-                "added": new_assignments,
-                "removed": [],
-                "modified": [],
-                "changes": [],
-            }
+            return ChurnData(
+                changed_count=0,
+                churn_rate=0.0,
+                added=new_assignments,
+                removed=[],
+                modified=[],
+                changes=[],
+            )
 
         # Build lookup maps by (block_id, person_id) tuple
         old_map = {
@@ -358,10 +364,10 @@ class StabilityMetricsComputer:
             for a in new_assignments
         }
 
-        added = []
-        removed = []
-        modified = []
-        changes = []
+        added: list[Any] = []
+        removed: list[Any] = []
+        modified: list[tuple[Any, Any]] = []
+        changes: list[tuple[str, Any, Any]] = []
 
         # Find removed assignments
         for key, old_assignment in old_map.items():
@@ -385,17 +391,26 @@ class StabilityMetricsComputer:
         total_assignments = max(len(old_assignments), len(new_assignments))
         churn_rate = total_changed / total_assignments if total_assignments > 0 else 0.0
 
-        return {
-            "changed_count": total_changed,
-            "churn_rate": churn_rate,
-            "added": added,
-            "removed": removed,
-            "modified": modified,
-            "changes": changes,
-        }
+        return ChurnData(
+            changed_count=total_changed,
+            churn_rate=churn_rate,
+            added=added,
+            removed=removed,
+            modified=modified,
+            changes=changes,
+        )
 
-    def _assignment_differs(self, old, new) -> bool:
-        """Check if two assignments differ in meaningful ways."""
+    def _assignment_differs(self, old: Any, new: Any) -> bool:
+        """
+        Check if two assignments differ in meaningful ways.
+
+        Args:
+            old: Previous assignment version
+            new: New assignment version
+
+        Returns:
+            True if assignments differ in rotation, role, or activity
+        """
         return (
             old.rotation_template_id != new.rotation_template_id
             or old.role != new.role
@@ -404,8 +419,8 @@ class StabilityMetricsComputer:
 
     def _calculate_ripple_factor(
         self,
-        changes: list[tuple],
-        current_assignments: list,
+        changes: list[tuple[str, Any, Any]],
+        current_assignments: list[Any],
     ) -> float:
         """
         Calculate how far changes cascade through the dependency graph.
@@ -457,7 +472,7 @@ class StabilityMetricsComputer:
         else:
             return 0.0
 
-    def _build_dependency_graph(self, assignments: list) -> "nx.DiGraph":
+    def _build_dependency_graph(self, assignments: list[Any]) -> Any:
         """
         Build a directed dependency graph from assignments.
 
@@ -519,7 +534,7 @@ class StabilityMetricsComputer:
 
         return G
 
-    def _calculate_n1_vulnerability(self, assignments: list) -> float:
+    def _calculate_n1_vulnerability(self, assignments: list[Any]) -> float:
         """
         Calculate N-1 vulnerability score (single point of failure risk).
 
@@ -588,8 +603,8 @@ class StabilityMetricsComputer:
 
     def _count_new_violations(
         self,
-        old_assignments: list,
-        new_assignments: list,
+        old_assignments: list[Any],
+        new_assignments: list[Any],
     ) -> int:
         """
         Count new constraint violations introduced by changes.
@@ -661,7 +676,7 @@ class StabilityMetricsComputer:
             # we'll use a heuristic: if churn rate is low (<15%) but violations exist,
             # they're likely not new. If churn is high and violations exist, count them as new.
             churn_data = self._calculate_churn_rate(old_assignments, new_assignments)
-            churn_rate = churn_data["churn_rate"]
+            churn_rate = churn_data.churn_rate
 
             if churn_rate < 0.15:
                 # Low churn - violations probably existed before
@@ -761,8 +776,8 @@ class StabilityMetricsComputer:
                     current_assignments
                 )
 
-                churn_rate = churn_data["churn_rate"]
-                changed_count = churn_data["changed_count"]
+                churn_rate = churn_data.churn_rate
+                changed_count = churn_data.changed_count
 
                 # Check if this qualifies as a major change
                 is_major = churn_rate > 0.30 or changed_count > 50

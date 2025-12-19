@@ -21,9 +21,9 @@ visible in ways that create accountability and force action.
 import hashlib
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
 from app.resilience.mtf_types import (
@@ -52,6 +52,122 @@ from app.schemas.resilience import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# Type-Safe Data Classes for MTF Compliance
+# =============================================================================
+
+
+@dataclass
+class MTFViolation:
+    """A single MTF compliance violation."""
+
+    rule_id: str
+    severity: str  # 'critical', 'warning', 'info'
+    description: str
+    affected_items: list[str] = field(default_factory=list)
+    recommendation: Optional[str] = None
+
+
+@dataclass
+class MTFComplianceResult:
+    """Result of an MTF compliance check."""
+
+    is_compliant: bool
+    score: float  # 0.0 to 100.0
+    violations: list[MTFViolation] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
+    checked_at: Optional[date] = None
+
+
+@dataclass
+class CoverageAnalysis:
+    """Analysis of coverage gaps and capacity."""
+
+    total_slots: int
+    filled_slots: int
+    coverage_percentage: float
+    gaps: list[dict[str, str]] = field(default_factory=list)
+
+
+@dataclass
+class ReadinessAssessment:
+    """Complete DRRS readiness assessment result."""
+
+    overall_rating: str
+    overall_capability: str
+    personnel_rating: str
+    personnel_percentage: float
+    capability_rating: str
+    deficiencies: list[str]
+    load_shedding_level: str
+    equilibrium_state: str
+    executive_summary: str
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary format."""
+        return {
+            "overall_rating": self.overall_rating,
+            "overall_capability": self.overall_capability,
+            "personnel_rating": self.personnel_rating,
+            "personnel_percentage": self.personnel_percentage,
+            "capability_rating": self.capability_rating,
+            "deficiencies": self.deficiencies,
+            "load_shedding_level": self.load_shedding_level,
+            "equilibrium_state": self.equilibrium_state,
+            "executive_summary": self.executive_summary,
+        }
+
+
+@dataclass
+class CircuitBreakerCheck:
+    """Result of a circuit breaker check."""
+
+    tripped: bool
+    state: str
+    trigger: Optional[str]
+    trigger_details: Optional[str]
+    locked_operations: list[str]
+    allowed_operations: list[str]
+    override_active: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary format."""
+        return {
+            "tripped": self.tripped,
+            "state": self.state,
+            "trigger": self.trigger,
+            "trigger_details": self.trigger_details,
+            "locked_operations": self.locked_operations,
+            "allowed_operations": self.allowed_operations,
+            "override_active": self.override_active,
+        }
+
+
+@dataclass
+class IronDomeStatus:
+    """Overall status of the Iron Dome system."""
+
+    circuit_breaker_state: str
+    scheduling_locked: bool
+    override_active: bool
+    trigger: Optional[str]
+    mfrs_generated: int
+    rffs_generated: int
+    locked_operations: list[str]
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary format."""
+        return {
+            "circuit_breaker_state": self.circuit_breaker_state,
+            "scheduling_locked": self.scheduling_locked,
+            "override_active": self.override_active,
+            "trigger": self.trigger,
+            "mfrs_generated": self.mfrs_generated,
+            "rffs_generated": self.rffs_generated,
+            "locked_operations": self.locked_operations,
+        }
 
 
 # =============================================================================
@@ -767,7 +883,7 @@ class CircuitBreaker:
         average_allostatic_load: float,
         volatility_level: str,
         compensation_debt: float,
-        positive_feedback_risks: list[PositiveFeedbackRisk | dict] | None = None,
+        positive_feedback_risks: list[PositiveFeedbackRisk | dict[str, Any]] | None = None,
     ) -> tuple[bool, CircuitBreakerTrigger | None, str | None]:
         """
         Check conditions and trip circuit breaker if thresholds breached.
@@ -1337,11 +1453,12 @@ class IronDomeService:
         available_faculty: int,
         required_faculty: int,
         overloaded_faculty_count: int = 0,
-    ) -> dict[str, Any]:
+    ) -> ReadinessAssessment:
         """
         Perform full DRRS readiness assessment.
 
-        Returns military-formatted readiness report (the SITREP).
+        Returns:
+            ReadinessAssessment with military-formatted readiness report (the SITREP).
         """
         # Translate each component
         drrs_rating, drrs_explanation = self.translator.translate_load_shedding(
@@ -1369,17 +1486,17 @@ class IronDomeService:
         else:
             capability = MissionCapabilityStatus.FMC
 
-        return {
-            "overall_rating": drrs_rating.value,
-            "overall_capability": capability.value,
-            "personnel_rating": p_rating.value,
-            "personnel_percentage": personnel_pct,
-            "capability_rating": s_rating.value,
-            "deficiencies": deficiencies,
-            "load_shedding_level": load_shedding_level.value if hasattr(load_shedding_level, 'value') else str(load_shedding_level),
-            "equilibrium_state": equilibrium_state.value if hasattr(equilibrium_state, 'value') else str(equilibrium_state),
-            "executive_summary": summary,
-        }
+        return ReadinessAssessment(
+            overall_rating=drrs_rating.value,
+            overall_capability=capability.value,
+            personnel_rating=p_rating.value,
+            personnel_percentage=personnel_pct,
+            capability_rating=s_rating.value,
+            deficiencies=deficiencies,
+            load_shedding_level=load_shedding_level.value if hasattr(load_shedding_level, 'value') else str(load_shedding_level),
+            equilibrium_state=equilibrium_state.value if hasattr(equilibrium_state, 'value') else str(equilibrium_state),
+            executive_summary=summary,
+        )
 
     def check_circuit_breaker(
         self,
@@ -1389,12 +1506,13 @@ class IronDomeService:
         average_allostatic_load: float,
         volatility_level: str,
         compensation_debt: float,
-        positive_feedback_risks: list[PositiveFeedbackRisk | dict] | None = None,
-    ) -> dict[str, Any]:
+        positive_feedback_risks: list[PositiveFeedbackRisk | dict[str, Any]] | None = None,
+    ) -> CircuitBreakerCheck:
         """
         Check circuit breaker and trip if thresholds breached.
 
-        Returns current status and any trip information.
+        Returns:
+            CircuitBreakerCheck with current status and any trip information.
         """
         tripped, trigger, details = self.circuit_breaker.check_and_trip(
             n1_pass=n1_pass,
@@ -1408,15 +1526,15 @@ class IronDomeService:
 
         status = self.circuit_breaker.get_status()
 
-        return {
-            "tripped": tripped,
-            "state": status.state.value,
-            "trigger": trigger.value if trigger else None,
-            "trigger_details": details,
-            "locked_operations": status.locked_operations,
-            "allowed_operations": status.allowed_operations,
-            "override_active": self.circuit_breaker._override_active(),
-        }
+        return CircuitBreakerCheck(
+            tripped=tripped,
+            state=status.state.value,
+            trigger=trigger.value if trigger else None,
+            trigger_details=details,
+            locked_operations=status.locked_operations,
+            allowed_operations=status.allowed_operations,
+            override_active=self.circuit_breaker._override_active(),
+        )
 
     def generate_risk_mfr(
         self,
@@ -1447,11 +1565,14 @@ class IronDomeService:
         reason: str,
         initiator: str,
         system_state: SystemHealthState | dict[str, Any],
-    ) -> tuple[MFRDocument, dict[str, Any]]:
+    ) -> tuple[MFRDocument, IronDomeStatus]:
         """
         Initiate a safety stand-down.
 
         This trips the circuit breaker and generates documentation.
+
+        Returns:
+            Tuple of (MFR document, IronDomeStatus)
         """
         # Trip circuit breaker manually
         self.circuit_breaker._trip(
@@ -1472,12 +1593,15 @@ class IronDomeService:
 
         status = self.circuit_breaker.get_status()
 
-        return mfr, {
-            "stand_down_active": True,
-            "circuit_breaker_state": status.state.value,
-            "locked_operations": status.locked_operations,
-            "mfr_id": str(mfr.id),
-        }
+        return mfr, IronDomeStatus(
+            circuit_breaker_state=status.state.value,
+            scheduling_locked=True,
+            override_active=self.circuit_breaker._override_active(),
+            trigger=status.trigger.value if status.trigger else None,
+            mfrs_generated=len(self.mfr_history),
+            rffs_generated=len(self.rff_history),
+            locked_operations=status.locked_operations,
+        )
 
     def draft_resource_request(
         self,
@@ -1507,16 +1631,21 @@ class IronDomeService:
         self.rff_history.append(rff)
         return rff
 
-    def get_status(self) -> dict[str, Any]:
-        """Get overall Iron Dome status."""
+    def get_status(self) -> IronDomeStatus:
+        """
+        Get overall Iron Dome status.
+
+        Returns:
+            IronDomeStatus with complete system status information.
+        """
         cb_status = self.circuit_breaker.get_status()
 
-        return {
-            "circuit_breaker_state": cb_status.state.value,
-            "scheduling_locked": cb_status.state == CircuitBreakerState.OPEN,
-            "override_active": self.circuit_breaker._override_active(),
-            "trigger": cb_status.trigger.value if cb_status.trigger else None,
-            "mfrs_generated": len(self.mfr_history),
-            "rffs_generated": len(self.rff_history),
-            "locked_operations": cb_status.locked_operations,
-        }
+        return IronDomeStatus(
+            circuit_breaker_state=cb_status.state.value,
+            scheduling_locked=cb_status.state == CircuitBreakerState.OPEN,
+            override_active=self.circuit_breaker._override_active(),
+            trigger=cb_status.trigger.value if cb_status.trigger else None,
+            mfrs_generated=len(self.mfr_history),
+            rffs_generated=len(self.rff_history),
+            locked_operations=cb_status.locked_operations,
+        )
