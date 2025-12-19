@@ -5,7 +5,7 @@ import { Modal } from './Modal';
 import { Input, Select } from './forms';
 import { useCreatePerson } from '@/lib/hooks';
 import { validateRequired, validateEmail, validateMinLength, validatePgyLevel } from '@/lib/validation';
-import type { PersonCreate } from '@/types/api';
+import { PersonType, type PersonCreate } from '@/types/api';
 
 interface AddPersonModalProps {
   isOpen: boolean;
@@ -38,7 +38,7 @@ const pgyOptions = [
 export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [type, setType] = useState<'resident' | 'faculty'>('resident');
+  const [type, setType] = useState<PersonType>(PersonType.RESIDENT);
   const [pgyLevel, setPgyLevel] = useState('1');
   const [performsProcedures, setPerformsProcedures] = useState(false);
   const [specialties, setSpecialties] = useState('');
@@ -69,7 +69,7 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
     }
 
     // PGY level validation for residents (1-8)
-    if (type === 'resident') {
+    if (type === PersonType.RESIDENT) {
       const pgyError = validatePgyLevel(pgyLevel);
       if (pgyError) {
         newErrors.pgy_level = pgyError;
@@ -91,7 +91,7 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
       name: name.trim(),
       type,
       ...(email && { email: email.trim() }),
-      ...(type === 'resident' && { pgy_level: parseInt(pgyLevel) }),
+      ...(type === PersonType.RESIDENT && { pgy_level: parseInt(pgyLevel) }),
       performs_procedures: performsProcedures,
       ...(specialties && { specialties: specialties.split(',').map(s => s.trim()).filter(Boolean) }),
     };
@@ -108,7 +108,7 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
     // Reset form
     setName('');
     setEmail('');
-    setType('resident');
+    setType(PersonType.RESIDENT);
     setPgyLevel('1');
     setPerformsProcedures(false);
     setSpecialties('');
@@ -146,11 +146,11 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
         <Select
           label="Type"
           value={type}
-          onChange={(e) => setType(e.target.value as 'resident' | 'faculty')}
+          onChange={(e) => setType(e.target.value as PersonType)}
           options={typeOptions}
         />
 
-        {type === 'resident' && (
+        {type === PersonType.RESIDENT && (
           <Select
             label="PGY Level"
             value={pgyLevel}

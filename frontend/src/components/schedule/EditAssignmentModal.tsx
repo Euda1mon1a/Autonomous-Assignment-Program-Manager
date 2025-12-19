@@ -15,7 +15,7 @@ import {
   useAssignments,
 } from '@/lib/hooks';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Assignment, AssignmentCreate, AssignmentUpdate } from '@/types/api';
+import { AssignmentRole, type Assignment, type AssignmentCreate, type AssignmentUpdate } from '@/types/api';
 import {
   AssignmentWarnings,
   AssignmentWarning,
@@ -62,7 +62,7 @@ export function EditAssignmentModal({
 
   // State
   const [rotationTemplateId, setRotationTemplateId] = useState<string>('');
-  const [role, setRole] = useState<'primary' | 'supervising' | 'backup'>('primary');
+  const [role, setRole] = useState<AssignmentRole>(AssignmentRole.PRIMARY);
   const [notes, setNotes] = useState<string>('');
   const [criticalAcknowledged, setCriticalAcknowledged] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +105,7 @@ export function EditAssignmentModal({
         setNotes(assignment.notes || '');
       } else {
         setRotationTemplateId('');
-        setRole('primary');
+        setRole(AssignmentRole.PRIMARY);
         setNotes('');
       }
       setCriticalAcknowledged(false);
@@ -353,7 +353,7 @@ export function EditAssignmentModal({
           label="Role"
           options={roleOptions}
           value={role}
-          onChange={(e) => setRole(e.target.value as 'primary' | 'supervising' | 'backup')}
+          onChange={(e) => setRole(e.target.value as AssignmentRole)}
         />
 
         <TextArea
