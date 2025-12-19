@@ -42,6 +42,16 @@ pulp>=2.7.0
 # Multi-Objective Optimization
 pymoo>=0.6.0
 
+# Quantum-Inspired Optimization (optional)
+# Install these for quantum-inspired scheduling solvers:
+# pip install pyqubo dwave-samplers
+# For D-Wave quantum hardware access, also install:
+# pip install dwave-system
+pyqubo>=1.4.0  # QUBO formulation library
+dwave-samplers>=1.0.0  # Classical simulated annealing (quantum-inspired)
+# dwave-system>=1.0.0  # Uncomment for D-Wave quantum hardware access
+# qubovert>=1.0.0  # Alternative QUBO library (optional)
+
 # Monitoring & Observability
 sentry-sdk[fastapi]==2.48.0
 prometheus-fastapi-instrumentator==7.1.0
