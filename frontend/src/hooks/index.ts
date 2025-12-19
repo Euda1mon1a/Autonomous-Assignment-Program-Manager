@@ -56,8 +56,14 @@ export {
   useCreatePerson,
   useUpdatePerson,
   useDeletePerson,
+  useCertifications,
   peopleQueryKeys,
   type PeopleFilters,
+  type PersonType,
+  type PersonStatus,
+  type CertificationStatus,
+  type CertificationType,
+  type PersonCertification,
 } from './usePeople'
 
 // ============================================================================
@@ -134,6 +140,7 @@ export const queryKeys = {
   person: (id: string) => ['people', id] as const,
   residents: (pgyLevel?: number) => ['residents', pgyLevel] as const,
   faculty: (specialty?: string) => ['faculty', specialty] as const,
+  certifications: (personId: string) => ['certifications', 'person', personId] as const,
 
   // Absence-related keys
   absences: (filters?: AbsenceFilters) => ['absences', filters] as const,

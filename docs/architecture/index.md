@@ -78,6 +78,11 @@ Fault tolerance and system stability.
 Data models and relationships.
 </div>
 
+<div class="feature-card" markdown>
+### :material-api: [API Design Standards](api-design.md)
+RESTful conventions, authentication, and error handling.
+</div>
+
 </div>
 
 ---
