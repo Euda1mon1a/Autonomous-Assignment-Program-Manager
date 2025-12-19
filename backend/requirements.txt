@@ -38,6 +38,7 @@ networkx>=3.0
 # Constraint Programming & Optimization
 ortools>=9.8
 pulp>=2.7.0
+pyomo>=6.7.0  # Algebraic modeling + rich solution data capture (duals, slacks)
 
 # Multi-Objective Optimization
 pymoo>=0.6.0
