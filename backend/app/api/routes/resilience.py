@@ -165,11 +165,11 @@ async def get_system_health(
     if end_date is None:
         end_date = start_date + timedelta(days=30)
 
-    # Load data for analysis
+    # Load data for analysis - no limit to ensure accurate health assessment
     faculty = (
         db.query(Person)
         .filter(Person.type == "faculty")
-        .limit(100)
+        .order_by(Person.id)
         .all()
     )
     blocks = (
@@ -178,7 +178,7 @@ async def get_system_health(
             Block.date >= start_date,
             Block.date <= end_date
         )
-        .limit(100)
+        .order_by(Block.date, Block.id)
         .all()
     )
     assignments = (
@@ -193,7 +193,7 @@ async def get_system_health(
             Block.date >= start_date,
             Block.date <= end_date
         )
-        .limit(100)
+        .order_by(Block.date, Assignment.id)
         .all()
     )
 
@@ -600,11 +600,11 @@ async def get_vulnerability_report(
     if end_date is None:
         end_date = start_date + timedelta(days=30)
 
-    # Load data
+    # Load data - no limit to ensure complete vulnerability analysis
     faculty = (
         db.query(Person)
         .filter(Person.type == "faculty")
-        .limit(100)
+        .order_by(Person.id)
         .all()
     )
     blocks = (
@@ -613,7 +613,7 @@ async def get_vulnerability_report(
             Block.date >= start_date,
             Block.date <= end_date
         )
-        .limit(100)
+        .order_by(Block.date, Block.id)
         .all()
     )
     assignments = (
@@ -628,7 +628,7 @@ async def get_vulnerability_report(
             Block.date >= start_date,
             Block.date <= end_date
         )
-        .limit(100)
+        .order_by(Block.date, Assignment.id)
         .all()
     )
 
@@ -729,11 +729,11 @@ async def get_comprehensive_report(
     if end_date is None:
         end_date = start_date + timedelta(days=30)
 
-    # Load data
+    # Load data - no limit to ensure complete comprehensive report
     faculty = (
         db.query(Person)
         .filter(Person.type == "faculty")
-        .limit(100)
+        .order_by(Person.id)
         .all()
     )
     blocks = (
@@ -742,7 +742,7 @@ async def get_comprehensive_report(
             Block.date >= start_date,
             Block.date <= end_date
         )
-        .limit(100)
+        .order_by(Block.date, Block.id)
         .all()
     )
     assignments = (
@@ -757,7 +757,7 @@ async def get_comprehensive_report(
             Block.date >= start_date,
             Block.date <= end_date
         )
-        .limit(100)
+        .order_by(Block.date, Assignment.id)
         .all()
     )
 
@@ -2216,11 +2216,11 @@ async def analyze_hubs(
     if end_date is None:
         end_date = start_date + timedelta(days=30)
 
-    # Load data
+    # Load data - no limit to ensure complete hub analysis
     faculty = (
         db.query(Person)
         .filter(Person.type == "faculty")
-        .limit(100)
+        .order_by(Person.id)
         .all()
     )
     assignments = (
@@ -2235,7 +2235,7 @@ async def analyze_hubs(
             Block.date >= start_date,
             Block.date <= end_date
         )
-        .limit(100)
+        .order_by(Block.date, Assignment.id)
         .all()
     )
 
