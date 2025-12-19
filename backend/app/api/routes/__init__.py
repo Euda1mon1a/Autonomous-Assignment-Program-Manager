@@ -11,6 +11,7 @@ from app.api.routes import (
     blocks,
     calendar,
     certifications,
+    conflict_resolution,
     credentials,
     daily_manifest,
     export,
@@ -61,5 +62,6 @@ api_router.include_router(leave.router)  # prefix="/leave" defined in router
 api_router.include_router(portal.router)  # prefix="/portal" defined in router
 api_router.include_router(fmit_health.router, prefix="/fmit", tags=["fmit-health"])
 api_router.include_router(fmit_timeline.router, prefix="/fmit_timeline", tags=["fmit-timeline"])
+api_router.include_router(conflict_resolution.router, prefix="/conflicts", tags=["conflict-resolution"])
 api_router.include_router(daily_manifest.router, prefix="/assignments", tags=["daily-manifest"])
 api_router.include_router(role_views.router, prefix="/views", tags=["role-views"])
