@@ -280,16 +280,15 @@ class ConstraintManager:
         manager.add(EquityConstraint(weight=10.0))
         manager.add(ContinuityConstraint(weight=5.0))
 
-        # Tier 1: Resilience-aware soft constraints (disabled by default for backward compatibility)
+        # Tier 1: Resilience-aware soft constraints (ENABLED by default)
+        # These provide critical protection against cascade failures
         manager.add(HubProtectionConstraint(weight=15.0))
         manager.add(UtilizationBufferConstraint(weight=20.0))
-        # Tier 2: Strategic resilience constraints (disabled by default)
+        # Tier 2: Strategic resilience constraints (disabled by default - more aggressive)
         manager.add(ZoneBoundaryConstraint(weight=12.0))
         manager.add(PreferenceTrailConstraint(weight=8.0))
         manager.add(N1VulnerabilityConstraint(weight=25.0))
-        # Disabled by default - enabled when resilience data is provided
-        manager.disable("HubProtection")
-        manager.disable("UtilizationBuffer")
+        # Tier 2 disabled by default - enable with create_resilience_aware(tier=2)
         manager.disable("ZoneBoundary")
         manager.disable("PreferenceTrail")
         manager.disable("N1Vulnerability")
