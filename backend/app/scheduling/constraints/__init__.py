@@ -77,6 +77,12 @@ from .fmit import (
 # Equity and continuity constraints
 from .equity import ContinuityConstraint, EquityConstraint
 
+# Sports Medicine coordination constraints
+from .sports_medicine import SMResidentFacultyAlignmentConstraint
+
+# Post-call assignment constraints
+from .post_call import PostCallAutoAssignmentConstraint
+
 # Call equity and preference constraints
 from .call_equity import (
     DeptChiefWednesdayPreferenceConstraint,
@@ -134,6 +140,10 @@ __all__ = [
     # Equity constraints
     "ContinuityConstraint",
     "EquityConstraint",
+    # Sports Medicine coordination constraints
+    "SMResidentFacultyAlignmentConstraint",
+    # Post-call assignment constraints
+    "PostCallAutoAssignmentConstraint",
     # Call equity and preference constraints
     "DeptChiefWednesdayPreferenceConstraint",
     "SundayCallEquityConstraint",
