@@ -27,8 +27,8 @@ After comprehensive analysis, this document identifies **active priorities** vs.
 | Priority | Issue | Severity | Effort | Description |
 |----------|-------|----------|--------|-------------|
 | **DONE** | #14 API Session No Rollback | HIGH | LOW | ~~`get_db()` doesn't rollback on exception~~ **FIXED 2025-12-19** |
-| **P1** | #1 Email Disconnect | HIGH | MEDIUM | Notification tasks stubbed, EmailService not wired |
-| **P1** | #10 Celery Retry Broken | MEDIUM | LOW | Tasks have `max_retries` but never call `self.retry()` |
+| **DONE** | #1 Email Disconnect | HIGH | MEDIUM | ~~Notification tasks stubbed~~ **FIXED 2025-12-19** - EmailService now wired in |
+| **DONE** | #10 Celery Retry Broken | MEDIUM | LOW | ~~No retry calls~~ **FIXED 2025-12-19** - Tasks now use `autoretry_for` + `bind=True` |
 | **DONE** | #11 Timezone Inconsistency | LOW | TRIVIAL | ~~`datetime.now()` used~~ **FIXED 2025-12-19** |
 | **DONE** | Documentation Sprawl | LOW | LOW | ~~wiki duplicates docs/~~ **FIXED 2025-12-19** - wiki deleted, backed up to docs/archived/wiki-backup |
 
