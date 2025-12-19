@@ -625,6 +625,230 @@ raise HTTPException(status_code=400, detail="Invalid scenario type")
 
 ---
 
+# PART 2: Wide Scan Findings
+
+Additional issues discovered through systematic codebase-wide analysis.
+
+---
+
+## NEEDLE #16: 15 API Routes Have No Dedicated Test Files (HIGH)
+
+### Problem
+Over half of API routes lack dedicated test files.
+
+**Routes WITH test files (14):**
+- academic_blocks, analytics, assignments, audit, auth, blocks, fmit_timeline
+- health, me_dashboard, portal, rotation_templates, settings, swap, unified_heatmap
+
+**Routes WITHOUT test files (15):**
+- `absences` (CRITICAL - unauthenticated AND untested!)
+- `calendar`
+- `certifications`
+- `credentials`
+- `daily_manifest`
+- `export`
+- `fmit_health`
+- `leave`
+- `people`
+- `procedures`
+- `resilience` (2000+ line file with no dedicated tests!)
+- `role_filter_example`
+- `role_views`
+- `schedule` (core functionality!)
+- `scheduler_ops`
+- `visualization`
+
+### Impact
+- Critical paths untested
+- Regressions undetected
+- Unauthenticated routes have no test coverage
+- Compliance-critical routes (schedule, leave) untested
+
+### Fix
+Create test files for all untested routes, prioritizing:
+1. `absences` - security critical
+2. `schedule` - core functionality
+3. `resilience` - complex logic
+4. `leave` - ACGME compliance
+
+---
+
+## NEEDLE #17: Hardcoded Credentials in Checked-In Files (MEDIUM)
+
+### Problem
+Database credentials are hardcoded in version-controlled configuration files.
+
+**Location:** `backend/alembic.ini` (line 9)
+```ini
+sqlalchemy.url = postgresql://scheduler:scheduler@localhost:5432/residency_scheduler
+```
+
+### Impact
+- Credentials in git history forever
+- Default password known to anyone with repo access
+- Violates security best practices
+
+### Fix
+1. Remove credentials from alembic.ini
+2. Use environment variable interpolation
+3. Document in .env.example instead
+
+---
+
+## NEEDLE #18: Docker Compose Uses Weak Default Password (MEDIUM)
+
+### Problem
+Production docker-compose.yml uses a weak default password for Redis.
+
+**Location:** `docker-compose.yml` (lines 34, 36, 40)
+```yaml
+command: redis-server ... --requirepass ${REDIS_PASSWORD:-dev_only_password}
+```
+
+### Impact
+- If REDIS_PASSWORD not set, production uses "dev_only_password"
+- Easily guessable default
+- Potential data exposure
+
+### Fix
+1. Remove default password fallback
+2. Require explicit REDIS_PASSWORD in production
+3. Fail fast if not set
+
+---
+
+## NEEDLE #19: Frontend Silently Swallows Errors (MEDIUM)
+
+### Problem
+Multiple frontend components use empty catch blocks that silently ignore errors.
+
+**Examples found:**
+```typescript
+// AuthContext.tsx
+} catch {
+  // Error silently ignored
+}
+
+// settings/page.tsx, templates/hooks.ts, etc.
+} catch {
+  // 14+ locations with silent error handling
+}
+```
+
+### Impact
+- Errors not logged to console or monitoring
+- Users see no feedback on failures
+- Debugging production issues extremely difficult
+- Failures appear as "nothing happened"
+
+### Fix
+At minimum, log errors:
+```typescript
+} catch (error) {
+  console.error('Operation failed:', error);
+  // Show user-friendly error message
+}
+```
+
+---
+
+## NEEDLE #20: SMTP Defaults Won't Work in Production (LOW)
+
+### Problem
+Email service defaults to localhost SMTP which won't work in containers.
+
+**Location:** `backend/app/services/email_service.py` (lines 57-64)
+```python
+host=os.getenv("SMTP_HOST", "localhost"),
+port=int(os.getenv("SMTP_PORT", "587")),
+from_email=os.getenv("SMTP_FROM_EMAIL", "noreply@hospital.org"),
+```
+
+### Impact
+- Email fails silently in production containers
+- Default "noreply@hospital.org" won't be valid
+- No validation that SMTP is configured
+
+### Fix
+1. Validate SMTP configuration on startup
+2. Log warning if using defaults
+3. Require explicit SMTP config in production
+
+---
+
+## NEEDLE #21: TypeScript Type Safety Bypassed (LOW)
+
+### Problem
+Frontend code uses `: any` type annotations, defeating TypeScript's type safety.
+
+**Examples from `fmit-timeline/hooks.ts`:**
+```typescript
+select: (data: any) => {
+  return items.map((person: any) => ({
+```
+
+**Other locations:**
+- SettingsPanel.test.tsx
+- settings.test.tsx
+- Multiple hook files
+
+### Impact
+- Type errors not caught at compile time
+- Runtime errors possible
+- Refactoring safety reduced
+
+### Fix
+Replace `any` with proper types or `unknown` with type guards.
+
+---
+
+## Final Combined Priority Matrix
+
+| # | Issue | Severity | Priority |
+|---|-------|----------|----------|
+| 6 | Unauthenticated Routes | CRITICAL | **P0** |
+| 9 | Rate Limiting Gaps | HIGH | **P0** |
+| 14 | API Session No Rollback | HIGH | **P0** |
+| 16 | 15 Routes Untested | HIGH | **P0** |
+| 4 | SwapExecutor Facade | HIGH | P1 |
+| 1 | Email Disconnect | HIGH | P1 |
+| 17 | Hardcoded Credentials | MEDIUM | P1 |
+| 18 | Weak Docker Password | MEDIUM | P1 |
+| 8 | FK Cascade Issues | MEDIUM | P2 |
+| 10 | Celery Retry Broken | MEDIUM | P2 |
+| 5 | ACGME Hides Violations | MEDIUM | P2 |
+| 2 | Resilience Disabled | MEDIUM | P2 |
+| 12 | SECRET_KEY Issue | MEDIUM | P2 |
+| 19 | Silent Error Swallowing | MEDIUM | P2 |
+| 13 | Fake Dashboard Metrics | MEDIUM | P3 |
+| 3 | Orphaned Resolver | MEDIUM | P3 |
+| 20 | SMTP Defaults | LOW | P3 |
+| 21 | TypeScript `any` Usage | LOW | P3 |
+| 11 | Timezone Issues | LOW | P3 |
+| 7 | Stubbed Webhooks | LOW | P3 |
+| 15 | Input in Errors | LOW | P4 |
+
+---
+
+## Grand Total: 21 Architectural Issues
+
+### By Category:
+- **Security**: 6 issues (#6, #9, #14, #15, #17, #18)
+- **Test Coverage**: 1 issue (#16)
+- **Data Integrity**: 3 issues (#1, #4, #8)
+- **Feature Completeness**: 4 issues (#2, #3, #7, #13)
+- **Reliability**: 4 issues (#10, #11, #12, #20)
+- **Code Quality**: 2 issues (#19, #21)
+- **Compliance**: 1 issue (#5)
+
+### By Effort to Fix:
+- **Trivial** (< 1 hour): #5, #11, #15, #20, #21
+- **Low** (1-4 hours): #1, #6, #8, #9, #10, #12, #14, #17, #18, #19
+- **Medium** (4-16 hours): #2, #3, #4, #7, #13, #16
+
+---
+
 *Document generated through deep cross-cutting analysis of codebase architecture.*
-*Updated with additional findings from intersection point analysis.*
-*Final count: 15 architectural disconnects identified.*
+*Part 1: Deep intersection analysis (15 issues)*
+*Part 2: Wide systematic scan (6 additional issues)*
+*Grand total: 21 architectural disconnects identified.*
