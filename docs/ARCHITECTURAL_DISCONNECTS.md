@@ -852,3 +852,195 @@ Replace `any` with proper types or `unknown` with type guards.
 *Part 1: Deep intersection analysis (15 issues)*
 *Part 2: Wide systematic scan (6 additional issues)*
 *Grand total: 21 architectural disconnects identified.*
+
+---
+
+# PART 3: Experimental Branches Analysis
+
+Analysis of unmerged experimental branches and how they relate to documented issues.
+
+---
+
+## Active Experimental Branches
+
+### Branch: `claude/docker-feedback-fixes-vsQ3v`
+
+**Status:** 13 commits ahead of main
+**Focus:** Deployment fixes and type safety
+
+**Key Changes:**
+- Migration ordering fixes for `email_templates` FK to `users` table
+- HIPAA/PHI reference cleanup from codebase
+- Frontend type fixes (AbsenceType, PersonType mismatches)
+- Docker image optimization (replaced DHI registry with standard Docker Hub)
+
+**Relation to Documented Issues:**
+- May address migration-related FK issues (#8)
+- Docker optimization relevant to #18 (weak Docker password) context
+
+---
+
+### Branch: `claude/quantum-physics-scheduler-7js6S`
+
+**Status:** 2 commits, +2,221 lines
+**Focus:** Quantum-inspired optimization for scheduling
+
+**Key New Files:**
+- `backend/app/scheduling/quantum/qubo_solver.py` (874 lines)
+  - QUBO (Quadratic Unconstrained Binary Optimization) formulation
+  - Classical simulated annealing implementation
+  - D-Wave quantum hardware integration hooks
+  - Hybrid quantum-classical approaches
+- `backend/tests/scheduling/test_quantum_solver.py` (367 lines)
+- `docs/research/quantum-physics-scheduler-exploration.md` (788 lines)
+
+**How It Works:**
+```python
+# Formulates scheduling as QUBO: minimize x^T Q x
+# - Hard constraints → high penalty terms
+# - ACGME rules → ACGME_PENALTY = 5000.0
+# - Soft constraints → optimization targets
+```
+
+**Relation to Documented Issues:**
+- **NEW SOLVER** - Alternative to existing constraint manager
+- Does NOT directly address any documented issue
+- Would work alongside, not replace, existing ACGME validator (#5)
+
+---
+
+### Branch: `claude/catalyst-concepts-research-i5qqD`
+
+**Status:** 2 commits, +4,704 lines
+**Focus:** Chemistry-inspired activation energy scheduling
+
+**Key New Files:**
+- `backend/app/scheduling_catalyst/__init__.py` - Library entrypoint
+- `backend/app/scheduling_catalyst/barriers.py` (599 lines) - Barrier detection
+- `backend/app/scheduling_catalyst/catalysts.py` (512 lines) - Catalyst analysis
+- `backend/app/scheduling_catalyst/integration.py` (668 lines) - System integration
+- `backend/app/scheduling_catalyst/models.py` (393 lines) - Data models
+- `backend/app/scheduling_catalyst/optimizer.py` (610 lines) - Transition optimizer
+- `docs/research/catalyst-concepts-analysis.md` (366 lines)
+
+**Core Concepts:**
+```python
+# Activation Energy Barriers: Obstacles preventing schedule changes
+# - Freeze horizons, credential requirements, ACGME rules
+
+# Catalysts: Personnel that lower barriers without being consumed
+# - Coordinators, cross-trained staff, override codes
+
+# Usage:
+analyzer = CatalystAnalyzer(db_session)
+barriers = await analyzer.identify_barriers(assignment, proposed_change)
+catalysts = await analyzer.find_catalysts(barriers)
+pathway = await optimizer.find_optimal_pathway(current, target, catalysts)
+```
+
+**Relation to Documented Issues:**
+- **Directly addresses Issue #4 (SwapExecutor Facade):**
+  - Provides actual schedule transition logic
+  - `TransitionOptimizer` could power swap execution
+  - Proper pathway finding vs empty `pass` statements
+
+- **Relevant to Issue #3 (Orphaned ConflictAutoResolver):**
+  - Could supersede or complement conflict resolution
+  - Barrier detection finds conflicts as barriers
+
+---
+
+### Branch: `claude/transcription-factors-scheduler-0kLeE`
+
+**Status:** 1 commit, +2,723 lines
+**Focus:** Bio-inspired constraint regulation (gene regulatory networks)
+
+**Key New Files:**
+- `backend/app/resilience/transcription_factors.py` (1,255 lines)
+- `backend/app/resilience/service.py` (407 lines)
+- `backend/tests/test_transcription_factors.py` (933 lines)
+
+**Core Concepts:**
+```python
+# DNA → RNA → Protein = Constraint Definition → Active Instance → Decision
+
+# Transcription Factors (TFs):
+class TFType(Enum):
+    ACTIVATOR = "activator"   # Increases constraint weight
+    REPRESSOR = "repressor"   # Decreases/disables constraint
+    PIONEER = "pioneer"       # Can enable disabled constraints
+    MASTER = "master"         # Controls entire programs
+
+# Chromatin State (constraint accessibility):
+class ChromatinState(Enum):
+    OPEN = "open"       # Fully accessible
+    POISED = "poised"   # Quick to activate
+    CLOSED = "closed"   # Requires pioneer TF
+    SILENCED = "silenced"  # Off during crisis
+```
+
+**Relation to Documented Issues:**
+- **Directly addresses Issue #2 (Resilience Constraints Disabled):**
+  - Instead of binary enable/disable, TFS provides context-sensitive activation
+  - Chromatin state model allows graceful constraint adjustment
+  - Crisis mode → constraints "silenced" appropriately
+
+- **Relevant to Issue #3 (Orphaned ConflictAutoResolver):**
+  - TFS models conflicts as regulatory states
+  - Signal transduction handles conflict cascades
+  - More sophisticated than current approach
+
+- **Enhances Issue #5 (ACGME Validator):**
+  - ACGME rules as "master regulators" always active
+  - Patient safety as highest-priority TF
+
+---
+
+## Integration Opportunities Matrix
+
+| Documented Issue | Quantum | Catalyst | Transcription |
+|-----------------|---------|----------|---------------|
+| #2 Resilience Disabled | - | - | **DIRECT FIX** |
+| #3 Orphaned Resolver | - | Partial | **SUPERSEDES** |
+| #4 SwapExecutor Facade | - | **DIRECT FIX** | - |
+| #5 ACGME Hides Violations | Alternative | - | Enhancement |
+
+---
+
+## Recommendation for Fix Session
+
+### Priority Merges:
+
+1. **`docker-feedback-fixes-vsQ3v`** - Merge first
+   - Contains migration fixes needed for deployability
+   - Type safety improvements reduce future issues
+   - Most conventional, lowest risk
+
+2. **`catalyst-concepts-research-i5qqD`** - Consider for #4 fix
+   - Could provide real implementation for SwapExecutor
+   - Well-tested (4 test files, 1,340+ test lines)
+   - Adds capability without breaking existing code
+
+3. **`transcription-factors-scheduler-0kLeE`** - Consider for #2 fix
+   - Replaces binary constraint enable/disable with smart regulation
+   - 933 lines of tests
+   - Novel approach that could solve multiple issues
+
+4. **`quantum-physics-scheduler-7js6S`** - Future consideration
+   - Experimental optimization approach
+   - Doesn't directly address documented issues
+   - Nice to have for performance optimization
+
+### Risk Assessment:
+
+| Branch | Lines Changed | Test Coverage | Risk Level |
+|--------|--------------|---------------|------------|
+| docker-feedback-fixes | 2,221 | N/A (fixes) | LOW |
+| catalyst-concepts | 4,704 | ~1,340 lines | MEDIUM |
+| transcription-factors | 2,723 | 933 lines | MEDIUM |
+| quantum-physics | 2,221 | 367 lines | HIGH (novel) |
+
+---
+
+*Part 3: Experimental branch analysis*
+*4 branches examined, 3 with potential to address documented issues*
