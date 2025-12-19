@@ -178,6 +178,7 @@ When a resident is on Sports Medicine rotation, they MUST be scheduled in SM cli
 - Available for FMIT (~6 weeks max per year)
 - Available for call when not on FMIT
 - Primary duty: SM clinic supervision
+- **When SM faculty is on FMIT**: SM clinic is cancelled for that week (no backup coverage)
 
 ---
 
