@@ -5,8 +5,6 @@
 # Use with: docker-compose -f docker-compose.yml -f nginx/docker-compose.nginx.yml up
 # =============================================================================
 
-version: '3.8'
-
 services:
   # ===========================================================================
   # Nginx Reverse Proxy
