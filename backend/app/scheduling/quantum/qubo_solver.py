@@ -186,20 +186,14 @@ class QUBOFormulation:
         Constraint: Cannot assign during unavailable periods.
 
         If resident r is unavailable at block b, set high penalty for x[r,b,*].
-
-        The availability matrix is structured as:
-        {person_id (UUID): {block_id (UUID): {"available": bool, ...}}}
         """
         for resident in self.context.residents:
             r_i = self.context.resident_idx[resident.id]
-            # Get availability info for this resident: {block_id (UUID): {"available": bool, ...}}
-            person_availability = self.context.availability.get(resident.id, {})
+            unavail = self.context.availability.get(resident.id, set())
 
             for block in self.workday_blocks:
                 b_i = self.context.block_idx[block.id]
-                # Check if this block has availability info and if resident is unavailable
-                block_avail = person_availability.get(block.id)
-                if block_avail is not None and not block_avail.get("available", True):
+                if b_i in unavail:
                     # Penalize any assignment to this block
                     for t_i in range(len(self.context.templates)):
                         if (r_i, b_i, t_i) in self.var_index:
