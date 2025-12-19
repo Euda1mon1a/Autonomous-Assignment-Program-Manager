@@ -1,0 +1,54 @@
+# Render Blueprint for Residency Scheduler
+# Documentation: https://render.com/docs/blueprint-spec
+
+services:
+  # Frontend - Next.js Application
+  - type: web
+    name: residency-scheduler-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    healthCheckPath: /
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        sync: false  # Set manually in Render dashboard
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+
+  # Backend - FastAPI Application
+  - type: web
+    name: residency-scheduler-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: residency-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: residency-redis
+          type: redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEBHOOK_SECRET
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+
+  # Redis for Celery and caching
+  - type: redis
+    name: residency-redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+
+databases:
+  - name: residency-db
+    plan: starter
+    databaseName: residency_scheduler
+    user: scheduler
