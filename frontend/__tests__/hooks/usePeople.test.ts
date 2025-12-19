@@ -11,6 +11,7 @@ import {
   useCreatePerson,
   useUpdatePerson,
   useDeletePerson,
+  useCertifications,
 } from '@/lib/hooks'
 import { createWrapper, mockFactories, mockResponses } from '../utils/test-utils'
 import * as api from '@/lib/api'
@@ -394,5 +395,390 @@ describe('useDeletePerson', () => {
     })
 
     expect(result.current.error).toEqual(apiError)
+  })
+
+  it('should handle conflict errors when person has assignments', async () => {
+    const apiError = {
+      message: 'Cannot delete person with existing assignments',
+      status: 409
+    }
+    mockedApi.del.mockRejectedValueOnce(apiError)
+
+    const { result } = renderHook(
+      () => useDeletePerson(),
+      { wrapper: createWrapper() }
+    )
+
+    await act(async () => {
+      result.current.mutate('person-with-assignments')
+    })
+
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true)
+    })
+
+    expect(result.current.error?.status).toBe(409)
+  })
+})
+
+describe('useCertifications', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  const mockCertification = {
+    id: 'cert-1',
+    person_id: 'person-1',
+    certification_type_id: 'type-1',
+    certification_number: 'BLS-12345',
+    issued_date: '2024-01-01',
+    expiration_date: '2026-01-01',
+    status: 'current' as const,
+    days_until_expiration: 730,
+    is_expired: false,
+    is_expiring_soon: false,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    certification_type: {
+      id: 'type-1',
+      name: 'BLS',
+      full_name: 'Basic Life Support',
+    },
+  }
+
+  const mockExpiringSoonCertification = {
+    ...mockCertification,
+    id: 'cert-2',
+    expiration_date: '2024-03-01',
+    status: 'expiring_soon' as const,
+    days_until_expiration: 45,
+    is_expiring_soon: true,
+  }
+
+  const mockExpiredCertification = {
+    ...mockCertification,
+    id: 'cert-3',
+    expiration_date: '2023-12-31',
+    status: 'expired' as const,
+    days_until_expiration: -30,
+    is_expired: true,
+  }
+
+  it('should fetch certifications for a person', async () => {
+    const mockResponse = {
+      items: [mockCertification],
+      total: 1,
+    }
+    mockedApi.get.mockResolvedValueOnce(mockResponse)
+
+    const { result } = renderHook(
+      () => useCertifications('person-1'),
+      { wrapper: createWrapper() }
+    )
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    expect(mockedApi.get).toHaveBeenCalledWith('/certifications/by-person/person-1')
+    expect(result.current.data?.items).toHaveLength(1)
+    expect(result.current.data?.items[0]).toEqual(mockCertification)
+  })
+
+  it('should not fetch when person ID is empty', async () => {
+    const { result } = renderHook(
+      () => useCertifications(''),
+      { wrapper: createWrapper() }
+    )
+
+    expect(mockedApi.get).not.toHaveBeenCalled()
+    expect(result.current.isFetching).toBe(false)
+  })
+
+  it('should handle empty certification list', async () => {
+    const mockResponse = {
+      items: [],
+      total: 0,
+    }
+    mockedApi.get.mockResolvedValueOnce(mockResponse)
+
+    const { result } = renderHook(
+      () => useCertifications('person-1'),
+      { wrapper: createWrapper() }
+    )
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    expect(result.current.data?.items).toHaveLength(0)
+    expect(result.current.data?.total).toBe(0)
+  })
+
+  it('should handle API errors gracefully', async () => {
+    const apiError = { message: 'Person not found', status: 404 }
+    mockedApi.get.mockRejectedValueOnce(apiError)
+
+    const { result } = renderHook(
+      () => useCertifications('non-existent'),
+      { wrapper: createWrapper() }
+    )
+
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true)
+    })
+
+    expect(result.current.error).toEqual(apiError)
+  })
+
+  it('should distinguish between current, expiring, and expired certifications', async () => {
+    const mockResponse = {
+      items: [
+        mockCertification,
+        mockExpiringSoonCertification,
+        mockExpiredCertification,
+      ],
+      total: 3,
+    }
+    mockedApi.get.mockResolvedValueOnce(mockResponse)
+
+    const { result } = renderHook(
+      () => useCertifications('person-1'),
+      { wrapper: createWrapper() }
+    )
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    const certs = result.current.data?.items || []
+    const current = certs.filter(c => c.status === 'current')
+    const expiring = certs.filter(c => c.is_expiring_soon)
+    const expired = certs.filter(c => c.is_expired)
+
+    expect(current).toHaveLength(1)
+    expect(expiring).toHaveLength(1)
+    expect(expired).toHaveLength(1)
+  })
+})
+
+describe('usePeople - Additional Edge Cases', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should handle empty results', async () => {
+    mockedApi.get.mockResolvedValueOnce({ items: [], total: 0 })
+
+    const { result } = renderHook(
+      () => usePeople(),
+      { wrapper: createWrapper() }
+    )
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    expect(result.current.data?.items).toHaveLength(0)
+    expect(result.current.data?.total).toBe(0)
+  })
+
+  it('should handle multiple filters simultaneously', async () => {
+    mockedApi.get.mockResolvedValueOnce({
+      items: [mockFactories.person({ type: 'resident', pgy_level: 2 })],
+      total: 1,
+    })
+
+    const { result } = renderHook(
+      () => usePeople({ role: 'resident', pgy_level: 2 }),
+      { wrapper: createWrapper() }
+    )
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    expect(mockedApi.get).toHaveBeenCalledWith('/people?role=resident&pgy_level=2')
+  })
+
+  it('should handle network errors', async () => {
+    const networkError = { message: 'Network error - unable to reach server', status: 0 }
+    mockedApi.get.mockRejectedValueOnce(networkError)
+
+    const { result } = renderHook(
+      () => usePeople(),
+      { wrapper: createWrapper() }
+    )
+
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true)
+    })
+
+    expect(result.current.error?.status).toBe(0)
+  })
+})
+
+describe('useCreatePerson - Additional Validation', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should create a faculty member without PGY level', async () => {
+    const newFaculty = mockFactories.person({
+      type: 'faculty',
+      pgy_level: null,
+      specialties: ['Cardiology'],
+    })
+    mockedApi.post.mockResolvedValueOnce(newFaculty)
+
+    const { result } = renderHook(
+      () => useCreatePerson(),
+      { wrapper: createWrapper() }
+    )
+
+    await act(async () => {
+      result.current.mutate({
+        name: 'Dr. Jane Faculty',
+        type: 'faculty',
+        specialties: ['Cardiology'],
+        performs_procedures: true,
+      })
+    })
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    expect(result.current.data?.type).toBe('faculty')
+  })
+
+  it('should handle duplicate email errors', async () => {
+    const apiError = {
+      message: 'Email already exists',
+      status: 409,
+      detail: 'A person with this email already exists',
+    }
+    mockedApi.post.mockRejectedValueOnce(apiError)
+
+    const { result } = renderHook(
+      () => useCreatePerson(),
+      { wrapper: createWrapper() }
+    )
+
+    await act(async () => {
+      result.current.mutate({
+        name: 'Dr. Duplicate',
+        type: 'resident',
+        email: 'existing@example.com',
+      })
+    })
+
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true)
+    })
+
+    expect(result.current.error?.status).toBe(409)
+  })
+})
+
+describe('useUpdatePerson - PGY Level Advancement', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should advance resident to next PGY level', async () => {
+    const advancedResident = mockFactories.person({ pgy_level: 3 })
+    mockedApi.put.mockResolvedValueOnce(advancedResident)
+
+    const { result } = renderHook(
+      () => useUpdatePerson(),
+      { wrapper: createWrapper() }
+    )
+
+    await act(async () => {
+      result.current.mutate({
+        id: 'resident-1',
+        data: { pgy_level: 3 },
+      })
+    })
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    expect(result.current.data?.pgy_level).toBe(3)
+  })
+
+  it('should handle partial updates', async () => {
+    const updatedPerson = mockFactories.person({ email: 'newemail@example.com' })
+    mockedApi.put.mockResolvedValueOnce(updatedPerson)
+
+    const { result } = renderHook(
+      () => useUpdatePerson(),
+      { wrapper: createWrapper() }
+    )
+
+    await act(async () => {
+      result.current.mutate({
+        id: 'person-1',
+        data: { email: 'newemail@example.com' },
+      })
+    })
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    expect(mockedApi.put).toHaveBeenCalledWith(
+      '/people/person-1',
+      { email: 'newemail@example.com' }
+    )
+  })
+})
+
+describe('useResidents - Filtering and Edge Cases', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should handle invalid PGY level gracefully', async () => {
+    const apiError = { message: 'Invalid PGY level', status: 400 }
+    mockedApi.get.mockRejectedValueOnce(apiError)
+
+    const { result } = renderHook(
+      () => useResidents(99), // Invalid PGY level
+      { wrapper: createWrapper() }
+    )
+
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true)
+    })
+
+    expect(result.current.error?.status).toBe(400)
+  })
+})
+
+describe('useFaculty - Specialty Filtering', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should properly encode specialty parameter', async () => {
+    const specialtyWithSpaces = 'Sports Medicine'
+    mockedApi.get.mockResolvedValueOnce({
+      items: [mockFactories.person({ type: 'faculty', specialties: [specialtyWithSpaces] })],
+      total: 1,
+    })
+
+    const { result } = renderHook(
+      () => useFaculty(specialtyWithSpaces),
+      { wrapper: createWrapper() }
+    )
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    expect(mockedApi.get).toHaveBeenCalledWith('/people/faculty?specialty=Sports%20Medicine')
   })
 })
