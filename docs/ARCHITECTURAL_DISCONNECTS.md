@@ -506,5 +506,125 @@ Tests exist but validate stubbed behavior:
 
 ---
 
+---
+
+## NEEDLE #14: API Session Manager Missing Rollback (HIGH)
+
+### Problem
+The `get_db()` dependency used by all API routes doesn't rollback on exception.
+
+**Location:** `backend/app/db/session.py` (lines 38-44)
+
+```python
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()  # ONLY CLOSES - NO ROLLBACK!
+```
+
+Compare to `task_session_scope()` in same file which properly handles transactions:
+```python
+@contextmanager
+def task_session_scope():
+    session = SessionLocal()
+    try:
+        yield session
+        session.commit()  # Commit on success
+    except Exception:
+        session.rollback()  # Rollback on error
+        raise
+    finally:
+        session.close()
+```
+
+### Impact
+- If exception occurs after db writes but before commit → session closed without rollback
+- Dirty session state may leak into connection pool
+- Next request may see uncommitted changes
+- Potential data inconsistency
+
+### Fix
+Update `get_db()` to match `task_session_scope()` pattern:
+```python
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
+    try:
+        yield db
+        db.commit()  # Add explicit commit
+    except Exception:
+        db.rollback()  # Add rollback on error
+        raise
+    finally:
+        db.close()
+```
+
+---
+
+## NEEDLE #15: User Input Reflected in Error Messages (LOW)
+
+### Problem
+Some HTTPException messages include user input directly, potentially leaking information.
+
+**Examples from `resilience.py`:**
+```python
+raise HTTPException(status_code=400, detail=f"Unknown scenario: {request.scenario}")
+raise HTTPException(status_code=400, detail=f"Invalid containment level: {level}")
+raise HTTPException(status_code=400, detail=f"Invalid stress type: {stress_type}")
+```
+
+### Impact
+- User input reflected back in responses
+- Could assist in enumeration attacks
+- Verbose error messages aid attackers
+
+### Fix
+Use generic error messages:
+```python
+raise HTTPException(status_code=400, detail="Invalid scenario type")
+```
+
+---
+
+## Final Updated Priority Matrix
+
+| # | Issue | Severity | Priority |
+|---|-------|----------|----------|
+| 6 | Unauthenticated Routes | CRITICAL | **P0** |
+| 9 | Rate Limiting Gaps | HIGH | **P0** |
+| 14 | API Session No Rollback | HIGH | **P0** |
+| 4 | SwapExecutor Facade | HIGH | P1 |
+| 1 | Email Disconnect | HIGH | P1 |
+| 8 | FK Cascade Issues | MEDIUM | P2 |
+| 10 | Celery Retry Broken | MEDIUM | P2 |
+| 5 | ACGME Hides Violations | MEDIUM | P2 |
+| 2 | Resilience Disabled | MEDIUM | P2 |
+| 12 | SECRET_KEY Issue | MEDIUM | P2 |
+| 13 | Fake Dashboard Metrics | MEDIUM | P3 |
+| 3 | Orphaned Resolver | MEDIUM | P3 |
+| 11 | Timezone Issues | LOW | P3 |
+| 7 | Stubbed Webhooks | LOW | P3 |
+| 15 | Input in Errors | LOW | P4 |
+
+---
+
+## Total Issues Discovered: 15
+
+### By Category:
+- **Security**: 4 issues (#6, #9, #14, #15)
+- **Data Integrity**: 3 issues (#1, #4, #8)
+- **Feature Completeness**: 4 issues (#2, #3, #7, #13)
+- **Reliability**: 3 issues (#10, #11, #12)
+- **Compliance**: 1 issue (#5)
+
+### By Effort to Fix:
+- **Trivial** (< 1 hour): #5, #11, #15
+- **Low** (1-4 hours): #1, #6, #8, #9, #10, #12, #14
+- **Medium** (4-16 hours): #2, #3, #4, #7, #13
+
+---
+
 *Document generated through deep cross-cutting analysis of codebase architecture.*
 *Updated with additional findings from intersection point analysis.*
+*Final count: 15 architectural disconnects identified.*
