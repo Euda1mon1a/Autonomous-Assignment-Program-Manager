@@ -6,6 +6,54 @@
 
 ---
 
+## Available Python Libraries (Implemented)
+
+Based on research, the following quantum optimization libraries have been integrated into this repository:
+
+| Library | Purpose | Installation | Status |
+|---------|---------|--------------|--------|
+| **[PyQUBO](https://pypi.org/project/pyqubo/)** | QUBO formulation from constraints | `pip install pyqubo` | ✅ Integrated |
+| **[dwave-samplers](https://github.com/dwavesystems/dwave-samplers)** | Simulated annealing (quantum-inspired) | `pip install dwave-samplers` | ✅ Integrated |
+| **[dwave-system](https://docs.dwavequantum.com)** | D-Wave quantum hardware access | `pip install dwave-system` | 🔧 Optional |
+| **[qubovert](https://github.com/jtiosue/qubovert)** | Alternative QUBO library | `pip install qubovert` | 📦 Available |
+| **[dimod](https://github.com/dwavesystems/dimod)** | BQM/QUBO shared API | Included with dwave-samplers | ✅ Included |
+
+### Integration Location
+
+The quantum-inspired solvers are implemented in:
+- `backend/app/scheduling/quantum/qubo_solver.py` - Main solver implementations
+- `backend/app/scheduling/quantum/__init__.py` - Module exports
+- `backend/tests/scheduling/test_quantum_solver.py` - Test suite
+
+### Key Classes
+
+- `SimulatedQuantumAnnealingSolver`: Pure Python quantum-inspired SA with tunneling
+- `QUBOSolver`: PyQUBO-based solver with D-Wave integration
+- `QuantumInspiredSolver`: Hybrid auto-selecting solver
+- `QUBOFormulation`: Converts scheduling problem to QUBO matrix
+
+### Usage Example
+
+```python
+from app.scheduling.quantum import QuantumInspiredSolver, get_quantum_library_status
+
+# Check available libraries
+status = get_quantum_library_status()
+print(status)  # {'pyqubo': True, 'dwave_samplers': True, ...}
+
+# Use quantum-inspired solver
+solver = QuantumInspiredSolver(timeout_seconds=60.0)
+result = solver.solve(scheduling_context)
+```
+
+### Academic References
+
+- [PyQUBO Paper](https://arxiv.org/abs/2103.01708) - QUBO formulation library
+- [Nurse Scheduling via QUBO](https://arxiv.org/abs/2302.09459) - Healthcare scheduling application
+- [D-Wave Nurse Scheduling](https://github.com/dwave-examples/nurse-scheduling) - Reference implementation
+
+---
+
 ## Executive Summary
 
 This document explores the intersection of quantum physics and combinatorial optimization, specifically examining how quantum computing concepts could enhance the residency scheduling system. The current system uses classical algorithms (greedy heuristics, linear programming, constraint satisfaction) that face exponential complexity scaling. Quantum approaches offer theoretical speedups through superposition, entanglement, and quantum tunneling—principles that enable parallel exploration of solution spaces impossible for classical computers.
