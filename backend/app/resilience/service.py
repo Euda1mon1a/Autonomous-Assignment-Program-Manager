@@ -118,6 +118,16 @@ from app.resilience.stigmergy import (
     SwapNetwork,
     TrailType,
 )
+from app.resilience.transcription_factors import (
+    BindingLogic,
+    ChromatinState,
+    GRNState,
+    PromoterArchitecture,
+    SignalEvent,
+    TFType,
+    TranscriptionFactor,
+    TranscriptionFactorScheduler,
+)
 
 # Tier 3 persistence helpers
 from app.resilience.tier3_persistence import (
@@ -217,6 +227,11 @@ class ResilienceConfig:
     critical_hub_threshold: float = 0.6
     use_networkx: bool = True
 
+    # Tier 4: Transcription Factor Scheduler settings
+    enable_transcription_factors: bool = True
+    tf_decay_interval_hours: float = 1.0
+    auto_induce_tfs_from_events: bool = True
+
 
 class ResilienceService:
     """
@@ -281,6 +296,14 @@ class ResilienceService:
             critical_hub_threshold=self.config.critical_hub_threshold,
             use_networkx=self.config.use_networkx,
         )
+
+        # Initialize Tier 4 components (Transcription Factor Scheduler)
+        if self.config.enable_transcription_factors:
+            self.tf_scheduler = TranscriptionFactorScheduler()
+            self._last_tf_decay: datetime | None = None
+        else:
+            self.tf_scheduler = None
+            self._last_tf_decay = None
 
         # State tracking
         self._last_health_check: datetime | None = None
@@ -1788,4 +1811,388 @@ class ResilienceService:
             "tier3_status": tier3_status,
             "issues": tier3_issues,
             "recommendations": recommendations[:10],
+        }
+
+    # =========================================================================
+    # Tier 4: Transcription Factor Scheduler Methods
+    # =========================================================================
+
+    def create_transcription_factor(
+        self,
+        name: str,
+        tf_type: TFType,
+        description: str = "",
+        binding_affinity: float = 0.7,
+        basal_expression: float = 0.1,
+        activation_strength: float = 1.0,
+        repression_strength: float = 0.5,
+        half_life_hours: float = 24.0,
+        activation_conditions: dict = None,
+    ) -> TranscriptionFactor | None:
+        """
+        Create a new transcription factor for constraint regulation.
+
+        Transcription factors (TFs) are regulatory elements that control
+        constraint weights based on system conditions. They can:
+        - ACTIVATE: Increase constraint weight/priority
+        - REPRESS: Decrease constraint weight or disable
+        - Work combinatorially with other TFs
+
+        Args:
+            name: Unique name for the TF
+            tf_type: Type (ACTIVATOR, REPRESSOR, DUAL, PIONEER, MASTER)
+            description: Human-readable description
+            binding_affinity: How strongly it binds to targets (0-1)
+            basal_expression: Minimum expression level (always present)
+            activation_strength: For activators, multiplier effect
+            repression_strength: For repressors, reduction effect
+            half_life_hours: How quickly TF decays
+            activation_conditions: Conditions for automatic activation
+
+        Returns:
+            Created TranscriptionFactor or None if TF scheduler disabled
+        """
+        if not self.tf_scheduler:
+            logger.warning("Transcription factor scheduler is disabled")
+            return None
+
+        tf = self.tf_scheduler.create_tf(
+            name=name,
+            tf_type=tf_type,
+            description=description,
+            binding_affinity=binding_affinity,
+            basal_expression=basal_expression,
+            activation_strength=activation_strength,
+            repression_strength=repression_strength,
+            half_life_hours=half_life_hours,
+            activation_conditions=activation_conditions,
+        )
+
+        self._emit_event("transcription_factor_created", {
+            "tf_id": str(tf.id),
+            "name": name,
+            "type": tf_type.value,
+        })
+
+        return tf
+
+    def link_tf_to_constraint(
+        self,
+        tf_name: str,
+        constraint_id: UUID,
+        constraint_name: str = "",
+        as_activator: bool = True,
+        required: bool = False,
+        edge_strength: float = 1.0,
+        base_weight: float = 1.0,
+        activator_logic: BindingLogic = BindingLogic.OR,
+    ):
+        """
+        Link a transcription factor to regulate a constraint.
+
+        This creates a regulatory relationship where the TF can
+        activate or repress the constraint based on its expression level.
+
+        Args:
+            tf_name: Name of the transcription factor
+            constraint_id: ID of the constraint to regulate
+            constraint_name: Human-readable constraint name
+            as_activator: True for activation, False for repression
+            required: Whether this TF is required (for AND logic)
+            edge_strength: Strength of regulatory relationship
+            base_weight: Default constraint weight when unregulated
+            activator_logic: How multiple activators combine (AND, OR, etc.)
+        """
+        if not self.tf_scheduler:
+            logger.warning("Transcription factor scheduler is disabled")
+            return
+
+        tf = self.tf_scheduler.get_tf_by_name(tf_name)
+        if not tf:
+            logger.warning(f"Transcription factor '{tf_name}' not found")
+            return
+
+        # Ensure promoter exists
+        if constraint_id not in self.tf_scheduler.promoters:
+            self.tf_scheduler.create_promoter(
+                constraint_id=constraint_id,
+                constraint_name=constraint_name or f"constraint_{constraint_id}",
+                base_weight=base_weight,
+                activator_logic=activator_logic,
+            )
+
+        # Link TF to constraint
+        self.tf_scheduler.link_tf_to_constraint(
+            tf_id=tf.id,
+            constraint_id=constraint_id,
+            as_activator=as_activator,
+            required=required,
+            edge_strength=edge_strength,
+        )
+
+        self._emit_event("tf_constraint_linked", {
+            "tf_name": tf_name,
+            "constraint_id": str(constraint_id),
+            "as_activator": as_activator,
+        })
+
+    def process_regulatory_signal(
+        self,
+        event_type: str,
+        description: str = "",
+        signal_strength: float = 1.0,
+    ) -> SignalEvent | None:
+        """
+        Process an external event that may trigger transcription factor responses.
+
+        Events propagate through the gene regulatory network, inducing
+        TFs that have matching activation conditions. This enables
+        context-sensitive constraint regulation.
+
+        Args:
+            event_type: Type of event (e.g., "deployment", "crisis", "holiday")
+            description: Human-readable description
+            signal_strength: Strength of signal (0-1)
+
+        Returns:
+            SignalEvent record or None if TF scheduler disabled
+        """
+        if not self.tf_scheduler:
+            return None
+
+        signal = self.tf_scheduler.create_signal(
+            event_type=event_type,
+            description=description,
+            signal_strength=signal_strength,
+        )
+
+        self._emit_event("regulatory_signal_processed", {
+            "signal_id": str(signal.id),
+            "event_type": event_type,
+            "tfs_induced": len(signal.target_tf_ids),
+        })
+
+        return signal
+
+    def get_regulated_constraint_weights(
+        self,
+        constraint_ids: list[UUID] = None,
+    ) -> dict[UUID, tuple[float, str]]:
+        """
+        Get current constraint weights after TF regulation.
+
+        This returns weights adjusted by the current state of the
+        gene regulatory network. Weights change based on which
+        TFs are active/expressed.
+
+        Args:
+            constraint_ids: Specific constraints (None = all regulated)
+
+        Returns:
+            Dict of constraint_id -> (weight, explanation)
+        """
+        if not self.tf_scheduler:
+            return {}
+
+        # Apply TF decay if due
+        self._maybe_decay_tfs()
+
+        return self.tf_scheduler.get_constraint_weights(constraint_ids)
+
+    def set_constraint_chromatin_state(
+        self,
+        constraint_id: UUID,
+        state: ChromatinState,
+    ):
+        """
+        Set the chromatin state (accessibility) for a constraint.
+
+        Chromatin state controls whether a constraint can be regulated:
+        - OPEN: Fully accessible, normal regulation
+        - POISED: Partially accessible, quick to activate
+        - CLOSED: Inaccessible, requires pioneer TF to open
+        - SILENCED: Completely disabled (e.g., during crisis)
+
+        Args:
+            constraint_id: Constraint to modify
+            state: New chromatin state
+        """
+        if not self.tf_scheduler:
+            return
+
+        self.tf_scheduler.set_chromatin_state(constraint_id, state)
+
+        self._emit_event("chromatin_state_changed", {
+            "constraint_id": str(constraint_id),
+            "new_state": state.value,
+        })
+
+    def silence_constraints_for_crisis(self, constraint_ids: list[UUID]):
+        """
+        Silence constraints during crisis mode.
+
+        Silenced constraints are completely disabled regardless of
+        TF expression levels. Use this for non-essential constraints
+        during emergencies.
+
+        Args:
+            constraint_ids: Constraints to silence
+        """
+        if not self.tf_scheduler:
+            return
+
+        self.tf_scheduler.silence_constraints(constraint_ids)
+
+        self._emit_event("constraints_silenced", {
+            "count": len(constraint_ids),
+            "reason": "crisis_mode",
+        })
+
+    def restore_silenced_constraints(self, constraint_ids: list[UUID]):
+        """
+        Restore silenced constraints after crisis.
+
+        Args:
+            constraint_ids: Constraints to restore
+        """
+        if not self.tf_scheduler:
+            return
+
+        self.tf_scheduler.open_constraints(constraint_ids)
+
+        self._emit_event("constraints_restored", {
+            "count": len(constraint_ids),
+        })
+
+    def detect_regulatory_loops(self):
+        """
+        Detect regulatory loops (network motifs) in the TF network.
+
+        Identifies:
+        - Positive feedback loops (amplify signals)
+        - Negative feedback loops (stabilize)
+        - Feed-forward loops (filter noise)
+        - Bistable switches (state memory)
+
+        Returns:
+            List of detected regulatory loops
+        """
+        if not self.tf_scheduler:
+            return []
+
+        loops = self.tf_scheduler.detect_loops()
+
+        self._emit_event("regulatory_loops_detected", {
+            "count": len(loops),
+            "types": [loop.loop_type.value for loop in loops],
+        })
+
+        return loops
+
+    def get_tf_expression_report(self) -> list[dict]:
+        """
+        Get expression levels for all transcription factors.
+
+        Returns:
+            List of TF status dicts sorted by expression level
+        """
+        if not self.tf_scheduler:
+            return []
+
+        return self.tf_scheduler.get_tf_expression_report()
+
+    def get_grn_state(self) -> GRNState | None:
+        """
+        Get current gene regulatory network state snapshot.
+
+        Returns:
+            GRNState with TF expressions, constraint weights, and metrics
+        """
+        if not self.tf_scheduler:
+            return None
+
+        return self.tf_scheduler.snapshot_state()
+
+    def get_tf_scheduler_status(self) -> dict:
+        """
+        Get comprehensive status of the transcription factor scheduler.
+
+        Returns:
+            Dict with TF scheduler status
+        """
+        if not self.tf_scheduler:
+            return {"enabled": False}
+
+        status = self.tf_scheduler.get_status()
+        status["enabled"] = True
+        return status
+
+    def _maybe_decay_tfs(self):
+        """Apply TF decay if enough time has passed."""
+        if not self.tf_scheduler:
+            return
+
+        now = datetime.now()
+        if self._last_tf_decay is None:
+            self._last_tf_decay = now
+            return
+
+        hours_since = (now - self._last_tf_decay).total_seconds() / 3600
+        if hours_since >= self.config.tf_decay_interval_hours:
+            self.tf_scheduler.decay_all_tfs(hours_since)
+            self._last_tf_decay = now
+
+    # =========================================================================
+    # Tier 4: Combined Status
+    # =========================================================================
+
+    def get_tier4_status(self) -> dict:
+        """
+        Get status of Tier 4 (Transcription Factor Scheduler) components.
+
+        Returns:
+            Dict with TF scheduler status
+        """
+        if not self.tf_scheduler:
+            return {
+                "generated_at": datetime.now().isoformat(),
+                "enabled": False,
+                "tier4_status": "disabled",
+            }
+
+        status = self.get_tf_scheduler_status()
+
+        # Determine overall tier 4 status
+        tier4_issues = []
+
+        if status.get("total_activation", 0) > 5.0:
+            tier4_issues.append("High regulatory activation - many constraints modified")
+        if status.get("total_repression", 0) > 3.0:
+            tier4_issues.append("High repression activity - constraints being suppressed")
+        if status.get("network_entropy", 0) > 2.0:
+            tier4_issues.append("High network entropy - regulatory state unstable")
+
+        if len(tier4_issues) >= 2:
+            tier4_status = "active_regulation"
+        elif len(tier4_issues) >= 1:
+            tier4_status = "moderate_regulation"
+        else:
+            tier4_status = "baseline"
+
+        return {
+            "generated_at": datetime.now().isoformat(),
+            "enabled": True,
+            "total_tfs": status.get("total_tfs", 0),
+            "active_tfs": status.get("active_tfs", 0),
+            "master_regulators_active": status.get("master_regulators_active", 0),
+            "constraints_regulated": status.get("total_constraints_regulated", 0),
+            "constraints_modified": status.get("constraints_with_modified_weight", 0),
+            "regulatory_edges": status.get("regulatory_edges", 0),
+            "detected_loops": status.get("detected_loops", 0),
+            "total_activation": status.get("total_activation", 0),
+            "total_repression": status.get("total_repression", 0),
+            "network_entropy": status.get("network_entropy", 0),
+            "active_tf_names": status.get("active_tf_names", []),
+            "tier4_status": tier4_status,
+            "issues": tier4_issues,
         }
