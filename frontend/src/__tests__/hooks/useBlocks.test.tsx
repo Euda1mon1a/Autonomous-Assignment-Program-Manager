@@ -338,7 +338,7 @@ describe('useBlocks', () => {
     })
 
     const blocks = result.current.data?.items || []
-    const blockNumbers = [...new Set(blocks.map(b => b.block_number))]
+    const blockNumbers = Array.from(new Set(blocks.map(b => b.block_number)))
     expect(blockNumbers).toContain(1)
     expect(blockNumbers).toContain(2)
   })
