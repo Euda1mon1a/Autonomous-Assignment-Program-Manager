@@ -1,14 +1,12 @@
 ***REMOVED*** Backend Dockerfile for Residency Scheduler
-***REMOVED*** Docker Hardened Image (DHI) with multi-stage build for minimal attack surface
-***REMOVED*** Requires: docker login (Docker Hub credentials) to pull from dhi.io
+***REMOVED*** Multi-stage build for minimal attack surface and optimized image size
 
 ***REMOVED*** =============================================================================
 ***REMOVED*** Python Version Selection: 3.12
 ***REMOVED*** =============================================================================
-***REMOVED*** Python 3.12 is chosen for ortools compatibility and security:
+***REMOVED*** Python 3.12 is chosen for ortools compatibility:
 ***REMOVED*** - ortools>=9.8 officially supports Python 3.9, 3.10, 3.11, 3.12, and 3.13
 ***REMOVED*** - Python 3.12 provides pre-built wheels for ortools on Linux x86-64
-***REMOVED*** - DHI (Docker Hardened Images) 3.12 offers ~95% fewer CVEs vs standard images
 ***REMOVED*** - All other dependencies (FastAPI, SQLAlchemy, etc.) support Python 3.12
 ***REMOVED***
 ***REMOVED*** Verified compatibility (as of 2025-12-18):
@@ -18,7 +16,7 @@
 ***REMOVED*** =============================================================================
 ***REMOVED*** Build Stage - includes compilers and build tools
 ***REMOVED*** =============================================================================
-FROM dhi.io/python:3.12-dev AS builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
@@ -32,14 +30,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 
 ***REMOVED*** Install Python dependencies into a virtual environment
+***REMOVED*** Combined into fewer layers for better caching
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip --no-cache-dir \
+    && pip install --no-cache-dir -r requirements.txt
 
 ***REMOVED*** =============================================================================
-***REMOVED*** Runtime Stage - minimal distroless image (~95% fewer CVEs)
+***REMOVED*** Runtime Stage - minimal production image
 ***REMOVED*** =============================================================================
-FROM dhi.io/python:3.12 AS runtime
+FROM python:3.12-slim AS runtime
 
 ***REMOVED*** Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \

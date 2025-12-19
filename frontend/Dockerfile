@@ -1,11 +1,10 @@
 ***REMOVED*** Frontend Dockerfile for Residency Scheduler
-***REMOVED*** Docker Hardened Image (DHI) with multi-stage build for minimal attack surface
-***REMOVED*** Requires: docker login (Docker Hub credentials) to pull from dhi.io
+***REMOVED*** Multi-stage build for minimal attack surface and optimized image size
 
 ***REMOVED*** =============================================================================
 ***REMOVED*** Build Stage - includes npm and build tools
 ***REMOVED*** =============================================================================
-FROM dhi.io/node:22-dev AS builder
+FROM node:22-slim AS builder
 WORKDIR /app
 
 ***REMOVED*** Copy package files for dependency installation
@@ -24,9 +23,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 ***REMOVED*** =============================================================================
-***REMOVED*** Runtime Stage - minimal distroless image (~95% fewer CVEs)
+***REMOVED*** Runtime Stage - minimal production image
 ***REMOVED*** =============================================================================
-FROM dhi.io/node:22 AS runtime
+FROM node:22-slim AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production \
