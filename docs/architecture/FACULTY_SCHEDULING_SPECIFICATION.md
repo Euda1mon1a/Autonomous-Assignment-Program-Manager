@@ -1,7 +1,8 @@
 # Faculty Scheduling Specification
 
-> **Version:** 1.0
+> **Version:** 1.1
 > **Created:** 2025-12-19
+> **Updated:** 2025-12-19
 > **Status:** Approved specification for implementation
 
 This document defines the complete scheduling parameters for faculty roles, FMIT coverage, call assignments, and coordination requirements.
@@ -17,8 +18,16 @@ This document defines the complete scheduling parameters for faculty roles, FMIT
 5. [Sports Medicine Coordination](#sports-medicine-coordination)
 6. [Post-Call Rules](#post-call-rules)
 7. [Supervision Ratios](#supervision-ratios)
-8. [Current Faculty Roster](#current-faculty-roster)
-9. [Implementation Requirements](#implementation-requirements)
+8. [Procedure Credentialing](#procedure-credentialing)
+9. [Wednesday Didactics](#wednesday-didactics)
+10. [Leave Request Windows](#leave-request-windows)
+11. [Night Float](#night-float)
+12. [Emergency Coverage (Scramble)](#emergency-coverage-scramble)
+13. [Military Program Constraints](#military-program-constraints)
+14. [Rotation Templates](#rotation-templates)
+15. [Current Faculty Roster](#current-faculty-roster)
+16. [Implementation Requirements](#implementation-requirements)
+17. [Future Exploration](#future-exploration)
 
 ---
 
@@ -248,6 +257,251 @@ Total faculty required: max(1, 2+1+1) = 4 faculty for AT
 
 ---
 
+## Procedure Credentialing
+
+### Overview
+
+Certain procedures require specific faculty credentialing. Only credentialed faculty may supervise or perform these procedures. This is a **faculty-specific constraint** - resident procedure tracking is handled externally via MyEvaluations.
+
+### Credentialed Procedures
+
+| Procedure | Description | Credentialed Faculty |
+|-----------|-------------|---------------------|
+| **Vasectomy** | Office-based surgical procedure | Limited (2-3 faculty) |
+| **Botox** | Therapeutic botulinum toxin injection | Limited subset |
+| **Colposcopy** | Cervical examination with magnification | Limited subset |
+| **IUD Insertion** | Intrauterine device placement | Most faculty (note exceptions) |
+| **Joint Injection** | Musculoskeletal injections | Sports Med + credentialed others |
+| **Skin Biopsy** | Punch/shave biopsy procedures | Most faculty |
+
+### Implementation Notes
+
+- Each faculty member needs a `credentialed_procedures` field (list/array)
+- When scheduling procedure clinics, validate faculty has required credential
+- Some faculty may have **negative credentials** (explicitly NOT credentialed for common procedures like IUD insertion)
+
+### Data Model
+
+```
+Person (Faculty)
+├── credentialed_procedures: List[str]  # ["vasectomy", "botox", "colposcopy"]
+└── excluded_procedures: List[str]      # ["iud_insertion"] (optional inverse)
+```
+
+---
+
+## Wednesday Didactics
+
+### Protected Educational Time
+
+Wednesday afternoon is protected for resident didactics (educational conferences).
+
+| Constraint | Rule |
+|------------|------|
+| **Time** | Wednesday PM (half-day block) |
+| **Residents** | Should not be scheduled for clinic |
+| **Faculty** | Reduced clinic staffing; some faculty attend/teach |
+| **Type** | Soft constraint with high weight |
+
+### Exceptions
+
+- FMIT residents/faculty: May have modified participation
+- Night float: Excused from didactics
+- On-call residents: Excused if post-call
+
+### Implementation
+
+- Block Wednesday PM from routine resident clinic scheduling
+- Flag Wednesday PM faculty assignments as "reduced coverage acceptable"
+- Track didactics attendance separately if required
+
+---
+
+## Leave Request Windows
+
+### Request Timing Requirements
+
+| Leave Type | Advance Notice | Approval Authority |
+|------------|----------------|-------------------|
+| **Vacation/PTO** | TBD - needs specification | Program Coordinator |
+| **Conference** | TBD - needs specification | PD/APD |
+| **Military (TDY)** | As soon as orders received | Automatic (orders-based) |
+| **Medical** | As soon as known | Program Coordinator |
+| **Parental** | 30+ days preferred | PD |
+
+### Blackout Periods
+
+> **TODO**: Define blackout periods for leave requests (e.g., orientation week, graduation, peak census periods)
+
+### Concurrent Leave Limits
+
+> **TODO**: Define maximum number of residents/faculty on leave simultaneously
+
+### Implementation Notes
+
+- Leave requests need `request_date` and `requested_for_date` tracking
+- Calculate days in advance at request time
+- Enforce minimum notice periods (soft constraint with override)
+- Track blackout periods in configuration
+
+---
+
+## Night Float
+
+### Overview
+
+Night float is a **rotation template** with hard scheduling rules. Residents on night float cover overnight duties for a defined period.
+
+### Hard Constraints
+
+| Constraint | Rule |
+|------------|------|
+| **Duration** | Defined per rotation (typically 1-2 weeks) |
+| **Schedule** | Night shifts only (no daytime activities) |
+| **Consecutive Nights** | Maximum per ACGME (typically 6 consecutive) |
+| **Recovery** | Required day off after night float block ends |
+| **Didactics** | Excused from Wednesday didactics |
+| **Clinic** | No continuity clinic during night float |
+
+### Night Float vs. Overnight Call
+
+| Aspect | Night Float | Overnight Call |
+|--------|-------------|----------------|
+| **Duration** | Multi-day rotation | Single night |
+| **Next Day** | Off (sleeping) | PCAT AM + DO PM |
+| **Frequency** | Rotation-based | Distributed across faculty |
+| **Coverage** | Resident + backup | Faculty primary |
+
+### Implementation
+
+- Night float is a rotation template type, not an ad-hoc assignment
+- Template defines all half-day blocks as "night float" activity
+- System must prevent conflicting daytime assignments
+- Post-night-float recovery day is hard constraint
+
+---
+
+## Emergency Coverage (Scramble)
+
+### Overview
+
+This program does **not** use a formal jeopardy/backup system. When coverage gaps occur, the program "scrambles" to find coverage.
+
+### Current Process
+
+1. Coverage gap identified (illness, emergency, etc.)
+2. Program coordinator contacts available faculty/residents
+3. Manual reassignment based on who responds
+4. Schedule updated after coverage secured
+
+### Scramble Decision Support (Future Enhancement)
+
+The system could provide decision support for scramble situations:
+
+| Feature | Description |
+|---------|-------------|
+| **Availability Query** | Who is available for this block? |
+| **Constraint Check** | Would assigning person X violate any constraints? |
+| **Equity Impact** | How would this affect call/clinic equity? |
+| **Quick Swap** | One-click reassignment with validation |
+| **Notification** | Automated outreach to available pool |
+
+### Who Can Cover
+
+> **TODO**: Define coverage eligibility rules
+> - Can PGY-1 cover PGY-3 clinic?
+> - Can faculty cover resident duties?
+> - Cross-rotation coverage rules?
+
+---
+
+## Military Program Constraints
+
+### Moonlighting
+
+**Moonlighting is NOT ALLOWED** at military residency programs.
+
+| Rule | Enforcement |
+|------|-------------|
+| **Internal moonlighting** | Prohibited |
+| **External moonlighting** | Prohibited |
+| **Exception process** | None - absolute prohibition |
+
+### Military-Specific Duties
+
+| Duty Type | Scheduling Impact |
+|-----------|-------------------|
+| **TDY (Temporary Duty)** | Automatic leave - schedule around orders |
+| **Deployment** | Extended absence - backfill required |
+| **PT (Physical Training)** | Early morning - may affect AM blocks |
+| **Military Training Days** | Periodic - treat as leave |
+| **Drill (Reserves)** | If applicable - weekend impact |
+
+### Implementation
+
+- No moonlighting fields/workflow needed
+- TDY/deployment leave types with orders-based approval
+- Consider PT time in early AM scheduling if applicable
+
+---
+
+## Rotation Templates
+
+### Overview
+
+Rotation templates define the expected half-day activities for residents during specific rotations. This is a **complex domain** requiring dedicated exploration.
+
+### Template Categories
+
+| Category | Constraint Type | Examples |
+|----------|-----------------|----------|
+| **Hard-constrained** | Must follow exactly | FMIT, Night Float |
+| **Soft-constrained** | Minimum activities/week | Outpatient, Procedures |
+| **Flexible** | General guidelines | Electives |
+
+### Known Hard Templates
+
+| Template | Hard Rules |
+|----------|------------|
+| **FMIT** | All blocks = FMIT activity, Fri/Sat call mandatory, no Sun-Thurs call |
+| **Night Float** | Night shifts only, no daytime activities, recovery day required |
+
+### Known Soft Templates
+
+| Template | Soft Rules |
+|----------|------------|
+| **Outpatient** | Minimum X clinic half-days per week |
+| **Procedures** | Minimum Y procedure half-days per week |
+| **Sports Medicine** | Must align with SM faculty availability |
+
+### Template Data Model Considerations
+
+```
+RotationTemplate
+├── name: str
+├── duration_blocks: int (typically 28 days = 1 block)
+├── constraint_type: "hard" | "soft" | "flexible"
+├── required_activities: List[ActivityRequirement]
+│   ├── activity_type: str
+│   ├── min_per_week: int (soft)
+│   ├── max_per_week: int (soft)
+│   └── exact_per_week: int (hard)
+├── blocked_activities: List[str]  # Cannot do these during rotation
+├── special_rules: Dict  # FMIT call rules, etc.
+└── didactics_policy: "required" | "excused" | "modified"
+```
+
+### ⚠️ Future Work Required
+
+Rotation templates require dedicated analysis:
+- Inventory all current rotations
+- Document each template's half-day activity expectations
+- Classify constraints as hard vs. soft
+- Define minimum/maximum thresholds
+- Handle template exceptions and overrides
+
+---
+
 ## Current Faculty Roster
 
 | Role | Count | Names (if applicable) |
@@ -309,3 +563,59 @@ Total faculty required: max(1, 2+1+1) = 4 faculty for AT
 | **HIGH** | Core business rules | Warning + manual override required |
 | **MEDIUM** | Equity and fairness | Warning, auto-balanced over time |
 | **LOW** | Personal preferences | Best effort, no warning if unmet |
+
+---
+
+## Future Exploration
+
+### Areas Requiring Dedicated Analysis
+
+The following topics are identified but require deeper exploration before implementation:
+
+| Area | Status | Priority | Notes |
+|------|--------|----------|-------|
+| **Rotation Templates** | 🔴 Not started | High | Inventory all rotations, define hard/soft constraints per template |
+| **Leave Request Windows** | 🟡 Partial | Medium | Define advance notice requirements, blackout periods |
+| **Procedure Credentialing** | 🟡 Partial | Medium | Complete faculty credentialing inventory |
+| **Scramble Decision Support** | 🔴 Not started | Low | Nice-to-have tooling for coverage gaps |
+| **Cross-Coverage Rules** | 🔴 Not started | Low | Currently none, but may need in future |
+
+### Questions to Answer
+
+1. **Rotation Templates**
+   - What are all the rotation types?
+   - What are the minimum half-day activity requirements for each?
+   - Which templates have hard vs. soft constraints?
+   - How do templates handle holiday weeks?
+
+2. **Leave Management**
+   - How many days advance notice for vacation?
+   - What are the blackout periods?
+   - Maximum concurrent residents on leave?
+   - Maximum concurrent faculty on leave?
+
+3. **Procedure Scheduling**
+   - Complete list of credentialed procedures
+   - Which faculty are credentialed for each?
+   - How often are procedure clinics scheduled?
+   - Do residents need to be paired with credentialed faculty?
+
+4. **Wednesday Didactics**
+   - Exact time block (1300-1700? All PM?)
+   - Which faculty roles are expected to attend?
+   - How is attendance tracked?
+
+### Implementation Phases (Proposed)
+
+| Phase | Focus | Estimated Complexity |
+|-------|-------|---------------------|
+| ✅ Phase 1-4 | Faculty roles, FMIT, call equity, SM alignment, post-call | Complete |
+| Phase 5 | Procedure credentialing | Medium |
+| Phase 6 | Wednesday didactics blocking | Low |
+| Phase 7 | Leave request windows | Medium |
+| Phase 8 | Rotation template constraints | High |
+| Phase 9 | Scramble decision support | Medium |
+
+---
+
+*This document is a living specification. Update as requirements are clarified.*
