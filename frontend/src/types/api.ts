@@ -80,7 +80,19 @@ export enum AbsenceType {
   /** Family emergency leave */
   FAMILY_EMERGENCY = 'family_emergency',
   /** Conference attendance */
-  CONFERENCE = 'conference'
+  CONFERENCE = 'conference',
+  /** Sick leave */
+  SICK = 'sick',
+  /** Bereavement leave */
+  BEREAVEMENT = 'bereavement',
+  /** Emergency leave */
+  EMERGENCY_LEAVE = 'emergency_leave',
+  /** Convalescent leave */
+  CONVALESCENT = 'convalescent',
+  /** Maternity or paternity leave */
+  MATERNITY_PATERNITY = 'maternity_paternity',
+  /** Personal leave */
+  PERSONAL = 'personal'
 }
 
 /**
