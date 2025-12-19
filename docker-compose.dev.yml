@@ -1,4 +1,3 @@
-version: '3.8'
 
 ***REMOVED*** Development Docker Compose Override
 ***REMOVED*** Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
