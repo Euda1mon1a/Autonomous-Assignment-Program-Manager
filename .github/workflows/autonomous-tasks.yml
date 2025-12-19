@@ -1,0 +1,200 @@
+# Autonomous Tasks Workflow
+# Scans codebase for TODO/FIXME comments and generates daily reports
+# Helps track technical debt and outstanding work items
+
+name: Autonomous Tasks
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6 AM UTC
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  scan-todos:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better context
+
+      - name: Scan for TODO comments
+        id: scan
+        run: |
+          echo "# TODO/FIXME Report - $(date '+%Y-%m-%d %H:%M:%S UTC')" > todo-report.md
+          echo "" >> todo-report.md
+          echo "## Summary" >> todo-report.md
+          echo "" >> todo-report.md
+
+          # Count TODOs by type
+          TODO_COUNT=$(grep -r "TODO" --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" . 2>/dev/null | wc -l || echo "0")
+          FIXME_COUNT=$(grep -r "FIXME" --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" . 2>/dev/null | wc -l || echo "0")
+          HACK_COUNT=$(grep -r "HACK" --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" . 2>/dev/null | wc -l || echo "0")
+          XXX_COUNT=$(grep -r "XXX" --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" . 2>/dev/null | wc -l || echo "0")
+
+          TOTAL=$((TODO_COUNT + FIXME_COUNT + HACK_COUNT + XXX_COUNT))
+
+          echo "- **Total Items:** $TOTAL" >> todo-report.md
+          echo "- **TODO:** $TODO_COUNT" >> todo-report.md
+          echo "- **FIXME:** $FIXME_COUNT" >> todo-report.md
+          echo "- **HACK:** $HACK_COUNT" >> todo-report.md
+          echo "- **XXX:** $XXX_COUNT" >> todo-report.md
+          echo "" >> todo-report.md
+
+          echo "## Backend (Python)" >> todo-report.md
+          echo "" >> todo-report.md
+          echo "\`\`\`" >> todo-report.md
+          grep -rn "TODO\|FIXME\|HACK\|XXX" --include="*.py" backend/ 2>/dev/null | head -100 >> todo-report.md || echo "No items found" >> todo-report.md
+          echo "\`\`\`" >> todo-report.md
+          echo "" >> todo-report.md
+
+          echo "## Frontend (TypeScript/JavaScript)" >> todo-report.md
+          echo "" >> todo-report.md
+          echo "\`\`\`" >> todo-report.md
+          grep -rn "TODO\|FIXME\|HACK\|XXX" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" frontend/ 2>/dev/null | head -100 >> todo-report.md || echo "No items found" >> todo-report.md
+          echo "\`\`\`" >> todo-report.md
+          echo "" >> todo-report.md
+
+          echo "## Documentation" >> todo-report.md
+          echo "" >> todo-report.md
+          echo "\`\`\`" >> todo-report.md
+          grep -rn "TODO\|FIXME\|HACK\|XXX" --include="*.md" docs/ 2>/dev/null | head -50 >> todo-report.md || echo "No items found" >> todo-report.md
+          echo "\`\`\`" >> todo-report.md
+          echo "" >> todo-report.md
+
+          echo "## High Priority (FIXME)" >> todo-report.md
+          echo "" >> todo-report.md
+          echo "\`\`\`" >> todo-report.md
+          grep -rn "FIXME" --include="*.py" --include="*.ts" --include="*.tsx" . 2>/dev/null >> todo-report.md || echo "No FIXME items found" >> todo-report.md
+          echo "\`\`\`" >> todo-report.md
+
+          # Set output for summary
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "todos=$TODO_COUNT" >> $GITHUB_OUTPUT
+          echo "fixmes=$FIXME_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: todo-report-${{ github.run_number }}
+          path: todo-report.md
+          retention-days: 30
+
+      - name: Display summary
+        run: |
+          echo "## TODO/FIXME Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat todo-report.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Check for critical items
+        run: |
+          FIXME_COUNT=${{ steps.scan.outputs.fixmes }}
+          if [ "$FIXME_COUNT" -gt 0 ]; then
+            echo "⚠️ Found $FIXME_COUNT FIXME items that should be addressed"
+            echo "Review the artifact for details"
+          fi
+
+          # Don't fail the workflow, just warn
+          exit 0
+
+  scan-security-patterns:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan for potential security issues
+        run: |
+          echo "# Security Pattern Scan - $(date '+%Y-%m-%d')" > security-scan.md
+          echo "" >> security-scan.md
+
+          echo "## Potential Hardcoded Secrets" >> security-scan.md
+          echo "\`\`\`" >> security-scan.md
+          grep -rniE "password\s*=\s*['\"][^'\"]+['\"]|secret\s*=\s*['\"][^'\"]+['\"]|api_key\s*=\s*['\"][^'\"]+['\"]" \
+            --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js" \
+            --exclude-dir=node_modules --exclude-dir=venv --exclude-dir=.git \
+            backend/app/ frontend/src/ 2>/dev/null | head -50 >> security-scan.md || echo "None found" >> security-scan.md
+          echo "\`\`\`" >> security-scan.md
+          echo "" >> security-scan.md
+
+          echo "## Debug/Print Statements" >> security-scan.md
+          echo "\`\`\`" >> security-scan.md
+          grep -rn "console.log\|print(" --include="*.py" --include="*.ts" --include="*.tsx" \
+            backend/app/ frontend/src/ 2>/dev/null | head -50 >> security-scan.md || echo "None found" >> security-scan.md
+          echo "\`\`\`" >> security-scan.md
+          echo "" >> security-scan.md
+
+          echo "## Commented Out Code" >> security-scan.md
+          echo "\`\`\`" >> security-scan.md
+          grep -rn "^[[:space:]]*#.*def \|^[[:space:]]*//.*function " \
+            --include="*.py" --include="*.ts" --include="*.tsx" \
+            backend/app/ frontend/src/ 2>/dev/null | head -30 >> security-scan.md || echo "None found" >> security-scan.md
+          echo "\`\`\`" >> security-scan.md
+
+      - name: Upload security scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-report-${{ github.run_number }}
+          path: security-scan.md
+          retention-days: 30
+
+  analyze-code-metrics:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Count lines of code
+        run: |
+          echo "# Code Metrics - $(date '+%Y-%m-%d')" > metrics-report.md
+          echo "" >> metrics-report.md
+
+          echo "## Lines of Code by Language" >> metrics-report.md
+          echo "" >> metrics-report.md
+
+          PY_LINES=$(find backend/app -name "*.py" -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $1}' || echo "0")
+          TS_LINES=$(find frontend/src -name "*.ts" -o -name "*.tsx" -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $1}' || echo "0")
+
+          echo "- **Python:** $PY_LINES lines" >> metrics-report.md
+          echo "- **TypeScript/TSX:** $TS_LINES lines" >> metrics-report.md
+          echo "" >> metrics-report.md
+
+          echo "## File Counts" >> metrics-report.md
+          echo "" >> metrics-report.md
+
+          PY_FILES=$(find backend/app -name "*.py" | wc -l)
+          TS_FILES=$(find frontend/src -name "*.ts" -o -name "*.tsx" | wc -l)
+          TEST_FILES=$(find backend/tests -name "test_*.py" | wc -l)
+
+          echo "- **Python files:** $PY_FILES" >> metrics-report.md
+          echo "- **TypeScript files:** $TS_FILES" >> metrics-report.md
+          echo "- **Test files:** $TEST_FILES" >> metrics-report.md
+          echo "" >> metrics-report.md
+
+          echo "## Largest Files (Python)" >> metrics-report.md
+          echo "" >> metrics-report.md
+          echo "\`\`\`" >> metrics-report.md
+          find backend/app -name "*.py" -exec wc -l {} + 2>/dev/null | sort -rn | head -10 >> metrics-report.md || echo "None found" >> metrics-report.md
+          echo "\`\`\`" >> metrics-report.md
+
+      - name: Upload metrics report
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-report-${{ github.run_number }}
+          path: metrics-report.md
+          retention-days: 30
+
+      - name: Display metrics summary
+        run: |
+          echo "## Code Metrics Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat metrics-report.md >> $GITHUB_STEP_SUMMARY
