@@ -23,7 +23,6 @@ from app.scheduling_catalyst.models import (
     BarrierType,
     CatalystMechanism,
     CatalystPerson,
-    CatalystType,
     EnergyBarrier,
     ReactionPathway,
     ReactionType,
@@ -240,7 +239,7 @@ class TransitionOptimizer:
         emergency_catalyst = CatalystMechanism(
             mechanism_id=f"emergency_{emergency_type}",
             name=f"Emergency Override ({emergency_type})",
-            catalyst_type=CatalystType.ENZYMATIC,
+            catalyst_type=CatalystMechanism.ENZYMATIC,
             barriers_addressed=[BarrierType.KINETIC, BarrierType.ELECTRONIC],
             reduction_factors={
                 BarrierType.KINETIC: 0.9,
