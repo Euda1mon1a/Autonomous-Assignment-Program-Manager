@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to the Residency Scheduler project! This guide will help you get started with development and ensure your contributions align with project standards.
 
-> **Important**: This is a HIPAA-sensitive healthcare application. All contributions must maintain security, privacy, and ACGME compliance standards.
+> **Important**: This is a scheduling application. All contributions must maintain security, privacy, and ACGME compliance standards.
 
 ---
 
@@ -844,7 +844,7 @@ Relates to #456
 - [ ] Input validation added for all new endpoints
 - [ ] No hardcoded secrets or credentials
 - [ ] Reviewed for SQL injection vulnerabilities
-- [ ] HIPAA compliance maintained
+- [ ] Security best practices followed
 
 ## Database Changes
 - [ ] No database changes
@@ -884,7 +884,7 @@ Any additional context, concerns, or discussion points.
    - All requested changes addressed
 
 3. **Reviewer Guidelines**:
-   - Check for security issues (PHI leaks, SQL injection, etc.)
+   - Check for security issues (data leaks, SQL injection, etc.)
    - Verify tests cover edge cases
    - Ensure ACGME compliance if touching scheduling
    - Validate architecture patterns are followed

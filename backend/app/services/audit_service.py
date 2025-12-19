@@ -587,3 +587,408 @@ def get_audit_statistics(
             "acgmeOverrideCount": 0,
             "uniqueUsers": 0,
         }
+
+
+# =============================================================================
+# Pydantic Models for Test Compatibility
+# =============================================================================
+
+from pydantic import BaseModel
+
+
+class AuditLogEntry(BaseModel):
+    """Pydantic model for audit log entries - used by tests and API."""
+    id: int | str
+    entity_type: str
+    entity_id: str
+    transaction_id: int | None = None
+    operation: str
+    changed_at: datetime | None = None
+    changed_by: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class AuditLogResponse(BaseModel):
+    """Pydantic model for paginated audit log responses."""
+    items: list[AuditLogEntry]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class AuditStatistics(BaseModel):
+    """Pydantic model for audit statistics."""
+    total_changes: int
+    changes_by_entity: dict[str, int]
+    changes_by_operation: dict[str, int]
+    changes_by_user: dict[str, int]
+    most_active_day: str | None = None
+
+
+# =============================================================================
+# AuditService Class Wrapper
+# =============================================================================
+
+class AuditService:
+    """
+    Service class wrapper for audit functionality.
+
+    Provides both instance methods (using injected db) and static methods
+    for backward compatibility with existing code.
+    """
+
+    def __init__(self, db: Session):
+        """
+        Initialize AuditService with a database session.
+
+        Args:
+            db: SQLAlchemy database session
+        """
+        from app.repositories.audit_repository import AuditRepository
+        self.db = db
+        self.repository = AuditRepository(db)
+
+    # =========================================================================
+    # Instance Methods
+    # =========================================================================
+
+    def query_audit_logs(
+        self,
+        db: Session,
+        filters: dict | None = None,
+        pagination: dict | None = None,
+        sort: dict | None = None,
+    ) -> AuditLogResponse:
+        """
+        Query audit logs with filtering, pagination, and sorting.
+
+        Args:
+            db: Database session
+            filters: Optional filters dict
+            pagination: Optional dict with page and page_size
+            sort: Optional dict with sort_by and sort_direction
+
+        Returns:
+            AuditLogResponse with items and pagination info
+        """
+        filters = filters or {}
+        pagination = pagination or {}
+        sort = sort or {}
+
+        page = pagination.get("page", 1)
+        page_size = pagination.get("page_size", 50)
+        sort_by = sort.get("sort_by", "changed_at")
+        sort_direction = sort.get("sort_direction", "desc")
+
+        entries, total = self.repository.get_audit_entries(
+            filters=filters,
+            page=page,
+            page_size=page_size,
+            sort_by=sort_by,
+            sort_direction=sort_direction,
+        )
+
+        # Convert to AuditLogEntry models
+        items = [
+            AuditLogEntry(
+                id=entry.get("id", 0),
+                entity_type=entry.get("entity_type", ""),
+                entity_id=str(entry.get("entity_id", "")),
+                transaction_id=entry.get("transaction_id"),
+                operation=entry.get("operation", ""),
+                changed_at=entry.get("changed_at"),
+                changed_by=entry.get("changed_by"),
+            )
+            for entry in entries
+        ]
+
+        total_pages = (total + page_size - 1) // page_size if total > 0 else 0
+
+        return AuditLogResponse(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages,
+        )
+
+    def get_entity_history(
+        self,
+        db: Session,
+        entity_type: str,
+        entity_id: Any,
+    ) -> list[AuditLogEntry]:
+        """
+        Get version history for a specific entity.
+
+        Args:
+            db: Database session
+            entity_type: Type of entity (assignment, absence, etc.)
+            entity_id: ID of the entity
+
+        Returns:
+            List of AuditLogEntry objects
+        """
+        history = self.repository.get_entity_history(entity_type, entity_id)
+
+        return [
+            AuditLogEntry(
+                id=entry.get("version_id", 0),
+                entity_type=entity_type,
+                entity_id=str(entity_id),
+                transaction_id=entry.get("transaction_id"),
+                operation=entry.get("operation", ""),
+                changed_at=entry.get("changed_at"),
+                changed_by=entry.get("changed_by"),
+            )
+            for entry in history
+        ]
+
+    def get_user_activity(
+        self,
+        db: Session,
+        user_id: str,
+        date_range: tuple[datetime, datetime] | None = None,
+    ) -> list[AuditLogEntry]:
+        """
+        Get audit activity for a specific user.
+
+        Args:
+            db: Database session
+            user_id: ID of the user
+            date_range: Optional tuple of (start_date, end_date)
+
+        Returns:
+            List of AuditLogEntry objects
+        """
+        filters = {"user_id": user_id}
+        if date_range:
+            filters["start_date"] = date_range[0]
+            filters["end_date"] = date_range[1]
+
+        entries, _ = self.repository.get_audit_entries(
+            filters=filters,
+            page=1,
+            page_size=1000,
+        )
+
+        return [
+            AuditLogEntry(
+                id=entry.get("id", 0),
+                entity_type=entry.get("entity_type", ""),
+                entity_id=str(entry.get("entity_id", "")),
+                transaction_id=entry.get("transaction_id"),
+                operation=entry.get("operation", ""),
+                changed_at=entry.get("changed_at"),
+                changed_by=entry.get("changed_by"),
+            )
+            for entry in entries
+        ]
+
+    def export_audit_logs(
+        self,
+        db: Session,
+        config: dict | None = None,
+    ) -> bytes:
+        """
+        Export audit logs to specified format.
+
+        Args:
+            db: Database session
+            config: Export configuration with format, filters, columns
+
+        Returns:
+            Bytes of exported data
+
+        Raises:
+            ValueError: If format is not supported
+        """
+        import csv
+        import io
+
+        config = config or {}
+        export_format = config.get("format", "csv")
+        filters = config.get("filters", {})
+        columns = config.get("columns", ["entity_type", "entity_id", "operation", "changed_at", "changed_by"])
+
+        if export_format not in ("csv", "excel"):
+            raise ValueError(f"Unsupported export format: {export_format}")
+
+        # Get entries
+        entries, _ = self.repository.get_audit_entries(
+            filters=filters,
+            page=1,
+            page_size=10000,
+        )
+
+        # Build CSV
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=columns, extrasaction='ignore')
+        writer.writeheader()
+
+        for entry in entries:
+            row = {
+                "id": entry.get("id"),
+                "entity_type": entry.get("entity_type"),
+                "entity_id": entry.get("entity_id"),
+                "transaction_id": entry.get("transaction_id"),
+                "operation": entry.get("operation"),
+                "changed_at": str(entry.get("changed_at")) if entry.get("changed_at") else None,
+                "changed_by": entry.get("changed_by"),
+            }
+            writer.writerow(row)
+
+        return output.getvalue().encode("utf-8")
+
+    def calculate_statistics(
+        self,
+        db: Session,
+        date_range: tuple[datetime, datetime] | None = None,
+    ) -> AuditStatistics:
+        """
+        Calculate audit statistics for a date range.
+
+        Args:
+            db: Database session
+            date_range: Optional tuple of (start_date, end_date)
+
+        Returns:
+            AuditStatistics object
+        """
+        start_date = date_range[0] if date_range else None
+        end_date = date_range[1] if date_range else None
+
+        stats = self.repository.get_audit_statistics(
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        return AuditStatistics(
+            total_changes=stats.get("total_changes", 0),
+            changes_by_entity=stats.get("changes_by_entity", {}),
+            changes_by_operation=stats.get("changes_by_operation", {}),
+            changes_by_user=stats.get("changes_by_user", {}),
+            most_active_day=stats.get("most_active_day"),
+        )
+
+    # =========================================================================
+    # Static Methods (backward compatibility)
+    # =========================================================================
+
+    @staticmethod
+    def get_assignment_history(db: Session, assignment_id: Any) -> list[dict]:
+        """
+        Get version history for a specific assignment.
+
+        Args:
+            db: Database session
+            assignment_id: UUID of the assignment
+
+        Returns:
+            List of version history entries
+        """
+        from app.repositories.audit_repository import AuditRepository
+        repo = AuditRepository(db)
+        return repo.get_entity_history("assignment", assignment_id)
+
+    @staticmethod
+    def get_absence_history(db: Session, absence_id: Any) -> list[dict]:
+        """
+        Get version history for a specific absence.
+
+        Args:
+            db: Database session
+            absence_id: UUID of the absence
+
+        Returns:
+            List of version history entries
+        """
+        from app.repositories.audit_repository import AuditRepository
+        repo = AuditRepository(db)
+        return repo.get_entity_history("absence", absence_id)
+
+    @staticmethod
+    def get_recent_changes(
+        db: Session,
+        hours: int = 24,
+        model_type: str | None = None,
+    ) -> list[dict]:
+        """
+        Get recent changes within specified hours.
+
+        Args:
+            db: Database session
+            hours: Number of hours to look back (default 24)
+            model_type: Optional model type filter
+
+        Returns:
+            List of recent changes
+        """
+        from datetime import timedelta
+        from app.repositories.audit_repository import AuditRepository
+
+        repo = AuditRepository(db)
+        start_date = datetime.utcnow() - timedelta(hours=hours)
+
+        filters = {"start_date": start_date}
+        if model_type:
+            filters["entity_type"] = model_type
+
+        entries, _ = repo.get_audit_entries(
+            filters=filters,
+            page=1,
+            page_size=1000,
+        )
+
+        # Convert to expected format
+        return [
+            {
+                "model_type": entry.get("entity_type"),
+                "entity_id": entry.get("entity_id"),
+                "operation": entry.get("operation"),
+                "changed_at": entry.get("changed_at"),
+                "changed_by": entry.get("changed_by"),
+            }
+            for entry in entries
+        ]
+
+    @staticmethod
+    def get_changes_by_user(
+        db: Session,
+        user_id: str,
+        since: datetime | None = None,
+        limit: int = 100,
+    ) -> list[dict]:
+        """
+        Get changes made by a specific user.
+
+        Args:
+            db: Database session
+            user_id: ID of the user
+            since: Optional start date (default 30 days ago)
+            limit: Maximum number of results
+
+        Returns:
+            List of changes by the user
+        """
+        from datetime import timedelta
+        from app.repositories.audit_repository import AuditRepository
+
+        repo = AuditRepository(db)
+        start_date = since or (datetime.utcnow() - timedelta(days=30))
+
+        filters = {
+            "user_id": user_id,
+            "start_date": start_date,
+        }
+
+        entries, _ = repo.get_audit_entries(
+            filters=filters,
+            page=1,
+            page_size=limit,
+        )
+
+        return entries

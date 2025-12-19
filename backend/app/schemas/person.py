@@ -1,8 +1,19 @@
 """Person schemas."""
 from datetime import datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, field_validator
+
+
+class FacultyRoleSchema(str, Enum):
+    """Faculty role types for API schema validation."""
+    PD = "pd"
+    APD = "apd"
+    OIC = "oic"
+    DEPT_CHIEF = "dept_chief"
+    SPORTS_MED = "sports_med"
+    CORE = "core"
 
 
 class PersonBase(BaseModel):
@@ -14,6 +25,7 @@ class PersonBase(BaseModel):
     performs_procedures: bool = False
     specialties: list[str] | None = None
     primary_duty: str | None = None
+    faculty_role: FacultyRoleSchema | None = None
 
     @field_validator("type")
     @classmethod
@@ -43,6 +55,7 @@ class PersonUpdate(BaseModel):
     performs_procedures: bool | None = None
     specialties: list[str] | None = None
     primary_duty: str | None = None
+    faculty_role: FacultyRoleSchema | None = None
 
 
 class PersonResponse(PersonBase):
@@ -50,6 +63,11 @@ class PersonResponse(PersonBase):
     id: UUID
     created_at: datetime
     updated_at: datetime
+
+    # Call and FMIT equity tracking (read-only, managed by system)
+    sunday_call_count: int = 0
+    weekday_call_count: int = 0
+    fmit_weeks_count: int = 0
 
     class Config:
         from_attributes = True

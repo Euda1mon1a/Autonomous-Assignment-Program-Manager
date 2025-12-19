@@ -1117,7 +1117,19 @@ class SolverFactory:
         "pulp": PuLPSolver,
         "cp_sat": CPSATSolver,
         "hybrid": HybridSolver,
+        "pyomo": None,  # Lazy-loaded to avoid import if not used
     }
+
+    @classmethod
+    def _get_pyomo_solver(cls):
+        """Lazy-load PyomoSolver to avoid import errors if not installed."""
+        if cls._solvers["pyomo"] is None:
+            try:
+                from app.scheduling.pyomo_solver import PyomoSolver
+                cls._solvers["pyomo"] = PyomoSolver
+            except ImportError:
+                raise ValueError("PyomoSolver requires pyomo package: pip install pyomo")
+        return cls._solvers["pyomo"]
 
     @classmethod
     def create(
@@ -1164,7 +1176,12 @@ class SolverFactory:
         if name not in cls._solvers:
             raise ValueError(f"Unknown solver: {name}. Available: {list(cls._solvers.keys())}")
 
-        solver_class = cls._solvers[name]
+        # Handle lazy-loaded solvers
+        if name == "pyomo":
+            solver_class = cls._get_pyomo_solver()
+        else:
+            solver_class = cls._solvers[name]
+
         return solver_class(constraint_manager=constraint_manager, **kwargs)
 
     @classmethod

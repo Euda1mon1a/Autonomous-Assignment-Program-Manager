@@ -10,7 +10,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 
 from app.controllers.block_controller import BlockController
+from app.core.security import get_current_active_user
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.block import BlockCreate, BlockListResponse, BlockResponse
 
 router = APIRouter()
@@ -22,8 +24,9 @@ def list_blocks(
     end_date: date | None = Query(None, description="Filter blocks until this date"),
     block_number: int | None = Query(None, description="Filter by academic block number"),
     db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """List blocks, optionally filtered by date range or block number."""
+    """List blocks, optionally filtered by date range or block number. Requires authentication."""
     controller = BlockController(db)
     return controller.list_blocks(
         start_date=start_date,
@@ -36,8 +39,9 @@ def list_blocks(
 def get_block(
     block_id: UUID,
     db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Get a block by ID."""
+    """Get a block by ID. Requires authentication."""
     controller = BlockController(db)
     return controller.get_block(block_id)
 
@@ -46,8 +50,9 @@ def get_block(
 def create_block(
     block_in: BlockCreate,
     db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Create a new block."""
+    """Create a new block. Requires authentication."""
     controller = BlockController(db)
     return controller.create_block(block_in)
 
@@ -58,9 +63,10 @@ def generate_blocks(
     end_date: date,
     base_block_number: int = Query(1, description="Starting block number"),
     db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
-    Generate blocks for a date range.
+    Generate blocks for a date range. Requires authentication.
 
     Creates AM and PM blocks for each day (730 blocks per year).
     """
@@ -76,7 +82,8 @@ def generate_blocks(
 def delete_block(
     block_id: UUID,
     db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
-    """Delete a block."""
+    """Delete a block. Requires authentication."""
     controller = BlockController(db)
     controller.delete_block(block_id)

@@ -12,7 +12,7 @@ Session lesson: Docker Hardened Images news looked like "infra noise" but was di
 
 ### 2. Is this regulatory/compliance news?
 - [ ] ACGME rule changes → directly affects our validator
-- [ ] HIPAA updates → affects data handling
+- [ ] Security updates → affects data handling
 - [ ] Military medical policy → affects Hawaii deployment context
 
 ### 3. Is this a "free upgrade" opportunity?

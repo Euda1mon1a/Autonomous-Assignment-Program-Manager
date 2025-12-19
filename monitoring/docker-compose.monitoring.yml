@@ -1,8 +1,6 @@
 # Docker Compose for Monitoring Stack
 # Residency Scheduler Observability Infrastructure
 
-version: '3.8'
-
 services:
   # Prometheus - Metrics Collection
   prometheus:

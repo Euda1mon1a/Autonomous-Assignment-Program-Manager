@@ -1,0 +1,66 @@
+{
+  "stress_scenarios": {
+    "normal_operations": {
+      "description": "Normal operating conditions",
+      "stress_level": "normal",
+      "unavailable_rate": 0.05,
+      "emergency_rate": 0.02,
+      "expected_constraints": {
+        "all_active": true
+      }
+    },
+    "flu_season": {
+      "description": "Elevated sick calls during flu season",
+      "stress_level": "elevated",
+      "unavailable_rate": 0.15,
+      "emergency_rate": 0.05,
+      "expected_constraints": {
+        "soft_constraints_relaxed": true,
+        "acgme_maintained": true
+      }
+    },
+    "deployment_crisis": {
+      "description": "Multiple military deployments simultaneously",
+      "stress_level": "high",
+      "unavailable_rate": 0.25,
+      "deployment_count": 3,
+      "expected_constraints": {
+        "non_critical_silenced": true,
+        "acgme_maintained": true,
+        "patient_safety": true
+      }
+    },
+    "mass_casualty": {
+      "description": "Mass casualty event requiring all hands",
+      "stress_level": "critical",
+      "unavailable_rate": 0.10,
+      "surge_capacity_needed": true,
+      "expected_constraints": {
+        "emergency_mode": true,
+        "acgme_suspended": true,
+        "patient_safety": true
+      }
+    },
+    "combined_crisis": {
+      "description": "Multiple simultaneous crises",
+      "stress_level": "crisis",
+      "unavailable_rate": 0.35,
+      "deployment_count": 2,
+      "emergency_rate": 0.15,
+      "expected_constraints": {
+        "minimal_constraints": true,
+        "patient_safety": true
+      }
+    }
+  },
+  "validation_rules": {
+    "patient_safety_always": "Patient safety constraints must NEVER be violated",
+    "graceful_degradation": "Constraint relaxation should be gradual, not sudden",
+    "recovery_possible": "System should recover when stress reduces"
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "created": "2025-12-19",
+    "purpose": "Stress test fixtures for transcription factor scheduler"
+  }
+}

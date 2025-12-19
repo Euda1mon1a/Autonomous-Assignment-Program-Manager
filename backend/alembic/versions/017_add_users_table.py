@@ -5,6 +5,7 @@ Revises: 016
 Create Date: 2025-12-18 00:00:00.000000
 
 Creates the users table for authentication and authorization.
+Also adds FK from email_templates.created_by_id to users.id.
 
 Supports 8 user roles:
 - admin: Full access to all features
@@ -57,11 +58,23 @@ def upgrade() -> None:
     op.create_index('ix_users_username', 'users', ['username'])
     op.create_index('ix_users_email', 'users', ['email'])
 
+    # Add FK from email_templates.created_by_id to users.id
+    # (column was created in migration 016 without FK)
+    op.create_foreign_key(
+        'fk_email_templates_created_by_id',
+        'email_templates', 'users',
+        ['created_by_id'], ['id'],
+        ondelete='SET NULL'
+    )
+
 
 def downgrade() -> None:
-    """Drop users table."""
+    """Drop users table and FK from email_templates."""
 
-    # Drop indexes first
+    # Drop FK from email_templates first (before dropping users table)
+    op.drop_constraint('fk_email_templates_created_by_id', 'email_templates', type_='foreignkey')
+
+    # Drop indexes
     op.drop_index('ix_users_email', table_name='users')
     op.drop_index('ix_users_username', table_name='users')
 

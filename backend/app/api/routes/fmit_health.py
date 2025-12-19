@@ -258,13 +258,18 @@ def detect_coverage_gaps(db: Session, start_date: date, end_date: date) -> list[
 
     # Get all FMIT blocks in range
     # Eager load assignments and rotation_template to avoid N+1 queries
-    blocks = db.query(Block).filter(
-        and_(
-            Block.date >= start_date,
-            Block.date <= end_date,
-            Block.service_type == "FMIT"
+    blocks = (
+        db.query(Block)
+        .filter(
+            and_(
+                Block.date >= start_date,
+                Block.date <= end_date,
+                Block.service_type == "FMIT"
+            )
         )
-    ).all()
+        .limit(100)
+        .all()
+    )
 
     # Build a map of block_id -> assignments to avoid N+1
     block_ids = [block.id for block in blocks]
@@ -325,9 +330,12 @@ def detect_coverage_gaps(db: Session, start_date: date, end_date: date) -> list[
 def find_available_faculty(db: Session, target_date: date, time_of_day: str) -> list[str]:
     """Find faculty available for a specific date/time."""
     # Get all faculty (people with faculty role)
-    all_faculty = db.query(Person).filter(
-        Person.role.in_(["faculty", "attending", "chief"])
-    ).all()
+    all_faculty = (
+        db.query(Person)
+        .filter(Person.role.in_(["faculty", "attending", "chief"]))
+        .limit(100)
+        .all()
+    )
 
     available = []
 
@@ -827,13 +835,18 @@ async def get_coverage_report(
             week_end = min(current + timedelta(days=increment - 1), end_date)
 
         # Get FMIT blocks for this period
-        week_blocks = db.query(Block).filter(
-            and_(
-                Block.date >= current,
-                Block.date <= week_end,
-                Block.service_type == "FMIT"
+        week_blocks = (
+            db.query(Block)
+            .filter(
+                and_(
+                    Block.date >= current,
+                    Block.date <= week_end,
+                    Block.service_type == "FMIT"
+                )
             )
-        ).all()
+            .limit(100)
+            .all()
+        )
 
         total_slots = len(week_blocks)
 

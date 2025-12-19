@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import and_, func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.analytics.engine import AnalyticsEngine
 from app.analytics.metrics import (
@@ -606,6 +606,10 @@ async def what_if_analysis(
                 current_assignments = (
                     db.query(Assignment)
                     .join(Block)
+                    .options(
+                        joinedload(Assignment.block),
+                        joinedload(Assignment.person)
+                    )
                     .filter(
                         and_(
                             Assignment.person_id == change.person_id,
@@ -728,24 +732,36 @@ async def export_for_research(
                     Block.date <= end_date.date()
                 )
             )
+            .limit(100)
             .all()
         )
 
         assignments = (
             db.query(Assignment)
             .join(Block)
+            .options(
+                joinedload(Assignment.block),
+                joinedload(Assignment.person),
+                joinedload(Assignment.rotation_template)
+            )
             .filter(
                 and_(
                     Block.date >= start_date.date(),
                     Block.date <= end_date.date()
                 )
             )
+            .limit(100)
             .all()
         )
 
         # Get all residents
         resident_ids = {a.person_id for a in assignments}
-        residents = db.query(Person).filter(Person.id.in_(resident_ids)).all()
+        residents = (
+            db.query(Person)
+            .filter(Person.id.in_(resident_ids))
+            .limit(100)
+            .all()
+        )
 
         # Build resident workload data
         resident_workload = []

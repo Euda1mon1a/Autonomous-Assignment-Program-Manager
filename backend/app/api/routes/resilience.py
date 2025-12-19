@@ -21,7 +21,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user
@@ -166,15 +166,36 @@ async def get_system_health(
         end_date = start_date + timedelta(days=30)
 
     # Load data for analysis
-    faculty = db.query(Person).filter(Person.type == "faculty").all()
-    blocks = db.query(Block).filter(
-        Block.date >= start_date,
-        Block.date <= end_date
-    ).all()
-    assignments = db.query(Assignment).join(Block).filter(
-        Block.date >= start_date,
-        Block.date <= end_date
-    ).all()
+    faculty = (
+        db.query(Person)
+        .filter(Person.type == "faculty")
+        .limit(100)
+        .all()
+    )
+    blocks = (
+        db.query(Block)
+        .filter(
+            Block.date >= start_date,
+            Block.date <= end_date
+        )
+        .limit(100)
+        .all()
+    )
+    assignments = (
+        db.query(Assignment)
+        .join(Block)
+        .options(
+            joinedload(Assignment.block),
+            joinedload(Assignment.person),
+            joinedload(Assignment.rotation_template)
+        )
+        .filter(
+            Block.date >= start_date,
+            Block.date <= end_date
+        )
+        .limit(100)
+        .all()
+    )
 
     # Run health check
     report = service.check_health(
@@ -580,15 +601,36 @@ async def get_vulnerability_report(
         end_date = start_date + timedelta(days=30)
 
     # Load data
-    faculty = db.query(Person).filter(Person.type == "faculty").all()
-    blocks = db.query(Block).filter(
-        Block.date >= start_date,
-        Block.date <= end_date
-    ).all()
-    assignments = db.query(Assignment).join(Block).filter(
-        Block.date >= start_date,
-        Block.date <= end_date
-    ).all()
+    faculty = (
+        db.query(Person)
+        .filter(Person.type == "faculty")
+        .limit(100)
+        .all()
+    )
+    blocks = (
+        db.query(Block)
+        .filter(
+            Block.date >= start_date,
+            Block.date <= end_date
+        )
+        .limit(100)
+        .all()
+    )
+    assignments = (
+        db.query(Assignment)
+        .join(Block)
+        .options(
+            joinedload(Assignment.block),
+            joinedload(Assignment.person),
+            joinedload(Assignment.rotation_template)
+        )
+        .filter(
+            Block.date >= start_date,
+            Block.date <= end_date
+        )
+        .limit(100)
+        .all()
+    )
 
     # Build coverage requirements
     coverage_requirements = {b.id: 1 for b in blocks}
@@ -688,15 +730,36 @@ async def get_comprehensive_report(
         end_date = start_date + timedelta(days=30)
 
     # Load data
-    faculty = db.query(Person).filter(Person.type == "faculty").all()
-    blocks = db.query(Block).filter(
-        Block.date >= start_date,
-        Block.date <= end_date
-    ).all()
-    assignments = db.query(Assignment).join(Block).filter(
-        Block.date >= start_date,
-        Block.date <= end_date
-    ).all()
+    faculty = (
+        db.query(Person)
+        .filter(Person.type == "faculty")
+        .limit(100)
+        .all()
+    )
+    blocks = (
+        db.query(Block)
+        .filter(
+            Block.date >= start_date,
+            Block.date <= end_date
+        )
+        .limit(100)
+        .all()
+    )
+    assignments = (
+        db.query(Assignment)
+        .join(Block)
+        .options(
+            joinedload(Assignment.block),
+            joinedload(Assignment.person),
+            joinedload(Assignment.rotation_template)
+        )
+        .filter(
+            Block.date >= start_date,
+            Block.date <= end_date
+        )
+        .limit(100)
+        .all()
+    )
 
     report = service.get_comprehensive_report(faculty, blocks, assignments)
 
@@ -2154,11 +2217,27 @@ async def analyze_hubs(
         end_date = start_date + timedelta(days=30)
 
     # Load data
-    faculty = db.query(Person).filter(Person.type == "faculty").all()
-    assignments = db.query(Assignment).join(Block).filter(
-        Block.date >= start_date,
-        Block.date <= end_date
-    ).all()
+    faculty = (
+        db.query(Person)
+        .filter(Person.type == "faculty")
+        .limit(100)
+        .all()
+    )
+    assignments = (
+        db.query(Assignment)
+        .join(Block)
+        .options(
+            joinedload(Assignment.block),
+            joinedload(Assignment.person),
+            joinedload(Assignment.rotation_template)
+        )
+        .filter(
+            Block.date >= start_date,
+            Block.date <= end_date
+        )
+        .limit(100)
+        .all()
+    )
 
     # Build services mapping (simplified - would need proper implementation)
     services = {}  # service_id -> [faculty_ids]

@@ -35,9 +35,9 @@
 - **Procedure Credentialing**: Track faculty qualifications and certifications
 - **Resilience Framework**: Cross-industry best practices (80% utilization threshold, N-1/N-2 contingency, defense in depth)
 
-### Healthcare Context
+### Application Context
 
-This is a **HIPAA-sensitive application** handling protected health information (PHI). All work must consider:
+This is a **scheduling application** for medical residency programs. All work must consider:
 - Data security and privacy
 - Audit trails for compliance
 - Error handling that doesn't leak sensitive information
@@ -324,9 +324,9 @@ If tests fail, **DO NOT COMMIT**. Fix the failing tests or the code first.
 
 ## Security Requirements
 
-### Healthcare Data Protection
+### Data Protection
 
-This application handles **Protected Health Information (PHI)** under HIPAA. Security is critical.
+Security is important for any application handling user data. Follow standard security best practices.
 
 ### Authentication & Authorization
 
@@ -337,7 +337,7 @@ This application handles **Protected Health Information (PHI)** under HIPAA. Sec
 
 ### Security Best Practices
 
-1. **Never log sensitive data**: No PHI, passwords, tokens in logs
+1. **Never log sensitive data**: No passwords, tokens, or personal data in logs
 2. **Input validation**: Use Pydantic schemas for all inputs
 3. **SQL injection prevention**: Always use SQLAlchemy ORM, never raw SQL
 4. **Path traversal prevention**: Validate file paths (see `backend/app/core/file_security.py`)
@@ -707,7 +707,7 @@ def calculate_hours(assignments: list[Assignment]) -> float:
 ```python
 raise HTTPException(
     status_code=400,
-    detail=f"Person {person_id} has SSN {person.ssn}"  # PHI leaked!
+    detail=f"Person {person_id} has email {person.email}"  # Sensitive data leaked!
 )
 ```
 
@@ -780,7 +780,7 @@ When making changes, update relevant documentation:
 Before implementing a feature:
 
 1. Does this maintain ACGME compliance?
-2. Is this secure for healthcare data?
+2. Is this secure?
 3. Have I written tests?
 4. Does this follow the layered architecture?
 5. Are all database operations async?
@@ -798,7 +798,7 @@ Before implementing a feature:
 - [ ] Tests pass: `pytest` (backend) and `npm test` (frontend)
 - [ ] Database changes have Alembic migrations
 - [ ] No secrets hardcoded (use environment variables)
-- [ ] No PHI leaked in error messages or logs
+- [ ] No sensitive data leaked in error messages or logs
 - [ ] Input validation uses Pydantic schemas
 - [ ] All database operations are async
 - [ ] ACGME compliance maintained (if touching scheduling)
@@ -807,7 +807,7 @@ Before implementing a feature:
 
 ---
 
-**Remember**: This is a healthcare application. Patient safety, data security, and regulatory compliance are paramount. When in doubt, ask before making changes to critical systems.
+**Remember**: This is a scheduling application. Data security and ACGME compliance are important. When in doubt, ask before making changes to critical systems.
 
 ---
 
