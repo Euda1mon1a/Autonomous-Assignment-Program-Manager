@@ -77,6 +77,14 @@ from .fmit import (
 # Equity and continuity constraints
 from .equity import ContinuityConstraint, EquityConstraint
 
+# Call equity and preference constraints
+from .call_equity import (
+    DeptChiefWednesdayPreferenceConstraint,
+    SundayCallEquityConstraint,
+    TuesdayCallPreferenceConstraint,
+    WeekdayCallEquityConstraint,
+)
+
 # Resilience-aware constraints
 from .resilience import (
     HubProtectionConstraint,
@@ -126,6 +134,11 @@ __all__ = [
     # Equity constraints
     "ContinuityConstraint",
     "EquityConstraint",
+    # Call equity and preference constraints
+    "DeptChiefWednesdayPreferenceConstraint",
+    "SundayCallEquityConstraint",
+    "TuesdayCallPreferenceConstraint",
+    "WeekdayCallEquityConstraint",
     # Resilience constraints
     "HubProtectionConstraint",
     "N1VulnerabilityConstraint",
