@@ -79,7 +79,7 @@ docker ai "Is my multi-stage build in frontend/Dockerfile optimal for Next.js?"
 
 ### 2. Security Analysis (High Value)
 
-Given this is a HIPAA-sensitive healthcare application, security analysis is critical:
+Security analysis is important for this application:
 
 ```bash
 # Security scan integration
@@ -148,7 +148,7 @@ docker ai "How do I add a new service to docker-compose.yml for this project?"
 
 | Use Case | Gordon Capability | Priority |
 |----------|-------------------|----------|
-| HIPAA compliance in containers | Security analysis, secret detection | High |
+| Security compliance in containers | Security analysis, secret detection | High |
 | Audit trail preservation | Log configuration review | High |
 | Data encryption at rest | Volume security analysis | High |
 | Network isolation | Compose network review | Medium |
@@ -260,7 +260,7 @@ docker ai "Check for security issues in my Docker configuration"
 
 ### When NOT to Use Gordon
 
-1. **Production debugging with PHI** - Be cautious about what container logs/data Gordon can access
+1. **Production debugging** - Be cautious about what container logs/data Gordon can access
 2. **Automated CI/CD decisions** - Use as advisory, not authoritative
 3. **Sensitive configuration review** - Ensure .env files are in .dockerignore
 

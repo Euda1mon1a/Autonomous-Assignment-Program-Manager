@@ -26,7 +26,7 @@ The Residency Scheduler API follows RESTful principles with modern security prac
 
 ### Design Principles
 
-- **Security First**: HIPAA-compliant, defense-in-depth approach
+- **Security First**: Defense-in-depth approach
 - **Consistency**: Predictable patterns across all endpoints
 - **Developer Experience**: Clear error messages, comprehensive documentation
 - **Type Safety**: Full Pydantic validation on all inputs/outputs
