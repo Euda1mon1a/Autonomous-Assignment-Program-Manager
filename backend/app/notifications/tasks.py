@@ -37,7 +37,7 @@ def send_email(
     # - SendGrid/Mailgun/SES SDK for managed email
     # - See docs/TODO_RESILIENCE.md for production checklist
     return {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.utcnow().isoformat(),
         "to": to,
         "subject": subject,
         "status": "queued",
@@ -68,7 +68,7 @@ def send_webhook(
     #     response = await client.post(url, json=payload, timeout=30)
     #     response.raise_for_status()
     return {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.utcnow().isoformat(),
         "url": url,
         "status": "queued",
     }
@@ -120,7 +120,7 @@ def detect_leave_conflicts(
             )
 
         return {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.utcnow().isoformat(),
             "absence_id": absence_id,
             "conflicts_found": len(conflicts),
             "alerts_created": len(alert_ids),
