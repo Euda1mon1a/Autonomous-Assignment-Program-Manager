@@ -1088,6 +1088,9 @@ class SolverFactory:
         - **pulp**: Linear programming solver (requires PuLP package)
         - **cp_sat**: Constraint programming solver (requires OR-Tools package)
         - **hybrid**: Combines CP-SAT and PuLP for best results
+        - **quantum**: Hybrid quantum-inspired solver (auto-selects best approach)
+        - **qubo**: PyQUBO-based QUBO solver (requires pyqubo package)
+        - **quantum_sa**: Quantum-inspired simulated annealing (pure Python fallback)
 
     Solver Selection Guide:
         - Small problems (<100 blocks): Use "greedy" for speed
@@ -1095,6 +1098,7 @@ class SolverFactory:
         - Large problems (>500 blocks): Use "hybrid" for reliability
         - Need explanations: Use "greedy" with generate_explanations=True
         - Production schedules: Use "cp_sat" or "hybrid" for optimality
+        - Experimental/research: Use "quantum" or "quantum_sa"
 
     Example:
         >>> # Create a CP-SAT solver with custom timeout
@@ -1118,6 +1122,9 @@ class SolverFactory:
         "cp_sat": CPSATSolver,
         "hybrid": HybridSolver,
         "pyomo": None,  # Lazy-loaded to avoid import if not used
+        "quantum": None,  # Lazy-loaded quantum-inspired solver
+        "qubo": None,  # Lazy-loaded PyQUBO-based solver
+        "quantum_sa": None,  # Lazy-loaded simulated quantum annealing
     }
 
     @classmethod
@@ -1130,6 +1137,33 @@ class SolverFactory:
             except ImportError:
                 raise ValueError("PyomoSolver requires pyomo package: pip install pyomo")
         return cls._solvers["pyomo"]
+
+    @classmethod
+    def _get_quantum_solver(cls, solver_type: str):
+        """
+        Lazy-load quantum solvers to avoid import errors if not installed.
+
+        Args:
+            solver_type: One of 'quantum', 'qubo', or 'quantum_sa'
+
+        Returns:
+            The requested solver class
+
+        Note:
+            These solvers have optional dependencies:
+            - quantum/quantum_sa: Works with pure Python fallback
+            - qubo: Requires PyQUBO (pip install pyqubo)
+        """
+        if cls._solvers[solver_type] is None:
+            from app.scheduling.quantum import (
+                QuantumInspiredSolver,
+                QUBOSolver,
+                SimulatedQuantumAnnealingSolver,
+            )
+            cls._solvers["quantum"] = QuantumInspiredSolver
+            cls._solvers["qubo"] = QUBOSolver
+            cls._solvers["quantum_sa"] = SimulatedQuantumAnnealingSolver
+        return cls._solvers[solver_type]
 
     @classmethod
     def create(
@@ -1179,6 +1213,8 @@ class SolverFactory:
         # Handle lazy-loaded solvers
         if name == "pyomo":
             solver_class = cls._get_pyomo_solver()
+        elif name in ("quantum", "qubo", "quantum_sa"):
+            solver_class = cls._get_quantum_solver(name)
         else:
             solver_class = cls._solvers[name]
 

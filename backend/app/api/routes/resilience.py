@@ -16,8 +16,12 @@ Tier 2 (Strategic) endpoints:
 - Equilibrium analysis (Le Chatelier)
 - Stress and compensation tracking
 """
+import logging
+import time
 from datetime import date, datetime, timedelta
 from uuid import UUID
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc
@@ -165,11 +169,12 @@ async def get_system_health(
     if end_date is None:
         end_date = start_date + timedelta(days=30)
 
-    # Load data for analysis
+    # Load data for analysis - no limit to ensure accurate health assessment
+    query_start = time.time()
     faculty = (
         db.query(Person)
         .filter(Person.type == "faculty")
-        .limit(100)
+        .order_by(Person.id)
         .all()
     )
     blocks = (
@@ -178,7 +183,7 @@ async def get_system_health(
             Block.date >= start_date,
             Block.date <= end_date
         )
-        .limit(100)
+        .order_by(Block.date, Block.id)
         .all()
     )
     assignments = (
@@ -193,8 +198,16 @@ async def get_system_health(
             Block.date >= start_date,
             Block.date <= end_date
         )
-        .limit(100)
+        .order_by(Block.date, Assignment.id)
         .all()
+    )
+    query_time = time.time() - query_start
+
+    logger.info(
+        "Health check data loaded: faculty=%d, blocks=%d, assignments=%d, "
+        "date_range=%s to %s, query_time=%.3fs",
+        len(faculty), len(blocks), len(assignments),
+        start_date, end_date, query_time
     )
 
     # Run health check
@@ -600,11 +613,12 @@ async def get_vulnerability_report(
     if end_date is None:
         end_date = start_date + timedelta(days=30)
 
-    # Load data
+    # Load data - no limit to ensure complete vulnerability analysis
+    query_start = time.time()
     faculty = (
         db.query(Person)
         .filter(Person.type == "faculty")
-        .limit(100)
+        .order_by(Person.id)
         .all()
     )
     blocks = (
@@ -613,7 +627,7 @@ async def get_vulnerability_report(
             Block.date >= start_date,
             Block.date <= end_date
         )
-        .limit(100)
+        .order_by(Block.date, Block.id)
         .all()
     )
     assignments = (
@@ -628,8 +642,16 @@ async def get_vulnerability_report(
             Block.date >= start_date,
             Block.date <= end_date
         )
-        .limit(100)
+        .order_by(Block.date, Assignment.id)
         .all()
+    )
+    query_time = time.time() - query_start
+
+    logger.info(
+        "Vulnerability report data loaded: faculty=%d, blocks=%d, assignments=%d, "
+        "date_range=%s to %s, query_time=%.3fs",
+        len(faculty), len(blocks), len(assignments),
+        start_date, end_date, query_time
     )
 
     # Build coverage requirements
@@ -729,11 +751,12 @@ async def get_comprehensive_report(
     if end_date is None:
         end_date = start_date + timedelta(days=30)
 
-    # Load data
+    # Load data - no limit to ensure complete comprehensive report
+    query_start = time.time()
     faculty = (
         db.query(Person)
         .filter(Person.type == "faculty")
-        .limit(100)
+        .order_by(Person.id)
         .all()
     )
     blocks = (
@@ -742,7 +765,7 @@ async def get_comprehensive_report(
             Block.date >= start_date,
             Block.date <= end_date
         )
-        .limit(100)
+        .order_by(Block.date, Block.id)
         .all()
     )
     assignments = (
@@ -757,8 +780,16 @@ async def get_comprehensive_report(
             Block.date >= start_date,
             Block.date <= end_date
         )
-        .limit(100)
+        .order_by(Block.date, Assignment.id)
         .all()
+    )
+    query_time = time.time() - query_start
+
+    logger.info(
+        "Comprehensive report data loaded: faculty=%d, blocks=%d, assignments=%d, "
+        "date_range=%s to %s, query_time=%.3fs",
+        len(faculty), len(blocks), len(assignments),
+        start_date, end_date, query_time
     )
 
     report = service.get_comprehensive_report(faculty, blocks, assignments)
@@ -2216,11 +2247,12 @@ async def analyze_hubs(
     if end_date is None:
         end_date = start_date + timedelta(days=30)
 
-    # Load data
+    # Load data - no limit to ensure complete hub analysis
+    query_start = time.time()
     faculty = (
         db.query(Person)
         .filter(Person.type == "faculty")
-        .limit(100)
+        .order_by(Person.id)
         .all()
     )
     assignments = (
@@ -2235,8 +2267,16 @@ async def analyze_hubs(
             Block.date >= start_date,
             Block.date <= end_date
         )
-        .limit(100)
+        .order_by(Block.date, Assignment.id)
         .all()
+    )
+    query_time = time.time() - query_start
+
+    logger.info(
+        "Hub analysis data loaded: faculty=%d, assignments=%d, "
+        "date_range=%s to %s, query_time=%.3fs",
+        len(faculty), len(assignments),
+        start_date, end_date, query_time
     )
 
     # Build services mapping (simplified - would need proper implementation)

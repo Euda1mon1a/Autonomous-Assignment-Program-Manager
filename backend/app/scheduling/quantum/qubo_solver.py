@@ -587,8 +587,10 @@ class QUBOSolver(BaseSolver):
                 solver_status="Could not build model",
             )
 
-        # Compile to BQM
-        bqm = model.to_bqm()
+        # Compile to BQM with placeholder values
+        # lambda_block is the penalty weight for the one-per-block constraint
+        feed_dict = {"lambda_block": QUBOFormulation.HARD_CONSTRAINT_PENALTY}
+        bqm = model.to_bqm(feed_dict=feed_dict)
 
         logger.info(
             f"PyQUBO model: {len(bqm.variables)} variables, "
