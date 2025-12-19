@@ -1,8 +1,6 @@
 ***REMOVED*** Docker Compose for Monitoring Stack
 ***REMOVED*** Residency Scheduler Observability Infrastructure
 
-version: '3.8'
-
 services:
   ***REMOVED*** Prometheus - Metrics Collection
   prometheus:

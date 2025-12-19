@@ -5,8 +5,6 @@
 ***REMOVED*** Use with: docker-compose -f docker-compose.yml -f nginx/docker-compose.nginx.yml up
 ***REMOVED*** =============================================================================
 
-version: '3.8'
-
 services:
   ***REMOVED*** ===========================================================================
   ***REMOVED*** Nginx Reverse Proxy
