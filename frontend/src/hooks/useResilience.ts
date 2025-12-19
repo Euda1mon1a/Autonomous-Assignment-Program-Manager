@@ -47,14 +47,16 @@ export interface EmergencyCoverageResponse {
  * @returns Mutation object containing:
  *   - `mutate`: Function to trigger emergency coverage
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether the request is in progress
+ *   - `isPending`: Whether the request is in progress
+ *   - `isSuccess`: Whether the request completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred during processing
  *   - `data`: Coverage response with replacement details
  *
  * @example
  * ```tsx
  * function EmergencyCoverageDialog({ personId }: Props) {
- *   const { mutate, isLoading } = useEmergencyCoverage();
+ *   const { mutate, isPending } = useEmergencyCoverage();
  *
  *   const handleSubmit = (data: EmergencyCoverageRequest) => {
  *     mutate(data, {
@@ -71,7 +73,7 @@ export interface EmergencyCoverageResponse {
  *     });
  *   };
  *
- *   return <CoverageForm onSubmit={handleSubmit} loading={isLoading} />;
+ *   return <CoverageForm onSubmit={handleSubmit} loading={isPending} />;
  * }
  * ```
  *

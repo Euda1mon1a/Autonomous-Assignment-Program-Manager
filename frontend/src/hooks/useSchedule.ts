@@ -145,14 +145,16 @@ export function useSchedule(
  * @returns Mutation object containing:
  *   - `mutate`: Function to trigger schedule generation
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether generation is in progress
+ *   - `isPending`: Whether generation is in progress
+ *   - `isSuccess`: Whether generation completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred during generation
  *   - `data`: Generation response with statistics and validation results
  *
  * @example
  * ```tsx
  * function ScheduleGenerator() {
- *   const { mutate, isLoading, data } = useGenerateSchedule();
+ *   const { mutate, isPending, data } = useGenerateSchedule();
  *
  *   const handleGenerate = () => {
  *     mutate({
@@ -174,7 +176,7 @@ export function useSchedule(
  *
  *   return (
  *     <div>
- *       <GenerateButton onClick={handleGenerate} loading={isLoading} />
+ *       <GenerateButton onClick={handleGenerate} loading={isPending} />
  *       {data && <GenerationStats stats={data.solver_stats} />}
  *     </div>
  *   );
@@ -362,14 +364,16 @@ export function useRotationTemplate(
  * @returns Mutation object containing:
  *   - `mutate`: Function to create a template
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether creation is in progress
+ *   - `isPending`: Whether creation is in progress
+ *   - `isSuccess`: Whether creation completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred
  *   - `data`: The created template with generated ID
  *
  * @example
  * ```tsx
  * function NewTemplateForm() {
- *   const { mutate, isLoading } = useCreateTemplate();
+ *   const { mutate, isPending } = useCreateTemplate();
  *
  *   const handleSubmit = (formData: RotationTemplateCreate) => {
  *     mutate(formData, {
@@ -383,7 +387,7 @@ export function useRotationTemplate(
  *     });
  *   };
  *
- *   return <TemplateForm onSubmit={handleSubmit} loading={isLoading} />;
+ *   return <TemplateForm onSubmit={handleSubmit} loading={isPending} />;
  * }
  * ```
  *
@@ -411,14 +415,16 @@ export function useCreateTemplate() {
  * @returns Mutation object containing:
  *   - `mutate`: Function to update a template
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether update is in progress
+ *   - `isPending`: Whether update is in progress
+ *   - `isSuccess`: Whether update completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred
  *   - `data`: The updated template
  *
  * @example
  * ```tsx
  * function TemplateEditor({ templateId }: Props) {
- *   const { mutate, isLoading } = useUpdateTemplate();
+ *   const { mutate, isPending } = useUpdateTemplate();
  *   const { data: template } = useRotationTemplate(templateId);
  *
  *   const handleSave = (updates: RotationTemplateUpdate) => {
@@ -461,13 +467,15 @@ export function useUpdateTemplate() {
  * @returns Mutation object containing:
  *   - `mutate`: Function to delete a template by ID
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether deletion is in progress
+ *   - `isPending`: Whether deletion is in progress
+ *   - `isSuccess`: Whether deletion completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred (e.g., template in use)
  *
  * @example
  * ```tsx
  * function TemplateActions({ templateId }: Props) {
- *   const { mutate, isLoading } = useDeleteTemplate();
+ *   const { mutate, isPending } = useDeleteTemplate();
  *
  *   const handleDelete = () => {
  *     if (confirm('Are you sure? This cannot be undone.')) {
@@ -485,7 +493,7 @@ export function useUpdateTemplate() {
  *     }
  *   };
  *
- *   return <DeleteButton onClick={handleDelete} loading={isLoading} />;
+ *   return <DeleteButton onClick={handleDelete} loading={isPending} />;
  * }
  * ```
  *
@@ -576,14 +584,16 @@ export function useAssignments(
  * @returns Mutation object containing:
  *   - `mutate`: Function to create an assignment
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether creation is in progress
+ *   - `isPending`: Whether creation is in progress
+ *   - `isSuccess`: Whether creation completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred (e.g., conflicts, validation)
  *   - `data`: The created assignment with generated ID
  *
  * @example
  * ```tsx
  * function QuickAssignDialog({ date, rotation }: Props) {
- *   const { mutate, isLoading } = useCreateAssignment();
+ *   const { mutate, isPending } = useCreateAssignment();
  *
  *   const handleAssign = (personId: string) => {
  *     mutate({
@@ -602,7 +612,7 @@ export function useAssignments(
  *     });
  *   };
  *
- *   return <PersonSelector onSelect={handleAssign} loading={isLoading} />;
+ *   return <PersonSelector onSelect={handleAssign} loading={isPending} />;
  * }
  * ```
  *
@@ -632,14 +642,16 @@ export function useCreateAssignment() {
  * @returns Mutation object containing:
  *   - `mutate`: Function to update an assignment
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether update is in progress
+ *   - `isPending`: Whether update is in progress
+ *   - `isSuccess`: Whether update completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred
  *   - `data`: The updated assignment
  *
  * @example
  * ```tsx
  * function AssignmentEditor({ assignmentId }: Props) {
- *   const { mutate, isLoading } = useUpdateAssignment();
+ *   const { mutate, isPending } = useUpdateAssignment();
  *
  *   const handleUpdate = (updates: AssignmentUpdate) => {
  *     mutate(
@@ -655,7 +667,7 @@ export function useCreateAssignment() {
  *     );
  *   };
  *
- *   return <AssignmentForm onSubmit={handleUpdate} loading={isLoading} />;
+ *   return <AssignmentForm onSubmit={handleUpdate} loading={isPending} />;
  * }
  * ```
  *
@@ -685,13 +697,15 @@ export function useUpdateAssignment() {
  * @returns Mutation object containing:
  *   - `mutate`: Function to delete an assignment by ID
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether deletion is in progress
+ *   - `isPending`: Whether deletion is in progress
+ *   - `isSuccess`: Whether deletion completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred
  *
  * @example
  * ```tsx
  * function AssignmentActions({ assignment }: Props) {
- *   const { mutate, isLoading } = useDeleteAssignment();
+ *   const { mutate, isPending } = useDeleteAssignment();
  *
  *   const handleDelete = () => {
  *     if (confirm('Remove this assignment?')) {
@@ -710,7 +724,7 @@ export function useUpdateAssignment() {
  *     <IconButton
  *       icon={TrashIcon}
  *       onClick={handleDelete}
- *       loading={isLoading}
+ *       loading={isPending}
  *       variant="danger"
  *     />
  *   );

@@ -213,3 +213,45 @@ class AuditStatistics(TypedDict):
     entriesBySeverity: dict[str, int]
     acgmeOverrideCount: int
     uniqueUsers: int
+
+
+class SwapMatchResult(TypedDict):
+    """
+    Result of swap candidate matching.
+
+    Contains compatibility analysis for potential schedule swap partners,
+    including overall score and breakdown of match factors.
+    """
+    candidate_id: str
+    compatibility_score: float
+    match_factors: dict[str, float]
+    is_eligible: bool
+
+
+class ACGMEViolation(TypedDict):
+    """
+    ACGME compliance violation details.
+
+    Documents specific violations of ACGME work hour rules,
+    including severity, affected parties, and dates.
+    """
+    rule_id: str
+    rule_name: str
+    severity: Literal["critical", "high", "medium", "low"]
+    description: str
+    affected_person_id: NotRequired[str]
+    affected_date: NotRequired[date]
+
+
+class NotificationPayload(TypedDict):
+    """
+    Notification message payload.
+
+    Structured data for sending notifications to users via
+    various channels (email, in-app, etc.).
+    """
+    recipient_id: str
+    notification_type: str
+    title: str
+    message: str
+    data: NotRequired[dict[str, str]]

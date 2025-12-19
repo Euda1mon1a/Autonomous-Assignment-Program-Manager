@@ -306,14 +306,16 @@ export function useAuth(
  * @returns Mutation object containing:
  *   - `mutate`: Function to trigger login
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether login is in progress (shows loading spinner)
+ *   - `isPending`: Whether login is in progress (shows loading spinner)
+ *   - `isSuccess`: Whether login completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred during login
  *   - `data`: Login response with access token and user data
  *
  * @example
  * ```tsx
  * function LoginForm() {
- *   const { mutate: login, isLoading, error } = useLogin();
+ *   const { mutate: login, isPending, error } = useLogin();
  *   const [username, setUsername] = useState('');
  *   const [password, setPassword] = useState('');
  *
@@ -347,8 +349,8 @@ export function useAuth(
  *         onChange={(e) => setPassword(e.target.value)}
  *         placeholder="Password"
  *       />
- *       <button type="submit" disabled={isLoading}>
- *         {isLoading ? 'Logging in...' : 'Login'}
+ *       <button type="submit" disabled={isPending}>
+ *         {isPending ? 'Logging in...' : 'Login'}
  *       </button>
  *       {error && <ErrorMessage>{error.message}</ErrorMessage>}
  *     </form>
@@ -390,13 +392,15 @@ export function useLogin() {
  * @returns Mutation object containing:
  *   - `mutate`: Function to trigger logout
  *   - `mutateAsync`: Async version returning a Promise
- *   - `isLoading`: Whether logout is in progress
+ *   - `isPending`: Whether logout is in progress
+ *   - `isSuccess`: Whether logout completed successfully
+ *   - `isError`: Whether an error occurred
  *   - `error`: Any error that occurred during logout
  *
  * @example
  * ```tsx
  * function LogoutButton() {
- *   const { mutate: logout, isLoading } = useLogout();
+ *   const { mutate: logout, isPending } = useLogout();
  *
  *   const handleLogout = () => {
  *     logout(undefined, {
@@ -413,8 +417,8 @@ export function useLogin() {
  *   };
  *
  *   return (
- *     <button onClick={handleLogout} disabled={isLoading}>
- *       {isLoading ? 'Logging out...' : 'Logout'}
+ *     <button onClick={handleLogout} disabled={isPending}>
+ *       {isPending ? 'Logging out...' : 'Logout'}
  *     </button>
  *   );
  * }

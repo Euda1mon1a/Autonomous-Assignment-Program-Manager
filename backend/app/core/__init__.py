@@ -33,6 +33,15 @@ from app.core.types import (
 
     ***REMOVED*** Audit
     AuditStatistics,
+
+    ***REMOVED*** Swap Matching
+    SwapMatchResult,
+
+    ***REMOVED*** ACGME Compliance
+    ACGMEViolation,
+
+    ***REMOVED*** Notifications
+    NotificationPayload,
 )
 
 __all__ = [
@@ -67,4 +76,13 @@ __all__ = [
 
     ***REMOVED*** Audit
     "AuditStatistics",
+
+    ***REMOVED*** Swap Matching
+    "SwapMatchResult",
+
+    ***REMOVED*** ACGME Compliance
+    "ACGMEViolation",
+
+    ***REMOVED*** Notifications
+    "NotificationPayload",
 ]
