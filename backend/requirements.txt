@@ -38,9 +38,20 @@ networkx>=3.0
 ***REMOVED*** Constraint Programming & Optimization
 ortools>=9.8
 pulp>=2.7.0
+pyomo>=6.7.0  ***REMOVED*** Algebraic modeling + rich solution data capture (duals, slacks)
 
 ***REMOVED*** Multi-Objective Optimization
 pymoo>=0.6.0
+
+***REMOVED*** Quantum-Inspired Optimization (optional)
+***REMOVED*** Install these for quantum-inspired scheduling solvers:
+***REMOVED*** pip install pyqubo dwave-samplers
+***REMOVED*** For D-Wave quantum hardware access, also install:
+***REMOVED*** pip install dwave-system
+pyqubo>=1.4.0  ***REMOVED*** QUBO formulation library
+dwave-samplers>=1.0.0  ***REMOVED*** Classical simulated annealing (quantum-inspired)
+***REMOVED*** dwave-system>=1.0.0  ***REMOVED*** Uncomment for D-Wave quantum hardware access
+***REMOVED*** qubovert>=1.0.0  ***REMOVED*** Alternative QUBO library (optional)
 
 ***REMOVED*** Monitoring & Observability
 sentry-sdk[fastapi]==2.48.0

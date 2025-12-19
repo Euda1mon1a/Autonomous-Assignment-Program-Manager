@@ -9,7 +9,9 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.security import get_current_active_user
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.academic_blocks import BlockListResponse, BlockMatrixResponse
 from app.services.academic_block_service import AcademicBlockService
 
@@ -22,6 +24,7 @@ def get_academic_block_matrix(
     academic_year: str = Query(..., description="Academic year (e.g., '2024-2025')"),
     pgy_level: int | None = Query(None, description="Filter by PGY level (1-3)", ge=1, le=3),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get academic block matrix for program coordinators.
@@ -68,6 +71,7 @@ def get_academic_block_matrix(
 def list_academic_blocks(
     academic_year: str = Query(..., description="Academic year (e.g., '2024-2025')"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     List all academic blocks for the year with summary statistics.
