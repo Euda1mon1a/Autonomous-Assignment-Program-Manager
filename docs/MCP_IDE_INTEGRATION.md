@@ -247,7 +247,7 @@ Both IDE configurations use environment variable substitution:
 **Key Features:**
 - Project-relative paths
 - Shell environment variable substitution
-- PHI protection enabled
+- Data protection enabled
 - Audit logging active
 
 ---
@@ -260,7 +260,7 @@ Both configurations include:
 
 1. **Read-Only Mode**: Prevents accidental data modification
 2. **Approval Required**: User confirmation for sensitive operations
-3. **PHI Protection**: Healthcare data security measures
+3. **Data Protection**: Security measures for user data
 4. **Audit Logging**: All operations logged for compliance
 5. **Local-Only Access**: Data stays on your machine
 
@@ -290,7 +290,7 @@ Both configurations include:
 
 5. **Protect sensitive data**
    - Use anonymized data for development
-   - Never use production PHI locally
+   - Never use production data locally
    - Securely delete old logs
 
 ---
@@ -467,7 +467,7 @@ Already configured in `.vscode/extensions.json`:
 2. **Create read-only database user** for MCP access
 3. **Enable audit logging**: Set `LOG_LEVEL=INFO`
 4. **Monitor MCP usage**: Review logs regularly
-5. **Implement HIPAA controls** as needed
+5. **Implement security controls** as needed
 
 ### For AI Assistant Users
 
@@ -512,4 +512,4 @@ For issues or questions:
 
 ---
 
-**Remember**: This system handles Protected Health Information (PHI) under HIPAA. Security, compliance, and data protection are paramount. Always follow security best practices and approve operations carefully.
+**Remember**: This is a scheduling system. Security, compliance, and data protection are important. Always follow security best practices and approve operations carefully.

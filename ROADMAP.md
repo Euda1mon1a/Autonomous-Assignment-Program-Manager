@@ -306,7 +306,7 @@ CREATE TABLE push_notifications (
 **Development Considerations:**
 - Code sharing: 70% shared business logic between web and mobile via shared API client
 - CI/CD: Automated builds via Expo EAS or Fastlane
-- App store requirements: HIPAA compliance statements, privacy policy
+- App store requirements: privacy policy, data handling statements
 - Analytics: Firebase Analytics or Sentry for crash reporting
 - Performance: Target 60fps, <3s app launch time, <500ms API response
 

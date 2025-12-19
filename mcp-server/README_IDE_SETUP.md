@@ -152,7 +152,7 @@ The `.vscode/mcp.json` file contains:
 Key features:
 - **Auto-start disabled**: Prevents accidental server starts
 - **Read-only mode**: Prevents unauthorized data modifications
-- **PHI protection**: Ensures healthcare data security
+- **Data protection**: Ensures user data security
 - **Approval required**: User confirmation for sensitive operations
 
 ---
@@ -214,7 +214,7 @@ The `.zed/mcp.json` file contains:
 
 Key features:
 - **STDIO transport**: Standard input/output communication
-- **PHI protection enabled**: Healthcare data security
+- **Data protection enabled**: User data security
 - **Audit logging**: All operations are logged
 - **Health checks**: Automatic server health monitoring
 
@@ -530,16 +530,16 @@ If tables are empty, you may need to:
 
 ## Security Considerations
 
-### Healthcare Data (PHI) Protection
+### Data Protection
 
-This application handles **Protected Health Information (PHI)** under HIPAA. Security is critical.
+Security is important for any application handling user data.
 
 #### Key Security Features
 
 1. **Read-only mode by default**: Prevents accidental data modification
 2. **Approval required**: User must confirm sensitive operations
 3. **Audit logging**: All MCP operations are logged
-4. **PHI redaction**: Sensitive data is masked in logs and error messages
+4. **Data redaction**: Sensitive data is masked in logs and error messages
 5. **Local-only access**: MCP server runs locally, data stays on your machine
 
 #### Best Practices
@@ -634,9 +634,9 @@ find . -name "mcp.log*" -mtime +30 -delete
 
 ### Compliance
 
-#### HIPAA Requirements
+#### Security Best Practices
 
-When using the MCP server with PHI:
+When using the MCP server with sensitive data:
 
 1. **Access Control**: Only authorized users should have access
 2. **Audit Trails**: All access must be logged and auditable
@@ -748,4 +748,4 @@ For issues or questions:
 
 ---
 
-**Remember**: This is a healthcare application handling PHI. Security, compliance, and data protection are paramount. When in doubt, err on the side of caution and consult with your security team.
+**Remember**: This is a scheduling application. Security and data protection are important. When in doubt, err on the side of caution.
