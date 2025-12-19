@@ -95,10 +95,10 @@ def upgrade() -> None:
         sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
 
         # Audit tracking
+        # Note: FK to users added in migration 017 after users table is created
         sa.Column(
             'created_by_id',
             postgresql.UUID(as_uuid=True),
-            sa.ForeignKey('users.id', ondelete='SET NULL'),
             nullable=True
         ),
 

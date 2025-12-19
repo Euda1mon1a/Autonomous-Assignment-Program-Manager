@@ -1,0 +1,58 @@
+{
+  "scenarios": {
+    "minimal": {
+      "description": "Minimal test scenario for quick validation",
+      "residents": [
+        {"id": "R1", "pgy": 1, "name": "Resident 1"},
+        {"id": "R2", "pgy": 1, "name": "Resident 2"},
+        {"id": "R3", "pgy": 2, "name": "Resident 3"},
+        {"id": "R4", "pgy": 2, "name": "Resident 4"},
+        {"id": "R5", "pgy": 3, "name": "Resident 5"},
+        {"id": "R6", "pgy": 3, "name": "Resident 6"}
+      ],
+      "blocks": 14,
+      "rotations": ["clinic", "inpatient", "procedures"],
+      "constraints": {
+        "max_weekly_hours": 80,
+        "min_day_off_per_week": 1,
+        "supervision_ratios": {
+          "PGY1": 2,
+          "PGY2": 4,
+          "PGY3": 4
+        }
+      }
+    },
+    "standard": {
+      "description": "Standard 24-resident scheduling scenario",
+      "residents": 24,
+      "blocks": 730,
+      "rotations": ["clinic", "inpatient", "procedures", "elective", "research"],
+      "constraints": {
+        "max_weekly_hours": 80,
+        "min_day_off_per_week": 1,
+        "supervision_ratios": {
+          "PGY1": 2,
+          "PGY2": 4,
+          "PGY3": 4
+        },
+        "continuity_clinic_days": ["Tuesday", "Thursday"],
+        "conference_protected": true
+      }
+    },
+    "swap_heavy": {
+      "description": "High volume of swap requests",
+      "base_scenario": "standard",
+      "swap_requests": [
+        {"from": "R1", "to": "R5", "block": 100, "reason": "conference"},
+        {"from": "R3", "to": "R7", "block": 150, "reason": "personal"},
+        {"from": "R12", "to": "R18", "block": 200, "reason": "medical"}
+      ],
+      "expected_swap_rate": 0.15
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "created": "2025-12-19",
+    "purpose": "Test fixtures for experimental solver comparison"
+  }
+}

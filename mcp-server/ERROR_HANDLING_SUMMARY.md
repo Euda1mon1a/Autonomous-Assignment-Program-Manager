@@ -312,10 +312,10 @@ tests/test_error_handling.py::TestIntegration::test_error_response_structure PAS
 - ✓ Comprehensive type hints
 - ✓ Extensive documentation and examples
 
-### 5. Healthcare Compliance
-- ✓ No PHI in error messages
+### 5. Security Compliance
+- ✓ No sensitive data in error messages
 - ✓ Audit trail via correlation IDs
-- ✓ HIPAA-compliant error handling
+- ✓ Secure error handling
 - ✓ Safe error responses
 
 ## Performance Characteristics
