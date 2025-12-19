@@ -1042,5 +1042,61 @@ class ChromatinState(Enum):
 
 ---
 
+# PART 4: Research Isolation Strategy
+
+> **Decision:** Experimental branches remain isolated for rigorous validation before any merge consideration.
+
+## Isolation Infrastructure Created
+
+### Test Harness Location
+```
+backend/experimental/
+├── __init__.py              # Package init
+├── harness.py               # Main CLI harness
+├── benchmarks/
+│   ├── solver_comparison.py # Compare solvers
+│   ├── pathway_validation.py # Catalyst pathway tests
+│   └── stress_testing.py    # TFS stress tests
+├── fixtures/
+│   ├── scheduling_scenarios.json
+│   └── stress_scenarios.json
+└── reports/
+    └── .gitkeep
+```
+
+### Running Experiments
+```bash
+# List available branches
+python -m experimental.harness --list-branches
+
+# Run single experiment
+python -m experimental.harness --branch catalyst-concepts --scenario standard
+
+# Compare all branches
+python -m experimental.harness --compare-all --output reports/comparison.json
+```
+
+## Success Criteria Before Any Merge
+
+| Branch | Metric | Threshold |
+|--------|--------|-----------|
+| quantum-physics | Quality vs CP-SAT | ≥95% quality in ≤50% time |
+| catalyst-concepts | Swap success rate | >90% valid transitions |
+| transcription-factors | Graceful degradation | No violations at 120% load |
+
+## Integration Protocol
+
+1. **Phase 1 (Current):** Isolated branch testing via harness
+2. **Phase 2:** Plugin architecture with feature flags (default OFF)
+3. **Phase 3:** Shadow mode in staging (log only, don't affect output)
+4. **Phase 4:** Gradual rollout with A/B testing
+
+## Documentation
+
+Full research strategy: [`docs/research/EXPERIMENTAL_RESEARCH_STRATEGY.md`](research/EXPERIMENTAL_RESEARCH_STRATEGY.md)
+
+---
+
 *Part 3: Experimental branch analysis*
-*4 branches examined, 3 with potential to address documented issues*
+*Part 4: Research isolation strategy*
+*4 branches examined, test harness created for safe validation*
