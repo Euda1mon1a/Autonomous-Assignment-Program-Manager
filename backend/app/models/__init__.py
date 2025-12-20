@@ -90,6 +90,14 @@ from app.models.gateway_auth import (
     IPBlacklist,
     RequestSignature,
 )
+from app.models.oauth2_client import PKCEClient
+from app.models.oauth2_authorization_code import OAuth2AuthorizationCode
+from app.models.schema_version import (
+    SchemaChangeEvent,
+    SchemaCompatibilityType,
+    SchemaStatus,
+    SchemaVersion,
+)
 from app.webhooks.models import (
     Webhook,
     WebhookDeadLetter,
@@ -209,4 +217,12 @@ __all__ = [
     "IPWhitelist",
     "IPBlacklist",
     "RequestSignature",
+    ***REMOVED*** PKCE Auth models
+    "PKCEClient",
+    "OAuth2AuthorizationCode",
+    ***REMOVED*** Schema Version models
+    "SchemaVersion",
+    "SchemaChangeEvent",
+    "SchemaCompatibilityType",
+    "SchemaStatus",
 ]
