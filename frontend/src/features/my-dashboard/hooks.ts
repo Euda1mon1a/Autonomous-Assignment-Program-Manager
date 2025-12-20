@@ -19,6 +19,71 @@ import type {
   Location,
 } from './types';
 
+// Backend API response types
+interface AssignmentApiResponse {
+  id?: string;
+  date: string;
+  time_of_day: string;
+  activity: string;
+  location: string;
+  can_trade?: boolean;
+  is_conflict?: boolean;
+  conflict_reason?: string;
+}
+
+interface SwapApiResponse {
+  id: string;
+  source_faculty_id: string;
+  source_faculty_name: string;
+  target_faculty_id?: string;
+  target_faculty_name?: string;
+  source_week: string;
+  target_week?: string;
+  status: string;
+  requested_at: string;
+  reason?: string;
+}
+
+interface AbsenceApiResponse {
+  id: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  status: string;
+  requested_at: string;
+}
+
+interface UserApiResponse {
+  id: string;
+  name: string;
+  role: string;
+}
+
+interface DashboardApiResponse {
+  user: UserApiResponse;
+  upcoming_schedule?: AssignmentApiResponse[];
+  pending_swaps?: SwapApiResponse[];
+  absences?: AbsenceApiResponse[];
+  calendar_sync_url?: string;
+  summary?: {
+    next_assignment?: string | null;
+    workload_next_4_weeks?: number;
+    pending_swap_count?: number;
+    upcoming_absences?: number;
+  };
+}
+
+interface CalendarSyncApiResponse {
+  success: boolean;
+  url: string;
+  message: string;
+}
+
+interface SwapRequestApiResponse {
+  success: boolean;
+  message: string;
+}
+
 // ============================================================================
 // Query Keys
 // ============================================================================
@@ -36,7 +101,7 @@ export const dashboardQueryKeys = {
 /**
  * Transform backend assignment to frontend format
  */
-function transformAssignment(assignment: any): UpcomingAssignment {
+function transformAssignment(assignment: AssignmentApiResponse): UpcomingAssignment {
   return {
     id: assignment.id || `${assignment.date}-${assignment.time_of_day}`,
     date: assignment.date,
@@ -52,16 +117,16 @@ function transformAssignment(assignment: any): UpcomingAssignment {
 /**
  * Transform backend pending swap to frontend format
  */
-function transformPendingSwap(swap: any, currentUserId?: string): PendingSwapSummary {
+function transformPendingSwap(swap: SwapApiResponse, currentUserId?: string): PendingSwapSummary {
   const isIncoming = swap.target_faculty_id === currentUserId;
   const isOutgoing = swap.source_faculty_id === currentUserId;
 
   return {
     id: swap.id,
     type: isIncoming ? 'incoming' : 'outgoing',
-    otherFacultyName: isIncoming ? swap.source_faculty_name : swap.target_faculty_name,
-    weekDate: isIncoming ? swap.source_week : swap.target_week,
-    status: swap.status,
+    otherFacultyName: isIncoming ? swap.source_faculty_name : swap.target_faculty_name || '',
+    weekDate: isIncoming ? swap.source_week : swap.target_week || '',
+    status: swap.status as 'pending' | 'approved' | 'rejected',
     requestedAt: swap.requested_at,
     reason: swap.reason,
     canRespond: isIncoming && swap.status === 'pending',
@@ -71,13 +136,13 @@ function transformPendingSwap(swap: any, currentUserId?: string): PendingSwapSum
 /**
  * Transform backend absence to frontend format
  */
-function transformAbsence(absence: any): AbsenceEntry {
+function transformAbsence(absence: AbsenceApiResponse): AbsenceEntry {
   return {
     id: absence.id,
     startDate: absence.start_date,
     endDate: absence.end_date,
     reason: absence.reason,
-    status: absence.status,
+    status: absence.status as 'pending' | 'approved' | 'rejected',
     requestedAt: absence.requested_at,
   };
 }
@@ -104,7 +169,7 @@ export function useMyDashboard(
       const queryString = queryParams.toString();
       const url = `/portal/my/dashboard${queryString ? `?${queryString}` : ''}`;
 
-      const response = await get<any>(url);
+      const response = await get<DashboardApiResponse>(url);
 
       // Get current user ID from localStorage if available
       let currentUserId: string | undefined;
@@ -123,7 +188,7 @@ export function useMyDashboard(
           role: response.user.role,
         },
         upcomingSchedule: (response.upcoming_schedule || []).map(transformAssignment),
-        pendingSwaps: (response.pending_swaps || []).map((swap: any) =>
+        pendingSwaps: (response.pending_swaps || []).map((swap: SwapApiResponse) =>
           transformPendingSwap(swap, currentUserId)
         ),
         absences: (response.absences || []).map(transformAbsence),
@@ -171,8 +236,8 @@ export function useCalendarSync() {
   const queryClient = useQueryClient();
 
   return useMutation<CalendarSyncResponse, ApiError, CalendarSyncRequest>({
-    mutationFn: async (request) => {
-      const response = await post<any>('/portal/my/calendar-sync', {
+    mutationFn: async (request: CalendarSyncRequest) => {
+      const response = await post<CalendarSyncApiResponse>('/portal/my/calendar-sync', {
         format: request.format,
         include_weeks_ahead: request.includeWeeksAhead || 12,
       });
@@ -197,8 +262,8 @@ export function useRequestSwap() {
   const queryClient = useQueryClient();
 
   return useMutation<{ success: boolean; message: string }, ApiError, { assignmentId: string; reason?: string }>({
-    mutationFn: async ({ assignmentId, reason }) => {
-      const response = await post<any>(`/portal/my/assignments/${assignmentId}/request-swap`, {
+    mutationFn: async ({ assignmentId, reason }: { assignmentId: string; reason?: string }) => {
+      const response = await post<SwapRequestApiResponse>(`/portal/my/assignments/${assignmentId}/request-swap`, {
         reason,
       });
 

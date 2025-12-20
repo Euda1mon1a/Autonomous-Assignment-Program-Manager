@@ -15,6 +15,24 @@ import type {
   DateRange,
 } from './types';
 
+// Backend API response types
+interface PersonApiResponse {
+  id: string;
+  name: string;
+  specialties?: string[];
+  primary_duty?: string;
+}
+
+interface RotationTemplateApiResponse {
+  id: string;
+  name?: string;
+  activity_type?: string;
+}
+
+interface ApiListResponse<T> {
+  items?: T[];
+}
+
 // ============================================================================
 // Query Keys
 // ============================================================================
@@ -191,13 +209,13 @@ export function useAvailableFaculty(
 
   return useQuery<Array<{ id: string; name: string; specialty: string }>, ApiError>({
     queryKey: ['fmit-timeline', 'faculty-list', specialty],
-    queryFn: () => get<Array<{ id: string; name: string; specialty: string }>>(`/people/faculty${params}`),
+    queryFn: () => get<PersonApiResponse[] | ApiListResponse<PersonApiResponse>>(`/people/faculty${params}`),
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
-    select: (data: any) => {
+    select: (data: PersonApiResponse[] | ApiListResponse<PersonApiResponse>) => {
       // Handle both array response and object with items array
       const items = Array.isArray(data) ? data : data.items || [];
-      return items.map((person: any) => ({
+      return items.map((person: PersonApiResponse) => ({
         id: person.id,
         name: person.name,
         specialty: person.specialties?.[0] || person.primary_duty || 'General',
@@ -215,15 +233,15 @@ export function useAvailableRotations(
 ) {
   return useQuery<Array<{ id: string; name: string }>, ApiError>({
     queryKey: ['fmit-timeline', 'rotations'],
-    queryFn: () => get<Array<{ id: string; name: string }>>('/rotation-templates'),
+    queryFn: () => get<RotationTemplateApiResponse[] | ApiListResponse<RotationTemplateApiResponse>>('/rotation-templates'),
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
-    select: (data: any) => {
+    select: (data: RotationTemplateApiResponse[] | ApiListResponse<RotationTemplateApiResponse>) => {
       // Handle both array response and object with items array
       const items = Array.isArray(data) ? data : data.items || [];
-      return items.map((template: any) => ({
+      return items.map((template: RotationTemplateApiResponse) => ({
         id: template.id,
-        name: template.name || template.activity_type,
+        name: template.name || template.activity_type || '',
       }));
     },
     ...options,
