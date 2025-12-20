@@ -74,6 +74,15 @@ from app.models.feature_flag import (
     FeatureFlagAudit,
     FeatureFlagEvaluation,
 )
+from app.models.scheduled_job import JobExecution, ScheduledJob
+from app.webhooks.models import (
+    Webhook,
+    WebhookDeadLetter,
+    WebhookDelivery,
+    WebhookDeliveryStatus,
+    WebhookEventType,
+    WebhookStatus,
+)
 
 __all__ = [
     "Person",
@@ -162,4 +171,14 @@ __all__ = [
     "FeatureFlag",
     "FeatureFlagEvaluation",
     "FeatureFlagAudit",
+    # Scheduled Job models
+    "ScheduledJob",
+    "JobExecution",
+    # Webhook models
+    "Webhook",
+    "WebhookDelivery",
+    "WebhookDeadLetter",
+    "WebhookEventType",
+    "WebhookStatus",
+    "WebhookDeliveryStatus",
 ]
