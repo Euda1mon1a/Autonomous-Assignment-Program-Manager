@@ -31,6 +31,15 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"
 
+    # Service Cache Configuration
+    # Redis-based caching for frequently accessed schedule data
+    CACHE_ENABLED: bool = True  # Enable/disable service-level caching
+    CACHE_DEFAULT_TTL: int = 3600  # Default TTL in seconds (1 hour)
+    CACHE_HEATMAP_TTL: int = 1800  # Heatmap cache TTL (30 minutes)
+    CACHE_CALENDAR_TTL: int = 3600  # Calendar export cache TTL (1 hour)
+    CACHE_SCHEDULE_TTL: int = 1800  # Schedule data cache TTL (30 minutes)
+    CACHE_ROTATION_TTL: int = 86400  # Rotation template cache TTL (24 hours)
+
     @property
     def redis_url_with_password(self) -> str:
         """
