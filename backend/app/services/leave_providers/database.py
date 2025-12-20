@@ -1,7 +1,7 @@
 """Database-backed leave provider."""
 from datetime import date, timedelta
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.services.leave_providers.base import LeaveProvider, LeaveRecord
 
@@ -31,9 +31,18 @@ class DatabaseLeaveProvider(LeaveProvider):
         if end_date is None:
             end_date = date.today() + timedelta(days=365)
 
-        absences = self.db.query(Absence).join(Person).filter(
-            Absence.end_date >= start_date, Absence.start_date <= end_date
-        ).all()
+        # OPTIMIZATION: Use joinedload to eagerly load the person relationship
+        # This prevents N+1 queries when accessing a.person.name in the list comprehension
+        absences = (
+            self.db.query(Absence)
+            .join(Person)
+            .options(joinedload(Absence.person))
+            .filter(
+                Absence.end_date >= start_date,
+                Absence.start_date <= end_date
+            )
+            .all()
+        )
 
         return [LeaveRecord(
             faculty_name=a.person.name,

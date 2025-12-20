@@ -890,34 +890,46 @@ class ConflictAlertService:
         Returns:
             List of available faculty, sorted by suitability
         """
-        # Get all faculty members
+        week_end = fmit_week + timedelta(days=6)
+
+        # OPTIMIZATION: Get all faculty members
         all_faculty = self.db.query(Person).filter(
             Person.type == "faculty",
             Person.id != exclude_faculty_id,
         ).all()
 
-        # Filter out those with existing conflicts or assignments that week
-        available = []
-        week_end = fmit_week + timedelta(days=6)
+        # OPTIMIZATION: Batch query for conflicts and assignments to avoid N+1
+        faculty_ids = [f.id for f in all_faculty]
 
-        for faculty in all_faculty:
-            # Check for existing alerts in that week
-            has_conflicts = self.db.query(ConflictAlert).filter(
-                ConflictAlert.faculty_id == faculty.id,
+        # Get all conflict alerts for these faculty for this week
+        conflicted_faculty_ids = set(
+            row[0] for row in self.db.query(ConflictAlert.faculty_id)
+            .filter(
+                ConflictAlert.faculty_id.in_(faculty_ids),
                 ConflictAlert.fmit_week == fmit_week,
                 ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]),
-            ).count() > 0
+            )
+            .distinct()
+        )
 
-            if not has_conflicts:
-                # Check for existing FMIT assignments that week
-                has_assignment = self.db.query(Assignment).join(Block).filter(
-                    Assignment.person_id == faculty.id,
-                    Block.date >= fmit_week,
-                    Block.date <= week_end,
-                ).count() > 0
+        # Get all faculty with assignments in this week
+        assigned_faculty_ids = set(
+            row[0] for row in self.db.query(Assignment.person_id)
+            .join(Block)
+            .filter(
+                Assignment.person_id.in_(faculty_ids),
+                Block.date >= fmit_week,
+                Block.date <= week_end,
+            )
+            .distinct()
+        )
 
-                if not has_assignment:
-                    available.append(faculty)
+        # Filter to available faculty
+        available = [
+            faculty for faculty in all_faculty
+            if faculty.id not in conflicted_faculty_ids
+            and faculty.id not in assigned_faculty_ids
+        ]
 
         return available
 

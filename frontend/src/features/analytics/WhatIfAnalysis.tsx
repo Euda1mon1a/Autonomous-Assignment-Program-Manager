@@ -137,8 +137,9 @@ function ChangeEditor({
                 try {
                   const params = JSON.parse(e.target.value);
                   onUpdate({ ...change, parameters: params });
-                } catch {
+                } catch (error) {
                   // Invalid JSON, ignore
+                  console.error('Invalid JSON in parameters:', error);
                 }
               }}
               placeholder='{"resident_id": "123", "date": "2024-01-15"}'
