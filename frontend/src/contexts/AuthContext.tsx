@@ -56,8 +56,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const validatedUser = await validateToken()
         setUser(validatedUser)
-      } catch {
+      } catch (error) {
         // Token validation failed, user remains null
+        console.error('Token validation failed:', error)
       }
       setIsLoading(false)
     }
@@ -89,8 +90,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const validatedUser = await validateToken()
       setUser(validatedUser)
-    } catch {
+    } catch (error) {
       // Token no longer valid
+      console.error('Token refresh failed:', error)
       logout()
     }
   }, [logout])

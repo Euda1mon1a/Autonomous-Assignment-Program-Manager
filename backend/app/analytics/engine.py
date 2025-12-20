@@ -11,6 +11,13 @@ from app.analytics.metrics import (
     calculate_coverage_rate,
     calculate_fairness_index,
 )
+from app.analytics.types import (
+    AnalysisResult,
+    RotationCoverageStats,
+    ScheduleComparison,
+    TrendAnalysis,
+    WorkloadDistribution,
+)
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
@@ -34,7 +41,7 @@ class AnalyticsEngine:
         self,
         start_date: date,
         end_date: date
-    ) -> dict[str, Any]:
+    ) -> AnalysisResult:
         """
         Comprehensive schedule analysis for a date range.
 
@@ -126,7 +133,7 @@ class AnalyticsEngine:
         self,
         start_date: date | None = None,
         end_date: date | None = None
-    ) -> dict[str, Any]:
+    ) -> WorkloadDistribution:
         """
         Get workload fairness metrics across all residents.
 
@@ -197,7 +204,7 @@ class AnalyticsEngine:
         self,
         start_date: date | None = None,
         end_date: date | None = None
-    ) -> dict[str, Any]:
+    ) -> RotationCoverageStats:
         """
         Get coverage statistics by rotation type.
 
@@ -251,7 +258,7 @@ class AnalyticsEngine:
         self,
         metric: str,
         period: str = "monthly"
-    ) -> dict[str, Any]:
+    ) -> TrendAnalysis:
         """
         Get historical trends for a specific metric.
 
@@ -295,7 +302,7 @@ class AnalyticsEngine:
         self,
         run_id_1: str,
         run_id_2: str
-    ) -> dict[str, Any]:
+    ) -> ScheduleComparison | dict[str, str]:
         """
         Compare two schedule versions.
 
