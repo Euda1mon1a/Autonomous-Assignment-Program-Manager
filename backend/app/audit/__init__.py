@@ -7,6 +7,8 @@ This package provides comprehensive audit log archival functionality including:
 - Compressed archive storage
 - Archive restoration
 - Search and compliance reporting
+- Enhanced audit logging with field-level tracking
+- Integrity verification with checksums
 
 Main Components:
 --------------
@@ -14,11 +16,13 @@ Main Components:
 - storage.py: Storage backend implementations
 - retention.py: Retention policy management
 - restore.py: Archive restoration service
+- enhanced_logging.py: Enhanced audit logging with integrity verification
 
 Usage:
 -----
     from app.audit.archiver import AuditArchiver
     from app.audit.retention import RetentionPolicy
+    from app.audit.enhanced_logging import EnhancedAuditLogger
 
     # Create archiver with default retention policy
     archiver = AuditArchiver(db)
@@ -30,6 +34,17 @@ Usage:
     from app.audit.restore import AuditRestorer
     restorer = AuditRestorer(db)
     logs = await restorer.restore_from_archive(archive_id="archive-2025-01")
+
+    # Enhanced audit logging
+    logger = EnhancedAuditLogger(db)
+    await logger.log_change(
+        entity_type="assignment",
+        entity_id="123",
+        action="update",
+        user_id="user-456",
+        old_values={"status": "pending"},
+        new_values={"status": "approved"},
+    )
 
 Background Tasks:
 ---------------
@@ -58,6 +73,17 @@ from app.audit.storage import (
     S3ArchiveStorage,
     get_storage_backend,
 )
+from app.audit.enhanced_logging import (
+    AuditContext,
+    AuditSearchFilter,
+    ComplianceReport,
+    EnhancedAuditLog,
+    EnhancedAuditLogger,
+    FieldChangeDetail,
+    create_audit_log,
+    generate_report,
+    search_audit_logs,
+)
 
 __all__ = [
     # Archiver
@@ -74,4 +100,14 @@ __all__ = [
     "LocalArchiveStorage",
     "S3ArchiveStorage",
     "get_storage_backend",
+    # Enhanced Logging
+    "AuditContext",
+    "AuditSearchFilter",
+    "ComplianceReport",
+    "EnhancedAuditLog",
+    "EnhancedAuditLogger",
+    "FieldChangeDetail",
+    "create_audit_log",
+    "generate_report",
+    "search_audit_logs",
 ]
