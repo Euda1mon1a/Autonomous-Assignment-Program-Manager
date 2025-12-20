@@ -1,12 +1,33 @@
 """
 API routes for faculty self-service portal.
 
-Provides endpoints for:
-- My schedule view
-- Swap requests
-- Preferences management
-- Dashboard
-- Swap marketplace
+This module provides endpoints for faculty members to manage their FMIT
+(Faculty Member in Training) schedules, request and respond to schedule swaps,
+set scheduling preferences, and view available swap opportunities in the
+marketplace.
+
+Key Features:
+    - Schedule View: View assigned FMIT weeks with conflict indicators
+    - Swap Management: Create, respond to, and track swap requests
+    - Preferences: Configure scheduling preferences and notification settings
+    - Dashboard: Personalized overview of schedule status and pending actions
+    - Marketplace: Browse and claim available swap opportunities from other faculty
+
+Authentication:
+    All endpoints require authentication via JWT token. The current user must
+    have a linked faculty profile in the Person table (matched by email).
+
+Related Models:
+    - Person: Faculty profile information
+    - Assignment: Schedule assignments
+    - Block: Calendar blocks (AM/PM sessions)
+    - SwapRecord: Swap request records
+    - FacultyPreference: Faculty scheduling preferences
+    - ConflictAlert: Schedule conflict notifications
+    - RotationTemplate: Rotation types (e.g., FMIT)
+
+Related Schemas:
+    - app.schemas.portal: Request/response models for all portal endpoints
 """
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -53,7 +74,30 @@ def get_my_schedule(
     """
     Get the current user's FMIT schedule.
 
-    Shows assigned FMIT weeks with conflict indicators.
+    Retrieves all FMIT week assignments for the authenticated faculty member,
+    including conflict indicators, pending swap requests, and comparison to
+    target workload. Weeks are grouped and returned with metadata indicating
+    whether they're in the past, have conflicts, or are eligible for swaps.
+
+    Args:
+        db: Database session injected via dependency
+        current_user: Authenticated user injected via dependency
+
+    Returns:
+        MyScheduleResponse: Contains faculty info, list of FMIT weeks with
+            metadata (conflicts, swap eligibility), total weeks assigned,
+            target weeks per year, and weeks remaining to meet target.
+
+    Raises:
+        HTTPException: 403 if current user has no linked faculty profile
+
+    Business Logic:
+        - Queries all FMIT assignments for the faculty member
+        - Groups assignments by week (Monday-Sunday)
+        - Checks for active conflict alerts (NEW or ACKNOWLEDGED status)
+        - Identifies weeks with pending swap requests
+        - Past weeks (week_end < today) cannot request swaps
+        - Uses target_weeks_per_year from preferences (default: 6)
     """
     # Get faculty profile linked to current user
     faculty = _get_faculty_for_user(db, current_user)
@@ -155,7 +199,30 @@ def get_my_swaps(
     """
     Get swap requests related to the current user.
 
-    Returns incoming requests, outgoing requests, and recent completed swaps.
+    Retrieves all swap requests where the authenticated faculty member is
+    either the source (requesting) or target (receiving) party. Returns
+    three categories: incoming pending requests requiring action, outgoing
+    pending requests awaiting response, and recently completed swaps.
+
+    Args:
+        db: Database session injected via dependency
+        current_user: Authenticated user injected via dependency
+
+    Returns:
+        MySwapsResponse: Contains three lists of SwapRequestSummary objects:
+            - incoming_requests: Swaps targeting this faculty (PENDING)
+            - outgoing_requests: Swaps initiated by this faculty (PENDING)
+            - recent_swaps: Completed swaps from last 30 days (EXECUTED,
+              APPROVED, or REJECTED status)
+
+    Raises:
+        HTTPException: 403 if current user has no linked faculty profile
+
+    Business Logic:
+        - Incoming: target_faculty_id matches, status PENDING
+        - Outgoing: source_faculty_id matches, status PENDING
+        - Recent: either party matches, non-PENDING status, last 30 days
+        - Limited to 10 most recent completed swaps
     """
     faculty = _get_faculty_for_user(db, current_user)
 
@@ -238,7 +305,36 @@ def create_swap_request(
     """
     Create a new swap request to offload an FMIT week.
 
-    Can specify a preferred target or let the system find candidates.
+    Allows faculty to request swapping an assigned FMIT week with another
+    faculty member. Can either target a specific faculty member (one-to-one
+    swap) or post to the marketplace for anyone to claim (absorb). Optionally
+    notifies potential swap candidates via the notification service.
+
+    Args:
+        request: SwapRequestCreate containing week_to_offload (date),
+            optional preferred_target_faculty_id (UUID), reason (str),
+            and auto_find_candidates (bool)
+        db: Database session injected via dependency
+        current_user: Authenticated user injected via dependency
+
+    Returns:
+        SwapRequestResponse: Contains success status, created swap request ID,
+            confirmation message, and number of candidates notified (if any)
+
+    Raises:
+        HTTPException: 404 if FMIT rotation template not found
+        HTTPException: 400 if faculty has no FMIT assignment for the specified week
+        HTTPException: 400 if a pending swap already exists for the week
+        HTTPException: 403 if current user has no linked faculty profile
+
+    Business Logic:
+        - Validates the requesting faculty has FMIT assignments for the week
+        - Prevents duplicate swap requests for the same week
+        - SwapType.ONE_TO_ONE if preferred_target_faculty_id provided
+        - SwapType.ABSORB if no target specified (marketplace posting)
+        - If auto_find_candidates=True, queries faculty with notification
+          preferences enabled and sends swap opportunity notifications
+        - Creates SwapRecord with PENDING status
     """
     faculty = _get_faculty_for_user(db, current_user)
 
@@ -385,7 +481,39 @@ def respond_to_swap(
     """
     Respond to an incoming swap request.
 
-    Can accept, reject, or counter-offer with a different week.
+    Allows faculty to accept or reject swap requests where they are the
+    target party. When accepting, can optionally provide a counter-offer
+    week to convert an ABSORB swap into a ONE_TO_ONE swap. Updates the
+    SwapRecord status and timestamps.
+
+    Args:
+        swap_id: UUID of the swap request to respond to
+        request: SwapRespondRequest containing accept (bool), optional
+            counter_offer_week (date), and optional notes (str)
+        db: Database session injected via dependency
+        current_user: Authenticated user injected via dependency
+
+    Returns:
+        dict: Contains success (bool), message (str), swap_id (UUID),
+            and updated status (str)
+
+    Raises:
+        HTTPException: 404 if swap request not found
+        HTTPException: 403 if current user is not the target of the swap
+        HTTPException: 400 if swap is no longer PENDING
+        HTTPException: 403 if current user has no linked faculty profile
+
+    Business Logic:
+        - Only the target_faculty can respond to a swap
+        - Swap must be in PENDING status
+        - If accept=True:
+            - With counter_offer_week: Sets target_week, type=ONE_TO_ONE
+            - Without counter_offer_week: Type=ABSORB, no target_week
+            - Status changed to APPROVED, approved_at set
+        - If accept=False:
+            - Status changed to REJECTED
+            - approved_at timestamp still set (tracks when rejected)
+        - Notes are appended to swap.notes field
     """
     faculty = _get_faculty_for_user(db, current_user)
 
@@ -471,7 +599,38 @@ def get_my_preferences(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Get the current user's FMIT scheduling preferences."""
+    """
+    Get the current user's FMIT scheduling preferences.
+
+    Retrieves the faculty member's scheduling preferences including preferred
+    and blocked weeks, workload constraints, and notification settings. Returns
+    default values if no preferences have been set yet.
+
+    Args:
+        db: Database session injected via dependency
+        current_user: Authenticated user injected via dependency
+
+    Returns:
+        PreferencesResponse: Contains faculty_id, preferred_weeks (list of dates),
+            blocked_weeks (list of dates), max_weeks_per_month (int),
+            max_consecutive_weeks (int), min_gap_between_weeks (int),
+            target_weeks_per_year (int), notification flags (bool),
+            notify_reminder_days (int), notes (str), and updated_at (datetime)
+
+    Raises:
+        HTTPException: 403 if current user has no linked faculty profile
+
+    Business Logic:
+        - Returns defaults if no FacultyPreference record exists:
+            - max_weeks_per_month: 2
+            - max_consecutive_weeks: 1
+            - min_gap_between_weeks: 2
+            - target_weeks_per_year: 6
+            - All notification flags: True
+            - notify_reminder_days: 7
+        - Converts JSON-stored ISO date strings to Python date objects
+        - Skips invalid dates in preferred_weeks and blocked_weeks
+    """
     faculty = _get_faculty_for_user(db, current_user)
 
     # Query FacultyPreference for this faculty
@@ -540,7 +699,37 @@ def update_my_preferences(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Update the current user's FMIT scheduling preferences."""
+    """
+    Update the current user's FMIT scheduling preferences.
+
+    Allows faculty to update their scheduling preferences including preferred
+    and blocked weeks, workload constraints, and notification settings. Creates
+    a new FacultyPreference record if one doesn't exist. Only updates fields
+    that are explicitly provided in the request (partial updates supported).
+
+    Args:
+        request: PreferencesUpdate containing optional fields: preferred_weeks
+            (list of dates), blocked_weeks (list of dates), max_weeks_per_month
+            (int), max_consecutive_weeks (int), min_gap_between_weeks (int),
+            notification flags (bool), notify_reminder_days (int), notes (str)
+        db: Database session injected via dependency
+        current_user: Authenticated user injected via dependency
+
+    Returns:
+        PreferencesResponse: Updated preferences with all fields populated,
+            including faculty_id and updated_at timestamp
+
+    Raises:
+        HTTPException: 403 if current user has no linked faculty profile
+
+    Business Logic:
+        - Creates new FacultyPreference record with defaults if none exists
+        - Only updates fields that are not None in the request
+        - Converts date objects to ISO format strings for JSON storage
+        - Sets updated_at to current UTC time
+        - Commits changes and refreshes to get updated values
+        - Converts stored ISO strings back to date objects for response
+    """
     faculty = _get_faculty_for_user(db, current_user)
 
     # Update FacultyPreference
@@ -650,7 +839,32 @@ def get_my_dashboard(
     """
     Get the dashboard view for the current user.
 
-    Includes stats, upcoming weeks, alerts, and pending actions.
+    Provides a comprehensive overview of the faculty member's schedule status
+    including workload statistics, upcoming FMIT weeks, recent conflict alerts,
+    and pending swap decisions. This is the main landing page view for the
+    faculty portal.
+
+    Args:
+        db: Database session injected via dependency
+        current_user: Authenticated user injected via dependency
+
+    Returns:
+        DashboardResponse: Contains faculty_id, faculty_name, stats
+            (DashboardStats with weeks assigned/completed/remaining, target,
+            pending swaps, unread alerts), upcoming_weeks (list of FMITWeekInfo),
+            recent_alerts (list of alert summaries), and pending_swap_decisions
+            (list of swaps requiring response)
+
+    Raises:
+        HTTPException: 403 if current user has no linked faculty profile
+
+    Business Logic:
+        - Currently returns stub data with zeros
+        - TODO: Implement full dashboard with:
+            - Actual week counts from assignments
+            - Upcoming weeks (next 4-8 weeks)
+            - Recent conflict alerts (last 30 days)
+            - Incoming swaps requiring response
     """
     faculty = _get_faculty_for_user(db, current_user)
 
@@ -681,7 +895,31 @@ def get_swap_marketplace(
     """
     Get available swap opportunities in the marketplace.
 
-    Shows open swap requests from other faculty.
+    Displays all open (PENDING) swap requests from other faculty members,
+    allowing the current user to browse and claim available weeks. Shows
+    compatibility based on the user's existing schedule and calculates
+    expiration dates for each posting.
+
+    Args:
+        db: Database session injected via dependency
+        current_user: Authenticated user injected via dependency
+
+    Returns:
+        MarketplaceResponse: Contains entries (list of MarketplaceEntry
+            objects with request details, requesting faculty name, week
+            available, reason, posted/expires timestamps, compatibility),
+            total count of entries, and my_postings count
+
+    Raises:
+        HTTPException: 403 if current user has no linked faculty profile
+
+    Business Logic:
+        - Only shows PENDING swaps from other faculty (excludes own requests)
+        - Checks compatibility: week not already assigned to viewer
+        - Expiration set to 30 days from posted date
+        - Counts user's own active marketplace postings separately
+        - Eager loads source_faculty and blocks to avoid N+1 queries
+        - Orders by most recently posted first
     """
     faculty = _get_faculty_for_user(db, current_user)
 
@@ -762,7 +1000,23 @@ def get_swap_marketplace(
 
 
 def _get_faculty_for_user(db: Session, user: User) -> Person:
-    """Get the faculty profile linked to a user."""
+    """
+    Get the faculty profile linked to a user.
+
+    Finds the Person record with type='faculty' that matches the user's email.
+    This links the authentication User record to the faculty profile in the
+    scheduling system.
+
+    Args:
+        db: Database session
+        user: Authenticated User object
+
+    Returns:
+        Person: Faculty profile with type='faculty' matching user's email
+
+    Raises:
+        HTTPException: 403 if no faculty profile found for user's email
+    """
     # First try to find by email match
     faculty = db.query(Person).filter(
         Person.email == user.email,
@@ -782,11 +1036,22 @@ def _get_week_start(any_date):
     """
     Get the Monday of the week containing the given date.
 
+    Calculates the start of the week (Monday) for any given date. This is
+    used throughout the portal to normalize dates to week boundaries for
+    FMIT week assignments and swap requests.
+
     Args:
-        any_date: Any date within the target week
+        any_date: Any date or datetime within the target week. Automatically
+            converts datetime objects to date objects.
 
     Returns:
-        Date of the Monday of that week
+        date: The Monday of the week containing the input date. If the input
+            is already a Monday, returns that date.
+
+    Note:
+        Uses ISO week definition where Monday is day 0 and Sunday is day 6.
+        This ensures consistent week boundaries across all swap and scheduling
+        operations.
     """
     from datetime import date, timedelta
 
