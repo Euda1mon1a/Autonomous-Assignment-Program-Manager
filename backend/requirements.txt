@@ -63,6 +63,21 @@ dwave-samplers>=1.0.0  ***REMOVED*** Classical simulated annealing (quantum-insp
 sentry-sdk[fastapi]==2.48.0
 prometheus-fastapi-instrumentator==7.1.0
 
+***REMOVED*** OpenTelemetry - Distributed Tracing
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-instrumentation-fastapi>=0.41b0
+opentelemetry-instrumentation-sqlalchemy>=0.41b0
+opentelemetry-instrumentation-redis>=0.41b0
+opentelemetry-instrumentation-requests>=0.41b0
+opentelemetry-instrumentation-httpx>=0.41b0
+
+***REMOVED*** OpenTelemetry Exporters
+opentelemetry-exporter-otlp-proto-grpc>=1.20.0  ***REMOVED*** OTLP gRPC exporter
+opentelemetry-exporter-otlp-proto-http>=1.20.0  ***REMOVED*** OTLP HTTP exporter
+opentelemetry-exporter-jaeger>=1.20.0  ***REMOVED*** Jaeger exporter (legacy)
+opentelemetry-exporter-zipkin-json>=1.20.0  ***REMOVED*** Zipkin exporter
+
 ***REMOVED*** Reporting & Export
 openpyxl==3.1.5
 reportlab==4.4.6
@@ -91,6 +106,7 @@ hypothesis==6.122.3
 ***REMOVED*** Utilities
 python-dotenv==1.2.1
 python-decouple==3.8
+watchdog==6.0.0  ***REMOVED*** File system monitoring for config hot reload
 
 ***REMOVED*** Visualization
 plotly>=5.18.0
