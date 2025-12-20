@@ -70,6 +70,19 @@ from app.events.projections import (
     AssignmentProjection,
     AuditProjection,
 )
+from app.events.replay_service import (
+    EventReplayService,
+    ReplayConfig,
+    ReplayFilterConfig,
+    ReplayProgress,
+    ReplayStatus,
+    ReplaySpeed,
+    ReplayTargetConfig,
+    ReplayTarget,
+    ReplayVerificationResult,
+    create_replay_from_timestamp,
+    replay_aggregate_history,
+)
 
 __all__ = [
     # Core components
@@ -103,4 +116,16 @@ __all__ = [
     "ScheduleProjection",
     "AssignmentProjection",
     "AuditProjection",
+    # Replay service
+    "EventReplayService",
+    "ReplayConfig",
+    "ReplayFilterConfig",
+    "ReplayProgress",
+    "ReplayStatus",
+    "ReplaySpeed",
+    "ReplayTargetConfig",
+    "ReplayTarget",
+    "ReplayVerificationResult",
+    "create_replay_from_timestamp",
+    "replay_aggregate_history",
 ]
