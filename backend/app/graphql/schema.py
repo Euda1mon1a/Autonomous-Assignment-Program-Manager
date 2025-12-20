@@ -10,48 +10,7 @@ from strawberry.types import Info
 from app.core.security import oauth2_scheme, verify_token
 from app.db.session import get_db
 from app.graphql.resolvers import Mutation, Query
-
-
-# Subscription type for real-time updates
-@strawberry.type
-class Subscription:
-    """
-    Root subscription type for real-time updates.
-
-    Note: Subscriptions require WebSocket support.
-    Use for real-time schedule updates, notifications, etc.
-    """
-
-    @strawberry.subscription
-    async def assignment_updates(
-        self,
-        info,
-        person_id: Optional[strawberry.ID] = None,
-    ) -> AsyncGenerator[str, None]:
-        """
-        Subscribe to assignment updates.
-
-        Args:
-            person_id: Optional filter for specific person's assignments
-
-        Yields:
-            Assignment update notifications
-        """
-        # This is a placeholder implementation
-        # In production, this would integrate with Redis pub/sub or similar
-        # to broadcast real-time updates when assignments change
-        yield "Subscription placeholder - implement with Redis pub/sub or similar"
-
-    @strawberry.subscription
-    async def schedule_updates(self, info) -> AsyncGenerator[str, None]:
-        """
-        Subscribe to schedule-wide updates.
-
-        Yields:
-            Schedule update notifications
-        """
-        # Placeholder for real-time schedule updates
-        yield "Schedule subscription placeholder"
+from app.graphql.subscriptions import Subscription
 
 
 # Build the schema
