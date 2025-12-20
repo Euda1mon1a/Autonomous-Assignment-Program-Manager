@@ -35,6 +35,8 @@ Example usage:
     ...     pass
 """
 
+__version__ = "1.0.0"
+
 # Decorators
 from .decorators import (
     validate_request,
