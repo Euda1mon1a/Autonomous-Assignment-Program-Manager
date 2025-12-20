@@ -40,6 +40,7 @@ celery_app = Celery(
         "app.notifications.tasks",
         "app.tasks.schedule_metrics_tasks",
         "app.exports.jobs",
+        "app.security.rotation_tasks",
     ],
 )
 
@@ -148,6 +149,35 @@ celery_app.conf.update(
             "schedule": crontab(minute=0),
             "options": {"queue": "exports"},
         },
+
+        # Secret Rotation - Check scheduled rotations daily at 1 AM
+        "security-check-scheduled-rotations": {
+            "task": "app.security.rotation_tasks.check_scheduled_rotations",
+            "schedule": crontab(hour=1, minute=0),
+            "options": {"queue": "security"},
+        },
+
+        # Secret Rotation - Complete grace periods every hour
+        "security-complete-grace-periods": {
+            "task": "app.security.rotation_tasks.complete_grace_periods",
+            "schedule": crontab(minute=30),
+            "options": {"queue": "security"},
+        },
+
+        # Secret Rotation - Health monitoring daily at 8 AM
+        "security-monitor-rotation-health": {
+            "task": "app.security.rotation_tasks.monitor_rotation_health",
+            "schedule": crontab(hour=8, minute=0),
+            "options": {"queue": "security"},
+        },
+
+        # Secret Rotation - Cleanup old history monthly on the 1st at 2 AM
+        "security-cleanup-rotation-history": {
+            "task": "app.security.rotation_tasks.cleanup_old_rotation_history",
+            "schedule": crontab(hour=2, minute=0, day_of_month=1),
+            "kwargs": {"retention_days": 730},
+            "options": {"queue": "security"},
+        },
     },
 
     # Task routes
@@ -156,6 +186,7 @@ celery_app.conf.update(
         "app.notifications.tasks.*": {"queue": "notifications"},
         "app.tasks.schedule_metrics_tasks.*": {"queue": "metrics"},
         "app.exports.jobs.*": {"queue": "exports"},
+        "app.security.rotation_tasks.*": {"queue": "security"},
     },
 
     # Task queues
@@ -165,6 +196,7 @@ celery_app.conf.update(
         "notifications": {},
         "metrics": {},
         "exports": {},
+        "security": {},
     },
 )
 
