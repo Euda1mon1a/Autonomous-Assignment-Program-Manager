@@ -39,6 +39,7 @@ celery_app = Celery(
         "app.resilience.tasks",
         "app.notifications.tasks",
         "app.tasks.schedule_metrics_tasks",
+        "app.exports.jobs",
     ],
 )
 
@@ -125,6 +126,28 @@ celery_app.conf.update(
             "schedule": crontab(hour=5, minute=0),
             "options": {"queue": "metrics"},
         },
+
+        # Export Jobs - Run scheduled exports every 5 minutes
+        "export-run-scheduled": {
+            "task": "app.exports.jobs.run_scheduled_exports",
+            "schedule": crontab(minute="*/5"),
+            "options": {"queue": "exports"},
+        },
+
+        # Export Jobs - Daily cleanup at 4 AM
+        "export-cleanup-old-executions": {
+            "task": "app.exports.jobs.cleanup_old_executions",
+            "schedule": crontab(hour=4, minute=0),
+            "kwargs": {"retention_days": 90},
+            "options": {"queue": "exports"},
+        },
+
+        # Export Jobs - Health check every hour
+        "export-health-check": {
+            "task": "app.exports.jobs.export_health_check",
+            "schedule": crontab(minute=0),
+            "options": {"queue": "exports"},
+        },
     },
 
     # Task routes
@@ -132,6 +155,7 @@ celery_app.conf.update(
         "app.resilience.tasks.*": {"queue": "resilience"},
         "app.notifications.tasks.*": {"queue": "notifications"},
         "app.tasks.schedule_metrics_tasks.*": {"queue": "metrics"},
+        "app.exports.jobs.*": {"queue": "exports"},
     },
 
     # Task queues
@@ -140,6 +164,7 @@ celery_app.conf.update(
         "resilience": {},
         "notifications": {},
         "metrics": {},
+        "exports": {},
     },
 )
 
