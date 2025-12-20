@@ -93,8 +93,9 @@ export function SwapRequestForm({
       } else {
         setErrors({ submit: response.message });
       }
-    } catch (error: any) {
-      setErrors({ submit: error.message || 'Failed to create swap request' });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create swap request';
+      setErrors({ submit: errorMessage });
     }
   };
 

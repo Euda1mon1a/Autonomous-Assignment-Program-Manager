@@ -44,7 +44,8 @@ function isValidCalendarUrl(url: string): boolean {
     const parsed = new URL(url);
     const allowedProtocols = ['webcal:', 'https:', 'http:'];
     return allowedProtocols.includes(parsed.protocol);
-  } catch {
+  } catch (error) {
+    console.error('Invalid URL provided:', error);
     return false;
   }
 }

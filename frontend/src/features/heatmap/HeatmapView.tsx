@@ -15,6 +15,18 @@ import type { HeatmapData, HeatmapCellClickData } from './types';
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
+// Plotly event types
+interface PlotlyPoint {
+  x: string | number;
+  y: string | number;
+  z: number;
+  pointIndex: [number, number];
+}
+
+interface PlotlyClickEvent {
+  points?: PlotlyPoint[];
+}
+
 export interface HeatmapViewProps {
   data: HeatmapData;
   onCellClick?: (cellData: HeatmapCellClickData) => void;
@@ -147,15 +159,15 @@ export function HeatmapView({
   }, []);
 
   // Handle cell click events
-  const handleClick = (event: any) => {
+  const handleClick = (event: PlotlyClickEvent) => {
     if (!onCellClick || !event.points || event.points.length === 0) {
       return;
     }
 
     const point = event.points[0];
     const cellData: HeatmapCellClickData = {
-      x: point.x,
-      y: point.y,
+      x: String(point.x),
+      y: String(point.y),
       value: point.z,
       pointIndex: [point.pointIndex[0], point.pointIndex[1]],
     };
@@ -220,9 +232,9 @@ export function HeatmapView({
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
       <Plot
-        data={plotData as any}
+        data={plotData}
         layout={plotLayout}
-        config={plotConfig as any}
+        config={plotConfig}
         onClick={handleClick}
         style={{ width, height }}
         useResizeHandler={true}
