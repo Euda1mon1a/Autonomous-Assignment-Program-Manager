@@ -3,7 +3,7 @@
 from datetime import date, timedelta
 from uuid import UUID
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.block import Block
 from app.repositories.block import BlockRepository
@@ -17,21 +17,72 @@ class BlockService:
         self.block_repo = BlockRepository(db)
 
     def get_block(self, block_id: UUID) -> Block | None:
-        """Get a single block by ID."""
+        """
+        Get a single block by ID.
+
+        For performance-critical cases where assignments are needed,
+        use get_block_with_assignments() instead.
+        """
         return self.block_repo.get_by_id(block_id)
+
+    def get_block_with_assignments(self, block_id: UUID) -> Block | None:
+        """
+        Get a single block by ID with eager-loaded assignments.
+
+        N+1 Optimization: Uses selectinload to eagerly fetch all assignments
+        and their related entities (person, rotation_template) in a batch query,
+        preventing N+1 queries when accessing block.assignments.
+        """
+        return (
+            self.db.query(Block)
+            .options(
+                selectinload(Block.assignments).selectinload("person"),
+                selectinload(Block.assignments).selectinload("rotation_template"),
+            )
+            .filter(Block.id == block_id)
+            .first()
+        )
 
     def list_blocks(
         self,
         start_date: date | None = None,
         end_date: date | None = None,
         block_number: int | None = None,
+        include_assignments: bool = False,
     ) -> dict:
-        """List blocks with optional filters."""
-        blocks = self.block_repo.list_with_filters(
-            start_date=start_date,
-            end_date=end_date,
-            block_number=block_number,
-        )
+        """
+        List blocks with optional filters.
+
+        Args:
+            start_date: Filter blocks from this date onwards
+            end_date: Filter blocks up to this date
+            block_number: Filter by block number
+            include_assignments: If True, eager load assignments (N+1 optimization)
+
+        N+1 Optimization: When include_assignments=True, uses selectinload to
+        eagerly fetch assignments and their relationships in batch queries.
+        """
+        if include_assignments:
+            query = self.db.query(Block).options(
+                selectinload(Block.assignments).selectinload("person"),
+                selectinload(Block.assignments).selectinload("rotation_template"),
+            )
+
+            if start_date:
+                query = query.filter(Block.date >= start_date)
+            if end_date:
+                query = query.filter(Block.date <= end_date)
+            if block_number is not None:
+                query = query.filter(Block.block_number == block_number)
+
+            blocks = query.order_by(Block.date, Block.time_of_day).all()
+        else:
+            blocks = self.block_repo.list_with_filters(
+                start_date=start_date,
+                end_date=end_date,
+                block_number=block_number,
+            )
+
         return {"items": blocks, "total": len(blocks)}
 
     def create_block(
