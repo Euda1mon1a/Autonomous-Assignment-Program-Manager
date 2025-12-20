@@ -145,7 +145,7 @@ class TestListCertificationTypesEndpoint:
 
     def test_list_certification_types_empty(self, client: TestClient, db: Session):
         """Test listing certification types when none exist."""
-        response = client.get("/api/certifications/types")
+        response = client.get("/api/v1/certifications/types")
 
         assert response.status_code == 200
         data = response.json()
@@ -158,7 +158,7 @@ class TestListCertificationTypesEndpoint:
         self, client: TestClient, sample_cert_types
     ):
         """Test listing certification types with existing data."""
-        response = client.get("/api/certifications/types")
+        response = client.get("/api/v1/certifications/types")
 
         assert response.status_code == 200
         data = response.json()
@@ -194,14 +194,14 @@ class TestListCertificationTypesEndpoint:
         db.commit()
 
         # Default: active_only=True
-        response = client.get("/api/certifications/types")
+        response = client.get("/api/v1/certifications/types")
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 1
         assert data["items"][0]["name"] == "BLS"
 
         # Explicitly set active_only=False
-        response = client.get("/api/certifications/types", params={"active_only": False})
+        response = client.get("/api/v1/certifications/types", params={"active_only": False})
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 2
@@ -214,7 +214,7 @@ class TestGetCertificationTypeEndpoint:
         self, client: TestClient, sample_cert_type: CertificationType
     ):
         """Test getting an existing certification type."""
-        response = client.get(f"/api/certifications/types/{sample_cert_type.id}")
+        response = client.get(f"/api/v1/certifications/types/{sample_cert_type.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -226,14 +226,14 @@ class TestGetCertificationTypeEndpoint:
     def test_get_certification_type_not_found(self, client: TestClient):
         """Test getting a non-existent certification type."""
         fake_id = uuid4()
-        response = client.get(f"/api/certifications/types/{fake_id}")
+        response = client.get(f"/api/v1/certifications/types/{fake_id}")
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
     def test_get_certification_type_invalid_uuid(self, client: TestClient):
         """Test getting certification type with invalid UUID."""
-        response = client.get("/api/certifications/types/invalid-uuid")
+        response = client.get("/api/v1/certifications/types/invalid-uuid")
 
         assert response.status_code == 422
 
@@ -256,7 +256,7 @@ class TestCreateCertificationTypeEndpoint:
         }
 
         response = client.post(
-            "/api/certifications/types",
+            "/api/v1/certifications/types",
             json=cert_data,
             headers=auth_headers,
         )
@@ -276,7 +276,7 @@ class TestCreateCertificationTypeEndpoint:
             "renewal_period_months": 24,
         }
 
-        response = client.post("/api/certifications/types", json=cert_data)
+        response = client.post("/api/v1/certifications/types", json=cert_data)
 
         assert response.status_code == 401
 
@@ -294,7 +294,7 @@ class TestCreateCertificationTypeEndpoint:
         }
 
         response = client.post(
-            "/api/certifications/types",
+            "/api/v1/certifications/types",
             json=cert_data,
             headers=auth_headers,
         )
@@ -311,7 +311,7 @@ class TestCreateCertificationTypeEndpoint:
         }
 
         response = client.post(
-            "/api/certifications/types",
+            "/api/v1/certifications/types",
             json=cert_data,
             headers=auth_headers,
         )
@@ -336,7 +336,7 @@ class TestUpdateCertificationTypeEndpoint:
         }
 
         response = client.put(
-            f"/api/certifications/types/{sample_cert_type.id}",
+            f"/api/v1/certifications/types/{sample_cert_type.id}",
             json=update_data,
             headers=auth_headers,
         )
@@ -354,7 +354,7 @@ class TestUpdateCertificationTypeEndpoint:
         update_data = {"full_name": "New Name"}
 
         response = client.put(
-            f"/api/certifications/types/{sample_cert_type.id}",
+            f"/api/v1/certifications/types/{sample_cert_type.id}",
             json=update_data,
         )
 
@@ -368,7 +368,7 @@ class TestUpdateCertificationTypeEndpoint:
         update_data = {"full_name": "New Name"}
 
         response = client.put(
-            f"/api/certifications/types/{fake_id}",
+            f"/api/v1/certifications/types/{fake_id}",
             json=update_data,
             headers=auth_headers,
         )
@@ -390,7 +390,7 @@ class TestGetExpiringCertificationsEndpoint:
         sample_person_cert: PersonCertification,
     ):
         """Test getting expiring certifications with default 180 days."""
-        response = client.get("/api/certifications/expiring")
+        response = client.get("/api/v1/certifications/expiring")
 
         assert response.status_code == 200
         data = response.json()
@@ -409,7 +409,7 @@ class TestGetExpiringCertificationsEndpoint:
         sample_person_cert: PersonCertification,
     ):
         """Test getting expiring certifications with custom days parameter."""
-        response = client.get("/api/certifications/expiring", params={"days": 60})
+        response = client.get("/api/v1/certifications/expiring", params={"days": 60})
 
         assert response.status_code == 200
         data = response.json()
@@ -422,7 +422,7 @@ class TestGetExpiringCertificationsEndpoint:
         self, client: TestClient, sample_person_cert: PersonCertification
     ):
         """Test with narrow window that excludes all certs."""
-        response = client.get("/api/certifications/expiring", params={"days": 1})
+        response = client.get("/api/v1/certifications/expiring", params={"days": 1})
 
         assert response.status_code == 200
         data = response.json()
@@ -434,7 +434,7 @@ class TestGetExpiringCertificationsEndpoint:
         self, client: TestClient, expiring_person_cert: PersonCertification
     ):
         """Test response structure for expiring certifications."""
-        response = client.get("/api/certifications/expiring", params={"days": 60})
+        response = client.get("/api/v1/certifications/expiring", params={"days": 60})
 
         assert response.status_code == 200
         data = response.json()
@@ -454,7 +454,7 @@ class TestGetComplianceSummaryEndpoint:
 
     def test_get_compliance_summary_empty(self, client: TestClient):
         """Test compliance summary with no certifications."""
-        response = client.get("/api/certifications/compliance")
+        response = client.get("/api/v1/certifications/compliance")
 
         assert response.status_code == 200
         data = response.json()
@@ -473,7 +473,7 @@ class TestGetComplianceSummaryEndpoint:
         expired_person_cert: PersonCertification,
     ):
         """Test compliance summary with various cert statuses."""
-        response = client.get("/api/certifications/compliance")
+        response = client.get("/api/v1/certifications/compliance")
 
         assert response.status_code == 200
         data = response.json()
@@ -494,7 +494,7 @@ class TestGetPersonComplianceEndpoint:
         sample_person_cert: PersonCertification,
     ):
         """Test getting compliance for a specific person."""
-        response = client.get(f"/api/certifications/compliance/{sample_resident.id}")
+        response = client.get(f"/api/v1/certifications/compliance/{sample_resident.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -510,7 +510,7 @@ class TestGetPersonComplianceEndpoint:
     def test_get_person_compliance_not_found(self, client: TestClient):
         """Test getting compliance for non-existent person."""
         fake_id = uuid4()
-        response = client.get(f"/api/certifications/compliance/{fake_id}")
+        response = client.get(f"/api/v1/certifications/compliance/{fake_id}")
 
         assert response.status_code == 404
 
@@ -526,7 +526,7 @@ class TestListCertificationsForPersonEndpoint:
         self, client: TestClient, sample_resident: Person
     ):
         """Test listing certifications for person with none."""
-        response = client.get(f"/api/certifications/by-person/{sample_resident.id}")
+        response = client.get(f"/api/v1/certifications/by-person/{sample_resident.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -541,7 +541,7 @@ class TestListCertificationsForPersonEndpoint:
         sample_person_cert: PersonCertification,
     ):
         """Test listing certifications for person with data."""
-        response = client.get(f"/api/certifications/by-person/{sample_resident.id}")
+        response = client.get(f"/api/v1/certifications/by-person/{sample_resident.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -570,14 +570,14 @@ class TestListCertificationsForPersonEndpoint:
         db.commit()
 
         # With expired (default)
-        response = client.get(f"/api/certifications/by-person/{sample_resident.id}")
+        response = client.get(f"/api/v1/certifications/by-person/{sample_resident.id}")
         assert response.status_code == 200
         data = response.json()
         assert data["total"] >= 1
 
         # Without expired
         response = client.get(
-            f"/api/certifications/by-person/{sample_resident.id}",
+            f"/api/v1/certifications/by-person/{sample_resident.id}",
             params={"include_expired": False},
         )
         assert response.status_code == 200
@@ -590,7 +590,7 @@ class TestGetPersonCertificationEndpoint:
         self, client: TestClient, sample_person_cert: PersonCertification
     ):
         """Test getting a person certification."""
-        response = client.get(f"/api/certifications/{sample_person_cert.id}")
+        response = client.get(f"/api/v1/certifications/{sample_person_cert.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -603,13 +603,13 @@ class TestGetPersonCertificationEndpoint:
     def test_get_person_certification_not_found(self, client: TestClient):
         """Test getting non-existent person certification."""
         fake_id = uuid4()
-        response = client.get(f"/api/certifications/{fake_id}")
+        response = client.get(f"/api/v1/certifications/{fake_id}")
 
         assert response.status_code == 404
 
     def test_get_person_certification_invalid_uuid(self, client: TestClient):
         """Test getting certification with invalid UUID."""
-        response = client.get("/api/certifications/invalid-uuid")
+        response = client.get("/api/v1/certifications/invalid-uuid")
 
         assert response.status_code == 422
 
@@ -637,7 +637,7 @@ class TestCreatePersonCertificationEndpoint:
         }
 
         response = client.post(
-            "/api/certifications",
+            "/api/v1/certifications",
             json=cert_data,
             headers=auth_headers,
         )
@@ -661,7 +661,7 @@ class TestCreatePersonCertificationEndpoint:
             "expiration_date": (date.today() + timedelta(days=730)).isoformat(),
         }
 
-        response = client.post("/api/certifications", json=cert_data)
+        response = client.post("/api/v1/certifications", json=cert_data)
 
         assert response.status_code == 401
 
@@ -682,7 +682,7 @@ class TestCreatePersonCertificationEndpoint:
         }
 
         response = client.post(
-            "/api/certifications",
+            "/api/v1/certifications",
             json=cert_data,
             headers=auth_headers,
         )
@@ -699,7 +699,7 @@ class TestCreatePersonCertificationEndpoint:
         }
 
         response = client.post(
-            "/api/certifications",
+            "/api/v1/certifications",
             json=cert_data,
             headers=auth_headers,
         )
@@ -723,7 +723,7 @@ class TestUpdatePersonCertificationEndpoint:
         }
 
         response = client.put(
-            f"/api/certifications/{sample_person_cert.id}",
+            f"/api/v1/certifications/{sample_person_cert.id}",
             json=update_data,
             headers=auth_headers,
         )
@@ -740,7 +740,7 @@ class TestUpdatePersonCertificationEndpoint:
         update_data = {"notes": "New notes"}
 
         response = client.put(
-            f"/api/certifications/{sample_person_cert.id}",
+            f"/api/v1/certifications/{sample_person_cert.id}",
             json=update_data,
         )
 
@@ -754,7 +754,7 @@ class TestUpdatePersonCertificationEndpoint:
         update_data = {"notes": "New notes"}
 
         response = client.put(
-            f"/api/certifications/{fake_id}",
+            f"/api/v1/certifications/{fake_id}",
             json=update_data,
             headers=auth_headers,
         )
@@ -779,7 +779,7 @@ class TestRenewCertificationEndpoint:
         }
 
         response = client.post(
-            f"/api/certifications/{sample_person_cert.id}/renew",
+            f"/api/v1/certifications/{sample_person_cert.id}/renew",
             json=renewal_data,
             headers=auth_headers,
         )
@@ -800,7 +800,7 @@ class TestRenewCertificationEndpoint:
         }
 
         response = client.post(
-            f"/api/certifications/{sample_person_cert.id}/renew",
+            f"/api/v1/certifications/{sample_person_cert.id}/renew",
             json=renewal_data,
         )
 
@@ -817,7 +817,7 @@ class TestRenewCertificationEndpoint:
         }
 
         response = client.post(
-            f"/api/certifications/{fake_id}/renew",
+            f"/api/v1/certifications/{fake_id}/renew",
             json=renewal_data,
             headers=auth_headers,
         )
@@ -837,7 +837,7 @@ class TestRenewCertificationEndpoint:
         }
 
         response = client.post(
-            f"/api/certifications/{sample_person_cert.id}/renew",
+            f"/api/v1/certifications/{sample_person_cert.id}/renew",
             json=renewal_data,
             headers=auth_headers,
         )
@@ -870,21 +870,21 @@ class TestDeletePersonCertificationEndpoint:
         cert_id = cert.id
 
         response = client.delete(
-            f"/api/certifications/{cert_id}",
+            f"/api/v1/certifications/{cert_id}",
             headers=auth_headers,
         )
 
         assert response.status_code == 204
 
         # Verify deletion
-        verify_response = client.get(f"/api/certifications/{cert_id}")
+        verify_response = client.get(f"/api/v1/certifications/{cert_id}")
         assert verify_response.status_code == 404
 
     def test_delete_person_certification_requires_auth(
         self, client: TestClient, sample_person_cert: PersonCertification
     ):
         """Test that deleting certification requires authentication."""
-        response = client.delete(f"/api/certifications/{sample_person_cert.id}")
+        response = client.delete(f"/api/v1/certifications/{sample_person_cert.id}")
 
         assert response.status_code == 401
 
@@ -894,7 +894,7 @@ class TestDeletePersonCertificationEndpoint:
         """Test deleting non-existent certification."""
         fake_id = uuid4()
         response = client.delete(
-            f"/api/certifications/{fake_id}",
+            f"/api/v1/certifications/{fake_id}",
             headers=auth_headers,
         )
 
@@ -917,7 +917,7 @@ class TestTriggerCertificationRemindersEndpoint:
     ):
         """Test manually triggering certification reminders (admin only)."""
         response = client.post(
-            "/api/certifications/admin/send-reminders",
+            "/api/v1/certifications/admin/send-reminders",
             headers=auth_headers,
         )
 
@@ -931,7 +931,7 @@ class TestTriggerCertificationRemindersEndpoint:
 
     def test_trigger_reminders_requires_auth(self, client: TestClient):
         """Test that triggering reminders requires authentication."""
-        response = client.post("/api/certifications/admin/send-reminders")
+        response = client.post("/api/v1/certifications/admin/send-reminders")
 
         assert response.status_code == 401
 
@@ -956,7 +956,7 @@ class TestTriggerCertificationRemindersEndpoint:
 
         # Login as regular user
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "regularuser", "password": "testpass123"},
         )
         token = response.json()["access_token"]
@@ -964,7 +964,7 @@ class TestTriggerCertificationRemindersEndpoint:
 
         # Try to trigger reminders
         response = client.post(
-            "/api/certifications/admin/send-reminders",
+            "/api/v1/certifications/admin/send-reminders",
             headers=headers,
         )
 
@@ -994,7 +994,7 @@ class TestCertificationEdgeCases:
         }
 
         response = client.post(
-            "/api/certifications",
+            "/api/v1/certifications",
             json=cert_data,
             headers=auth_headers,
         )
@@ -1018,7 +1018,7 @@ class TestCertificationEdgeCases:
         }
 
         response = client.post(
-            "/api/certifications",
+            "/api/v1/certifications",
             json=cert_data,
             headers=auth_headers,
         )
@@ -1028,7 +1028,7 @@ class TestCertificationEdgeCases:
 
     def test_get_expiring_with_zero_days(self, client: TestClient):
         """Test getting expiring certifications with 0 days threshold."""
-        response = client.get("/api/certifications/expiring", params={"days": 0})
+        response = client.get("/api/v1/certifications/expiring", params={"days": 0})
 
         assert response.status_code == 200
         data = response.json()
@@ -1037,7 +1037,7 @@ class TestCertificationEdgeCases:
 
     def test_get_expiring_with_negative_days(self, client: TestClient):
         """Test getting expiring certifications with negative days."""
-        response = client.get("/api/certifications/expiring", params={"days": -30})
+        response = client.get("/api/v1/certifications/expiring", params={"days": -30})
 
         # Should handle gracefully
         assert response.status_code in [200, 400, 422]
