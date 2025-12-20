@@ -10,6 +10,8 @@ common web vulnerabilities:
 - Information leakage
 - Man-in-the-middle attacks
 
+It also provides secret rotation services for automated credential management.
+
 Usage:
     from app.security import SecurityHeadersMiddleware
     from fastapi import FastAPI
@@ -27,6 +29,7 @@ Components:
     - ContentSecurityPolicy: CSP policy builder
     - SecurityHeadersMiddleware: Middleware for automatic header injection
     - SecurityHeadersConfig: Configuration helper
+    - SecretRotationService: Service for rotating sensitive secrets
 """
 from app.security.headers import SecurityHeaders
 from app.security.csp import ContentSecurityPolicy
@@ -35,6 +38,18 @@ from app.security.middleware import (
     SecurityHeadersConfig,
     create_security_headers_middleware,
 )
+from app.security.secret_rotation import (
+    RotationConfig,
+    RotationPriority,
+    RotationResult,
+    RotationStatus,
+    SecretRotationHistory,
+    SecretRotationService,
+    SecretType,
+    check_rotation_status,
+    rotate_api_keys,
+    rotate_jwt_key,
+)
 
 __all__ = [
     "SecurityHeaders",
@@ -42,4 +57,15 @@ __all__ = [
     "SecurityHeadersMiddleware",
     "SecurityHeadersConfig",
     "create_security_headers_middleware",
+    # Secret Rotation
+    "SecretRotationService",
+    "SecretRotationHistory",
+    "SecretType",
+    "RotationStatus",
+    "RotationPriority",
+    "RotationConfig",
+    "RotationResult",
+    "rotate_jwt_key",
+    "rotate_api_keys",
+    "check_rotation_status",
 ]
