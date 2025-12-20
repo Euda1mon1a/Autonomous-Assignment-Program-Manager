@@ -3,6 +3,8 @@
  *
  * Provides a configured axios instance with interceptors for
  * authentication, error handling, and type-safe request helpers.
+ *
+ * @module lib/api
  */
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios'
 
@@ -10,17 +12,39 @@ import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
 
 /**
- * Standardized API error shape
+ * Standardized API error shape returned by all API operations.
+ * Provides consistent error handling across the application.
  */
 export interface ApiError {
+  /** Human-readable error message for display */
   message: string
+  /** HTTP status code (0 for network errors) */
   status: number
+  /** Detailed error message from server (optional) */
   detail?: string
+  /** Field-specific validation errors (optional) */
   errors?: Record<string, string[]>
 }
 
 /**
- * Transform axios errors into consistent ApiError shape
+ * Transforms axios errors into consistent ApiError shape.
+ *
+ * This function normalizes different error scenarios (response errors,
+ * network errors, and other errors) into a single, predictable format
+ * that the application can handle uniformly.
+ *
+ * @param error - The axios error to transform
+ * @returns Normalized API error object
+ *
+ * @example
+ * ```ts
+ * try {
+ *   await api.get('/endpoint');
+ * } catch (error) {
+ *   const apiError = transformError(error as AxiosError);
+ *   console.log(apiError.message); // User-friendly error message
+ * }
+ * ```
  */
 function transformError(error: AxiosError): ApiError {
   if (error.response) {
@@ -47,7 +71,19 @@ function transformError(error: AxiosError): ApiError {
 }
 
 /**
- * Get human-readable message for HTTP status codes
+ * Gets human-readable error message for HTTP status codes.
+ *
+ * Maps common HTTP status codes to user-friendly messages that can
+ * be displayed in the UI without exposing technical details.
+ *
+ * @param status - HTTP status code
+ * @returns User-friendly error message
+ *
+ * @example
+ * ```ts
+ * getStatusMessage(404); // "Not found"
+ * getStatusMessage(500); // "Server error - please try again later"
+ * ```
  */
 function getStatusMessage(status: number): string {
   const messages: Record<number, string> = {
@@ -64,7 +100,23 @@ function getStatusMessage(status: number): string {
 }
 
 /**
- * Create configured axios instance
+ * Creates a configured axios instance with authentication and error handling.
+ *
+ * The instance includes:
+ * - Base URL from environment or defaults to localhost
+ * - 120-second timeout for long-running operations (schedule generation)
+ * - Automatic credential inclusion for httpOnly cookies
+ * - Request/response interceptors for error transformation
+ * - Automatic redirect to login on 401 errors
+ * - Special handling for 207 Multi-Status responses (partial success)
+ *
+ * @returns Configured axios instance
+ *
+ * @example
+ * ```ts
+ * const client = createApiClient();
+ * const response = await client.get('/people');
+ * ```
  */
 function createApiClient(): AxiosInstance {
   const client = axios.create({
@@ -142,7 +194,20 @@ function createApiClient(): AxiosInstance {
 export const api = createApiClient()
 
 /**
- * Type-safe GET request
+ * Performs a type-safe GET request to the API.
+ *
+ * @template T - Expected response data type
+ * @param url - API endpoint URL (relative to base URL)
+ * @param config - Optional axios request configuration
+ * @returns Promise resolving to typed response data
+ * @throws {ApiError} If the request fails
+ *
+ * @example
+ * ```ts
+ * interface User { id: string; name: string }
+ * const user = await get<User>('/auth/me');
+ * console.log(user.name);
+ * ```
  */
 export async function get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
   const response = await api.get<T>(url, config)
@@ -150,7 +215,23 @@ export async function get<T>(url: string, config?: AxiosRequestConfig): Promise<
 }
 
 /**
- * Type-safe POST request
+ * Performs a type-safe POST request to the API.
+ *
+ * @template T - Expected response data type
+ * @param url - API endpoint URL (relative to base URL)
+ * @param data - Request body data
+ * @param config - Optional axios request configuration
+ * @returns Promise resolving to typed response data
+ * @throws {ApiError} If the request fails
+ *
+ * @example
+ * ```ts
+ * interface Person { id: string; name: string }
+ * const newPerson = await post<Person>('/people', {
+ *   name: 'Dr. Smith',
+ *   role: 'faculty'
+ * });
+ * ```
  */
 export async function post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
   const response = await api.post<T>(url, data, config)
@@ -158,7 +239,23 @@ export async function post<T>(url: string, data?: unknown, config?: AxiosRequest
 }
 
 /**
- * Type-safe PUT request
+ * Performs a type-safe PUT request to the API.
+ *
+ * @template T - Expected response data type
+ * @param url - API endpoint URL (relative to base URL)
+ * @param data - Request body data (full replacement)
+ * @param config - Optional axios request configuration
+ * @returns Promise resolving to typed response data
+ * @throws {ApiError} If the request fails
+ *
+ * @example
+ * ```ts
+ * interface Person { id: string; name: string; email: string }
+ * const updated = await put<Person>('/people/123', {
+ *   name: 'Dr. Smith',
+ *   email: 'smith@example.com'
+ * });
+ * ```
  */
 export async function put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
   const response = await api.put<T>(url, data, config)
@@ -166,7 +263,22 @@ export async function put<T>(url: string, data?: unknown, config?: AxiosRequestC
 }
 
 /**
- * Type-safe PATCH request
+ * Performs a type-safe PATCH request to the API.
+ *
+ * @template T - Expected response data type
+ * @param url - API endpoint URL (relative to base URL)
+ * @param data - Request body data (partial update)
+ * @param config - Optional axios request configuration
+ * @returns Promise resolving to typed response data
+ * @throws {ApiError} If the request fails
+ *
+ * @example
+ * ```ts
+ * interface Person { id: string; name: string }
+ * const updated = await patch<Person>('/people/123', {
+ *   name: 'Dr. Jane Smith' // Only update the name
+ * });
+ * ```
  */
 export async function patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
   const response = await api.patch<T>(url, data, config)
@@ -174,7 +286,18 @@ export async function patch<T>(url: string, data?: unknown, config?: AxiosReques
 }
 
 /**
- * Type-safe DELETE request
+ * Performs a type-safe DELETE request to the API.
+ *
+ * @param url - API endpoint URL (relative to base URL)
+ * @param config - Optional axios request configuration
+ * @returns Promise resolving when deletion completes
+ * @throws {ApiError} If the request fails
+ *
+ * @example
+ * ```ts
+ * await del('/people/123');
+ * console.log('Person deleted successfully');
+ * ```
  */
 export async function del(url: string, config?: AxiosRequestConfig): Promise<void> {
   await api.delete(url, config)
