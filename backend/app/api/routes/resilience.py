@@ -20,7 +20,6 @@ import logging
 import time
 from datetime import date, datetime, timedelta
 
-logger = logging.getLogger(__name__)
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -194,24 +193,6 @@ async def get_system_health(
     blocks = blocks_query.all()
 
     assignments_query = (
-    # Load data for analysis - no limit to ensure accurate health assessment
-    query_start = time.time()
-    faculty = (
-        db.query(Person)
-        .filter(Person.type == "faculty")
-        .order_by(Person.id)
-        .all()
-    )
-    blocks = (
-        db.query(Block)
-        .filter(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
-        .order_by(Block.date, Block.id)
-        .all()
-    )
-    assignments = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -228,15 +209,6 @@ async def get_system_health(
     if max_assignments:
         assignments_query = assignments_query.limit(max_assignments)
     assignments = assignments_query.all()
-    query_time = time.time() - query_start
-
-    logger.info(
-        "Health check data loaded: faculty=%d, blocks=%d, assignments=%d, "
-        "date_range=%s to %s, query_time=%.3fs",
-        len(faculty), len(blocks), len(assignments),
-        start_date, end_date, query_time
-        .all()
-    )
     query_time = time.time() - query_start
 
     logger.info(
@@ -672,24 +644,6 @@ async def get_vulnerability_report(
     blocks = blocks_query.all()
 
     assignments_query = (
-    # Load data - no limit to ensure complete vulnerability analysis
-    query_start = time.time()
-    faculty = (
-        db.query(Person)
-        .filter(Person.type == "faculty")
-        .order_by(Person.id)
-        .all()
-    )
-    blocks = (
-        db.query(Block)
-        .filter(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
-        .order_by(Block.date, Block.id)
-        .all()
-    )
-    assignments = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -706,15 +660,6 @@ async def get_vulnerability_report(
     if max_assignments:
         assignments_query = assignments_query.limit(max_assignments)
     assignments = assignments_query.all()
-    query_time = time.time() - query_start
-
-    logger.info(
-        "Vulnerability report data loaded: faculty=%d, blocks=%d, assignments=%d, "
-        "date_range=%s to %s, query_time=%.3fs",
-        len(faculty), len(blocks), len(assignments),
-        start_date, end_date, query_time
-        .all()
-    )
     query_time = time.time() - query_start
 
     logger.info(
@@ -844,24 +789,6 @@ async def get_comprehensive_report(
     blocks = blocks_query.all()
 
     assignments_query = (
-    # Load data - no limit to ensure complete comprehensive report
-    query_start = time.time()
-    faculty = (
-        db.query(Person)
-        .filter(Person.type == "faculty")
-        .order_by(Person.id)
-        .all()
-    )
-    blocks = (
-        db.query(Block)
-        .filter(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
-        .order_by(Block.date, Block.id)
-        .all()
-    )
-    assignments = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -878,15 +805,6 @@ async def get_comprehensive_report(
     if max_assignments:
         assignments_query = assignments_query.limit(max_assignments)
     assignments = assignments_query.all()
-    query_time = time.time() - query_start
-
-    logger.info(
-        "Comprehensive report data loaded: faculty=%d, blocks=%d, assignments=%d, "
-        "date_range=%s to %s, query_time=%.3fs",
-        len(faculty), len(blocks), len(assignments),
-        start_date, end_date, query_time
-        .all()
-    )
     query_time = time.time() - query_start
 
     logger.info(
@@ -2364,15 +2282,6 @@ async def analyze_hubs(
     faculty = faculty_query.all()
 
     assignments_query = (
-    # Load data - no limit to ensure complete hub analysis
-    query_start = time.time()
-    faculty = (
-        db.query(Person)
-        .filter(Person.type == "faculty")
-        .order_by(Person.id)
-        .all()
-    )
-    assignments = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -2389,15 +2298,6 @@ async def analyze_hubs(
     if max_assignments:
         assignments_query = assignments_query.limit(max_assignments)
     assignments = assignments_query.all()
-    query_time = time.time() - query_start
-
-    logger.info(
-        "Hub analysis data loaded: faculty=%d, assignments=%d, "
-        "date_range=%s to %s, query_time=%.3fs",
-        len(faculty), len(assignments),
-        start_date, end_date, query_time
-        .all()
-    )
     query_time = time.time() - query_start
 
     logger.info(
