@@ -16,6 +16,7 @@ from app.api.routes import (
     credentials,
     daily_manifest,
     db_admin,
+    docs,
     export,
     fmit_health,
     fmit_timeline,
@@ -45,6 +46,7 @@ api_router = APIRouter()
 
 # Core infrastructure routes
 api_router.include_router(health.router, prefix="/health", tags=["health"])
+api_router.include_router(docs.router, prefix="/docs", tags=["documentation"])
 
 api_router.include_router(people.router, prefix="/people", tags=["people"])
 api_router.include_router(blocks.router, prefix="/blocks", tags=["blocks"])
