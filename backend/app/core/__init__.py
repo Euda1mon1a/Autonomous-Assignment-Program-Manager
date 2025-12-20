@@ -6,6 +6,8 @@ from app.core.types import (
     ScheduleMetrics,
     ComplianceResult,
     ValidationContext,
+    ScheduleGenerationMetrics,
+    ValidationResultDict,
 
     # Person and Assignment
     PersonInfo,
@@ -13,8 +15,18 @@ from app.core.types import (
     BlockInfo,
     SwapInfo,
 
+    # Swap Management
+    SwapDetails,
+
+    # Coverage and Analytics
+    CoverageReportItem,
+    CoverageReport,
+    WorkloadDistribution,
+    AnalyticsReport,
+
     # Resilience and API
     ResilienceMetrics,
+    ResilienceAnalysisResult,
     APIResponse,
 
     # ACGME Duty Hours
@@ -49,6 +61,8 @@ __all__ = [
     "ScheduleMetrics",
     "ComplianceResult",
     "ValidationContext",
+    "ScheduleGenerationMetrics",
+    "ValidationResultDict",
 
     # Person and Assignment
     "PersonInfo",
@@ -56,8 +70,18 @@ __all__ = [
     "BlockInfo",
     "SwapInfo",
 
+    # Swap Management
+    "SwapDetails",
+
+    # Coverage and Analytics
+    "CoverageReportItem",
+    "CoverageReport",
+    "WorkloadDistribution",
+    "AnalyticsReport",
+
     # Resilience and API
     "ResilienceMetrics",
+    "ResilienceAnalysisResult",
     "APIResponse",
 
     # ACGME Duty Hours

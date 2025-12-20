@@ -23,7 +23,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, TypedDict, NotRequired
 from uuid import UUID, uuid4
 
 from app.resilience.mtf_types import (
@@ -52,6 +52,95 @@ from app.schemas.resilience import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# TypedDict Definitions for Complex State Objects
+# =============================================================================
+
+
+class SystemStateDict(TypedDict, total=False):
+    """
+    Dictionary representation of system health state.
+
+    Used when system state is passed as a dictionary instead of
+    SystemHealthState object. All fields are optional (total=False)
+    to allow partial state representations.
+    """
+    n1_pass: bool
+    n2_pass: bool
+    coverage_rate: float
+    average_allostatic_load: float
+    load_shedding_level: str
+    equilibrium_state: str
+    phase_transition_risk: str
+    compensation_debt: float
+    volatility_level: str
+
+
+class MTFComplianceResultDict(TypedDict):
+    """
+    Dictionary representation of MTF compliance check results.
+
+    Provides type safety for compliance results passed as dictionaries.
+    """
+    is_compliant: bool
+    score: float
+    violations: list[dict[str, Any]]
+    recommendations: list[str]
+    checked_at: NotRequired[date | None]
+
+
+class ContingencyAnalysisDict(TypedDict):
+    """
+    Dictionary representation of N-1/N-2 contingency analysis results.
+
+    Tracks system resilience to faculty losses and identifies
+    single/dual points of failure.
+    """
+    n1_pass: bool
+    n2_pass: bool
+    single_point_failures: NotRequired[list[str]]
+    dual_point_failures: NotRequired[list[tuple[str, str]]]
+    vulnerable_rotations: NotRequired[list[str]]
+    risk_level: NotRequired[str]
+
+
+class CapacityMetricsDict(TypedDict):
+    """
+    Dictionary representation of capacity and utilization metrics.
+
+    Tracks system capacity, current utilization, and any deficits
+    for resource planning and load shedding decisions.
+    """
+    capacity: int
+    utilization: float
+    deficit: NotRequired[int]
+    available_slots: NotRequired[int]
+    filled_slots: NotRequired[int]
+    coverage_percentage: NotRequired[float]
+
+
+class CascadePredictionDict(TypedDict, total=False):
+    """
+    Dictionary representation of cascade failure prediction.
+
+    Used for predicting system collapse timelines.
+    """
+    days_until_exhaustion: int
+    probability: float
+    trigger_event: str
+
+
+class PositiveFeedbackRiskDict(TypedDict):
+    """
+    Dictionary representation of positive feedback risk.
+
+    Identifies self-reinforcing failure cycles.
+    """
+    confidence: float
+    risk_type: NotRequired[str]
+    description: NotRequired[str]
 
 
 # =============================================================================
@@ -399,7 +488,7 @@ class MFRDocument:
     findings: list[str]
     risk_assessment: str
     recommendations: list[str]
-    system_state_snapshot: dict[str, Any]
+    system_state_snapshot: SystemStateDict
     document_hash: str
     risk_level: RiskLevel
     requires_commander_signature: bool
@@ -455,7 +544,7 @@ class MFRGenerator:
         self,
         mfr_type: MFRType,
         subject: str,
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
         scheduler_name: str,
         scheduler_objection: str | None = None,
         priority: MFRPriority = MFRPriority.ROUTINE,
@@ -509,7 +598,7 @@ class MFRGenerator:
         document_hash = hashlib.sha256(hash_content.encode()).hexdigest()
 
         # Convert system_state to dict for snapshot
-        state_snapshot = system_state.to_dict() if isinstance(system_state, SystemHealthState) else system_state
+        state_snapshot: SystemStateDict = system_state.to_dict() if isinstance(system_state, SystemHealthState) else system_state  # type: ignore[assignment]
 
         return MFRDocument(
             id=mfr_id,
@@ -531,7 +620,7 @@ class MFRGenerator:
 
     def _extract_findings(
         self,
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
         additional: list[str] | None,
     ) -> list[str]:
         """Extract findings from system state."""
@@ -608,7 +697,7 @@ class MFRGenerator:
 
         return findings
 
-    def _assess_risk_level(self, system_state: SystemHealthState | dict[str, Any]) -> RiskLevel:
+    def _assess_risk_level(self, system_state: SystemHealthState | SystemStateDict) -> RiskLevel:
         """Assess overall risk level from system state."""
         risk_score = 0
 
@@ -660,7 +749,7 @@ class MFRGenerator:
 
     def _generate_risk_assessment(
         self,
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
         risk_level: RiskLevel,
     ) -> str:
         """Generate risk assessment narrative."""
@@ -701,7 +790,7 @@ class MFRGenerator:
     def _generate_body(
         self,
         mfr_type: MFRType,
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
         scheduler_name: str,
         scheduler_objection: str | None,
         findings: list[str],
@@ -745,7 +834,7 @@ class MFRGenerator:
     def _generate_recommendations(
         self,
         mfr_type: MFRType,
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
         risk_level: RiskLevel,
     ) -> list[str]:
         """Generate recommendations based on MFR type and risk level."""
@@ -866,13 +955,13 @@ class CircuitBreaker:
         "read_reports",
     ]
 
-    def __init__(self):
-        self.state = CircuitBreakerState.CLOSED
+    def __init__(self) -> None:
+        self.state: CircuitBreakerState = CircuitBreakerState.CLOSED
         self.triggered_at: datetime | None = None
         self.trigger: CircuitBreakerTrigger | None = None
         self.trigger_details: str | None = None
         self.override: CircuitBreakerOverride | None = None
-        self.trip_count = 0
+        self.trip_count: int = 0
         self.last_trip: datetime | None = None
 
     def check_and_trip(
@@ -883,7 +972,7 @@ class CircuitBreaker:
         average_allostatic_load: float,
         volatility_level: str,
         compensation_debt: float,
-        positive_feedback_risks: list[PositiveFeedbackRisk | dict[str, Any]] | None = None,
+        positive_feedback_risks: list[PositiveFeedbackRisk | PositiveFeedbackRiskDict] | None = None,
     ) -> tuple[bool, CircuitBreakerTrigger | None, str | None]:
         """
         Check conditions and trip circuit breaker if thresholds breached.
@@ -1135,8 +1224,8 @@ class RFFDrafter:
         personnel_count: int,
         duration_days: int,
         justification: str,
-        system_state: SystemHealthState | dict[str, Any],
-        cascade_prediction: CascadePrediction | dict[str, Any] | None = None,
+        system_state: SystemHealthState | SystemStateDict,
+        cascade_prediction: CascadePrediction | CascadePredictionDict | None = None,
         uic: str | None = None,
     ) -> RFFDocument:
         """
@@ -1221,8 +1310,8 @@ class RFFDrafter:
 
     def _generate_situation(
         self,
-        system_state: SystemHealthState | dict[str, Any],
-        cascade_prediction: CascadePrediction | dict[str, Any] | None,
+        system_state: SystemHealthState | SystemStateDict,
+        cascade_prediction: CascadePrediction | CascadePredictionDict | None,
     ) -> str:
         """Generate Situation paragraph."""
         situation = "\n1. SITUATION:\n\n"
@@ -1265,7 +1354,7 @@ class RFFDrafter:
     def _generate_mission_impact(
         self,
         missions: list[MissionType],
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
     ) -> str:
         """Generate Mission Impact paragraph."""
         impact = "\n2. MISSION IMPACT:\n\n"
@@ -1340,7 +1429,7 @@ class RFFDrafter:
 
         return command
 
-    def _compile_metrics(self, system_state: SystemHealthState | dict[str, Any]) -> SupportingMetrics:
+    def _compile_metrics(self, system_state: SystemHealthState | SystemStateDict) -> SupportingMetrics:
         """Compile supporting metrics for the RFF."""
         # Handle both SystemHealthState and dict
         if isinstance(system_state, SystemHealthState):
@@ -1368,8 +1457,8 @@ class RFFDrafter:
 
     def _project_without_support(
         self,
-        system_state: SystemHealthState | dict[str, Any],
-        cascade_prediction: CascadePrediction | dict[str, Any] | None,
+        system_state: SystemHealthState | SystemStateDict,
+        cascade_prediction: CascadePrediction | CascadePredictionDict | None,
         duration: int,
     ) -> ProjectionWithoutSupport:
         """Project what happens without the requested support."""
@@ -1433,11 +1522,11 @@ class IronDomeService:
     chain of command by weaponizing compliance documentation.
     """
 
-    def __init__(self):
-        self.translator = DRRSTranslator()
-        self.mfr_generator = MFRGenerator()
-        self.circuit_breaker = CircuitBreaker()
-        self.rff_drafter = RFFDrafter()
+    def __init__(self) -> None:
+        self.translator: DRRSTranslator = DRRSTranslator()
+        self.mfr_generator: MFRGenerator = MFRGenerator()
+        self.circuit_breaker: CircuitBreaker = CircuitBreaker()
+        self.rff_drafter: RFFDrafter = RFFDrafter()
 
         # Document storage (in production, this would be database-backed)
         self.mfr_history: list[MFRDocument] = []
@@ -1506,7 +1595,7 @@ class IronDomeService:
         average_allostatic_load: float,
         volatility_level: str,
         compensation_debt: float,
-        positive_feedback_risks: list[PositiveFeedbackRisk | dict[str, Any]] | None = None,
+        positive_feedback_risks: list[PositiveFeedbackRisk | PositiveFeedbackRiskDict] | None = None,
     ) -> CircuitBreakerCheck:
         """
         Check circuit breaker and trip if thresholds breached.
@@ -1539,7 +1628,7 @@ class IronDomeService:
     def generate_risk_mfr(
         self,
         subject: str,
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
         scheduler_name: str,
         scheduler_objection: str | None = None,
     ) -> MFRDocument:
@@ -1564,7 +1653,7 @@ class IronDomeService:
         self,
         reason: str,
         initiator: str,
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
     ) -> tuple[MFRDocument, IronDomeStatus]:
         """
         Initiate a safety stand-down.
@@ -1611,8 +1700,8 @@ class IronDomeService:
         personnel_count: int,
         duration_days: int,
         justification: str,
-        system_state: SystemHealthState | dict[str, Any],
-        cascade_prediction: CascadePrediction | dict[str, Any] | None = None,
+        system_state: SystemHealthState | SystemStateDict,
+        cascade_prediction: CascadePrediction | CascadePredictionDict | None = None,
     ) -> RFFDocument:
         """
         Draft a Request for Forces document.
