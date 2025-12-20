@@ -140,14 +140,31 @@ class ContingencyAnalyzer:
         """
         Perform N-1 analysis: simulate loss of each faculty member.
 
+        N-1 analysis ensures the system can survive the loss of any single
+        component. This method tests each faculty member's removal to identify
+        critical dependencies and single points of failure.
+
         Args:
-            faculty: List of faculty members (Person objects with id, name)
-            blocks: List of blocks in the period
-            current_assignments: List of current assignments
-            coverage_requirements: Dict of block_id -> required coverage count
+            faculty: List of faculty members (Person objects with id, name attributes).
+            blocks: List of Block objects representing the scheduling period.
+            current_assignments: List of Assignment objects linking faculty to blocks.
+            coverage_requirements: Dict mapping block_id (UUID) to required
+                coverage count. Example: {block_uuid: 2} means 2 faculty required.
 
         Returns:
-            List of vulnerabilities found
+            list[Vulnerability]: Vulnerabilities sorted by severity (critical first),
+                then by affected_blocks count. Each vulnerability includes:
+                - faculty_id: UUID of the vulnerable dependency
+                - severity: "critical", "high", "medium", or "low"
+                - affected_blocks: Number of blocks impacted
+                - is_unique_provider: True if sole provider for any service
+
+        Example:
+            >>> analyzer = ContingencyAnalyzer()
+            >>> vulns = analyzer.analyze_n1(faculty, blocks, assignments, {b.id: 1 for b in blocks})
+            >>> critical = [v for v in vulns if v.severity == "critical"]
+            >>> if critical:
+            ...     print(f"WARNING: {len(critical)} single points of failure detected")
         """
         vulnerabilities = []
 
@@ -222,18 +239,36 @@ class ContingencyAnalyzer:
         """
         Perform N-2 analysis: simulate loss of each pair of faculty.
 
+        N-2 analysis tests system resilience against simultaneous loss of
+        two components. This is critical for identifying dangerous faculty
+        combinations where joint absence would cause system failure.
+
         For large faculty lists, this can be expensive (O(n^2)), so by default
         only analyzes pairs involving critical faculty (from N-1 analysis).
 
         Args:
-            faculty: List of faculty members
-            blocks: List of blocks in the period
-            current_assignments: List of current assignments
-            coverage_requirements: Dict of block_id -> required coverage count
-            critical_faculty_only: If True, only analyze pairs with critical faculty
+            faculty: List of faculty members (Person objects with id, name).
+            blocks: List of Block objects in the scheduling period.
+            current_assignments: List of Assignment objects.
+            coverage_requirements: Dict mapping block_id to required coverage.
+            critical_faculty_only: If True, only analyze pairs involving
+                faculty identified as critical/high in N-1 analysis.
+                Set False for exhaustive analysis. Defaults to True.
 
         Returns:
-            List of fatal pairs that would cause system failure
+            list[FatalPair]: Fatal pairs sorted by uncoverable_blocks (worst first).
+                Each pair includes:
+                - faculty_1_id, faculty_2_id: UUIDs of the pair
+                - uncoverable_blocks: Blocks that cannot be covered
+                - affected_services: List of impacted services
+
+        Example:
+            >>> analyzer = ContingencyAnalyzer()
+            >>> pairs = analyzer.analyze_n2(faculty, blocks, assignments, coverage_reqs)
+            >>> if pairs:
+            ...     worst = pairs[0]
+            ...     print(f"DANGER: {worst.faculty_1_name} + {worst.faculty_2_name} absence "
+            ...           f"leaves {worst.uncoverable_blocks} blocks uncovered")
         """
         fatal_pairs = []
 
@@ -307,16 +342,37 @@ class ContingencyAnalyzer:
         """
         Calculate centrality scores for each faculty member.
 
-        Higher centrality = removal causes more disruption.
+        Higher centrality = removal causes more disruption. This identifies
+        "hub" faculty whose loss would disproportionately impact operations.
         Based on network theory hub vulnerability analysis.
 
+        The score combines:
+        - Services covered (30%): Breadth of capabilities
+        - Unique coverage (30%): Sole provider for services
+        - Replacement difficulty (20%): How hard to find substitutes
+        - Workload share (20%): Current assignment volume
+
         Args:
-            faculty: List of faculty members
-            assignments: List of current assignments
-            services: Dict of service_id -> list of faculty IDs who can cover it
+            faculty: List of faculty members (Person objects with id, name).
+            assignments: List of current Assignment objects.
+            services: Dict mapping service_id (UUID) to list of faculty UUIDs
+                who are credentialed to provide that service.
 
         Returns:
-            List of CentralityScore, sorted by score descending
+            list[CentralityScore]: Scores sorted by centrality (highest first).
+                Each score includes:
+                - score: Composite centrality (0.0 to 1.0)
+                - services_covered: Count of services faculty can provide
+                - unique_coverage_slots: Services where they're sole provider
+                - replacement_difficulty: How hard to replace (0.0 to 1.0)
+                - workload_share: Fraction of total assignments
+
+        Example:
+            >>> analyzer = ContingencyAnalyzer()
+            >>> services = {svc_uuid: [fac1.id, fac2.id]}  # Both can do this service
+            >>> scores = analyzer.calculate_centrality(faculty, assignments, services)
+            >>> hubs = [s for s in scores if s.score > 0.7]
+            >>> print(f"Identified {len(hubs)} high-centrality faculty")
         """
         scores = []
         total_assignments = len(assignments)
@@ -589,22 +645,43 @@ class ContingencyAnalyzer:
         """
         Simulate cascade failure from initial faculty losses.
 
-        Models how initial failures propagate through the system:
+        Models how initial failures propagate through the system, similar to
+        electrical grid cascade failures. Key insight: each failure increases
+        load on survivors, potentially triggering additional failures.
+
+        Simulation steps:
         1. Initial failures remove their capacity
-        2. Remaining faculty absorb load
-        3. If anyone exceeds overload_threshold, they "fail" (burnout/quit)
-        4. Repeat until stable or catastrophic
+        2. Load redistributes to remaining faculty
+        3. Faculty exceeding overload_threshold "fail" (burnout/departure)
+        4. Steps 2-3 repeat until stable or catastrophic collapse
 
         Args:
-            faculty: List of faculty members
-            blocks: List of blocks
-            assignments: List of current assignments
-            initial_failures: List of faculty IDs who initially fail
-            max_utilization: Normal max utilization (0.80)
-            overload_threshold: Utilization that triggers cascade (1.2 = 120%)
+            faculty: List of faculty members (Person objects).
+            blocks: List of Block objects in the period.
+            assignments: List of current Assignment objects.
+            initial_failures: List of faculty UUIDs who initially become
+                unavailable (illness, departure, etc.).
+            max_utilization: Normal maximum utilization threshold (default 0.80).
+            overload_threshold: Utilization multiplier that triggers cascade
+                failure. 1.2 means 120% of normal capacity. Default 1.2.
 
         Returns:
-            CascadeSimulation with step-by-step cascade details
+            CascadeSimulation: Detailed simulation results including:
+                - cascade_steps: List of failure propagation steps
+                - total_failures: Final count of failed faculty
+                - final_coverage: Coverage rate after cascade stabilizes
+                - cascade_length: Number of propagation steps
+                - is_catastrophic: True if final coverage < 50%
+
+        Example:
+            >>> analyzer = ContingencyAnalyzer()
+            >>> # Simulate what happens if Dr. Smith becomes unavailable
+            >>> cascade = analyzer.simulate_cascade_failure(
+            ...     faculty, blocks, assignments,
+            ...     initial_failures=[dr_smith.id]
+            ... )
+            >>> if cascade.is_catastrophic:
+            ...     print(f"CRITICAL: Cascade would collapse to {cascade.final_coverage:.0%} coverage")
         """
         # Build faculty workload map
         assignment_counts = {}
