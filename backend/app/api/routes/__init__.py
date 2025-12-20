@@ -31,6 +31,7 @@ from app.api.routes import (
     swap,
     unified_heatmap,
     visualization,
+    ws,
 )
 
 api_router = APIRouter()
@@ -65,3 +66,4 @@ api_router.include_router(fmit_timeline.router, prefix="/fmit_timeline", tags=["
 api_router.include_router(conflict_resolution.router, prefix="/conflicts", tags=["conflict-resolution"])
 api_router.include_router(daily_manifest.router, prefix="/assignments", tags=["daily-manifest"])
 api_router.include_router(role_views.router, prefix="/views", tags=["role-views"])
+api_router.include_router(ws.router, tags=["websocket"])
