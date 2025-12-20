@@ -108,6 +108,24 @@ class Settings(BaseSettings):
     RESILIENCE_ALERT_RECIPIENTS: list[str] = []  # Email addresses for alerts
     RESILIENCE_SLACK_CHANNEL: str = ""  # Slack channel for alerts (optional)
 
+    # OpenTelemetry / Distributed Tracing Configuration
+    TELEMETRY_ENABLED: bool = False  # Enable distributed tracing
+    TELEMETRY_SERVICE_NAME: str = "residency-scheduler"
+    TELEMETRY_ENVIRONMENT: str = "development"  # development, staging, production
+    TELEMETRY_SAMPLING_RATE: float = 1.0  # Trace sampling rate (0.0 to 1.0)
+    TELEMETRY_CONSOLE_EXPORT: bool = False  # Enable console exporter for debugging
+
+    # Exporter Configuration
+    TELEMETRY_EXPORTER_TYPE: str = "otlp_grpc"  # jaeger, zipkin, otlp_http, otlp_grpc
+    TELEMETRY_EXPORTER_ENDPOINT: str = "http://localhost:4317"  # Exporter endpoint URL
+    TELEMETRY_EXPORTER_INSECURE: bool = True  # Use insecure connection (no TLS)
+    TELEMETRY_EXPORTER_HEADERS: dict[str, str] = {}  # Custom headers for authentication
+
+    # Instrumentation Configuration
+    TELEMETRY_TRACE_SQLALCHEMY: bool = True  # Enable SQLAlchemy tracing
+    TELEMETRY_TRACE_REDIS: bool = True  # Enable Redis tracing
+    TELEMETRY_TRACE_HTTP: bool = True  # Enable HTTP client tracing
+
     @field_validator('SECRET_KEY', 'WEBHOOK_SECRET')
     @classmethod
     def validate_secrets(cls, v: str, info) -> str:
