@@ -21,7 +21,7 @@ class TestListPeopleEndpoint:
 
     def test_list_people_empty(self, client: TestClient, db: Session, auth_headers: dict):
         """Test listing people when none exist."""
-        response = client.get("/api/people", headers=auth_headers)
+        response = client.get("/api/v1/people", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -33,7 +33,7 @@ class TestListPeopleEndpoint:
 
     def test_list_people_with_data(self, client: TestClient, sample_residents, sample_faculty_members, auth_headers: dict):
         """Test listing people with existing data."""
-        response = client.get("/api/people", headers=auth_headers)
+        response = client.get("/api/v1/people", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -50,7 +50,7 @@ class TestListPeopleEndpoint:
     def test_list_people_filter_by_type_resident(self, client: TestClient, sample_residents, sample_faculty_members, auth_headers: dict):
         """Test filtering people by type='resident'."""
         response = client.get(
-            "/api/people",
+            "/api/v1/people",
             params={"type": "resident"},
             headers=auth_headers
         )
@@ -66,7 +66,7 @@ class TestListPeopleEndpoint:
     def test_list_people_filter_by_type_faculty(self, client: TestClient, sample_residents, sample_faculty_members, auth_headers: dict):
         """Test filtering people by type='faculty'."""
         response = client.get(
-            "/api/people",
+            "/api/v1/people",
             params={"type": "faculty"},
             headers=auth_headers
         )
@@ -81,7 +81,7 @@ class TestListPeopleEndpoint:
     def test_list_people_filter_by_pgy_level(self, client: TestClient, sample_residents, auth_headers: dict):
         """Test filtering people by pgy_level."""
         response = client.get(
-            "/api/people",
+            "/api/v1/people",
             params={"pgy_level": 2},
             headers=auth_headers
         )
@@ -96,7 +96,7 @@ class TestListPeopleEndpoint:
     def test_list_people_filter_type_and_pgy(self, client: TestClient, sample_residents, sample_faculty_members, auth_headers: dict):
         """Test combined filter by type and pgy_level."""
         response = client.get(
-            "/api/people",
+            "/api/v1/people",
             params={"type": "resident", "pgy_level": 1},
             headers=auth_headers
         )
@@ -111,7 +111,7 @@ class TestListPeopleEndpoint:
 
     def test_list_people_requires_auth(self, client: TestClient):
         """Test that listing people requires authentication."""
-        response = client.get("/api/people")
+        response = client.get("/api/v1/people")
 
         assert response.status_code == 401
 
@@ -121,7 +121,7 @@ class TestListResidentsEndpoint:
 
     def test_list_residents_all(self, client: TestClient, sample_residents, sample_faculty_members, auth_headers: dict):
         """Test listing all residents."""
-        response = client.get("/api/people/residents", headers=auth_headers)
+        response = client.get("/api/v1/people/residents", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -134,7 +134,7 @@ class TestListResidentsEndpoint:
     def test_list_residents_filter_pgy_level(self, client: TestClient, sample_residents, auth_headers: dict):
         """Test filtering residents by PGY level."""
         response = client.get(
-            "/api/people/residents",
+            "/api/v1/people/residents",
             params={"pgy_level": 3},
             headers=auth_headers
         )
@@ -149,7 +149,7 @@ class TestListResidentsEndpoint:
 
     def test_list_residents_empty(self, client: TestClient, db: Session, auth_headers: dict):
         """Test listing residents when none exist."""
-        response = client.get("/api/people/residents", headers=auth_headers)
+        response = client.get("/api/v1/people/residents", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -157,7 +157,7 @@ class TestListResidentsEndpoint:
 
     def test_list_residents_excludes_faculty(self, client: TestClient, sample_residents, sample_faculty_members, auth_headers: dict):
         """Test that list residents excludes faculty members."""
-        response = client.get("/api/people/residents", headers=auth_headers)
+        response = client.get("/api/v1/people/residents", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -168,7 +168,7 @@ class TestListResidentsEndpoint:
 
     def test_list_residents_requires_auth(self, client: TestClient):
         """Test that listing residents requires authentication."""
-        response = client.get("/api/people/residents")
+        response = client.get("/api/v1/people/residents")
 
         assert response.status_code == 401
 
@@ -178,7 +178,7 @@ class TestListFacultyEndpoint:
 
     def test_list_faculty_all(self, client: TestClient, sample_residents, sample_faculty_members, auth_headers: dict):
         """Test listing all faculty."""
-        response = client.get("/api/people/faculty", headers=auth_headers)
+        response = client.get("/api/v1/people/faculty", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -202,7 +202,7 @@ class TestListFacultyEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/people/faculty",
+            "/api/v1/people/faculty",
             params={"specialty": "Sports Medicine"},
             headers=auth_headers
         )
@@ -217,7 +217,7 @@ class TestListFacultyEndpoint:
 
     def test_list_faculty_empty(self, client: TestClient, db: Session, auth_headers: dict):
         """Test listing faculty when none exist."""
-        response = client.get("/api/people/faculty", headers=auth_headers)
+        response = client.get("/api/v1/people/faculty", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -225,7 +225,7 @@ class TestListFacultyEndpoint:
 
     def test_list_faculty_excludes_residents(self, client: TestClient, sample_residents, sample_faculty_members, auth_headers: dict):
         """Test that list faculty excludes residents."""
-        response = client.get("/api/people/faculty", headers=auth_headers)
+        response = client.get("/api/v1/people/faculty", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -236,7 +236,7 @@ class TestListFacultyEndpoint:
 
     def test_list_faculty_requires_auth(self, client: TestClient):
         """Test that listing faculty requires authentication."""
-        response = client.get("/api/people/faculty")
+        response = client.get("/api/v1/people/faculty")
 
         assert response.status_code == 401
 
@@ -246,7 +246,7 @@ class TestGetPersonEndpoint:
 
     def test_get_person_resident_success(self, client: TestClient, sample_resident: Person, auth_headers: dict):
         """Test getting an existing resident by ID."""
-        response = client.get(f"/api/people/{sample_resident.id}", headers=auth_headers)
+        response = client.get(f"/api/v1/people/{sample_resident.id}", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -257,7 +257,7 @@ class TestGetPersonEndpoint:
 
     def test_get_person_faculty_success(self, client: TestClient, sample_faculty: Person, auth_headers: dict):
         """Test getting an existing faculty by ID."""
-        response = client.get(f"/api/people/{sample_faculty.id}", headers=auth_headers)
+        response = client.get(f"/api/v1/people/{sample_faculty.id}", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -269,26 +269,26 @@ class TestGetPersonEndpoint:
     def test_get_person_not_found(self, client: TestClient, auth_headers: dict):
         """Test getting a non-existent person."""
         fake_id = uuid4()
-        response = client.get(f"/api/people/{fake_id}", headers=auth_headers)
+        response = client.get(f"/api/v1/people/{fake_id}", headers=auth_headers)
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
     def test_get_person_invalid_uuid(self, client: TestClient, auth_headers: dict):
         """Test getting person with invalid UUID format."""
-        response = client.get("/api/people/not-a-valid-uuid", headers=auth_headers)
+        response = client.get("/api/v1/people/not-a-valid-uuid", headers=auth_headers)
 
         assert response.status_code == 422  # Validation error
 
     def test_get_person_requires_auth(self, client: TestClient, sample_resident: Person):
         """Test that getting a person requires authentication."""
-        response = client.get(f"/api/people/{sample_resident.id}")
+        response = client.get(f"/api/v1/people/{sample_resident.id}")
 
         assert response.status_code == 401
 
     def test_get_person_includes_timestamps(self, client: TestClient, sample_resident: Person, auth_headers: dict):
         """Test that person response includes created_at and updated_at."""
-        response = client.get(f"/api/people/{sample_resident.id}", headers=auth_headers)
+        response = client.get(f"/api/v1/people/{sample_resident.id}", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -308,7 +308,7 @@ class TestCreatePersonEndpoint:
             "pgy_level": 1,
         }
 
-        response = client.post("/api/people", json=person_data, headers=auth_headers)
+        response = client.post("/api/v1/people", json=person_data, headers=auth_headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -327,7 +327,7 @@ class TestCreatePersonEndpoint:
             "specialties": ["Primary Care"],
         }
 
-        response = client.post("/api/people", json=person_data, headers=auth_headers)
+        response = client.post("/api/v1/people", json=person_data, headers=auth_headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -345,7 +345,7 @@ class TestCreatePersonEndpoint:
             "email": "invalid@hospital.org",
         }
 
-        response = client.post("/api/people", json=person_data, headers=auth_headers)
+        response = client.post("/api/v1/people", json=person_data, headers=auth_headers)
 
         assert response.status_code == 422  # Validation error
 
@@ -358,7 +358,7 @@ class TestCreatePersonEndpoint:
             "pgy_level": 5,  # Invalid, must be 1-3
         }
 
-        response = client.post("/api/people", json=person_data, headers=auth_headers)
+        response = client.post("/api/v1/people", json=person_data, headers=auth_headers)
 
         assert response.status_code == 422  # Validation error
 
@@ -369,7 +369,7 @@ class TestCreatePersonEndpoint:
             # Missing name
         }
 
-        response = client.post("/api/people", json=person_data, headers=auth_headers)
+        response = client.post("/api/v1/people", json=person_data, headers=auth_headers)
 
         assert response.status_code == 422  # Validation error
 
@@ -382,7 +382,7 @@ class TestCreatePersonEndpoint:
             "pgy_level": 1,
         }
 
-        response = client.post("/api/people", json=person_data, headers=auth_headers)
+        response = client.post("/api/v1/people", json=person_data, headers=auth_headers)
 
         # Should fail with 400 or 422
         assert response.status_code in [400, 422]
@@ -396,7 +396,7 @@ class TestCreatePersonEndpoint:
             "pgy_level": 1,
         }
 
-        response = client.post("/api/people", json=person_data)
+        response = client.post("/api/v1/people", json=person_data)
 
         assert response.status_code == 401
 
@@ -409,7 +409,7 @@ class TestCreatePersonEndpoint:
             "faculty_role": "pd",
         }
 
-        response = client.post("/api/people", json=person_data, headers=auth_headers)
+        response = client.post("/api/v1/people", json=person_data, headers=auth_headers)
 
         assert response.status_code == 201
         data = response.json()
@@ -426,7 +426,7 @@ class TestUpdatePersonEndpoint:
         }
 
         response = client.put(
-            f"/api/people/{sample_resident.id}",
+            f"/api/v1/people/{sample_resident.id}",
             json=update_data,
             headers=auth_headers
         )
@@ -442,7 +442,7 @@ class TestUpdatePersonEndpoint:
         }
 
         response = client.put(
-            f"/api/people/{sample_resident.id}",
+            f"/api/v1/people/{sample_resident.id}",
             json=update_data,
             headers=auth_headers
         )
@@ -458,7 +458,7 @@ class TestUpdatePersonEndpoint:
         }
 
         response = client.put(
-            f"/api/people/{sample_faculty.id}",
+            f"/api/v1/people/{sample_faculty.id}",
             json=update_data,
             headers=auth_headers
         )
@@ -475,7 +475,7 @@ class TestUpdatePersonEndpoint:
         }
 
         response = client.put(
-            f"/api/people/{fake_id}",
+            f"/api/v1/people/{fake_id}",
             json=update_data,
             headers=auth_headers
         )
@@ -485,7 +485,7 @@ class TestUpdatePersonEndpoint:
     def test_update_person_invalid_uuid(self, client: TestClient, auth_headers: dict):
         """Test updating person with invalid UUID."""
         response = client.put(
-            "/api/people/invalid-uuid",
+            "/api/v1/people/invalid-uuid",
             json={"name": "Test"},
             headers=auth_headers
         )
@@ -495,7 +495,7 @@ class TestUpdatePersonEndpoint:
     def test_update_person_requires_auth(self, client: TestClient, sample_resident: Person):
         """Test that updating a person requires authentication."""
         response = client.put(
-            f"/api/people/{sample_resident.id}",
+            f"/api/v1/people/{sample_resident.id}",
             json={"name": "No Auth"}
         )
 
@@ -511,7 +511,7 @@ class TestUpdatePersonEndpoint:
         }
 
         response = client.put(
-            f"/api/people/{sample_resident.id}",
+            f"/api/v1/people/{sample_resident.id}",
             json=update_data,
             headers=auth_headers
         )
@@ -539,31 +539,31 @@ class TestDeletePersonEndpoint:
         db.commit()
         person_id = person.id
 
-        response = client.delete(f"/api/people/{person_id}", headers=auth_headers)
+        response = client.delete(f"/api/v1/people/{person_id}", headers=auth_headers)
 
         assert response.status_code == 204
         assert response.content == b""
 
         # Verify person is deleted
-        verify_response = client.get(f"/api/people/{person_id}", headers=auth_headers)
+        verify_response = client.get(f"/api/v1/people/{person_id}", headers=auth_headers)
         assert verify_response.status_code == 404
 
     def test_delete_person_not_found(self, client: TestClient, auth_headers: dict):
         """Test deleting a non-existent person."""
         fake_id = uuid4()
-        response = client.delete(f"/api/people/{fake_id}", headers=auth_headers)
+        response = client.delete(f"/api/v1/people/{fake_id}", headers=auth_headers)
 
         assert response.status_code == 404
 
     def test_delete_person_invalid_uuid(self, client: TestClient, auth_headers: dict):
         """Test deleting person with invalid UUID."""
-        response = client.delete("/api/people/invalid-uuid", headers=auth_headers)
+        response = client.delete("/api/v1/people/invalid-uuid", headers=auth_headers)
 
         assert response.status_code == 422
 
     def test_delete_person_requires_auth(self, client: TestClient, sample_resident: Person):
         """Test that deleting a person requires authentication."""
-        response = client.delete(f"/api/people/{sample_resident.id}")
+        response = client.delete(f"/api/v1/people/{sample_resident.id}")
 
         assert response.status_code == 401
 
@@ -580,11 +580,11 @@ class TestDeletePersonEndpoint:
         person_id = person.id
 
         # First delete
-        response1 = client.delete(f"/api/people/{person_id}", headers=auth_headers)
+        response1 = client.delete(f"/api/v1/people/{person_id}", headers=auth_headers)
         assert response1.status_code == 204
 
         # Second delete should fail
-        response2 = client.delete(f"/api/people/{person_id}", headers=auth_headers)
+        response2 = client.delete(f"/api/v1/people/{person_id}", headers=auth_headers)
         assert response2.status_code == 404
 
 
@@ -594,7 +594,7 @@ class TestPersonCredentialsEndpoint:
     def test_get_person_credentials_empty(self, client: TestClient, sample_faculty: Person, auth_headers: dict):
         """Test getting credentials for faculty with none."""
         response = client.get(
-            f"/api/people/{sample_faculty.id}/credentials",
+            f"/api/v1/people/{sample_faculty.id}/credentials",
             headers=auth_headers
         )
 
@@ -608,7 +608,7 @@ class TestPersonCredentialsEndpoint:
         """Test getting credentials for non-existent person."""
         fake_id = uuid4()
         response = client.get(
-            f"/api/people/{fake_id}/credentials",
+            f"/api/v1/people/{fake_id}/credentials",
             headers=auth_headers
         )
 
@@ -617,7 +617,7 @@ class TestPersonCredentialsEndpoint:
     def test_get_person_credentials_filter_status(self, client: TestClient, sample_faculty: Person, auth_headers: dict):
         """Test filtering credentials by status."""
         response = client.get(
-            f"/api/people/{sample_faculty.id}/credentials",
+            f"/api/v1/people/{sample_faculty.id}/credentials",
             params={"status": "active"},
             headers=auth_headers
         )
@@ -629,7 +629,7 @@ class TestPersonCredentialsEndpoint:
     def test_get_person_credentials_include_expired(self, client: TestClient, sample_faculty: Person, auth_headers: dict):
         """Test including expired credentials."""
         response = client.get(
-            f"/api/people/{sample_faculty.id}/credentials",
+            f"/api/v1/people/{sample_faculty.id}/credentials",
             params={"include_expired": True},
             headers=auth_headers
         )
@@ -640,7 +640,7 @@ class TestPersonCredentialsEndpoint:
 
     def test_get_person_credentials_requires_auth(self, client: TestClient, sample_faculty: Person):
         """Test that getting credentials requires authentication."""
-        response = client.get(f"/api/people/{sample_faculty.id}/credentials")
+        response = client.get(f"/api/v1/people/{sample_faculty.id}/credentials")
 
         assert response.status_code == 401
 
@@ -651,7 +651,7 @@ class TestPersonCredentialSummaryEndpoint:
     def test_get_credential_summary_success(self, client: TestClient, sample_faculty: Person, auth_headers: dict):
         """Test getting credential summary for faculty."""
         response = client.get(
-            f"/api/people/{sample_faculty.id}/credentials/summary",
+            f"/api/v1/people/{sample_faculty.id}/credentials/summary",
             headers=auth_headers
         )
 
@@ -664,7 +664,7 @@ class TestPersonCredentialSummaryEndpoint:
         """Test getting credential summary for non-existent person."""
         fake_id = uuid4()
         response = client.get(
-            f"/api/people/{fake_id}/credentials/summary",
+            f"/api/v1/people/{fake_id}/credentials/summary",
             headers=auth_headers
         )
 
@@ -673,7 +673,7 @@ class TestPersonCredentialSummaryEndpoint:
     def test_get_credential_summary_invalid_uuid(self, client: TestClient, auth_headers: dict):
         """Test getting credential summary with invalid UUID."""
         response = client.get(
-            "/api/people/invalid-uuid/credentials/summary",
+            "/api/v1/people/invalid-uuid/credentials/summary",
             headers=auth_headers
         )
 
@@ -681,7 +681,7 @@ class TestPersonCredentialSummaryEndpoint:
 
     def test_get_credential_summary_requires_auth(self, client: TestClient, sample_faculty: Person):
         """Test that getting credential summary requires authentication."""
-        response = client.get(f"/api/people/{sample_faculty.id}/credentials/summary")
+        response = client.get(f"/api/v1/people/{sample_faculty.id}/credentials/summary")
 
         assert response.status_code == 401
 
@@ -692,7 +692,7 @@ class TestPersonProceduresEndpoint:
     def test_get_person_procedures_empty(self, client: TestClient, sample_faculty: Person, auth_headers: dict):
         """Test getting procedures for faculty with none."""
         response = client.get(
-            f"/api/people/{sample_faculty.id}/procedures",
+            f"/api/v1/people/{sample_faculty.id}/procedures",
             headers=auth_headers
         )
 
@@ -705,7 +705,7 @@ class TestPersonProceduresEndpoint:
         """Test getting procedures for non-existent person."""
         fake_id = uuid4()
         response = client.get(
-            f"/api/people/{fake_id}/procedures",
+            f"/api/v1/people/{fake_id}/procedures",
             headers=auth_headers
         )
 
@@ -714,7 +714,7 @@ class TestPersonProceduresEndpoint:
     def test_get_person_procedures_invalid_uuid(self, client: TestClient, auth_headers: dict):
         """Test getting procedures with invalid UUID."""
         response = client.get(
-            "/api/people/invalid-uuid/procedures",
+            "/api/v1/people/invalid-uuid/procedures",
             headers=auth_headers
         )
 
@@ -722,7 +722,7 @@ class TestPersonProceduresEndpoint:
 
     def test_get_person_procedures_requires_auth(self, client: TestClient, sample_faculty: Person):
         """Test that getting procedures requires authentication."""
-        response = client.get(f"/api/people/{sample_faculty.id}/procedures")
+        response = client.get(f"/api/v1/people/{sample_faculty.id}/procedures")
 
         assert response.status_code == 401
 
@@ -732,7 +732,7 @@ class TestPersonResponseStructure:
 
     def test_person_response_has_all_fields(self, client: TestClient, sample_resident: Person, auth_headers: dict):
         """Test that person response includes all expected fields."""
-        response = client.get(f"/api/people/{sample_resident.id}", headers=auth_headers)
+        response = client.get(f"/api/v1/people/{sample_resident.id}", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -749,7 +749,7 @@ class TestPersonResponseStructure:
 
     def test_resident_has_pgy_level(self, client: TestClient, sample_resident: Person, auth_headers: dict):
         """Test that resident response includes pgy_level."""
-        response = client.get(f"/api/people/{sample_resident.id}", headers=auth_headers)
+        response = client.get(f"/api/v1/people/{sample_resident.id}", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -758,7 +758,7 @@ class TestPersonResponseStructure:
 
     def test_faculty_has_specialties(self, client: TestClient, sample_faculty: Person, auth_headers: dict):
         """Test that faculty response includes specialties."""
-        response = client.get(f"/api/people/{sample_faculty.id}", headers=auth_headers)
+        response = client.get(f"/api/v1/people/{sample_faculty.id}", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -767,7 +767,7 @@ class TestPersonResponseStructure:
 
     def test_person_type_values(self, client: TestClient, sample_residents, sample_faculty_members, auth_headers: dict):
         """Test that type only contains valid values."""
-        response = client.get("/api/people", headers=auth_headers)
+        response = client.get("/api/v1/people", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -788,7 +788,7 @@ class TestPersonEdgeCases:
             "pgy_level": 1,
         }
 
-        response = client.post("/api/people", json=person_data, headers=auth_headers)
+        response = client.post("/api/v1/people", json=person_data, headers=auth_headers)
 
         # Should succeed - email is optional
         assert response.status_code == 201
@@ -801,7 +801,7 @@ class TestPersonEdgeCases:
             "email": "nospecialty@hospital.org",
         }
 
-        response = client.post("/api/people", json=person_data, headers=auth_headers)
+        response = client.post("/api/v1/people", json=person_data, headers=auth_headers)
 
         # Should succeed
         assert response.status_code == 201
@@ -815,7 +815,7 @@ class TestPersonEdgeCases:
             "email": "pgy1@hospital.org",
             "pgy_level": 1,
         }
-        response1 = client.post("/api/people", json=person_data_1, headers=auth_headers)
+        response1 = client.post("/api/v1/people", json=person_data_1, headers=auth_headers)
         assert response1.status_code == 201
 
         # PGY-3 (maximum)
@@ -825,13 +825,13 @@ class TestPersonEdgeCases:
             "email": "pgy3@hospital.org",
             "pgy_level": 3,
         }
-        response3 = client.post("/api/people", json=person_data_3, headers=auth_headers)
+        response3 = client.post("/api/v1/people", json=person_data_3, headers=auth_headers)
         assert response3.status_code == 201
 
     def test_update_person_empty_body(self, client: TestClient, sample_resident: Person, auth_headers: dict):
         """Test updating person with empty body."""
         response = client.put(
-            f"/api/people/{sample_resident.id}",
+            f"/api/v1/people/{sample_resident.id}",
             json={},
             headers=auth_headers
         )
@@ -850,7 +850,7 @@ class TestPersonEdgeCases:
             "pgy_level": 1,
         }
 
-        response = client.post("/api/people", json=person_data, headers=auth_headers)
+        response = client.post("/api/v1/people", json=person_data, headers=auth_headers)
 
         # Should succeed or handle gracefully
         assert response.status_code in [201, 422]

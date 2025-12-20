@@ -19,7 +19,7 @@ class TestGetRolePermissionsEndpoint:
     def test_get_role_permissions_admin(self, client: TestClient, auth_headers: dict):
         """Test getting permissions for admin role."""
         response = client.get(
-            "/api/role-views/views/permissions/admin",
+            "/api/v1/role-views/views/permissions/admin",
             headers=auth_headers
         )
 
@@ -33,7 +33,7 @@ class TestGetRolePermissionsEndpoint:
     def test_get_role_permissions_coordinator(self, client: TestClient, auth_headers: dict):
         """Test getting permissions for coordinator role."""
         response = client.get(
-            "/api/role-views/views/permissions/coordinator",
+            "/api/v1/role-views/views/permissions/coordinator",
             headers=auth_headers
         )
 
@@ -46,7 +46,7 @@ class TestGetRolePermissionsEndpoint:
     def test_get_role_permissions_faculty(self, client: TestClient, auth_headers: dict):
         """Test getting permissions for faculty role."""
         response = client.get(
-            "/api/role-views/views/permissions/faculty",
+            "/api/v1/role-views/views/permissions/faculty",
             headers=auth_headers
         )
 
@@ -58,7 +58,7 @@ class TestGetRolePermissionsEndpoint:
     def test_get_role_permissions_resident(self, client: TestClient, auth_headers: dict):
         """Test getting permissions for resident role."""
         response = client.get(
-            "/api/role-views/views/permissions/resident",
+            "/api/v1/role-views/views/permissions/resident",
             headers=auth_headers
         )
 
@@ -69,7 +69,7 @@ class TestGetRolePermissionsEndpoint:
     def test_get_role_permissions_clinical_staff(self, client: TestClient, auth_headers: dict):
         """Test getting permissions for clinical staff role."""
         response = client.get(
-            "/api/role-views/views/permissions/clinical_staff",
+            "/api/v1/role-views/views/permissions/clinical_staff",
             headers=auth_headers
         )
 
@@ -80,7 +80,7 @@ class TestGetRolePermissionsEndpoint:
     def test_get_role_permissions_rn(self, client: TestClient, auth_headers: dict):
         """Test getting permissions for RN role."""
         response = client.get(
-            "/api/role-views/views/permissions/rn",
+            "/api/v1/role-views/views/permissions/rn",
             headers=auth_headers
         )
 
@@ -91,7 +91,7 @@ class TestGetRolePermissionsEndpoint:
     def test_get_role_permissions_lpn(self, client: TestClient, auth_headers: dict):
         """Test getting permissions for LPN role."""
         response = client.get(
-            "/api/role-views/views/permissions/lpn",
+            "/api/v1/role-views/views/permissions/lpn",
             headers=auth_headers
         )
 
@@ -102,7 +102,7 @@ class TestGetRolePermissionsEndpoint:
     def test_get_role_permissions_msa(self, client: TestClient, auth_headers: dict):
         """Test getting permissions for MSA role."""
         response = client.get(
-            "/api/role-views/views/permissions/msa",
+            "/api/v1/role-views/views/permissions/msa",
             headers=auth_headers
         )
 
@@ -112,7 +112,7 @@ class TestGetRolePermissionsEndpoint:
 
     def test_get_role_permissions_unauthenticated(self, client: TestClient):
         """Test getting permissions without authentication."""
-        response = client.get("/api/role-views/views/permissions/admin")
+        response = client.get("/api/v1/role-views/views/permissions/admin")
 
         # Should require authentication
         assert response.status_code in [401, 403]
@@ -120,7 +120,7 @@ class TestGetRolePermissionsEndpoint:
     def test_get_role_permissions_invalid_role(self, client: TestClient, auth_headers: dict):
         """Test getting permissions for invalid role."""
         response = client.get(
-            "/api/role-views/views/permissions/invalid_role",
+            "/api/v1/role-views/views/permissions/invalid_role",
             headers=auth_headers
         )
 
@@ -134,7 +134,7 @@ class TestGetRoleConfigEndpoint:
     def test_get_role_config_admin(self, client: TestClient, auth_headers: dict):
         """Test getting full config for admin role."""
         response = client.get(
-            "/api/role-views/views/config/admin",
+            "/api/v1/role-views/views/config/admin",
             headers=auth_headers
         )
 
@@ -148,7 +148,7 @@ class TestGetRoleConfigEndpoint:
     def test_get_role_config_coordinator(self, client: TestClient, auth_headers: dict):
         """Test getting full config for coordinator role."""
         response = client.get(
-            "/api/role-views/views/config/coordinator",
+            "/api/v1/role-views/views/config/coordinator",
             headers=auth_headers
         )
 
@@ -160,7 +160,7 @@ class TestGetRoleConfigEndpoint:
     def test_get_role_config_faculty(self, client: TestClient, auth_headers: dict):
         """Test getting full config for faculty role."""
         response = client.get(
-            "/api/role-views/views/config/faculty",
+            "/api/v1/role-views/views/config/faculty",
             headers=auth_headers
         )
 
@@ -172,7 +172,7 @@ class TestGetRoleConfigEndpoint:
     def test_get_role_config_resident(self, client: TestClient, auth_headers: dict):
         """Test getting full config for resident role."""
         response = client.get(
-            "/api/role-views/views/config/resident",
+            "/api/v1/role-views/views/config/resident",
             headers=auth_headers
         )
 
@@ -183,14 +183,14 @@ class TestGetRoleConfigEndpoint:
 
     def test_get_role_config_unauthenticated(self, client: TestClient):
         """Test getting config without authentication."""
-        response = client.get("/api/role-views/views/config/admin")
+        response = client.get("/api/v1/role-views/views/config/admin")
 
         assert response.status_code in [401, 403]
 
     def test_get_role_config_invalid_role(self, client: TestClient, auth_headers: dict):
         """Test getting config for invalid role."""
         response = client.get(
-            "/api/role-views/views/config/nonexistent_role",
+            "/api/v1/role-views/views/config/nonexistent_role",
             headers=auth_headers
         )
 
@@ -203,7 +203,7 @@ class TestGetCurrentUserViewConfigEndpoint:
     def test_get_current_user_config_admin(self, client: TestClient, auth_headers: dict):
         """Test getting config for authenticated admin user."""
         response = client.get(
-            "/api/role-views/views/config",
+            "/api/v1/role-views/views/config",
             headers=auth_headers
         )
 
@@ -229,7 +229,7 @@ class TestGetCurrentUserViewConfigEndpoint:
 
         # Login as coordinator
         login_response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testcoordinator", "password": "testpass123"},
         )
         assert login_response.status_code == 200
@@ -237,7 +237,7 @@ class TestGetCurrentUserViewConfigEndpoint:
         headers = {"Authorization": f"Bearer {token}"}
 
         # Get config
-        response = client.get("/api/role-views/views/config", headers=headers)
+        response = client.get("/api/v1/role-views/views/config", headers=headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -260,7 +260,7 @@ class TestGetCurrentUserViewConfigEndpoint:
 
         # Login as faculty
         login_response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testfaculty", "password": "testpass123"},
         )
         assert login_response.status_code == 200
@@ -268,7 +268,7 @@ class TestGetCurrentUserViewConfigEndpoint:
         headers = {"Authorization": f"Bearer {token}"}
 
         # Get config
-        response = client.get("/api/role-views/views/config", headers=headers)
+        response = client.get("/api/v1/role-views/views/config", headers=headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -276,7 +276,7 @@ class TestGetCurrentUserViewConfigEndpoint:
 
     def test_get_current_user_config_unauthenticated(self, client: TestClient):
         """Test getting config without authentication."""
-        response = client.get("/api/role-views/views/config")
+        response = client.get("/api/v1/role-views/views/config")
 
         assert response.status_code in [401, 403]
 
@@ -287,7 +287,7 @@ class TestCheckEndpointAccessEndpoint:
     def test_check_access_admin_schedules(self, client: TestClient, auth_headers: dict):
         """Test checking admin access to schedules endpoint."""
         response = client.post(
-            "/api/role-views/views/check-access",
+            "/api/v1/role-views/views/check-access",
             headers=auth_headers,
             params={
                 "role": "admin",
@@ -308,7 +308,7 @@ class TestCheckEndpointAccessEndpoint:
     def test_check_access_coordinator_compliance(self, client: TestClient, auth_headers: dict):
         """Test checking coordinator access to compliance endpoint."""
         response = client.post(
-            "/api/role-views/views/check-access",
+            "/api/v1/role-views/views/check-access",
             headers=auth_headers,
             params={
                 "role": "coordinator",
@@ -325,7 +325,7 @@ class TestCheckEndpointAccessEndpoint:
     def test_check_access_faculty_swaps(self, client: TestClient, auth_headers: dict):
         """Test checking faculty access to swaps endpoint."""
         response = client.post(
-            "/api/role-views/views/check-access",
+            "/api/v1/role-views/views/check-access",
             headers=auth_headers,
             params={
                 "role": "faculty",
@@ -341,7 +341,7 @@ class TestCheckEndpointAccessEndpoint:
     def test_check_access_resident_schedules(self, client: TestClient, auth_headers: dict):
         """Test checking resident access to schedules."""
         response = client.post(
-            "/api/role-views/views/check-access",
+            "/api/v1/role-views/views/check-access",
             headers=auth_headers,
             params={
                 "role": "resident",
@@ -360,7 +360,7 @@ class TestCheckEndpointAccessEndpoint:
 
         for category in categories:
             response = client.post(
-                "/api/role-views/views/check-access",
+                "/api/v1/role-views/views/check-access",
                 headers=auth_headers,
                 params={
                     "role": "admin",
@@ -375,7 +375,7 @@ class TestCheckEndpointAccessEndpoint:
     def test_check_access_unauthenticated(self, client: TestClient):
         """Test checking access without authentication."""
         response = client.post(
-            "/api/role-views/views/check-access",
+            "/api/v1/role-views/views/check-access",
             params={
                 "role": "admin",
                 "endpoint_category": "schedules"
@@ -387,7 +387,7 @@ class TestCheckEndpointAccessEndpoint:
     def test_check_access_invalid_role(self, client: TestClient, auth_headers: dict):
         """Test checking access with invalid role."""
         response = client.post(
-            "/api/role-views/views/check-access",
+            "/api/v1/role-views/views/check-access",
             headers=auth_headers,
             params={
                 "role": "invalid_role",
@@ -402,7 +402,7 @@ class TestCheckEndpointAccessEndpoint:
         """Test checking access with missing parameters."""
         # Missing endpoint_category
         response = client.post(
-            "/api/role-views/views/check-access",
+            "/api/v1/role-views/views/check-access",
             headers=auth_headers,
             params={"role": "admin"}
         )
@@ -416,7 +416,7 @@ class TestListAllRolesEndpoint:
     def test_list_all_roles(self, client: TestClient, auth_headers: dict):
         """Test listing all available staff roles."""
         response = client.get(
-            "/api/role-views/views/roles",
+            "/api/v1/role-views/views/roles",
             headers=auth_headers
         )
 
@@ -433,7 +433,7 @@ class TestListAllRolesEndpoint:
     def test_list_all_roles_contains_all_8_roles(self, client: TestClient, auth_headers: dict):
         """Test that all 8 roles are returned."""
         response = client.get(
-            "/api/role-views/views/roles",
+            "/api/v1/role-views/views/roles",
             headers=auth_headers
         )
 
@@ -451,7 +451,7 @@ class TestListAllRolesEndpoint:
 
     def test_list_all_roles_unauthenticated(self, client: TestClient):
         """Test listing roles without authentication."""
-        response = client.get("/api/role-views/views/roles")
+        response = client.get("/api/v1/role-views/views/roles")
 
         assert response.status_code in [401, 403]
 
@@ -462,7 +462,7 @@ class TestGetAllRolePermissionsEndpoint:
     def test_get_all_role_permissions(self, client: TestClient, auth_headers: dict):
         """Test getting permissions for all roles."""
         response = client.get(
-            "/api/role-views/views/permissions",
+            "/api/v1/role-views/views/permissions",
             headers=auth_headers
         )
 
@@ -479,7 +479,7 @@ class TestGetAllRolePermissionsEndpoint:
     def test_get_all_permissions_structure(self, client: TestClient, auth_headers: dict):
         """Test that all role permissions have proper structure."""
         response = client.get(
-            "/api/role-views/views/permissions",
+            "/api/v1/role-views/views/permissions",
             headers=auth_headers
         )
 
@@ -496,7 +496,7 @@ class TestGetAllRolePermissionsEndpoint:
     ):
         """Test that admin role has the most permissions."""
         response = client.get(
-            "/api/role-views/views/permissions",
+            "/api/v1/role-views/views/permissions",
             headers=auth_headers
         )
 
@@ -516,7 +516,7 @@ class TestGetAllRolePermissionsEndpoint:
 
     def test_get_all_permissions_unauthenticated(self, client: TestClient):
         """Test getting all permissions without authentication."""
-        response = client.get("/api/role-views/views/permissions")
+        response = client.get("/api/v1/role-views/views/permissions")
 
         assert response.status_code in [401, 403]
 
@@ -528,7 +528,7 @@ class TestRoleViewsErrorHandling:
         """Test that server errors are handled gracefully."""
         # Try to trigger errors with extreme values or edge cases
         response = client.get(
-            "/api/role-views/views/permissions/admin",
+            "/api/v1/role-views/views/permissions/admin",
             headers=auth_headers
         )
 
@@ -545,7 +545,7 @@ class TestRoleViewsErrorHandling:
         """Test handling of malformed requests."""
         # Send invalid JSON
         response = client.post(
-            "/api/role-views/views/check-access",
+            "/api/v1/role-views/views/check-access",
             headers=auth_headers,
             data="invalid json",
         )
@@ -561,7 +561,7 @@ class TestRoleViewsIntegration:
         """Test complete workflow for admin role."""
         # 1. List all roles
         roles_response = client.get(
-            "/api/role-views/views/roles",
+            "/api/v1/role-views/views/roles",
             headers=auth_headers
         )
         assert roles_response.status_code == 200
@@ -570,7 +570,7 @@ class TestRoleViewsIntegration:
 
         # 2. Get admin config
         config_response = client.get(
-            "/api/role-views/views/config/admin",
+            "/api/v1/role-views/views/config/admin",
             headers=auth_headers
         )
         assert config_response.status_code == 200
@@ -579,7 +579,7 @@ class TestRoleViewsIntegration:
 
         # 3. Check access to schedules
         access_response = client.post(
-            "/api/role-views/views/check-access",
+            "/api/v1/role-views/views/check-access",
             headers=auth_headers,
             params={"role": "admin", "endpoint_category": "schedules"}
         )
@@ -603,7 +603,7 @@ class TestRoleViewsIntegration:
 
         # Login
         login_response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "workflowfaculty", "password": "testpass123"},
         )
         assert login_response.status_code == 200
@@ -611,20 +611,20 @@ class TestRoleViewsIntegration:
         headers = {"Authorization": f"Bearer {token}"}
 
         # 1. Get current user config
-        config_response = client.get("/api/role-views/views/config", headers=headers)
+        config_response = client.get("/api/v1/role-views/views/config", headers=headers)
         assert config_response.status_code == 200
         assert config_response.json()["role"] == "faculty"
 
         # 2. Get faculty permissions
         perms_response = client.get(
-            "/api/role-views/views/permissions/faculty",
+            "/api/v1/role-views/views/permissions/faculty",
             headers=headers
         )
         assert perms_response.status_code == 200
 
         # 3. Get all permissions
         all_perms_response = client.get(
-            "/api/role-views/views/permissions",
+            "/api/v1/role-views/views/permissions",
             headers=headers
         )
         assert all_perms_response.status_code == 200
@@ -634,7 +634,7 @@ class TestRoleViewsIntegration:
         """Test that permission hierarchy is enforced."""
         # Get all permissions
         response = client.get(
-            "/api/role-views/views/permissions",
+            "/api/v1/role-views/views/permissions",
             headers=auth_headers
         )
 

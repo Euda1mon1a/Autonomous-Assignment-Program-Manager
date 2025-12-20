@@ -23,7 +23,7 @@ class TestListLeaveEndpoint:
 
     def test_list_leave_empty(self, client: TestClient, db: Session):
         """Test listing leave when none exist."""
-        response = client.get("/api/leave/")
+        response = client.get("/api/v1/leave/")
 
         assert response.status_code == 200
         data = response.json()
@@ -35,7 +35,7 @@ class TestListLeaveEndpoint:
 
     def test_list_leave_with_data(self, client: TestClient, sample_absence: Absence):
         """Test listing leave with existing data."""
-        response = client.get("/api/leave/")
+        response = client.get("/api/v1/leave/")
 
         assert response.status_code == 200
         data = response.json()
@@ -85,7 +85,7 @@ class TestListLeaveEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/leave/",
+            "/api/v1/leave/",
             params={"faculty_id": str(sample_faculty.id)}
         )
 
@@ -119,7 +119,7 @@ class TestListLeaveEndpoint:
 
         filter_date = (date.today() + timedelta(days=5)).isoformat()
         response = client.get(
-            "/api/leave/",
+            "/api/v1/leave/",
             params={"start_date": filter_date}
         )
 
@@ -154,7 +154,7 @@ class TestListLeaveEndpoint:
 
         filter_date = (date.today() + timedelta(days=10)).isoformat()
         response = client.get(
-            "/api/leave/",
+            "/api/v1/leave/",
             params={"end_date": filter_date}
         )
 
@@ -201,7 +201,7 @@ class TestListLeaveEndpoint:
         filter_end = (date.today() + timedelta(days=15)).isoformat()
 
         response = client.get(
-            "/api/leave/",
+            "/api/v1/leave/",
             params={
                 "start_date": filter_start,
                 "end_date": filter_end
@@ -238,7 +238,7 @@ class TestListLeaveEndpoint:
 
         # Test first page
         response = client.get(
-            "/api/leave/",
+            "/api/v1/leave/",
             params={"page": 1, "page_size": 10}
         )
 
@@ -251,7 +251,7 @@ class TestListLeaveEndpoint:
 
         # Test second page
         response = client.get(
-            "/api/leave/",
+            "/api/v1/leave/",
             params={"page": 2, "page_size": 10}
         )
 
@@ -270,7 +270,7 @@ class TestGetLeaveCalendarEndpoint:
         end = date.today() + timedelta(days=7)
 
         response = client.get(
-            "/api/leave/calendar",
+            "/api/v1/leave/calendar",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -301,7 +301,7 @@ class TestGetLeaveCalendarEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/leave/calendar",
+            "/api/v1/leave/calendar",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -324,7 +324,7 @@ class TestGetLeaveCalendarEndpoint:
 
     def test_get_leave_calendar_missing_dates(self, client: TestClient):
         """Test calendar endpoint with missing required dates."""
-        response = client.get("/api/leave/calendar")
+        response = client.get("/api/v1/leave/calendar")
 
         assert response.status_code == 422  # Validation error
 
@@ -354,7 +354,7 @@ class TestGetLeaveCalendarEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/leave/calendar",
+            "/api/v1/leave/calendar",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -387,7 +387,7 @@ class TestCreateLeaveEndpoint:
             "description": "Annual vacation",
         }
 
-        response = client.post("/api/leave/", json=leave_data)
+        response = client.post("/api/v1/leave/", json=leave_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -410,7 +410,7 @@ class TestCreateLeaveEndpoint:
             "is_blocking": True,
         }
 
-        response = client.post("/api/leave/", json=leave_data)
+        response = client.post("/api/v1/leave/", json=leave_data)
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
@@ -425,7 +425,7 @@ class TestCreateLeaveEndpoint:
             "is_blocking": True,
         }
 
-        response = client.post("/api/leave/", json=leave_data)
+        response = client.post("/api/v1/leave/", json=leave_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -436,7 +436,7 @@ class TestCreateLeaveEndpoint:
             # Missing start_date, end_date, leave_type
         }
 
-        response = client.post("/api/leave/", json=leave_data)
+        response = client.post("/api/v1/leave/", json=leave_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -450,7 +450,7 @@ class TestCreateLeaveEndpoint:
             "is_blocking": True,
         }
 
-        response = client.post("/api/leave/", json=leave_data)
+        response = client.post("/api/v1/leave/", json=leave_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -465,7 +465,7 @@ class TestCreateLeaveEndpoint:
             "description": "Military deployment",
         }
 
-        response = client.post("/api/leave/", json=leave_data)
+        response = client.post("/api/v1/leave/", json=leave_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -482,7 +482,7 @@ class TestCreateLeaveEndpoint:
             "is_blocking": False,
         }
 
-        response = client.post("/api/leave/", json=leave_data)
+        response = client.post("/api/v1/leave/", json=leave_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -513,7 +513,7 @@ class TestUpdateLeaveEndpoint:
             "description": "Updated description",
         }
 
-        response = client.put(f"/api/leave/{absence.id}", json=update_data)
+        response = client.put(f"/api/v1/leave/{absence.id}", json=update_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -528,7 +528,7 @@ class TestUpdateLeaveEndpoint:
             "description": "Updated description",
         }
 
-        response = client.put(f"/api/leave/{fake_id}", json=update_data)
+        response = client.put(f"/api/v1/leave/{fake_id}", json=update_data)
 
         assert response.status_code == 404
 
@@ -555,7 +555,7 @@ class TestUpdateLeaveEndpoint:
             "description": "Only description changed",
         }
 
-        response = client.put(f"/api/leave/{absence.id}", json=update_data)
+        response = client.put(f"/api/v1/leave/{absence.id}", json=update_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -582,7 +582,7 @@ class TestUpdateLeaveEndpoint:
             "leave_type": "conference",
         }
 
-        response = client.put(f"/api/leave/{absence.id}", json=update_data)
+        response = client.put(f"/api/v1/leave/{absence.id}", json=update_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -606,7 +606,7 @@ class TestDeleteLeaveEndpoint:
         db.commit()
         leave_id = absence.id
 
-        response = client.delete(f"/api/leave/{leave_id}")
+        response = client.delete(f"/api/v1/leave/{leave_id}")
 
         assert response.status_code == 204
         assert response.content == b""
@@ -618,7 +618,7 @@ class TestDeleteLeaveEndpoint:
     def test_delete_leave_not_found(self, client: TestClient):
         """Test deleting a non-existent leave record."""
         fake_id = uuid4()
-        response = client.delete(f"/api/leave/{fake_id}")
+        response = client.delete(f"/api/v1/leave/{fake_id}")
 
         assert response.status_code == 404
 
@@ -637,11 +637,11 @@ class TestDeleteLeaveEndpoint:
         leave_id = absence.id
 
         # First delete
-        response1 = client.delete(f"/api/leave/{leave_id}")
+        response1 = client.delete(f"/api/v1/leave/{leave_id}")
         assert response1.status_code == 204
 
         # Second delete should fail
-        response2 = client.delete(f"/api/leave/{leave_id}")
+        response2 = client.delete(f"/api/v1/leave/{leave_id}")
         assert response2.status_code == 404
 
 
@@ -671,7 +671,7 @@ class TestLeaveWebhookEndpoint:
             "leave_type": "vacation",
         }
 
-        response = client.post("/api/leave/webhook", json=payload)
+        response = client.post("/api/v1/leave/webhook", json=payload)
 
         assert response.status_code == 401
 
@@ -687,7 +687,7 @@ class TestLeaveWebhookEndpoint:
         }
 
         response = client.post(
-            "/api/leave/webhook",
+            "/api/v1/leave/webhook",
             json=payload,
             headers={"X-Webhook-Signature": "fake_signature"}
         )
@@ -707,7 +707,7 @@ class TestLeaveWebhookEndpoint:
         timestamp = str(int(datetime.utcnow().timestamp()))
 
         response = client.post(
-            "/api/leave/webhook",
+            "/api/v1/leave/webhook",
             json=payload,
             headers={
                 "X-Webhook-Signature": "invalid_signature",
@@ -732,7 +732,7 @@ class TestLeaveWebhookEndpoint:
         signature = self._create_webhook_signature(payload, old_timestamp)
 
         response = client.post(
-            "/api/leave/webhook",
+            "/api/v1/leave/webhook",
             json=payload,
             headers={
                 "X-Webhook-Signature": signature,
@@ -757,7 +757,7 @@ class TestLeaveWebhookEndpoint:
         signature = self._create_webhook_signature(payload, timestamp)
 
         response = client.post(
-            "/api/leave/webhook",
+            "/api/v1/leave/webhook",
             json=payload,
             headers={
                 "X-Webhook-Signature": signature,
@@ -791,7 +791,7 @@ class TestBulkLeaveImportEndpoint:
             "skip_duplicates": True,
         }
 
-        response = client.post("/api/leave/bulk-import", json=payload)
+        response = client.post("/api/v1/leave/bulk-import", json=payload)
 
         # Should require authentication/authorization
         assert response.status_code in [401, 403]
@@ -818,7 +818,7 @@ class TestBulkLeaveImportEndpoint:
             "skip_duplicates": True,
         }
 
-        response = client.post("/api/leave/bulk-import", json=payload, headers=auth_headers)
+        response = client.post("/api/v1/leave/bulk-import", json=payload, headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -859,7 +859,7 @@ class TestBulkLeaveImportEndpoint:
             "skip_duplicates": True,
         }
 
-        response = client.post("/api/leave/bulk-import", json=payload, headers=auth_headers)
+        response = client.post("/api/v1/leave/bulk-import", json=payload, headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -880,7 +880,7 @@ class TestLeaveEdgeCases:
             "is_blocking": True,
         }
 
-        response = client.post("/api/leave/", json=leave_data)
+        response = client.post("/api/v1/leave/", json=leave_data)
 
         assert response.status_code == 201
 
@@ -894,7 +894,7 @@ class TestLeaveEdgeCases:
             "is_blocking": True,
         }
 
-        response = client.post("/api/leave/", json=leave_data)
+        response = client.post("/api/v1/leave/", json=leave_data)
 
         assert response.status_code == 201
 
@@ -909,7 +909,7 @@ class TestLeaveEdgeCases:
             "description": "A" * 1000,  # Very long description
         }
 
-        response = client.post("/api/leave/", json=leave_data)
+        response = client.post("/api/v1/leave/", json=leave_data)
 
         # Should fail validation if max_length=500 is enforced
         assert response.status_code in [201, 422]
@@ -936,7 +936,7 @@ class TestLeaveEdgeCases:
             "is_blocking": True,
         }
 
-        response = client.post("/api/leave/", json=leave_data)
+        response = client.post("/api/v1/leave/", json=leave_data)
 
         # Should succeed - overlapping leave is allowed (system tracks conflicts)
         assert response.status_code == 201
