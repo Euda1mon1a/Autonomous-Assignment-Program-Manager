@@ -262,6 +262,14 @@ async def restrict_metrics_endpoint(request: Request, call_next):
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
 
+# Include GraphQL endpoint
+try:
+    from app.graphql import graphql_router
+    app.include_router(graphql_router, prefix="/graphql", tags=["graphql"])
+    logger.info("GraphQL endpoint enabled at /graphql")
+except ImportError as e:
+    logger.warning(f"GraphQL endpoint not available: {e}")
+
 
 @app.get("/")
 async def root():

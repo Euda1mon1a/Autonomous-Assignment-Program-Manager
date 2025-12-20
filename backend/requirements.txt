@@ -26,11 +26,16 @@ python-magic>=0.4.27  # File type detection for upload validation
 fastapi-pagination==0.15.3
 fastapi-cache2==0.2.2
 slowapi==0.1.9
+strawberry-graphql[fastapi]==0.219.2
 
 # Data Processing
 pandas==2.3.3
 numpy==2.3.5
 python-dateutil==2.9.0.post0
+
+# Machine Learning
+scikit-learn>=1.3.0
+joblib>=1.3.0  # Model serialization
 
 # Graph Analysis (for resilience hub vulnerability analysis)
 networkx>=3.0
