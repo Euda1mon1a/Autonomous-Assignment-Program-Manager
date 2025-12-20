@@ -19,6 +19,7 @@ from app.api.routes import (
     db_admin,
     docs,
     export,
+    exports,
     features,
     fmit_health,
     fmit_timeline,
@@ -68,6 +69,7 @@ api_router.include_router(settings.router, prefix="/settings", tags=["settings"]
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(me_dashboard.router, prefix="/me", tags=["dashboard"])
 api_router.include_router(export.router, prefix="/export", tags=["export"])
+api_router.include_router(exports.router, prefix="/exports", tags=["exports"])
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 api_router.include_router(resilience.router, prefix="/resilience", tags=["resilience"])
 api_router.include_router(scheduler_ops.router, prefix="/scheduler", tags=["scheduler-ops"])
