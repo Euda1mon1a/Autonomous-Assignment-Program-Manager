@@ -75,6 +75,14 @@ from app.models.feature_flag import (
     FeatureFlagEvaluation,
 )
 from app.models.scheduled_job import JobExecution, ScheduledJob
+from app.models.export_job import (
+    ExportJob,
+    ExportJobExecution,
+    ExportFormat,
+    ExportDeliveryMethod,
+    ExportJobStatus,
+    ExportTemplate,
+)
 from app.webhooks.models import (
     Webhook,
     WebhookDeadLetter,
@@ -174,6 +182,13 @@ __all__ = [
     # Scheduled Job models
     "ScheduledJob",
     "JobExecution",
+    # Export Job models
+    "ExportJob",
+    "ExportJobExecution",
+    "ExportFormat",
+    "ExportDeliveryMethod",
+    "ExportJobStatus",
+    "ExportTemplate",
     # Webhook models
     "Webhook",
     "WebhookDelivery",
