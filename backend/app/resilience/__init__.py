@@ -19,6 +19,33 @@ Tier 3 Tactical Concepts:
 11. Hub Vulnerability Analysis (from network theory)
 """
 
+# Circuit Breaker
+from app.resilience.circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerConfig,
+    CircuitBreakerError,
+    CircuitBreakerMetrics,
+    CircuitBreakerRegistry,
+    CircuitBreakerTimeoutError,
+    CircuitMetrics,
+    CircuitOpenError,
+    CircuitState,
+    MetricsCollector,
+    StateMachine,
+    StateTransition,
+    async_circuit_breaker,
+    circuit_breaker,
+    collect_metrics_for_all_breakers,
+    get_breaker_from_function,
+    get_breaker_name_from_function,
+    get_metrics as get_circuit_breaker_metrics,
+    get_registry,
+    setup_metrics as setup_circuit_breaker_metrics,
+    setup_registry,
+    with_async_circuit_breaker,
+    with_circuit_breaker,
+)
+
 # Tier 1 imports
 from app.resilience.blast_radius import (
     BlastRadiusManager,
@@ -108,6 +135,30 @@ from app.resilience.stigmergy import (
 from app.resilience.utilization import UtilizationMonitor, UtilizationThreshold
 
 __all__ = [
+    # Circuit Breaker
+    "CircuitBreaker",
+    "CircuitBreakerConfig",
+    "CircuitBreakerError",
+    "CircuitOpenError",
+    "CircuitBreakerTimeoutError",
+    "CircuitState",
+    "CircuitMetrics",
+    "StateTransition",
+    "StateMachine",
+    "CircuitBreakerRegistry",
+    "get_registry",
+    "setup_registry",
+    "circuit_breaker",
+    "async_circuit_breaker",
+    "with_circuit_breaker",
+    "with_async_circuit_breaker",
+    "get_breaker_from_function",
+    "get_breaker_name_from_function",
+    "CircuitBreakerMetrics",
+    "get_circuit_breaker_metrics",
+    "setup_circuit_breaker_metrics",
+    "collect_metrics_for_all_breakers",
+    "MetricsCollector",
     # Tier 1: Utilization
     "UtilizationMonitor",
     "UtilizationThreshold",
