@@ -1,5 +1,20 @@
 """Middleware components for the application."""
 from app.middleware.audit import AuditContextMiddleware, get_audit_info
+from app.middleware.content import (
+    AcceptHeader,
+    ContentNegotiationMiddleware,
+    ContentNegotiationStats,
+    Parser,
+    ParserRegistry,
+    ParsingError,
+    Serializer,
+    SerializerRegistry,
+    SerializationError,
+    get_parser_registry,
+    get_serializer_registry,
+    register_parser,
+    register_serializer,
+)
 from app.middleware.logging import (
     RequestLoggingConfig,
     RequestLoggingMiddleware,
@@ -48,4 +63,17 @@ __all__ = [
     "SensitiveDataFilter",
     "get_recent_logs",
     "get_response_metrics",
+    "ContentNegotiationMiddleware",
+    "ContentNegotiationStats",
+    "AcceptHeader",
+    "Serializer",
+    "SerializerRegistry",
+    "SerializationError",
+    "Parser",
+    "ParserRegistry",
+    "ParsingError",
+    "get_serializer_registry",
+    "get_parser_registry",
+    "register_serializer",
+    "register_parser",
 ]
