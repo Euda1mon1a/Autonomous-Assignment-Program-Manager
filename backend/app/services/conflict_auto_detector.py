@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import and_, func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 if TYPE_CHECKING:
     pass
@@ -64,7 +64,13 @@ class ConflictAutoDetector:
         """
         from app.models.absence import Absence
 
-        absence = self.db.query(Absence).filter(Absence.id == absence_id).first()
+        # OPTIMIZATION: Use joinedload to eagerly load person relationship
+        absence = (
+            self.db.query(Absence)
+            .options(joinedload(Absence.person))
+            .filter(Absence.id == absence_id)
+            .first()
+        )
         if not absence:
             return []
 
@@ -117,16 +123,39 @@ class ConflictAutoDetector:
         conflicts = []
 
         # 1. Check absence-based conflicts
-        query = self.db.query(Absence).filter(
-            Absence.end_date >= start_date,
-            Absence.start_date <= end_date,
+        # OPTIMIZATION: Eagerly load person relationship to avoid N+1 queries
+        query = (
+            self.db.query(Absence)
+            .options(joinedload(Absence.person))
+            .filter(
+                Absence.end_date >= start_date,
+                Absence.start_date <= end_date,
+            )
         )
 
         if faculty_id:
             query = query.filter(Absence.person_id == faculty_id)
 
-        for absence in query.all():
-            conflicts.extend(self.detect_conflicts_for_absence(absence.id))
+        absences = query.all()
+
+        # Process absences inline to avoid additional queries
+        for absence in absences:
+            if absence.should_block_assignment:
+                fmit_conflicts = self._find_fmit_overlaps(
+                    absence.person_id,
+                    absence.start_date,
+                    absence.end_date,
+                )
+                for fmit_week in fmit_conflicts:
+                    conflicts.append(ConflictInfo(
+                        faculty_id=absence.person_id,
+                        faculty_name=absence.person.name if absence.person else "Unknown",
+                        conflict_type="leave_fmit_overlap",
+                        fmit_week=fmit_week,
+                        leave_id=absence.id,
+                        severity="critical",
+                        description=f"{absence.absence_type} conflicts with FMIT week {fmit_week}",
+                    ))
 
         # 2. Check for double-booking across systems
         conflicts.extend(
@@ -268,10 +297,12 @@ class ConflictAutoDetector:
         # Query for FMIT assignments in the date range
         fmit_weeks = []
 
+        # OPTIMIZATION: Use joinedload to eagerly load block relationship
         assignments = (
             self.db.query(Assignment)
             .join(Block)
             .join(RotationTemplate)
+            .options(joinedload(Assignment.block))
             .filter(
                 and_(
                     Assignment.person_id == faculty_id,
@@ -405,11 +436,18 @@ class ConflictAutoDetector:
         conflicts = []
 
         # Query all residents (ACGME rules apply to residents)
-        query = self.db.query(Person).filter(Person.type == "resident")
+        # OPTIMIZATION: Eagerly load assignments to reduce queries in violation checks
+        query = (
+            self.db.query(Person)
+            .options(selectinload(Person.assignments))
+            .filter(Person.type == "resident")
+        )
         if faculty_id:
             query = query.filter(Person.id == faculty_id)
 
-        for person in query.all():
+        residents = query.all()
+
+        for person in residents:
             # Check 80-hour work week violations
             week_violations = self._check_80_hour_violations(person, start_date, end_date)
             conflicts.extend(week_violations)
@@ -567,9 +605,13 @@ class ConflictAutoDetector:
 
         conflicts = []
 
-        # Query blocks in date range where supervision is required
+        # OPTIMIZATION: Load blocks with their assignments and related data in one query
         blocks_query = (
             self.db.query(Block)
+            .options(
+                selectinload(Block.assignments).joinedload(Assignment.person),
+                selectinload(Block.assignments).joinedload(Assignment.rotation_template),
+            )
             .filter(
                 and_(
                     Block.date >= start_date,
@@ -578,15 +620,14 @@ class ConflictAutoDetector:
             )
         )
 
-        for block in blocks_query.all():
-            # Get all assignments for this block
-            assignments = (
-                self.db.query(Assignment)
-                .join(Person)
-                .outerjoin(RotationTemplate)
-                .filter(Assignment.block_id == block.id)
-                .all()
-            )
+        blocks = blocks_query.all()
+
+        for block in blocks:
+            # Get all assignments for this block (already loaded)
+            assignments = block.assignments
+
+            if not assignments:
+                continue
 
             # Count residents by PGY level and faculty
             pgy1_count = 0

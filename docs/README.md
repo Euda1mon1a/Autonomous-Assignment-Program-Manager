@@ -11,6 +11,7 @@ Welcome to the Residency Scheduler documentation. This comprehensive guide will 
 2. [Configuration](getting-started/configuration.md) - Environment setup
 3. [Quick Start Guide](getting-started/quickstart.md) - First steps after installation
 4. [User Guide](user-guide/index.md) - How to use the application
+5. [Complete User Guide](user-guide/USER_GUIDE.md) - Comprehensive user documentation
 
 ### For Administrators
 1. [Admin Manual](admin-manual/index.md) - System administration
@@ -19,14 +20,27 @@ Welcome to the Residency Scheduler documentation. This comprehensive guide will 
 4. [User Management](admin-manual/users.md) - Managing accounts
 
 ### For Developers
-1. [Development Setup](development/setup.md) - Local development environment
-2. [Contributing Guide](development/contributing.md) - How to contribute
-3. [Code Style](development/code-style.md) - Coding standards
-4. [Testing](development/testing.md) - Test suite and coverage
+1. [**CLAUDE.md**](../CLAUDE.md) - **Project guidelines for AI-assisted development** (Essential reading!)
+2. [Development Setup](development/setup.md) - Local development environment
+3. [Contributing Guide](development/contributing.md) - How to contribute
+4. [Code Style](development/code-style.md) - Coding standards
+5. [Testing](development/testing.md) - Test suite and coverage
+6. [Agents Documentation](development/AGENTS.md) - AI agent integration patterns
 
 ---
 
 ## Documentation Structure
+
+### :material-file-document: Essential Root Documents
+Core project documentation located at the repository root.
+
+| Document | Description |
+|----------|-------------|
+| [**CLAUDE.md**](../CLAUDE.md) | **Project guidelines for AI-assisted development** (Required reading for all developers) |
+| [README.md](../README.md) | Project overview and quick start |
+| [CHANGELOG.md](../CHANGELOG.md) | Version history and release notes |
+| [CONTRIBUTING.md](../CONTRIBUTING.md) | Contribution guidelines |
+| [ARCHITECTURE.md](../ARCHITECTURE.md) | High-level architecture overview |
 
 ### :material-rocket-launch: Getting Started
 Essential guides for installation and initial setup.
@@ -44,6 +58,7 @@ Learn how to use all features of the application.
 | Document | Description |
 |----------|-------------|
 | [Index](user-guide/index.md) | User guide overview |
+| [**Complete User Guide**](user-guide/USER_GUIDE.md) | **Comprehensive user documentation** |
 | [Dashboard](user-guide/dashboard.md) | Dashboard features |
 | [People Management](user-guide/people.md) | Managing residents and faculty |
 | [Schedule](user-guide/schedule.md) | Viewing and managing schedules |
@@ -113,7 +128,12 @@ Contributing guidelines and development setup.
 | [Contributing](development/contributing.md) | Contribution guidelines |
 | [Code Style](development/code-style.md) | Code style guide |
 | [Testing](development/testing.md) | Testing guidelines |
+| [**Agents Documentation**](development/AGENTS.md) | **AI agent integration patterns and tools** |
 | [CI/CD Recommendations](development/CI_CD_RECOMMENDATIONS.md) | CI/CD pipeline improvements |
+| [N+1 Query Optimization](development/N1_QUERY_OPTIMIZATION.md) | Database query optimization |
+| [TypedDict Type Safety](development/TYPEDDICT_TYPE_SAFETY.md) | Python type safety improvements |
+| [Faculty Constraints Integration](development/FACULTY_CONSTRAINTS_INTEGRATION.md) | Faculty scheduling constraints |
+| [Implementation Verification](development/IMPLEMENTATION_VERIFICATION.md) | Verification procedures |
 
 ### :material-cog-outline: Operations
 Operational guides and monitoring.
@@ -122,28 +142,67 @@ Operational guides and monitoring.
 |----------|-------------|
 | [Metrics](operations/metrics.md) | Monitoring and metrics |
 | [Security Scanning](operations/SECURITY_SCANNING.md) | Security scanning setup |
+| [Load Testing](operations/LOAD_TESTING.md) | Load testing procedures and results |
+| [Deployment Prompt](operations/DEPLOYMENT_PROMPT.md) | Deployment automation guide |
+| [Celery Integration](operations/SCHEDULER_OPS_CELERY_INTEGRATION_SUMMARY.md) | Background task system integration |
+
+### :material-rocket: Deployment
+Deployment guides for various platforms.
+
+| Document | Description |
+|----------|-------------|
+| [**macOS Deployment**](deployment/MACOS.md) | **Complete macOS deployment guide** |
+| [Deployment Lessons Learned](deployment/LESSONS_LEARNED_ROUND1.md) | First deployment insights |
 
 ### :material-clipboard-check: Planning
 Project planning and tracking documents.
 
 | Document | Description |
 |----------|-------------|
+| [**Project Roadmap**](planning/ROADMAP.md) | **Long-term project roadmap and feature planning** |
 | [Implementation Tracker](planning/IMPLEMENTATION_TRACKER.md) | Feature implementation status |
 | [TODO Tracker](planning/TODO_TRACKER.md) | Outstanding tasks |
+| [Project Status Assessment](planning/PROJECT_STATUS_ASSESSMENT.md) | Current project status |
+| [Strategic Decisions](planning/STRATEGIC_DECISIONS.md) | Major strategic decisions and rationale |
 | [ChatGPT Feature Review](planning/CHATGPT_FEATURE_REVIEW.md) | Review of ChatGPT Codex and Pulse |
 | [Parallel Priorities Evaluation](planning/PARALLEL_PRIORITIES_EVALUATION.md) | Parallel development evaluation |
 | [Leadership Discussion Guide](planning/LEADERSHIP_DISCUSSION_GUIDE.md) | Strategic discussion guide |
 | [Code Complexity Analysis](planning/CODE_COMPLEXITY_ANALYSIS.md) | Code complexity metrics |
+| [MCP Integration Opportunities](planning/MCP_INTEGRATION_OPPORTUNITIES.md) | Model Context Protocol integration plans |
+| [FastMCP Research](planning/FASTMCP_RESEARCH.md) | FastMCP framework evaluation |
+
+### :material-flask: Research
+Experimental research and exploration documents.
+
+| Document | Description |
+|----------|-------------|
+| [Experimental Research Strategy](research/EXPERIMENTAL_RESEARCH_STRATEGY.md) | Research methodology and approach |
+| [Catalyst Concepts Analysis](research/catalyst-concepts-analysis.md) | Catalyst pattern analysis |
+| [Quantum Physics Scheduler Exploration](research/quantum-physics-scheduler-exploration.md) | Quantum-inspired scheduling concepts |
+
+### :material-calendar-clock: Sessions
+Development session notes and summaries.
+
+| Document | Description |
+|----------|-------------|
+| [Sessions Index](sessions/README.md) | Overview of development sessions |
+| [Session 9: MCP N8N Parallel Work](sessions/SESSION_009_MCP_N8N_PARALLEL_WORK.md) | MCP and N8N integration work |
+| [Session 10: Load Testing](sessions/SESSION_10_LOAD_TESTING.md) | Load testing implementation |
+| [Session 11: Parallel High-Yield Todos](sessions/SESSION_11_PARALLEL_HIGH_YIELD_TODOS.md) | Parallel development todos |
 
 ### :material-archive: Archived
 Historical documentation retained for reference.
 
 | Document | Description |
 |----------|-------------|
+| [Archived Index](archived/README.md) | Overview of archived documentation |
 | [Celery Setup Summary](archived/CELERY_SETUP_SUMMARY.md) | Celery task queue setup |
 | [Celery Configuration](archived/CELERY_CONFIGURATION_REPORT.md) | Celery configuration details |
 | [Celery Production Checklist](archived/CELERY_PRODUCTION_CHECKLIST.md) | Production deployment checklist |
 | [Celery Quick Reference](archived/CELERY_QUICK_REFERENCE.md) | Celery quick reference |
+| [Implementation Summaries](archived/implementation-summaries/) | Historical implementation notes |
+| [Reports](archived/reports/) | Historical project reports |
+| [Wiki Backup](archived/wiki-backup/) | Backup of GitHub wiki content |
 
 ---
 
@@ -162,6 +221,29 @@ Located in [tasks/templates/](tasks/templates/):
 - [Consultation](tasks/templates/consultation.md) - Expert consultation template
 - [Oracle Query](tasks/templates/oracle-query.md) - Knowledge base queries
 - [Research](tasks/templates/research.md) - Research task template
+
+### :material-note-text: Other Root-Level Documentation
+Additional documentation files at the repository root:
+
+| Document | Description | Recommended Action |
+|----------|-------------|-------------------|
+| [DOCKER_LOCAL_SETUP.md](../DOCKER_LOCAL_SETUP.md) | Docker setup guide | Consider moving to `docs/getting-started/` |
+| [DOCKER_LOCAL_CHEATSHEET.md](../DOCKER_LOCAL_CHEATSHEET.md) | Docker quick reference | Consider moving to `docs/getting-started/` |
+| [SCHEDULER_OPS_QUICK_START.md](../SCHEDULER_OPS_QUICK_START.md) | Operations quick start | Consider moving to `docs/operations/` |
+| [SCHEDULER_OPS_CELERY_INTEGRATION_SUMMARY.md](../SCHEDULER_OPS_CELERY_INTEGRATION_SUMMARY.md) | Celery integration summary | Already in `docs/operations/` (duplicate) |
+| [IMPLEMENTATION_VERIFICATION.md](../IMPLEMENTATION_VERIFICATION.md) | Implementation verification | Already in `docs/development/` (duplicate) |
+| [HUMAN_TODO.md](../HUMAN_TODO.md) | Tasks requiring human action | Keep at root |
+
+### :material-file-multiple: Docs Root-Level Files
+Important files at the docs/ root:
+
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURAL_DISCONNECTS.md](ARCHITECTURAL_DISCONNECTS.md) | Known architectural inconsistencies |
+| [EMAIL_NOTIFICATION_INFRASTRUCTURE.md](EMAIL_NOTIFICATION_INFRASTRUCTURE.md) | Email notification system design |
+| [MCP_IDE_INTEGRATION.md](MCP_IDE_INTEGRATION.md) | Model Context Protocol IDE integration |
+| [PRIORITY_LIST.md](PRIORITY_LIST.md) | Current development priorities |
+| [PULSE_CHECKLIST.md](PULSE_CHECKLIST.md) | System health pulse checklist |
 
 ---
 

@@ -96,6 +96,7 @@ class NotificationService:
             db: Database session for persistence
         """
         self.db = db
+        self._preferences_cache: dict[UUID, NotificationPreferences] = {}
 
     async def send_notification(
         self,
@@ -207,8 +208,33 @@ class NotificationService:
         Returns:
             Dictionary mapping recipient_id to list of DeliveryResults
         """
+        # OPTIMIZATION: Batch-load all user preferences to avoid N+1 queries
+        preferences_records = (
+            self.db.query(NotificationPreferenceRecord)
+            .filter(NotificationPreferenceRecord.user_id.in_(recipient_ids))
+            .all()
+        )
+
+        # Build a cache of preferences by user_id
+        preferences_cache = {
+            record.user_id: NotificationPreferences(
+                user_id=record.user_id,
+                enabled_channels=record.get_enabled_channels(),
+                notification_types=record.notification_types or {},
+                quiet_hours_start=record.quiet_hours_start,
+                quiet_hours_end=record.quiet_hours_end,
+            )
+            for record in preferences_records
+        }
+
         results = {}
         for recipient_id in recipient_ids:
+            # Use cached preferences if available, otherwise use defaults
+            if recipient_id in preferences_cache:
+                self._preferences_cache = {recipient_id: preferences_cache[recipient_id]}
+            else:
+                self._preferences_cache = {recipient_id: NotificationPreferences(user_id=recipient_id)}
+
             delivery_results = await self.send_notification(
                 recipient_id=recipient_id,
                 notification_type=notification_type,
@@ -216,6 +242,9 @@ class NotificationService:
                 channels=channels
             )
             results[str(recipient_id)] = delivery_results
+
+        # Clear the cache after bulk operation
+        self._preferences_cache = {}
 
         return results
 
@@ -289,6 +318,32 @@ class NotificationService:
             .all()
         )
 
+        # OPTIMIZATION: Batch-load all user preferences to avoid N+1 queries
+        unique_recipient_ids = list(set(record.recipient_id for record in due_notifications))
+        if unique_recipient_ids:
+            preferences_records = (
+                self.db.query(NotificationPreferenceRecord)
+                .filter(NotificationPreferenceRecord.user_id.in_(unique_recipient_ids))
+                .all()
+            )
+
+            # Build cache of preferences
+            self._preferences_cache = {
+                record.user_id: NotificationPreferences(
+                    user_id=record.user_id,
+                    enabled_channels=record.get_enabled_channels(),
+                    notification_types=record.notification_types or {},
+                    quiet_hours_start=record.quiet_hours_start,
+                    quiet_hours_end=record.quiet_hours_end,
+                )
+                for record in preferences_records
+            }
+
+            # Add default preferences for users without records
+            for user_id in unique_recipient_ids:
+                if user_id not in self._preferences_cache:
+                    self._preferences_cache[user_id] = NotificationPreferences(user_id=user_id)
+
         for record in due_notifications:
             # Mark as processing
             record.status = "processing"
@@ -324,6 +379,9 @@ class NotificationService:
                 )
 
             self.db.commit()
+
+        # Clear the cache after processing
+        self._preferences_cache = {}
 
         return sent_count
 
@@ -403,6 +461,10 @@ class NotificationService:
         Returns:
             NotificationPreferences object
         """
+        # OPTIMIZATION: Check cache first to avoid repeated queries
+        if user_id in self._preferences_cache:
+            return self._preferences_cache[user_id]
+
         record = (
             self.db.query(NotificationPreferenceRecord)
             .filter(NotificationPreferenceRecord.user_id == user_id)
