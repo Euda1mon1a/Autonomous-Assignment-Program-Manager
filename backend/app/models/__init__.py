@@ -83,6 +83,13 @@ from app.models.export_job import (
     ExportJobStatus,
     ExportTemplate,
 )
+from app.models.gateway_auth import (
+    APIKey,
+    OAuth2Client,
+    IPWhitelist,
+    IPBlacklist,
+    RequestSignature,
+)
 from app.webhooks.models import (
     Webhook,
     WebhookDeadLetter,
@@ -196,4 +203,10 @@ __all__ = [
     "WebhookEventType",
     "WebhookStatus",
     "WebhookDeliveryStatus",
+    # Gateway Auth models
+    "APIKey",
+    "OAuth2Client",
+    "IPWhitelist",
+    "IPBlacklist",
+    "RequestSignature",
 ]
