@@ -58,6 +58,11 @@ class Settings(BaseSettings):
     RATE_LIMIT_REGISTER_WINDOW: int = 60  # Time window in seconds (1 minute)
     RATE_LIMIT_ENABLED: bool = True  # Enable/disable rate limiting globally
 
+    # Cache TTL Settings (in seconds)
+    CACHE_HEATMAP_TTL: int = 300  # 5 minutes for heatmap data
+    CACHE_CALENDAR_TTL: int = 600  # 10 minutes for calendar exports
+    CACHE_SCHEDULE_TTL: int = 300  # 5 minutes for schedule queries
+
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
