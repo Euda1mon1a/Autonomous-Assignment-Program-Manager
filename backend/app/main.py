@@ -5,17 +5,22 @@ FastAPI application for managing residency program schedules.
 """
 import logging
 from contextlib import asynccontextmanager
+from ipaddress import ip_address, ip_network
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from ipaddress import ip_address, ip_network
 
 from app.api.routes import api_router
 from app.core.config import get_settings
 from app.core.exceptions import AppException
+from app.core.slowapi_limiter import limiter, rate_limit_exceeded_handler
 from app.middleware.audit import AuditContextMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -145,6 +150,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Attach rate limiter to app state for slowapi
+app.state.limiter = limiter
+
+# Add rate limit exceeded exception handler
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
 
 # =============================================================================
 # Global Exception Handlers
@@ -190,6 +201,14 @@ async def global_exception_handler(request: Request, exc: Exception):
 # =============================================================================
 # Middleware Configuration
 # =============================================================================
+
+# Security headers middleware - adds OWASP recommended security headers
+app.add_middleware(SecurityHeadersMiddleware)
+logger.info("Security headers middleware enabled")
+
+# Slowapi rate limiting middleware - applies global rate limits
+app.add_middleware(SlowAPIMiddleware)
+logger.info("Slowapi rate limiting middleware enabled")
 
 # CORS middleware
 app.add_middleware(
