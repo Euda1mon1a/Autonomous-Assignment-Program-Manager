@@ -12,6 +12,12 @@ from app.analytics.metrics import (
     calculate_coverage_rate,
     calculate_fairness_index,
 )
+from app.analytics.types import (
+    ComplianceReport,
+    MonthlyReport,
+    ResidentReport,
+    WorkloadReport,
+)
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
@@ -34,7 +40,7 @@ class ReportGenerator:
         self,
         year: int,
         month: int
-    ) -> dict[str, Any]:
+    ) -> MonthlyReport:
         """
         Generate monthly summary report.
 
@@ -151,7 +157,7 @@ class ReportGenerator:
         person_id: str,
         start_date: date,
         end_date: date
-    ) -> dict[str, Any]:
+    ) -> ResidentReport | dict[str, str]:
         """
         Generate individual resident statistics report.
 
@@ -253,7 +259,7 @@ class ReportGenerator:
         self,
         start_date: date,
         end_date: date
-    ) -> dict[str, Any]:
+    ) -> ComplianceReport:
         """
         Generate ACGME compliance summary report.
 
@@ -370,7 +376,7 @@ class ReportGenerator:
         self,
         start_date: date,
         end_date: date
-    ) -> dict[str, Any]:
+    ) -> WorkloadReport:
         """
         Generate workload distribution report.
 
