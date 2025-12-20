@@ -208,6 +208,80 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
         settings = get_settings()
         redis_client = Redis.from_url(settings.redis_url_with_password)
 
+        # Get all task result keys from Redis
+        task_keys = redis_client.keys("celery-task-meta-*")
+
+        # Parse and collect task information
+        task_data_list = []
+
+        for key in task_keys:
+            try:
+                task_data = redis_client.get(key)
+                if not task_data:
+                    continue
+
+                result = json.loads(task_data)
+
+                # Extract task ID from key (format: celery-task-meta-<uuid>)
+                task_id = key.decode("utf-8").replace("celery-task-meta-", "")
+
+                # Parse task information
+                status_str = result.get("status", "UNKNOWN")
+                task_name = result.get("task_name") or result.get("name", "Unknown Task")
+                date_done = result.get("date_done")
+                traceback = result.get("traceback")
+
+                # Map Celery status to our TaskStatus enum
+                status_mapping = {
+                    "PENDING": TaskStatus.PENDING,
+                    "STARTED": TaskStatus.IN_PROGRESS,
+                    "SUCCESS": TaskStatus.COMPLETED,
+                    "FAILURE": TaskStatus.FAILED,
+                    "RETRY": TaskStatus.IN_PROGRESS,
+                    "REVOKED": TaskStatus.CANCELLED,
+                }
+                task_status = status_mapping.get(status_str, TaskStatus.PENDING)
+
+                # Parse timestamps
+                completed_at = None
+                if date_done:
+                    try:
+                        # Celery date_done is in ISO format
+                        completed_at = datetime.fromisoformat(date_done.replace("Z", "+00:00"))
+                    except (ValueError, AttributeError):
+                        pass
+
+                # Extract error message if failed
+                error_message = None
+                if status_str == "FAILURE":
+                    error_result = result.get("result")
+                    if isinstance(error_result, dict):
+                        error_message = error_result.get("exc_message") or error_result.get("exc_type")
+                    elif isinstance(error_result, str):
+                        error_message = error_result[:200]  # Truncate long errors
+
+                    # Use traceback if no error message
+                    if not error_message and traceback:
+                        error_message = traceback.split("\n")[-1][:200]
+
+                task_data_list.append({
+                    "task_id": task_id,
+                    "name": task_name,
+                    "status": task_status,
+                    "completed_at": completed_at,
+                    "error_message": error_message,
+                })
+
+            except (json.JSONDecodeError, Exception) as parse_error:
+                logger.debug(f"Error parsing task key {key}: {parse_error}")
+                continue
+
+        # Sort by completion time (most recent first)
+        task_data_list.sort(
+            key=lambda x: x["completed_at"] if x["completed_at"] else datetime.min,
+            reverse=True
+        )
+
         # Get task result keys from Redis using non-blocking SCAN and limit the sample size
         scan_limit = max(limit * 5, 50)
         task_keys = list(
