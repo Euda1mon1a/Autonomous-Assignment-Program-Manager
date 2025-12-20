@@ -63,6 +63,19 @@ class Settings(BaseSettings):
     CACHE_CALENDAR_TTL: int = 600  ***REMOVED*** 10 minutes for calendar exports
     CACHE_SCHEDULE_TTL: int = 300  ***REMOVED*** 5 minutes for schedule queries
 
+    ***REMOVED*** File Upload Settings
+    UPLOAD_STORAGE_BACKEND: str = "local"  ***REMOVED*** Storage backend: 'local' or 's3'
+    UPLOAD_LOCAL_DIR: str = "/tmp/uploads"  ***REMOVED*** Local storage directory
+    UPLOAD_MAX_SIZE_MB: int = 50  ***REMOVED*** Maximum file size in megabytes
+    UPLOAD_ENABLE_VIRUS_SCAN: bool = False  ***REMOVED*** Enable virus scanning
+
+    ***REMOVED*** S3 Upload Settings (used when UPLOAD_STORAGE_BACKEND='s3')
+    UPLOAD_S3_BUCKET: str = "residency-scheduler-uploads"
+    UPLOAD_S3_REGION: str = "us-east-1"
+    UPLOAD_S3_ACCESS_KEY: str = ""
+    UPLOAD_S3_SECRET_KEY: str = ""
+    UPLOAD_S3_ENDPOINT_URL: str = ""  ***REMOVED*** For S3-compatible services (MinIO, etc.)
+
     ***REMOVED*** CORS
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
