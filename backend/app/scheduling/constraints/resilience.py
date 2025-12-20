@@ -20,6 +20,7 @@ Classes:
 """
 import logging
 from collections import defaultdict
+from typing import Any
 from uuid import UUID
 
 from .base import (
@@ -57,7 +58,7 @@ class HubProtectionConstraint(SoftConstraint):
     HIGH_HUB_THRESHOLD = 0.4      # Above this = significant hub
     CRITICAL_HUB_THRESHOLD = 0.6  # Above this = critical hub (2x penalty)
 
-    def __init__(self, weight: float = 15.0):
+    def __init__(self, weight: float = 15.0) -> None:
         super().__init__(
             name="HubProtection",
             constraint_type=ConstraintType.HUB_PROTECTION,
@@ -65,7 +66,12 @@ class HubProtectionConstraint(SoftConstraint):
             priority=ConstraintPriority.MEDIUM,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """
         Add hub protection penalty to CP-SAT model objective function.
 
@@ -135,7 +141,12 @@ class HubProtectionConstraint(SoftConstraint):
         if total_hub_penalty:
             variables["hub_penalty"] = total_hub_penalty
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add hub protection penalty to PuLP model."""
         import pulp
         x = variables.get("assignments", {})
@@ -168,7 +179,11 @@ class HubProtectionConstraint(SoftConstraint):
         if penalty_terms:
             variables["hub_penalty"] = pulp.lpSum(penalty_terms)
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """
         Validate hub protection and calculate penalty.
 
@@ -176,8 +191,8 @@ class HubProtectionConstraint(SoftConstraint):
         - Which hubs are over-assigned
         - Total hub concentration risk
         """
-        violations = []
-        total_penalty = 0.0
+        violations: list[ConstraintViolation] = []
+        total_penalty: float = 0.0
 
         if not context.hub_scores:
             return ConstraintResult(satisfied=True, penalty=0.0)
@@ -250,7 +265,7 @@ class UtilizationBufferConstraint(SoftConstraint):
     - Penalty increases sharply above threshold (quadratic)
     """
 
-    def __init__(self, weight: float = 20.0, target_utilization: float = 0.80):
+    def __init__(self, weight: float = 20.0, target_utilization: float = 0.80) -> None:
         super().__init__(
             name="UtilizationBuffer",
             constraint_type=ConstraintType.UTILIZATION_BUFFER,
@@ -259,7 +274,12 @@ class UtilizationBufferConstraint(SoftConstraint):
         )
         self.target_utilization = target_utilization
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """
         Add utilization buffer constraint to CP-SAT model.
 
@@ -324,7 +344,12 @@ class UtilizationBufferConstraint(SoftConstraint):
         # Use linear approximation with higher weight for large overages
         variables["utilization_penalty"] = over_util
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add utilization buffer constraint to PuLP model."""
         import pulp
         x = variables.get("assignments", {})
@@ -344,7 +369,11 @@ class UtilizationBufferConstraint(SoftConstraint):
 
         variables["utilization_penalty"] = over_util
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """
         Validate utilization buffer and calculate penalty.
 
@@ -353,7 +382,7 @@ class UtilizationBufferConstraint(SoftConstraint):
         - Buffer remaining
         - Whether in danger zone
         """
-        violations = []
+        violations: list[ConstraintViolation] = []
 
         # Calculate utilization
         # This is a simplified calculation - actual would consider
@@ -452,7 +481,7 @@ class ZoneBoundaryConstraint(SoftConstraint):
         "admin": 0.5,          # Most flexible
     }
 
-    def __init__(self, weight: float = 12.0):
+    def __init__(self, weight: float = 12.0) -> None:
         super().__init__(
             name="ZoneBoundary",
             constraint_type=ConstraintType.ZONE_BOUNDARY,
@@ -460,7 +489,12 @@ class ZoneBoundaryConstraint(SoftConstraint):
             priority=ConstraintPriority.MEDIUM,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """
         Add zone boundary penalty to CP-SAT model.
 
@@ -499,7 +533,12 @@ class ZoneBoundaryConstraint(SoftConstraint):
         if total_zone_penalty:
             variables["zone_penalty"] = total_zone_penalty
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add zone boundary penalty to PuLP model."""
         import pulp
         x = variables.get("assignments", {})
@@ -531,7 +570,11 @@ class ZoneBoundaryConstraint(SoftConstraint):
         if penalty_terms:
             variables["zone_penalty"] = pulp.lpSum(penalty_terms)
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """
         Validate zone boundary compliance.
 
@@ -540,8 +583,8 @@ class ZoneBoundaryConstraint(SoftConstraint):
         - Which zones are being violated
         - Total isolation breach penalty
         """
-        violations = []
-        total_penalty = 0.0
+        violations: list[ConstraintViolation] = []
+        total_penalty: float = 0.0
 
         if not context.zone_assignments or not context.block_zones:
             return ConstraintResult(satisfied=True, penalty=0.0)
@@ -614,7 +657,7 @@ class PreferenceTrailConstraint(SoftConstraint):
     STRONG_TRAIL_THRESHOLD = 0.6   # Above this = strong signal
     WEAK_TRAIL_THRESHOLD = 0.3     # Below this = ignore
 
-    def __init__(self, weight: float = 8.0):
+    def __init__(self, weight: float = 8.0) -> None:
         super().__init__(
             name="PreferenceTrail",
             constraint_type=ConstraintType.PREFERENCE_TRAIL,
@@ -622,7 +665,12 @@ class PreferenceTrailConstraint(SoftConstraint):
             priority=ConstraintPriority.LOW,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """
         Add preference trail bonus/penalty to CP-SAT model.
 
@@ -667,7 +715,12 @@ class PreferenceTrailConstraint(SoftConstraint):
         if total_trail_score:
             variables["trail_bonus"] = total_trail_score
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add preference trail bonus/penalty to PuLP model."""
         import pulp
         x = variables.get("assignments", {})
@@ -707,7 +760,11 @@ class PreferenceTrailConstraint(SoftConstraint):
         if penalty_terms:
             variables["trail_penalty"] = pulp.lpSum(penalty_terms)
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """
         Validate preference trail alignment.
 
@@ -715,8 +772,8 @@ class PreferenceTrailConstraint(SoftConstraint):
         - How well assignments align with preference trails
         - Assignments against strong avoidance trails
         """
-        violations = []
-        total_penalty = 0.0
+        violations: list[ConstraintViolation] = []
+        total_penalty: float = 0.0
 
         if not context.preference_trails:
             return ConstraintResult(satisfied=True, penalty=0.0)
@@ -796,7 +853,7 @@ class N1VulnerabilityConstraint(SoftConstraint):
     - Identifies faculty who are sole coverage providers
     """
 
-    def __init__(self, weight: float = 25.0):
+    def __init__(self, weight: float = 25.0) -> None:
         super().__init__(
             name="N1Vulnerability",
             constraint_type=ConstraintType.N1_VULNERABILITY,
@@ -804,7 +861,12 @@ class N1VulnerabilityConstraint(SoftConstraint):
             priority=ConstraintPriority.HIGH,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """
         Add N-1 vulnerability penalty to CP-SAT model.
 
@@ -848,7 +910,12 @@ class N1VulnerabilityConstraint(SoftConstraint):
         if total_n1_penalty:
             variables["n1_penalty"] = total_n1_penalty
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add N-1 vulnerability penalty to PuLP model."""
         import pulp
         x = variables.get("assignments", {})
@@ -856,7 +923,7 @@ class N1VulnerabilityConstraint(SoftConstraint):
         if not x:
             return
 
-        penalty_terms = []
+        penalty_terms: list[Any] = []
 
         for block in context.blocks:
             b_i = context.block_idx[block.id]
@@ -882,7 +949,11 @@ class N1VulnerabilityConstraint(SoftConstraint):
         if penalty_terms:
             variables["n1_penalty"] = pulp.lpSum(penalty_terms)
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """
         Validate N-1 compliance of the schedule.
 
@@ -891,8 +962,8 @@ class N1VulnerabilityConstraint(SoftConstraint):
         - Faculty who are single points of failure
         - Overall N-1 compliance rate
         """
-        violations = []
-        total_penalty = 0.0
+        violations: list[ConstraintViolation] = []
+        total_penalty: float = 0.0
 
         # Analyze each block for redundancy
         block_coverage = defaultdict(list)

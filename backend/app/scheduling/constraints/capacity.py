@@ -12,6 +12,7 @@ Classes:
 """
 import logging
 from collections import defaultdict
+from typing import Any
 
 from .base import (
     ConstraintPriority,
@@ -32,15 +33,20 @@ class OnePersonPerBlockConstraint(HardConstraint):
     (Faculty supervision is separate)
     """
 
-    def __init__(self, max_per_block: int = 1):
+    def __init__(self, max_per_block: int = 1) -> None:
         super().__init__(
             name="OnePersonPerBlock",
             constraint_type=ConstraintType.CAPACITY,
             priority=ConstraintPriority.CRITICAL,
         )
-        self.max_per_block = max_per_block
+        self.max_per_block: int = max_per_block
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """At most max_per_block residents per block."""
         x = variables.get("assignments", {})
 
@@ -54,7 +60,12 @@ class OnePersonPerBlockConstraint(HardConstraint):
             if resident_vars:
                 model.Add(sum(resident_vars) <= self.max_per_block)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """At most max_per_block residents per block."""
         import pulp
         x = variables.get("assignments", {})
@@ -72,10 +83,14 @@ class OnePersonPerBlockConstraint(HardConstraint):
                     f"max_per_block_{b_i}"
                 )
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Check for multiple primary assignments per block."""
-        violations = []
-        block_counts = defaultdict(int)
+        violations: list[ConstraintViolation] = []
+        block_counts: dict[Any, int] = defaultdict(int)
 
         for assignment in assignments:
             if assignment.role == "primary":
@@ -104,14 +119,19 @@ class ClinicCapacityConstraint(HardConstraint):
     Each rotation template may have a max_residents limit.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="ClinicCapacity",
             constraint_type=ConstraintType.CAPACITY,
             priority=ConstraintPriority.HIGH,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Enforce template capacity limits per block."""
         variables.get("assignments", {})
         template_vars = variables.get("template_assignments", {})  # (r, b, t) -> var
@@ -135,7 +155,12 @@ class ClinicCapacityConstraint(HardConstraint):
                     if template_block_vars:
                         model.Add(sum(template_block_vars) <= template.max_residents)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Enforce template capacity limits per block."""
         import pulp
         template_vars = variables.get("template_assignments", {})
@@ -163,12 +188,16 @@ class ClinicCapacityConstraint(HardConstraint):
                         )
                         constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Check capacity violations."""
-        violations = []
+        violations: list[ConstraintViolation] = []
 
         # Group by (block, template)
-        by_block_template = defaultdict(int)
+        by_block_template: dict[tuple[Any, Any], int] = defaultdict(int)
         for a in assignments:
             if a.rotation_template_id:
                 by_block_template[(a.block_id, a.rotation_template_id)] += 1
@@ -207,7 +236,7 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
     Default: 6 physicians maximum per clinic session (AM or PM).
     """
 
-    def __init__(self, max_physicians: int = 6):
+    def __init__(self, max_physicians: int = 6) -> None:
         """
         Initialize the constraint.
 
@@ -220,9 +249,14 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
             constraint_type=ConstraintType.CAPACITY,
             priority=ConstraintPriority.HIGH,
         )
-        self.max_physicians = max_physicians
+        self.max_physicians: int = max_physicians
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Enforce maximum physicians per clinic block."""
         x = variables.get("assignments", {})
         template_vars = variables.get("template_assignments", {})
@@ -266,7 +300,12 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
             if clinic_vars:
                 model.Add(sum(clinic_vars) <= self.max_physicians)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Enforce maximum physicians per clinic block using PuLP."""
         import pulp
 
@@ -303,12 +342,16 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
                 )
                 constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Check maximum physicians in clinic per block."""
-        violations = []
+        violations: list[ConstraintViolation] = []
 
         # Identify clinic templates
-        clinic_template_ids = {
+        clinic_template_ids: set[Any] = {
             t.id for t in context.templates
             if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
         }
@@ -349,7 +392,7 @@ class CoverageConstraint(SoftConstraint):
     Primary optimization objective.
     """
 
-    def __init__(self, weight: float = 1000.0):
+    def __init__(self, weight: float = 1000.0) -> None:
         super().__init__(
             name="Coverage",
             constraint_type=ConstraintType.CAPACITY,
@@ -357,7 +400,12 @@ class CoverageConstraint(SoftConstraint):
             priority=ConstraintPriority.HIGH,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add coverage to objective."""
         x = variables.get("assignments", {})
 
@@ -367,7 +415,12 @@ class CoverageConstraint(SoftConstraint):
         total = sum(x.values())
         variables["coverage_bonus"] = total
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add coverage to objective."""
         import pulp
         x = variables.get("assignments", {})
@@ -377,7 +430,11 @@ class CoverageConstraint(SoftConstraint):
 
         variables["coverage_bonus"] = pulp.lpSum(x.values())
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Calculate coverage rate."""
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
         assigned_blocks = {a.block_id for a in assignments}

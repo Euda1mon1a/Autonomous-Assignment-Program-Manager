@@ -20,7 +20,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -93,7 +93,7 @@ class Constraint(ABC):
         constraint_type: ConstraintType,
         priority: ConstraintPriority = ConstraintPriority.MEDIUM,
         enabled: bool = True,
-    ):
+    ) -> None:
         self.name = name
         self.constraint_type = constraint_type
         self.priority = priority
@@ -103,7 +103,7 @@ class Constraint(ABC):
     def add_to_cpsat(
         self,
         model: Any,
-        variables: dict,
+        variables: dict[str, Any],
         context: "SchedulingContext",
     ) -> None:
         """Add constraint to OR-Tools CP-SAT model."""
@@ -113,7 +113,7 @@ class Constraint(ABC):
     def add_to_pulp(
         self,
         model: Any,
-        variables: dict,
+        variables: dict[str, Any],
         context: "SchedulingContext",
     ) -> None:
         """Add constraint to PuLP model."""
@@ -122,7 +122,7 @@ class Constraint(ABC):
     @abstractmethod
     def validate(
         self,
-        assignments: list,
+        assignments: list[Any],
         context: "SchedulingContext",
     ) -> ConstraintResult:
         """Validate constraint against assignments."""
@@ -135,7 +135,7 @@ class HardConstraint(Constraint):
     Violations result in infeasible solutions.
     """
 
-    def get_penalty(self) -> float:
+    def get_penalty(self: "HardConstraint") -> float:
         """Hard constraints have infinite penalty when violated."""
         return float('inf')
 
@@ -153,11 +153,11 @@ class SoftConstraint(Constraint):
         weight: float = 1.0,
         priority: ConstraintPriority = ConstraintPriority.MEDIUM,
         enabled: bool = True,
-    ):
+    ) -> None:
         super().__init__(name, constraint_type, priority, enabled)
         self.weight = weight
 
-    def get_penalty(self, violation_count: int = 1) -> float:
+    def get_penalty(self: "SoftConstraint", violation_count: int = 1) -> float:
         """Calculate penalty based on weight and violations."""
         return self.weight * violation_count * self.priority.value
 
@@ -226,7 +226,7 @@ class SchedulingContext:
     # Target utilization for buffer constraint (default 80%)
     target_utilization: float = 0.80
 
-    def __post_init__(self):
+    def __post_init__(self: "SchedulingContext") -> None:
         """
         Build lookup dictionaries and indices for fast constraint evaluation.
 
@@ -248,7 +248,7 @@ class SchedulingContext:
         for block in self.blocks:
             self.blocks_by_date[block.date].append(block)
 
-    def has_resilience_data(self) -> bool:
+    def has_resilience_data(self: "SchedulingContext") -> bool:
         """
         Check if resilience data has been populated in this context.
 
@@ -265,7 +265,7 @@ class SchedulingContext:
         """
         return bool(self.hub_scores) or self.current_utilization > 0
 
-    def get_hub_score(self, faculty_id: UUID) -> float:
+    def get_hub_score(self: "SchedulingContext", faculty_id: UUID) -> float:
         """
         Get hub vulnerability score for a faculty member.
 
@@ -288,7 +288,7 @@ class SchedulingContext:
         """
         return self.hub_scores.get(faculty_id, 0.0)
 
-    def is_n1_vulnerable(self, faculty_id: UUID) -> bool:
+    def is_n1_vulnerable(self: "SchedulingContext", faculty_id: UUID) -> bool:
         """
         Check if faculty is a single point of failure (N-1 vulnerable).
 
@@ -308,7 +308,7 @@ class SchedulingContext:
         """
         return faculty_id in self.n1_vulnerable_faculty
 
-    def get_preference_strength(self, faculty_id: UUID, slot_type: str) -> float:
+    def get_preference_strength(self: "SchedulingContext", faculty_id: UUID, slot_type: str) -> float:
         """
         Get preference trail strength for a faculty member and slot type.
 

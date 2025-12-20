@@ -20,6 +20,7 @@ Classes:
 import logging
 from collections import defaultdict
 from datetime import timedelta
+from typing import Any
 
 from .base import (
     ConstraintPriority,
@@ -39,14 +40,19 @@ class AvailabilityConstraint(HardConstraint):
     Respects absences (vacation, deployment, TDY, etc.)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="Availability",
             constraint_type=ConstraintType.AVAILABILITY,
             priority=ConstraintPriority.CRITICAL,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """
         Add availability constraint to OR-Tools CP-SAT model.
 
@@ -78,7 +84,12 @@ class AvailabilityConstraint(HardConstraint):
                             if (r_i, b_i) in x:
                                 model.Add(x[r_i, b_i] == 0)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """
         Add availability constraint to PuLP linear programming model.
 
@@ -109,7 +120,11 @@ class AvailabilityConstraint(HardConstraint):
                             if (r_i, b_i) in x:
                                 model += x[r_i, b_i] == 0, f"avail_{r_i}_{b_i}"
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """
         Validate that no assignments occur during absences.
 
@@ -187,11 +202,11 @@ class EightyHourRuleConstraint(HardConstraint):
         ROLLING_WEEKS: Window size for averaging (4 weeks)
     """
 
-    HOURS_PER_BLOCK = 6
-    MAX_WEEKLY_HOURS = 80
-    ROLLING_WEEKS = 4
+    HOURS_PER_BLOCK: int = 6
+    MAX_WEEKLY_HOURS: int = 80
+    ROLLING_WEEKS: int = 4
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize the 80-hour rule constraint.
 
@@ -204,9 +219,14 @@ class EightyHourRuleConstraint(HardConstraint):
             priority=ConstraintPriority.CRITICAL,
         )
         # Max blocks per 4-week window: (80 * 4) / 6 = 53.33 -> 53
-        self.max_blocks_per_window = (self.MAX_WEEKLY_HOURS * self.ROLLING_WEEKS) // self.HOURS_PER_BLOCK
+        self.max_blocks_per_window: int = (self.MAX_WEEKLY_HOURS * self.ROLLING_WEEKS) // self.HOURS_PER_BLOCK
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Enforce 80-hour rule via block count limits."""
         x = variables.get("assignments", {})
         dates = sorted(context.blocks_by_date.keys())
@@ -238,7 +258,12 @@ class EightyHourRuleConstraint(HardConstraint):
                 if window_vars:
                     model.Add(sum(window_vars) <= self.max_blocks_per_window)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Enforce 80-hour rule via block count limits."""
         import pulp
         x = variables.get("assignments", {})
@@ -273,12 +298,16 @@ class EightyHourRuleConstraint(HardConstraint):
                     )
             window_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Check 80-hour rule compliance."""
-        violations = []
+        violations: list[ConstraintViolation] = []
 
         # Group assignments by resident
-        by_resident = defaultdict(list)
+        by_resident: dict[Any, list[Any]] = defaultdict(list)
         for a in assignments:
             by_resident[a.person_id].append(a)
 
@@ -339,16 +368,21 @@ class OneInSevenRuleConstraint(HardConstraint):
     Simplified: Cannot work more than 6 consecutive days.
     """
 
-    MAX_CONSECUTIVE_DAYS = 6
+    MAX_CONSECUTIVE_DAYS: int = 6
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="1in7Rule",
             constraint_type=ConstraintType.CONSECUTIVE_DAYS,
             priority=ConstraintPriority.CRITICAL,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Enforce max consecutive days."""
 
         x = variables.get("assignments", {})
@@ -393,7 +427,12 @@ class OneInSevenRuleConstraint(HardConstraint):
                 if len(day_worked_vars) == self.MAX_CONSECUTIVE_DAYS + 1:
                     model.Add(sum(day_worked_vars) <= self.MAX_CONSECUTIVE_DAYS)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Enforce max consecutive days (linear approximation)."""
         import pulp
         x = variables.get("assignments", {})
@@ -433,12 +472,16 @@ class OneInSevenRuleConstraint(HardConstraint):
                     )
                     constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Check for consecutive days violations."""
-        violations = []
+        violations: list[ConstraintViolation] = []
 
         # Group by resident
-        by_resident = defaultdict(set)
+        by_resident: dict[Any, set[Any]] = defaultdict(set)
         for a in assignments:
             for b in context.blocks:
                 if b.id == a.block_id:
@@ -508,10 +551,10 @@ class SupervisionRatioConstraint(HardConstraint):
         OTHER_RATIO: Maximum PGY-2/3 residents per faculty (4)
     """
 
-    PGY1_RATIO = 2  # 1 faculty per 2 PGY-1
-    OTHER_RATIO = 4  # 1 faculty per 4 PGY-2/3
+    PGY1_RATIO: int = 2  # 1 faculty per 2 PGY-1
+    OTHER_RATIO: int = 4  # 1 faculty per 4 PGY-2/3
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize supervision ratio constraint.
 
@@ -547,17 +590,31 @@ class SupervisionRatioConstraint(HardConstraint):
         from_other = (other_count + self.OTHER_RATIO - 1) // self.OTHER_RATIO
         return max(1, from_pgy1 + from_other) if (pgy1_count + other_count) > 0 else 0
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Supervision ratio is typically handled post-hoc for residents."""
         # This constraint is usually enforced during faculty assignment phase
         # The CP-SAT model focuses on resident assignment
         pass
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Supervision ratio is typically handled post-hoc for residents."""
         pass
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Check supervision ratios per block."""
         violations = []
 

@@ -10,6 +10,7 @@ Classes:
 """
 import logging
 from collections import defaultdict
+from typing import Any
 
 from .base import (
     ConstraintPriority,
@@ -35,7 +36,7 @@ class EquityConstraint(SoftConstraint):
     to work the same number of blocks.
     """
 
-    def __init__(self, weight: float = 10.0):
+    def __init__(self, weight: float = 10.0) -> None:
         super().__init__(
             name="Equity",
             constraint_type=ConstraintType.EQUITY,
@@ -43,7 +44,12 @@ class EquityConstraint(SoftConstraint):
             priority=ConstraintPriority.MEDIUM,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add equity objective to model with support for individual targets."""
         x = variables.get("assignments", {})
 
@@ -91,7 +97,12 @@ class EquityConstraint(SoftConstraint):
 
             variables["equity_penalty"] = max_assigns
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add equity objective to model with support for individual targets."""
         import pulp
         x = variables.get("assignments", {})
@@ -167,9 +178,13 @@ class EquityConstraint(SoftConstraint):
 
             variables["equity_penalty"] = max_assigns
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Calculate equity score."""
-        by_resident = defaultdict(int)
+        by_resident: dict[Any, int] = defaultdict(int)
         for a in assignments:
             if a.person_id in context.resident_idx:
                 by_resident[a.person_id] += 1
@@ -208,7 +223,7 @@ class ContinuityConstraint(SoftConstraint):
     for consecutive blocks when appropriate.
     """
 
-    def __init__(self, weight: float = 5.0):
+    def __init__(self, weight: float = 5.0) -> None:
         super().__init__(
             name="Continuity",
             constraint_type=ConstraintType.CONTINUITY,
@@ -216,17 +231,31 @@ class ContinuityConstraint(SoftConstraint):
             priority=ConstraintPriority.LOW,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Continuity is complex for CP-SAT, handled via preference."""
         # This would require tracking template assignments across consecutive blocks
         # For simplicity, we handle this in post-processing or validation
         pass
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Continuity is complex for PuLP, handled via preference."""
         pass
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Calculate continuity score (template changes)."""
         # Group by resident, sorted by date
         by_resident = defaultdict(list)

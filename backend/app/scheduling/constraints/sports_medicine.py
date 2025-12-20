@@ -17,6 +17,7 @@ Classes:
 """
 import logging
 from collections import defaultdict
+from typing import Any
 from uuid import UUID
 
 from .base import (
@@ -55,7 +56,7 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
         This is not a violation - it's expected behavior.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize SM alignment constraint."""
         super().__init__(
             name="SMResidentFacultyAlignment",
@@ -63,7 +64,12 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
             priority=ConstraintPriority.HIGH,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """
         Add SM alignment constraints to CP-SAT model.
 
@@ -135,7 +141,12 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
                     # Implication: any_resident => any_faculty
                     model.AddImplication(any_resident, any_faculty)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add SM alignment constraints to PuLP model."""
         import pulp
 
@@ -194,14 +205,18 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
                     )
                     constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """
         Validate SM resident/faculty alignment.
 
         Checks that whenever an SM resident is assigned to SM clinic,
         SM faculty is also assigned to the same block.
         """
-        violations = []
+        violations: list[ConstraintViolation] = []
 
         sm_template_ids = self._get_sm_template_ids(context)
         if not sm_template_ids:
@@ -261,9 +276,9 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
             violations=violations,
         )
 
-    def _get_sm_template_ids(self, context: SchedulingContext) -> set[UUID]:
+    def _get_sm_template_ids(self, context: SchedulingContext) -> set[Any]:
         """Get IDs of Sports Medicine clinic templates."""
-        sm_templates = set()
+        sm_templates: set[Any] = set()
         for t in context.templates:
             # Check requires_specialty field
             if hasattr(t, 'requires_specialty') and t.requires_specialty == 'Sports Medicine':
@@ -275,9 +290,9 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
                     sm_templates.add(t.id)
         return sm_templates
 
-    def _get_sm_faculty(self, context: SchedulingContext) -> list:
+    def _get_sm_faculty(self, context: SchedulingContext) -> list[Any]:
         """Get Sports Medicine faculty members."""
-        sm_faculty = []
+        sm_faculty: list[Any] = []
         for f in context.faculty:
             if hasattr(f, 'is_sports_medicine') and f.is_sports_medicine:
                 sm_faculty.append(f)
@@ -287,7 +302,7 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
                 sm_faculty.append(f)
         return sm_faculty
 
-    def _get_sm_rotation_residents(self, context: SchedulingContext) -> list:
+    def _get_sm_rotation_residents(self, context: SchedulingContext) -> list[Any]:
         """
         Get residents currently on SM rotation.
 
