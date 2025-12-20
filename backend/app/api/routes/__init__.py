@@ -12,6 +12,7 @@ from app.api.routes import (
     blocks,
     calendar,
     certifications,
+    changelog,
     conflict_resolution,
     credentials,
     daily_manifest,
@@ -42,6 +43,7 @@ from app.api.routes import (
     unified_heatmap,
     upload,
     visualization,
+    webhooks,
     ws,
 )
 
@@ -51,6 +53,7 @@ api_router = APIRouter()
 api_router.include_router(health.router, prefix="/health", tags=["health"])
 api_router.include_router(docs.router, prefix="/docs", tags=["documentation"])
 api_router.include_router(features.router, prefix="/features", tags=["features"])
+api_router.include_router(changelog.router, prefix="/changelog", tags=["changelog"])
 
 api_router.include_router(people.router, prefix="/people", tags=["people"])
 api_router.include_router(blocks.router, prefix="/blocks", tags=["blocks"])
@@ -90,4 +93,5 @@ api_router.include_router(role_views.router, prefix="/views", tags=["role-views"
 api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 api_router.include_router(upload.router, prefix="/uploads", tags=["upload"])
+api_router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 api_router.include_router(ws.router, tags=["websocket"])
