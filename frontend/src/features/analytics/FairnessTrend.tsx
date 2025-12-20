@@ -20,8 +20,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type CustomTooltipProps = { active?: boolean; payload?: any[]; label?: string };
 import { TrendingUp, TrendingDown, Info, BarChart3, Activity } from 'lucide-react';
 import { useFairnessTrend, usePgyEquity } from './hooks';
 import type { TimePeriod, TrendDirection } from './types';
@@ -39,6 +37,19 @@ interface FairnessTrendProps {
 
 type ChartType = 'line' | 'bar';
 type MetricType = 'gini' | 'variance' | 'equity' | 'all';
+
+// Recharts tooltip payload type
+interface TooltipPayloadEntry {
+  name?: string;
+  value?: number | string;
+  color?: string;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadEntry[];
+  label?: string;
+}
 
 // ============================================================================
 // Sub-Components

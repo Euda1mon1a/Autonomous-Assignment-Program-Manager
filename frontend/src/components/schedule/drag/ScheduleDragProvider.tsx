@@ -19,6 +19,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { put } from '@/lib/api'
 import type { Assignment, Block } from '@/types/api'
 
+// Query data type for assignments cache
+interface AssignmentsQueryData {
+  items: Assignment[];
+}
+
 // Types for drag operations
 export interface DragAssignment {
   id: string
@@ -98,7 +103,7 @@ export function ScheduleDragProvider({
     },
 
     // Optimistic update - update UI immediately
-    onMutate: async ({ assignmentId, newBlockId }) => {
+    onMutate: async ({ assignmentId, newBlockId }: { assignmentId: string; newBlockId: string }) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['assignments'] })
 
@@ -106,7 +111,7 @@ export function ScheduleDragProvider({
       const previousAssignments = queryClient.getQueryData(['assignments'])
 
       // Optimistically update cache
-      queryClient.setQueryData(['assignments'], (old: any) => {
+      queryClient.setQueryData(['assignments'], (old: AssignmentsQueryData | undefined) => {
         if (!old?.items) return old
         return {
           ...old,
@@ -122,19 +127,26 @@ export function ScheduleDragProvider({
       return { previousAssignments }
     },
 
-    onSuccess: (data, variables) => {
+    onSuccess: (
+      _data: Assignment,
+      variables: { assignmentId: string; newBlockId: string }
+    ) => {
       setFeedback({ type: 'success', message: 'Assignment moved successfully' })
       onAssignmentMove?.(variables.assignmentId, variables.newBlockId)
       setTimeout(() => setFeedback(null), 3000)
     },
 
     // Rollback on error
-    onError: (err, variables, context) => {
+    onError: (
+      err: Error,
+      _variables: { assignmentId: string; newBlockId: string },
+      context: { previousAssignments: unknown } | undefined
+    ) => {
       if (context?.previousAssignments) {
         queryClient.setQueryData(['assignments'], context.previousAssignments)
       }
       // Show error toast
-      const errorMessage = (err as Error).message || 'Failed to move assignment'
+      const errorMessage = err.message || 'Failed to move assignment'
       setFeedback({ type: 'error', message: `Move failed - changes reverted: ${errorMessage}` })
       setTimeout(() => setFeedback(null), 5000)
     },
