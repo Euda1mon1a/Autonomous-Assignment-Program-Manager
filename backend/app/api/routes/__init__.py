@@ -30,6 +30,7 @@ from app.api.routes import (
     people,
     portal,
     procedures,
+    quota,
     rate_limit,
     reports,
     resilience,
@@ -81,6 +82,7 @@ api_router.include_router(db_admin.router, tags=["db-admin"])
 api_router.include_router(visualization.router, prefix="/visualization", tags=["visualization"])
 api_router.include_router(unified_heatmap.router, prefix="/unified-heatmap", tags=["unified-heatmap"])
 api_router.include_router(rate_limit.router, prefix="/rate-limit", tags=["rate-limit"])
+api_router.include_router(quota.router, prefix="/quota", tags=["quota"])
 # FMIT scheduling routes
 api_router.include_router(swap.router)  # prefix="/swaps" defined in router
 api_router.include_router(leave.router)  # prefix="/leave" defined in router
