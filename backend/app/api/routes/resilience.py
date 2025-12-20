@@ -60,6 +60,8 @@ from app.schemas.resilience import (
     HealthCheckHistoryItem,
     HealthCheckHistoryResponse,
     HealthCheckResponse,
+    HomeostasisCheckRequest,
+    HomeostasisReport,
     LoadSheddingLevel,
     LoadSheddingRequest,
     LoadSheddingStatus,
@@ -68,6 +70,10 @@ from app.schemas.resilience import (
     UtilizationLevel,
     UtilizationMetrics,
     VulnerabilityReportResponse,
+)
+from app.services.resilience.homeostasis import (
+    HomeostasisService,
+    get_homeostasis_service,
 )
 
 router = APIRouter()
@@ -1122,30 +1128,28 @@ async def get_homeostasis_status(
     )
 
 
-@router.post("/tier2/homeostasis/check")
+@router.post("/tier2/homeostasis/check", response_model=HomeostasisReport)
 async def check_homeostasis(
-    metrics: dict,
+    request: HomeostasisCheckRequest,
     db: Session = Depends(get_db),
-):
+) -> HomeostasisReport:
     """
     Check homeostasis with provided metrics.
 
     Metrics dict should contain setpoint names and current values:
     {"coverage_rate": 0.92, "faculty_utilization": 0.78}
-    """
-    service = get_resilience_service(db)
-    status = service.check_homeostasis(metrics)
 
-    return {
-        "timestamp": status.timestamp.isoformat(),
-        "overall_state": status.overall_state.value,
-        "feedback_loops_healthy": status.feedback_loops_healthy,
-        "feedback_loops_deviating": status.feedback_loops_deviating,
-        "active_corrections": status.active_corrections,
-        "positive_feedback_risks": status.positive_feedback_risks,
-        "average_allostatic_load": status.average_allostatic_load,
-        "recommendations": status.recommendations,
-    }
+    Available setpoints:
+    - coverage_rate: Target 0.95, tolerance 0.05
+    - faculty_utilization: Target 0.75, tolerance 0.10
+    - workload_balance: Target 0.15 (std_dev), tolerance 0.05
+    - schedule_stability: Target 0.95, tolerance 0.05
+    - acgme_compliance: Target 1.0, tolerance 0.02
+
+    Returns a HomeostasisReport with feedback loop states and recommendations.
+    """
+    homeostasis_service = get_homeostasis_service(db)
+    return homeostasis_service.check_homeostasis(request.metrics)
 
 
 @router.post("/tier2/allostasis/calculate")
