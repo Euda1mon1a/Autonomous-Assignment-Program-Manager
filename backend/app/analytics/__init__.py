@@ -1,6 +1,10 @@
 """Analytics module for schedule analysis and reporting."""
 from sqlalchemy.orm import Session
 
+from app.analytics.api import (
+    APIAnalyticsService,
+    get_api_analytics_service,
+)
 from app.analytics.engine import AnalyticsEngine
 from app.analytics.metrics import (
     calculate_acgme_compliance_rate,
@@ -46,17 +50,19 @@ def get_report_generator(db: Session) -> ReportGenerator:
 __all__ = [
     # Classes
     "AnalyticsEngine",
+    "APIAnalyticsService",
     "ReportGenerator",
     "StabilityMetrics",
     "StabilityMetricsComputer",
     # Factory functions
     "get_analytics_engine",
+    "get_api_analytics_service",
     "get_report_generator",
     # Metric functions
-    "calculate_fairness_index",
-    "calculate_coverage_rate",
     "calculate_acgme_compliance_rate",
-    "calculate_preference_satisfaction",
     "calculate_consecutive_duty_stats",
+    "calculate_coverage_rate",
+    "calculate_fairness_index",
+    "calculate_preference_satisfaction",
     "compute_stability_metrics",
 ]
