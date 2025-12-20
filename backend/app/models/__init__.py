@@ -69,6 +69,11 @@ from app.models.swap import SwapApproval, SwapRecord, SwapStatus, SwapType
 from app.models.token_blacklist import TokenBlacklist
 from app.models.user import User
 from app.models.calendar_subscription import CalendarSubscription
+from app.models.feature_flag import (
+    FeatureFlag,
+    FeatureFlagAudit,
+    FeatureFlagEvaluation,
+)
 
 __all__ = [
     "Person",
@@ -153,4 +158,8 @@ __all__ = [
     "CrossTrainingRecommendationRecord",
     # Calendar Subscription model
     "CalendarSubscription",
+    # Feature Flag models
+    "FeatureFlag",
+    "FeatureFlagEvaluation",
+    "FeatureFlagAudit",
 ]
