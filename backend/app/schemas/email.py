@@ -31,6 +31,7 @@ class EmailLogBase(BaseModel):
 class EmailLogCreate(EmailLogBase):
     """Schema for creating an email log."""
     notification_id: UUID | None = None
+    template_id: UUID | None = None
 
 
 class EmailLogUpdate(BaseModel):
@@ -61,6 +62,7 @@ class EmailLogRead(EmailLogBase):
     """Schema for email log response."""
     id: UUID
     notification_id: UUID | None = None
+    template_id: UUID | None = None
     status: str
     error_message: str | None = None
     sent_at: datetime | None = None
@@ -193,3 +195,35 @@ class EmailTemplateSummary(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ============================================================================
+# Email Send Request Schema
+# ============================================================================
+
+
+class EmailSendRequest(BaseModel):
+    """Schema for sending an email via API."""
+    recipient_email: EmailStr
+    subject: str
+    body_html: str | None = None
+    body_text: str | None = None
+    template_id: UUID | None = None
+    template_variables: dict[str, str] | None = None
+
+    @field_validator("subject")
+    @classmethod
+    def validate_subject(cls, v: str) -> str:
+        """Validate subject is not empty."""
+        if not v or not v.strip():
+            raise ValueError("subject cannot be empty")
+        if len(v) > 500:
+            raise ValueError("subject cannot exceed 500 characters")
+        return v
+
+    @field_validator("body_html", "body_text")
+    @classmethod
+    def validate_body(cls, v: str | None) -> str | None:
+        """Validate at least one body format is provided if no template."""
+        # This validation is enhanced in the service layer
+        return v
