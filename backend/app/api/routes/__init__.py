@@ -8,6 +8,7 @@ from app.api.routes import (
     assignments,
     audit,
     auth,
+    batch,
     blocks,
     calendar,
     certifications,
@@ -19,9 +20,11 @@ from app.api.routes import (
     fmit_timeline,
     leave,
     me_dashboard,
+    metrics,
     people,
     portal,
     procedures,
+    rate_limit,
     resilience,
     role_views,
     rotation_templates,
@@ -41,6 +44,7 @@ api_router.include_router(blocks.router, prefix="/blocks", tags=["blocks"])
 api_router.include_router(academic_blocks.router, prefix="/academic-blocks", tags=["academic-blocks"])
 api_router.include_router(rotation_templates.router, prefix="/rotation-templates", tags=["rotation-templates"])
 api_router.include_router(assignments.router, prefix="/assignments", tags=["assignments"])
+api_router.include_router(batch.router, prefix="/batch", tags=["batch"])
 api_router.include_router(absences.router, prefix="/absences", tags=["absences"])
 api_router.include_router(schedule.router, prefix="/schedule", tags=["schedule"])
 api_router.include_router(settings.router, prefix="/settings", tags=["settings"])
@@ -57,6 +61,7 @@ api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
 api_router.include_router(analytics.router, tags=["analytics"])
 api_router.include_router(visualization.router, prefix="/visualization", tags=["visualization"])
 api_router.include_router(unified_heatmap.router, prefix="/unified-heatmap", tags=["unified-heatmap"])
+api_router.include_router(rate_limit.router, prefix="/rate-limit", tags=["rate-limit"])
 # FMIT scheduling routes
 api_router.include_router(swap.router)  # prefix="/swaps" defined in router
 api_router.include_router(leave.router)  # prefix="/leave" defined in router
@@ -66,4 +71,5 @@ api_router.include_router(fmit_timeline.router, prefix="/fmit_timeline", tags=["
 api_router.include_router(conflict_resolution.router, prefix="/conflicts", tags=["conflict-resolution"])
 api_router.include_router(daily_manifest.router, prefix="/assignments", tags=["daily-manifest"])
 api_router.include_router(role_views.router, prefix="/views", tags=["role-views"])
+api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 api_router.include_router(ws.router, tags=["websocket"])
