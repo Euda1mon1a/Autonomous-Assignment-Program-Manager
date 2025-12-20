@@ -84,9 +84,11 @@ reportlab==4.4.6
 python-docx==1.2.0
 icalendar==6.1.0
 
-***REMOVED*** Background Tasks
+***REMOVED*** Background Tasks & Scheduling
 celery==5.6.0
 redis==7.1.0
+apscheduler>=3.10.0  ***REMOVED*** Advanced job scheduling
+croniter>=2.0.0  ***REMOVED*** Cron expression parsing
 
 ***REMOVED*** Development Tools
 black==25.12.0
