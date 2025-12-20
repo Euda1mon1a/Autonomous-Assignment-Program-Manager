@@ -126,6 +126,21 @@ class Settings(BaseSettings):
     TELEMETRY_TRACE_REDIS: bool = True  # Enable Redis tracing
     TELEMETRY_TRACE_HTTP: bool = True  # Enable HTTP client tracing
 
+    # Shadow Traffic Configuration
+    SHADOW_TRAFFIC_ENABLED: bool = False  # Enable shadow traffic duplication
+    SHADOW_TRAFFIC_URL: str = ""  # Shadow service base URL
+    SHADOW_SAMPLING_RATE: float = 0.1  # Percentage of requests to shadow (0.0-1.0)
+    SHADOW_TIMEOUT: float = 10.0  # Shadow request timeout in seconds
+    SHADOW_MAX_CONCURRENT: int = 10  # Maximum concurrent shadow requests
+    SHADOW_VERIFY_SSL: bool = True  # Verify SSL certificates for shadow service
+    SHADOW_ALERT_ON_DIFF: bool = True  # Alert on response differences
+    SHADOW_DIFF_THRESHOLD: str = "medium"  # Threshold for alerting: low, medium, high, critical
+    SHADOW_RETRY_ON_FAILURE: bool = False  # Retry failed shadow requests
+    SHADOW_MAX_RETRIES: int = 2  # Maximum retry attempts
+    SHADOW_INCLUDE_HEADERS: bool = True  # Include original headers in shadow requests
+    SHADOW_HEALTH_CHECK_INTERVAL: int = 60  # Health check interval in seconds
+    SHADOW_METRICS_RETENTION_HOURS: int = 24  # Metrics retention period
+
     @field_validator('SECRET_KEY', 'WEBHOOK_SECRET')
     @classmethod
     def validate_secrets(cls, v: str, info) -> str:
@@ -179,4 +194,39 @@ def get_resilience_config():
         contingency_analysis_interval_hours=settings.RESILIENCE_CONTINGENCY_ANALYSIS_INTERVAL_HOURS,
         alert_recipients=settings.RESILIENCE_ALERT_RECIPIENTS,
         escalation_threshold=DefenseLevel.CONTAINMENT,
+    )
+
+
+def get_shadow_config():
+    """Get ShadowConfig from settings."""
+    from app.shadow.traffic import DiffSeverity, ShadowConfig
+
+    settings = get_settings()
+
+    # Map string threshold to enum
+    threshold_map = {
+        "none": DiffSeverity.NONE,
+        "low": DiffSeverity.LOW,
+        "medium": DiffSeverity.MEDIUM,
+        "high": DiffSeverity.HIGH,
+        "critical": DiffSeverity.CRITICAL,
+    }
+    diff_threshold = threshold_map.get(
+        settings.SHADOW_DIFF_THRESHOLD.lower(), DiffSeverity.MEDIUM
+    )
+
+    return ShadowConfig(
+        enabled=settings.SHADOW_TRAFFIC_ENABLED,
+        shadow_url=settings.SHADOW_TRAFFIC_URL,
+        sampling_rate=settings.SHADOW_SAMPLING_RATE,
+        timeout=settings.SHADOW_TIMEOUT,
+        max_concurrent=settings.SHADOW_MAX_CONCURRENT,
+        verify_ssl=settings.SHADOW_VERIFY_SSL,
+        alert_on_diff=settings.SHADOW_ALERT_ON_DIFF,
+        diff_threshold=diff_threshold,
+        retry_on_failure=settings.SHADOW_RETRY_ON_FAILURE,
+        max_retries=settings.SHADOW_MAX_RETRIES,
+        include_headers=settings.SHADOW_INCLUDE_HEADERS,
+        health_check_interval=settings.SHADOW_HEALTH_CHECK_INTERVAL,
+        metrics_retention_hours=settings.SHADOW_METRICS_RETENTION_HOURS,
     )
