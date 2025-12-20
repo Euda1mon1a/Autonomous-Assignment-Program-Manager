@@ -83,6 +83,29 @@ from app.cqrs.queries import (
     ReadModel,
     ReadModelProjector,
 )
+from app.cqrs.projection_builder import (
+    BaseProjection,
+    BuildMode,
+    BuildResult,
+    ProjectionBuilder,
+    ProjectionBuildLog,
+    ProjectionCheckpoint,
+    ProjectionDefinition,
+    ProjectionError,
+    ProjectionMetadata,
+    ProjectionNotFoundError,
+    ProjectionStatus,
+)
+from app.cqrs.read_model_sync import (
+    ConflictResolutionStrategy,
+    ReadModelSyncService,
+    SyncCheckpoint,
+    SyncConflict,
+    SyncMetrics,
+    SyncPriority,
+    SyncStatus,
+    create_sync_service,
+)
 
 __all__ = [
     # Commands
@@ -98,4 +121,25 @@ __all__ = [
     "QueryResult",
     "ReadModel",
     "ReadModelProjector",
+    # Projection Builder
+    "BaseProjection",
+    "BuildMode",
+    "BuildResult",
+    "ProjectionBuilder",
+    "ProjectionBuildLog",
+    "ProjectionCheckpoint",
+    "ProjectionDefinition",
+    "ProjectionError",
+    "ProjectionMetadata",
+    "ProjectionNotFoundError",
+    "ProjectionStatus",
+    # Read Model Sync
+    "ConflictResolutionStrategy",
+    "ReadModelSyncService",
+    "SyncCheckpoint",
+    "SyncConflict",
+    "SyncMetrics",
+    "SyncPriority",
+    "SyncStatus",
+    "create_sync_service",
 ]

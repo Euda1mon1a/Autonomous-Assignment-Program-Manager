@@ -83,6 +83,15 @@ from app.events.replay_service import (
     create_replay_from_timestamp,
     replay_aggregate_history,
 )
+from app.events.snapshot_store import (
+    SnapshotStore,
+    SnapshotConfig,
+    SnapshotMetadata,
+    SnapshotValidationResult,
+    get_snapshot_store,
+    auto_snapshot_aggregate,
+    cleanup_all_old_snapshots,
+)
 
 __all__ = [
     # Core components
@@ -90,6 +99,14 @@ __all__ = [
     "EventStore",
     "get_event_bus",
     "get_event_store",
+    # Snapshot store
+    "SnapshotStore",
+    "SnapshotConfig",
+    "SnapshotMetadata",
+    "SnapshotValidationResult",
+    "get_snapshot_store",
+    "auto_snapshot_aggregate",
+    "cleanup_all_old_snapshots",
     # Base types
     "BaseEvent",
     "EventMetadata",
