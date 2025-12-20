@@ -5,17 +5,15 @@ Handles grouping of daily scheduling blocks into rotation periods
 and generating block matrix views for program coordinators.
 """
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import and_, func
+from sqlalchemy import and_
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.assignment import Assignment
 from app.models.block import Block
-from app.models.person import Person
-from app.models.rotation_template import RotationTemplate
 from app.repositories.assignment import AssignmentRepository
 from app.repositories.block import BlockRepository
 from app.repositories.person import PersonRepository

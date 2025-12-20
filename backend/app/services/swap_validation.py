@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 
 @dataclass
 class ValidationError:
+    """Represents a single validation error or warning."""
+
     code: str
     message: str
     severity: str = "error"
@@ -19,6 +21,8 @@ class ValidationError:
 
 @dataclass
 class SwapValidationResult:
+    """Result of swap request validation."""
+
     valid: bool
     errors: list[ValidationError]
     warnings: list[ValidationError]

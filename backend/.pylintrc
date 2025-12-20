@@ -1,0 +1,127 @@
+[MAIN]
+# Files or directories to be skipped
+ignore=alembic,tests,venv,.venv,__pycache__
+
+# Use multiple processes for faster linting
+jobs=0
+
+# Python version for type inference
+py-version=3.11
+
+# Minimum line similarity for code duplication detection
+min-similarity-lines=10
+
+[MESSAGES CONTROL]
+# Disable messages that are not relevant for this project
+disable=
+    # Import errors - dependencies may not be installed in lint environment
+    import-error,
+    # Too strict for complex business logic services
+    too-many-arguments,
+    too-many-positional-arguments,
+    too-many-locals,
+    too-many-instance-attributes,
+    too-many-branches,
+    too-many-return-statements,
+    too-many-lines,
+    too-many-nested-blocks,
+    too-few-public-methods,
+    # Code duplication - handled at code review level
+    duplicate-code,
+    # Import organization - handled by ruff/isort
+    wrong-import-order,
+    wrong-import-position,
+    # These are design decisions
+    too-many-statements,
+    too-many-public-methods,
+    # Lazy/conditional imports are intentional
+    import-outside-toplevel,
+    # f-strings in logging is modern Python style
+    logging-fstring-interpolation,
+    # Sometimes else after return is more readable
+    no-else-return,
+    # Intentional for module-level singletons
+    global-statement,
+    # Often intentional for API consistency/interface compliance
+    unused-argument,
+    # Allow catching broad exceptions for error handling
+    broad-exception-caught,
+    # Line length handled by black/ruff
+    line-too-long,
+
+[FORMAT]
+# Maximum number of characters on a single line
+max-line-length=120
+
+# Expected format of line ending
+expected-line-ending-format=LF
+
+[DESIGN]
+# Maximum number of arguments for function / method
+max-args=12
+
+# Maximum number of locals for function / method
+max-locals=25
+
+# Maximum number of return / yield for function / method
+max-returns=10
+
+# Maximum number of branch for function / method
+max-branches=20
+
+# Maximum number of attributes for a class
+max-attributes=20
+
+[BASIC]
+# Good variable names which should always be accepted
+good-names=i,j,k,ex,_,db,id,pk,dt,df,n,x,y,ax,f,e,ws,X,F
+
+# Regular expression matching correct variable names
+variable-rgx=[a-z_][a-z0-9_]{0,30}$
+
+# Regular expression matching correct constant names
+const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))$
+
+# Regular expression matching correct function names
+function-rgx=[a-z_][a-z0-9_]{2,50}$
+
+# Regular expression matching correct method names
+method-rgx=[a-z_][a-z0-9_]{2,50}$
+
+# Regular expression matching correct class names
+class-rgx=[A-Z_][a-zA-Z0-9]+$
+
+[LOGGING]
+# Allow f-strings in logging (modern Python style)
+logging-format-style=new
+
+[SIMILARITIES]
+# Minimum lines number of a similarity
+min-similarity-lines=10
+
+# Ignore comments when computing similarities
+ignore-comments=yes
+
+# Ignore docstrings when computing similarities
+ignore-docstrings=yes
+
+# Ignore imports when computing similarities
+ignore-imports=yes
+
+[TYPECHECK]
+# List of decorators that produce context managers
+contextmanager-decorators=contextlib.contextmanager
+
+# List of members which are set dynamically
+generated-members=
+
+[VARIABLES]
+# List of additional names supposed to be defined in builtins
+additional-builtins=
+
+# A regular expression matching the name of dummy variables
+dummy-variables-rgx=_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_
+
+[EXCEPTIONS]
+# Exceptions that will emit a warning when caught
+overgeneral-exceptions=builtins.BaseException

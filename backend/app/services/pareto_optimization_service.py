@@ -15,7 +15,6 @@ from pymoo.termination import get_termination
 from pymoo.indicators.hv import HV
 from sqlalchemy.orm import Session
 
-from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.repositories.assignment import AssignmentRepository
