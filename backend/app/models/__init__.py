@@ -98,6 +98,11 @@ from app.models.schema_version import (
     SchemaStatus,
     SchemaVersion,
 )
+from app.models.state_machine import (
+    StateMachineInstance,
+    StateMachineStatus,
+    StateMachineTransition,
+)
 from app.webhooks.models import (
     Webhook,
     WebhookDeadLetter,
@@ -225,4 +230,8 @@ __all__ = [
     "SchemaChangeEvent",
     "SchemaCompatibilityType",
     "SchemaStatus",
+    # State Machine models
+    "StateMachineInstance",
+    "StateMachineTransition",
+    "StateMachineStatus",
 ]
