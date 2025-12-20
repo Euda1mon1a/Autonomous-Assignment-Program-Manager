@@ -149,8 +149,9 @@ export function ExportPanel({
 
     try {
       await exportData(data, options);
-    } catch {
+    } catch (error) {
       // Error handled by hook
+      console.error('Export failed:', error);
     }
   }, [data, columns, filename, title, subtitle, includeHeaders, exportData]);
 
@@ -403,8 +404,9 @@ export function QuickExportButton({
 
     try {
       await exportData(data, options);
-    } catch {
+    } catch (error) {
       // Error handled by hook
+      console.error('Export failed:', error);
     }
   };
 
