@@ -11,10 +11,12 @@ This document tracks all TODO, FIXME, and HACK comments found in the codebase th
 | Leave Routes TODOs | 2 | Medium | 2/2 ✅ |
 | Portal Routes TODOs | 2 | Low | 2/2 ✅ |
 | Other TODOs | 1 | Low | 1/1 ✅ |
-| **Total** | **13** | - | **13/13 (100%)** ✅ |
+| Experimental Benchmarks | 9 | Low | 9/9 ✅ |
+| **Total** | **22** | - | **22/22 (100%)** ✅ |
 
-> **Status:** All backend implementation TODOs have been resolved as of 2025-12-18.
-> See `SESSION_8_PARALLEL_PRIORITIES.md` for next improvement priorities.
+> **Status:** All backend implementation TODOs have been resolved.
+> - Core backend TODOs: Completed 2025-12-18 (Session 8)
+> - Experimental benchmarks: Completed 2025-12-20 (Session 11)
 
 ---
 
@@ -165,6 +167,97 @@ This document tracks all TODO, FIXME, and HACK comments found in the codebase th
 
 ---
 
+## Low Priority - Experimental Benchmarks (Session 11)
+
+### 13. Memory Tracking ✅ COMPLETED
+**Location:** `backend/experimental/benchmarks/solver_comparison.py:56`
+**Status:** COMPLETED (2025-12-20)
+**Description:** Implemented memory tracking for solver benchmarks using tracemalloc.
+**Implementation:**
+- Start tracemalloc before solver execution
+- Capture peak memory usage after completion
+- Convert bytes to MB for reporting
+**Assignee:** Session 11
+
+### 14. Violation Counting ✅ COMPLETED
+**Location:** `backend/experimental/benchmarks/solver_comparison.py:64`
+**Status:** COMPLETED (2025-12-20)
+**Description:** Implemented flexible constraint violation counting from solver results.
+**Implementation:**
+- Check multiple attributes (violations, constraint_violations, statistics)
+- Handle both list and integer violation formats
+- Default to 0 for successful results
+**Assignee:** Session 11
+
+### 15. Coverage Calculation ✅ COMPLETED
+**Location:** `backend/experimental/benchmarks/solver_comparison.py:69`
+**Status:** COMPLETED (2025-12-20)
+**Description:** Implemented coverage score calculation with multiple fallbacks.
+**Implementation:**
+- Check coverage_score, coverage, statistics dict
+- Calculate from assignments/total_blocks if available
+- Default to 1.0 for successful results
+**Assignee:** Session 11
+
+### 16. Pathway Validation Logic ✅ COMPLETED
+**Location:** `backend/experimental/benchmarks/pathway_validation.py:46`
+**Status:** COMPLETED (2025-12-20)
+**Description:** Implemented complete pathway validation for scheduling optimizations.
+**Implementation:**
+- Validate pathway structure and state transitions
+- Compare initial and final states
+- Return detailed validation results
+**Assignee:** Session 11
+
+### 17. Pathway Step Counting ✅ COMPLETED
+**Location:** `backend/experimental/benchmarks/pathway_validation.py:52`
+**Status:** COMPLETED (2025-12-20)
+**Description:** Count pathway steps from various result structures.
+**Implementation:**
+- Extract from pathway.steps, pathway.transitions, dict keys, or list length
+- Handle both object and dict pathway representations
+**Assignee:** Session 11
+
+### 18. Barrier Counting ✅ COMPLETED
+**Location:** `backend/experimental/benchmarks/pathway_validation.py:53`
+**Status:** COMPLETED (2025-12-20)
+**Description:** Count barriers bypassed during pathway optimization.
+**Implementation:**
+- Extract from pathway.barriers_bypassed or pathway.barriers
+- Handle various result structures
+**Assignee:** Session 11
+
+### 19. Catalyst Listing ✅ COMPLETED
+**Location:** `backend/experimental/benchmarks/pathway_validation.py:54`
+**Status:** COMPLETED (2025-12-20)
+**Description:** List catalysts used in pathway optimization.
+**Implementation:**
+- Extract from pathway.catalysts_used or pathway.catalysts
+- Return empty list if not found
+**Assignee:** Session 11
+
+### 20. Baseline Solver Invocation ✅ COMPLETED
+**Location:** `backend/experimental/harness.py:188`
+**Status:** COMPLETED (2025-12-20)
+**Description:** Implement baseline solver invocation for benchmarking.
+**Implementation:**
+- Attempt to use SolverBenchmark with mock context
+- Graceful fallback on import errors
+- Return baseline results for comparison
+**Assignee:** Session 11
+
+### 21. Experimental Subprocess Execution ✅ COMPLETED
+**Location:** `backend/experimental/harness.py:214`
+**Status:** COMPLETED (2025-12-20)
+**Description:** Implement isolated subprocess execution for experimental solvers.
+**Implementation:**
+- Create temp directory for isolated execution
+- Run solver in subprocess with JSON input/output
+- Parse and return experimental results
+**Assignee:** Session 11
+
+---
+
 ## Reference Documentation
 
 ### Related Files
@@ -196,6 +289,15 @@ This document tracks all TODO, FIXME, and HACK comments found in the codebase th
 | #10 Background Conflicts | ✅ Completed | Terminal 3 | 2025-12-18 |
 | #11 Conflict Table Check | ✅ Completed | Terminal 2 | 2025-12-18 |
 | #12 Candidate Notifications | ✅ Completed | Terminal 2 | 2025-12-18 |
+| #13 Memory Tracking | ✅ Completed | Session 11 | 2025-12-20 |
+| #14 Violation Counting | ✅ Completed | Session 11 | 2025-12-20 |
+| #15 Coverage Calculation | ✅ Completed | Session 11 | 2025-12-20 |
+| #16 Pathway Validation | ✅ Completed | Session 11 | 2025-12-20 |
+| #17 Step Counting | ✅ Completed | Session 11 | 2025-12-20 |
+| #18 Barrier Counting | ✅ Completed | Session 11 | 2025-12-20 |
+| #19 Catalyst Listing | ✅ Completed | Session 11 | 2025-12-20 |
+| #20 Baseline Solver | ✅ Completed | Session 11 | 2025-12-20 |
+| #21 Subprocess Execution | ✅ Completed | Session 11 | 2025-12-20 |
 
 ---
 
