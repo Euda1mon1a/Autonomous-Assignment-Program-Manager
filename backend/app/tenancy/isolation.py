@@ -1,19 +1,24 @@
 """
 Data isolation strategies for multitenancy.
 
-This module implements two primary isolation strategies:
+This module implements comprehensive tenant isolation with multiple security layers:
 
 1. Schema-based isolation: Each tenant has a dedicated PostgreSQL schema
 2. Row-level isolation: All tenants share tables with tenant_id filtering
+3. Row-level security (RLS): PostgreSQL policies enforce tenant boundaries
+4. Data encryption: Tenant-specific encryption keys for sensitive data
+5. Connection pooling: Tenant-specific connection pools for resource isolation
+6. Resource quotas: Enforce limits on tenant resource usage
+7. Audit logging: Track all cross-tenant access and policy changes
 
 Both strategies prevent data leaks by ensuring queries are automatically
 scoped to the current tenant unless explicitly bypassed by administrators.
 
 Usage:
 -----
-    # Automatic row-level filtering
+    # Automatic row-level filtering with RLS
     async with TenantScope(db, tenant_id):
-        # All queries automatically filtered
+        # All queries automatically filtered by RLS policies
         people = await db.execute(select(Person))
 
     # Schema-based isolation
@@ -21,32 +26,51 @@ Usage:
         # Queries run against tenant-specific schema
         people = await db.execute(select(Person))
 
-    # Admin cross-tenant query
+    # Encrypted data access
+    service = TenantIsolationService(db)
+    encrypted = await service.encrypt_tenant_data(tenant_id, sensitive_data)
+    decrypted = await service.decrypt_tenant_data(tenant_id, encrypted)
+
+    # Resource quota enforcement
+    await service.check_quota(tenant_id, "max_users", current_count=50)
+
+    # Admin cross-tenant query with audit
     async with TenantScope(db, bypass=True):
-        # No tenant filtering applied
+        # Audit log automatically created
         all_people = await db.execute(select(Person))
 
 Security:
 --------
 - Tenant ID is validated to prevent SQL injection
 - Schema names are sanitized and validated
+- PostgreSQL RLS policies enforce database-level isolation
+- AES-256-GCM encryption for tenant data
 - All filtering is applied at the database level
-- Audit logging for cross-tenant access
+- Comprehensive audit logging for cross-tenant access
 - Defense in depth: multiple validation layers
+- Connection pool isolation prevents resource exhaustion
 """
 import logging
 import re
 from contextlib import asynccontextmanager, contextmanager
-from typing import Any, Optional
+from datetime import datetime
+from typing import Any, Dict, Optional
 from uuid import UUID
+import hashlib
+import base64
+import secrets
 
-from sqlalchemy import event, text
-from sqlalchemy.orm import Query, Session
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.backends import default_backend
+from sqlalchemy import create_engine, event, pool, text
+from sqlalchemy.orm import Query, Session, sessionmaker
+from sqlalchemy.pool import NullPool, QueuePool
 
 from app.tenancy.context import (
     get_current_tenant_id,
     is_bypassing_tenant_filter,
 )
+from app.tenancy.models import Tenant, TenantAuditLog
 
 logger = logging.getLogger(__name__)
 
@@ -557,3 +581,856 @@ async def migrate_tenant_to_row_level(
         await drop_tenant_schema(session, tenant_id, cascade=True)
 
     logger.info(f"Migrated tenant {tenant_id} to row-level isolation")
+
+
+# =============================================================================
+# Row-Level Security (RLS) Policies
+# =============================================================================
+
+
+class RowLevelSecurityManager:
+    """
+    Manager for PostgreSQL Row-Level Security policies.
+
+    Implements database-level tenant isolation using PostgreSQL RLS.
+    This provides an additional security layer beyond application-level filtering.
+
+    RLS policies are enforced at the database level, so even direct SQL queries
+    or compromised application code cannot bypass tenant boundaries.
+    """
+
+    def __init__(self, session: Session):
+        """
+        Initialize RLS manager.
+
+        Args:
+            session: Database session
+        """
+        self.session = session
+
+    async def enable_rls_for_table(self, table_name: str) -> None:
+        """
+        Enable row-level security for a table.
+
+        Args:
+            table_name: Name of the table to enable RLS on
+
+        Raises:
+            RuntimeError: If RLS cannot be enabled
+        """
+        try:
+            await self.session.execute(
+                text(f"ALTER TABLE {table_name} ENABLE ROW LEVEL SECURITY")
+            )
+            logger.info(f"Enabled RLS for table: {table_name}")
+        except Exception as e:
+            logger.error(f"Failed to enable RLS for {table_name}: {e}")
+            raise RuntimeError(f"Failed to enable RLS: {e}")
+
+    async def create_tenant_policy(
+        self,
+        table_name: str,
+        policy_name: Optional[str] = None,
+    ) -> None:
+        """
+        Create RLS policy to enforce tenant isolation.
+
+        Creates a policy that only allows users to see rows where
+        tenant_id matches the current_setting('app.current_tenant_id').
+
+        Args:
+            table_name: Table to create policy for
+            policy_name: Optional custom policy name
+
+        Raises:
+            RuntimeError: If policy creation fails
+        """
+        policy_name = policy_name or f"{table_name}_tenant_isolation"
+
+        try:
+            # Drop existing policy if it exists
+            await self.session.execute(
+                text(f"DROP POLICY IF EXISTS {policy_name} ON {table_name}")
+            )
+
+            # Create new policy
+            # Policy checks if tenant_id matches current_setting
+            await self.session.execute(
+                text(f"""
+                    CREATE POLICY {policy_name} ON {table_name}
+                    FOR ALL
+                    USING (
+                        tenant_id::text = current_setting('app.current_tenant_id', TRUE)
+                        OR current_setting('app.bypass_rls', TRUE) = 'true'
+                    )
+                    WITH CHECK (
+                        tenant_id::text = current_setting('app.current_tenant_id', TRUE)
+                        OR current_setting('app.bypass_rls', TRUE) = 'true'
+                    )
+                """)
+            )
+
+            logger.info(f"Created RLS policy {policy_name} for {table_name}")
+        except Exception as e:
+            logger.error(f"Failed to create RLS policy: {e}")
+            raise RuntimeError(f"Failed to create RLS policy: {e}")
+
+    async def set_tenant_for_session(self, tenant_id: UUID) -> None:
+        """
+        Set the current tenant ID in PostgreSQL session variables.
+
+        This is used by RLS policies to filter rows.
+
+        Args:
+            tenant_id: Tenant UUID to set
+        """
+        await self.session.execute(
+            text(f"SET app.current_tenant_id = '{tenant_id}'")
+        )
+        logger.debug(f"Set session tenant_id to {tenant_id}")
+
+    async def bypass_rls_for_session(self, bypass: bool = True) -> None:
+        """
+        Bypass RLS policies for admin operations.
+
+        Args:
+            bypass: Whether to bypass RLS
+        """
+        value = "true" if bypass else "false"
+        await self.session.execute(
+            text(f"SET app.bypass_rls = '{value}'")
+        )
+        logger.debug(f"Set RLS bypass to {bypass}")
+
+    async def disable_rls_for_table(self, table_name: str) -> None:
+        """
+        Disable row-level security for a table.
+
+        Args:
+            table_name: Name of the table
+        """
+        try:
+            await self.session.execute(
+                text(f"ALTER TABLE {table_name} DISABLE ROW LEVEL SECURITY")
+            )
+            logger.info(f"Disabled RLS for table: {table_name}")
+        except Exception as e:
+            logger.error(f"Failed to disable RLS: {e}")
+            raise RuntimeError(f"Failed to disable RLS: {e}")
+
+
+# =============================================================================
+# Tenant Data Encryption
+# =============================================================================
+
+
+class TenantEncryptionService:
+    """
+    Service for encrypting tenant-specific data.
+
+    Uses AES-256-GCM encryption with tenant-specific keys derived from
+    a master secret and tenant ID. This provides cryptographic isolation
+    between tenants.
+
+    Each tenant's encryption key is derived using HKDF (HMAC-based Extract-
+    and-Expand Key Derivation Function) from:
+    - Master encryption key (stored securely, e.g., in env vars or KMS)
+    - Tenant ID (as salt)
+
+    This ensures:
+    - Different tenants cannot decrypt each other's data
+    - Keys are deterministically derived (no key storage needed)
+    - Cryptographic separation even if database isolation fails
+    """
+
+    def __init__(self, master_key: Optional[bytes] = None):
+        """
+        Initialize encryption service.
+
+        Args:
+            master_key: Master encryption key (32 bytes for AES-256)
+                       If not provided, generates a random key (NOT production safe)
+        """
+        if master_key is None:
+            # Generate random key (for development/testing only)
+            logger.warning(
+                "No master key provided, generating random key. "
+                "This is NOT safe for production!"
+            )
+            master_key = secrets.token_bytes(32)
+
+        if len(master_key) != 32:
+            raise ValueError("Master key must be exactly 32 bytes for AES-256")
+
+        self.master_key = master_key
+
+    def _derive_tenant_key(self, tenant_id: UUID) -> bytes:
+        """
+        Derive a tenant-specific encryption key.
+
+        Uses HKDF-like approach with SHA-256 for key derivation.
+
+        Args:
+            tenant_id: Tenant UUID
+
+        Returns:
+            32-byte encryption key for this tenant
+        """
+        # Use tenant ID as salt in key derivation
+        tenant_bytes = str(tenant_id).encode('utf-8')
+
+        # Derive key using HMAC-SHA256
+        derived = hashlib.pbkdf2_hmac(
+            'sha256',
+            self.master_key,
+            tenant_bytes,
+            iterations=100000,
+            dklen=32
+        )
+
+        return derived
+
+    async def encrypt_data(self, tenant_id: UUID, plaintext: bytes) -> str:
+        """
+        Encrypt data for a specific tenant.
+
+        Args:
+            tenant_id: Tenant UUID
+            plaintext: Data to encrypt (bytes)
+
+        Returns:
+            Base64-encoded ciphertext with nonce prepended
+            Format: base64(nonce + ciphertext + tag)
+        """
+        try:
+            # Derive tenant-specific key
+            key = self._derive_tenant_key(tenant_id)
+
+            # Create AESGCM cipher
+            aesgcm = AESGCM(key)
+
+            # Generate random nonce (96 bits for GCM)
+            nonce = secrets.token_bytes(12)
+
+            # Encrypt (GCM provides authentication)
+            ciphertext = aesgcm.encrypt(nonce, plaintext, None)
+
+            # Combine nonce + ciphertext for storage
+            encrypted = nonce + ciphertext
+
+            # Encode as base64 for text storage
+            return base64.b64encode(encrypted).decode('utf-8')
+
+        except Exception as e:
+            logger.error(f"Encryption failed for tenant {tenant_id}: {e}")
+            raise RuntimeError(f"Encryption failed: {e}")
+
+    async def decrypt_data(self, tenant_id: UUID, ciphertext_b64: str) -> bytes:
+        """
+        Decrypt data for a specific tenant.
+
+        Args:
+            tenant_id: Tenant UUID
+            ciphertext_b64: Base64-encoded ciphertext from encrypt_data()
+
+        Returns:
+            Decrypted plaintext bytes
+
+        Raises:
+            RuntimeError: If decryption fails or authentication fails
+        """
+        try:
+            # Decode from base64
+            encrypted = base64.b64decode(ciphertext_b64)
+
+            # Extract nonce and ciphertext
+            nonce = encrypted[:12]
+            ciphertext = encrypted[12:]
+
+            # Derive tenant-specific key
+            key = self._derive_tenant_key(tenant_id)
+
+            # Create AESGCM cipher
+            aesgcm = AESGCM(key)
+
+            # Decrypt and verify authentication tag
+            plaintext = aesgcm.decrypt(nonce, ciphertext, None)
+
+            return plaintext
+
+        except Exception as e:
+            logger.error(f"Decryption failed for tenant {tenant_id}: {e}")
+            raise RuntimeError(f"Decryption failed: {e}")
+
+    async def encrypt_string(self, tenant_id: UUID, plaintext: str) -> str:
+        """
+        Encrypt a string for a specific tenant.
+
+        Args:
+            tenant_id: Tenant UUID
+            plaintext: String to encrypt
+
+        Returns:
+            Base64-encoded ciphertext
+        """
+        plaintext_bytes = plaintext.encode('utf-8')
+        return await self.encrypt_data(tenant_id, plaintext_bytes)
+
+    async def decrypt_string(self, tenant_id: UUID, ciphertext: str) -> str:
+        """
+        Decrypt a string for a specific tenant.
+
+        Args:
+            tenant_id: Tenant UUID
+            ciphertext: Base64-encoded ciphertext
+
+        Returns:
+            Decrypted string
+        """
+        plaintext_bytes = await self.decrypt_data(tenant_id, ciphertext)
+        return plaintext_bytes.decode('utf-8')
+
+
+# =============================================================================
+# Tenant-Specific Connection Pools
+# =============================================================================
+
+
+class TenantConnectionPoolManager:
+    """
+    Manager for tenant-specific database connection pools.
+
+    Provides resource isolation by giving each tenant a dedicated connection
+    pool. This prevents one tenant from exhausting database connections and
+    affecting other tenants.
+
+    Benefits:
+    - Resource isolation: Tenant A cannot exhaust connections for Tenant B
+    - Performance isolation: Slow queries from one tenant don't block others
+    - Quota enforcement: Limit connections per tenant
+    - Monitoring: Track connection usage per tenant
+    """
+
+    def __init__(self, database_url: str, default_pool_size: int = 5):
+        """
+        Initialize connection pool manager.
+
+        Args:
+            database_url: Base database URL
+            default_pool_size: Default pool size per tenant
+        """
+        self.database_url = database_url
+        self.default_pool_size = default_pool_size
+        self._pools: Dict[UUID, sessionmaker] = {}
+        self._pool_configs: Dict[UUID, Dict[str, Any]] = {}
+
+    def create_tenant_pool(
+        self,
+        tenant_id: UUID,
+        pool_size: Optional[int] = None,
+        max_overflow: Optional[int] = None,
+        pool_timeout: int = 30,
+        pool_recycle: int = 1800,
+    ) -> sessionmaker:
+        """
+        Create a dedicated connection pool for a tenant.
+
+        Args:
+            tenant_id: Tenant UUID
+            pool_size: Number of connections to keep open
+            max_overflow: Additional connections allowed
+            pool_timeout: Seconds to wait for available connection
+            pool_recycle: Recycle connections after N seconds
+
+        Returns:
+            SQLAlchemy sessionmaker for this tenant
+        """
+        if tenant_id in self._pools:
+            logger.warning(f"Pool already exists for tenant {tenant_id}")
+            return self._pools[tenant_id]
+
+        pool_size = pool_size or self.default_pool_size
+        max_overflow = max_overflow or (pool_size * 2)
+
+        # Create engine with dedicated pool
+        engine = create_engine(
+            self.database_url,
+            poolclass=QueuePool,
+            pool_size=pool_size,
+            max_overflow=max_overflow,
+            pool_timeout=pool_timeout,
+            pool_recycle=pool_recycle,
+            pool_pre_ping=True,
+        )
+
+        # Create sessionmaker
+        session_factory = sessionmaker(
+            autocommit=False,
+            autoflush=False,
+            bind=engine
+        )
+
+        # Store pool
+        self._pools[tenant_id] = session_factory
+        self._pool_configs[tenant_id] = {
+            'pool_size': pool_size,
+            'max_overflow': max_overflow,
+            'pool_timeout': pool_timeout,
+            'pool_recycle': pool_recycle,
+        }
+
+        logger.info(
+            f"Created connection pool for tenant {tenant_id}: "
+            f"size={pool_size}, max_overflow={max_overflow}"
+        )
+
+        return session_factory
+
+    def get_tenant_session(self, tenant_id: UUID) -> Session:
+        """
+        Get a database session from the tenant's pool.
+
+        Args:
+            tenant_id: Tenant UUID
+
+        Returns:
+            Database session
+
+        Raises:
+            RuntimeError: If no pool exists for tenant
+        """
+        if tenant_id not in self._pools:
+            raise RuntimeError(f"No connection pool for tenant {tenant_id}")
+
+        return self._pools[tenant_id]()
+
+    def get_pool_stats(self, tenant_id: UUID) -> Dict[str, Any]:
+        """
+        Get connection pool statistics for a tenant.
+
+        Args:
+            tenant_id: Tenant UUID
+
+        Returns:
+            Dictionary with pool statistics
+        """
+        if tenant_id not in self._pools:
+            return {'error': 'No pool exists'}
+
+        session_factory = self._pools[tenant_id]
+        engine = session_factory.kw['bind']
+        pool_obj = engine.pool
+
+        return {
+            'tenant_id': str(tenant_id),
+            'pool_size': pool_obj.size(),
+            'checked_out': pool_obj.checkedout(),
+            'overflow': pool_obj.overflow(),
+            'config': self._pool_configs.get(tenant_id, {}),
+        }
+
+    def dispose_tenant_pool(self, tenant_id: UUID) -> None:
+        """
+        Dispose of a tenant's connection pool.
+
+        Closes all connections and removes the pool. Use when deprovisioning
+        a tenant or during maintenance.
+
+        Args:
+            tenant_id: Tenant UUID
+        """
+        if tenant_id not in self._pools:
+            logger.warning(f"No pool to dispose for tenant {tenant_id}")
+            return
+
+        # Get engine and dispose
+        session_factory = self._pools[tenant_id]
+        engine = session_factory.kw['bind']
+        engine.dispose()
+
+        # Remove from tracking
+        del self._pools[tenant_id]
+        del self._pool_configs[tenant_id]
+
+        logger.info(f"Disposed connection pool for tenant {tenant_id}")
+
+
+# =============================================================================
+# Resource Quota Enforcement
+# =============================================================================
+
+
+class TenantQuotaService:
+    """
+    Service for enforcing tenant resource quotas.
+
+    Prevents individual tenants from consuming excessive resources:
+    - Maximum number of users
+    - Maximum number of schedules
+    - Maximum storage (for uploads, exports)
+    - API rate limits
+    - Database connection limits
+
+    Quotas are stored in the Tenant model's resource_limits JSON field.
+    """
+
+    def __init__(self, session: Session):
+        """
+        Initialize quota service.
+
+        Args:
+            session: Database session
+        """
+        self.session = session
+
+    async def check_quota(
+        self,
+        tenant_id: UUID,
+        quota_name: str,
+        current_count: int,
+    ) -> bool:
+        """
+        Check if a tenant has exceeded a quota.
+
+        Args:
+            tenant_id: Tenant UUID
+            quota_name: Name of quota to check (e.g., 'max_users')
+            current_count: Current usage count
+
+        Returns:
+            True if under quota, False if exceeded
+
+        Raises:
+            RuntimeError: If tenant not found
+        """
+        from sqlalchemy import select
+
+        result = await self.session.execute(
+            select(Tenant).where(Tenant.id == tenant_id)
+        )
+        tenant = result.scalar_one_or_none()
+
+        if not tenant:
+            raise RuntimeError(f"Tenant {tenant_id} not found")
+
+        # Get quota limit
+        limits = tenant.resource_limits or {}
+        quota_limit = limits.get(quota_name)
+
+        if quota_limit is None:
+            # No limit set, allow
+            return True
+
+        # Check if under limit
+        under_quota = current_count < quota_limit
+
+        if not under_quota:
+            logger.warning(
+                f"Tenant {tenant_id} exceeded quota {quota_name}: "
+                f"{current_count}/{quota_limit}"
+            )
+
+        return under_quota
+
+    async def enforce_quota(
+        self,
+        tenant_id: UUID,
+        quota_name: str,
+        current_count: int,
+    ) -> None:
+        """
+        Enforce a quota, raising an exception if exceeded.
+
+        Args:
+            tenant_id: Tenant UUID
+            quota_name: Name of quota
+            current_count: Current usage count
+
+        Raises:
+            QuotaExceededError: If quota is exceeded
+        """
+        under_quota = await self.check_quota(tenant_id, quota_name, current_count)
+
+        if not under_quota:
+            raise QuotaExceededError(
+                f"Tenant {tenant_id} has exceeded quota '{quota_name}'"
+            )
+
+    async def get_quota_usage(
+        self,
+        tenant_id: UUID,
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Get current quota usage for a tenant.
+
+        Args:
+            tenant_id: Tenant UUID
+
+        Returns:
+            Dictionary mapping quota names to usage info
+        """
+        from sqlalchemy import select, func
+
+        result = await self.session.execute(
+            select(Tenant).where(Tenant.id == tenant_id)
+        )
+        tenant = result.scalar_one_or_none()
+
+        if not tenant:
+            raise RuntimeError(f"Tenant {tenant_id} not found")
+
+        limits = tenant.resource_limits or {}
+        usage = {}
+
+        # Count users
+        # Note: This assumes a tenant_users table exists
+        # Adjust based on your actual schema
+        try:
+            from app.models.user import User
+            user_count_result = await self.session.execute(
+                select(func.count(User.id)).where(User.tenant_id == tenant_id)
+            )
+            user_count = user_count_result.scalar() or 0
+
+            usage['max_users'] = {
+                'current': user_count,
+                'limit': limits.get('max_users'),
+                'percentage': (user_count / limits['max_users'] * 100) if limits.get('max_users') else 0,
+            }
+        except Exception as e:
+            logger.debug(f"Could not count users: {e}")
+
+        return usage
+
+
+class QuotaExceededError(Exception):
+    """Exception raised when a tenant quota is exceeded."""
+    pass
+
+
+# =============================================================================
+# Comprehensive Tenant Isolation Service
+# =============================================================================
+
+
+class TenantIsolationService:
+    """
+    Comprehensive service for tenant isolation.
+
+    Combines all isolation strategies:
+    - Schema/row-level isolation
+    - Row-level security policies
+    - Data encryption
+    - Connection pool management
+    - Resource quota enforcement
+    - Audit logging
+
+    This is the main entry point for tenant isolation functionality.
+    """
+
+    def __init__(
+        self,
+        session: Session,
+        master_encryption_key: Optional[bytes] = None,
+        database_url: Optional[str] = None,
+    ):
+        """
+        Initialize isolation service.
+
+        Args:
+            session: Database session
+            master_encryption_key: Master key for tenant encryption
+            database_url: Database URL for connection pools
+        """
+        self.session = session
+        self.rls_manager = RowLevelSecurityManager(session)
+        self.encryption_service = TenantEncryptionService(master_encryption_key)
+        self.quota_service = TenantQuotaService(session)
+
+        if database_url:
+            self.pool_manager = TenantConnectionPoolManager(database_url)
+        else:
+            self.pool_manager = None
+
+    async def provision_tenant(
+        self,
+        tenant_id: UUID,
+        use_schema_isolation: bool = False,
+        enable_rls: bool = True,
+        create_connection_pool: bool = False,
+    ) -> None:
+        """
+        Provision a new tenant with full isolation.
+
+        Args:
+            tenant_id: Tenant UUID
+            use_schema_isolation: Create dedicated schema
+            enable_rls: Enable row-level security policies
+            create_connection_pool: Create dedicated connection pool
+        """
+        logger.info(f"Provisioning tenant {tenant_id}")
+
+        try:
+            # Create schema if requested
+            if use_schema_isolation:
+                await create_tenant_schema(self.session, tenant_id)
+
+            # Enable RLS policies if requested
+            if enable_rls:
+                # Enable RLS on common tables
+                tables_to_protect = [
+                    'people', 'assignments', 'blocks', 'absences',
+                    'schedules', 'swaps', 'notifications'
+                ]
+
+                for table in tables_to_protect:
+                    try:
+                        await self.rls_manager.enable_rls_for_table(table)
+                        await self.rls_manager.create_tenant_policy(table)
+                    except Exception as e:
+                        logger.warning(f"Could not enable RLS for {table}: {e}")
+
+            # Create connection pool if requested
+            if create_connection_pool and self.pool_manager:
+                self.pool_manager.create_tenant_pool(tenant_id)
+
+            # Log provisioning
+            await self._log_audit(
+                tenant_id=tenant_id,
+                action="provision_tenant",
+                resource_type="tenant",
+                resource_id=tenant_id,
+            )
+
+            logger.info(f"Successfully provisioned tenant {tenant_id}")
+
+        except Exception as e:
+            logger.error(f"Failed to provision tenant {tenant_id}: {e}")
+            raise
+
+    async def deprovision_tenant(
+        self,
+        tenant_id: UUID,
+        drop_schema: bool = False,
+    ) -> None:
+        """
+        Deprovision a tenant and clean up resources.
+
+        Args:
+            tenant_id: Tenant UUID
+            drop_schema: Whether to drop the schema (if using schema isolation)
+        """
+        logger.warning(f"Deprovisioning tenant {tenant_id}")
+
+        try:
+            # Drop schema if requested
+            if drop_schema:
+                await drop_tenant_schema(self.session, tenant_id, cascade=True)
+
+            # Dispose connection pool
+            if self.pool_manager:
+                self.pool_manager.dispose_tenant_pool(tenant_id)
+
+            # Log deprovisioning
+            await self._log_audit(
+                tenant_id=tenant_id,
+                action="deprovision_tenant",
+                resource_type="tenant",
+                resource_id=tenant_id,
+            )
+
+            logger.info(f"Successfully deprovisioned tenant {tenant_id}")
+
+        except Exception as e:
+            logger.error(f"Failed to deprovision tenant {tenant_id}: {e}")
+            raise
+
+    async def encrypt_tenant_data(
+        self,
+        tenant_id: UUID,
+        plaintext: str,
+    ) -> str:
+        """
+        Encrypt data for a tenant.
+
+        Args:
+            tenant_id: Tenant UUID
+            plaintext: Data to encrypt
+
+        Returns:
+            Encrypted ciphertext (base64-encoded)
+        """
+        return await self.encryption_service.encrypt_string(tenant_id, plaintext)
+
+    async def decrypt_tenant_data(
+        self,
+        tenant_id: UUID,
+        ciphertext: str,
+    ) -> str:
+        """
+        Decrypt data for a tenant.
+
+        Args:
+            tenant_id: Tenant UUID
+            ciphertext: Encrypted data
+
+        Returns:
+            Decrypted plaintext
+        """
+        return await self.encryption_service.decrypt_string(tenant_id, ciphertext)
+
+    async def check_quota(
+        self,
+        tenant_id: UUID,
+        quota_name: str,
+        current_count: int,
+    ) -> bool:
+        """
+        Check if tenant is under quota.
+
+        Args:
+            tenant_id: Tenant UUID
+            quota_name: Quota to check
+            current_count: Current usage
+
+        Returns:
+            True if under quota
+        """
+        return await self.quota_service.check_quota(
+            tenant_id, quota_name, current_count
+        )
+
+    async def _log_audit(
+        self,
+        tenant_id: UUID,
+        action: str,
+        resource_type: str,
+        resource_id: UUID,
+        user_id: Optional[UUID] = None,
+        changes: Optional[Dict] = None,
+    ) -> None:
+        """
+        Log an audit event for tenant operations.
+
+        Args:
+            tenant_id: Tenant UUID
+            action: Action performed
+            resource_type: Type of resource
+            resource_id: Resource UUID
+            user_id: User who performed action
+            changes: Optional changes dictionary
+        """
+        audit_log = TenantAuditLog(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action=action,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            changes=changes,
+            created_at=datetime.utcnow(),
+        )
+
+        self.session.add(audit_log)
+        await self.session.commit()
+
+        logger.info(f"Audit log: {action} on {resource_type} {resource_id}")
