@@ -3,8 +3,10 @@ import statistics
 from collections import Counter, defaultdict
 from typing import Any
 
+from app.analytics.types import ConsecutiveDutyStats, MetricResult
 
-def calculate_fairness_index(assignments: list[dict[str, Any]]) -> dict[str, Any]:
+
+def calculate_fairness_index(assignments: list[dict[str, Any]]) -> MetricResult:
     """
     Calculate fairness index (Gini coefficient) for workload distribution.
 
@@ -72,7 +74,7 @@ def calculate_fairness_index(assignments: list[dict[str, Any]]) -> dict[str, Any
 
 
 def calculate_coverage_rate(blocks: list[dict[str, Any]],
-                            assignments: list[dict[str, Any]]) -> dict[str, Any]:
+                            assignments: list[dict[str, Any]]) -> MetricResult:
     """
     Calculate percentage of blocks that are covered by assignments.
 
@@ -118,7 +120,7 @@ def calculate_coverage_rate(blocks: list[dict[str, Any]],
     }
 
 
-def calculate_acgme_compliance_rate(violations: int, total_checks: int) -> dict[str, Any]:
+def calculate_acgme_compliance_rate(violations: int, total_checks: int) -> MetricResult:
     """
     Calculate ACGME compliance rate.
 
@@ -165,7 +167,7 @@ def calculate_acgme_compliance_rate(violations: int, total_checks: int) -> dict[
 def calculate_preference_satisfaction(
     assignments: list[dict[str, Any]],
     preferences: list[dict[str, Any]]
-) -> dict[str, Any]:
+) -> MetricResult:
     """
     Calculate how well assignments match stated preferences.
 
@@ -233,7 +235,7 @@ def calculate_preference_satisfaction(
 def calculate_consecutive_duty_stats(
     person_id: str,
     assignments: list[dict[str, Any]]
-) -> dict[str, Any]:
+) -> ConsecutiveDutyStats:
     """
     Calculate consecutive duty pattern statistics for a person.
 

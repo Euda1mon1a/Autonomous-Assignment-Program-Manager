@@ -23,6 +23,8 @@ from sqlalchemy import and_, desc
 from sqlalchemy.orm import Session
 from sqlalchemy_continuum import version_class
 
+from app.analytics.types import StabilityMetricsDict
+
 logger = logging.getLogger(__name__)
 
 # Try to import NetworkX for dependency graph analysis
@@ -819,7 +821,7 @@ def compute_stability_metrics(
     db: Session,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
-) -> dict[str, Any]:
+) -> StabilityMetricsDict:
     """
     Convenience function to compute stability metrics.
 
