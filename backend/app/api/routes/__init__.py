@@ -19,6 +19,7 @@ from app.api.routes import (
     export,
     fmit_health,
     fmit_timeline,
+    health,
     jobs,
     leave,
     me_dashboard,
@@ -41,6 +42,9 @@ from app.api.routes import (
 )
 
 api_router = APIRouter()
+
+# Core infrastructure routes
+api_router.include_router(health.router, prefix="/health", tags=["health"])
 
 api_router.include_router(people.router, prefix="/people", tags=["people"])
 api_router.include_router(blocks.router, prefix="/blocks", tags=["blocks"])
