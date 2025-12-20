@@ -1,4 +1,5 @@
 """Service for managing faculty FMIT scheduling preferences."""
+import logging
 from datetime import date, datetime, timedelta
 from typing import Optional
 from uuid import UUID, uuid4
@@ -12,6 +13,8 @@ from app.models.faculty_preference import FacultyPreference
 from app.models.person import Person
 from app.models.swap import SwapApproval, SwapRecord, SwapStatus
 
+logger = logging.getLogger(__name__)
+
 
 class FacultyPreferenceService:
     """
@@ -19,10 +22,33 @@ class FacultyPreferenceService:
 
     Handles CRUD operations and preference validation for faculty
     self-service portal.
+
+    Cache Integration:
+        This service integrates with FacultyPreferenceCache for caching.
+        Cache is automatically invalidated on preference updates.
     """
 
     def __init__(self, db: Session):
         self.db = db
+        self._cache = None
+
+    def _get_cache(self):
+        """Lazy-load cache to avoid circular imports."""
+        if self._cache is None:
+            try:
+                from app.services.constraints.faculty import get_faculty_pref_cache
+                self._cache = get_faculty_pref_cache()
+            except ImportError:
+                logger.debug("Faculty constraint cache not available")
+                self._cache = False  # Mark as unavailable
+        return self._cache if self._cache else None
+
+    def _invalidate_cache(self, faculty_id: UUID) -> None:
+        """Invalidate cache for a faculty member after updates."""
+        cache = self._get_cache()
+        if cache:
+            cache.invalidate_faculty(faculty_id)
+            logger.debug(f"Cache invalidated for faculty {faculty_id}")
 
     def get_or_create_preferences(self, faculty_id: UUID) -> FacultyPreference:
         """
@@ -114,6 +140,9 @@ class FacultyPreferenceService:
         self.db.commit()
         self.db.refresh(preferences)
 
+        # Invalidate cache after update
+        self._invalidate_cache(faculty_id)
+
         return preferences
 
     def add_preferred_week(self, faculty_id: UUID, week_date: date) -> FacultyPreference:
@@ -133,6 +162,8 @@ class FacultyPreferenceService:
             preferences.updated_at = datetime.utcnow()
             self.db.commit()
             self.db.refresh(preferences)
+            # Invalidate cache after update
+            self._invalidate_cache(faculty_id)
 
         return preferences
 
@@ -153,6 +184,8 @@ class FacultyPreferenceService:
             preferences.updated_at = datetime.utcnow()
             self.db.commit()
             self.db.refresh(preferences)
+            # Invalidate cache after update
+            self._invalidate_cache(faculty_id)
 
         return preferences
 
@@ -166,6 +199,8 @@ class FacultyPreferenceService:
             preferences.updated_at = datetime.utcnow()
             self.db.commit()
             self.db.refresh(preferences)
+            # Invalidate cache after update
+            self._invalidate_cache(faculty_id)
 
         return preferences
 
@@ -179,6 +214,8 @@ class FacultyPreferenceService:
             preferences.updated_at = datetime.utcnow()
             self.db.commit()
             self.db.refresh(preferences)
+            # Invalidate cache after update
+            self._invalidate_cache(faculty_id)
 
         return preferences
 
