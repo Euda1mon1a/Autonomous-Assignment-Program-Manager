@@ -15,16 +15,16 @@ Usage:
 
     Version history will then include who made each change.
 """
-import logging
 from collections.abc import Callable
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.core.logging import get_logger
 from app.db.audit import clear_current_user_id, set_current_user_id
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class AuditContextMiddleware(BaseHTTPMiddleware):

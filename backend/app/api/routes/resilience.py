@@ -16,16 +16,15 @@ Tier 2 (Strategic) endpoints:
 - Equilibrium analysis (Le Chatelier)
 - Stress and compensation tracking
 """
-import logging
 import time
 from datetime import date, datetime, timedelta
-
-logger = logging.getLogger(__name__)
 from uuid import UUID
 
-logger = logging.getLogger(__name__)
-
 from fastapi import APIRouter, Depends, HTTPException, Query
+
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 from sqlalchemy import desc
 from sqlalchemy.orm import Session, joinedload, selectinload
 

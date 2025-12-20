@@ -29,7 +29,6 @@ Tier 2:
 - LeChatelierAnalyzer (equilibrium, stress compensation)
 """
 
-import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime
@@ -37,6 +36,8 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy.orm import Session
+
+from app.core.logging import get_logger
 
 from app.resilience.blast_radius import (
     BlastRadiusManager,
@@ -150,7 +151,7 @@ from app.resilience.utilization import (
     UtilizationThreshold,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass

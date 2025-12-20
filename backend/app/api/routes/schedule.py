@@ -1,8 +1,9 @@
 """Schedule generation and validation API routes."""
-import logging
 import uuid
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
+
+from app.core.logging import get_logger
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
@@ -49,7 +50,7 @@ except ImportError:
     obs_metrics = None
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @router.post("/generate", response_model=ScheduleResponse)
@@ -751,8 +752,7 @@ def find_swap_candidates(
             external_conflicts.extend(absence_conflicts)
         except Exception as e:
             # Log but don't fail - absence integration is optional
-            import logging
-            logging.warning(f"Failed to load absence conflicts: {e}")
+            logger.warning(f"Failed to load absence conflicts: {e}")
 
     try:
         # Create SwapFinder from file

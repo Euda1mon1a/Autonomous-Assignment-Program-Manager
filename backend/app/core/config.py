@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
 
+    # Logging
+    LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+    LOG_FORMAT: str = "text"  # json for production, text for development
+    LOG_FILE: str = ""  # Optional file path for log output
+
     # Database
     DATABASE_URL: str = "postgresql://scheduler:scheduler@localhost:5432/residency_scheduler"
 

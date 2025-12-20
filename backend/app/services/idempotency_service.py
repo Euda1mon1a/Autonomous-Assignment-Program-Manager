@@ -9,7 +9,6 @@ This service handles:
 """
 import hashlib
 import json
-import logging
 from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
@@ -17,9 +16,10 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
+from app.core.logging import get_logger
 from app.models.idempotency import IdempotencyRequest, IdempotencyStatus
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Default expiration time for idempotency keys (24 hours)
 DEFAULT_EXPIRATION_HOURS = 24
