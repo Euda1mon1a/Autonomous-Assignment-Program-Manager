@@ -8,11 +8,174 @@ This module "weaponizes compliance" to protect schedulers from the inevitable
 fallout of staffing crises. It turns the scheduler into an automated JAG
 (Judge Advocate General) / Inspector General officer.
 
-Key Components:
-1. DRRS Translation - Converts metrics to military readiness language
-2. MFR Generator - Creates Memoranda for Record documenting risk acceptance
-3. Circuit Breaker - Locks scheduling when safety thresholds are breached
-4. RFF Drafter - Generates Request for Forces documentation
+Overview
+--------
+The Iron Dome addresses a fundamental asymmetry in military healthcare: the
+scheduling system can detect catastrophic risks (N-1 failures, burnout cascades,
+ACGME violations), but lacks institutional authority to force action. This module
+provides that authority through automated compliance documentation that creates
+legal/regulatory pressure.
+
+When the system detects dangerous conditions, it doesn't just log a warning—it
+generates formal military documentation that forces command accountability.
+
+Key Components
+--------------
+
+1. **DRRS Translation Layer** (DRRSTranslator)
+   - Converts internal scheduling metrics to Defense Readiness Reporting System format
+   - Translates LoadSheddingLevel → DRRS C-ratings (C1-C5)
+   - Maps EquilibriumState → Mission Capability Status (FMC/PMC/NMC)
+   - Calculates Personnel (P) and Equipment/Capability (S) readiness ratings
+   - Generates SITREP-style executive summaries for command briefings
+
+   Use case: Transform "residents are stressed" into "Unit rated C4, Not Mission
+   Capable due to P4 personnel readiness—requires immediate command intervention"
+
+2. **MFR Generator** (MFRGenerator)
+   - Creates immutable Memoranda for Record with cryptographic hashing
+   - Documents risk acceptance when schedules published under dangerous conditions
+   - Auto-generates 5 MFR types: Risk Acceptance, Safety Concern, Compliance
+     Violation, Resource Request, Stand-Down
+   - Includes system state snapshots, findings, risk assessments, recommendations
+   - Routes to appropriate distribution lists (DIO, Risk Management, Commander, etc.)
+
+   Use case: When Commander orders "make it work" with insufficient staff, system
+   generates timestamped MFR documenting that risk assessment predicted 98%
+   probability of ACGME violation—shifting liability back to command
+
+3. **Circuit Breaker** (CircuitBreaker)
+   - Implements safety stand-down protocol based on system health thresholds
+   - Three states: CLOSED (normal), HALF_OPEN (limited ops), OPEN (locked)
+   - Automatically trips on: N-1 failure, coverage collapse (<70%), allostatic
+     overload (>80), critical volatility, positive feedback cascades
+   - Locks operations: new assignments, schedule changes, leave approval
+   - Always permits: emergency coverage, patient safety assignments, viewing
+   - Supports command override with time limits and mandatory MFR documentation
+
+   Use case: System detects single point of failure and automatically prevents
+   any schedule modifications, returning HTTP 451 "Unavailable For Legal Reasons"
+   until conditions improve or commander provides documented override
+
+4. **RFF Drafter** (RFFDrafter)
+   - Generates Request for Forces documents using military SMEAC format
+     (Situation, Mission, Execution, Administration, Command)
+   - Uses cascade predictions to mathematically prove resource needs
+   - Maps medical specialties to Military Occupational Specialty (MOS) codes
+   - Projects mission failure timeline without support
+   - Compiles supporting metrics from resilience framework
+
+   Use case: System calculates 14 days until "extinction vortex" and auto-drafts
+   RFF requesting 2 Reserve Component physicians (MOS 60H) with full justification
+   that speaks bureaucratic language to unlock resources
+
+Integration Points
+------------------
+
+This module integrates with other resilience components:
+
+- **resilience.mtf_types**: Imports SystemHealthState, CascadePrediction,
+  PositiveFeedbackRisk for system state tracking
+
+- **resilience.sacrifice**: LoadSheddingLevel provides graduated defense-in-depth
+  response that DRRS Translator maps to military C-ratings
+
+- **resilience.allostasis**: Allostatic load metrics feed into personnel readiness
+  (P-rating) calculations and circuit breaker thresholds
+
+- **resilience.contingency**: N-1/N-2 analysis results determine capability ratings
+  (S-rating) and circuit breaker triggers
+
+- **resilience.lechatelier**: Cascade predictions power RFF timeline projections
+  and risk assessment severity
+
+The IronDomeService class provides a unified interface combining all four
+components into a single "regulatory bodyguard" service.
+
+Usage Example
+-------------
+
+Basic readiness assessment::
+
+    from app.resilience.mtf_compliance import IronDomeService
+    from app.schemas.resilience import LoadSheddingLevel, EquilibriumState
+
+    iron_dome = IronDomeService()
+
+    # Generate DRRS readiness report
+    assessment = iron_dome.assess_readiness(
+        load_shedding_level=LoadSheddingLevel.ORANGE,
+        equilibrium_state=EquilibriumState.STRESSED,
+        n1_pass=False,
+        n2_pass=True,
+        coverage_rate=0.82,
+        available_faculty=15,
+        required_faculty=18,
+        overloaded_faculty_count=4
+    )
+
+    print(assessment.executive_summary)
+    # Output: "UNIT STATUS: YELLOW\nOverall: C3 | Personnel: P3 | Capability: S4\n..."
+
+Circuit breaker and MFR generation::
+
+    # Check if circuit breaker trips
+    cb_check = iron_dome.check_circuit_breaker(
+        n1_pass=False,
+        n2_pass=False,
+        coverage_rate=0.68,
+        average_allostatic_load=85,
+        volatility_level="critical",
+        compensation_debt=1200,
+    )
+
+    if cb_check.tripped:
+        # Circuit breaker tripped - generate MFR
+        mfr = iron_dome.generate_risk_mfr(
+            subject="Critical Staffing Shortage - Week of 2025-12-20",
+            system_state=current_system_state,
+            scheduler_name="Maj Smith, Program Director",
+            scheduler_objection="Recommend activating reserve pool before publishing schedule"
+        )
+
+        # MFR is now immutable record with hash, timestamp, findings
+        print(f"MFR {mfr.id} generated at {mfr.generated_at}")
+        print(f"Risk Level: {mfr.risk_level.value}")
+        print(f"Distribution: {', '.join(mfr.distribution_list)}")
+
+Request for Forces drafting::
+
+    # Auto-generate RFF when system predicts failure
+    rff = iron_dome.draft_resource_request(
+        requesting_unit="Department of Family Medicine",
+        mission_affected=[MissionType.PRIMARY_CARE, MissionType.GME],
+        mos_required=["60H", "66H"],  # Attending physician, Nurse Practitioner
+        personnel_count=3,
+        duration_days=90,
+        justification="Prevent cascade failure and ACGME citation",
+        system_state=current_system_state,
+        cascade_prediction=cascade_analysis
+    )
+
+    # RFF includes full SMEAC format documentation
+    print(rff.situation)  # Military situation analysis
+    print(rff.projected_without_support.outcomes)  # Timeline to failure
+
+Military Terminology
+--------------------
+
+- **DRRS**: Defense Readiness Reporting System - standardized DoD readiness reporting
+- **C-rating**: Overall readiness category (C1=fully capable, C5=critical deficiency)
+- **P-rating**: Personnel readiness (P1=100%+ manning, P4=<80%)
+- **S-rating**: Equipment/capability readiness (S1=all systems go, S4=major gaps)
+- **MFR**: Memorandum for Record - official documentation of events/decisions
+- **RFF**: Request for Forces - formal request for additional military personnel
+- **SITREP**: Situation Report - summary of current operational status
+- **DIO**: Designated Institutional Official - ACGME compliance authority
+- **MOS**: Military Occupational Specialty - job code (e.g., 60H = physician)
+- **OPCON**: Operational Control - command authority over assigned forces
+- **UIC**: Unit Identification Code - unique identifier for military units
+- **FMC/PMC/NMC**: Fully/Partially/Not Mission Capable
 
 The insight: The system already calculates risk. This module makes risk
 visible in ways that create accountability and force action.
@@ -23,7 +186,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, TypedDict, NotRequired
 from uuid import UUID, uuid4
 
 from app.resilience.mtf_types import (
@@ -55,13 +218,115 @@ logger = logging.getLogger(__name__)
 
 
 # =============================================================================
+# TypedDict Definitions for Complex State Objects
+# =============================================================================
+
+
+class SystemStateDict(TypedDict, total=False):
+    """
+    Dictionary representation of system health state.
+
+    Used when system state is passed as a dictionary instead of
+    SystemHealthState object. All fields are optional (total=False)
+    to allow partial state representations.
+    """
+    n1_pass: bool
+    n2_pass: bool
+    coverage_rate: float
+    average_allostatic_load: float
+    load_shedding_level: str
+    equilibrium_state: str
+    phase_transition_risk: str
+    compensation_debt: float
+    volatility_level: str
+
+
+class MTFComplianceResultDict(TypedDict):
+    """
+    Dictionary representation of MTF compliance check results.
+
+    Provides type safety for compliance results passed as dictionaries.
+    """
+    is_compliant: bool
+    score: float
+    violations: list[dict[str, Any]]
+    recommendations: list[str]
+    checked_at: NotRequired[date | None]
+
+
+class ContingencyAnalysisDict(TypedDict):
+    """
+    Dictionary representation of N-1/N-2 contingency analysis results.
+
+    Tracks system resilience to faculty losses and identifies
+    single/dual points of failure.
+    """
+    n1_pass: bool
+    n2_pass: bool
+    single_point_failures: NotRequired[list[str]]
+    dual_point_failures: NotRequired[list[tuple[str, str]]]
+    vulnerable_rotations: NotRequired[list[str]]
+    risk_level: NotRequired[str]
+
+
+class CapacityMetricsDict(TypedDict):
+    """
+    Dictionary representation of capacity and utilization metrics.
+
+    Tracks system capacity, current utilization, and any deficits
+    for resource planning and load shedding decisions.
+    """
+    capacity: int
+    utilization: float
+    deficit: NotRequired[int]
+    available_slots: NotRequired[int]
+    filled_slots: NotRequired[int]
+    coverage_percentage: NotRequired[float]
+
+
+class CascadePredictionDict(TypedDict, total=False):
+    """
+    Dictionary representation of cascade failure prediction.
+
+    Used for predicting system collapse timelines.
+    """
+    days_until_exhaustion: int
+    probability: float
+    trigger_event: str
+
+
+class PositiveFeedbackRiskDict(TypedDict):
+    """
+    Dictionary representation of positive feedback risk.
+
+    Identifies self-reinforcing failure cycles.
+    """
+    confidence: float
+    risk_type: NotRequired[str]
+    description: NotRequired[str]
+
+
+# =============================================================================
 # Type-Safe Data Classes for MTF Compliance
 # =============================================================================
 
 
 @dataclass
 class MTFViolation:
-    """A single MTF compliance violation."""
+    """
+    A single MTF compliance violation detected by the system.
+
+    Represents a specific failure to meet regulatory, safety, or operational
+    requirements. Used to build comprehensive compliance reports.
+
+    Attributes:
+        rule_id: Unique identifier for the violated rule (e.g., "ACGME_80HR", "N1_FAIL")
+        severity: Severity level - 'critical' (immediate action), 'warning' (needs attention),
+                  'info' (informational only)
+        description: Human-readable description of what was violated and why it matters
+        affected_items: List of specific items affected (person IDs, rotation names, dates, etc.)
+        recommendation: Optional suggested remediation action
+    """
 
     rule_id: str
     severity: str  # 'critical', 'warning', 'info'
@@ -72,7 +337,19 @@ class MTFViolation:
 
 @dataclass
 class MTFComplianceResult:
-    """Result of an MTF compliance check."""
+    """
+    Result of a comprehensive MTF compliance check.
+
+    Aggregates all detected violations and provides an overall compliance
+    score and actionable recommendations.
+
+    Attributes:
+        is_compliant: True if no critical violations detected
+        score: Compliance score from 0.0 (total failure) to 100.0 (perfect compliance)
+        violations: List of all detected violations, ordered by severity
+        recommendations: Prioritized list of recommended actions to achieve compliance
+        checked_at: Date/time when compliance check was performed (for audit trail)
+    """
 
     is_compliant: bool
     score: float  # 0.0 to 100.0
@@ -83,7 +360,19 @@ class MTFComplianceResult:
 
 @dataclass
 class CoverageAnalysis:
-    """Analysis of coverage gaps and capacity."""
+    """
+    Analysis of schedule coverage gaps and capacity utilization.
+
+    Identifies where and when the schedule has insufficient coverage,
+    supporting load shedding and resource request decisions.
+
+    Attributes:
+        total_slots: Total number of schedule slots that need coverage
+        filled_slots: Number of slots currently filled with assignments
+        coverage_percentage: Percentage filled (0.0 to 100.0)
+        gaps: List of specific coverage gaps, each containing date, rotation,
+              shift, and required specialty information
+    """
 
     total_slots: int
     filled_slots: int
@@ -93,7 +382,27 @@ class CoverageAnalysis:
 
 @dataclass
 class ReadinessAssessment:
-    """Complete DRRS readiness assessment result."""
+    """
+    Complete DRRS readiness assessment in military reporting format.
+
+    Translates complex scheduling system metrics into Defense Readiness
+    Reporting System (DRRS) language that military commanders understand.
+    This is what appears on the Commander's daily briefing slide.
+
+    Attributes:
+        overall_rating: DRRS C-rating (C1-C5), where C1 is fully mission capable
+                        and C5 is critical deficiency
+        overall_capability: Mission capability status - FMC (Fully Mission Capable),
+                            PMC (Partially), or NMC (Not Mission Capable)
+        personnel_rating: P-rating (P1-P4) indicating personnel manning levels
+        personnel_percentage: Actual personnel strength as percentage of required
+        capability_rating: S-rating (S1-S4) indicating equipment/capability readiness
+        deficiencies: List of specific deficiencies degrading readiness
+        load_shedding_level: Current sacrifice hierarchy level (NORMAL through CRITICAL)
+        equilibrium_state: System equilibrium state (stable, compensating, stressed, etc.)
+        executive_summary: SITREP-style narrative summary for command briefing,
+                           includes color-coded status and mission impact assessment
+    """
 
     overall_rating: str
     overall_capability: str
@@ -122,7 +431,26 @@ class ReadinessAssessment:
 
 @dataclass
 class CircuitBreakerCheck:
-    """Result of a circuit breaker check."""
+    """
+    Result of a circuit breaker safety check.
+
+    Indicates whether the circuit breaker has tripped and what operations
+    are currently locked/allowed. Used to enforce safety stand-down protocols.
+
+    Attributes:
+        tripped: True if circuit breaker tripped during this check
+        state: Current circuit breaker state - CLOSED (normal), HALF_OPEN (limited),
+               or OPEN (locked down)
+        trigger: What triggered the circuit breaker (N1_VIOLATION, COVERAGE_COLLAPSE,
+                 ALLOSTATIC_OVERLOAD, etc.) if tripped
+        trigger_details: Human-readable explanation of why circuit breaker tripped
+        locked_operations: List of operations currently prohibited (e.g., "new_assignments",
+                           "schedule_changes", "leave_approval")
+        allowed_operations: List of operations always permitted (emergency_coverage,
+                            patient_safety_assignment, view_schedule, etc.)
+        override_active: True if a command override is currently in effect,
+                         allowing operations despite trip
+    """
 
     tripped: bool
     state: str
@@ -147,7 +475,21 @@ class CircuitBreakerCheck:
 
 @dataclass
 class IronDomeStatus:
-    """Overall status of the Iron Dome system."""
+    """
+    Overall status of the Iron Dome compliance defense system.
+
+    Provides a complete snapshot of the Iron Dome's defensive posture,
+    including circuit breaker state and documentation generation activity.
+
+    Attributes:
+        circuit_breaker_state: Current state (CLOSED/HALF_OPEN/OPEN)
+        scheduling_locked: True if scheduling operations are locked due to safety concerns
+        override_active: True if command has provided documented override
+        trigger: What caused the current defensive posture, if applicable
+        mfrs_generated: Count of Memoranda for Record generated (liability documentation)
+        rffs_generated: Count of Request for Forces documents generated (resource requests)
+        locked_operations: List of currently prohibited operations
+    """
 
     circuit_breaker_state: str
     scheduling_locked: bool
@@ -189,32 +531,45 @@ class DRRSTranslator:
     """
 
     # Map LoadSheddingLevel to DRRS Category
+    # DRRS C-ratings indicate overall unit readiness to perform assigned mission:
+    # C1 = Fully Mission Capable (all systems go)
+    # C2 = Substantially Mission Capable (minor deficiencies, can perform mission)
+    # C3 = Marginally Mission Capable (significant deficiencies, mission degraded)
+    # C4 = Not Mission Capable (major deficiencies, cannot fully perform mission)
+    # C5 = Not Mission Capable - Critical (only emergency operations possible)
     LOAD_SHEDDING_TO_DRRS = {
-        LoadSheddingLevel.NORMAL: DRRSCategory.C1,
-        LoadSheddingLevel.YELLOW: DRRSCategory.C2,
-        LoadSheddingLevel.ORANGE: DRRSCategory.C3,
-        LoadSheddingLevel.RED: DRRSCategory.C4,
-        LoadSheddingLevel.BLACK: DRRSCategory.C4,
-        LoadSheddingLevel.CRITICAL: DRRSCategory.C5,
+        LoadSheddingLevel.NORMAL: DRRSCategory.C1,      # All services operational
+        LoadSheddingLevel.YELLOW: DRRSCategory.C2,      # Minor load shedding (elective procedures delayed)
+        LoadSheddingLevel.ORANGE: DRRSCategory.C3,      # Moderate load shedding (non-essential services suspended)
+        LoadSheddingLevel.RED: DRRSCategory.C4,         # Major load shedding (essential services only)
+        LoadSheddingLevel.BLACK: DRRSCategory.C4,       # Severe load shedding (emergency and urgent only)
+        LoadSheddingLevel.CRITICAL: DRRSCategory.C5,    # Critical - patient safety only, system near collapse
     }
 
-    # Map EquilibriumState to Mission Capability
+    # Map EquilibriumState to Mission Capability Status
+    # Mission Capability indicates whether unit can perform its assigned missions:
+    # FMC = Fully Mission Capable (can perform all assigned missions)
+    # PMC = Partially Mission Capable (can perform some but not all missions)
+    # NMC = Not Mission Capable (cannot perform primary mission without augmentation)
     EQUILIBRIUM_TO_MISSION = {
-        EquilibriumState.STABLE: MissionCapabilityStatus.FMC,
-        EquilibriumState.COMPENSATING: MissionCapabilityStatus.PMC,
-        EquilibriumState.STRESSED: MissionCapabilityStatus.PMC,
-        EquilibriumState.UNSUSTAINABLE: MissionCapabilityStatus.NMC,
-        EquilibriumState.CRITICAL: MissionCapabilityStatus.NMC,
+        EquilibriumState.STABLE: MissionCapabilityStatus.FMC,           # System mathematically sustainable
+        EquilibriumState.COMPENSATING: MissionCapabilityStatus.PMC,     # System using compensation mechanisms
+        EquilibriumState.STRESSED: MissionCapabilityStatus.PMC,         # System under stress but holding
+        EquilibriumState.UNSUSTAINABLE: MissionCapabilityStatus.NMC,    # System math doesn't work long-term
+        EquilibriumState.CRITICAL: MissionCapabilityStatus.NMC,         # System approaching collapse
     }
 
-    # Military Occupational Specialty codes for medical personnel
+    # Military Occupational Specialty (MOS) codes for medical personnel
+    # These codes are used in RFF (Request for Forces) documents to specify
+    # what type of medical personnel are needed. Different services use different
+    # codes (Army uses 60-series for medical officers, 68-series for enlisted).
     MOS_DESCRIPTIONS = {
-        "60H": "Physician, Attending",
-        "60M": "Physician, Resident",
-        "66H": "Nurse Practitioner",
-        "68W": "Combat Medic/Healthcare Specialist",
-        "68C": "Practical Nursing Specialist",
-        "68K": "Medical Laboratory Specialist",
+        "60H": "Physician, Attending",                  # Board-certified attending physician
+        "60M": "Physician, Resident",                   # Physician in residency training
+        "66H": "Nurse Practitioner",                    # Advanced practice registered nurse
+        "68W": "Combat Medic/Healthcare Specialist",    # Enlisted medic/EMT equivalent
+        "68C": "Practical Nursing Specialist",          # Licensed Practical Nurse (LPN)
+        "68K": "Medical Laboratory Specialist",         # Lab technician
     }
 
     def translate_load_shedding(
@@ -251,29 +606,41 @@ class DRRSTranslator:
         """
         Translate faculty availability to Personnel (P) readiness.
 
+        Personnel readiness considers not just headcount but effective capacity.
+        Faculty in allostatic overload count as 0.5 personnel (degraded effectiveness).
+
+        P-ratings (DRRS Personnel Readiness):
+        - P1: ≥100% manning (fully staffed or overstaffed)
+        - P2: 90-99% manning (minor shortage)
+        - P3: 80-89% manning (significant shortage)
+        - P4: <80% manning (critical shortage)
+
         Args:
-            available_faculty: Number of faculty available
-            required_faculty: Number of faculty required
-            overloaded_count: Number of faculty in allostatic overload
+            available_faculty: Number of faculty available (headcount)
+            required_faculty: Number of faculty required (authorized manning)
+            overloaded_count: Number of faculty in allostatic overload (burnout risk)
 
         Returns:
-            Tuple of (P-rating, percentage)
+            Tuple of (P-rating, effective percentage)
         """
         if required_faculty == 0:
             return PersonnelReadinessLevel.P4, 0.0
 
-        # Effective availability reduces by overloaded count (they're not really available)
+        # Calculate effective availability accounting for degraded capacity of overloaded personnel
+        # Overloaded faculty count as 0.5 personnel (50% effective) due to fatigue/burnout
+        # This prevents gaming the system by overworking existing staff to appear "fully manned"
         effective_available = max(0, available_faculty - (overloaded_count * 0.5))
         percentage = (effective_available / required_faculty) * 100
 
+        # Map effective percentage to P-rating thresholds
         if percentage >= 100:
-            return PersonnelReadinessLevel.P1, percentage
+            return PersonnelReadinessLevel.P1, percentage  # Fully manned
         elif percentage >= 90:
-            return PersonnelReadinessLevel.P2, percentage
+            return PersonnelReadinessLevel.P2, percentage  # Minor shortage
         elif percentage >= 80:
-            return PersonnelReadinessLevel.P3, percentage
+            return PersonnelReadinessLevel.P3, percentage  # Significant shortage
         else:
-            return PersonnelReadinessLevel.P4, percentage
+            return PersonnelReadinessLevel.P4, percentage  # Critical shortage
 
     def translate_capability(
         self,
@@ -284,35 +651,55 @@ class DRRSTranslator:
         """
         Translate contingency analysis to Capability (S) readiness.
 
-        N-1/N-2 failures represent single points of failure in capabilities.
+        In DRRS, "S-rating" typically refers to equipment readiness, but we adapt it
+        for capability readiness - whether the system can perform its mission even
+        when stressed (losing personnel, high demand, etc.).
+
+        N-1/N-2 analysis tests system resilience:
+        - N-1: Can system survive losing ANY single person?
+        - N-2: Can system survive losing ANY pair of people?
+
+        Failures represent single/dual points of failure in mission capability.
+
+        S-ratings (DRRS Equipment/Capability Readiness):
+        - S1: All systems operational, no deficiencies
+        - S2: Minor deficiencies (1 issue, no single points of failure)
+        - S3: Significant deficiencies (multiple issues, but N-1 passes)
+        - S4: Major deficiencies (N-1 failure = any single loss causes mission failure)
 
         Args:
             n1_pass: Whether system passes N-1 (single loss) test
             n2_pass: Whether system passes N-2 (double loss) test
-            coverage_rate: Current coverage rate
+            coverage_rate: Current coverage rate (0.0 to 1.0)
 
         Returns:
-            Tuple of (S-rating, list of deficiencies)
+            Tuple of (S-rating, list of deficiency descriptions)
         """
         deficiencies = []
 
+        # Check for single point of failure (N-1 failure)
         if not n1_pass:
             deficiencies.append("Single Point of Failure: Any faculty loss causes service gaps")
 
+        # Check for dual point vulnerabilities (N-2 failure)
         if not n2_pass:
             deficiencies.append("Dual Point of Failure: Two faculty losses cause critical gaps")
 
+        # Check for coverage degradation
         if coverage_rate < 0.90:
             deficiencies.append(f"Coverage degraded: {coverage_rate*100:.0f}% vs 90% minimum")
 
+        # Determine S-rating based on deficiency count and N-1 status
+        # N-1 failure is the critical threshold - if you can't survive ANY single loss,
+        # you're S4 regardless of anything else
         if not deficiencies:
-            return EquipmentReadinessLevel.S1, deficiencies
+            return EquipmentReadinessLevel.S1, deficiencies  # Perfect - no deficiencies
         elif len(deficiencies) == 1 and n1_pass:
-            return EquipmentReadinessLevel.S2, deficiencies
+            return EquipmentReadinessLevel.S2, deficiencies  # Minor - 1 deficiency, resilient
         elif n1_pass:
-            return EquipmentReadinessLevel.S3, deficiencies
+            return EquipmentReadinessLevel.S3, deficiencies  # Significant - multiple issues
         else:
-            return EquipmentReadinessLevel.S4, deficiencies
+            return EquipmentReadinessLevel.S4, deficiencies  # Major - single point of failure exists
 
     def generate_sitrep_summary(
         self,
@@ -388,7 +775,33 @@ class DRRSTranslator:
 
 @dataclass
 class MFRDocument:
-    """A generated Memorandum for Record."""
+    """
+    A generated Memorandum for Record (MFR) - formal military documentation.
+
+    MFRs are immutable, cryptographically hashed documents that create an
+    official record of system conditions, risks identified, and decisions made.
+    They shift liability from schedulers to command when dangerous conditions
+    are documented and schedules are published anyway.
+
+    Attributes:
+        id: Unique UUID for this MFR
+        generated_at: Timestamp when MFR was created (immutable)
+        mfr_type: Type of MFR (RISK_ACCEPTANCE, SAFETY_CONCERN, COMPLIANCE_VIOLATION,
+                  RESOURCE_REQUEST, STAND_DOWN)
+        priority: Urgency level (ROUTINE, PRIORITY, IMMEDIATE, FLASH)
+        subject: Subject line for the memorandum
+        header: Formatted header with date, MFR ID, priority
+        body: Main body text following military format (PURPOSE, BACKGROUND, FINDINGS, etc.)
+        findings: List of specific findings from system analysis (N-1 failures, overload, etc.)
+        risk_assessment: Narrative risk assessment (CATASTROPHIC, CRITICAL, HIGH, MODERATE, LOW)
+        recommendations: Prioritized list of recommended actions
+        system_state_snapshot: Complete system state at time of generation (for audit/reconstruction)
+        document_hash: SHA-256 hash for immutability verification
+        risk_level: Computed risk level enum value
+        requires_commander_signature: True if this MFR requires commander acknowledgment
+        distribution_list: List of roles/positions who must receive this MFR
+                           (DIO, Risk Management, Patient Safety Officer, Commander, etc.)
+    """
     id: UUID
     generated_at: datetime
     mfr_type: MFRType
@@ -399,7 +812,7 @@ class MFRDocument:
     findings: list[str]
     risk_assessment: str
     recommendations: list[str]
-    system_state_snapshot: dict[str, Any]
+    system_state_snapshot: SystemStateDict
     document_hash: str
     risk_level: RiskLevel
     requires_commander_signature: bool
@@ -423,30 +836,42 @@ class MFRGenerator:
     direct order/duress."
     """
 
+    # MFR Templates defining format and routing for each document type
+    # Each template specifies:
+    # - header_template: Subject line format
+    # - requires_signature: Whether commander/authority must sign
+    # - distribution: Who must receive this MFR (routing list)
+    #
+    # Distribution routing follows military/healthcare chain of command:
+    # - DIO (Designated Institutional Official): ACGME compliance authority
+    # - Commander: Military chain of command
+    # - Risk Management: Liability and risk assessment
+    # - Patient Safety Officer: Clinical safety oversight
+    # - Program Director: Residency program leadership
     MFR_TEMPLATES = {
         MFRType.RISK_ACCEPTANCE: {
             "header_template": "MEMORANDUM FOR RECORD\n\nSUBJECT: Risk Acceptance - {subject}",
-            "requires_signature": True,
+            "requires_signature": True,  # Must have commander acknowledgment
             "distribution": ["Designated Institutional Official", "Risk Management", "Quality Assurance"],
         },
         MFRType.SAFETY_CONCERN: {
             "header_template": "MEMORANDUM FOR RECORD\n\nSUBJECT: Patient/Staff Safety Concern - {subject}",
-            "requires_signature": True,
+            "requires_signature": True,  # Critical - requires signature
             "distribution": ["DIO", "Risk Management", "Patient Safety Officer", "Commander"],
         },
         MFRType.COMPLIANCE_VIOLATION: {
             "header_template": "MEMORANDUM FOR RECORD\n\nSUBJECT: ACGME/DHA Compliance Concern - {subject}",
-            "requires_signature": True,
+            "requires_signature": True,  # ACGME violations require acknowledgment
             "distribution": ["Program Director", "DIO", "GME Office"],
         },
         MFRType.RESOURCE_REQUEST: {
             "header_template": "MEMORANDUM FOR RECORD\n\nSUBJECT: Resource Request Documentation - {subject}",
-            "requires_signature": False,
+            "requires_signature": False,  # Informational - documents the ask
             "distribution": ["Department Chief", "Resource Manager"],
         },
         MFRType.STAND_DOWN: {
             "header_template": "MEMORANDUM FOR RECORD\n\nSUBJECT: Safety Stand-Down Initiated - {subject}",
-            "requires_signature": True,
+            "requires_signature": True,  # Critical event - requires signature
             "distribution": ["Commander", "DIO", "Risk Management", "Patient Safety Officer"],
         },
     }
@@ -455,7 +880,7 @@ class MFRGenerator:
         self,
         mfr_type: MFRType,
         subject: str,
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
         scheduler_name: str,
         scheduler_objection: str | None = None,
         priority: MFRPriority = MFRPriority.ROUTINE,
@@ -509,7 +934,7 @@ class MFRGenerator:
         document_hash = hashlib.sha256(hash_content.encode()).hexdigest()
 
         # Convert system_state to dict for snapshot
-        state_snapshot = system_state.to_dict() if isinstance(system_state, SystemHealthState) else system_state
+        state_snapshot: SystemStateDict = system_state.to_dict() if isinstance(system_state, SystemHealthState) else system_state  # type: ignore[assignment]
 
         return MFRDocument(
             id=mfr_id,
@@ -531,7 +956,7 @@ class MFRGenerator:
 
     def _extract_findings(
         self,
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
         additional: list[str] | None,
     ) -> list[str]:
         """Extract findings from system state."""
@@ -608,8 +1033,30 @@ class MFRGenerator:
 
         return findings
 
-    def _assess_risk_level(self, system_state: SystemHealthState | dict[str, Any]) -> RiskLevel:
-        """Assess overall risk level from system state."""
+    def _assess_risk_level(self, system_state: SystemHealthState | SystemStateDict) -> RiskLevel:
+        """
+        Assess overall risk level from system state using weighted scoring.
+
+        Risk scoring algorithm:
+        - N-1 failure: +3 (any single loss causes gaps - single point of failure)
+        - N-2 failure: +2 (two losses cause gaps - dual point vulnerability)
+        - Coverage <70%: +4 (critical), <80%: +3 (severe), <90%: +2 (degraded)
+        - Allostatic load >80: +3 (burnout imminent), >60: +2 (chronic stress)
+        - Equilibrium critical: +4, unsustainable: +3 (system math doesn't work)
+
+        Risk levels:
+        - 10+: CATASTROPHIC (multiple critical failures)
+        - 7-9: CRITICAL (severe risk requiring immediate action)
+        - 4-6: HIGH (significant risk, documented acceptance needed)
+        - 2-3: MODERATE (watchlist, increased monitoring)
+        - 0-1: LOW (normal operations)
+
+        Args:
+            system_state: Current system health state
+
+        Returns:
+            Computed risk level enum
+        """
         risk_score = 0
 
         # Handle both SystemHealthState and dict
@@ -626,28 +1073,33 @@ class MFRGenerator:
             avg_load = system_state.get("average_allostatic_load", 0)
             eq_state = system_state.get("equilibrium_state", "stable")
 
+        # Contingency analysis failures (system resilience to personnel loss)
         if not n1_pass:
-            risk_score += 3
+            risk_score += 3  # Single point of failure exists
         if not n2_pass:
-            risk_score += 2
+            risk_score += 2  # Dual point vulnerability exists
 
+        # Coverage degradation (how many shifts are filled)
         if coverage < 0.70:
-            risk_score += 4
+            risk_score += 4  # Critical: <70% coverage = major service gaps
         elif coverage < 0.80:
-            risk_score += 3
+            risk_score += 3  # Severe: 70-80% coverage = significant gaps
         elif coverage < 0.90:
-            risk_score += 2
+            risk_score += 2  # Degraded: 80-90% coverage = minor gaps
 
+        # Staff burnout indicators (allostatic load)
         if avg_load > 80:
-            risk_score += 3
+            risk_score += 3  # Burnout imminent, attrition risk high
         elif avg_load > 60:
-            risk_score += 2
+            risk_score += 2  # Chronic stress, sustainability concerns
 
+        # System equilibrium state (can the system math work?)
         if eq_state in ("critical", EquilibriumState.CRITICAL):
-            risk_score += 4
+            risk_score += 4  # System mathematically unstable
         elif eq_state in ("unsustainable", EquilibriumState.UNSUSTAINABLE):
-            risk_score += 3
+            risk_score += 3  # System cannot maintain current state
 
+        # Map total risk score to risk level
         if risk_score >= 10:
             return RiskLevel.CATASTROPHIC
         elif risk_score >= 7:
@@ -660,7 +1112,7 @@ class MFRGenerator:
 
     def _generate_risk_assessment(
         self,
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
         risk_level: RiskLevel,
     ) -> str:
         """Generate risk assessment narrative."""
@@ -701,7 +1153,7 @@ class MFRGenerator:
     def _generate_body(
         self,
         mfr_type: MFRType,
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
         scheduler_name: str,
         scheduler_objection: str | None,
         findings: list[str],
@@ -745,7 +1197,7 @@ class MFRGenerator:
     def _generate_recommendations(
         self,
         mfr_type: MFRType,
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
         risk_level: RiskLevel,
     ) -> list[str]:
         """Generate recommendations based on MFR type and risk level."""
@@ -791,7 +1243,22 @@ class MFRGenerator:
 
 @dataclass
 class CircuitBreakerOverride:
-    """An active override of the circuit breaker."""
+    """
+    An active override of the circuit breaker by command authority.
+
+    When the circuit breaker trips, only specific authorities can override it
+    to continue operations. The override is time-limited and must be documented
+    with an associated MFR that accepts liability.
+
+    Attributes:
+        id: Unique UUID for this override
+        authority: Who authorized the override (COMMANDER, DIO, PATIENT_SAFETY_OFFICER,
+                   RISK_MANAGEMENT, PROGRAM_DIRECTOR)
+        reason: Documented justification for the override
+        activated_at: When the override was activated
+        expires_at: When the override automatically expires (time-limited)
+        mfr_id: Associated MFR documenting the risk acceptance, if generated
+    """
     id: UUID
     authority: OverrideAuthority
     reason: str
@@ -802,7 +1269,21 @@ class CircuitBreakerOverride:
 
 @dataclass
 class CircuitBreakerStatus:
-    """Current status of the circuit breaker."""
+    """
+    Current status of the circuit breaker safety system.
+
+    Provides complete information about the circuit breaker's state,
+    what triggered it, any active overrides, and what operations are permitted.
+
+    Attributes:
+        state: Current state (CLOSED/HALF_OPEN/OPEN)
+        triggered_at: When the circuit breaker last tripped, if applicable
+        trigger: What caused the trip (N1_VIOLATION, COVERAGE_COLLAPSE, etc.)
+        trigger_details: Human-readable explanation of the trigger
+        override: Active override object if command has overridden the breaker
+        locked_operations: Operations currently prohibited
+        allowed_operations: Operations always permitted (emergency/patient safety)
+    """
     state: CircuitBreakerState
     triggered_at: datetime | None
     trigger: CircuitBreakerTrigger | None
@@ -866,13 +1347,13 @@ class CircuitBreaker:
         "read_reports",
     ]
 
-    def __init__(self):
-        self.state = CircuitBreakerState.CLOSED
+    def __init__(self) -> None:
+        self.state: CircuitBreakerState = CircuitBreakerState.CLOSED
         self.triggered_at: datetime | None = None
         self.trigger: CircuitBreakerTrigger | None = None
         self.trigger_details: str | None = None
         self.override: CircuitBreakerOverride | None = None
-        self.trip_count = 0
+        self.trip_count: int = 0
         self.last_trip: datetime | None = None
 
     def check_and_trip(
@@ -883,55 +1364,85 @@ class CircuitBreaker:
         average_allostatic_load: float,
         volatility_level: str,
         compensation_debt: float,
-        positive_feedback_risks: list[PositiveFeedbackRisk | dict[str, Any]] | None = None,
+        positive_feedback_risks: list[PositiveFeedbackRisk | PositiveFeedbackRiskDict] | None = None,
     ) -> tuple[bool, CircuitBreakerTrigger | None, str | None]:
         """
         Check conditions and trip circuit breaker if thresholds breached.
 
+        The circuit breaker implements a priority-based cascade of safety checks.
+        Checks are ordered from most critical (N-1 failure) to least critical
+        (positive feedback risk). First failed check wins and trips the breaker.
+
+        Threshold priority order:
+        1. N-1 failure (single point of failure - immediate lockout)
+        2. N-2 failure + degraded coverage (dual failure with existing problems)
+        3. Coverage collapse (<70% - service gaps)
+        4. Allostatic overload (>80 - burnout imminent)
+        5. Critical volatility (phase transition risk)
+        6. Compensation debt exceeded (>1000 - unsustainable borrowing)
+        7. Positive feedback cascade (>0.8 confidence - death spiral detected)
+
         Args:
-            n1_pass: N-1 analysis result
-            n2_pass: N-2 analysis result
-            coverage_rate: Current coverage rate
-            average_allostatic_load: Average faculty allostatic load
-            volatility_level: Current volatility level
+            n1_pass: N-1 analysis result (can system survive any single loss?)
+            n2_pass: N-2 analysis result (can system survive any two losses?)
+            coverage_rate: Current coverage rate (0.0 to 1.0)
+            average_allostatic_load: Average faculty allostatic load (0-100)
+            volatility_level: Current volatility level string
             compensation_debt: Accumulated compensation debt
-            positive_feedback_risks: Detected positive feedback risks
+            positive_feedback_risks: Detected positive feedback risks (self-reinforcing failures)
 
         Returns:
             Tuple of (tripped, trigger, details)
+            - tripped: True if breaker tripped on this check
+            - trigger: What caused the trip (None if no trip)
+            - details: Human-readable explanation
         """
+        # Early return if already tripped and no override active
         if self.state == CircuitBreakerState.OPEN and not self._override_active():
-            # Already tripped and no override
+            # Already tripped and no override - can't trip again
             return False, self.trigger, self.trigger_details
 
         trigger = None
         details = None
 
-        # Check each threshold
+        # Priority 1: N-1 failure (highest priority - single point of failure exists)
+        # This means ANY faculty loss will cause service gaps - unacceptable risk
         if not n1_pass:
             trigger = CircuitBreakerTrigger.N1_VIOLATION
             details = "N-1 analysis failed: Any single faculty loss causes service gaps"
 
+        # Priority 2: N-2 failure combined with already degraded coverage
+        # Two vulnerabilities means system is brittle and degrading
         elif not n2_pass and coverage_rate < self.THRESHOLDS["coverage_rate_warning"]:
             trigger = CircuitBreakerTrigger.N2_VIOLATION
             details = "N-2 analysis failed with degraded coverage"
 
+        # Priority 3: Coverage collapse - critical threshold breached
+        # Below 70% means significant service gaps already exist
         elif coverage_rate < self.THRESHOLDS["coverage_rate_critical"]:
             trigger = CircuitBreakerTrigger.COVERAGE_COLLAPSE
             details = f"Coverage rate ({coverage_rate*100:.0f}%) below critical threshold (70%)"
 
+        # Priority 4: Allostatic overload - faculty burnout imminent
+        # Above 80 means personnel are in chronic stress, attrition risk high
         elif average_allostatic_load > self.THRESHOLDS["allostatic_load_critical"]:
             trigger = CircuitBreakerTrigger.ALLOSTATIC_OVERLOAD
             details = f"Average allostatic load ({average_allostatic_load:.0f}) exceeds critical threshold (80)"
 
+        # Priority 5: Critical volatility - phase transition risk
+        # System approaching bifurcation point where small changes cause catastrophic shifts
         elif volatility_level in ("critical", "CRITICAL"):
             trigger = CircuitBreakerTrigger.VOLATILITY_CRITICAL
             details = "System volatility at critical level - phase transition risk"
 
+        # Priority 6: Compensation debt exceeded - unsustainable borrowing
+        # System has borrowed too much future capacity, will fail when debt comes due
         elif compensation_debt > self.THRESHOLDS["compensation_debt_critical"]:
             trigger = CircuitBreakerTrigger.COMPENSATION_DEBT_EXCEEDED
             details = f"Compensation debt ({compensation_debt:.0f}) exceeds sustainable threshold"
 
+        # Priority 7: Positive feedback cascade - death spiral detected
+        # Self-reinforcing failure cycle identified with high confidence
         elif positive_feedback_risks:
             # Handle both PositiveFeedbackRisk and dict
             high_confidence_risks = [
@@ -943,15 +1454,18 @@ class CircuitBreaker:
                 trigger = CircuitBreakerTrigger.POSITIVE_FEEDBACK_CASCADE
                 details = f"High-confidence positive feedback risks detected: {len(high_confidence_risks)}"
 
+        # If any threshold was breached, trip the circuit breaker
         if trigger:
             self._trip(trigger, details)
             return True, trigger, details
 
-        # Check if we can close from half-open
+        # If in HALF_OPEN state, check if conditions have improved enough to fully close
+        # This allows gradual recovery after a trip
         if self.state == CircuitBreakerState.HALF_OPEN:
             if self._conditions_safe(coverage_rate, average_allostatic_load, n1_pass):
                 self.close()
 
+        # No trip occurred
         return False, None, None
 
     def _trip(self, trigger: CircuitBreakerTrigger, details: str):
@@ -1091,7 +1605,35 @@ class CircuitBreaker:
 
 @dataclass
 class RFFDocument:
-    """A generated Request for Forces document."""
+    """
+    A generated Request for Forces (RFF) document in military SMEAC format.
+
+    RFFs are formal requests for additional military personnel, following
+    the standard five-paragraph SMEAC (Situation, Mission, Execution,
+    Administration, Command) format. They use cascade predictions to
+    mathematically justify resource needs.
+
+    Attributes:
+        id: Unique UUID for this RFF
+        generated_at: Timestamp when RFF was created
+        requesting_unit: Name of the unit/department requesting forces
+        uic: Unit Identification Code, if applicable
+        mission_affected: List of mission types impacted (PRIMARY_CARE, GME,
+                          SPECIALTY_CARE, EMERGENCY_SERVICES, etc.)
+        mos_required: List of Military Occupational Specialty codes needed
+                      (e.g., "60H" = physician, "66H" = nurse practitioner)
+        personnel_count: Number of personnel requested
+        duration_days: Duration of request in days
+        header: Formatted RFF header with date, ID, requesting unit, priority
+        situation: Paragraph 1 - Situation analysis with current status and criticality
+        mission_impact: Paragraph 2 - Mission impact assessment with load shedding info
+        execution: Paragraph 3 - Execution details (who, how many, what specialties)
+        sustainment: Paragraph 4 - Admin/logistics (billeting, meals, travel, duration)
+        command_and_signal: Paragraph 5 - Command relationships and reporting
+        supporting_metrics: Detailed system metrics supporting the request
+        projected_without_support: Timeline projection of what happens without support
+        document_hash: SHA-256 hash for immutability verification
+    """
     id: UUID
     generated_at: datetime
     requesting_unit: str
@@ -1135,8 +1677,8 @@ class RFFDrafter:
         personnel_count: int,
         duration_days: int,
         justification: str,
-        system_state: SystemHealthState | dict[str, Any],
-        cascade_prediction: CascadePrediction | dict[str, Any] | None = None,
+        system_state: SystemHealthState | SystemStateDict,
+        cascade_prediction: CascadePrediction | CascadePredictionDict | None = None,
         uic: str | None = None,
     ) -> RFFDocument:
         """
@@ -1221,8 +1763,8 @@ class RFFDrafter:
 
     def _generate_situation(
         self,
-        system_state: SystemHealthState | dict[str, Any],
-        cascade_prediction: CascadePrediction | dict[str, Any] | None,
+        system_state: SystemHealthState | SystemStateDict,
+        cascade_prediction: CascadePrediction | CascadePredictionDict | None,
     ) -> str:
         """Generate Situation paragraph."""
         situation = "\n1. SITUATION:\n\n"
@@ -1265,7 +1807,7 @@ class RFFDrafter:
     def _generate_mission_impact(
         self,
         missions: list[MissionType],
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
     ) -> str:
         """Generate Mission Impact paragraph."""
         impact = "\n2. MISSION IMPACT:\n\n"
@@ -1340,7 +1882,7 @@ class RFFDrafter:
 
         return command
 
-    def _compile_metrics(self, system_state: SystemHealthState | dict[str, Any]) -> SupportingMetrics:
+    def _compile_metrics(self, system_state: SystemHealthState | SystemStateDict) -> SupportingMetrics:
         """Compile supporting metrics for the RFF."""
         # Handle both SystemHealthState and dict
         if isinstance(system_state, SystemHealthState):
@@ -1368,8 +1910,8 @@ class RFFDrafter:
 
     def _project_without_support(
         self,
-        system_state: SystemHealthState | dict[str, Any],
-        cascade_prediction: CascadePrediction | dict[str, Any] | None,
+        system_state: SystemHealthState | SystemStateDict,
+        cascade_prediction: CascadePrediction | CascadePredictionDict | None,
         duration: int,
     ) -> ProjectionWithoutSupport:
         """Project what happens without the requested support."""
@@ -1433,11 +1975,11 @@ class IronDomeService:
     chain of command by weaponizing compliance documentation.
     """
 
-    def __init__(self):
-        self.translator = DRRSTranslator()
-        self.mfr_generator = MFRGenerator()
-        self.circuit_breaker = CircuitBreaker()
-        self.rff_drafter = RFFDrafter()
+    def __init__(self) -> None:
+        self.translator: DRRSTranslator = DRRSTranslator()
+        self.mfr_generator: MFRGenerator = MFRGenerator()
+        self.circuit_breaker: CircuitBreaker = CircuitBreaker()
+        self.rff_drafter: RFFDrafter = RFFDrafter()
 
         # Document storage (in production, this would be database-backed)
         self.mfr_history: list[MFRDocument] = []
@@ -1506,7 +2048,7 @@ class IronDomeService:
         average_allostatic_load: float,
         volatility_level: str,
         compensation_debt: float,
-        positive_feedback_risks: list[PositiveFeedbackRisk | dict[str, Any]] | None = None,
+        positive_feedback_risks: list[PositiveFeedbackRisk | PositiveFeedbackRiskDict] | None = None,
     ) -> CircuitBreakerCheck:
         """
         Check circuit breaker and trip if thresholds breached.
@@ -1539,7 +2081,7 @@ class IronDomeService:
     def generate_risk_mfr(
         self,
         subject: str,
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
         scheduler_name: str,
         scheduler_objection: str | None = None,
     ) -> MFRDocument:
@@ -1564,7 +2106,7 @@ class IronDomeService:
         self,
         reason: str,
         initiator: str,
-        system_state: SystemHealthState | dict[str, Any],
+        system_state: SystemHealthState | SystemStateDict,
     ) -> tuple[MFRDocument, IronDomeStatus]:
         """
         Initiate a safety stand-down.
@@ -1611,8 +2153,8 @@ class IronDomeService:
         personnel_count: int,
         duration_days: int,
         justification: str,
-        system_state: SystemHealthState | dict[str, Any],
-        cascade_prediction: CascadePrediction | dict[str, Any] | None = None,
+        system_state: SystemHealthState | SystemStateDict,
+        cascade_prediction: CascadePrediction | CascadePredictionDict | None = None,
     ) -> RFFDocument:
         """
         Draft a Request for Forces document.

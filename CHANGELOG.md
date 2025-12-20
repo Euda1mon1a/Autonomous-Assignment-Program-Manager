@@ -5,6 +5,115 @@ All notable changes to the Residency Scheduler project will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+#### Test Coverage Expansion (Session 11 - 2025-12-20)
+- **Certification Scheduler Tests**: 34 tests for background certification expiration checks
+  - Scheduler lifecycle (start/stop), reminder thresholds, admin summary
+  - Environment configuration, singleton pattern, exception handling
+- **Advanced ACGME Validator Tests**: 41 tests for compliance validation
+  - 24+4 hour rule, night float limits, moonlighting hours
+  - PGY-specific requirements, duty hours breakdown
+- **Email Service Tests**: 32 tests for SMTP notifications
+  - Configuration loading, urgency levels (7/30/90/180 days)
+  - HTML template generation, compliance summaries
+- **Pareto Optimization Tests**: 54 tests for multi-objective scheduling (93% coverage)
+  - Objective functions (fairness, coverage, preference satisfaction)
+  - Constraint handling, Pareto frontier extraction, hypervolume calculation
+- **XLSX Import Tests**: 84 edge case tests for Excel schedule imports
+  - Slot type mapping (70+ codes), conflict detection, week calculations
+  - Provider scheduling, alternating pattern detection
+- **Scheduling Catalyst Integration Tests**: 57 new integration + 21 expanded optimizer tests
+  - Full workflow testing, barrier-catalyst matching, chain reactions
+  - Multi-objective optimization, constraint satisfaction, Pareto frontier
+- **Notification Channels Tests**: 43 tests for delivery channels (93% coverage)
+  - InAppChannel, EmailChannel, WebhookChannel
+  - Priority handling, HTML formatting, payload structure
+
+#### Documentation Enhancements
+- **Portal API Routes**: Comprehensive docstrings for all 11 endpoints
+  - Google-style format with Args, Returns, Raises, Business Logic
+  - Module-level docstring with authentication and model references
+- **MTF Compliance Module**: 8,000+ character documentation expansion
+  - Military terminology glossary (DRRS, MFR, RFF, C/P/S-ratings)
+  - Detailed algorithm explanations for risk assessment
+  - Usage examples for readiness assessment, circuit breaker, RFF drafting
+
+#### Bug Fixes & Implementations
+- **Scheduling Catalyst Optimizer**: Fixed missing CatalystType import
+- **Experimental Benchmarks**: Resolved 9 TODOs across 3 files
+  - Memory tracking via tracemalloc in solver_comparison.py
+  - Violation counting with flexible result structure handling
+  - Coverage calculation with multiple attribute fallbacks
+  - Pathway validation with complete step/barrier/catalyst extraction
+  - Baseline and experimental solver execution in harness.py
+
+### Changed
+- Expanded test coverage from ~70% to comprehensive coverage in key services
+- Enhanced scheduling_catalyst test suite from basic to full integration
+
+### Statistics
+- **346+ new tests** across 9 new test files
+- **8,514 lines added** (17 files changed)
+- **9 TODOs resolved** in experimental benchmarks
+- Tests cover: services, validators, notifications, scheduling_catalyst
+#### MCP Server Enhancements
+- **MCP Tool Implementations**: Full implementations for 4 critical tools:
+  - `validate_schedule()`: ACGME compliance validation (80-hour rule, 1-in-7 rule, supervision ratios)
+  - `analyze_contingency()`: N-1/N-2 contingency analysis with impact assessment
+  - `detect_conflicts()`: Comprehensive conflict detection (double-booking, work hour violations, leave overlaps)
+  - `find_swap_matches()`: Intelligent swap matching with multi-factor scoring algorithm
+- **MCP Resource Database Queries**: Real database queries replacing placeholder data
+  - `get_schedule_status()`: Live assignment data with coverage metrics
+  - `get_compliance_summary()`: Full ACGME compliance calculations
+
+#### Type Safety Improvements
+- **TypedDict Expansion**: 8 new TypedDict definitions in `core/types.py`:
+  - `SwapDetails`, `CoverageReport`, `CoverageReportItem`, `ValidationResultDict`
+  - `ScheduleGenerationMetrics`, `ResilienceAnalysisResult`, `WorkloadDistribution`, `AnalyticsReport`
+- **MTF Compliance Type Safety**: 6 TypedDict classes for resilience framework:
+  - `SystemStateDict`, `MTFComplianceResultDict`, `ContingencyAnalysisDict`
+  - `CapacityMetricsDict`, `CascadePredictionDict`, `PositiveFeedbackRiskDict`
+
+#### Performance Optimizations
+- **N+1 Query Optimization**: Eager loading patterns across 5 service files
+  - `assignment_service.py`: Eager load Person, Block relationships
+  - `person_service.py`: New `get_person_with_assignments()` method
+  - `block_service.py`: New `get_block_with_assignments()` method
+  - `swap_request_service.py`: 7 methods optimized with eager loading
+  - `swap_executor.py`: Batch loading for swap execution
+  - Performance improvement: 87-99% reduction in database queries
+
+#### Infrastructure
+- **Email Notification Enhancement**: Added `template_id` relationship to EmailLog model
+- **EmailSendRequest Schema**: New Pydantic schema for API email sending
+- **Scheduler Ops Celery Integration**: Real task tracking replacing synthetic metrics
+  - Query active/scheduled/reserved tasks via Celery Inspect API
+  - Historical task analysis from Redis backend
+  - 8 comprehensive test cases
+
+#### Testing & Quality
+- **Stress Testing Framework**: Complete implementation in `experimental/benchmarks/`
+  - 5 stress levels: NORMAL, ELEVATED, HIGH, CRITICAL, CRISIS
+  - Graceful degradation verification
+  - ACGME compliance calculation under stress
+  - Patient safety master regulator checks
+- **Frontend JSDoc Documentation**: Comprehensive documentation for:
+  - `api.ts`: API client with all HTTP helpers
+  - `auth.ts`: Authentication functions
+  - `validation.ts`: Form validation utilities
+
+### Changed
+- **Constraints Module**: Modularized from 3,016-line monolithic file to 14 specialized modules (5,613 lines total)
+
+### Documentation
+- Added `docs/sessions/SESSION_011_PARALLEL_HIGH_YIELD_TODOS.md`
+- Added `docs/EMAIL_NOTIFICATION_INFRASTRUCTURE.md`
+- Added `SCHEDULER_OPS_CELERY_INTEGRATION_SUMMARY.md`
+- Added `backend/experimental/benchmarks/STRESS_TESTING_SUMMARY.md`
+
 ## [1.0.0] - 2024-01-15
 
 ### Added

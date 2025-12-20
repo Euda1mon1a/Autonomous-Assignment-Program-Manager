@@ -2,7 +2,8 @@
 
 from uuid import UUID
 
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.person import Person
 from app.repositories.person import PersonRepository
@@ -16,26 +17,116 @@ class PersonService:
         self.person_repo = PersonRepository(db)
 
     def get_person(self, person_id: UUID) -> Person | None:
-        """Get a single person by ID."""
+        """
+        Get a single person by ID.
+
+        For performance-critical cases where assignments are needed,
+        use get_person_with_assignments() instead.
+        """
         return self.person_repo.get_by_id(person_id)
+
+    def get_person_with_assignments(self, person_id: UUID) -> Person | None:
+        """
+        Get a single person by ID with eager-loaded assignments.
+
+        N+1 Optimization: Uses selectinload to eagerly fetch all assignments
+        and their related entities (block, rotation_template) in a batch query,
+        preventing N+1 queries when accessing person.assignments.
+        """
+        return (
+            self.db.query(Person)
+            .options(
+                selectinload(Person.assignments).selectinload("block"),
+                selectinload(Person.assignments).selectinload("rotation_template"),
+            )
+            .filter(Person.id == person_id)
+            .first()
+        )
 
     def list_people(
         self,
         type: str | None = None,
         pgy_level: int | None = None,
+        include_assignments: bool = False,
     ) -> dict:
-        """List people with optional filters."""
-        people = self.person_repo.list_with_filters(type=type, pgy_level=pgy_level)
+        """
+        List people with optional filters.
+
+        Args:
+            type: Filter by person type (resident/faculty)
+            pgy_level: Filter by PGY level
+            include_assignments: If True, eager load assignments (N+1 optimization)
+
+        N+1 Optimization: When include_assignments=True, uses selectinload to
+        eagerly fetch assignments and their relationships in batch queries.
+        """
+        if include_assignments:
+            query = self.db.query(Person).options(
+                selectinload(Person.assignments).selectinload("block"),
+                selectinload(Person.assignments).selectinload("rotation_template"),
+            )
+
+            if type:
+                query = query.filter(Person.type == type)
+            if pgy_level is not None:
+                query = query.filter(Person.pgy_level == pgy_level)
+
+            people = query.order_by(Person.name).all()
+        else:
+            people = self.person_repo.list_with_filters(type=type, pgy_level=pgy_level)
+
         return {"items": people, "total": len(people)}
 
-    def list_residents(self, pgy_level: int | None = None) -> dict:
-        """List all residents with optional PGY filter."""
-        residents = self.person_repo.list_residents(pgy_level=pgy_level)
+    def list_residents(
+        self,
+        pgy_level: int | None = None,
+        include_assignments: bool = False,
+    ) -> dict:
+        """
+        List all residents with optional PGY filter.
+
+        N+1 Optimization: When include_assignments=True, uses selectinload to
+        eagerly fetch assignments, preventing N+1 queries when accessing resident.assignments.
+        """
+        if include_assignments:
+            query = self.db.query(Person).options(
+                selectinload(Person.assignments).selectinload("block"),
+                selectinload(Person.assignments).selectinload("rotation_template"),
+            ).filter(Person.type == "resident")
+
+            if pgy_level is not None:
+                query = query.filter(Person.pgy_level == pgy_level)
+
+            residents = query.order_by(Person.pgy_level, Person.name).all()
+        else:
+            residents = self.person_repo.list_residents(pgy_level=pgy_level)
+
         return {"items": residents, "total": len(residents)}
 
-    def list_faculty(self, specialty: str | None = None) -> dict:
-        """List all faculty with optional specialty filter."""
-        faculty = self.person_repo.list_faculty(specialty=specialty)
+    def list_faculty(
+        self,
+        specialty: str | None = None,
+        include_assignments: bool = False,
+    ) -> dict:
+        """
+        List all faculty with optional specialty filter.
+
+        N+1 Optimization: When include_assignments=True, uses selectinload to
+        eagerly fetch assignments, preventing N+1 queries when accessing faculty.assignments.
+        """
+        if include_assignments:
+            query = self.db.query(Person).options(
+                selectinload(Person.assignments).selectinload("block"),
+                selectinload(Person.assignments).selectinload("rotation_template"),
+            ).filter(Person.type == "faculty")
+
+            if specialty:
+                query = query.filter(Person.specialties.contains([specialty]))
+
+            faculty = query.order_by(Person.name).all()
+        else:
+            faculty = self.person_repo.list_faculty(specialty=specialty)
+
         return {"items": faculty, "total": len(faculty)}
 
     def create_person(

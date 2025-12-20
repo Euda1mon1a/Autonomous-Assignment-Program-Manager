@@ -12,6 +12,7 @@ import logging
 import secrets
 import uuid
 from datetime import datetime, timedelta
+from itertools import islice
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import and_, desc, func
@@ -66,41 +67,119 @@ def _get_resilience_service(db: Session):
 
 
 def _calculate_task_metrics(db: Session) -> TaskMetrics:
-    """Calculate task execution metrics.
+    """Calculate task execution metrics from Celery backend.
 
-    In a real implementation, this would query Celery task status
-    or a task tracking database. For now, we'll use placeholder logic.
+    Queries actual Celery task data from:
+    - Active tasks (currently running)
+    - Scheduled tasks (queued for execution)
+    - Reserved tasks (claimed by workers)
+    - Recent task results (completed/failed)
     """
-    # TODO: Integrate with actual task tracking system (Celery, etc.)
-    # For now, return synthetic metrics based on system state
-
     try:
-        service = _get_resilience_service(db)
-        health_report = service.get_health_snapshot()
+        from app.core.celery_app import celery_app
 
-        # Derive task metrics from system health
-        # This is a placeholder - replace with actual task tracking
-        base_tasks = 100
-        failed_rate = 0.05 if health_report.get("overall_status") == "healthy" else 0.15
+        # Get Celery inspect API
+        inspect = celery_app.control.inspect()
 
-        total_tasks = base_tasks
-        failed_tasks = int(total_tasks * failed_rate)
-        completed_tasks = int(total_tasks * 0.8)
-        active_tasks = total_tasks - completed_tasks - failed_tasks
-        pending_tasks = max(0, total_tasks - completed_tasks - active_tasks - failed_tasks)
+        # Query active, scheduled, and reserved tasks
+        active_tasks_dict = inspect.active() or {}
+        scheduled_tasks_dict = inspect.scheduled() or {}
+        reserved_tasks_dict = inspect.reserved() or {}
 
-        success_rate = completed_tasks / total_tasks if total_tasks > 0 else 1.0
+        # Count active tasks across all workers
+        active_count = sum(len(tasks) for tasks in active_tasks_dict.values())
+
+        # Count pending tasks (scheduled + reserved)
+        scheduled_count = sum(len(tasks) for tasks in scheduled_tasks_dict.values())
+        reserved_count = sum(len(tasks) for tasks in reserved_tasks_dict.values())
+        pending_count = scheduled_count + reserved_count
+
+        # Query stats for completed/failed tasks
+        stats_dict = inspect.stats() or {}
+
+        # Aggregate task counts from worker stats
+        total_completed = 0
+        total_failed = 0
+
+        for worker_name, worker_stats in stats_dict.items():
+            # Worker stats may contain task counters
+            if isinstance(worker_stats, dict):
+                total_completed += worker_stats.get("total", {}).get("completed", 0)
+
+        # For recent failures, check registered tasks
+        registered_dict = inspect.registered() or {}
+
+        # Get recent task results from result backend
+        # Query last 100 task IDs to get completion statistics
+        try:
+            # Use Redis to query recent task keys
+            from redis import Redis
+            from app.core.config import get_settings
+
+            settings = get_settings()
+            redis_client = Redis.from_url(settings.redis_url_with_password)
+
+            # Celery stores results with pattern: celery-task-meta-*
+            task_keys = redis_client.keys("celery-task-meta-*")
+
+            completed_count = 0
+            failed_count = 0
+
+            # Sample up to 100 most recent tasks
+            for key in task_keys[:100]:
+                try:
+                    task_data = redis_client.get(key)
+                    if task_data:
+                        import json
+                        result = json.loads(task_data)
+                        status = result.get("status", "")
+
+                        if status == "SUCCESS":
+                            completed_count += 1
+                        elif status == "FAILURE":
+                            failed_count += 1
+                except (json.JSONDecodeError, Exception) as parse_error:
+                    logger.debug(f"Error parsing task result: {parse_error}")
+                    continue
+
+            # Use sampled data if available
+            if completed_count > 0 or failed_count > 0:
+                total_completed = completed_count
+                total_failed = failed_count
+
+        except Exception as redis_error:
+            logger.warning(f"Could not query Redis for task results: {redis_error}")
+            # Fall back to worker stats if Redis query fails
+            pass
+
+        # Calculate total and success rate
+        total_tasks = active_count + pending_count + total_completed + total_failed
+
+        # Ensure we have at least some tasks to report
+        if total_tasks == 0:
+            # If no tasks found, return minimal metrics
+            return TaskMetrics(
+                total_tasks=0,
+                active_tasks=0,
+                completed_tasks=0,
+                failed_tasks=0,
+                pending_tasks=0,
+                success_rate=1.0,
+            )
+
+        success_rate = total_completed / (total_completed + total_failed) if (total_completed + total_failed) > 0 else 1.0
 
         return TaskMetrics(
             total_tasks=total_tasks,
-            active_tasks=active_tasks,
-            completed_tasks=completed_tasks,
-            failed_tasks=failed_tasks,
-            pending_tasks=pending_tasks,
+            active_tasks=active_count,
+            completed_tasks=total_completed,
+            failed_tasks=total_failed,
+            pending_tasks=pending_count,
             success_rate=success_rate,
         )
+
     except Exception as e:
-        logger.error(f"Error calculating task metrics: {e}")
+        logger.error(f"Error calculating task metrics from Celery: {e}", exc_info=True)
         # Return safe defaults
         return TaskMetrics(
             total_tasks=0,
@@ -113,40 +192,255 @@ def _calculate_task_metrics(db: Session) -> TaskMetrics:
 
 
 def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
-    """Get recent task activity.
+    """Get recent task activity from Celery backend.
 
-    In production, this would query actual task execution logs.
-    For now, returns placeholder data.
+    Queries actual task execution history from Redis/Celery result backend.
+    Returns most recent tasks with their status, timing, and error information.
     """
-    # TODO: Query actual task execution history
-    # This is a placeholder implementation
     recent_tasks = []
 
-    # Example: Use assignment changes as proxy for tasks
     try:
-        # Get recent assignments as proxy for task activity
-        recent = (
-            db.query(Assignment)
-            .join(Block)
-            .order_by(desc(Block.date))
-            .limit(limit)
-            .all()
+        from app.core.celery_app import celery_app
+        from redis import Redis
+        from app.core.config import get_settings
+        import json
+
+        settings = get_settings()
+        redis_client = Redis.from_url(settings.redis_url_with_password)
+
+        # Get all task result keys from Redis
+        task_keys = redis_client.keys("celery-task-meta-*")
+
+        # Parse and collect task information
+        task_data_list = []
+
+        for key in task_keys:
+            try:
+                task_data = redis_client.get(key)
+                if not task_data:
+                    continue
+
+                result = json.loads(task_data)
+
+                # Extract task ID from key (format: celery-task-meta-<uuid>)
+                task_id = key.decode("utf-8").replace("celery-task-meta-", "")
+
+                # Parse task information
+                status_str = result.get("status", "UNKNOWN")
+                task_name = result.get("task_name") or result.get("name", "Unknown Task")
+                date_done = result.get("date_done")
+                traceback = result.get("traceback")
+
+                # Map Celery status to our TaskStatus enum
+                status_mapping = {
+                    "PENDING": TaskStatus.PENDING,
+                    "STARTED": TaskStatus.IN_PROGRESS,
+                    "SUCCESS": TaskStatus.COMPLETED,
+                    "FAILURE": TaskStatus.FAILED,
+                    "RETRY": TaskStatus.IN_PROGRESS,
+                    "REVOKED": TaskStatus.CANCELLED,
+                }
+                task_status = status_mapping.get(status_str, TaskStatus.PENDING)
+
+                # Parse timestamps
+                completed_at = None
+                if date_done:
+                    try:
+                        # Celery date_done is in ISO format
+                        completed_at = datetime.fromisoformat(date_done.replace("Z", "+00:00"))
+                    except (ValueError, AttributeError):
+                        pass
+
+                # Extract error message if failed
+                error_message = None
+                if status_str == "FAILURE":
+                    error_result = result.get("result")
+                    if isinstance(error_result, dict):
+                        error_message = error_result.get("exc_message") or error_result.get("exc_type")
+                    elif isinstance(error_result, str):
+                        error_message = error_result[:200]  # Truncate long errors
+
+                    # Use traceback if no error message
+                    if not error_message and traceback:
+                        error_message = traceback.split("\n")[-1][:200]
+
+                task_data_list.append({
+                    "task_id": task_id,
+                    "name": task_name,
+                    "status": task_status,
+                    "completed_at": completed_at,
+                    "error_message": error_message,
+                })
+
+            except (json.JSONDecodeError, Exception) as parse_error:
+                logger.debug(f"Error parsing task key {key}: {parse_error}")
+                continue
+
+        # Sort by completion time (most recent first)
+        task_data_list.sort(
+            key=lambda x: x["completed_at"] if x["completed_at"] else datetime.min,
+            reverse=True
         )
 
-        for assignment in recent[:limit]:
+        # Get task result keys from Redis using non-blocking SCAN and limit the sample size
+        scan_limit = max(limit * 5, 50)
+        task_keys = list(
+            islice(
+                redis_client.scan_iter(match="celery-task-meta-*", count=100),
+                scan_limit,
+            )
+        )
+
+        # Parse and collect task information
+        task_data_list = []
+
+        for key in task_keys:
+            try:
+                task_data = redis_client.get(key)
+                if not task_data:
+                    continue
+
+                result = json.loads(task_data)
+
+                # Extract task ID from key (format: celery-task-meta-<uuid>)
+                task_id = key.decode("utf-8").replace("celery-task-meta-", "")
+
+                # Parse task information
+                status_str = result.get("status", "UNKNOWN")
+                task_name = result.get("task_name") or result.get("name", "Unknown Task")
+                date_done = result.get("date_done")
+                traceback = result.get("traceback")
+
+                # Map Celery status to our TaskStatus enum
+                status_mapping = {
+                    "PENDING": TaskStatus.PENDING,
+                    "STARTED": TaskStatus.IN_PROGRESS,
+                    "SUCCESS": TaskStatus.COMPLETED,
+                    "FAILURE": TaskStatus.FAILED,
+                    "RETRY": TaskStatus.IN_PROGRESS,
+                    "REVOKED": TaskStatus.CANCELLED,
+                }
+                task_status = status_mapping.get(status_str, TaskStatus.PENDING)
+
+                # Parse timestamps
+                completed_at = None
+                if date_done:
+                    try:
+                        # Celery date_done is in ISO format
+                        completed_at = datetime.fromisoformat(date_done.replace("Z", "+00:00"))
+                    except (ValueError, AttributeError):
+                        pass
+
+                # Extract error message if failed
+                error_message = None
+                if status_str == "FAILURE":
+                    error_result = result.get("result")
+                    if isinstance(error_result, dict):
+                        error_message = error_result.get("exc_message") or error_result.get("exc_type")
+                    elif isinstance(error_result, str):
+                        error_message = error_result[:200]  # Truncate long errors
+
+                    # Use traceback if no error message
+                    if not error_message and traceback:
+                        error_message = traceback.split("\n")[-1][:200]
+
+                task_data_list.append({
+                    "task_id": task_id,
+                    "name": task_name,
+                    "status": task_status,
+                    "completed_at": completed_at,
+                    "error_message": error_message,
+                })
+
+            except (json.JSONDecodeError, Exception) as parse_error:
+                logger.debug(f"Error parsing task key {key}: {parse_error}")
+                continue
+
+        # Sort by completion time (most recent first)
+        task_data_list.sort(
+            key=lambda x: x["completed_at"] if x["completed_at"] else datetime.min,
+            reverse=True
+        )
+
+        # Get active tasks to supplement recent tasks
+        inspect = celery_app.control.inspect()
+        active_tasks_dict = inspect.active() or {}
+
+        # Add active tasks to the list
+        for worker_name, tasks_list in active_tasks_dict.items():
+            for task_info in tasks_list:
+                task_id = task_info.get("id", "unknown")
+                task_name = task_info.get("name", "Unknown Task")
+
+                # Get start time
+                started_at = None
+                if "time_start" in task_info:
+                    try:
+                        started_at = datetime.fromtimestamp(task_info["time_start"])
+                    except (ValueError, TypeError):
+                        pass
+
+                # Parse args/kwargs for description
+                args = task_info.get("args", [])
+                kwargs = task_info.get("kwargs", {})
+                description = f"Worker: {worker_name}"
+                if args or kwargs:
+                    description += f" | Args: {args[:50]}" if args else ""
+
+                task_data_list.append({
+                    "task_id": task_id,
+                    "name": task_name,
+                    "status": TaskStatus.IN_PROGRESS,
+                    "started_at": started_at,
+                    "completed_at": None,
+                    "error_message": None,
+                    "description": description,
+                })
+
+        # Take the most recent tasks up to limit
+        for task_data in task_data_list[:limit]:
+            # Calculate duration if both timestamps available
+            duration_seconds = None
+            if task_data.get("started_at") and task_data.get("completed_at"):
+                delta = task_data["completed_at"] - task_data["started_at"]
+                duration_seconds = delta.total_seconds()
+
+            # Generate human-readable task name from Celery task path
+            task_name = task_data["name"]
+            if "." in task_name:
+                # Extract last part for readability (e.g., app.resilience.tasks.periodic_health_check -> periodic_health_check)
+                task_name_parts = task_name.split(".")
+                friendly_name = task_name_parts[-1].replace("_", " ").title()
+            else:
+                friendly_name = task_name
+
+            # Build description
+            description = task_data.get("description")
+            if not description:
+                if task_data["status"] == TaskStatus.COMPLETED:
+                    description = "Task completed successfully"
+                elif task_data["status"] == TaskStatus.FAILED:
+                    description = f"Task failed: {task_data.get('error_message', 'Unknown error')}"
+                elif task_data["status"] == TaskStatus.IN_PROGRESS:
+                    description = "Task is currently running"
+                else:
+                    description = f"Task status: {task_data['status'].value}"
+
             recent_tasks.append(
                 RecentTaskInfo(
-                    task_id=str(assignment.id),
-                    name=f"Assignment {assignment.person_id}",
-                    status=TaskStatus.COMPLETED,
-                    description=f"Assigned to block {assignment.block_id}",
-                    started_at=datetime.utcnow() - timedelta(hours=2),
-                    completed_at=datetime.utcnow() - timedelta(hours=1),
-                    duration_seconds=3600.0,
+                    task_id=task_data["task_id"],
+                    name=friendly_name,
+                    status=task_data["status"],
+                    description=description,
+                    started_at=task_data.get("started_at"),
+                    completed_at=task_data.get("completed_at"),
+                    duration_seconds=duration_seconds,
+                    error_message=task_data.get("error_message"),
                 )
             )
+
     except Exception as e:
-        logger.error(f"Error fetching recent tasks: {e}")
+        logger.error(f"Error fetching recent tasks from Celery: {e}", exc_info=True)
 
     return recent_tasks
 

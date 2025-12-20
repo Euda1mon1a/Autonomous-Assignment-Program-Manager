@@ -37,6 +37,14 @@ class EmailLog(Base):
         index=True
     )
 
+    # Optional link to email template used
+    template_id = Column(
+        GUID(),
+        ForeignKey("email_templates.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
+
     # Email details
     recipient_email = Column(String(255), nullable=False, index=True)
     subject = Column(String(500), nullable=False)
@@ -52,8 +60,9 @@ class EmailLog(Base):
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
-    # Relationship
+    # Relationships
     notification = relationship("Notification", back_populates="email_logs")
+    template = relationship("EmailTemplate", backref="email_logs")
 
     def __repr__(self) -> str:
         return f"<EmailLog(id={self.id}, recipient='{self.recipient_email}', status='{self.status}')>"
