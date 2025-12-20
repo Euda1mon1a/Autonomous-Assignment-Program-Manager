@@ -12,6 +12,7 @@ import logging
 import secrets
 import uuid
 from datetime import datetime, timedelta
+from itertools import islice
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import and_, desc, func
@@ -207,8 +208,14 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
         settings = get_settings()
         redis_client = Redis.from_url(settings.redis_url_with_password)
 
-        # Get all task result keys from Redis
-        task_keys = redis_client.keys("celery-task-meta-*")
+        # Get task result keys from Redis using non-blocking SCAN and limit the sample size
+        scan_limit = max(limit * 5, 50)
+        task_keys = list(
+            islice(
+                redis_client.scan_iter(match="celery-task-meta-*", count=100),
+                scan_limit,
+            )
+        )
 
         # Parse and collect task information
         task_data_list = []

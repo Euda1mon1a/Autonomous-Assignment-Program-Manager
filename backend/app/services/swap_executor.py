@@ -135,9 +135,9 @@ class SwapExecutor:
             # Reverse the schedule assignments
             self._update_schedule_assignments(
                 swap_record.target_faculty_id,
-                swap_record.target_week,
-                swap_record.source_faculty_id,
                 swap_record.source_week,
+                swap_record.source_faculty_id,
+                swap_record.target_week,
             )
 
             # Reverse the call cascade
