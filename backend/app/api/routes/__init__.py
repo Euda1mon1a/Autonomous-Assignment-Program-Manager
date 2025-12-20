@@ -35,9 +35,11 @@ from app.api.routes import (
     rotation_templates,
     schedule,
     scheduler_ops,
+    search,
     settings,
     swap,
     unified_heatmap,
+    upload,
     visualization,
     ws,
 )
@@ -65,6 +67,7 @@ api_router.include_router(resilience.router, prefix="/resilience", tags=["resili
 api_router.include_router(scheduler_ops.router, prefix="/scheduler", tags=["scheduler-ops"])
 api_router.include_router(procedures.router, prefix="/procedures", tags=["procedures"])
 api_router.include_router(credentials.router, prefix="/credentials", tags=["credentials"])
+api_router.include_router(search.router, prefix="/search", tags=["search"])
 api_router.include_router(certifications.router, prefix="/certifications", tags=["certifications"])
 api_router.include_router(calendar.router, prefix="/calendar", tags=["calendar"])
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
@@ -84,4 +87,5 @@ api_router.include_router(daily_manifest.router, prefix="/assignments", tags=["d
 api_router.include_router(role_views.router, prefix="/views", tags=["role-views"])
 api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
+api_router.include_router(upload.router, prefix="/uploads", tags=["upload"])
 api_router.include_router(ws.router, tags=["websocket"])
