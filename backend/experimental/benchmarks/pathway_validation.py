@@ -43,15 +43,66 @@ class PathwayValidator:
         """
         errors = []
 
-        ***REMOVED*** TODO: Implement actual validation logic
-        ***REMOVED*** This requires importing from catalyst-concepts branch
+        ***REMOVED*** Extract pathway information from various possible structures
+        steps_count = 0
+        barriers_count = 0
+        catalyst_list = []
+
+        ***REMOVED*** Handle different pathway structures
+        if hasattr(pathway, "steps"):
+            steps_data = getattr(pathway, "steps")
+            if isinstance(steps_data, list):
+                steps_count = len(steps_data)
+            elif isinstance(steps_data, int):
+                steps_count = steps_data
+
+        if hasattr(pathway, "transitions"):
+            transitions = getattr(pathway, "transitions")
+            if isinstance(transitions, list):
+                steps_count = len(transitions)
+
+        if isinstance(pathway, dict):
+            steps_count = len(pathway.get("steps", pathway.get("transitions", [])))
+            barriers_count = pathway.get("barriers_bypassed", 0)
+            catalyst_list = pathway.get("catalysts_used", pathway.get("catalysts", []))
+
+        if isinstance(pathway, list):
+            ***REMOVED*** Pathway is a list of transitions/steps
+            steps_count = len(pathway)
+
+        ***REMOVED*** Extract barriers bypassed
+        if hasattr(pathway, "barriers_bypassed"):
+            barriers_count = getattr(pathway, "barriers_bypassed")
+        elif hasattr(pathway, "barriers"):
+            barriers = getattr(pathway, "barriers")
+            if isinstance(barriers, list):
+                barriers_count = len(barriers)
+            elif isinstance(barriers, int):
+                barriers_count = barriers
+
+        ***REMOVED*** Extract catalysts used
+        if hasattr(pathway, "catalysts_used"):
+            catalysts = getattr(pathway, "catalysts_used")
+            if isinstance(catalysts, list):
+                catalyst_list = [str(c) for c in catalysts]
+        elif hasattr(pathway, "catalysts"):
+            catalysts = getattr(pathway, "catalysts")
+            if isinstance(catalysts, list):
+                catalyst_list = [str(c) for c in catalysts]
+
+        ***REMOVED*** Basic validation checks
+        if steps_count == 0:
+            errors.append("Pathway has no steps")
+
+        if current_state == target_state and steps_count > 0:
+            errors.append("Current state equals target state but pathway has steps")
 
         result = PathwayResult(
             pathway_id=str(id(pathway)),
             is_valid=len(errors) == 0,
-            steps=0,  ***REMOVED*** TODO: Count pathway steps
-            barriers_bypassed=0,  ***REMOVED*** TODO: Count barriers
-            catalysts_used=[],  ***REMOVED*** TODO: List catalysts
+            steps=steps_count,
+            barriers_bypassed=barriers_count,
+            catalysts_used=catalyst_list,
             validation_errors=errors,
         )
 
