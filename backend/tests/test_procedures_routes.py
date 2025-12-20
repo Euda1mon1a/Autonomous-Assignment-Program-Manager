@@ -125,7 +125,7 @@ class TestListProceduresEndpoint:
 
     def test_list_procedures_empty(self, client: TestClient, db: Session):
         """Test listing procedures when none exist."""
-        response = client.get("/api/procedures")
+        response = client.get("/api/v1/procedures")
 
         assert response.status_code == 200
         data = response.json()
@@ -136,7 +136,7 @@ class TestListProceduresEndpoint:
 
     def test_list_procedures_with_data(self, client: TestClient, sample_procedures):
         """Test listing procedures with existing data."""
-        response = client.get("/api/procedures")
+        response = client.get("/api/v1/procedures")
 
         assert response.status_code == 200
         data = response.json()
@@ -160,7 +160,7 @@ class TestListProceduresEndpoint:
         self, client: TestClient, sample_procedures
     ):
         """Test filtering procedures by specialty."""
-        response = client.get("/api/procedures", params={"specialty": "OB/GYN"})
+        response = client.get("/api/v1/procedures", params={"specialty": "OB/GYN"})
 
         assert response.status_code == 200
         data = response.json()
@@ -173,7 +173,7 @@ class TestListProceduresEndpoint:
         self, client: TestClient, sample_procedures
     ):
         """Test filtering procedures by category."""
-        response = client.get("/api/procedures", params={"category": "office"})
+        response = client.get("/api/v1/procedures", params={"category": "office"})
 
         assert response.status_code == 200
         data = response.json()
@@ -187,7 +187,7 @@ class TestListProceduresEndpoint:
     ):
         """Test filtering procedures by active status."""
         # Filter active only
-        response = client.get("/api/procedures", params={"is_active": True})
+        response = client.get("/api/v1/procedures", params={"is_active": True})
 
         assert response.status_code == 200
         data = response.json()
@@ -197,7 +197,7 @@ class TestListProceduresEndpoint:
             assert procedure["is_active"] is True
 
         # Filter inactive only
-        response = client.get("/api/procedures", params={"is_active": False})
+        response = client.get("/api/v1/procedures", params={"is_active": False})
 
         assert response.status_code == 200
         data = response.json()
@@ -207,7 +207,7 @@ class TestListProceduresEndpoint:
         self, client: TestClient, sample_procedures
     ):
         """Test filtering procedures by complexity level."""
-        response = client.get("/api/procedures", params={"complexity_level": "basic"})
+        response = client.get("/api/v1/procedures", params={"complexity_level": "basic"})
 
         assert response.status_code == 200
         data = response.json()
@@ -221,7 +221,7 @@ class TestListProceduresEndpoint:
     ):
         """Test combining multiple filters."""
         response = client.get(
-            "/api/procedures",
+            "/api/v1/procedures",
             params={
                 "category": "office",
                 "is_active": True,
@@ -240,7 +240,7 @@ class TestListProceduresEndpoint:
     def test_list_procedures_no_matches(self, client: TestClient, sample_procedures):
         """Test filtering with no matching results."""
         response = client.get(
-            "/api/procedures",
+            "/api/v1/procedures",
             params={"specialty": "NonExistentSpecialty"}
         )
 
@@ -259,7 +259,7 @@ class TestGetSpecialtiesEndpoint:
 
     def test_get_specialties_empty(self, client: TestClient):
         """Test getting specialties when no procedures exist."""
-        response = client.get("/api/procedures/specialties")
+        response = client.get("/api/v1/procedures/specialties")
 
         assert response.status_code == 200
         data = response.json()
@@ -268,7 +268,7 @@ class TestGetSpecialtiesEndpoint:
 
     def test_get_specialties_with_data(self, client: TestClient, sample_procedures):
         """Test getting unique specialties from procedures."""
-        response = client.get("/api/procedures/specialties")
+        response = client.get("/api/v1/procedures/specialties")
 
         assert response.status_code == 200
         data = response.json()
@@ -287,7 +287,7 @@ class TestGetSpecialtiesEndpoint:
 
     def test_get_specialties_unique(self, client: TestClient, sample_procedures):
         """Test that specialties are unique (no duplicates)."""
-        response = client.get("/api/procedures/specialties")
+        response = client.get("/api/v1/procedures/specialties")
 
         assert response.status_code == 200
         data = response.json()
@@ -301,7 +301,7 @@ class TestGetCategoriesEndpoint:
 
     def test_get_categories_empty(self, client: TestClient):
         """Test getting categories when no procedures exist."""
-        response = client.get("/api/procedures/categories")
+        response = client.get("/api/v1/procedures/categories")
 
         assert response.status_code == 200
         data = response.json()
@@ -310,7 +310,7 @@ class TestGetCategoriesEndpoint:
 
     def test_get_categories_with_data(self, client: TestClient, sample_procedures):
         """Test getting unique categories from procedures."""
-        response = client.get("/api/procedures/categories")
+        response = client.get("/api/v1/procedures/categories")
 
         assert response.status_code == 200
         data = response.json()
@@ -328,7 +328,7 @@ class TestGetCategoriesEndpoint:
 
     def test_get_categories_unique(self, client: TestClient, sample_procedures):
         """Test that categories are unique (no duplicates)."""
-        response = client.get("/api/procedures/categories")
+        response = client.get("/api/v1/procedures/categories")
 
         assert response.status_code == 200
         data = response.json()
@@ -348,7 +348,7 @@ class TestGetProcedureByNameEndpoint:
         self, client: TestClient, sample_procedure: Procedure
     ):
         """Test getting a procedure by its name."""
-        response = client.get(f"/api/procedures/by-name/{sample_procedure.name}")
+        response = client.get(f"/api/v1/procedures/by-name/{sample_procedure.name}")
 
         assert response.status_code == 200
         data = response.json()
@@ -358,7 +358,7 @@ class TestGetProcedureByNameEndpoint:
 
     def test_get_procedure_by_name_not_found(self, client: TestClient):
         """Test getting non-existent procedure by name."""
-        response = client.get("/api/procedures/by-name/NonExistentProcedure")
+        response = client.get("/api/v1/procedures/by-name/NonExistentProcedure")
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
@@ -368,11 +368,11 @@ class TestGetProcedureByNameEndpoint:
     ):
         """Test that name lookup is case-sensitive."""
         # Exact match should work
-        response = client.get(f"/api/procedures/by-name/{sample_procedure.name}")
+        response = client.get(f"/api/v1/procedures/by-name/{sample_procedure.name}")
         assert response.status_code == 200
 
         # Different case might not work (depends on implementation)
-        response = client.get(f"/api/procedures/by-name/{sample_procedure.name.lower()}")
+        response = client.get(f"/api/v1/procedures/by-name/{sample_procedure.name.lower()}")
         # Could be 200 or 404 depending on case sensitivity
         assert response.status_code in [200, 404]
 
@@ -384,7 +384,7 @@ class TestGetProcedureEndpoint:
         self, client: TestClient, sample_procedure: Procedure
     ):
         """Test getting a procedure by ID."""
-        response = client.get(f"/api/procedures/{sample_procedure.id}")
+        response = client.get(f"/api/v1/procedures/{sample_procedure.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -398,14 +398,14 @@ class TestGetProcedureEndpoint:
     def test_get_procedure_not_found(self, client: TestClient):
         """Test getting non-existent procedure."""
         fake_id = uuid4()
-        response = client.get(f"/api/procedures/{fake_id}")
+        response = client.get(f"/api/v1/procedures/{fake_id}")
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
     def test_get_procedure_invalid_uuid(self, client: TestClient):
         """Test getting procedure with invalid UUID."""
-        response = client.get("/api/procedures/invalid-uuid")
+        response = client.get("/api/v1/procedures/invalid-uuid")
 
         assert response.status_code == 422
 
@@ -432,7 +432,7 @@ class TestCreateProcedureEndpoint:
         }
 
         response = client.post(
-            "/api/procedures",
+            "/api/v1/procedures",
             json=procedure_data,
             headers=auth_headers,
         )
@@ -451,7 +451,7 @@ class TestCreateProcedureEndpoint:
             "category": "office",
         }
 
-        response = client.post("/api/procedures", json=procedure_data)
+        response = client.post("/api/v1/procedures", json=procedure_data)
 
         assert response.status_code == 401
 
@@ -465,7 +465,7 @@ class TestCreateProcedureEndpoint:
         }
 
         response = client.post(
-            "/api/procedures",
+            "/api/v1/procedures",
             json=procedure_data,
             headers=auth_headers,
         )
@@ -493,7 +493,7 @@ class TestCreateProcedureEndpoint:
         }
 
         response = client.post(
-            "/api/procedures",
+            "/api/v1/procedures",
             json=procedure_data,
             headers=auth_headers,
         )
@@ -510,7 +510,7 @@ class TestCreateProcedureEndpoint:
         }
 
         response = client.post(
-            "/api/procedures",
+            "/api/v1/procedures",
             json=procedure_data,
             headers=auth_headers,
         )
@@ -529,7 +529,7 @@ class TestCreateProcedureEndpoint:
         }
 
         response = client.post(
-            "/api/procedures",
+            "/api/v1/procedures",
             json=procedure_data,
             headers=auth_headers,
         )
@@ -546,7 +546,7 @@ class TestCreateProcedureEndpoint:
         }
 
         response = client.post(
-            "/api/procedures",
+            "/api/v1/procedures",
             json=procedure_data,
             headers=auth_headers,
         )
@@ -575,7 +575,7 @@ class TestUpdateProcedureEndpoint:
         }
 
         response = client.put(
-            f"/api/procedures/{sample_procedure.id}",
+            f"/api/v1/procedures/{sample_procedure.id}",
             json=update_data,
             headers=auth_headers,
         )
@@ -595,7 +595,7 @@ class TestUpdateProcedureEndpoint:
         update_data = {"description": "New description"}
 
         response = client.put(
-            f"/api/procedures/{sample_procedure.id}",
+            f"/api/v1/procedures/{sample_procedure.id}",
             json=update_data,
         )
 
@@ -609,7 +609,7 @@ class TestUpdateProcedureEndpoint:
         update_data = {"description": "New description"}
 
         response = client.put(
-            f"/api/procedures/{fake_id}",
+            f"/api/v1/procedures/{fake_id}",
             json=update_data,
             headers=auth_headers,
         )
@@ -628,7 +628,7 @@ class TestUpdateProcedureEndpoint:
         }
 
         response = client.put(
-            f"/api/procedures/{sample_procedure.id}",
+            f"/api/v1/procedures/{sample_procedure.id}",
             json=update_data,
             headers=auth_headers,
         )
@@ -653,7 +653,7 @@ class TestUpdateProcedureEndpoint:
         }
 
         response = client.put(
-            f"/api/procedures/{sample_procedure.id}",
+            f"/api/v1/procedures/{sample_procedure.id}",
             json=update_data,
             headers=auth_headers,
         )
@@ -683,21 +683,21 @@ class TestDeleteProcedureEndpoint:
         procedure_id = procedure.id
 
         response = client.delete(
-            f"/api/procedures/{procedure_id}",
+            f"/api/v1/procedures/{procedure_id}",
             headers=auth_headers,
         )
 
         assert response.status_code == 204
 
         # Verify deletion
-        verify_response = client.get(f"/api/procedures/{procedure_id}")
+        verify_response = client.get(f"/api/v1/procedures/{procedure_id}")
         assert verify_response.status_code == 404
 
     def test_delete_procedure_requires_auth(
         self, client: TestClient, sample_procedure: Procedure
     ):
         """Test that deleting procedure requires authentication."""
-        response = client.delete(f"/api/procedures/{sample_procedure.id}")
+        response = client.delete(f"/api/v1/procedures/{sample_procedure.id}")
 
         assert response.status_code == 401
 
@@ -707,7 +707,7 @@ class TestDeleteProcedureEndpoint:
         """Test deleting non-existent procedure."""
         fake_id = uuid4()
         response = client.delete(
-            f"/api/procedures/{fake_id}",
+            f"/api/v1/procedures/{fake_id}",
             headers=auth_headers,
         )
 
@@ -729,7 +729,7 @@ class TestDeactivateProcedureEndpoint:
     ):
         """Test deactivating a procedure."""
         response = client.post(
-            f"/api/procedures/{sample_procedure.id}/deactivate",
+            f"/api/v1/procedures/{sample_procedure.id}/deactivate",
             headers=auth_headers,
         )
 
@@ -742,7 +742,7 @@ class TestDeactivateProcedureEndpoint:
         self, client: TestClient, sample_procedure: Procedure
     ):
         """Test that deactivating procedure requires authentication."""
-        response = client.post(f"/api/procedures/{sample_procedure.id}/deactivate")
+        response = client.post(f"/api/v1/procedures/{sample_procedure.id}/deactivate")
 
         assert response.status_code == 401
 
@@ -752,7 +752,7 @@ class TestDeactivateProcedureEndpoint:
         """Test deactivating non-existent procedure."""
         fake_id = uuid4()
         response = client.post(
-            f"/api/procedures/{fake_id}/deactivate",
+            f"/api/v1/procedures/{fake_id}/deactivate",
             headers=auth_headers,
         )
 
@@ -772,7 +772,7 @@ class TestDeactivateProcedureEndpoint:
         db.commit()
 
         response = client.post(
-            f"/api/procedures/{procedure.id}/deactivate",
+            f"/api/v1/procedures/{procedure.id}/deactivate",
             headers=auth_headers,
         )
 
@@ -798,7 +798,7 @@ class TestActivateProcedureEndpoint:
         db.commit()
 
         response = client.post(
-            f"/api/procedures/{procedure.id}/activate",
+            f"/api/v1/procedures/{procedure.id}/activate",
             headers=auth_headers,
         )
 
@@ -820,7 +820,7 @@ class TestActivateProcedureEndpoint:
         db.add(procedure)
         db.commit()
 
-        response = client.post(f"/api/procedures/{procedure.id}/activate")
+        response = client.post(f"/api/v1/procedures/{procedure.id}/activate")
 
         assert response.status_code == 401
 
@@ -830,7 +830,7 @@ class TestActivateProcedureEndpoint:
         """Test activating non-existent procedure."""
         fake_id = uuid4()
         response = client.post(
-            f"/api/procedures/{fake_id}/activate",
+            f"/api/v1/procedures/{fake_id}/activate",
             headers=auth_headers,
         )
 
@@ -844,7 +844,7 @@ class TestActivateProcedureEndpoint:
     ):
         """Test activating an already active procedure."""
         response = client.post(
-            f"/api/procedures/{sample_procedure.id}/activate",
+            f"/api/v1/procedures/{sample_procedure.id}/activate",
             headers=auth_headers,
         )
 
@@ -877,7 +877,7 @@ class TestProcedureEdgeCases:
         }
 
         response = client.post(
-            "/api/procedures",
+            "/api/v1/procedures",
             json=procedure_data,
             headers=auth_headers,
         )
@@ -893,7 +893,7 @@ class TestProcedureEdgeCases:
         """Test PGY level validation at boundary values."""
         # Valid: 1
         response = client.post(
-            "/api/procedures",
+            "/api/v1/procedures",
             json={"name": "PGY1 Procedure", "min_pgy_level": 1},
             headers=auth_headers,
         )
@@ -901,7 +901,7 @@ class TestProcedureEdgeCases:
 
         # Valid: 3
         response = client.post(
-            "/api/procedures",
+            "/api/v1/procedures",
             json={"name": "PGY3 Procedure", "min_pgy_level": 3},
             headers=auth_headers,
         )
@@ -909,7 +909,7 @@ class TestProcedureEdgeCases:
 
         # Invalid: 0
         response = client.post(
-            "/api/procedures",
+            "/api/v1/procedures",
             json={"name": "PGY0 Procedure", "min_pgy_level": 0},
             headers=auth_headers,
         )
@@ -917,7 +917,7 @@ class TestProcedureEdgeCases:
 
         # Invalid: 4
         response = client.post(
-            "/api/procedures",
+            "/api/v1/procedures",
             json={"name": "PGY4 Procedure", "min_pgy_level": 4},
             headers=auth_headers,
         )
@@ -930,7 +930,7 @@ class TestProcedureEdgeCases:
         long_name = "A" * 300  # Very long name
 
         response = client.post(
-            "/api/procedures",
+            "/api/v1/procedures",
             json={"name": long_name},
             headers=auth_headers,
         )
@@ -950,7 +950,7 @@ class TestProcedureEdgeCases:
         }
 
         response = client.put(
-            f"/api/procedures/{sample_procedures[0].id}",
+            f"/api/v1/procedures/{sample_procedures[0].id}",
             json=update_data,
             headers=auth_headers,
         )
@@ -974,7 +974,7 @@ class TestProcedureEdgeCases:
         db.commit()
 
         # Should still be able to list all procedures
-        response = client.get("/api/procedures")
+        response = client.get("/api/v1/procedures")
         assert response.status_code == 200
         data = response.json()
         assert data["total"] >= 1
@@ -983,7 +983,7 @@ class TestProcedureEdgeCases:
         self, client: TestClient, sample_procedure: Procedure
     ):
         """Test that procedure response has all expected fields."""
-        response = client.get(f"/api/procedures/{sample_procedure.id}")
+        response = client.get(f"/api/v1/procedures/{sample_procedure.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -1005,7 +1005,7 @@ class TestProcedureEdgeCases:
 
         for i, level in enumerate(valid_levels):
             response = client.post(
-                "/api/procedures",
+                "/api/v1/procedures",
                 json={
                     "name": f"Procedure {level} {i}",
                     "complexity_level": level,

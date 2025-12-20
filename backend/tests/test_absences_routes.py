@@ -19,7 +19,7 @@ class TestListAbsencesEndpoint:
 
     def test_list_absences_empty(self, client: TestClient, db: Session):
         """Test listing absences when none exist."""
-        response = client.get("/api/absences")
+        response = client.get("/api/v1/absences")
 
         assert response.status_code == 200
         data = response.json()
@@ -32,7 +32,7 @@ class TestListAbsencesEndpoint:
 
     def test_list_absences_with_data(self, client: TestClient, sample_absence: Absence):
         """Test listing absences with existing data."""
-        response = client.get("/api/absences")
+        response = client.get("/api/v1/absences")
 
         assert response.status_code == 200
         data = response.json()
@@ -85,7 +85,7 @@ class TestListAbsencesEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/absences",
+            "/api/v1/absences",
             params={"person_id": str(sample_resident.id)}
         )
 
@@ -122,7 +122,7 @@ class TestListAbsencesEndpoint:
 
         filter_date = (date.today() + timedelta(days=5)).isoformat()
         response = client.get(
-            "/api/absences",
+            "/api/v1/absences",
             params={"start_date": filter_date}
         )
 
@@ -159,7 +159,7 @@ class TestListAbsencesEndpoint:
 
         filter_date = (date.today() + timedelta(days=10)).isoformat()
         response = client.get(
-            "/api/absences",
+            "/api/v1/absences",
             params={"end_date": filter_date}
         )
 
@@ -208,7 +208,7 @@ class TestListAbsencesEndpoint:
         filter_end = (date.today() + timedelta(days=15)).isoformat()
 
         response = client.get(
-            "/api/absences",
+            "/api/v1/absences",
             params={
                 "start_date": filter_start,
                 "end_date": filter_end
@@ -261,7 +261,7 @@ class TestListAbsencesEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/absences",
+            "/api/v1/absences",
             params={"absence_type": "vacation"}
         )
 
@@ -316,7 +316,7 @@ class TestListAbsencesEndpoint:
 
         # Filter by person and type
         response = client.get(
-            "/api/absences",
+            "/api/v1/absences",
             params={
                 "person_id": str(sample_resident.id),
                 "absence_type": "vacation"
@@ -341,7 +341,7 @@ class TestListAbsencesEndpoint:
         future_end = (date.today() + timedelta(days=400)).isoformat()
 
         response = client.get(
-            "/api/absences",
+            "/api/v1/absences",
             params={
                 "start_date": future_start,
                 "end_date": future_end
@@ -361,7 +361,7 @@ class TestGetAbsenceEndpoint:
 
     def test_get_absence_success(self, client: TestClient, sample_absence: Absence):
         """Test getting an existing absence by ID."""
-        response = client.get(f"/api/absences/{sample_absence.id}")
+        response = client.get(f"/api/v1/absences/{sample_absence.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -374,14 +374,14 @@ class TestGetAbsenceEndpoint:
     def test_get_absence_not_found(self, client: TestClient):
         """Test getting a non-existent absence."""
         fake_id = uuid4()
-        response = client.get(f"/api/absences/{fake_id}")
+        response = client.get(f"/api/v1/absences/{fake_id}")
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
     def test_get_absence_invalid_uuid(self, client: TestClient):
         """Test getting absence with invalid UUID format."""
-        response = client.get("/api/absences/not-a-valid-uuid")
+        response = client.get("/api/v1/absences/not-a-valid-uuid")
 
         assert response.status_code == 422  # Validation error
 
@@ -399,7 +399,7 @@ class TestGetAbsenceEndpoint:
         db.commit()
         db.refresh(absence)
 
-        response = client.get(f"/api/absences/{absence.id}")
+        response = client.get(f"/api/v1/absences/{absence.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -419,7 +419,7 @@ class TestCreateAbsenceEndpoint:
             "notes": "Annual vacation",
         }
 
-        response = client.post("/api/absences", json=absence_data)
+        response = client.post("/api/v1/absences", json=absence_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -440,7 +440,7 @@ class TestCreateAbsenceEndpoint:
             "absence_type": "vacation",
         }
 
-        response = client.post("/api/absences", json=absence_data)
+        response = client.post("/api/v1/absences", json=absence_data)
 
         assert response.status_code == 400
 
@@ -453,7 +453,7 @@ class TestCreateAbsenceEndpoint:
             "absence_type": "vacation",
         }
 
-        response = client.post("/api/absences", json=absence_data)
+        response = client.post("/api/v1/absences", json=absence_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -464,7 +464,7 @@ class TestCreateAbsenceEndpoint:
             # Missing start_date, end_date, absence_type
         }
 
-        response = client.post("/api/absences", json=absence_data)
+        response = client.post("/api/v1/absences", json=absence_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -477,7 +477,7 @@ class TestCreateAbsenceEndpoint:
             "absence_type": "invalid_type",
         }
 
-        response = client.post("/api/absences", json=absence_data)
+        response = client.post("/api/v1/absences", json=absence_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -492,7 +492,7 @@ class TestCreateAbsenceEndpoint:
             "notes": "Deployment to overseas location",
         }
 
-        response = client.post("/api/absences", json=absence_data)
+        response = client.post("/api/v1/absences", json=absence_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -508,7 +508,7 @@ class TestCreateAbsenceEndpoint:
             "tdy_location": "Tripler Army Medical Center",
         }
 
-        response = client.post("/api/absences", json=absence_data)
+        response = client.post("/api/v1/absences", json=absence_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -524,7 +524,7 @@ class TestCreateAbsenceEndpoint:
             "absence_type": "conference",
         }
 
-        response = client.post("/api/absences", json=absence_data)
+        response = client.post("/api/v1/absences", json=absence_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -540,7 +540,7 @@ class TestCreateAbsenceEndpoint:
             "absence_type": "sick",
         }
 
-        response = client.post("/api/absences", json=absence_data)
+        response = client.post("/api/v1/absences", json=absence_data)
 
         assert response.status_code == 201
 
@@ -569,7 +569,7 @@ class TestUpdateAbsenceEndpoint:
             "notes": "Updated notes",
         }
 
-        response = client.put(f"/api/absences/{absence.id}", json=update_data)
+        response = client.put(f"/api/v1/absences/{absence.id}", json=update_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -584,7 +584,7 @@ class TestUpdateAbsenceEndpoint:
             "notes": "Updated notes",
         }
 
-        response = client.put(f"/api/absences/{fake_id}", json=update_data)
+        response = client.put(f"/api/v1/absences/{fake_id}", json=update_data)
 
         assert response.status_code == 404
 
@@ -612,7 +612,7 @@ class TestUpdateAbsenceEndpoint:
             "notes": "Only notes changed",
         }
 
-        response = client.put(f"/api/absences/{absence.id}", json=update_data)
+        response = client.put(f"/api/v1/absences/{absence.id}", json=update_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -640,7 +640,7 @@ class TestUpdateAbsenceEndpoint:
             "absence_type": "conference",
         }
 
-        response = client.put(f"/api/absences/{absence.id}", json=update_data)
+        response = client.put(f"/api/v1/absences/{absence.id}", json=update_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -664,7 +664,7 @@ class TestUpdateAbsenceEndpoint:
             "absence_type": "invalid_type",
         }
 
-        response = client.put(f"/api/absences/{absence.id}", json=update_data)
+        response = client.put(f"/api/v1/absences/{absence.id}", json=update_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -688,7 +688,7 @@ class TestUpdateAbsenceEndpoint:
             "notes": "Orders received",
         }
 
-        response = client.put(f"/api/absences/{absence.id}", json=update_data)
+        response = client.put(f"/api/v1/absences/{absence.id}", json=update_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -713,7 +713,7 @@ class TestDeleteAbsenceEndpoint:
         db.commit()
         absence_id = absence.id
 
-        response = client.delete(f"/api/absences/{absence_id}")
+        response = client.delete(f"/api/v1/absences/{absence_id}")
 
         assert response.status_code == 204
         assert response.content == b""
@@ -725,13 +725,13 @@ class TestDeleteAbsenceEndpoint:
     def test_delete_absence_not_found(self, client: TestClient):
         """Test deleting a non-existent absence."""
         fake_id = uuid4()
-        response = client.delete(f"/api/absences/{fake_id}")
+        response = client.delete(f"/api/v1/absences/{fake_id}")
 
         assert response.status_code == 404
 
     def test_delete_absence_invalid_uuid(self, client: TestClient):
         """Test deleting absence with invalid UUID format."""
-        response = client.delete("/api/absences/invalid-uuid-format")
+        response = client.delete("/api/v1/absences/invalid-uuid-format")
 
         assert response.status_code == 422  # Validation error
 
@@ -750,11 +750,11 @@ class TestDeleteAbsenceEndpoint:
         absence_id = absence.id
 
         # First delete
-        response1 = client.delete(f"/api/absences/{absence_id}")
+        response1 = client.delete(f"/api/v1/absences/{absence_id}")
         assert response1.status_code == 204
 
         # Second delete should fail
-        response2 = client.delete(f"/api/absences/{absence_id}")
+        response2 = client.delete(f"/api/v1/absences/{absence_id}")
         assert response2.status_code == 404
 
 
@@ -763,7 +763,7 @@ class TestAbsenceStructureAndValidation:
 
     def test_absence_response_has_all_fields(self, client: TestClient, sample_absence: Absence):
         """Test that absence response includes all expected fields."""
-        response = client.get(f"/api/absences/{sample_absence.id}")
+        response = client.get(f"/api/v1/absences/{sample_absence.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -792,7 +792,7 @@ class TestAbsenceStructureAndValidation:
             db.add(absence)
         db.commit()
 
-        response = client.get("/api/absences")
+        response = client.get("/api/v1/absences")
 
         assert response.status_code == 200
         data = response.json()
@@ -830,7 +830,7 @@ class TestAbsenceStructureAndValidation:
             db.add(absence)
         db.commit()
 
-        response = client.get("/api/absences")
+        response = client.get("/api/v1/absences")
 
         assert response.status_code == 200
         data = response.json()
@@ -854,7 +854,7 @@ class TestAbsenceEdgeCases:
             "absence_type": "vacation",
         }
 
-        response = client.post("/api/absences", json=absence_data)
+        response = client.post("/api/v1/absences", json=absence_data)
 
         assert response.status_code == 201
 
@@ -867,7 +867,7 @@ class TestAbsenceEdgeCases:
             "absence_type": "sick",
         }
 
-        response = client.post("/api/absences", json=absence_data)
+        response = client.post("/api/v1/absences", json=absence_data)
 
         # Should succeed - historical absences are allowed
         assert response.status_code in [201, 400]
@@ -893,7 +893,7 @@ class TestAbsenceEdgeCases:
             "absence_type": "conference",
         }
 
-        response = client.post("/api/absences", json=absence_data)
+        response = client.post("/api/v1/absences", json=absence_data)
 
         # May succeed or fail depending on business logic
         assert response.status_code in [201, 400]
@@ -908,7 +908,7 @@ class TestAbsenceEdgeCases:
             "notes": "A" * 1000,  # Very long notes
         }
 
-        response = client.post("/api/absences", json=absence_data)
+        response = client.post("/api/v1/absences", json=absence_data)
 
         # Should succeed unless there's a length limit
         assert response.status_code in [201, 422]
@@ -933,7 +933,7 @@ class TestAbsenceEdgeCases:
             "end_date": (date.today() + timedelta(days=15)).isoformat(),  # Before start!
         }
 
-        response = client.put(f"/api/absences/{absence.id}", json=update_data)
+        response = client.put(f"/api/v1/absences/{absence.id}", json=update_data)
 
         # Should fail validation
         assert response.status_code in [400, 422]
@@ -955,7 +955,7 @@ class TestAbsenceEdgeCases:
 
         # Query with exact start date
         response = client.get(
-            "/api/absences",
+            "/api/v1/absences",
             params={"start_date": base_date.isoformat()}
         )
 

@@ -37,7 +37,7 @@ class TestExportAllCalendarsEndpoint:
         end = date.today() + timedelta(days=7)
 
         response = client.get(
-            "/api/calendar/export/ics",
+            "/api/v1/calendar/export/ics",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -69,7 +69,7 @@ class TestExportAllCalendarsEndpoint:
         end = date.today() + timedelta(days=7)
 
         response = client.get(
-            "/api/calendar/export/ics",
+            "/api/v1/calendar/export/ics",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -96,7 +96,7 @@ class TestExportAllCalendarsEndpoint:
         end = date.today() + timedelta(days=7)
 
         response = client.get(
-            "/api/calendar/export/ics",
+            "/api/v1/calendar/export/ics",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -109,7 +109,7 @@ class TestExportAllCalendarsEndpoint:
 
     def test_export_all_calendars_missing_dates(self, client: TestClient):
         """Test export without required date parameters."""
-        response = client.get("/api/calendar/export/ics")
+        response = client.get("/api/v1/calendar/export/ics")
 
         assert response.status_code == 422  # Validation error
 
@@ -119,7 +119,7 @@ class TestExportAllCalendarsEndpoint:
         end = start - timedelta(days=7)
 
         response = client.get(
-            "/api/calendar/export/ics",
+            "/api/v1/calendar/export/ics",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -136,7 +136,7 @@ class TestExportAllCalendarsEndpoint:
         end = start + timedelta(days=30)
 
         response = client.get(
-            "/api/calendar/export/ics",
+            "/api/v1/calendar/export/ics",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -153,7 +153,7 @@ class TestExportAllCalendarsEndpoint:
         end = start + timedelta(days=7)
 
         response = client.get(
-            "/api/calendar/export/ics",
+            "/api/v1/calendar/export/ics",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -185,7 +185,7 @@ class TestExportPersonICSEndpoint:
         end = start + timedelta(days=7)
 
         response = client.get(
-            f"/api/calendar/export/ics/{sample_resident.id}",
+            f"/api/v1/calendar/export/ics/{sample_resident.id}",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -204,7 +204,7 @@ class TestExportPersonICSEndpoint:
         end = start + timedelta(days=7)
 
         response = client.get(
-            f"/api/calendar/export/ics/{fake_id}",
+            f"/api/v1/calendar/export/ics/{fake_id}",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -216,7 +216,7 @@ class TestExportPersonICSEndpoint:
     def test_export_person_ics_invalid_uuid(self, client: TestClient):
         """Test exporting ICS with invalid person UUID."""
         response = client.get(
-            "/api/calendar/export/ics/invalid-uuid",
+            "/api/v1/calendar/export/ics/invalid-uuid",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=7)).isoformat(),
@@ -227,7 +227,7 @@ class TestExportPersonICSEndpoint:
 
     def test_export_person_ics_missing_dates(self, client: TestClient, sample_resident: Person):
         """Test export without required date parameters."""
-        response = client.get(f"/api/calendar/export/ics/{sample_resident.id}")
+        response = client.get(f"/api/v1/calendar/export/ics/{sample_resident.id}")
 
         assert response.status_code == 422
 
@@ -237,7 +237,7 @@ class TestExportPersonICSEndpoint:
         end = start + timedelta(days=7)
 
         response = client.get(
-            f"/api/calendar/export/ics/{sample_resident.id}",
+            f"/api/v1/calendar/export/ics/{sample_resident.id}",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -253,7 +253,7 @@ class TestExportPersonICSEndpoint:
         end = start + timedelta(days=7)
 
         response = client.get(
-            f"/api/calendar/export/ics/{sample_resident.id}",
+            f"/api/v1/calendar/export/ics/{sample_resident.id}",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -285,7 +285,7 @@ class TestExportPersonCalendarEndpoint:
         end = start + timedelta(days=7)
 
         response = client.get(
-            f"/api/calendar/export/person/{sample_resident.id}",
+            f"/api/v1/calendar/export/person/{sample_resident.id}",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -302,7 +302,7 @@ class TestExportPersonCalendarEndpoint:
         end = start + timedelta(days=7)
 
         response = client.get(
-            f"/api/calendar/export/person/{fake_id}",
+            f"/api/v1/calendar/export/person/{fake_id}",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -314,7 +314,7 @@ class TestExportPersonCalendarEndpoint:
     def test_export_person_calendar_invalid_uuid(self, client: TestClient):
         """Test exporting calendar with invalid UUID."""
         response = client.get(
-            "/api/calendar/export/person/invalid-uuid",
+            "/api/v1/calendar/export/person/invalid-uuid",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=7)).isoformat(),
@@ -329,7 +329,7 @@ class TestExportPersonCalendarEndpoint:
         end = start + timedelta(days=365)  # Full year
 
         response = client.get(
-            f"/api/calendar/export/person/{sample_resident.id}",
+            f"/api/v1/calendar/export/person/{sample_resident.id}",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -359,7 +359,7 @@ class TestExportRotationCalendarEndpoint:
         end = start + timedelta(days=7)
 
         response = client.get(
-            f"/api/calendar/export/rotation/{sample_rotation_template.id}",
+            f"/api/v1/calendar/export/rotation/{sample_rotation_template.id}",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -376,7 +376,7 @@ class TestExportRotationCalendarEndpoint:
         end = start + timedelta(days=7)
 
         response = client.get(
-            f"/api/calendar/export/rotation/{fake_id}",
+            f"/api/v1/calendar/export/rotation/{fake_id}",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -388,7 +388,7 @@ class TestExportRotationCalendarEndpoint:
     def test_export_rotation_calendar_invalid_uuid(self, client: TestClient):
         """Test exporting rotation calendar with invalid UUID."""
         response = client.get(
-            "/api/calendar/export/rotation/invalid-uuid",
+            "/api/v1/calendar/export/rotation/invalid-uuid",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=7)).isoformat(),
@@ -399,7 +399,7 @@ class TestExportRotationCalendarEndpoint:
 
     def test_export_rotation_calendar_missing_dates(self, client: TestClient, sample_rotation_template: RotationTemplate):
         """Test export without required date parameters."""
-        response = client.get(f"/api/calendar/export/rotation/{sample_rotation_template.id}")
+        response = client.get(f"/api/v1/calendar/export/rotation/{sample_rotation_template.id}")
 
         assert response.status_code == 422
 
@@ -409,7 +409,7 @@ class TestExportRotationCalendarEndpoint:
         end = start + timedelta(days=7)
 
         response = client.get(
-            f"/api/calendar/export/rotation/{sample_rotation_template.id}",
+            f"/api/v1/calendar/export/rotation/{sample_rotation_template.id}",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -433,7 +433,7 @@ class TestCreateSubscriptionEndpoint:
         }
 
         response = client.post(
-            "/api/calendar/subscribe",
+            "/api/v1/calendar/subscribe",
             json=subscription_data,
             headers=auth_headers
         )
@@ -456,7 +456,7 @@ class TestCreateSubscriptionEndpoint:
         }
 
         response = client.post(
-            "/api/calendar/subscribe",
+            "/api/v1/calendar/subscribe",
             json=subscription_data,
             headers=auth_headers
         )
@@ -474,7 +474,7 @@ class TestCreateSubscriptionEndpoint:
         }
 
         response = client.post(
-            "/api/calendar/subscribe",
+            "/api/v1/calendar/subscribe",
             json=subscription_data,
             headers=auth_headers
         )
@@ -488,7 +488,7 @@ class TestCreateSubscriptionEndpoint:
         }
 
         response = client.post(
-            "/api/calendar/subscribe",
+            "/api/v1/calendar/subscribe",
             json=subscription_data,
             headers=auth_headers
         )
@@ -503,7 +503,7 @@ class TestCreateSubscriptionEndpoint:
         }
 
         response = client.post(
-            "/api/calendar/subscribe",
+            "/api/v1/calendar/subscribe",
             json=subscription_data
         )
 
@@ -517,7 +517,7 @@ class TestCreateSubscriptionEndpoint:
         }
 
         response = client.post(
-            "/api/calendar/subscribe",
+            "/api/v1/calendar/subscribe",
             json=subscription_data,
             headers=auth_headers
         )
@@ -545,7 +545,7 @@ class TestGetSubscriptionFeedEndpoint:
         db.add(subscription)
         db.commit()
 
-        response = client.get(f"/api/calendar/subscribe/{subscription.token}")
+        response = client.get(f"/api/v1/calendar/subscribe/{subscription.token}")
 
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("text/calendar")
@@ -554,7 +554,7 @@ class TestGetSubscriptionFeedEndpoint:
 
     def test_get_subscription_feed_invalid_token(self, client: TestClient):
         """Test getting subscription feed with invalid token."""
-        response = client.get("/api/calendar/subscribe/invalid_token")
+        response = client.get("/api/v1/calendar/subscribe/invalid_token")
 
         assert response.status_code == 401
 
@@ -573,7 +573,7 @@ class TestGetSubscriptionFeedEndpoint:
         db.add(subscription)
         db.commit()
 
-        response = client.get(f"/api/calendar/subscribe/{subscription.token}")
+        response = client.get(f"/api/v1/calendar/subscribe/{subscription.token}")
 
         assert response.status_code == 401
 
@@ -591,7 +591,7 @@ class TestGetSubscriptionFeedEndpoint:
         db.add(subscription)
         db.commit()
 
-        response = client.get(f"/api/calendar/subscribe/{subscription.token}")
+        response = client.get(f"/api/v1/calendar/subscribe/{subscription.token}")
 
         assert response.status_code == 401
 
@@ -610,7 +610,7 @@ class TestGetSubscriptionFeedEndpoint:
         db.commit()
 
         # Call without auth headers
-        response = client.get(f"/api/calendar/subscribe/{subscription.token}")
+        response = client.get(f"/api/v1/calendar/subscribe/{subscription.token}")
 
         # Should succeed - token is the auth
         assert response.status_code == 200
@@ -629,7 +629,7 @@ class TestGetSubscriptionFeedEndpoint:
         db.add(subscription)
         db.commit()
 
-        response = client.get(f"/api/calendar/subscribe/{subscription.token}")
+        response = client.get(f"/api/v1/calendar/subscribe/{subscription.token}")
 
         assert response.status_code == 200
         assert "cache-control" in response.headers
@@ -640,7 +640,7 @@ class TestListSubscriptionsEndpoint:
 
     def test_list_subscriptions_empty(self, client: TestClient, auth_headers: dict):
         """Test listing subscriptions when none exist."""
-        response = client.get("/api/calendar/subscriptions", headers=auth_headers)
+        response = client.get("/api/v1/calendar/subscriptions", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -664,7 +664,7 @@ class TestListSubscriptionsEndpoint:
             db.add(subscription)
         db.commit()
 
-        response = client.get("/api/calendar/subscriptions", headers=auth_headers)
+        response = client.get("/api/v1/calendar/subscriptions", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -697,7 +697,7 @@ class TestListSubscriptionsEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/calendar/subscriptions",
+            "/api/v1/calendar/subscriptions",
             params={"person_id": str(sample_resident.id)},
             headers=auth_headers
         )
@@ -735,7 +735,7 @@ class TestListSubscriptionsEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/calendar/subscriptions",
+            "/api/v1/calendar/subscriptions",
             params={"active_only": True},
             headers=auth_headers
         )
@@ -748,7 +748,7 @@ class TestListSubscriptionsEndpoint:
 
     def test_list_subscriptions_requires_auth(self, client: TestClient):
         """Test that listing subscriptions requires authentication."""
-        response = client.get("/api/calendar/subscriptions")
+        response = client.get("/api/v1/calendar/subscriptions")
 
         assert response.status_code == 401
 
@@ -766,7 +766,7 @@ class TestListSubscriptionsEndpoint:
         db.add(subscription)
         db.commit()
 
-        response = client.get("/api/calendar/subscriptions", headers=auth_headers)
+        response = client.get("/api/v1/calendar/subscriptions", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -794,7 +794,7 @@ class TestRevokeSubscriptionEndpoint:
         db.commit()
 
         response = client.delete(
-            f"/api/calendar/subscribe/{subscription.token}",
+            f"/api/v1/calendar/subscribe/{subscription.token}",
             headers=auth_headers
         )
 
@@ -805,7 +805,7 @@ class TestRevokeSubscriptionEndpoint:
     def test_revoke_subscription_not_found(self, client: TestClient, auth_headers: dict):
         """Test revoking non-existent subscription."""
         response = client.delete(
-            "/api/calendar/subscribe/nonexistent_token",
+            "/api/v1/calendar/subscribe/nonexistent_token",
             headers=auth_headers
         )
 
@@ -825,7 +825,7 @@ class TestRevokeSubscriptionEndpoint:
         db.add(subscription)
         db.commit()
 
-        response = client.delete(f"/api/calendar/subscribe/{subscription.token}")
+        response = client.delete(f"/api/v1/calendar/subscribe/{subscription.token}")
 
         assert response.status_code == 401
 
@@ -846,7 +846,7 @@ class TestRevokeSubscriptionEndpoint:
         db.commit()
 
         response = client.delete(
-            f"/api/calendar/subscribe/{subscription.token}",
+            f"/api/v1/calendar/subscribe/{subscription.token}",
             headers=auth_headers
         )
 
@@ -862,7 +862,7 @@ class TestCalendarICSContent:
         end = start + timedelta(days=7)
 
         response = client.get(
-            f"/api/calendar/export/ics/{sample_resident.id}",
+            f"/api/v1/calendar/export/ics/{sample_resident.id}",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -880,7 +880,7 @@ class TestCalendarICSContent:
         end = start + timedelta(days=7)
 
         response = client.get(
-            f"/api/calendar/export/ics/{sample_resident.id}",
+            f"/api/v1/calendar/export/ics/{sample_resident.id}",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -897,7 +897,7 @@ class TestCalendarICSContent:
         end = start + timedelta(days=7)
 
         response = client.get(
-            f"/api/calendar/export/ics/{sample_resident.id}",
+            f"/api/v1/calendar/export/ics/{sample_resident.id}",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -917,7 +917,7 @@ class TestCalendarEdgeCases:
         today = date.today()
 
         response = client.get(
-            f"/api/calendar/export/ics/{sample_resident.id}",
+            f"/api/v1/calendar/export/ics/{sample_resident.id}",
             params={
                 "start_date": today.isoformat(),
                 "end_date": today.isoformat(),
@@ -933,7 +933,7 @@ class TestCalendarEdgeCases:
         end = start + timedelta(days=730)  # 2 years
 
         response = client.get(
-            f"/api/calendar/export/ics/{sample_resident.id}",
+            f"/api/v1/calendar/export/ics/{sample_resident.id}",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -954,7 +954,7 @@ class TestCalendarEdgeCases:
             }
 
             response = client.post(
-                "/api/calendar/subscribe",
+                "/api/v1/calendar/subscribe",
                 json=subscription_data,
                 headers=auth_headers
             )
@@ -972,7 +972,7 @@ class TestCalendarEdgeCases:
         end = start + timedelta(days=7)
 
         response = client.get(
-            "/api/calendar/export/ics",
+            "/api/v1/calendar/export/ics",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),

@@ -31,7 +31,7 @@ class TestExportPeopleEndpoint:
         self, client: TestClient, sample_residents: list[Person]
     ):
         """Test exporting people as CSV."""
-        response = client.get("/api/export/people", params={"format": "csv"})
+        response = client.get("/api/v1/export/people", params={"format": "csv"})
 
         assert response.status_code == 200
         assert response.headers["content-type"] == "text/csv; charset=utf-8"
@@ -57,7 +57,7 @@ class TestExportPeopleEndpoint:
         self, client: TestClient, sample_residents: list[Person]
     ):
         """Test exporting people as JSON."""
-        response = client.get("/api/export/people", params={"format": "json"})
+        response = client.get("/api/v1/export/people", params={"format": "json"})
 
         assert response.status_code == 200
         assert response.headers["content-type"] == "application/json"
@@ -83,14 +83,14 @@ class TestExportPeopleEndpoint:
         self, client: TestClient, sample_residents: list[Person]
     ):
         """Test that default export format is CSV."""
-        response = client.get("/api/export/people")
+        response = client.get("/api/v1/export/people")
 
         assert response.status_code == 200
         assert response.headers["content-type"] == "text/csv; charset=utf-8"
 
     def test_export_people_empty_database(self, client: TestClient):
         """Test exporting people when database is empty."""
-        response = client.get("/api/export/people", params={"format": "csv"})
+        response = client.get("/api/v1/export/people", params={"format": "csv"})
 
         assert response.status_code == 200
 
@@ -106,7 +106,7 @@ class TestExportPeopleEndpoint:
         self, client: TestClient, sample_faculty: Person
     ):
         """Test that export includes faculty members."""
-        response = client.get("/api/export/people", params={"format": "json"})
+        response = client.get("/api/v1/export/people", params={"format": "json"})
 
         assert response.status_code == 200
         data = response.json()
@@ -120,14 +120,14 @@ class TestExportPeopleEndpoint:
         # Note: This test assumes admin role is required
         # Actual behavior depends on require_admin() dependency
 
-        response = client.get("/api/export/people")
+        response = client.get("/api/v1/export/people")
 
         # Should either succeed (if admin check passes) or return 403
         assert response.status_code in [200, 401, 403]
 
     def test_export_people_invalid_format(self, client: TestClient):
         """Test export with invalid format parameter."""
-        response = client.get("/api/export/people", params={"format": "xml"})
+        response = client.get("/api/v1/export/people", params={"format": "xml"})
 
         # Should default to CSV or return error
         assert response.status_code in [200, 400, 422]
@@ -146,7 +146,7 @@ class TestExportPeopleEndpoint:
         db.add(person)
         db.commit()
 
-        response = client.get("/api/export/people", params={"format": "csv"})
+        response = client.get("/api/v1/export/people", params={"format": "csv"})
 
         assert response.status_code == 200
         content = response.text
@@ -161,7 +161,7 @@ class TestExportAbsencesEndpoint:
         self, client: TestClient, sample_absence: Absence
     ):
         """Test exporting absences as CSV."""
-        response = client.get("/api/export/absences", params={"format": "csv"})
+        response = client.get("/api/v1/export/absences", params={"format": "csv"})
 
         assert response.status_code == 200
         assert response.headers["content-type"] == "text/csv; charset=utf-8"
@@ -186,7 +186,7 @@ class TestExportAbsencesEndpoint:
         self, client: TestClient, sample_absence: Absence
     ):
         """Test exporting absences as JSON."""
-        response = client.get("/api/export/absences", params={"format": "json"})
+        response = client.get("/api/v1/export/absences", params={"format": "json"})
 
         assert response.status_code == 200
         assert response.headers["content-type"] == "application/json"
@@ -230,7 +230,7 @@ class TestExportAbsencesEndpoint:
         # Filter for future absences only
         filter_start = date.today()
         response = client.get(
-            "/api/export/absences",
+            "/api/v1/export/absences",
             params={
                 "format": "json",
                 "start_date": filter_start.isoformat()
@@ -263,7 +263,7 @@ class TestExportAbsencesEndpoint:
         # Filter with end_date before the absence
         filter_end = date.today() + timedelta(days=40)
         response = client.get(
-            "/api/export/absences",
+            "/api/v1/export/absences",
             params={
                 "format": "json",
                 "end_date": filter_end.isoformat()
@@ -287,7 +287,7 @@ class TestExportAbsencesEndpoint:
         end = date.today() + timedelta(days=30)
 
         response = client.get(
-            "/api/export/absences",
+            "/api/v1/export/absences",
             params={
                 "format": "json",
                 "start_date": start.isoformat(),
@@ -310,7 +310,7 @@ class TestExportAbsencesEndpoint:
 
     def test_export_absences_empty(self, client: TestClient, db: Session):
         """Test exporting when no absences exist."""
-        response = client.get("/api/export/absences", params={"format": "csv"})
+        response = client.get("/api/v1/export/absences", params={"format": "csv"})
 
         assert response.status_code == 200
 
@@ -336,7 +336,7 @@ class TestExportAbsencesEndpoint:
         db.add(deployment)
         db.commit()
 
-        response = client.get("/api/export/absences", params={"format": "json"})
+        response = client.get("/api/v1/export/absences", params={"format": "json"})
 
         assert response.status_code == 200
         data = response.json()
@@ -361,7 +361,7 @@ class TestExportScheduleEndpoint:
         end = date.today() + timedelta(days=7)
 
         response = client.get(
-            "/api/export/schedule",
+            "/api/v1/export/schedule",
             params={
                 "format": "csv",
                 "start_date": start.isoformat(),
@@ -395,7 +395,7 @@ class TestExportScheduleEndpoint:
         end = date.today() + timedelta(days=7)
 
         response = client.get(
-            "/api/export/schedule",
+            "/api/v1/export/schedule",
             params={
                 "format": "json",
                 "start_date": start.isoformat(),
@@ -422,19 +422,19 @@ class TestExportScheduleEndpoint:
     def test_export_schedule_requires_date_range(self, client: TestClient):
         """Test that schedule export requires start_date and end_date."""
         # Missing both dates
-        response = client.get("/api/export/schedule")
+        response = client.get("/api/v1/export/schedule")
         assert response.status_code == 422
 
         # Missing end_date
         response = client.get(
-            "/api/export/schedule",
+            "/api/v1/export/schedule",
             params={"start_date": date.today().isoformat()}
         )
         assert response.status_code == 422
 
         # Missing start_date
         response = client.get(
-            "/api/export/schedule",
+            "/api/v1/export/schedule",
             params={"end_date": date.today().isoformat()}
         )
         assert response.status_code == 422
@@ -445,7 +445,7 @@ class TestExportScheduleEndpoint:
         end = start - timedelta(days=7)  # End before start
 
         response = client.get(
-            "/api/export/schedule",
+            "/api/v1/export/schedule",
             params={
                 "format": "csv",
                 "start_date": start.isoformat(),
@@ -478,7 +478,7 @@ class TestExportScheduleEndpoint:
         end = sample_blocks[-1].date
 
         response = client.get(
-            "/api/export/schedule",
+            "/api/v1/export/schedule",
             params={
                 "format": "json",
                 "start_date": start.isoformat(),
@@ -503,7 +503,7 @@ class TestExportScheduleEndpoint:
         end = start + timedelta(days=7)
 
         response = client.get(
-            "/api/export/schedule",
+            "/api/v1/export/schedule",
             params={
                 "format": "csv",
                 "start_date": start.isoformat(),
@@ -526,7 +526,7 @@ class TestExportScheduleEndpoint:
         day = date.today()
 
         response = client.get(
-            "/api/export/schedule",
+            "/api/v1/export/schedule",
             params={
                 "format": "json",
                 "start_date": day.isoformat(),
@@ -551,7 +551,7 @@ class TestExportScheduleXLSXEndpoint:
         end = date.today() + timedelta(days=27)  # 28-day block
 
         response = client.get(
-            "/api/export/schedule/xlsx",
+            "/api/v1/export/schedule/xlsx",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat()
@@ -571,12 +571,12 @@ class TestExportScheduleXLSXEndpoint:
     def test_export_xlsx_requires_dates(self, client: TestClient):
         """Test that XLSX export requires date parameters."""
         # Missing both
-        response = client.get("/api/export/schedule/xlsx")
+        response = client.get("/api/v1/export/schedule/xlsx")
         assert response.status_code == 422
 
         # Missing end_date
         response = client.get(
-            "/api/export/schedule/xlsx",
+            "/api/v1/export/schedule/xlsx",
             params={"start_date": date.today().isoformat()}
         )
         assert response.status_code == 422
@@ -589,7 +589,7 @@ class TestExportScheduleXLSXEndpoint:
         end = date.today() + timedelta(days=27)
 
         response = client.get(
-            "/api/export/schedule/xlsx",
+            "/api/v1/export/schedule/xlsx",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -609,7 +609,7 @@ class TestExportScheduleXLSXEndpoint:
         holidays = f"{(start + timedelta(days=10)).isoformat()},{(start + timedelta(days=20)).isoformat()}"
 
         response = client.get(
-            "/api/export/schedule/xlsx",
+            "/api/v1/export/schedule/xlsx",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -625,7 +625,7 @@ class TestExportScheduleXLSXEndpoint:
         end = date.today() + timedelta(days=27)
 
         response = client.get(
-            "/api/export/schedule/xlsx",
+            "/api/v1/export/schedule/xlsx",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -645,7 +645,7 @@ class TestExportScheduleXLSXEndpoint:
         end = date.today() + timedelta(days=27)
 
         response = client.get(
-            "/api/export/schedule/xlsx",
+            "/api/v1/export/schedule/xlsx",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat()
@@ -666,7 +666,7 @@ class TestExportScheduleXLSXEndpoint:
         end = start + timedelta(days=27)
 
         response = client.get(
-            "/api/export/schedule/xlsx",
+            "/api/v1/export/schedule/xlsx",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat()
@@ -682,7 +682,7 @@ class TestExportScheduleXLSXEndpoint:
         end = start + timedelta(days=365)  # Full year
 
         response = client.get(
-            "/api/export/schedule/xlsx",
+            "/api/v1/export/schedule/xlsx",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat()
@@ -698,7 +698,7 @@ class TestExportAuthenticationAndAuthorization:
 
     def test_export_people_requires_admin(self, client: TestClient):
         """Test that people export requires admin role."""
-        response = client.get("/api/export/people")
+        response = client.get("/api/v1/export/people")
 
         # Should require admin (403) or allow access (200)
         assert response.status_code in [200, 401, 403]
@@ -706,7 +706,7 @@ class TestExportAuthenticationAndAuthorization:
     def test_export_absences_requires_admin(self, client: TestClient):
         """Test that absences export requires admin role."""
         response = client.get(
-            "/api/export/absences",
+            "/api/v1/export/absences",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=7)).isoformat()
@@ -718,7 +718,7 @@ class TestExportAuthenticationAndAuthorization:
     def test_export_schedule_requires_admin(self, client: TestClient):
         """Test that schedule export requires admin role."""
         response = client.get(
-            "/api/export/schedule",
+            "/api/v1/export/schedule",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=7)).isoformat()
@@ -730,7 +730,7 @@ class TestExportAuthenticationAndAuthorization:
     def test_export_xlsx_requires_admin(self, client: TestClient):
         """Test that XLSX export requires admin role."""
         response = client.get(
-            "/api/export/schedule/xlsx",
+            "/api/v1/export/schedule/xlsx",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=7)).isoformat()
@@ -758,7 +758,7 @@ class TestExportEdgeCases:
         db.add(person)
         db.commit()
 
-        response = client.get("/api/export/people", params={"format": "csv"})
+        response = client.get("/api/v1/export/people", params={"format": "csv"})
 
         assert response.status_code == 200
 
@@ -782,7 +782,7 @@ class TestExportEdgeCases:
         db.add(absence)
         db.commit()
 
-        response = client.get("/api/export/absences", params={"format": "json"})
+        response = client.get("/api/v1/export/absences", params={"format": "json"})
 
         assert response.status_code == 200
         data = response.json()
@@ -809,7 +809,7 @@ class TestExportEdgeCases:
         db.add(person)
         db.commit()
 
-        response = client.get("/api/export/people", params={"format": "csv"})
+        response = client.get("/api/v1/export/people", params={"format": "csv"})
 
         assert response.status_code == 200
         content = response.text
@@ -850,7 +850,7 @@ class TestExportEdgeCases:
         db.commit()
 
         response = client.get(
-            "/api/export/schedule",
+            "/api/v1/export/schedule",
             params={
                 "format": "json",
                 "start_date": min(dates).isoformat(),
@@ -898,7 +898,7 @@ class TestExportPerformance:
             db.add(person)
         db.commit()
 
-        response = client.get("/api/export/people", params={"format": "csv"})
+        response = client.get("/api/v1/export/people", params={"format": "csv"})
 
         assert response.status_code == 200
 
@@ -940,7 +940,7 @@ class TestExportPerformance:
         db.commit()
 
         response = client.get(
-            "/api/export/schedule",
+            "/api/v1/export/schedule",
             params={
                 "format": "json",
                 "start_date": start_date.isoformat(),

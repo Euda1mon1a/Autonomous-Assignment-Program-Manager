@@ -98,7 +98,7 @@ class TestAnalyzeConflictEndpoint:
     ):
         """Test successfully analyzing a conflict."""
         response = client.get(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/analyze"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/analyze"
         )
 
         assert response.status_code == 200
@@ -129,14 +129,14 @@ class TestAnalyzeConflictEndpoint:
     def test_analyze_conflict_not_found(self, client: TestClient):
         """Test analyzing a non-existent conflict."""
         fake_id = uuid4()
-        response = client.get(f"/api/conflict-resolution/{fake_id}/analyze")
+        response = client.get(f"/api/v1/conflict-resolution/{fake_id}/analyze")
 
         assert response.status_code == 404
         assert "detail" in response.json()
 
     def test_analyze_conflict_invalid_uuid(self, client: TestClient):
         """Test analyzing conflict with invalid UUID format."""
-        response = client.get("/api/conflict-resolution/invalid-uuid/analyze")
+        response = client.get("/api/v1/conflict-resolution/invalid-uuid/analyze")
 
         assert response.status_code == 422  # Validation error
 
@@ -147,7 +147,7 @@ class TestAnalyzeConflictEndpoint:
         # Note: This test assumes auth is required. If not, this test will fail
         # and should be adjusted based on actual auth requirements
         response = client.get(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/analyze"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/analyze"
         )
 
         # Should either succeed (if no auth required) or return 401/403
@@ -158,7 +158,7 @@ class TestAnalyzeConflictEndpoint:
     ):
         """Test analyzing a critical severity conflict."""
         response = client.get(
-            f"/api/conflict-resolution/{critical_conflict_alert.id}/analyze"
+            f"/api/v1/conflict-resolution/{critical_conflict_alert.id}/analyze"
         )
 
         assert response.status_code == 200
@@ -173,7 +173,7 @@ class TestAnalyzeConflictEndpoint:
     ):
         """Test that analysis includes safety check results."""
         response = client.get(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/analyze"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/analyze"
         )
 
         assert response.status_code == 200
@@ -197,7 +197,7 @@ class TestGetResolutionOptionsEndpoint:
     ):
         """Test successfully getting resolution options."""
         response = client.get(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/options"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/options"
         )
 
         assert response.status_code in [200, 404]  # 404 if no options available
@@ -221,7 +221,7 @@ class TestGetResolutionOptionsEndpoint:
     ):
         """Test getting resolution options with max_options parameter."""
         response = client.get(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/options",
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/options",
             params={"max_options": 3}
         )
 
@@ -238,14 +238,14 @@ class TestGetResolutionOptionsEndpoint:
         """Test max_options parameter validation."""
         # Test below minimum (should be >= 1)
         response = client.get(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/options",
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/options",
             params={"max_options": 0}
         )
         assert response.status_code == 422  # Validation error
 
         # Test above maximum (should be <= 10)
         response = client.get(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/options",
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/options",
             params={"max_options": 11}
         )
         assert response.status_code == 422  # Validation error
@@ -253,7 +253,7 @@ class TestGetResolutionOptionsEndpoint:
     def test_get_resolution_options_not_found(self, client: TestClient):
         """Test getting options for non-existent conflict."""
         fake_id = uuid4()
-        response = client.get(f"/api/conflict-resolution/{fake_id}/options")
+        response = client.get(f"/api/v1/conflict-resolution/{fake_id}/options")
 
         assert response.status_code == 404
 
@@ -262,7 +262,7 @@ class TestGetResolutionOptionsEndpoint:
     ):
         """Test that default max_options is applied correctly."""
         response = client.get(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/options"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/options"
         )
 
         assert response.status_code in [200, 404]
@@ -277,7 +277,7 @@ class TestGetResolutionOptionsEndpoint:
     ):
         """Test that options include impact assessment."""
         response = client.get(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/options"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/options"
         )
 
         assert response.status_code in [200, 404]
@@ -299,7 +299,7 @@ class TestResolveConflictEndpoint:
     ):
         """Test auto-resolving conflict without specifying strategy."""
         response = client.post(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/resolve"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/resolve"
         )
 
         # Could succeed, fail due to safety checks, or fail if conflict not resolvable
@@ -317,7 +317,7 @@ class TestResolveConflictEndpoint:
     ):
         """Test resolving conflict with specific strategy."""
         response = client.post(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/resolve",
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/resolve",
             params={"strategy": "swap_assignments"}
         )
 
@@ -332,7 +332,7 @@ class TestResolveConflictEndpoint:
     def test_resolve_conflict_not_found(self, client: TestClient):
         """Test resolving a non-existent conflict."""
         fake_id = uuid4()
-        response = client.post(f"/api/conflict-resolution/{fake_id}/resolve")
+        response = client.post(f"/api/v1/conflict-resolution/{fake_id}/resolve")
 
         assert response.status_code in [404, 422]
 
@@ -341,7 +341,7 @@ class TestResolveConflictEndpoint:
     ):
         """Test that resolution result has expected structure."""
         response = client.post(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/resolve"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/resolve"
         )
 
         if response.status_code == 200:
@@ -370,7 +370,7 @@ class TestResolveConflictEndpoint:
     ):
         """Test resolving with invalid strategy name."""
         response = client.post(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/resolve",
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/resolve",
             params={"strategy": "invalid_strategy_name"}
         )
 
@@ -384,7 +384,7 @@ class TestBatchResolveConflictsEndpoint:
     def test_batch_resolve_empty_list(self, client: TestClient):
         """Test batch resolve with no conflicts specified."""
         response = client.post(
-            "/api/conflict-resolution/batch/resolve",
+            "/api/v1/conflict-resolution/batch/resolve",
             params={"max_conflicts": 10}
         )
 
@@ -398,7 +398,7 @@ class TestBatchResolveConflictsEndpoint:
         conflict_ids = [str(alert.id) for alert in multiple_conflict_alerts[:2]]
 
         response = client.post(
-            "/api/conflict-resolution/batch/resolve",
+            "/api/v1/conflict-resolution/batch/resolve",
             params={"conflict_ids": conflict_ids}
         )
 
@@ -417,7 +417,7 @@ class TestBatchResolveConflictsEndpoint:
     ):
         """Test batch resolve with max_conflicts limit."""
         response = client.post(
-            "/api/conflict-resolution/batch/resolve",
+            "/api/v1/conflict-resolution/batch/resolve",
             params={"max_conflicts": 2}
         )
 
@@ -431,14 +431,14 @@ class TestBatchResolveConflictsEndpoint:
         """Test max_conflicts parameter validation."""
         # Test below minimum (should be >= 1)
         response = client.post(
-            "/api/conflict-resolution/batch/resolve",
+            "/api/v1/conflict-resolution/batch/resolve",
             params={"max_conflicts": 0}
         )
         assert response.status_code == 422
 
         # Test above maximum (should be <= 100)
         response = client.post(
-            "/api/conflict-resolution/batch/resolve",
+            "/api/v1/conflict-resolution/batch/resolve",
             params={"max_conflicts": 101}
         )
         assert response.status_code == 422
@@ -448,7 +448,7 @@ class TestBatchResolveConflictsEndpoint:
     ):
         """Test batch resolve with severity filter."""
         response = client.post(
-            "/api/conflict-resolution/batch/resolve",
+            "/api/v1/conflict-resolution/batch/resolve",
             params={
                 "max_conflicts": 10,
                 "severity_filter": "CRITICAL"
@@ -460,7 +460,7 @@ class TestBatchResolveConflictsEndpoint:
     def test_batch_resolve_invalid_severity(self, client: TestClient):
         """Test batch resolve with invalid severity filter."""
         response = client.post(
-            "/api/conflict-resolution/batch/resolve",
+            "/api/v1/conflict-resolution/batch/resolve",
             params={
                 "max_conflicts": 10,
                 "severity_filter": "INVALID_SEVERITY"
@@ -475,7 +475,7 @@ class TestBatchResolveConflictsEndpoint:
     ):
         """Test batch resolve in dry-run mode."""
         response = client.post(
-            "/api/conflict-resolution/batch/resolve",
+            "/api/v1/conflict-resolution/batch/resolve",
             params={
                 "max_conflicts": 5,
                 "dry_run": True
@@ -494,7 +494,7 @@ class TestBatchResolveConflictsEndpoint:
     ):
         """Test that batch resolution report has expected structure."""
         response = client.post(
-            "/api/conflict-resolution/batch/resolve",
+            "/api/v1/conflict-resolution/batch/resolve",
             params={"max_conflicts": 5}
         )
 
@@ -525,7 +525,7 @@ class TestBatchResolveConflictsEndpoint:
     ):
         """Test that batch resolution includes performance metrics."""
         response = client.post(
-            "/api/conflict-resolution/batch/resolve",
+            "/api/v1/conflict-resolution/batch/resolve",
             params={"max_conflicts": 3}
         )
 
@@ -545,7 +545,7 @@ class TestCanAutoResolveEndpoint:
     ):
         """Test checking if conflict can be auto-resolved."""
         response = client.get(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/can-auto-resolve"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/can-auto-resolve"
         )
 
         assert response.status_code in [200, 404]
@@ -565,14 +565,14 @@ class TestCanAutoResolveEndpoint:
     def test_can_auto_resolve_not_found(self, client: TestClient):
         """Test checking auto-resolve for non-existent conflict."""
         fake_id = uuid4()
-        response = client.get(f"/api/conflict-resolution/{fake_id}/can-auto-resolve")
+        response = client.get(f"/api/v1/conflict-resolution/{fake_id}/can-auto-resolve")
 
         assert response.status_code == 404
 
     def test_can_auto_resolve_invalid_uuid(self, client: TestClient):
         """Test checking auto-resolve with invalid UUID."""
         response = client.get(
-            "/api/conflict-resolution/invalid-uuid/can-auto-resolve"
+            "/api/v1/conflict-resolution/invalid-uuid/can-auto-resolve"
         )
 
         assert response.status_code == 422
@@ -582,7 +582,7 @@ class TestCanAutoResolveEndpoint:
     ):
         """Test that can-auto-resolve includes blocker information."""
         response = client.get(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/can-auto-resolve"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/can-auto-resolve"
         )
 
         if response.status_code == 200:
@@ -595,7 +595,7 @@ class TestCanAutoResolveEndpoint:
     ):
         """Test that can-auto-resolve includes recommended strategies."""
         response = client.get(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/can-auto-resolve"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/can-auto-resolve"
         )
 
         if response.status_code == 200:
@@ -608,7 +608,7 @@ class TestCanAutoResolveEndpoint:
     ):
         """Test auto-resolve check for critical severity conflict."""
         response = client.get(
-            f"/api/conflict-resolution/{critical_conflict_alert.id}/can-auto-resolve"
+            f"/api/v1/conflict-resolution/{critical_conflict_alert.id}/can-auto-resolve"
         )
 
         if response.status_code == 200:
@@ -630,7 +630,7 @@ class TestConflictResolutionEdgeCases:
         db.commit()
 
         response = client.post(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/resolve"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/resolve"
         )
 
         # Should handle gracefully
@@ -645,7 +645,7 @@ class TestConflictResolutionEdgeCases:
         db.commit()
 
         response = client.get(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/analyze"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/analyze"
         )
 
         # Should still be analyzable
@@ -663,7 +663,7 @@ class TestConflictResolutionEdgeCases:
         conflict_ids = [str(alert.id) for alert in multiple_conflict_alerts]
 
         response = client.post(
-            "/api/conflict-resolution/batch/resolve",
+            "/api/v1/conflict-resolution/batch/resolve",
             params={"conflict_ids": conflict_ids}
         )
 
@@ -686,7 +686,7 @@ class TestConflictResolutionEdgeCases:
         db.add(info_alert)
         db.commit()
 
-        response = client.get(f"/api/conflict-resolution/{info_alert.id}/options")
+        response = client.get(f"/api/v1/conflict-resolution/{info_alert.id}/options")
 
         # INFO conflicts might not have auto-resolution options
         assert response.status_code in [200, 404]
@@ -697,10 +697,10 @@ class TestConflictResolutionEdgeCases:
         """Test multiple simultaneous resolution attempts on same conflict."""
         # Simulate concurrent requests
         response1 = client.post(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/resolve"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/resolve"
         )
         response2 = client.post(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/resolve"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/resolve"
         )
 
         # Both should respond (one might succeed, one might fail)
@@ -720,11 +720,11 @@ class TestConflictResolutionAuthentication:
 
         # Test all endpoints without auth
         endpoints = [
-            ("GET", f"/api/conflict-resolution/{fake_id}/analyze"),
-            ("GET", f"/api/conflict-resolution/{fake_id}/options"),
-            ("POST", f"/api/conflict-resolution/{fake_id}/resolve"),
-            ("GET", f"/api/conflict-resolution/{fake_id}/can-auto-resolve"),
-            ("POST", "/api/conflict-resolution/batch/resolve"),
+            ("GET", f"/api/v1/conflict-resolution/{fake_id}/analyze"),
+            ("GET", f"/api/v1/conflict-resolution/{fake_id}/options"),
+            ("POST", f"/api/v1/conflict-resolution/{fake_id}/resolve"),
+            ("GET", f"/api/v1/conflict-resolution/{fake_id}/can-auto-resolve"),
+            ("POST", "/api/v1/conflict-resolution/batch/resolve"),
         ]
 
         for method, url in endpoints:
@@ -746,7 +746,7 @@ class TestConflictResolutionErrorHandling:
         """Test error handling when analysis encounters database issues."""
         # This is a placeholder - actual implementation would need to mock DB errors
         response = client.get(
-            f"/api/conflict-resolution/{sample_conflict_alert.id}/analyze"
+            f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/analyze"
         )
 
         # Should handle errors gracefully
@@ -755,7 +755,7 @@ class TestConflictResolutionErrorHandling:
     def test_resolve_with_invalid_data(self, client: TestClient):
         """Test resolution with malformed request data."""
         # Send invalid UUID
-        response = client.post("/api/conflict-resolution/not-a-uuid/resolve")
+        response = client.post("/api/v1/conflict-resolution/not-a-uuid/resolve")
 
         assert response.status_code == 422
 
@@ -763,7 +763,7 @@ class TestConflictResolutionErrorHandling:
         """Test batch resolve with invalid JSON in request."""
         # FastAPI should handle this at framework level
         response = client.post(
-            "/api/conflict-resolution/batch/resolve",
+            "/api/v1/conflict-resolution/batch/resolve",
             data="invalid json{",
             headers={"Content-Type": "application/json"}
         )
