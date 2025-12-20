@@ -15,6 +15,7 @@ from app.api.routes import (
     conflict_resolution,
     credentials,
     daily_manifest,
+    db_admin,
     export,
     fmit_health,
     fmit_timeline,
@@ -25,6 +26,7 @@ from app.api.routes import (
     portal,
     procedures,
     rate_limit,
+    reports,
     resilience,
     role_views,
     rotation_templates,
@@ -51,6 +53,7 @@ api_router.include_router(settings.router, prefix="/settings", tags=["settings"]
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(me_dashboard.router, prefix="/me", tags=["dashboard"])
 api_router.include_router(export.router, prefix="/export", tags=["export"])
+api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 api_router.include_router(resilience.router, prefix="/resilience", tags=["resilience"])
 api_router.include_router(scheduler_ops.router, prefix="/scheduler", tags=["scheduler-ops"])
 api_router.include_router(procedures.router, prefix="/procedures", tags=["procedures"])
@@ -59,6 +62,7 @@ api_router.include_router(certifications.router, prefix="/certifications", tags=
 api_router.include_router(calendar.router, prefix="/calendar", tags=["calendar"])
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
 api_router.include_router(analytics.router, tags=["analytics"])
+api_router.include_router(db_admin.router, tags=["db-admin"])
 api_router.include_router(visualization.router, prefix="/visualization", tags=["visualization"])
 api_router.include_router(unified_heatmap.router, prefix="/unified-heatmap", tags=["unified-heatmap"])
 api_router.include_router(rate_limit.router, prefix="/rate-limit", tags=["rate-limit"])
