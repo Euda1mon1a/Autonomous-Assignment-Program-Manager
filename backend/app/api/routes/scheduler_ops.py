@@ -103,7 +103,9 @@ def _calculate_task_metrics(db: Session) -> TaskMetrics:
         for worker_name, worker_stats in stats_dict.items():
             # Worker stats may contain task counters
             if isinstance(worker_stats, dict):
-                total_completed += worker_stats.get("total", {}).get("completed", 0)
+                task_totals = worker_stats.get("total") or {}
+                if isinstance(task_totals, dict):
+                    total_completed += sum(task_totals.values())
 
         # For recent failures, check registered tasks
         registered_dict = inspect.registered() or {}
