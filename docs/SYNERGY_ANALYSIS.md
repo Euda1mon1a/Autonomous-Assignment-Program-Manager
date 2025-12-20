@@ -347,5 +347,364 @@ Together: a scheduling system that *maintains itself*.
 
 ---
 
+## 11. ⏰ Time Crystal Dynamics for Schedule Stability
+
+**NEW SYNERGY - Inspired by Discrete Time Crystal Physics**
+
+### Background: What Time Crystals Teach Us
+
+Time crystals are quantum phases that break *time* translation symmetry - they exhibit rigid periodic behavior that persists even under perturbation. While we can't use quantum time crystals directly, the *conceptual framework* maps powerfully to scheduling:
+
+| Time Crystal Property | Scheduling Analog |
+|-----------------------|-------------------|
+| Periodic driving (period T) | Block structure (day, week, 4-week ACGME window) |
+| Subharmonic response (period nT) | Emergent longer cycles (Q4 call, alternating weekends) |
+| Rigidity against perturbation | Schedule stability under small changes |
+| Phase locking | Multiple schedules staying synchronized |
+| Stroboscopic observation | State advances at discrete checkpoints |
+
+### The Insight: Schedules Are Driven Periodic Systems
+
+The scheduler is already a **Floquet system** (periodically driven):
+- External drive period: 7 days (week), 28 days (ACGME 4-week window)
+- The 80-hour rule uses rolling 4-week windows - this IS the drive period
+- Q4 call naturally creates 4-day subharmonic patterns
+- Alternating weekends create 14-day subharmonic patterns
+
+**Current problem:** Each regeneration treats blocks independently, ignoring this structure.
+
+**Time-crystal-inspired solution:** Encode periodicity explicitly into the optimization.
+
+### Components for Time Crystal Scheduling
+
+**Components:** Existing ACGME 4-week windows + Entropy minimization + Anti-churn objective + Stroboscopic state management
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     TIME CRYSTAL SCHEDULING DYNAMICS                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   DRIVE PERIODS (External forcing)                                          │
+│   ├── T₁ = 7 days (weekly structure)                                        │
+│   ├── T₂ = 28 days (ACGME 4-week averaging window)                          │
+│   └── T₃ = 365 days (academic year)                                         │
+│                                                                              │
+│   SUBHARMONIC RESPONSES (Emergent longer cycles)                            │
+│   ├── 2T₁ = 14 days (alternating weekend call)                              │
+│   ├── 4T₁ = 28 days (Q4 call rotation)                                      │
+│   └── 4T₂ = 112 days (quarterly rotation cycles)                            │
+│                                                                              │
+│   STABILITY MECHANISMS                                                       │
+│   ├── Phase consistency constraint (prevent drift on regeneration)          │
+│   ├── Anti-churn objective (minimize Hamming distance from current)         │
+│   └── Template locking (solve once, extend by periodicity)                  │
+│                                                                              │
+│   STROBOSCOPIC CHECKPOINTS                                                   │
+│   ├── Block boundaries (publish authoritative state)                        │
+│   ├── Week boundaries (aggregate metrics)                                   │
+│   └── 4-week boundaries (ACGME compliance snapshot)                         │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Implementation: Anti-Churn Objective
+
+The key "time crystal" insight is **rigidity** - small perturbations should NOT cause large schedule changes.
+
+```python
+def time_crystal_objective(
+    new_schedule: Schedule,
+    current_schedule: Schedule,
+    constraints: list[Constraint],
+    alpha: float = 0.3  # Rigidity weight
+) -> float:
+    """
+    Optimization objective inspired by time crystal stability.
+
+    Combines constraint satisfaction with anti-churn (rigidity).
+
+    The alpha parameter controls the trade-off:
+    - alpha = 0: Pure constraint optimization (may cause large reshuffles)
+    - alpha = 1: Pure stability (no changes even if suboptimal)
+    - alpha = 0.3: Balanced - satisfy constraints with minimal disruption
+    """
+    # Standard constraint satisfaction score
+    constraint_score = sum(c.evaluate(new_schedule) for c in constraints)
+
+    # Anti-churn: Hamming distance from current schedule
+    # (number of assignments that changed)
+    churn = hamming_distance(new_schedule, current_schedule)
+    max_churn = len(new_schedule.assignments)
+    normalized_churn = churn / max_churn
+
+    # Rigidity score: penalize changes
+    rigidity_score = 1.0 - normalized_churn
+
+    # Combined objective
+    return (1 - alpha) * constraint_score + alpha * rigidity_score
+```
+
+### Implementation: Subharmonic Detection
+
+Automatically detect natural cycle lengths in the data:
+
+```python
+def detect_subharmonics(
+    assignments: list[Assignment],
+    base_period: int = 7  # Days
+) -> list[int]:
+    """
+    Detect emergent longer cycles in assignment patterns.
+
+    Uses autocorrelation to find periods where the schedule
+    naturally repeats - these are subharmonic responses.
+
+    Returns:
+        List of detected cycle lengths (multiples of base_period)
+    """
+    # Build time series of assignments per person
+    series = build_assignment_time_series(assignments)
+
+    # Compute autocorrelation
+    autocorr = np.correlate(series, series, mode='full')
+    autocorr = autocorr[len(autocorr)//2:]  # Take positive lags
+
+    # Find peaks (subharmonic periods)
+    peaks = find_peaks(autocorr, distance=base_period)
+
+    # Filter to multiples of base period
+    subharmonics = [p for p in peaks if p % base_period == 0]
+
+    return subharmonics
+```
+
+### Implementation: Stroboscopic State Management
+
+```python
+class StroboscopicScheduleManager:
+    """
+    Manage schedule state with discrete checkpoints.
+
+    Inspired by stroboscopic observation of time crystals:
+    - Authoritative state only advances at checkpoints
+    - Tentative drafts allowed between checkpoints
+    - Reduces race conditions and ensures consistency
+    """
+
+    def __init__(self, checkpoint_period: timedelta = timedelta(days=7)):
+        self.checkpoint_period = checkpoint_period
+        self.authoritative_schedule: Schedule = None
+        self.draft_schedule: Schedule = None
+        self.last_checkpoint: datetime = None
+
+    async def advance_checkpoint(self) -> None:
+        """
+        Stroboscopic update: draft becomes authoritative.
+
+        Called at checkpoint boundaries (e.g., week start).
+        All observers see consistent state.
+        """
+        async with distributed_lock("schedule_checkpoint"):
+            self.authoritative_schedule = self.draft_schedule.copy()
+            self.last_checkpoint = datetime.utcnow()
+
+            # Emit checkpoint event
+            await event_bus.publish(ScheduleCheckpointEvent(
+                schedule_id=self.authoritative_schedule.id,
+                checkpoint_time=self.last_checkpoint
+            ))
+
+    def get_observable_state(self) -> Schedule:
+        """
+        Return the authoritative state (stroboscopic observation).
+
+        External systems always see the last checkpoint,
+        never the in-progress draft.
+        """
+        return self.authoritative_schedule
+```
+
+### Python Libraries for Floquet/Periodic Analysis
+
+While there's no "time crystal" library, these support the concepts:
+
+| Library | Use For | Install |
+|---------|---------|---------|
+| `scipy.signal.periodogram` | Detect periodicities in time series | `pip install scipy` |
+| `scipy.signal.find_peaks` | Find subharmonic periods | (included in scipy) |
+| `statsmodels.tsa.acf` | Autocorrelation for cycle detection | `pip install statsmodels` |
+| `numpy.fft` | Fourier analysis for frequency components | `pip install numpy` |
+| `networkx` | Phase synchronization in coupled systems | `pip install networkx` |
+
+### Connection to Existing Synergies
+
+| Synergy | Time Crystal Enhancement |
+|---------|-------------------------|
+| Phase Transitions (#1) | Transitions are when periodicity breaks down |
+| Entropy (#2, #4) | Low entropy = strong periodic order |
+| Closed-Loop Scheduling (#7) | PID maintains phase lock to target |
+| Predictive Immune (#1) | Detect when rigidity is failing |
+
+### Why This Matters
+
+The existing system regenerates schedules treating each block independently. This causes:
+- Unnecessary churn (people's schedules change even when they don't need to)
+- Loss of natural patterns (Q4 call gets scrambled)
+- User distrust ("why does my schedule change every regeneration?")
+
+Time-crystal-inspired scheduling:
+- Exploits the natural periodicity already present
+- Adds rigidity as an explicit optimization objective
+- Detects and preserves emergent longer cycles
+- Uses stroboscopic checkpoints for clean state transitions
+
+---
+
+## Implementation Roadmap: Must-Have Integrations
+
+Based on all synergies identified, here are the actionable next steps:
+
+### Phase 1: Quick Wins (1-2 weeks)
+
+| Task | Components | Effort | Files to Modify |
+|------|------------|--------|-----------------|
+| **Anti-Churn Objective** | Time Crystal concept | Low | `backend/app/scheduling/optimizer.py` |
+| **Phase Transition → WebSocket** | Event Bus + WebSocket | Low | Wire existing components |
+| **Entropy Monitoring** | Thermodynamics branch | Low | Cherry-pick `thermodynamics/entropy.py` |
+
+**Immediate Actions:**
+```bash
+# 1. Cherry-pick thermodynamic monitoring
+git checkout origin/claude/research-resiliency-scheduling-O5FaX -- \
+    backend/app/resilience/thermodynamics/entropy.py \
+    backend/app/resilience/thermodynamics/phase_transitions.py \
+    backend/app/resilience/thermodynamics/__init__.py
+
+# 2. Cherry-pick WebSocket manager
+git checkout origin/claude/batch-parallel-implementations-BnuSh -- \
+    backend/app/websocket/
+
+# 3. Cherry-pick event bus
+git checkout origin/claude/batch-parallel-implementations-BnuSh -- \
+    backend/app/events/event_bus.py \
+    backend/app/events/event_types.py
+```
+
+### Phase 2: Core Synergies (2-4 weeks)
+
+| Task | Components | Effort | Synergy # |
+|------|------------|--------|-----------|
+| **Predictive Immune System** | Phase + R₀ + Circuit Breaker + Saga | Medium | #1 |
+| **Distributed Locking** | Redis locks | Low | #6, #11 |
+| **Subharmonic Detection** | Time Crystal concept | Medium | #11 |
+| **Stroboscopic State** | Checkpoint manager | Medium | #11 |
+
+**Key Files to Create:**
+```
+backend/app/scheduling/
+├── periodicity/
+│   ├── __init__.py
+│   ├── subharmonic_detector.py    # Detect natural cycles
+│   ├── anti_churn.py              # Rigidity objective
+│   └── stroboscopic_manager.py    # Checkpoint state management
+```
+
+### Phase 3: Advanced Integration (4-8 weeks)
+
+| Task | Components | Effort | Synergy # |
+|------|------------|--------|-----------|
+| **Closed-Loop Scheduling** | PID + Saga | Medium | #7 |
+| **Targeted Intervention** | Hub + R₀ + Blast Radius | Medium | #8 |
+| **Time-Travel Debugging** | Event Sourcing + Audit | High | #3 |
+| **Saga Orchestration** | Multi-step transactions | Medium | #1, #7 |
+
+**Cherry-pick saga infrastructure:**
+```bash
+git checkout origin/claude/batch-parallel-implementations-BnuSh -- \
+    backend/app/saga/
+```
+
+### Phase 4: Full Autonomy (8+ weeks)
+
+| Task | Components | Effort | Synergy # |
+|------|------------|--------|-----------|
+| **Self-Optimizing Fairness** | Shapley + A/B | High | #2 |
+| **Strategyproof Preferences** | VCG Mechanism | High | #6 |
+| **Optimal Fallback Discovery** | Entropy + Shapley | High | #9 |
+| **Full Autonomous Ops** | Everything | Very High | #10 |
+
+---
+
+## Merge Priority Summary
+
+### Must Merge (Tier 1)
+
+| Branch/Component | Why |
+|------------------|-----|
+| `thermodynamics/entropy.py` | Foundation for all entropy-based synergies |
+| `thermodynamics/phase_transitions.py` | Early warning detection |
+| `backend/app/websocket/` | Real-time updates |
+| `backend/app/events/event_bus.py` | Decoupling for all synergies |
+| `backend/app/distributed/locks.py` | Concurrency control |
+| `backend/app/saga/` | Multi-step operations |
+
+### Should Merge (Tier 2)
+
+| Branch/Component | Why |
+|------------------|-----|
+| `backend/app/rollback/manager.py` | State restoration |
+| `backend/app/audit/enhanced_logging.py` | Compliance trail |
+| `backend/app/health/` | Production readiness |
+| `backend/app/correlation/` | Request tracing |
+
+### Consider (Tier 3)
+
+| Branch/Component | Why |
+|------------------|-----|
+| `backend/app/outbox/` | Reliable event delivery |
+| `backend/app/features/` | Feature flags for gradual rollout |
+| Research docs (game theory, epidemiology) | Reference for future implementation |
+
+---
+
+## Final Architecture Vision
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    TIME-CRYSTAL-INSPIRED AUTONOMOUS SCHEDULER                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐     │
+│  │   SENSE     │   │  PREDICT    │   │   DECIDE    │   │     ACT     │     │
+│  │             │   │             │   │             │   │             │     │
+│  │  Entropy    │   │  Phase      │   │  Anti-Churn │   │   Saga      │     │
+│  │  Monitor    │──▶│  Transition │──▶│  Optimizer  │──▶│  Executor   │     │
+│  │             │   │  Detector   │   │             │   │             │     │
+│  │  Subharmonic│   │             │   │  Shapley    │   │  Distributed│     │
+│  │  Detector   │   │  R₀ Calc    │   │  Fairness   │   │  Locking    │     │
+│  └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘     │
+│         │                 │                 │                 │             │
+│         └─────────────────┴─────────────────┴─────────────────┘             │
+│                                   │                                          │
+│                                   ▼                                          │
+│                    ┌─────────────────────────────┐                          │
+│                    │   STROBOSCOPIC CHECKPOINTS   │                          │
+│                    │   (Week boundaries, ACGME    │                          │
+│                    │    4-week windows)           │                          │
+│                    └─────────────────────────────┘                          │
+│                                   │                                          │
+│                                   ▼                                          │
+│                    ┌─────────────────────────────┐                          │
+│                    │   RIGID PERIODIC SCHEDULE    │                          │
+│                    │   (Stable under perturbation,│                          │
+│                    │    minimal churn, fair)      │                          │
+│                    └─────────────────────────────┘                          │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 *"The whole is greater than the sum of its parts." - Aristotle*
 *"The emergent behavior of interacting components cannot be predicted from the components alone." - Complex Systems Theory*
+*"A time crystal is a phase that spontaneously breaks time-translation symmetry." - Frank Wilczek*
