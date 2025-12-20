@@ -19,11 +19,7 @@ Tier 2 (Strategic) endpoints:
 import logging
 import time
 from datetime import date, datetime, timedelta
-
-logger = logging.getLogger(__name__)
 from uuid import UUID
-
-logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc
@@ -69,6 +65,9 @@ from app.schemas.resilience import (
     UtilizationMetrics,
     VulnerabilityReportResponse,
 )
+from app.services.resilience.blast_radius import BlastRadiusService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -80,6 +79,11 @@ def get_resilience_service(db: Session):
 
     config = get_resilience_config()
     return ResilienceService(db=db, config=config)
+
+
+def get_blast_radius_service(db: Session = Depends(get_db)) -> BlastRadiusService:
+    """Get BlastRadiusService instance for blast radius operations."""
+    return BlastRadiusService(db=db)
 
 
 def persist_health_check(db: Session, report, metrics_snapshot: dict = None):
@@ -194,24 +198,6 @@ async def get_system_health(
     blocks = blocks_query.all()
 
     assignments_query = (
-    # Load data for analysis - no limit to ensure accurate health assessment
-    query_start = time.time()
-    faculty = (
-        db.query(Person)
-        .filter(Person.type == "faculty")
-        .order_by(Person.id)
-        .all()
-    )
-    blocks = (
-        db.query(Block)
-        .filter(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
-        .order_by(Block.date, Block.id)
-        .all()
-    )
-    assignments = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -672,24 +658,6 @@ async def get_vulnerability_report(
     blocks = blocks_query.all()
 
     assignments_query = (
-    # Load data - no limit to ensure complete vulnerability analysis
-    query_start = time.time()
-    faculty = (
-        db.query(Person)
-        .filter(Person.type == "faculty")
-        .order_by(Person.id)
-        .all()
-    )
-    blocks = (
-        db.query(Block)
-        .filter(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
-        .order_by(Block.date, Block.id)
-        .all()
-    )
-    assignments = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -706,15 +674,6 @@ async def get_vulnerability_report(
     if max_assignments:
         assignments_query = assignments_query.limit(max_assignments)
     assignments = assignments_query.all()
-    query_time = time.time() - query_start
-
-    logger.info(
-        "Vulnerability report data loaded: faculty=%d, blocks=%d, assignments=%d, "
-        "date_range=%s to %s, query_time=%.3fs",
-        len(faculty), len(blocks), len(assignments),
-        start_date, end_date, query_time
-        .all()
-    )
     query_time = time.time() - query_start
 
     logger.info(
@@ -844,24 +803,6 @@ async def get_comprehensive_report(
     blocks = blocks_query.all()
 
     assignments_query = (
-    # Load data - no limit to ensure complete comprehensive report
-    query_start = time.time()
-    faculty = (
-        db.query(Person)
-        .filter(Person.type == "faculty")
-        .order_by(Person.id)
-        .all()
-    )
-    blocks = (
-        db.query(Block)
-        .filter(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
-        .order_by(Block.date, Block.id)
-        .all()
-    )
-    assignments = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -878,15 +819,6 @@ async def get_comprehensive_report(
     if max_assignments:
         assignments_query = assignments_query.limit(max_assignments)
     assignments = assignments_query.all()
-    query_time = time.time() - query_start
-
-    logger.info(
-        "Comprehensive report data loaded: faculty=%d, blocks=%d, assignments=%d, "
-        "date_range=%s to %s, query_time=%.3fs",
-        len(faculty), len(blocks), len(assignments),
-        start_date, end_date, query_time
-        .all()
-    )
     query_time = time.time() - query_start
 
     logger.info(
@@ -1199,10 +1131,12 @@ async def calculate_allostatic_load(
 
 @router.get("/tier2/zones")
 async def list_zones(
-    db: Session = Depends(get_db),
+    blast_radius_service: BlastRadiusService = Depends(get_blast_radius_service),
 ):
     """
     List all scheduling zones and their current status.
+
+    Uses the BlastRadiusService for zone management.
     """
     from app.schemas.resilience import (
         ContainmentLevel as SchemaContainment,
@@ -1217,24 +1151,25 @@ async def list_zones(
         ZoneType as SchemaZoneType,
     )
 
-    service = get_resilience_service(db)
+    # Use the new BlastRadiusService
+    zone_data = blast_radius_service.get_all_zones()
     zones = []
 
-    for zone in service.blast_radius.zones.values():
+    for z in zone_data:
         zones.append(ZoneResponse(
-            id=zone.id,
-            name=zone.name,
-            zone_type=SchemaZoneType(zone.zone_type.value),
-            description=zone.description,
-            services=zone.services,
-            minimum_coverage=zone.minimum_coverage,
-            optimal_coverage=zone.optimal_coverage,
-            priority=zone.priority,
-            status=SchemaZoneStatus(zone.status.value),
-            containment_level=SchemaContainment(zone.containment_level.value),
-            borrowing_limit=zone.borrowing_limit,
-            lending_limit=zone.lending_limit,
-            is_active=True,
+            id=UUID(z["id"]),
+            name=z["name"],
+            zone_type=SchemaZoneType(z["zone_type"]),
+            description=z["description"],
+            services=z["services"],
+            minimum_coverage=z["minimum_coverage"],
+            optimal_coverage=z["optimal_coverage"],
+            priority=z["priority"],
+            status=SchemaZoneStatus(z["status"]),
+            containment_level=SchemaContainment(z["containment_level"]),
+            borrowing_limit=z["borrowing_limit"],
+            lending_limit=z["lending_limit"],
+            is_active=z["is_active"],
         ))
 
     return {"zones": zones, "total": len(zones)}
@@ -1242,12 +1177,13 @@ async def list_zones(
 
 @router.get("/tier2/zones/report")
 async def get_blast_radius_report(
-    db: Session = Depends(get_db),
+    blast_radius_service: BlastRadiusService = Depends(get_blast_radius_service),
 ):
     """
     Get comprehensive blast radius containment report.
 
     Returns health status of all zones and overall containment status.
+    Uses the BlastRadiusService for zone containment analysis.
     """
     from app.schemas.resilience import (
         BlastRadiusReportResponse,
@@ -1265,46 +1201,47 @@ async def get_blast_radius_report(
         ZoneType as SchemaZoneType,
     )
 
-    service = get_resilience_service(db)
-    report = service.check_all_zones()
+    # Use the new BlastRadiusService for calculation
+    result = blast_radius_service.calculate_blast_radius(check_all_zones=True)
 
+    # Convert zone details to schema format
     zone_reports = [
         SchemaZoneHealth(
-            zone_id=zr.zone_id,
-            zone_name=zr.zone_name,
-            zone_type=SchemaZoneType(zr.zone_type.value),
-            checked_at=zr.checked_at,
-            status=SchemaZoneStatus(zr.status.value),
-            containment_level=SchemaContainment(zr.containment_level.value),
-            is_self_sufficient=zr.is_self_sufficient,
-            has_surplus=zr.has_surplus,
-            available_faculty=zr.available_faculty,
-            minimum_required=zr.minimum_required,
-            optimal_required=zr.optimal_required,
-            capacity_ratio=zr.capacity_ratio,
-            faculty_borrowed=zr.faculty_borrowed,
-            faculty_lent=zr.faculty_lent,
-            net_borrowing=zr.net_borrowing,
-            active_incidents=zr.active_incidents,
-            services_affected=zr.services_affected,
-            recommendations=zr.recommendations,
+            zone_id=UUID(zd["zone_id"]),
+            zone_name=zd["zone_name"],
+            zone_type=SchemaZoneType(zd["zone_type"]),
+            checked_at=result.analyzed_at,
+            status=SchemaZoneStatus(zd["status"]),
+            containment_level=SchemaContainment(zd["containment_level"]),
+            is_self_sufficient=zd["is_self_sufficient"],
+            has_surplus=zd["has_surplus"],
+            available_faculty=zd["available_faculty"],
+            minimum_required=zd["minimum_required"],
+            optimal_required=zd.get("optimal_required", zd["minimum_required"]),
+            capacity_ratio=zd["capacity_ratio"],
+            faculty_borrowed=zd.get("faculty_borrowed", 0),
+            faculty_lent=zd.get("faculty_lent", 0),
+            net_borrowing=zd.get("net_borrowing", 0),
+            active_incidents=zd["active_incidents"],
+            services_affected=zd.get("services_affected", []),
+            recommendations=zd["recommendations"],
         )
-        for zr in report.zone_reports
+        for zd in result.zone_details
     ]
 
     return BlastRadiusReportResponse(
-        generated_at=report.generated_at,
-        total_zones=report.total_zones,
-        zones_healthy=report.zones_healthy,
-        zones_degraded=report.zones_degraded,
-        zones_critical=report.zones_critical,
-        containment_active=report.containment_active,
-        containment_level=SchemaContainment(report.containment_level.value),
-        zones_isolated=report.zones_isolated,
-        active_borrowing_requests=report.active_borrowing_requests,
-        pending_borrowing_requests=report.pending_borrowing_requests,
+        generated_at=result.analyzed_at,
+        total_zones=result.total_zones,
+        zones_healthy=result.zones_healthy,
+        zones_degraded=result.zones_degraded,
+        zones_critical=result.zones_critical,
+        containment_active=result.containment_active,
+        containment_level=SchemaContainment(result.containment_level),
+        zones_isolated=result.zones_isolated,
+        active_borrowing_requests=result.active_borrowing_requests,
+        pending_borrowing_requests=result.pending_borrowing_requests,
         zone_reports=zone_reports,
-        recommendations=report.recommendations,
+        recommendations=result.recommendations,
     )
 
 
@@ -1317,29 +1254,21 @@ async def create_zone(
     minimum_coverage: int = 1,
     optimal_coverage: int = 2,
     priority: int = 5,
-    db: Session = Depends(get_db),
+    blast_radius_service: BlastRadiusService = Depends(get_blast_radius_service),
     current_user: User = Depends(get_current_active_user),
 ):
     """
     Create a new scheduling zone. Requires authentication.
+
+    Uses the BlastRadiusService for zone creation.
     """
-    from app.resilience.blast_radius import ZoneType
     from app.schemas.resilience import ContainmentLevel, ZoneResponse, ZoneStatus
     from app.schemas.resilience import ZoneType as SchemaZoneType
 
-    type_map = {
-        "inpatient": ZoneType.INPATIENT,
-        "outpatient": ZoneType.OUTPATIENT,
-        "education": ZoneType.EDUCATION,
-        "research": ZoneType.RESEARCH,
-        "admin": ZoneType.ADMINISTRATIVE,
-        "on_call": ZoneType.ON_CALL,
-    }
-
-    service = get_resilience_service(db)
-    zone = service.create_zone(
+    # Use the new BlastRadiusService
+    result = blast_radius_service.create_zone(
         name=name,
-        zone_type=type_map.get(zone_type, ZoneType.INPATIENT),
+        zone_type=zone_type,
         description=description,
         services=services or [],
         minimum_coverage=minimum_coverage,
@@ -1347,19 +1276,29 @@ async def create_zone(
         priority=priority,
     )
 
+    if not result.success:
+        raise HTTPException(status_code=400, detail=result.message)
+
+    # Get zone details for response
+    zones = blast_radius_service.get_all_zones()
+    zone_data = next((z for z in zones if z["id"] == result.zone_id), None)
+
+    if not zone_data:
+        raise HTTPException(status_code=500, detail="Zone created but not found")
+
     return ZoneResponse(
-        id=zone.id,
-        name=zone.name,
-        zone_type=SchemaZoneType(zone.zone_type.value),
-        description=zone.description,
-        services=zone.services,
-        minimum_coverage=zone.minimum_coverage,
-        optimal_coverage=zone.optimal_coverage,
-        priority=zone.priority,
+        id=UUID(zone_data["id"]),
+        name=zone_data["name"],
+        zone_type=SchemaZoneType(zone_data["zone_type"]),
+        description=zone_data["description"],
+        services=zone_data["services"],
+        minimum_coverage=zone_data["minimum_coverage"],
+        optimal_coverage=zone_data["optimal_coverage"],
+        priority=zone_data["priority"],
         status=ZoneStatus.GREEN,
         containment_level=ContainmentLevel.NONE,
-        borrowing_limit=zone.borrowing_limit,
-        lending_limit=zone.lending_limit,
+        borrowing_limit=zone_data["borrowing_limit"],
+        lending_limit=zone_data["lending_limit"],
         is_active=True,
     )
 
@@ -1370,16 +1309,21 @@ async def assign_faculty_to_zone(
     faculty_id: UUID,
     faculty_name: str,
     role: str = "primary",
-    db: Session = Depends(get_db),
+    blast_radius_service: BlastRadiusService = Depends(get_blast_radius_service),
     current_user: User = Depends(get_current_active_user),
 ):
     """
     Assign a faculty member to a zone. Requires authentication.
 
+    Uses the BlastRadiusService for zone faculty assignment.
     role must be: "primary", "secondary", or "backup"
     """
-    service = get_resilience_service(db)
-    success = service.assign_faculty_to_zone(zone_id, faculty_id, faculty_name, role)
+    success = blast_radius_service.assign_faculty_to_zone(
+        zone_id=zone_id,
+        faculty_id=faculty_id,
+        faculty_name=faculty_name,
+        role=role,
+    )
 
     if not success:
         raise HTTPException(status_code=400, detail="Failed to assign faculty to zone")
@@ -1395,18 +1339,18 @@ async def record_zone_incident(
     severity: str,
     faculty_affected: list[UUID] = None,
     services_affected: list[str] = None,
-    db: Session = Depends(get_db),
+    blast_radius_service: BlastRadiusService = Depends(get_blast_radius_service),
     current_user: User = Depends(get_current_active_user),
 ):
     """
     Record an incident affecting a zone. Requires authentication.
 
+    Uses the BlastRadiusService for incident recording.
     severity must be: "minor", "moderate", "severe", or "critical"
     """
     from app.schemas.resilience import ZoneIncidentResponse
 
-    service = get_resilience_service(db)
-    incident = service.record_zone_incident(
+    result = blast_radius_service.record_incident(
         zone_id=zone_id,
         incident_type=incident_type,
         description=description,
@@ -1415,21 +1359,23 @@ async def record_zone_incident(
         services_affected=services_affected,
     )
 
-    if not incident:
-        raise HTTPException(status_code=404, detail="Zone not found")
+    if not result.success:
+        if result.error_code == "ZONE_NOT_FOUND":
+            raise HTTPException(status_code=404, detail="Zone not found")
+        raise HTTPException(status_code=400, detail=result.message)
 
     return ZoneIncidentResponse(
-        id=incident.id,
-        zone_id=incident.zone_id,
-        incident_type=incident.incident_type,
-        description=incident.description,
-        severity=incident.severity,
-        started_at=incident.started_at,
-        faculty_affected=[str(f) for f in incident.faculty_affected],
-        services_affected=incident.services_affected,
-        capacity_lost=incident.capacity_lost,
-        resolved_at=incident.resolved_at,
-        containment_successful=incident.containment_successful,
+        id=UUID(result.incident_id),
+        zone_id=zone_id,
+        incident_type=incident_type,
+        description=description,
+        severity=severity,
+        started_at=None,  # Not available from service result
+        faculty_affected=[str(f) for f in (faculty_affected or [])],
+        services_affected=services_affected or [],
+        capacity_lost=0.0,
+        resolved_at=None,
+        containment_successful=result.containment_activated,
     )
 
 
@@ -1437,29 +1383,23 @@ async def record_zone_incident(
 async def set_containment_level(
     level: str,
     reason: str,
-    db: Session = Depends(get_db),
+    blast_radius_service: BlastRadiusService = Depends(get_blast_radius_service),
     current_user: User = Depends(get_current_active_user),
 ):
     """
     Set system-wide containment level. Requires authentication.
 
+    Uses the BlastRadiusService for containment management.
     level must be: "none", "soft", "moderate", "strict", or "lockdown"
     """
-    from app.resilience.blast_radius import ContainmentLevel
-
-    level_map = {
-        "none": ContainmentLevel.NONE,
-        "soft": ContainmentLevel.SOFT,
-        "moderate": ContainmentLevel.MODERATE,
-        "strict": ContainmentLevel.STRICT,
-        "lockdown": ContainmentLevel.LOCKDOWN,
-    }
-
-    if level not in level_map:
+    valid_levels = {"none", "soft", "moderate", "strict", "lockdown"}
+    if level.lower() not in valid_levels:
         raise HTTPException(status_code=400, detail=f"Invalid containment level: {level}")
 
-    service = get_resilience_service(db)
-    service.set_containment_level(level_map[level], reason)
+    success = blast_radius_service.set_containment_level(level, reason)
+
+    if not success:
+        raise HTTPException(status_code=400, detail=f"Failed to set containment level: {level}")
 
     return {
         "success": True,
@@ -2364,15 +2304,6 @@ async def analyze_hubs(
     faculty = faculty_query.all()
 
     assignments_query = (
-    # Load data - no limit to ensure complete hub analysis
-    query_start = time.time()
-    faculty = (
-        db.query(Person)
-        .filter(Person.type == "faculty")
-        .order_by(Person.id)
-        .all()
-    )
-    assignments = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -2389,15 +2320,6 @@ async def analyze_hubs(
     if max_assignments:
         assignments_query = assignments_query.limit(max_assignments)
     assignments = assignments_query.all()
-    query_time = time.time() - query_start
-
-    logger.info(
-        "Hub analysis data loaded: faculty=%d, assignments=%d, "
-        "date_range=%s to %s, query_time=%.3fs",
-        len(faculty), len(assignments),
-        start_date, end_date, query_time
-        .all()
-    )
     query_time = time.time() - query_start
 
     logger.info(
