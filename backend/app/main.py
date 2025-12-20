@@ -110,6 +110,20 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Failed to initialize resilience metrics: {e}")
 
+    # Initialize service cache
+    try:
+        from app.core.cache import get_service_cache
+        cache = get_service_cache()
+        if cache.is_available:
+            stats = cache.get_stats()
+            logger.info(
+                f"Service cache initialized (Redis connected, TTL: {stats['default_ttl']}s)"
+            )
+        else:
+            logger.warning("Service cache unavailable - Redis not connected")
+    except Exception as e:
+        logger.warning(f"Failed to initialize service cache: {e}")
+
     # Start certification scheduler for expiration reminders
     try:
         from app.services.certification_scheduler import start_scheduler
@@ -125,6 +139,19 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down Residency Scheduler API")
+
+    # Log final cache stats
+    try:
+        from app.core.cache import get_service_cache
+        cache = get_service_cache()
+        if cache.is_available:
+            stats = cache.get_stats()
+            logger.info(
+                f"Cache stats at shutdown - hits: {stats['hits']}, "
+                f"misses: {stats['misses']}, hit_rate: {stats['hit_rate']:.2%}"
+            )
+    except Exception:
+        pass
 
     # Stop certification scheduler
     try:
@@ -311,5 +338,37 @@ async def resilience_health():
     except Exception as e:
         return {
             "status": "degraded",
+            "error": str(e),
+        }
+
+
+@app.get("/health/cache")
+async def cache_health():
+    """
+    Cache system health check.
+
+    Returns current cache status including:
+    - Redis availability
+    - Hit/miss statistics
+    - Cache hit rate
+    """
+    try:
+        from app.core.cache import get_service_cache
+
+        cache = get_service_cache()
+        stats = cache.get_stats()
+        return {
+            "status": "operational" if stats["available"] else "unavailable",
+            "enabled": stats["enabled"],
+            "redis_connected": stats["available"],
+            "hits": stats["hits"],
+            "misses": stats["misses"],
+            "hit_rate": stats["hit_rate"],
+            "approximate_entries": stats["approximate_size"],
+            "default_ttl_seconds": stats["default_ttl"],
+        }
+    except Exception as e:
+        return {
+            "status": "error",
             "error": str(e),
         }
