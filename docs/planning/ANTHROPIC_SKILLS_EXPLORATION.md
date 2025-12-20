@@ -14,8 +14,9 @@
 4. [Implemented Skills](#implemented-skills)
 5. [Strict Quality Parameters](#strict-quality-parameters)
 6. [The "IT Guy" Concept](#the-it-guy-concept)
-7. [Integration with Existing Infrastructure](#integration-with-existing-infrastructure)
-8. [Future Directions](#future-directions)
+7. [MCP Integration for Production Incidents](#mcp-integration-for-production-incidents)
+8. [Integration with Existing Infrastructure](#integration-with-existing-infrastructure)
+9. [Future Directions](#future-directions)
 
 ---
 
@@ -276,6 +277,139 @@ If a fix causes additional failures:
 
 ---
 
+## MCP Integration for Production Incidents
+
+### The Missing Piece: Acting on Live Systems
+
+Skills handle code-level issues, but what about production system failures? That's where **MCP (Model Context Protocol)** comes in. This project already has a comprehensive MCP server with 13 resilience tools.
+
+### Implemented Skill: production-incident-responder
+
+**Purpose:** Crisis response for production system failures using MCP tools.
+
+**Triggers:**
+- Production health check fails
+- ACGME compliance violations
+- Utilization exceeds 80% threshold
+- Coverage gaps identified
+- Circuit breaker trips
+- Defense level escalates to ORANGE+
+
+### MCP Resilience Tools Available
+
+| Tool | Industry Pattern | Purpose |
+|------|-----------------|---------|
+| `check_utilization_threshold_tool` | Queuing Theory | 80% threshold monitoring |
+| `get_defense_level_tool` | Nuclear Safety | 5-level graduated response |
+| `run_contingency_analysis_resilience_tool` | Power Grid | N-1/N-2 vulnerability |
+| `get_static_fallbacks_tool` | AWS/Cloud | Pre-computed backups |
+| `execute_sacrifice_hierarchy_tool` | Triage | Load shedding |
+| `analyze_homeostasis_tool` | Biology | Feedback loop health |
+| `calculate_blast_radius_tool` | Nuclear/Cloud | Failure containment |
+| `analyze_hub_centrality_tool` | Network Theory | Single point failures |
+| `check_mtf_compliance_tool` | Military | DRRS readiness |
+
+### How Skills + MCP Work Together
+
+```
+Production Issue Detected
+         ↓
+production-incident-responder skill activates
+         ↓
+Connects to MCP Server
+         ↓
+Queries Resilience Tools
+├── check_utilization_threshold_tool → Current load
+├── get_defense_level_tool → Severity assessment
+├── run_contingency_analysis_resilience_tool → Impact analysis
+└── get_static_fallbacks_tool → Available responses
+         ↓
+Generates Incident Report
+         ↓
+Severity Assessment
+├── GREEN/YELLOW → Automated monitoring, recommendations
+├── ORANGE → HUMAN APPROVAL REQUIRED for mitigations
+└── RED/BLACK → Emergency escalation, documentation
+         ↓
+Execute Response (with approval)
+├── Activate fallback schedules
+├── Execute sacrifice hierarchy
+├── Generate compliance documentation
+└── Monitor recovery
+```
+
+### Defense Levels (Nuclear Safety Pattern)
+
+| Level | Color | Actions Available |
+|-------|-------|-------------------|
+| 1 | GREEN | Normal operations, continuous monitoring |
+| 2 | YELLOW | Warning state, suspend optional activities |
+| 3 | ORANGE | Critical, suspend admin/research |
+| 4 | RED | Emergency, suspend non-clinical education |
+| 5 | BLACK | Catastrophic, essential services only |
+
+### Example: Faculty Absence Crisis
+
+```
+1. DETECT (Automated)
+   MCP: check_utilization_threshold_tool
+   Result: Utilization at 85% (above 80% threshold)
+   → Defense Level: ORANGE
+
+2. DIAGNOSE (Automated)
+   MCP: run_contingency_analysis_resilience_tool
+   Result: N-1 resilience FAILED
+   → 8 coverage gaps, 2 ACGME violations predicted
+
+3. RESPOND (Human Approval Required)
+   MCP: get_static_fallbacks_tool(scenario="dual_absence")
+   MCP: execute_sacrifice_hierarchy_tool(simulate_only=true)
+
+   Options presented:
+   a) Activate fallback schedule
+   b) Suspend optional education (free 4 blocks)
+   c) Request external coverage
+
+4. RECOVER (Automated monitoring)
+   MCP: analyze_homeostasis_tool
+   → Monitor until equilibrium restored
+```
+
+### MCP Server Setup
+
+```bash
+# Start MCP server
+cd mcp-server
+pip install -e .
+python -m scheduler_mcp.server
+
+# Configure in Claude Desktop
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "command": "python",
+      "args": ["-m", "scheduler_mcp.server"],
+      "cwd": "/path/to/mcp-server"
+    }
+  }
+}
+```
+
+### Key Principle: Human-in-the-Loop for Critical Decisions
+
+The production-incident-responder skill **never** executes critical actions without human approval:
+
+| Action | Approval Required |
+|--------|-------------------|
+| Monitoring, analysis, simulation | No |
+| Swap facilitation (single) | No |
+| Fallback schedule activation | **YES** |
+| Load shedding execution | **YES** |
+| External staffing request | **YES** |
+| Circuit breaker override | **YES** |
+
+---
+
 ## Integration with Existing Infrastructure
 
 ### Slash Commands (User-Invoked)
@@ -370,13 +504,30 @@ Result: Structured fix with quality assurance
 
 Anthropic Skills provide a powerful way to add automated intelligence to development workflows. By implementing:
 
-1. **automated-code-fixer** - Safe, gated code fixes
+1. **automated-code-fixer** - Safe, gated code fixes for development
 2. **code-quality-monitor** - Proactive health enforcement
+3. **production-incident-responder** - Crisis response via MCP for live systems
 
 We get an "IT guy" that:
-- Fixes issues when it's safe
-- Escalates when it's not
+- Fixes code issues when it's safe
+- Responds to production incidents via MCP
+- Escalates when it's not safe to proceed
 - Never compromises quality
 - Follows project standards
+- Maintains human-in-the-loop for critical decisions
 
-The Skills Open Standard means this investment is portable and future-proof.
+### Complete Architecture
+
+```
+Development Issues                Production Issues
+       ↓                                 ↓
+automated-code-fixer              production-incident-responder
+       ↓                                 ↓
+Quality Gates (5 gates)           MCP Server (13 tools)
+       ↓                                 ↓
+Fix or Escalate                   Analyze → Respond → Recover
+       ↓                                 ↓
+code-quality-monitor              Human Approval for Critical Actions
+```
+
+The Skills Open Standard + MCP integration means this investment is portable and future-proof.
