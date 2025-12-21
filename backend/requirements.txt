@@ -130,3 +130,6 @@ watchdog==6.0.0  # File system monitoring for config hot reload
 # Visualization
 plotly>=5.18.0
 kaleido>=0.2.1
+
+# Game Theory (Axelrod's Prisoner's Dilemma tournaments)
+axelrod>=4.12.0
