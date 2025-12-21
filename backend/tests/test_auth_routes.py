@@ -912,6 +912,10 @@ class TestTokenSecurity:
         assert decoded.get("type") == "refresh"
         assert decoded.get("sub") == str(admin_user.id)
 
+        # The login above sets an access_token cookie; clear it so this request
+        # relies solely on the refresh token passed in the Authorization header.
+        client.cookies.clear()
+
         # Try to use refresh token to access a protected endpoint
         # This MUST fail - refresh tokens should only work at /refresh
         response = client.get(
