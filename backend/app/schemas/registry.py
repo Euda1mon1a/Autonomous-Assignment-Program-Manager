@@ -1018,16 +1018,137 @@ class SchemaRegistry:
                 f"v{change_event.new_version} - {change_event.event_type}"
             )
 
-            # TODO: Integrate with notification service
-            # from app.notifications import get_notification_service
-            # notification_service = get_notification_service(self.db)
-            # await notification_service.send_notification(...)
+            # Integrate with notification service
+            await self.notify_schema_change(
+                schema_name=change_event.schema_name,
+                change_type=change_event.event_type,
+                details={
+                    "version": change_event.new_version,
+                    "previous_version": change_event.previous_version,
+                    "description": change_event.change_description,
+                    "changed_by": change_event.changed_by,
+                }
+            )
 
         except Exception as e:
             logger.error(
                 f"Failed to send schema change notification: {e}",
                 exc_info=True
             )
+
+    async def notify_schema_change(
+        self,
+        schema_name: str,
+        change_type: str,
+        details: dict = None
+    ):
+        """
+        Notify about schema changes via notification service.
+
+        Args:
+            schema_name: Name of changed schema
+            change_type: Type of change (created, updated, deleted, deprecated, archived)
+            details: Additional change details
+        """
+        try:
+            from app.models.person import Person
+            from app.notifications.service import NotificationService
+            from app.notifications.templates import NotificationType
+
+            service = NotificationService(self.db)
+
+            # Get admin users who should be notified
+            admin_ids = await self._get_schema_admin_ids()
+
+            if not admin_ids:
+                logger.warning("No admin users found to notify about schema change")
+                return
+
+            # Create notification data
+            message = f"Schema '{schema_name}' was {change_type}"
+            if details:
+                if details.get("version"):
+                    message += f" (version {details['version']})"
+                if details.get("description"):
+                    message += f": {details['description']}"
+
+            # Send notifications to all admins
+            notification_data = {
+                "schema_name": schema_name,
+                "change_type": change_type,
+                "version": details.get("version") if details else None,
+                "description": details.get("description") if details else None,
+                "message": message,
+            }
+
+            # Use a generic notification type or create a custom one
+            # For now, we'll use the notification service directly without a specific type
+            for admin_id in admin_ids:
+                try:
+                    # Create an in-app notification record directly
+                    from app.models.notification import Notification
+
+                    notification_record = Notification(
+                        recipient_id=admin_id,
+                        notification_type="schema_change",
+                        subject=f"Schema Change: {schema_name}",
+                        body=message,
+                        data=notification_data,
+                        priority="normal",
+                        channels_delivered="in_app",
+                    )
+                    self.db.add(notification_record)
+                except Exception as notify_error:
+                    logger.warning(
+                        f"Failed to notify admin {admin_id} about schema change: {notify_error}"
+                    )
+
+            # Commit all notifications
+            if self.is_async:
+                await self.db.commit()
+            else:
+                self.db.commit()
+
+            logger.info(f"Notified {len(admin_ids)} admins about schema change: {schema_name}")
+
+        except Exception as e:
+            logger.warning(f"Failed to send schema change notification: {e}")
+
+    async def _get_schema_admin_ids(self) -> list:
+        """
+        Get list of admin user IDs who should be notified about schema changes.
+
+        Returns:
+            List of admin user UUIDs
+        """
+        try:
+            from app.models.person import Person
+
+            # Query for users with ADMIN or COORDINATOR roles
+            if self.is_async:
+                stmt = select(Person.id).where(
+                    or_(
+                        Person.role == "ADMIN",
+                        Person.role == "COORDINATOR"
+                    )
+                )
+                result = await self.db.execute(stmt)
+                return list(result.scalars().all())
+            else:
+                persons = (
+                    self.db.query(Person.id)
+                    .filter(
+                        or_(
+                            Person.role == "ADMIN",
+                            Person.role == "COORDINATOR"
+                        )
+                    )
+                    .all()
+                )
+                return [p.id for p in persons]
+        except Exception as e:
+            logger.error(f"Failed to get admin user IDs: {e}")
+            return []
 
 
 # Convenience functions for common operations

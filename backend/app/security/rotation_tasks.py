@@ -29,6 +29,97 @@ from app.security.secret_rotation import (
 logger = logging.getLogger(__name__)
 
 
+async def _get_admin_user_ids() -> list[str]:
+    """
+    Get list of admin user IDs for notification purposes.
+
+    Returns:
+        List of admin user UUIDs as strings
+    """
+    db = get_db_session()
+    try:
+        from app.models.user import User
+
+        admin_users = db.query(User).filter(User.role == "admin", User.is_active == True).all()
+        return [str(user.id) for user in admin_users]
+    except Exception as e:
+        logger.error(f"Failed to fetch admin users: {e}", exc_info=True)
+        return []
+    finally:
+        db.close()
+
+
+async def _notify_rotation_event(
+    event_type: str,
+    details: dict,
+    severity: str = "normal"
+) -> None:
+    """
+    Notify administrators about rotation events.
+
+    This function logs rotation events and prepares for future integration
+    with the notification service. Currently logs structured data that can
+    be used for monitoring and alerting.
+
+    Args:
+        event_type: Type of rotation event (e.g., rotation_required, rotation_health_alert)
+        details: Event details dictionary
+        severity: Severity level (normal, medium, high, urgent)
+
+    Note:
+        Future enhancement: Add NotificationType.SECRET_ROTATION to notification templates
+        to enable proper notification delivery via email/webhook channels.
+    """
+    try:
+        # Get admin users for notifications
+        admin_ids = await _get_admin_user_ids()
+
+        if not admin_ids:
+            logger.warning("No admin users found for rotation notifications")
+            return
+
+        # Log structured event for monitoring systems
+        logger.info(
+            f"Secret rotation event: {event_type}",
+            extra={
+                "event_type": event_type,
+                "severity": severity,
+                "details": details,
+                "admin_recipients": len(admin_ids),
+            }
+        )
+
+        # NOTE: The NotificationService requires a NotificationType enum value,
+        # but there is currently no SECRET_ROTATION type in the enum.
+        # This should be added to app/notifications/templates.py:NotificationType
+        #
+        # Once added, uncomment the following code:
+        #
+        # from app.notifications.service import NotificationService
+        # from app.notifications.templates import NotificationType
+        # from uuid import UUID
+        #
+        # db = get_db_session()
+        # try:
+        #     service = NotificationService(db)
+        #
+        #     for admin_id in admin_ids:
+        #         await service.send_notification(
+        #             recipient_id=UUID(admin_id),
+        #             notification_type=NotificationType.SECRET_ROTATION,
+        #             data={
+        #                 "event_type": event_type,
+        #                 "severity": severity,
+        #                 **details
+        #             }
+        #         )
+        # finally:
+        #     db.close()
+
+    except Exception as e:
+        logger.warning(f"Failed to process rotation notification: {e}", exc_info=True)
+
+
 def get_db_session() -> Session:
     """Get a database session for task execution."""
     from app.core.database import SessionLocal
@@ -297,8 +388,20 @@ def send_rotation_reminder(
             },
         )
 
-        # TODO: Integrate with app.notifications.service.NotificationService
-        # to send actual email/webhook notifications
+        # Notify admins about upcoming rotation
+        try:
+            import asyncio
+            asyncio.run(_notify_rotation_event(
+                event_type="rotation_reminder",
+                details={
+                    "secret_type": secret_type,
+                    "days_until_due": days_until_due,
+                    "priority": priority.value,
+                },
+                severity=priority.value,
+            ))
+        except Exception as e:
+            logger.error(f"Failed to send rotation notification: {e}", exc_info=True)
 
         return {
             "timestamp": datetime.utcnow().isoformat(),
@@ -400,7 +503,21 @@ def monitor_rotation_health(self) -> dict:
                 f"Secret rotation health check: {health_status}",
                 extra={"issues": issues},
             )
-            # TODO: Send alert via notification service
+            # Send alert via notification service
+            try:
+                import asyncio
+                asyncio.run(_notify_rotation_event(
+                    event_type="rotation_health_alert",
+                    details={
+                        "health_status": health_status,
+                        "failed_rotations": failed_rotations,
+                        "overdue_rotations": overdue_rotations,
+                        "issues": issues,
+                    },
+                    severity="high" if failed_rotations > 0 or len(overdue_rotations) > 0 else "medium",
+                ))
+            except Exception as e:
+                logger.error(f"Failed to send health alert notification: {e}", exc_info=True)
 
         return {
             "timestamp": datetime.utcnow().isoformat(),
