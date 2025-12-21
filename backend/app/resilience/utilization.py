@@ -42,7 +42,27 @@ class UtilizationThreshold:
     emergency_threshold: float = 0.95  # Black alert
 
     def get_level(self, utilization: float) -> UtilizationLevel:
-        """Determine utilization level from value."""
+        """
+        Determine utilization level from value.
+
+        Maps a numeric utilization rate to the appropriate categorical level
+        based on configured thresholds.
+
+        Args:
+            utilization: Current utilization rate as a decimal (0.0 to 1.0).
+
+        Returns:
+            UtilizationLevel: The categorical level (GREEN, YELLOW, ORANGE, RED, or BLACK).
+
+        Example:
+            >>> threshold = UtilizationThreshold()
+            >>> threshold.get_level(0.65)
+            UtilizationLevel.GREEN
+            >>> threshold.get_level(0.75)
+            UtilizationLevel.YELLOW
+            >>> threshold.get_level(0.85)
+            UtilizationLevel.ORANGE
+        """
         if utilization >= self.emergency_threshold:
             return UtilizationLevel.BLACK
         elif utilization >= self.critical_threshold:
@@ -159,7 +179,23 @@ class UtilizationMonitor:
         Get safe capacity (80% of theoretical) for scheduling.
 
         This is the maximum number of blocks that should be scheduled
-        to maintain operational buffer.
+        to maintain operational buffer per queuing theory principles.
+
+        Args:
+            available_faculty: List of faculty members available for scheduling.
+            blocks_per_faculty_per_day: Maximum blocks each faculty can work
+                per day. Defaults to 2.0 (AM + PM sessions).
+            days_in_period: Number of days in the scheduling period.
+
+        Returns:
+            int: Maximum number of blocks that can be safely scheduled
+                while maintaining the 20% buffer.
+
+        Example:
+            >>> monitor = UtilizationMonitor()
+            >>> # With 10 faculty, 2 blocks/day, 5 days: 10 * 2 * 5 * 0.8 = 80
+            >>> monitor.get_safe_capacity(faculty_list, 2.0, 5)
+            80
         """
         theoretical = int(
             len(available_faculty) * blocks_per_faculty_per_day * days_in_period
@@ -175,8 +211,24 @@ class UtilizationMonitor:
         """
         Check if adding blocks would exceed safe threshold.
 
+        Validates whether additional assignments can be safely made
+        without exceeding the 80% utilization threshold.
+
+        Args:
+            current_utilization: Current utilization rate (0.0 to 1.0).
+            additional_blocks: Number of new blocks to add.
+            total_capacity: Total available capacity in blocks.
+
         Returns:
-            Tuple of (is_safe, message)
+            tuple[bool, str]: A tuple containing:
+                - is_safe (bool): True if assignment can be made safely
+                - message (str): Human-readable explanation of the decision
+
+        Example:
+            >>> monitor = UtilizationMonitor()
+            >>> is_safe, msg = monitor.check_assignment_safe(0.75, 10, 100)
+            >>> if not is_safe:
+            ...     print(f"Cannot add: {msg}")
         """
         if total_capacity == 0:
             return False, "No capacity available"
@@ -209,14 +261,28 @@ class UtilizationMonitor:
         """
         Forecast utilization over a period, accounting for known absences.
 
+        Enables proactive identification of high-stress periods by projecting
+        utilization based on PCS moves, leave, TDY, and other known absences.
+
         Args:
-            base_faculty: List of all faculty
-            known_absences: Dict of date -> list of absent faculty IDs
-            required_coverage_by_date: Dict of date -> required blocks
-            forecast_days: Number of days to forecast
+            base_faculty: List of all faculty members in the department.
+            known_absences: Dict mapping dates to lists of absent faculty UUIDs.
+                Example: {date(2024, 7, 4): [uuid1, uuid2]}
+            required_coverage_by_date: Dict mapping dates to required block counts.
+                Example: {date(2024, 7, 4): 10}
+            forecast_days: Number of days to project ahead. Defaults to 90.
 
         Returns:
-            List of daily utilization forecasts
+            list[UtilizationForecast]: Daily forecasts with predicted utilization,
+                level, contributing factors, and recommendations.
+
+        Example:
+            >>> monitor = UtilizationMonitor()
+            >>> absences = {date(2024, 7, 4): [uuid1, uuid2]}
+            >>> coverage = {date(2024, 7, 4): 10}
+            >>> forecasts = monitor.forecast_utilization(faculty, absences, coverage)
+            >>> high_risk = [f for f in forecasts if f.predicted_level == UtilizationLevel.RED]
+            >>> print(f"Found {len(high_risk)} high-risk days in next 90 days")
         """
         forecasts = []
         today = date.today()
@@ -273,9 +339,27 @@ class UtilizationMonitor:
         """
         Calculate expected wait time multiplier based on queuing theory.
 
-        Uses M/M/1 queue formula: W = rho / (1 - rho)
+        Uses the M/M/1 queue formula: W = ρ / (1 - ρ)
 
-        This represents how much longer things take compared to baseline.
+        This represents how much longer processes take compared to baseline.
+        As utilization approaches 100%, wait times approach infinity.
+
+        Args:
+            utilization: Current utilization rate (0.0 to 1.0).
+
+        Returns:
+            float: Wait time multiplier. For example:
+                - At 50%: returns 1.0 (baseline)
+                - At 80%: returns 4.0 (4x longer)
+                - At 90%: returns 9.0 (9x longer)
+                - At 95%: returns 19.0 (19x longer)
+                - At 100%: returns infinity
+
+        Example:
+            >>> monitor = UtilizationMonitor()
+            >>> multiplier = monitor.calculate_wait_time_multiplier(0.80)
+            >>> print(f"At 80% utilization, expect {multiplier}x wait times")
+            At 80% utilization, expect 4.0x wait times
         """
         if utilization >= 1.0:
             return float('inf')
@@ -288,7 +372,31 @@ class UtilizationMonitor:
         self,
         metrics: UtilizationMetrics,
     ) -> dict:
-        """Generate human-readable status report."""
+        """
+        Generate human-readable status report.
+
+        Converts utilization metrics into a formatted report suitable
+        for display in dashboards or notifications.
+
+        Args:
+            metrics: UtilizationMetrics from calculate_utilization().
+
+        Returns:
+            dict: Status report containing:
+                - level: Current level name (green, yellow, etc.)
+                - utilization: Formatted utilization percentage
+                - message: Human-readable status message
+                - buffer_remaining: Remaining buffer as percentage
+                - wait_time_multiplier: Expected delay factor
+                - capacity: Breakdown of capacity usage
+                - recommendations: List of suggested actions
+
+        Example:
+            >>> monitor = UtilizationMonitor()
+            >>> metrics = monitor.calculate_utilization(faculty, 80)
+            >>> report = monitor.get_status_report(metrics)
+            >>> print(f"Status: {report['level']} - {report['message']}")
+        """
         wait_multiplier = self.calculate_wait_time_multiplier(metrics.utilization_rate)
 
         status_messages = {

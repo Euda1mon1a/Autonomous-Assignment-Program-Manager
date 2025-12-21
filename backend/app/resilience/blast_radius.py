@@ -460,16 +460,32 @@ class BlastRadiusManager:
         """
         Request to borrow faculty from another zone.
 
+        Cross-zone borrowing is the controlled mechanism for sharing resources
+        while maintaining blast radius isolation. Requests are validated
+        against containment levels, zone relationships, and capacity limits.
+
         Args:
-            requesting_zone_id: Zone needing faculty
-            lending_zone_id: Zone to borrow from
-            faculty_id: Specific faculty to borrow
-            priority: Priority level of request
-            reason: Why borrowing is needed
-            duration_hours: How long needed
+            requesting_zone_id: UUID of the zone needing faculty.
+            lending_zone_id: UUID of the zone to borrow from.
+            faculty_id: UUID of the specific faculty member to borrow.
+            priority: BorrowingPriority level (CRITICAL, HIGH, MEDIUM, LOW).
+            reason: Description of why borrowing is needed.
+            duration_hours: How long the faculty is needed. Default 8 hours.
 
         Returns:
-            BorrowingRequest if created, None if blocked
+            BorrowingRequest: If request is created (may be pending or auto-approved).
+            None: If request is blocked by containment or capacity limits.
+
+        Example:
+            >>> manager = BlastRadiusManager()
+            >>> # Request emergency borrowing from outpatient to cover inpatient
+            >>> request = manager.request_borrowing(
+            ...     requesting_zone_id=inpatient_zone.id,
+            ...     lending_zone_id=outpatient_zone.id,
+            ...     faculty_id=dr_smith.id,
+            ...     priority=BorrowingPriority.CRITICAL,
+            ...     reason="ICU attending called out sick"
+            ... )
         """
         requesting_zone = self.zones.get(requesting_zone_id)
         lending_zone = self.zones.get(lending_zone_id)
