@@ -10,14 +10,15 @@ These tasks prevent unbounded table growth and ensure
 orphaned records don't block system operations.
 """
 
-import logging
 from datetime import datetime
 from typing import Any
 
 from celery import shared_task
 from sqlalchemy.orm import Session
 
-logger = logging.getLogger(__name__)
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_db_session() -> Session:

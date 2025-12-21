@@ -4,7 +4,6 @@ Rate limiting module for API endpoints.
 Implements a sliding window rate limiter using Redis to prevent brute force attacks
 and API abuse. Uses Redis sorted sets for efficient time-based tracking.
 """
-import logging
 import time
 from typing import Optional
 
@@ -13,8 +12,9 @@ from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
+from app.core.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 settings = get_settings()
 
 

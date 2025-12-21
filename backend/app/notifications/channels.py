@@ -1,5 +1,4 @@
 """Notification delivery channels."""
-import logging
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -9,7 +8,9 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-logger = logging.getLogger(__name__)
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class NotificationPayload(BaseModel):

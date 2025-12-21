@@ -14,16 +14,16 @@ Configuration is done via environment variables:
 - SMTP_USE_TLS: Use TLS (default: True)
 """
 
-import logging
 import smtplib
 from datetime import date
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from app.core.logging import get_logger
 from app.models.certification import PersonCertification
 from app.models.person import Person
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class EmailConfig:

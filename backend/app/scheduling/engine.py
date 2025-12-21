@@ -17,14 +17,15 @@ Algorithms:
 The engine uses a modular constraint system (constraints.py) and pluggable solvers (solvers.py)
 for flexible, maintainable scheduling.
 """
-import logging
 import time
 from datetime import date, timedelta
 from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-logger = logging.getLogger(__name__)
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 from app.models.absence import Absence
 from app.models.assignment import Assignment
