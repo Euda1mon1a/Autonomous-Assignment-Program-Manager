@@ -25,6 +25,18 @@ class FacultyRole(str, Enum):
     CORE = "core"               # Core Faculty: max 4/week
 
 
+class ScreenerRole(str, Enum):
+    """
+    Screener role types for clinic session staffing.
+
+    Different roles have different efficiency levels and availability.
+    """
+    DEDICATED = "dedicated"     # Dedicated screener (100% efficiency)
+    RN = "rn"                   # Registered Nurse (90% efficiency)
+    EMT = "emt"                 # Emergency Medical Technician (80% efficiency)
+    RESIDENT = "resident"       # Resident serving as screener (70% efficiency)
+
+
 class Person(Base):
     """
     Represents residents and faculty members.
@@ -55,6 +67,11 @@ class Person(Base):
     primary_duty = Column(String(255))
     faculty_role = Column(String(50))  # FacultyRole enum value (pd, apd, oic, dept_chief, sports_med, core)
 
+    # Screener-specific fields
+    screener_role = Column(String(50))  # ScreenerRole enum value (dedicated, rn, emt, resident)
+    can_screen = Column(Boolean, default=False)  # Whether this person can serve as screener
+    screening_efficiency = Column(Integer, default=100)  # Efficiency percentage (70-100)
+
     # Call and FMIT equity tracking (reset annually)
     # These track cumulative counts for fair distribution
     sunday_call_count = Column(Integer, default=0)     # Sunday calls (tracked separately - worst day)
@@ -78,6 +95,14 @@ class Person(Base):
         CheckConstraint(
             "faculty_role IS NULL OR faculty_role IN ('pd', 'apd', 'oic', 'dept_chief', 'sports_med', 'core')",
             name="check_faculty_role"
+        ),
+        CheckConstraint(
+            "screener_role IS NULL OR screener_role IN ('dedicated', 'rn', 'emt', 'resident')",
+            name="check_screener_role"
+        ),
+        CheckConstraint(
+            "screening_efficiency IS NULL OR screening_efficiency BETWEEN 0 AND 100",
+            name="check_screening_efficiency"
         ),
     )
 
