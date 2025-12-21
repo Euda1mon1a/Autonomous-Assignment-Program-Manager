@@ -13,8 +13,10 @@ This workflow helps you deploy the residency scheduling system locally and valid
 ### 1. Pull latest changes
 // turbo
 ```bash
-git pull origin main
+git pull
 ```
+
+> **Note:** This pulls the current branch. Use `git checkout main && git pull` if you need to switch to main first.
 
 ### 2. Start all services with Docker
 ```bash
@@ -42,7 +44,7 @@ Once running, open these in your browser:
 | **Frontend** | http://localhost:3000 | Main UI - schedules, calendar, dashboards |
 | **API Docs** | http://localhost:8000/docs | Swagger UI - test API endpoints directly |
 | **Health Check** | http://localhost:8000/health | Quick status check |
-| **n8n Workflows** | http://localhost:5679 | Automation workflows (see `.env.local` for credentials) |
+| **n8n Workflows** | http://localhost:5679 | Automation workflows (default: admin / local_dev_n8n_password — change in `docker-compose.local.yml`) |
 
 ---
 
