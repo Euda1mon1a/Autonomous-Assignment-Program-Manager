@@ -75,6 +75,10 @@ class Settings(BaseSettings):
     ***REMOVED*** Empty list disables the middleware; set in production to actual domain(s)
     TRUSTED_HOSTS: list[str] = []  ***REMOVED*** e.g., ["scheduler.hospital.org", "*.hospital.org"]
 
+    ***REMOVED*** Trusted Proxies (for X-Forwarded-For header validation - prevents rate limit bypass)
+    ***REMOVED*** Only trust X-Forwarded-For from these IPs; empty list uses direct client IP
+    TRUSTED_PROXIES: list[str] = []  ***REMOVED*** e.g., ["10.0.0.1", "10.0.0.2", "172.16.0.0/12"]
+
     ***REMOVED*** Resilience Configuration (Tier 1)
     ***REMOVED*** Utilization thresholds based on queuing theory (M/M/c queue model)
     ***REMOVED*** Wait time formula: W ~ rho / (1 - rho), where rho = utilization
