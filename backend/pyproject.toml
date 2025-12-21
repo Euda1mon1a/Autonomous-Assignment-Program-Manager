@@ -130,3 +130,10 @@ exclude_lines = [
 ]
 fail_under = 70
 show_missing = true
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["app"]
+skip = [".git", ".mypy_cache", ".ruff_cache", ".venv", "venv", "__pycache__", "alembic/versions"]
+skip_gitignore = true
