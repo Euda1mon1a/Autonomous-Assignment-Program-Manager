@@ -83,6 +83,9 @@ faker==38.2.0
 freezegun==1.5.5
 hypothesis==6.122.3
 
+# Logging
+loguru==0.7.3
+
 # Utilities
 python-dotenv==1.2.1
 python-decouple==3.8

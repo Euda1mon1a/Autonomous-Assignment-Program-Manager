@@ -10,7 +10,6 @@ Provides automated background tasks for:
 Tasks integrate with AnalyticsEngine and StabilityMetricsComputer.
 """
 
-import logging
 from datetime import date, datetime, timedelta
 from typing import Any, Optional
 from uuid import UUID
@@ -18,7 +17,9 @@ from uuid import UUID
 from celery import shared_task
 from sqlalchemy.orm import Session
 
-logger = logging.getLogger(__name__)
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_db_session() -> Session:

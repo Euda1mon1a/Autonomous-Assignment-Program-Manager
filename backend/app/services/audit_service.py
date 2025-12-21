@@ -18,7 +18,6 @@ Usage:
     )
 """
 
-import logging
 from datetime import datetime
 from typing import Any
 from uuid import UUID
@@ -27,6 +26,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy_continuum import version_class
 
+from app.core.logging import get_logger
 from app.core.types import AuditStatistics
 from app.models.assignment import Assignment
 from app.models.absence import Absence
@@ -36,7 +36,7 @@ from app.models.swap import SwapRecord
 from app.models.user import User
 from app.schemas.audit import AuditLogEntry, AuditUser, FieldChange
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 # Map entity types to their model classes

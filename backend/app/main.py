@@ -3,22 +3,30 @@ Residency Scheduler API.
 
 FastAPI application for managing residency program schedules.
 """
-import logging
 from contextlib import asynccontextmanager
+from ipaddress import ip_address, ip_network
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from ipaddress import ip_address, ip_network
 
 from app.api.routes import api_router
 from app.core.config import get_settings
 from app.core.exceptions import AppException
+from app.core.logging import get_logger, setup_logging
 from app.middleware.audit import AuditContextMiddleware
 
 settings = get_settings()
-logger = logging.getLogger(__name__)
+
+# Initialize structured logging
+setup_logging(
+    level=settings.LOG_LEVEL,
+    format_type=settings.LOG_FORMAT,
+    log_file=settings.LOG_FILE if settings.LOG_FILE else None,
+)
+
+logger = get_logger(__name__)
 
 
 def _validate_security_config() -> None:
