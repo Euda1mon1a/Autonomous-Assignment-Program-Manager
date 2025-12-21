@@ -1,0 +1,28 @@
+{
+  "notification": {
+    "swap": {
+      "approved": "Your swap request has been approved",
+      "rejected": "Your swap request has been rejected",
+      "pending": "Your swap request is pending review"
+    },
+    "schedule": {
+      "published": "New schedule has been published for {period}",
+      "updated": "Schedule has been updated",
+      "conflict": "Schedule conflict detected"
+    },
+    "acgme": {
+      "warning": "ACGME compliance warning: {violation_type}",
+      "violation": "ACGME violation detected"
+    },
+    "assignment": {
+      "changed": "Your assignment has been changed",
+      "added": "New assignment added to your schedule"
+    }
+  },
+  "common": {
+    "greeting": "Hello {name}",
+    "footer": "This is an automated notification from the Residency Scheduler",
+    "action_required": "Action required",
+    "view_details": "View details"
+  }
+}
