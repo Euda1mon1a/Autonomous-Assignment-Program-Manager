@@ -10,6 +10,10 @@
 
 This document provides an overview of the Model Context Protocol (MCP) server integration for the Residency Scheduler application. The MCP server enables AI assistants to interact with scheduling data and tools through your IDE.
 
+> **Which Claude tool should I use?** This guide covers IDE-integrated Claude (VSCode, Zed, Antigravity).
+> For help choosing between Claude for macOS (chat app), Claude Code (CLI), or IDE integration,
+> see [Choosing Your Claude Interface](./guides/AI_AGENT_USER_GUIDE.md***REMOVED***choosing-your-claude-interface).
+
 ***REMOVED******REMOVED*** What Was Created
 
 ***REMOVED******REMOVED******REMOVED*** VSCode Configuration Files
