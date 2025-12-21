@@ -150,15 +150,31 @@ class FallbackScheduler:
         """
         Pre-compute and store a fallback schedule for a scenario.
 
+        This is the core of static stability: compute schedules during calm
+        periods so they're ready for instant activation during crisis.
+        No decisions or computation needed when activating.
+
         Args:
-            scenario: The scenario this fallback addresses
-            start_date: Start of the fallback period
-            end_date: End of the fallback period
-            assumptions: List of assumptions made in this schedule
-            custom_assignments: Pre-built assignments (if not using generator)
+            scenario: The FallbackScenario this fallback addresses
+                (e.g., SINGLE_FACULTY_LOSS, PCS_SEASON_50_PERCENT).
+            start_date: First day the fallback covers.
+            end_date: Last day the fallback covers.
+            assumptions: List of assumptions made (e.g., "Assumes Dr. X available").
+            custom_assignments: Pre-built assignment dicts. If None, uses
+                registered schedule generator.
 
         Returns:
-            The created FallbackSchedule
+            FallbackSchedule: The created and stored fallback schedule.
+
+        Example:
+            >>> scheduler = FallbackScheduler()
+            >>> fallback = scheduler.precompute_fallback(
+            ...     scenario=FallbackScenario.PCS_SEASON_50_PERCENT,
+            ...     start_date=date(2024, 6, 1),
+            ...     end_date=date(2024, 8, 31),
+            ...     assumptions=["50% faculty available", "Electives suspended"]
+            ... )
+            >>> print(f"Pre-computed with {fallback.coverage_rate:.0%} coverage")
         """
         if custom_assignments:
             assignments = custom_assignments
@@ -227,8 +243,24 @@ class FallbackScheduler:
         Activate a pre-computed fallback schedule.
 
         This is designed to be instant—no computation, just switch.
+        The key principle of static stability: the fallback is already
+        computed and stored, so activation is a simple state change.
 
-        Returns the fallback schedule if available, None if not found.
+        Args:
+            scenario: The FallbackScenario to activate.
+
+        Returns:
+            FallbackSchedule: The activated schedule if available.
+            None: If no fallback exists for this scenario.
+
+        Example:
+            >>> scheduler = FallbackScheduler()
+            >>> # Pre-compute during calm period
+            >>> scheduler.precompute_fallback(FallbackScenario.HOLIDAY_SKELETON, ...)
+            >>> # Later, during crisis, activate instantly
+            >>> fallback = scheduler.activate_fallback(FallbackScenario.HOLIDAY_SKELETON)
+            >>> if fallback:
+            ...     print(f"Activated {fallback.name} with {len(fallback.assignments)} assignments")
         """
         fallback = self.fallback_schedules.get(scenario)
 
