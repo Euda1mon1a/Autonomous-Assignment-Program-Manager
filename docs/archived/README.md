@@ -24,16 +24,14 @@ archived/
 │   ├── STABILITY_METRICS_IMPLEMENTATION_SUMMARY.md
 │   └── DATABASE_MODELS_STATUS.md
 │
-├── reports/               ***REMOVED*** Historical reports
-│   ├── BRANCH_CLEANUP.md
-│   ├── BRANCH_REBASE_REPORT.md
-│   ├── REPO_HYGIENE_REPORT.md
-│   ├── REPO_REVIEW_2025-12-17.md
-│   ├── SECURITY_FIX_SUMMARY.md
-│   ├── SECURITY_VULNERABILITY_ASSESSMENT.md
-│   └── LAUNCH_LESSONS_LEARNED.md
-│
-└── CELERY_*.md            ***REMOVED*** Celery setup reference documents
+└── reports/               ***REMOVED*** Historical reports
+    ├── BRANCH_CLEANUP.md
+    ├── BRANCH_REBASE_REPORT.md
+    ├── REPO_HYGIENE_REPORT.md
+    ├── REPO_REVIEW_2025-12-17.md
+    ├── SECURITY_FIX_SUMMARY.md
+    ├── SECURITY_VULNERABILITY_ASSESSMENT.md
+    └── LAUNCH_LESSONS_LEARNED.md
 ```
 
 ***REMOVED******REMOVED*** When to Archive

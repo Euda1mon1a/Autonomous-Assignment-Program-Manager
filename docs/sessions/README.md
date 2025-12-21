@@ -51,7 +51,17 @@ Session planning documents are maintained in the project root during active deve
   - Rate limiting attack simulation
   - 12,149 lines added across 32 files
 
-- **SESSION_11_PARALLEL_HIGH_YIELD_TODOS.md** - Test coverage & documentation expansion
+- **SESSION_11A_MCP_AND_OPTIMIZATION.md** - MCP tools & performance optimization
+  - MCP tool stubs (validate_schedule, analyze_contingency, detect_conflicts, find_swap_matches)
+  - MCP resources database queries (get_schedule_status, get_compliance_summary)
+  - N+1 query optimization (95-99% reduction in query counts)
+  - TypedDict type safety expansion (14+ TypedDicts)
+  - Scheduler Ops Celery integration
+  - Frontend JSDoc documentation
+  - Stress testing framework (5 stress levels)
+  - +4,900 lines across 24 files
+
+- **SESSION_11B_TEST_COVERAGE.md** - Test coverage & documentation expansion
   - 346+ new tests across 9 test files
   - Services: certification_scheduler, email_service, pareto_optimization, xlsx_import
   - Validators: advanced_acgme
@@ -59,7 +69,7 @@ Session planning documents are maintained in the project root during active deve
   - Scheduling catalyst: integration tests, optimizer expansion
   - Documentation: portal.py (11 endpoints), mtf_compliance.py (8K+ chars)
   - Experimental: 9 TODOs resolved (memory tracking, coverage, violations)
-  - 8,514 lines added across 17 files
+  - +8,514 lines across 17 files
 
 - **SESSION_12_PARALLEL_HIGH_YIELD.md** - Route tests & query optimization
   - 481 new tests across 10 test files (people, calendar, certifications, leave, etc.)
