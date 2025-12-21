@@ -19,6 +19,8 @@ Tier 2 (Strategic) endpoints:
 import logging
 import time
 from datetime import date, datetime, timedelta
+
+logger = logging.getLogger(__name__)
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -178,7 +180,6 @@ async def get_system_health(
 
     # Load data for analysis - apply optional limits if specified
     query_start = time.time()
-
     faculty_query = db.query(Person).filter(Person.type == "faculty").order_by(Person.id)
     if max_faculty:
         faculty_query = faculty_query.limit(max_faculty)
@@ -193,6 +194,24 @@ async def get_system_health(
     blocks = blocks_query.all()
 
     assignments_query = (
+    # Load data for analysis - no limit to ensure accurate health assessment
+    query_start = time.time()
+    faculty = (
+        db.query(Person)
+        .filter(Person.type == "faculty")
+        .order_by(Person.id)
+        .all()
+    )
+    blocks = (
+        db.query(Block)
+        .filter(
+            Block.date >= start_date,
+            Block.date <= end_date
+        )
+        .order_by(Block.date, Block.id)
+        .all()
+    )
+    assignments = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -209,8 +228,17 @@ async def get_system_health(
     if max_assignments:
         assignments_query = assignments_query.limit(max_assignments)
     assignments = assignments_query.all()
-
     query_time = time.time() - query_start
+
+    logger.info(
+        "Health check data loaded: faculty=%d, blocks=%d, assignments=%d, "
+        "date_range=%s to %s, query_time=%.3fs",
+        len(faculty), len(blocks), len(assignments),
+        start_date, end_date, query_time
+        .all()
+    )
+    query_time = time.time() - query_start
+
     logger.info(
         "Health check data loaded: faculty=%d, blocks=%d, assignments=%d, "
         "date_range=%s to %s, query_time=%.3fs",
@@ -597,30 +625,36 @@ async def set_load_shedding_level(
     )
 
 
+def get_contingency_service(db: Session):
+    """Get or create ContingencyService instance with dependency injection."""
+    from app.services.resilience.contingency import ContingencyService
+
+    return ContingencyService(db=db)
+
+
 @router.get("/vulnerability", response_model=VulnerabilityReportResponse)
 async def get_vulnerability_report(
     start_date: date | None = None,
     end_date: date | None = None,
-    max_faculty: int | None = Query(None, ge=1, description="Optional limit for faculty records"),
-    max_blocks: int | None = Query(None, ge=1, description="Optional limit for block records"),
-    max_assignments: int | None = Query(None, ge=1, description="Optional limit for assignment records"),
+    include_n2: bool = Query(True, description="Include N-2 analysis (more expensive)"),
     db: Session = Depends(get_db),
 ):
     """
     Run full N-1/N-2 vulnerability analysis.
 
-    This is computationally intensive for large datasets.
-    Use for periodic assessment, not real-time monitoring.
+    This endpoint uses the ContingencyService to perform efficient N-1/N-2
+    contingency analysis with optimized simulation loops.
 
-    Optional limits (max_faculty, max_blocks, max_assignments) can be set for
-    performance tuning. By default, no limits are applied to ensure accurate
-    vulnerability analysis.
+    The analysis implements power grid reliability principles:
+    - N-1: System must survive loss of any single faculty member
+    - N-2: System must survive loss of any two faculty members (optional)
+
+    Args:
+        start_date: Start of analysis period (defaults to today)
+        end_date: End of analysis period (defaults to 30 days from start)
+        include_n2: Whether to include N-2 pair analysis (default True)
     """
-    from app.models.assignment import Assignment
-    from app.models.block import Block
-    from app.models.person import Person
-
-    service = get_resilience_service(db)
+    contingency_service = get_contingency_service(db)
 
     # Default date range
     if start_date is None:
@@ -628,104 +662,63 @@ async def get_vulnerability_report(
     if end_date is None:
         end_date = start_date + timedelta(days=30)
 
-    # Load data - apply optional limits if specified
-    query_start = time.time()
-
-    faculty_query = db.query(Person).filter(Person.type == "faculty").order_by(Person.id)
-    if max_faculty:
-        faculty_query = faculty_query.limit(max_faculty)
-    faculty = faculty_query.all()
-
-    blocks_query = db.query(Block).filter(
-        Block.date >= start_date,
-        Block.date <= end_date
-    ).order_by(Block.date, Block.id)
-    if max_blocks:
-        blocks_query = blocks_query.limit(max_blocks)
-    blocks = blocks_query.all()
-
-    assignments_query = (
-        db.query(Assignment)
-        .join(Block)
-        .options(
-            joinedload(Assignment.block),
-            joinedload(Assignment.person),
-            joinedload(Assignment.rotation_template)
-        )
-        .filter(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
-        .order_by(Block.date, Assignment.id)
+    # Run contingency analysis using the service
+    analysis_start = time.time()
+    result = contingency_service.analyze_contingency(
+        start_date=start_date,
+        end_date=end_date,
+        include_n2=include_n2,
     )
-    if max_assignments:
-        assignments_query = assignments_query.limit(max_assignments)
-    assignments = assignments_query.all()
+    analysis_time = time.time() - analysis_start
 
-    query_time = time.time() - query_start
     logger.info(
-        "Vulnerability report data loaded: faculty=%d, blocks=%d, assignments=%d, "
-        "date_range=%s to %s, query_time=%.3fs",
-        len(faculty), len(blocks), len(assignments),
-        start_date, end_date, query_time
-    )
-
-    # Build coverage requirements
-    coverage_requirements = {b.id: 1 for b in blocks}
-
-    # Run analysis
-    report = service.contingency.generate_report(
-        faculty=faculty,
-        blocks=blocks,
-        assignments=assignments,
-        coverage_requirements=coverage_requirements,
-        current_utilization=0.0,  # Will be calculated
-    )
-
-    # Get centrality scores
-    services = {}  # Would need proper service mapping
-    centrality_scores = service.contingency.calculate_centrality(
-        faculty, assignments, services
+        "Vulnerability analysis completed: n1_pass=%s, n2_pass=%s, "
+        "vulnerabilities=%d, fatal_pairs=%d, duration=%.3fs",
+        result.n1_pass, result.n2_pass,
+        len(result.n1_vulnerabilities), len(result.n2_fatal_pairs),
+        analysis_time
     )
 
     # Persist vulnerability record
     vuln_record = VulnerabilityRecord(
         period_start=datetime.combine(start_date, datetime.min.time()),
         period_end=datetime.combine(end_date, datetime.min.time()),
-        faculty_count=len(faculty),
-        block_count=len(blocks),
-        n1_pass=report.n1_pass,
-        n2_pass=report.n2_pass,
-        phase_transition_risk=report.phase_transition_risk,
-        n1_vulnerabilities=[v.__dict__ for v in report.n1_vulnerabilities[:10]],
-        n2_fatal_pairs=[{"pair": [str(p.faculty1_id), str(p.faculty2_id)]} for p in report.n2_fatal_pairs[:10]],
-        most_critical_faculty=[str(fid) for fid in report.most_critical_faculty[:5]],
-        recommended_actions=report.recommended_actions,
+        faculty_count=len(result.n1_simulations),
+        block_count=len(set(
+            b for s in result.n1_simulations for b in s.uncovered_blocks
+        )) if result.n1_simulations else 0,
+        n1_pass=result.n1_pass,
+        n2_pass=result.n2_pass,
+        phase_transition_risk=result.phase_transition_risk,
+        n1_vulnerabilities=[v.to_dict() for v in result.n1_vulnerabilities[:10]],
+        n2_fatal_pairs=[p.to_dict() for p in result.n2_fatal_pairs[:10]],
+        most_critical_faculty=[str(fid) for fid in result.most_critical_faculty[:5]],
+        recommended_actions=result.recommended_actions,
     )
     db.add(vuln_record)
     db.commit()
 
     return VulnerabilityReportResponse(
-        analyzed_at=datetime.utcnow(),
+        analyzed_at=result.analyzed_at,
         period_start=start_date,
         period_end=end_date,
-        n1_pass=report.n1_pass,
-        n2_pass=report.n2_pass,
-        phase_transition_risk=report.phase_transition_risk,
+        n1_pass=result.n1_pass,
+        n2_pass=result.n2_pass,
+        phase_transition_risk=result.phase_transition_risk,
         n1_vulnerabilities=[
             {
                 "faculty_id": str(v.faculty_id),
                 "affected_blocks": v.affected_blocks,
                 "severity": v.severity,
             }
-            for v in report.n1_vulnerabilities[:10]
+            for v in result.n1_vulnerabilities[:10]
         ],
         n2_fatal_pairs=[
             {
                 "faculty1_id": str(p.faculty1_id),
                 "faculty2_id": str(p.faculty2_id),
             }
-            for p in report.n2_fatal_pairs[:10]
+            for p in result.n2_fatal_pairs[:10]
         ],
         most_critical_faculty=[
             CentralityScore(
@@ -737,9 +730,9 @@ async def get_vulnerability_report(
                 replacement_difficulty=c.replacement_difficulty,
                 risk_level=_centrality_to_risk(c.centrality_score),
             )
-            for c in centrality_scores[:10]
+            for c in result.centrality_scores[:10]
         ],
-        recommended_actions=report.recommended_actions,
+        recommended_actions=result.recommended_actions,
     )
 
 
@@ -776,7 +769,6 @@ async def get_comprehensive_report(
 
     # Load data - apply optional limits if specified
     query_start = time.time()
-
     faculty_query = db.query(Person).filter(Person.type == "faculty").order_by(Person.id)
     if max_faculty:
         faculty_query = faculty_query.limit(max_faculty)
@@ -791,6 +783,24 @@ async def get_comprehensive_report(
     blocks = blocks_query.all()
 
     assignments_query = (
+    # Load data - no limit to ensure complete comprehensive report
+    query_start = time.time()
+    faculty = (
+        db.query(Person)
+        .filter(Person.type == "faculty")
+        .order_by(Person.id)
+        .all()
+    )
+    blocks = (
+        db.query(Block)
+        .filter(
+            Block.date >= start_date,
+            Block.date <= end_date
+        )
+        .order_by(Block.date, Block.id)
+        .all()
+    )
+    assignments = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -807,8 +817,17 @@ async def get_comprehensive_report(
     if max_assignments:
         assignments_query = assignments_query.limit(max_assignments)
     assignments = assignments_query.all()
-
     query_time = time.time() - query_start
+
+    logger.info(
+        "Comprehensive report data loaded: faculty=%d, blocks=%d, assignments=%d, "
+        "date_range=%s to %s, query_time=%.3fs",
+        len(faculty), len(blocks), len(assignments),
+        start_date, end_date, query_time
+        .all()
+    )
+    query_time = time.time() - query_start
+
     logger.info(
         "Comprehensive report data loaded: faculty=%d, blocks=%d, assignments=%d, "
         "date_range=%s to %s, query_time=%.3fs",
@@ -2278,13 +2297,21 @@ async def analyze_hubs(
 
     # Load data - apply optional limits if specified
     query_start = time.time()
-
     faculty_query = db.query(Person).filter(Person.type == "faculty").order_by(Person.id)
     if max_faculty:
         faculty_query = faculty_query.limit(max_faculty)
     faculty = faculty_query.all()
 
     assignments_query = (
+    # Load data - no limit to ensure complete hub analysis
+    query_start = time.time()
+    faculty = (
+        db.query(Person)
+        .filter(Person.type == "faculty")
+        .order_by(Person.id)
+        .all()
+    )
+    assignments = (
         db.query(Assignment)
         .join(Block)
         .options(
@@ -2301,8 +2328,17 @@ async def analyze_hubs(
     if max_assignments:
         assignments_query = assignments_query.limit(max_assignments)
     assignments = assignments_query.all()
-
     query_time = time.time() - query_start
+
+    logger.info(
+        "Hub analysis data loaded: faculty=%d, assignments=%d, "
+        "date_range=%s to %s, query_time=%.3fs",
+        len(faculty), len(assignments),
+        start_date, end_date, query_time
+        .all()
+    )
+    query_time = time.time() - query_start
+
     logger.info(
         "Hub analysis data loaded: faculty=%d, assignments=%d, "
         "date_range=%s to %s, query_time=%.3fs",
