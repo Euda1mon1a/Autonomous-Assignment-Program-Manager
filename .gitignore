@@ -93,3 +93,4 @@ nginx/certbot/
 
 ***REMOVED*** Test coverage output
 frontend/coverage/
+docs/data/airtable_absences_*.json
