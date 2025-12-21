@@ -4,7 +4,7 @@ description: Deploy locally and validate the scheduling system
 
 # Local Deployment & Testing Workflow
 
-This workflow helps you deploy the residency scheduling system locally and validate it's working correctly.
+This workflow helps you deploy the residency scheduling system locally and validate it is working correctly.
 
 ---
 
