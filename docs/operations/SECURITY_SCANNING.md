@@ -45,9 +45,26 @@ npm audit fix
 npm audit fix --force
 ```
 
-**Current Status:** 3 high severity vulnerabilities identified
-- `glob` 10.2.0-10.4.5: Command injection via -c/--cmd
-- Fix: `npm audit fix --force` (installs eslint-config-next@16.0.10)
+**Current Status:** ✅ All vulnerabilities resolved (2025-12-21)
+
+**Resolved Vulnerability:**
+- `glob` 10.2.0-10.4.5: Command injection via -c/--cmd (GHSA-5j98-mcp5-4vw2)
+
+**Fix Applied:** npm `overrides` in `frontend/package.json`:
+```json
+"overrides": {
+  "glob": "^10.5.0"
+}
+```
+
+**Why NOT `npm audit fix --force`:**
+Using `npm audit fix --force` upgrades `eslint-config-next` from v14 to v16, which:
+1. Requires ESLint v9 (breaking peer dependency change)
+2. ESLint v9 uses "flat config" format, incompatible with `next lint` in Next.js 14
+3. Causes deployment failures due to config incompatibility
+
+The npm `overrides` approach pins the transitive `glob` dependency to a fixed version
+without changing the eslint-config-next major version, avoiding these compatibility issues.
 
 ### 2. Static Application Security Testing (SAST)
 
