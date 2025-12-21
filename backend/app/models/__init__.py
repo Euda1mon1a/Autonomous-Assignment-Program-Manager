@@ -5,6 +5,12 @@ from app.models.idempotency import IdempotencyRequest, IdempotencyStatus
 from app.models.block import Block
 from app.models.call_assignment import CallAssignment
 from app.models.certification import CertificationType, PersonCertification
+from app.models.clinic_session import (
+    ClinicSession,
+    ClinicType,
+    SessionType,
+    StaffingStatus,
+)
 from app.models.conflict_alert import (
     ConflictAlert,
     ConflictAlertStatus,
@@ -14,12 +20,13 @@ from app.models.conflict_alert import (
 from app.models.email_log import EmailLog, EmailStatus
 from app.models.email_template import EmailTemplate, EmailTemplateType
 from app.models.faculty_preference import FacultyPreference
+from app.models.intern_stagger import InternStaggerPattern
 from app.models.notification import (
     Notification,
     NotificationPreferenceRecord,
     ScheduledNotificationRecord,
 )
-from app.models.person import Person
+from app.models.person import Person, ScreenerRole
 from app.models.procedure import Procedure
 from app.models.procedure_credential import ProcedureCredential
 from app.models.resilience import (
@@ -72,6 +79,7 @@ from app.models.calendar_subscription import CalendarSubscription
 
 __all__ = [
     "Person",
+    "ScreenerRole",
     "Block",
     "RotationTemplate",
     "Assignment",
@@ -88,6 +96,13 @@ __all__ = [
     # Certification models
     "CertificationType",
     "PersonCertification",
+    # Clinic Session models
+    "ClinicSession",
+    "SessionType",
+    "ClinicType",
+    "StaffingStatus",
+    # Intern Stagger model
+    "InternStaggerPattern",
     # Settings model
     "ApplicationSettings",
     # Notification models
