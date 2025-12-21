@@ -132,6 +132,11 @@ Uses predator-prey dynamics, ecosystem resilience, and niche theory for workforc
 
 Applies neural network concepts (Hopfield networks, attractor dynamics) to scheduling optimization.
 
+### Piezoelectric Bone Remodeling (NEW)
+- [Piezoelectric Bone Remodeling for Scheduling](./piezoelectric-bone-remodeling-for-scheduling.md)
+
+Explores piezoelectric effects in bone tissue (Wolff's Law) as a metaphor for stress-sensing feedback systems. Includes review of Python libraries (FEniCS, SfePy). **Status:** Research complete, low priority for implementation.
+
 ### Quantum Physics
 - [Quantum Physics Scheduler Exploration](./quantum-physics-scheduler-exploration.md)
 
@@ -178,9 +183,11 @@ By looking to fields like **game theory, epidemiology, ecology, and physics**, w
 | **Stigmergy** | ✅ Implemented | - | Deployed |
 | **Control Theory** | ✅ Research Complete | ⭐⭐ MEDIUM | Medium |
 | **Epidemiology** | ✅ Research Complete | ⭐⭐ MEDIUM | Medium |
+| **Materials Science** | ✅ Research Complete | ⭐⭐ MEDIUM | Medium |
 | **Thermodynamics** | ✅ Research Complete | ⭐ LOW | High |
 | **Ecology** | ✅ Research Complete | ⭐ LOW | Medium |
 | **Neural Computation** | ✅ Research Complete | ⭐ LOW | High |
+| **Piezoelectric** | ✅ Research Complete | ⭐ LOW | Low |
 | **Quantum** | ✅ Research Complete | ⭐ LOW | Very High |
 
 ---
@@ -286,6 +293,6 @@ Questions about other research areas:
 
 ---
 
-**Last Updated:** 2025-12-20
+**Last Updated:** 2025-12-21
 
 *Research is ongoing. Check back for updates as new concepts are explored and validated.*
