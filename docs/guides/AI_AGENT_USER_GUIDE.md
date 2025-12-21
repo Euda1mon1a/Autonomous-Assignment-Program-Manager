@@ -2,7 +2,7 @@
 
 > **Complete guide to using AI agents with the Residency Scheduler**
 >
-> Covers: Skills, MCP Tools, Google ADK, and CLI platforms (Claude Code, Antigravity)
+> Covers: Skills, MCP Tools, Google ADK, and Claude Code (Web, CLI, IDE)
 
 ---
 
@@ -13,7 +13,7 @@
 3. [The Three Pillars](#the-three-pillars)
 4. [Quick Start](#quick-start)
 5. [Skills Reference](#skills-reference)
-6. [CLI Platforms](#cli-platforms)
+6. [Claude Code Platforms](#claude-code-platforms)
 7. [Model Selection](#model-selection)
 8. [Evaluation & Testing](#evaluation--testing)
 9. [Troubleshooting](#troubleshooting)
@@ -57,11 +57,42 @@ This repository has a complete AI agent infrastructure:
 
 Before diving in, understand the difference between Claude's interfaces:
 
-### Claude for macOS/Desktop (Chat App) vs Claude Code (CLI)
+### Claude Code: Web, CLI, and IDE
 
-| Feature | Claude for macOS | Claude Code |
-|---------|------------------|-------------|
-| **What It Is** | Desktop chat application | Command-line development tool |
+Claude Code is available in three forms, all providing the same agentic development capabilities:
+
+| Feature | Claude Code Web | Claude Code CLI | Claude Code IDE |
+|---------|-----------------|-----------------|-----------------|
+| **What It Is** | Browser-based interface at claude.ai/code | Terminal command-line tool | VS Code / Cursor extension |
+| **File Access** | Full codebase via GitHub integration | Full local filesystem access | Full workspace access |
+| **Code Editing** | Read, write, edit files | Read, write, edit files | Read, write, edit files |
+| **Git Operations** | Full git integration | Full git integration | Full git integration |
+| **MCP Tools** | Supported via GitHub repos | Full MCP support | Full MCP support |
+| **Skills** | Loads from `.claude/skills/` | Loads from `.claude/skills/` | Loads from `.claude/skills/` |
+| **Best For** | Remote development, cloud-first workflows | Local development, scripting | IDE-integrated workflows |
+
+> **Note:** This project was primarily developed using **Claude Code Web**. The web interface provides full agentic capabilities without requiring local installation, making it ideal for rapid development across different machines.
+
+### Claude Code Web (Primary Development Interface)
+
+Claude Code Web is the browser-based version accessible at [claude.ai/code](https://claude.ai/code). Key features:
+
+- **GitHub Integration**: Connect your repositories directly; Claude can read, edit, and commit
+- **No Local Setup**: Works from any browser without installing CLI tools
+- **Persistent Sessions**: Continue work across browser sessions
+- **Same Capabilities**: Full file editing, git operations, and tool usage as CLI
+
+**When to use Claude Code Web:**
+- Working on cloud-hosted repositories
+- Developing from multiple machines
+- Quick iterations without local environment setup
+- Collaborative development with remote repos
+
+### Claude for macOS/Desktop (Chat App) vs Claude Code
+
+| Feature | Claude for macOS | Claude Code (any platform) |
+|---------|------------------|----------------------------|
+| **What It Is** | Desktop chat application | Agentic development tool |
 | **File Access** | Limited (can view attached files) | Full access to your codebase |
 | **Code Editing** | Cannot edit files | Can read, write, and edit files |
 | **Git Operations** | None | Full git integration |
@@ -78,22 +109,34 @@ Before diving in, understand the difference between Claude's interfaces:
 - Analyzing individual files you upload manually
 - Having conversations that don't require code changes
 
-**Use Claude Code (CLI) when:**
-- Making changes to your codebase
-- Debugging issues in your project
-- Running tests or build commands
-- Working with git (commits, branches, PRs)
-- Using project-specific skills and MCP tools
-- Any task that requires reading or modifying multiple files
+**Use Claude Code Web when:**
+- Working on GitHub-hosted repositories
+- Developing from any machine without local setup
+- Rapid prototyping and iteration
+- You want full agentic capabilities in a browser
+
+**Use Claude Code CLI when:**
+- Working with local files not on GitHub
+- Scripting and automation workflows
+- Deployment tasks requiring local system access
+- macOS automation with OSAScript (see [IDE Setup for macOS](#ide-setup-for-macos))
+
+**Use Claude Code IDE (VS Code/Cursor) when:**
+- You prefer staying in your editor
+- Integrating with existing IDE workflows
+- Need side-by-side code viewing while chatting
 
 ### Decision Flowchart
 
 ```
 Do you need to modify files in your codebase?
-├── YES → Use Claude Code
+├── YES
+│   └── Is your repo on GitHub and you're okay with browser-based work?
+│       ├── YES → Use Claude Code Web
+│       └── NO → Use Claude Code CLI or IDE
 └── NO
     └── Do you need to read/analyze project files?
-        ├── YES → Use Claude Code (or IDE with Claude extension)
+        ├── YES → Use Claude Code (Web, CLI, or IDE)
         └── NO
             └── Is this a coding-related question?
                 ├── YES, about THIS project → Use Claude Code
@@ -178,7 +221,27 @@ Claude:
 > For general questions without code changes, you can use Claude for macOS/Desktop instead.
 > See [Choosing Your Claude Interface](#choosing-your-claude-interface) for guidance.
 
-### Option A: Claude Code (Recommended for Development)
+### Option A: Claude Code Web (Recommended - No Installation)
+
+This is the primary interface used to develop this project.
+
+```
+1. Visit claude.ai/code
+2. Connect your GitHub account
+3. Select Autonomous-Assignment-Program-Manager repository
+4. Start developing!
+```
+
+**First Interaction:**
+```
+You: Check if the schedule is ACGME compliant
+
+Claude: [Activates acgme-compliance skill]
+        [Calls validate_acgme_compliance tool]
+        [Returns detailed compliance report]
+```
+
+### Option B: Claude Code CLI (Local Development)
 
 ```bash
 # Install Claude Code
@@ -193,16 +256,7 @@ claude
 # Claude automatically loads skills from .claude/skills/
 ```
 
-**First Interaction:**
-```
-You: Check if the schedule is ACGME compliant
-
-Claude: [Activates acgme-compliance skill]
-        [Calls validate_acgme_compliance tool]
-        [Returns detailed compliance report]
-```
-
-### Option B: Google Antigravity
+### Option C: Google Antigravity
 
 ```bash
 # Download from https://antigravityai.org/
@@ -297,11 +351,38 @@ Detailed instructions here...
 
 ---
 
-## CLI Platforms
+## Claude Code Platforms
 
-### Claude Code
+### Claude Code Web
 
-**Best For:** Daily development, code changes, git operations
+**Best For:** Primary development, remote workflows, cloud-first development
+
+> **This project was built primarily with Claude Code Web.** The browser-based interface provides full agentic capabilities with seamless GitHub integration.
+
+**Getting Started:**
+1. Visit [claude.ai/code](https://claude.ai/code)
+2. Connect your GitHub account
+3. Select a repository to work with
+4. Start coding with full file access, git operations, and skill support
+
+**Key Features:**
+| Feature | Description |
+|---------|-------------|
+| GitHub Integration | Read, write, commit directly to repos |
+| No Installation | Works from any browser |
+| Skill Support | Loads `.claude/skills/` from your repo |
+| Full Git | Branches, commits, PRs, all in-browser |
+| Persistent Context | Sessions maintain conversation history |
+
+**Tips:**
+- Works identically to CLI—same commands, same capabilities
+- Ideal for development without local environment setup
+- Great for quick fixes from any device
+- All project skills and MCP configurations work automatically
+
+### Claude Code CLI
+
+**Best For:** Local development, scripting, deployment tasks
 
 **Installation:**
 ```bash
@@ -330,6 +411,39 @@ winget install Anthropic.ClaudeCode
 - MCP tools available if `mcp-server/` is configured
 - Opus 4.5 is best for complex reasoning
 - Sonnet is faster for simple tasks
+
+### IDE Setup for macOS
+
+When setting up Claude Code in an IDE on macOS, be aware of OSAScript considerations:
+
+**macOS Automation Permissions:**
+- Claude Code CLI/IDE may require automation permissions
+- OSAScript (AppleScript) adds a layer of obfuscation for system commands
+- Grant permissions in System Preferences → Security & Privacy → Automation
+
+**Recommended IDE Setup:**
+
+1. **VS Code with Claude Extension:**
+   ```bash
+   # Install Claude extension from VS Code marketplace
+   code --install-extension anthropic.claude-code
+   ```
+
+2. **Cursor (Claude-native IDE):**
+   - Download from [cursor.sh](https://cursor.sh)
+   - Built-in Claude integration, no extension needed
+
+3. **Terminal Integration:**
+   ```bash
+   # Add to ~/.zshrc or ~/.bashrc
+   alias cc='claude'
+   alias cco='claude --model opus'
+   ```
+
+**Deployment Considerations:**
+- For deployment tasks, CLI provides direct system access
+- OSAScript wrappers may intercept certain system calls
+- Use explicit paths and avoid shell aliases in deployment scripts
 
 ### Google Antigravity (Recommended for Beginners)
 
@@ -686,7 +800,8 @@ EOF
 
 | Task | Command / Action |
 |------|------------------|
-| Start Claude Code | `claude` |
+| Start Claude Code Web | Visit claude.ai/code, connect GitHub |
+| Start Claude Code CLI | `claude` |
 | Start Antigravity | Open app, select folder |
 | Start ADK | `cd agent-adk && npm run dev` |
 | Check compliance | "Is the schedule ACGME compliant?" |
