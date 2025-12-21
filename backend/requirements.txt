@@ -30,10 +30,12 @@ slowapi==0.1.9
 # Data Processing
 pandas==2.3.3
 numpy==2.3.5
+scipy>=1.11.0  # Sparse matrix operations for tensegrity solver
 python-dateutil==2.9.0.post0
 
 # Graph Analysis (for resilience hub vulnerability analysis)
 networkx>=3.0
+ndlib>=5.1.0  # Network diffusion library for burnout contagion modeling
 
 # Constraint Programming & Optimization
 ortools>=9.8
