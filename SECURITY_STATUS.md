@@ -1,6 +1,6 @@
 # Security Vulnerability Status
 
-**Last Updated:** 2025-12-21 (glob fix added)
+**Last Updated:** 2025-12-21 (refresh token security fix)
 **Original Assessment:** 2025-12-17
 
 This document tracks security vulnerabilities identified in the codebase and their remediation status.
@@ -12,7 +12,7 @@ This document tracks security vulnerabilities identified in the codebase and the
 | Severity | Total | Fixed | Open |
 |----------|-------|-------|------|
 | CRITICAL | 8 | 8 | 0 |
-| HIGH | 7 | 5 | 2 |
+| HIGH | 8 | 6 | 2 |
 | MEDIUM | 15 | 1 | 14 |
 | LOW | 5 | 0 | 5 |
 
@@ -105,13 +105,26 @@ This document tracks security vulnerabilities identified in the codebase and the
   - **Why NOT `npm audit fix --force`:** Upgrades eslint-config-next v14→v16, which requires ESLint v9 and breaks `next lint` with Next.js 14
   - See `docs/operations/VALIDATION_TRACKER.md` for full history
 
-### 6. 24-Hour Token Expiration Without Refresh
-- **Status:** OPEN
+### 6. ~~Refresh Token Usable as Access Token~~
+- **Status:** FIXED
+- **Fixed In:** `backend/app/core/security.py:201-226` (PR #327)
+- **Severity:** High (privilege escalation)
+- **Details:**
+  - **Vulnerability:** Refresh tokens (7-day lifetime) could be used as access tokens (30-min lifetime)
+  - `verify_token()` did not check token type, accepting any valid JWT
+  - Attackers could use stolen refresh tokens directly in Authorization header for 7 days
+  - **Fix:** `verify_token()` now explicitly rejects tokens with `type="refresh"`
+  - Refresh tokens can only be used at the `/api/auth/refresh` endpoint
+  - Added tests: `test_refresh_token_cannot_be_used_as_access_token`, `test_refresh_token_in_cookie_rejected`
+
+### 7. 24-Hour Token Expiration Without Refresh
+- **Status:** PARTIALLY ADDRESSED
 - **Location:** `backend/app/core/config.py:55`
 - **Risk:** Long-lived tokens increase window for token theft
-- **Remediation:** Implement refresh token rotation with shorter access token lifetime (15-30 min)
+- **Current State:** Refresh token rotation implemented with proper blacklisting
+- **Remaining:** Consider reducing access token lifetime from 30 min to 15 min
 
-### 7. No Per-User Account Lockout
+### 8. No Per-User Account Lockout
 - **Status:** OPEN
 - **Location:** `backend/app/core/rate_limit.py`
 - **Risk:** Distributed brute force attacks can bypass IP-based rate limiting
