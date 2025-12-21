@@ -15,13 +15,14 @@ Example:
     for version in assignment.versions:
         print(f"Version {version.transaction_id}: changed at {version.transaction.issued_at}")
 """
-import logging
 from contextvars import ContextVar
 
 from sqlalchemy_continuum import make_versioned
 from sqlalchemy_continuum.plugins import PropertyModTrackerPlugin
 
-logger = logging.getLogger(__name__)
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 # Context variable to store current user ID for audit trail
 # This is set by the audit middleware on each request

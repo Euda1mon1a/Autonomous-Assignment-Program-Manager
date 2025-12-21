@@ -21,16 +21,16 @@ Configuration via environment variables:
 - CERT_ADMIN_EMAIL: Email for compliance summaries
 """
 
-import logging
 import os
 
 from sqlalchemy.orm import Session
 
+from app.core.logging import get_logger
 from app.db.session import SessionLocal
 from app.services.certification_service import CertificationService
 from app.services.email_service import EmailService
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Reminder thresholds in days
 REMINDER_THRESHOLDS = [180, 90, 30, 14, 7]

@@ -25,8 +25,9 @@ Info:
 - resilience_info: Build/version info
 """
 
-import logging
 from typing import Optional
+
+from app.core.logging import get_logger
 
 try:
     from prometheus_client import (
@@ -41,7 +42,7 @@ try:
 except ImportError:
     PROMETHEUS_AVAILABLE = False
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ResilienceMetrics:

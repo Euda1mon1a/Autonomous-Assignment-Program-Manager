@@ -36,7 +36,6 @@ Usage:
     )
 """
 
-import logging
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from enum import Enum
@@ -45,13 +44,14 @@ from uuid import UUID, uuid4
 
 from sqlalchemy.orm import Session
 
+from app.core.logging import get_logger
 from app.models.settings import ApplicationSettings, FreezeScope, OverrideReasonCode
 
 if TYPE_CHECKING:
     from app.models.assignment import Assignment
     from app.models.block import Block
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class FreezeCheckResult:

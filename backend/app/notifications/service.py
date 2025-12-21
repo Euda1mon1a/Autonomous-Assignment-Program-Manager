@@ -1,5 +1,4 @@
 """Core notification service for schedule alerts and updates."""
-import logging
 import uuid
 from datetime import datetime
 from typing import Any
@@ -8,7 +7,9 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-logger = logging.getLogger(__name__)
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 from app.models.notification import (
     Notification,

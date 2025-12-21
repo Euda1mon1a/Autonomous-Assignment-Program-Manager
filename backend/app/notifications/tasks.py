@@ -5,16 +5,16 @@ Provides background tasks for sending notifications via various channels.
 Tasks use proper retry logic with exponential backoff.
 """
 
-import logging
 from datetime import datetime
 from uuid import UUID
 
 import httpx
 from celery import shared_task
 
+from app.core.logging import get_logger
 from app.services.email_service import EmailService, EmailConfig
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Lazy-loaded email service instance
 _email_service: EmailService | None = None
