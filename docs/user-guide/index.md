@@ -56,6 +56,11 @@ ACGME compliance monitoring and violations.
 Export to Excel, PDF, and calendar formats.
 </div>
 
+<div class="feature-card" markdown>
+### :material-gamepad-variant: [Game Theory Analysis](game-theory.md)
+Test configurations using Axelrod's tournament framework.
+</div>
+
 </div>
 
 ---
