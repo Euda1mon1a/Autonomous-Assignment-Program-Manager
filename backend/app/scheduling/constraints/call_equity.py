@@ -22,6 +22,7 @@ Call Schedule Overview:
 import logging
 from collections import defaultdict
 from datetime import date, timedelta
+from typing import Any
 from uuid import UUID
 
 from .base import (
@@ -52,7 +53,7 @@ class SundayCallEquityConstraint(SoftConstraint):
     encouraging even distribution.
     """
 
-    def __init__(self, weight: float = 10.0):
+    def __init__(self, weight: float = 10.0) -> None:
         """
         Initialize Sunday call equity constraint.
 
@@ -66,7 +67,12 @@ class SundayCallEquityConstraint(SoftConstraint):
             priority=ConstraintPriority.MEDIUM,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """
         Add Sunday call equity to CP-SAT objective.
 
@@ -115,7 +121,12 @@ class SundayCallEquityConstraint(SoftConstraint):
         objective_vars.append((max_sunday, int(self.weight)))
         variables["objective_terms"] = objective_vars
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add Sunday call equity to PuLP objective."""
         import pulp
 
@@ -158,15 +169,19 @@ class SundayCallEquityConstraint(SoftConstraint):
             if "objective" in variables:
                 variables["objective"] += self.weight * max_calls
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """
         Validate Sunday call distribution and calculate penalty.
 
         Returns penalty based on deviation from mean Sunday call count.
         """
         # Count Sunday calls per faculty
-        faculty_by_id = {f.id: f for f in context.faculty}
-        block_by_id = {b.id: b for b in context.blocks}
+        faculty_by_id: dict[Any, Any] = {f.id: f for f in context.faculty}
+        block_by_id: dict[Any, Any] = {b.id: b for b in context.blocks}
 
         sunday_counts = defaultdict(int)
 
@@ -225,7 +240,7 @@ class WeekdayCallEquityConstraint(SoftConstraint):
     have significantly more weekday calls than others.
     """
 
-    def __init__(self, weight: float = 5.0):
+    def __init__(self, weight: float = 5.0) -> None:
         """
         Initialize weekday call equity constraint.
 
@@ -239,7 +254,12 @@ class WeekdayCallEquityConstraint(SoftConstraint):
             priority=ConstraintPriority.MEDIUM,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add weekday call equity to CP-SAT objective."""
         call_vars = variables.get("call_assignments", {})
         if not call_vars:
@@ -281,7 +301,12 @@ class WeekdayCallEquityConstraint(SoftConstraint):
         objective_vars.append((max_weekday, int(self.weight)))
         variables["objective_terms"] = objective_vars
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add weekday call equity to PuLP objective."""
         import pulp
 
@@ -320,10 +345,14 @@ class WeekdayCallEquityConstraint(SoftConstraint):
             if "objective" in variables:
                 variables["objective"] += self.weight * max_calls
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Validate weekday call distribution."""
-        faculty_by_id = {f.id: f for f in context.faculty}
-        block_by_id = {b.id: b for b in context.blocks}
+        faculty_by_id: dict[Any, Any] = {f.id: f for f in context.faculty}
+        block_by_id: dict[Any, Any] = {b.id: b for b in context.blocks}
 
         weekday_counts = defaultdict(int)
 
@@ -383,7 +412,7 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
     Tuesday overnight call, but doesn't prohibit it if necessary.
     """
 
-    def __init__(self, weight: float = 2.0):
+    def __init__(self, weight: float = 2.0) -> None:
         """
         Initialize Tuesday call preference constraint.
 
@@ -397,7 +426,12 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
             priority=ConstraintPriority.LOW,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add Tuesday avoidance penalty for PD/APD to CP-SAT objective."""
         call_vars = variables.get("call_assignments", {})
         if not call_vars:
@@ -433,7 +467,12 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
                 objective_vars.append((var, int(self.weight)))
             variables["objective_terms"] = objective_vars
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add Tuesday avoidance penalty for PD/APD to PuLP objective."""
         import pulp
 
@@ -449,7 +488,7 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
         if not tuesday_blocks:
             return
 
-        penalty_vars = []
+        penalty_vars: list[Any] = []
         for faculty in context.faculty:
             if not hasattr(faculty, 'avoid_tuesday_call') or not faculty.avoid_tuesday_call:
                 continue
@@ -466,7 +505,11 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
         if penalty_vars and "objective" in variables:
             variables["objective"] += self.weight * pulp.lpSum(penalty_vars)
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Validate and penalize PD/APD Tuesday call assignments."""
         faculty_by_id = {f.id: f for f in context.faculty}
         block_by_id = {b.id: b for b in context.blocks}
@@ -520,7 +563,7 @@ class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
     impact schedule quality.
     """
 
-    def __init__(self, weight: float = 1.0):
+    def __init__(self, weight: float = 1.0) -> None:
         """
         Initialize Wednesday preference constraint.
 
@@ -534,7 +577,12 @@ class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
             priority=ConstraintPriority.LOW,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add Wednesday bonus for Dept Chief to CP-SAT objective."""
         call_vars = variables.get("call_assignments", {})
         if not call_vars:
@@ -571,7 +619,12 @@ class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
                 objective_vars.append((var, -int(self.weight)))
             variables["objective_terms"] = objective_vars
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add Wednesday bonus for Dept Chief to PuLP objective."""
         import pulp
 
@@ -587,7 +640,7 @@ class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
         if not wednesday_blocks:
             return
 
-        bonus_vars = []
+        bonus_vars: list[Any] = []
         for faculty in context.faculty:
             if not hasattr(faculty, 'prefer_wednesday_call') or not faculty.prefer_wednesday_call:
                 continue
@@ -605,7 +658,11 @@ class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
             # Negative = bonus
             variables["objective"] -= self.weight * pulp.lpSum(bonus_vars)
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Calculate bonus for Dept Chief Wednesday call."""
         faculty_by_id = {f.id: f for f in context.faculty}
         block_by_id = {b.id: b for b in context.blocks}

@@ -15,6 +15,7 @@ Classes:
     - ConstraintManager: Main manager class for organizing constraints
 """
 import logging
+from typing import Any
 
 from .base import (
     Constraint,
@@ -61,7 +62,7 @@ class ConstraintManager:
     - Validation aggregation
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.constraints: list[Constraint] = []
         self._hard_constraints: list[HardConstraint] = []
         self._soft_constraints: list[SoftConstraint] = []
@@ -208,8 +209,8 @@ class ConstraintManager:
 
     def apply_to_cpsat(
         self,
-        model,
-        variables: dict,
+        model: Any,
+        variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
         """Apply all enabled constraints to CP-SAT model."""
@@ -222,8 +223,8 @@ class ConstraintManager:
 
     def apply_to_pulp(
         self,
-        model,
-        variables: dict,
+        model: Any,
+        variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
         """Apply all enabled constraints to PuLP model."""
@@ -236,11 +237,11 @@ class ConstraintManager:
 
     def validate_all(
         self,
-        assignments: list,
+        assignments: list[Any],
         context: SchedulingContext,
     ) -> ConstraintResult:
         """Validate all constraints and aggregate results."""
-        all_violations = []
+        all_violations: list[Any] = []
         total_penalty = 0.0
         all_satisfied = True
 

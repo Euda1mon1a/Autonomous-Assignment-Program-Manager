@@ -21,7 +21,8 @@ Activity Types:
 """
 import logging
 from collections import defaultdict
-from datetime import timedelta
+from datetime import date, timedelta
+from typing import Any, Optional
 
 from .base import (
     ConstraintPriority,
@@ -60,7 +61,7 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
     PCAT_ACTIVITY = "PCAT"  # Post-Call Attending
     DO_ACTIVITY = "DO"       # Direct Observation
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize post-call auto-assignment constraint."""
         super().__init__(
             name="PostCallAutoAssignment",
@@ -68,7 +69,12 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
             priority=ConstraintPriority.HIGH,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """
         Add post-call assignment constraints to CP-SAT model.
 
@@ -137,7 +143,12 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
                         # call_var == 1 => do_var == 1
                         model.AddImplication(call_var, template_vars[f_i, pm_b_i, do_t_i])
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add post-call assignment constraints to PuLP model."""
         call_vars = variables.get("call_assignments", {})
         template_vars = variables.get("template_assignments", {})
@@ -198,7 +209,11 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
                         )
                         constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """
         Validate post-call assignments.
 
@@ -206,7 +221,7 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
         - PCAT assigned for next day AM
         - DO assigned for next day PM
         """
-        violations = []
+        violations: list[ConstraintViolation] = []
 
         # Find overnight call assignments
         call_assignments = self._extract_call_assignments(assignments, context)
@@ -297,7 +312,7 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
             violations=violations,
         )
 
-    def _find_template_id(self, context: SchedulingContext, activity_name: str):
+    def _find_template_id(self, context: SchedulingContext, activity_name: str) -> Optional[Any]:
         """Find template ID by activity name or abbreviation."""
         for t in context.templates:
             # Check name
@@ -309,23 +324,23 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
                     return t.id
         return None
 
-    def _group_blocks_by_date_time(self, context: SchedulingContext) -> dict:
+    def _group_blocks_by_date_time(self, context: SchedulingContext) -> dict[tuple[date, str], list[Any]]:
         """Group blocks by (date, time_of_day) for quick lookup."""
-        result = defaultdict(list)
+        result: dict[tuple[date, str], list[Any]] = defaultdict(list)
         for block in context.blocks:
             if hasattr(block, 'time_of_day'):
                 key = (block.date, block.time_of_day)
                 result[key].append(block)
         return result
 
-    def _extract_call_assignments(self, assignments: list, context: SchedulingContext) -> list:
+    def _extract_call_assignments(self, assignments: list[Any], context: SchedulingContext) -> list[Any]:
         """
         Extract overnight call assignments from assignment list.
 
         Call assignments may be in a separate model (CallAssignment)
         or flagged within regular assignments.
         """
-        call_assignments = []
+        call_assignments: list[Any] = []
         for a in assignments:
             # Check if this is a call assignment type
             if hasattr(a, 'call_type') and a.call_type == 'overnight':
