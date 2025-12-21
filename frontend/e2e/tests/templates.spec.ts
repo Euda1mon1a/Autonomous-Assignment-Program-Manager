@@ -56,7 +56,7 @@ test.describe('Templates Library', () => {
       const hasDescription = await templatePage.isVisible(
         templatePage.getText(/Create and manage|Define reusable/i)
       );
-      expect(hasDescription || true).toBe(true);
+      expect(hasDescription).toBe(true);
     });
 
     test('should display "New Template" button', async ({ page }) => {
@@ -161,7 +161,7 @@ test.describe('Templates Library', () => {
       const hasPredefined = await templatePage.isVisible(
         templatePage.getText(/Predefined|pre-built/i)
       );
-      expect(hasPredefined || true).toBe(true);
+      expect(hasPredefined).toBe(true);
 
       // Switch back to My Templates
       await templatePage.switchTab('my-templates');
@@ -180,7 +180,7 @@ test.describe('Templates Library', () => {
       const countBadge = page.locator('[class*="badge"], span').filter({ hasText: /\d+/ });
       const hasCount = await templatePage.isVisible(countBadge);
 
-      expect(hasCount || true).toBe(true);
+      expect(hasCount).toBe(true);
     });
   });
 
@@ -234,7 +234,7 @@ test.describe('Templates Library', () => {
       const categoryWithCount = page.locator('button, [class*="pill"]').filter({ hasText: /\(\d+\)|\d+/ }).first();
       const hasCount = await templatePage.isVisible(categoryWithCount);
 
-      expect(hasCount || true).toBe(true);
+      expect(hasCount).toBe(true);
     });
   });
 
@@ -253,7 +253,7 @@ test.describe('Templates Library', () => {
       const searchInput = templatePage.getSearchInput();
       const hasSearch = await templatePage.isVisible(searchInput);
 
-      expect(hasSearch || true).toBe(true);
+      expect(hasSearch).toBe(true);
     });
 
     test('should search templates by name', async ({ page }) => {
@@ -292,7 +292,7 @@ test.describe('Templates Library', () => {
         templatePage.getText(/No templates match|No results|No templates found/i)
       );
 
-      expect(hasNoResults || true).toBe(true);
+      expect(hasNoResults).toBe(true);
     });
 
     test('should clear search and restore all templates', async ({ page }) => {
@@ -346,7 +346,7 @@ test.describe('Templates Library', () => {
           page.locator('[role="dialog"], [class*="modal"]')
         );
 
-        expect(hasModal || true).toBe(true);
+        expect(hasModal).toBe(true);
       }
 
       expect(page.url()).toBeTruthy();
@@ -369,7 +369,7 @@ test.describe('Templates Library', () => {
           page.locator('[role="dialog"]').or(page.locator('[class*="modal"]'))
         );
 
-        expect(hasDetails || true).toBe(true);
+        expect(hasDetails).toBe(true);
       }
 
       expect(page.url()).toBeTruthy();
@@ -422,7 +422,7 @@ test.describe('Templates Library', () => {
       const modal = templatePage.getEditorModal();
       const hasModal = await templatePage.isVisible(modal);
 
-      expect(hasModal || true).toBe(true);
+      expect(hasModal).toBe(true);
     });
 
     test('should display template form fields', async ({ page }) => {
@@ -439,7 +439,7 @@ test.describe('Templates Library', () => {
         page.locator('input[name*="name" i], input[placeholder*="name" i]')
       );
 
-      expect(hasNameField || true).toBe(true);
+      expect(hasNameField).toBe(true);
     });
 
     test('should cancel template creation', async ({ page }) => {
@@ -615,7 +615,7 @@ test.describe('Templates Library', () => {
           firstCard.locator('button').filter({ hasText: /Edit|Delete|Share|Duplicate/i })
         );
 
-        expect(hasActions || true).toBe(true);
+        expect(hasActions).toBe(true);
       }
 
       expect(page.url()).toBeTruthy();
@@ -638,7 +638,7 @@ test.describe('Templates Library', () => {
 
           // Share modal should appear
           const hasModal = await templatePage.isVisible(templatePage.getShareModal());
-          expect(hasModal || true).toBe(true);
+          expect(hasModal).toBe(true);
         }
       }
 

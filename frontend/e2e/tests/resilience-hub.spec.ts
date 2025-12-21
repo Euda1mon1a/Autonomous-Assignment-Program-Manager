@@ -77,7 +77,7 @@ test.describe('Resilience Hub', () => {
         .isVisible()
         .catch(() => false);
 
-      expect(hasDescription || true).toBe(true);
+      expect(hasDescription).toBe(true);
     });
 
     test('should show loading state initially', async ({ page }) => {
@@ -166,7 +166,7 @@ test.describe('Resilience Hub', () => {
         (await page.getByText(/N-1/i).isVisible().catch(() => false)) ||
         (await page.getByText(/n-1/i).isVisible().catch(() => false));
 
-      expect(hasN1Status || true).toBe(true);
+      expect(hasN1Status).toBe(true);
     });
 
     test('should display N-2 contingency status', async ({ page }) => {
@@ -180,7 +180,7 @@ test.describe('Resilience Hub', () => {
         (await page.getByText(/N-2/i).isVisible().catch(() => false)) ||
         (await page.getByText(/n-2/i).isVisible().catch(() => false));
 
-      expect(hasN2Status || true).toBe(true);
+      expect(hasN2Status).toBe(true);
     });
 
     test('should show utilization progress bar', async ({ page }) => {
@@ -197,7 +197,7 @@ test.describe('Resilience Hub', () => {
         await resiliencePage.verifyUtilizationProgressBar();
       }
 
-      expect(hasProgressBar || true).toBe(true);
+      expect(hasProgressBar).toBe(true);
     });
 
     test('should display buffer remaining', async ({ page }) => {
@@ -207,7 +207,7 @@ test.describe('Resilience Hub', () => {
       await page.waitForTimeout(1500);
 
       const buffer = await resiliencePage.getBufferRemaining();
-      expect(buffer !== null || true).toBe(true);
+      expect(buffer).not.toBeNull();
     });
 
     test('should display wait time multiplier', async ({ page }) => {
@@ -217,7 +217,7 @@ test.describe('Resilience Hub', () => {
       await page.waitForTimeout(1500);
 
       const waitTime = await resiliencePage.getWaitTimeMultiplier();
-      expect(waitTime !== null || true).toBe(true);
+      expect(waitTime).not.toBeNull();
     });
 
     test('should display redundancy status section', async ({ page }) => {
@@ -230,7 +230,7 @@ test.describe('Resilience Hub', () => {
       const redundancyCard = resiliencePage.getRedundancyCard();
       const hasRedundancy = await resiliencePage.isVisible(redundancyCard);
 
-      expect(hasRedundancy || true).toBe(true);
+      expect(hasRedundancy).toBe(true);
     });
 
     test('should show phase transition risk', async ({ page }) => {
@@ -240,7 +240,7 @@ test.describe('Resilience Hub', () => {
       await page.waitForTimeout(1500);
 
       const phaseRisk = await resiliencePage.getPhaseTransitionRisk();
-      expect(phaseRisk !== null || true).toBe(true);
+      expect(phaseRisk).not.toBeNull();
     });
   });
 
@@ -259,7 +259,7 @@ test.describe('Resilience Hub', () => {
       const watchItems = resiliencePage.getWatchItemsSection();
       const hasWatchItems = await resiliencePage.isVisible(watchItems);
 
-      expect(hasWatchItems || true).toBe(true);
+      expect(hasWatchItems).toBe(true);
     });
 
     test('should not show immediate actions for healthy status', async ({ page }) => {
@@ -290,7 +290,7 @@ test.describe('Resilience Hub', () => {
 
       if (status?.includes('green')) {
         const hasOptimal = await page.getByText(/optimal/i).isVisible().catch(() => false);
-        expect(hasOptimal || true).toBe(true);
+        expect(hasOptimal).toBe(true);
       }
 
       expect(page.url()).toBeTruthy();
@@ -441,7 +441,7 @@ test.describe('Resilience Hub', () => {
       if (status?.includes('red')) {
         const hasWarning =
           await page.getByText(/phase.*transition.*imminent/i).isVisible().catch(() => false);
-        expect(hasWarning || true).toBe(true);
+        expect(hasWarning).toBe(true);
       }
 
       expect(page.url()).toBeTruthy();
@@ -480,7 +480,7 @@ test.describe('Resilience Hub', () => {
       const hasN1Section =
         await page.getByText(/N-1.*vulnerabilit/i).isVisible().catch(() => false);
 
-      expect(hasN1Section || true).toBe(true);
+      expect(hasN1Section).toBe(true);
     });
 
     test('should display N-2 fatal pairs analysis', async ({ page }) => {
@@ -494,7 +494,7 @@ test.describe('Resilience Hub', () => {
       // Look for N-2 fatal pairs
       const hasN2Section = await page.getByText(/N-2.*fatal/i).isVisible().catch(() => false);
 
-      expect(hasN2Section || true).toBe(true);
+      expect(hasN2Section).toBe(true);
     });
 
     test('should show critical faculty list', async ({ page }) => {
@@ -509,7 +509,7 @@ test.describe('Resilience Hub', () => {
       const hasCriticalFaculty =
         await page.getByText(/critical.*faculty|most.*critical/i).isVisible().catch(() => false);
 
-      expect(hasCriticalFaculty || true).toBe(true);
+      expect(hasCriticalFaculty).toBe(true);
     });
 
     test('should display centrality scores for critical faculty', async ({ page }) => {
@@ -524,7 +524,7 @@ test.describe('Resilience Hub', () => {
       const hasCentrality =
         await page.getByText(/centralit/i).isVisible().catch(() => false);
 
-      expect(hasCentrality || true).toBe(true);
+      expect(hasCentrality).toBe(true);
     });
 
     test('should show recommended actions in contingency view', async ({ page }) => {
@@ -539,7 +539,7 @@ test.describe('Resilience Hub', () => {
       const hasRecommendations =
         await page.getByText(/recommend/i).isVisible().catch(() => false);
 
-      expect(hasRecommendations || true).toBe(true);
+      expect(hasRecommendations).toBe(true);
     });
 
     test('should display vulnerability severity levels', async ({ page }) => {
@@ -554,7 +554,7 @@ test.describe('Resilience Hub', () => {
       const hasSeverity =
         await page.getByText(/critical|high|medium|low/i).isVisible().catch(() => false);
 
-      expect(hasSeverity || true).toBe(true);
+      expect(hasSeverity).toBe(true);
     });
 
     test('should run contingency analysis on demand', async ({ page }) => {
@@ -595,7 +595,7 @@ test.describe('Resilience Hub', () => {
 
         // Modal should open
         const hasModal = await page.locator('[role="dialog"]').isVisible().catch(() => false);
-        expect(hasModal || true).toBe(true);
+        expect(hasModal).toBe(true);
       }
 
       expect(page.url()).toBeTruthy();
@@ -618,7 +618,7 @@ test.describe('Resilience Hub', () => {
         const hasScenarios =
           await page.getByText(/single.*faculty|double.*faculty|pandemic/i).isVisible().catch(() => false);
 
-        expect(hasScenarios || true).toBe(true);
+        expect(hasScenarios).toBe(true);
       }
 
       expect(page.url()).toBeTruthy();
@@ -649,7 +649,7 @@ test.describe('Resilience Hub', () => {
 
         // Look for coverage percentage
         const hasCoverage = await page.getByText(/\d+%/).isVisible().catch(() => false);
-        expect(hasCoverage || true).toBe(true);
+        expect(hasCoverage).toBe(true);
       }
 
       expect(page.url()).toBeTruthy();
@@ -700,7 +700,7 @@ test.describe('Resilience Hub', () => {
       const hasTimestamps =
         await page.getByText(/\d{4}-\d{2}-\d{2}|\d{1,2}:\d{2}/).isVisible().catch(() => false);
 
-      expect(hasTimestamps || true).toBe(true);
+      expect(hasTimestamps).toBe(true);
     });
 
     test('should show event types', async ({ page }) => {
@@ -715,7 +715,7 @@ test.describe('Resilience Hub', () => {
       const hasEventTypes =
         await page.getByText(/health.*check|load.*shedding|fallback/i).isVisible().catch(() => false);
 
-      expect(hasEventTypes || true).toBe(true);
+      expect(hasEventTypes).toBe(true);
     });
 
     test('should display event severity levels', async ({ page }) => {
@@ -730,7 +730,7 @@ test.describe('Resilience Hub', () => {
       const hasSeverity =
         await page.getByText(/info|warning|critical/i).isVisible().catch(() => false);
 
-      expect(hasSeverity || true).toBe(true);
+      expect(hasSeverity).toBe(true);
     });
 
     test('should filter events by severity if available', async ({ page }) => {
@@ -792,8 +792,7 @@ test.describe('Resilience Hub', () => {
         // Check if button is disabled briefly
         const isDisabled = await refreshButton.isDisabled().catch(() => false);
 
-        // Button may be disabled or enabled depending on timing
-        expect(isDisabled || true).toBe(true);
+        expect(isDisabled).toBe(true);
       }
 
       expect(page.url()).toBeTruthy();
@@ -932,7 +931,7 @@ test.describe('Resilience Hub', () => {
         (await page.getByText(/error|fail/i).isVisible().catch(() => false)) ||
         (await page.getByRole('button', { name: /retry/i }).isVisible().catch(() => false));
 
-      expect(hasError || true).toBe(true);
+      expect(hasError).toBe(true);
     });
 
     test('should show retry button on error', async ({ page }) => {
@@ -949,7 +948,7 @@ test.describe('Resilience Hub', () => {
       const retryButton = page.getByRole('button', { name: /retry/i });
       const hasRetry = await retryButton.isVisible().catch(() => false);
 
-      expect(hasRetry || true).toBe(true);
+      expect(hasRetry).toBe(true);
     });
   });
 
@@ -999,7 +998,7 @@ test.describe('Resilience Hub', () => {
 
       for (const button of buttons) {
         const hasType = await button.getAttribute('type');
-        expect(hasType || true).toBeTruthy();
+        expect(hasType).toBeTruthy();
       }
 
       expect(page.url()).toBeTruthy();
@@ -1115,7 +1114,7 @@ test.describe('Resilience Hub', () => {
       const hasAccess = await page.getByText('Resilience Hub').isVisible().catch(() => false);
       const hasRestricted = await page.getByText(/unauthorized|access.*denied/i).isVisible().catch(() => false);
 
-      expect(hasAccess || hasRestricted || true).toBe(true);
+      expect(hasAccess || hasRestricted).toBe(true);
     });
   });
 
@@ -1133,7 +1132,7 @@ test.describe('Resilience Hub', () => {
       const quickActions = resiliencePage.getQuickActionsSection();
       const hasQuickActions = await resiliencePage.isVisible(quickActions);
 
-      expect(hasQuickActions || true).toBe(true);
+      expect(hasQuickActions).toBe(true);
     });
 
     test('should show view fallbacks action button', async ({ page }) => {
@@ -1145,7 +1144,7 @@ test.describe('Resilience Hub', () => {
       const fallbackButton = page.getByRole('button', { name: /view.*fallback/i });
       const hasButton = await fallbackButton.isVisible().catch(() => false);
 
-      expect(hasButton || true).toBe(true);
+      expect(hasButton).toBe(true);
     });
 
     test('should show run analysis action button', async ({ page }) => {
@@ -1157,7 +1156,7 @@ test.describe('Resilience Hub', () => {
       const analysisButton = page.getByRole('button', { name: /run.*analysis|contingency/i });
       const hasButton = await analysisButton.isVisible().catch(() => false);
 
-      expect(hasButton || true).toBe(true);
+      expect(hasButton).toBe(true);
     });
   });
 });

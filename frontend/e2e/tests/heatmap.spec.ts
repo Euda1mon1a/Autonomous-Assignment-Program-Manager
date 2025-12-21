@@ -53,7 +53,7 @@ test.describe('Heatmap Visualization', () => {
         page.locator('canvas, svg, .js-plotly-plot').first()
       );
 
-      expect(hasHeatmap || true).toBe(true);
+      expect(hasHeatmap).toBe(true);
     });
 
     test('should show loading state on initial render', async ({ page }) => {
@@ -148,7 +148,7 @@ test.describe('Heatmap Visualization', () => {
 
       const hasGroupBy = await heatmapPage.isVisible(groupBySelect);
 
-      expect(hasGroupBy || true).toBe(true);
+      expect(hasGroupBy).toBe(true);
     });
 
     test('should change grouping option', async ({ page }) => {
@@ -182,7 +182,7 @@ test.describe('Heatmap Visualization', () => {
 
       const hasFmit = await heatmapPage.isVisible(fmitCheckbox);
 
-      expect(hasFmit || true).toBe(true);
+      expect(hasFmit).toBe(true);
     });
 
     test('should toggle include FMIT', async ({ page }) => {
@@ -214,7 +214,7 @@ test.describe('Heatmap Visualization', () => {
       const filtersButton = page.getByRole('button', { name: /Filters?/i });
       const hasButton = await heatmapPage.isVisible(filtersButton);
 
-      expect(hasButton || true).toBe(true);
+      expect(hasButton).toBe(true);
     });
 
     test('should expand and collapse filters panel', async ({ page }) => {
@@ -249,7 +249,7 @@ test.describe('Heatmap Visualization', () => {
       const exportButton = heatmapPage.getExportButton();
       const hasExport = await heatmapPage.isVisible(exportButton);
 
-      expect(hasExport || true).toBe(true);
+      expect(hasExport).toBe(true);
     });
   });
 
@@ -362,7 +362,7 @@ test.describe('Heatmap Visualization', () => {
       const peopleSection = page.locator('label:has-text("People"), h3:has-text("People")').first();
       const hasSection = await heatmapPage.isVisible(peopleSection);
 
-      expect(hasSection || true).toBe(true);
+      expect(hasSection).toBe(true);
     });
 
     test('should show rotation filter options', async ({ page }) => {
@@ -378,7 +378,7 @@ test.describe('Heatmap Visualization', () => {
       const rotationSection = page.locator('label:has-text("Rotation"), h3:has-text("Rotation")').first();
       const hasSection = await heatmapPage.isVisible(rotationSection);
 
-      expect(hasSection || true).toBe(true);
+      expect(hasSection).toBe(true);
     });
   });
 
@@ -397,7 +397,7 @@ test.describe('Heatmap Visualization', () => {
       const legend = heatmapPage.getLegendContainer();
       const hasLegend = await heatmapPage.isVisible(legend);
 
-      expect(hasLegend || true).toBe(true);
+      expect(hasLegend).toBe(true);
     });
 
     test('should display color scale in legend', async ({ page }) => {
@@ -413,7 +413,7 @@ test.describe('Heatmap Visualization', () => {
 
       const hasColorScale = await heatmapPage.isVisible(colorScale);
 
-      expect(hasColorScale || true).toBe(true);
+      expect(hasColorScale).toBe(true);
     });
 
     test('should display legend labels', async ({ page }) => {
@@ -425,7 +425,7 @@ test.describe('Heatmap Visualization', () => {
       // Look for legend text
       const hasLegendText = await page.getByText(/Legend|Scale|Intensity/i).isVisible().catch(() => false);
 
-      expect(hasLegendText || true).toBe(true);
+      expect(hasLegendText).toBe(true);
     });
 
     test('should show activity type colors in legend', async ({ page }) => {
@@ -437,7 +437,7 @@ test.describe('Heatmap Visualization', () => {
       // Look for activity type indicators
       const hasActivityTypes = await page.getByText(/Clinic|Inpatient|Procedure/i).isVisible().catch(() => false);
 
-      expect(hasActivityTypes || true).toBe(true);
+      expect(hasActivityTypes).toBe(true);
     });
 
     test('should show coverage indicators in legend', async ({ page }) => {
@@ -449,7 +449,7 @@ test.describe('Heatmap Visualization', () => {
       // Look for coverage status
       const hasCoverage = await page.getByText(/Full coverage|Partial coverage|No coverage/i).isVisible().catch(() => false);
 
-      expect(hasCoverage || true).toBe(true);
+      expect(hasCoverage).toBe(true);
     });
   });
 
@@ -468,7 +468,7 @@ test.describe('Heatmap Visualization', () => {
       const heatmap = heatmapPage.getHeatmapContainer();
       const hasHeatmap = await heatmapPage.isVisible(heatmap);
 
-      expect(hasHeatmap || true).toBe(true);
+      expect(hasHeatmap).toBe(true);
     });
 
     test('should show tooltip on hover', async ({ page }) => {
@@ -489,7 +489,7 @@ test.describe('Heatmap Visualization', () => {
         const tooltip = page.locator('.plotly-tooltip, [class*="tooltip"]').first();
         const hasTooltip = await heatmapPage.isVisible(tooltip);
 
-        expect(hasTooltip || true).toBe(true);
+        expect(hasTooltip).toBe(true);
       }
     });
 
@@ -522,7 +522,7 @@ test.describe('Heatmap Visualization', () => {
       const modeBar = page.locator('.modebar, [class*="modebar"]').first();
       const hasModeBar = await heatmapPage.isVisible(modeBar);
 
-      expect(hasModeBar || true).toBe(true);
+      expect(hasModeBar).toBe(true);
     });
 
     test('should support zoom interactions', async ({ page }) => {
@@ -559,7 +559,7 @@ test.describe('Heatmap Visualization', () => {
       // Look for axis labels (dates, names, etc.)
       const hasLabels = await page.locator('text, .xtick, .ytick').first().isVisible().catch(() => false);
 
-      expect(hasLabels || true).toBe(true);
+      expect(hasLabels).toBe(true);
     });
 
     test('should display heatmap title', async ({ page }) => {
@@ -571,7 +571,7 @@ test.describe('Heatmap Visualization', () => {
       // Look for chart title
       const hasTitle = await page.locator('h1, h2, h3, [class*="title"]').first().isVisible().catch(() => false);
 
-      expect(hasTitle || true).toBe(true);
+      expect(hasTitle).toBe(true);
     });
 
     test('should show loading state during data fetch', async ({ page }) => {
@@ -602,7 +602,7 @@ test.describe('Heatmap Visualization', () => {
         // Look for empty state or message
         const hasEmptyState = await page.getByText(/No data|No results/i).isVisible().catch(() => false);
 
-        expect(hasEmptyState || true).toBe(true);
+        expect(hasEmptyState).toBe(true);
       }
     });
 
@@ -640,7 +640,7 @@ test.describe('Heatmap Visualization', () => {
       const exportButton = heatmapPage.getExportButton();
       const hasExport = await heatmapPage.isVisible(exportButton);
 
-      expect(hasExport || true).toBe(true);
+      expect(hasExport).toBe(true);
     });
 
     test('should trigger export action', async ({ page }) => {
@@ -676,7 +676,7 @@ test.describe('Heatmap Visualization', () => {
         const downloadIcon = modeBar.locator('[data-title*="Download" i], [data-title*="Camera" i]').first();
         const hasDownload = await heatmapPage.isVisible(downloadIcon);
 
-        expect(hasDownload || true).toBe(true);
+        expect(hasDownload).toBe(true);
       }
     });
   });
@@ -699,7 +699,7 @@ test.describe('Heatmap Visualization', () => {
       const heatmap = heatmapPage.getHeatmapContainer();
       const hasHeatmap = await heatmapPage.isVisible(heatmap);
 
-      expect(hasHeatmap || true).toBe(true);
+      expect(hasHeatmap).toBe(true);
     });
 
     test('should display heatmap on tablet viewport', async ({ page }) => {
@@ -714,7 +714,7 @@ test.describe('Heatmap Visualization', () => {
       const heatmap = heatmapPage.getHeatmapContainer();
       const hasHeatmap = await heatmapPage.isVisible(heatmap);
 
-      expect(hasHeatmap || true).toBe(true);
+      expect(hasHeatmap).toBe(true);
     });
 
     test('should resize heatmap when viewport changes', async ({ page }) => {
@@ -754,7 +754,7 @@ test.describe('Heatmap Visualization', () => {
       const dateInputs = page.locator('input[type="date"]');
       const hasControls = await dateInputs.first().isVisible().catch(() => false);
 
-      expect(hasControls || true).toBe(true);
+      expect(hasControls).toBe(true);
     });
 
     test('should adapt controls layout for mobile', async ({ page }) => {
@@ -769,7 +769,7 @@ test.describe('Heatmap Visualization', () => {
       const controls = heatmapPage.getControlsContainer();
       const hasControls = await heatmapPage.isVisible(controls);
 
-      expect(hasControls || true).toBe(true);
+      expect(hasControls).toBe(true);
     });
   });
 
