@@ -1,6 +1,6 @@
 # Security Vulnerability Status
 
-**Last Updated:** 2025-12-21
+**Last Updated:** 2025-12-21 (glob fix added)
 **Original Assessment:** 2025-12-17
 
 This document tracks security vulnerabilities identified in the codebase and their remediation status.
@@ -12,7 +12,7 @@ This document tracks security vulnerabilities identified in the codebase and the
 | Severity | Total | Fixed | Open |
 |----------|-------|-------|------|
 | CRITICAL | 8 | 8 | 0 |
-| HIGH | 6 | 4 | 2 |
+| HIGH | 7 | 5 | 2 |
 | MEDIUM | 15 | 1 | 14 |
 | LOW | 5 | 0 | 5 |
 
@@ -95,13 +95,23 @@ This document tracks security vulnerabilities identified in the codebase and the
 - **Fixed In:** `monitoring/docker-compose.monitoring.yml`
 - **Details:** Only `--web.enable-lifecycle` is set, `--web.enable-admin-api` is not enabled.
 
-### 5. 24-Hour Token Expiration Without Refresh
+### 5. ~~glob CLI Command Injection (GHSA-5j98-mcp5-4vw2)~~
+- **Status:** FIXED
+- **Fixed In:** `frontend/package.json` (npm overrides)
+- **Severity:** High (development dependency)
+- **Details:**
+  - Vulnerability in glob 10.2.0-10.4.5 allowed command injection via `-c/--cmd` flag
+  - Fixed by adding npm `overrides` to pin glob to ^10.5.0
+  - **Why NOT `npm audit fix --force`:** Upgrades eslint-config-next v14→v16, which requires ESLint v9 and breaks `next lint` with Next.js 14
+  - See `docs/operations/VALIDATION_TRACKER.md` for full history
+
+### 6. 24-Hour Token Expiration Without Refresh
 - **Status:** OPEN
 - **Location:** `backend/app/core/config.py:55`
 - **Risk:** Long-lived tokens increase window for token theft
 - **Remediation:** Implement refresh token rotation with shorter access token lifetime (15-30 min)
 
-### 6. No Per-User Account Lockout
+### 7. No Per-User Account Lockout
 - **Status:** OPEN
 - **Location:** `backend/app/core/rate_limit.py`
 - **Risk:** Distributed brute force attacks can bypass IP-based rate limiting

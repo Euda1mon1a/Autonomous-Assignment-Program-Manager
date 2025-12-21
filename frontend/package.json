@@ -39,6 +39,9 @@
     "react-plotly.js": "^2.6.0",
     "recharts": "^3.6.0"
   },
+  "overrides": {
+    "glob": "^10.5.0"
+  },
   "devDependencies": {
     "@mswjs/interceptors": "^0.40.0",
     "@playwright/test": "^1.40.0",
