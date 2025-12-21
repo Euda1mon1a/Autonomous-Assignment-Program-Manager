@@ -331,9 +331,31 @@ winget install Anthropic.ClaudeCode
 - Opus 4.5 is best for complex reasoning
 - Sonnet is faster for simple tasks
 
-### Google Antigravity
+### Google Antigravity (Recommended for Beginners)
 
-**Best For:** Multi-agent workflows, parallel task execution
+**Best For:** Users with limited coding experience who want AI to handle the heavy lifting
+
+**Why Antigravity Over Other IDEs?**
+
+If you're new to coding or this codebase, Antigravity offers unique advantages:
+
+| Feature | Antigravity | VS Code + Extension | Cursor |
+|---------|-------------|---------------------|--------|
+| **True Agent Mode** | AI works autonomously across files | Chat-based, manual file selection | Semi-autonomous |
+| **Review Mode** | See exactly what AI will do before it happens | Limited preview | Partial preview |
+| **Manager View** | Run 5 agents on different tasks simultaneously | Single conversation | Single agent |
+| **Built-in Guardrails** | Prevents dangerous operations by default | Varies by extension | Basic guardrails |
+| **Beginner UX** | Visual, intuitive interface | Requires IDE familiarity | Familiar VS Code UX |
+
+**What Makes "Agentic" Different?**
+
+Traditional AI coding assistants wait for you to ask questions. Agentic AI:
+- **Explores** your codebase to understand context before answering
+- **Plans** multi-step solutions and executes them
+- **Self-corrects** when something doesn't work
+- **Uses tools** (runs tests, checks errors, reads docs) automatically
+
+This means you can say "fix the failing tests" and the AI will find them, understand why they fail, fix the code, and verify the fix—without you navigating files manually.
 
 **Installation:**
 - Download from [antigravityai.org](https://antigravityai.org/)
@@ -341,23 +363,27 @@ winget install Anthropic.ClaudeCode
 - macOS, Linux, Windows supported
 
 **Key Features:**
-| Feature | Description |
-|---------|-------------|
-| Agent Mode | Autonomous task completion |
-| Manager View | Run 5 agents in parallel |
-| Review Mode | AI asks permission before actions |
-| Autopilot | Full autonomous operation |
+| Feature | What It Does | When to Use |
+|---------|--------------|-------------|
+| **Agent Mode** | AI completes tasks autonomously | Most development work |
+| **Manager View** | Run 5 agents in parallel | Large refactors, multiple bugs |
+| **Review Mode** | AI asks permission before each action | Learning, unfamiliar code |
+| **Autopilot** | Full autonomous operation | Routine tasks you trust |
+
+**Getting Started (Beginner Path):**
+
+1. **Install Antigravity** and open this repository folder
+2. **Start in Review Mode** - you'll see every action the AI wants to take
+3. **Ask simple questions first**: "What does this codebase do?" or "Where is the main entry point?"
+4. **Gradually trust more**: As you learn what the AI does well, switch to Agent Mode
+5. **Use Autopilot sparingly**: Only for tasks you've seen work before
 
 **Model Support:**
-- Gemini 3 Pro/Flash (default)
-- Claude Sonnet 4.5
-- GPT-OSS
+- Gemini 3 Pro/Flash (default, good balance)
+- Claude Sonnet 4.5 / Opus 4.5 (best reasoning)
+- GPT-OSS 120B (open-source alternative)
 
-**Best Practices:**
-1. Start in Review Mode for unfamiliar tasks
-2. Use Manager View for parallel bug fixes
-3. Switch to Autopilot for routine tasks
-4. Always review generated tests
+See [Model Selection](#model-selection) for detailed guidance on which model to use.
 
 ### VS Code + Extensions
 
@@ -384,39 +410,110 @@ winget install Anthropic.ClaudeCode
 
 ## Model Selection
 
-### When to Use Each Model
+### Understanding Your Options (Beginner's Guide)
 
-| Model | Best For | Cost | Speed |
-|-------|----------|------|-------|
-| **Claude Opus 4.5** | Complex reasoning, architecture | $$$ | Slow |
-| **Claude Sonnet 4** | Daily coding, balanced | $$ | Medium |
-| **Gemini 3 Pro** | Complex analysis | $$ | Medium |
-| **Gemini 3 Flash** | Quick queries | $ | Fast |
+If you're new to AI coding assistants, choosing a model can be confusing. Here's what you need to know:
 
-### Recommended Configurations
+**What's a "model"?** It's the AI brain powering your assistant. Different models have different strengths—some are faster, some are smarter, some cost more.
 
-**Development (Daily):**
+**Do I need to pay?** Most models require API keys with usage-based pricing. Antigravity includes some free tier access. Check each provider's pricing.
+
+### Available Models in Antigravity
+
+Based on your Antigravity installation, here are your model options:
+
+| Model | Best For | Coding Skill | Speed | Cost |
+|-------|----------|--------------|-------|------|
+| **Gemini 3 Pro (High)** | Complex tasks, architecture decisions | Any level | Medium | $$ |
+| **Gemini 3 Pro (Low)** | Same as High, lower resource usage | Any level | Medium | $ |
+| **Gemini 3 Flash** | Quick questions, simple fixes | Any level | Fast | $ |
+| **Claude Sonnet 4.5** | Daily coding, good explanations | Any level | Medium | $$ |
+| **Claude Sonnet 4.5 (Thinking)** | Shows reasoning step-by-step | Beginners | Slower | $$ |
+| **Claude Opus 4.5 (Thinking)** | Hardest problems, best reasoning | Any level | Slow | $$$ |
+| **GPT-OSS 120B (Medium)** | Open-source alternative | Intermediate | Medium | $ |
+
+### Which Model Should I Use?
+
+**If you're a beginner, start here:**
+
+```
+Are you learning how the code works?
+├── YES → Claude Sonnet 4.5 (Thinking)
+│         Shows its reasoning so you can learn
+└── NO
+    └── Is this a quick question or small fix?
+        ├── YES → Gemini 3 Flash
+        │         Fast and cheap
+        └── NO
+            └── Is this a complex task (architecture, debugging)?
+                ├── YES → Claude Opus 4.5 (Thinking) or Gemini 3 Pro (High)
+                │         Best reasoning for hard problems
+                └── NO → Claude Sonnet 4.5 or Gemini 3 Pro (Low)
+                          Good balance for everyday tasks
+```
+
+### Model Details
+
+#### "Thinking" Models - Best for Learning
+
+**Claude Sonnet 4.5 (Thinking)** and **Claude Opus 4.5 (Thinking)** show their reasoning process. This is invaluable for beginners because:
+
+- You see *why* the AI makes each decision
+- You learn coding patterns by watching the AI think
+- You can catch mistakes before they happen
+- You understand the codebase faster
+
+**Example output:**
+```
+Thinking: The user wants to fix the failing test. Let me first
+understand what the test is checking... I see it's testing ACGME
+compliance validation. The error suggests the expected value
+doesn't match. Let me check the validation logic in
+acgme_validator.py...
+```
+
+#### Speed vs Quality Trade-offs
+
+| If you need... | Use this | Why |
+|----------------|----------|-----|
+| Quick answers while coding | Gemini 3 Flash | Responds in seconds |
+| Best possible solution | Claude Opus 4.5 (Thinking) | Most capable, thinks deeply |
+| Balance of speed and quality | Claude Sonnet 4.5 | Good for daily work |
+| Lower costs | Gemini 3 Pro (Low) or Flash | Less resource usage |
+
+#### Open Source Option
+
+**GPT-OSS 120B** is an open-source model. Consider it if:
+- You want to avoid proprietary AI providers
+- You're cost-conscious for high-volume usage
+- You're comfortable with slightly less polished responses
+
+### Recommended Setup for This Project
+
+**For beginners working on the Residency Scheduler:**
+
+1. **Start with Claude Sonnet 4.5 (Thinking)** - learn from the AI's reasoning
+2. **Switch to Gemini 3 Flash** for quick questions once you're comfortable
+3. **Use Claude Opus 4.5 (Thinking)** for complex tasks like:
+   - Understanding ACGME compliance rules
+   - Debugging resilience framework issues
+   - Planning new features
+
+**In Antigravity:** Click the model dropdown (top of chat) to switch models anytime.
+
+### Claude Code Model Selection
+
+If using Claude Code CLI instead of Antigravity:
+
 ```bash
-# Claude Code
+# Daily development (balanced)
 claude --model sonnet
 
-# or in .claude/config
-model: sonnet
-```
-
-**Complex Analysis:**
-```bash
-# Claude Code
+# Complex reasoning (slower but smarter)
 claude --model opus
 
-# ADK
-ADK_MODEL=gemini-3-pro npm run dev
-```
-
-**Cost-Sensitive:**
-```bash
-# Gemini Flash
-ADK_MODEL=gemini-3-flash npm run dev
+# Set default in config
+echo "model: sonnet" >> ~/.claude/config
 ```
 
 ---
