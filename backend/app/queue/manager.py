@@ -9,7 +9,9 @@ Manages task queues with advanced features:
 - Queue statistics and monitoring
 """
 
+import json
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Any, Optional
 from uuid import uuid4
@@ -359,9 +361,77 @@ class QueueManager:
             f"Task {task_name} (ID: {task_id}) sent to dead letter queue: {error}"
         )
 
-        # In production, this would store to a database or persistent queue
-        # For now, we log it
-        # TODO: Implement persistent dead letter queue storage
+        # Store in persistent dead letter queue
+        self.store_in_dead_letter_queue(
+            job_id=task_id,
+            job_data={
+                "task_name": task_name,
+                "args": args,
+                "kwargs": kwargs,
+                "error_type": error_type,
+                "traceback": traceback,
+            },
+            error=error,
+            retry_count=0,  # Tasks reaching DLQ have exhausted retries
+        )
+
+    def store_in_dead_letter_queue(
+        self,
+        job_id: str,
+        job_data: dict,
+        error: str,
+        retry_count: int
+    ) -> bool:
+        """
+        Store failed job in persistent dead letter queue.
+
+        Args:
+            job_id: Unique job identifier
+            job_data: Original job payload
+            error: Error message
+            retry_count: Number of retries attempted
+
+        Returns:
+            True if stored successfully
+        """
+        try:
+            dlq_entry = {
+                "job_id": job_id,
+                "job_data": job_data,
+                "error": str(error),
+                "retry_count": retry_count,
+                "failed_at": datetime.utcnow().isoformat(),
+                "status": "failed"
+            }
+
+            # Try Redis first (using synchronous client)
+            try:
+                import redis
+
+                redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+                client = redis.from_url(redis_url)
+
+                client.lpush("dlq:failed_jobs", json.dumps(dlq_entry, default=str))
+                client.close()
+
+                logger.info(f"Stored job {job_id} in DLQ (Redis)")
+                return True
+            except Exception as redis_error:
+                logger.warning(f"Redis DLQ failed, using file fallback: {redis_error}")
+
+            # Fallback to file storage
+            dlq_dir = os.getenv("DLQ_DIR", "/tmp/dlq")
+            os.makedirs(dlq_dir, exist_ok=True)
+
+            filepath = os.path.join(dlq_dir, f"{job_id}.json")
+            with open(filepath, 'w') as f:
+                json.dump(dlq_entry, f, indent=2, default=str)
+
+            logger.info(f"Stored job {job_id} in DLQ (file)")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to store job in DLQ: {e}")
+            return False
 
     def get_queue_stats(self, queue_name: str | None = None) -> dict[str, Any]:
         """
