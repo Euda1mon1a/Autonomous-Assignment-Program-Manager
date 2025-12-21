@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
+from app.validators.date_validators import validate_academic_year_date
+
 
 class BlockBase(BaseModel):
     """Base block schema."""
@@ -13,6 +15,12 @@ class BlockBase(BaseModel):
     is_weekend: bool = False
     is_holiday: bool = False
     holiday_name: str | None = None
+
+    @field_validator("date")
+    @classmethod
+    def validate_date(cls, v: date) -> date:
+        """Validate date is within academic year bounds."""
+        return validate_academic_year_date(v, field_name="date")
 
     @field_validator("time_of_day")
     @classmethod

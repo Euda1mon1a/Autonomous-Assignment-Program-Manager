@@ -1,0 +1,69 @@
+# Docker Compose Production Override for Monitoring Stack
+# Residency Scheduler Observability Infrastructure - PRODUCTION CONFIGURATION
+#
+# SECURITY: This file removes all external port mappings for monitoring services.
+# In production, monitoring services should only be accessible via internal networks,
+# not exposed to the host or external networks.
+#
+# Usage:
+#   docker-compose -f docker-compose.monitoring.yml -f docker-compose.monitoring.prod.yml up -d
+#
+# Rationale:
+#   - Prometheus, Grafana, and other monitoring tools should not be publicly accessible
+#   - Reduces attack surface by eliminating unnecessary port exposure
+#   - Monitoring data may contain sensitive information about system internals
+#   - Access should be controlled via reverse proxy with authentication
+#
+# Access in Production:
+#   - Set up an authenticated reverse proxy (nginx/traefik) to Grafana
+#   - Use SSH tunneling for direct admin access: ssh -L 3001:localhost:3001 user@server
+#   - VPN access to internal network for monitoring tools
+
+services:
+  # Prometheus - NO external ports (internal network only)
+  prometheus:
+    ports: []  # Override: remove all port mappings
+    # Accessible within Docker network at: prometheus:9090
+
+  # Alertmanager - NO external ports (internal network only)
+  alertmanager:
+    ports: []  # Override: remove all port mappings
+    # Accessible within Docker network at: alertmanager:9093
+
+  # Grafana - NO external ports (use reverse proxy for authenticated access)
+  grafana:
+    ports: []  # Override: remove all port mappings
+    # Accessible within Docker network at: grafana:3000
+    environment:
+      # Update root URL for production reverse proxy
+      - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-https://monitoring.residency-scheduler.local}
+
+  # Loki - NO external ports (internal network only)
+  loki:
+    ports: []  # Override: remove all port mappings
+    # Accessible within Docker network at: loki:3100
+
+  # Node Exporter - NO external ports (internal network only)
+  node-exporter:
+    ports: []  # Override: remove all port mappings
+    # Accessible within Docker network at: node-exporter:9100
+
+  # cAdvisor - NO external ports (internal network only)
+  cadvisor:
+    ports: []  # Override: remove all port mappings
+    # Accessible within Docker network at: cadvisor:8080
+
+  # PostgreSQL Exporter - NO external ports (internal network only)
+  postgres-exporter:
+    ports: []  # Override: remove all port mappings
+    # Accessible within Docker network at: postgres-exporter:9187
+
+  # Redis Exporter - NO external ports (internal network only)
+  redis-exporter:
+    ports: []  # Override: remove all port mappings
+    # Accessible within Docker network at: redis-exporter:9121
+
+  # Nginx Exporter - NO external ports (internal network only)
+  nginx-exporter:
+    ports: []  # Override: remove all port mappings
+    # Accessible within Docker network at: nginx-exporter:9113

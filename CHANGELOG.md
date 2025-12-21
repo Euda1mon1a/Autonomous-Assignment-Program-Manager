@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Fixes for bugs identified in Codex review of Session 13 PRs (#312):
 
 **Security Fixes**
+- **Comprehensive Startup Secret Validation**: Added validation for all service secrets at application startup
+  - **REDIS_PASSWORD**: Now required in production (min 16 chars), validates against weak password list
+  - **DATABASE_URL**: Extracts and validates database password (min 12 chars), rejects default 'scheduler' password
+  - **SECRET_KEY & WEBHOOK_SECRET**: Enhanced validators check weak password list and enforce 32+ char minimum
+  - **WEAK_PASSWORDS**: Centralized list of 30+ known weak/default passwords including .env.example placeholders
+  - **Development vs Production**: Logs warnings in DEBUG mode, raises errors in production (fail-fast)
+  - Application refuses to start if any production secret is weak/default
+  - Added 18 new tests in `tests/test_core.py::TestSecretValidation`
+
 - **Refresh Token Privilege Escalation** (PR #327, #328): Fixed critical vulnerability where refresh tokens could be used as access tokens
   - `verify_token()` now explicitly rejects tokens with `type="refresh"`
   - Prevents attackers from using stolen refresh tokens (7-day lifetime) to bypass short access token lifetime (30 min)

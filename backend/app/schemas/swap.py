@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.validators.date_validators import validate_academic_year_date
+
 
 class SwapStatusSchema(str, Enum):
     PENDING = "pending"
@@ -27,6 +29,14 @@ class SwapExecuteRequest(BaseModel):
     target_week: date | None = None
     swap_type: SwapTypeSchema
     reason: str | None = Field(None, max_length=500)
+
+    @field_validator('source_week', 'target_week')
+    @classmethod
+    def validate_dates_in_range(cls, v: date | None) -> date | None:
+        """Validate dates are within academic year bounds."""
+        if v is not None:
+            return validate_academic_year_date(v, field_name="date")
+        return v
 
     @field_validator('target_week')
     @classmethod
@@ -52,6 +62,14 @@ class SwapHistoryFilter(BaseModel):
     end_date: date | None = None
     page: int = Field(1, ge=1)
     page_size: int = Field(20, ge=1, le=100)
+
+    @field_validator('start_date', 'end_date')
+    @classmethod
+    def validate_dates_in_range(cls, v: date | None) -> date | None:
+        """Validate dates are within academic year bounds."""
+        if v is not None:
+            return validate_academic_year_date(v, field_name="date")
+        return v
 
 
 class SwapValidationResult(BaseModel):

@@ -24,6 +24,7 @@ from uuid import UUID
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import quoted_name
 from sqlalchemy_continuum import version_class
 
 from app.core.logging import get_logger
@@ -53,6 +54,28 @@ VERSION_TABLE_MAP = {
     "schedule_run": "schedule_run_version",
     "swap_record": "swap_record_version",
 }
+
+
+def _validate_and_quote_table_name(table_name: str) -> str:
+    """
+    Validate table name against allowlist and return quoted identifier.
+
+    Args:
+        table_name: The table name to validate and quote
+
+    Returns:
+        Properly quoted table name for use in SQL
+
+    Raises:
+        ValueError: If table name is not in allowlist
+    """
+    # Validate against allowlist
+    if table_name not in VERSION_TABLE_MAP.values():
+        raise ValueError(f"Invalid table name: {table_name}")
+
+    # Return quoted identifier (PostgreSQL uses double quotes)
+    # This prevents SQL injection even if allowlist is bypassed
+    return f'"{table_name}"'
 
 
 def get_audit_logs(
@@ -151,6 +174,9 @@ def _query_version_table(
     table_name = VERSION_TABLE_MAP[entity_type]
     model_class = ENTITY_MODEL_MAP[entity_type]
 
+    # Validate and quote table name to prevent SQL injection
+    quoted_table = _validate_and_quote_table_name(table_name)
+
     # Build query
     where_clauses = ["1=1"]
     params = {}
@@ -183,7 +209,7 @@ def _query_version_table(
             t.issued_at,
             t.user_id,
             t.remote_addr
-        FROM {table_name} v
+        FROM {quoted_table} v
         LEFT JOIN transaction t ON v.transaction_id = t.id
         WHERE {where_sql}
         ORDER BY t.issued_at DESC

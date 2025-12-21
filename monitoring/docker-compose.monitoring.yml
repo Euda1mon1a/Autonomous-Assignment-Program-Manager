@@ -1,5 +1,25 @@
 # Docker Compose for Monitoring Stack
 # Residency Scheduler Observability Infrastructure
+#
+# ⚠️  SECURITY WARNING - DEVELOPMENT CONFIGURATION ⚠️
+#
+# This configuration exposes monitoring service ports for DEVELOPMENT ONLY.
+# DO NOT use this file as-is in production environments.
+#
+# For PRODUCTION deployments:
+#   Use: docker-compose -f docker-compose.monitoring.yml -f docker-compose.monitoring.prod.yml up -d
+#
+# The production override file removes all external port mappings and restricts
+# access to internal Docker networks only. Access should be provided via:
+#   - Authenticated reverse proxy (nginx/traefik) for Grafana
+#   - SSH tunneling for admin access
+#   - VPN for internal monitoring tool access
+#
+# Rationale:
+#   - Exposed monitoring ports are a security risk (information disclosure)
+#   - Monitoring data reveals system architecture and potential vulnerabilities
+#   - Default credentials or weak authentication can be exploited
+#   - Services like Prometheus have no built-in authentication
 
 services:
   # Prometheus - Metrics Collection
@@ -16,6 +36,8 @@ services:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./prometheus/rules:/etc/prometheus/rules:ro
       - prometheus_data:/prometheus
+    # DEVELOPMENT ONLY: Exposed port for web UI access
+    # PRODUCTION: Remove this port mapping (use docker-compose.monitoring.prod.yml)
     ports:
       - "9090:9090"
     networks:
@@ -41,6 +63,8 @@ services:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - ./alertmanager/templates:/etc/alertmanager/templates:ro
       - alertmanager_data:/alertmanager
+    # DEVELOPMENT ONLY: Exposed port for web UI access
+    # PRODUCTION: Remove this port mapping (use docker-compose.monitoring.prod.yml)
     ports:
       - "9093:9093"
     networks:
@@ -79,6 +103,9 @@ services:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/etc/grafana/dashboards:ro
       - grafana_data:/var/lib/grafana
+    # DEVELOPMENT ONLY: Exposed port for web UI access
+    # PRODUCTION: Remove this port mapping (use docker-compose.monitoring.prod.yml)
+    #             Access via authenticated reverse proxy instead
     ports:
       - "3001:3000"
     networks:

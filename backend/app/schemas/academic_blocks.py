@@ -2,7 +2,9 @@
 from datetime import date
 from typing import Optional
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+from app.validators.date_validators import validate_academic_year_date
 
 
 class AcademicBlock(BaseModel):
@@ -15,6 +17,22 @@ class AcademicBlock(BaseModel):
     start_date: date = Field(..., description="First date of the block")
     end_date: date = Field(..., description="Last date of the block")
     name: Optional[str] = Field(None, description="Block name (e.g., 'Block 1', 'Block 2')")
+
+    @field_validator('start_date', 'end_date')
+    @classmethod
+    def validate_dates_in_range(cls, v: date) -> date:
+        """Validate dates are within academic year bounds."""
+        return validate_academic_year_date(v, field_name="date")
+
+    @model_validator(mode='after')
+    def validate_date_order(self) -> 'AcademicBlock':
+        """Ensure start_date is before or equal to end_date."""
+        if self.start_date > self.end_date:
+            raise ValueError(
+                f"start_date ({self.start_date}) must be before or equal to "
+                f"end_date ({self.end_date})"
+            )
+        return self
 
 
 class ResidentRow(BaseModel):
@@ -75,6 +93,12 @@ class BlockSummary(BaseModel):
     total_residents: int = Field(..., description="Number of residents assigned")
     compliance_rate: float = Field(..., description="Percentage of compliant assignments (0-100)")
     average_hours: float = Field(..., description="Average hours per resident")
+
+    @field_validator('start_date', 'end_date')
+    @classmethod
+    def validate_dates_in_range(cls, v: date) -> date:
+        """Validate dates are within academic year bounds."""
+        return validate_academic_year_date(v, field_name="date")
 
 
 class BlockListResponse(BaseModel):

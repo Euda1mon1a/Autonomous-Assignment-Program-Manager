@@ -46,6 +46,64 @@ class TestConfigurationSettings:
         # CORS_ORIGINS should be a list
         assert isinstance(settings.CORS_ORIGINS, list)
 
+    def test_cors_origins_default_is_restrictive(self):
+        """Test that default CORS origins is restrictive (not wildcard)."""
+        from app.core.config import Settings
+
+        settings = Settings()
+
+        # Default should NOT contain wildcard
+        assert "*" not in settings.CORS_ORIGINS
+        # Default should be localhost for development
+        assert any("localhost" in origin for origin in settings.CORS_ORIGINS)
+
+    def test_cors_origins_wildcard_forbidden_in_production(self, monkeypatch):
+        """Test that wildcard CORS is forbidden when DEBUG=False."""
+        from app.core.config import Settings
+
+        # Set production mode and wildcard CORS
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv("CORS_ORIGINS", '["*"]')
+
+        # Should raise ValueError in production
+        with pytest.raises(ValueError, match="cannot contain wildcard"):
+            Settings()
+
+    def test_cors_origins_wildcard_allowed_in_debug(self, monkeypatch):
+        """Test that wildcard CORS is allowed (with warning) when DEBUG=True."""
+        from app.core.config import Settings
+
+        # Set debug mode and wildcard CORS
+        monkeypatch.setenv("DEBUG", "true")
+        monkeypatch.setenv("CORS_ORIGINS", '["*"]')
+
+        # Should succeed in debug mode (with warning)
+        settings = Settings()
+        assert "*" in settings.CORS_ORIGINS
+
+    def test_cors_origins_multiple_explicit_allowed(self, monkeypatch):
+        """Test that multiple explicit origins are allowed."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv(
+            "CORS_ORIGINS",
+            '["https://scheduler.hospital.org","https://scheduler-staging.hospital.org"]'
+        )
+
+        settings = Settings()
+        assert len(settings.CORS_ORIGINS) == 2
+        assert "https://scheduler.hospital.org" in settings.CORS_ORIGINS
+
+    def test_cors_origins_regex_support(self, monkeypatch):
+        """Test that CORS_ORIGINS_REGEX is supported."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("CORS_ORIGINS_REGEX", r"^https://.*\.hospital\.org$")
+
+        settings = Settings()
+        assert settings.CORS_ORIGINS_REGEX == r"^https://.*\.hospital\.org$"
+
 
 @pytest.mark.unit
 class TestPasswordHashing:
@@ -240,3 +298,184 @@ class TestResilienceConfiguration:
             if hasattr(settings, attr):
                 value = getattr(settings, attr)
                 assert value is not None
+
+
+@pytest.mark.unit
+class TestSecretValidation:
+    """Test startup secret validation for all services."""
+
+    def test_secret_key_rejects_weak_value_production(self, monkeypatch):
+        """Test that SECRET_KEY rejects weak values in production."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv("SECRET_KEY", "password")
+
+        with pytest.raises(ValueError, match="known weak/default value"):
+            Settings()
+
+    def test_secret_key_rejects_short_value_production(self, monkeypatch):
+        """Test that SECRET_KEY rejects short values in production."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv("SECRET_KEY", "short")
+
+        with pytest.raises(ValueError, match="at least 32 characters"):
+            Settings()
+
+    def test_secret_key_allows_weak_debug(self, monkeypatch, caplog):
+        """Test that SECRET_KEY allows weak values in debug mode with warning."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "true")
+        monkeypatch.setenv("SECRET_KEY", "password_but_longer_than_32_characters_here")
+
+        # Should succeed with warning
+        settings = Settings()
+        assert settings.SECRET_KEY == "password_but_longer_than_32_characters_here"
+
+    def test_webhook_secret_rejects_weak_value_production(self, monkeypatch):
+        """Test that WEBHOOK_SECRET rejects weak values in production."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv("WEBHOOK_SECRET", "your-webhook-secret-change-in-production")
+
+        with pytest.raises(ValueError, match="known weak/default value"):
+            Settings()
+
+    def test_redis_password_required_production(self, monkeypatch):
+        """Test that REDIS_PASSWORD is required in production."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv("REDIS_PASSWORD", "")
+
+        with pytest.raises(ValueError, match="REDIS_PASSWORD must be set in production"):
+            Settings()
+
+    def test_redis_password_allows_empty_debug(self, monkeypatch):
+        """Test that REDIS_PASSWORD allows empty in debug mode."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "true")
+        monkeypatch.setenv("REDIS_PASSWORD", "")
+
+        # Should succeed in debug mode
+        settings = Settings()
+        assert settings.REDIS_PASSWORD == ""
+
+    def test_redis_password_rejects_weak_production(self, monkeypatch):
+        """Test that REDIS_PASSWORD rejects weak passwords in production."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv("REDIS_PASSWORD", "password")
+
+        with pytest.raises(ValueError, match="known weak/default value"):
+            Settings()
+
+    def test_redis_password_rejects_short_production(self, monkeypatch):
+        """Test that REDIS_PASSWORD rejects short passwords in production."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv("REDIS_PASSWORD", "short")
+
+        with pytest.raises(ValueError, match="at least 16 characters"):
+            Settings()
+
+    def test_redis_password_allows_strong_production(self, monkeypatch):
+        """Test that REDIS_PASSWORD allows strong passwords in production."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv("REDIS_PASSWORD", "very_strong_random_password_here_123456")
+
+        settings = Settings()
+        assert settings.REDIS_PASSWORD == "very_strong_random_password_here_123456"
+
+    def test_database_url_rejects_weak_password_production(self, monkeypatch):
+        """Test that DATABASE_URL rejects weak passwords in production."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv("DATABASE_URL", "postgresql://user:password@localhost:5432/db")
+
+        with pytest.raises(ValueError, match="known weak/default password"):
+            Settings()
+
+    def test_database_url_rejects_default_scheduler_password_production(self, monkeypatch):
+        """Test that DATABASE_URL rejects default 'scheduler' password in production."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv("DATABASE_URL", "postgresql://scheduler:scheduler@localhost:5432/db")
+
+        with pytest.raises(ValueError, match="known weak/default password"):
+            Settings()
+
+    def test_database_url_rejects_short_password_production(self, monkeypatch):
+        """Test that DATABASE_URL rejects short passwords in production."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv("DATABASE_URL", "postgresql://user:short@localhost:5432/db")
+
+        with pytest.raises(ValueError, match="at least 12 characters"):
+            Settings()
+
+    def test_database_url_allows_weak_debug(self, monkeypatch):
+        """Test that DATABASE_URL allows weak passwords in debug mode."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "true")
+        monkeypatch.setenv("DATABASE_URL", "postgresql://scheduler:scheduler@localhost:5432/db")
+
+        # Should succeed in debug mode
+        settings = Settings()
+        assert "scheduler:scheduler" in settings.DATABASE_URL
+
+    def test_database_url_allows_strong_production(self, monkeypatch):
+        """Test that DATABASE_URL allows strong passwords in production."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv(
+            "DATABASE_URL",
+            "postgresql://user:very_strong_db_password_123456@localhost:5432/db"
+        )
+
+        settings = Settings()
+        assert "very_strong_db_password_123456" in settings.DATABASE_URL
+
+    def test_database_url_requires_password(self, monkeypatch):
+        """Test that DATABASE_URL requires a password."""
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv("DATABASE_URL", "postgresql://user@localhost:5432/db")
+
+        with pytest.raises(ValueError, match="must include a password"):
+            Settings()
+
+    def test_all_secrets_strong_production(self, monkeypatch):
+        """Test that all secrets can be strong in production."""
+        import secrets
+        from app.core.config import Settings
+
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv("SECRET_KEY", secrets.token_urlsafe(64))
+        monkeypatch.setenv("WEBHOOK_SECRET", secrets.token_urlsafe(64))
+        monkeypatch.setenv("REDIS_PASSWORD", secrets.token_urlsafe(32))
+        monkeypatch.setenv(
+            "DATABASE_URL",
+            f"postgresql://user:{secrets.token_urlsafe(32)}@localhost:5432/db"
+        )
+
+        # Should succeed with all strong secrets
+        settings = Settings()
+        assert len(settings.SECRET_KEY) >= 32
+        assert len(settings.WEBHOOK_SECRET) >= 32
+        assert len(settings.REDIS_PASSWORD) >= 16
