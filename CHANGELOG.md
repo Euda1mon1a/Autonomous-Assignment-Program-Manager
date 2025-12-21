@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+#### Security & Bug Fixes (Session 13 - 2025-12-21)
+
+Fixes for bugs identified in Codex review of Session 13 PRs (#312):
+
+**Security Fixes**
+- **Rate Limit Bypass Prevention**: Fixed X-Forwarded-For header spoofing vulnerability
+  - Added `TRUSTED_PROXIES` config option to validate proxy sources
+  - Only trust X-Forwarded-For when request comes from configured trusted proxy
+  - Prevents attackers from bypassing rate limiting via header manipulation
+
+**Data Integrity Fixes**
+- **Cache Key Collision**: Fixed cache key truncation in scheduling caching layer
+  - Changed from truncating IDs to first 10 elements (which caused collisions)
+  - Now uses SHA-256 hash of all IDs for collision-resistant cache keys
+  - Prevents incorrect availability data being served when >10 persons/blocks queried
+
+**Test Reliability Fixes**
+- **Hook Mock Results Access**: Fixed mock results array indexing in procedure credentialing tests
+  - Changed from `mock.results[0]` to accessing the most recent result
+  - Prevents test failures from accumulated mock calls across test runs
+
+**Documentation Updates**
+- Added clear documentation for test-local component pattern in swap auto-matching tests
+  - Documented that `AutoMatchingCandidates` is a reference implementation
+  - Added TODO notes for when production component is created
+  - Noted type differences between test mock and production types
+
 ### Added
 
 #### Test Coverage Expansion (Session 11 - 2025-12-20)

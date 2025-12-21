@@ -7,6 +7,7 @@ Provides Redis-based caching for expensive operations:
 - Constraint validation results
 - Solver intermediate results
 """
+import hashlib
 import logging
 import pickle
 from collections import defaultdict
@@ -78,12 +79,11 @@ class ScheduleCache:
         Returns:
             Filtered availability matrix
         """
-        # Create cache key from sorted IDs
-        cache_key = self._create_key(
-            "availability",
-            sorted(str(p) for p in person_ids[:10]),  # Limit key size
-            sorted(str(b) for b in block_ids[:10]),
-        )
+        # Create cache key by hashing all IDs to avoid key size issues
+        # while preventing cache collisions from ID truncation
+        person_ids_hash = self._hash_id_list(sorted(str(p) for p in person_ids))
+        block_ids_hash = self._hash_id_list(sorted(str(b) for b in block_ids))
+        cache_key = self._create_key("availability", person_ids_hash, block_ids_hash)
 
         # Try cache first
         cached = self._get(cache_key)
@@ -281,6 +281,23 @@ class ScheduleCache:
     def _create_key(*parts) -> str:
         """Create cache key from parts."""
         return ":".join(str(p) for p in parts)
+
+    @staticmethod
+    def _hash_id_list(id_list: list[str]) -> str:
+        """
+        Create a hash of a list of IDs for use in cache keys.
+
+        Uses SHA-256 to create a consistent, collision-resistant hash
+        of all IDs regardless of list size.
+
+        Args:
+            id_list: List of string IDs (should be sorted for consistency)
+
+        Returns:
+            32-character hex digest of the hash
+        """
+        id_string = ",".join(id_list)
+        return hashlib.sha256(id_string.encode()).hexdigest()[:32]
 
 
 # Global cache instance for module-level caching
