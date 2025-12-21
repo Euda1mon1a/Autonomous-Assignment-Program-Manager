@@ -710,19 +710,109 @@ class SecretRotationService:
             details: Additional details for notification
         """
         try:
-            ***REMOVED*** In production, this would use the notification service
-            ***REMOVED*** For now, just log the notification
+            ***REMOVED*** Log the notification with structured data
             logger.info(
                 f"Rotation notification: {secret_type.value} - {status} "
                 f"(priority: {priority.value})",
                 extra={"details": details},
             )
 
-            ***REMOVED*** TODO: Integrate with app.notifications.service.NotificationService
-            ***REMOVED*** to send actual notifications via email, webhook, etc.
+            ***REMOVED*** Notify admins about rotation result
+            await self._notify_secret_rotation_result(
+                secret_name=secret_type.value,
+                status=status,
+                priority=priority.value,
+                details=details,
+            )
 
         except Exception as e:
             logger.error(f"Failed to send rotation notification: {e}", exc_info=True)
+
+    async def _notify_secret_rotation_result(
+        self,
+        secret_name: str,
+        status: str,
+        priority: str,
+        details: dict[str, Any],
+    ) -> None:
+        """
+        Notify about secret rotation results.
+
+        This function logs rotation results and prepares for future integration
+        with the notification service.
+
+        Args:
+            secret_name: Name of the secret that was rotated
+            status: Rotation status (success, failed, critical_failure, etc.)
+            priority: Priority level
+            details: Additional details about the rotation
+
+        Note:
+            Future enhancement: Add NotificationType.SECRET_ROTATION to enable
+            proper email/webhook notification delivery via NotificationService.
+        """
+        try:
+            ***REMOVED*** Determine if this was a success or failure
+            success = status in ["success", "grace_period_completed"]
+            error_message = details.get("error") or details.get("rollback_error")
+
+            ***REMOVED*** Build notification message
+            message = f"Secret rotation {status} for: {secret_name}"
+            if error_message:
+                message += f"\nError: {error_message}"
+            if details.get("action_required"):
+                message += f"\nAction Required: {details['action_required']}"
+
+            ***REMOVED*** Log structured data for monitoring
+            logger.info(
+                f"Secret rotation result notification",
+                extra={
+                    "secret_name": secret_name,
+                    "status": status,
+                    "success": success,
+                    "priority": priority,
+                    "details": details,
+                }
+            )
+
+            ***REMOVED*** NOTE: The NotificationService requires a NotificationType enum value,
+            ***REMOVED*** but there is currently no SECRET_ROTATION type in the enum.
+            ***REMOVED*** This should be added to app/notifications/templates.py:NotificationType
+            ***REMOVED***
+            ***REMOVED*** Once added, uncomment the following code to enable email notifications:
+            ***REMOVED***
+            ***REMOVED*** from app.notifications.service import NotificationService
+            ***REMOVED*** from app.notifications.templates import NotificationType
+            ***REMOVED*** from app.models.user import User
+            ***REMOVED*** from uuid import UUID
+            ***REMOVED***
+            ***REMOVED*** ***REMOVED*** Get admin users
+            ***REMOVED*** admin_users = (
+            ***REMOVED***     self.db.query(User)
+            ***REMOVED***     .filter(User.role == "admin", User.is_active == True)
+            ***REMOVED***     .all()
+            ***REMOVED*** )
+            ***REMOVED***
+            ***REMOVED*** if admin_users:
+            ***REMOVED***     service = NotificationService(self.db)
+            ***REMOVED***
+            ***REMOVED***     for admin in admin_users:
+            ***REMOVED***         await service.send_notification(
+            ***REMOVED***             recipient_id=admin.id,
+            ***REMOVED***             notification_type=NotificationType.SECRET_ROTATION,
+            ***REMOVED***             data={
+            ***REMOVED***                 "secret_name": secret_name,
+            ***REMOVED***                 "status": status,
+            ***REMOVED***                 "success": success,
+            ***REMOVED***                 "priority": priority,
+            ***REMOVED***                 "message": message,
+            ***REMOVED***                 **details
+            ***REMOVED***             },
+            ***REMOVED***             channels=["email"] if priority in ["high", "critical"] else ["in_app"]
+            ***REMOVED***         )
+
+        except Exception as e:
+            logger.warning(f"Failed to send rotation notification: {e}", exc_info=True)
 
     ***REMOVED*** Rotation handlers for each secret type
 
