@@ -262,11 +262,369 @@ Different sets. Same stone.
 
 ---
 
+## Appendix A: Set Theory Foundations
+
+*For the physician who'd rather be reading about cytokines.*
+
+### The Universal Set (U)
+
+Every set operation happens within a **universe**—the set of all possible elements.
+
+In scheduling:
+```
+U = { all possible (person, block, role) tuples }
+```
+
+In medicine, you'd call this the "population at risk" or "sample space."
+
+### Basic Sets
+
+| Set | Definition | Scheduling Example |
+|-----|------------|-------------------|
+| **A** | A collection of elements from U | All Monday assignments |
+| **∅** (empty set) | The set with no elements | Unassigned blocks |
+| **U** | All elements | Every possible assignment |
+
+### Fundamental Operations
+
+#### 1. Union (A ∪ B) — "OR"
+
+**Definition**: All elements in A, B, or both.
+
+```
+A ∪ B = { x : x ∈ A or x ∈ B }
+```
+
+**Scheduling**: Combined coverage of two faculty members.
+
+**Biology analog**: All cells expressing marker A OR marker B (like flow cytometry gating).
+
+#### 2. Intersection (A ∩ B) — "AND"
+
+**Definition**: Only elements in both A and B.
+
+```
+A ∩ B = { x : x ∈ A and x ∈ B }
+```
+
+**Scheduling**: Faculty who are both qualified AND available.
+
+**Biology analog**: Cells that are CD4+ AND CD8+ (rare, but you get the idea).
+
+#### 3. Difference (A - B) or (A \ B) — "BUT NOT"
+
+**Definition**: Elements in A that are not in B.
+
+```
+A - B = { x : x ∈ A and x ∉ B }
+```
+
+**Scheduling**: Blocks needing coverage MINUS blocks already assigned.
+
+**Biology analog**: Cells expressing A but not B (A+B- population).
+
+#### 4. Complement (Aᶜ) or (¬A) — "NOT"
+
+**Definition**: Everything in U that is not in A.
+
+```
+Aᶜ = { x : x ∈ U and x ∉ A }
+```
+
+**Scheduling**: All faculty NOT on leave.
+
+**Biology analog**: The negative population in a staining assay.
+
+#### 5. Symmetric Difference (A △ B) — "XOR"
+
+**Definition**: Elements in A or B, but not both.
+
+```
+A △ B = (A - B) ∪ (B - A) = (A ∪ B) - (A ∩ B)
+```
+
+**Scheduling**: Shifts covered by exactly one of two faculty (no overlap, no gap).
+
+**Biology analog**: Cells expressing exactly one of two mutually exclusive markers.
+
+### Set Properties
+
+These laws hold for all sets—and thus for all the frameworks built on them:
+
+| Property | Formula | Plain English |
+|----------|---------|---------------|
+| **Commutative** | A ∪ B = B ∪ A | Order doesn't matter |
+| **Associative** | (A ∪ B) ∪ C = A ∪ (B ∪ C) | Grouping doesn't matter |
+| **Distributive** | A ∩ (B ∪ C) = (A ∩ B) ∪ (A ∩ C) | Like algebra |
+| **Identity** | A ∪ ∅ = A | Empty set changes nothing |
+| **Complement** | A ∪ Aᶜ = U | A thing and its opposite = everything |
+| **De Morgan's** | (A ∪ B)ᶜ = Aᶜ ∩ Bᶜ | NOT(A OR B) = (NOT A) AND (NOT B) |
+
+### Cardinality
+
+**|A|** = the number of elements in set A.
+
+This is what we actually measure:
+
+```python
+# "Do we have enough coverage?"
+available_dedicated = len(set(self.dedicated_faculty) & available_faculty)
+return available_dedicated >= self.minimum_coverage
+```
+
+Translation: `|TrainedFaculty ∩ AvailableFaculty| ≥ MinimumCoverage`
+
+### Partitions
+
+A **partition** of set S is a collection of non-empty, disjoint subsets that together equal S.
+
+```
+S = A₁ ⊔ A₂ ⊔ ... ⊔ Aₙ  where  Aᵢ ∩ Aⱼ = ∅ for all i ≠ j
+```
+
+**Scheduling**: Burden categories partition all faculty:
+```
+AllFaculty = Crushing ⊔ Heavy ⊔ Balanced ⊔ Light ⊔ VeryLight
+```
+
+**Epidemiology**: SIR partitions a population:
+```
+Population = Susceptible ⊔ Infected ⊔ Recovered
+```
+
+**Biology analog**: Cell cycle phases partition dividing cells:
+```
+DividingCells = G1 ⊔ S ⊔ G2 ⊔ M
+```
+
+### Power Sets
+
+The **power set** P(S) is the set of all subsets of S, including ∅ and S itself.
+
+If |S| = n, then |P(S)| = 2ⁿ.
+
+**Why this matters**: The number of possible coverage states grows exponentially with faculty count. A program with 20 faculty has 2²⁰ = 1,048,576 possible availability combinations. This is why we need efficient algorithms.
+
+### Mapping to This Codebase
+
+| Set Theory Concept | Python Implementation | Resilience Module |
+|-------------------|----------------------|-------------------|
+| A ∩ B | `set_a & set_b` | Static stability zone coverage |
+| A ∪ B | `set_a \| set_b` | N-2 combined impact |
+| A - B | `set_a - set_b` | Uncovered blocks after absence |
+| x ∈ A | `x in set_a` | Constraint validation |
+| \|A\| | `len(set_a)` | Coverage counting |
+| A = ∅ | `not set_a` | "No violations" check |
+| Partition | List comprehensions by category | Burden classification |
+
+### The Formal Definition of a Schedule
+
+A schedule can be formally defined as:
+
+```
+Schedule S ⊆ Person × Block × Role
+
+where:
+  Person = { p₁, p₂, ..., pₙ }
+  Block = { b₁, b₂, ..., bₘ }
+  Role = { r₁, r₂, ..., rₖ }
+```
+
+A **valid** schedule satisfies constraints expressed as set predicates:
+
+```
+∀ (p, b, r) ∈ S:
+  p ∈ Available(b) ∧
+  p ∈ Qualified(r) ∧
+  |{ (p', b, r') ∈ S : p' = p }| ≤ 1 ∧  // One assignment per person per block
+  WeeklyHours(p, week(b)) ≤ 80          // ACGME constraint
+```
+
+This is the scheduling problem: find S ⊆ U satisfying all constraints while maximizing coverage.
+
+---
+
+## Appendix B: Matrix Representations
+
+*"Unfortunately, no one can be told what the Matrix is. You have to see it for yourself." — Morpheus*
+
+Sets are collections. Matrices are *relationships between* collections. When you have two sets and want to track which elements relate to which, you get a matrix.
+
+### The Assignment Matrix
+
+A schedule is fundamentally a matrix:
+
+```
+             Block₁  Block₂  Block₃  Block₄  ...
+           ┌──────────────────────────────────────
+Person₁    │   1       0       0       1     ...
+Person₂    │   0       1       1       0     ...
+Person₃    │   1       0       1       0     ...
+    ⋮      │   ⋮       ⋮       ⋮       ⋮
+```
+
+- **Rows**: People (faculty, residents)
+- **Columns**: Time blocks
+- **Cells**: 1 = assigned, 0 = not assigned
+
+This is a **binary matrix** (only 0s and 1s)—the matrix analog of set membership.
+
+### Matrix Operations = Set Operations
+
+| Set Operation | Matrix Operation | Result |
+|---------------|------------------|--------|
+| A ∩ B | Element-wise AND (`A * B`) | Cells where both are 1 |
+| A ∪ B | Element-wise OR (`A + B > 0`) | Cells where either is 1 |
+| Aᶜ | 1 - A | Flip all bits |
+| \|A\| | sum(A) | Count of 1s |
+
+### The Adjacency Matrix (Networks)
+
+The burnout epidemiology module uses a **social network graph**. Graphs are stored as adjacency matrices:
+
+```
+             Person₁  Person₂  Person₃  Person₄
+           ┌────────────────────────────────────
+Person₁    │   0        1        0        1
+Person₂    │   1        0        1        0
+Person₃    │   0        1        0        1
+Person₄    │   1        0        1        0
+```
+
+- **Cell (i,j) = 1**: Person i and Person j are connected (shared shifts, mentorship, etc.)
+- **Symmetric matrix**: If i connects to j, j connects to i
+- **Diagonal = 0**: No self-connections
+
+**Matrix powers reveal reach**:
+- A¹: Direct connections
+- A²: Two-hop connections (friends of friends)
+- Aⁿ: n-hop reachability
+
+This is how epidemiology models spread: A² shows who can infect whom through one intermediary.
+
+### The Transition Matrix (Markov Chains)
+
+SIR epidemiology uses state transitions. These are **stochastic matrices**:
+
+```
+           To: S     I     R
+         ┌─────────────────────
+From: S  │  0.95   0.05   0.00
+From: I  │  0.00   0.90   0.10
+From: R  │  0.00   0.00   1.00
+```
+
+- **Rows sum to 1** (probability must go somewhere)
+- **Cell (i,j)**: Probability of transitioning from state i to state j
+- **Multiply by state vector**: Get next time step's distribution
+
+```
+[S, I, R]ₜ₊₁ = [S, I, R]ₜ × TransitionMatrix
+```
+
+### The Constraint Matrix (Optimization)
+
+ACGME compliance can be expressed as linear constraints:
+
+```
+Ax ≤ b
+
+where:
+  x = assignment vector (flattened schedule)
+  A = constraint coefficient matrix
+  b = limits vector
+```
+
+Example row in A: "Dr. Smith's weekly hours ≤ 80"
+
+```
+[0 0 0 8 8 8 8 0 0 ...] × x ≤ 80
+         └─────────────┘
+         Hours for each block Dr. Smith could work
+```
+
+This is how constraint solvers (OR-Tools, etc.) work: they find x satisfying all matrix inequalities.
+
+### Why Matrices Matter Here
+
+1. **Compact storage**: A 50-person × 730-block schedule = 36,500 cells, but sparse (mostly zeros)
+2. **Fast operations**: NumPy/SciPy can do matrix math in microseconds
+3. **Linear algebra tools**: Eigenvalues, decompositions, optimizers all work on matrices
+4. **Graph algorithms**: NetworkX uses matrix representations internally
+
+### The Connection: Sets, Matrices, Graphs
+
+```
+           SET THEORY
+               │
+               │ "Is x ∈ A?"
+               │
+               ▼
+        BOOLEAN MATRIX
+        (A[i,j] ∈ {0,1})
+               │
+               │ "Row i connected to column j?"
+               │
+               ▼
+             GRAPH
+        (Nodes and edges)
+               │
+               │ "What's reachable from here?"
+               │
+               ▼
+         ADJACENCY MATRIX
+               │
+               │ "Path analysis via matrix powers"
+               │
+               ▼
+         SPECTRAL ANALYSIS
+        (Eigenvalues, centrality)
+```
+
+**They're all the same structure** viewed at different abstraction levels:
+- Set: "Who's in?"
+- Matrix: "Who's connected to whom?"
+- Graph: "What's the structure?"
+- Eigenvalues: "Who's most important?"
+
+### Matrix Example: Finding Critical Faculty
+
+The hub analysis module computes **eigenvector centrality**. In matrix terms:
+
+```python
+# Simplified version of what NetworkX does internally
+import numpy as np
+
+# Adjacency matrix A
+A = np.array([[0,1,1,0],
+              [1,0,1,1],
+              [1,1,0,0],
+              [0,1,0,0]])
+
+# Eigenvector centrality = dominant eigenvector
+eigenvalues, eigenvectors = np.linalg.eig(A)
+centrality = eigenvectors[:, eigenvalues.argmax()]
+```
+
+The faculty with highest centrality score is most "connected"—if they burn out, the network effect is largest.
+
+This is the same math Google uses for PageRank. You're doing search engine math on a residency schedule.
+
+---
+
+*"You take the red pill—you stay in Wonderland, and I show you how deep the rabbit hole goes."*
+
+The rabbit hole goes: Sets → Boolean Algebra → Matrices → Graphs → Spectral Analysis → Machine Learning.
+
+It's all connected. Literally.
+
+---
+
 *End of midnight exploration.*
 
 ---
 
-## Appendix: Code Examples
+## Appendix C: Code Examples
 
 ### Set Intersection (Static Stability)
 
