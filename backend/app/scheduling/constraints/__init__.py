@@ -67,7 +67,9 @@ from .faculty_role import (
 
 ***REMOVED*** FMIT constraints
 from .fmit import (
+    FMITContinuityTurfConstraint,
     FMITMandatoryCallConstraint,
+    FMITStaffingFloorConstraint,
     FMITWeekBlockingConstraint,
     PostFMITRecoveryConstraint,
     get_fmit_week_dates,
@@ -132,7 +134,9 @@ __all__ = [
     "FacultyRoleClinicConstraint",
     "SMFacultyClinicConstraint",
     ***REMOVED*** FMIT constraints
+    "FMITContinuityTurfConstraint",
     "FMITMandatoryCallConstraint",
+    "FMITStaffingFloorConstraint",
     "FMITWeekBlockingConstraint",
     "PostFMITRecoveryConstraint",
     "get_fmit_week_dates",
