@@ -2,9 +2,10 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 from app.schemas.procedure import ProcedureSummary
+from app.validators.date_validators import validate_date_range
 
 
 class CredentialBase(BaseModel):
@@ -18,6 +19,14 @@ class CredentialBase(BaseModel):
     max_per_week: int | None = None
     max_per_academic_year: int | None = None
     notes: str | None = None
+
+    @field_validator("issued_date", "expiration_date", "last_verified_date")
+    @classmethod
+    def validate_dates_in_range(cls, v: date | None) -> date | None:
+        """Validate dates are within reasonable bounds."""
+        if v is not None:
+            return validate_date_range(v, field_name="date")
+        return v
 
     @field_validator("status")
     @classmethod
@@ -34,6 +43,17 @@ class CredentialBase(BaseModel):
         if v not in valid_levels:
             raise ValueError(f"competency_level must be one of {valid_levels}")
         return v
+
+    @model_validator(mode="after")
+    def validate_expiration_after_issue(self):
+        """Ensure expiration_date is after issued_date if both are set."""
+        if self.issued_date and self.expiration_date:
+            if self.expiration_date <= self.issued_date:
+                raise ValueError(
+                    f"expiration_date ({self.expiration_date.isoformat()}) must be after "
+                    f"issued_date ({self.issued_date.isoformat()})"
+                )
+        return self
 
 
 class CredentialCreate(CredentialBase):
@@ -52,6 +72,14 @@ class CredentialUpdate(BaseModel):
     max_per_week: int | None = None
     max_per_academic_year: int | None = None
     notes: str | None = None
+
+    @field_validator("expiration_date", "last_verified_date")
+    @classmethod
+    def validate_dates_in_range(cls, v: date | None) -> date | None:
+        """Validate dates are within reasonable bounds."""
+        if v is not None:
+            return validate_date_range(v, field_name="date")
+        return v
 
     @field_validator("status")
     @classmethod

@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, field_validator, model_validator
 
+from app.validators.date_validators import validate_academic_year_date
+
 
 class AbsenceType(str, Enum):
     """
@@ -49,6 +51,12 @@ class AbsenceBase(BaseModel):
     replacement_activity: str | None = None
     notes: str | None = None
 
+    @field_validator("start_date", "end_date")
+    @classmethod
+    def validate_dates_in_range(cls, v: date) -> date:
+        """Validate dates are within academic year bounds."""
+        return validate_academic_year_date(v, field_name="date")
+
     @field_validator("absence_type")
     @classmethod
     def validate_absence_type(cls, v: str) -> str:
@@ -88,6 +96,14 @@ class AbsenceUpdate(BaseModel):
     tdy_location: str | None = None
     replacement_activity: str | None = None
     notes: str | None = None
+
+    @field_validator("start_date", "end_date")
+    @classmethod
+    def validate_dates_in_range(cls, v: date | None) -> date | None:
+        """Validate dates are within academic year bounds."""
+        if v is not None:
+            return validate_academic_year_date(v, field_name="date")
+        return v
 
     @field_validator("absence_type")
     @classmethod
