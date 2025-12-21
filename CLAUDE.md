@@ -61,6 +61,10 @@ This is a **scheduling application** for medical residency programs. All work mu
 | **Celery** | 5.x | Background task processing |
 | **pytest** | Latest | Testing framework |
 | **NetworkX** | 3.0+ | Graph analysis for resilience |
+| **SciPy** | 1.11+ | Scientific computing (Erlang C, statistics) |
+| **NDlib** | 5.1+ | Network epidemiology (SIR models) |
+| **pyspc** | 0.1+ | Statistical Process Control charts |
+| **pyworkforce** | 0.2+ | Erlang C queuing optimization |
 
 ### Frontend
 
@@ -635,13 +639,30 @@ Must be validated for all schedules:
 
 ### Resilience Framework
 
-Cross-industry best practices:
+Cross-industry best practices organized in tiers:
 
+**Tier 1 - Core Concepts:**
 - **80% Utilization Threshold**: Queuing theory prevents cascade failures
 - **N-1/N-2 Contingency**: Power grid-style vulnerability detection
 - **Defense in Depth**: 5 safety levels (GREEN → YELLOW → ORANGE → RED → BLACK)
 - **Static Stability**: Pre-computed fallback schedules
 - **Sacrifice Hierarchy**: Triage-based load shedding
+
+**Tier 2 - Strategic Concepts:**
+- **Homeostasis**: Biological feedback loops for schedule balance
+- **Blast Radius Isolation**: Zone-based containment from AWS
+- **Le Chatelier's Principle**: Equilibrium shifts from chemistry
+
+**Tier 3+ - Cross-Disciplinary Analytics:**
+- **SPC Monitoring**: Western Electric rules from semiconductor manufacturing
+- **Process Capability**: Cp/Cpk Six Sigma metrics for schedule quality
+- **Burnout Epidemiology**: SIR models and Rt reproduction number
+- **Erlang Coverage**: Telecommunications queuing for specialist staffing
+- **Seismic Detection**: STA/LTA algorithm for burnout precursors
+- **Burnout Fire Index**: Multi-temporal danger rating from forestry CFFDRS
+- **Creep/Fatigue**: Larson-Miller parameter from materials science
+
+See `docs/architecture/cross-disciplinary-resilience.md` for detailed documentation.
 
 ### Swap System
 
