@@ -204,37 +204,52 @@ ChatGPT Codex cannot replicate this workflow. If you try to use Codex for this p
 
 Several browser-based tools provide Claude access but with varying capabilities. Understanding these differences prevents frustration.
 
-#### Quick Comparison
+#### Quick Comparison (Updated December 2025)
 
 | Tool | What It Does | Agentic? | Best Use Case |
 |------|--------------|----------|---------------|
 | **Claude Code Web** | Full agentic development | Yes (files, git, commands) | Primary development |
-| **Comet** | Browser automation | Yes (browser actions) | Web scraping, form filling |
-| **Atlas** | Multi-step browser workflows | Yes (browser actions) | Complex web tasks, data extraction |
-| **Dia** | Early AI browser | Limited | Basic browsing assistance |
-| **Claude Chrome Extension** | Chat overlay | No | Quick questions while browsing |
-| **Gemini for Chrome** | Google AI sidebar | No (currently) | Research, summarization |
+| **Claude for Chrome** | Browser agent with computer use | Yes (click, type, navigate) | Web automation, multi-tab workflows |
+| **Comet** (Perplexity) | AI browser with assistant | Yes (full browser control) | Research, shopping, task automation |
+| **Atlas** (OpenAI) | ChatGPT-native browser | Yes (Agent Mode) | Research, form filling, web tasks |
+| **Dia** (Browser Company) | AI-first browser | Yes (AI in URL bar) | Everyday browsing with AI assistance |
+| **Gemini in Chrome** | Google AI sidebar | Yes (rolling out) | Multi-tab research, Google ecosystem |
 
-> **Sometimes you don't want agentic.** Not every task needs an AI that takes autonomous actions. Sometimes you just want someone looking over your shoulder—a second pair of eyes to review your code, explain what you're reading, or answer quick questions. That's what non-agentic tools excel at.
+> **The landscape has shifted dramatically.** As of late 2025, most major browser tools are now agentic. The question is no longer "agentic or not?" but rather "what kind of agency do you need?"
+>
+> - **Code agency** (files, git, terminal) → Claude Code
+> - **Browser agency** (click, type, navigate web) → Claude for Chrome, Comet, Atlas, Dia
+> - **Ecosystem agency** (Google Calendar, Docs, etc.) → Gemini in Chrome
 
-#### Claude Chrome Extension
+#### Claude for Chrome (Browser Agent)
 
-**What it IS:**
-- Quick access to Claude chat from any webpage
-- Can read/analyze the current page content
-- Convenient for summarizing articles or asking questions about what you're viewing
+Claude for Chrome is now a **full agentic browser assistant** that can see, click, type, and navigate web pages autonomously.
 
-**What it IS NOT:**
-- A coding environment (cannot edit files)
-- Connected to your codebase or GitHub
-- Capable of running commands or git operations
-- A replacement for Claude Code
+**Current capabilities (as of late 2025):**
+- **Computer use in browser**: Click, type, scroll, navigate across web pages
+- **Multi-tab workflows**: Work across multiple tabs simultaneously
+- **Scheduled tasks**: Set up recurring automated workflows
+- **Form filling**: Complete forms, manage calendar, draft emails
+- **Workflow recording**: "Teach" Claude by recording your actions
+- **Claude Code integration**: Connects with Claude Code for development tasks
 
-**When to use:** Research while browsing, quick questions, summarizing web content. NOT for development work.
+**Safety measures:**
+- Blocked from high-risk categories (financial services, adult content)
+- Requires explicit approval for publishing, purchasing, sharing personal data
+- Attack mitigations reduced success rate from 23.6% to 11.2%
 
-#### Agentic Browsers (Comet, Atlas, etc.)
+**Availability:** Beta for all Max plan subscribers after initial 1,000-user pilot.
 
-Agentic browsers let Claude control browser actions—clicking, typing, navigating. This is powerful but fundamentally different from coding.
+**What it still IS NOT:**
+- A coding environment (cannot edit local files)
+- Connected to your local filesystem
+- A replacement for Claude Code for development work
+
+**When to use:** Web automation, form filling, email management, calendar tasks, multi-step browser workflows. For actual code editing, use Claude Code.
+
+#### Agentic Browsers (Comet, Atlas, Dia)
+
+These are full browsers with AI agents built in—not extensions, but standalone applications that reimagine browsing around AI.
 
 **What Agentic Browsers DO Well:**
 - Automate repetitive web tasks (filling forms, clicking through workflows)
@@ -242,6 +257,7 @@ Agentic browsers let Claude control browser actions—clicking, typing, navigati
 - Navigate complex web UIs
 - Research across multiple sites
 - Test web applications from a user perspective
+- Background task processing (work while you do other things)
 
 **What Agentic Browsers DON'T Do:**
 - Edit code files in your repository
@@ -250,68 +266,107 @@ Agentic browsers let Claude control browser actions—clicking, typing, navigati
 - Load project-specific skills or MCP tools
 - Integrate with your development workflow
 
-**Comet Specifics:**
-- Strong at multi-step browser automation
-- Can chain actions across pages
-- Good for web research and data gathering
-- Limitation: Browser sandbox only—no filesystem access
+#### Comet (Perplexity)
 
-**Atlas Specifics:**
-- Designed for complex, multi-page workflows
-- Can handle dynamic web content
-- Good for scraping and form automation
-- Limitation: Same browser-only constraints
+Perplexity's AI-powered browser, released July 2025 and now free for all users.
 
-#### Dia (Early AI Browser)
+**Key features:**
+- **Comet Assistant**: Sidecar AI that sees your page and answers questions
+- **Agentic task execution**: Book hotels, comparison shop, schedule meetings, fill forms
+- **Built-in tools**: Discover (news), Spaces (project organization), Shopping, Travel, Finance, Sports
+- **Voice interaction**: Hands-free task automation
+- **Background Assistant** (Max users): Works on multiple tasks simultaneously in background
+- **Privacy-first**: Most processing done locally
 
-Dia was one of the first AI-capable browsers, representing an early attempt at integrating AI into browsing workflows.
+**November 2025 updates:** Completely reimagined assistant that can work longer on more complex jobs.
 
-**What Dia offered:**
-- AI assistance built into the browser chrome
-- Basic page summarization and Q&A
-- Early exploration of AI-browser integration
+**Best for:** Research, shopping, travel planning, general web automation.
 
-**Limitations compared to current tools:**
-- Less sophisticated browser automation than Comet/Atlas
-- No true agentic capabilities (couldn't take multi-step autonomous actions)
-- Limited integration with external tools or codebases
-- Predates the current generation of agentic AI tooling
+#### Atlas (OpenAI)
 
-**Historical significance:** Dia helped establish that users wanted AI integrated into their browsing experience, paving the way for more capable tools. If you used Dia and were underwhelmed, the current generation of agentic browsers (Comet, Atlas) represents a significant leap forward.
+OpenAI's ChatGPT-native browser, released October 2025.
 
-#### Gemini for Chrome
+**Key features:**
+- **Agent Mode**: ChatGPT handles tasks autonomously—"you can watch or don't have to"
+- **Built on Chromium**: Familiar Chrome-like experience
+- **"Take control" / "Stop" buttons**: Override AI actions at any time
+- **Deep ChatGPT integration**: AI accompanies you everywhere across the web
 
-Google's Gemini sidebar for Chrome provides AI assistance while browsing.
+**Availability:** macOS now, Windows/iOS/Android coming. Free tier available, Agent Mode requires paid ChatGPT subscription.
 
-**Current state (as of late 2024):**
-- Non-agentic: Gemini observes and responds but doesn't take browser actions
-- Good for summarizing pages, answering questions, drafting text
-- Integrated with Google Workspace (Docs, Gmail, etc.)
-- Cannot click, navigate, or automate browser tasks
+**Security concerns:** Some researchers found it blocked only 5.8% of phishing attacks in tests. Prompt injection risks exist with Agent Mode.
 
-**What to expect:** Given Google's investment in agentic AI (see Antigravity, ADK), Gemini for Chrome will likely gain agentic capabilities. When it does, expect:
-- Browser action automation (clicking, form filling)
-- Multi-step task execution
-- Deeper integration with Google services
+**Best for:** Researchers, students, professionals who need automated web research.
 
-**For now:** Use Gemini for Chrome as a research companion and writing assistant—not for automation. Pair it with Claude Code for actual development work.
+#### Dia (Browser Company → Atlassian)
 
-#### Agentic vs Non-Agentic: When to Choose Each
+AI-first browser from the makers of Arc, acquired by Atlassian for $610M.
+
+**Key features:**
+- **AI in URL bar**: Type commands to search, summarize, multitask
+- **Skill-based AI**: Shopping skill sees your Amazon/Anthropologie history; writing skill knows your email style
+- **Privacy-focused**: Data encrypted on device, only sent to cloud for milliseconds
+- **Atlassian integration**: Jira, Linear, and other productivity tools
+- **Arc features coming**: Sidebar mode, picture-in-picture, custom keyboard shortcuts
+
+**Design philosophy:** Minimalist (like Chrome/Safari) vs Arc's power-user complexity.
+
+**Best for:** Everyday browsing with AI assistance, especially for Atlassian users.
+
+#### Gemini in Chrome
+
+Google's AI integration in Chrome—now rolling out agentic capabilities.
+
+**Current capabilities (late 2025):**
+- **Multi-tab context**: Uses up to 10 open tabs to provide relevant responses
+- **Gemini Live**: Real-time voice conversations from any tab
+- **Agentic browsing** (rolling out): Click, scroll, type on websites (confirms final step like purchases)
+- **Tab recall**: Find previously visited sites with natural language
+- **Google app integration**: Calendar, Tasks, Drive, Docs/Sheets/Slides, Maps, YouTube
+- **AI Mode in address bar**: Complex questions with follow-ups
+- **Security**: Gemini Nano detects scams, can auto-change compromised passwords
+
+**Agentic features coming:**
+- "Tell Gemini in Chrome what you want to get done, and it acts on web pages on your behalf"
+- Book haircuts, order groceries, complete multi-step web tasks
+
+**Availability:** Free for Mac/Windows desktop users in US. iOS coming soon.
+
+**Best for:** Users in the Google ecosystem who want AI assistance integrated with Calendar, Docs, Gmail, etc.
+
+#### Choosing the Right Agentic Tool
+
+Now that most tools are agentic, the question is: **what kind of agency do you need?**
 
 | You want... | Use | Why |
 |-------------|-----|-----|
-| AI to make changes for you | Agentic (Claude Code, Comet) | Autonomous action-taking |
-| A second pair of eyes | Non-agentic (Chrome Extension, Gemini) | Observation without action |
-| Help understanding code | Either works | Both can explain |
-| Automated testing/scraping | Agentic browser (Comet, Atlas) | Requires browser control |
-| Quick research while coding | Non-agentic (Chrome Extension) | Fast, low-friction |
-| Deployment and git operations | Claude Code | Requires filesystem + git access |
+| Edit code, run tests, git operations | **Claude Code** | Only tool with filesystem + terminal access |
+| Web automation (forms, booking, shopping) | **Claude for Chrome, Comet, Atlas** | Browser agency |
+| Google ecosystem integration | **Gemini in Chrome** | Calendar, Docs, Gmail, Drive integration |
+| Research with AI summaries | **Comet, Dia** | Built for information gathering |
+| ChatGPT-native experience | **Atlas** | If you're already in OpenAI ecosystem |
+| Atlassian/Jira integration | **Dia** | Following Atlassian acquisition |
 
-**The "agentic" distinction matters because:**
-- Agentic tools can surprise you (good and bad)—they take actions you didn't explicitly request
-- Non-agentic tools are predictable—they only respond, never act
-- Trust and verification differ: agentic tools need more oversight initially
-- Speed differs: agentic tools can complete multi-step tasks faster once trusted
+#### When You DON'T Want Agency
+
+Sometimes you want AI to **observe without acting**—a second pair of eyes, not a pair of hands.
+
+**Scenarios where you want observation-only:**
+- Learning how code works (you want explanations, not changes)
+- Reviewing before committing (AI shouldn't auto-commit)
+- Sensitive operations (you want confirmation at every step)
+- Understanding before automating (research phase)
+
+**How to get observation-only behavior:**
+- In Claude Code: Ask questions without requesting changes
+- In Claude for Chrome: Use chat mode instead of letting it take actions
+- In Comet/Atlas: Don't enable Agent Mode
+- In Gemini: Agentic features require explicit activation
+
+**The trust ladder:**
+1. Start with observation-only (AI explains, you act)
+2. Graduate to supervised agency (AI acts, you approve each step)
+3. Eventually use full agency for trusted tasks (AI completes multi-step workflows)
 
 #### The "Same Model, Different Capabilities" Confusion
 
@@ -327,45 +382,61 @@ Think of it like this:
 - Agentic Browser = Claude with browser hands (can click/type in browser, but can't touch your filesystem)
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    SAME AI MODEL, DIFFERENT ENVIRONMENTS             │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  Environment determines capabilities, not the model                  │
-│                                                                      │
-│  ┌─────────────────────── AGENTIC ───────────────────────┐          │
-│  │                                                        │          │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │          │
-│  │  │ Claude Code  │  │   Comet /    │  │  Antigravity │ │          │
-│  │  │  Web/CLI     │  │    Atlas     │  │              │ │          │
-│  │  ├──────────────┤  ├──────────────┤  ├──────────────┤ │          │
-│  │  │ ✓ Files      │  │ ✗ Files      │  │ ✓ Files      │ │          │
-│  │  │ ✓ Git        │  │ ✗ Git        │  │ ✓ Git        │ │          │
-│  │  │ ✓ Terminal   │  │ ✗ Terminal   │  │ ✓ Terminal   │ │          │
-│  │  │ ✓ Skills     │  │ ✗ Skills     │  │ ✓ Skills     │ │          │
-│  │  │ ✗ Browser    │  │ ✓ Browser    │  │ ✗ Browser    │ │          │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘ │          │
-│  │  Development       Web automation    IDE development   │          │
-│  └────────────────────────────────────────────────────────┘          │
-│                                                                      │
-│  ┌─────────────────── NON-AGENTIC ───────────────────────┐          │
-│  │                                                        │          │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │          │
-│  │  │   Claude     │  │   Gemini     │  │     Dia      │ │          │
-│  │  │  Extension   │  │  for Chrome  │  │   (legacy)   │ │          │
-│  │  ├──────────────┤  ├──────────────┤  ├──────────────┤ │          │
-│  │  │ ✓ Page view  │  │ ✓ Page view  │  │ ✓ Page view  │ │          │
-│  │  │ ✓ Q&A        │  │ ✓ Q&A        │  │ ✓ Q&A        │ │          │
-│  │  │ ✗ Actions    │  │ ✗ Actions    │  │ ✗ Actions    │ │          │
-│  │  │ ✗ Files      │  │ ✗ Files      │  │ ✗ Files      │ │          │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘ │          │
-│  │  Quick research    Google ecosystem  Basic assistance  │          │
-│  └────────────────────────────────────────────────────────┘          │
-│                                                                      │
-│  Choose agentic when you want AI to DO things                        │
-│  Choose non-agentic when you want AI to EXPLAIN things               │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│              2025: THE AGENTIC LANDSCAPE (All Major Tools Are Agentic)     │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  The key question: WHAT KIND of agency do you need?                        │
+│                                                                            │
+│  ┌─────────────────────── CODE AGENCY ────────────────────────┐           │
+│  │  (filesystem, git, terminal, tests)                         │           │
+│  │                                                              │           │
+│  │  ┌─────────────────┐  ┌─────────────────┐                   │           │
+│  │  │  Claude Code    │  │   Antigravity   │                   │           │
+│  │  │   Web/CLI/IDE   │  │                 │                   │           │
+│  │  ├─────────────────┤  ├─────────────────┤                   │           │
+│  │  │ ✓ Edit files    │  │ ✓ Edit files    │                   │           │
+│  │  │ ✓ Git/GitHub    │  │ ✓ Git           │                   │           │
+│  │  │ ✓ Run tests     │  │ ✓ Run tests     │                   │           │
+│  │  │ ✓ Skills/MCP    │  │ ✓ Skills        │                   │           │
+│  │  └─────────────────┘  └─────────────────┘                   │           │
+│  │  USE FOR: Development, debugging, deployment                 │           │
+│  └──────────────────────────────────────────────────────────────┘           │
+│                                                                            │
+│  ┌─────────────────────── BROWSER AGENCY ─────────────────────┐           │
+│  │  (click, type, navigate, automate web tasks)                │           │
+│  │                                                              │           │
+│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐│           │
+│  │  │  Claude    │ │   Comet    │ │   Atlas    │ │    Dia     ││           │
+│  │  │ for Chrome │ │(Perplexity)│ │  (OpenAI)  │ │(Atlassian) ││           │
+│  │  ├────────────┤ ├────────────┤ ├────────────┤ ├────────────┤│           │
+│  │  │ ✓ Click    │ │ ✓ Click    │ │ ✓ Click    │ │ ✓ AI URL   ││           │
+│  │  │ ✓ Type     │ │ ✓ Type     │ │ ✓ Type     │ │ ✓ Skills   ││           │
+│  │  │ ✓ Navigate │ │ ✓ Navigate │ │ ✓ Navigate │ │ ✓ Jira     ││           │
+│  │  │ ✓ Multi-tab│ │ ✓ Bkgnd    │ │ ✓ Agent    │ │ ✓ Privacy  ││           │
+│  │  └────────────┘ └────────────┘ └────────────┘ └────────────┘│           │
+│  │  USE FOR: Web automation, shopping, booking, forms          │           │
+│  └──────────────────────────────────────────────────────────────┘           │
+│                                                                            │
+│  ┌─────────────────────── ECOSYSTEM AGENCY ───────────────────┐           │
+│  │  (deep integration with specific platforms)                  │           │
+│  │                                                              │           │
+│  │  ┌─────────────────────────────────────────┐                │           │
+│  │  │            Gemini in Chrome              │                │           │
+│  │  ├─────────────────────────────────────────┤                │           │
+│  │  │ ✓ Google Calendar, Docs, Sheets, Drive  │                │           │
+│  │  │ ✓ Gmail, Maps, YouTube                  │                │           │
+│  │  │ ✓ Multi-tab context (up to 10 tabs)     │                │           │
+│  │  │ ✓ Gemini Live (voice)                   │                │           │
+│  │  │ ✓ Agentic browsing (rolling out)        │                │           │
+│  │  └─────────────────────────────────────────┘                │           │
+│  │  USE FOR: Google Workspace power users                       │           │
+│  └──────────────────────────────────────────────────────────────┘           │
+│                                                                            │
+│  ⚠️  NONE of the browser tools can edit local code files                   │
+│  ⚠️  For THIS PROJECT: Use Claude Code (Web, CLI, or IDE)                  │
+│                                                                            │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 #### When to Combine Tools
