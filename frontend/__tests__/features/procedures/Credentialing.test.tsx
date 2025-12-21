@@ -699,7 +699,9 @@ describe('Credentialing UI', () => {
       render(<CredentialingUI />, { wrapper: createWrapper() });
 
       expect(hooks.useProcedures).toHaveBeenCalled();
-      const mockCall = (hooks.useProcedures as jest.Mock).mock.results[0];
+      // Use the most recent mock result to avoid index issues from accumulated test runs
+      const mockResults = (hooks.useProcedures as jest.Mock).mock.results;
+      const mockCall = mockResults[mockResults.length - 1];
       expect(mockCall.value.refetch).toBe(mockRefetchProcedures);
     });
 
@@ -707,7 +709,9 @@ describe('Credentialing UI', () => {
       render(<CredentialingUI />, { wrapper: createWrapper() });
 
       expect(hooks.useFacultyCredentials).toHaveBeenCalled();
-      const mockCall = (hooks.useFacultyCredentials as jest.Mock).mock.results[0];
+      // Use the most recent mock result to avoid index issues from accumulated test runs
+      const mockResults = (hooks.useFacultyCredentials as jest.Mock).mock.results;
+      const mockCall = mockResults[mockResults.length - 1];
       expect(mockCall.value.refetch).toBe(mockRefetchCredentials);
     });
   });
