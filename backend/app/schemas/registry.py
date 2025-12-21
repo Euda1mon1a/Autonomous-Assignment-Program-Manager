@@ -1123,29 +1123,34 @@ class SchemaRegistry:
         """
         try:
             from app.models.person import Person
+            from app.models.user import User
 
-            # Query for users with ADMIN or COORDINATOR roles
+            admin_roles = ("admin", "coordinator")
+
+            # Query for users with ADMIN or COORDINATOR roles and map to person records by email
             if self.is_async:
-                stmt = select(Person.id).where(
-                    or_(
-                        Person.role == "ADMIN",
-                        Person.role == "COORDINATOR"
-                    )
+                stmt = (
+                    select(Person.id)
+                    .join(User, User.email == Person.email)
+                    .where(User.role.in_(admin_roles))
                 )
                 result = await self.db.execute(stmt)
-                return list(result.scalars().all())
+                admin_ids = list(result.scalars().all())
             else:
                 persons = (
                     self.db.query(Person.id)
-                    .filter(
-                        or_(
-                            Person.role == "ADMIN",
-                            Person.role == "COORDINATOR"
-                        )
-                    )
+                    .join(User, User.email == Person.email)
+                    .filter(User.role.in_(admin_roles))
                     .all()
                 )
-                return [p.id for p in persons]
+                admin_ids = [p.id for p in persons]
+
+            if not admin_ids:
+                logger.warning(
+                    "No admin or coordinator person records found for schema notifications"
+                )
+
+            return admin_ids
         except Exception as e:
             logger.error(f"Failed to get admin user IDs: {e}")
             return []
