@@ -1,9 +1,8 @@
 """Service for managing faculty FMIT scheduling preferences."""
 from datetime import date, datetime, timedelta
-from typing import Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy import and_, func, or_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app.models.assignment import Assignment

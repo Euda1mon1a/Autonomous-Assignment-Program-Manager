@@ -6,6 +6,8 @@ from datetime import date
 
 @dataclass
 class LeaveRecord:
+    """Represents a single leave record for a faculty member."""
+
     faculty_name: str
     faculty_id: str | None
     start_date: date
@@ -16,14 +18,25 @@ class LeaveRecord:
 
 
 class LeaveProvider(ABC):
+    """Abstract base class for leave data providers."""
+
     @abstractmethod
-    def get_conflicts(self, faculty_name: str | None = None, start_date: date | None = None, end_date: date | None = None) -> list[LeaveRecord]:
-        pass
+    def get_conflicts(
+        self,
+        faculty_name: str | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> list[LeaveRecord]:
+        """Get leave records that may conflict with scheduling."""
 
     @abstractmethod
     def sync(self) -> int:
-        pass
+        """Synchronize leave data from source. Returns count of records."""
 
     @abstractmethod
-    def get_all_leave(self, start_date: date | None = None, end_date: date | None = None) -> list[LeaveRecord]:
-        pass
+    def get_all_leave(
+        self,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> list[LeaveRecord]:
+        """Get all leave records within date range."""

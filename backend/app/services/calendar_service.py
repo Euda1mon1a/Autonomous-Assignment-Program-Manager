@@ -1,5 +1,4 @@
 """Calendar service for ICS export and subscription."""
-import secrets
 from datetime import date, datetime, timedelta
 from uuid import UUID
 
