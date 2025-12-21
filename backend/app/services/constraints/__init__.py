@@ -1,21 +1,21 @@
 """
-ACGME Constraint Services.
+Constraint Services Module.
 
-This package provides ACGME compliance constraints as a service layer,
-enabling constraint-based scheduling validation and optimization.
+This package provides ACGME compliance constraints and faculty constraint
+services with caching, authorization, and validation support.
 
 The constraints enforce ACGME (Accreditation Council for Graduate Medical
 Education) requirements for resident duty hours, supervision, and schedules.
 
 Modules:
     acgme: ACGME compliance constraints (80-hour rule, 1-in-7, supervision)
+    faculty: Faculty preference and constraint services with caching
 
 Example:
     >>> from backend.app.services.constraints import (
     ...     ACGMEConstraintValidator,
     ...     EightyHourRuleConstraint,
-    ...     OneInSevenRuleConstraint,
-    ...     SupervisionRatioConstraint,
+    ...     FacultyConstraintService,
     ... )
 """
 
@@ -26,6 +26,10 @@ from .acgme import (
     OneInSevenRuleConstraint,
     SupervisionRatioConstraint,
 )
+from app.services.constraints.faculty import (
+    CachedFacultyPreferenceService,
+    FacultyConstraintService,
+)
 
 __all__ = [
     "ACGMEConstraintValidator",
@@ -33,4 +37,6 @@ __all__ = [
     "EightyHourRuleConstraint",
     "OneInSevenRuleConstraint",
     "SupervisionRatioConstraint",
+    "CachedFacultyPreferenceService",
+    "FacultyConstraintService",
 ]
