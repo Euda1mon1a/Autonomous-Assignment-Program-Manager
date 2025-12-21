@@ -3,6 +3,7 @@
 > **Generated:** 2025-12-20
 > **Reviewer:** Claude Code Assistant
 > **Scope:** Last 10 merged pull requests
+> **Status:** ✅ FIXED (see commit `fc3a38e`)
 
 ---
 
@@ -10,12 +11,14 @@
 
 During review of the last 10 merged PRs, I identified **critical duplicate code issues** in `backend/app/api/routes/resilience.py` introduced in **PR #289** ("Claude/review branch merges pc7 gp"). The merge incorrectly combined two different implementations instead of replacing one with the other.
 
+**UPDATE:** All issues have been fixed in this PR. The duplicate code has been removed and the new implementation with optional query limits has been kept.
+
 ### Impact
 
 - **Severity:** HIGH - Code will not compile/run correctly
 - **Files Affected:** 1 (resilience.py)
 - **Duplicate Code Blocks:** 5 locations
-- **Estimated Fix Time:** 30 minutes
+- **Status:** ✅ FIXED - Removed 101 lines of duplicate code
 
 ---
 
