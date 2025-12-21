@@ -104,6 +104,14 @@ from .tools import (
     validate_schedule,
 )
 
+# Import new validate_schedule tool with ConstraintService integration
+from tools.validate_schedule import (
+    ScheduleValidationRequest as ConstraintValidationRequest,
+    ScheduleValidationResponse as ConstraintValidationResponse,
+    ConstraintConfig,
+    validate_schedule as validate_schedule_by_id,
+)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -215,6 +223,71 @@ async def validate_schedule_tool(
     )
 
     return await validate_schedule(request)
+
+
+@mcp.tool()
+async def validate_schedule_by_id_tool(
+    schedule_id: str,
+    constraint_config: str = "default",
+    include_suggestions: bool = True,
+) -> ConstraintValidationResponse:
+    """
+    Validate a schedule by ID against ACGME constraints.
+
+    This tool validates a specific schedule identified by schedule_id against
+    the full constraint system including ACGME compliance rules. It connects
+    to the ConstraintService for comprehensive validation.
+
+    Security Features:
+    - Input schedule_id is validated and sanitized against injection attacks
+    - Output is sanitized to prevent PII leakage
+    - All person references are anonymized
+
+    Args:
+        schedule_id: Unique identifier for the schedule (UUID or alphanumeric).
+                    Must be 1-64 characters, no special characters allowed.
+        constraint_config: Constraint configuration to use:
+                          - "default": Standard ACGME compliance checks
+                          - "minimal": Fast basic validation
+                          - "strict": Comprehensive strict validation
+                          - "resilience": Include resilience framework constraints
+        include_suggestions: Whether to include suggested actions for issues
+
+    Returns:
+        Validation result with sanitized issues and compliance metrics.
+        All person names and identifiers are anonymized.
+
+    Raises:
+        ValueError: If schedule_id contains invalid characters or is too long
+
+    Example:
+        # Validate a schedule with default constraints
+        result = await validate_schedule_by_id_tool(
+            schedule_id="abc123-def456",
+            constraint_config="default",
+            include_suggestions=True
+        )
+
+        if result.is_valid:
+            print("Schedule passes all critical constraints!")
+        else:
+            print(f"Found {result.critical_count} critical issues")
+    """
+    try:
+        config = ConstraintConfig(constraint_config)
+    except ValueError as e:
+        raise ValueError(
+            f"Invalid constraint_config: {constraint_config}. "
+            f"Must be one of: {[c.value for c in ConstraintConfig]}"
+        ) from e
+
+    request = ConstraintValidationRequest(
+        schedule_id=schedule_id,
+        constraint_config=config,
+        include_suggestions=include_suggestions,
+    )
+
+    return await validate_schedule_by_id(request)
 
 
 @mcp.tool()

@@ -39,6 +39,7 @@ from .base import (
 
 # ACGME compliance constraints
 from .acgme import (
+    ACGMEConstraintValidator,
     AvailabilityConstraint,
     EightyHourRuleConstraint,
     OneInSevenRuleConstraint,
@@ -117,6 +118,7 @@ __all__ = [
     "SchedulingContext",
     "SoftConstraint",
     # ACGME constraints
+    "ACGMEConstraintValidator",
     "AvailabilityConstraint",
     "EightyHourRuleConstraint",
     "OneInSevenRuleConstraint",
