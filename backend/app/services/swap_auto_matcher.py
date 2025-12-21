@@ -1,6 +1,5 @@
 """Enhanced auto-matching service for FMIT swap requests."""
 from datetime import date, datetime, timedelta
-from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import and_, or_
@@ -9,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
-from app.models.swap import SwapApproval, SwapRecord, SwapStatus, SwapType
+from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.schemas.swap_matching import (
     AutoMatchResult,
     BatchAutoMatchResult,

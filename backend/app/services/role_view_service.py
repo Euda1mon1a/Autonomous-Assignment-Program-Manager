@@ -32,6 +32,8 @@ ROLE_PERMISSIONS = {
 }
 
 class RoleViewService:
+    """Service for filtering views based on user roles."""
+
     @staticmethod
     def get_permissions(role: StaffRole) -> ViewPermissions:
         """Get permissions for a given role."""

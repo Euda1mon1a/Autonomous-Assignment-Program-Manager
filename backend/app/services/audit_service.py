@@ -30,7 +30,6 @@ from app.core.logging import get_logger
 from app.core.types import AuditStatistics
 from app.models.assignment import Assignment
 from app.models.absence import Absence
-from app.models.person import Person
 from app.models.schedule_run import ScheduleRun
 from app.models.swap import SwapRecord
 from app.models.user import User

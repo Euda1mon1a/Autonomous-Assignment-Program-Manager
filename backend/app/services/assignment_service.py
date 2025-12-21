@@ -3,8 +3,7 @@
 from datetime import date, timedelta
 from uuid import UUID
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from app.models.assignment import Assignment
 from app.models.settings import OverrideReasonCode
@@ -13,7 +12,6 @@ from app.repositories.block import BlockRepository
 from app.repositories.person import PersonRepository
 from app.scheduling.validator import ACGMEValidator
 from app.services.freeze_horizon_service import (
-    FreezeCheckResult,
     FreezeHorizonService,
     FreezeHorizonViolation,
     FreezeOverrideRequest,

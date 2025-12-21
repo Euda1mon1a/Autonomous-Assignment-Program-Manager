@@ -12,6 +12,8 @@ ALLOWED_CSV_DIR = Path("data/csv_files")
 
 
 class CSVLeaveProvider(LeaveProvider):
+    """Leave provider that reads from CSV files."""
+
     def __init__(self, file_path: Path, allowed_base_dir: Path | None = None):
         """
         Initialize CSV leave provider with path validation.
@@ -34,11 +36,11 @@ class CSVLeaveProvider(LeaveProvider):
         try:
             validated_path = validate_file_path(file_path, base_dir)
             self.file_path = validated_path
-        except FileSecurityError:
+        except FileSecurityError as exc:
             # If validation fails, raise with more context
             raise FileSecurityError(
                 f"CSV file path '{file_path}' must be within allowed directory '{base_dir}'"
-            )
+            ) from exc
 
         self._records: list[LeaveRecord] = []
 
@@ -66,7 +68,7 @@ class CSVLeaveProvider(LeaveProvider):
         if not self.file_path.exists():
             return []
         records = []
-        with open(self.file_path) as f:
+        with open(self.file_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 records.append(LeaveRecord(
