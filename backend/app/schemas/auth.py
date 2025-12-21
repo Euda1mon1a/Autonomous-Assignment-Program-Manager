@@ -8,9 +8,11 @@ COMMON_PASSWORDS = {'password', 'password123', '123456', '12345678', 'qwerty', '
 
 
 class Token(BaseModel):
-    """JWT token response."""
+    """JWT token response with optional refresh token."""
     access_token: str
     token_type: str = "bearer"
+    refresh_token: str | None = None  # Included on login, used for token refresh
+    expires_in: int | None = None  # Access token lifetime in seconds
 
 
 class TokenData(BaseModel):
@@ -24,6 +26,11 @@ class UserLogin(BaseModel):
     """User login request."""
     username: str
     password: str
+
+
+class RefreshTokenRequest(BaseModel):
+    """Refresh token request."""
+    refresh_token: str
 
 
 class UserCreate(BaseModel):

@@ -3,7 +3,11 @@ Rate limiting module for API endpoints.
 
 Implements a sliding window rate limiter using Redis to prevent brute force attacks
 and API abuse. Uses Redis sorted sets for efficient time-based tracking.
+
+Also provides per-user account lockout to prevent distributed brute force attacks
+that rotate IP addresses.
 """
+import math
 import time
 from typing import Optional
 
@@ -186,8 +190,219 @@ class RateLimiter:
             return max_requests
 
 
+class AccountLockout:
+    """
+    Per-user account lockout to prevent distributed brute force attacks.
+
+    Unlike IP-based rate limiting, this tracks failed login attempts by username.
+    Uses exponential backoff to increase lockout duration with each consecutive
+    lockout, making sustained attacks increasingly impractical.
+
+    Security: Prevents attacks that rotate source IPs while targeting a single user.
+    """
+
+    def __init__(self, redis_client: Optional[redis.Redis] = None):
+        """
+        Initialize account lockout tracker.
+
+        Args:
+            redis_client: Optional Redis client. If not provided, creates a new one.
+        """
+        if redis_client is None:
+            try:
+                redis_url = settings.redis_url_with_password
+                self.redis = redis.from_url(
+                    redis_url,
+                    decode_responses=True,
+                    socket_connect_timeout=5,
+                    socket_timeout=5,
+                )
+                self.redis.ping()
+            except (redis.ConnectionError, redis.TimeoutError) as e:
+                logger.error(f"Failed to connect to Redis for account lockout: {e}")
+                self.redis = None
+        else:
+            self.redis = redis_client
+
+    def _get_lockout_key(self, username: str) -> str:
+        """Get Redis key for lockout tracking."""
+        return f"account_lockout:{username}"
+
+    def _get_attempts_key(self, username: str) -> str:
+        """Get Redis key for failed attempts tracking."""
+        return f"account_attempts:{username}"
+
+    def _get_consecutive_lockouts_key(self, username: str) -> str:
+        """Get Redis key for consecutive lockout count."""
+        return f"account_lockout_count:{username}"
+
+    def is_locked_out(self, username: str) -> tuple[bool, int]:
+        """
+        Check if an account is currently locked out.
+
+        Args:
+            username: The username to check
+
+        Returns:
+            Tuple of (is_locked, seconds_remaining)
+        """
+        if self.redis is None:
+            return False, 0
+
+        try:
+            lockout_key = self._get_lockout_key(username)
+            ttl = self.redis.ttl(lockout_key)
+
+            if ttl > 0:
+                return True, ttl
+            return False, 0
+        except Exception as e:
+            logger.error(f"Error checking lockout for {username}: {e}")
+            return False, 0
+
+    def record_failed_attempt(self, username: str) -> tuple[bool, int, int]:
+        """
+        Record a failed login attempt for a user.
+
+        Args:
+            username: The username that failed to authenticate
+
+        Returns:
+            Tuple of (is_now_locked, lockout_seconds, attempts_count)
+        """
+        if self.redis is None:
+            return False, 0, 0
+
+        try:
+            attempts_key = self._get_attempts_key(username)
+            lockout_key = self._get_lockout_key(username)
+            lockouts_key = self._get_consecutive_lockouts_key(username)
+
+            # Use pipeline for atomic operations
+            pipe = self.redis.pipeline()
+
+            # Increment failed attempts
+            pipe.incr(attempts_key)
+            # Set expiry on attempts counter (reset after 1 hour of no attempts)
+            pipe.expire(attempts_key, 3600)
+            # Get current attempt count
+            results = pipe.execute()
+
+            attempts = results[0]
+
+            # Check if threshold exceeded
+            if attempts >= settings.ACCOUNT_LOCKOUT_ATTEMPTS:
+                # Get consecutive lockout count for exponential backoff
+                lockout_count = int(self.redis.get(lockouts_key) or 0)
+
+                # Calculate lockout duration with exponential backoff
+                lockout_seconds = min(
+                    settings.ACCOUNT_LOCKOUT_INITIAL_SECONDS * (
+                        settings.ACCOUNT_LOCKOUT_MULTIPLIER ** lockout_count
+                    ),
+                    settings.ACCOUNT_LOCKOUT_MAX_SECONDS
+                )
+                lockout_seconds = int(lockout_seconds)
+
+                # Set lockout
+                pipe2 = self.redis.pipeline()
+                pipe2.setex(lockout_key, lockout_seconds, "1")
+                pipe2.incr(lockouts_key)
+                # Reset attempts counter
+                pipe2.delete(attempts_key)
+                # Set expiry on lockout count (reset after 24 hours of no lockouts)
+                pipe2.expire(lockouts_key, 86400)
+                pipe2.execute()
+
+                logger.warning(
+                    f"Account locked out: {username} for {lockout_seconds}s "
+                    f"(lockout #{lockout_count + 1})"
+                )
+
+                return True, lockout_seconds, attempts
+
+            return False, 0, attempts
+
+        except Exception as e:
+            logger.error(f"Error recording failed attempt for {username}: {e}")
+            return False, 0, 0
+
+    def record_successful_login(self, username: str) -> None:
+        """
+        Reset failed attempts counter on successful login.
+
+        Note: Does NOT reset consecutive lockout count - that requires
+        24 hours without lockouts to reset (defense in depth).
+
+        Args:
+            username: The username that successfully authenticated
+        """
+        if self.redis is None:
+            return
+
+        try:
+            attempts_key = self._get_attempts_key(username)
+            self.redis.delete(attempts_key)
+        except Exception as e:
+            logger.error(f"Error clearing attempts for {username}: {e}")
+
+    def get_lockout_info(self, username: str) -> dict:
+        """
+        Get detailed lockout information for a user.
+
+        Args:
+            username: The username to check
+
+        Returns:
+            Dict with lockout status information
+        """
+        if self.redis is None:
+            return {
+                "locked": False,
+                "attempts": 0,
+                "max_attempts": settings.ACCOUNT_LOCKOUT_ATTEMPTS,
+                "seconds_remaining": 0,
+                "consecutive_lockouts": 0,
+            }
+
+        try:
+            lockout_key = self._get_lockout_key(username)
+            attempts_key = self._get_attempts_key(username)
+            lockouts_key = self._get_consecutive_lockouts_key(username)
+
+            pipe = self.redis.pipeline()
+            pipe.ttl(lockout_key)
+            pipe.get(attempts_key)
+            pipe.get(lockouts_key)
+            results = pipe.execute()
+
+            ttl = results[0] if results[0] > 0 else 0
+            attempts = int(results[1] or 0)
+            lockouts = int(results[2] or 0)
+
+            return {
+                "locked": ttl > 0,
+                "attempts": attempts,
+                "max_attempts": settings.ACCOUNT_LOCKOUT_ATTEMPTS,
+                "seconds_remaining": ttl,
+                "consecutive_lockouts": lockouts,
+            }
+        except Exception as e:
+            logger.error(f"Error getting lockout info for {username}: {e}")
+            return {
+                "locked": False,
+                "attempts": 0,
+                "max_attempts": settings.ACCOUNT_LOCKOUT_ATTEMPTS,
+                "seconds_remaining": 0,
+                "consecutive_lockouts": 0,
+            }
+
+
 # Global rate limiter instance
 _rate_limiter: Optional[RateLimiter] = None
+
+# Global account lockout instance
+_account_lockout: Optional[AccountLockout] = None
 
 
 def get_rate_limiter() -> RateLimiter:
@@ -201,6 +416,19 @@ def get_rate_limiter() -> RateLimiter:
     if _rate_limiter is None:
         _rate_limiter = RateLimiter()
     return _rate_limiter
+
+
+def get_account_lockout() -> AccountLockout:
+    """
+    Get or create the global account lockout instance.
+
+    Returns:
+        AccountLockout instance
+    """
+    global _account_lockout
+    if _account_lockout is None:
+        _account_lockout = AccountLockout()
+    return _account_lockout
 
 
 def _is_trusted_proxy(ip: str) -> bool:

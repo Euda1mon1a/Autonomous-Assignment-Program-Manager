@@ -52,7 +52,9 @@ class Settings(BaseSettings):
 
     # Security
     SECRET_KEY: str = Field(default_factory=lambda: secrets.token_urlsafe(64))
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30  # 30 minutes (short-lived access tokens)
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # 7 days for refresh tokens
+    REFRESH_TOKEN_ROTATE: bool = True  # Issue new refresh token on each refresh
     WEBHOOK_SECRET: str = Field(default_factory=lambda: secrets.token_urlsafe(64))
     WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS: int = 300  # 5 minutes
 
@@ -62,6 +64,12 @@ class Settings(BaseSettings):
     RATE_LIMIT_REGISTER_ATTEMPTS: int = 3  # Maximum registration attempts per minute
     RATE_LIMIT_REGISTER_WINDOW: int = 60  # Time window in seconds (1 minute)
     RATE_LIMIT_ENABLED: bool = True  # Enable/disable rate limiting globally
+
+    # Per-User Account Lockout (prevents distributed brute force attacks)
+    ACCOUNT_LOCKOUT_ATTEMPTS: int = 5  # Failed attempts before lockout
+    ACCOUNT_LOCKOUT_INITIAL_SECONDS: int = 60  # Initial lockout duration (1 minute)
+    ACCOUNT_LOCKOUT_MAX_SECONDS: int = 3600  # Maximum lockout duration (1 hour)
+    ACCOUNT_LOCKOUT_MULTIPLIER: float = 2.0  # Exponential backoff multiplier
 
     # Cache TTL Settings (in seconds)
     CACHE_HEATMAP_TTL: int = 300  # 5 minutes for heatmap data

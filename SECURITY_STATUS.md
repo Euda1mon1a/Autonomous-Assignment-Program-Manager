@@ -1,6 +1,6 @@
 # Security Vulnerability Status
 
-**Last Updated:** 2025-12-21 (glob fix added)
+**Last Updated:** 2025-12-21 (HIGH-6, HIGH-7, MEDIUM-10, MEDIUM-15 fixed)
 **Original Assessment:** 2025-12-17
 
 This document tracks security vulnerabilities identified in the codebase and their remediation status.
@@ -12,8 +12,8 @@ This document tracks security vulnerabilities identified in the codebase and the
 | Severity | Total | Fixed | Open |
 |----------|-------|-------|------|
 | CRITICAL | 8 | 8 | 0 |
-| HIGH | 7 | 5 | 2 |
-| MEDIUM | 15 | 1 | 14 |
+| HIGH | 7 | 7 | 0 |
+| MEDIUM | 15 | 3 | 12 |
 | LOW | 5 | 0 | 5 |
 
 ---
@@ -105,21 +105,29 @@ This document tracks security vulnerabilities identified in the codebase and the
   - **Why NOT `npm audit fix --force`:** Upgrades eslint-config-next v14→v16, which requires ESLint v9 and breaks `next lint` with Next.js 14
   - See `docs/operations/VALIDATION_TRACKER.md` for full history
 
-### 6. 24-Hour Token Expiration Without Refresh
-- **Status:** OPEN
-- **Location:** `backend/app/core/config.py:55`
-- **Risk:** Long-lived tokens increase window for token theft
-- **Remediation:** Implement refresh token rotation with shorter access token lifetime (15-30 min)
+### 6. ~~24-Hour Token Expiration Without Refresh~~
+- **Status:** FIXED
+- **Fixed In:** `backend/app/core/config.py`, `backend/app/core/security.py`, `backend/app/api/routes/auth.py`
+- **Details:**
+  - Access tokens now expire after 30 minutes (configurable via `ACCESS_TOKEN_EXPIRE_MINUTES`)
+  - Refresh tokens expire after 7 days (configurable via `REFRESH_TOKEN_EXPIRE_DAYS`)
+  - Token rotation enabled by default (`REFRESH_TOKEN_ROTATE=True`)
+  - New `/api/v1/auth/refresh` endpoint for token refresh
+  - `create_refresh_token()` and `verify_refresh_token()` functions added to security.py
 
-### 7. No Per-User Account Lockout
-- **Status:** OPEN
-- **Location:** `backend/app/core/rate_limit.py`
-- **Risk:** Distributed brute force attacks can bypass IP-based rate limiting
-- **Remediation:** Add user-based lockout after N failed attempts with exponential backoff
+### 7. ~~No Per-User Account Lockout~~
+- **Status:** FIXED
+- **Fixed In:** `backend/app/core/rate_limit.py`, `backend/app/services/auth_service.py`
+- **Details:**
+  - New `AccountLockout` class tracks failed login attempts per username
+  - Lockout after 5 failed attempts (configurable via `ACCOUNT_LOCKOUT_ATTEMPTS`)
+  - Exponential backoff: 1 min → 2 min → 4 min → ... up to 1 hour max
+  - Lockout duration resets after 24 hours of no lockouts
+  - Returns HTTP 423 Locked with `Retry-After` header when locked
 
 ---
 
-## Medium Vulnerabilities (Open)
+## Medium Vulnerabilities
 
 ### 1. CORS Overly Permissive
 - **Location:** `backend/app/core/config.py`
@@ -138,8 +146,8 @@ This document tracks security vulnerabilities identified in the codebase and the
 ### 5. Potential Email Regex ReDoS
 - **Status:** OPEN - Consider using validated email library
 
-### 6. Long Token Expiration Without Refresh
-- **Status:** OPEN - See High #5
+### 6. ~~Long Token Expiration Without Refresh~~
+- **Status:** FIXED - See High #6 above
 
 ### 7. No Multi-Factor Authentication
 - **Status:** OPEN - Add TOTP for admin accounts
@@ -150,8 +158,13 @@ This document tracks security vulnerabilities identified in the codebase and the
 ### 9. Database Connection String Weak Default
 - **Status:** OPEN - Requires strong passwords in production
 
-### 10. No Request ID Tracking
-- **Status:** OPEN - Add correlation IDs for tracing
+### 10. ~~No Request ID Tracking~~
+- **Status:** FIXED
+- **Fixed In:** `backend/app/core/observability.py`, `backend/app/main.py`
+- **Details:**
+  - `RequestIDMiddleware` generates/propagates `X-Request-ID` header
+  - Request IDs stored in context variable for logging correlation
+  - Integrated with structured logging via `set_logging_request_id()`
 
 ### 11. Webhook Secret Has Dev Default
 - **Status:** OPEN - Similar to SECRET_KEY, needs production validation
@@ -165,9 +178,13 @@ This document tracks security vulnerabilities identified in the codebase and the
 ### 14. No Password History/Rotation
 - **Status:** OPEN - Implement password policies
 
-### 15. cAdvisor Running Privileged
-- **Location:** `monitoring/docker-compose.monitoring.yml:152`
-- **Status:** OPEN - Use specific capabilities instead of full privileged mode
+### 15. ~~cAdvisor Running Privileged~~
+- **Status:** FIXED
+- **Fixed In:** `monitoring/docker-compose.monitoring.yml:152`
+- **Details:**
+  - Removed `privileged: true` (security risk)
+  - Added specific capabilities: `SYS_PTRACE`, `DAC_READ_SEARCH`
+  - Added `security_opt: no-new-privileges:true` to prevent privilege escalation
 
 ---
 

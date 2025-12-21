@@ -145,11 +145,18 @@ services:
     pid: host
 
   # cAdvisor - Container Metrics
+  # SECURITY: Uses specific capabilities instead of full privileged mode
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.2
     container_name: cadvisor
     restart: unless-stopped
-    privileged: true
+    # Removed: privileged: true (security risk)
+    # Using specific capabilities instead for least-privilege access
+    cap_add:
+      - SYS_PTRACE      # Required for process monitoring
+      - DAC_READ_SEARCH  # Required for reading /proc and /sys
+    security_opt:
+      - no-new-privileges:true  # Prevent privilege escalation
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro

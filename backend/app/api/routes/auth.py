@@ -23,7 +23,7 @@ from app.core.security import (
 )
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.auth import Token, UserCreate, UserLogin, UserResponse
+from app.schemas.auth import RefreshTokenRequest, Token, UserCreate, UserLogin, UserResponse
 
 settings = get_settings()
 router = APIRouter()
@@ -82,22 +82,57 @@ async def login_json(
     _rate_limit: None = Depends(rate_limit_login),
 ):
     """
-    Authenticate user with JSON body and return JWT token.
+    Authenticate user with JSON body and return JWT tokens.
 
     Alternative to OAuth2 form-based login.
     Rate limited to prevent brute force attacks.
 
-    Security: Token is set as httpOnly cookie to prevent XSS attacks.
+    Security:
+    - Access token is set as httpOnly cookie to prevent XSS attacks.
+    - Refresh token is returned in body for secure storage by client.
+    - Access tokens are short-lived (30 min), refresh tokens longer (7 days).
     """
     controller = AuthController(db)
     token_response = controller.login(credentials.username, credentials.password)
 
-    # Set token as httpOnly cookie for XSS protection
+    # Set access token as httpOnly cookie for XSS protection
     response.set_cookie(
         key="access_token",
         value=f"Bearer {token_response.access_token}",
         httponly=True,
         secure=not settings.DEBUG,  # Secure in production
+        samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/",
+    )
+
+    return token_response
+
+
+@router.post("/refresh", response_model=Token)
+async def refresh_token(
+    response: Response,
+    refresh_request: RefreshTokenRequest,
+    db=Depends(get_db),
+):
+    """
+    Refresh access token using a valid refresh token.
+
+    Security:
+    - Validates refresh token signature and expiration.
+    - Issues new short-lived access token.
+    - If token rotation is enabled, also issues new refresh token.
+    - Access token is set as httpOnly cookie for XSS protection.
+    """
+    controller = AuthController(db)
+    token_response = controller.refresh_token(refresh_request.refresh_token)
+
+    # Set new access token as httpOnly cookie
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {token_response.access_token}",
+        httponly=True,
+        secure=not settings.DEBUG,
         samesite="lax",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         path="/",
