@@ -13,6 +13,18 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
+class TokenWithRefresh(BaseModel):
+    """JWT token response with refresh token."""
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+
+
+class RefreshTokenRequest(BaseModel):
+    """Request to refresh access token using refresh token."""
+    refresh_token: str
+
+
 class TokenData(BaseModel):
     """Data extracted from JWT token."""
     user_id: str | None = None

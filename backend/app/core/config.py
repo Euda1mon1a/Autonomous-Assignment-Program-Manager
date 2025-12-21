@@ -53,6 +53,8 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str = Field(default_factory=lambda: secrets.token_urlsafe(64))
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # 7 days
+    REFRESH_TOKEN_ROTATE: bool = True  # Issue new refresh token on each use
     WEBHOOK_SECRET: str = Field(default_factory=lambda: secrets.token_urlsafe(64))
     WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS: int = 300  # 5 minutes
 

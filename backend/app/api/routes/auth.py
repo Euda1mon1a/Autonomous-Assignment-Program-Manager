@@ -4,9 +4,9 @@ Thin routing layer that connects URL paths to controllers.
 All business logic is in the service layer.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 
@@ -16,14 +16,25 @@ from app.core.rate_limit import create_rate_limit_dependency
 from app.core.security import (
     ALGORITHM,
     blacklist_token,
+    create_access_token,
+    create_refresh_token,
     get_admin_user,
     get_current_active_user,
     get_current_user,
+    get_user_by_id,
     oauth2_scheme,
+    verify_refresh_token,
 )
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.auth import Token, UserCreate, UserLogin, UserResponse
+from app.schemas.auth import (
+    RefreshTokenRequest,
+    Token,
+    TokenWithRefresh,
+    UserCreate,
+    UserLogin,
+    UserResponse,
+)
 
 settings = get_settings()
 router = APIRouter()
@@ -42,7 +53,7 @@ rate_limit_register = create_rate_limit_dependency(
 )
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=TokenWithRefresh)
 async def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -50,17 +61,18 @@ async def login(
     _rate_limit: None = Depends(rate_limit_login),
 ):
     """
-    Authenticate user and return JWT token.
+    Authenticate user and return JWT access and refresh tokens.
 
     Accepts OAuth2 password flow (username + password).
     Rate limited to prevent brute force attacks.
 
-    Security: Token is set as httpOnly cookie to prevent XSS attacks.
+    Security: Access token is set as httpOnly cookie to prevent XSS attacks.
+    Refresh token is returned in the response body for secure storage.
     """
     controller = AuthController(db)
     token_response = controller.login(form_data.username, form_data.password)
 
-    # Set token as httpOnly cookie for XSS protection
+    # Set access token as httpOnly cookie for XSS protection
     response.set_cookie(
         key="access_token",
         value=f"Bearer {token_response.access_token}",
@@ -71,10 +83,28 @@ async def login(
         path="/",
     )
 
-    return token_response
+    # Decode access token to get user info for refresh token
+    payload = jwt.decode(
+        token_response.access_token,
+        settings.SECRET_KEY,
+        algorithms=[ALGORITHM]
+    )
+    user_id = payload.get("sub")
+    username = payload.get("username")
+
+    # Generate refresh token with user data
+    refresh_token, _, _ = create_refresh_token(
+        data={"sub": user_id, "username": username}
+    )
+
+    return TokenWithRefresh(
+        access_token=token_response.access_token,
+        refresh_token=refresh_token,
+        token_type="bearer"
+    )
 
 
-@router.post("/login/json", response_model=Token)
+@router.post("/login/json", response_model=TokenWithRefresh)
 async def login_json(
     response: Response,
     credentials: UserLogin,
@@ -82,17 +112,18 @@ async def login_json(
     _rate_limit: None = Depends(rate_limit_login),
 ):
     """
-    Authenticate user with JSON body and return JWT token.
+    Authenticate user with JSON body and return JWT access and refresh tokens.
 
     Alternative to OAuth2 form-based login.
     Rate limited to prevent brute force attacks.
 
-    Security: Token is set as httpOnly cookie to prevent XSS attacks.
+    Security: Access token is set as httpOnly cookie to prevent XSS attacks.
+    Refresh token is returned in the response body for secure storage.
     """
     controller = AuthController(db)
     token_response = controller.login(credentials.username, credentials.password)
 
-    # Set token as httpOnly cookie for XSS protection
+    # Set access token as httpOnly cookie for XSS protection
     response.set_cookie(
         key="access_token",
         value=f"Bearer {token_response.access_token}",
@@ -103,7 +134,25 @@ async def login_json(
         path="/",
     )
 
-    return token_response
+    # Decode access token to get user info for refresh token
+    payload = jwt.decode(
+        token_response.access_token,
+        settings.SECRET_KEY,
+        algorithms=[ALGORITHM]
+    )
+    user_id = payload.get("sub")
+    username = payload.get("username")
+
+    # Generate refresh token with user data
+    refresh_token, _, _ = create_refresh_token(
+        data={"sub": user_id, "username": username}
+    )
+
+    return TokenWithRefresh(
+        access_token=token_response.access_token,
+        refresh_token=refresh_token,
+        token_type="bearer"
+    )
 
 
 @router.post("/logout")
@@ -150,6 +199,87 @@ async def logout(
     response.delete_cookie(key="access_token", path="/")
 
     return {"message": "Successfully logged out"}
+
+
+@router.post("/refresh", response_model=TokenWithRefresh)
+async def refresh_token(
+    response: Response,
+    request: RefreshTokenRequest,
+    db=Depends(get_db),
+):
+    """
+    Exchange a refresh token for a new access token.
+
+    Security:
+    - When REFRESH_TOKEN_ROTATE is enabled, a new refresh token is issued
+      and the old refresh token is IMMEDIATELY BLACKLISTED to prevent reuse.
+    - This addresses the token theft window: if an attacker steals a refresh
+      token, they cannot continue using it after the legitimate user refreshes.
+    - The blacklist check happens before issuing new tokens, so a reused
+      token will be rejected.
+
+    Returns:
+        TokenWithRefresh: New access token and optionally new refresh token
+    """
+    from uuid import UUID
+
+    # Verify refresh token and optionally blacklist it if rotation is enabled
+    # CRITICAL: blacklist_on_use=True ensures the old token cannot be reused
+    token_data, old_jti, old_expires = verify_refresh_token(
+        token=request.refresh_token,
+        db=db,
+        blacklist_on_use=settings.REFRESH_TOKEN_ROTATE,  # Blacklist when rotating
+    )
+
+    if token_data is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Verify user still exists and is active
+    user = get_user_by_id(db, UUID(token_data.user_id))
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Create new access token
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    new_access_token, _, _ = create_access_token(
+        data={"sub": str(user.id), "username": user.username},
+        expires_delta=access_token_expires,
+    )
+
+    # Set new access token as httpOnly cookie
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {new_access_token}",
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/",
+    )
+
+    # Create new refresh token if rotation is enabled
+    # The old token was already blacklisted in verify_refresh_token
+    if settings.REFRESH_TOKEN_ROTATE:
+        new_refresh_token, _, _ = create_refresh_token(
+            data={"sub": str(user.id), "username": user.username}
+        )
+    else:
+        # Return the same refresh token if rotation is disabled
+        new_refresh_token = request.refresh_token
+
+    return TokenWithRefresh(
+        access_token=new_access_token,
+        refresh_token=new_refresh_token,
+        token_type="bearer"
+    )
 
 
 @router.get("/me", response_model=UserResponse)

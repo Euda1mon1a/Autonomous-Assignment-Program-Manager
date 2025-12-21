@@ -8,6 +8,28 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### :lock: Security - Refresh Token Rotation Fix
+
+Fixed a security vulnerability in refresh token rotation where old tokens were not being blacklisted.
+
+#### Changes
+- **New endpoint**: `POST /api/auth/refresh` - Exchange refresh token for new tokens
+- **Token blacklisting**: When `REFRESH_TOKEN_ROTATE=true` (default), old refresh tokens are immediately blacklisted upon use
+- **Token type validation**: Refresh tokens now include `type: "refresh"` claim to prevent access tokens being used as refresh tokens
+- **Configuration options**:
+  - `REFRESH_TOKEN_EXPIRE_DAYS` - Refresh token lifetime (default: 7 days)
+  - `REFRESH_TOKEN_ROTATE` - Enable token rotation with blacklisting (default: true)
+
+#### Security Impact
+- **Before**: An attacker with a stolen refresh token could continue exchanging it for new access tokens until natural expiration
+- **After**: Once a refresh token is used, it is blacklisted and cannot be reused. Stolen tokens are invalidated after the legitimate user refreshes
+
+#### Updated Endpoints
+- `POST /api/auth/login` - Now returns `refresh_token` in response
+- `POST /api/auth/login/json` - Now returns `refresh_token` in response
+
+---
+
 ### :test_tube: Load Testing Infrastructure (Session 10)
 
 Added comprehensive load testing framework for healthcare scheduling system validation.
