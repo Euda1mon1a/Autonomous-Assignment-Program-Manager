@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.validators.date_validators import validate_academic_year_date
+
 
 class LeaveType(str, Enum):
     """
@@ -47,6 +49,12 @@ class LeaveWebhookPayload(BaseModel):
     description: str | None = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
+    @field_validator('start_date', 'end_date')
+    @classmethod
+    def validate_dates_in_range(cls, v: date) -> date:
+        """Validate dates are within academic year bounds."""
+        return validate_academic_year_date(v, field_name="date")
+
     @field_validator('end_date')
     @classmethod
     def end_date_after_start(cls, v, info):
@@ -64,6 +72,12 @@ class LeaveCreateRequest(BaseModel):
     is_blocking: bool = True
     description: str | None = Field(None, max_length=500)
 
+    @field_validator('start_date', 'end_date')
+    @classmethod
+    def validate_dates_in_range(cls, v: date) -> date:
+        """Validate dates are within academic year bounds."""
+        return validate_academic_year_date(v, field_name="date")
+
     @field_validator('end_date')
     @classmethod
     def end_date_after_start(cls, v, info):
@@ -79,6 +93,14 @@ class LeaveUpdateRequest(BaseModel):
     leave_type: LeaveType | None = None
     is_blocking: bool | None = None
     description: str | None = Field(None, max_length=500)
+
+    @field_validator('start_date', 'end_date')
+    @classmethod
+    def validate_dates_in_range(cls, v: date | None) -> date | None:
+        """Validate dates are within academic year bounds."""
+        if v is not None:
+            return validate_academic_year_date(v, field_name="date")
+        return v
 
 
 class LeaveResponse(BaseModel):

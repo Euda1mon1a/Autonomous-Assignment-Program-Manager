@@ -60,10 +60,8 @@ class TestNotificationService:
         assert "coord@hospital.org" in formatted
 
     def test_validate_email_format(self):
-        """Test email format validation."""
-        import re
-
-        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        """Test email format validation using email-validator library."""
+        from email_validator import validate_email, EmailNotValidError
 
         valid_emails = [
             "user@example.com",
@@ -79,10 +77,14 @@ class TestNotificationService:
         ]
 
         for email in valid_emails:
-            assert re.match(email_pattern, email), f"{email} should be valid"
+            try:
+                validate_email(email, check_deliverability=False)
+            except EmailNotValidError:
+                pytest.fail(f"{email} should be valid")
 
         for email in invalid_emails:
-            assert not re.match(email_pattern, email), f"{email} should be invalid"
+            with pytest.raises(EmailNotValidError):
+                validate_email(email, check_deliverability=False)
 
 
 @pytest.mark.unit

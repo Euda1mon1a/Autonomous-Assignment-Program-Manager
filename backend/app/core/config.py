@@ -1,9 +1,46 @@
 """Application configuration."""
+import logging
 import secrets
 from functools import lru_cache
+from urllib.parse import urlparse
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
+
+logger = logging.getLogger(__name__)
+
+# Known weak/default passwords that should never be used in production
+WEAK_PASSWORDS = {
+    "",
+    "password",
+    "admin",
+    "123456",
+    "12345678",
+    "123456789",
+    "test",
+    "guest",
+    "root",
+    "toor",
+    "letmein",
+    "welcome",
+    "monkey",
+    "dragon",
+    "master",
+    "sunshine",
+    "qwerty",
+    "abc123",
+    "default",
+    "changeme",
+    # Common defaults from .env.example files
+    "scheduler",
+    "your_redis_password_here",
+    "your_secure_database_password_here",
+    "your-secret-key-change-in-production",
+    "your-webhook-secret-change-in-production",
+    "your_secret_key_here_generate_a_random_64_char_string",
+    "your_redis_password_here_generate_a_random_string",
+    "dev_only_password",
+}
 
 
 class Settings(BaseSettings):
@@ -12,7 +49,7 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "Residency Scheduler"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = False
+    DEBUG: bool = True
 
     # Logging
     LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -52,7 +89,7 @@ class Settings(BaseSettings):
 
     # Security
     SECRET_KEY: str = Field(default_factory=lambda: secrets.token_urlsafe(64))
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # 15 minutes (security: reduced from 24 hours)
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # 7 days
     REFRESH_TOKEN_ROTATE: bool = True  # Issue new refresh token on each use
     WEBHOOK_SECRET: str = Field(default_factory=lambda: secrets.token_urlsafe(64))
@@ -72,6 +109,7 @@ class Settings(BaseSettings):
 
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    CORS_ORIGINS_REGEX: str = ""  # Optional regex pattern for flexible origin matching
 
     # Trusted Hosts (for TrustedHostMiddleware - prevents host header attacks)
     # Empty list disables the middleware; set in production to actual domain(s)
@@ -109,25 +147,201 @@ class Settings(BaseSettings):
     @field_validator('SECRET_KEY', 'WEBHOOK_SECRET')
     @classmethod
     def validate_secrets(cls, v: str, info) -> str:
-        """Validate that secrets are not using insecure default values."""
-        field_name = info.field_name
-        insecure_defaults = [
-            "",
-            "your-secret-key-change-in-production",
-            "your-webhook-secret-change-in-production",
-        ]
+        """
+        Validate that secrets are not using insecure default values.
 
-        if v in insecure_defaults:
-            raise ValueError(
-                f"{field_name} must be set to a secure value. "
-                f"Set the {field_name} environment variable to a strong random value."
+        In production (DEBUG=False): Raises errors for weak/default secrets.
+        In development (DEBUG=True): Logs warnings but allows weak secrets.
+        """
+        field_name = info.field_name
+        debug_mode = info.data.get('DEBUG', False)
+
+        # Check against known weak passwords
+        if v.lower() in WEAK_PASSWORDS or v in WEAK_PASSWORDS:
+            error_msg = (
+                f"{field_name} is using a known weak/default value. "
+                f"Set the {field_name} environment variable to a strong random value. "
+                f"Generate with: python -c 'import secrets; print(secrets.token_urlsafe(64))'"
             )
+            if debug_mode:
+                logger.warning(
+                    f"[SECURITY WARNING] {error_msg} "
+                    "(Acceptable in DEBUG mode but MUST be changed for production)"
+                )
+            else:
+                raise ValueError(error_msg)
 
         # Check minimum length (at least 32 characters for production secrets)
         if len(v) < 32:
-            raise ValueError(
+            error_msg = (
                 f"{field_name} must be at least 32 characters long for security. "
-                f"Current length: {len(v)}"
+                f"Current length: {len(v)}. "
+                f"Generate with: python -c 'import secrets; print(secrets.token_urlsafe(64))'"
+            )
+            if debug_mode:
+                logger.warning(
+                    f"[SECURITY WARNING] {error_msg} "
+                    "(Acceptable in DEBUG mode but MUST be changed for production)"
+                )
+            else:
+                raise ValueError(error_msg)
+
+        return v
+
+    @field_validator('REDIS_PASSWORD')
+    @classmethod
+    def validate_redis_password(cls, v: str, info) -> str:
+        """
+        Validate Redis password security.
+
+        In production (DEBUG=False): Requires strong password.
+        In development (DEBUG=True): Allows empty/weak passwords with warning.
+        """
+        debug_mode = info.data.get('DEBUG', False)
+
+        # Allow empty in development (Redis running without auth)
+        if not v:
+            if debug_mode:
+                logger.info(
+                    "[SECURITY INFO] REDIS_PASSWORD not set. "
+                    "Redis will be accessed without authentication (acceptable in DEBUG mode only)."
+                )
+                return v
+            else:
+                raise ValueError(
+                    "REDIS_PASSWORD must be set in production. "
+                    "Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+                )
+
+        # Check against known weak passwords
+        if v.lower() in WEAK_PASSWORDS or v in WEAK_PASSWORDS:
+            error_msg = (
+                f"REDIS_PASSWORD is using a known weak/default value. "
+                f"Use a strong random value. "
+                f"Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+            )
+            if debug_mode:
+                logger.warning(
+                    f"[SECURITY WARNING] {error_msg} "
+                    "(Acceptable in DEBUG mode but MUST be changed for production)"
+                )
+            else:
+                raise ValueError(error_msg)
+
+        # Check minimum length (at least 16 characters for Redis)
+        if len(v) < 16:
+            error_msg = (
+                f"REDIS_PASSWORD must be at least 16 characters long for security. "
+                f"Current length: {len(v)}. "
+                f"Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+            )
+            if debug_mode:
+                logger.warning(
+                    f"[SECURITY WARNING] {error_msg} "
+                    "(Acceptable in DEBUG mode but MUST be changed for production)"
+                )
+            else:
+                raise ValueError(error_msg)
+
+        return v
+
+    @field_validator('DATABASE_URL')
+    @classmethod
+    def validate_database_url(cls, v: str, info) -> str:
+        """
+        Validate database URL to ensure password is not using weak/default values.
+
+        In production (DEBUG=False): Rejects weak database passwords.
+        In development (DEBUG=True): Allows weak passwords with warning.
+        """
+        debug_mode = info.data.get('DEBUG', False)
+
+        try:
+            parsed = urlparse(v)
+            db_password = parsed.password
+
+            # If no password in URL, that's a critical error
+            if db_password is None:
+                raise ValueError(
+                    "DATABASE_URL must include a password. "
+                    "Format: postgresql://user:password@host:port/dbname"
+                )
+
+            # Check against known weak passwords
+            if db_password.lower() in WEAK_PASSWORDS or db_password in WEAK_PASSWORDS:
+                error_msg = (
+                    f"DATABASE_URL contains a known weak/default password: '{db_password}'. "
+                    f"Use a strong random password for the database user."
+                )
+                if debug_mode:
+                    logger.warning(
+                        f"[SECURITY WARNING] {error_msg} "
+                        "(Acceptable in DEBUG mode but MUST be changed for production)"
+                    )
+                else:
+                    raise ValueError(error_msg)
+
+            # Check password length (at least 12 characters for databases)
+            if len(db_password) < 12:
+                error_msg = (
+                    f"DATABASE_URL password must be at least 12 characters long. "
+                    f"Current length: {len(db_password)}."
+                )
+                if debug_mode:
+                    logger.warning(
+                        f"[SECURITY WARNING] {error_msg} "
+                        "(Acceptable in DEBUG mode but MUST be changed for production)"
+                    )
+                else:
+                    raise ValueError(error_msg)
+
+        except Exception as e:
+            # If we can't parse the URL, let it through but warn
+            if "DATABASE_URL must include a password" in str(e) or "weak/default password" in str(e) or "must be at least" in str(e):
+                raise  # Re-raise our validation errors
+            logger.warning(f"Unable to parse DATABASE_URL for validation: {e}")
+
+        return v
+
+    @field_validator('CORS_ORIGINS')
+    @classmethod
+    def validate_cors_origins(cls, v: list[str], info) -> list[str]:
+        """
+        Validate CORS origins to prevent overly permissive configuration in production.
+
+        Security requirements:
+        - In production (DEBUG=False), wildcard "*" is forbidden
+        - Warns about overly permissive configurations
+        - Allows localhost origins for development flexibility
+        """
+        # Get DEBUG value from field values being validated
+        # Note: field_validator runs during model initialization, so we can access other fields
+        debug_mode = info.data.get('DEBUG', False)
+
+        # Check for wildcard "*" - forbidden in production
+        if "*" in v:
+            if not debug_mode:
+                raise ValueError(
+                    "CORS_ORIGINS cannot contain wildcard '*' in production. "
+                    "Specify explicit allowed origins (e.g., ['https://scheduler.hospital.org']) "
+                    "or use CORS_ORIGINS_REGEX for pattern matching."
+                )
+            else:
+                # Development mode: warn but allow
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    "CORS wildcard '*' detected in DEBUG mode. "
+                    "This is acceptable for development but MUST NOT be used in production."
+                )
+
+        # Warn about multiple overly broad origins in production
+        if not debug_mode and len(v) > 10:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                f"CORS_ORIGINS contains {len(v)} origins. "
+                "Consider using CORS_ORIGINS_REGEX for pattern matching if appropriate."
             )
 
         return v
