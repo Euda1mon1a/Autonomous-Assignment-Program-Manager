@@ -878,6 +878,74 @@ class TestTokenSecurity:
 
         assert response.status_code == 401
 
+    def test_refresh_token_cannot_be_used_as_access_token(
+        self, client: TestClient, admin_user: User
+    ):
+        """Test that refresh tokens are rejected when used as access tokens.
+
+        SECURITY: This is a critical security test. Refresh tokens are long-lived
+        (7 days by default) while access tokens are short-lived (30 minutes).
+        If refresh tokens could be used as access tokens, an attacker who steals
+        a refresh token would have API access for 7 days instead of needing to
+        use the /refresh endpoint (which can implement additional security checks).
+
+        The vulnerability: refresh tokens contain sub/username claims and are
+        signed with the same key, so without explicit type checking, they would
+        pass JWT validation.
+
+        The fix: verify_token() must reject tokens with type="refresh".
+        """
+        ***REMOVED*** Login to get a refresh token
+        login_response = client.post(
+            "/api/auth/login/json",
+            json={"username": "testadmin", "password": "testpass123"},
+        )
+        assert login_response.status_code == 200
+        refresh_token = login_response.json()["refresh_token"]
+
+        ***REMOVED*** Verify it's actually a refresh token
+        decoded = jwt.decode(
+            refresh_token,
+            settings.SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+        assert decoded.get("type") == "refresh"
+        assert decoded.get("sub") == str(admin_user.id)
+
+        ***REMOVED*** The login above sets an access_token cookie; clear it so this request
+        ***REMOVED*** relies solely on the refresh token passed in the Authorization header.
+        client.cookies.clear()
+
+        ***REMOVED*** Try to use refresh token to access a protected endpoint
+        ***REMOVED*** This MUST fail - refresh tokens should only work at /refresh
+        response = client.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {refresh_token}"}
+        )
+
+        ***REMOVED*** Must be rejected - refresh tokens cannot substitute for access tokens
+        assert response.status_code == 401
+
+    def test_refresh_token_in_cookie_rejected(
+        self, client: TestClient, admin_user: User
+    ):
+        """Test that refresh tokens in cookies are also rejected.
+
+        SECURITY: The authentication system checks both the Authorization header
+        and httpOnly cookies. Ensure refresh tokens are rejected from either source.
+        """
+        ***REMOVED*** Create a refresh token
+        refresh_token, _, _ = create_refresh_token(
+            data={"sub": str(admin_user.id), "username": admin_user.username}
+        )
+
+        ***REMOVED*** Try to use refresh token via cookie
+        client.cookies.set("access_token", f"Bearer {refresh_token}")
+        response = client.get("/api/auth/me")
+
+        ***REMOVED*** Must be rejected
+        assert response.status_code == 401
+
 
 ***REMOVED*** ============================================================================
 ***REMOVED*** Edge Cases and Error Handling Tests
