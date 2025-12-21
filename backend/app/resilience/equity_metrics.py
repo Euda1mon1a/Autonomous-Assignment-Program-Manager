@@ -242,21 +242,25 @@ def equity_report(
     min_hours = float(np.min(hours_array))
     max_hours = float(np.max(hours_array))
 
-    # Find most overloaded and underloaded providers
+    # Find most overloaded and underloaded providers using the same values
+    # used for delta calculations to keep recommendations consistent
     if weights is not None:
         # Use intensity-adjusted hours for identification
         adjusted_hours = {
             pid: provider_hours[pid] * intensity_weights[pid]
             for pid in provider_ids
         }
-        most_overloaded = max(adjusted_hours, key=adjusted_hours.get)
-        most_underloaded = min(adjusted_hours, key=adjusted_hours.get)
+        std_adjusted_hours = float(np.std(np.array(list(adjusted_hours.values()))))
     else:
-        most_overloaded = max(provider_hours, key=provider_hours.get)
-        most_underloaded = min(provider_hours, key=provider_hours.get)
+        adjusted_hours = {pid: provider_hours[pid] for pid in provider_ids}
+        std_adjusted_hours = std_hours
 
-    overload_delta = provider_hours[most_overloaded] - mean_hours
-    underload_delta = mean_hours - provider_hours[most_underloaded]
+    most_overloaded = max(adjusted_hours, key=adjusted_hours.get)
+    most_underloaded = min(adjusted_hours, key=adjusted_hours.get)
+
+    mean_adjusted_hours = float(np.mean(list(adjusted_hours.values())))
+    overload_delta = adjusted_hours[most_overloaded] - mean_adjusted_hours
+    underload_delta = mean_adjusted_hours - adjusted_hours[most_underloaded]
 
     # Target Gini coefficient for medical scheduling (based on research)
     # Values below 0.15 indicate equitable distribution
@@ -273,24 +277,24 @@ def equity_report(
         )
 
         # Recommend specific actions
-        if overload_delta > mean_hours * 0.2:  # 20% above mean
+        if overload_delta > mean_adjusted_hours * 0.2:  # 20% above mean
             recommendations.append(
                 f"Provider {most_overloaded} is {overload_delta:.1f} hours "
-                f"({(overload_delta/mean_hours*100):.1f}%) above average. "
+                f"({(overload_delta/mean_adjusted_hours*100):.1f}%) above average. "
                 "Consider reducing their assignments."
             )
 
-        if underload_delta > mean_hours * 0.2:  # 20% below mean
+        if underload_delta > mean_adjusted_hours * 0.2:  # 20% below mean
             recommendations.append(
                 f"Provider {most_underloaded} is {underload_delta:.1f} hours "
-                f"({(underload_delta/mean_hours*100):.1f}%) below average. "
+                f"({(underload_delta/mean_adjusted_hours*100):.1f}%) below average. "
                 "Consider increasing their assignments."
             )
 
-        if std_hours > mean_hours * 0.25:  # High variation
+        if std_adjusted_hours > mean_adjusted_hours * 0.25:  # High variation
             recommendations.append(
-                f"High variation in workload (σ={std_hours:.1f}, "
-                f"{(std_hours/mean_hours*100):.1f}% of mean). "
+                f"High variation in workload (σ={std_adjusted_hours:.1f}, "
+                f"{(std_adjusted_hours/mean_adjusted_hours*100):.1f}% of mean). "
                 "Review assignment algorithm for bias."
             )
 
@@ -308,7 +312,7 @@ def equity_report(
         )
 
         # Even if equitable, flag significant outliers
-        if overload_delta > mean_hours * 0.3:
+        if overload_delta > mean_adjusted_hours * 0.3:
             recommendations.append(
                 f"Note: Provider {most_overloaded} is still {overload_delta:.1f} hours "
                 "above average. Monitor for burnout risk."
