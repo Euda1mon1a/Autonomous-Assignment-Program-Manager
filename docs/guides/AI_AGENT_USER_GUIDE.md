@@ -200,6 +200,115 @@ ChatGPT Codex cannot replicate this workflow. If you try to use Codex for this p
 
 **Bottom Line:** Use Claude Code (Web, CLI, or IDE) for this project. ChatGPT Codex is a different tool for different use cases.
 
+### Browser Extensions & Agentic Browsers
+
+Several browser-based tools provide Claude access but with varying capabilities. Understanding these differences prevents frustration.
+
+#### Quick Comparison
+
+| Tool | What It Does | Codebase Access | Best Use Case |
+|------|--------------|-----------------|---------------|
+| **Claude Code Web** | Full agentic development | Full (via GitHub) | Primary development |
+| **Claude Chrome Extension** | Chat overlay in browser | None (conversation only) | Quick questions while browsing |
+| **Comet** | Agentic browser automation | Limited (can view open tabs) | Web scraping, form filling, research |
+| **Atlas** | Multi-step browser workflows | Limited (browser context only) | Complex web tasks, data extraction |
+
+#### Claude Chrome Extension
+
+**What it IS:**
+- Quick access to Claude chat from any webpage
+- Can read/analyze the current page content
+- Convenient for summarizing articles or asking questions about what you're viewing
+
+**What it IS NOT:**
+- A coding environment (cannot edit files)
+- Connected to your codebase or GitHub
+- Capable of running commands or git operations
+- A replacement for Claude Code
+
+**When to use:** Research while browsing, quick questions, summarizing web content. NOT for development work.
+
+#### Agentic Browsers (Comet, Atlas, etc.)
+
+Agentic browsers let Claude control browser actions—clicking, typing, navigating. This is powerful but fundamentally different from coding.
+
+**What Agentic Browsers DO Well:**
+- Automate repetitive web tasks (filling forms, clicking through workflows)
+- Extract data from websites
+- Navigate complex web UIs
+- Research across multiple sites
+- Test web applications from a user perspective
+
+**What Agentic Browsers DON'T Do:**
+- Edit code files in your repository
+- Run terminal commands (npm, pytest, git)
+- Access your local filesystem
+- Load project-specific skills or MCP tools
+- Integrate with your development workflow
+
+**Comet Specifics:**
+- Strong at multi-step browser automation
+- Can chain actions across pages
+- Good for web research and data gathering
+- Limitation: Browser sandbox only—no filesystem access
+
+**Atlas Specifics:**
+- Designed for complex, multi-page workflows
+- Can handle dynamic web content
+- Good for scraping and form automation
+- Limitation: Same browser-only constraints
+
+#### The "Same Model, Different Capabilities" Confusion
+
+This is a common source of frustration:
+
+> "I used Claude in [browser tool] and it couldn't edit my files. But it's the same Claude model!"
+
+**The model is the same. The environment is not.**
+
+Think of it like this:
+- Claude Code = Claude with hands (can touch your files, run commands)
+- Chrome Extension = Claude with eyes (can see webpages, but can't act on your code)
+- Agentic Browser = Claude with browser hands (can click/type in browser, but can't touch your filesystem)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    SAME CLAUDE MODEL                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Environment determines capabilities, not the model          │
+│                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │ Claude Code  │  │   Browser    │  │   Agentic    │       │
+│  │  Web/CLI     │  │  Extension   │  │   Browser    │       │
+│  ├──────────────┤  ├──────────────┤  ├──────────────┤       │
+│  │ ✓ Files      │  │ ✗ Files      │  │ ✗ Files      │       │
+│  │ ✓ Git        │  │ ✗ Git        │  │ ✗ Git        │       │
+│  │ ✓ Terminal   │  │ ✗ Terminal   │  │ ✗ Terminal   │       │
+│  │ ✓ MCP Tools  │  │ ✗ MCP Tools  │  │ ✗ MCP Tools  │       │
+│  │ ✓ Skills     │  │ ✗ Skills     │  │ ✗ Skills     │       │
+│  │ ✗ Browser    │  │ ✓ Page View  │  │ ✓ Full Ctrl  │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
+│                                                              │
+│  Use case:         Use case:         Use case:              │
+│  Development       Quick research    Web automation         │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### When to Combine Tools
+
+The tools complement each other:
+
+| Scenario | Tool Combination |
+|----------|------------------|
+| Research a library, then implement | Chrome Extension → Claude Code |
+| Scrape data, then process in code | Comet/Atlas → Claude Code |
+| Debug a web UI issue | Claude Code (for code) + Agentic Browser (for testing) |
+| Quick question while coding | Chrome Extension (without leaving browser) |
+
+**Pro tip:** Don't expect browser tools to replace Claude Code for development. Use them for what they're good at (web interaction), then switch to Claude Code when you need to write/edit code.
+
 ---
 
 ## The Three Pillars
