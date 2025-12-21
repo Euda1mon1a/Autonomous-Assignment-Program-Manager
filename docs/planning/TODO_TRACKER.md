@@ -12,11 +12,15 @@ This document tracks all TODO, FIXME, and HACK comments found in the codebase th
 | Portal Routes TODOs | 2 | Low | 2/2 ✅ |
 | Other TODOs | 1 | Low | 1/1 ✅ |
 | Experimental Benchmarks | 9 | Low | 9/9 ✅ |
-| **Total** | **22** | - | **22/22 (100%)** ✅ |
+| **Completed Subtotal** | **22** | - | **22/22 ✅** |
+| Portal Dashboard | 1 | Medium | 0/1 ⏳ |
+| MCP Server | 2 | Low | 0/2 ⏳ |
+| **Grand Total** | **25** | - | **22/25 (88%)** |
 
-> **Status:** All backend implementation TODOs have been resolved.
+> **Status:** Core backend TODOs completed. New items identified in portal and MCP server.
 > - Core backend TODOs: Completed 2025-12-18 (Session 8)
 > - Experimental benchmarks: Completed 2025-12-20 (Session 11)
+> - New items identified: 2025-12-21
 
 ---
 
@@ -298,12 +302,61 @@ This document tracks all TODO, FIXME, and HACK comments found in the codebase th
 | #19 Catalyst Listing | ✅ Completed | Session 11 | 2025-12-20 |
 | #20 Baseline Solver | ✅ Completed | Session 11 | 2025-12-20 |
 | #21 Subprocess Execution | ✅ Completed | Session 11 | 2025-12-20 |
+| #22 Faculty Dashboard Data | ⏳ Pending | - | - |
+| #23 MCP Sampling Call | ⏳ Pending | - | - |
+| #24 Server Cleanup Logic | ⏳ Pending | - | - |
+
+---
+
+## Medium Priority - Portal Dashboard Implementation
+
+### 22. Faculty Dashboard Data ⏳ PENDING
+**Location:** `backend/app/api/routes/portal.py:863`
+**Status:** PENDING
+**Priority:** Medium
+**Description:** The faculty dashboard endpoint currently returns stub data with zeros. Needs implementation for:
+- Actual week counts from assignments
+- Upcoming weeks (next 4-8 weeks)
+- Recent conflict alerts (last 30 days)
+- Incoming swaps requiring response
+
+**Implementation Notes:**
+- Query Assignment table for weeks_assigned/completed/remaining
+- Query Block table for upcoming_weeks
+- Query ConflictAlert table for recent_alerts
+- Query SwapRequest table for pending_swap_decisions
+
+---
+
+## Low Priority - MCP Server TODOs
+
+### 23. MCP Sampling Call ⏳ PENDING
+**Location:** `mcp-server/src/scheduler_mcp/agent_server.py:263`
+**Status:** PENDING
+**Priority:** Low
+**Description:** Replace simulated LLM response with actual MCP sampling call.
+
+**Implementation Notes:**
+- Currently uses `_simulate_llm_response()` as placeholder
+- In production, should call actual LLM via MCP protocol
+- Part of agent-based architecture for AI-assisted scheduling
+
+### 24. Server Cleanup Logic ⏳ PENDING
+**Location:** `mcp-server/src/scheduler_mcp/server.py:1121`
+**Status:** PENDING
+**Priority:** Low
+**Description:** Add cleanup logic for server shutdown (close DB connections, etc.)
+
+**Implementation Notes:**
+- Called when server shuts down
+- Should close database connections gracefully
+- Release any held resources
 
 ---
 
 ## Summary
 
-**All 22 TODOs have been successfully completed as of 2025-12-20.**
+**22 of 25 TODOs have been completed (88%).**
 
 Session 12 completed 20 high-yield parallel improvements:
 - 10 new test files (481 tests)
@@ -333,5 +386,5 @@ See `docs/sessions/SESSION_12_PARALLEL_HIGH_YIELD.md` for detailed breakdown.
 
 ---
 
-*Last updated: 2025-12-20*
-*Status: 100% Complete - Session 12 Finished*
+*Last updated: 2025-12-21*
+*Status: 88% Complete (22/25) - 3 new items identified*
