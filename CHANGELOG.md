@@ -159,7 +159,8 @@ Fixes for bugs identified in Codex review of Session 13 PRs (#312):
 - **Constraints Module**: Modularized from 3,016-line monolithic file to 14 specialized modules (5,613 lines total)
 
 ### Documentation
-- Added `docs/sessions/SESSION_011_PARALLEL_HIGH_YIELD_TODOS.md`
+- Added `docs/sessions/SESSION_11A_MCP_AND_OPTIMIZATION.md`
+- Added `docs/sessions/SESSION_11B_TEST_COVERAGE.md`
 - Added `docs/EMAIL_NOTIFICATION_INFRASTRUCTURE.md`
 - Added `SCHEDULER_OPS_CELERY_INTEGRATION_SUMMARY.md`
 - Added `backend/experimental/benchmarks/STRESS_TESTING_SUMMARY.md`
