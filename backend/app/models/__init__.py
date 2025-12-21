@@ -69,6 +69,48 @@ from app.models.swap import SwapApproval, SwapRecord, SwapStatus, SwapType
 from app.models.token_blacklist import TokenBlacklist
 from app.models.user import User
 from app.models.calendar_subscription import CalendarSubscription
+from app.models.feature_flag import (
+    FeatureFlag,
+    FeatureFlagAudit,
+    FeatureFlagEvaluation,
+)
+from app.models.scheduled_job import JobExecution, ScheduledJob
+from app.models.export_job import (
+    ExportJob,
+    ExportJobExecution,
+    ExportFormat,
+    ExportDeliveryMethod,
+    ExportJobStatus,
+    ExportTemplate,
+)
+from app.models.gateway_auth import (
+    APIKey,
+    OAuth2Client,
+    IPWhitelist,
+    IPBlacklist,
+    RequestSignature,
+)
+from app.models.oauth2_client import PKCEClient
+from app.models.oauth2_authorization_code import OAuth2AuthorizationCode
+from app.models.schema_version import (
+    SchemaChangeEvent,
+    SchemaCompatibilityType,
+    SchemaStatus,
+    SchemaVersion,
+)
+from app.models.state_machine import (
+    StateMachineInstance,
+    StateMachineStatus,
+    StateMachineTransition,
+)
+from app.webhooks.models import (
+    Webhook,
+    WebhookDeadLetter,
+    WebhookDelivery,
+    WebhookDeliveryStatus,
+    WebhookEventType,
+    WebhookStatus,
+)
 
 __all__ = [
     "Person",
@@ -153,4 +195,43 @@ __all__ = [
     "CrossTrainingRecommendationRecord",
     # Calendar Subscription model
     "CalendarSubscription",
+    # Feature Flag models
+    "FeatureFlag",
+    "FeatureFlagEvaluation",
+    "FeatureFlagAudit",
+    # Scheduled Job models
+    "ScheduledJob",
+    "JobExecution",
+    # Export Job models
+    "ExportJob",
+    "ExportJobExecution",
+    "ExportFormat",
+    "ExportDeliveryMethod",
+    "ExportJobStatus",
+    "ExportTemplate",
+    # Webhook models
+    "Webhook",
+    "WebhookDelivery",
+    "WebhookDeadLetter",
+    "WebhookEventType",
+    "WebhookStatus",
+    "WebhookDeliveryStatus",
+    # Gateway Auth models
+    "APIKey",
+    "OAuth2Client",
+    "IPWhitelist",
+    "IPBlacklist",
+    "RequestSignature",
+    # PKCE Auth models
+    "PKCEClient",
+    "OAuth2AuthorizationCode",
+    # Schema Version models
+    "SchemaVersion",
+    "SchemaChangeEvent",
+    "SchemaCompatibilityType",
+    "SchemaStatus",
+    # State Machine models
+    "StateMachineInstance",
+    "StateMachineTransition",
+    "StateMachineStatus",
 ]
