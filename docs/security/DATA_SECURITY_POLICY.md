@@ -6,7 +6,7 @@
 
 ## Overview
 
-This repository is **public** and must not contain:
+This repository should be treated as **potentially public** and must not contain:
 - Real resident/faculty names or identifiers
 - Actual schedule assignments
 - Absence/leave records with PII
@@ -52,11 +52,11 @@ data/*.json
 
 For development and testing, use **sanitized data**:
 
-### Option 1: Synthetic Names
+### Option 1: Clearly Fictitious Names
 ```python
-# Use obviously fake names
-residents = ["Resident A", "Resident B", "Resident C"]
-faculty = ["Dr. Smith", "Dr. Jones", "Dr. Williams"]
+# Use obviously fake placeholder names
+residents = ["Resident Alpha", "Resident Bravo", "Resident Charlie"]
+faculty = ["Dr. Example", "Dr. Placeholder", "Dr. TestFaculty"]
 ```
 
 ### Option 2: Role-Based Identifiers
@@ -91,18 +91,31 @@ Never:
 
 ## If Data Is Accidentally Committed
 
-1. **Immediately** remove from git history:
+1. **Immediately** remove from current branch:
    ```bash
    git rm --cached <file>
    git commit -m "security: Remove sensitive data"
    git push --force-with-lease
    ```
 
-2. **Notify**: Inform project leads of potential exposure
+2. **Scrub from history** (required if data was in prior commits):
+   ```bash
+   # Install BFG Repo Cleaner
+   brew install bfg
+   
+   # Remove file from all history
+   bfg --delete-files <filename> --no-blob-protection
+   git reflog expire --expire=now --all && git gc --prune=now --aggressive
+   git push --force
+   ```
+   
+   > ⚠️ Coordinate with team before force-pushing to shared branches.
 
-3. **Rotate credentials**: If API keys or passwords were exposed
+3. **Notify**: Inform project leads of potential exposure
 
-4. **Document**: Record the incident and remediation
+4. **Rotate credentials**: If API keys or passwords were exposed
+
+5. **Document**: Record the incident and remediation
 
 ---
 

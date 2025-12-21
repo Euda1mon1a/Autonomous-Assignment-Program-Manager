@@ -346,6 +346,7 @@ This system handles military medical residency schedules. **Never commit to the 
 **Gitignored Files:**
 - `docs/data/*_export.json` - Airtable exports with real data
 - `docs/data/*.json` - Any schedule data
+- `*.dump`, `*.sql` - Database dumps
 - `.env`, `.env.local` - Credentials
 
 **For Demo/Test Data:**

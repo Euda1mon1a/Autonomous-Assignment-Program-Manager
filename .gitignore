@@ -93,4 +93,11 @@ nginx/certbot/
 
 # Test coverage output
 frontend/coverage/
+
+# Schedule data exports (OPSEC/PERSEC - never commit)
 docs/data/airtable_absences_*.json
+docs/data/*_export.json
+docs/data/*.json
+*.dump
+*.sql
+!backend/alembic/**/*.sql
