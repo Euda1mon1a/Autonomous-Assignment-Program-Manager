@@ -90,3 +90,6 @@ nginx/ssl/*.csr
 !nginx/ssl/.gitkeep
 nginx/certbot/
 .env.local
+
+***REMOVED*** Test coverage output
+frontend/coverage/

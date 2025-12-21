@@ -10,3 +10,6 @@ export { DashboardPage } from './DashboardPage';
 export { SchedulePage } from './SchedulePage';
 export { SwapPage } from './SwapPage';
 export { AnalyticsPage } from './AnalyticsPage';
+export { TemplatePage } from './TemplatePage';
+export { HeatmapPage } from './HeatmapPage';
+export { ResiliencePage } from './ResiliencePage';

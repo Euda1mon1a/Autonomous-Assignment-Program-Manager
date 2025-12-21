@@ -1,0 +1,514 @@
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { CalendarExportButton, SimpleCalendarExportButton } from '@/components/CalendarExportButton'
+
+// Mock toast context
+const mockToast = {
+  success: jest.fn(),
+  error: jest.fn(),
+}
+
+jest.mock('@/contexts/ToastContext', () => ({
+  useToast: () => ({ toast: mockToast }),
+}))
+
+// Mock fetch
+global.fetch = jest.fn()
+
+// Mock URL methods
+const mockCreateObjectURL = jest.fn(() => 'blob:mock-url')
+const mockRevokeObjectURL = jest.fn()
+global.URL.createObjectURL = mockCreateObjectURL
+global.URL.revokeObjectURL = mockRevokeObjectURL
+
+// Mock clipboard
+Object.assign(navigator, {
+  clipboard: {
+    writeText: jest.fn(() => Promise.resolve()),
+  },
+})
+
+describe('CalendarExportButton', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2024-02-15'))
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
+  })
+
+  describe('Button Rendering', () => {
+    it('should render export button', () => {
+      render(<CalendarExportButton personId="person-1" />)
+
+      expect(screen.getByRole('button', { name: /export calendar/i })).toBeInTheDocument()
+    })
+
+    it('should apply custom className', () => {
+      const { container } = render(
+        <CalendarExportButton personId="person-1" className="custom-class" />
+      )
+
+      const button = container.querySelector('.custom-class')
+      expect(button).toBeInTheDocument()
+    })
+
+    it('should have calendar icon', () => {
+      const { container } = render(<CalendarExportButton personId="person-1" />)
+
+      const icon = container.querySelector('svg')
+      expect(icon).toBeInTheDocument()
+    })
+  })
+
+  describe('Dropdown Behavior', () => {
+    it('should open dropdown when clicking button', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      render(<CalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+
+      expect(screen.getByText('Export Calendar')).toBeInTheDocument()
+      expect(screen.getByText(/download ics file/i)).toBeInTheDocument()
+    })
+
+    it('should close dropdown when clicking backdrop', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      const { container } = render(<CalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      expect(screen.getByText('Export Calendar')).toBeInTheDocument()
+
+      const backdrop = container.querySelector('.fixed.inset-0')
+      await user.click(backdrop!)
+
+      await waitFor(() => {
+        expect(screen.queryByText(/download ics file/i)).not.toBeInTheDocument()
+      })
+    })
+
+    it('should toggle dropdown when clicking button multiple times', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      render(<CalendarExportButton personId="person-1" />)
+
+      const button = screen.getByRole('button', { name: /export calendar/i })
+
+      await user.click(button)
+      expect(screen.getByText('Export Calendar')).toBeInTheDocument()
+
+      await user.click(button)
+      await waitFor(() => {
+        expect(screen.queryByText(/download ics file/i)).not.toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Download ICS Functionality', () => {
+    it('should download ICS for person calendar', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      const mockBlob = new Blob(['mock ics data'], { type: 'text/calendar' })
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      })
+
+      render(<CalendarExportButton personId="person-123" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      await user.click(screen.getByRole('button', { name: /download ics/i }))
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('/api/calendar/export/person/person-123')
+        )
+      })
+
+      expect(mockToast.success).toHaveBeenCalledWith('Calendar exported successfully')
+    })
+
+    it('should download ICS for rotation calendar', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      const mockBlob = new Blob(['mock ics data'], { type: 'text/calendar' })
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      })
+
+      render(<CalendarExportButton rotationId="rotation-456" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      await user.click(screen.getByRole('button', { name: /download ics/i }))
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('/api/calendar/export/rotation/rotation-456')
+        )
+      })
+    })
+
+    it('should include date range in request', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      const mockBlob = new Blob(['mock ics data'], { type: 'text/calendar' })
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      })
+
+      render(
+        <CalendarExportButton
+          personId="person-1"
+          startDate="2024-01-01"
+          endDate="2024-12-31"
+        />
+      )
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      await user.click(screen.getByRole('button', { name: /download ics/i }))
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('start_date=2024-01-01&end_date=2024-12-31')
+        )
+      })
+    })
+
+    it('should include activity types in request', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      const mockBlob = new Blob(['mock ics data'], { type: 'text/calendar' })
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      })
+
+      render(
+        <CalendarExportButton
+          personId="person-1"
+          includeTypes={['clinic', 'inpatient']}
+        />
+      )
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      await user.click(screen.getByRole('button', { name: /download ics/i }))
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('include_types=clinic&include_types=inpatient')
+        )
+      })
+    })
+
+    it('should show loading state during export', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      ;(global.fetch as jest.Mock).mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve({ ok: true, blob: () => Promise.resolve(new Blob()) }), 100))
+      )
+
+      render(<CalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      await user.click(screen.getByRole('button', { name: /download ics/i }))
+
+      expect(screen.getByText('Exporting...')).toBeInTheDocument()
+    })
+
+    it('should handle export error', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ detail: 'Export failed' }),
+      })
+
+      render(<CalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      await user.click(screen.getByRole('button', { name: /download ics/i }))
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith('Export failed')
+      })
+    })
+
+    it('should close dropdown after successful export', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      const mockBlob = new Blob(['mock ics data'], { type: 'text/calendar' })
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      })
+
+      render(<CalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      await user.click(screen.getByRole('button', { name: /download ics/i }))
+
+      await waitFor(() => {
+        expect(screen.queryByText(/download ics file/i)).not.toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Subscription Functionality', () => {
+    it('should show subscription option for person calendars', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      render(<CalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+
+      expect(screen.getByText(/create subscription url/i)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /create subscription/i })).toBeInTheDocument()
+    })
+
+    it('should not show subscription option for rotation calendars', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      render(<CalendarExportButton rotationId="rotation-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+
+      expect(screen.queryByText(/create subscription url/i)).not.toBeInTheDocument()
+    })
+
+    it('should create subscription URL', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ subscription_url: 'https://example.com/calendar/subscribe/token123' }),
+      })
+
+      render(<CalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      await user.click(screen.getByRole('button', { name: /create subscription/i }))
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith('/api/calendar/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ person_id: 'person-1', expires_days: null }),
+        })
+      })
+
+      expect(screen.getByText('https://example.com/calendar/subscribe/token123')).toBeInTheDocument()
+      expect(mockToast.success).toHaveBeenCalledWith('Subscription URL created')
+    })
+
+    it('should show loading state during subscription creation', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      ;(global.fetch as jest.Mock).mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve({ ok: true, json: () => Promise.resolve({ subscription_url: 'url' }) }), 100))
+      )
+
+      render(<CalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      await user.click(screen.getByRole('button', { name: /create subscription/i }))
+
+      expect(screen.getByText('Creating...')).toBeInTheDocument()
+    })
+
+    it('should handle subscription creation error', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ detail: 'Subscription failed' }),
+      })
+
+      render(<CalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      await user.click(screen.getByRole('button', { name: /create subscription/i }))
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith('Subscription failed')
+      })
+    })
+  })
+
+  describe('Copy URL Functionality', () => {
+    it('should copy subscription URL to clipboard', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ subscription_url: 'https://example.com/calendar/subscribe/token123' }),
+      })
+
+      render(<CalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      await user.click(screen.getByRole('button', { name: /create subscription/i }))
+
+      await waitFor(() => {
+        expect(screen.getByText('https://example.com/calendar/subscribe/token123')).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByRole('button', { name: /copy url/i }))
+
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('https://example.com/calendar/subscribe/token123')
+      expect(mockToast.success).toHaveBeenCalledWith('Subscription URL copied to clipboard')
+    })
+
+    it('should show "Copied!" feedback after copying', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ subscription_url: 'https://example.com/url' }),
+      })
+
+      render(<CalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      await user.click(screen.getByRole('button', { name: /create subscription/i }))
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /copy url/i })).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByRole('button', { name: /copy url/i }))
+
+      await waitFor(() => {
+        expect(screen.getByText('Copied!')).toBeInTheDocument()
+      })
+    })
+
+    it('should handle clipboard error', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ subscription_url: 'https://example.com/url' }),
+      })
+
+      ;(navigator.clipboard.writeText as jest.Mock).mockRejectedValue(new Error('Clipboard error'))
+
+      render(<CalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      await user.click(screen.getByRole('button', { name: /create subscription/i }))
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /copy url/i })).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByRole('button', { name: /copy url/i }))
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith('Failed to copy URL')
+      })
+    })
+  })
+
+  describe('Subscription Instructions', () => {
+    it('should show subscription instructions after URL is created', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ subscription_url: 'https://example.com/url' }),
+      })
+
+      render(<CalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export calendar/i }))
+      await user.click(screen.getByRole('button', { name: /create subscription/i }))
+
+      await waitFor(() => {
+        expect(screen.getByText('How to subscribe:')).toBeInTheDocument()
+        expect(screen.getByText(/google calendar.*add by url/i)).toBeInTheDocument()
+        expect(screen.getByText(/outlook.*subscribe to calendar/i)).toBeInTheDocument()
+        expect(screen.getByText(/apple calendar.*new calendar subscription/i)).toBeInTheDocument()
+      })
+    })
+  })
+})
+
+describe('SimpleCalendarExportButton', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2024-02-15'))
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
+  })
+
+  describe('Simple Export', () => {
+    it('should render simple export button', () => {
+      render(<SimpleCalendarExportButton personId="person-1" />)
+
+      expect(screen.getByRole('button', { name: /export to calendar/i })).toBeInTheDocument()
+    })
+
+    it('should export directly without dropdown', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      const mockBlob = new Blob(['mock ics data'], { type: 'text/calendar' })
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      })
+
+      render(<SimpleCalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export to calendar/i }))
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('/api/calendar/export/person/person-1')
+        )
+      })
+
+      expect(mockToast.success).toHaveBeenCalledWith('Calendar exported successfully')
+    })
+
+    it('should disable button during export', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      ;(global.fetch as jest.Mock).mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve({ ok: true, blob: () => Promise.resolve(new Blob()) }), 100))
+      )
+
+      render(<SimpleCalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export to calendar/i }))
+
+      const button = screen.getByRole('button', { name: /exporting/i })
+      expect(button).toBeDisabled()
+    })
+
+    it('should handle export error', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ detail: 'Export failed' }),
+      })
+
+      render(<SimpleCalendarExportButton personId="person-1" />)
+
+      await user.click(screen.getByRole('button', { name: /export to calendar/i }))
+
+      await waitFor(() => {
+        expect(mockToast.error).toHaveBeenCalledWith('Export failed')
+      })
+    })
+  })
+})
