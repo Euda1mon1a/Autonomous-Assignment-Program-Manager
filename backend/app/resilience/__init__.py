@@ -18,6 +18,15 @@ Tier 3 Tactical Concepts:
 10. Stigmergy/Swarm Intelligence (from biology/AI)
 11. Hub Vulnerability Analysis (from network theory)
 12. Creep/Fatigue Analysis (from materials science)
+
+Tier 3+ Cross-Disciplinary Concepts:
+13. SPC Monitoring (from semiconductor manufacturing)
+14. Process Capability (from Six Sigma quality management)
+15. Burnout Epidemiology (from epidemiology and public health)
+16. Erlang Coverage (from telecommunications queueing theory)
+17. Seismic Detection (from seismology early warning systems)
+18. Burnout Fire Index (from forestry CFFDRS)
+19. Creep Fatigue (from materials science)
 """
 
 # Tier 1 imports
@@ -103,6 +112,34 @@ from app.resilience.spc_monitoring import (
     WorkloadControlChart,
     calculate_control_limits,
     calculate_process_capability,
+)
+
+# Tier 3+: Cross-Disciplinary imports
+from app.resilience.burnout_epidemiology import (
+    BurnoutEpidemiology,
+    BurnoutSIRModel,
+    BurnoutState,
+    EpiReport,
+)
+from app.resilience.burnout_fire_index import (
+    BurnoutCodeReport,
+    BurnoutDangerRating,
+    DangerClass,
+    FireDangerReport,
+)
+from app.resilience.erlang_coverage import (
+    ErlangCCalculator,
+    ErlangMetrics,
+    SpecialistCoverage,
+)
+from app.resilience.process_capability import (
+    ProcessCapabilityReport,
+    ScheduleCapabilityAnalyzer,
+)
+from app.resilience.seismic_detection import (
+    BurnoutEarlyWarning,
+    PrecursorSignal,
+    SeismicAlert,
 )
 
 # Main service
@@ -208,6 +245,28 @@ __all__ = [
     "WorkloadControlChart",
     "calculate_control_limits",
     "calculate_process_capability",
+    # Tier 3+: Cross-Disciplinary
+    # Burnout Epidemiology
+    "BurnoutEpidemiology",
+    "BurnoutSIRModel",
+    "BurnoutState",
+    "EpiReport",
+    # Burnout Fire Index
+    "BurnoutCodeReport",
+    "BurnoutDangerRating",
+    "DangerClass",
+    "FireDangerReport",
+    # Erlang Coverage
+    "ErlangCCalculator",
+    "ErlangMetrics",
+    "SpecialistCoverage",
+    # Process Capability
+    "ProcessCapabilityReport",
+    "ScheduleCapabilityAnalyzer",
+    # Seismic Detection
+    "BurnoutEarlyWarning",
+    "PrecursorSignal",
+    "SeismicAlert",
     # Service
     "ResilienceService",
     "ResilienceConfig",
