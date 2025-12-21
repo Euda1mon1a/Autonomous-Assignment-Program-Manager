@@ -1191,7 +1191,43 @@ async def on_shutdown() -> None:
     closing database connections.
     """
     logger.info("Shutting down Residency Scheduler MCP Server")
-    # TODO: Add cleanup logic (close DB connections, etc.)
+
+    # Close database connections
+    if hasattr(mcp, 'db_session') and mcp.db_session:
+        try:
+            await mcp.db_session.close()
+            logger.info("Database session closed")
+        except Exception as e:
+            logger.warning(f"Error closing database session: {e}")
+
+    # Close any open connections
+    if hasattr(mcp, 'connections'):
+        for conn_id, conn in list(mcp.connections.items()):
+            try:
+                await conn.close()
+                logger.debug(f"Closed connection: {conn_id}")
+            except Exception as e:
+                logger.warning(f"Error closing connection {conn_id}: {e}")
+        mcp.connections.clear()
+
+    # Flush any pending metrics
+    if hasattr(mcp, 'metrics'):
+        try:
+            await mcp.metrics.flush()
+            logger.info("Metrics flushed")
+        except Exception as e:
+            logger.warning(f"Error flushing metrics: {e}")
+
+    # Release any held resources
+    if hasattr(mcp, 'resource_locks'):
+        for lock_name, lock in list(mcp.resource_locks.items()):
+            try:
+                if lock.locked():
+                    lock.release()
+                    logger.debug(f"Released lock: {lock_name}")
+            except Exception as e:
+                logger.warning(f"Error releasing lock {lock_name}: {e}")
+
     logger.info("Server shutdown complete")
 
 

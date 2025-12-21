@@ -1,5 +1,7 @@
 """Template rendering engine using Jinja2."""
+import json
 import logging
+import os
 from typing import Any
 
 from jinja2 import (
@@ -74,6 +76,7 @@ class TemplateEngine:
         """
         self.locale = locale
         self.enable_sandbox = enable_sandbox
+        self._translation_cache: dict[str, dict] = {}
 
         # Create Jinja2 environment
         if enable_sandbox:
@@ -353,7 +356,7 @@ class TemplateEngine:
 
         def localize(key: str, **kwargs) -> str:
             """
-            Localize a string (placeholder for i18n).
+            Localize a string using i18n lookup.
 
             Args:
                 key: Localization key
@@ -362,16 +365,84 @@ class TemplateEngine:
             Returns:
                 Localized string
             """
-            # TODO: Implement proper i18n lookup
-            # For now, return the key with variables substituted
+            return self.get_translated_text(key, self.locale, **kwargs)
+
+        # Register global functions
+        self.env.globals["localize"] = localize
+        self.env.globals["locale"] = self.locale
+
+    def get_translated_text(self, key: str, locale: str = "en", **kwargs) -> str:
+        """
+        Get translated text for a given key and locale.
+
+        Args:
+            key: Translation key (e.g., "notification.swap.approved")
+            locale: Locale code (e.g., "en", "es", "fr")
+            **kwargs: Variables for string formatting
+
+        Returns:
+            Translated text or key if not found
+        """
+        # Load translations (with caching)
+        translations = self._load_translations(locale)
+
+        # Navigate nested keys (e.g., "notification.swap.approved")
+        parts = key.split(".")
+        current = translations
+
+        try:
+            for part in parts:
+                current = current[part]
+
+            # Substitute variables in the translated text
+            result = current
+            for k, v in kwargs.items():
+                result = result.replace(f"{{{k}}}", str(v))
+            return result
+        except (KeyError, TypeError):
+            # Fallback to English if not found
+            if locale != "en":
+                return self.get_translated_text(key, "en", **kwargs)
+
+            logger.warning(f"Translation not found: {key}")
+            # Return key with variables substituted as fallback
             result = key
             for k, v in kwargs.items():
                 result = result.replace(f"{{{k}}}", str(v))
             return result
 
-        # Register global functions
-        self.env.globals["localize"] = localize
-        self.env.globals["locale"] = self.locale
+    def _load_translations(self, locale: str) -> dict:
+        """
+        Load translations for a locale with caching.
+
+        Args:
+            locale: Locale code
+
+        Returns:
+            Dictionary of translations
+        """
+        cache_key = f"translations:{locale}"
+
+        if cache_key in self._translation_cache:
+            return self._translation_cache[cache_key]
+
+        try:
+            translations_dir = os.path.join(
+                os.path.dirname(__file__), "translations"
+            )
+            filepath = os.path.join(translations_dir, f"{locale}.json")
+
+            if os.path.exists(filepath):
+                with open(filepath, 'r') as f:
+                    translations = json.load(f)
+            else:
+                translations = {}
+
+            self._translation_cache[cache_key] = translations
+            return translations
+        except Exception as e:
+            logger.warning(f"Failed to load translations for {locale}: {e}")
+            return {}
 
 
 # Default global instance

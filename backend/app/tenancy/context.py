@@ -15,15 +15,19 @@ Uses contextvars for async-safe context management. Each async task
 gets its own isolated context that doesn't interfere with other
 concurrent requests.
 """
+import logging
 from contextvars import ContextVar
 from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+
+logger = logging.getLogger(__name__)
 
 # Context variables for tenant tracking
 # These are async-safe and isolated per request/task
@@ -261,12 +265,18 @@ async def require_active_tenant(db: Session = Depends(get_db)):
     return tenant
 
 
-def require_admin_for_cross_tenant() -> None:
+async def require_admin_for_cross_tenant(
+    current_user_id: str | None = None, db: AsyncSession | None = None
+) -> None:
     """
     Check if the current user is allowed to perform cross-tenant operations.
 
     This should be used when bypassing tenant filtering for administrative
     queries across all tenants.
+
+    Args:
+        current_user_id: ID of the current user (optional)
+        db: Database session (optional)
 
     Raises:
         HTTPException: 403 if user is not authorized
@@ -275,16 +285,149 @@ def require_admin_for_cross_tenant() -> None:
         @router.get("/admin/all-schedules")
         async def list_all_schedules(
             current_user = Depends(get_current_user),
+            db: Session = Depends(get_db),
         ):
-            require_admin_for_cross_tenant()
+            await require_admin_for_cross_tenant(str(current_user.id), db)
             # Can now query across all tenants
             set_current_tenant(bypass=True)
             ...
     """
-    # TODO: Implement actual user permission check
-    # For now, just check if bypass is being attempted
-    # In production, verify current_user.is_admin or similar
-    pass
+    if not current_user_id or not db:
+        # If no user ID or DB provided, we can't check permissions
+        # Log a warning and deny access
+        logger.warning("Cross-tenant access attempted without user ID or DB session")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions for cross-tenant operations",
+        )
+
+    # Check if user has permission
+    has_permission = await check_user_permission(
+        db=db, user_id=current_user_id, resource="tenant", action="admin"
+    )
+
+    if not has_permission:
+        logger.warning(
+            f"User {current_user_id} attempted cross-tenant operation without permission"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions for cross-tenant operations",
+        )
+
+
+async def check_user_permission(
+    db: AsyncSession, user_id: str, resource: str, action: str
+) -> bool:
+    """
+    Check if user has permission for an action on a resource.
+
+    Args:
+        db: Database session
+        user_id: User ID to check
+        resource: Resource type (e.g., "schedule", "person", "assignment", "tenant")
+        action: Action type (e.g., "read", "write", "delete", "admin")
+
+    Returns:
+        True if user has permission, False otherwise
+    """
+    try:
+        from app.models.user import User
+
+        # Get user with their role
+        result = await db.execute(select(User).where(User.id == user_id))
+        user_obj = result.scalar_one_or_none()
+
+        if not user_obj:
+            logger.warning(f"User not found: {user_id}")
+            return False
+
+        # Check if user is active
+        if not user_obj.is_active:
+            logger.warning(f"Inactive user attempted access: {user_id}")
+            return False
+
+        # Check role-based permissions
+        role_permissions = _get_role_permissions(user_obj.role)
+
+        # Check if role has permission for this resource/action
+        if resource in role_permissions:
+            allowed_actions = role_permissions[resource]
+            if action in allowed_actions or "admin" in allowed_actions:
+                return True
+
+        return False
+    except Exception as e:
+        logger.error(f"Permission check failed for user {user_id}: {e}", exc_info=True)
+        return False
+
+
+def _get_role_permissions(role: str) -> dict[str, list[str]]:
+    """
+    Get default permissions for a role.
+
+    Args:
+        role: User role
+
+    Returns:
+        Dictionary mapping resources to allowed actions
+    """
+    ROLE_PERMISSIONS = {
+        "admin": {
+            "schedule": ["read", "write", "delete", "admin"],
+            "person": ["read", "write", "delete", "admin"],
+            "assignment": ["read", "write", "delete", "admin"],
+            "swap": ["read", "write", "delete", "admin"],
+            "tenant": ["read", "write", "delete", "admin"],
+            "feature_flag": ["read", "write", "delete", "admin"],
+        },
+        "coordinator": {
+            "schedule": ["read", "write", "delete"],
+            "person": ["read", "write"],
+            "assignment": ["read", "write", "delete"],
+            "swap": ["read", "write", "delete"],
+            "tenant": ["read"],
+        },
+        "faculty": {
+            "schedule": ["read"],
+            "person": ["read"],
+            "assignment": ["read"],
+            "swap": ["read", "write"],
+            "tenant": ["read"],
+        },
+        "resident": {
+            "schedule": ["read"],
+            "person": ["read"],
+            "assignment": ["read"],
+            "swap": ["read"],
+            "tenant": ["read"],
+        },
+        "clinical_staff": {
+            "schedule": ["read"],
+            "person": ["read"],
+            "assignment": ["read"],
+            "tenant": ["read"],
+        },
+        "rn": {
+            "schedule": ["read"],
+            "person": ["read"],
+            "assignment": ["read"],
+            "tenant": ["read"],
+        },
+        "lpn": {
+            "schedule": ["read"],
+            "person": ["read"],
+            "assignment": ["read"],
+            "tenant": ["read"],
+        },
+        "msa": {
+            "schedule": ["read"],
+            "person": ["read"],
+            "assignment": ["read"],
+            "tenant": ["read"],
+        },
+    }
+    return ROLE_PERMISSIONS.get(role, {})
 
 
 async def get_tenant_by_slug(slug: str, db: Session) -> Optional:

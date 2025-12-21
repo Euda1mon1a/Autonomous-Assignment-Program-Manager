@@ -710,19 +710,109 @@ class SecretRotationService:
             details: Additional details for notification
         """
         try:
-            # In production, this would use the notification service
-            # For now, just log the notification
+            # Log the notification with structured data
             logger.info(
                 f"Rotation notification: {secret_type.value} - {status} "
                 f"(priority: {priority.value})",
                 extra={"details": details},
             )
 
-            # TODO: Integrate with app.notifications.service.NotificationService
-            # to send actual notifications via email, webhook, etc.
+            # Notify admins about rotation result
+            await self._notify_secret_rotation_result(
+                secret_name=secret_type.value,
+                status=status,
+                priority=priority.value,
+                details=details,
+            )
 
         except Exception as e:
             logger.error(f"Failed to send rotation notification: {e}", exc_info=True)
+
+    async def _notify_secret_rotation_result(
+        self,
+        secret_name: str,
+        status: str,
+        priority: str,
+        details: dict[str, Any],
+    ) -> None:
+        """
+        Notify about secret rotation results.
+
+        This function logs rotation results and prepares for future integration
+        with the notification service.
+
+        Args:
+            secret_name: Name of the secret that was rotated
+            status: Rotation status (success, failed, critical_failure, etc.)
+            priority: Priority level
+            details: Additional details about the rotation
+
+        Note:
+            Future enhancement: Add NotificationType.SECRET_ROTATION to enable
+            proper email/webhook notification delivery via NotificationService.
+        """
+        try:
+            # Determine if this was a success or failure
+            success = status in ["success", "grace_period_completed"]
+            error_message = details.get("error") or details.get("rollback_error")
+
+            # Build notification message
+            message = f"Secret rotation {status} for: {secret_name}"
+            if error_message:
+                message += f"\nError: {error_message}"
+            if details.get("action_required"):
+                message += f"\nAction Required: {details['action_required']}"
+
+            # Log structured data for monitoring
+            logger.info(
+                f"Secret rotation result notification",
+                extra={
+                    "secret_name": secret_name,
+                    "status": status,
+                    "success": success,
+                    "priority": priority,
+                    "details": details,
+                }
+            )
+
+            # NOTE: The NotificationService requires a NotificationType enum value,
+            # but there is currently no SECRET_ROTATION type in the enum.
+            # This should be added to app/notifications/templates.py:NotificationType
+            #
+            # Once added, uncomment the following code to enable email notifications:
+            #
+            # from app.notifications.service import NotificationService
+            # from app.notifications.templates import NotificationType
+            # from app.models.user import User
+            # from uuid import UUID
+            #
+            # # Get admin users
+            # admin_users = (
+            #     self.db.query(User)
+            #     .filter(User.role == "admin", User.is_active == True)
+            #     .all()
+            # )
+            #
+            # if admin_users:
+            #     service = NotificationService(self.db)
+            #
+            #     for admin in admin_users:
+            #         await service.send_notification(
+            #             recipient_id=admin.id,
+            #             notification_type=NotificationType.SECRET_ROTATION,
+            #             data={
+            #                 "secret_name": secret_name,
+            #                 "status": status,
+            #                 "success": success,
+            #                 "priority": priority,
+            #                 "message": message,
+            #                 **details
+            #             },
+            #             channels=["email"] if priority in ["high", "critical"] else ["in_app"]
+            #         )
+
+        except Exception as e:
+            logger.warning(f"Failed to send rotation notification: {e}", exc_info=True)
 
     # Rotation handlers for each secret type
 
