@@ -17,6 +17,16 @@ Tier 3 Tactical Concepts:
 9. Cognitive Load Management (from psychology/human factors)
 10. Stigmergy/Swarm Intelligence (from biology/AI)
 11. Hub Vulnerability Analysis (from network theory)
+12. Creep/Fatigue Analysis (from materials science)
+
+Tier 3+ Cross-Disciplinary Concepts:
+13. SPC Monitoring (from semiconductor manufacturing)
+14. Process Capability (from Six Sigma quality management)
+15. Burnout Epidemiology (from epidemiology and public health)
+16. Erlang Coverage (from telecommunications queueing theory)
+17. Seismic Detection (from seismology early warning systems)
+18. Burnout Fire Index (from forestry CFFDRS)
+19. Creep Fatigue (from materials science)
 """
 
 # Tier 1 imports
@@ -43,6 +53,12 @@ from app.resilience.cognitive_load import (
     DecisionComplexity,
     DecisionOutcome,
     DecisionQueueStatus,
+)
+from app.resilience.creep_fatigue import (
+    CreepAnalysis,
+    CreepFatigueModel,
+    CreepStage,
+    FatigueCurve,
 )
 from app.resilience.contingency import (
     CascadeSimulation,
@@ -90,6 +106,40 @@ from app.resilience.sacrifice_hierarchy import (
     ActivityCategory,
     LoadSheddingLevel,
     SacrificeHierarchy,
+)
+from app.resilience.spc_monitoring import (
+    SPCAlert,
+    WorkloadControlChart,
+    calculate_control_limits,
+    calculate_process_capability,
+)
+
+# Tier 3+: Cross-Disciplinary imports
+from app.resilience.burnout_epidemiology import (
+    BurnoutEpidemiology,
+    BurnoutSIRModel,
+    BurnoutState,
+    EpiReport,
+)
+from app.resilience.burnout_fire_index import (
+    BurnoutCodeReport,
+    BurnoutDangerRating,
+    DangerClass,
+    FireDangerReport,
+)
+from app.resilience.erlang_coverage import (
+    ErlangCCalculator,
+    ErlangMetrics,
+    SpecialistCoverage,
+)
+from app.resilience.process_capability import (
+    ProcessCapabilityReport,
+    ScheduleCapabilityAnalyzer,
+)
+from app.resilience.seismic_detection import (
+    BurnoutEarlyWarning,
+    PrecursorSignal,
+    SeismicAlert,
 )
 
 # Main service
@@ -166,6 +216,11 @@ __all__ = [
     "DecisionOutcome",
     "CognitiveLoadReport",
     "DecisionQueueStatus",
+    # Tier 3: Creep/Fatigue
+    "CreepFatigueModel",
+    "CreepStage",
+    "CreepAnalysis",
+    "FatigueCurve",
     # Tier 3: Stigmergy
     "StigmergicScheduler",
     "PreferenceTrail",
@@ -185,6 +240,33 @@ __all__ = [
     "CrossTrainingRecommendation",
     "CrossTrainingPriority",
     "HubDistributionReport",
+    # Tier 3: SPC Monitoring
+    "SPCAlert",
+    "WorkloadControlChart",
+    "calculate_control_limits",
+    "calculate_process_capability",
+    # Tier 3+: Cross-Disciplinary
+    # Burnout Epidemiology
+    "BurnoutEpidemiology",
+    "BurnoutSIRModel",
+    "BurnoutState",
+    "EpiReport",
+    # Burnout Fire Index
+    "BurnoutCodeReport",
+    "BurnoutDangerRating",
+    "DangerClass",
+    "FireDangerReport",
+    # Erlang Coverage
+    "ErlangCCalculator",
+    "ErlangMetrics",
+    "SpecialistCoverage",
+    # Process Capability
+    "ProcessCapabilityReport",
+    "ScheduleCapabilityAnalyzer",
+    # Seismic Detection
+    "BurnoutEarlyWarning",
+    "PrecursorSignal",
+    "SeismicAlert",
     # Service
     "ResilienceService",
     "ResilienceConfig",
