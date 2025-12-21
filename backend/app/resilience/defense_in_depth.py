@@ -257,7 +257,29 @@ class DefenseInDepth:
         """
         Activate a specific defense action.
 
-        Returns True if action was activated successfully.
+        Defense actions are protective measures organized by severity level.
+        Each level operates independently, assuming previous levels have failed.
+
+        Args:
+            level: The DefenseLevel (PREVENTION, CONTROL, SAFETY_SYSTEMS,
+                CONTAINMENT, or EMERGENCY).
+            action_name: Name of the action to activate (e.g., "auto_reassignment",
+                "service_reduction", "crisis_communication").
+            context: Optional dict of context data passed to the action handler.
+
+        Returns:
+            bool: True if action was activated successfully, False otherwise.
+
+        Example:
+            >>> defense = DefenseInDepth()
+            >>> # Activate early warning when coverage drops
+            >>> defense.activate_action(DefenseLevel.CONTROL, "early_warning")
+            >>> # Activate service reduction during crisis
+            >>> defense.activate_action(
+            ...     DefenseLevel.CONTAINMENT,
+            ...     "service_reduction",
+            ...     context={"services_to_reduce": ["elective_procedures"]}
+            ... )
         """
         level_status = self.levels.get(level)
         if not level_status:
@@ -295,7 +317,24 @@ class DefenseInDepth:
         """
         Check redundancy status for a critical function.
 
-        Uses the N+2 rule: should be able to lose 2 providers and still operate.
+        Uses the N+2 rule from nuclear engineering: systems should be able
+        to lose 2 providers and still operate at minimum capacity.
+
+        Args:
+            function_name: Name of the critical function (e.g., "clinical_coverage").
+            available_providers: List of personnel who can provide this function.
+            minimum_required: Minimum number needed for safe operation.
+
+        Returns:
+            RedundancyStatus: Contains:
+                - status: "N+2" (healthy), "N+1" (warning), "N+0" (critical), "BELOW"
+                - redundancy_level: How many can fail before minimum
+
+        Example:
+            >>> defense = DefenseInDepth()
+            >>> status = defense.check_redundancy("surgery_coverage", surgeons, 3)
+            >>> if status.status == "N+0":
+            ...     print("WARNING: No backup surgeons available!")
         """
         available = len(available_providers)
         redundancy = available - minimum_required
@@ -356,7 +395,26 @@ class DefenseInDepth:
         """
         Get the recommended active defense level based on coverage.
 
-        Higher levels should be activated as coverage drops.
+        Higher defense levels should be activated as coverage deteriorates.
+        Each level threshold corresponds to increasingly severe measures.
+
+        Args:
+            coverage_rate: Current coverage rate (0.0 to 1.0). For example,
+                0.95 means 95% of required slots are covered.
+
+        Returns:
+            DefenseLevel: Recommended level based on coverage:
+                - >= 95%: PREVENTION (maintain buffers)
+                - >= 90%: CONTROL (monitoring and alerts)
+                - >= 80%: SAFETY_SYSTEMS (automated response)
+                - >= 70%: CONTAINMENT (limit damage)
+                - < 70%: EMERGENCY (crisis response)
+
+        Example:
+            >>> defense = DefenseInDepth()
+            >>> level = defense.get_recommended_level(0.85)
+            >>> print(f"Recommended level: {level.name}")
+            Recommended level: SAFETY_SYSTEMS
         """
         if coverage_rate >= 0.95:
             return DefenseLevel.PREVENTION

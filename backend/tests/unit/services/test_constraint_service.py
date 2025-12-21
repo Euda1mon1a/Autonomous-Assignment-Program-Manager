@@ -869,3 +869,259 @@ class TestConstraintErrorHandling:
         assert len(hard) == 1
         assert len(soft) == 1
         assert hard[0].priority.value > soft[0].priority.value
+
+
+class TestConstraintServiceScheduleIdValidation:
+    """Test suite for ConstraintService schedule_id validation (security)."""
+
+    def test_valid_uuid_schedule_id(self):
+        """Test that valid UUID schedule_id is accepted."""
+        from app.services.constraint_service import ConstraintService
+
+        valid_uuid = "12345678-1234-1234-1234-123456789abc"
+        result = ConstraintService.validate_schedule_id(valid_uuid)
+
+        assert result == valid_uuid
+
+    def test_valid_alphanumeric_schedule_id(self):
+        """Test that valid alphanumeric schedule_id is accepted."""
+        from app.services.constraint_service import ConstraintService
+
+        valid_id = "schedule_2025_winter"
+        result = ConstraintService.validate_schedule_id(valid_id)
+
+        assert result == valid_id
+
+    def test_valid_schedule_id_with_hyphens(self):
+        """Test that schedule_id with hyphens is accepted."""
+        from app.services.constraint_service import ConstraintService
+
+        valid_id = "schedule-2025-01"
+        result = ConstraintService.validate_schedule_id(valid_id)
+
+        assert result == valid_id
+
+    def test_empty_schedule_id_rejected(self):
+        """Test that empty schedule_id is rejected."""
+        from app.services.constraint_service import (
+            ConstraintService,
+            ScheduleIdValidationError,
+        )
+
+        with pytest.raises(ScheduleIdValidationError, match="cannot be empty"):
+            ConstraintService.validate_schedule_id("")
+
+    def test_none_schedule_id_rejected(self):
+        """Test that None schedule_id is rejected."""
+        from app.services.constraint_service import (
+            ConstraintService,
+            ScheduleIdValidationError,
+        )
+
+        with pytest.raises(ScheduleIdValidationError, match="cannot be empty"):
+            ConstraintService.validate_schedule_id(None)
+
+    def test_whitespace_only_schedule_id_rejected(self):
+        """Test that whitespace-only schedule_id is rejected."""
+        from app.services.constraint_service import (
+            ConstraintService,
+            ScheduleIdValidationError,
+        )
+
+        with pytest.raises(ScheduleIdValidationError, match="empty after stripping"):
+            ConstraintService.validate_schedule_id("   ")
+
+    def test_too_long_schedule_id_rejected(self):
+        """Test that overly long schedule_id is rejected."""
+        from app.services.constraint_service import (
+            ConstraintService,
+            ScheduleIdValidationError,
+        )
+
+        long_id = "a" * 100
+        with pytest.raises(ScheduleIdValidationError, match="too long"):
+            ConstraintService.validate_schedule_id(long_id)
+
+    def test_path_traversal_rejected(self):
+        """Test that path traversal attempts are rejected."""
+        from app.services.constraint_service import (
+            ConstraintService,
+            ScheduleIdValidationError,
+        )
+
+        with pytest.raises(ScheduleIdValidationError, match="invalid characters"):
+            ConstraintService.validate_schedule_id("../etc/passwd")
+
+    def test_sql_injection_rejected(self):
+        """Test that SQL injection attempts are rejected."""
+        from app.services.constraint_service import (
+            ConstraintService,
+            ScheduleIdValidationError,
+        )
+
+        with pytest.raises(ScheduleIdValidationError, match="invalid characters"):
+            ConstraintService.validate_schedule_id("'; DROP TABLE schedules; --")
+
+    def test_command_injection_rejected(self):
+        """Test that command injection attempts are rejected."""
+        from app.services.constraint_service import (
+            ConstraintService,
+            ScheduleIdValidationError,
+        )
+
+        with pytest.raises(ScheduleIdValidationError, match="invalid characters"):
+            ConstraintService.validate_schedule_id("schedule; rm -rf /")
+
+    def test_html_injection_rejected(self):
+        """Test that HTML injection attempts are rejected."""
+        from app.services.constraint_service import (
+            ConstraintService,
+            ScheduleIdValidationError,
+        )
+
+        with pytest.raises(ScheduleIdValidationError, match="invalid characters"):
+            ConstraintService.validate_schedule_id("<script>alert('xss')</script>")
+
+    def test_null_byte_injection_rejected(self):
+        """Test that null byte injection is rejected."""
+        from app.services.constraint_service import (
+            ConstraintService,
+            ScheduleIdValidationError,
+        )
+
+        with pytest.raises(ScheduleIdValidationError, match="invalid characters"):
+            ConstraintService.validate_schedule_id("schedule\x00.txt")
+
+    def test_newline_injection_rejected(self):
+        """Test that newline injection is rejected."""
+        from app.services.constraint_service import (
+            ConstraintService,
+            ScheduleIdValidationError,
+        )
+
+        with pytest.raises(ScheduleIdValidationError, match="invalid characters"):
+            ConstraintService.validate_schedule_id("schedule\nid")
+
+    def test_shell_expansion_rejected(self):
+        """Test that shell expansion attempts are rejected."""
+        from app.services.constraint_service import (
+            ConstraintService,
+            ScheduleIdValidationError,
+        )
+
+        with pytest.raises(ScheduleIdValidationError, match="invalid characters"):
+            ConstraintService.validate_schedule_id("$(whoami)")
+
+    def test_invalid_format_rejected(self):
+        """Test that invalid format schedule_id is rejected."""
+        from app.services.constraint_service import (
+            ConstraintService,
+            ScheduleIdValidationError,
+        )
+
+        with pytest.raises(ScheduleIdValidationError, match="valid UUID or alphanumeric"):
+            ConstraintService.validate_schedule_id("schedule@invalid.format")
+
+
+class TestConstraintServicePIISanitization:
+    """Test suite for ConstraintService PII sanitization (security)."""
+
+    def test_email_sanitization(self, db):
+        """Test that email addresses are sanitized from messages."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        message = "Assignment conflict for dr.smith@hospital.org"
+
+        sanitized = service._sanitize_message(message)
+
+        assert "dr.smith@hospital.org" not in sanitized
+        assert "[EMAIL REDACTED]" in sanitized
+
+    def test_phone_sanitization(self, db):
+        """Test that phone numbers are sanitized from messages."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        message = "Contact at 555-123-4567 for coverage"
+
+        sanitized = service._sanitize_message(message)
+
+        assert "555-123-4567" not in sanitized
+        assert "[PHONE REDACTED]" in sanitized
+
+    def test_ssn_sanitization(self, db):
+        """Test that SSN patterns are sanitized from messages."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        message = "Person with SSN 123-45-6789 has conflict"
+
+        sanitized = service._sanitize_message(message)
+
+        assert "123-45-6789" not in sanitized
+        assert "[SSN REDACTED]" in sanitized
+
+    def test_doctor_name_sanitization(self, db):
+        """Test that doctor names are sanitized from messages."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        message = "Dr. Smith has exceeded hours"
+
+        sanitized = service._sanitize_message(message)
+
+        assert "Dr. Smith" not in sanitized
+        assert "[PERSON]" in sanitized
+
+    def test_sensitive_fields_removed_from_details(self, db):
+        """Test that sensitive fields are removed from details dict."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        details = {
+            "email": "test@example.com",
+            "phone": "555-1234",
+            "ssn": "123-45-6789",
+            "hours": 85,
+            "blocks": 15,
+            "user_password": "secret123",
+            "api_token": "abc123",
+        }
+
+        sanitized = service._sanitize_details(details)
+
+        # Sensitive fields should be removed
+        assert "email" not in sanitized
+        assert "phone" not in sanitized
+        assert "ssn" not in sanitized
+        assert "user_password" not in sanitized
+        assert "api_token" not in sanitized
+
+        # Non-sensitive fields should remain
+        assert sanitized["hours"] == 85
+        assert sanitized["blocks"] == 15
+
+    def test_entity_anonymization(self, db):
+        """Test that person IDs are anonymized."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        person_id = uuid4()
+
+        anonymized = service._anonymize_person_ref(person_id)
+
+        assert anonymized is not None
+        assert anonymized.startswith("entity-")
+        assert str(person_id) not in anonymized
+        # Only first 8 chars of UUID should be used
+        assert len(anonymized) == len("entity-") + 8
+
+    def test_none_entity_anonymization(self, db):
+        """Test that None person_id returns None."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        anonymized = service._anonymize_person_ref(None)
+
+        assert anonymized is None
