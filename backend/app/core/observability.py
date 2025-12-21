@@ -23,7 +23,6 @@ Request Correlation:
 - Middleware to add X-Request-ID header for distributed tracing
 """
 
-import logging
 import time
 import uuid
 from contextvars import ContextVar
@@ -33,7 +32,9 @@ from typing import Callable, Optional
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-logger = logging.getLogger(__name__)
+from app.core.logging import get_logger, set_request_id as set_logging_request_id
+
+logger = get_logger(__name__)
 
 ***REMOVED*** Context variable for request correlation ID
 request_id_ctx: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
@@ -300,8 +301,11 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         if not request_id:
             request_id = str(uuid.uuid4())
 
-        ***REMOVED*** Store in context variable
+        ***REMOVED*** Store in context variable for observability metrics
         token = request_id_ctx.set(request_id)
+
+        ***REMOVED*** Also set in logging context for structured logging
+        set_logging_request_id(request_id)
 
         try:
             response = await call_next(request)
@@ -315,6 +319,9 @@ def with_request_id(func: Callable) -> Callable:
     """
     Decorator to include request ID in log messages.
 
+    With loguru integration, the request ID is automatically included
+    in log output when set via the RequestIDMiddleware.
+
     Usage:
         @with_request_id
         def my_function():
@@ -325,19 +332,8 @@ def with_request_id(func: Callable) -> Callable:
     def wrapper(*args, **kwargs):
         request_id = get_request_id()
         if request_id:
-            ***REMOVED*** Add request_id to log extra
-            old_factory = logging.getLogRecordFactory()
-
-            def record_factory(*args, **kwargs):
-                record = old_factory(*args, **kwargs)
-                record.request_id = request_id
-                return record
-
-            logging.setLogRecordFactory(record_factory)
-            try:
-                return func(*args, **kwargs)
-            finally:
-                logging.setLogRecordFactory(old_factory)
+            ***REMOVED*** Set request ID in logging context for this call
+            set_logging_request_id(request_id)
         return func(*args, **kwargs)
 
     return wrapper
