@@ -157,6 +157,49 @@ For developers who prefer staying in their editor:
 
 All IDE options provide file access and can use MCP tools when configured.
 
+### ChatGPT Codex vs Claude Code (Common Confusion)
+
+If you're coming from ChatGPT Codex expecting Claude Code-like capabilities, here's what you need to know:
+
+| Capability | Claude Code | ChatGPT Codex |
+|------------|-------------|---------------|
+| **Architecture** | Agentic (autonomous actions) | Sandboxed environment with limited agency |
+| **File Editing** | Directly edits your actual files | Works in isolated container, exports patches |
+| **Git Integration** | Full git operations (commit, push, PR) | No direct git access; manual patch application |
+| **Real-time Execution** | Runs commands in your environment | Runs in ephemeral sandbox |
+| **Conversation Context** | Maintains context across file edits | Context resets between tasks |
+| **MCP Tools** | Full support | Not supported |
+| **Skills** | Loads project-specific skills | Not supported |
+| **Workflow** | Interactive, iterative development | Task submission → wait → review output |
+
+**What ChatGPT Codex IS:**
+- A sandboxed coding environment that can write and test code
+- Good for isolated coding tasks with clear specifications
+- Outputs patches/diffs you manually apply to your codebase
+- Useful when you want AI code generation without direct repo access
+
+**What ChatGPT Codex IS NOT:**
+- An agentic coding assistant that works directly in your codebase
+- A replacement for Claude Code's interactive development workflow
+- Capable of running your actual tests, linters, or build tools
+- Integrated with your git workflow
+
+**Why This Matters for This Project:**
+
+This residency scheduler was built with Claude Code's agentic capabilities:
+- Skills that auto-activate based on context (ACGME compliance, swap management)
+- MCP tools that call the actual backend API
+- Direct git operations for commits and PRs
+- Iterative debugging with real test execution
+
+ChatGPT Codex cannot replicate this workflow. If you try to use Codex for this project, you'll need to:
+1. Copy code snippets manually
+2. Apply patches by hand
+3. Run tests locally yourself
+4. Manage git operations separately
+
+**Bottom Line:** Use Claude Code (Web, CLI, or IDE) for this project. ChatGPT Codex is a different tool for different use cases.
+
 ---
 
 ## The Three Pillars
