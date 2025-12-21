@@ -206,12 +206,16 @@ Several browser-based tools provide Claude access but with varying capabilities.
 
 #### Quick Comparison
 
-| Tool | What It Does | Codebase Access | Best Use Case |
-|------|--------------|-----------------|---------------|
-| **Claude Code Web** | Full agentic development | Full (via GitHub) | Primary development |
-| **Claude Chrome Extension** | Chat overlay in browser | None (conversation only) | Quick questions while browsing |
-| **Comet** | Agentic browser automation | Limited (can view open tabs) | Web scraping, form filling, research |
-| **Atlas** | Multi-step browser workflows | Limited (browser context only) | Complex web tasks, data extraction |
+| Tool | What It Does | Agentic? | Best Use Case |
+|------|--------------|----------|---------------|
+| **Claude Code Web** | Full agentic development | Yes (files, git, commands) | Primary development |
+| **Comet** | Browser automation | Yes (browser actions) | Web scraping, form filling |
+| **Atlas** | Multi-step browser workflows | Yes (browser actions) | Complex web tasks, data extraction |
+| **Dia** | Early AI browser | Limited | Basic browsing assistance |
+| **Claude Chrome Extension** | Chat overlay | No | Quick questions while browsing |
+| **Gemini for Chrome** | Google AI sidebar | No (currently) | Research, summarization |
+
+> **Sometimes you don't want agentic.** Not every task needs an AI that takes autonomous actions. Sometimes you just want someone looking over your shoulder—a second pair of eyes to review your code, explain what you're reading, or answer quick questions. That's what non-agentic tools excel at.
 
 #### Claude Chrome Extension
 
@@ -258,6 +262,57 @@ Agentic browsers let Claude control browser actions—clicking, typing, navigati
 - Good for scraping and form automation
 - Limitation: Same browser-only constraints
 
+#### Dia (Early AI Browser)
+
+Dia was one of the first AI-capable browsers, representing an early attempt at integrating AI into browsing workflows.
+
+**What Dia offered:**
+- AI assistance built into the browser chrome
+- Basic page summarization and Q&A
+- Early exploration of AI-browser integration
+
+**Limitations compared to current tools:**
+- Less sophisticated browser automation than Comet/Atlas
+- No true agentic capabilities (couldn't take multi-step autonomous actions)
+- Limited integration with external tools or codebases
+- Predates the current generation of agentic AI tooling
+
+**Historical significance:** Dia helped establish that users wanted AI integrated into their browsing experience, paving the way for more capable tools. If you used Dia and were underwhelmed, the current generation of agentic browsers (Comet, Atlas) represents a significant leap forward.
+
+#### Gemini for Chrome
+
+Google's Gemini sidebar for Chrome provides AI assistance while browsing.
+
+**Current state (as of late 2024):**
+- Non-agentic: Gemini observes and responds but doesn't take browser actions
+- Good for summarizing pages, answering questions, drafting text
+- Integrated with Google Workspace (Docs, Gmail, etc.)
+- Cannot click, navigate, or automate browser tasks
+
+**What to expect:** Given Google's investment in agentic AI (see Antigravity, ADK), Gemini for Chrome will likely gain agentic capabilities. When it does, expect:
+- Browser action automation (clicking, form filling)
+- Multi-step task execution
+- Deeper integration with Google services
+
+**For now:** Use Gemini for Chrome as a research companion and writing assistant—not for automation. Pair it with Claude Code for actual development work.
+
+#### Agentic vs Non-Agentic: When to Choose Each
+
+| You want... | Use | Why |
+|-------------|-----|-----|
+| AI to make changes for you | Agentic (Claude Code, Comet) | Autonomous action-taking |
+| A second pair of eyes | Non-agentic (Chrome Extension, Gemini) | Observation without action |
+| Help understanding code | Either works | Both can explain |
+| Automated testing/scraping | Agentic browser (Comet, Atlas) | Requires browser control |
+| Quick research while coding | Non-agentic (Chrome Extension) | Fast, low-friction |
+| Deployment and git operations | Claude Code | Requires filesystem + git access |
+
+**The "agentic" distinction matters because:**
+- Agentic tools can surprise you (good and bad)—they take actions you didn't explicitly request
+- Non-agentic tools are predictable—they only respond, never act
+- Trust and verification differ: agentic tools need more oversight initially
+- Speed differs: agentic tools can complete multi-step tasks faster once trusted
+
 #### The "Same Model, Different Capabilities" Confusion
 
 This is a common source of frustration:
@@ -272,28 +327,45 @@ Think of it like this:
 - Agentic Browser = Claude with browser hands (can click/type in browser, but can't touch your filesystem)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    SAME CLAUDE MODEL                         │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  Environment determines capabilities, not the model          │
-│                                                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
-│  │ Claude Code  │  │   Browser    │  │   Agentic    │       │
-│  │  Web/CLI     │  │  Extension   │  │   Browser    │       │
-│  ├──────────────┤  ├──────────────┤  ├──────────────┤       │
-│  │ ✓ Files      │  │ ✗ Files      │  │ ✗ Files      │       │
-│  │ ✓ Git        │  │ ✗ Git        │  │ ✗ Git        │       │
-│  │ ✓ Terminal   │  │ ✗ Terminal   │  │ ✗ Terminal   │       │
-│  │ ✓ MCP Tools  │  │ ✗ MCP Tools  │  │ ✗ MCP Tools  │       │
-│  │ ✓ Skills     │  │ ✗ Skills     │  │ ✗ Skills     │       │
-│  │ ✗ Browser    │  │ ✓ Page View  │  │ ✓ Full Ctrl  │       │
-│  └──────────────┘  └──────────────┘  └──────────────┘       │
-│                                                              │
-│  Use case:         Use case:         Use case:              │
-│  Development       Quick research    Web automation         │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                    SAME AI MODEL, DIFFERENT ENVIRONMENTS             │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Environment determines capabilities, not the model                  │
+│                                                                      │
+│  ┌─────────────────────── AGENTIC ───────────────────────┐          │
+│  │                                                        │          │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │          │
+│  │  │ Claude Code  │  │   Comet /    │  │  Antigravity │ │          │
+│  │  │  Web/CLI     │  │    Atlas     │  │              │ │          │
+│  │  ├──────────────┤  ├──────────────┤  ├──────────────┤ │          │
+│  │  │ ✓ Files      │  │ ✗ Files      │  │ ✓ Files      │ │          │
+│  │  │ ✓ Git        │  │ ✗ Git        │  │ ✓ Git        │ │          │
+│  │  │ ✓ Terminal   │  │ ✗ Terminal   │  │ ✓ Terminal   │ │          │
+│  │  │ ✓ Skills     │  │ ✗ Skills     │  │ ✓ Skills     │ │          │
+│  │  │ ✗ Browser    │  │ ✓ Browser    │  │ ✗ Browser    │ │          │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘ │          │
+│  │  Development       Web automation    IDE development   │          │
+│  └────────────────────────────────────────────────────────┘          │
+│                                                                      │
+│  ┌─────────────────── NON-AGENTIC ───────────────────────┐          │
+│  │                                                        │          │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │          │
+│  │  │   Claude     │  │   Gemini     │  │     Dia      │ │          │
+│  │  │  Extension   │  │  for Chrome  │  │   (legacy)   │ │          │
+│  │  ├──────────────┤  ├──────────────┤  ├──────────────┤ │          │
+│  │  │ ✓ Page view  │  │ ✓ Page view  │  │ ✓ Page view  │ │          │
+│  │  │ ✓ Q&A        │  │ ✓ Q&A        │  │ ✓ Q&A        │ │          │
+│  │  │ ✗ Actions    │  │ ✗ Actions    │  │ ✗ Actions    │ │          │
+│  │  │ ✗ Files      │  │ ✗ Files      │  │ ✗ Files      │ │          │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘ │          │
+│  │  Quick research    Google ecosystem  Basic assistance  │          │
+│  └────────────────────────────────────────────────────────┘          │
+│                                                                      │
+│  Choose agentic when you want AI to DO things                        │
+│  Choose non-agentic when you want AI to EXPLAIN things               │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 #### When to Combine Tools
