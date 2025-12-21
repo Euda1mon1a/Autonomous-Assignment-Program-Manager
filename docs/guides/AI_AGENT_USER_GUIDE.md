@@ -2,7 +2,7 @@
 
 > **Complete guide to using AI agents with the Residency Scheduler**
 >
-> Covers: Skills, MCP Tools, Google ADK, and CLI platforms (Claude Code, Antigravity)
+> Covers: Skills, MCP Tools, Google ADK, and Claude Code (Web, CLI, IDE)
 
 ---
 
@@ -13,7 +13,7 @@
 3. [The Three Pillars](#the-three-pillars)
 4. [Quick Start](#quick-start)
 5. [Skills Reference](#skills-reference)
-6. [CLI Platforms](#cli-platforms)
+6. [Claude Code Platforms](#claude-code-platforms)
 7. [Model Selection](#model-selection)
 8. [Evaluation & Testing](#evaluation--testing)
 9. [Troubleshooting](#troubleshooting)
@@ -57,11 +57,42 @@ This repository has a complete AI agent infrastructure:
 
 Before diving in, understand the difference between Claude's interfaces:
 
-### Claude for macOS/Desktop (Chat App) vs Claude Code (CLI)
+### Claude Code: Web, CLI, and IDE
 
-| Feature | Claude for macOS | Claude Code |
-|---------|------------------|-------------|
-| **What It Is** | Desktop chat application | Command-line development tool |
+Claude Code is available in three forms, all providing the same agentic development capabilities:
+
+| Feature | Claude Code Web | Claude Code CLI | Claude Code IDE |
+|---------|-----------------|-----------------|-----------------|
+| **What It Is** | Browser-based interface at claude.ai/code | Terminal command-line tool | VS Code / Cursor extension |
+| **File Access** | Full codebase via GitHub integration | Full local filesystem access | Full workspace access |
+| **Code Editing** | Read, write, edit files | Read, write, edit files | Read, write, edit files |
+| **Git Operations** | Full git integration | Full git integration | Full git integration |
+| **MCP Tools** | Supported via GitHub repos | Full MCP support | Full MCP support |
+| **Skills** | Loads from `.claude/skills/` | Loads from `.claude/skills/` | Loads from `.claude/skills/` |
+| **Best For** | Remote development, cloud-first workflows | Local development, scripting | IDE-integrated workflows |
+
+> **Note:** This project was primarily developed using **Claude Code Web**. The web interface provides full agentic capabilities without requiring local installation, making it ideal for rapid development across different machines.
+
+### Claude Code Web (Primary Development Interface)
+
+Claude Code Web is the browser-based version accessible at [claude.ai/code](https://claude.ai/code). Key features:
+
+- **GitHub Integration**: Connect your repositories directly; Claude can read, edit, and commit
+- **No Local Setup**: Works from any browser without installing CLI tools
+- **Persistent Sessions**: Continue work across browser sessions
+- **Same Capabilities**: Full file editing, git operations, and tool usage as CLI
+
+**When to use Claude Code Web:**
+- Working on cloud-hosted repositories
+- Developing from multiple machines
+- Quick iterations without local environment setup
+- Collaborative development with remote repos
+
+### Claude for macOS/Desktop (Chat App) vs Claude Code
+
+| Feature | Claude for macOS | Claude Code (any platform) |
+|---------|------------------|----------------------------|
+| **What It Is** | Desktop chat application | Agentic development tool |
 | **File Access** | Limited (can view attached files) | Full access to your codebase |
 | **Code Editing** | Cannot edit files | Can read, write, and edit files |
 | **Git Operations** | None | Full git integration |
@@ -78,22 +109,34 @@ Before diving in, understand the difference between Claude's interfaces:
 - Analyzing individual files you upload manually
 - Having conversations that don't require code changes
 
-**Use Claude Code (CLI) when:**
-- Making changes to your codebase
-- Debugging issues in your project
-- Running tests or build commands
-- Working with git (commits, branches, PRs)
-- Using project-specific skills and MCP tools
-- Any task that requires reading or modifying multiple files
+**Use Claude Code Web when:**
+- Working on GitHub-hosted repositories
+- Developing from any machine without local setup
+- Rapid prototyping and iteration
+- You want full agentic capabilities in a browser
+
+**Use Claude Code CLI when:**
+- Working with local files not on GitHub
+- Scripting and automation workflows
+- Deployment tasks requiring local system access
+- macOS automation with OSAScript (see [IDE Setup for macOS](#ide-setup-for-macos))
+
+**Use Claude Code IDE (VS Code/Cursor) when:**
+- You prefer staying in your editor
+- Integrating with existing IDE workflows
+- Need side-by-side code viewing while chatting
 
 ### Decision Flowchart
 
 ```
 Do you need to modify files in your codebase?
-├── YES → Use Claude Code
+├── YES
+│   └── Is your repo on GitHub and you're okay with browser-based work?
+│       ├── YES → Use Claude Code Web
+│       └── NO → Use Claude Code CLI or IDE
 └── NO
     └── Do you need to read/analyze project files?
-        ├── YES → Use Claude Code (or IDE with Claude extension)
+        ├── YES → Use Claude Code (Web, CLI, or IDE)
         └── NO
             └── Is this a coding-related question?
                 ├── YES, about THIS project → Use Claude Code
@@ -113,6 +156,301 @@ For developers who prefer staying in their editor:
 | **Cline** | Claude extension for VS Code | Alternative VS Code integration |
 
 All IDE options provide file access and can use MCP tools when configured.
+
+### ChatGPT Codex vs Claude Code (Common Confusion)
+
+If you're coming from ChatGPT Codex expecting Claude Code-like capabilities, here's what you need to know:
+
+| Capability | Claude Code | ChatGPT Codex |
+|------------|-------------|---------------|
+| **Architecture** | Agentic (autonomous actions) | Sandboxed environment with limited agency |
+| **File Editing** | Directly edits your actual files | Works in isolated container, exports patches |
+| **Git Integration** | Full git operations (commit, push, PR) | No direct git access; manual patch application |
+| **Real-time Execution** | Runs commands in your environment | Runs in ephemeral sandbox |
+| **Conversation Context** | Maintains context across file edits | Context resets between tasks |
+| **MCP Tools** | Full support | Not supported |
+| **Skills** | Loads project-specific skills | Not supported |
+| **Workflow** | Interactive, iterative development | Task submission → wait → review output |
+
+**What ChatGPT Codex IS:**
+- A sandboxed coding environment that can write and test code
+- Good for isolated coding tasks with clear specifications
+- Outputs patches/diffs you manually apply to your codebase
+- Useful when you want AI code generation without direct repo access
+
+**What ChatGPT Codex IS NOT:**
+- An agentic coding assistant that works directly in your codebase
+- A replacement for Claude Code's interactive development workflow
+- Capable of running your actual tests, linters, or build tools
+- Integrated with your git workflow
+
+**Why This Matters for This Project:**
+
+This residency scheduler was built with Claude Code's agentic capabilities:
+- Skills that auto-activate based on context (ACGME compliance, swap management)
+- MCP tools that call the actual backend API
+- Direct git operations for commits and PRs
+- Iterative debugging with real test execution
+
+ChatGPT Codex cannot replicate this workflow. If you try to use Codex for this project, you'll need to:
+1. Copy code snippets manually
+2. Apply patches by hand
+3. Run tests locally yourself
+4. Manage git operations separately
+
+**Bottom Line:** Use Claude Code (Web, CLI, or IDE) for this project. ChatGPT Codex is a different tool for different use cases.
+
+### Browser Extensions & Agentic Browsers
+
+Several browser-based tools provide Claude access but with varying capabilities. Understanding these differences prevents frustration.
+
+#### Quick Comparison (Updated December 2025)
+
+| Tool | What It Does | Agentic? | Best Use Case |
+|------|--------------|----------|---------------|
+| **Claude Code Web** | Full agentic development | Yes (files, git, commands) | Primary development |
+| **Claude for Chrome** | Browser agent with computer use | Yes (click, type, navigate) | Web automation, multi-tab workflows |
+| **Comet** (Perplexity) | AI browser with assistant | Yes (full browser control) | Research, shopping, task automation |
+| **Atlas** (OpenAI) | ChatGPT-native browser | Yes (Agent Mode) | Research, form filling, web tasks |
+| **Dia** (Browser Company) | AI-first browser | Yes (AI in URL bar) | Everyday browsing with AI assistance |
+| **Gemini in Chrome** | Google AI sidebar | Yes (rolling out) | Multi-tab research, Google ecosystem |
+
+> **The landscape has shifted dramatically.** As of late 2025, most major browser tools are now agentic. The question is no longer "agentic or not?" but rather "what kind of agency do you need?"
+>
+> - **Code agency** (files, git, terminal) → Claude Code
+> - **Browser agency** (click, type, navigate web) → Claude for Chrome, Comet, Atlas, Dia
+> - **Ecosystem agency** (Google Calendar, Docs, etc.) → Gemini in Chrome
+
+#### Claude for Chrome (Browser Agent)
+
+Claude for Chrome is now a **full agentic browser assistant** that can see, click, type, and navigate web pages autonomously.
+
+**Current capabilities (as of late 2025):**
+- **Computer use in browser**: Click, type, scroll, navigate across web pages
+- **Multi-tab workflows**: Work across multiple tabs simultaneously
+- **Scheduled tasks**: Set up recurring automated workflows
+- **Form filling**: Complete forms, manage calendar, draft emails
+- **Workflow recording**: "Teach" Claude by recording your actions
+- **Claude Code integration**: Connects with Claude Code for development tasks
+
+**Safety measures:**
+- Blocked from high-risk categories (financial services, adult content)
+- Requires explicit approval for publishing, purchasing, sharing personal data
+- Attack mitigations reduced success rate from 23.6% to 11.2%
+
+**Availability:** Beta for all Max plan subscribers after initial 1,000-user pilot.
+
+**What it still IS NOT:**
+- A coding environment (cannot edit local files)
+- Connected to your local filesystem
+- A replacement for Claude Code for development work
+
+**When to use:** Web automation, form filling, email management, calendar tasks, multi-step browser workflows. For actual code editing, use Claude Code.
+
+#### Agentic Browsers (Comet, Atlas, Dia)
+
+These are full browsers with AI agents built in—not extensions, but standalone applications that reimagine browsing around AI.
+
+**What Agentic Browsers DO Well:**
+- Automate repetitive web tasks (filling forms, clicking through workflows)
+- Extract data from websites
+- Navigate complex web UIs
+- Research across multiple sites
+- Test web applications from a user perspective
+- Background task processing (work while you do other things)
+
+**What Agentic Browsers DON'T Do:**
+- Edit code files in your repository
+- Run terminal commands (npm, pytest, git)
+- Access your local filesystem
+- Load project-specific skills or MCP tools
+- Integrate with your development workflow
+
+#### Comet (Perplexity)
+
+Perplexity's AI-powered browser, released July 2025 and now free for all users.
+
+**Key features:**
+- **Comet Assistant**: Sidecar AI that sees your page and answers questions
+- **Agentic task execution**: Book hotels, comparison shop, schedule meetings, fill forms
+- **Built-in tools**: Discover (news), Spaces (project organization), Shopping, Travel, Finance, Sports
+- **Voice interaction**: Hands-free task automation
+- **Background Assistant** (Max users): Works on multiple tasks simultaneously in background
+- **Privacy-first**: Most processing done locally
+
+**November 2025 updates:** Completely reimagined assistant that can work longer on more complex jobs.
+
+**Best for:** Research, shopping, travel planning, general web automation.
+
+#### Atlas (OpenAI)
+
+OpenAI's ChatGPT-native browser, released October 2025.
+
+**Key features:**
+- **Agent Mode**: ChatGPT handles tasks autonomously—"you can watch or don't have to"
+- **Built on Chromium**: Familiar Chrome-like experience
+- **"Take control" / "Stop" buttons**: Override AI actions at any time
+- **Deep ChatGPT integration**: AI accompanies you everywhere across the web
+
+**Availability:** macOS now, Windows/iOS/Android coming. Free tier available, Agent Mode requires paid ChatGPT subscription.
+
+**Security concerns:** Some researchers found it blocked only 5.8% of phishing attacks in tests. Prompt injection risks exist with Agent Mode.
+
+**Best for:** Researchers, students, professionals who need automated web research.
+
+#### Dia (Browser Company → Atlassian)
+
+AI-first browser from the makers of Arc, acquired by Atlassian for $610M.
+
+**Key features:**
+- **AI in URL bar**: Type commands to search, summarize, multitask
+- **Skill-based AI**: Shopping skill sees your Amazon/Anthropologie history; writing skill knows your email style
+- **Privacy-focused**: Data encrypted on device, only sent to cloud for milliseconds
+- **Atlassian integration**: Jira, Linear, and other productivity tools
+- **Arc features coming**: Sidebar mode, picture-in-picture, custom keyboard shortcuts
+
+**Design philosophy:** Minimalist (like Chrome/Safari) vs Arc's power-user complexity.
+
+**Best for:** Everyday browsing with AI assistance, especially for Atlassian users.
+
+#### Gemini in Chrome
+
+Google's AI integration in Chrome—now rolling out agentic capabilities.
+
+**Current capabilities (late 2025):**
+- **Multi-tab context**: Uses up to 10 open tabs to provide relevant responses
+- **Gemini Live**: Real-time voice conversations from any tab
+- **Agentic browsing** (rolling out): Click, scroll, type on websites (confirms final step like purchases)
+- **Tab recall**: Find previously visited sites with natural language
+- **Google app integration**: Calendar, Tasks, Drive, Docs/Sheets/Slides, Maps, YouTube
+- **AI Mode in address bar**: Complex questions with follow-ups
+- **Security**: Gemini Nano detects scams, can auto-change compromised passwords
+
+**Agentic features coming:**
+- "Tell Gemini in Chrome what you want to get done, and it acts on web pages on your behalf"
+- Book haircuts, order groceries, complete multi-step web tasks
+
+**Availability:** Free for Mac/Windows desktop users in US. iOS coming soon.
+
+**Best for:** Users in the Google ecosystem who want AI assistance integrated with Calendar, Docs, Gmail, etc.
+
+#### Choosing the Right Agentic Tool
+
+Now that most tools are agentic, the question is: **what kind of agency do you need?**
+
+| You want... | Use | Why |
+|-------------|-----|-----|
+| Edit code, run tests, git operations | **Claude Code** | Only tool with filesystem + terminal access |
+| Web automation (forms, booking, shopping) | **Claude for Chrome, Comet, Atlas** | Browser agency |
+| Google ecosystem integration | **Gemini in Chrome** | Calendar, Docs, Gmail, Drive integration |
+| Research with AI summaries | **Comet, Dia** | Built for information gathering |
+| ChatGPT-native experience | **Atlas** | If you're already in OpenAI ecosystem |
+| Atlassian/Jira integration | **Dia** | Following Atlassian acquisition |
+
+#### When You DON'T Want Agency
+
+Sometimes you want AI to **observe without acting**—a second pair of eyes, not a pair of hands.
+
+**Scenarios where you want observation-only:**
+- Learning how code works (you want explanations, not changes)
+- Reviewing before committing (AI shouldn't auto-commit)
+- Sensitive operations (you want confirmation at every step)
+- Understanding before automating (research phase)
+
+**How to get observation-only behavior:**
+- In Claude Code: Ask questions without requesting changes
+- In Claude for Chrome: Use chat mode instead of letting it take actions
+- In Comet/Atlas: Don't enable Agent Mode
+- In Gemini: Agentic features require explicit activation
+
+**The trust ladder:**
+1. Start with observation-only (AI explains, you act)
+2. Graduate to supervised agency (AI acts, you approve each step)
+3. Eventually use full agency for trusted tasks (AI completes multi-step workflows)
+
+#### The "Same Model, Different Capabilities" Confusion
+
+This is a common source of frustration:
+
+> "I used Claude in [browser tool] and it couldn't edit my files. But it's the same Claude model!"
+
+**The model is the same. The environment is not.**
+
+Think of it like this:
+- Claude Code = Claude with hands (can touch your files, run commands)
+- Chrome Extension = Claude with eyes (can see webpages, but can't act on your code)
+- Agentic Browser = Claude with browser hands (can click/type in browser, but can't touch your filesystem)
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│              2025: THE AGENTIC LANDSCAPE (All Major Tools Are Agentic)     │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  The key question: WHAT KIND of agency do you need?                        │
+│                                                                            │
+│  ┌─────────────────────── CODE AGENCY ────────────────────────┐           │
+│  │  (filesystem, git, terminal, tests)                         │           │
+│  │                                                              │           │
+│  │  ┌─────────────────┐  ┌─────────────────┐                   │           │
+│  │  │  Claude Code    │  │   Antigravity   │                   │           │
+│  │  │   Web/CLI/IDE   │  │                 │                   │           │
+│  │  ├─────────────────┤  ├─────────────────┤                   │           │
+│  │  │ ✓ Edit files    │  │ ✓ Edit files    │                   │           │
+│  │  │ ✓ Git/GitHub    │  │ ✓ Git           │                   │           │
+│  │  │ ✓ Run tests     │  │ ✓ Run tests     │                   │           │
+│  │  │ ✓ Skills/MCP    │  │ ✓ Skills        │                   │           │
+│  │  └─────────────────┘  └─────────────────┘                   │           │
+│  │  USE FOR: Development, debugging, deployment                 │           │
+│  └──────────────────────────────────────────────────────────────┘           │
+│                                                                            │
+│  ┌─────────────────────── BROWSER AGENCY ─────────────────────┐           │
+│  │  (click, type, navigate, automate web tasks)                │           │
+│  │                                                              │           │
+│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐│           │
+│  │  │  Claude    │ │   Comet    │ │   Atlas    │ │    Dia     ││           │
+│  │  │ for Chrome │ │(Perplexity)│ │  (OpenAI)  │ │(Atlassian) ││           │
+│  │  ├────────────┤ ├────────────┤ ├────────────┤ ├────────────┤│           │
+│  │  │ ✓ Click    │ │ ✓ Click    │ │ ✓ Click    │ │ ✓ AI URL   ││           │
+│  │  │ ✓ Type     │ │ ✓ Type     │ │ ✓ Type     │ │ ✓ Skills   ││           │
+│  │  │ ✓ Navigate │ │ ✓ Navigate │ │ ✓ Navigate │ │ ✓ Jira     ││           │
+│  │  │ ✓ Multi-tab│ │ ✓ Bkgnd    │ │ ✓ Agent    │ │ ✓ Privacy  ││           │
+│  │  └────────────┘ └────────────┘ └────────────┘ └────────────┘│           │
+│  │  USE FOR: Web automation, shopping, booking, forms          │           │
+│  └──────────────────────────────────────────────────────────────┘           │
+│                                                                            │
+│  ┌─────────────────────── ECOSYSTEM AGENCY ───────────────────┐           │
+│  │  (deep integration with specific platforms)                  │           │
+│  │                                                              │           │
+│  │  ┌─────────────────────────────────────────┐                │           │
+│  │  │            Gemini in Chrome              │                │           │
+│  │  ├─────────────────────────────────────────┤                │           │
+│  │  │ ✓ Google Calendar, Docs, Sheets, Drive  │                │           │
+│  │  │ ✓ Gmail, Maps, YouTube                  │                │           │
+│  │  │ ✓ Multi-tab context (up to 10 tabs)     │                │           │
+│  │  │ ✓ Gemini Live (voice)                   │                │           │
+│  │  │ ✓ Agentic browsing (rolling out)        │                │           │
+│  │  └─────────────────────────────────────────┘                │           │
+│  │  USE FOR: Google Workspace power users                       │           │
+│  └──────────────────────────────────────────────────────────────┘           │
+│                                                                            │
+│  ⚠️  NONE of the browser tools can edit local code files                   │
+│  ⚠️  For THIS PROJECT: Use Claude Code (Web, CLI, or IDE)                  │
+│                                                                            │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+#### When to Combine Tools
+
+The tools complement each other:
+
+| Scenario | Tool Combination |
+|----------|------------------|
+| Research a library, then implement | Chrome Extension → Claude Code |
+| Scrape data, then process in code | Comet/Atlas → Claude Code |
+| Debug a web UI issue | Claude Code (for code) + Agentic Browser (for testing) |
+| Quick question while coding | Chrome Extension (without leaving browser) |
+
+**Pro tip:** Don't expect browser tools to replace Claude Code for development. Use them for what they're good at (web interaction), then switch to Claude Code when you need to write/edit code.
 
 ---
 
@@ -178,7 +516,27 @@ Claude:
 > For general questions without code changes, you can use Claude for macOS/Desktop instead.
 > See [Choosing Your Claude Interface](#choosing-your-claude-interface) for guidance.
 
-### Option A: Claude Code (Recommended for Development)
+### Option A: Claude Code Web (Recommended - No Installation)
+
+This is the primary interface used to develop this project.
+
+```
+1. Visit claude.ai/code
+2. Connect your GitHub account
+3. Select Autonomous-Assignment-Program-Manager repository
+4. Start developing!
+```
+
+**First Interaction:**
+```
+You: Check if the schedule is ACGME compliant
+
+Claude: [Activates acgme-compliance skill]
+        [Calls validate_acgme_compliance tool]
+        [Returns detailed compliance report]
+```
+
+### Option B: Claude Code CLI (Local Development)
 
 ```bash
 # Install Claude Code
@@ -193,16 +551,7 @@ claude
 # Claude automatically loads skills from .claude/skills/
 ```
 
-**First Interaction:**
-```
-You: Check if the schedule is ACGME compliant
-
-Claude: [Activates acgme-compliance skill]
-        [Calls validate_acgme_compliance tool]
-        [Returns detailed compliance report]
-```
-
-### Option B: Google Antigravity
+### Option C: Google Antigravity
 
 ```bash
 # Download from https://antigravityai.org/
@@ -297,11 +646,38 @@ Detailed instructions here...
 
 ---
 
-## CLI Platforms
+## Claude Code Platforms
 
-### Claude Code
+### Claude Code Web
 
-**Best For:** Daily development, code changes, git operations
+**Best For:** Primary development, remote workflows, cloud-first development
+
+> **This project was built primarily with Claude Code Web.** The browser-based interface provides full agentic capabilities with seamless GitHub integration.
+
+**Getting Started:**
+1. Visit [claude.ai/code](https://claude.ai/code)
+2. Connect your GitHub account
+3. Select a repository to work with
+4. Start coding with full file access, git operations, and skill support
+
+**Key Features:**
+| Feature | Description |
+|---------|-------------|
+| GitHub Integration | Read, write, commit directly to repos |
+| No Installation | Works from any browser |
+| Skill Support | Loads `.claude/skills/` from your repo |
+| Full Git | Branches, commits, PRs, all in-browser |
+| Persistent Context | Sessions maintain conversation history |
+
+**Tips:**
+- Works identically to CLI—same commands, same capabilities
+- Ideal for development without local environment setup
+- Great for quick fixes from any device
+- All project skills and MCP configurations work automatically
+
+### Claude Code CLI
+
+**Best For:** Local development, scripting, deployment tasks
 
 **Installation:**
 ```bash
@@ -330,6 +706,39 @@ winget install Anthropic.ClaudeCode
 - MCP tools available if `mcp-server/` is configured
 - Opus 4.5 is best for complex reasoning
 - Sonnet is faster for simple tasks
+
+### IDE Setup for macOS
+
+When setting up Claude Code in an IDE on macOS, be aware of OSAScript considerations:
+
+**macOS Automation Permissions:**
+- Claude Code CLI/IDE may require automation permissions
+- OSAScript (AppleScript) adds a layer of obfuscation for system commands
+- Grant permissions in System Preferences → Security & Privacy → Automation
+
+**Recommended IDE Setup:**
+
+1. **VS Code with Claude Extension:**
+   ```bash
+   # Install Claude extension from VS Code marketplace
+   code --install-extension anthropic.claude-code
+   ```
+
+2. **Cursor (Claude-native IDE):**
+   - Download from [cursor.sh](https://cursor.sh)
+   - Built-in Claude integration, no extension needed
+
+3. **Terminal Integration:**
+   ```bash
+   # Add to ~/.zshrc or ~/.bashrc
+   alias cc='claude'
+   alias cco='claude --model opus'
+   ```
+
+**Deployment Considerations:**
+- For deployment tasks, CLI provides direct system access
+- OSAScript wrappers may intercept certain system calls
+- Use explicit paths and avoid shell aliases in deployment scripts
 
 ### Google Antigravity (Recommended for Beginners)
 
@@ -686,7 +1095,8 @@ EOF
 
 | Task | Command / Action |
 |------|------------------|
-| Start Claude Code | `claude` |
+| Start Claude Code Web | Visit claude.ai/code, connect GitHub |
+| Start Claude Code CLI | `claude` |
 | Start Antigravity | Open app, select folder |
 | Start ADK | `cd agent-adk && npm run dev` |
 | Check compliance | "Is the schedule ACGME compliant?" |
