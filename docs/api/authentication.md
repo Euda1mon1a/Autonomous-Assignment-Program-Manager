@@ -234,7 +234,7 @@ Returns all users. Requires admin role.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | 30 | Access token lifetime |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | 15 | Access token lifetime (minutes) |
 | `REFRESH_TOKEN_EXPIRE_DAYS` | 7 | Refresh token lifetime |
 | `REFRESH_TOKEN_ROTATE` | true | Enable refresh token rotation |
 

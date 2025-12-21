@@ -491,7 +491,7 @@ def analyze_imported_schedules(
 
     ***REMOVED*** Validate FMIT file
     try:
-        validate_excel_upload(fmit_bytes, fmit_file.filename)
+        validate_excel_upload(fmit_bytes, fmit_file.filename, fmit_file.content_type)
     except FileValidationError as e:
         raise HTTPException(
             status_code=400,
@@ -510,7 +510,7 @@ def analyze_imported_schedules(
 
         ***REMOVED*** Validate clinic file
         try:
-            validate_excel_upload(clinic_bytes, clinic_file.filename)
+            validate_excel_upload(clinic_bytes, clinic_file.filename, clinic_file.content_type)
         except FileValidationError as e:
             raise HTTPException(
                 status_code=400,
@@ -576,7 +576,7 @@ def analyze_single_file(
 
     ***REMOVED*** Validate uploaded file
     try:
-        validate_excel_upload(file_bytes, file.filename)
+        validate_excel_upload(file_bytes, file.filename, file.content_type)
     except FileValidationError as e:
         raise HTTPException(
             status_code=400,
@@ -715,7 +715,7 @@ def find_swap_candidates(
 
     ***REMOVED*** Validate FMIT file
     try:
-        validate_excel_upload(fmit_bytes, fmit_file.filename)
+        validate_excel_upload(fmit_bytes, fmit_file.filename, fmit_file.content_type)
     except FileValidationError as e:
         raise HTTPException(
             status_code=400,

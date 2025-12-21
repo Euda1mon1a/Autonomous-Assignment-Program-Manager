@@ -1,0 +1,69 @@
+***REMOVED*** Docker Compose Production Override for Monitoring Stack
+***REMOVED*** Residency Scheduler Observability Infrastructure - PRODUCTION CONFIGURATION
+***REMOVED***
+***REMOVED*** SECURITY: This file removes all external port mappings for monitoring services.
+***REMOVED*** In production, monitoring services should only be accessible via internal networks,
+***REMOVED*** not exposed to the host or external networks.
+***REMOVED***
+***REMOVED*** Usage:
+***REMOVED***   docker-compose -f docker-compose.monitoring.yml -f docker-compose.monitoring.prod.yml up -d
+***REMOVED***
+***REMOVED*** Rationale:
+***REMOVED***   - Prometheus, Grafana, and other monitoring tools should not be publicly accessible
+***REMOVED***   - Reduces attack surface by eliminating unnecessary port exposure
+***REMOVED***   - Monitoring data may contain sensitive information about system internals
+***REMOVED***   - Access should be controlled via reverse proxy with authentication
+***REMOVED***
+***REMOVED*** Access in Production:
+***REMOVED***   - Set up an authenticated reverse proxy (nginx/traefik) to Grafana
+***REMOVED***   - Use SSH tunneling for direct admin access: ssh -L 3001:localhost:3001 user@server
+***REMOVED***   - VPN access to internal network for monitoring tools
+
+services:
+  ***REMOVED*** Prometheus - NO external ports (internal network only)
+  prometheus:
+    ports: []  ***REMOVED*** Override: remove all port mappings
+    ***REMOVED*** Accessible within Docker network at: prometheus:9090
+
+  ***REMOVED*** Alertmanager - NO external ports (internal network only)
+  alertmanager:
+    ports: []  ***REMOVED*** Override: remove all port mappings
+    ***REMOVED*** Accessible within Docker network at: alertmanager:9093
+
+  ***REMOVED*** Grafana - NO external ports (use reverse proxy for authenticated access)
+  grafana:
+    ports: []  ***REMOVED*** Override: remove all port mappings
+    ***REMOVED*** Accessible within Docker network at: grafana:3000
+    environment:
+      ***REMOVED*** Update root URL for production reverse proxy
+      - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-https://monitoring.residency-scheduler.local}
+
+  ***REMOVED*** Loki - NO external ports (internal network only)
+  loki:
+    ports: []  ***REMOVED*** Override: remove all port mappings
+    ***REMOVED*** Accessible within Docker network at: loki:3100
+
+  ***REMOVED*** Node Exporter - NO external ports (internal network only)
+  node-exporter:
+    ports: []  ***REMOVED*** Override: remove all port mappings
+    ***REMOVED*** Accessible within Docker network at: node-exporter:9100
+
+  ***REMOVED*** cAdvisor - NO external ports (internal network only)
+  cadvisor:
+    ports: []  ***REMOVED*** Override: remove all port mappings
+    ***REMOVED*** Accessible within Docker network at: cadvisor:8080
+
+  ***REMOVED*** PostgreSQL Exporter - NO external ports (internal network only)
+  postgres-exporter:
+    ports: []  ***REMOVED*** Override: remove all port mappings
+    ***REMOVED*** Accessible within Docker network at: postgres-exporter:9187
+
+  ***REMOVED*** Redis Exporter - NO external ports (internal network only)
+  redis-exporter:
+    ports: []  ***REMOVED*** Override: remove all port mappings
+    ***REMOVED*** Accessible within Docker network at: redis-exporter:9121
+
+  ***REMOVED*** Nginx Exporter - NO external ports (internal network only)
+  nginx-exporter:
+    ports: []  ***REMOVED*** Override: remove all port mappings
+    ***REMOVED*** Accessible within Docker network at: nginx-exporter:9113

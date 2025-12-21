@@ -16,11 +16,25 @@ from app.schemas.schedule import ValidationResult, Violation
 
 from .advanced_acgme import AdvancedACGMEValidator
 from .fatigue_tracker import FatigueTracker
+from .date_validators import (
+    validate_date_range,
+    validate_date_order,
+    validate_expiration_after_issue,
+    validate_academic_year_date,
+    MIN_REASONABLE_DATE,
+    MAX_REASONABLE_DATE,
+)
 
 __all__ = [
     "AdvancedACGMEValidator",
     "FatigueTracker",
     "validate_schedule",
+    "validate_date_range",
+    "validate_date_order",
+    "validate_expiration_after_issue",
+    "validate_academic_year_date",
+    "MIN_REASONABLE_DATE",
+    "MAX_REASONABLE_DATE",
 ]
 
 
