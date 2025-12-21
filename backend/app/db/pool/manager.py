@@ -264,17 +264,72 @@ class PoolManager:
         """Update the pool size dynamically.
 
         Note: SQLAlchemy's QueuePool doesn't support runtime size changes,
-        so this is a placeholder for future implementation or pool recreation.
+        so this implementation recreates the engine with the new pool size.
 
         Args:
             new_size: New pool size
         """
-        # TODO: Implement dynamic pool resizing
-        # This would require recreating the pool or using a custom pool class
-        logger.warning(
-            "Dynamic pool resizing not yet implemented. "
-            f"Would resize to {new_size} connections."
+        if new_size == self._config.pool_size:
+            logger.debug(f"Pool size unchanged at {new_size}")
+            return
+
+        logger.info(
+            f"Resizing pool from {self._config.pool_size} to {new_size} connections"
         )
+
+        try:
+            # Update config
+            old_size = self._config.pool_size
+            self._config.pool_size = new_size
+
+            # Dispose old engine and pool
+            if self._engine:
+                logger.debug("Disposing old engine and pool")
+                self._engine.dispose()
+
+            # Create new engine with updated pool size
+            self._engine = create_engine(
+                self._database_url,
+                poolclass=QueuePool,
+                pool_size=self._config.pool_size,
+                max_overflow=self._config.max_overflow,
+                pool_timeout=self._config.timeout,
+                pool_recycle=self._config.recycle,
+                pool_pre_ping=self._config.pre_ping,
+                echo_pool=self._config.echo_pool,
+                pool_reset_on_return=self._config.pool_reset_on_return,
+                connect_args={"connect_timeout": self._config.connect_timeout},
+            )
+
+            # Get new pool reference
+            self._pool = self._engine.pool
+
+            # Update session factory
+            self._session_factory = sessionmaker(
+                autocommit=False, autoflush=False, bind=self._engine
+            )
+
+            # Re-setup pool events for monitoring
+            if self._config.enable_monitoring and self._monitor:
+                self._setup_pool_events()
+
+            # Update monitor reference
+            if self._monitor:
+                self._monitor._pool = self._pool
+
+            # Update auto-recovery reference
+            if self._auto_recovery:
+                self._auto_recovery._pool = self._pool
+
+            logger.info(
+                f"Pool successfully resized from {old_size} to {new_size} connections"
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to resize pool: {e}", exc_info=True)
+            # Attempt to restore old size
+            self._config.pool_size = old_size
+            raise
 
     def get_session_factory(self):
         """Get the session factory for creating database sessions.

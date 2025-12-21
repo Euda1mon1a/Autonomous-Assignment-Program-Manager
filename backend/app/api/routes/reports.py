@@ -21,6 +21,7 @@ from app.schemas.reports import (
 )
 from app.services.reports.templates.analytics_report import AnalyticsReportTemplate
 from app.services.reports.templates.compliance_report import ComplianceReportTemplate
+from app.services.reports.templates.faculty_summary_report import FacultySummaryReportTemplate
 from app.services.reports.templates.schedule_report import ScheduleReportTemplate
 
 router = APIRouter()
@@ -274,21 +275,9 @@ async def generate_faculty_summary_report(
             f"from {request.start_date} to {request.end_date}"
         )
 
-        # For now, use analytics template
-        # TODO: Implement dedicated FacultySummaryReportTemplate
-        analytics_request = AnalyticsReportRequest(
-            start_date=request.start_date,
-            end_date=request.end_date,
-            include_logo=request.include_logo,
-            include_toc=request.include_toc,
-            include_page_numbers=request.include_page_numbers,
-            include_charts=False,
-            include_fairness_metrics=True,
-            include_trends=False,
-        )
-
-        template = AnalyticsReportTemplate(db)
-        pdf_bytes = template.generate(analytics_request)
+        # Use dedicated faculty summary template
+        template = FacultySummaryReportTemplate(db)
+        pdf_bytes = template.generate(request)
 
         # Create filename
         filename = (

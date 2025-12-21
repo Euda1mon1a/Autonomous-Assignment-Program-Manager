@@ -9,17 +9,151 @@ Provides automated compliance report generation and distribution:
 - Email distribution to stakeholders
 """
 
+import json
 import logging
-from datetime import date, timedelta
+import os
+from datetime import date, datetime, timedelta
 from typing import Any
+from uuid import UUID
 
 from celery import shared_task
+from sqlalchemy import select
 
 from app.compliance.reports import ComplianceReportGenerator
 from app.core.config import settings
 from app.db.session import SessionLocal
+from app.models.person import FacultyRole, Person
+from app.notifications.tasks import send_email
 
 logger = logging.getLogger(__name__)
+
+
+def save_report_to_file(report_bytes: bytes, filename: str, report_type: str) -> str:
+    """
+    Save report to file system and return path.
+
+    Args:
+        report_bytes: Report content as bytes
+        filename: Desired filename
+        report_type: Type of report (for subdirectory organization)
+
+    Returns:
+        str: Absolute path to saved file
+
+    Raises:
+        IOError: If file cannot be written
+    """
+    try:
+        # Get reports directory from environment or use default
+        reports_dir = os.getenv("REPORTS_DIR", "/tmp/reports")
+
+        # Create subdirectory for report type
+        type_dir = os.path.join(reports_dir, report_type)
+        os.makedirs(type_dir, exist_ok=True)
+
+        # Save file
+        filepath = os.path.join(type_dir, filename)
+        with open(filepath, 'wb') as f:
+            f.write(report_bytes)
+
+        logger.info(f"Report saved to: {filepath} ({len(report_bytes)} bytes)")
+        return filepath
+
+    except Exception as e:
+        logger.error(f"Failed to save report {filename}: {e}")
+        raise
+
+
+def save_report_data_to_json(report_data: dict, report_type: str) -> str:
+    """
+    Save report data dictionary to JSON file.
+
+    Args:
+        report_data: Report data as dictionary
+        report_type: Type of report (for filename)
+
+    Returns:
+        str: Absolute path to saved JSON file
+
+    Raises:
+        IOError: If file cannot be written
+    """
+    try:
+        reports_dir = os.getenv("REPORTS_DIR", "/tmp/reports")
+        os.makedirs(reports_dir, exist_ok=True)
+
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        filename = f"{report_type}_{timestamp}.json"
+        filepath = os.path.join(reports_dir, filename)
+
+        with open(filepath, 'w') as f:
+            json.dump(report_data, f, indent=2, default=str)
+
+        logger.info(f"Report data saved to: {filepath}")
+        return filepath
+
+    except Exception as e:
+        logger.error(f"Failed to save report data: {e}")
+        raise
+
+
+def get_program_directors_emails(db) -> list[str]:
+    """
+    Get email addresses of all program directors.
+
+    Args:
+        db: Database session
+
+    Returns:
+        list[str]: List of program director email addresses
+    """
+    try:
+        # Query for faculty with Program Director role
+        stmt = select(Person).where(
+            Person.type == "faculty",
+            Person.faculty_role == FacultyRole.PD.value,
+            Person.email.isnot(None)
+        )
+        result = db.execute(stmt)
+        program_directors = result.scalars().all()
+
+        emails = [pd.email for pd in program_directors if pd.email]
+        logger.info(f"Found {len(emails)} program director email(s)")
+        return emails
+
+    except Exception as e:
+        logger.error(f"Failed to query program directors: {e}")
+        return []
+
+
+def get_compliance_stakeholder_emails() -> list[str]:
+    """
+    Get compliance stakeholder email addresses from configuration.
+
+    Returns:
+        list[str]: List of stakeholder email addresses
+    """
+    # Get from environment or use default
+    stakeholders = os.getenv(
+        "COMPLIANCE_STAKEHOLDER_EMAILS",
+        "compliance@hospital.org,program-director@hospital.org"
+    )
+    return [email.strip() for email in stakeholders.split(",") if email.strip()]
+
+
+def get_executive_stakeholder_emails() -> list[str]:
+    """
+    Get executive stakeholder email addresses from configuration.
+
+    Returns:
+        list[str]: List of executive email addresses
+    """
+    # Get from environment or use default
+    executives = os.getenv(
+        "EXECUTIVE_STAKEHOLDER_EMAILS",
+        "chief-medical-officer@hospital.org,program-director@hospital.org"
+    )
+    return [email.strip() for email in executives.split(",") if email.strip()]
 
 
 @shared_task(
@@ -82,11 +216,40 @@ def generate_daily_compliance_summary(self, lookback_days: int = 1) -> dict[str,
 
             logger.info(f"Daily compliance summary: {summary}")
 
-            # TODO: Send email notification if violations found
+            # Send email notification if violations found
             if summary["total_violations"] > 0:
                 logger.warning(
                     f"Found {summary['total_violations']} violations in daily summary"
                 )
+
+                # Get stakeholder emails
+                stakeholder_emails = get_compliance_stakeholder_emails()
+
+                # Send email to each stakeholder
+                for email in stakeholder_emails:
+                    try:
+                        send_email.delay(
+                            to=email,
+                            subject=f"Compliance Alert: {summary['total_violations']} violation(s) detected",
+                            body=f"""Daily Compliance Alert - {end_date}
+
+The following compliance violations were detected in the daily compliance check:
+
+Period: {start_date} to {end_date}
+Total Violations: {summary['total_violations']}
+Total Residents: {summary['total_residents']}
+Compliance Rate: {summary['compliance_rate']:.1f}%
+Coverage Rate: {summary['coverage_rate']:.1f}%
+
+Please review the compliance report and take appropriate action.
+
+This is an automated alert from the Residency Scheduler system.
+""",
+                            html=None
+                        )
+                        logger.info(f"Violation alert email queued for {email}")
+                    except Exception as e:
+                        logger.error(f"Failed to queue violation alert email for {email}: {e}")
 
             return {
                 "success": True,
@@ -168,8 +331,47 @@ def generate_weekly_compliance_report(
                 f"compliance_report_{last_monday}_{last_sunday}.{format}"
             )
 
-            # TODO: Save report to file system or cloud storage
-            # TODO: Send email to stakeholders with attachment
+            # Save report to file system
+            try:
+                filepath = save_report_to_file(
+                    report_bytes=report_bytes,
+                    filename=filename,
+                    report_type="weekly"
+                )
+            except Exception as e:
+                logger.error(f"Failed to save weekly report: {e}")
+                filepath = None
+
+            # Send email to stakeholders with attachment
+            stakeholder_emails = get_compliance_stakeholder_emails()
+            for email in stakeholder_emails:
+                try:
+                    # Note: Celery send_email task doesn't support attachments yet
+                    # For now, send link to report location or inline summary
+                    send_email.delay(
+                        to=email,
+                        subject=f"Weekly Compliance Report - {last_monday} to {last_sunday}",
+                        body=f"""Weekly Compliance Report
+
+Report Period: {last_monday} to {last_sunday}
+Format: {format.upper()}
+
+Summary:
+- Total Residents: {report_data.work_hour_summary.get('total_residents', 0)}
+- Total Violations: {report_data.work_hour_summary.get('total_violations', 0)}
+- Compliance Rate: {report_data.work_hour_summary.get('compliance_rate', 100):.1f}%
+
+Report File: {filepath if filepath else 'Failed to save'}
+
+Please review the compliance report for the past week.
+
+This is an automated report from the Residency Scheduler system.
+""",
+                        html=None
+                    )
+                    logger.info(f"Weekly report email queued for {email}")
+                except Exception as e:
+                    logger.error(f"Failed to queue weekly report email for {email}: {e}")
 
             logger.info(
                 f"Weekly compliance report generated: {filename} "
@@ -262,8 +464,59 @@ def generate_monthly_executive_summary(self) -> dict[str, Any]:
                 f"compliance_data_{first_of_prev_month.strftime('%Y-%m')}.xlsx"
             )
 
-            # TODO: Save reports to file system or cloud storage
-            # TODO: Send email to executive stakeholders
+            # Save reports to file system
+            pdf_filepath = None
+            excel_filepath = None
+
+            try:
+                pdf_filepath = save_report_to_file(
+                    report_bytes=pdf_bytes,
+                    filename=filename_pdf,
+                    report_type="monthly_executive"
+                )
+            except Exception as e:
+                logger.error(f"Failed to save monthly PDF report: {e}")
+
+            try:
+                excel_filepath = save_report_to_file(
+                    report_bytes=excel_bytes,
+                    filename=filename_excel,
+                    report_type="monthly_executive"
+                )
+            except Exception as e:
+                logger.error(f"Failed to save monthly Excel report: {e}")
+
+            # Send email to executive stakeholders
+            executive_emails = get_executive_stakeholder_emails()
+            for email in executive_emails:
+                try:
+                    send_email.delay(
+                        to=email,
+                        subject=f"Monthly Executive Compliance Summary - {first_of_prev_month.strftime('%B %Y')}",
+                        body=f"""Monthly Executive Compliance Summary
+
+Report Period: {first_of_prev_month.strftime('%B %Y')} ({first_of_prev_month} to {last_of_prev_month})
+
+Executive Summary:
+- Total Residents: {report_data.work_hour_summary.get('total_residents', 0)}
+- Total Violations: {report_data.work_hour_summary.get('total_violations', 0)}
+- Compliance Rate: {report_data.work_hour_summary.get('compliance_rate', 100):.1f}%
+- Average Weekly Hours: {report_data.work_hour_summary.get('avg_weekly_hours', 0):.1f}
+- Supervision Compliance: {report_data.supervision_summary.get('compliance_rate', 100):.1f}%
+
+Report Files:
+- PDF Report: {pdf_filepath if pdf_filepath else 'Failed to save'}
+- Excel Data: {excel_filepath if excel_filepath else 'Failed to save'}
+
+Please review the monthly compliance summary for leadership review.
+
+This is an automated report from the Residency Scheduler system.
+""",
+                        html=None
+                    )
+                    logger.info(f"Monthly executive report email queued for {email}")
+                except Exception as e:
+                    logger.error(f"Failed to queue monthly executive email for {email}: {e}")
 
             logger.info(
                 f"Monthly executive summary generated: {filename_pdf} "
@@ -394,8 +647,16 @@ def generate_custom_compliance_report(
 
             filename = f"compliance_report_{start}_{end}.{format}"
 
-            # TODO: Save report to file system or cloud storage
-            # Return file path/URL for download
+            # Save report to file system and return file path for download
+            filepath = None
+            try:
+                filepath = save_report_to_file(
+                    report_bytes=report_bytes,
+                    filename=filename,
+                    report_type="custom"
+                )
+            except Exception as e:
+                logger.error(f"Failed to save custom report: {e}")
 
             logger.info(
                 f"Custom compliance report generated: {filename} "
@@ -406,6 +667,7 @@ def generate_custom_compliance_report(
                 "success": True,
                 "message": "Custom compliance report generated",
                 "filename": filename,
+                "filepath": filepath,
                 "file_size": len(report_bytes),
                 "start_date": str(start),
                 "end_date": str(end),
@@ -489,8 +751,87 @@ def check_violation_alerts(self, lookback_days: int = 1) -> dict[str, Any]:
                     f"({len(critical_violations)} critical)"
                 )
 
-                # TODO: Send email alerts to program directors
-                # TODO: Create notifications in the system
+                # Send email alerts to program directors
+                pd_emails = get_program_directors_emails(db)
+
+                for email in pd_emails:
+                    try:
+                        # Format violation details for email
+                        violation_details = "\n".join(
+                            f"- {v.get('type', 'Unknown')}: {v.get('description', 'No description')} "
+                            f"(Severity: {v.get('severity', 'UNKNOWN')})"
+                            for v in violations[:10]  # Include first 10
+                        )
+
+                        if len(violations) > 10:
+                            violation_details += f"\n... and {len(violations) - 10} more violations"
+
+                        send_email.delay(
+                            to=email,
+                            subject=f"URGENT: {len(critical_violations)} Critical Compliance Violation(s) Detected",
+                            body=f"""Compliance Violation Alert
+
+URGENT: Compliance violations have been detected that require immediate attention.
+
+Period Checked: {start_date} to {end_date}
+Total Violations: {len(violations)}
+Critical Violations: {len(critical_violations)}
+
+Violation Details:
+{violation_details}
+
+Please review these violations and take appropriate corrective action immediately.
+
+This is an automated alert from the Residency Scheduler system.
+""",
+                            html=None
+                        )
+                        logger.info(f"Critical violation alert email queued for {email}")
+                    except Exception as e:
+                        logger.error(f"Failed to queue violation alert email for {email}: {e}")
+
+                # Create in-app notifications for program directors
+                from app.models.notification import Notification
+
+                # Query program directors for in-app notifications
+                stmt = select(Person).where(
+                    Person.type == "faculty",
+                    Person.faculty_role == FacultyRole.PD.value
+                )
+                result = db.execute(stmt)
+                program_directors = result.scalars().all()
+
+                for pd in program_directors:
+                    try:
+                        # Create notification record
+                        notification = Notification(
+                            recipient_id=pd.id,
+                            notification_type="COMPLIANCE_ALERT",
+                            subject=f"Critical Compliance Issues Detected",
+                            body=f"{len(critical_violations)} critical and {len(violations) - len(critical_violations)} "
+                                 f"total compliance violations detected between {start_date} and {end_date}. "
+                                 f"Immediate review required.",
+                            priority="high",
+                            data={
+                                "violation_count": len(violations),
+                                "critical_count": len(critical_violations),
+                                "start_date": str(start_date),
+                                "end_date": str(end_date),
+                                "violations": violations[:5]  # Include first 5 for quick view
+                            }
+                        )
+                        db.add(notification)
+                        logger.info(f"Created in-app notification for program director {pd.id}")
+                    except Exception as e:
+                        logger.error(f"Failed to create in-app notification for PD {pd.id}: {e}")
+
+                # Commit all notifications
+                try:
+                    db.commit()
+                    logger.info(f"Created {len(program_directors)} in-app notifications for program directors")
+                except Exception as e:
+                    logger.error(f"Failed to commit in-app notifications: {e}")
+                    db.rollback()
 
                 return {
                     "success": True,

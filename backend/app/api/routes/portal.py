@@ -48,6 +48,7 @@ from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.models.user import User
 from app.services.swap_notification_service import SwapNotificationService
 from app.schemas.portal import (
+    DashboardAlert,
     DashboardResponse,
     DashboardStats,
     FMITWeekInfo,
@@ -859,31 +860,213 @@ def get_my_dashboard(
         HTTPException: 403 if current user has no linked faculty profile
 
     Business Logic:
-        - Currently returns stub data with zeros
-        - TODO: Implement full dashboard with:
-            - Actual week counts from assignments
-            - Upcoming weeks (next 4-8 weeks)
-            - Recent conflict alerts (last 30 days)
-            - Incoming swaps requiring response
+        - Queries actual week counts from assignments
+        - Shows upcoming weeks (next 4-8 weeks)
+        - Displays recent conflict alerts (last 30 days, NEW or ACKNOWLEDGED status)
+        - Lists incoming swaps requiring response (PENDING status)
     """
     faculty = _get_faculty_for_user(db, current_user)
+    today = datetime.utcnow().date()
 
+    # Get FMIT template
+    fmit_template = db.query(RotationTemplate).filter(
+        RotationTemplate.name == "FMIT"
+    ).first()
+
+    # Initialize counters
+    weeks_assigned = 0
+    weeks_completed = 0
+    weeks_remaining = 0
+    upcoming_weeks = []
+
+    if fmit_template:
+        # Get all FMIT assignments for this faculty (eager load block to avoid N+1)
+        assignments = (
+            db.query(Assignment)
+            .join(Block, Assignment.block_id == Block.id)
+            .options(joinedload(Assignment.block))
+            .filter(
+                Assignment.person_id == faculty.id,
+                Assignment.rotation_template_id == fmit_template.id,
+            )
+            .order_by(Block.date)
+            .all()
+        )
+
+        # Group assignments by week
+        week_map = defaultdict(list)
+        for assignment in assignments:
+            week_start = _get_week_start(assignment.block.date)
+            week_map[week_start].append(assignment)
+
+        # Count weeks
+        weeks_assigned = len(week_map)
+
+        # Count completed vs remaining weeks
+        for week_start in week_map.keys():
+            week_end = week_start + timedelta(days=6)
+            if week_end < today:
+                weeks_completed += 1
+            else:
+                weeks_remaining += 1
+
+        # Get upcoming weeks (next 8 weeks)
+        eight_weeks_out = today + timedelta(weeks=8)
+        for week_start, week_assignments in sorted(week_map.items()):
+            week_end = week_start + timedelta(days=6)
+
+            # Only include weeks starting from today up to 8 weeks out
+            if week_start >= today and week_start <= eight_weeks_out:
+                # Check for conflicts
+                conflict_alert = (
+                    db.query(ConflictAlert)
+                    .filter(
+                        ConflictAlert.faculty_id == faculty.id,
+                        ConflictAlert.fmit_week == week_start,
+                        ConflictAlert.status.in_([
+                            ConflictAlertStatus.NEW,
+                            ConflictAlertStatus.ACKNOWLEDGED
+                        ])
+                    )
+                    .first()
+                )
+
+                has_conflict = conflict_alert is not None
+                conflict_description = conflict_alert.description if conflict_alert else None
+
+                # Check for pending swaps
+                pending_swap = (
+                    db.query(SwapRecord)
+                    .filter(
+                        SwapRecord.source_faculty_id == faculty.id,
+                        SwapRecord.source_week == week_start,
+                        SwapRecord.status == SwapStatus.PENDING,
+                    )
+                    .first()
+                )
+
+                has_pending_swap = pending_swap is not None
+
+                upcoming_weeks.append(FMITWeekInfo(
+                    week_start=week_start,
+                    week_end=week_end,
+                    is_past=False,  # All upcoming weeks are not past
+                    has_conflict=has_conflict,
+                    conflict_description=conflict_description,
+                    can_request_swap=not has_pending_swap,
+                    pending_swap_request=has_pending_swap,
+                ))
+
+    # Get target weeks from preferences
+    preferences = db.query(FacultyPreference).filter(
+        FacultyPreference.faculty_id == faculty.id
+    ).first()
+    target_weeks = preferences.target_weeks_per_year if preferences else 6
+
+    # Count pending swap requests (incoming)
+    pending_swap_requests_count = (
+        db.query(SwapRecord)
+        .filter(
+            SwapRecord.target_faculty_id == faculty.id,
+            SwapRecord.status == SwapStatus.PENDING,
+        )
+        .count()
+    )
+
+    # Count unread alerts (NEW status only)
+    unread_alerts_count = (
+        db.query(ConflictAlert)
+        .filter(
+            ConflictAlert.faculty_id == faculty.id,
+            ConflictAlert.status == ConflictAlertStatus.NEW,
+        )
+        .count()
+    )
+
+    # Get recent conflict alerts (last 30 days, NEW or ACKNOWLEDGED)
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    recent_alerts_query = (
+        db.query(ConflictAlert)
+        .filter(
+            ConflictAlert.faculty_id == faculty.id,
+            ConflictAlert.created_at >= thirty_days_ago,
+            ConflictAlert.status.in_([
+                ConflictAlertStatus.NEW,
+                ConflictAlertStatus.ACKNOWLEDGED
+            ])
+        )
+        .order_by(ConflictAlert.created_at.desc())
+        .limit(10)
+        .all()
+    )
+
+    # Convert to DashboardAlert
+    recent_alerts = []
+    for alert in recent_alerts_query:
+        # Determine severity based on alert type
+        severity = "warning"  # Default
+        if hasattr(alert, 'severity') and alert.severity:
+            severity = alert.severity
+        elif "critical" in alert.description.lower() if alert.description else False:
+            severity = "critical"
+
+        # Determine action URL - link to schedule view with week filter
+        action_url = None
+        if alert.fmit_week:
+            action_url = f"/portal/my/schedule?week={alert.fmit_week.isoformat()}"
+
+        recent_alerts.append(DashboardAlert(
+            id=alert.id,
+            alert_type="conflict",
+            severity=severity,
+            message=alert.description or "Conflict detected",
+            created_at=alert.created_at,
+            action_url=action_url,
+        ))
+
+    # Get pending swap decisions (incoming swaps requiring response)
+    incoming_swaps = (
+        db.query(SwapRecord)
+        .options(joinedload(SwapRecord.source_faculty))
+        .filter(
+            SwapRecord.target_faculty_id == faculty.id,
+            SwapRecord.status == SwapStatus.PENDING,
+        )
+        .order_by(SwapRecord.requested_at.desc())
+        .limit(10)
+        .all()
+    )
+
+    # Convert to SwapRequestSummary
+    pending_swap_decisions = []
+    for swap in incoming_swaps:
+        pending_swap_decisions.append(SwapRequestSummary(
+            id=swap.id,
+            other_faculty_name=swap.source_faculty.name if swap.source_faculty else "Unknown",
+            week_to_give=swap.target_week,  # What they want from us
+            week_to_receive=swap.source_week,  # What we would get
+            status=swap.status.value,
+            created_at=swap.requested_at,
+            is_incoming=True,
+        ))
+
+    # Build stats
     stats = DashboardStats(
-        weeks_assigned=0,
-        weeks_completed=0,
-        weeks_remaining=0,
-        target_weeks=6,
-        pending_swap_requests=0,
-        unread_alerts=0,
+        weeks_assigned=weeks_assigned,
+        weeks_completed=weeks_completed,
+        weeks_remaining=weeks_remaining,
+        target_weeks=target_weeks,
+        pending_swap_requests=pending_swap_requests_count,
+        unread_alerts=unread_alerts_count,
     )
 
     return DashboardResponse(
         faculty_id=faculty.id,
         faculty_name=faculty.name,
         stats=stats,
-        upcoming_weeks=[],
-        recent_alerts=[],
-        pending_swap_decisions=[],
+        upcoming_weeks=upcoming_weeks,
+        recent_alerts=recent_alerts,
+        pending_swap_decisions=pending_swap_decisions,
     )
 
 

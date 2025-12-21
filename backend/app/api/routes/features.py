@@ -9,11 +9,13 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_admin_user, get_current_active_user
 from app.db.session import get_db
 from app.features.flags import FeatureFlagService
+from app.models.feature_flag import FeatureFlag
 from app.models.user import User
 from app.schemas.feature_flag import (
     FeatureFlagBulkEvaluationRequest,
@@ -116,13 +118,17 @@ async def get_feature_flag_stats(
     """
     service = FeatureFlagService(db)
     stats = await service.get_stats()
+
+    # Get flags by environment breakdown
+    flags_by_environment = await _get_flags_by_environment(db)
+
     return FeatureFlagStatsResponse(
         total_flags=stats['total_flags'],
         enabled_flags=stats['enabled_flags'],
         disabled_flags=stats['disabled_flags'],
         percentage_rollout_flags=stats['percentage_rollout_flags'],
         variant_flags=stats['variant_flags'],
-        flags_by_environment={},  # TODO: Implement environment breakdown
+        flags_by_environment=flags_by_environment,
         recent_evaluations=stats['recent_evaluations'],
         unique_users=stats['unique_users']
     )
@@ -355,3 +361,45 @@ async def disable_feature_flag(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
+
+
+async def _get_flags_by_environment(db: AsyncSession) -> dict[str, Any]:
+    """
+    Get feature flags breakdown by environment.
+
+    Returns:
+        Dictionary mapping environments to their feature flag statistics
+    """
+    environments = ["development", "staging", "production"]
+    result = {}
+
+    for env in environments:
+        # Get all flags
+        all_flags_result = await db.execute(select(FeatureFlag))
+        all_flags = all_flags_result.scalars().all()
+
+        # Filter flags for this environment
+        env_flags = []
+        for flag in all_flags:
+            # If flag.environments is None, it applies to all environments
+            # If flag.environments is a list, check if env is in it
+            if flag.environments is None or env in flag.environments:
+                env_flags.append(flag)
+
+        # Categorize flags
+        enabled = [f.key for f in env_flags if f.enabled]
+        disabled = [f.key for f in env_flags if not f.enabled]
+        rollout_percentages = {}
+
+        for flag in env_flags:
+            if flag.rollout_percentage is not None and flag.rollout_percentage < 1.0:
+                rollout_percentages[flag.key] = int(flag.rollout_percentage * 100)
+
+        result[env] = {
+            "total": len(env_flags),
+            "enabled": enabled,
+            "disabled": disabled,
+            "rollout_percentages": rollout_percentages,
+        }
+
+    return result
