@@ -203,12 +203,50 @@ def get_rate_limiter() -> RateLimiter:
     return _rate_limiter
 
 
+def _is_trusted_proxy(ip: str) -> bool:
+    """
+    Check if an IP address is a trusted proxy.
+
+    Args:
+        ip: IP address to check
+
+    Returns:
+        True if IP is in the trusted proxies list
+    """
+    import ipaddress
+
+    trusted_proxies = settings.TRUSTED_PROXIES
+    if not trusted_proxies:
+        return False
+
+    try:
+        client_ip = ipaddress.ip_address(ip)
+        for proxy in trusted_proxies:
+            try:
+                # Check if it's a network (CIDR notation) or single IP
+                if "/" in proxy:
+                    network = ipaddress.ip_network(proxy, strict=False)
+                    if client_ip in network:
+                        return True
+                else:
+                    if client_ip == ipaddress.ip_address(proxy):
+                        return True
+            except ValueError:
+                logger.warning(f"Invalid trusted proxy configuration: {proxy}")
+                continue
+        return False
+    except ValueError:
+        logger.warning(f"Invalid IP address format: {ip}")
+        return False
+
+
 def get_client_ip(request: Request) -> str:
     """
     Extract client IP address from request.
 
-    Checks X-Forwarded-For header first (for proxies/load balancers),
-    then falls back to direct client IP.
+    Only trusts X-Forwarded-For header when the direct client IP is from
+    a configured trusted proxy. This prevents rate limit bypass via header
+    spoofing attacks.
 
     Args:
         request: FastAPI request object
@@ -216,15 +254,19 @@ def get_client_ip(request: Request) -> str:
     Returns:
         Client IP address as string
     """
-    # Check X-Forwarded-For header (for proxies/load balancers)
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        # Take the first IP in the chain (client IP)
-        return forwarded_for.split(",")[0].strip()
+    # Get direct client IP first
+    direct_ip = request.client.host if request.client else None
 
-    # Fall back to direct client IP
-    if request.client:
-        return request.client.host
+    # Only trust X-Forwarded-For if request comes from a trusted proxy
+    if direct_ip and _is_trusted_proxy(direct_ip):
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            # Take the first IP in the chain (original client IP)
+            return forwarded_for.split(",")[0].strip()
+
+    # Use direct client IP (no trusted proxy or no X-Forwarded-For)
+    if direct_ip:
+        return direct_ip
 
     # Default fallback
     return "unknown"
