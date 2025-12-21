@@ -9,13 +9,14 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [The Three Pillars](#the-three-pillars)
-3. [Quick Start](#quick-start)
-4. [Skills Reference](#skills-reference)
-5. [CLI Platforms](#cli-platforms)
-6. [Model Selection](#model-selection)
-7. [Evaluation & Testing](#evaluation--testing)
-8. [Troubleshooting](#troubleshooting)
+2. [Choosing Your Claude Interface](#choosing-your-claude-interface)
+3. [The Three Pillars](#the-three-pillars)
+4. [Quick Start](#quick-start)
+5. [Skills Reference](#skills-reference)
+6. [CLI Platforms](#cli-platforms)
+7. [Model Selection](#model-selection)
+8. [Evaluation & Testing](#evaluation--testing)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -49,6 +50,69 @@ This repository has a complete AI agent infrastructure:
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Choosing Your Claude Interface
+
+Before diving in, understand the difference between Claude's interfaces:
+
+### Claude for macOS/Desktop (Chat App) vs Claude Code (CLI)
+
+| Feature | Claude for macOS | Claude Code |
+|---------|------------------|-------------|
+| **What It Is** | Desktop chat application | Command-line development tool |
+| **File Access** | Limited (can view attached files) | Full access to your codebase |
+| **Code Editing** | Cannot edit files | Can read, write, and edit files |
+| **Git Operations** | None | Full git integration |
+| **MCP Tools** | Not available | Full MCP tool support |
+| **Skills** | Not available | Loads skills from `.claude/skills/` |
+| **Best For** | Research, writing, quick questions | Development, code changes, debugging |
+
+### When to Use Each
+
+**Use Claude for macOS (Desktop App) when:**
+- Asking general questions not tied to your codebase
+- Drafting documentation or writing content
+- Research and brainstorming
+- Analyzing individual files you upload manually
+- Having conversations that don't require code changes
+
+**Use Claude Code (CLI) when:**
+- Making changes to your codebase
+- Debugging issues in your project
+- Running tests or build commands
+- Working with git (commits, branches, PRs)
+- Using project-specific skills and MCP tools
+- Any task that requires reading or modifying multiple files
+
+### Decision Flowchart
+
+```
+Do you need to modify files in your codebase?
+├── YES → Use Claude Code
+└── NO
+    └── Do you need to read/analyze project files?
+        ├── YES → Use Claude Code (or IDE with Claude extension)
+        └── NO
+            └── Is this a coding-related question?
+                ├── YES, about THIS project → Use Claude Code
+                ├── YES, general coding → Either works
+                └── NO → Use Claude for macOS
+```
+
+### IDE Integration Options
+
+For developers who prefer staying in their editor:
+
+| Option | Description | When to Use |
+|--------|-------------|-------------|
+| **Antigravity** | Full-featured IDE with Claude | Multi-agent workflows, parallel tasks |
+| **VS Code + Claude Extension** | Claude in VS Code sidebar | Light IDE integration |
+| **Cursor** | VS Code fork with native Claude | If you prefer Cursor's UX |
+| **Cline** | Claude extension for VS Code | Alternative VS Code integration |
+
+All IDE options provide file access and can use MCP tools when configured.
 
 ---
 
@@ -110,7 +174,11 @@ Claude:
 
 ## Quick Start
 
-### Option A: Claude Code (Recommended for macOS)
+> **Note:** This section covers development tools that integrate with your codebase.
+> For general questions without code changes, you can use Claude for macOS/Desktop instead.
+> See [Choosing Your Claude Interface](#choosing-your-claude-interface) for guidance.
+
+### Option A: Claude Code (Recommended for Development)
 
 ```bash
 # Install Claude Code
