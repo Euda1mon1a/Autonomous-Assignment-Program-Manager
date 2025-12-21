@@ -15,7 +15,7 @@ sqlalchemy-continuum==1.5.2  # Audit trail / version history for models
 pydantic==2.12.5
 pydantic-settings==2.12.0
 email-validator==2.3.0
-jinja2==3.1.4  # Template rendering for notifications
+jinja2==3.1.6  # Template rendering for notifications
 
 # Authentication & Security
 python-jose[cryptography]==3.5.0
