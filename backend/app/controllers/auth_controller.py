@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.error_codes import ErrorCode, get_error_code_from_message
+from app.core.rate_limit import get_account_lockout
 from app.models.user import User
 from app.schemas.auth import (
     Token,
@@ -19,17 +20,57 @@ class AuthController:
 
     def __init__(self, db: Session):
         self.service = AuthService(db)
+        self.lockout = get_account_lockout()
 
     def login(self, username: str, password: str) -> Token:
-        """Authenticate user and return JWT token."""
+        """
+        Authenticate user and return JWT token.
+
+        Security: Implements per-user account lockout with exponential backoff
+        to prevent distributed brute force attacks. This complements IP-based
+        rate limiting by tracking failed attempts per username.
+
+        Note: This is independent of token handling - lockout only tracks
+        failed authentication attempts before any tokens are issued.
+        """
+        # Check if account is locked out
+        is_locked, lockout_seconds = self.lockout.check_lockout(username)
+        if is_locked:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "error": "Account temporarily locked",
+                    "message": f"Too many failed login attempts. Try again in {lockout_seconds} seconds.",
+                    "lockout_seconds": lockout_seconds,
+                },
+                headers={"Retry-After": str(lockout_seconds)},
+            )
+
         result = self.service.authenticate(username, password)
 
         if result["error"]:
+            # Record failed attempt and check if account should be locked
+            is_now_locked, attempts_remaining, new_lockout_seconds = self.lockout.record_failed_attempt(username)
+
+            if is_now_locked:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail={
+                        "error": "Account temporarily locked",
+                        "message": f"Too many failed login attempts. Try again in {new_lockout_seconds} seconds.",
+                        "lockout_seconds": new_lockout_seconds,
+                    },
+                    headers={"Retry-After": str(new_lockout_seconds)},
+                )
+
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=result["error"],
                 headers={"WWW-Authenticate": "Bearer"},
             )
+
+        # Successful login - clear any lockout/failed attempts
+        self.lockout.clear_lockout(username)
 
         return Token(
             access_token=result["access_token"],

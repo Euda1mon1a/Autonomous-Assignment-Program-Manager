@@ -145,23 +145,34 @@ services:
     pid: host
 
   # cAdvisor - Container Metrics
+  # Security: Uses specific capabilities instead of privileged mode
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.2
     container_name: cadvisor
     restart: unless-stopped
-    privileged: true
+    # SECURITY: Replaced privileged:true with minimal required capabilities
+    cap_add:
+      - SYS_PTRACE     # Process inspection for container metrics
+      - DAC_READ_SEARCH # Read files for resource monitoring
+    cap_drop:
+      - ALL            # Drop all capabilities first, then add only what's needed
+    security_opt:
+      - no-new-privileges:true  # Prevent privilege escalation
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro  # Explicit cgroup mount
     ports:
       - "8080:8080"
     networks:
       - monitoring
     devices:
       - /dev/kmsg:/dev/kmsg
+    command:
+      - '--docker_only=true'  # Only monitor Docker containers, reduces attack surface
 
   # PostgreSQL Exporter - Database Metrics
   postgres-exporter:

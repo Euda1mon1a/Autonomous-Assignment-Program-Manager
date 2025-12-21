@@ -1,6 +1,6 @@
 # Security Vulnerability Status
 
-**Last Updated:** 2025-12-21 (refresh token security fix)
+**Last Updated:** 2025-12-21 (account lockout + cAdvisor security fix)
 **Original Assessment:** 2025-12-17
 
 This document tracks security vulnerabilities identified in the codebase and their remediation status.
@@ -12,8 +12,8 @@ This document tracks security vulnerabilities identified in the codebase and the
 | Severity | Total | Fixed | Open |
 |----------|-------|-------|------|
 | CRITICAL | 8 | 8 | 0 |
-| HIGH | 8 | 6 | 2 |
-| MEDIUM | 15 | 1 | 14 |
+| HIGH | 8 | 7 | 1 |
+| MEDIUM | 15 | 2 | 13 |
 | LOW | 5 | 0 | 5 |
 
 ---
@@ -124,11 +124,16 @@ This document tracks security vulnerabilities identified in the codebase and the
 - **Current State:** Refresh token rotation implemented with proper blacklisting
 - **Remaining:** Consider reducing access token lifetime from 30 min to 15 min
 
-### 8. No Per-User Account Lockout
-- **Status:** OPEN
-- **Location:** `backend/app/core/rate_limit.py`
-- **Risk:** Distributed brute force attacks can bypass IP-based rate limiting
-- **Remediation:** Add user-based lockout after N failed attempts with exponential backoff
+### 8. ~~No Per-User Account Lockout~~
+- **Status:** FIXED
+- **Fixed In:** `backend/app/core/rate_limit.py:346-543`, `backend/app/controllers/auth_controller.py`
+- **Details:**
+  - Added `AccountLockout` class with exponential backoff
+  - Locks account after 5 failed attempts
+  - Initial lockout: 60 seconds, doubles with each subsequent failure (max 1 hour)
+  - Complements IP-based rate limiting to prevent distributed brute force attacks
+  - Lockout cleared on successful login
+  - Note: This is independent of token handling - only tracks failed authentication attempts
 
 ---
 
@@ -178,9 +183,14 @@ This document tracks security vulnerabilities identified in the codebase and the
 ### 14. No Password History/Rotation
 - **Status:** OPEN - Implement password policies
 
-### 15. cAdvisor Running Privileged
-- **Location:** `monitoring/docker-compose.monitoring.yml:152`
-- **Status:** OPEN - Use specific capabilities instead of full privileged mode
+### 15. ~~cAdvisor Running Privileged~~
+- **Status:** FIXED
+- **Fixed In:** `monitoring/docker-compose.monitoring.yml:147-175`
+- **Details:**
+  - Replaced `privileged: true` with specific capabilities (SYS_PTRACE, DAC_READ_SEARCH)
+  - Added `cap_drop: ALL` to drop all capabilities first
+  - Added `security_opt: no-new-privileges:true` to prevent privilege escalation
+  - Added `--docker_only=true` flag to reduce attack surface
 
 ---
 
