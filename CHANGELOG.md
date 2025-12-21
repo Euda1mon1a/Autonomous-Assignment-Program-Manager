@@ -14,10 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Fixes for bugs identified in Codex review of Session 13 PRs (#312):
 
 **Security Fixes**
-- **Refresh Token Privilege Escalation** (PR #327): Fixed critical vulnerability where refresh tokens could be used as access tokens
+- **Refresh Token Privilege Escalation** (PR #327, #328): Fixed critical vulnerability where refresh tokens could be used as access tokens
   - `verify_token()` now explicitly rejects tokens with `type="refresh"`
   - Prevents attackers from using stolen refresh tokens (7-day lifetime) to bypass short access token lifetime (30 min)
   - Added tests: `test_refresh_token_cannot_be_used_as_access_token`, `test_refresh_token_in_cookie_rejected`
+  - Fixed test validation to properly clear cookies before testing Authorization header behavior
+
+- **Refresh Token Rotation Blacklisting** (PR #327): Implemented secure refresh token rotation
+  - Old refresh tokens are now **immediately blacklisted** when rotation is enabled
+  - `verify_refresh_token()` accepts `blacklist_on_use` parameter for atomic rotation
+  - Prevents token replay attacks where stolen refresh tokens could be reused indefinitely
+  - Added tests: `test_refresh_blacklists_old_token_on_rotation`, `test_refresh_reused_token_rejected`
 
 - **Rate Limit Bypass Prevention**: Fixed X-Forwarded-For header spoofing vulnerability
   - Added `TRUSTED_PROXIES` config option to validate proxy sources
