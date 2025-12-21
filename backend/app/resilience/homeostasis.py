@@ -667,12 +667,25 @@ class HomeostasisMonitor:
         """
         Check a feedback loop and trigger correction if needed.
 
+        This is the core homeostasis mechanism: detect deviation from
+        setpoint and trigger corrective action to restore equilibrium.
+        Like a thermostat, it continuously monitors and adjusts.
+
         Args:
-            loop_id: ID of the feedback loop to check
-            current_value: Current value of the monitored metric
+            loop_id: UUID of the feedback loop to check.
+            current_value: Current value of the monitored metric.
 
         Returns:
-            CorrectiveAction if correction triggered, None otherwise
+            CorrectiveAction: If deviation requires correction, returns the
+                action taken (or to be taken).
+            None: If metric is within tolerance and no action needed.
+
+        Example:
+            >>> monitor = HomeostasisMonitor()
+            >>> loop = monitor.get_feedback_loop("coverage_rate")
+            >>> action = monitor.check_feedback_loop(loop.id, 0.82)
+            >>> if action:
+            ...     print(f"Correction needed: {action.action_type.value}")
         """
         loop = self.feedback_loops.get(loop_id)
         if not loop or not loop.is_active:
@@ -828,17 +841,29 @@ class HomeostasisMonitor:
         """
         Detect potential positive feedback loops.
 
-        Positive feedback loops amplify problems:
-        - Burnout -> Sick calls -> More work -> More burnout
-        - Short-staffing -> Errors -> Investigations -> More short-staffing
-        - Senior faculty leave -> Juniors overloaded -> Juniors leave
+        Positive feedback loops amplify deviation instead of correcting it,
+        leading to runaway destabilization. Key patterns detected:
+        - Burnout cascade: Burnout → Sick calls → More work → More burnout
+        - Coverage spiral: Low coverage → Errors → Investigations → Less coverage
+        - Attrition cascade: Departures → Overload → More departures
 
         Args:
-            faculty_metrics: List of faculty allostatic metrics
-            system_metrics: System-level metrics dict
+            faculty_metrics: List of AllostasisMetrics for each faculty member.
+            system_metrics: Dict of system-level metrics including:
+                - coverage_rate: Current coverage rate (0.0 to 1.0)
 
         Returns:
-            List of detected positive feedback risks
+            list[PositiveFeedbackRisk]: Detected risks with interventions.
+                Each risk includes trigger, amplification mechanism,
+                consequence, and recommended intervention.
+
+        Example:
+            >>> monitor = HomeostasisMonitor()
+            >>> faculty_load = [monitor.calculate_allostatic_load(f.id, "faculty", {...}) for f in faculty]
+            >>> risks = monitor.detect_positive_feedback_risks(faculty_load, {"coverage_rate": 0.80})
+            >>> urgent = [r for r in risks if r.urgency == "immediate"]
+            >>> if urgent:
+            ...     print(f"URGENT: {urgent[0].name} - {urgent[0].intervention}")
         """
         risks = []
 
