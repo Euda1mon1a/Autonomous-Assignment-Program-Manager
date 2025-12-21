@@ -6,7 +6,6 @@ from uuid import UUID, uuid4
 from sqlalchemy import and_
 from sqlalchemy.orm import Session, selectinload
 
-from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.call_assignment import CallAssignment
 from app.models.swap import SwapRecord, SwapStatus, SwapType
@@ -14,6 +13,8 @@ from app.models.swap import SwapRecord, SwapStatus, SwapType
 
 @dataclass
 class ExecutionResult:
+    """Result of a swap execution operation."""
+
     success: bool
     swap_id: UUID | None = None
     message: str = ""
@@ -22,6 +23,8 @@ class ExecutionResult:
 
 @dataclass
 class RollbackResult:
+    """Result of a swap rollback operation."""
+
     success: bool
     message: str = ""
     error_code: str | None = None

@@ -9,8 +9,15 @@ from app.services.leave_providers.database import DatabaseLeaveProvider
 
 
 class LeaveProviderFactory:
+    """Factory for creating leave data providers."""
+
     @staticmethod
-    def create(provider_type: str, db: Session | None = None, file_path: Path | None = None) -> LeaveProvider:
+    def create(
+        provider_type: str,
+        db: Session | None = None,
+        file_path: Path | None = None,
+    ) -> LeaveProvider:
+        """Create a leave provider of the specified type."""
         if provider_type == "database":
             if db is None:
                 raise ValueError("Database session required for database provider")

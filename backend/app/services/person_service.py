@@ -2,7 +2,6 @@
 
 from uuid import UUID
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.person import Person

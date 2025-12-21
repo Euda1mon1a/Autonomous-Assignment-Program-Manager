@@ -13,9 +13,9 @@ Role definitions (from PROJECT_STATUS_ASSESSMENT.md):
 | rn/lpn/msa | Today's manifest, call roster | Academic blocks, compliance |
 """
 
-from typing import Dict, List, Any, Optional, Set
-from datetime import date, datetime
+from datetime import date
 from enum import Enum
+from typing import Dict, List, Any, Optional, Set
 
 
 class UserRole(str, Enum):

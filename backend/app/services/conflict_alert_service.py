@@ -16,7 +16,6 @@ from app.models.conflict_alert import (
     ConflictType,
 )
 from app.models.person import Person
-from app.models.rotation_template import RotationTemplate
 from app.models.swap import SwapRecord, SwapStatus, SwapType
 
 
