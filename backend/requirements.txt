@@ -30,8 +30,8 @@ slowapi==0.1.9
 ***REMOVED*** Data Processing
 pandas==2.3.3
 numpy==2.3.5
-scipy>=1.11.0  ***REMOVED*** Sparse matrix operations for tensegrity solver
-scipy>=1.11.0  ***REMOVED*** Scientific computing for Erlang C queuing calculations
+scipy==1.15.3  ***REMOVED*** Sparse matrix operations for tensegrity solver
+scipy==1.15.3  ***REMOVED*** Scientific computing for Erlang C queuing calculations
 python-dateutil==2.9.0.post0
 
 ***REMOVED*** Graph Analysis (for resilience hub vulnerability analysis)
@@ -58,8 +58,8 @@ pymoo>=0.6.0
 ***REMOVED*** pip install pyqubo dwave-samplers
 ***REMOVED*** For D-Wave quantum hardware access, also install:
 ***REMOVED*** pip install dwave-system
-pyqubo>=1.4.0  ***REMOVED*** QUBO formulation library
-dwave-samplers>=1.0.0  ***REMOVED*** Classical simulated annealing (quantum-inspired)
+***REMOVED*** pyqubo>=1.0.0  ***REMOVED*** QUBO formulation library
+***REMOVED*** dwave-samplers>=1.0.0  ***REMOVED*** Classical simulated annealing (quantum-inspired)
 ***REMOVED*** dwave-system>=1.0.0  ***REMOVED*** Uncomment for D-Wave quantum hardware access
 ***REMOVED*** qubovert>=1.0.0  ***REMOVED*** Alternative QUBO library (optional)
 
