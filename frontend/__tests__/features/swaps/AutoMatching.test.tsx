@@ -7,6 +7,24 @@
  * - Single candidate display
  * - Multiple candidates display (5)
  * - Accessibility with findByRole queries
+ *
+ * NOTE: This test file defines a local AutoMatchingCandidates component as a
+ * reference implementation for testing UI patterns and API integration. This is
+ * intentional for the following reasons:
+ *
+ * 1. Establishes expected component interface and behavior patterns
+ * 2. Tests API integration with /api/v1/swaps/candidates endpoint
+ * 3. Validates accessibility requirements (ARIA labels, roles)
+ * 4. Provides a working reference for production implementation
+ *
+ * When implementing the production component at:
+ *   frontend/src/features/swap-marketplace/AutoMatchingCandidates.tsx
+ *
+ * Update this test to import and test the production component instead:
+ *   import { AutoMatchingCandidates } from '@/features/swap-marketplace';
+ *
+ * Also ensure the production component uses the correct types from:
+ *   frontend/src/hooks/useSwaps.ts (SwapCandidate interface with snake_case fields)
  */
 
 import React from 'react';
@@ -39,11 +57,17 @@ interface CandidatesResponse {
 }
 
 // ============================================================================
-// Auto-Matching Candidates Component
+// Auto-Matching Candidates Component (Test Reference Implementation)
 // ============================================================================
 
 /**
- * Component that displays auto-matched swap candidates
+ * Reference implementation of AutoMatchingCandidates component.
+ *
+ * TODO: Replace with production component import when created:
+ *   import { AutoMatchingCandidates } from '@/features/swap-marketplace';
+ *
+ * The production component should use types from @/hooks/useSwaps.ts which has
+ * snake_case field names (faculty_id, faculty_name, available_weeks, etc.)
  */
 interface AutoMatchingCandidatesProps {
   weekToMatch: string;
