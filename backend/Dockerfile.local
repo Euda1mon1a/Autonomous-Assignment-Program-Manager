@@ -32,10 +32,15 @@ WORKDIR /app
 
 # Install build dependencies in single layer for better caching
 # - gcc, libpq-dev: Required for psycopg2 compilation
+# - gfortran, libopenblas-dev: Required for scipy compilation
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        gcc \
-        libpq-dev \
+    gcc \
+    g++ \
+    gfortran \
+    libpq-dev \
+    libopenblas-dev \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better layer caching
@@ -65,9 +70,9 @@ WORKDIR /app
 # - postgresql-client: Useful for DB debugging
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        libpq5 \
-        curl \
-        postgresql-client \
+    libpq5 \
+    curl \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
