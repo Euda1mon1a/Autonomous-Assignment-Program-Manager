@@ -82,6 +82,122 @@ def create_access_token(
     return encoded_jwt, jti, expire
 
 
+def create_refresh_token(
+    data: dict,
+    expires_delta: timedelta | None = None
+) -> tuple[str, str, datetime]:
+    """
+    Create a JWT refresh token with jti for blacklist support.
+
+    Refresh tokens are longer-lived tokens used to obtain new access tokens
+    without requiring re-authentication.
+
+    Args:
+        data: Payload data to encode in the token
+        expires_delta: Optional custom expiration time
+
+    Returns:
+        Tuple of (encoded_jwt, jti, expires_at)
+    """
+    to_encode = data.copy()
+
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+
+    # Generate unique token identifier for blacklist tracking
+    jti = str(uuid.uuid4())
+
+    to_encode.update({
+        "exp": expire,
+        "jti": jti,
+        "iat": datetime.utcnow(),
+        "type": "refresh",  # Distinguish from access tokens
+    })
+
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+
+    # Record metric
+    if obs_metrics:
+        obs_metrics.record_token_issued("refresh")
+
+    return encoded_jwt, jti, expire
+
+
+def verify_refresh_token(
+    token: str,
+    db: Session,
+    blacklist_on_use: bool = False
+) -> tuple[TokenData | None, str | None, datetime | None]:
+    """
+    Verify and decode a JWT refresh token.
+
+    When REFRESH_TOKEN_ROTATE is enabled, this function can blacklist the
+    incoming token to prevent reuse (addressing token theft window).
+
+    Args:
+        token: JWT refresh token string
+        db: Database session for blacklist check
+        blacklist_on_use: If True, blacklist this token after verification
+
+    Returns:
+        Tuple of (token_data, jti, expires_at) if valid
+        (None, None, None) otherwise
+    """
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+
+        # Verify this is a refresh token
+        if payload.get("type") != "refresh":
+            if obs_metrics:
+                obs_metrics.record_auth_failure("wrong_token_type")
+            return None, None, None
+
+        user_id: str = payload.get("sub")
+        username: str = payload.get("username")
+        jti: str = payload.get("jti")
+        exp: int = payload.get("exp")
+
+        if user_id is None or jti is None:
+            if obs_metrics:
+                obs_metrics.record_auth_failure("missing_claims")
+            return None, None, None
+
+        # Check if token is blacklisted
+        if TokenBlacklist.is_blacklisted(db, jti):
+            if obs_metrics:
+                obs_metrics.record_auth_failure("blacklisted_refresh")
+            return None, None, None
+
+        expires_at = datetime.utcfromtimestamp(exp) if exp else None
+        token_data = TokenData(user_id=user_id, username=username, jti=jti)
+
+        # Blacklist the token after successful verification if requested
+        # This is critical for secure refresh token rotation
+        if blacklist_on_use and expires_at:
+            blacklist_token(
+                db=db,
+                jti=jti,
+                expires_at=expires_at,
+                user_id=UUID(user_id) if user_id else None,
+                reason="refresh_rotation"
+            )
+
+        return token_data, jti, expires_at
+
+    except JWTError as e:
+        if obs_metrics:
+            error_str = str(e).lower()
+            if "expired" in error_str:
+                obs_metrics.record_auth_failure("refresh_expired")
+            elif "signature" in error_str:
+                obs_metrics.record_auth_failure("invalid_refresh_signature")
+            else:
+                obs_metrics.record_auth_failure("malformed_refresh")
+        return None, None, None
+
+
 def verify_token(token: str, db: Session | None = None) -> TokenData | None:
     """
     Verify and decode a JWT token.

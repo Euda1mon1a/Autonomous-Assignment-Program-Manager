@@ -96,9 +96,64 @@ password=secure_password
 ```json
 {
   "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
   "token_type": "bearer"
 }
 ```
+
+The access token is also set as an httpOnly cookie for XSS protection.
+The refresh token should be stored securely by the client for token renewal.
+
+### Login (JSON)
+
+```http
+POST /api/auth/login/json
+```
+
+Alternative endpoint accepting JSON body instead of form data.
+
+**Request Body:**
+```json
+{
+  "username": "user@example.com",
+  "password": "secure_password"
+}
+```
+
+**Response:** Same as `/api/auth/login`
+
+### Refresh Token
+
+```http
+POST /api/auth/refresh
+```
+
+Exchange a refresh token for new access and refresh tokens.
+
+**Security Features:**
+- When `REFRESH_TOKEN_ROTATE` is enabled (default), a new refresh token is issued
+- The old refresh token is **immediately blacklisted** to prevent reuse
+- This narrows the token theft window: stolen tokens cannot be reused after the legitimate user refreshes
+
+**Request Body:**
+```json
+{
+  "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+**Response:**
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "token_type": "bearer"
+}
+```
+
+**Error Responses:**
+- `401 Unauthorized`: Invalid, expired, or blacklisted refresh token
+- `401 Unauthorized`: User not found or inactive
 
 ### Get Current User
 
