@@ -17,6 +17,7 @@ Tier 3 Tactical Concepts:
 9. Cognitive Load Management (from psychology/human factors)
 10. Stigmergy/Swarm Intelligence (from biology/AI)
 11. Hub Vulnerability Analysis (from network theory)
+12. Creep/Fatigue Analysis (from materials science)
 """
 
 # Tier 1 imports
@@ -43,6 +44,12 @@ from app.resilience.cognitive_load import (
     DecisionComplexity,
     DecisionOutcome,
     DecisionQueueStatus,
+)
+from app.resilience.creep_fatigue import (
+    CreepAnalysis,
+    CreepFatigueModel,
+    CreepStage,
+    FatigueCurve,
 )
 from app.resilience.contingency import (
     CascadeSimulation,
@@ -90,6 +97,12 @@ from app.resilience.sacrifice_hierarchy import (
     ActivityCategory,
     LoadSheddingLevel,
     SacrificeHierarchy,
+)
+from app.resilience.spc_monitoring import (
+    SPCAlert,
+    WorkloadControlChart,
+    calculate_control_limits,
+    calculate_process_capability,
 )
 
 # Main service
@@ -166,6 +179,11 @@ __all__ = [
     "DecisionOutcome",
     "CognitiveLoadReport",
     "DecisionQueueStatus",
+    # Tier 3: Creep/Fatigue
+    "CreepFatigueModel",
+    "CreepStage",
+    "CreepAnalysis",
+    "FatigueCurve",
     # Tier 3: Stigmergy
     "StigmergicScheduler",
     "PreferenceTrail",
@@ -185,6 +203,11 @@ __all__ = [
     "CrossTrainingRecommendation",
     "CrossTrainingPriority",
     "HubDistributionReport",
+    # Tier 3: SPC Monitoring
+    "SPCAlert",
+    "WorkloadControlChart",
+    "calculate_control_limits",
+    "calculate_process_capability",
     # Service
     "ResilienceService",
     "ResilienceConfig",
