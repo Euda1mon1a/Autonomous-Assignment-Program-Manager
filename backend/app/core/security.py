@@ -200,17 +200,31 @@ def verify_refresh_token(
 
 def verify_token(token: str, db: Session | None = None) -> TokenData | None:
     """
-    Verify and decode a JWT token.
+    Verify and decode a JWT access token.
+
+    SECURITY: This function explicitly rejects refresh tokens to prevent
+    them from being used as access tokens. Refresh tokens are long-lived
+    (7 days) while access tokens are short-lived (30 min). Accepting
+    refresh tokens as access tokens would effectively extend the session
+    duration, creating a security vulnerability.
 
     Args:
         token: JWT token string
         db: Database session for blacklist check (optional)
 
     Returns:
-        TokenData if valid, None otherwise
+        TokenData if valid access token, None otherwise
     """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+
+        # SECURITY: Reject refresh tokens - they must only be used at /refresh endpoint
+        # Refresh tokens have type="refresh", access tokens have no type field
+        if payload.get("type") == "refresh":
+            if obs_metrics:
+                obs_metrics.record_auth_failure("refresh_token_as_access")
+            return None
+
         user_id: str = payload.get("sub")
         username: str = payload.get("username")
         jti: str = payload.get("jti")
