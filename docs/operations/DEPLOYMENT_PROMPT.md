@@ -101,7 +101,7 @@ DB_POOL_MAX_OVERFLOW=20
 # Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'
 SECRET_KEY=generate-64-char-random-token
 WEBHOOK_SECRET=generate-32-char-random-token
-ACCESS_TOKEN_EXPIRE_MINUTES=1440
+ACCESS_TOKEN_EXPIRE_MINUTES=15
 
 # Redis (password-authenticated)
 REDIS_PASSWORD=your-secure-redis-password

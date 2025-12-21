@@ -4,7 +4,9 @@ from enum import Enum
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+from app.validators.date_validators import validate_academic_year_date
 
 
 class SchedulingAlgorithm(str, Enum):
@@ -28,6 +30,12 @@ class ScheduleRequest(BaseModel):
         le=300.0,
         description="Maximum solver runtime in seconds (5-300)"
     )
+
+    @field_validator("start_date", "end_date")
+    @classmethod
+    def validate_dates_in_range(cls, v: date) -> date:
+        """Validate dates are within academic year bounds."""
+        return validate_academic_year_date(v, field_name="date")
 
     @model_validator(mode='after')
     def validate_date_range(self) -> 'ScheduleRequest':
@@ -88,6 +96,22 @@ class EmergencyRequest(BaseModel):
     end_date: date
     reason: str
     is_deployment: bool = False
+
+    @field_validator("start_date", "end_date")
+    @classmethod
+    def validate_dates_in_range(cls, v: date) -> date:
+        """Validate dates are within academic year bounds."""
+        return validate_academic_year_date(v, field_name="date")
+
+    @model_validator(mode='after')
+    def validate_date_order(self) -> 'EmergencyRequest':
+        """Ensure start_date is before or equal to end_date."""
+        if self.start_date > self.end_date:
+            raise ValueError(
+                f"start_date ({self.start_date}) must be before or equal to "
+                f"end_date ({self.end_date})"
+            )
+        return self
 
 
 class EmergencyResponse(BaseModel):
@@ -166,6 +190,12 @@ class ExternalConflictInput(BaseModel):
     conflict_type: Literal["leave", "conference", "tdy", "training", "deployment", "medical"]
     description: str = ""
 
+    @field_validator("start_date", "end_date")
+    @classmethod
+    def validate_dates_in_range(cls, v: date) -> date:
+        """Validate dates are within academic year bounds."""
+        return validate_academic_year_date(v, field_name="date")
+
     @model_validator(mode='after')
     def validate_dates(self) -> 'ExternalConflictInput':
         if self.start_date > self.end_date:
@@ -195,6 +225,12 @@ class SwapFinderRequest(BaseModel):
         le=365,
         description="Days ahead that clinic schedules are released"
     )
+
+    @field_validator("target_week")
+    @classmethod
+    def validate_target_week_in_range(cls, v: date) -> date:
+        """Validate target_week is within academic year bounds."""
+        return validate_academic_year_date(v, field_name="target_week")
 
 
 class SwapCandidateResponse(BaseModel):

@@ -287,17 +287,32 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
     """
     Middleware to add X-Request-ID header for request correlation.
 
-    If the client provides X-Request-ID, it's used as-is.
+    If the client provides X-Request-ID, it's validated and used.
     Otherwise, a new UUID is generated.
+
+    Security: Incoming request IDs are validated to prevent abuse:
+    - Must not be empty or whitespace-only
+    - Must not exceed 255 characters (prevent memory/logging DoS)
 
     The request ID is:
     1. Stored in context variable for logging
     2. Added to response headers
     """
 
+    MAX_REQUEST_ID_LENGTH = 255
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         # Get or generate request ID
         request_id = request.headers.get("X-Request-ID")
+
+        # Validate incoming request ID
+        if request_id:
+            request_id = request_id.strip()
+            # Reject if empty after stripping or too long
+            if not request_id or len(request_id) > self.MAX_REQUEST_ID_LENGTH:
+                request_id = None
+
+        # Generate new UUID if no valid request ID provided
         if not request_id:
             request_id = str(uuid.uuid4())
 

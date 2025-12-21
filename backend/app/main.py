@@ -200,13 +200,22 @@ async def global_exception_handler(request: Request, exc: Exception):
 # =============================================================================
 
 # CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Support both explicit origins list and regex pattern for flexible domain matching
+cors_kwargs = {
+    "allow_credentials": True,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+}
+
+# Add explicit origins if configured
+if settings.CORS_ORIGINS:
+    cors_kwargs["allow_origins"] = settings.CORS_ORIGINS
+
+# Add regex pattern if configured (allows flexible domain matching)
+if settings.CORS_ORIGINS_REGEX:
+    cors_kwargs["allow_origin_regex"] = settings.CORS_ORIGINS_REGEX
+
+app.add_middleware(CORSMiddleware, **cors_kwargs)
 
 # Trusted host middleware - prevents host header attacks (production only)
 if settings.TRUSTED_HOSTS:

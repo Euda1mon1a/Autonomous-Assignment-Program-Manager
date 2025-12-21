@@ -52,11 +52,14 @@ nano .env
 ### 2. Start Monitoring Stack
 
 ```bash
-# Run the setup script
-./scripts/setup-monitoring.sh
-
-# Or manually with docker-compose
+# DEVELOPMENT: Run with all ports exposed
 docker-compose -f docker-compose.monitoring.yml up -d
+
+# PRODUCTION: Run with internal network only (recommended)
+docker-compose -f docker-compose.monitoring.yml -f docker-compose.monitoring.prod.yml up -d
+
+# Or use the setup script (development mode)
+./scripts/setup-monitoring.sh
 ```
 
 ### 3. Access Services
@@ -273,11 +276,123 @@ curl -u admin:admin http://localhost:3001/api/datasources
 
 ## Security Considerations
 
-1. **Change default passwords** in production
-2. **Restrict network access** to monitoring ports
-3. **Enable TLS** for external access
+### ⚠️ CRITICAL: Production Deployment Security
+
+**DO NOT deploy the base `docker-compose.monitoring.yml` file to production as-is.**
+
+The base configuration exposes all monitoring ports for development convenience. In production, this creates serious security vulnerabilities:
+
+- **Information Disclosure**: Prometheus, Grafana, and other services reveal system architecture, performance metrics, and potential vulnerabilities
+- **No Built-in Authentication**: Services like Prometheus have no authentication mechanism
+- **Attack Surface**: Exposed ports increase the attack surface for potential exploitation
+- **Sensitive Data**: Monitoring data may contain database query patterns, API usage, and system internals
+
+### Production Deployment
+
+**Always use the production override file:**
+
+```bash
+docker-compose \
+  -f docker-compose.monitoring.yml \
+  -f docker-compose.monitoring.prod.yml \
+  up -d
+```
+
+The production override (`docker-compose.monitoring.prod.yml`) removes all external port mappings. Services remain accessible within the internal Docker network.
+
+### Accessing Monitoring in Production
+
+#### Option 1: Authenticated Reverse Proxy (Recommended)
+
+Set up nginx or Traefik with authentication in front of Grafana:
+
+```nginx
+# Example nginx configuration
+upstream grafana {
+    server grafana:3000;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name monitoring.example.com;
+
+    ssl_certificate /etc/nginx/ssl/cert.pem;
+    ssl_certificate_key /etc/nginx/ssl/key.pem;
+
+    location / {
+        proxy_pass http://grafana;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+#### Option 2: SSH Tunneling
+
+For admin access to any monitoring service:
+
+```bash
+# Tunnel to Grafana
+ssh -L 3001:localhost:3001 user@production-server
+
+# Access at http://localhost:3001
+
+# Tunnel to Prometheus
+ssh -L 9090:localhost:9090 user@production-server
+```
+
+#### Option 3: VPN Access
+
+Configure VPN access to the internal Docker network for authorized administrators.
+
+### Additional Security Best Practices
+
+1. **Change default passwords** in production (especially Grafana)
+   ```bash
+   # Set strong Grafana admin password in .env
+   GRAFANA_ADMIN_PASSWORD=$(python -c 'import secrets; print(secrets.token_urlsafe(32))')
+   ```
+
+2. **Restrict network access** to monitoring ports (handled by production override)
+
+3. **Enable TLS** for external access (use reverse proxy with Let's Encrypt)
+
 4. **Use secrets management** for sensitive configuration
+   - Store alert webhook URLs in environment variables
+   - Never commit `.env` files with production secrets
+   - Use Docker secrets or HashiCorp Vault for credentials
+
 5. **Regular security updates** for container images
+   ```bash
+   # Update images regularly
+   docker-compose pull
+   docker-compose up -d
+   ```
+
+6. **Enable audit logging** in Grafana
+   ```env
+   # In .env file
+   GF_LOG_MODE=console file
+   GF_LOG_LEVEL=info
+   ```
+
+7. **Implement rate limiting** on reverse proxy to prevent abuse
+
+8. **Monitor monitoring access** - Set up alerts for unauthorized access attempts
+
+### Port Exposure Summary
+
+**Development (docker-compose.monitoring.yml):**
+- Grafana: 3001 → Exposed for UI access
+- Prometheus: 9090 → Exposed for UI access
+- Alertmanager: 9093 → Exposed for UI access
+- Loki: 3100 → Exposed for API access
+- All exporters: Various ports → Exposed for debugging
+
+**Production (+ docker-compose.monitoring.prod.yml):**
+- All services: Internal network only
+- Access via reverse proxy or SSH tunnel only
+- Zero external port exposure
 
 ## Integration with CI/CD
 

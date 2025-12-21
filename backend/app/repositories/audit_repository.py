@@ -13,6 +13,7 @@ from uuid import UUID
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import quoted_name
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,27 @@ class AuditRepository:
     def __init__(self, db: Session):
         """Initialize the audit repository with a database session."""
         self.db = db
+
+    def _validate_and_quote_table_name(self, table_name: str) -> str:
+        """
+        Validate table name against allowlist and return quoted identifier.
+
+        Args:
+            table_name: The table name to validate and quote
+
+        Returns:
+            Properly quoted table name for use in SQL
+
+        Raises:
+            ValueError: If table name is not in allowlist
+        """
+        # Validate against allowlist
+        if table_name not in self.VERSION_TABLES.values():
+            raise ValueError(f"Invalid table name: {table_name}")
+
+        # Return quoted identifier (PostgreSQL uses double quotes)
+        # This prevents SQL injection even if allowlist is bypassed
+        return f'"{table_name}"'
 
     def get_audit_entries(
         self,
@@ -142,10 +164,13 @@ class AuditRepository:
             return None
 
         try:
+            # Validate and quote table name to prevent SQL injection
+            quoted_table = self._validate_and_quote_table_name(table_name)
+
             query = text(f"""
                 SELECT v.id, v.transaction_id, v.operation_type,
                        t.issued_at, t.user_id
-                FROM {table_name} v
+                FROM {quoted_table} v
                 LEFT JOIN transaction t ON v.transaction_id = t.id
                 WHERE v.id = :entry_id
             """)
@@ -210,13 +235,16 @@ class AuditRepository:
             # Aggregate across all version tables
             for model_name, table_name in self.VERSION_TABLES.items():
                 try:
+                    # Validate and quote table name to prevent SQL injection
+                    quoted_table = self._validate_and_quote_table_name(table_name)
+
                     query = text(f"""
                         SELECT
                             COUNT(*) as total,
                             v.operation_type,
                             t.user_id,
                             DATE(t.issued_at) as change_date
-                        FROM {table_name} v
+                        FROM {quoted_table} v
                         LEFT JOIN transaction t ON v.transaction_id = t.id
                         WHERE 1=1 {date_filter}
                         GROUP BY v.operation_type, t.user_id, DATE(t.issued_at)
@@ -335,10 +363,13 @@ class AuditRepository:
             return []
 
         try:
+            # Validate and quote table name to prevent SQL injection
+            quoted_table = self._validate_and_quote_table_name(table_name)
+
             query = text(f"""
                 SELECT v.id, v.transaction_id, v.operation_type,
                        t.issued_at, t.user_id
-                FROM {table_name} v
+                FROM {quoted_table} v
                 LEFT JOIN transaction t ON v.transaction_id = t.id
                 WHERE v.id = :entity_id
                 ORDER BY t.issued_at ASC
@@ -368,6 +399,9 @@ class AuditRepository:
         filters: dict[str, Any],
     ) -> text:
         """Build SQL query for audit entries with filters."""
+        # Validate and quote table name to prevent SQL injection
+        quoted_table = self._validate_and_quote_table_name(table_name)
+
         where_clauses = []
 
         if filters.get("entity_id"):
@@ -392,7 +426,7 @@ class AuditRepository:
         query_sql = f"""
             SELECT v.id, v.id as entity_id, v.transaction_id, v.operation_type,
                    t.issued_at, t.user_id
-            FROM {table_name} v
+            FROM {quoted_table} v
             LEFT JOIN transaction t ON v.transaction_id = t.id
             WHERE {where_sql}
             ORDER BY t.issued_at DESC

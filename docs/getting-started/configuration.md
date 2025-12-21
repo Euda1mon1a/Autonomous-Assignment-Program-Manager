@@ -34,7 +34,7 @@ Complete reference for all configuration options.
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `SECRET_KEY` | JWT signing key (64+ chars) | Yes |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token expiration time | `1440` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token expiration time | `15` |
 | `CORS_ORIGINS` | Allowed origins (JSON array) | `["http://localhost:3000"]` |
 | `TRUSTED_HOSTS` | Allowed host headers | `[]` |
 
@@ -93,7 +93,7 @@ DATABASE_URL=postgresql://postgres:devpass@localhost:5432/residency_scheduler
 
 # Security
 SECRET_KEY=dev-secret-key-not-for-production-use-only-for-development
-ACCESS_TOKEN_EXPIRE_MINUTES=10080
+ACCESS_TOKEN_EXPIRE_MINUTES=15
 
 # CORS (allow all localhost)
 CORS_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
@@ -117,7 +117,7 @@ DATABASE_URL=postgresql://prod_user:${DB_PASSWORD}@db.example.com:5432/residency
 
 # Security (generate with: openssl rand -hex 32)
 SECRET_KEY=your-production-secret-key-64-characters-minimum-here
-ACCESS_TOKEN_EXPIRE_MINUTES=1440
+ACCESS_TOKEN_EXPIRE_MINUTES=15
 TRUSTED_HOSTS=["scheduler.example.com"]
 
 # CORS

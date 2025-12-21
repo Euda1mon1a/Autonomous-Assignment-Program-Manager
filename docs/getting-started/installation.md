@@ -125,7 +125,7 @@ celery -A app.core.celery_app beat --loglevel=info
 | `DEBUG` | Enable debug mode | `false` |
 | `APP_NAME` | Application name | `Residency Scheduler` |
 | `CORS_ORIGINS` | Allowed origins (JSON array) | `["http://localhost:3000"]` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token expiration | `1440` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token expiration | `15` |
 | `REDIS_URL` | Redis connection | `redis://localhost:6379/0` |
 
 See [Configuration](configuration.md) for complete reference.
