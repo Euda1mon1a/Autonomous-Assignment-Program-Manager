@@ -56,6 +56,11 @@ Swap marketplace operations.
 Metrics and reporting endpoints.
 </div>
 
+<div class="feature-card" markdown>
+***REMOVED******REMOVED******REMOVED*** :material-gamepad-variant: [Game Theory](game-theory.md)
+Configuration testing via Axelrod tournaments.
+</div>
+
 </div>
 
 ---

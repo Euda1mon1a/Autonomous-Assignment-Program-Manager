@@ -83,6 +83,11 @@ Data models and relationships.
 RESTful conventions, authentication, and error handling.
 </div>
 
+<div class="feature-card" markdown>
+***REMOVED******REMOVED******REMOVED*** :material-gamepad-variant: [Game Theory Framework](game-theory-framework.md)
+Axelrod tournament-based configuration testing.
+</div>
+
 </div>
 
 ---
