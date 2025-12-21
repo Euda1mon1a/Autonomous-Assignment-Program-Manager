@@ -16,7 +16,12 @@ from jose import jwt
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.security import ALGORITHM, create_access_token, get_password_hash
+from app.core.security import (
+    ALGORITHM,
+    create_access_token,
+    create_refresh_token,
+    get_password_hash,
+)
 from app.models.token_blacklist import TokenBlacklist
 from app.models.user import User
 
@@ -1032,3 +1037,340 @@ class TestAuthEdgeCases:
         )
 
         assert response.status_code == 401
+
+
+# ============================================================================
+# Refresh Token Endpoint Tests
+# ============================================================================
+
+
+class TestRefreshTokenEndpoint:
+    """Tests for POST /api/auth/refresh endpoint.
+
+    Critical security tests for refresh token rotation and blacklisting.
+    When REFRESH_TOKEN_ROTATE is enabled, the old refresh token must be
+    blacklisted immediately upon use to prevent token reuse attacks.
+    """
+
+    def test_refresh_returns_new_tokens(self, client: TestClient, admin_user: User):
+        """Test that refresh endpoint returns new access and refresh tokens."""
+        # Login to get initial tokens
+        response = client.post(
+            "/api/auth/login/json",
+            json={"username": "testadmin", "password": "testpass123"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "refresh_token" in data
+        original_refresh_token = data["refresh_token"]
+        original_access_token = data["access_token"]
+
+        # Use refresh token
+        response = client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": original_refresh_token},
+        )
+
+        assert response.status_code == 200
+        new_data = response.json()
+        assert "access_token" in new_data
+        assert "refresh_token" in new_data
+        # New access token should be different
+        assert new_data["access_token"] != original_access_token
+
+    def test_refresh_with_invalid_token(self, client: TestClient):
+        """Test that refresh fails with invalid token."""
+        response = client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": "invalid_token"},
+        )
+
+        assert response.status_code == 401
+        assert "invalid" in response.json()["detail"].lower()
+
+    def test_refresh_with_expired_token(self, client: TestClient, admin_user: User):
+        """Test that refresh fails with expired refresh token."""
+        # Create an expired refresh token
+        expired_token, _, _ = create_refresh_token(
+            data={"sub": str(admin_user.id), "username": admin_user.username},
+            expires_delta=timedelta(seconds=-1)  # Already expired
+        )
+
+        response = client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": expired_token},
+        )
+
+        assert response.status_code == 401
+
+    def test_refresh_with_access_token_fails(self, client: TestClient, admin_user: User):
+        """Test that refresh fails when given an access token instead of refresh token."""
+        # Create an access token (wrong type)
+        access_token, _, _ = create_access_token(
+            data={"sub": str(admin_user.id), "username": admin_user.username}
+        )
+
+        response = client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": access_token},
+        )
+
+        # Should fail because access tokens have no "type" field or wrong type
+        assert response.status_code == 401
+
+    def test_refresh_blacklists_old_token_on_rotation(
+        self, client: TestClient, admin_user: User, db: Session
+    ):
+        """Test that old refresh token is blacklisted when rotation is enabled.
+
+        This is the CRITICAL security test. When REFRESH_TOKEN_ROTATE is enabled,
+        the old refresh token must be blacklisted immediately to prevent an attacker
+        with a stolen token from continuing to use it.
+        """
+        # Login to get initial refresh token
+        response = client.post(
+            "/api/auth/login/json",
+            json={"username": "testadmin", "password": "testpass123"},
+        )
+
+        original_refresh_token = response.json()["refresh_token"]
+
+        # Decode to get the JTI
+        decoded = jwt.decode(
+            original_refresh_token,
+            settings.SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+        original_jti = decoded["jti"]
+
+        # Use refresh token (this should blacklist the original)
+        response = client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": original_refresh_token},
+        )
+        assert response.status_code == 200
+
+        # Verify the original token's JTI is now blacklisted
+        blacklisted = db.query(TokenBlacklist).filter(
+            TokenBlacklist.jti == original_jti
+        ).first()
+        assert blacklisted is not None
+        assert blacklisted.reason == "refresh_rotation"
+
+    def test_refresh_reused_token_rejected(
+        self, client: TestClient, admin_user: User, db: Session
+    ):
+        """Test that a reused (rotated) refresh token is rejected.
+
+        This test verifies the fix for the security vulnerability:
+        After rotation, the old refresh token should be rejected.
+        """
+        # Login to get initial refresh token
+        response = client.post(
+            "/api/auth/login/json",
+            json={"username": "testadmin", "password": "testpass123"},
+        )
+        original_refresh_token = response.json()["refresh_token"]
+
+        # First use of refresh token - should succeed
+        response = client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": original_refresh_token},
+        )
+        assert response.status_code == 200
+
+        # Second use of same refresh token - should fail (token was blacklisted)
+        response = client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": original_refresh_token},
+        )
+        assert response.status_code == 401
+        assert "invalid" in response.json()["detail"].lower()
+
+    def test_refresh_new_token_works_after_rotation(
+        self, client: TestClient, admin_user: User
+    ):
+        """Test that the new refresh token works after rotation."""
+        # Login to get initial refresh token
+        response = client.post(
+            "/api/auth/login/json",
+            json={"username": "testadmin", "password": "testpass123"},
+        )
+        original_refresh_token = response.json()["refresh_token"]
+
+        # First rotation
+        response = client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": original_refresh_token},
+        )
+        assert response.status_code == 200
+        new_refresh_token = response.json()["refresh_token"]
+
+        # New token should be different from original
+        assert new_refresh_token != original_refresh_token
+
+        # New token should work for another refresh
+        response = client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": new_refresh_token},
+        )
+        assert response.status_code == 200
+
+    def test_refresh_with_inactive_user(
+        self, client: TestClient, inactive_user: User, db: Session
+    ):
+        """Test refresh fails if user became inactive."""
+        # Create refresh token for inactive user
+        refresh_token, _, _ = create_refresh_token(
+            data={"sub": str(inactive_user.id), "username": inactive_user.username}
+        )
+
+        response = client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": refresh_token},
+        )
+
+        # Should fail because user is inactive
+        assert response.status_code == 401
+        assert "inactive" in response.json()["detail"].lower()
+
+    def test_refresh_with_deleted_user(
+        self, client: TestClient, regular_user: User, db: Session
+    ):
+        """Test refresh fails if user was deleted after token was issued."""
+        # Create refresh token
+        refresh_token, _, _ = create_refresh_token(
+            data={"sub": str(regular_user.id), "username": regular_user.username}
+        )
+
+        # Delete user
+        db.delete(regular_user)
+        db.commit()
+
+        # Try to use refresh token
+        response = client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": refresh_token},
+        )
+
+        # Should fail because user no longer exists
+        assert response.status_code == 401
+
+    def test_refresh_token_has_correct_type(self, client: TestClient, admin_user: User):
+        """Test that refresh tokens have type='refresh' in payload."""
+        # Login to get refresh token
+        response = client.post(
+            "/api/auth/login/json",
+            json={"username": "testadmin", "password": "testpass123"},
+        )
+        refresh_token = response.json()["refresh_token"]
+
+        # Decode and verify type
+        decoded = jwt.decode(
+            refresh_token,
+            settings.SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
+        assert decoded.get("type") == "refresh"
+
+    def test_refresh_sets_access_token_cookie(self, client: TestClient, admin_user: User):
+        """Test that refresh endpoint sets httpOnly cookie with new access token."""
+        # Login to get refresh token
+        response = client.post(
+            "/api/auth/login/json",
+            json={"username": "testadmin", "password": "testpass123"},
+        )
+        refresh_token = response.json()["refresh_token"]
+
+        # Refresh
+        response = client.post(
+            "/api/auth/refresh",
+            json={"refresh_token": refresh_token},
+        )
+
+        assert response.status_code == 200
+        # Check that access_token cookie is set
+        assert "access_token" in response.cookies
+
+    def test_login_returns_refresh_token(self, client: TestClient, admin_user: User):
+        """Test that login endpoints return refresh tokens."""
+        # Form login
+        response = client.post(
+            "/api/auth/login",
+            data={"username": "testadmin", "password": "testpass123"},
+        )
+        assert response.status_code == 200
+        assert "refresh_token" in response.json()
+
+        # JSON login
+        response = client.post(
+            "/api/auth/login/json",
+            json={"username": "testadmin", "password": "testpass123"},
+        )
+        assert response.status_code == 200
+        assert "refresh_token" in response.json()
+
+    def test_refresh_token_jti_is_unique(self, client: TestClient, admin_user: User):
+        """Test that each refresh token has a unique JTI."""
+        # Login twice
+        response1 = client.post(
+            "/api/auth/login/json",
+            json={"username": "testadmin", "password": "testpass123"},
+        )
+        response2 = client.post(
+            "/api/auth/login/json",
+            json={"username": "testadmin", "password": "testpass123"},
+        )
+
+        token1 = response1.json()["refresh_token"]
+        token2 = response2.json()["refresh_token"]
+
+        decoded1 = jwt.decode(token1, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        decoded2 = jwt.decode(token2, settings.SECRET_KEY, algorithms=[ALGORITHM])
+
+        # JTIs should be different
+        assert decoded1["jti"] != decoded2["jti"]
+
+    def test_multiple_rapid_refreshes_all_blacklisted(
+        self, client: TestClient, admin_user: User, db: Session
+    ):
+        """Test that rapid refresh attempts properly blacklist each token.
+
+        Simulates a race condition where attacker tries to use a token
+        multiple times rapidly. Each successful refresh should blacklist
+        that token.
+        """
+        # Login to get initial token
+        response = client.post(
+            "/api/auth/login/json",
+            json={"username": "testadmin", "password": "testpass123"},
+        )
+        current_token = response.json()["refresh_token"]
+        tokens_used = [current_token]
+
+        # Perform multiple refreshes in sequence
+        for i in range(3):
+            response = client.post(
+                "/api/auth/refresh",
+                json={"refresh_token": current_token},
+            )
+            assert response.status_code == 200
+            current_token = response.json()["refresh_token"]
+            tokens_used.append(current_token)
+
+        # All previous tokens (except the latest) should be blacklisted
+        for token in tokens_used[:-1]:
+            decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+            blacklisted = db.query(TokenBlacklist).filter(
+                TokenBlacklist.jti == decoded["jti"]
+            ).first()
+            assert blacklisted is not None, f"Token with JTI {decoded['jti']} should be blacklisted"
+
+        # Latest token should not be blacklisted yet
+        latest_decoded = jwt.decode(tokens_used[-1], settings.SECRET_KEY, algorithms=[ALGORITHM])
+        latest_blacklisted = db.query(TokenBlacklist).filter(
+            TokenBlacklist.jti == latest_decoded["jti"]
+        ).first()
+        assert latest_blacklisted is None, "Latest token should not be blacklisted"
