@@ -11,6 +11,9 @@ The resilience framework is inspired by cross-industry best practices:
 - **Queuing Theory** - 80% utilization threshold
 - **Power Grid Engineering** - N-1/N-2 contingency analysis
 - **Nuclear Safety** - Defense in Depth levels
+- **Immunology** - Anomaly detection via Artificial Immune Systems
+- **Epidemiology** - Burnout contagion modeling
+- **Structural Mechanics** - Schedule stability via tensegrity equilibrium
 
 ---
 
@@ -94,10 +97,42 @@ Celery tasks run continuously:
 
 ---
 
+## Advanced Modules
+
+### Artificial Immune System (AIS)
+
+Detects schedule anomalies using biological immune principles:
+
+- **Negative Selection**: Learns valid patterns, flags deviations
+- **Clonal Selection**: Adaptive repair strategies
+- **Location**: `backend/app/resilience/immune_system.py`
+
+### Burnout Contagion Model
+
+Models burnout spread through provider networks:
+
+- **SIS Model**: Susceptible → Infected → Susceptible
+- **Superspreader Detection**: High-centrality + high-burnout nodes
+- **Location**: `backend/app/resilience/contagion_model.py`
+
+### Equity Metrics
+
+Measures workload fairness:
+
+- **Gini Coefficient**: 0 = equal, 1 = unequal
+- **Target**: G < 0.15 for medical scheduling
+- **Location**: `backend/app/resilience/equity_metrics.py`
+
+See **[Advanced Scheduling Architecture](advanced-scheduling.md)** for full details.
+
+---
+
 ## Related Documentation
 
+- **[Advanced Scheduling Architecture](advanced-scheduling.md)** - Cross-disciplinary algorithms (AIS, tensegrity, etc.)
 - **[Complete Resilience Framework Guide](../guides/resilience-framework.md)** - Comprehensive implementation details
 - **[Cross-Disciplinary Resilience Extensions](../guides/cross-disciplinary-resilience.md)** - Advanced monitoring from 7 industries
 - **[System Architecture](overview.md)** - Overall system design
 - **[Backend Architecture](backend.md)** - Backend implementation details
 - **[Operations Metrics](../operations/metrics.md)** - Monitoring and metrics
+- **[Libraries Research](../research/scheduling-libs-research.md)** - Library evaluation and recommendations
