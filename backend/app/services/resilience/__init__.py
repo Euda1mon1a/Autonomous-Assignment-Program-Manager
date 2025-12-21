@@ -2,7 +2,7 @@
 
 Provides service-layer abstractions for resilience analysis,
 including N-1/N-2 contingency analysis, blast radius isolation,
-and vulnerability assessment.
+homeostasis monitoring, and vulnerability assessment.
 """
 
 from app.services.resilience.blast_radius import (
@@ -19,6 +19,7 @@ from app.services.resilience.contingency import (
     N2SimulationResult,
     VulnerabilityAssessment,
 )
+from app.services.resilience.homeostasis import HomeostasisService
 
 __all__ = [
     "BlastRadiusAnalysisResult",
@@ -31,4 +32,5 @@ __all__ = [
     "N1SimulationResult",
     "N2SimulationResult",
     "VulnerabilityAssessment",
+    "HomeostasisService",
 ]
