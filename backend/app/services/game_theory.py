@@ -380,13 +380,14 @@ class GameTheoryService:
 
             # Process results
             rankings = []
-            for i, name in enumerate(results.ranked_names):
-                strategy = next((s for s in strategies if s.name == name), None)
-                scores = results.scores[results.ranking.index(i)]
+            for rank, player_index in enumerate(results.ranking):
+                name = results.ranked_names[rank]
+                strategy = strategies[player_index] if player_index < len(strategies) else next((s for s in strategies if s.name == name), None)
+                scores = results.scores[player_index]
                 avg_score = sum(scores) / len(scores) if scores else 0
 
                 rankings.append({
-                    "rank": i + 1,
+                    "rank": rank + 1,
                     "strategy_id": str(strategy.id) if strategy else None,
                     "strategy_name": name,
                     "total_score": sum(scores),
@@ -397,7 +398,7 @@ class GameTheoryService:
                 if strategy:
                     strategy.tournaments_participated += 1
                     strategy.average_score = avg_score
-                    if i == 0:
+                    if rank == 0:
                         strategy.total_wins += 1
 
             # Build payoff matrix
@@ -630,7 +631,7 @@ class GameTheoryService:
             match.play()
 
             total_score += match.final_score()[0]
-            total_cooperations += match.cooperation()[0] * turns
+            total_cooperations += match.cooperation()[0]
             total_moves += turns
 
             # Reset players for next match
