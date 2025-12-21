@@ -21,6 +21,7 @@ Classes:
 import logging
 from collections import defaultdict
 from datetime import date, timedelta
+from typing import Any
 
 from .base import (
     ConstraintPriority,
@@ -78,7 +79,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
     FMIT assignments should have activity_type='inpatient' and name containing 'FMIT'.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the FMIT week blocking constraint."""
         super().__init__(
             name="FMITWeekBlocking",
@@ -86,7 +87,12 @@ class FMITWeekBlockingConstraint(HardConstraint):
             priority=ConstraintPriority.CRITICAL,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """
         Add FMIT blocking constraints to CP-SAT model.
 
@@ -134,7 +140,12 @@ class FMITWeekBlockingConstraint(HardConstraint):
                         if (f_i, b_i, "overnight") in call_vars:
                             model.Add(call_vars[f_i, b_i, "overnight"] == 0)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add FMIT blocking constraints to PuLP model."""
         template_vars = variables.get("template_assignments", {})
         call_vars = variables.get("call_assignments", {})
@@ -179,9 +190,13 @@ class FMITWeekBlockingConstraint(HardConstraint):
                             )
                             constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Validate FMIT faculty not assigned clinic or Sun-Thurs call."""
-        violations = []
+        violations: list[ConstraintViolation] = []
 
         fmit_weeks_by_faculty = self._identify_fmit_weeks(context)
         if not fmit_weeks_by_faculty:
@@ -228,14 +243,14 @@ class FMITWeekBlockingConstraint(HardConstraint):
             violations=violations,
         )
 
-    def _identify_fmit_weeks(self, context: SchedulingContext) -> dict:
+    def _identify_fmit_weeks(self, context: SchedulingContext) -> dict[Any, list[tuple[date, date]]]:
         """
         Identify FMIT weeks from existing assignments.
 
         Returns:
             dict: {faculty_id: [(friday_start, thursday_end), ...]}
         """
-        fmit_weeks = defaultdict(set)
+        fmit_weeks: dict[Any, set[tuple[date, date]]] = defaultdict(set)
 
         # Look for FMIT assignments in existing assignments
         for a in context.existing_assignments:
@@ -287,7 +302,7 @@ class FMITMandatoryCallConstraint(HardConstraint):
     when FMIT attending is already on-site.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize FMIT mandatory call constraint."""
         super().__init__(
             name="FMITMandatoryCall",
@@ -295,7 +310,12 @@ class FMITMandatoryCallConstraint(HardConstraint):
             priority=ConstraintPriority.CRITICAL,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Force FMIT attending to take Fri/Sat call in CP-SAT model."""
         call_vars = variables.get("call_assignments", {})
         if not call_vars:
@@ -324,7 +344,12 @@ class FMITMandatoryCallConstraint(HardConstraint):
                         if (f_i, b_i, "overnight") in call_vars:
                             model.Add(call_vars[f_i, b_i, "overnight"] == 1)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Force FMIT attending to take Fri/Sat call in PuLP model."""
         call_vars = variables.get("call_assignments", {})
         if not call_vars:
@@ -361,9 +386,13 @@ class FMITMandatoryCallConstraint(HardConstraint):
                             )
                             constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Validate FMIT attending has Fri/Sat call assigned."""
-        violations = []
+        violations: list[ConstraintViolation] = []
 
         fmit_weeks_by_faculty = self._identify_fmit_weeks(context)
         if not fmit_weeks_by_faculty:
@@ -376,9 +405,9 @@ class FMITMandatoryCallConstraint(HardConstraint):
         # For now, just return satisfied if we can't validate
         return ConstraintResult(satisfied=True, violations=[])
 
-    def _identify_fmit_weeks(self, context: SchedulingContext) -> dict:
+    def _identify_fmit_weeks(self, context: SchedulingContext) -> dict[Any, list[tuple[date, date]]]:
         """Identify FMIT weeks (same as FMITWeekBlockingConstraint)."""
-        fmit_weeks = defaultdict(set)
+        fmit_weeks: dict[Any, set[tuple[date, date]]] = defaultdict(set)
 
         for a in context.existing_assignments:
             template = None
@@ -424,7 +453,7 @@ class PostFMITRecoveryConstraint(HardConstraint):
     This ensures adequate recovery time after a demanding inpatient week.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize post-FMIT recovery constraint."""
         super().__init__(
             name="PostFMITRecovery",
@@ -432,7 +461,12 @@ class PostFMITRecoveryConstraint(HardConstraint):
             priority=ConstraintPriority.HIGH,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Block post-FMIT Friday in CP-SAT model."""
         template_vars = variables.get("template_assignments", {})
         call_vars = variables.get("call_assignments", {})
@@ -470,7 +504,12 @@ class PostFMITRecoveryConstraint(HardConstraint):
                             if (f_i, b_i, call_type) in call_vars:
                                 model.Add(call_vars[f_i, b_i, call_type] == 0)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Block post-FMIT Friday in PuLP model."""
         template_vars = variables.get("template_assignments", {})
         call_vars = variables.get("call_assignments", {})
@@ -513,9 +552,13 @@ class PostFMITRecoveryConstraint(HardConstraint):
                                 )
                                 constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Validate no assignments on post-FMIT Friday."""
-        violations = []
+        violations: list[ConstraintViolation] = []
 
         fmit_weeks_by_faculty = self._identify_fmit_weeks(context)
         if not fmit_weeks_by_faculty:
@@ -559,9 +602,9 @@ class PostFMITRecoveryConstraint(HardConstraint):
             violations=violations,
         )
 
-    def _identify_fmit_weeks(self, context: SchedulingContext) -> dict:
+    def _identify_fmit_weeks(self, context: SchedulingContext) -> dict[Any, list[tuple[date, date]]]:
         """Identify FMIT weeks (same as FMITWeekBlockingConstraint)."""
-        fmit_weeks = defaultdict(set)
+        fmit_weeks: dict[Any, set[tuple[date, date]]] = defaultdict(set)
 
         for a in context.existing_assignments:
             template = None

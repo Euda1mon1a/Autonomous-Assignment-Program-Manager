@@ -8,6 +8,7 @@ Classes:
     - WednesdayAMInternOnlyConstraint: Wednesday AM clinic for interns only (hard)
 """
 import logging
+from typing import Any
 
 from .base import (
     ConstraintPriority,
@@ -37,7 +38,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
 
     WEDNESDAY = 2  # Python weekday: Monday=0, Tuesday=1, Wednesday=2
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the constraint."""
         super().__init__(
             name="WednesdayAMInternOnly",
@@ -45,7 +46,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
             priority=ConstraintPriority.HIGH,
         )
 
-    def _is_wednesday_am(self, block) -> bool:
+    def _is_wednesday_am(self, block: Any) -> bool:
         """Check if a block is Wednesday AM."""
         return (
             hasattr(block, 'date') and
@@ -53,7 +54,12 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
             block.time_of_day == 'AM'
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Prevent non-intern assignments on Wednesday AM."""
         template_vars = variables.get("template_assignments", {})
 
@@ -95,7 +101,12 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
                         # Force non-intern to 0 on Wednesday AM clinic
                         model.Add(template_vars[r_i, b_i, t_i] == 0)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Prevent non-intern assignments on Wednesday AM using PuLP."""
         template_vars = variables.get("template_assignments", {})
 
@@ -135,9 +146,13 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
                             f"wed_am_intern_only_{r_i}_{b_i}_{t_i}"
                         )
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Check that Wednesday AM clinic has only interns."""
-        violations = []
+        violations: list[ConstraintViolation] = []
 
         # Build lookup tables
         clinic_template_ids = {

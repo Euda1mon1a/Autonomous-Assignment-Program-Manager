@@ -19,7 +19,8 @@ Role-based Clinic Limits:
 """
 import logging
 from collections import defaultdict
-from datetime import timedelta
+from datetime import date, timedelta
+from typing import Any
 
 from .base import (
     ConstraintPriority,
@@ -54,7 +55,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
         - Sports Medicine faculty should not be assigned to regular clinic
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the faculty role clinic constraint."""
         super().__init__(
             name="FacultyRoleClinic",
@@ -62,7 +63,12 @@ class FacultyRoleClinicConstraint(HardConstraint):
             priority=ConstraintPriority.HIGH,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """
         Add role-based clinic limits to OR-Tools CP-SAT model.
 
@@ -115,7 +121,12 @@ class FacultyRoleClinicConstraint(HardConstraint):
                 if week_clinic_vars and weekly_limit >= 0:
                     model.Add(sum(week_clinic_vars) <= weekly_limit)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Add role-based clinic limits to PuLP model."""
         import pulp
 
@@ -161,13 +172,17 @@ class FacultyRoleClinicConstraint(HardConstraint):
                     )
                     constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """
         Validate that faculty clinic assignments respect role limits.
 
         Checks both weekly and block limits depending on role flexibility.
         """
-        violations = []
+        violations: list[ConstraintViolation] = []
 
         # Build faculty lookup
         faculty_by_id = {f.id: f for f in context.faculty}
@@ -225,15 +240,15 @@ class FacultyRoleClinicConstraint(HardConstraint):
             violations=violations,
         )
 
-    def _group_blocks_by_week(self, blocks: list) -> dict:
+    def _group_blocks_by_week(self, blocks: list[Any]) -> dict[date, list[Any]]:
         """Group blocks by week (starting Monday)."""
-        weeks = defaultdict(list)
+        weeks: dict[date, list[Any]] = defaultdict(list)
         for block in blocks:
             week_start = self._get_week_start(block.date)
             weeks[week_start].append(block)
         return weeks
 
-    def _get_week_start(self, any_date) -> "date":
+    def _get_week_start(self, any_date: date) -> date:
         """Get Monday of the week containing the date."""
         days_since_monday = any_date.weekday()
         return any_date - timedelta(days=days_since_monday)
@@ -252,7 +267,7 @@ class SMFacultyClinicConstraint(HardConstraint):
     SM clinic assignments are handled separately.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the SM faculty clinic constraint."""
         super().__init__(
             name="SMFacultyNoRegularClinic",
@@ -260,7 +275,12 @@ class SMFacultyClinicConstraint(HardConstraint):
             priority=ConstraintPriority.HIGH,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Block SM faculty from regular clinic in CP-SAT model."""
         template_vars = variables.get("template_assignments", {})
         if not template_vars:
@@ -294,7 +314,12 @@ class SMFacultyClinicConstraint(HardConstraint):
                         if t_i is not None and (f_i, b_i, t_i) in template_vars:
                             model.Add(template_vars[f_i, b_i, t_i] == 0)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
         """Block SM faculty from regular clinic in PuLP model."""
         template_vars = variables.get("template_assignments", {})
         if not template_vars:
@@ -327,9 +352,13 @@ class SMFacultyClinicConstraint(HardConstraint):
                             )
                             constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
         """Validate SM faculty is not assigned to regular clinic."""
-        violations = []
+        violations: list[ConstraintViolation] = []
 
         faculty_by_id = {f.id: f for f in context.faculty}
         template_by_id = {t.id: t for t in context.templates}
