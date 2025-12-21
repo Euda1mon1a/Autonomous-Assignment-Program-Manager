@@ -119,6 +119,9 @@ hypothesis==6.122.3
 # Logging
 loguru==0.7.3
 
+# Cloud & Storage
+boto3>=1.34.0
+
 # Utilities
 python-dotenv==1.2.1
 python-decouple==3.8
