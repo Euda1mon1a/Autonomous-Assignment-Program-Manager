@@ -29,10 +29,20 @@
 
 ---
 
+## Documentation Cleanup
+
+- [ ] **Move CELERY_PRODUCTION_CHECKLIST.md out of archived**
+  - Location: `docs/archived/CELERY_PRODUCTION_CHECKLIST.md`
+  - Move to: `docs/deployment/CELERY_PRODUCTION_CHECKLIST.md` (or consolidate into broader production checklist)
+  - Reason: Contains pending production tasks (email implementation, SMTP config, monitoring)
+  - Per archived/README.md, active checklists should not be archived
+
+---
+
 ## Other Pending Tasks
 
 _(Add other human-required tasks here)_
 
 ---
 
-*Last updated: 2025-12-17*
+*Last updated: 2025-12-21*
