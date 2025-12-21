@@ -54,3 +54,35 @@ Swap marketplace API endpoints.
 ***REMOVED******REMOVED*** Cancel Swap
 
 <span class="endpoint-badge delete">DELETE</span> `/api/v1/swaps/{id}`
+
+---
+
+***REMOVED******REMOVED*** Karma-Based Allocation
+
+For competitive swaps with multiple interested parties, the system supports a Karma mechanism for fair allocation.
+
+***REMOVED******REMOVED******REMOVED*** How It Works
+
+1. **Initial Balance**: Each provider starts with 100 karma
+2. **Bidding**: Providers bid karma on desired swaps
+3. **Resolution**: Highest bidder wins the swap
+4. **Settlement**: Winner's bid is redistributed to losers
+
+***REMOVED******REMOVED******REMOVED*** Properties
+
+- **Self-contained**: No external currency needed
+- **Budget-balanced**: Total karma is conserved
+- **Fair**: Losing bids earn karma for future use
+- **Equitable**: Gini coefficient monitoring prevents karma concentration
+
+***REMOVED******REMOVED******REMOVED*** Settlement Formula
+
+```
+Winner:  K_new = K_old - bid_amount
+Losers:  K_new = K_old + (bid_amount / num_losers)
+```
+
+***REMOVED******REMOVED******REMOVED*** Related
+
+- **[Advanced Scheduling Architecture](../architecture/advanced-scheduling.md***REMOVED***1-karma-mechanism)** - Full implementation details
+- **Service**: `backend/app/services/karma_mechanism.py`
