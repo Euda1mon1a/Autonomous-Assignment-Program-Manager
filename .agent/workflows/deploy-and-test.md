@@ -18,8 +18,10 @@ git pull origin main
 
 ### 2. Start all services with Docker
 ```bash
-docker compose -f docker-compose.local.yml up --build
+docker compose -f docker-compose.local.yml up --build -d
 ```
+
+> **Note:** The `-d` flag runs in detached mode (background). Omit it to see logs in foreground (requires a second terminal for other commands).
 
 > **Wait for:** All services to show "healthy" status (usually 1-2 minutes)
 
@@ -40,7 +42,7 @@ Once running, open these in your browser:
 | **Frontend** | http://localhost:3000 | Main UI - schedules, calendar, dashboards |
 | **API Docs** | http://localhost:8000/docs | Swagger UI - test API endpoints directly |
 | **Health Check** | http://localhost:8000/health | Quick status check |
-| **n8n Workflows** | http://localhost:5679 | Automation workflows (user: admin, pass: local_dev_n8n_password) |
+| **n8n Workflows** | http://localhost:5679 | Automation workflows (see `.env.local` for credentials) |
 
 ---
 
@@ -92,9 +94,12 @@ docker compose -f docker-compose.local.yml down
 ```
 
 ### Nuclear reset (rebuild from scratch)
+
+> ⚠️ **WARNING:** This deletes all local data (database, volumes). Only use if you need a completely fresh start.
+
 ```bash
 docker compose -f docker-compose.local.yml down -v
-docker compose -f docker-compose.local.yml up --build
+docker compose -f docker-compose.local.yml up --build -d
 ```
 
 ---
@@ -106,7 +111,10 @@ docker compose -f docker-compose.local.yml up --build
 # Find what's using the port (e.g., 3000)
 lsof -i :3000
 
-# Kill it if needed
+# Gracefully stop the process first
+kill <PID>
+
+# If it doesn't stop, force kill (may cause data loss)
 kill -9 <PID>
 ```
 
