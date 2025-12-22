@@ -27,7 +27,7 @@ from app.notifications.channels import (
     EmailChannel,
     WebhookChannel,
 )
-from app.notifications.templates import NotificationType, render_notification
+from app.notifications.notification_types import NotificationType, render_notification
 from app.models.notification import (
     Notification,
     NotificationPreferenceRecord,
