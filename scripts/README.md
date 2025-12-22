@@ -9,9 +9,9 @@ Utility scripts for database seeding, maintenance, and operations.
 Generates scheduling blocks (AM/PM half-days) for the academic year. Each day has 2 blocks: one for AM and one for PM.
 
 **Academic Year Structure:**
-- 13 blocks × 28 days = 364 days
-- Academic year runs July 1 to June 29 (following year)
-- Each block is exactly 4 weeks (28 days)
+- 13 blocks, with the final block extended to reach June 30 (covers 365 days, or 366 in leap years)
+- Academic year runs July 1 to June 30 (following year)
+- Blocks are 4 weeks (28 days) except the final block, which absorbs the remaining days
 
 **Usage:**
 
@@ -19,7 +19,7 @@ Generates scheduling blocks (AM/PM half-days) for the academic year. Each day ha
 # Generate blocks for a single block period
 python scripts/generate_blocks.py --start 2026-03-10 --end 2026-04-06 --block-number 10
 
-# Generate full academic year 2025-2026 (July 1, 2025 - June 29, 2026)
+# Generate full academic year 2025-2026 (July 1, 2025 - June 30, 2026)
 python scripts/generate_blocks.py --academic-year 2025
 
 # Dry run to preview what would be created
@@ -51,7 +51,7 @@ python scripts/generate_blocks.py --academic-year 2025 --verbose
 | 10 | Mar 10, 2026 | Apr 06, 2026 |
 | 11 | Apr 07, 2026 | May 04, 2026 |
 | 12 | May 05, 2026 | Jun 01, 2026 |
-| 13 | Jun 02, 2026 | Jun 29, 2026 |
+| 13 | Jun 02, 2026 | Jun 30, 2026 |
 
 ### seed_people.py
 

@@ -3,7 +3,7 @@
 Generate scheduling blocks (AM/PM half-days) for academic year.
 
 Each day has 2 blocks: AM and PM.
-Academic year: July 1 - June 30 (13 blocks × 28 days = 364 days)
+Academic year: July 1 - June 30 (final block extends to cover the last day)
 
 Usage:
     # Generate blocks for Block 10 (March 10 - April 6, 2026)
@@ -43,6 +43,17 @@ def calculate_block_dates(block_number: int, academic_year_start: date) -> tuple
     """
     block_start = academic_year_start + timedelta(days=(block_number - 1) * 28)
     block_end = block_start + timedelta(days=27)
+
+    academic_year_end = date(academic_year_start.year + 1, 6, 30)
+    if (
+        block_number == 13
+        and academic_year_start.month == 7
+        and academic_year_start.day == 1
+        and block_end < academic_year_end
+    ):
+        # Extend the final block to include the last day of the academic year.
+        block_end = academic_year_end
+
     return block_start, block_end
 
 
@@ -122,7 +133,7 @@ def generate_academic_year(
     """
     Generate all 13 blocks for an academic year.
 
-    Academic year 2025 = July 1, 2025 to June 23, 2026
+    Academic year 2025 = July 1, 2025 to June 30, 2026
 
     Args:
         year: The calendar year when the academic year starts (e.g., 2025)
@@ -133,6 +144,7 @@ def generate_academic_year(
         Tuple of (total_created, total_skipped)
     """
     academic_year_start = date(year, 7, 1)
+    academic_year_end = date(year + 1, 6, 30)
     total_created = 0
     total_skipped = 0
 
@@ -141,6 +153,8 @@ def generate_academic_year(
 
     for block_num in range(1, 14):  # Blocks 1-13
         block_start, block_end = calculate_block_dates(block_num, academic_year_start)
+        if block_num == 13:
+            block_end = academic_year_end
         print(f"Block {block_num:2d}: {block_start.strftime('%b %d')} - {block_end.strftime('%b %d, %Y')}")
 
         created, skipped = generate_blocks(

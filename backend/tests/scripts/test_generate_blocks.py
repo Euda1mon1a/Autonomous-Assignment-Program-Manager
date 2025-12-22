@@ -16,6 +16,16 @@ def calculate_block_dates(block_number: int, academic_year_start: date) -> tuple
     """
     block_start = academic_year_start + timedelta(days=(block_number - 1) * 28)
     block_end = block_start + timedelta(days=27)
+
+    academic_year_end = date(academic_year_start.year + 1, 6, 30)
+    if (
+        block_number == 13
+        and academic_year_start.month == 7
+        and academic_year_start.day == 1
+        and block_end < academic_year_end
+    ):
+        block_end = academic_year_end
+
     return block_start, block_end
 
 
@@ -52,17 +62,19 @@ class TestCalculateBlockDates:
         block_start, block_end = calculate_block_dates(13, academic_start)
 
         assert block_start == date(2026, 6, 2)
-        assert block_end == date(2026, 6, 29)
+        assert block_end == date(2026, 6, 30)
 
-    def test_each_block_is_28_days(self):
-        """Each block should be exactly 28 days (inclusive)."""
+    def test_each_block_is_28_days_except_final(self):
+        """First 12 blocks should be 28 days; final block extends to year end."""
         academic_start = date(2025, 7, 1)
 
-        for block_num in range(1, 14):
+        for block_num in range(1, 13):
             block_start, block_end = calculate_block_dates(block_num, academic_start)
-            # End - start + 1 = 28 days
             days = (block_end - block_start).days + 1
             assert days == 28, f"Block {block_num} is {days} days, expected 28"
+
+        final_start, final_end = calculate_block_dates(13, academic_start)
+        assert (final_end - final_start).days + 1 == 29
 
     def test_blocks_are_contiguous(self):
         """Blocks should be contiguous with no gaps."""
@@ -77,14 +89,23 @@ class TestCalculateBlockDates:
                 f"Gap between Block {block_num} and Block {block_num + 1}"
             )
 
-    def test_academic_year_covers_364_days(self):
-        """13 blocks × 28 days = 364 days total."""
+    def test_academic_year_covers_365_days(self):
+        """Academic year should cover July 1 - June 30 inclusive."""
         academic_start = date(2025, 7, 1)
         block_1_start, _ = calculate_block_dates(1, academic_start)
         _, block_13_end = calculate_block_dates(13, academic_start)
 
         total_days = (block_13_end - block_1_start).days + 1
-        assert total_days == 364
+        assert total_days == 365
+
+    def test_academic_year_in_leap_cycle_extends_final_block(self):
+        """Academic year spanning Feb 29 should cover 366 days inclusive."""
+        academic_start = date(2023, 7, 1)  # Includes Feb 29, 2024
+        block_1_start, _ = calculate_block_dates(1, academic_start)
+        _, block_13_end = calculate_block_dates(13, academic_start)
+
+        total_days = (block_13_end - block_1_start).days + 1
+        assert total_days == 366
 
 
 class TestWeekendDetection:
@@ -122,12 +143,9 @@ class TestBlockCountPerDay:
         expected_blocks = days * blocks_per_day
         assert expected_blocks == 56
 
-    def test_full_year_creates_728_blocks(self):
-        """13 blocks × 28 days × 2 = 728 blocks per academic year."""
-        # Note: The model docstring says 730 (365 × 2), but the academic
-        # year is actually 364 days (13 × 28), so it's 728 blocks
-        num_blocks = 13
-        days_per_block = 28
+    def test_full_year_creates_730_blocks(self):
+        """Academic year should generate 365 days × 2 blocks = 730 blocks."""
+        total_days = 365
         blocks_per_day = 2
-        expected = num_blocks * days_per_block * blocks_per_day
-        assert expected == 728
+        expected = total_days * blocks_per_day
+        assert expected == 730
