@@ -492,6 +492,79 @@ class HomeostasisStatusResponse(BaseModel):
     positive_risks: list[PositiveFeedbackRiskInfo]
 
 
+class HomeostasisCheckRequest(BaseModel):
+    """Request to check homeostasis with provided metrics."""
+    metrics: dict[str, float] = Field(
+        ...,
+        description="Setpoint names and current values, e.g., {'coverage_rate': 0.92}",
+        examples=[{"coverage_rate": 0.92, "faculty_utilization": 0.78}],
+    )
+
+
+class HomeostasisReport(BaseModel):
+    """
+    Report from homeostasis check.
+
+    This is the primary response type from the homeostasis service's
+    check_homeostasis method. It provides a summary of feedback loop
+    states and system health.
+    """
+    timestamp: datetime = Field(
+        ...,
+        description="When the homeostasis check was performed",
+    )
+    overall_state: AllostasisState = Field(
+        ...,
+        description="Overall allostatic state of the system",
+    )
+    feedback_loops_healthy: int = Field(
+        ...,
+        ge=0,
+        description="Number of feedback loops within tolerance",
+    )
+    feedback_loops_deviating: int = Field(
+        ...,
+        ge=0,
+        description="Number of feedback loops with deviations",
+    )
+    active_corrections: int = Field(
+        ...,
+        ge=0,
+        description="Number of corrective actions currently in progress",
+    )
+    positive_feedback_risks: int = Field(
+        ...,
+        ge=0,
+        description="Number of detected positive feedback loop risks",
+    )
+    average_allostatic_load: float = Field(
+        ...,
+        ge=0.0,
+        description="Average allostatic load across monitored entities",
+    )
+    recommendations: list[str] = Field(
+        default_factory=list,
+        description="List of recommended actions based on current state",
+    )
+
+    class Config:
+        """Pydantic model configuration."""
+        json_schema_extra = {
+            "example": {
+                "timestamp": "2024-01-15T10:30:00",
+                "overall_state": "homeostasis",
+                "feedback_loops_healthy": 4,
+                "feedback_loops_deviating": 1,
+                "active_corrections": 0,
+                "positive_feedback_risks": 0,
+                "average_allostatic_load": 25.5,
+                "recommendations": [
+                    "Monitor coverage rate - approaching threshold"
+                ],
+            }
+        }
+
+
 class AllostasisCalculateRequest(BaseModel):
     """Request to calculate allostatic load."""
     entity_id: UUID

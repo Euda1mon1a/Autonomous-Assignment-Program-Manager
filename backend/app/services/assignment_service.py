@@ -1,10 +1,12 @@
 """Assignment service for business logic."""
 
+import logging
 from datetime import date, timedelta
 from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.core.cache import invalidate_schedule_cache
 from app.models.assignment import Assignment
 from app.models.settings import OverrideReasonCode
 from app.repositories.assignment import AssignmentRepository
@@ -16,6 +18,8 @@ from app.services.freeze_horizon_service import (
     FreezeHorizonViolation,
     FreezeOverrideRequest,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class AssignmentService:
@@ -167,6 +171,13 @@ class AssignmentService:
         self.assignment_repo.commit()
         self.assignment_repo.refresh(assignment)
 
+        # Invalidate schedule cache after assignment creation
+        try:
+            invalidate_schedule_cache()
+            logger.debug(f"Cache invalidated after creating assignment {assignment.id}")
+        except Exception as e:
+            logger.warning(f"Failed to invalidate cache after assignment creation: {e}")
+
         return {
             "assignment": assignment,
             "acgme_warnings": validation["warnings"],
@@ -254,6 +265,13 @@ class AssignmentService:
         self.assignment_repo.commit()
         self.assignment_repo.refresh(assignment)
 
+        # Invalidate schedule cache after assignment update
+        try:
+            invalidate_schedule_cache()
+            logger.debug(f"Cache invalidated after updating assignment {assignment.id}")
+        except Exception as e:
+            logger.warning(f"Failed to invalidate cache after assignment update: {e}")
+
         return {
             "assignment": assignment,
             "acgme_warnings": validation["warnings"],
@@ -307,6 +325,14 @@ class AssignmentService:
 
         self.assignment_repo.delete(assignment)
         self.assignment_repo.commit()
+
+        # Invalidate schedule cache after assignment deletion
+        try:
+            invalidate_schedule_cache()
+            logger.debug(f"Cache invalidated after deleting assignment {assignment_id}")
+        except Exception as e:
+            logger.warning(f"Failed to invalidate cache after assignment deletion: {e}")
+
         return {"success": True, "error": None, "freeze_status": freeze_result.to_dict()}
 
     def delete_assignments_bulk(
@@ -362,6 +388,15 @@ class AssignmentService:
 
         deleted_count = self.assignment_repo.delete_by_block_ids(block_ids)
         self.assignment_repo.commit()
+
+        # Invalidate schedule cache after bulk deletion
+        if deleted_count > 0:
+            try:
+                invalidate_schedule_cache()
+                logger.debug(f"Cache invalidated after bulk deleting {deleted_count} assignments")
+            except Exception as e:
+                logger.warning(f"Failed to invalidate cache after bulk deletion: {e}")
+
         return {"deleted": deleted_count, "error": None, "freeze_status": None}
 
     def _validate_acgme(

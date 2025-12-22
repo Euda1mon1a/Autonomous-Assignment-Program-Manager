@@ -188,7 +188,8 @@ Development session notes and summaries.
 | [Sessions Index](sessions/README.md) | Overview of development sessions |
 | [Session 9: MCP N8N Parallel Work](sessions/SESSION_009_MCP_N8N_PARALLEL_WORK.md) | MCP and N8N integration work |
 | [Session 10: Load Testing](sessions/SESSION_10_LOAD_TESTING.md) | Load testing implementation |
-| [Session 11: Parallel High-Yield Todos](sessions/SESSION_11_PARALLEL_HIGH_YIELD_TODOS.md) | Parallel development todos |
+| [Session 11A: MCP & Optimization](sessions/SESSION_11A_MCP_AND_OPTIMIZATION.md) | MCP tools & performance optimization |
+| [Session 11B: Test Coverage](sessions/SESSION_11B_TEST_COVERAGE.md) | Test coverage expansion |
 
 ### :material-archive: Archived
 Historical documentation retained for reference.
@@ -198,7 +199,7 @@ Historical documentation retained for reference.
 | [Archived Index](archived/README.md) | Overview of archived documentation |
 | [Celery Setup Summary](archived/CELERY_SETUP_SUMMARY.md) | Celery task queue setup |
 | [Celery Configuration](archived/CELERY_CONFIGURATION_REPORT.md) | Celery configuration details |
-| [Celery Production Checklist](archived/CELERY_PRODUCTION_CHECKLIST.md) | Production deployment checklist |
+| [Celery Production Checklist](deployment/CELERY_PRODUCTION_CHECKLIST.md) | Production deployment checklist |
 | [Celery Quick Reference](archived/CELERY_QUICK_REFERENCE.md) | Celery quick reference |
 | [Implementation Summaries](archived/implementation-summaries/) | Historical implementation notes |
 | [Reports](archived/reports/) | Historical project reports |

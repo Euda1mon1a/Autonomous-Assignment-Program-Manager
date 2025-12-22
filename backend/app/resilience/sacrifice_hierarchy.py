@@ -219,14 +219,34 @@ class SacrificeHierarchy:
         """
         Remove activities until demand fits capacity.
 
+        Uses the pre-defined sacrifice hierarchy to determine which activities
+        to suspend. Activities are removed starting with least protected
+        (EDUCATION_OPTIONAL) until demand fits available capacity.
+
+        The key benefit: decisions are made by algorithm according to
+        pre-agreed priorities, removing cognitive burden during crisis.
+
         Args:
-            current_demand: List of activities needing coverage
-            available_capacity: Available faculty-hours
-            reason: Reason for shedding (for audit)
-            approved_by: Who approved (for audit)
+            current_demand: List of Activity objects needing coverage.
+            available_capacity: Available faculty-hours for the period.
+            reason: Reason for shedding (recorded for audit trail).
+            approved_by: Person approving the decision (for audit trail).
 
         Returns:
-            Tuple of (kept_activities, sacrificed_activities)
+            tuple[list[Activity], list[Activity]]: A tuple containing:
+                - kept_activities: Activities that will continue
+                - sacrificed_activities: Activities being suspended
+
+        Example:
+            >>> hierarchy = SacrificeHierarchy()
+            >>> kept, sacrificed = hierarchy.shed_load(
+            ...     current_demand=activities,
+            ...     available_capacity=100.0,
+            ...     reason="PCS season understaffing",
+            ...     approved_by="Dr. Chief"
+            ... )
+            >>> print(f"Suspended {len(sacrificed)} activities, freeing "
+            ...       f"{sum(a.faculty_hours for a in sacrificed)} hours")
         """
         # Sort by sacrifice order (first to sacrifice = highest index in category)
         sorted_activities = sorted(
@@ -283,7 +303,22 @@ class SacrificeHierarchy:
         """
         Activate a specific load shedding level.
 
-        This suspends all activities in sacrificed categories.
+        This suspends all activities in sacrificed categories and creates
+        an audit record of the decision.
+
+        Args:
+            level: LoadSheddingLevel to activate (YELLOW, ORANGE, RED, BLACK, CRITICAL).
+            reason: Description of why this level is being activated.
+            approved_by: Person authorizing the level change.
+
+        Example:
+            >>> hierarchy = SacrificeHierarchy()
+            >>> # Escalate to ORANGE: suspend admin, research, optional education
+            >>> hierarchy.activate_level(
+            ...     LoadSheddingLevel.ORANGE,
+            ...     reason="Multiple faculty out with flu",
+            ...     approved_by="Dr. Chief"
+            ... )
         """
         if level == self.current_level:
             return
@@ -381,7 +416,23 @@ class SacrificeHierarchy:
         """
         Get plan for recovering from current load shedding level.
 
-        Returns activities in order they should be restored.
+        Returns a prioritized list of suspended activities in the order
+        they should be restored as capacity becomes available.
+        Activities are ordered by priority (most important first).
+
+        Returns:
+            list[dict]: Recovery plan with each activity containing:
+                - activity: Activity name
+                - category: Activity category name
+                - hours_required: Faculty hours needed to restore
+                - can_defer_further: Whether activity can be delayed more
+                - max_deferral_days: Maximum days it can be deferred
+
+        Example:
+            >>> hierarchy = SacrificeHierarchy()
+            >>> plan = hierarchy.get_recovery_plan()
+            >>> for item in plan:
+            ...     print(f"Restore {item['activity']}: {item['hours_required']} hours needed")
         """
         suspended = self.get_suspended_activities()
 

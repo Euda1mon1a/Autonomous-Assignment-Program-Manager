@@ -1,26 +1,41 @@
 """
 ACGME Compliance Constraints.
 
-This module contains constraints that enforce ACGME (Accreditation Council
-for Graduate Medical Education) requirements for resident duty hours,
-supervision, and work schedules.
+This module provides backward-compatible re-exports of ACGME constraints
+that have been moved to the services layer.
+
+The canonical implementation is now in:
+    backend/app/services/constraints/acgme.py
+
+This module re-exports all classes to maintain backward compatibility
+with existing code that imports from this location.
 
 Key ACGME Rules:
-    - 80-Hour Rule: Maximum 80 hours per week, averaged over 4 weeks
+    - 80-Hour Rule: Maximum 80 hours per week, strictly calculated over
+      a 4-week rolling average (28 consecutive days)
     - 1-in-7 Rule: At least one 24-hour period off every 7 days
     - Supervision: Adequate faculty-to-resident ratios by PGY level
     - Availability: Residents cannot work during scheduled absences
 
-Classes:
+Classes (re-exported from services.constraints.acgme):
     - AvailabilityConstraint: Enforces absence tracking (hard)
     - EightyHourRuleConstraint: Enforces 80-hour duty hour limit (hard)
     - OneInSevenRuleConstraint: Enforces 1-in-7 day off rule (hard)
     - SupervisionRatioConstraint: Enforces faculty supervision ratios (hard)
+    - ACGMEConstraintValidator: High-level validator for all ACGME rules
+
+Migration Note:
+    New code should import directly from:
+        from app.services.constraints import (
+            ACGMEConstraintValidator,
+            EightyHourRuleConstraint,
+            OneInSevenRuleConstraint,
+            SupervisionRatioConstraint,
+        )
 """
 import logging
 from collections import defaultdict
 from datetime import timedelta
-from typing import Any
 
 from .base import (
     ConstraintPriority,
@@ -37,38 +52,26 @@ logger = logging.getLogger(__name__)
 class AvailabilityConstraint(HardConstraint):
     """
     Ensures residents are only assigned to blocks when available.
+
     Respects absences (vacation, deployment, TDY, etc.)
+    This is a hard constraint - assignments during blocking absences
+    are forbidden.
     """
 
-    def __init__(self) -> None:
+    def __init__(self):
+        """Initialize availability constraint."""
         super().__init__(
             name="Availability",
             constraint_type=ConstraintType.AVAILABILITY,
             priority=ConstraintPriority.CRITICAL,
         )
 
-    def add_to_cpsat(
-        self,
-        model: Any,
-        variables: dict[str, Any],
-        context: SchedulingContext,
-    ) -> None:
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
         """
         Add availability constraint to OR-Tools CP-SAT model.
 
-        Enforces that residents cannot be assigned to blocks during absences.
-        This is a hard constraint - assignments during blocking absences
-        (deployment, TDY, extended medical leave) are forbidden.
-
-        Args:
-            model: OR-Tools CP-SAT model to add constraints to
-            variables: Dictionary containing decision variables:
-                      - "assignments": {(resident_idx, block_idx): BoolVar}
-            context: SchedulingContext with availability matrix
-
-        Implementation:
-            For each (resident, block) pair where resident is unavailable,
-            adds constraint: x[r_i, b_i] == 0
+        For each (resident, block) pair where resident is unavailable,
+        adds constraint: x[r_i, b_i] == 0
         """
         x = variables.get("assignments", {})
 
@@ -77,36 +80,14 @@ class AvailabilityConstraint(HardConstraint):
             for block in context.blocks:
                 b_i = context.block_idx[block.id]
 
-                # Check availability
                 if resident.id in context.availability:
                     if block.id in context.availability[resident.id]:
                         if not context.availability[resident.id][block.id]["available"]:
                             if (r_i, b_i) in x:
                                 model.Add(x[r_i, b_i] == 0)
 
-    def add_to_pulp(
-        self,
-        model: Any,
-        variables: dict[str, Any],
-        context: SchedulingContext,
-    ) -> None:
-        """
-        Add availability constraint to PuLP linear programming model.
-
-        Enforces that residents cannot be assigned to blocks during absences.
-        This is a hard constraint - assignments during blocking absences
-        (deployment, TDY, extended medical leave) are forbidden.
-
-        Args:
-            model: PuLP LpProblem to add constraints to
-            variables: Dictionary containing decision variables:
-                      - "assignments": {(resident_idx, block_idx): LpVariable}
-            context: SchedulingContext with availability matrix
-
-        Implementation:
-            For each (resident, block) pair where resident is unavailable,
-            adds constraint: x[r_i, b_i] == 0
-        """
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+        """Add availability constraint to PuLP model."""
         x = variables.get("assignments", {})
 
         for resident in context.residents:
@@ -120,33 +101,8 @@ class AvailabilityConstraint(HardConstraint):
                             if (r_i, b_i) in x:
                                 model += x[r_i, b_i] == 0, f"avail_{r_i}_{b_i}"
 
-    def validate(
-        self,
-        assignments: list[Any],
-        context: SchedulingContext,
-    ) -> ConstraintResult:
-        """
-        Validate that no assignments occur during absences.
-
-        Checks existing assignments to ensure no resident is scheduled during
-        a blocking absence (deployment, TDY, extended medical leave).
-
-        Args:
-            assignments: List of Assignment objects to validate
-            context: SchedulingContext with availability matrix
-
-        Returns:
-            ConstraintResult with:
-                - satisfied: True if no violations found
-                - violations: List of ConstraintViolation objects for each
-                            assignment during a blocking absence
-
-        Example:
-            >>> result = constraint.validate(assignments, context)
-            >>> if not result.satisfied:
-            ...     for v in result.violations:
-            ...         print(f"ERROR: {v.message}")
-        """
+    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+        """Validate that no assignments occur during absences."""
         violations = []
 
         for assignment in assignments:
@@ -156,7 +112,6 @@ class AvailabilityConstraint(HardConstraint):
             if person_id in context.availability:
                 if block_id in context.availability[person_id]:
                     if not context.availability[person_id][block_id]["available"]:
-                        # Find person name
                         person_name = "Unknown"
                         for r in context.residents + context.faculty:
                             if r.id == person_id:
@@ -180,38 +135,47 @@ class AvailabilityConstraint(HardConstraint):
 
 class EightyHourRuleConstraint(HardConstraint):
     """
-    ACGME 80-hour rule: Maximum 80 hours per week, averaged over 4 weeks.
+    ACGME 80-hour rule: Maximum 80 hours per week, strictly calculated
+    over a 4-week rolling average (28 consecutive days).
 
     This constraint enforces one of the most critical ACGME requirements:
     resident duty hours must not exceed 80 hours per week when averaged over
-    any 4-week period.
+    any 4-week (28 consecutive days) rolling window.
 
     Implementation Details:
         - Each half-day block (AM or PM) represents 6 hours of duty time
-        - Uses rolling 4-week windows to check all possible time periods
-        - Maximum blocks per 4-week window: (80 × 4) / 6 = 53 blocks
+        - Uses STRICT rolling 4-week (28-day) windows
+        - Checks ALL possible 28-day windows in the schedule period
+        - Maximum blocks per 4-week window: (80 * 4) / 6 = 53 blocks
 
     ACGME Reference:
         Common Program Requirements, Section VI.F.1:
         "Duty hours are limited to 80 hours per week, averaged over a four-week
         period, inclusive of all in-house clinical and educational activities."
 
+    Critical Notes:
+        - The 4-week period is STRICTLY 28 consecutive calendar days
+        - Rolling average means checking EVERY possible 28-day window
+        - This is a HARD constraint - violations make schedule invalid
+
     Constants:
         HOURS_PER_BLOCK: Hours per half-day block (6 hours)
         MAX_WEEKLY_HOURS: Maximum hours per week (80 hours)
-        ROLLING_WEEKS: Window size for averaging (4 weeks)
+        ROLLING_WEEKS: Window size for averaging (4 weeks = 28 days)
+        ROLLING_DAYS: Exact number of days in window (28 days)
     """
 
-    HOURS_PER_BLOCK: int = 6
-    MAX_WEEKLY_HOURS: int = 80
-    ROLLING_WEEKS: int = 4
+    HOURS_PER_BLOCK = 6
+    MAX_WEEKLY_HOURS = 80
+    ROLLING_WEEKS = 4
+    ROLLING_DAYS = 28  # 4 weeks * 7 days = 28 days (STRICT)
 
-    def __init__(self) -> None:
+    def __init__(self):
         """
         Initialize the 80-hour rule constraint.
 
         Calculates the maximum number of blocks allowed in any 4-week window:
-        max_blocks = (80 hours/week × 4 weeks) / 6 hours/block = 53 blocks
+        max_blocks = (80 hours/week * 4 weeks) / 6 hours/block = 53 blocks
         """
         super().__init__(
             name="80HourRule",
@@ -219,15 +183,45 @@ class EightyHourRuleConstraint(HardConstraint):
             priority=ConstraintPriority.CRITICAL,
         )
         # Max blocks per 4-week window: (80 * 4) / 6 = 53.33 -> 53
-        self.max_blocks_per_window: int = (self.MAX_WEEKLY_HOURS * self.ROLLING_WEEKS) // self.HOURS_PER_BLOCK
+        self.max_blocks_per_window = (
+            self.MAX_WEEKLY_HOURS * self.ROLLING_WEEKS
+        ) // self.HOURS_PER_BLOCK
 
-    def add_to_cpsat(
-        self,
-        model: Any,
-        variables: dict[str, Any],
-        context: SchedulingContext,
-    ) -> None:
-        """Enforce 80-hour rule via block count limits."""
+    def _calculate_rolling_average(
+        self, hours_by_date: dict, window_start
+    ) -> float:
+        """
+        Calculate the rolling 4-week average hours starting from window_start.
+
+        This method strictly implements the ACGME 4-week rolling average:
+        - Window is exactly 28 consecutive calendar days
+        - Sum all hours within the window
+        - Divide by 4 to get weekly average
+
+        Args:
+            hours_by_date: Dict mapping dates to hours worked
+            window_start: First day of the 28-day window
+
+        Returns:
+            float: Average weekly hours over the 4-week period
+        """
+        window_end = window_start + timedelta(days=self.ROLLING_DAYS - 1)
+
+        total_hours = sum(
+            hours
+            for d, hours in hours_by_date.items()
+            if window_start <= d <= window_end
+        )
+
+        return total_hours / self.ROLLING_WEEKS
+
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+        """
+        Enforce 80-hour rule via block count limits in CP-SAT model.
+
+        For each possible 28-day window and each resident, adds constraint
+        that the sum of assigned blocks <= max_blocks_per_window (53).
+        """
         x = variables.get("assignments", {})
         dates = sorted(context.blocks_by_date.keys())
 
@@ -236,11 +230,12 @@ class EightyHourRuleConstraint(HardConstraint):
 
         # For each possible 28-day window starting point
         for window_start in dates:
-            window_end = window_start + timedelta(days=self.ROLLING_WEEKS * 7 - 1)
+            window_end = window_start + timedelta(days=self.ROLLING_DAYS - 1)
 
-            # Get all blocks in this window
+            # Get all blocks in this strict 28-day window
             window_blocks = [
-                b for b in context.blocks
+                b
+                for b in context.blocks
                 if window_start <= b.date <= window_end
             ]
 
@@ -258,14 +253,10 @@ class EightyHourRuleConstraint(HardConstraint):
                 if window_vars:
                     model.Add(sum(window_vars) <= self.max_blocks_per_window)
 
-    def add_to_pulp(
-        self,
-        model: Any,
-        variables: dict[str, Any],
-        context: SchedulingContext,
-    ) -> None:
-        """Enforce 80-hour rule via block count limits."""
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+        """Enforce 80-hour rule via block count limits in PuLP model."""
         import pulp
+
         x = variables.get("assignments", {})
         dates = sorted(context.blocks_by_date.keys())
 
@@ -274,10 +265,11 @@ class EightyHourRuleConstraint(HardConstraint):
 
         window_count = 0
         for window_start in dates:
-            window_end = window_start + timedelta(days=self.ROLLING_WEEKS * 7 - 1)
+            window_end = window_start + timedelta(days=self.ROLLING_DAYS - 1)
 
             window_blocks = [
-                b for b in context.blocks
+                b
+                for b in context.blocks
                 if window_start <= b.date <= window_end
             ]
 
@@ -294,20 +286,21 @@ class EightyHourRuleConstraint(HardConstraint):
                 if window_vars:
                     model += (
                         pulp.lpSum(window_vars) <= self.max_blocks_per_window,
-                        f"80hr_{r_i}_{window_count}"
+                        f"80hr_{r_i}_{window_count}",
                     )
             window_count += 1
 
-    def validate(
-        self,
-        assignments: list[Any],
-        context: SchedulingContext,
-    ) -> ConstraintResult:
-        """Check 80-hour rule compliance."""
-        violations: list[ConstraintViolation] = []
+    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+        """
+        Check 80-hour rule compliance with strict 4-week rolling average.
+
+        Validates that no resident exceeds 80 hours/week when averaged
+        over any 28-day consecutive period.
+        """
+        violations = []
 
         # Group assignments by resident
-        by_resident: dict[Any, list[Any]] = defaultdict(list)
+        by_resident = defaultdict(list)
         for a in assignments:
             by_resident[a.person_id].append(a)
 
@@ -316,45 +309,47 @@ class EightyHourRuleConstraint(HardConstraint):
             if not resident_assignments:
                 continue
 
-            # Get dates for this resident
-            dates_with_blocks = defaultdict(int)
+            # Get hours per date for this resident
+            hours_by_date = defaultdict(int)
             for a in resident_assignments:
-                # Find block date
                 for b in context.blocks:
                     if b.id == a.block_id:
-                        dates_with_blocks[b.date] += 1
+                        hours_by_date[b.date] += self.HOURS_PER_BLOCK
                         break
 
-            if not dates_with_blocks:
+            if not hours_by_date:
                 continue
 
-            sorted_dates = sorted(dates_with_blocks.keys())
+            sorted_dates = sorted(hours_by_date.keys())
 
-            # Check each 28-day window
+            # Check EVERY possible 28-day window (strict rolling average)
             for start_date in sorted_dates:
-                end_date = start_date + timedelta(days=27)
-
-                total_blocks = sum(
-                    count for d, count in dates_with_blocks.items()
-                    if start_date <= d <= end_date
-                )
-
-                total_hours = total_blocks * self.HOURS_PER_BLOCK
-                avg_weekly = total_hours / self.ROLLING_WEEKS
+                avg_weekly = self._calculate_rolling_average(hours_by_date, start_date)
 
                 if avg_weekly > self.MAX_WEEKLY_HOURS:
-                    violations.append(ConstraintViolation(
-                        constraint_name=self.name,
-                        constraint_type=self.constraint_type,
-                        severity="CRITICAL",
-                        message=f"{resident.name}: {avg_weekly:.1f} hours/week (limit: {self.MAX_WEEKLY_HOURS})",
-                        person_id=resident.id,
-                        details={
-                            "window_start": start_date.isoformat(),
-                            "average_weekly_hours": avg_weekly,
-                        },
-                    ))
-                    break  # One violation per resident is enough
+                    end_date = start_date + timedelta(days=self.ROLLING_DAYS - 1)
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="CRITICAL",
+                            message=(
+                                f"{resident.name}: {avg_weekly:.1f} hours/week "
+                                f"(limit: {self.MAX_WEEKLY_HOURS}) in 4-week window "
+                                f"{start_date.isoformat()} to {end_date.isoformat()}"
+                            ),
+                            person_id=resident.id,
+                            details={
+                                "window_start": start_date.isoformat(),
+                                "window_end": end_date.isoformat(),
+                                "window_days": self.ROLLING_DAYS,
+                                "average_weekly_hours": avg_weekly,
+                                "max_weekly_hours": self.MAX_WEEKLY_HOURS,
+                            },
+                        )
+                    )
+                    # Report first violation per resident for efficiency
+                    break
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -365,26 +360,27 @@ class EightyHourRuleConstraint(HardConstraint):
 class OneInSevenRuleConstraint(HardConstraint):
     """
     ACGME 1-in-7 rule: At least one 24-hour period off every 7 days.
-    Simplified: Cannot work more than 6 consecutive days.
+
+    Simplified implementation: Cannot work more than 6 consecutive days.
+
+    ACGME Reference:
+        Common Program Requirements, Section VI.F.3:
+        "Residents must have one day in seven free from all educational
+        and clinical responsibilities, averaged over four weeks."
     """
 
-    MAX_CONSECUTIVE_DAYS: int = 6
+    MAX_CONSECUTIVE_DAYS = 6
 
-    def __init__(self) -> None:
+    def __init__(self):
+        """Initialize 1-in-7 rule constraint."""
         super().__init__(
             name="1in7Rule",
             constraint_type=ConstraintType.CONSECUTIVE_DAYS,
             priority=ConstraintPriority.CRITICAL,
         )
 
-    def add_to_cpsat(
-        self,
-        model: Any,
-        variables: dict[str, Any],
-        context: SchedulingContext,
-    ) -> None:
-        """Enforce max consecutive days."""
-
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+        """Enforce max consecutive days in CP-SAT model."""
         x = variables.get("assignments", {})
         dates = sorted(context.blocks_by_date.keys())
 
@@ -410,7 +406,7 @@ class OneInSevenRuleConstraint(HardConstraint):
 
                 # Create indicator variables for each day
                 day_worked_vars = []
-                for d in consecutive_dates[:self.MAX_CONSECUTIVE_DAYS + 1]:
+                for d in consecutive_dates[: self.MAX_CONSECUTIVE_DAYS + 1]:
                     day_blocks = context.blocks_by_date[d]
                     day_vars = [
                         x[r_i, context.block_idx[b.id]]
@@ -427,14 +423,10 @@ class OneInSevenRuleConstraint(HardConstraint):
                 if len(day_worked_vars) == self.MAX_CONSECUTIVE_DAYS + 1:
                     model.Add(sum(day_worked_vars) <= self.MAX_CONSECUTIVE_DAYS)
 
-    def add_to_pulp(
-        self,
-        model: Any,
-        variables: dict[str, Any],
-        context: SchedulingContext,
-    ) -> None:
-        """Enforce max consecutive days (linear approximation)."""
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+        """Enforce max consecutive days in PuLP model (linear approximation)."""
         import pulp
+
         x = variables.get("assignments", {})
         dates = sorted(context.blocks_by_date.keys())
 
@@ -458,9 +450,8 @@ class OneInSevenRuleConstraint(HardConstraint):
                     continue
 
                 # Sum of all blocks across 7 days <= 6 * 2 (max 2 blocks per day)
-                # This is a relaxation, but works for most cases
                 all_vars = []
-                for d in consecutive_dates[:self.MAX_CONSECUTIVE_DAYS + 1]:
+                for d in consecutive_dates[: self.MAX_CONSECUTIVE_DAYS + 1]:
                     for b in context.blocks_by_date[d]:
                         if (r_i, context.block_idx[b.id]) in x:
                             all_vars.append(x[r_i, context.block_idx[b.id]])
@@ -468,20 +459,16 @@ class OneInSevenRuleConstraint(HardConstraint):
                 if all_vars:
                     model += (
                         pulp.lpSum(all_vars) <= self.MAX_CONSECUTIVE_DAYS * 2,
-                        f"1in7_{r_i}_{constraint_count}"
+                        f"1in7_{r_i}_{constraint_count}",
                     )
                     constraint_count += 1
 
-    def validate(
-        self,
-        assignments: list[Any],
-        context: SchedulingContext,
-    ) -> ConstraintResult:
+    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
         """Check for consecutive days violations."""
-        violations: list[ConstraintViolation] = []
+        violations = []
 
         # Group by resident
-        by_resident: dict[Any, set[Any]] = defaultdict(set)
+        by_resident = defaultdict(set)
         for a in assignments:
             for b in context.blocks:
                 if b.id == a.block_id:
@@ -504,14 +491,19 @@ class OneInSevenRuleConstraint(HardConstraint):
                     consecutive = 1
 
             if max_consecutive > self.MAX_CONSECUTIVE_DAYS:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="HIGH",
-                    message=f"{resident.name}: {max_consecutive} consecutive duty days (limit: {self.MAX_CONSECUTIVE_DAYS})",
-                    person_id=resident.id,
-                    details={"consecutive_days": max_consecutive},
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="HIGH",
+                        message=(
+                            f"{resident.name}: {max_consecutive} consecutive duty days "
+                            f"(limit: {self.MAX_CONSECUTIVE_DAYS})"
+                        ),
+                        person_id=resident.id,
+                        details={"consecutive_days": max_consecutive},
+                    )
+                )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -523,9 +515,6 @@ class SupervisionRatioConstraint(HardConstraint):
     """
     ACGME supervision ratios: Ensures adequate faculty supervision.
 
-    This constraint enforces different faculty-to-resident ratios based on
-    PGY level, reflecting the increased supervision needs of junior residents.
-
     Supervision Ratios:
         - PGY-1: 1 faculty : 2 residents (more intensive supervision)
         - PGY-2/3: 1 faculty : 4 residents (greater independence)
@@ -535,32 +524,16 @@ class SupervisionRatioConstraint(HardConstraint):
         "The program must demonstrate that the appropriate level of supervision
         is in place for all residents who care for patients."
 
-    Clinical Context:
-        - PGY-1 residents require more direct oversight
-        - Senior residents (PGY-2/3) have more clinical autonomy
-        - These ratios ensure patient safety and educational quality
-
-    Example:
-        For a clinic with 2 PGY-1 and 4 PGY-2/3 residents:
-        - PGY-1 faculty needed: ⌈2/2⌉ = 1
-        - PGY-2/3 faculty needed: ⌈4/4⌉ = 1
-        - Total required: 2 faculty members
-
     Constants:
         PGY1_RATIO: Maximum PGY-1 residents per faculty (2)
         OTHER_RATIO: Maximum PGY-2/3 residents per faculty (4)
     """
 
-    PGY1_RATIO: int = 2  # 1 faculty per 2 PGY-1
-    OTHER_RATIO: int = 4  # 1 faculty per 4 PGY-2/3
+    PGY1_RATIO = 2  # 1 faculty per 2 PGY-1
+    OTHER_RATIO = 4  # 1 faculty per 4 PGY-2/3
 
-    def __init__(self) -> None:
-        """
-        Initialize supervision ratio constraint.
-
-        Sets constraint priority to CRITICAL as inadequate supervision
-        violates ACGME requirements and patient safety standards.
-        """
+    def __init__(self):
+        """Initialize supervision ratio constraint."""
         super().__init__(
             name="SupervisionRatio",
             constraint_type=ConstraintType.SUPERVISION,
@@ -580,41 +553,20 @@ class SupervisionRatioConstraint(HardConstraint):
 
         Returns:
             int: Minimum number of faculty required, or 0 if no residents
-
-        Example:
-            >>> calc = SupervisionRatioConstraint()
-            >>> calc.calculate_required_faculty(pgy1_count=3, other_count=5)
-            3  # 2 for PGY-1 (⌈3/2⌉=2), 2 for others (⌈5/4⌉=2), but max(1,2+2)=3
         """
         from_pgy1 = (pgy1_count + self.PGY1_RATIO - 1) // self.PGY1_RATIO
         from_other = (other_count + self.OTHER_RATIO - 1) // self.OTHER_RATIO
         return max(1, from_pgy1 + from_other) if (pgy1_count + other_count) > 0 else 0
 
-    def add_to_cpsat(
-        self,
-        model: Any,
-        variables: dict[str, Any],
-        context: SchedulingContext,
-    ) -> None:
-        """Supervision ratio is typically handled post-hoc for residents."""
-        # This constraint is usually enforced during faculty assignment phase
-        # The CP-SAT model focuses on resident assignment
-        pass
-
-    def add_to_pulp(
-        self,
-        model: Any,
-        variables: dict[str, Any],
-        context: SchedulingContext,
-    ) -> None:
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
         """Supervision ratio is typically handled post-hoc for residents."""
         pass
 
-    def validate(
-        self,
-        assignments: list[Any],
-        context: SchedulingContext,
-    ) -> ConstraintResult:
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+        """Supervision ratio is typically handled post-hoc for residents."""
+        pass
+
+    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
         """Check supervision ratios per block."""
         violations = []
 
@@ -649,21 +601,69 @@ class SupervisionRatioConstraint(HardConstraint):
             required = self.calculate_required_faculty(pgy1_count, other_count)
 
             if len(faculty) < required:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="CRITICAL",
-                    message=f"Block needs {required} faculty but has {len(faculty)} ({len(residents)} residents)",
-                    block_id=block_id,
-                    details={
-                        "residents": len(residents),
-                        "pgy1_count": pgy1_count,
-                        "faculty": len(faculty),
-                        "required": required,
-                    },
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="CRITICAL",
+                        message=(
+                            f"Block needs {required} faculty but has {len(faculty)} "
+                            f"({len(residents)} residents)"
+                        ),
+                        block_id=block_id,
+                        details={
+                            "residents": len(residents),
+                            "pgy1_count": pgy1_count,
+                            "faculty": len(faculty),
+                            "required": required,
+                        },
+                    )
+                )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
             violations=violations,
         )
+
+
+# Re-export ACGMEConstraintValidator from services
+# This enables using the high-level validator from the old import path
+try:
+    from app.services.constraints.acgme import ACGMEConstraintValidator
+except ImportError:
+    # Fallback if services module not yet available (e.g., during initialization)
+    class ACGMEConstraintValidator:
+        """Placeholder for backward compatibility during module initialization."""
+
+        def __init__(self):
+            self.constraints = [
+                AvailabilityConstraint(),
+                EightyHourRuleConstraint(),
+                OneInSevenRuleConstraint(),
+                SupervisionRatioConstraint(),
+            ]
+
+        def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+            """Validate all ACGME constraints."""
+            return self.validate_all(assignments, context)
+
+        def validate_all(
+            self, assignments: list, context: SchedulingContext
+        ) -> ConstraintResult:
+            """Run all ACGME constraint validations."""
+            all_violations = []
+            total_penalty = 0.0
+
+            for constraint in self.constraints:
+                if not constraint.enabled:
+                    continue
+
+                result = constraint.validate(assignments, context)
+                all_violations.extend(result.violations)
+                total_penalty += result.penalty
+
+            return ConstraintResult(
+                satisfied=len(all_violations) == 0,
+                violations=all_violations,
+                penalty=total_penalty,
+            )

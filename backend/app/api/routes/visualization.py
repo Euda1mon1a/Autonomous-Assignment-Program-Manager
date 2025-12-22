@@ -22,6 +22,7 @@ from app.schemas.visualization import (
     TimeRangeType,
     UnifiedHeatmapRequest,
 )
+from app.services.cached_schedule_service import CachedHeatmapService
 from app.services.heatmap_service import HeatmapService
 
 router = APIRouter()
@@ -67,7 +68,8 @@ def get_unified_heatmap(
             status_code=400, detail="start_date must be before or equal to end_date"
         )
 
-    service = HeatmapService()
+    # Use cached service for better performance
+    service = CachedHeatmapService()
     return service.generate_unified_heatmap(
         db=db,
         start_date=start_date,
@@ -106,7 +108,8 @@ def get_unified_heatmap_with_time_range(
             status_code=400, detail="group_by must be 'person' or 'rotation'"
         )
 
-    service = HeatmapService()
+    # Use cached service for better performance
+    service = CachedHeatmapService()
 
     # Calculate date range from time_range specification
     try:
@@ -115,7 +118,7 @@ def get_unified_heatmap_with_time_range(
         logger.error(f"Invalid visualization parameters: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Invalid request parameters")
 
-    # Generate unified heatmap
+    # Generate unified heatmap (cached)
     result = service.generate_unified_heatmap(
         db=db,
         start_date=start_date,
@@ -181,9 +184,10 @@ def get_heatmap_image(
             status_code=400, detail="group_by must be 'person' or 'rotation'"
         )
 
-    service = HeatmapService()
+    # Use cached service for better performance
+    service = CachedHeatmapService()
 
-    # Generate heatmap data
+    # Generate heatmap data (cached)
     heatmap_response = service.generate_unified_heatmap(
         db=db,
         start_date=start_date,
@@ -249,7 +253,8 @@ def get_coverage_heatmap(
             status_code=400, detail="start_date must be before or equal to end_date"
         )
 
-    service = HeatmapService()
+    # Use cached service for better performance
+    service = CachedHeatmapService()
     return service.generate_coverage_heatmap(
         db=db, start_date=start_date, end_date=end_date
     )
@@ -286,7 +291,8 @@ def get_workload_heatmap(
             status_code=400, detail="start_date must be before or equal to end_date"
         )
 
-    service = HeatmapService()
+    # Use cached service for better performance
+    service = CachedHeatmapService()
     return service.generate_person_workload_heatmap(
         db=db,
         person_ids=person_ids,
@@ -324,9 +330,10 @@ def export_heatmap(
             detail="heatmap_type must be 'unified', 'coverage', or 'workload'",
         )
 
-    service = HeatmapService()
+    # Use cached service for better performance
+    service = CachedHeatmapService()
 
-    # Generate appropriate heatmap based on type
+    # Generate appropriate heatmap based on type (cached)
     try:
         if request.heatmap_type == "unified":
             params = request.request_params

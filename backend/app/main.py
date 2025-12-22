@@ -9,13 +9,18 @@ from ipaddress import ip_address, ip_network
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.routes import api_router
 from app.core.config import get_settings
 from app.core.exceptions import AppException
 from app.core.logging import get_logger, setup_logging
+from app.core.slowapi_limiter import limiter, rate_limit_exceeded_handler
 from app.middleware.audit import AuditContextMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
 
 settings = get_settings()
 
@@ -118,6 +123,20 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Failed to initialize resilience metrics: {e}")
 
+    # Initialize service cache
+    try:
+        from app.core.cache import get_service_cache
+        cache = get_service_cache()
+        if cache.is_available:
+            stats = cache.get_stats()
+            logger.info(
+                f"Service cache initialized (Redis connected, TTL: {stats['default_ttl']}s)"
+            )
+        else:
+            logger.warning("Service cache unavailable - Redis not connected")
+    except Exception as e:
+        logger.warning(f"Failed to initialize service cache: {e}")
+
     # Start certification scheduler for expiration reminders
     try:
         from app.services.certification_scheduler import start_scheduler
@@ -133,6 +152,19 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down Residency Scheduler API")
+
+    # Log final cache stats
+    try:
+        from app.core.cache import get_service_cache
+        cache = get_service_cache()
+        if cache.is_available:
+            stats = cache.get_stats()
+            logger.info(
+                f"Cache stats at shutdown - hits: {stats['hits']}, "
+                f"misses: {stats['misses']}, hit_rate: {stats['hit_rate']:.2%}"
+            )
+    except Exception:
+        pass
 
     # Stop certification scheduler
     try:
@@ -152,6 +184,12 @@ app = FastAPI(
     openapi_url="/openapi.json" if settings.DEBUG else None,
     lifespan=lifespan,
 )
+
+# Attach rate limiter to app state for slowapi
+app.state.limiter = limiter
+
+# Add rate limit exceeded exception handler
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 
 # =============================================================================
@@ -198,6 +236,14 @@ async def global_exception_handler(request: Request, exc: Exception):
 # =============================================================================
 # Middleware Configuration
 # =============================================================================
+
+# Security headers middleware - adds OWASP recommended security headers
+app.add_middleware(SecurityHeadersMiddleware)
+logger.info("Security headers middleware enabled")
+
+# Slowapi rate limiting middleware - applies global rate limits
+app.add_middleware(SlowAPIMiddleware)
+logger.info("Slowapi rate limiting middleware enabled")
 
 # CORS middleware
 # Support both explicit origins list and regex pattern for flexible domain matching
@@ -279,6 +325,14 @@ async def restrict_metrics_endpoint(request: Request, call_next):
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
 
+# Include GraphQL endpoint
+try:
+    from app.graphql import graphql_router
+    app.include_router(graphql_router, prefix="/graphql", tags=["graphql"])
+    logger.info("GraphQL endpoint enabled at /graphql")
+except ImportError as e:
+    logger.warning(f"GraphQL endpoint not available: {e}")
+
 
 @app.get("/")
 async def root():
@@ -328,5 +382,37 @@ async def resilience_health():
     except Exception as e:
         return {
             "status": "degraded",
+            "error": str(e),
+        }
+
+
+@app.get("/health/cache")
+async def cache_health():
+    """
+    Cache system health check.
+
+    Returns current cache status including:
+    - Redis availability
+    - Hit/miss statistics
+    - Cache hit rate
+    """
+    try:
+        from app.core.cache import get_service_cache
+
+        cache = get_service_cache()
+        stats = cache.get_stats()
+        return {
+            "status": "operational" if stats["available"] else "unavailable",
+            "enabled": stats["enabled"],
+            "redis_connected": stats["available"],
+            "hits": stats["hits"],
+            "misses": stats["misses"],
+            "hit_rate": stats["hit_rate"],
+            "approximate_entries": stats["approximate_size"],
+            "default_ttl_seconds": stats["default_ttl"],
+        }
+    except Exception as e:
+        return {
+            "status": "error",
             "error": str(e),
         }

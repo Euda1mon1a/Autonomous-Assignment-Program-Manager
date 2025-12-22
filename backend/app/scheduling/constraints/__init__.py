@@ -39,6 +39,7 @@ from .base import (
 
 # ACGME compliance constraints
 from .acgme import (
+    ACGMEConstraintValidator,
     AvailabilityConstraint,
     EightyHourRuleConstraint,
     OneInSevenRuleConstraint,
@@ -71,7 +72,9 @@ from .faculty_role import (
 
 # FMIT constraints
 from .fmit import (
+    FMITContinuityTurfConstraint,
     FMITMandatoryCallConstraint,
+    FMITStaffingFloorConstraint,
     FMITWeekBlockingConstraint,
     PostFMITRecoveryConstraint,
     get_fmit_week_dates,
@@ -119,6 +122,7 @@ __all__ = [
     "SchedulingContext",
     "SoftConstraint",
     # ACGME constraints
+    "ACGMEConstraintValidator",
     "AvailabilityConstraint",
     "EightyHourRuleConstraint",
     "OneInSevenRuleConstraint",
@@ -138,7 +142,9 @@ __all__ = [
     "FacultyRoleClinicConstraint",
     "SMFacultyClinicConstraint",
     # FMIT constraints
+    "FMITContinuityTurfConstraint",
     "FMITMandatoryCallConstraint",
+    "FMITStaffingFloorConstraint",
     "FMITWeekBlockingConstraint",
     "PostFMITRecoveryConstraint",
     "get_fmit_week_dates",
