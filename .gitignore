@@ -114,3 +114,4 @@ celerybeat.pid
 # Local seed scripts that may reference real data paths
 scripts/seed_people_local.py
 docs/data/*.csv
+scripts/airtable_sync.py
