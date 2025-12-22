@@ -182,6 +182,7 @@ class SchedulingContext:
 
     # Lookup dictionaries for fast access
     resident_idx: dict[UUID, int] = field(default_factory=dict)
+    faculty_idx: dict[UUID, int] = field(default_factory=dict)
     block_idx: dict[UUID, int] = field(default_factory=dict)
     template_idx: dict[UUID, int] = field(default_factory=dict)
     blocks_by_date: dict[date, list] = field(default_factory=dict)
@@ -236,11 +237,13 @@ class SchedulingContext:
 
         Creates:
             - resident_idx: Maps resident UUID to array index for decision variables
+            - faculty_idx: Maps faculty UUID to array index for decision variables
             - block_idx: Maps block UUID to array index for decision variables
             - template_idx: Maps template UUID to array index for decision variables
             - blocks_by_date: Groups blocks by date for temporal constraint evaluation
         """
         self.resident_idx = {r.id: i for i, r in enumerate(self.residents)}
+        self.faculty_idx = {f.id: i for i, f in enumerate(self.faculty)}
         self.block_idx = {b.id: i for i, b in enumerate(self.blocks)}
         self.template_idx = {t.id: i for i, t in enumerate(self.templates)}
 
