@@ -24,6 +24,7 @@ import argparse
 import logging
 import sys
 import uuid
+from uuid import UUID
 from datetime import date, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -601,6 +602,7 @@ def import_schedule_from_sheet(
     """
     # Lazy imports
     from sqlalchemy import select
+    from app.models.absence import Absence
     from app.models.assignment import Assignment
     from app.models.block import Block
     from app.models.rotation_template import RotationTemplate
@@ -644,6 +646,10 @@ def import_schedule_from_sheet(
 
     logger.info(f"Sheet '{ws.title}': Found {len(date_columns)} date/time columns")
 
+    # Collect absence cells keyed by person/date so we can create Absence rows
+    absence_days: dict[UUID, dict[date, str]] = {}
+    person_lookup: dict[UUID, "PersonType"] = {}
+
     # Process person rows (usually starting at row 9)
     for row in range(9, ws.max_row + 1):
         person_name = ws.cell(row=row, column=person_col).value
@@ -658,6 +664,8 @@ def import_schedule_from_sheet(
             if person_name and not person_name.isspace():
                 logger.debug(f"Row {row}: Person not found: '{person_name}'")
             continue
+
+        person_lookup[person.id] = person
 
         # Process each date column
         for col, (col_date, time_of_day) in date_columns.items():
@@ -674,8 +682,18 @@ def import_schedule_from_sheet(
             # Check if it's an absence abbreviation
             absence_type = get_absence_type(value)
             if absence_type:
-                # This is an absence - should be in absences, not assignments
-                # Skip here, let absences sheet handle it
+                person_absence_days = absence_days.setdefault(person.id, {})
+                existing_absence_type = person_absence_days.get(col_date)
+
+                if existing_absence_type and existing_absence_type != absence_type:
+                    result.add_error(
+                        f"Row {row}, Col {col}: Conflicting absence values for "
+                        f"{person.name} on {col_date} ({existing_absence_type} vs {absence_type})"
+                    )
+                    continue
+
+                if not existing_absence_type:
+                    person_absence_days[col_date] = absence_type
                 continue
 
             # Look up rotation template
@@ -739,6 +757,84 @@ def import_schedule_from_sheet(
                 )
 
             result.created += 1
+
+    # Create absence records for any absence codes found in the schedule grid
+    for person_id, date_map in absence_days.items():
+        for absence_type in set(date_map.values()):
+            # Group contiguous dates of the same absence type
+            dates = sorted(
+                day for day, day_type in date_map.items() if day_type == absence_type
+            )
+
+            if not dates:
+                continue
+
+            start_idx = 0
+            for idx in range(1, len(dates) + 1):
+                is_break = (
+                    idx == len(dates)
+                    or (dates[idx] - dates[idx - 1]).days > 1
+                )
+
+                if is_break:
+                    start_date = dates[start_idx]
+                    end_date = dates[idx - 1]
+
+                    existing = session.execute(
+                        select(Absence).where(
+                            Absence.person_id == person_id,
+                            Absence.absence_type == absence_type,
+                            Absence.start_date == start_date,
+                            Absence.end_date == end_date,
+                        )
+                    ).scalar_one_or_none()
+
+                    person_display = (
+                        person_lookup[person_id].name
+                        if person_id in person_lookup
+                        else person_id
+                    )
+
+                    if existing:
+                        logger.info(
+                            "Skipping duplicate absence for %s (%s: %s to %s)",
+                            person_display,
+                            absence_type,
+                            start_date,
+                            end_date,
+                        )
+                        result.skipped += 1
+                    elif not dry_run:
+                        absence = Absence(
+                            id=uuid.uuid4(),
+                            person_id=person_id,
+                            absence_type=absence_type,
+                            start_date=start_date,
+                            end_date=end_date,
+                            notes=None,
+                            tdy_location=None,
+                            deployment_orders=False,
+                        )
+                        session.add(absence)
+                        logger.info(
+                            "Created absence for %s: %s (%s to %s)",
+                            person_display,
+                            absence_type,
+                            start_date,
+                            end_date,
+                        )
+                        result.created += 1
+                    else:
+                        logger.info(
+                            "[DRY-RUN] Would create absence for %s: %s (%s to %s)",
+                            person_display,
+                            absence_type,
+                            start_date,
+                            end_date,
+                        )
+                        result.created += 1
+
+                    start_idx = idx
 
     return result
 
