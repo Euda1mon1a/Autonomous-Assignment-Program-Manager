@@ -184,6 +184,30 @@ class Settings(BaseSettings):
     TELEMETRY_TRACE_REDIS: bool = True  # Enable Redis tracing
     TELEMETRY_TRACE_HTTP: bool = True  # Enable HTTP client tracing
 
+    # ML Model Configuration
+    # Machine learning models for schedule scoring and prediction
+    ML_ENABLED: bool = False  # Enable ML-based schedule scoring
+    ML_MODELS_DIR: str = "models"  # Base directory for ML model artifacts
+    ML_PREFERENCE_MODEL_PATH: str = ""  # Path to preference predictor model
+    ML_CONFLICT_MODEL_PATH: str = ""  # Path to conflict predictor model
+    ML_WORKLOAD_MODEL_PATH: str = ""  # Path to workload optimizer model
+
+    # ML Training Configuration
+    ML_TRAINING_LOOKBACK_DAYS: int = 365  # Historical data range for training
+    ML_MIN_TRAINING_SAMPLES: int = 100  # Minimum samples required for training
+    ML_AUTO_TRAINING_ENABLED: bool = False  # Enable automatic model retraining
+    ML_TRAINING_FREQUENCY_DAYS: int = 7  # Retraining frequency
+
+    # ML Scoring Weights (for ScheduleScorer)
+    ML_PREFERENCE_WEIGHT: float = 0.4  # Weight for preference satisfaction
+    ML_WORKLOAD_WEIGHT: float = 0.3  # Weight for workload balance
+    ML_CONFLICT_WEIGHT: float = 0.3  # Weight for conflict safety
+
+    # ML Thresholds
+    ML_TARGET_UTILIZATION: float = 0.80  # Target utilization (from resilience)
+    ML_OVERLOAD_THRESHOLD: float = 0.85  # Threshold for overloaded detection
+    ML_CONFLICT_RISK_THRESHOLD: float = 0.70  # High-risk conflict threshold
+
     # Shadow Traffic Configuration
     SHADOW_TRAFFIC_ENABLED: bool = False  # Enable shadow traffic duplication
     SHADOW_TRAFFIC_URL: str = ""  # Shadow service base URL
