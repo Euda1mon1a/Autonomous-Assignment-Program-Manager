@@ -4,7 +4,30 @@ Import schedules and data into Residency Scheduler from Excel files.
 
 ---
 
-## Overview
+## Web Interface (Recommended)
+
+The easiest way to import data is through the **Import/Export** page:
+
+1. Navigate to **Import/Export** in the main navigation
+2. Click the **Import** tab
+3. Click **Start Import**
+4. Select your file (CSV, Excel, or JSON)
+5. Preview the data and fix any validation errors
+6. Click **Import** to complete
+
+The web interface provides:
+- Real-time validation with error highlighting
+- Preview before importing
+- Progress tracking for large imports
+- Automatic duplicate detection
+
+---
+
+## Command Line Import
+
+For advanced users and automation, use the Excel import script.
+
+### Overview
 
 The Excel import script (`scripts/import_excel.py`) allows you to bulk import:
 
@@ -269,3 +292,4 @@ Row 5: Person not found: 'Dr. John Smith'
 - [Exporting Data](exports.md) - Export schedules to Excel
 - [Absences](absences.md) - Managing absences via the UI
 - [People Management](people.md) - Adding residents and faculty
+- [Conflict Resolution](conflicts.md) - Resolving import conflicts
