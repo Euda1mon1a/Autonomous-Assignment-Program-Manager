@@ -1,63 +1,87 @@
-# Faculty Scheduling Integration
+# Faculty Solver Integration (REQUIRED)
 
-## Current Architecture ✅
+## Scope Clarification
 
-**This is by design:**
-1. Solver schedules residents → template half-day activities
-2. Faculty assignments built around resident needs (post-processing)
-3. `engine.py:701-780` handles faculty via `_assign_faculty()`
+This scheduling system co-schedules **BOTH**:
+- 🧑‍⚕️ Residents: 730 half-days/year
+- 👨‍🔬 Faculty: 730 half-days/year
 
-## What's Working
-- Supervision ratio enforcement
-- Basic faculty coverage
-
-## What's Missing (Wednesday Rules)
-
-The post-processing step (`_assign_faculty`) needs enhancement:
-
-| Rule | Status |
-|------|--------|
-| Regular Wed PM: 1 faculty in clinic | ❌ Not enforced |
-| 4th Wed AM: 1 faculty in clinic | ❌ Not enforced |
-| 4th Wed PM: 1 different faculty | ❌ Not enforced |
-| 4th Wed faculty equity | ❌ Not enforced |
-
-## Implementation Options
-
-### Option A: Enhance Post-Processing (Recommended)
-Extend `engine.py:_assign_faculty()` to:
-1. Identify Wednesday blocks in resident schedule
-2. Assign exactly 1 faculty on Wed PM (1st-3rd)
-3. Assign 2 different faculty on 4th Wed (AM/PM)
-4. Track 4th Wed assignments for equity
-
-**Pros:** Minimal change, preserves design intent  
-**Cons:** No solver optimization for faculty
-
-### Option B: Model Faculty in Solver
-Add faculty decision variables to solver.
-
-**Warning:** Codex found issues with current doc:
-- Shape mismatch (3D proposed, 2D in existing constraints)
-- Missing PuLP implementation
-- Missing solution extraction
-- Other constraints need updates (`FacultyRoleClinicConstraint`, etc.)
-
-**Pros:** Full optimization  
-**Cons:** Major architectural change (~8-10 hours)
+Faculty are NOT post-processed. They must be modeled in the solver.
 
 ---
 
-## Recommendation
+## Current Gap
 
-**Start with Option A** - enhance `_assign_faculty()` to handle Wednesday rules. This:
-- Matches original n8n/Airtable design
-- Is lower risk
-- Delivers value faster
+| Component | Residents | Faculty |
+|-----------|-----------|---------|
+| Decision variables | ✅ Yes | ❌ No |
+| `context.*_idx` | ✅ `resident_idx` | ❌ No `faculty_idx` |
+| Constraints applied | ✅ Yes | ❌ Broken |
+| Solution extraction | ✅ Yes | ❌ Missing |
 
-Faculty decision variables can be added later if optimization is needed.
+---
 
-## Files to Modify (Option A)
-- `backend/app/scheduling/engine.py` - `_assign_faculty()` method
-- Add Wednesday detection helpers
-- Add equity tracking for 4th Wed
+## Implementation Checklist
+
+### 1. Add `faculty_idx` to `SchedulingContext`
+**File:** `backend/app/scheduling/constraints/base.py`
+```python
+faculty_idx: dict[uuid.UUID, int] = field(default_factory=dict)
+```
+
+### 2. Create Faculty Decision Variables
+**File:** `backend/app/scheduling/solvers.py`
+```python
+# After resident variables (~line 223)
+faculty_vars = {}
+for f_i, faculty in enumerate(context.faculty):
+    for b_i, block in enumerate(workday_blocks):
+        for t_i, template_id in enumerate(template_ids):
+            faculty_vars[f_i, b_i, t_i] = model.NewBoolVar(...)
+variables["faculty_assignments"] = faculty_vars
+```
+**Also add PuLP equivalent.**
+
+### 3. Update All Faculty-Referencing Constraints
+Change `context.resident_idx.get(f.id)` → `context.faculty_idx.get(f.id)`
+
+**Files:**
+- `temporal.py` (Wed constraints)
+- `capacity.py` (MaxPhysiciansInClinicConstraint)
+- `faculty_role.py`
+- `sports_medicine.py`
+- `acgme.py` (SupervisionRatioConstraint)
+
+### 4. Add Faculty-Specific Constraints
+- One faculty per block (can't be in 2 places)
+- Faculty availability
+- **Wednesday rules** (already written, need faculty_idx)
+
+### 5. Extract Faculty Assignments
+**File:** `backend/app/scheduling/solvers.py`
+```python
+# After resident extraction
+for f_i, b_i, t_i in faculty_vars:
+    if solver.Value(faculty_vars[f_i, b_i, t_i]):
+        assignments.append(Assignment(
+            person_id=context.faculty[f_i].id,
+            ...
+        ))
+```
+
+### 6. Update Tests
+- Test faculty variables exist
+- Test Wednesday constraints fire
+- Integration test with mixed resident/faculty
+
+---
+
+## Effort Estimate
+**8-10 hours** across 2-3 sessions
+
+## Files Impacted
+- `solvers.py` (major)
+- `base.py` (context)
+- `temporal.py` (minor - index fix)
+- `capacity.py`, `faculty_role.py`, `acgme.py` (index fixes)
+- Test files
