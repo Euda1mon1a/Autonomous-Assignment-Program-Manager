@@ -1,107 +1,63 @@
-***REMOVED*** Solver Integration Gap
+***REMOVED*** Scheduling Integration
 
-## Problem Summary
-Wednesday constraints (`WednesdayPMSingleFacultyConstraint`, `InvertedWednesdayConstraint`) cannot enforce faculty assignments because **the solver only models resident decision variables**.
+## Current Architecture ✅
 
-## Current State
+**This is by design:**
+1. Solver schedules residents → template half-day activities
+2. Faculty assignments built around resident needs (post-processing)
+3. `engine.py:701-780` handles faculty via `_assign_faculty()`
 
-### Solver Architecture (`backend/app/scheduling/solvers.py`)
-```python
-# Line ~176-223: Only resident variables are created
-for r_i, resident in enumerate(context.residents):
-    for b_i, block in enumerate(context.blocks):
-        for t_i, template in enumerate(context.templates):
-            template_vars[r_i, b_i, t_i] = model.NewBoolVar(...)
-```
+## What's Working
+- Supervision ratio enforcement
+- Basic faculty coverage
 
-- `template_assignments` dict: **residents only**
-- `context.resident_idx`: maps resident IDs to indices
-- Faculty are NOT in `resident_idx` → `f_i = context.resident_idx.get(f.id)` returns `None`
+## What's Missing (Wednesday Rules)
 
-### Wednesday Constraints Impact
-```python
-# temporal.py add_to_cpsat - this does nothing because:
-for f in context.faculty:
-    f_i = context.resident_idx.get(f.id)  # Always None!
-    if f_i is not None and (f_i, b_i, t_i) in template_vars:
-        faculty_clinic_vars.append(...)  # Never executed
-```
+The post-processing step (`_assign_faculty`) needs enhancement:
 
-**Result:** `faculty_clinic_vars` is always empty → no constraints added.
+| Rule | Status |
+|------|--------|
+| Regular Wed PM: 1 faculty in clinic | ❌ Not enforced |
+| 4th Wed AM: 1 faculty in clinic | ❌ Not enforced |
+| 4th Wed PM: 1 different faculty | ❌ Not enforced |
+| 4th Wed faculty equity | ❌ Not enforced |
 
----
+## Implementation Options
 
-## Required Changes
+### Option A: Enhance Post-Processing (Recommended)
+Extend `engine.py:_assign_faculty()` to:
+1. Identify Wednesday blocks in resident schedule
+2. Assign exactly 1 faculty on Wed PM (1st-3rd)
+3. Assign 2 different faculty on 4th Wed (AM/PM)
+4. Track 4th Wed assignments for equity
 
-### Option 1: Model Faculty in Solver (Recommended)
+**Pros:** Minimal change, preserves design intent  
+**Cons:** No solver optimization for faculty
 
-**Files to modify:**
-1. `backend/app/scheduling/solvers.py` - Add faculty decision variables
-2. `backend/app/scheduling/constraints/base.py` - Add `faculty_idx` to `SchedulingContext`
-3. `backend/app/scheduling/constraints/temporal.py` - Use `faculty_idx` instead of `resident_idx`
+### Option B: Model Faculty in Solver
+Add faculty decision variables to solver.
 
-**Implementation Steps:**
+**Warning:** Codex found issues with current doc:
+- Shape mismatch (3D proposed, 2D in existing constraints)
+- Missing PuLP implementation
+- Missing solution extraction
+- Other constraints need updates (`FacultyRoleClinicConstraint`, etc.)
 
-1. **Add faculty variables to solver:**
-```python
-# In solvers.py, after resident variables
-faculty_vars = {}
-for f_i, faculty in enumerate(context.faculty):
-    for b_i, block in enumerate(context.blocks):
-        for t_i, template in enumerate(context.templates):
-            faculty_vars[f_i, b_i, t_i] = model.NewBoolVar(
-                f"faculty_{f_i}_block_{b_i}_template_{t_i}"
-            )
-variables["faculty_assignments"] = faculty_vars
-```
-
-2. **Add faculty_idx to SchedulingContext:**
-```python
-# In base.py SchedulingContext
-faculty_idx: dict[uuid.UUID, int] = field(default_factory=dict)
-
-# Populate during context creation
-faculty_idx = {f.id: i for i, f in enumerate(context.faculty)}
-```
-
-3. **Update temporal.py constraints:**
-```python
-# Replace:
-f_i = context.resident_idx.get(f.id)
-# With:
-f_i = context.faculty_idx.get(f.id)
-
-# Use faculty_vars instead of template_vars:
-faculty_vars = variables.get("faculty_assignments", {})
-```
-
-4. **Add faculty-specific constraints:**
-- Faculty can only be at one place per block (OnePersonPerBlockConstraint equivalent)
-- Faculty supervision requirements still apply
+**Pros:** Full optimization  
+**Cons:** Major architectural change (~8-10 hours)
 
 ---
 
-## Scope Assessment
+## Recommendation
 
-| Task | Complexity | Risk |
-|------|------------|------|
-| Add `faculty_idx` to context | Low | Low |
-| Add faculty decision variables | Medium | Medium |
-| Update Wednesday constraints | Low | Low |
-| Test integration | Medium | Medium |
-| Faculty-specific constraints | Medium | Low |
+**Start with Option A** - enhance `_assign_faculty()` to handle Wednesday rules. This:
+- Matches original n8n/Airtable design
+- Is lower risk
+- Delivers value faster
 
-**Estimated effort:** 2-3 hours
+Faculty decision variables can be added later if optimization is needed.
 
----
-
-## Validation After Fix
-1. Run solver and verify faculty variables are created
-2. Check that Wednesday constraints add clauses to model
-3. Validate generated schedules have exactly 1 faculty on Wed PM
-4. Validate 4th Wednesday has different AM/PM faculty
-
----
-
-## Current Workaround
-Constraints are currently **validation-only** — they check assignments after solving but don't prevent violations during optimization. This is acceptable for initial deployment since violations will be flagged in the schedule report.
+## Files to Modify (Option A)
+- `backend/app/scheduling/engine.py` - `_assign_faculty()` method
+- Add Wednesday detection helpers
+- Add equity tracking for 4th Wed
