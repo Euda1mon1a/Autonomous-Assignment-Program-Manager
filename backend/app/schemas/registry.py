@@ -1053,7 +1053,7 @@ class SchemaRegistry:
         try:
             from app.models.person import Person
             from app.notifications.service import NotificationService
-            from app.notifications.templates import NotificationType
+            from app.notifications.notification_types import NotificationType
 
             service = NotificationService(self.db)
 

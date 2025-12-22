@@ -40,7 +40,39 @@
 
 ## Other Pending Tasks
 
-_(Add other human-required tasks here)_
+### Backend Fix: Faculty Assignments Missing rotation_template_id
+
+**Priority:** Medium
+**Found:** Session 14 (2025-12-22)
+**Location:** Schedule generation engine or seeder
+
+**Issue:** Faculty-Inpatient Year View shows all zeros because faculty assignments are created without `rotation_template_id`.
+
+Database verification:
+```
+ total_assignments | with_template | without_template |   type
+-------------------+---------------+------------------+----------
+                40 |             0 |               40 | faculty
+                40 |            40 |                0 | resident
+```
+
+**Root Cause:** The schedule generator creates faculty assignments without linking rotation templates. The frontend correctly filters by `activity_type === 'inpatient'`, but faculty assignments have `activity_type = NULL` because no template is assigned.
+
+**Files to investigate:**
+- `backend/app/scheduling/engine.py` - Faculty assignment creation logic
+- Seed scripts that generate test data
+
+**Frontend code (working correctly):**
+```typescript
+// FacultyInpatientWeeksView.tsx:92-94
+if (
+  (am && am.activityType?.toLowerCase() === 'inpatient') ||
+  (pm && pm.activityType?.toLowerCase() === 'inpatient')
+) {
+  count++
+```
+
+---
 
 ---
 
