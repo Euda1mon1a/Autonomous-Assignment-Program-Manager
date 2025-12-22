@@ -238,6 +238,91 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
             return False
         return True
 
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Enforce exactly 1 faculty in clinic on regular Wed PM."""
+        template_vars = variables.get("template_assignments", {})
+        if not template_vars:
+            return
+
+        clinic_template_ids = {
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+        }
+        if not clinic_template_ids:
+            return
+
+        for block in context.blocks:
+            if not self._is_regular_wednesday_pm(block):
+                continue
+
+            b_i = context.block_idx[block.id]
+            faculty_clinic_vars = []
+
+            for template in context.templates:
+                if template.id not in clinic_template_ids:
+                    continue
+                t_i = context.template_idx[template.id]
+
+                for f in context.faculty:
+                    f_i = context.resident_idx.get(f.id)
+                    if f_i is not None and (f_i, b_i, t_i) in template_vars:
+                        faculty_clinic_vars.append(template_vars[f_i, b_i, t_i])
+
+            # Exactly 1 faculty in clinic
+            if faculty_clinic_vars:
+                model.Add(sum(faculty_clinic_vars) == 1)
+
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Enforce exactly 1 faculty in clinic on regular Wed PM (PuLP)."""
+        import pulp
+
+        template_vars = variables.get("template_assignments", {})
+        if not template_vars:
+            return
+
+        clinic_template_ids = {
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+        }
+        if not clinic_template_ids:
+            return
+
+        for block in context.blocks:
+            if not self._is_regular_wednesday_pm(block):
+                continue
+
+            b_i = context.block_idx[block.id]
+            faculty_clinic_vars = []
+
+            for template in context.templates:
+                if template.id not in clinic_template_ids:
+                    continue
+                t_i = context.template_idx[template.id]
+
+                for f in context.faculty:
+                    f_i = context.resident_idx.get(f.id)
+                    if f_i is not None and (f_i, b_i, t_i) in template_vars:
+                        faculty_clinic_vars.append(template_vars[f_i, b_i, t_i])
+
+            # Exactly 1 faculty in clinic
+            if faculty_clinic_vars:
+                model += (
+                    pulp.lpSum(faculty_clinic_vars) == 1,
+                    f"wed_pm_single_faculty_{b_i}",
+                )
+
     def validate(
         self,
         assignments: list[Any],
@@ -322,6 +407,173 @@ class InvertedWednesdayConstraint(HardConstraint):
             return False
         # 4th Wednesday: day 22-28 only (5th would be 29-31)
         return 22 <= block.date.day <= 28
+
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Enforce 1 faculty AM, 1 different faculty PM on 4th Wednesday."""
+        template_vars = variables.get("template_assignments", {})
+        if not template_vars:
+            return
+
+        clinic_template_ids = {
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+        }
+        if not clinic_template_ids:
+            return
+
+        # Group 4th Wednesday blocks by date and time
+        fourth_wed_groups: dict[str, dict[str, list]] = {}
+        for block in context.blocks:
+            if not self._is_fourth_wednesday(block):
+                continue
+            date_str = str(block.date)
+            if date_str not in fourth_wed_groups:
+                fourth_wed_groups[date_str] = {"AM": [], "PM": []}
+            tod = getattr(block, "time_of_day", "AM")
+            fourth_wed_groups[date_str][tod].append(block)
+
+        for date_str, blocks_by_time in fourth_wed_groups.items():
+            am_blocks = blocks_by_time.get("AM", [])
+            pm_blocks = blocks_by_time.get("PM", [])
+
+            am_vars = []
+            pm_vars = []
+
+            # Collect AM faculty clinic variables
+            for block in am_blocks:
+                b_i = context.block_idx[block.id]
+                for template in context.templates:
+                    if template.id not in clinic_template_ids:
+                        continue
+                    t_i = context.template_idx[template.id]
+                    for f in context.faculty:
+                        f_i = context.resident_idx.get(f.id)
+                        if f_i is not None and (f_i, b_i, t_i) in template_vars:
+                            am_vars.append((f.id, template_vars[f_i, b_i, t_i]))
+
+            # Collect PM faculty clinic variables
+            for block in pm_blocks:
+                b_i = context.block_idx[block.id]
+                for template in context.templates:
+                    if template.id not in clinic_template_ids:
+                        continue
+                    t_i = context.template_idx[template.id]
+                    for f in context.faculty:
+                        f_i = context.resident_idx.get(f.id)
+                        if f_i is not None and (f_i, b_i, t_i) in template_vars:
+                            pm_vars.append((f.id, template_vars[f_i, b_i, t_i]))
+
+            # Exactly 1 faculty AM
+            if am_vars:
+                model.Add(sum(v for _, v in am_vars) == 1)
+
+            # Exactly 1 faculty PM
+            if pm_vars:
+                model.Add(sum(v for _, v in pm_vars) == 1)
+
+            # Different faculty AM vs PM (if same faculty in both, sum <= 1)
+            if am_vars and pm_vars:
+                faculty_in_both = set(f for f, _ in am_vars) & set(
+                    f for f, _ in pm_vars
+                )
+                for fac_id in faculty_in_both:
+                    am_v = [v for f, v in am_vars if f == fac_id]
+                    pm_v = [v for f, v in pm_vars if f == fac_id]
+                    if am_v and pm_v:
+                        # Cannot have same faculty both AM and PM
+                        model.Add(sum(am_v) + sum(pm_v) <= 1)
+
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Enforce 1 faculty AM, 1 different faculty PM on 4th Wednesday (PuLP)."""
+        import pulp
+
+        template_vars = variables.get("template_assignments", {})
+        if not template_vars:
+            return
+
+        clinic_template_ids = {
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+        }
+        if not clinic_template_ids:
+            return
+
+        fourth_wed_groups: dict[str, dict[str, list]] = {}
+        for block in context.blocks:
+            if not self._is_fourth_wednesday(block):
+                continue
+            date_str = str(block.date)
+            if date_str not in fourth_wed_groups:
+                fourth_wed_groups[date_str] = {"AM": [], "PM": []}
+            tod = getattr(block, "time_of_day", "AM")
+            fourth_wed_groups[date_str][tod].append(block)
+
+        for date_str, blocks_by_time in fourth_wed_groups.items():
+            am_blocks = blocks_by_time.get("AM", [])
+            pm_blocks = blocks_by_time.get("PM", [])
+
+            am_vars = []
+            pm_vars = []
+
+            for block in am_blocks:
+                b_i = context.block_idx[block.id]
+                for template in context.templates:
+                    if template.id not in clinic_template_ids:
+                        continue
+                    t_i = context.template_idx[template.id]
+                    for f in context.faculty:
+                        f_i = context.resident_idx.get(f.id)
+                        if f_i is not None and (f_i, b_i, t_i) in template_vars:
+                            am_vars.append((f.id, template_vars[f_i, b_i, t_i]))
+
+            for block in pm_blocks:
+                b_i = context.block_idx[block.id]
+                for template in context.templates:
+                    if template.id not in clinic_template_ids:
+                        continue
+                    t_i = context.template_idx[template.id]
+                    for f in context.faculty:
+                        f_i = context.resident_idx.get(f.id)
+                        if f_i is not None and (f_i, b_i, t_i) in template_vars:
+                            pm_vars.append((f.id, template_vars[f_i, b_i, t_i]))
+
+            # Exactly 1 faculty AM
+            if am_vars:
+                model += (
+                    pulp.lpSum(v for _, v in am_vars) == 1,
+                    f"inv_wed_am_{date_str}",
+                )
+
+            # Exactly 1 faculty PM
+            if pm_vars:
+                model += (
+                    pulp.lpSum(v for _, v in pm_vars) == 1,
+                    f"inv_wed_pm_{date_str}",
+                )
+
+            # Different faculty AM vs PM
+            if am_vars and pm_vars:
+                fac_both = set(f for f, _ in am_vars) & set(f for f, _ in pm_vars)
+                for fac_id in fac_both:
+                    am_v = [v for f, v in am_vars if f == fac_id]
+                    pm_v = [v for f, v in pm_vars if f == fac_id]
+                    if am_v and pm_v:
+                        model += (
+                            pulp.lpSum(am_v) + pulp.lpSum(pm_v) <= 1,
+                            f"inv_wed_diff_{date_str}_{fac_id}",
+                        )
 
     def validate(
         self,
