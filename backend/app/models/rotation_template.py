@@ -1,4 +1,5 @@
 """Rotation template model - reusable activity patterns."""
+
 import uuid
 from datetime import datetime
 
@@ -18,11 +19,16 @@ class RotationTemplate(Base):
     - Sports Medicine (requires specialty faculty)
     - FMIT Inpatient (24/7 coverage, NOT leave-eligible)
     """
+
     __tablename__ = "rotation_templates"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    name = Column(String(255), nullable=False)  ***REMOVED*** e.g., "PGY-1 Clinic", "FMIT", "Sports Medicine"
-    activity_type = Column(String(255), nullable=False)  ***REMOVED*** "clinic", "inpatient", "procedure", "conference"
+    name = Column(
+        String(255), nullable=False
+    )  ***REMOVED*** e.g., "PGY-1 Clinic", "FMIT", "Sports Medicine"
+    activity_type = Column(
+        String(255), nullable=False
+    )  ***REMOVED*** "clinic", "inpatient", "procedure", "conference"
     abbreviation = Column(String(10))  ***REMOVED*** For Excel export: "C", "FMIT", "LEC"
 
     ***REMOVED*** Leave eligibility
@@ -46,6 +52,12 @@ class RotationTemplate(Base):
 
     ***REMOVED*** Relationships
     assignments = relationship("Assignment", back_populates="rotation_template")
+    halfday_requirements = relationship(
+        "RotationHalfDayRequirement",
+        back_populates="rotation_template",
+        uselist=False,  ***REMOVED*** One-to-one relationship
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self):
         return f"<RotationTemplate(name='{self.name}', type='{self.activity_type}')>"
