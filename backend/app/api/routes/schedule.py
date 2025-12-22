@@ -209,6 +209,7 @@ def generate_schedule(
                     rotation_template_ids=request.rotation_template_ids,
                     algorithm=algorithm,
                     timeout_seconds=request.timeout_seconds,
+                    preserve_fmit=request.preserve_fmit_assignments,
                 )
         else:
             result = engine.generate(
@@ -216,6 +217,7 @@ def generate_schedule(
                 rotation_template_ids=request.rotation_template_ids,
                 algorithm=algorithm,
                 timeout_seconds=request.timeout_seconds,
+                preserve_fmit=request.preserve_fmit_assignments,
             )
 
         # Build solver statistics if available

@@ -51,6 +51,18 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
 
+    # Academic Year Configuration
+    # Residency academic year starts July 1
+    ACADEMIC_YEAR_START_MONTH: int = 7  # July
+    ACADEMIC_YEAR_START_DAY: int = 1
+    BLOCK_LENGTH_DAYS: int = 28  # 4-week blocks
+
+    @property
+    def ACADEMIC_YEAR_START(self) -> "date":
+        """Get academic year start as a date object (July 1 of current year)."""
+        from datetime import date
+        return date(date.today().year, self.ACADEMIC_YEAR_START_MONTH, self.ACADEMIC_YEAR_START_DAY)
+
     # Logging
     LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
     LOG_FORMAT: str = "text"  # json for production, text for development

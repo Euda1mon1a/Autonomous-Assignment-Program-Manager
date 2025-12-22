@@ -53,3 +53,46 @@ class Block(Base):
     def is_workday(self) -> bool:
         """Check if this is a regular workday (not weekend or holiday)."""
         return not self.is_weekend and not self.is_holiday
+
+    @property
+    def block_half(self) -> int:
+        """
+        Determine which half of the 4-week block this date falls into.
+
+        Returns:
+            1 = First half (weeks 1-2, days 1-14)
+            2 = Second half (weeks 3-4, days 15-28)
+
+        Used for split rotations like Night Float where residents swap
+        mid-block to ensure continuous coverage.
+
+        Note: Uses the stored block_number and finds all blocks with same number
+        to calculate position within the block.
+        """
+        from sqlalchemy import func
+        from sqlalchemy.orm import object_session
+
+        session = object_session(self)
+        if session is None:
+            # Fallback if not attached to session - use modulo of day of year
+            day_of_year = self.date.timetuple().tm_yday
+            return 1 if (day_of_year % 28) < 14 else 2
+
+        # Find the first date of this block_number
+        first_date = session.query(func.min(Block.date)).filter(
+            Block.block_number == self.block_number
+        ).scalar()
+
+        if first_date is None:
+            return 1
+
+        # Calculate day within the block (0-27)
+        day_in_block = (self.date - first_date).days
+
+        # First half = days 0-13, Second half = days 14-27
+        return 1 if day_in_block < 14 else 2
+
+    @property
+    def block_half_display(self) -> str:
+        """Human-readable block half description."""
+        return f"Block {self.block_number} - {'First' if self.block_half == 1 else 'Second'} Half"
