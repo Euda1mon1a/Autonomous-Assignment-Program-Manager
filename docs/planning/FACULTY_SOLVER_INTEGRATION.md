@@ -63,9 +63,19 @@ switch to `faculty_assignments` where appropriate.
 - Enforce Wednesday rules against faculty variables (exact counts).
 
 ### 5. Add Faculty-Specific Constraints
-- One faculty per block (can't be in 2 places)
-- Faculty availability
-- Supervision ratio constraints (in-solver or keep post-hoc, but be consistent)
+**Faculty are NOT residents.** Different rules apply:
+
+| Constraint | Details |
+|------------|---------|
+| One block per half-day | Can't be in 2 places |
+| Availability | Per-faculty calendar |
+| **Weekend Call** | Friday AM → Sunday noon (not 24h like residents) |
+| No 80-hour rule | N/A |
+| No one-in-seven | N/A |
+
+**Call rotation:** Faculty weekend call is Friday AM to Sunday 12:00.
+- Equitable rotation across faculty
+- Block their weekday clinic the following Monday (if applicable)
 
 ### 6. Extract Faculty Assignments
 **File:** `backend/app/scheduling/solvers.py`
