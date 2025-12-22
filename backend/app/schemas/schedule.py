@@ -30,6 +30,10 @@ class ScheduleRequest(BaseModel):
         le=300.0,
         description="Maximum solver runtime in seconds (5-300)"
     )
+    preserve_fmit_assignments: bool = Field(
+        default=True,
+        description="Preserve existing FMIT faculty assignments during generation"
+    )
 
     @field_validator("start_date", "end_date")
     @classmethod
