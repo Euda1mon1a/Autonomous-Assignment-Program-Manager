@@ -62,6 +62,26 @@ Export to Excel, PDF, and calendar formats.
 </div>
 
 <div class="feature-card" markdown>
+### :material-alert: [Conflict Resolution](conflicts.md)
+Detect, review, and resolve scheduling conflicts.
+</div>
+
+<div class="feature-card" markdown>
+### :material-clipboard-list: [Daily Manifest](daily-manifest.md)
+Real-time view of who is where today.
+</div>
+
+<div class="feature-card" markdown>
+### :material-chart-box: [Schedule Heatmap](heatmap.md)
+Visualize coverage and workload distribution.
+</div>
+
+<div class="feature-card" markdown>
+### :material-phone: [Call Roster](call-roster.md)
+On-call schedule with contact information.
+</div>
+
+<div class="feature-card" markdown>
 ### :material-gamepad-variant: [Game Theory Analysis](game-theory.md)
 Test configurations using Axelrod's tournament framework.
 </div>

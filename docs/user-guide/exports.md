@@ -4,6 +4,18 @@ Export schedules and data from Residency Scheduler.
 
 ---
 
+## Import/Export Page
+
+For a unified import/export experience:
+
+1. Navigate to **Import/Export** in the main navigation
+2. Click the **Export** tab
+3. Select the data type to export
+4. Choose format (CSV, Excel, JSON)
+5. Configure options and download
+
+---
+
 ## Excel Export
 
 Export schedules to Excel:
