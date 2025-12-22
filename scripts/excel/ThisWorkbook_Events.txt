@@ -1,0 +1,55 @@
+'===============================================================================
+' ThisWorkbook Event Handlers for CSV Auto-Export
+'===============================================================================
+' INSTRUCTIONS:
+' 1. Open your Excel workbook
+' 2. Press Alt+F11 to open the VBA Editor
+' 3. In the Project Explorer (left panel), find "ThisWorkbook" under your workbook
+' 4. Double-click "ThisWorkbook" to open its code module
+' 5. Copy and paste ALL the code below into that module
+' 6. Save the workbook as .xlsm (macro-enabled)
+'===============================================================================
+
+Option Explicit
+
+'-------------------------------------------------------------------------------
+' Workbook_BeforeSave
+' Automatically exports all visible worksheets to CSV when the workbook is saved
+'-------------------------------------------------------------------------------
+Private Sub Workbook_BeforeSave(ByVal SaveAsUI As Boolean, Cancel As Boolean)
+    On Error Resume Next
+
+    ' Only export if workbook has been saved before (has a path)
+    If Len(Me.Path) > 0 Then
+        ' Export silently (no message box on regular save)
+        CSVAutoExport.ExportAllSheetsToCSV ShowMessage:=False
+    End If
+
+    On Error GoTo 0
+End Sub
+
+'-------------------------------------------------------------------------------
+' Workbook_Open
+' Sets up keyboard shortcut when workbook opens
+'-------------------------------------------------------------------------------
+Private Sub Workbook_Open()
+    On Error Resume Next
+
+    ' Assign Ctrl+Shift+E shortcut for manual export
+    Application.OnKey "^+e", "ManualExportToCSV"
+
+    On Error GoTo 0
+End Sub
+
+'-------------------------------------------------------------------------------
+' Workbook_BeforeClose
+' Cleans up keyboard shortcut when workbook closes
+'-------------------------------------------------------------------------------
+Private Sub Workbook_BeforeClose(Cancel As Boolean)
+    On Error Resume Next
+
+    ' Remove keyboard shortcut assignment
+    Application.OnKey "^+e"
+
+    On Error GoTo 0
+End Sub
