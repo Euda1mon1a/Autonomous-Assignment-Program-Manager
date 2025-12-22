@@ -68,7 +68,7 @@ limiter = Limiter(
     default_limits=["200/minute", "1000/hour"],
     enabled=settings.RATE_LIMIT_ENABLED,
     headers_enabled=True,  ***REMOVED*** Add X-RateLimit-* headers to responses
-    strategy="fixed-window",  ***REMOVED*** Valid strategies: fixed-window, moving-window
+    strategy="fixed-window-elastic-expiry",
 )
 
 
