@@ -131,6 +131,42 @@ def validate_date_in_range(
     return check
 
 
+def validate_academic_year_date(value: date, field_name: str = "date") -> date:
+    """
+    Validate a single date is within reasonable academic year bounds.
+
+    Args:
+        value: Date to validate
+        field_name: Name of field for error messages
+
+    Returns:
+        date: Validated date
+
+    Raises:
+        ValidationError: If date is outside reasonable bounds
+    """
+    if value is None:
+        raise ValidationError(f"{field_name} cannot be None")
+
+    today = date.today()
+    min_date = date(today.year - 2, 1, 1)
+    max_date = date(today.year + 3, 12, 31)
+
+    if value < min_date:
+        raise ValidationError(
+            f"{field_name} ({value}) is too far in the past. "
+            f"Must be after {min_date}"
+        )
+
+    if value > max_date:
+        raise ValidationError(
+            f"{field_name} ({value}) is too far in the future. "
+            f"Must be before {max_date}"
+        )
+
+    return value
+
+
 def validate_academic_year_dates(start_date: date, end_date: date) -> tuple[date, date]:
     """
     Validate academic year date range.

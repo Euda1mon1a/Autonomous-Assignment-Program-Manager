@@ -1,5 +1,6 @@
 """GraphQL types for Schedule and Block entities."""
 from datetime import date, datetime
+from enum import Enum
 from typing import Optional
 from uuid import UUID
 
@@ -8,7 +9,7 @@ from strawberry.scalars import JSON
 
 
 @strawberry.enum
-class TimeOfDay(str):
+class TimeOfDay(str, Enum):
     """Time of day for blocks."""
     AM = "AM"
     PM = "PM"

@@ -217,7 +217,7 @@ class CryptographicKey(Base):
 
     # Metadata
     description = Column(String(1000), nullable=True)
-    metadata = Column(JSONType, nullable=False, default=dict)
+    key_metadata = Column(JSONType, nullable=False, default=dict)
 
     def __repr__(self):
         return f"<CryptographicKey(name='{self.name}', type='{self.key_type}', status='{self.status}')>"
@@ -247,7 +247,7 @@ class KeyUsageLog(Base):
     request_id = Column(String(100), nullable=True)
 
     # Additional metadata
-    metadata = Column(JSONType, nullable=False, default=dict)
+    usage_metadata = Column(JSONType, nullable=False, default=dict)
     error_message = Column(String(1000), nullable=True)
 
     def __repr__(self):

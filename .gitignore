@@ -17,6 +17,7 @@ parts/
 sdist/
 var/
 wheels/
+!backend/vendor/wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -101,3 +102,14 @@ docs/data/*.json
 *.dump
 *.sql
 !backend/alembic/**/*.sql
+
+# Celery runtime files
+celerybeat-schedule
+backend/celerybeat-schedule
+celerybeat.pid
+
+# Package lock files (regenerated on install)
+**/package-lock.json
+
+# Local seed scripts that may reference real data paths
+scripts/seed_people_local.py

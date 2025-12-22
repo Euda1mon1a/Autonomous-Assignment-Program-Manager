@@ -91,6 +91,10 @@ class Settings(BaseSettings):
             str: Redis URL with password embedded if password is configured,
                  otherwise returns the base REDIS_URL.
         """
+        # Check if password is already in the URL (format: redis://:password@host)
+        if "@" in self.REDIS_URL and self.REDIS_URL.startswith("redis://:"):
+            # Password already embedded in URL, use it as-is
+            return self.REDIS_URL
         if self.REDIS_PASSWORD:
             # Insert password into URL (format: redis://:password@host:port/db)
             return self.REDIS_URL.replace("redis://", f"redis://:{self.REDIS_PASSWORD}@")

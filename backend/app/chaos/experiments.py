@@ -254,7 +254,8 @@ class ChaosExperimentRecord(Base):
     injector_params = Column(JSONType())
     observations = Column(JSONType())
     metrics_snapshot = Column(JSONType())
-    metadata = Column(JSONType())
+    # Map Python attr 'experiment_metadata' to DB column 'metadata' (reserved name workaround)
+    experiment_metadata = Column('metadata', JSONType())
 
     # Authorization
     created_by = Column(String(100))

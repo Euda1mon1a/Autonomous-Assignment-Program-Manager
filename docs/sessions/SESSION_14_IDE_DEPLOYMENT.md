@@ -52,6 +52,39 @@ First deployment session from the new Antigravity IDE environment. Established a
 **Impact:** Cannot seed resident data via API
 **Workaround:** Faculty creation works; direct database seeding possible
 
+### Backend Crash Loop (Resolved)
+**Symptom:** Backend container restarts endlessly.
+**Root Cause:** `numpy==2.3.5` incompatible with legacy `pyspc` and `manufacturing` libraries.
+**Fix:** Downgraded to `numpy==1.26.4` in `backend/requirements.txt`.
+
+### PII Scrub Side Effects (Session 14b - Claude)
+**Symptom:** After running `git-filter-repo` to remove PII from branch history, backend fails with `SyntaxError: invalid syntax`.
+**Root Cause:** The PII replacement file had entries like `literal:Tagawa==>FAC-PD` which inadvertently replaced `# Faculty` comments with `***REMOVED***` throughout the codebase (~30+ files).
+**Affected Areas:**
+- `backend/app/models/__init__.py` - Broken `__all__` list
+- `backend/alembic/versions/*.py` - Broken column comments
+- `backend/app/scheduling/*.py` - Broken code comments
+- `backend/app/resilience/*.py` - Broken code comments
+- `backend/tests/*.py` - Broken test comments
+**Fix:** Run `find backend -name "*.py" -exec sed -i '' 's/\*\*\*REMOVED\*\*\*/# Faculty/g' {} \;`
+**Prevention:** Use more specific replacement patterns (e.g., full names only, not last names in isolation).
+
+### Docker Desktop File Sync Issue (Session 14b - Claude)
+**Symptom:** Backend container sees old/stale Python files despite local edits.
+**Evidence:** Local file has 255 lines, container sees 157 lines (MD5 mismatch).
+**Root Cause:** Docker Desktop macOS file sync (VirtioFS/gRPC FUSE) can cache stale files.
+**Fix:** Restart Docker Desktop to force file system refresh.
+**Workaround:** Use `docker-compose up -d --build` to rebuild image instead of relying on volume mounts.
+
+### Missing Function Exports (Session 14b - Claude)
+**Symptom:** `ImportError: cannot import name 'X' from 'app.Y'`
+**Examples Found:**
+- `invalidate_schedule_cache` not exported from `app.core.cache`
+- `validate_academic_year_date` missing from `app.validators.date_validators`
+- `require_role` missing from `app.core.security`
+**Root Cause:** Code references functions that either don't exist or aren't exported in `__init__.py`.
+**Fix:** Add missing exports or create stub implementations.
+
 ---
 
 ## Files Changed
