@@ -1,4 +1,5 @@
 """Database models."""
+
 from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.idempotency import IdempotencyRequest, IdempotencyStatus
@@ -63,6 +64,7 @@ from app.models.resilience import (
     ZoneStatus,
 )
 from app.models.rotation_template import RotationTemplate
+from app.models.rotation_halfday_requirement import RotationHalfDayRequirement
 from app.models.schedule_run import ScheduleRun
 from app.models.settings import ApplicationSettings
 from app.models.swap import SwapApproval, SwapRecord, SwapStatus, SwapType
@@ -74,6 +76,7 @@ __all__ = [
     "Person",
     "Block",
     "RotationTemplate",
+    "RotationHalfDayRequirement",
     "Assignment",
     "Absence",
     "CallAssignment",
