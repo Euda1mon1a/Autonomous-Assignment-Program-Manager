@@ -245,8 +245,8 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
         context: SchedulingContext,
     ) -> None:
         """Enforce exactly 1 faculty in clinic on regular Wed PM."""
-        template_vars = variables.get("template_assignments", {})
-        if not template_vars:
+        faculty_template_vars = variables.get("faculty_template_assignments", {})
+        if not faculty_template_vars:
             return
 
         clinic_template_ids = {
@@ -270,9 +270,9 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
                 t_i = context.template_idx[template.id]
 
                 for f in context.faculty:
-                    f_i = context.resident_idx.get(f.id)
-                    if f_i is not None and (f_i, b_i, t_i) in template_vars:
-                        faculty_clinic_vars.append(template_vars[f_i, b_i, t_i])
+                    f_i = context.faculty_idx.get(f.id)
+                    if f_i is not None and (f_i, b_i, t_i) in faculty_template_vars:
+                        faculty_clinic_vars.append(faculty_template_vars[f_i, b_i, t_i])
 
             # Exactly 1 faculty in clinic
             if faculty_clinic_vars:
@@ -287,8 +287,8 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
         """Enforce exactly 1 faculty in clinic on regular Wed PM (PuLP)."""
         import pulp
 
-        template_vars = variables.get("template_assignments", {})
-        if not template_vars:
+        faculty_template_vars = variables.get("faculty_template_assignments", {})
+        if not faculty_template_vars:
             return
 
         clinic_template_ids = {
@@ -312,9 +312,9 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
                 t_i = context.template_idx[template.id]
 
                 for f in context.faculty:
-                    f_i = context.resident_idx.get(f.id)
-                    if f_i is not None and (f_i, b_i, t_i) in template_vars:
-                        faculty_clinic_vars.append(template_vars[f_i, b_i, t_i])
+                    f_i = context.faculty_idx.get(f.id)
+                    if f_i is not None and (f_i, b_i, t_i) in faculty_template_vars:
+                        faculty_clinic_vars.append(faculty_template_vars[f_i, b_i, t_i])
 
             # Exactly 1 faculty in clinic
             if faculty_clinic_vars:
@@ -415,8 +415,8 @@ class InvertedWednesdayConstraint(HardConstraint):
         context: SchedulingContext,
     ) -> None:
         """Enforce 1 faculty AM, 1 different faculty PM on 4th Wednesday."""
-        template_vars = variables.get("template_assignments", {})
-        if not template_vars:
+        faculty_template_vars = variables.get("faculty_template_assignments", {})
+        if not faculty_template_vars:
             return
 
         clinic_template_ids = {
@@ -453,9 +453,9 @@ class InvertedWednesdayConstraint(HardConstraint):
                         continue
                     t_i = context.template_idx[template.id]
                     for f in context.faculty:
-                        f_i = context.resident_idx.get(f.id)
-                        if f_i is not None and (f_i, b_i, t_i) in template_vars:
-                            am_vars.append((f.id, template_vars[f_i, b_i, t_i]))
+                        f_i = context.faculty_idx.get(f.id)
+                        if f_i is not None and (f_i, b_i, t_i) in faculty_template_vars:
+                            am_vars.append((f.id, faculty_template_vars[f_i, b_i, t_i]))
 
             # Collect PM faculty clinic variables
             for block in pm_blocks:
@@ -465,9 +465,9 @@ class InvertedWednesdayConstraint(HardConstraint):
                         continue
                     t_i = context.template_idx[template.id]
                     for f in context.faculty:
-                        f_i = context.resident_idx.get(f.id)
-                        if f_i is not None and (f_i, b_i, t_i) in template_vars:
-                            pm_vars.append((f.id, template_vars[f_i, b_i, t_i]))
+                        f_i = context.faculty_idx.get(f.id)
+                        if f_i is not None and (f_i, b_i, t_i) in faculty_template_vars:
+                            pm_vars.append((f.id, faculty_template_vars[f_i, b_i, t_i]))
 
             # Exactly 1 faculty AM
             if am_vars:
@@ -498,8 +498,8 @@ class InvertedWednesdayConstraint(HardConstraint):
         """Enforce 1 faculty AM, 1 different faculty PM on 4th Wednesday (PuLP)."""
         import pulp
 
-        template_vars = variables.get("template_assignments", {})
-        if not template_vars:
+        faculty_template_vars = variables.get("faculty_template_assignments", {})
+        if not faculty_template_vars:
             return
 
         clinic_template_ids = {
@@ -534,9 +534,9 @@ class InvertedWednesdayConstraint(HardConstraint):
                         continue
                     t_i = context.template_idx[template.id]
                     for f in context.faculty:
-                        f_i = context.resident_idx.get(f.id)
-                        if f_i is not None and (f_i, b_i, t_i) in template_vars:
-                            am_vars.append((f.id, template_vars[f_i, b_i, t_i]))
+                        f_i = context.faculty_idx.get(f.id)
+                        if f_i is not None and (f_i, b_i, t_i) in faculty_template_vars:
+                            am_vars.append((f.id, faculty_template_vars[f_i, b_i, t_i]))
 
             for block in pm_blocks:
                 b_i = context.block_idx[block.id]
@@ -545,9 +545,9 @@ class InvertedWednesdayConstraint(HardConstraint):
                         continue
                     t_i = context.template_idx[template.id]
                     for f in context.faculty:
-                        f_i = context.resident_idx.get(f.id)
-                        if f_i is not None and (f_i, b_i, t_i) in template_vars:
-                            pm_vars.append((f.id, template_vars[f_i, b_i, t_i]))
+                        f_i = context.faculty_idx.get(f.id)
+                        if f_i is not None and (f_i, b_i, t_i) in faculty_template_vars:
+                            pm_vars.append((f.id, faculty_template_vars[f_i, b_i, t_i]))
 
             # Exactly 1 faculty AM
             if am_vars:
