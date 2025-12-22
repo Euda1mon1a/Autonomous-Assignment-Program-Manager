@@ -97,6 +97,22 @@ variables["faculty_call"] = call_vars
 - Equitable: each non-FMIT faculty ~same count/year
 - If on call, blocked from clinic Friday PM and Monday AM
 
+**Mapping to Assignments:**
+```python
+***REMOVED*** Extract faculty_call → CallAssignment rows (NOT Assignment)
+for f_i, w_i in call_vars:
+    if solver.Value(call_vars[f_i, w_i]):
+        call_assignments.append(CallAssignment(
+            person_id=context.faculty[f_i].id,
+            call_type="FACULTY_WEEKEND",  ***REMOVED*** Distinct from resident overnight
+            start_date=weekend_dates[w_i].friday,
+            end_date=weekend_dates[w_i].sunday_noon,
+        ))
+```
+**Coexistence:** Faculty call is separate from resident overnight call.
+- Resident call: `PostCallAutoAssignmentConstraint` (Sun-Thu overnight)
+- Faculty call: New constraint (Fri AM - Sun noon, ~52/year)
+
 ***REMOVED******REMOVED******REMOVED*** 6. Extract Faculty Assignments
 **File:** `backend/app/scheduling/solvers.py`
 ```python
