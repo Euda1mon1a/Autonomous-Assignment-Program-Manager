@@ -21,7 +21,7 @@ from app.notifications.channels import (
     NotificationPayload,
     get_channel,
 )
-from app.notifications.templates import (
+from app.notifications.notification_types import (
     NotificationType,
     get_template,
     render_notification,
