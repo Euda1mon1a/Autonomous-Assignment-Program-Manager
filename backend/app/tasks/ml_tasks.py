@@ -8,6 +8,7 @@ Provides automated background tasks for:
 - Model health checks
 """
 
+import asyncio
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
@@ -24,8 +25,18 @@ settings = get_settings()
 
 def get_db_session() -> Session:
     """Get a database session for task execution."""
-    from app.core.database import SessionLocal
+    from app.db.session import SessionLocal
     return SessionLocal()
+
+
+def _run_async(coro):
+    """Run an async coroutine from a synchronous Celery task."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+
+    return loop.run_until_complete(coro)
 
 
 @shared_task(
@@ -91,9 +102,11 @@ def train_ml_models(
         if "preference" in model_types:
             logger.info("Training preference predictor...")
             try:
-                X, y = pipeline.extract_preference_training_data(
-                    start_date=date.today() - timedelta(days=lookback),
-                    end_date=date.today(),
+                X, y = _run_async(
+                    pipeline.extract_preference_training_data(
+                        start_date=date.today() - timedelta(days=lookback),
+                        end_date=date.today(),
+                    )
                 )
 
                 if len(X) >= min_samples:
@@ -120,9 +133,11 @@ def train_ml_models(
         if "conflict" in model_types:
             logger.info("Training conflict predictor...")
             try:
-                X, y = pipeline.extract_conflict_training_data(
-                    start_date=date.today() - timedelta(days=lookback),
-                    end_date=date.today(),
+                X, y = _run_async(
+                    pipeline.extract_conflict_training_data(
+                        start_date=date.today() - timedelta(days=lookback),
+                        end_date=date.today(),
+                    )
                 )
 
                 if len(X) >= min_samples:
@@ -149,9 +164,11 @@ def train_ml_models(
         if "workload" in model_types:
             logger.info("Training workload optimizer...")
             try:
-                X, y = pipeline.extract_workload_training_data(
-                    start_date=date.today() - timedelta(days=lookback),
-                    end_date=date.today(),
+                X, y = _run_async(
+                    pipeline.extract_workload_training_data(
+                        start_date=date.today() - timedelta(days=lookback),
+                        end_date=date.today(),
+                    )
                 )
 
                 if len(X) >= min_samples // 2:  # Workload needs fewer samples
