@@ -3,7 +3,7 @@
 import { useState, FormEvent, useCallback, useMemo } from 'react'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { validateRequired, validatePassword } from '@/lib/validation'
+import { validateRequired } from '@/lib/validation'
 
 interface LoginFormProps {
   onSuccess?: () => void
@@ -30,9 +30,10 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       errors.username = usernameError;
     }
 
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      errors.password = passwordError;
+    // Skip password complexity validation for login - backend handles it
+    // Only check if password is provided
+    if (!password) {
+      errors.password = 'Password is required';
     }
 
     return errors;
@@ -41,7 +42,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const formErrors = useMemo(() => validateForm(), [validateForm]);
 
   const isFormValid = useMemo(() => {
-    return Object.keys(formErrors).length === 0 && username.trim() !== '' && password !== '';
+    const valid = Object.keys(formErrors).length === 0 && username.trim() !== '' && password !== '';
+    console.log('[LoginForm] isFormValid:', valid, { errorCount: Object.keys(formErrors).length, username: !!username, password: !!password })
+    return valid;
   }, [formErrors, username, password]);
 
   const handleBlur = (field: string) => {
@@ -50,25 +53,41 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    console.log('[LoginForm] Form submitted', { username, password: '***', isFormValid, formErrors })
 
     // Mark all fields as touched
     setTouched({ username: true, password: true });
 
     // Check for validation errors
     const errors = validateForm();
+    console.log('[LoginForm] Validation errors:', errors)
     if (Object.keys(errors).length > 0) {
+      console.log('[LoginForm] Validation failed, not submitting')
       return;
     }
 
     setError(null)
     setIsSubmitting(true)
+    console.log('[LoginForm] Starting login request...')
 
     try {
       await login({ username, password })
       onSuccess?.()
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Invalid username or password'
+      // Descriptive error for local development troubleshooting
+      let errorMessage = 'Invalid username or password'
+      if (err instanceof Error) {
+        errorMessage = err.message
+        // Add debugging info for common issues
+        if (err.message.includes('Network') || err.message.includes('fetch')) {
+          errorMessage = `Network error: Cannot reach API at ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}. Check if backend is running.`
+        } else if (err.message.includes('401')) {
+          errorMessage = 'Invalid credentials. Check username/password.'
+        } else if (err.message.includes('404')) {
+          errorMessage = `API endpoint not found. Check NEXT_PUBLIC_API_URL: ${process.env.NEXT_PUBLIC_API_URL || '(default)'}`
+        }
+      }
+      console.error('[LoginForm] Login failed:', err)
       setError(errorMessage)
     } finally {
       setIsSubmitting(false)
@@ -151,23 +170,18 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </button>
       </form>
 
-      {/* Demo Account Info */}
-      <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Demo Accounts</h3>
-        <div className="space-y-2 text-sm text-gray-600">
-          <div className="flex justify-between">
-            <span className="font-mono">admin</span>
-            <span className="text-gray-400">admin123</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-mono">coordinator</span>
-            <span className="text-gray-400">coord123</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-mono">faculty</span>
-            <span className="text-gray-400">faculty123</span>
+      {/* Demo Account Info - Local Development Only */}
+      <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <h3 className="text-sm font-medium text-blue-800 mb-3">Local Dev Credentials</h3>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between items-center">
+            <span className="font-mono text-blue-700">admin</span>
+            <span className="font-mono text-blue-600 text-xs">admin123</span>
           </div>
         </div>
+        <p className="mt-3 text-xs text-blue-600">
+          API: {typeof window !== 'undefined' ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api' : 'loading...'}
+        </p>
       </div>
 
       {/* Help Section */}

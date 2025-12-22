@@ -114,7 +114,7 @@ class Webhook(Base):
     custom_headers = Column(JSONType, default=dict)
 
     ***REMOVED*** Metadata
-    metadata = Column(JSONType, default=dict)
+    webhook_metadata = Column(JSONType, default=dict)
 
     ***REMOVED*** Owner (optional - for multi-tenant scenarios)
     owner_id = Column(

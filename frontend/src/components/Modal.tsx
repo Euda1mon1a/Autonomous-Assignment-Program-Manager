@@ -32,12 +32,21 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
 
-      // Focus first focusable element in modal
-      const focusableElements = modalRef.current?.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      // Focus first input/select/textarea in modal content (skip header buttons)
+      // This provides better UX - user can immediately start typing
+      const contentInputs = modalRef.current?.querySelectorAll<HTMLElement>(
+        'input:not([type="hidden"]), select, textarea'
       );
-      if (focusableElements && focusableElements.length > 0) {
-        focusableElements[0].focus();
+      if (contentInputs && contentInputs.length > 0) {
+        contentInputs[0].focus();
+      } else {
+        // Fallback to first focusable element if no inputs
+        const focusableElements = modalRef.current?.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusableElements && focusableElements.length > 0) {
+          focusableElements[0].focus();
+        }
       }
     }
 
