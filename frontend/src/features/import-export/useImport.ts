@@ -66,6 +66,7 @@ interface ImportState {
   file: File | null;
   format: ImportFileFormat;
   dataType: ImportDataType;
+  dataTypeSource: 'auto' | 'manual';
   preview: ImportPreviewResult | null;
   progress: ImportProgress;
   options: ImportOptions;
@@ -83,6 +84,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
     file: null,
     format: 'csv',
     dataType: hookOptions.dataType || 'schedules',
+    dataTypeSource: hookOptions.dataType ? 'manual' : 'auto',
     preview: null,
     progress: {
       status: 'idle',
@@ -161,8 +163,9 @@ export function useImport(hookOptions: UseImportOptions = {}) {
       const normalizedData = normalizeColumns(rawData);
       const columns = Object.keys(normalizedData[0] || {});
 
-      // Detect data type from columns
-      const detectedType = hookOptions.dataType || detectDataType(columns);
+      // Use manual selection if user explicitly chose, otherwise auto-detect
+      const detectedType =
+        state.dataTypeSource === 'manual' ? state.dataType : detectDataType(columns);
 
       updateProgress({
         status: 'validating',
@@ -224,7 +227,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
       });
       throw error;
     }
-  }, [hookOptions.dataType, parseFile, updateProgress]);
+  }, [state.dataType, state.dataTypeSource, parseFile, updateProgress]);
 
   // ============================================================================
   // Execute Import Mutation
@@ -381,6 +384,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
       file: null,
       format: 'csv',
       dataType: hookOptions.dataType || 'schedules',
+      dataTypeSource: hookOptions.dataType ? 'manual' : 'auto',
       preview: null,
       progress: {
         status: 'idle',
@@ -413,7 +417,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
   // ============================================================================
 
   const setDataType = useCallback((dataType: ImportDataType) => {
-    setState(prev => ({ ...prev, dataType }));
+    setState(prev => ({ ...prev, dataType, dataTypeSource: 'manual' }));
   }, []);
 
   // ============================================================================

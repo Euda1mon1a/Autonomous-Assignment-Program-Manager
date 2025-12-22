@@ -2,17 +2,28 @@
 
 import { useState } from 'react'
 import { HeatmapView, HeatmapControls, HeatmapLegend, getDefaultDateRange } from '@/features/heatmap'
-import type { HeatmapFilters, HeatmapViewMode } from '@/features/heatmap'
+import type { HeatmapFilters, HeatmapViewMode, DateRange } from '@/features/heatmap'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 export default function HeatmapPage() {
   const defaultDateRange = getDefaultDateRange()
+  const [dateRange, setDateRange] = useState<DateRange>(defaultDateRange)
   const [filters, setFilters] = useState<HeatmapFilters>({
-    startDate: defaultDateRange.startDate,
-    endDate: defaultDateRange.endDate,
-    groupBy: 'day',
+    start_date: defaultDateRange.start,
+    end_date: defaultDateRange.end,
+    group_by: 'day',
   })
   const [viewMode, setViewMode] = useState<HeatmapViewMode>('coverage')
+
+  // Sync date range changes to filters
+  const handleDateRangeChange = (newDateRange: DateRange) => {
+    setDateRange(newDateRange)
+    setFilters(prev => ({
+      ...prev,
+      start_date: newDateRange.start,
+      end_date: newDateRange.end,
+    }))
+  }
 
   return (
     <ProtectedRoute>
@@ -28,8 +39,8 @@ export default function HeatmapPage() {
             <HeatmapControls
               filters={filters}
               onFiltersChange={setFilters}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
+              dateRange={dateRange}
+              onDateRangeChange={handleDateRangeChange}
             />
           </div>
 
