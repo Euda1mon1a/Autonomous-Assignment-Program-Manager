@@ -61,6 +61,21 @@ Metrics and reporting endpoints.
 Configuration testing via Axelrod tournaments.
 </div>
 
+<div class="feature-card" markdown>
+### :material-flask: [Experiments](experiments.md)
+A/B testing and experimentation endpoints.
+</div>
+
+<div class="feature-card" markdown>
+### :material-atom: [Scheduling Catalyst](scheduling-catalyst.md)
+Barrier analysis and schedule change optimization.
+</div>
+
+<div class="feature-card" markdown>
+### :material-brain: [Machine Learning](ml.md)
+ML-based schedule scoring and predictions.
+</div>
+
 </div>
 
 ---
@@ -96,6 +111,10 @@ curl http://localhost:8000/api/v1/people \
 | <span class="endpoint-badge post">POST</span> | `/schedule/generate` | Generate new schedule |
 | <span class="endpoint-badge get">GET</span> | `/absences` | List absences |
 | <span class="endpoint-badge post">POST</span> | `/swaps` | Create swap request |
+| <span class="endpoint-badge post">POST</span> | `/experiments` | Create A/B test experiment |
+| <span class="endpoint-badge post">POST</span> | `/scheduling-catalyst/barriers/detect` | Detect barriers for change |
+| <span class="endpoint-badge post">POST</span> | `/ml/score` | Score schedule with ML |
+| <span class="endpoint-badge get">GET</span> | `/ml/health` | Check ML model health |
 
 ### Response Codes
 

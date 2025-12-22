@@ -18,6 +18,7 @@ from app.api.routes import (
     daily_manifest,
     db_admin,
     docs,
+    experiments,
     export,
     exports,
     features,
@@ -29,6 +30,7 @@ from app.api.routes import (
     leave,
     me_dashboard,
     metrics,
+    ml,
     oauth2,
     people,
     portal,
@@ -41,6 +43,7 @@ from app.api.routes import (
     rotation_templates,
     schedule,
     scheduler_ops,
+    scheduling_catalyst,
     search,
     settings,
     swap,
@@ -57,6 +60,7 @@ api_router = APIRouter()
 api_router.include_router(health.router, prefix="/health", tags=["health"])
 api_router.include_router(docs.router, prefix="/docs", tags=["documentation"])
 api_router.include_router(features.router, prefix="/features", tags=["features"])
+api_router.include_router(experiments.router, prefix="/experiments", tags=["experiments"])
 api_router.include_router(changelog.router, prefix="/changelog", tags=["changelog"])
 
 api_router.include_router(people.router, prefix="/people", tags=["people"])
@@ -89,6 +93,8 @@ api_router.include_router(visualization.router, prefix="/visualization", tags=["
 api_router.include_router(unified_heatmap.router, prefix="/unified-heatmap", tags=["unified-heatmap"])
 api_router.include_router(rate_limit.router, prefix="/rate-limit", tags=["rate-limit"])
 api_router.include_router(quota.router, prefix="/quota", tags=["quota"])
+api_router.include_router(scheduling_catalyst.router, prefix="/scheduling-catalyst", tags=["scheduling-catalyst"])
+api_router.include_router(ml.router, prefix="/ml", tags=["ml"])
 # FMIT scheduling routes
 api_router.include_router(swap.router)  # prefix="/swaps" defined in router
 api_router.include_router(leave.router)  # prefix="/leave" defined in router
