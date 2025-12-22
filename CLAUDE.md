@@ -332,6 +332,32 @@ If tests fail, **DO NOT COMMIT**. Fix the failing tests or the code first.
 
 Security is important for any application handling user data. Follow standard security best practices.
 
+### OPSEC/PERSEC Requirements (Military Medical Data)
+
+This system handles military medical residency schedules. **Never commit to the repository:**
+
+| Data Type | Risk | Handling |
+|-----------|------|----------|
+| **Resident/Faculty Names** | PERSEC | Local only, sanitize for demos |
+| **Schedule Assignments** | OPSEC | Local only, reveals duty patterns |
+| **Absence/Leave Records** | OPSEC/PERSEC | Local only, reveals movements |
+| **TDY/Deployment Data** | OPSEC | Never in repo or logs |
+
+**Gitignored Files:**
+- `docs/data/*_export.json` - Airtable exports with real data
+- `docs/data/*.json` - Any schedule data
+- `*.dump`, `*.sql` - Database dumps
+- `.env`, `.env.local` - Credentials
+
+**For Demo/Test Data:**
+```python
+# Use synthetic identifiers
+residents = ["PGY1-01", "PGY2-01"]  # Not real names
+faculty = ["FAC-PD", "FAC-APD"]      # Role-based IDs
+```
+
+See `docs/security/DATA_SECURITY_POLICY.md` for full policy.
+
 ### Authentication & Authorization
 
 1. **JWT-based auth**: httpOnly cookies (XSS-resistant)

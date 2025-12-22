@@ -20,7 +20,7 @@ with existing code that imports directly from the constraints module.
 Example:
     >>> from backend.app.scheduling.constraints import ConstraintManager
     >>> from backend.app.scheduling.constraints import AvailabilityConstraint
-    >>> 
+    >>>
     >>> manager = ConstraintManager.create_default()
     >>> manager.add(AvailabilityConstraint())
 """
@@ -55,7 +55,11 @@ from .capacity import (
 )
 
 # Temporal constraints
-from .temporal import WednesdayAMInternOnlyConstraint
+from .temporal import (
+    InvertedWednesdayConstraint,
+    WednesdayAMInternOnlyConstraint,
+    WednesdayPMSingleFacultyConstraint,
+)
 
 ***REMOVED*** and preference constraints
 from .faculty import PreferenceConstraint
@@ -130,6 +134,8 @@ __all__ = [
     "OnePersonPerBlockConstraint",
     # Temporal constraints
     "WednesdayAMInternOnlyConstraint",
+    "WednesdayPMSingleFacultyConstraint",
+    "InvertedWednesdayConstraint",
     ***REMOVED*** constraints
     "PreferenceConstraint",
     ***REMOVED*** role constraints
