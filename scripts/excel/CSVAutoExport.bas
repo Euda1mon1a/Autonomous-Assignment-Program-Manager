@@ -1,29 +1,64 @@
 Attribute VB_Name = "CSVAutoExport"
 '===============================================================================
-' CSV Auto-Export Module
+' CSV Auto-Export Module for Residency Scheduler
 '===============================================================================
-' Automatically exports all visible worksheets to UTF-8 CSV files when the
-' workbook is saved. Designed for the Residency Scheduler import system.
 '
-' Features:
-'   - Auto-export on workbook save
-'   - UTF-8 encoding for international character support
-'   - Sanitized filenames (removes invalid characters)
-'   - Skips hidden sheets
-'   - Manual trigger via Ctrl+Shift+E
+' PURPOSE:
+'   Automatically creates CSV copies of Excel worksheets when you save.
+'   These CSV files can be imported into the Residency Scheduler web app.
 '
-' Installation:
-'   1. Open VBA Editor (Alt+F11)
-'   2. File > Import File > select this .bas file
-'   3. Copy ThisWorkbook_BeforeSave code to ThisWorkbook module
+' WHY THIS EXISTS:
+'   The clinic maintains schedules in Excel (familiar interface), but the
+'   web scheduler needs CSV files. This bridge eliminates manual "Save As CSV"
+'   steps that are error-prone and time-consuming.
 '
-' Naming Convention:
+' HOW IT WORKS:
+'   1. You edit your schedule in Excel as normal
+'   2. When you press Ctrl+S (save), this code runs automatically
+'   3. Each visible worksheet becomes a CSV file in the same folder
+'   4. CSV files use UTF-8 encoding (handles names with accents, etc.)
+'
+' DEPENDENCIES:
+'   - Microsoft Excel (any version 2007+)
+'   - ADODB.Stream (built into Windows since XP, used for UTF-8 encoding)
+'   - NO external libraries, NO internet required
+'
+' INSTALLATION (one-time, 5 minutes):
+'   1. Open your schedule workbook in Excel
+'   2. Press Alt+F11 to open the VBA editor
+'   3. File menu > Import File > select this .bas file
+'   4. In left panel, double-click "ThisWorkbook"
+'   5. Paste contents of ThisWorkbook_Events.txt there
+'   6. Save workbook as .xlsm (macro-enabled format)
+'
+' DAILY USE:
+'   - Just save normally (Ctrl+S) - CSV files appear automatically
+'   - Press Ctrl+Shift+E for manual export with confirmation message
+'
+' OUTPUT NAMING:
 '   {WorkbookName}_{SheetName}.csv
-'   Example: Schedule_Block10.xlsx with sheet "Residents" -> Schedule_Block10_Residents.csv
+'   Example: Block10_Schedule.xlsx with sheet "Residents"
+'            creates: Block10_Schedule_Residents.csv
 '
-' Author: Claude Code Assistant
-' Version: 1.0.0
-' Date: 2024
+' TROUBLESHOOTING:
+'   - "Please save workbook first" = Save the Excel file once to establish path
+'   - No CSV appears = Check if sheet is hidden (hidden sheets are skipped)
+'   - Garbled characters = Ensure you're opening CSV as UTF-8 in target app
+'
+' MODIFICATION GUIDE:
+'   - Change delimiter: Edit CSV_DELIMITER constant below
+'   - Include hidden sheets: Set SKIP_HIDDEN_SHEETS to False
+'   - Silence all messages: Set SHOW_COMPLETION_MESSAGE to False
+'
+' VERSION HISTORY:
+'   1.0.0 (2024-12) - Initial release
+'   1.0.1 (2024-12) - Added comprehensive documentation for long-term maintenance
+'
+' MAINTAINER NOTES:
+'   This code intentionally avoids "clever" patterns in favor of obvious,
+'   readable code. Future maintainers: please keep it simple and well-commented.
+'   The next person reading this might be learning VBA for the first time.
+'
 '===============================================================================
 
 Option Explicit
