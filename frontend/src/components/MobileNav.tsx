@@ -15,6 +15,11 @@ import {
   Settings,
   LogIn,
   HelpCircle,
+  ArrowLeftRight,
+  Phone,
+  BarChart3,
+  FileUp,
+  ClipboardList,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -29,9 +34,14 @@ const navItems: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: Calendar },
   { href: '/my-schedule', label: 'My Schedule', icon: CalendarCheck },
   { href: '/people', label: 'People', icon: Users },
+  { href: '/swaps', label: 'Swaps', icon: ArrowLeftRight },
+  { href: '/call-roster', label: 'Call Roster', icon: Phone },
+  { href: '/daily-manifest', label: 'Daily Manifest', icon: ClipboardList },
+  { href: '/heatmap', label: 'Heatmap', icon: BarChart3 },
+  { href: '/conflicts', label: 'Conflicts', icon: AlertTriangle },
   { href: '/templates', label: 'Templates', icon: FileText },
   { href: '/absences', label: 'Absences', icon: CalendarOff },
-  { href: '/compliance', label: 'Compliance', icon: AlertTriangle },
+  { href: '/import-export', label: 'Import/Export', icon: FileUp },
   { href: '/help', label: 'Help', icon: HelpCircle },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ]
