@@ -8,6 +8,9 @@ This scheduling system co-schedules **BOTH**:
 
 Faculty are NOT post-processed. They must be modeled in the solver.
 
+> **Source of Truth:** This document reflects the intended design, not current code.
+> Current implementation has gaps. These steps bring it to target state.
+
 ---
 
 ## Current Gap
@@ -76,6 +79,22 @@ switch to `faculty_assignments` where appropriate.
 **Call rotation:** Faculty weekend call is Friday AM to Sunday 12:00.
 - Equitable rotation across faculty
 - Block their weekday clinic the following Monday (if applicable)
+- **Note:** Existing code handles Sun-Thu resident call only; faculty call needs new implementation
+
+### 5a. Add Call Decision Variables
+**Faculty call requires separate variables:**
+```python
+# In solvers.py
+call_vars = {}
+for f_i, faculty in enumerate(context.faculty):
+    for w_i, weekend in enumerate(weekend_dates):  # ~52 weekends
+        call_vars[f_i, w_i] = model.NewBoolVar(f"faculty_call_{f_i}_{w_i}")
+variables["faculty_call"] = call_vars
+```
+**Constraints:**
+- Exactly 1 faculty per weekend
+- Equitable: each faculty ~same count/year
+- If on call, blocked from clinic Friday PM and Monday AM
 
 ### 6. Extract Faculty Assignments
 **File:** `backend/app/scheduling/solvers.py`
