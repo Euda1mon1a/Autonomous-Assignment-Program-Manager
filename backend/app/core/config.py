@@ -73,6 +73,15 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"
 
+    # Service Cache Configuration
+    # Redis-based caching for frequently accessed schedule data
+    CACHE_ENABLED: bool = True  # Enable/disable service-level caching
+    CACHE_DEFAULT_TTL: int = 3600  # Default TTL in seconds (1 hour)
+    CACHE_HEATMAP_TTL: int = 1800  # Heatmap cache TTL (30 minutes)
+    CACHE_CALENDAR_TTL: int = 3600  # Calendar export cache TTL (1 hour)
+    CACHE_SCHEDULE_TTL: int = 1800  # Schedule data cache TTL (30 minutes)
+    CACHE_ROTATION_TTL: int = 86400  # Rotation template cache TTL (24 hours)
+
     @property
     def redis_url_with_password(self) -> str:
         """
@@ -106,6 +115,19 @@ class Settings(BaseSettings):
     CACHE_HEATMAP_TTL: int = 300  # 5 minutes for heatmap data
     CACHE_CALENDAR_TTL: int = 600  # 10 minutes for calendar exports
     CACHE_SCHEDULE_TTL: int = 300  # 5 minutes for schedule queries
+
+    # File Upload Settings
+    UPLOAD_STORAGE_BACKEND: str = "local"  # Storage backend: 'local' or 's3'
+    UPLOAD_LOCAL_DIR: str = "/tmp/uploads"  # Local storage directory
+    UPLOAD_MAX_SIZE_MB: int = 50  # Maximum file size in megabytes
+    UPLOAD_ENABLE_VIRUS_SCAN: bool = False  # Enable virus scanning
+
+    # S3 Upload Settings (used when UPLOAD_STORAGE_BACKEND='s3')
+    UPLOAD_S3_BUCKET: str = "residency-scheduler-uploads"
+    UPLOAD_S3_REGION: str = "us-east-1"
+    UPLOAD_S3_ACCESS_KEY: str = ""
+    UPLOAD_S3_SECRET_KEY: str = ""
+    UPLOAD_S3_ENDPOINT_URL: str = ""  # For S3-compatible services (MinIO, etc.)
 
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
@@ -143,6 +165,63 @@ class Settings(BaseSettings):
     # Alert settings
     RESILIENCE_ALERT_RECIPIENTS: list[str] = []  # Email addresses for alerts
     RESILIENCE_SLACK_CHANNEL: str = ""  # Slack channel for alerts (optional)
+
+    # OpenTelemetry / Distributed Tracing Configuration
+    TELEMETRY_ENABLED: bool = False  # Enable distributed tracing
+    TELEMETRY_SERVICE_NAME: str = "residency-scheduler"
+    TELEMETRY_ENVIRONMENT: str = "development"  # development, staging, production
+    TELEMETRY_SAMPLING_RATE: float = 1.0  # Trace sampling rate (0.0 to 1.0)
+    TELEMETRY_CONSOLE_EXPORT: bool = False  # Enable console exporter for debugging
+
+    # Exporter Configuration
+    TELEMETRY_EXPORTER_TYPE: str = "otlp_grpc"  # jaeger, zipkin, otlp_http, otlp_grpc
+    TELEMETRY_EXPORTER_ENDPOINT: str = "http://localhost:4317"  # Exporter endpoint URL
+    TELEMETRY_EXPORTER_INSECURE: bool = True  # Use insecure connection (no TLS)
+    TELEMETRY_EXPORTER_HEADERS: dict[str, str] = {}  # Custom headers for authentication
+
+    # Instrumentation Configuration
+    TELEMETRY_TRACE_SQLALCHEMY: bool = True  # Enable SQLAlchemy tracing
+    TELEMETRY_TRACE_REDIS: bool = True  # Enable Redis tracing
+    TELEMETRY_TRACE_HTTP: bool = True  # Enable HTTP client tracing
+
+    # ML Model Configuration
+    # Machine learning models for schedule scoring and prediction
+    ML_ENABLED: bool = False  # Enable ML-based schedule scoring
+    ML_MODELS_DIR: str = "models"  # Base directory for ML model artifacts
+    ML_PREFERENCE_MODEL_PATH: str = ""  # Path to preference predictor model
+    ML_CONFLICT_MODEL_PATH: str = ""  # Path to conflict predictor model
+    ML_WORKLOAD_MODEL_PATH: str = ""  # Path to workload optimizer model
+
+    # ML Training Configuration
+    ML_TRAINING_LOOKBACK_DAYS: int = 365  # Historical data range for training
+    ML_MIN_TRAINING_SAMPLES: int = 100  # Minimum samples required for training
+    ML_AUTO_TRAINING_ENABLED: bool = False  # Enable automatic model retraining
+    ML_TRAINING_FREQUENCY_DAYS: int = 7  # Retraining frequency
+
+    # ML Scoring Weights (for ScheduleScorer)
+    ML_PREFERENCE_WEIGHT: float = 0.4  # Weight for preference satisfaction
+    ML_WORKLOAD_WEIGHT: float = 0.3  # Weight for workload balance
+    ML_CONFLICT_WEIGHT: float = 0.3  # Weight for conflict safety
+
+    # ML Thresholds
+    ML_TARGET_UTILIZATION: float = 0.80  # Target utilization (from resilience)
+    ML_OVERLOAD_THRESHOLD: float = 0.85  # Threshold for overloaded detection
+    ML_CONFLICT_RISK_THRESHOLD: float = 0.70  # High-risk conflict threshold
+
+    # Shadow Traffic Configuration
+    SHADOW_TRAFFIC_ENABLED: bool = False  # Enable shadow traffic duplication
+    SHADOW_TRAFFIC_URL: str = ""  # Shadow service base URL
+    SHADOW_SAMPLING_RATE: float = 0.1  # Percentage of requests to shadow (0.0-1.0)
+    SHADOW_TIMEOUT: float = 10.0  # Shadow request timeout in seconds
+    SHADOW_MAX_CONCURRENT: int = 10  # Maximum concurrent shadow requests
+    SHADOW_VERIFY_SSL: bool = True  # Verify SSL certificates for shadow service
+    SHADOW_ALERT_ON_DIFF: bool = True  # Alert on response differences
+    SHADOW_DIFF_THRESHOLD: str = "medium"  # Threshold for alerting: low, medium, high, critical
+    SHADOW_RETRY_ON_FAILURE: bool = False  # Retry failed shadow requests
+    SHADOW_MAX_RETRIES: int = 2  # Maximum retry attempts
+    SHADOW_INCLUDE_HEADERS: bool = True  # Include original headers in shadow requests
+    SHADOW_HEALTH_CHECK_INTERVAL: int = 60  # Health check interval in seconds
+    SHADOW_METRICS_RETENTION_HOURS: int = 24  # Metrics retention period
 
     @field_validator('SECRET_KEY', 'WEBHOOK_SECRET')
     @classmethod
@@ -373,4 +452,39 @@ def get_resilience_config():
         contingency_analysis_interval_hours=settings.RESILIENCE_CONTINGENCY_ANALYSIS_INTERVAL_HOURS,
         alert_recipients=settings.RESILIENCE_ALERT_RECIPIENTS,
         escalation_threshold=DefenseLevel.CONTAINMENT,
+    )
+
+
+def get_shadow_config():
+    """Get ShadowConfig from settings."""
+    from app.shadow.traffic import DiffSeverity, ShadowConfig
+
+    settings = get_settings()
+
+    # Map string threshold to enum
+    threshold_map = {
+        "none": DiffSeverity.NONE,
+        "low": DiffSeverity.LOW,
+        "medium": DiffSeverity.MEDIUM,
+        "high": DiffSeverity.HIGH,
+        "critical": DiffSeverity.CRITICAL,
+    }
+    diff_threshold = threshold_map.get(
+        settings.SHADOW_DIFF_THRESHOLD.lower(), DiffSeverity.MEDIUM
+    )
+
+    return ShadowConfig(
+        enabled=settings.SHADOW_TRAFFIC_ENABLED,
+        shadow_url=settings.SHADOW_TRAFFIC_URL,
+        sampling_rate=settings.SHADOW_SAMPLING_RATE,
+        timeout=settings.SHADOW_TIMEOUT,
+        max_concurrent=settings.SHADOW_MAX_CONCURRENT,
+        verify_ssl=settings.SHADOW_VERIFY_SSL,
+        alert_on_diff=settings.SHADOW_ALERT_ON_DIFF,
+        diff_threshold=diff_threshold,
+        retry_on_failure=settings.SHADOW_RETRY_ON_FAILURE,
+        max_retries=settings.SHADOW_MAX_RETRIES,
+        include_headers=settings.SHADOW_INCLUDE_HEADERS,
+        health_check_interval=settings.SHADOW_HEALTH_CHECK_INTERVAL,
+        metrics_retention_hours=settings.SHADOW_METRICS_RETENTION_HOURS,
     )

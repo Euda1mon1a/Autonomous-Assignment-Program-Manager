@@ -7,7 +7,6 @@ including heatmap generation, calendar exports, and schedule queries.
 These wrappers add caching on top of existing service implementations
 without modifying the original services.
 """
-import hashlib
 import logging
 from datetime import date
 from typing import Any
@@ -31,24 +30,6 @@ from app.services.calendar_service import CalendarService
 from app.services.heatmap_service import HeatmapService
 
 logger = logging.getLogger(__name__)
-
-
-def _hash_id_list(ids: list[UUID]) -> str:
-    """
-    Create a deterministic hash of a list of UUIDs for cache keys.
-
-    This ensures cache keys are unique for different ID combinations
-    without creating excessively long keys.
-
-    Args:
-        ids: List of UUIDs to hash
-
-    Returns:
-        Short hash string representing the ID list
-    """
-    sorted_ids = sorted(str(pid) for pid in ids)
-    id_string = ",".join(sorted_ids)
-    return hashlib.sha256(id_string.encode()).hexdigest()[:16]
 
 
 class CachedHeatmapService:
@@ -92,15 +73,13 @@ class CachedHeatmapService:
             str(include_fmit).lower(),
         ]
 
-        # Use hash of all IDs to ensure unique cache keys for different ID sets
-        # This prevents cache collisions when more than 5 IDs are provided
         if person_ids:
-            person_hash = _hash_id_list(person_ids)
-            key_parts.append(f"persons:{person_hash}")
+            sorted_ids = sorted(str(pid) for pid in person_ids)
+            key_parts.append(f"persons:[{','.join(sorted_ids[:5])}]")
 
         if rotation_ids:
-            rotation_hash = _hash_id_list(rotation_ids)
-            key_parts.append(f"rotations:{rotation_hash}")
+            sorted_ids = sorted(str(rid) for rid in rotation_ids)
+            key_parts.append(f"rotations:[{','.join(sorted_ids[:5])}]")
 
         return ":".join(key_parts)
 
@@ -258,13 +237,13 @@ class CachedHeatmapService:
         Returns:
             HeatmapResponse with workload data
         """
-        # Build cache key with hash of all person IDs (not truncated)
-        person_hash = _hash_id_list(person_ids)
+        # Build cache key
+        sorted_ids = sorted(str(pid) for pid in person_ids)
         cache_key = (
             f"{CachePrefix.WORKLOAD.value}:"
             f"{start_date.isoformat()}:{end_date.isoformat()}:"
             f"weekends={include_weekends}:"
-            f"persons:{person_hash}"
+            f"persons=[{','.join(sorted_ids[:5])}]"
         )
 
         # Try cache first

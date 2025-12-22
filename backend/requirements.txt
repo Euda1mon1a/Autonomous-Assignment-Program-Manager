@@ -15,6 +15,7 @@ sqlalchemy-continuum==1.5.2  # Audit trail / version history for models
 pydantic==2.12.5
 pydantic-settings==2.12.0
 email-validator==2.3.0
+jinja2==3.1.6  # Template rendering for notifications
 
 # Authentication & Security
 python-jose[cryptography]==3.5.0
@@ -26,6 +27,7 @@ python-magic>=0.4.27  # File type detection for upload validation
 fastapi-pagination==0.15.3
 fastapi-cache2==0.2.2
 slowapi==0.1.9
+strawberry-graphql[fastapi]==0.219.2
 
 # Data Processing
 pandas==2.3.3
@@ -33,6 +35,10 @@ numpy==2.3.5
 scipy==1.15.3  # Sparse matrix operations for tensegrity solver
 scipy==1.15.3  # Scientific computing for Erlang C queuing calculations
 python-dateutil==2.9.0.post0
+
+# Machine Learning
+scikit-learn>=1.3.0
+joblib>=1.3.0  # Model serialization
 
 # Graph Analysis (for resilience hub vulnerability analysis)
 networkx>=3.0
@@ -67,15 +73,32 @@ pymoo>=0.6.0
 sentry-sdk[fastapi]==2.48.0
 prometheus-fastapi-instrumentator==7.1.0
 
+# OpenTelemetry - Distributed Tracing
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-instrumentation-fastapi>=0.41b0
+opentelemetry-instrumentation-sqlalchemy>=0.41b0
+opentelemetry-instrumentation-redis>=0.41b0
+opentelemetry-instrumentation-requests>=0.41b0
+opentelemetry-instrumentation-httpx>=0.41b0
+
+# OpenTelemetry Exporters
+opentelemetry-exporter-otlp-proto-grpc>=1.20.0  # OTLP gRPC exporter
+opentelemetry-exporter-otlp-proto-http>=1.20.0  # OTLP HTTP exporter
+opentelemetry-exporter-jaeger>=1.20.0  # Jaeger exporter (legacy)
+opentelemetry-exporter-zipkin-json>=1.20.0  # Zipkin exporter
+
 # Reporting & Export
 openpyxl==3.1.5
 reportlab==4.4.6
 python-docx==1.2.0
 icalendar==6.1.0
 
-# Background Tasks
+# Background Tasks & Scheduling
 celery==5.6.0
 redis==7.1.0
+apscheduler>=3.10.0  # Advanced job scheduling
+croniter>=2.0.0  # Cron expression parsing
 
 # Development Tools
 black==25.12.0
@@ -96,10 +119,17 @@ hypothesis==6.122.3
 # Logging
 loguru==0.7.3
 
+# Cloud & Storage
+boto3>=1.34.0
+
 # Utilities
 python-dotenv==1.2.1
 python-decouple==3.8
+watchdog==6.0.0  # File system monitoring for config hot reload
 
 # Visualization
 plotly>=5.18.0
 kaleido>=0.2.1
+
+# Game Theory (Axelrod's Prisoner's Dilemma tournaments)
+axelrod>=4.12.0

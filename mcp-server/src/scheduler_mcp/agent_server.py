@@ -240,9 +240,6 @@ class AgentMCPServer:
         Returns:
             LLM response text
         """
-        # In a real implementation, this would use the MCP sampling protocol
-        # to call the configured LLM provider. For now, we'll simulate.
-
         logger.info(f"LLM sampling request: {prompt[:100]}...")
 
         # Build full prompt with context
@@ -260,12 +257,39 @@ Task:
 Please provide a detailed, structured response.
 """
 
-        # TODO: Replace with actual MCP sampling call
-        # For now, return a placeholder that simulates LLM reasoning
         logger.debug(f"Full prompt sent to LLM:\n{full_prompt}")
 
-        # Simulated response - in production, this calls the actual LLM
-        return self._simulate_llm_response(prompt, context)
+        try:
+            # Check if we have an MCP client configured
+            if hasattr(self, 'mcp_client') and self.mcp_client:
+                # Use MCP sampling API
+                logger.debug("Using MCP client for sampling")
+                response = await self.mcp_client.sample(
+                    messages=[
+                        {"role": "user", "content": full_prompt}
+                    ],
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    model=self.llm_provider
+                )
+
+                # Extract content from response
+                if hasattr(response, 'content'):
+                    return response.content
+                elif isinstance(response, dict) and 'content' in response:
+                    return response['content']
+                else:
+                    logger.warning("Unexpected MCP response format, using simulated response")
+                    return self._simulate_llm_response(prompt, context)
+            else:
+                # Fallback to simulated response for development
+                logger.warning("MCP client not configured, using simulated response")
+                return self._simulate_llm_response(prompt, context)
+
+        except Exception as e:
+            logger.error(f"Error calling LLM via MCP: {e}")
+            logger.info("Falling back to simulated response")
+            return self._simulate_llm_response(prompt, context)
 
     def _simulate_llm_response(self, prompt: str, context: dict) -> str:
         """

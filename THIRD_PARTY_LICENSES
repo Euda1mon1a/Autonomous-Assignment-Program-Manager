@@ -1,0 +1,380 @@
+# Third-Party Licenses
+
+This file documents the licenses of third-party dependencies used by the
+Residency Scheduler project. The original code in this repository is licensed
+under the MIT License (see LICENSE file).
+
+When using, modifying, or distributing this software, you must comply with
+both this project's MIT license AND the licenses of all dependencies listed below.
+
+---
+
+## Summary
+
+| License Type | Count | Notes |
+|--------------|-------|-------|
+| MIT | ~40+ | Fully permissive, compatible |
+| BSD (2/3-clause) | ~15+ | Fully permissive, compatible |
+| Apache 2.0 | ~5 | Permissive, requires NOTICE preservation |
+| ISC | ~10+ | Fully permissive, compatible |
+| PSF | 1 | Python Software Foundation License |
+
+No copyleft (GPL/AGPL/LGPL) dependencies are used in this project.
+
+---
+
+## Backend Dependencies (Python)
+
+### Apache License 2.0
+
+**Google OR-Tools** (ortools)
+- Copyright: Google LLC
+- License: Apache License 2.0
+- URL: https://github.com/google/or-tools
+- Usage: Constraint programming and optimization for schedule generation
+
+**Sentry SDK** (sentry-sdk)
+- Copyright: Sentry (https://sentry.io)
+- License: Apache License 2.0 (BSD-2-Clause for some components)
+- URL: https://github.com/getsentry/sentry-python
+
+**prometheus-fastapi-instrumentator**
+- Copyright: Tim Schwenke
+- License: Apache License 2.0
+- URL: https://github.com/trallnag/prometheus-fastapi-instrumentator
+
+### MIT License
+
+**FastAPI**
+- Copyright: Sebastián Ramírez
+- License: MIT
+- URL: https://github.com/tiangolo/fastapi
+
+**SQLAlchemy**
+- Copyright: Michael Bayer
+- License: MIT
+- URL: https://github.com/sqlalchemy/sqlalchemy
+
+**Pydantic**
+- Copyright: Samuel Colvin
+- License: MIT
+- URL: https://github.com/pydantic/pydantic
+
+**Alembic**
+- Copyright: Michael Bayer
+- License: MIT
+- URL: https://github.com/sqlalchemy/alembic
+
+**Uvicorn**
+- Copyright: Tom Christie
+- License: BSD 3-Clause
+- URL: https://github.com/encode/uvicorn
+
+**python-jose**
+- Copyright: Michael Davis
+- License: MIT
+- URL: https://github.com/mpdavis/python-jose
+
+**passlib**
+- Copyright: Assurance Technologies, LLC
+- License: BSD
+- URL: https://github.com/glic3rern/passlib
+
+**Celery**
+- Copyright: Ask Solem & Contributors
+- License: BSD 3-Clause
+- URL: https://github.com/celery/celery
+
+**Redis-py**
+- Copyright: Redis Inc.
+- License: MIT
+- URL: https://github.com/redis/redis-py
+
+**Loguru**
+- Copyright: Delgan
+- License: MIT
+- URL: https://github.com/Delgan/loguru
+
+**HTTPX**
+- Copyright: Tom Christie
+- License: BSD 3-Clause
+- URL: https://github.com/encode/httpx
+
+**python-dotenv**
+- Copyright: Saurabh Kumar
+- License: BSD 3-Clause
+- URL: https://github.com/theskumar/python-dotenv
+
+**Pytest**
+- Copyright: Holger Krekel and pytest contributors
+- License: MIT
+- URL: https://github.com/pytest-dev/pytest
+
+**Black**
+- Copyright: Łukasz Langa and contributors
+- License: MIT
+- URL: https://github.com/psf/black
+
+**Ruff**
+- Copyright: Astral Software Inc.
+- License: MIT
+- URL: https://github.com/astral-sh/ruff
+
+### BSD License (2-Clause or 3-Clause)
+
+**NumPy**
+- Copyright: NumPy Developers
+- License: BSD 3-Clause
+- URL: https://github.com/numpy/numpy
+
+**pandas**
+- Copyright: pandas Development Team
+- License: BSD 3-Clause
+- URL: https://github.com/pandas-dev/pandas
+
+**SciPy**
+- Copyright: SciPy Developers
+- License: BSD 3-Clause
+- URL: https://github.com/scipy/scipy
+
+**NetworkX**
+- Copyright: NetworkX Developers
+- License: BSD 3-Clause
+- URL: https://github.com/networkx/networkx
+
+**NDlib** (Network Diffusion Library)
+- Copyright: Giulio Rossetti
+- License: BSD 2-Clause
+- URL: https://github.com/GiulioRossetti/ndlib
+- Usage: SIR epidemic models for burnout contagion analysis
+
+**Plotly**
+- Copyright: Plotly, Inc.
+- License: MIT
+- URL: https://github.com/plotly/plotly.py
+
+**ReportLab**
+- Copyright: ReportLab Europe Ltd
+- License: BSD 3-Clause
+- URL: https://www.reportlab.com/
+
+**openpyxl**
+- Copyright: Eric Gazoni, Charlie Clark
+- License: MIT
+- URL: https://github.com/theorchard/openpyxl
+
+**python-docx**
+- Copyright: Steve Canny
+- License: MIT
+- URL: https://github.com/python-openxml/python-docx
+
+**iCalendar**
+- Copyright: Plone Foundation
+- License: BSD 2-Clause
+- URL: https://github.com/collective/icalendar
+
+### Other Permissive Licenses
+
+**PuLP**
+- Copyright: COIN-OR Foundation
+- License: BSD (COIN-OR)
+- URL: https://github.com/coin-or/pulp
+
+**Pyomo**
+- Copyright: Sandia National Laboratories
+- License: BSD 3-Clause
+- URL: https://github.com/Pyomo/pyomo
+
+**pymoo**
+- Copyright: Julian Blank
+- License: Apache License 2.0
+- URL: https://github.com/anyoptimization/pymoo
+
+**pyspc**
+- Copyright: Carlos Moyano
+- License: MIT
+- URL: https://github.com/carloscinelli/pyspc
+
+**pyworkforce**
+- Copyright: pyworkforce contributors
+- License: MIT
+- URL: https://github.com/rodrigo-arenas/pyworkforce
+
+---
+
+## Frontend Dependencies (JavaScript/TypeScript)
+
+### MIT License
+
+**Next.js**
+- Copyright: Vercel, Inc.
+- License: MIT
+- URL: https://github.com/vercel/next.js
+
+**React**
+- Copyright: Meta Platforms, Inc.
+- License: MIT
+- URL: https://github.com/facebook/react
+
+**TanStack Query** (@tanstack/react-query)
+- Copyright: Tanner Linsley
+- License: MIT
+- URL: https://github.com/TanStack/query
+
+**Axios**
+- Copyright: Matt Zabriskie
+- License: MIT
+- URL: https://github.com/axios/axios
+
+**date-fns**
+- Copyright: Sasha Koss
+- License: MIT
+- URL: https://github.com/date-fns/date-fns
+
+**Tailwind CSS**
+- Copyright: Tailwind Labs, Inc.
+- License: MIT
+- URL: https://github.com/tailwindlabs/tailwindcss
+
+**Framer Motion**
+- Copyright: Framer B.V.
+- License: MIT
+- URL: https://github.com/framer/motion
+
+**Lucide React**
+- Copyright: Lucide Contributors
+- License: ISC
+- URL: https://github.com/lucide-icons/lucide
+
+**Recharts**
+- Copyright: Recharts Group
+- License: MIT
+- URL: https://github.com/recharts/recharts
+
+**Plotly.js**
+- Copyright: Plotly, Inc.
+- License: MIT
+- URL: https://github.com/plotly/plotly.js
+
+**@dnd-kit** (core, sortable, modifiers, utilities)
+- Copyright: Claudéric Demers
+- License: MIT
+- URL: https://github.com/clauderic/dnd-kit
+
+### Development Dependencies
+
+**TypeScript**
+- Copyright: Microsoft Corporation
+- License: Apache License 2.0
+- URL: https://github.com/microsoft/TypeScript
+
+**ESLint**
+- Copyright: OpenJS Foundation
+- License: MIT
+- URL: https://github.com/eslint/eslint
+
+**Jest**
+- Copyright: Meta Platforms, Inc.
+- License: MIT
+- URL: https://github.com/jestjs/jest
+
+**Playwright**
+- Copyright: Microsoft Corporation
+- License: Apache License 2.0
+- URL: https://github.com/microsoft/playwright
+
+**Testing Library** (@testing-library/react, @testing-library/jest-dom)
+- Copyright: Kent C. Dodds
+- License: MIT
+- URL: https://github.com/testing-library
+
+**MSW** (Mock Service Worker)
+- Copyright: Artem Zakharchenko
+- License: MIT
+- URL: https://github.com/mswjs/msw
+
+**PostCSS**
+- Copyright: Andrey Sitnik
+- License: MIT
+- URL: https://github.com/postcss/postcss
+
+---
+
+## Infrastructure Dependencies
+
+**Docker**
+- License: Apache License 2.0
+- URL: https://github.com/docker/docker-ce
+
+**PostgreSQL**
+- License: PostgreSQL License (BSD-like)
+- URL: https://www.postgresql.org/about/licence/
+
+**Redis**
+- License: BSD 3-Clause (RSALv2 for Redis Stack modules)
+- URL: https://redis.io/docs/about/license/
+- Note: This project uses core Redis, which is BSD-licensed
+
+**Prometheus**
+- License: Apache License 2.0
+- URL: https://github.com/prometheus/prometheus
+
+**Grafana**
+- License: AGPL-3.0 (Grafana OSS) / Proprietary (Grafana Enterprise)
+- URL: https://github.com/grafana/grafana
+- Note: Used as a standalone monitoring tool, not linked/embedded
+
+---
+
+## Full License Texts
+
+The full text of each license type can be found at:
+
+- **MIT License**: https://opensource.org/licenses/MIT
+- **BSD 2-Clause**: https://opensource.org/licenses/BSD-2-Clause
+- **BSD 3-Clause**: https://opensource.org/licenses/BSD-3-Clause
+- **Apache License 2.0**: https://www.apache.org/licenses/LICENSE-2.0
+- **ISC License**: https://opensource.org/licenses/ISC
+- **PostgreSQL License**: https://www.postgresql.org/about/licence/
+
+---
+
+## Apache 2.0 NOTICE
+
+As required by the Apache License 2.0, the following notice applies to
+Apache-licensed dependencies:
+
+```
+This product includes software developed by:
+- Google LLC (OR-Tools)
+- Microsoft Corporation (TypeScript, Playwright)
+- Vercel, Inc. (contributions to various packages)
+- Sentry (sentry-sdk)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use these files except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
+
+---
+
+## Updating This File
+
+When adding new dependencies to the project:
+
+1. Check the license of the new dependency
+2. Verify it is compatible with MIT (avoid GPL/AGPL/LGPL)
+3. Add an entry to the appropriate section above
+4. For Apache 2.0 dependencies, update the NOTICE section if required
+
+---
+
+*Last updated: 2025-12-21*
