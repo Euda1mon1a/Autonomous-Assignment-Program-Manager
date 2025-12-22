@@ -3,7 +3,15 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -32,6 +40,14 @@ class RotationHalfDayRequirement(Base):
     """
 
     __tablename__ = "rotation_halfday_requirements"
+
+    # Enforce one-to-one relationship at DB level
+    __table_args__ = (
+        UniqueConstraint(
+            "rotation_template_id",
+            name="uq_rotation_halfday_template",
+        ),
+    )
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     rotation_template_id = Column(
