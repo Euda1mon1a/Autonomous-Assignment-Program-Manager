@@ -31,7 +31,7 @@ strawberry-graphql[fastapi]==0.287.3
 
 # Data Processing
 pandas==2.3.3
-numpy==1.26.4
+numpy==2.4.0
 scipy==1.16.3  # Scientific computing (Sparse matrix & Erlang C)
 python-dateutil==2.9.0.post0
 
