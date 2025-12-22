@@ -45,12 +45,17 @@ RUN apt-get update \
 
 ***REMOVED*** Copy requirements first for better layer caching
 COPY requirements.txt .
+COPY vendor/wheels /wheels
 
 ***REMOVED*** Create virtual environment and install dependencies
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
+    && if ls /wheels/*.whl >/dev/null 2>&1; then \
+        pip install --no-index --find-links=/wheels -r requirements.txt; \
+    else \
+        pip install -r requirements.txt; \
+    fi
 
 ***REMOVED*** -----------------------------------------------------------------------------
 ***REMOVED*** Runtime Stage - minimal image for development
@@ -68,11 +73,13 @@ WORKDIR /app
 ***REMOVED*** - libpq5: Runtime library for psycopg2
 ***REMOVED*** - curl: Useful for debugging/health checks
 ***REMOVED*** - postgresql-client: Useful for DB debugging
+***REMOVED*** - libmagic1: Required for python-magic file type detection
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     libpq5 \
     curl \
     postgresql-client \
+    libmagic1 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 

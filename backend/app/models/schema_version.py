@@ -164,7 +164,7 @@ class SchemaChangeEvent(Base):
         change_description: Description of what changed
         notification_sent: Whether notifications were sent
         notified_at: When notifications were sent
-        metadata: Additional metadata about the change
+        event_metadata: Additional metadata about the change
         created_at: When the event occurred
     """
     __tablename__ = "schema_change_events"
@@ -179,7 +179,7 @@ class SchemaChangeEvent(Base):
     change_description = Column(Text, nullable=True)
     notification_sent = Column(Boolean, default=False, nullable=False)
     notified_at = Column(DateTime, nullable=True)
-    metadata = Column(JSON, default=dict, nullable=False)
+    event_metadata = Column(JSON, default=dict, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     __table_args__ = (

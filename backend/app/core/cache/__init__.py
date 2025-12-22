@@ -45,6 +45,44 @@ Features:
     - Async/await support
 """
 
+from enum import Enum
+
+
+class CachePrefix(Enum):
+    """Cache key prefixes for different services."""
+    SCHEDULE = "schedule"
+    HEATMAP = "heatmap"
+    COVERAGE = "coverage"
+    CALENDAR = "calendar"
+    PERSON = "person"
+    ASSIGNMENT = "assignment"
+    BLOCK = "block"
+    ROTATION = "rotation"
+    SEARCH = "search"
+    FACETS = "facets"
+    AUTOCOMPLETE = "autocomplete"
+
+
+class CacheTTL:
+    """Standard cache TTL values in seconds."""
+    SHORT = 60  ***REMOVED*** 1 minute
+    MEDIUM = 300  ***REMOVED*** 5 minutes
+    LONG = 900  ***REMOVED*** 15 minutes
+    HOUR = 3600  ***REMOVED*** 1 hour
+    DAY = 86400  ***REMOVED*** 24 hours
+
+
+***REMOVED*** Global service cache instance
+_service_cache = None
+
+
+def get_service_cache():
+    """Get or create the global service cache instance."""
+    global _service_cache
+    if _service_cache is None:
+        _service_cache = get_cache("service")
+    return _service_cache
+
 ***REMOVED*** Core cache classes
 from app.core.cache.redis_cache import (
     CacheEntry,
@@ -82,7 +120,14 @@ from app.core.cache.decorators import (
     write_through,
 )
 
+***REMOVED*** Utility functions
+from app.core.cache.utils import invalidate_schedule_cache
+
 __all__ = [
+    ***REMOVED*** Cache prefixes and TTL
+    "CachePrefix",
+    "CacheTTL",
+    "get_service_cache",
     ***REMOVED*** Core cache
     "CacheEntry",
     "CacheStats",
@@ -108,6 +153,8 @@ __all__ = [
     "cached_property_async",
     "read_through",
     "write_through",
+    ***REMOVED*** Utility functions
+    "invalidate_schedule_cache",
 ]
 
 ***REMOVED*** Version

@@ -295,7 +295,7 @@ def generate_schedule(
     except Exception as e:
         if obs_metrics:
             obs_metrics.record_schedule_failure(algorithm)
-        logger.error(f"Error generating schedule: {e}", exc_info=True)
+        logger.opt(exception=True).error("Error generating schedule: {error}", error=str(e))
         error_msg = "An error occurred generating the schedule"
         if idempotency_request:
             idempotency_service.mark_failed(

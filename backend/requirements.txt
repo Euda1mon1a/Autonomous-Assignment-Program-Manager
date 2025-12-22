@@ -31,9 +31,8 @@ strawberry-graphql[fastapi]==0.219.2
 
 ***REMOVED*** Data Processing
 pandas==2.3.3
-numpy==2.3.5
-scipy==1.15.3  ***REMOVED*** Sparse matrix operations for tensegrity solver
-scipy==1.15.3  ***REMOVED*** Scientific computing for Erlang C queuing calculations
+numpy==1.26.4
+scipy==1.15.3  ***REMOVED*** Scientific computing (Sparse matrix & Erlang C)
 python-dateutil==2.9.0.post0
 
 ***REMOVED*** Machine Learning
@@ -73,20 +72,20 @@ pymoo>=0.6.0
 sentry-sdk[fastapi]==2.48.0
 prometheus-fastapi-instrumentator==7.1.0
 
-***REMOVED*** OpenTelemetry - Distributed Tracing
-opentelemetry-api>=1.20.0
-opentelemetry-sdk>=1.20.0
-opentelemetry-instrumentation-fastapi>=0.41b0
-opentelemetry-instrumentation-sqlalchemy>=0.41b0
-opentelemetry-instrumentation-redis>=0.41b0
-opentelemetry-instrumentation-requests>=0.41b0
-opentelemetry-instrumentation-httpx>=0.41b0
+***REMOVED*** OpenTelemetry - Distributed Tracing (pinned to 1.21.0/0.42b0 for compatibility)
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-instrumentation-fastapi==0.42b0
+opentelemetry-instrumentation-sqlalchemy==0.42b0
+opentelemetry-instrumentation-redis==0.42b0
+opentelemetry-instrumentation-requests==0.42b0
+opentelemetry-instrumentation-httpx==0.42b0
 
-***REMOVED*** OpenTelemetry Exporters
-opentelemetry-exporter-otlp-proto-grpc>=1.20.0  ***REMOVED*** OTLP gRPC exporter
-opentelemetry-exporter-otlp-proto-http>=1.20.0  ***REMOVED*** OTLP HTTP exporter
-opentelemetry-exporter-jaeger>=1.20.0  ***REMOVED*** Jaeger exporter (legacy)
-opentelemetry-exporter-zipkin-json>=1.20.0  ***REMOVED*** Zipkin exporter
+***REMOVED*** OpenTelemetry Exporters (pinned for compatibility)
+opentelemetry-exporter-otlp-proto-grpc==1.21.0  ***REMOVED*** OTLP gRPC exporter
+opentelemetry-exporter-otlp-proto-http==1.21.0  ***REMOVED*** OTLP HTTP exporter
+opentelemetry-exporter-jaeger==1.21.0  ***REMOVED*** Jaeger exporter (last version before deprecation)
+opentelemetry-exporter-zipkin-json==1.21.0  ***REMOVED*** Zipkin exporter
 
 ***REMOVED*** Reporting & Export
 openpyxl==3.1.5
