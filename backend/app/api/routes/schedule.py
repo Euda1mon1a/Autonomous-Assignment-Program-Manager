@@ -443,7 +443,7 @@ def analyze_imported_schedules(
     clinic_file: UploadFile | None = File(None, description="Clinic schedule Excel file (optional)"),
     specialty_providers: str | None = Form(
         None,
-        description="JSON mapping of specialty to providers, e.g., {\"Sports Medicine\": [\"FAC-PD\"]}"
+        description="JSON mapping of specialty to providers, e.g., {\"Sports Medicine\": [\"FAC-SPORTS\"]}"
     ),
     db: Session = Depends(get_db),
 ):
