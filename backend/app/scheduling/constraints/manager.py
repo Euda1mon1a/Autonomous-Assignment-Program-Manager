@@ -14,6 +14,7 @@ Features:
 Classes:
     - ConstraintManager: Main manager class for organizing constraints
 """
+
 import logging
 from typing import Any
 
@@ -46,7 +47,11 @@ from .resilience import (
     UtilizationBufferConstraint,
     ZoneBoundaryConstraint,
 )
-from .temporal import WednesdayAMInternOnlyConstraint
+from .temporal import (
+    InvertedWednesdayConstraint,
+    WednesdayAMInternOnlyConstraint,
+    WednesdayPMSingleFacultyConstraint,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -275,6 +280,8 @@ class ConstraintManager:
         manager.add(ClinicCapacityConstraint())
         manager.add(MaxPhysiciansInClinicConstraint())
         manager.add(WednesdayAMInternOnlyConstraint())
+        manager.add(WednesdayPMSingleFacultyConstraint())
+        manager.add(InvertedWednesdayConstraint())
 
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))
@@ -329,6 +336,8 @@ class ConstraintManager:
         manager.add(ClinicCapacityConstraint())
         manager.add(MaxPhysiciansInClinicConstraint())
         manager.add(WednesdayAMInternOnlyConstraint())
+        manager.add(WednesdayPMSingleFacultyConstraint())
+        manager.add(InvertedWednesdayConstraint())
 
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))
@@ -337,7 +346,11 @@ class ConstraintManager:
 
         # Tier 1: Core resilience constraints (ENABLED)
         manager.add(HubProtectionConstraint(weight=15.0))
-        manager.add(UtilizationBufferConstraint(weight=20.0, target_utilization=target_utilization))
+        manager.add(
+            UtilizationBufferConstraint(
+                weight=20.0, target_utilization=target_utilization
+            )
+        )
 
         # Tier 2: Strategic resilience constraints
         manager.add(ZoneBoundaryConstraint(weight=12.0))
