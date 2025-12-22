@@ -199,13 +199,45 @@ class PuLPSolver(BaseSolver):
                 if rotation_vars:
                     x_2d[r_i, b_i] = pulp.lpSum(rotation_vars)
 
+        # ==================================================
+        # FACULTY DECISION VARIABLES
+        # f[f_i, b_i, t_i] = 1 if faculty f assigned to rotation t during block b
+        # ==================================================
+        f = {}
+        for faculty in context.faculty:
+            f_i = context.faculty_idx[faculty.id]
+            for block in workday_blocks:
+                b_i = context.block_idx[block.id]
+                for template in context.templates:
+                    t_i = template_idx[template.id]
+                    f[f_i, b_i, t_i] = pulp.LpVariable(
+                        f"f_{f_i}_{b_i}_{t_i}",
+                        cat=pulp.LpBinary,
+                    )
+
+        # 2D view for faculty
+        f_2d = {}
+        for faculty in context.faculty:
+            f_i = context.faculty_idx[faculty.id]
+            for block in workday_blocks:
+                b_i = context.block_idx[block.id]
+                rotation_vars = [
+                    f[f_i, b_i, t_i]
+                    for t_i in range(len(context.templates))
+                    if (f_i, b_i, t_i) in f
+                ]
+                if rotation_vars:
+                    f_2d[f_i, b_i] = pulp.lpSum(rotation_vars)
+
         variables = {
-            "assignments": x_2d,  # For legacy constraints
-            "template_assignments": x,  # For rotation-specific constraints
+            "assignments": x_2d,  # For legacy constraints (residents)
+            "template_assignments": x,  # For rotation-specific constraints (residents)
+            "faculty_assignments": f_2d,  ***REMOVED*** 2D view
+            "faculty_template_assignments": f,  ***REMOVED*** 3D view
         }
 
         # ==================================================
-        # CONSTRAINT: At most one rotation per person per block
+        # CONSTRAINT: At most one rotation per resident per block
         # ==================================================
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
@@ -219,7 +251,25 @@ class PuLPSolver(BaseSolver):
                 if rotation_vars:
                     prob += (
                         pulp.lpSum(rotation_vars) <= 1,
-                        f"one_rotation_{r_i}_{b_i}"
+                        f"one_rotation_res_{r_i}_{b_i}"
+                    )
+
+        # ==================================================
+        # CONSTRAINT: At most one rotation per faculty per block
+        # ==================================================
+        for faculty in context.faculty:
+            f_i = context.faculty_idx[faculty.id]
+            for block in workday_blocks:
+                b_i = context.block_idx[block.id]
+                rotation_vars = [
+                    f[f_i, b_i, t_i]
+                    for t_i in range(len(context.templates))
+                    if (f_i, b_i, t_i) in f
+                ]
+                if rotation_vars:
+                    prob += (
+                        pulp.lpSum(rotation_vars) <= 1,
+                        f"one_rotation_fac_{f_i}_{b_i}"
                     )
 
         # ==================================================
@@ -287,7 +337,7 @@ class PuLPSolver(BaseSolver):
             )
 
         # ==================================================
-        # EXTRACT SOLUTION
+        # EXTRACT SOLUTION - Residents
         # ==================================================
         assignments = []
         for resident in context.residents:
@@ -303,7 +353,29 @@ class PuLPSolver(BaseSolver):
                             template.id,
                         ))
 
-        logger.info(f"PuLP found {len(assignments)} assignments in {runtime:.2f}s")
+        # ==================================================
+        # EXTRACT SOLUTION - Faculty
+        # ==================================================
+        faculty_assignment_count = 0
+        for faculty in context.faculty:
+            f_i = context.faculty_idx[faculty.id]
+            for block in workday_blocks:
+                b_i = context.block_idx[block.id]
+                for template in context.templates:
+                    t_i = template_idx[template.id]
+                    if (f_i, b_i, t_i) in f and pulp.value(f[f_i, b_i, t_i]) == 1:
+                        assignments.append((
+                            faculty.id,
+                            block.id,
+                            template.id,
+                        ))
+                        faculty_assignment_count += 1
+
+        logger.info(
+            f"PuLP found {len(assignments)} assignments "
+            f"({len(assignments) - faculty_assignment_count} residents, "
+            f"{faculty_assignment_count} faculty) in {runtime:.2f}s"
+        )
 
         return SolverResult(
             success=True,
@@ -315,7 +387,10 @@ class PuLPSolver(BaseSolver):
             statistics={
                 "total_blocks": len(workday_blocks),
                 "total_residents": len(context.residents),
+                "total_faculty": len(context.faculty),
                 "total_templates": len(context.templates),
+                "resident_assignments": len(assignments) - faculty_assignment_count,
+                "faculty_assignments": faculty_assignment_count,
                 "coverage_rate": len(assignments) / len(workday_blocks) if workday_blocks else 0,
             },
         )
@@ -554,13 +629,44 @@ class CPSATSolver(BaseSolver):
                     model.Add(sum(rotation_vars) >= 1).OnlyEnforceIf(x_2d[r_i, b_i])
                     model.Add(sum(rotation_vars) == 0).OnlyEnforceIf(x_2d[r_i, b_i].Not())
 
+        # ==================================================
+        # FACULTY DECISION VARIABLES
+        # f[f_i, b_i, t_i] = 1 if faculty f assigned to rotation t during block b
+        # ==================================================
+        f = {}
+        for faculty in context.faculty:
+            f_i = context.faculty_idx[faculty.id]
+            for block in workday_blocks:
+                b_i = context.block_idx[block.id]
+                for template in context.templates:
+                    t_i = template_idx[template.id]
+                    f[f_i, b_i, t_i] = model.NewBoolVar(f"f_{f_i}_{b_i}_{t_i}")
+
+        # 2D view for faculty
+        f_2d = {}
+        for faculty in context.faculty:
+            f_i = context.faculty_idx[faculty.id]
+            for block in workday_blocks:
+                b_i = context.block_idx[block.id]
+                rotation_vars = [
+                    f[f_i, b_i, t_i]
+                    for t_i in range(len(context.templates))
+                    if (f_i, b_i, t_i) in f
+                ]
+                if rotation_vars:
+                    f_2d[f_i, b_i] = model.NewBoolVar(f"f_2d_{f_i}_{b_i}")
+                    model.Add(sum(rotation_vars) >= 1).OnlyEnforceIf(f_2d[f_i, b_i])
+                    model.Add(sum(rotation_vars) == 0).OnlyEnforceIf(f_2d[f_i, b_i].Not())
+
         variables = {
-            "assignments": x_2d,  # For legacy constraints
-            "template_assignments": x,  # For rotation-specific constraints
+            "assignments": x_2d,  # For legacy constraints (residents)
+            "template_assignments": x,  # For rotation-specific constraints (residents)
+            "faculty_assignments": f_2d,  ***REMOVED*** 2D view
+            "faculty_template_assignments": f,  ***REMOVED*** 3D view
         }
 
         # ==================================================
-        # CONSTRAINT: At most one rotation per person per block
+        # CONSTRAINT: At most one rotation per resident per block
         # ==================================================
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
@@ -570,6 +676,21 @@ class CPSATSolver(BaseSolver):
                     x[r_i, b_i, t_i]
                     for t_i in range(len(context.templates))
                     if (r_i, b_i, t_i) in x
+                ]
+                if rotation_vars:
+                    model.Add(sum(rotation_vars) <= 1)
+
+        # ==================================================
+        # CONSTRAINT: At most one rotation per faculty per block
+        # ==================================================
+        for faculty in context.faculty:
+            f_i = context.faculty_idx[faculty.id]
+            for block in workday_blocks:
+                b_i = context.block_idx[block.id]
+                rotation_vars = [
+                    f[f_i, b_i, t_i]
+                    for t_i in range(len(context.templates))
+                    if (f_i, b_i, t_i) in f
                 ]
                 if rotation_vars:
                     model.Add(sum(rotation_vars) <= 1)
@@ -666,7 +787,7 @@ class CPSATSolver(BaseSolver):
             )
 
         # ==================================================
-        # EXTRACT SOLUTION
+        # EXTRACT SOLUTION - Residents
         # ==================================================
         assignments = []
         for resident in context.residents:
@@ -682,7 +803,29 @@ class CPSATSolver(BaseSolver):
                             template.id,
                         ))
 
-        logger.info(f"CP-SAT found {len(assignments)} assignments in {runtime:.2f}s (status: {status_name})")
+        # ==================================================
+        # EXTRACT SOLUTION - Faculty
+        # ==================================================
+        faculty_assignment_count = 0
+        for faculty in context.faculty:
+            f_i = context.faculty_idx[faculty.id]
+            for block in workday_blocks:
+                b_i = context.block_idx[block.id]
+                for template in context.templates:
+                    t_i = template_idx[template.id]
+                    if (f_i, b_i, t_i) in f and solver.Value(f[f_i, b_i, t_i]) == 1:
+                        assignments.append((
+                            faculty.id,
+                            block.id,
+                            template.id,
+                        ))
+                        faculty_assignment_count += 1
+
+        logger.info(
+            f"CP-SAT found {len(assignments)} assignments "
+            f"({len(assignments) - faculty_assignment_count} residents, "
+            f"{faculty_assignment_count} faculty) in {runtime:.2f}s (status: {status_name})"
+        )
 
         return SolverResult(
             success=True,
@@ -694,7 +837,10 @@ class CPSATSolver(BaseSolver):
             statistics={
                 "total_blocks": len(workday_blocks),
                 "total_residents": len(context.residents),
+                "total_faculty": len(context.faculty),
                 "total_templates": len(context.templates),
+                "resident_assignments": len(assignments) - faculty_assignment_count,
+                "faculty_assignments": faculty_assignment_count,
                 "coverage_rate": len(assignments) / len(workday_blocks) if workday_blocks else 0,
                 "branches": solver.NumBranches(),
                 "conflicts": solver.NumConflicts(),

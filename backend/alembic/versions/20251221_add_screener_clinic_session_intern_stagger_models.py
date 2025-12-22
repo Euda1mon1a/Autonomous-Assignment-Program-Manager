@@ -30,7 +30,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '20251221'
-down_revision: Union[str, None] = '20251219_add_template_id_to_email_logs'
+down_revision: Union[str, None] = '20251220_add_chaos_experiments'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
