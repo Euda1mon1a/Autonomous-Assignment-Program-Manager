@@ -103,7 +103,7 @@ croniter>=2.0.0  # Cron expression parsing
 black==25.12.0
 ruff==0.14.10
 mypy==1.19.1
-isort==6.0.1
+isort==7.0.0
 
 # Testing
 pytest==9.0.2
