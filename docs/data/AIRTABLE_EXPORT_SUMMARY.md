@@ -36,9 +36,9 @@
 - Cannot merge rotations with different sequences
 
 ### Faculty Assignment Rules
-- **Colgan:** EXCLUDED from assignments
-- **Chu:** NOW ASSIGNABLE (exclusions removed)
-- **Beckwith:** Has specific exclusions
+- **FAC-CORE-04:** EXCLUDED from assignments (example)
+- **FAC-CORE-06:** NOW ASSIGNABLE (exclusions removed)
+- **FAC-ADJUNCT-01:** Has specific exclusions
 
 ### Procedure Supervision System
 Tracking implemented for:
@@ -96,11 +96,11 @@ Tracking implemented for:
 - ... (17 total)
 
 ### Faculty
-- Tagawa
-- LaBounty
-- Kinkennon
-- Montgomery
-- Bevis
+- FAC-PD
+- FAC-APD
+- FAC-OIC
+- FAC-CORE-01
+- FAC-CORE-02
 - ... (12 total)
 
 ---
