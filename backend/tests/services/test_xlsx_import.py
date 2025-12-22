@@ -168,14 +168,14 @@ class TestScheduleConflict:
     def test_specialty_unavailable_message(self):
         """Test message generation for specialty provider unavailable."""
         conflict = ScheduleConflict(
-            provider_name="Dr. FAC-PD",
+            provider_name="Dr. FAC-SPORTS",
             date=date(2024, 3, 10),
             time_of_day="AM",
             conflict_type="specialty_unavailable",
             severity="warning",
         )
 
-        assert "Dr. FAC-PD" in conflict.message
+        assert "Dr. FAC-SPORTS" in conflict.message
         assert "specialty provider" in conflict.message
         assert "unavailable for clinic" in conflict.message
 

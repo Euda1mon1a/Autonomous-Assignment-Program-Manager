@@ -779,7 +779,7 @@ class ConflictDetector:
         Args:
             fmit_schedule: Parsed FMIT rotation schedule
             clinic_schedule: Parsed clinic schedule
-            specialty_providers: Dict of specialty -> provider names (e.g., {"Sports Medicine": ["FAC-PD"]})
+            specialty_providers: Dict of specialty -> provider names (e.g., {"Sports Medicine": ["FAC-SPORTS"]})
         """
         self.fmit = fmit_schedule
         self.clinic = clinic_schedule

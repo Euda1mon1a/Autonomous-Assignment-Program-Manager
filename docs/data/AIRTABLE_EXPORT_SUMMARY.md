@@ -112,7 +112,7 @@ Tracking implemented for:
 1. **Import residents/faculty** from Airtable to local DB
 2. **Apply rotation sequence logic** to scheduling constraints
 3. **Implement procedure supervision counters**
-4. **Add faculty exclusion rules** (FAC-CORE-04 exclusions, etc.)
+4. **Add faculty exclusion rules** (exclusion rules for specific faculty, etc.)
 5. **Use 25 primary duties** for role-based scheduling
 
 ---
