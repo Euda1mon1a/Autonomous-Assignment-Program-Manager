@@ -98,6 +98,43 @@ Validates system state before deployment.
 
 Fixes npm audit issues in the frontend.
 
+## Excel Tools
+
+### excel/CSVAutoExport.bas
+
+VBA module for Excel that automatically exports worksheets to CSV files when the workbook is saved. This eliminates the manual "Save As CSV" step for clinics using Excel for schedule management.
+
+**Features:**
+- Auto-export on save
+- UTF-8 encoding for import system compatibility
+- Naming convention: `{WorkbookName}_{SheetName}.csv`
+- Ctrl+Shift+E manual trigger
+- Skips hidden sheets
+
+**Quick Setup:**
+1. Open your schedule workbook in Excel
+2. Press Alt+F11 to open VBA Editor
+3. File > Import File > select `scripts/excel/CSVAutoExport.bas`
+4. Copy `scripts/excel/ThisWorkbook_Events.txt` into the ThisWorkbook module
+5. Save as .xlsm (macro-enabled)
+
+See `scripts/excel/README.md` for detailed instructions.
+
+### import_excel.py
+
+Imports scheduling data (absences, assignments) from Excel/CSV files into the database.
+
+**Usage:**
+```bash
+# Dry run to preview changes
+python scripts/import_excel.py schedule.csv --dry-run
+
+# Import with verbose output
+python scripts/import_excel.py absences.xlsx --verbose
+```
+
+See docstring in script for supported formats and abbreviations.
+
 ## Running Scripts
 
 Most Python scripts require the backend environment:
