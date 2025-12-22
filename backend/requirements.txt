@@ -31,9 +31,8 @@ strawberry-graphql[fastapi]==0.219.2
 
 # Data Processing
 pandas==2.3.3
-numpy==2.3.5
-scipy==1.15.3  # Sparse matrix operations for tensegrity solver
-scipy==1.15.3  # Scientific computing for Erlang C queuing calculations
+numpy==1.26.4
+scipy==1.15.3  # Scientific computing (Sparse matrix & Erlang C)
 python-dateutil==2.9.0.post0
 
 # Machine Learning
@@ -73,20 +72,20 @@ pymoo>=0.6.0
 sentry-sdk[fastapi]==2.48.0
 prometheus-fastapi-instrumentator==7.1.0
 
-# OpenTelemetry - Distributed Tracing
-opentelemetry-api>=1.20.0
-opentelemetry-sdk>=1.20.0
-opentelemetry-instrumentation-fastapi>=0.41b0
-opentelemetry-instrumentation-sqlalchemy>=0.41b0
-opentelemetry-instrumentation-redis>=0.41b0
-opentelemetry-instrumentation-requests>=0.41b0
-opentelemetry-instrumentation-httpx>=0.41b0
+# OpenTelemetry - Distributed Tracing (pinned to 1.21.0/0.42b0 for compatibility)
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-instrumentation-fastapi==0.42b0
+opentelemetry-instrumentation-sqlalchemy==0.42b0
+opentelemetry-instrumentation-redis==0.42b0
+opentelemetry-instrumentation-requests==0.42b0
+opentelemetry-instrumentation-httpx==0.42b0
 
-# OpenTelemetry Exporters
-opentelemetry-exporter-otlp-proto-grpc>=1.20.0  # OTLP gRPC exporter
-opentelemetry-exporter-otlp-proto-http>=1.20.0  # OTLP HTTP exporter
-opentelemetry-exporter-jaeger>=1.20.0  # Jaeger exporter (legacy)
-opentelemetry-exporter-zipkin-json>=1.20.0  # Zipkin exporter
+# OpenTelemetry Exporters (pinned for compatibility)
+opentelemetry-exporter-otlp-proto-grpc==1.21.0  # OTLP gRPC exporter
+opentelemetry-exporter-otlp-proto-http==1.21.0  # OTLP HTTP exporter
+opentelemetry-exporter-jaeger==1.21.0  # Jaeger exporter (last version before deprecation)
+opentelemetry-exporter-zipkin-json==1.21.0  # Zipkin exporter
 
 # Reporting & Export
 openpyxl==3.1.5

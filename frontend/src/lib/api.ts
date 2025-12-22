@@ -9,7 +9,8 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios'
 
 // API base URL from environment or default for development
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+// Use /api/v1 directly to avoid 307 redirect which causes CORS issues
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
 
 /**
  * Standardized API error shape returned by all API operations.
@@ -131,18 +132,22 @@ function createApiClient(): AxiosInstance {
     withCredentials: true,
   })
 
-  // Request interceptor - no longer needed for auth token
-  // Tokens are sent automatically via httpOnly cookies
+  // Request interceptor - debug logging
   client.interceptors.request.use(
     (config) => {
+      console.log(`[api.ts] REQUEST: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`)
       return config
     },
-    (error) => Promise.reject(error)
+    (error) => {
+      console.error('[api.ts] Request interceptor error:', error)
+      return Promise.reject(error)
+    }
   )
 
   // Response interceptor - transform errors
   client.interceptors.response.use(
     (response) => {
+      console.log(`[api.ts] RESPONSE: ${response.status} ${response.config.url}`)
       // Issue #5: Handle 207 Multi-Status as a successful response (partial success)
       // This is used for schedule generation that completes but has validation warnings
       return response
@@ -158,7 +163,11 @@ function createApiClient(): AxiosInstance {
       if (typeof window !== 'undefined') {
         // Handle 401 - redirect to login
         // Security: No need to clear localStorage since tokens are in httpOnly cookies
-        if (apiError.status === 401) {
+        // Don't redirect if already on login page (prevents infinite loop)
+        // Don't redirect for auth endpoints (let checkAuth handle gracefully)
+        const requestUrl = error.config?.url || ''
+        const isAuthEndpoint = requestUrl.includes('/auth/')
+        if (apiError.status === 401 && !window.location.pathname.includes('/login') && !isAuthEndpoint) {
           window.location.href = '/login'
         }
 

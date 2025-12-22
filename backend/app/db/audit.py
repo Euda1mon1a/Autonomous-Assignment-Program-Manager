@@ -18,7 +18,8 @@ Example:
 from contextvars import ContextVar
 
 from sqlalchemy_continuum import make_versioned
-from sqlalchemy_continuum.plugins import PropertyModTrackerPlugin
+# PropertyModTrackerPlugin requires *_mod columns - disabled until migrations updated
+# from sqlalchemy_continuum.plugins import PropertyModTrackerPlugin
 
 from app.core.logging import get_logger
 
@@ -45,9 +46,10 @@ def clear_current_user_id() -> None:
 
 
 # Initialize versioning BEFORE models are imported
-# PropertyModTrackerPlugin tracks which properties were modified
+# NOTE: PropertyModTrackerPlugin disabled - requires *_mod columns in version tables
+# which our manual migrations don't create. Can re-enable once migrations are updated.
 make_versioned(
-    plugins=[PropertyModTrackerPlugin()],
+    plugins=[],  # PropertyModTrackerPlugin disabled to avoid missing *_mod columns
     options={
         "create_models": True,  # Auto-create version models
         "native_versioning": False,  # Use Python-based versioning (more compatible)

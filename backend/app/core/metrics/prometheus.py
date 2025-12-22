@@ -583,8 +583,20 @@ class MetricsRegistry:
             self.acgme_compliance_score.labels(rule=rule).set(score)
 
 
-# Global metrics instance
-metrics: MetricsRegistry = MetricsRegistry()
+# Global metrics instance - handle duplicate registration on reload
+try:
+    metrics: MetricsRegistry = MetricsRegistry()
+except ValueError as e:
+    if "Duplicated timeseries" in str(e):
+        # Metrics already registered, this is fine
+        import logging
+        logging.getLogger(__name__).debug("Metrics already registered, reusing")
+        metrics = None  # Will be handled by get_metrics
+    else:
+        raise
+
+# Cached metrics instance for when registry already exists
+_metrics_instance: MetricsRegistry | None = metrics
 
 
 def get_metrics() -> MetricsRegistry:
@@ -594,4 +606,9 @@ def get_metrics() -> MetricsRegistry:
     Returns:
         MetricsRegistry: Global metrics instance
     """
-    return metrics
+    global _metrics_instance
+    if _metrics_instance is None:
+        # Create a disabled metrics registry as fallback
+        _metrics_instance = MetricsRegistry.__new__(MetricsRegistry)
+        _metrics_instance._enabled = False
+    return _metrics_instance

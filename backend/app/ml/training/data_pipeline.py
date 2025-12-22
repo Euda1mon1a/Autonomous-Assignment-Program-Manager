@@ -20,7 +20,7 @@ from app.models.conflict_alert import ConflictAlert
 from app.models.faculty_preference import FacultyPreference
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
-from app.models.swap import SwapRequest
+from app.models.swap import SwapRecord
 
 logger = logging.getLogger(__name__)
 
@@ -577,10 +577,10 @@ class TrainingDataPipeline:
     async def _was_assignment_swapped(self, assignment_id: str) -> bool:
         """Check if an assignment was involved in a swap."""
         # Query swap requests related to this assignment
-        query = select(func.count(SwapRequest.id)).where(
-            SwapRequest.status == "completed",
-            (SwapRequest.assignment_from_id == assignment_id)
-            | (SwapRequest.assignment_to_id == assignment_id),
+        query = select(func.count(SwapRecord.id)).where(
+            SwapRecord.status == "completed",
+            (SwapRecord.assignment_from_id == assignment_id)
+            | (SwapRecord.assignment_to_id == assignment_id),
         )
         result = await self._execute(query)
         count = result.scalar()

@@ -107,18 +107,30 @@ export interface AuthCheckResponse {
  * @see logout - For clearing the session
  */
 export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
+  console.log('[auth.ts] login() called with username:', credentials.username)
+  console.log('[auth.ts] API base URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api (default)')
+
   // Create form data for OAuth2 password flow
   const formData = new URLSearchParams()
   formData.append('username', credentials.username)
   formData.append('password', credentials.password)
 
+  console.log('[auth.ts] Sending POST to /auth/login...')
+
   // Step 1: Authenticate and get token (set as httpOnly cookie)
-  const tokenResponse = await api.post<{ access_token: string; token_type: string }>('/auth/login', formData, {
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    withCredentials: true, // Required for cookies
-  })
+  let tokenResponse;
+  try {
+    tokenResponse = await api.post<{ access_token: string; token_type: string }>('/auth/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      withCredentials: true, // Required for cookies
+    })
+    console.log('[auth.ts] Login response received:', { status: 'success', hasToken: !!tokenResponse?.access_token })
+  } catch (loginError) {
+    console.error('[auth.ts] Login request FAILED:', loginError)
+    throw loginError
+  }
 
   // Step 2: Fetch user data using the newly set token
   try {
@@ -200,7 +212,15 @@ export async function logout(): Promise<void> {
  * @see validateToken - For checking if the session is still valid
  */
 export async function getCurrentUser(): Promise<User> {
-  return get<User>('/auth/me')
+  console.log('[auth.ts] getCurrentUser() - fetching /auth/me...')
+  try {
+    const user = await get<User>('/auth/me')
+    console.log('[auth.ts] getCurrentUser() - success:', { id: user?.id, username: user?.username })
+    return user
+  } catch (err) {
+    console.error('[auth.ts] getCurrentUser() - FAILED:', err)
+    throw err
+  }
 }
 
 /**
@@ -242,8 +262,10 @@ export async function getCurrentUser(): Promise<User> {
  */
 export async function checkAuth(): Promise<AuthCheckResponse> {
   try {
-    const response = await get<AuthCheckResponse>('/auth/check')
-    return response
+    // Use /auth/me instead of /auth/check (which doesn't exist on backend)
+    // Transform the User response into AuthCheckResponse format
+    const user = await get<User>('/auth/me')
+    return { authenticated: true, user }
   } catch (error) {
     // If request fails, user is not authenticated
     return { authenticated: false }
