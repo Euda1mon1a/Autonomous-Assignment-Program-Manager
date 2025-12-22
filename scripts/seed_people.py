@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Seed the database with real people from Airtable.
+"""Seed the database with sample people.
 
 Run with: python scripts/seed_people.py
+
+NOTE: Uses synthetic identifiers per DATA_SECURITY_POLICY.md
+Real personnel data should never be committed to the repository.
 """
 import sys
 
@@ -53,7 +56,7 @@ def main():
         {"name": "PGY1-06", "pgy": 1},
     ]
     for r in pgy1:
-        email = r["name"].lower().replace(" ", ".") + "@residency.mil"
+        email = r["name"].lower().replace("-", "") + "@example.mil"
         if create_person(
             {"name": r["name"], "type": "resident", "pgy_level": 1, "email": email},
             headers,
@@ -71,7 +74,7 @@ def main():
         {"name": "PGY2-06", "pgy": 2},
     ]
     for r in pgy2:
-        email = r["name"].lower().replace(" ", ".") + "@residency.mil"
+        email = r["name"].lower().replace("-", "") + "@example.mil"
         if create_person(
             {"name": r["name"], "type": "resident", "pgy_level": 2, "email": email},
             headers,
@@ -88,7 +91,7 @@ def main():
         {"name": "PGY3-05", "pgy": 3},
     ]
     for r in pgy3:
-        email = r["name"].lower().replace(" ", ".") + "@residency.mil"
+        email = r["name"].lower().replace("-", "") + "@example.mil"
         if create_person(
             {"name": r["name"], "type": "resident", "pgy_level": 3, "email": email},
             headers,
@@ -96,7 +99,6 @@ def main():
             created_count += 1
 
     # ==================== FACULTY (12) ====================
-    # FAC-CORE-04 excluded from assignments but still in system
     print("\n=== Creating Faculty ===")
     faculty = [
         {"name": "FAC-PD", "role": "pd"},
@@ -105,7 +107,7 @@ def main():
         {"name": "FAC-CORE-01", "role": "core"},
         {"name": "FAC-CORE-02", "role": "core"},
         {"name": "FAC-CORE-03", "role": "core"},
-        {"name": "FAC-CORE-04", "role": "core"},  # EXCLUDED from assignments
+        {"name": "FAC-CORE-04", "role": "core"},  # Example: excluded from assignments
         {"name": "FAC-CORE-05", "role": "core"},
         {"name": "FAC-CORE-06", "role": "core"},
         {"name": "FAC-SPORTS", "role": "sports_med"},
@@ -113,7 +115,7 @@ def main():
         {"name": "FAC-CHIEF", "role": "dept_chief"},
     ]
     for f in faculty:
-        email = f["name"].lower().replace(" ", ".") + "@hospital.mil"
+        email = f["name"].lower().replace("-", ".") + "@example.mil"
         if create_person(
             {
                 "name": f["name"],

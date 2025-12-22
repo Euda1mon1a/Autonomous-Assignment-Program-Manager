@@ -36,8 +36,8 @@
 - Cannot merge rotations with different sequences
 
 ##***REMOVED*** Assignment Rules
-- **FAC-CORE-04:** EXCLUDED from assignments
-- **Chu:** NOW ASSIGNABLE (exclusions removed)
+- **FAC-CORE-04:** EXCLUDED from assignments (example)
+- **FAC-CORE-06:** NOW ASSIGNABLE (exclusions removed)
 - **FAC-ADJUNCT-01:** Has specific exclusions
 
 ### Procedure Supervision System
@@ -88,20 +88,22 @@ Tracking implemented for:
 ## Sample Data
 
 ### Residents
-- PGY2-01 (PGY-2)
-- You (PGY-3)
-- PGY1-01 (PGY-1)
-- PGY1-02 (PGY-1)
-- PGY3-02 (PGY-3)
+- PGY2-01
+- PGY3-01
+- PGY1-01
+- PGY1-02
+- PGY3-02
 - ... (17 total)
 
 ##***REMOVED***
 - FAC-PD
 - FAC-APD
 - FAC-OIC
-- Montgomery
+- FAC-CORE-01
 - FAC-CORE-02
 - ... (12 total)
+
+> **Note:** Real names removed per DATA_SECURITY_POLICY.md
 
 ---
 
