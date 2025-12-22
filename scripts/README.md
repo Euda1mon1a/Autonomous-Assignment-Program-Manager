@@ -1,184 +1,122 @@
 # Scripts
 
-Utility scripts for the Residency Scheduler application.
+Utility scripts for database seeding, maintenance, and operations.
 
 ## Available Scripts
 
-### Data Import/Export
+### generate_blocks.py
 
-| Script | Description |
-|--------|-------------|
-| **import_excel.py** | Import absences and schedules from Excel files |
-| **seed_people.py** | Seed the database with test people data |
+Generates scheduling blocks (AM/PM half-days) for the academic year. Each day has 2 blocks: one for AM and one for PM.
 
-### System Operations
+**Academic Year Structure:**
+- 13 blocks × 28 days = 364 days
+- Academic year runs July 1 to June 29 (following year)
+- Each block is exactly 4 weeks (28 days)
 
-| Script | Description |
-|--------|-------------|
-| **backup-db.sh** | Database backup utility |
-| **health-check.sh** | System health check |
-| **start-celery.sh** | Start Celery worker and beat scheduler |
-| **pre-deploy-validate.sh** | Pre-deployment validation checks |
-| **audit-fix.sh** | Fix npm audit issues |
-
----
-
-## import_excel.py
-
-Import leave/absences and pre-assigned rotations from Excel files.
-
-### Usage
+**Usage:**
 
 ```bash
-# Validate without making changes
-python scripts/import_excel.py schedule.xlsx --dry-run
+# Generate blocks for a single block period
+python scripts/generate_blocks.py --start 2026-03-10 --end 2026-04-06 --block-number 10
 
-# Import with verbose logging
-python scripts/import_excel.py absences.xlsx --verbose
+# Generate full academic year 2025-2026 (July 1, 2025 - June 29, 2026)
+python scripts/generate_blocks.py --academic-year 2025
 
-# Use custom database
-python scripts/import_excel.py data.xlsx --database-url "postgresql://..."
+# Dry run to preview what would be created
+python scripts/generate_blocks.py --academic-year 2025 --dry-run
+
+# Verbose mode shows each block as it's created
+python scripts/generate_blocks.py --academic-year 2025 --verbose
 ```
 
-### Options
+**Features:**
+- Idempotent: Skips blocks that already exist in database
+- Automatically detects weekends (Saturday/Sunday)
+- Supports dry-run mode for previewing changes
+- Verbose mode for detailed output
 
-- `--dry-run` - Parse and validate without creating records
-- `--verbose, -v` - Enable detailed logging
-- `--database-url` - Database connection string (defaults to DATABASE_URL)
+**Block Dates (Academic Year 2025-2026):**
 
-### Supported Formats
+| Block | Start Date | End Date |
+|-------|------------|----------|
+| 1 | Jul 01, 2025 | Jul 28, 2025 |
+| 2 | Jul 29, 2025 | Aug 25, 2025 |
+| 3 | Aug 26, 2025 | Sep 22, 2025 |
+| 4 | Sep 23, 2025 | Oct 20, 2025 |
+| 5 | Oct 21, 2025 | Nov 17, 2025 |
+| 6 | Nov 18, 2025 | Dec 15, 2025 |
+| 7 | Dec 16, 2025 | Jan 12, 2026 |
+| 8 | Jan 13, 2026 | Feb 09, 2026 |
+| 9 | Feb 10, 2026 | Mar 09, 2026 |
+| 10 | Mar 10, 2026 | Apr 06, 2026 |
+| 11 | Apr 07, 2026 | May 04, 2026 |
+| 12 | May 05, 2026 | Jun 01, 2026 |
+| 13 | Jun 02, 2026 | Jun 29, 2026 |
 
-**Absence sheets** with columns:
-- Person/Name, Type (VAC/SICK/DEP/etc.), Start Date, End Date, Notes
+### seed_people.py
 
-**Schedule sheets** (legacy format):
-- AM/PM columns per day, person names in column E
+Seeds the database with test people (residents and faculty) via the API.
 
-### Absence Type Abbreviations
-
-| Abbreviation | Type |
-|--------------|------|
-| VAC | Vacation |
-| SICK | Sick Leave |
-| MED | Medical |
-| CONF | Conference |
-| DEP | Deployment |
-| TDY | Temporary Duty |
-| FEM | Family Emergency |
-| PER | Personal |
-| BER | Bereavement |
-| MAT/PAT | Maternity/Paternity |
-
-See [User Guide - Importing Data](../docs/user-guide/imports.md) for complete documentation.
-
----
-
-## seed_people.py
-
-Seed the database with test residents and faculty for development.
-
-### Usage
+**Usage:**
 
 ```bash
-# Requires backend server running
+# Requires the API to be running
 python scripts/seed_people.py
 ```
 
 Creates:
-- 6 PGY-1 Residents
-- 6 PGY-2 Residents
-- 6 PGY-3 Residents
-- 10 Faculty members with various roles
+- 6 PGY-1 residents
+- 6 PGY-2 residents
+- 6 PGY-3 residents
+- 10 faculty members with various roles
 
----
+## Shell Scripts
 
-## start-celery.sh
+### start-celery.sh
 
-Start Celery background task workers.
-
-### Usage
+Starts Celery worker and/or beat scheduler.
 
 ```bash
-# Start both worker and beat scheduler
-./scripts/start-celery.sh both
-
-# Start worker only
-./scripts/start-celery.sh worker
-
-# Start beat scheduler only
-./scripts/start-celery.sh beat
+./scripts/start-celery.sh both    # Start worker + beat
+./scripts/start-celery.sh worker  # Worker only
+./scripts/start-celery.sh beat    # Scheduler only
 ```
 
----
+### backup-db.sh
 
-## backup-db.sh
+Creates database backups with configurable retention.
 
-Create database backups.
+### health-check.sh
 
-### Usage
+Runs system health checks for deployment verification.
+
+### pre-deploy-validate.sh
+
+Validates system state before deployment.
+
+### audit-fix.sh
+
+Fixes npm audit issues in the frontend.
+
+## Running Scripts
+
+Most Python scripts require the backend environment:
 
 ```bash
-./scripts/backup-db.sh
+# From project root
+cd backend
+source venv/bin/activate  # or your virtualenv activation
+python ../scripts/script_name.py [args]
+
+# Or with Docker
+docker-compose exec backend python /app/scripts/script_name.py [args]
 ```
 
-Creates timestamped backup in `backups/` directory.
+## Testing
 
----
-
-## health-check.sh
-
-Run system health checks.
-
-### Usage
+Tests for scripts are located in `backend/tests/scripts/`:
 
 ```bash
-./scripts/health-check.sh
+cd backend
+pytest tests/scripts/ -v
 ```
-
-Checks:
-- Database connectivity
-- Redis connectivity
-- API health endpoints
-- Celery worker status
-
----
-
-## pre-deploy-validate.sh
-
-Validate the system before deployment.
-
-### Usage
-
-```bash
-./scripts/pre-deploy-validate.sh
-```
-
-Validates:
-- Environment variables
-- Database migrations
-- Static assets
-- Configuration
-
----
-
-## Prerequisites
-
-Most Python scripts require:
-
-1. **Backend virtual environment activated**:
-   ```bash
-   cd backend
-   source venv/bin/activate
-   ```
-
-2. **Dependencies installed**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Database running and accessible**
-
-Shell scripts may require:
-- Docker running (for containerized services)
-- PostgreSQL client tools (`pg_dump`, `psql`)
-- Redis CLI (`redis-cli`)
