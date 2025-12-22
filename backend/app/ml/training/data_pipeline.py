@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from app.models.assignment import Assignment
 from app.models.block import Block
@@ -36,7 +37,7 @@ class TrainingDataPipeline:
     - Generates training datasets for all ML models
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession | Session):
         """
         Initialize training data pipeline.
 
@@ -44,6 +45,12 @@ class TrainingDataPipeline:
             db: Async database session
         """
         self.db = db
+
+    async def _execute(self, query):
+        """Execute a query on either async or sync database sessions."""
+        if isinstance(self.db, AsyncSession):
+            return await self.db.execute(query)
+        return self.db.execute(query)
 
     async def extract_preference_training_data(
         self,
@@ -80,7 +87,7 @@ class TrainingDataPipeline:
             .where(Block.date <= end_date.date())
         )
 
-        result = await self.db.execute(query)
+        result = await self._execute(query)
         rows = result.all()
 
         logger.info(f"Found {len(rows)} historical assignments")
@@ -173,7 +180,7 @@ class TrainingDataPipeline:
 
         # Get all people
         people_query = select(Person)
-        result = await self.db.execute(people_query)
+        result = await self._execute(people_query)
         people = result.scalars().all()
 
         features_list = []
@@ -189,7 +196,7 @@ class TrainingDataPipeline:
                 .where(Block.date <= end_date.date())
             )
 
-            assignments_result = await self.db.execute(assignments_query)
+            assignments_result = await self._execute(assignments_query)
             assignment_rows = assignments_result.all()
 
             if not assignment_rows:
@@ -289,7 +296,7 @@ class TrainingDataPipeline:
             .where(Block.date <= end_date.date())
         )
 
-        result = await self.db.execute(query)
+        result = await self._execute(query)
         rows = result.all()
 
         features_list = []
@@ -305,7 +312,7 @@ class TrainingDataPipeline:
                 .where(Assignment.id != assignment.id)
             )
 
-            existing_result = await self.db.execute(existing_query)
+            existing_result = await self._execute(existing_query)
             existing_rows = existing_result.all()
 
             # Person data
@@ -571,9 +578,11 @@ class TrainingDataPipeline:
         """Check if an assignment was involved in a swap."""
         # Query swap requests related to this assignment
         query = select(func.count(SwapRequest.id)).where(
-            SwapRequest.status == "completed"
+            SwapRequest.status == "completed",
+            (SwapRequest.assignment_from_id == assignment_id)
+            | (SwapRequest.assignment_to_id == assignment_id),
         )
-        result = await self.db.execute(query)
+        result = await self._execute(query)
         count = result.scalar()
         return count > 0
 
@@ -589,7 +598,7 @@ class TrainingDataPipeline:
             .where(ConflictAlert.created_at >= start_date)
             .where(ConflictAlert.created_at <= end_date)
         )
-        result = await self.db.execute(query)
+        result = await self._execute(query)
         count = result.scalar()
         return count > 0
 
@@ -599,7 +608,7 @@ class TrainingDataPipeline:
         query = select(func.count(ConflictAlert.id)).where(
             ConflictAlert.severity.in_(["warning", "error", "critical"])
         )
-        result = await self.db.execute(query)
+        result = await self._execute(query)
         count = result.scalar()
         # Randomly assign some as conflicts for training (simplified)
         return (count % 5) == 0  # Simplified heuristic
