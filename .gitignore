@@ -101,3 +101,7 @@ docs/data/*.json
 *.dump
 *.sql
 !backend/alembic/**/*.sql
+
+# Local seed script with real PII
+scripts/seed_people_local.py
+docs/data/people.json
