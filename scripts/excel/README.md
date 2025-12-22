@@ -12,6 +12,82 @@ VBA module that automatically maintains CSV "twins" of Excel worksheets. When yo
 - **Manual trigger**: Ctrl+Shift+E to force export anytime
 - **Status feedback**: Message box shows count of exported files
 
+---
+
+## For Program Leadership & Administrators
+
+### What This Does
+
+This tool creates a bridge between your Excel schedule workbooks and the Residency Scheduler web application. Instead of manually exporting each worksheet as a CSV file every time you make changes, the system now does it automatically.
+
+**Before:** Save Excel → File → Save As → CSV → Navigate to folder → Save → Repeat for each sheet → Upload to scheduler
+
+**After:** Save Excel → Done (CSV files appear automatically)
+
+### Why This Matters
+
+| Benefit | Impact |
+|---------|--------|
+| **Eliminates manual steps** | No more "Save As CSV" for each worksheet |
+| **Always current data** | Web app always has your latest schedule |
+| **Reduces errors** | No risk of uploading outdated files |
+| **Saves time** | 5-10 minutes saved per schedule update |
+| **Works silently** | Just save normally - CSV files appear automatically |
+
+### What You'll See
+
+When you save your schedule workbook, CSV files appear in the same folder:
+
+```
+📁 Schedules/
+   📄 Block10_Schedule.xlsm        ← Your Excel file
+   📄 Block10_Schedule_Residents.csv   ← Auto-generated
+   📄 Block10_Schedule_Faculty.csv     ← Auto-generated
+   📄 Block10_Schedule_Absences.csv    ← Auto-generated
+```
+
+These CSV files are ready to import into the Residency Scheduler.
+
+### One-Time Setup (5 minutes)
+
+Have your IT support or a tech-comfortable colleague perform these steps once:
+
+1. Open your master schedule workbook in Excel
+2. Press **Alt+F11** to open the code editor
+3. Go to **File → Import File** and select `CSVAutoExport.bas`
+4. Find "ThisWorkbook" in the left panel and paste in the event code
+5. Save the workbook as `.xlsm` (macro-enabled format)
+
+Detailed instructions are in the [Quick Start](#quick-start) section below.
+
+### Daily Use
+
+**Automatic mode:** Just save your workbook normally (Ctrl+S or File → Save). CSV files are created/updated silently.
+
+**Manual export:** Press **Ctrl+Shift+E** anytime to force an export and see a confirmation message.
+
+### Common Questions
+
+**Q: Do I need to change how I edit the schedule?**
+A: No. Edit your Excel file exactly as before. The only change is saving as `.xlsm` instead of `.xlsx`.
+
+**Q: Where do the CSV files go?**
+A: Same folder as your Excel file. They're named `{YourWorkbook}_{SheetName}.csv`.
+
+**Q: What if I have hidden sheets?**
+A: Hidden sheets are skipped. Only visible worksheets are exported.
+
+**Q: Will this slow down saving?**
+A: Barely noticeable. Export adds 1-2 seconds for a typical schedule workbook.
+
+**Q: What about security?**
+A: The macro only reads your cells and writes CSV files locally. It doesn't access the internet or send data anywhere.
+
+**Q: Can multiple people use this?**
+A: Yes. Each person needs the macro installed in their copy of the workbook, or use the global installation option.
+
+---
+
 ## Quick Start
 
 ### Option 1: Add to a Specific Workbook
