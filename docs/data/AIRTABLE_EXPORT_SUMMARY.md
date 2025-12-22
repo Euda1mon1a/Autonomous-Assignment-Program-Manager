@@ -36,9 +36,9 @@
 - Cannot merge rotations with different sequences
 
 ***REMOVED******REMOVED******REMOVED*** Faculty Assignment Rules
-- **Faculty-A-Last:** EXCLUDED from assignments
-- **Chu:** NOW ASSIGNABLE (exclusions removed)
-- **Beckwith:** Has specific exclusions
+- **FAC-CORE-04:** EXCLUDED from assignments (example)
+- **FAC-CORE-06:** NOW ASSIGNABLE (exclusions removed)
+- **FAC-ADJUNCT-01:** Has specific exclusions
 
 ***REMOVED******REMOVED******REMOVED*** Procedure Supervision System
 Tracking implemented for:
@@ -96,11 +96,11 @@ Tracking implemented for:
 - ... (17 total)
 
 ***REMOVED******REMOVED******REMOVED*** Faculty
-- Faculty-C-Last
-- Faculty-D-Last
-- Faculty-I-Last
-- Montgomery
-- Faculty-J-Last
+- FAC-PD
+- FAC-APD
+- FAC-OIC
+- FAC-CORE-01
+- FAC-CORE-02
 - ... (12 total)
 
 ---
