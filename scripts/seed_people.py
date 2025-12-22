@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
 """Seed the database with test people."""
-import requests
 import json
+import os
+import requests
 import sys
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = os.getenv("SEED_BASE_URL", "http://localhost:8000")
+
+# Read credentials from environment (allows override without editing code)
+admin_username = os.getenv("SEED_ADMIN_USERNAME", "admin")
+admin_password = os.getenv("SEED_ADMIN_PASSWORD", "admin123")
 
 # Login to get token
 login_resp = requests.post(
     f"{BASE_URL}/api/v1/auth/login/json",
-    json={"username": "admin", "password": "AdminPassword123!"}
+    json={"username": admin_username, "password": admin_password}
 )
 if login_resp.status_code != 200:
     print(f"Login failed: {login_resp.text}")
