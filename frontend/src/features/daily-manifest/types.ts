@@ -50,10 +50,11 @@ export interface LocationManifest {
 
 export interface DailyManifestData {
   date: string;
-  time_of_day: 'AM' | 'PM' | 'ALL';
+  time_of_day: 'AM' | 'PM' | 'ALL' | null;
   locations: LocationManifest[];
   generated_at: string;
-  summary: {
+  // Summary is computed client-side from locations, not returned by backend
+  summary?: {
     total_locations: number;
     total_staff: number;
     total_residents: number;

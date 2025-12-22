@@ -14,6 +14,8 @@ from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.person import (
+    BulkImportResult,
+    BulkPersonImport,
     PersonCreate,
     PersonListResponse,
     PersonResponse,
@@ -83,6 +85,51 @@ def create_person(
     """Create a new person (resident or faculty). Requires authentication."""
     controller = PersonController(db)
     return controller.create_person(person_in)
+
+
+@router.post("/bulk", response_model=BulkImportResult, status_code=201)
+def bulk_import_people(
+    import_data: BulkPersonImport,
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Bulk import people (residents and faculty).
+
+    Accepts a list of person records and creates them in batch.
+    Returns success/failure counts and any errors encountered.
+    """
+    controller = PersonController(db)
+
+    success_count = 0
+    error_count = 0
+    errors = []
+    imported_ids = []
+
+    for idx, person_data in enumerate(import_data.items):
+        try:
+            result = controller.create_person(person_data)
+            success_count += 1
+            imported_ids.append(str(result.id))
+        except Exception as e:
+            error_count += 1
+            errors.append({
+                "row": idx + 2,  # +2 for header row and 0-indexing
+                "column": "unknown",
+                "value": person_data.name,
+                "message": str(e),
+                "severity": "error",
+            })
+
+    return BulkImportResult(
+        success=error_count == 0,
+        totalProcessed=len(import_data.items),
+        successCount=success_count,
+        errorCount=error_count,
+        skippedCount=0,
+        errors=errors,
+        importedIds=imported_ids,
+    )
 
 
 @router.put("/{person_id}", response_model=PersonResponse)
