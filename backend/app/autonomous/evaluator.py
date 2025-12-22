@@ -286,7 +286,7 @@ class ScheduleEvaluator:
 
         # 1. ACGME Compliance (hard constraints)
         acgme_component, acgme_violations = self._evaluate_acgme(
-            start_date, end_date
+            assignments, start_date, end_date
         )
         components.append(acgme_component)
         violations.extend(acgme_violations)
@@ -351,6 +351,7 @@ class ScheduleEvaluator:
 
     def _evaluate_acgme(
         self,
+        assignments: list[Assignment],
         start_date: date,
         end_date: date,
     ) -> tuple[ScoreComponent, list[ViolationDetail]]:
@@ -362,7 +363,11 @@ class ScheduleEvaluator:
         violations: list[ViolationDetail] = []
 
         # Run ACGME validation
-        result = self.acgme_validator.validate_all(start_date, end_date)
+        result = self.acgme_validator.validate_all(
+            start_date=start_date,
+            end_date=end_date,
+            assignments=assignments,
+        )
 
         # Convert violations to our format
         for v in result.violations:
