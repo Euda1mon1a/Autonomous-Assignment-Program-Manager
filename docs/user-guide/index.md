@@ -52,6 +52,11 @@ ACGME compliance monitoring and violations.
 </div>
 
 <div class="feature-card" markdown>
+***REMOVED******REMOVED******REMOVED*** :material-upload: [Importing Data](imports.md)
+Import absences and schedules from Excel files.
+</div>
+
+<div class="feature-card" markdown>
 ***REMOVED******REMOVED******REMOVED*** :material-download: [Exporting Data](exports.md)
 Export to Excel, PDF, and calendar formats.
 </div>
