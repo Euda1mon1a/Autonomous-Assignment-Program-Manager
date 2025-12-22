@@ -92,8 +92,9 @@ for f_i, faculty in enumerate(context.faculty):
 variables["faculty_call"] = call_vars
 ```
 **Constraints:**
-- Exactly 1 faculty per weekend
-- Equitable: each faculty ~same count/year
+- **FMIT attending auto-assigned** Fri AM → Sun noon for their week
+- Other faculty rotate remaining weekends (eligible if not on leave)
+- Equitable: each non-FMIT faculty ~same count/year
 - If on call, blocked from clinic Friday PM and Monday AM
 
 ### 6. Extract Faculty Assignments
