@@ -195,7 +195,12 @@ jobs:
       - name: Check JSON files
         run: |
           echo "Validating JSON files..."
-          find . -name "*.json" -not -path "*/node_modules/*" -not -path "*/.git/*" | while read file; do
+          # Skip .vscode and .zed directories - they use JSONC (JSON with comments)
+          find . -name "*.json" \
+            -not -path "*/node_modules/*" \
+            -not -path "*/.git/*" \
+            -not -path "*/.vscode/*" \
+            -not -path "*/.zed/*" | while read file; do
             if python3 -c "import json; json.load(open('$file'))" 2>/dev/null; then
               echo "Valid: $file"
             else
