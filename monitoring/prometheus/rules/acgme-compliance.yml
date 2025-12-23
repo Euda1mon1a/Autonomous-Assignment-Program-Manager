@@ -182,11 +182,7 @@ groups:
           summary: "PGY-1 supervision VIOLATION"
           description: "VIOLATION: PGY-1 resident {{ $labels.resident_id }} performed {{ $value }} procedures without required supervision."
 
-<<<<<<< HEAD
       # Faculty Coverage Gap
-=======
-      ***REMOVED*** Coverage Gap
->>>>>>> origin/docs/session-14-summary
       - alert: ACGMEFacultyCoverageGap
         expr: |
           scheduled_blocks_without_faculty_gauge{job="residency-scheduler-backend"} > 0
