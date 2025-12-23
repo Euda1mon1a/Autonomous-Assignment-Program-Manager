@@ -1,4 +1,4 @@
-# Medical Student Scheduling Requirements
+# Medical Student & Rotating Intern Scheduling Requirements
 
 > **Status:** Draft - Pending Implementation
 > **Created:** 2025-12-23
@@ -9,7 +9,25 @@
 
 ## Overview
 
-Support scheduling for up to **7 concurrent medical students** on Family Medicine rotation. Med students have different constraints than residents:
+Support scheduling for up to **7 concurrent medical students** plus rotating interns on Family Medicine rotation. These learners have different constraints than FM residents:
+
+### Learner Types
+
+| Type | Abbreviation | FMIT Required | Notes |
+|------|--------------|---------------|-------|
+| Medical Student | MS | Yes (1 week) | MS3/MS4 on FM clerkship |
+| Transitional Year Intern | TY | No | Non-FM intern rotating through |
+| Psychiatry Intern | PSYCH | No | Non-FM intern rotating through |
+
+### Key Scheduling Concept
+
+**Learners do NOT have their own clinic slots.** They are **paired with existing attending/resident clinic sessions**:
+
+- Attending has clinic → assign 1-2 learners to shadow/see patients with them
+- Learners "help see clinic" - e.g., 2 med students each see 2 patients in attending's clinic
+- This is an **overlay** on existing schedule, not separate slots
+
+Med students have different constraints than residents:
 
 - No LCME hour tracking (unlike ACGME for residents)
 - Max 2 learners per physician (supervision ratio)
@@ -26,6 +44,9 @@ Support scheduling for up to **7 concurrent medical students** on Family Medicin
 | **PC** | Post Call | Day after overnight call; lighter duties or recovery |
 | **ASM** | Academic Sports Medicine | Wednesday AM didactic/clinic session for all med students |
 | **LCME** | Liaison Committee on Medical Education | Accrediting body for med schools (does NOT track hours like ACGME) |
+| **TY** | Transitional Year Intern | Non-FM intern rotating through; same schedule as MS but no FMIT |
+| **PSYCH** | Psychiatry Intern | Psychiatry intern rotating through; same schedule as MS but no FMIT |
+| **MS** | Medical Student | MS3 or MS4 on Family Medicine clerkship |
 
 ---
 
@@ -117,24 +138,66 @@ Need 7 distinct rotation templates for up to 7 concurrent med students. Template
 
 ### Person Model
 
-Add `med_student` as valid person type:
+Add learner types to valid person types:
 
 ```python
 # Current constraint
 CheckConstraint("type IN ('resident', 'faculty')", name="check_person_type")
 
-# New constraint
-CheckConstraint("type IN ('resident', 'faculty', 'med_student')", name="check_person_type")
+# New constraint - add learner types
+CheckConstraint(
+    "type IN ('resident', 'faculty', 'med_student', 'rotating_intern')",
+    name="check_person_type"
+)
 ```
 
-### New Fields for Med Students
+### New Fields for Learners
 
 ```python
-# Med student specific fields
-med_school = Column(String(255))  # e.g., "USUHS", "Harvard"
-ms_year = Column(Integer)  # 3 or 4 (MS3, MS4)
+# Learner-specific fields (med students and rotating interns)
+learner_type = Column(String(50))  # 'MS', 'TY', 'PSYCH' (for rotating_intern type)
+med_school = Column(String(255))  # e.g., "USUHS", "Harvard" (for med_students)
+ms_year = Column(Integer)  # 3 or 4 (MS3, MS4) - null for rotating interns
 rotation_start_date = Column(Date)  # When their FM rotation starts
 rotation_end_date = Column(Date)  # When their FM rotation ends
+requires_fmit = Column(Boolean, default=True)  # True for MS, False for TY/PSYCH
+```
+
+### Learner Assignment Model (NEW)
+
+Since learners are **paired with existing clinic assignments** (not their own slots), we need a separate assignment model:
+
+```python
+class LearnerAssignment(Base):
+    """
+    Pairs a learner (med student, TY, PSYCH) with an existing clinic assignment.
+
+    This is an OVERLAY on the main schedule - learners don't have their own
+    clinic slots, they are assigned to work with someone who already has one.
+    """
+    __tablename__ = "learner_assignments"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+
+    # The learner being assigned
+    learner_id = Column(GUID(), ForeignKey("people.id"), nullable=False)
+
+    # The existing assignment they're paired with (attending/resident's clinic)
+    parent_assignment_id = Column(GUID(), ForeignKey("assignments.id"), nullable=False)
+
+    # Or for non-clinic activities (FMIT, ASM, procedures)
+    block_id = Column(GUID(), ForeignKey("blocks.id"))
+    activity_type = Column(String(50))  # 'FMIT', 'ASM', 'procedures', 'clinic'
+
+    # Relationships
+    learner = relationship("Person", foreign_keys=[learner_id])
+    parent_assignment = relationship("Assignment")
+    block = relationship("Block")
+
+    __table_args__ = (
+        # Max 2 learners per parent assignment
+        # (enforced at application level, not DB constraint)
+    )
 ```
 
 ### Rotation Templates

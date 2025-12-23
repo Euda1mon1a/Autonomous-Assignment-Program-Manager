@@ -33,3 +33,5 @@
 *[LCME]: Liaison Committee on Medical Education
 *[MS]: Medical Student
 *[PC]: Post Call
+*[TY]: Transitional Year Intern
+*[PSYCH]: Psychiatry Intern
