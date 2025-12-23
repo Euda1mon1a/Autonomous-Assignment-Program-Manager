@@ -4,11 +4,66 @@ These rules apply to Claude Code, Codex, and any AI agent working in this repo.
 
 ---
 
+***REMOVED******REMOVED*** The Sacred Timeline: `origin/main`
+
+> **`origin/main` is the single source of truth.** All PRs target `origin/main`. No exceptions.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     SACRED TIMELINE                             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   origin/main  ═══════════════════════════════════════════►     │
+│        │                                                        │
+│        │  ← All PRs merge here                                  │
+│        │  ← All feature branches created from here              │
+│        │  ← Never push directly (use PR)                        │
+│        │  ← Never force push                                    │
+│        │                                                        │
+│   ╔════╧═════╗    ╔══════════════╗    ╔══════════════╗         │
+│   ║ claude/  ║    ║ claude/      ║    ║ feature/     ║         │
+│   ║ fix-xyz  ║    ║ add-abc      ║    ║ user-task    ║         │
+│   ╚══════════╝    ╚══════════════╝    ╚══════════════╝         │
+│        │               │                    │                   │
+│        └───────────────┴────────────────────┘                   │
+│                        │                                        │
+│                        ▼                                        │
+│              PR → Review → Merge to origin/main                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+***REMOVED******REMOVED******REMOVED*** Key Principles
+
+1. **`origin/main` = Production Truth**
+   - Always fetch from `origin/main` before starting work
+   - Always create PRs that target `origin/main`
+   - Never reference a local `main` without syncing to `origin/main` first
+
+2. **Every Change Gets a PR**
+   - IDE completes work → commits → pushes to feature branch → creates PR
+   - PR targets `origin/main` (not local main, not any other branch)
+   - User/Web reviews PR before merge
+
+3. **Sync Protocol**
+   ```bash
+   ***REMOVED*** Before starting any work
+   git fetch origin main
+   git checkout -b claude/new-task origin/main
+
+   ***REMOVED*** Before creating PR
+   git fetch origin main
+   git rebase origin/main
+   git push -u origin claude/new-task
+   ```
+
+---
+
 ***REMOVED******REMOVED*** Core Policy
 
 - Full autonomy for local work is allowed.
-- All changes destined for GitHub must go through a PR.
-- No direct commits or pushes to `main` / `origin/main` unless explicitly approved.
+- All changes destined for GitHub must go through a PR targeting `origin/main`.
+- No direct commits or pushes to `origin/main` unless explicitly approved.
 
 ---
 
