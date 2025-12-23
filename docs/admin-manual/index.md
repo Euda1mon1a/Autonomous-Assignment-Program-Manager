@@ -133,6 +133,19 @@ If the system says "main and origin are aligned," your local copy matches the of
 
 ---
 
+## Parallel AI Sessions (What “Split Terminal” Really Means)
+
+If you are running multiple AI tools (e.g., Claude Web and Codex), they do **not** share a live terminal. Each session sees only what is on disk when it runs its own commands.
+
+Practical guidance:
+
+- Assume AI sessions are **independent** unless you explicitly coordinate.
+- If two sessions are working on the same files, expect conflicts.
+- Always check `git status -sb` before and after AI runs.
+- Prefer one “driver” session at a time for changes that touch the same files.
+
+---
+
 ## Security Considerations
 
 !!! danger "Production Security"
