@@ -6,7 +6,7 @@
  * Administrative interface for managing system users, roles, and permissions.
  * Provides CRUD operations for users and role assignment capabilities.
  */
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   Users,
   UserPlus,
@@ -386,6 +386,19 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
     role: user?.role || 'resident',
     sendInvite: true,
   });
+
+  // Reset form state when user prop changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        email: user?.email || '',
+        firstName: user?.firstName || '',
+        lastName: user?.lastName || '',
+        role: user?.role || 'resident',
+        sendInvite: true,
+      });
+    }
+  }, [user, isOpen]);
 
   if (!isOpen) return null;
 
