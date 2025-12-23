@@ -37,7 +37,6 @@ export function DailyManifest() {
     );
   });
 
-<<<<<<< HEAD
   // Compute summary from locations (backend returns per-location summaries)
   const summary = data?.locations.reduce(
     (acc, loc) => ({
@@ -49,8 +48,6 @@ export function DailyManifest() {
     { total_locations: 0, total_staff: 0, total_residents: 0, total_faculty: 0 }
   );
 
-=======
->>>>>>> origin/docs/session-14-summary
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -121,11 +118,7 @@ export function DailyManifest() {
       </div>
 
       {/* Summary Stats */}
-<<<<<<< HEAD
       {summary && (
-=======
-      {data && (
->>>>>>> origin/docs/session-14-summary
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
             <div className="flex items-center gap-3">
@@ -135,11 +128,7 @@ export function DailyManifest() {
               <div>
                 <p className="text-sm text-gray-600">Locations</p>
                 <p className="text-2xl font-bold text-gray-900">
-<<<<<<< HEAD
                   {summary.total_locations}
-=======
-                  {data.summary.total_locations}
->>>>>>> origin/docs/session-14-summary
                 </p>
               </div>
             </div>
@@ -153,11 +142,7 @@ export function DailyManifest() {
               <div>
                 <p className="text-sm text-gray-600">Total Staff</p>
                 <p className="text-2xl font-bold text-gray-900">
-<<<<<<< HEAD
                   {summary.total_staff}
-=======
-                  {data.summary.total_staff}
->>>>>>> origin/docs/session-14-summary
                 </p>
               </div>
             </div>
@@ -171,11 +156,7 @@ export function DailyManifest() {
               <div>
                 <p className="text-sm text-gray-600">Residents</p>
                 <p className="text-2xl font-bold text-gray-900">
-<<<<<<< HEAD
                   {summary.total_residents}
-=======
-                  {data.summary.total_residents}
->>>>>>> origin/docs/session-14-summary
                 </p>
               </div>
             </div>
@@ -189,11 +170,7 @@ export function DailyManifest() {
               <div>
                 <p className="text-sm text-gray-600">Faculty</p>
                 <p className="text-2xl font-bold text-gray-900">
-<<<<<<< HEAD
                   {summary.total_faculty}
-=======
-                  {data.summary.total_faculty}
->>>>>>> origin/docs/session-14-summary
                 </p>
               </div>
             </div>

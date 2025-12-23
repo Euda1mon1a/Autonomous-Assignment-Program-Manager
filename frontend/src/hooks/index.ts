@@ -121,6 +121,37 @@ export {
 } from './useSwaps'
 
 // ============================================================================
+// Admin Scheduling Hooks
+// ============================================================================
+export {
+  useScheduleRuns,
+  useScheduleRun,
+  useRunComparison,
+  useConstraintConfigs,
+  useValidateConfiguration,
+  useGenerateScheduleRun,
+  useScenarioPresets,
+  useRunQueue,
+  useQueueExperiments,
+  useCancelExperiment,
+  useScheduleMetrics,
+  useMetricsTrend,
+  useLockedAssignments,
+  useLockAssignment,
+  useUnlockAssignment,
+  useEmergencyHolidays,
+  useCreateEmergencyHoliday,
+  useDeleteEmergencyHoliday,
+  useRollbackPoints,
+  useCreateRollbackPoint,
+  useRevertToRollbackPoint,
+  useSyncMetadata,
+  useTriggerSync,
+  useSeedCleanup,
+  adminSchedulingKeys,
+} from './useAdminScheduling'
+
+// ============================================================================
 // Shared Types
 // ============================================================================
 export type { ListResponse } from './useSchedule'
