@@ -18,6 +18,9 @@ import {
   BarChart3,
   FileUp,
   ClipboardList,
+  Beaker,
+  Activity,
+  Shield,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { MobileNav } from './MobileNav'
@@ -45,6 +48,9 @@ const navItems: NavItem[] = [
   { href: '/import-export', label: 'Import/Export', icon: FileUp },
   { href: '/help', label: 'Help', icon: HelpCircle },
   { href: '/admin/scheduling', label: 'Lab', icon: Beaker, adminOnly: true },
+  { href: '/admin/users', label: 'Users', icon: Shield, adminOnly: true },
+  { href: '/admin/audit', label: 'Audit', icon: FileText, adminOnly: true },
+  { href: '/admin/health', label: 'Health', icon: Activity, adminOnly: true },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ]
 
