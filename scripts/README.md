@@ -53,6 +53,33 @@ python scripts/generate_blocks.py --academic-year 2025 --verbose
 | 12 | May 05, 2026 | Jun 01, 2026 |
 | 13 | Jun 02, 2026 | Jun 30, 2026 |
 
+### check-ai-assistant-usage.py
+
+Checks for mixed AI assistant commits on the current Git branch. Helps prevent conflicts when using multiple AI coding assistants (Claude Code, GitHub Copilot, Codex, etc.) simultaneously.
+
+**Usage:**
+
+```bash
+# Basic check
+python scripts/check-ai-assistant-usage.py
+
+# Strict mode (exits non-zero if issues found, for CI/hooks)
+python scripts/check-ai-assistant-usage.py --strict
+
+# Check more history (default: 20 commits)
+python scripts/check-ai-assistant-usage.py --commits 50
+
+# Quiet mode (only show warnings)
+python scripts/check-ai-assistant-usage.py --quiet
+```
+
+**What It Detects:**
+- Interleaved AI commits (e.g., `claude → codex → claude` without human consolidation)
+- Multiple AI assistants used on the same branch
+- Missing consolidation commits between AI sessions
+
+See [AI Assistant Guardrails](../docs/development/ai-assistant-guardrails.md) for full documentation.
+
 ### seed_people.py
 
 Seeds the database with test people (residents and faculty) via the API.
