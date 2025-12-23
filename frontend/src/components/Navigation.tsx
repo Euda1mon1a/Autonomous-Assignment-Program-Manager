@@ -44,6 +44,7 @@ const navItems: NavItem[] = [
   { href: '/absences', label: 'Absences', icon: CalendarOff },
   { href: '/import-export', label: 'Import/Export', icon: FileUp },
   { href: '/help', label: 'Help', icon: HelpCircle },
+  { href: '/admin/scheduling', label: 'Lab', icon: Beaker, adminOnly: true },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ]
 

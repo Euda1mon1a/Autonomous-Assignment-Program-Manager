@@ -4,6 +4,9 @@
 // Re-export all types and enums from api.ts
 export * from './api';
 
+// Re-export admin scheduling types
+export * from './admin-scheduling';
+
 // Import specific types for use in view-specific interfaces
 import {
   UUID,
