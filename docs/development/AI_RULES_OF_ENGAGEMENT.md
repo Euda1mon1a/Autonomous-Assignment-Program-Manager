@@ -209,6 +209,118 @@ When ending a session that another AI might continue:
 
 ---
 
+***REMOVED******REMOVED*** CI/CD Integration for AI Branches
+
+***REMOVED******REMOVED******REMOVED*** Branch Naming Conventions
+
+AI agents (Claude Code, Codex, etc.) use specific branch naming patterns:
+
+| Agent | Branch Pattern | Example |
+|-------|---------------|---------|
+| Claude Code | `claude/<task>-<session-id>` | `claude/fix-auth-bug-EwUPf` |
+| Codex | `codex/<task>-<id>` | `codex/add-feature-123` |
+| Other AI | `ai/<agent>/<task>` | `ai/copilot/refactor-utils` |
+
+***REMOVED******REMOVED******REMOVED*** CI/CD Workflow Triggers
+
+The following workflows are configured to run on AI branches:
+
+```yaml
+***REMOVED*** Workflows that trigger on claude/** branches:
+- ci.yml              ***REMOVED*** Main test suite
+- ci-enhanced.yml     ***REMOVED*** Matrix testing
+- ci-comprehensive.yml ***REMOVED*** Full quality checks
+- code-quality.yml    ***REMOVED*** Linting and formatting
+```
+
+These workflows use this trigger pattern:
+```yaml
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'claude/**'  ***REMOVED*** AI-created branches
+```
+
+***REMOVED******REMOVED******REMOVED*** Before Pushing AI Branches
+
+AI agents MUST verify CI will trigger:
+
+1. **Check branch name matches pattern**: `git branch --show-current` should show `claude/*` or similar
+2. **Verify workflows exist**: Confirm `.github/workflows/*.yml` have appropriate triggers
+3. **Run local checks first**:
+   ```bash
+   ***REMOVED*** Backend
+   cd backend && ruff check . && pytest
+
+   ***REMOVED*** Frontend
+   cd frontend && npm run lint && npm test
+   ```
+
+---
+
+***REMOVED******REMOVED*** Preventing Parallel Development Conflicts
+
+***REMOVED******REMOVED******REMOVED*** The Single-Session Rule
+
+**CRITICAL**: Only ONE AI session should work on a codebase at a time.
+
+***REMOVED******REMOVED******REMOVED*** Pre-Session Checks
+
+Before starting work, AI agents MUST:
+
+```bash
+***REMOVED*** 1. Fetch latest state
+git fetch origin
+
+***REMOVED*** 2. Check for other AI branches in progress
+git branch -r | grep -E 'claude/|codex/|ai/' | head -10
+
+***REMOVED*** 3. Check for recent activity
+git log --oneline --all --since="1 hour ago" --author-date-order
+
+***REMOVED*** 4. Check for uncommitted changes
+git status --porcelain
+```
+
+***REMOVED******REMOVED******REMOVED*** If Parallel Work Detected
+
+If another AI session is detected:
+
+1. **DO NOT** create overlapping changes
+2. **STOP** and inform the user:
+   ```
+   WARNING: Detected active AI branch: claude/other-task-XYZ
+   Last commit: 15 minutes ago
+   Please confirm this session should proceed.
+   ```
+3. **WAIT** for user confirmation before continuing
+
+***REMOVED******REMOVED******REMOVED*** Session Isolation Strategies
+
+| Strategy | When to Use | Implementation |
+|----------|-------------|----------------|
+| **Stacking** | Same feature area | Create branch from existing AI branch |
+| **Isolation** | Different features | Create independent branch from main |
+| **Takeover** | Previous session stalled | Checkout and continue existing branch |
+
+***REMOVED******REMOVED******REMOVED*** Avoiding Merge Conflicts
+
+1. **Small, focused changes** - One logical change per branch
+2. **Immediate PR creation** - Push and create PR as soon as work is complete
+3. **Clean handoff** - If pausing, commit with message: `WIP: <description>`
+4. **Rebase before push** - Always `git pull --rebase origin main` before pushing
+
+***REMOVED******REMOVED******REMOVED*** Branch Cleanup
+
+After PR is merged, AI agents should NOT:
+- Delete remote branches (leave for human review)
+- Force-push to branches with open PRs
+- Reuse old branch names
+
+---
+
 ***REMOVED******REMOVED*** Related Documentation
 
 - [AI Interface Guide](../admin-manual/ai-interface-guide.md) - Web vs CLI comparison
