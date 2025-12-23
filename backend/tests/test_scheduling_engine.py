@@ -530,6 +530,105 @@ class TestFacultyAssignment:
         if len(primary_assignments) > 0:
             assert len(supervising_assignments) > 0
 
+    def test_faculty_receives_rotation_template_id(
+        self,
+        db: Session,
+        sample_residents: list[Person],
+        sample_faculty_members: list[Person],
+        sample_rotation_template: RotationTemplate,
+    ):
+        """
+        Faculty supervision assignments should have rotation_template_id.
+
+        Bug fix test: Previously, faculty assignments were created without
+        rotation_template_id, causing them to not appear in activity-type
+        views (e.g., Faculty-Inpatient Year View showed all zeros).
+
+        The fix ensures faculty supervisors get the same rotation_template_id
+        as the residents they're supervising.
+        """
+        start_date = date.today()
+        end_date = start_date + timedelta(days=6)
+
+        engine = SchedulingEngine(db, start_date, end_date)
+        engine.generate(algorithm="greedy")
+
+        # Get supervising assignments
+        supervising_assignments = [
+            a for a in engine.assignments if a.role == "supervising"
+        ]
+
+        # Get primary (resident) assignments
+        primary_assignments = [a for a in engine.assignments if a.role == "primary"]
+
+        # If there are resident assignments, faculty should have template IDs
+        if len(primary_assignments) > 0 and len(supervising_assignments) > 0:
+            # Count faculty assignments with rotation_template_id
+            faculty_with_template = [
+                a for a in supervising_assignments if a.rotation_template_id is not None
+            ]
+
+            # ALL supervising faculty should have rotation_template_id
+            assert len(faculty_with_template) == len(supervising_assignments), (
+                f"Expected all {len(supervising_assignments)} faculty assignments "
+                f"to have rotation_template_id, but only {len(faculty_with_template)} do. "
+                f"Faculty assignments without template will not appear in activity views."
+            )
+
+    def test_faculty_template_matches_resident_template(
+        self,
+        db: Session,
+        sample_residents: list[Person],
+        sample_faculty_members: list[Person],
+        sample_rotation_template: RotationTemplate,
+    ):
+        """
+        Faculty should have same rotation_template_id as residents they supervise.
+
+        This ensures faculty appear correctly in activity-type reports and views.
+        """
+        start_date = date.today()
+        end_date = start_date + timedelta(days=6)
+
+        engine = SchedulingEngine(db, start_date, end_date)
+        engine.generate(algorithm="greedy")
+
+        # Group all assignments by block
+        assignments_by_block: dict = {}
+        for assignment in engine.assignments:
+            if assignment.block_id not in assignments_by_block:
+                assignments_by_block[assignment.block_id] = {"primary": [], "supervising": []}
+            assignments_by_block[assignment.block_id][assignment.role].append(assignment)
+
+        # For each block with both residents and faculty, verify template alignment
+        for block_id, block_assignments in assignments_by_block.items():
+            primary = block_assignments.get("primary", [])
+            supervising = block_assignments.get("supervising", [])
+
+            if not primary or not supervising:
+                continue
+
+            # Get the most common template from resident assignments
+            resident_templates = [a.rotation_template_id for a in primary if a.rotation_template_id]
+            if not resident_templates:
+                continue
+
+            # Find most common resident template
+            from collections import Counter
+            template_counts = Counter(resident_templates)
+            most_common_template = template_counts.most_common(1)[0][0]
+
+            # Verify faculty have a matching template (the primary or most common)
+            for fac_assignment in supervising:
+                assert fac_assignment.rotation_template_id is not None, (
+                    f"Faculty assignment {fac_assignment.id} has no rotation_template_id"
+                )
+                # Faculty should have one of the templates from residents
+                assert fac_assignment.rotation_template_id in resident_templates, (
+                    f"Faculty template {fac_assignment.rotation_template_id} "
+                    f"does not match any resident template in block"
+                )
+
     def test_faculty_respects_blocking_absence(
         self,
         db: Session,
