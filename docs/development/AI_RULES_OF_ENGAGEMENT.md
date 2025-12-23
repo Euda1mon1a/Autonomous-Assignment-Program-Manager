@@ -172,6 +172,133 @@ When ending a session that another AI might continue:
 
 ---
 
+***REMOVED******REMOVED*** Code Quality Patterns for LLMs
+
+**AI agents must follow these patterns to avoid common CI failures.**
+
+***REMOVED******REMOVED******REMOVED*** Pre-Edit Checklist
+
+Before modifying any file:
+
+1. **Read the entire file first** - Understand context before changes
+2. **Note all imports** - Track what's used vs. unused
+3. **Identify cross-function variables** - Variables may be used far from declaration
+4. **Check for re-exports** - Modifying imports may break `__init__.py` exports
+
+***REMOVED******REMOVED******REMOVED*** Common LLM Mistakes to Avoid
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Variable Hygiene
+
+```python
+***REMOVED*** BAD - Unused variable (F841)
+result = expensive_operation()
+return True
+
+***REMOVED*** GOOD - Use or remove
+return expensive_operation()
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Boolean Comparisons
+
+```python
+***REMOVED*** BAD - Explicit comparison (E712)
+if user.is_active == True:
+    pass
+
+***REMOVED*** GOOD - Pythonic
+if user.is_active:
+    pass
+
+***REMOVED*** EXCEPTION: SQLAlchemy requires explicit comparison
+query = select(User).where(User.is_active == True)  ***REMOVED*** noqa: E712
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Import Discipline
+
+```python
+***REMOVED*** BAD - Unused import (F401)
+from typing import Optional, Dict, List
+def foo() -> Dict:
+    return {}
+
+***REMOVED*** GOOD - Only what's needed
+from typing import Dict
+def foo() -> Dict:
+    return {}
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Loop Variables
+
+```python
+***REMOVED*** BAD - Unused loop variable (B007)
+for assignment in assignments:
+    process_data()
+
+***REMOVED*** GOOD - Use underscore
+for _ in assignments:
+    process_data()
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Error Handling
+
+```python
+***REMOVED*** BAD - Bare except (E722)
+try:
+    risky_operation()
+except:
+    pass
+
+***REMOVED*** GOOD - Specific exceptions
+from contextlib import suppress
+with suppress(ValueError, TypeError):
+    risky_operation()
+```
+
+***REMOVED******REMOVED******REMOVED*** TypeScript Test Files
+
+```typescript
+// IMPORTANT: Use .tsx extension for files containing JSX
+
+// BAD - Generic type looks like JSX in .tsx
+const Component = <T>(props: Props<T>) => { }
+
+// GOOD - Add trailing comma to disambiguate
+const Component = <T,>(props: Props<T>) => { }
+
+// BAD - Angle bracket assertion
+const mock = <MockType>someValue;
+
+// GOOD - Use 'as' keyword
+const mock = someValue as MockType;
+```
+
+***REMOVED******REMOVED******REMOVED*** Post-Edit Verification
+
+After every edit, run:
+
+```bash
+***REMOVED*** Backend
+ruff check <modified_file> --show-source
+mypy <modified_file> --ignore-missing-imports
+
+***REMOVED*** Frontend
+npx eslint <modified_file>
+npx tsc --noEmit
+```
+
+***REMOVED******REMOVED******REMOVED*** CI Failure Recovery
+
+If CI fails after your commit:
+
+1. **Identify failure type** - Lint, type check, or test?
+2. **Reproduce locally** - Run the exact CI command
+3. **Fix in batch** - Use `--fix` flags where available
+4. **Verify completely** - Run full CI suite before re-pushing
+
+See **[CI/CD Troubleshooting Guide](CI_CD_TROUBLESHOOTING.md)** for detailed error codes and fixes.
+
+---
+
 ***REMOVED******REMOVED*** Exceptions
 
 - Emergency fixes can be pushed directly to `main` **only** with explicit approval.
@@ -325,3 +452,4 @@ After PR is merged, AI agents should NOT:
 
 - [AI Interface Guide](../admin-manual/ai-interface-guide.md) - Web vs CLI comparison
 - [Git Safe Sync Checklist](CLAUDE_GIT_SAFE_SYNC_CHECKLIST.md) - Daily sync procedures
+- [CI/CD Troubleshooting Guide](CI_CD_TROUBLESHOOTING.md) - Error codes, fixes, and recovery workflows
