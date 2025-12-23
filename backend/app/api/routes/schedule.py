@@ -242,6 +242,7 @@ def generate_schedule(
             validation=result["validation"],
             run_id=result.get("run_id"),
             solver_stats=solver_stats,
+            nf_pc_audit=result.get("nf_pc_audit"),
         )
 
         # Issue #5: Partial success semantics - use proper HTTP status codes

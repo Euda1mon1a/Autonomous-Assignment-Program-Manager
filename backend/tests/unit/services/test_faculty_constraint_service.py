@@ -334,19 +334,21 @@ class TestFacultyConstraintService:
         mock_pref.max_consecutive_weeks = 1
         mock_pref.min_gap_between_weeks = 2
 
-        with patch.object(
-            CachedFacultyPreferenceService, "is_week_blocked", return_value=True
-        ):
-            with patch.object(
+        with (
+            patch.object(
+                CachedFacultyPreferenceService, "is_week_blocked", return_value=True
+            ),
+            patch.object(
                 CachedFacultyPreferenceService, "is_week_preferred", return_value=False
-            ):
-                with patch.object(
-                    CachedFacultyPreferenceService,
-                    "get_preferences",
-                    return_value=mock_pref,
-                ):
-                    service = FacultyConstraintService(mock_db)
-                    result = service.check_week_availability(faculty_id, week_date)
+            ),
+            patch.object(
+                CachedFacultyPreferenceService,
+                "get_preferences",
+                return_value=mock_pref,
+            ),
+        ):
+            service = FacultyConstraintService(mock_db)
+            result = service.check_week_availability(faculty_id, week_date)
 
         assert result["is_blocked"] is True
         assert result["is_preferred"] is False

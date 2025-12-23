@@ -435,11 +435,14 @@ class TestRabbitMQAdapter:
         config = QueueConfig(backend="rabbitmq")
         adapter = RabbitMQAdapter(config)
 
-        with patch(
-            "builtins.__import__", side_effect=ImportError("No module named 'aio_pika'")
+        with (
+            patch(
+                "builtins.__import__",
+                side_effect=ImportError("No module named 'aio_pika'"),
+            ),
+            pytest.raises(ImportError),
         ):
-            with pytest.raises(ImportError):
-                await adapter.connect()
+            await adapter.connect()
 
     @pytest.mark.asyncio
     async def test_disconnect(self):

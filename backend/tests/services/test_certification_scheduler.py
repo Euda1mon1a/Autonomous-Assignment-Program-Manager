@@ -110,16 +110,18 @@ class TestCertificationSchedulerStart:
 
     def test_start_without_apscheduler(self, caplog):
         """Test scheduler handles missing APScheduler gracefully."""
-        with patch.dict("os.environ", {"CERT_CHECK_ENABLED": "true"}):
-            with patch(
+        with (
+            patch.dict("os.environ", {"CERT_CHECK_ENABLED": "true"}),
+            patch(
                 "app.services.certification_scheduler.BackgroundScheduler",
                 side_effect=ImportError,
-            ):
-                scheduler = CertificationScheduler()
-                scheduler.start()
+            ),
+        ):
+            scheduler = CertificationScheduler()
+            scheduler.start()
 
-                assert "APScheduler not installed" in caplog.text
-                assert scheduler.scheduler is None
+            assert "APScheduler not installed" in caplog.text
+            assert scheduler.scheduler is None
 
     @patch("app.services.certification_scheduler.BackgroundScheduler")
     def test_start_handles_exception(self, mock_scheduler_class, caplog):
