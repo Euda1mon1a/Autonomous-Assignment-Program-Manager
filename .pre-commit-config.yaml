@@ -17,7 +17,7 @@ repos:
     hooks:
       - id: mypy
         name: mypy (type check)
-        entry: bash -c "cd backend && mypy app/ --ignore-missing-imports --no-error-summary 2>/dev/null || true"
+        entry: bash -c "cd backend && mypy app/ --ignore-missing-imports --no-error-summary 2>/dev/null"
         language: system
         pass_filenames: false
         files: ^backend/app/
@@ -35,7 +35,7 @@ repos:
 
       - id: tsc
         name: tsc (type check)
-        entry: bash -c "cd frontend && npm run type-check 2>/dev/null || true"
+        entry: bash -c "cd frontend && npm run type-check 2>/dev/null"
         language: system
         pass_filenames: false
         files: ^frontend/
