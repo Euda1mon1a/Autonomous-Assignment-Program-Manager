@@ -104,8 +104,12 @@ Create a findings document:
 ```bash
 cd /home/user/Autonomous-Assignment-Program-Manager
 
+# Create slug from argument (replace spaces/special chars with dashes)
+SLUG=$(echo "$ARGUMENTS" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//')
+FILENAME="debug-session-${SLUG:-unknown}.md"
+
 # Create debug session notes
-cat > debug-session-$ARGUMENTS.md << 'EOF'
+cat > "$FILENAME" << 'EOF'
 # Debug Session: $ARGUMENTS
 
 ## Date: $(date +%Y-%m-%d)

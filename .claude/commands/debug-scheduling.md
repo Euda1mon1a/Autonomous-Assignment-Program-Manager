@@ -112,7 +112,7 @@ If all tests pass:
 
 Create a checkpoint before attempting risky changes:
 ```bash
-git stash push -m "WIP: before debugging $ARGUMENTS"
+git stash push -m "WIP: before debugging: $ARGUMENTS"
 ```
 
 Restore if needed:
