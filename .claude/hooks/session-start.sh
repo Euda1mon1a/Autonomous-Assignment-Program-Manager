@@ -13,6 +13,26 @@ log() {
 
 log "SESSION_START"
 
+# Display current git branch prominently
+if [ -d "$PROJECT_ROOT/.git" ]; then
+    CURRENT_BRANCH=$(git -C "$PROJECT_ROOT" branch --show-current 2>/dev/null || echo "unknown")
+    if [ -n "$CURRENT_BRANCH" ]; then
+        echo ""
+        echo "========================================"
+        echo "  Current Branch: $CURRENT_BRANCH"
+        echo "========================================"
+        echo ""
+        log "BRANCH: $CURRENT_BRANCH"
+
+        # Warn if on main/master
+        if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
+            echo "WARNING: You are on the $CURRENT_BRANCH branch!"
+            echo "Create a feature branch before making changes."
+            echo ""
+        fi
+    fi
+fi
+
 # Check git status
 if [ -d "$PROJECT_ROOT/.git" ]; then
     DIRTY=$(git -C "$PROJECT_ROOT" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
