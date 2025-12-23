@@ -667,9 +667,11 @@ class ConflictAlertService:
                 details={
                     "faculty_id": str(alert.faculty_id),
                     "fmit_week": alert.fmit_week.isoformat(),
-                    "urgency": "high"
-                    if alert.severity == ConflictSeverity.CRITICAL
-                    else "normal",
+                    "urgency": (
+                        "high"
+                        if alert.severity == ConflictSeverity.CRITICAL
+                        else "normal"
+                    ),
                 },
             )
         )

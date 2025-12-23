@@ -955,9 +955,9 @@ class ProjectionBuilder:
                 "id": str(log.id),
                 "build_mode": log.build_mode,
                 "started_at": log.started_at.isoformat() if log.started_at else None,
-                "completed_at": log.completed_at.isoformat()
-                if log.completed_at
-                else None,
+                "completed_at": (
+                    log.completed_at.isoformat() if log.completed_at else None
+                ),
                 "duration_seconds": log.duration_seconds,
                 "events_processed": log.events_processed,
                 "success": log.success,

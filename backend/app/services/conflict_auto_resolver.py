@@ -273,9 +273,11 @@ class ConflictAutoResolver:
                 return ResolutionResult(
                     resolution_option_id="none",
                     conflict_id=conflict_id,
-                    strategy=ResolutionStrategyEnum(strategy)
-                    if strategy
-                    else ResolutionStrategyEnum.DEFER_TO_HUMAN,
+                    strategy=(
+                        ResolutionStrategyEnum(strategy)
+                        if strategy
+                        else ResolutionStrategyEnum.DEFER_TO_HUMAN
+                    ),
                     success=False,
                     status=ResolutionStatusEnum.REJECTED,
                     message=f"Requested strategy '{strategy}' not available or not safe for auto-apply",

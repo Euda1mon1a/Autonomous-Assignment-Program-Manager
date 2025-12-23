@@ -53,13 +53,11 @@ from app.models.oauth2_client import PKCEClient
 from app.models.person import Person, ScreenerRole
 from app.models.procedure import Procedure
 from app.models.procedure_credential import ProcedureCredential
-from app.models.resilience import (
+from app.models.resilience import (  ***REMOVED*** Tier 2 models; Tier 3 models; Tier 1 models
     AllostasisRecord,
-    ***REMOVED*** Tier 2 models
     AllostasisState,
     CognitiveDecisionRecord,
     CognitiveSessionRecord,
-    ***REMOVED*** Tier 3 models
     CognitiveState,
     CompensationRecord,
     ContainmentLevel,
@@ -80,7 +78,6 @@ from app.models.resilience import (
     PreferenceTrailRecord,
     ResilienceEvent,
     ResilienceEventType,
-    ***REMOVED*** Tier 1 models
     ResilienceHealthCheck,
     SacrificeDecision,
     SchedulingZoneRecord,

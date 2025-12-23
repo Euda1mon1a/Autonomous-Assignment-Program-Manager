@@ -102,12 +102,14 @@ def run_monte_carlo(params: PCSSeasonParams, n_runs: int = 100) -> dict:
         "survival_rate": survival_rate,
         "survival_count": survival_count,
         "collapse_count": n_runs - survival_count,
-        "avg_collapse_day": sum(collapse_days) / len(collapse_days)
-        if collapse_days
-        else None,
-        "median_collapse_day": collapse_days_sorted[len(collapse_days_sorted) // 2]
-        if collapse_days_sorted
-        else None,
+        "avg_collapse_day": (
+            sum(collapse_days) / len(collapse_days) if collapse_days else None
+        ),
+        "median_collapse_day": (
+            collapse_days_sorted[len(collapse_days_sorted) // 2]
+            if collapse_days_sorted
+            else None
+        ),
         "earliest_collapse": min(collapse_days) if collapse_days else None,
         "latest_collapse": max(collapse_days) if collapse_days else None,
         "avg_peak_workload": sum(peak_workloads) / len(peak_workloads),

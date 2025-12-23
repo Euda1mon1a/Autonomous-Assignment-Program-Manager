@@ -157,9 +157,9 @@ class HarnessResult:
             "failed_scenarios": self.failed_scenarios,
             "pass_rate": self.pass_rate(),
             "avg_score_degradation": self.avg_score_degradation,
-            "worst_scenario": self.worst_scenario.to_dict()
-            if self.worst_scenario
-            else None,
+            "worst_scenario": (
+                self.worst_scenario.to_dict() if self.worst_scenario else None
+            ),
             "scenario_results": [r.to_dict() for r in self.scenario_results],
             "total_time": self.total_time,
         }

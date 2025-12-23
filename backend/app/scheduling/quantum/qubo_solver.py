@@ -413,9 +413,9 @@ class SimulatedQuantumAnnealingSolver(BaseSolver):
                 "num_reads": self.num_reads,
                 "num_sweeps": self.num_sweeps,
                 "final_energy": energy,
-                "library": "dwave-samplers"
-                if DWAVE_SAMPLERS_AVAILABLE
-                else "pure_python",
+                "library": (
+                    "dwave-samplers" if DWAVE_SAMPLERS_AVAILABLE else "pure_python"
+                ),
             },
         )
 

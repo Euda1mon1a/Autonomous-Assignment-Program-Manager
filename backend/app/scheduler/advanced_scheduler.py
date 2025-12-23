@@ -1275,12 +1275,14 @@ class AdvancedTaskScheduler:
             "status": execution.status.value,
             "priority": execution.priority.name,
             "scheduled_time": execution.scheduled_time.isoformat(),
-            "started_time": execution.started_time.isoformat()
-            if execution.started_time
-            else None,
-            "completed_time": execution.completed_time.isoformat()
-            if execution.completed_time
-            else None,
+            "started_time": (
+                execution.started_time.isoformat() if execution.started_time else None
+            ),
+            "completed_time": (
+                execution.completed_time.isoformat()
+                if execution.completed_time
+                else None
+            ),
             "retry_count": execution.retry_count,
             "error": execution.error,
             "metrics": execution.metrics,

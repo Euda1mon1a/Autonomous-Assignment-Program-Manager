@@ -413,10 +413,10 @@ class JobPersistence:
             "failure_count": status_counts.get("failure", 0),
             "missed_count": status_counts.get("missed", 0),
             "average_runtime_seconds": float(avg_runtime),
-            "last_run_time": job.last_run_time.isoformat()
-            if job.last_run_time
-            else None,
-            "next_run_time": job.next_run_time.isoformat()
-            if job.next_run_time
-            else None,
+            "last_run_time": (
+                job.last_run_time.isoformat() if job.last_run_time else None
+            ),
+            "next_run_time": (
+                job.next_run_time.isoformat() if job.next_run_time else None
+            ),
         }

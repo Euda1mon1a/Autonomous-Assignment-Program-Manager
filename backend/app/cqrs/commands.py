@@ -511,9 +511,9 @@ class CommandBus:
                 extra={
                     "event_id": str(event.event_id),
                     "event_type": event.event_type,
-                    "aggregate_id": str(event.aggregate_id)
-                    if event.aggregate_id
-                    else None,
+                    "aggregate_id": (
+                        str(event.aggregate_id) if event.aggregate_id else None
+                    ),
                 },
             )
 

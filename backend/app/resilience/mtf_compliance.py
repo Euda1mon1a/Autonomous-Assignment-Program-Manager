@@ -1418,8 +1418,9 @@ class CircuitBreaker:
         average_allostatic_load: float,
         volatility_level: str,
         compensation_debt: float,
-        positive_feedback_risks: list[PositiveFeedbackRisk | PositiveFeedbackRiskDict]
-        | None = None,
+        positive_feedback_risks: (
+            list[PositiveFeedbackRisk | PositiveFeedbackRiskDict] | None
+        ) = None,
     ) -> tuple[bool, CircuitBreakerTrigger | None, str | None]:
         """
         Check conditions and trip circuit breaker if thresholds breached.
@@ -2109,12 +2110,16 @@ class IronDomeService:
             personnel_percentage=personnel_pct,
             capability_rating=s_rating.value,
             deficiencies=deficiencies,
-            load_shedding_level=load_shedding_level.value
-            if hasattr(load_shedding_level, "value")
-            else str(load_shedding_level),
-            equilibrium_state=equilibrium_state.value
-            if hasattr(equilibrium_state, "value")
-            else str(equilibrium_state),
+            load_shedding_level=(
+                load_shedding_level.value
+                if hasattr(load_shedding_level, "value")
+                else str(load_shedding_level)
+            ),
+            equilibrium_state=(
+                equilibrium_state.value
+                if hasattr(equilibrium_state, "value")
+                else str(equilibrium_state)
+            ),
             executive_summary=summary,
         )
 
@@ -2126,8 +2131,9 @@ class IronDomeService:
         average_allostatic_load: float,
         volatility_level: str,
         compensation_debt: float,
-        positive_feedback_risks: list[PositiveFeedbackRisk | PositiveFeedbackRiskDict]
-        | None = None,
+        positive_feedback_risks: (
+            list[PositiveFeedbackRisk | PositiveFeedbackRiskDict] | None
+        ) = None,
     ) -> CircuitBreakerCheck:
         """
         Check circuit breaker and trip if thresholds breached.

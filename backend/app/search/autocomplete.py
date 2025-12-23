@@ -397,9 +397,9 @@ class AutocompleteService:
                     "id": str(person.id),
                     "type": person.type,
                     "email": person.email,
-                    "pgy_level": person.pgy_level
-                    if person.type == "resident"
-                    else None,
+                    "pgy_level": (
+                        person.pgy_level if person.type == "resident" else None
+                    ),
                 },
                 matched_field=matched_field,
             )
@@ -973,9 +973,9 @@ class AutocompleteService:
 
             return {
                 "total_queries": total_queries,
-                "cache_hit_rate": cache_hits / total_queries
-                if total_queries > 0
-                else 0,
+                "cache_hit_rate": (
+                    cache_hits / total_queries if total_queries > 0 else 0
+                ),
                 "avg_response_time_ms": round(avg_response_time, 2),
                 "avg_suggestions": round(avg_suggestions, 2),
                 "by_context": dict(context_counts),

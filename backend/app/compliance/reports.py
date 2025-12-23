@@ -1127,9 +1127,11 @@ class ComplianceReportGenerator:
                     hours_trends[i]["week_start"],
                     hours_trends[i]["week_end"],
                     hours_trends[i]["total_hours"],
-                    coverage_trends[i]["coverage_rate"]
-                    if i < len(coverage_trends)
-                    else 0,
+                    (
+                        coverage_trends[i]["coverage_rate"]
+                        if i < len(coverage_trends)
+                        else 0
+                    ),
                     absence_trends[i]["absence_days"] if i < len(absence_trends) else 0,
                 ]
             )

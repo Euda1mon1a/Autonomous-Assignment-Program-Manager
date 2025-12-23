@@ -284,9 +284,11 @@ class ExplainabilityService:
             ConstraintEvaluation(
                 constraint_name="Availability",
                 constraint_type=ConstraintType.HARD,
-                status=ConstraintStatus.SATISFIED
-                if is_available
-                else ConstraintStatus.VIOLATED,
+                status=(
+                    ConstraintStatus.SATISFIED
+                    if is_available
+                    else ConstraintStatus.VIOLATED
+                ),
                 weight=100.0,
                 penalty=0.0 if is_available else 10000.0,
                 details=None if is_available else "Person has blocking absence",

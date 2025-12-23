@@ -441,14 +441,18 @@ class ParetoOptimizationService:
             frontier_indices=frontier_indices,
             hypervolume=hypervolume,
             total_solutions=len(solutions),
-            convergence_metric=res.algorithm.n_gen / n_generations
-            if hasattr(res.algorithm, "n_gen")
-            else None,
+            convergence_metric=(
+                res.algorithm.n_gen / n_generations
+                if hasattr(res.algorithm, "n_gen")
+                else None
+            ),
             execution_time_seconds=execution_time,
             algorithm="NSGA-II",
-            termination_reason="Max generations reached"
-            if execution_time < timeout_seconds
-            else "Timeout",
+            termination_reason=(
+                "Max generations reached"
+                if execution_time < timeout_seconds
+                else "Timeout"
+            ),
         )
 
     def get_pareto_frontier(

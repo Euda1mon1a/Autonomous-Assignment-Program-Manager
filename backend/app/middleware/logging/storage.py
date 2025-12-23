@@ -107,9 +107,9 @@ class InMemoryLogStorage(LogStorage):
         return {
             "total_entries": len(self._logs),
             "max_entries": self.max_entries,
-            "utilization": len(self._logs) / self.max_entries
-            if self.max_entries > 0
-            else 0,
+            "utilization": (
+                len(self._logs) / self.max_entries if self.max_entries > 0 else 0
+            ),
         }
 
 

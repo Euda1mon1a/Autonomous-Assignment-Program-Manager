@@ -382,9 +382,9 @@ async def resilience_health():
         metrics = get_metrics()
         return {
             "status": "operational",
-            "metrics_enabled": metrics._enabled
-            if hasattr(metrics, "_enabled")
-            else False,
+            "metrics_enabled": (
+                metrics._enabled if hasattr(metrics, "_enabled") else False
+            ),
             "components": [
                 "utilization_monitor",
                 "defense_in_depth",

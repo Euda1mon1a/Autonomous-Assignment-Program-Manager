@@ -217,9 +217,11 @@ class FieldRenameTransformer(ResponseTransformer):
                 transformed[target_key] = self.transform(value, target_version)
             elif isinstance(value, list):
                 transformed[target_key] = [
-                    self.transform(item, target_version)
-                    if isinstance(item, dict)
-                    else item
+                    (
+                        self.transform(item, target_version)
+                        if isinstance(item, dict)
+                        else item
+                    )
                     for item in value
                 ]
             else:
