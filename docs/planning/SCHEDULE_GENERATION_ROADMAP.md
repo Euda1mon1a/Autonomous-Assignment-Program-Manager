@@ -16,6 +16,58 @@
 
 ---
 
+## Mandatory PR Review Checkpoints
+
+> **RULE:** IDE must create a PR and STOP at each checkpoint. Web/User reviews before proceeding.
+
+### Checkpoint Protocol
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    FORCED PR CHECKPOINT                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. IDE completes work item                                     │
+│  2. IDE runs tests locally (must pass)                          │
+│  3. IDE commits with descriptive message                        │
+│  4. IDE pushes to feature branch                                │
+│  5. IDE creates PR with summary                                 │
+│  6. ══════════════════════════════════════════════════════════  │
+│     ▶▶▶ STOP - AWAIT WEB/USER REVIEW ◀◀◀                       │
+│  ══════════════════════════════════════════════════════════     │
+│  7. Web/User reviews PR                                         │
+│  8. Web/User approves or requests changes                       │
+│  9. IDE proceeds to next checkpoint only after approval         │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Today's Checkpoints
+
+| CP# | After Task | PR Title | Reviewer Action |
+|-----|------------|----------|-----------------|
+| **CP-1** | Faculty template fix | `fix: add rotation_template_id to faculty assignments` | Verify fix doesn't break residents |
+| **CP-2** | FMIT validation | `test: validate FMIT week boundaries` | Confirm Fri-Thurs logic correct |
+| **CP-3** | Block 10 generated | `feat: generate Block 10 schedule` | Review generated schedule quality |
+
+### This Week's Checkpoints
+
+| CP# | After Task | PR Title | Reviewer Action |
+|-----|------------|----------|-----------------|
+| **CP-4** | FacultyRoleClinicConstraint | `feat: implement faculty role clinic limits` | Verify role limits match spec |
+| **CP-5** | FMITWeekBlockingConstraint | `feat: implement FMIT week blocking` | Confirm blocking rules |
+| **CP-6** | Blocks 11-13 generated | `feat: complete AY 25-26 schedule` | Review full year export |
+
+### This Month's Checkpoints
+
+| CP# | After Task | PR Title | Reviewer Action |
+|-----|------------|----------|-----------------|
+| **CP-7** | AY rollover script | `feat: academic year 26-27 rollover` | Verify block creation, PGY promotions |
+| **CP-8** | Advanced constraints | `feat: call equity and SM alignment` | Review constraint behavior |
+| **CP-9** | Full AY 26-27 generated | `feat: complete AY 26-27 schedule` | Final acceptance review |
+
+---
+
 ## Short Term: Block 10 Generation (Today)
 
 ### Objective
@@ -35,7 +87,7 @@ Generate Block 10 schedule requiring minimal manual edits by user.
 
 #### Claude Code IDE (Today)
 
-**1. Fix Faculty Assignment Template IDs** (BLOCKER)
+**1. Fix Faculty Assignment Template IDs** (BLOCKER) → **CP-1**
 ```
 Location: backend/app/scheduling/engine.py
 Issue: Faculty assignments created without rotation_template_id
@@ -48,8 +100,9 @@ Tasks:
 - [ ] Apply same pattern to faculty assignments
 - [ ] Write unit test for faculty template assignment
 - [ ] Run pytest to verify fix
+- [ ] **CREATE PR → STOP FOR REVIEW (CP-1)**
 
-**2. FMIT Week Boundary Validation**
+**2. FMIT Week Boundary Validation** → **CP-2**
 ```
 Location: backend/app/services/fmit_scheduler_service.py
 Issue: FMIT weeks span Fri-Thurs, must align correctly
@@ -59,8 +112,9 @@ Tasks:
 - [ ] Verify FMIT week detection logic (Fri-Thurs boundaries)
 - [ ] Test across block boundaries
 - [ ] Ensure post-FMIT Friday recovery blocking
+- [ ] **CREATE PR → STOP FOR REVIEW (CP-2)**
 
-**3. Block 10 Generation**
+**3. Block 10 Generation** → **CP-3**
 ```
 Endpoint: POST /api/schedule/generate
 Parameters: block_number=10, academic_year=2025
@@ -72,13 +126,26 @@ Tasks:
 - [ ] Review output for conflicts
 - [ ] Run ACGME validation
 - [ ] Export to Excel for user review
+- [ ] **CREATE PR → STOP FOR REVIEW (CP-3)**
 
-#### Claude Code Web (Today - Limited)
+#### Claude Code Web (Today - Review Gates)
 
-- [ ] Review this roadmap for clarity
-- [ ] Answer questions about constraint priorities
-- [ ] Review PR after IDE commits changes
-- [ ] Provide feedback on generated schedule logic
+**CP-1 Review (Faculty Template Fix):**
+- [ ] Verify fix targets correct location in engine.py
+- [ ] Confirm resident assignments still work
+- [ ] Check test coverage is adequate
+- [ ] Approve or request changes
+
+**CP-2 Review (FMIT Validation):**
+- [ ] Confirm Fri-Thurs boundary logic is correct
+- [ ] Verify cross-block handling
+- [ ] Approve or request changes
+
+**CP-3 Review (Block 10 Generation):**
+- [ ] Review generated schedule output
+- [ ] Verify ACGME compliance passes
+- [ ] Check faculty inpatient view shows data
+- [ ] Approve for user manual review
 
 ---
 
@@ -96,26 +163,26 @@ Complete schedule generation for remaining blocks (11-13) of academic year 2025-
 
 #### Claude Code IDE (This Week)
 
-**Day 1-2: Constraint Refinement**
+**Day 1-2: Constraint Refinement** → **CP-4, CP-5**
+
+| Task | Priority | Effort | Checkpoint |
+|------|----------|--------|------------|
+| Implement FacultyRoleClinicConstraint | High | 2-3h | **CP-4** |
+| Implement FMITWeekBlockingConstraint | High | 3-4h | **CP-5** |
+| Add unit tests for new constraints | High | 2h | (included) |
+| Register constraints in scheduler | Medium | 1h | (included) |
+
+**Day 3-4: Batch Generation** → **CP-6**
 
 | Task | Priority | Effort |
 |------|----------|--------|
-| Implement FacultyRoleClinicConstraint | High | 2-3h |
-| Implement FMITWeekBlockingConstraint | High | 3-4h |
-| Add unit tests for new constraints | High | 2h |
-| Register constraints in scheduler | Medium | 1h |
+| Generate Block 11 | High | 1h | |
+| Generate Block 12 | High | 1h | |
+| Generate Block 13 | High | 1h | |
+| Cross-block conflict detection | High | 2h | |
+| ACGME compliance validation (all blocks) | High | 1h | **CP-6** |
 
-**Day 3-4: Batch Generation**
-
-| Task | Priority | Effort |
-|------|----------|--------|
-| Generate Block 11 | High | 1h |
-| Generate Block 12 | High | 1h |
-| Generate Block 13 | High | 1h |
-| Cross-block conflict detection | High | 2h |
-| ACGME compliance validation (all blocks) | High | 1h |
-
-**Day 5: Quality Assurance**
+**Day 5: Quality Assurance** (User Review)
 
 | Task | Priority | Effort |
 |------|----------|--------|
@@ -124,13 +191,25 @@ Complete schedule generation for remaining blocks (11-13) of academic year 2025-
 | Manual spot-check validation | User | 2h |
 | Fix any identified issues | IDE | Variable |
 
-#### Claude Code Web (This Week - Supporting)
+#### Claude Code Web (This Week - Review Gates)
 
-- [ ] Review constraint implementation PRs
-- [ ] Clarify constraint priorities with user
-- [ ] Document constraint interaction rules
-- [ ] Review generated schedule summaries
-- [ ] Assist with compliance interpretation
+**CP-4 Review (Faculty Role Clinic):**
+- [ ] Verify role limits: PD=0, Dept Chief=1, APD/OIC=2, Core=4
+- [ ] Confirm block limits work (APD/OIC=8/block)
+- [ ] Check Sports Med excluded from regular clinic
+- [ ] Approve or request changes
+
+**CP-5 Review (FMIT Blocking):**
+- [ ] Verify FMIT blocks all clinic during Fri-Thurs week
+- [ ] Confirm Sun-Thurs call blocked, Fri/Sat mandatory
+- [ ] Check post-FMIT Friday recovery blocking
+- [ ] Approve or request changes
+
+**CP-6 Review (Full AY 25-26):**
+- [ ] Review Blocks 11-13 generated output
+- [ ] Verify cross-block conflicts resolved
+- [ ] Check full year ACGME compliance
+- [ ] Approve for user final review
 
 ### Deliverables
 
@@ -149,7 +228,7 @@ Build infrastructure for complete next academic year schedule development.
 
 ### Phase 1: Data Preparation (Week 1-2)
 
-#### Claude Code IDE
+#### Claude Code IDE → **CP-7**
 
 | Task | Description | Effort |
 |------|-------------|--------|
@@ -158,17 +237,19 @@ Build infrastructure for complete next academic year schedule development.
 | Rotation template cloning | Copy AY 25-26 templates to 26-27 | 2h |
 | Leave/absence migration | Handle multi-year absences | 3h |
 | Database migration | Alembic migration for new year | 2h |
+| **CREATE PR** | **STOP FOR REVIEW (CP-7)** | - |
 
-#### Claude Code Web
+#### Claude Code Web (CP-7 Review)
 
-- [ ] Verify academic calendar dates
-- [ ] Review PGY promotion logic
-- [ ] Confirm template reuse strategy
-- [ ] Document rollover procedure
+- [ ] Verify 730 blocks created for AY 26-27
+- [ ] Confirm PGY promotions correct (PGY-1→2, PGY-2→3, PGY-3→graduated)
+- [ ] Check template cloning preserves constraints
+- [ ] Verify multi-year absences handled
+- [ ] Approve or request changes
 
 ### Phase 2: Constraint Enhancements (Week 2-3)
 
-#### Claude Code IDE
+#### Claude Code IDE → **CP-8**
 
 | Constraint | Phase | Priority | Effort |
 |------------|-------|----------|--------|
@@ -177,17 +258,19 @@ Build infrastructure for complete next academic year schedule development.
 | Tuesday Call Preference | 3.3 | Medium | 2h |
 | SM Faculty Alignment | 4.1 | High | 4h |
 | Post-Call Auto-Assignment | 4.2 | High | 3h |
+| **CREATE PR** | **STOP FOR REVIEW (CP-8)** | - | - |
 
-#### Claude Code Web
+#### Claude Code Web (CP-8 Review)
 
-- [ ] Review constraint specifications
-- [ ] Clarify edge cases with user
-- [ ] Document constraint interactions
-- [ ] Review implementation PRs
+- [ ] Verify Sunday call tracked separately for equity
+- [ ] Confirm Tuesday avoidance for PD/APD
+- [ ] Check SM resident-faculty alignment works
+- [ ] Verify post-call PCAT/DO auto-assignment
+- [ ] Approve or request changes
 
 ### Phase 3: Full Year Generation (Week 3-4)
 
-#### Claude Code IDE
+#### Claude Code IDE → **CP-9**
 
 | Task | Description | Effort |
 |------|-------------|--------|
@@ -196,6 +279,15 @@ Build infrastructure for complete next academic year schedule development.
 | Generate Blocks 9-13 (Q3-4) | Remaining blocks | 3h |
 | Cross-block optimization | Equity across full year | 4h |
 | Full year validation | ACGME compliance check | 2h |
+| **CREATE PR** | **STOP FOR REVIEW (CP-9)** | - |
+
+#### Claude Code Web (CP-9 Review - FINAL)
+
+- [ ] Review all 13 blocks generated
+- [ ] Verify full year ACGME compliance
+- [ ] Check equity metrics (call, FMIT, clinic distribution)
+- [ ] Confirm no cross-block conflicts
+- [ ] **FINAL APPROVAL for User Acceptance**
 
 ### Phase 4: User Acceptance (Week 4)
 
