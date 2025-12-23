@@ -31,23 +31,16 @@ export function useDailyManifest(
   timeOfDay: 'AM' | 'PM' | 'ALL' = 'AM',
   options?: Omit<UseQueryOptions<DailyManifestData, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-<<<<<<< HEAD
   // Only include time_of_day param for AM/PM, omit for ALL (backend returns all if not specified)
   const params = new URLSearchParams({ date });
   if (timeOfDay !== 'ALL') {
     params.set('time_of_day', timeOfDay);
   }
-=======
->>>>>>> origin/docs/session-14-summary
   return useQuery<DailyManifestData, ApiError>({
     queryKey: manifestQueryKeys.byDate(date, timeOfDay),
     queryFn: () =>
       get<DailyManifestData>(
-<<<<<<< HEAD
         `/daily-manifest?${params.toString()}`
-=======
-        `/daily-manifest?date=${date}&time_of_day=${timeOfDay}`
->>>>>>> origin/docs/session-14-summary
       ),
     staleTime: 30 * 1000, // 30 seconds - manifest changes frequently
     gcTime: 5 * 60 * 1000, // 5 minutes

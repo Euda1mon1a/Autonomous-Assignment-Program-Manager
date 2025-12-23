@@ -53,28 +53,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Security: Checks httpOnly cookie automatically via validateToken
   useEffect(() => {
     async function initAuth() {
-<<<<<<< HEAD
-      console.log('[AuthContext] initAuth() - checking for existing session...')
-      try {
-        const validatedUser = await validateToken()
-        console.log('[AuthContext] initAuth() - session found:', { userId: validatedUser?.id })
-        setUser(validatedUser)
-      } catch (error) {
-        // Token validation failed, user remains null
-        console.log('[AuthContext] initAuth() - no valid session (this is normal for login page)')
-      }
-      setIsLoading(false)
-      console.log('[AuthContext] initAuth() - complete, isLoading=false')
-=======
       try {
         const validatedUser = await validateToken()
         setUser(validatedUser)
-      } catch (error) {
+      } catch {
         // Token validation failed, user remains null
-        console.error('Token validation failed:', error)
       }
       setIsLoading(false)
->>>>>>> origin/docs/session-14-summary
     }
 
     initAuth()
@@ -82,27 +67,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Login function
   const login = useCallback(async (credentials: LoginCredentials) => {
-<<<<<<< HEAD
-    console.log('[AuthContext] login() - starting login for:', credentials.username)
     setIsLoading(true)
     try {
       const response = await authLogin(credentials)
-      console.log('[AuthContext] login() - SUCCESS, user:', response.user?.username)
       setUser(response.user)
     } catch (err) {
-      console.error('[AuthContext] login() - FAILED:', err)
       throw err  // Re-throw so LoginForm can catch it
     } finally {
       setIsLoading(false)
-      console.log('[AuthContext] login() - complete')
-=======
-    setIsLoading(true)
-    try {
-      const response = await authLogin(credentials)
-      setUser(response.user)
-    } finally {
-      setIsLoading(false)
->>>>>>> origin/docs/session-14-summary
     }
   }, [])
 

@@ -51,8 +51,6 @@ export function BlockNavigation({
     onDateRangeChange(blockStart, addDays(blockStart, 27))
   }
 
-<<<<<<< HEAD
-=======
   // Handle date input changes
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newStart = new Date(e.target.value + 'T00:00:00')
@@ -69,7 +67,6 @@ export function BlockNavigation({
     }
   }
 
->>>>>>> origin/docs/session-14-summary
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
       {/* Block navigation buttons */}
@@ -135,14 +132,6 @@ export function BlockNavigation({
         </button>
       </div>
 
-<<<<<<< HEAD
-      {/* Date range display (read-only - use navigation buttons to change) */}
-      <div className="flex items-center gap-2 text-sm">
-        <span className="text-gray-600">Block:</span>
-        <span className="font-medium text-gray-900 bg-gray-100 px-3 py-1 rounded">
-          {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')}
-        </span>
-=======
       {/* Date range picker */}
       <div className="flex items-center gap-2 text-sm">
         <label className="text-gray-600">From:</label>
@@ -161,7 +150,6 @@ export function BlockNavigation({
           className="input-field text-sm py-1 px-2"
           aria-label="End date"
         />
->>>>>>> origin/docs/session-14-summary
       </div>
 
       {/* Current range display */}

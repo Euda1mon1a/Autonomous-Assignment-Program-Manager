@@ -15,14 +15,12 @@ import {
   Settings,
   LogIn,
   HelpCircle,
-<<<<<<< HEAD
   ArrowLeftRight,
   Phone,
   BarChart3,
   FileUp,
   ClipboardList,
-=======
->>>>>>> origin/docs/session-14-summary
+  Beaker,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -37,7 +35,6 @@ const navItems: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: Calendar },
   { href: '/my-schedule', label: 'My Schedule', icon: CalendarCheck },
   { href: '/people', label: 'People', icon: Users },
-<<<<<<< HEAD
   { href: '/swaps', label: 'Swaps', icon: ArrowLeftRight },
   { href: '/call-roster', label: 'Call Roster', icon: Phone },
   { href: '/daily-manifest', label: 'Daily Manifest', icon: ClipboardList },
@@ -46,12 +43,9 @@ const navItems: NavItem[] = [
   { href: '/templates', label: 'Templates', icon: FileText },
   { href: '/absences', label: 'Absences', icon: CalendarOff },
   { href: '/import-export', label: 'Import/Export', icon: FileUp },
-=======
-  { href: '/templates', label: 'Templates', icon: FileText },
-  { href: '/absences', label: 'Absences', icon: CalendarOff },
   { href: '/compliance', label: 'Compliance', icon: AlertTriangle },
->>>>>>> origin/docs/session-14-summary
   { href: '/help', label: 'Help', icon: HelpCircle },
+  { href: '/admin/scheduling', label: 'Lab', icon: Beaker, adminOnly: true },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ]
 
