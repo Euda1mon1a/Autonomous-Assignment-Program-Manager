@@ -949,6 +949,142 @@ class SchedulingEngine:
                 f"({self.start_date} to {self.end_date}), preserved {preserved_count}"
             )
 
+    def _audit_nf_pc_allocations(self) -> dict:
+        """
+        Audit Night Float to Post-Call allocations after generation.
+
+        Blindspot #6: Post-generation audit for NF->PC allocations.
+
+        This verifies that for each NF (Night Float) assignment ending at a
+        block-half boundary, the next day has proper PC (Post-Call) assignments
+        for both AM and PM blocks.
+
+        Returns:
+            dict with:
+                - compliant: bool - True if all NF->PC requirements are met
+                - total_nf_transitions: int - Total NF block-half transitions found
+                - violations: list[dict] - Details of missing PC assignments
+        """
+        violations = []
+        total_transitions = 0
+
+        # Get all assignments grouped by person and block
+        assignments_by_person: dict[UUID, list] = {}
+        for assignment in self.assignments:
+            if assignment.person_id not in assignments_by_person:
+                assignments_by_person[assignment.person_id] = []
+            assignments_by_person[assignment.person_id].append(assignment)
+
+        # Get NF and PC template IDs
+        nf_template = (
+            self.db.query(RotationTemplate)
+            .filter(RotationTemplate.abbreviation == "NF")
+            .first()
+        )
+        pc_template = (
+            self.db.query(RotationTemplate)
+            .filter(RotationTemplate.abbreviation == "PC")
+            .first()
+        )
+
+        if not nf_template:
+            logger.debug("No NF rotation template found - skipping NF->PC audit")
+            return {
+                "compliant": True,
+                "total_nf_transitions": 0,
+                "violations": [],
+                "message": "No Night Float rotation template configured",
+            }
+
+        if not pc_template:
+            logger.warning("No PC rotation template found - cannot validate NF->PC")
+            return {
+                "compliant": False,
+                "total_nf_transitions": 0,
+                "violations": [{"error": "PC rotation template not configured"}],
+                "message": "Post-Call rotation template not configured",
+            }
+
+        # Check each person's NF assignments
+        for person_id, person_assignments in assignments_by_person.items():
+            # Find NF assignments
+            nf_assignments = [
+                a
+                for a in person_assignments
+                if a.rotation_template_id == nf_template.id
+            ]
+
+            if not nf_assignments:
+                continue
+
+            # Group NF assignments by date to find transition days
+            nf_by_date: dict[date, list] = {}
+            for a in nf_assignments:
+                block = self.db.query(Block).filter(Block.id == a.block_id).first()
+                if block:
+                    if block.date not in nf_by_date:
+                        nf_by_date[block.date] = []
+                    nf_by_date[block.date].append(a)
+
+            # For each NF date, check if next day has PC
+            for nf_date in sorted(nf_by_date.keys()):
+                pc_required_date = nf_date + timedelta(days=1)
+
+                # Skip if outside schedule range
+                if pc_required_date > self.end_date:
+                    continue
+
+                total_transitions += 1
+
+                # Check for PC assignments on the required date
+                pc_blocks = (
+                    self.db.query(Block).filter(Block.date == pc_required_date).all()
+                )
+
+                has_am_pc = False
+                has_pm_pc = False
+
+                for block in pc_blocks:
+                    # Check if person has PC assignment for this block
+                    pc_assignment = next(
+                        (
+                            a
+                            for a in person_assignments
+                            if a.block_id == block.id
+                            and a.rotation_template_id == pc_template.id
+                        ),
+                        None,
+                    )
+                    if pc_assignment:
+                        if block.time_of_day == "AM":
+                            has_am_pc = True
+                        elif block.time_of_day == "PM":
+                            has_pm_pc = True
+
+                # Record violations
+                if not has_am_pc or not has_pm_pc:
+                    person = (
+                        self.db.query(Person).filter(Person.id == person_id).first()
+                    )
+                    violations.append(
+                        {
+                            "person_id": str(person_id),
+                            "person_name": person.name if person else "Unknown",
+                            "nf_date": str(nf_date),
+                            "pc_required_date": str(pc_required_date),
+                            "missing_am_pc": not has_am_pc,
+                            "missing_pm_pc": not has_pm_pc,
+                        }
+                    )
+
+        return {
+            "compliant": len(violations) == 0,
+            "total_nf_transitions": total_transitions,
+            "violations": violations,
+            "message": f"Audited {total_transitions} NF transitions, "
+            f"found {len(violations)} violations",
+        }
+
     def _update_run_status(
         self,
         run: ScheduleRun,

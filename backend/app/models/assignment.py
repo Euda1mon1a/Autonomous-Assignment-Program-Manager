@@ -68,10 +68,19 @@ class Assignment(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Provenance - link to the schedule run that created this assignment
+    schedule_run_id = Column(
+        GUID(),
+        ForeignKey("schedule_runs.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     # Relationships
     block = relationship("Block", back_populates="assignments")
     person = relationship("Person", back_populates="assignments")
     rotation_template = relationship("RotationTemplate", back_populates="assignments")
+    schedule_run = relationship("ScheduleRun", backref="assignments")
 
     __table_args__ = (
         UniqueConstraint("block_id", "person_id", name="unique_person_per_block"),
