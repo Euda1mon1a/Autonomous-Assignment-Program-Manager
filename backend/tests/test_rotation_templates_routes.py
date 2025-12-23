@@ -1,8 +1,8 @@
 """Comprehensive tests for rotation template API routes."""
+
 from datetime import datetime
 from uuid import UUID, uuid4
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -23,7 +23,9 @@ class TestListRotationTemplates:
         assert data["total"] == 0
         assert data["items"] == []
 
-    def test_list_templates_single(self, client: TestClient, sample_rotation_template: RotationTemplate):
+    def test_list_templates_single(
+        self, client: TestClient, sample_rotation_template: RotationTemplate
+    ):
         """Test listing templates with one template in database."""
         response = client.get("/api/rotation-templates")
 
@@ -32,7 +34,9 @@ class TestListRotationTemplates:
         assert data["total"] == 1
         assert len(data["items"]) == 1
         assert data["items"][0]["name"] == sample_rotation_template.name
-        assert data["items"][0]["activity_type"] == sample_rotation_template.activity_type
+        assert (
+            data["items"][0]["activity_type"] == sample_rotation_template.activity_type
+        )
 
     def test_list_templates_multiple(self, client: TestClient, db: Session):
         """Test listing multiple templates."""
@@ -74,7 +78,9 @@ class TestListRotationTemplates:
         names = [item["name"] for item in data["items"]]
         assert names == ["Alpha Clinic", "Beta Clinic", "Zebra Clinic"]
 
-    def test_list_templates_filter_by_activity_type_clinic(self, client: TestClient, db: Session):
+    def test_list_templates_filter_by_activity_type_clinic(
+        self, client: TestClient, db: Session
+    ):
         """Test filtering templates by activity_type='clinic'."""
         templates_data = [
             {"name": "Clinic A", "activity_type": "clinic"},
@@ -95,7 +101,9 @@ class TestListRotationTemplates:
         assert data["total"] == 2
         assert all(item["activity_type"] == "clinic" for item in data["items"])
 
-    def test_list_templates_filter_by_activity_type_inpatient(self, client: TestClient, db: Session):
+    def test_list_templates_filter_by_activity_type_inpatient(
+        self, client: TestClient, db: Session
+    ):
         """Test filtering templates by activity_type='inpatient'."""
         templates_data = [
             {"name": "Clinic A", "activity_type": "clinic"},
@@ -115,7 +123,9 @@ class TestListRotationTemplates:
         assert data["total"] == 2
         assert all(item["activity_type"] == "inpatient" for item in data["items"])
 
-    def test_list_templates_filter_by_activity_type_no_results(self, client: TestClient, db: Session):
+    def test_list_templates_filter_by_activity_type_no_results(
+        self, client: TestClient, db: Session
+    ):
         """Test filtering by activity_type with no matching results."""
         template = RotationTemplate(
             id=uuid4(),
@@ -132,7 +142,9 @@ class TestListRotationTemplates:
         assert data["total"] == 0
         assert data["items"] == []
 
-    def test_list_templates_filter_case_sensitive(self, client: TestClient, db: Session):
+    def test_list_templates_filter_case_sensitive(
+        self, client: TestClient, db: Session
+    ):
         """Test that activity_type filter is case-sensitive."""
         template = RotationTemplate(
             id=uuid4(),
@@ -186,7 +198,9 @@ class TestListRotationTemplates:
 class TestGetRotationTemplate:
     """Tests for GET /api/rotation-templates/{template_id} endpoint."""
 
-    def test_get_template_success(self, client: TestClient, sample_rotation_template: RotationTemplate):
+    def test_get_template_success(
+        self, client: TestClient, sample_rotation_template: RotationTemplate
+    ):
         """Test successfully retrieving a template by ID."""
         response = client.get(f"/api/rotation-templates/{sample_rotation_template.id}")
 
@@ -284,7 +298,11 @@ class TestCreateRotationTemplate:
 
         # Verify it was saved to database
         template_id = UUID(data["id"])
-        db_template = db.query(RotationTemplate).filter(RotationTemplate.id == template_id).first()
+        db_template = (
+            db.query(RotationTemplate)
+            .filter(RotationTemplate.id == template_id)
+            .first()
+        )
         assert db_template is not None
         assert db_template.name == "New Clinic"
 
@@ -458,7 +476,9 @@ class TestCreateRotationTemplate:
 class TestUpdateRotationTemplate:
     """Tests for PUT /api/rotation-templates/{template_id} endpoint."""
 
-    def test_update_template_single_field(self, client: TestClient, sample_rotation_template: RotationTemplate):
+    def test_update_template_single_field(
+        self, client: TestClient, sample_rotation_template: RotationTemplate
+    ):
         """Test updating a single field."""
         update_data = {
             "name": "Updated Clinic Name",
@@ -474,7 +494,9 @@ class TestUpdateRotationTemplate:
         assert data["name"] == "Updated Clinic Name"
         assert data["activity_type"] == sample_rotation_template.activity_type
 
-    def test_update_template_multiple_fields(self, client: TestClient, sample_rotation_template: RotationTemplate):
+    def test_update_template_multiple_fields(
+        self, client: TestClient, sample_rotation_template: RotationTemplate
+    ):
         """Test updating multiple fields at once."""
         update_data = {
             "name": "New Name",
@@ -493,7 +515,9 @@ class TestUpdateRotationTemplate:
         assert data["abbreviation"] == "NN"
         assert data["max_residents"] == 10
 
-    def test_update_template_all_fields(self, client: TestClient, sample_rotation_template: RotationTemplate):
+    def test_update_template_all_fields(
+        self, client: TestClient, sample_rotation_template: RotationTemplate
+    ):
         """Test updating all fields."""
         update_data = {
             "name": "Completely Updated",
@@ -545,7 +569,9 @@ class TestUpdateRotationTemplate:
 
         assert response.status_code == 422
 
-    def test_update_template_empty_body(self, client: TestClient, sample_rotation_template: RotationTemplate):
+    def test_update_template_empty_body(
+        self, client: TestClient, sample_rotation_template: RotationTemplate
+    ):
         """Test updating with empty body (no changes)."""
         response = client.put(
             f"/api/rotation-templates/{sample_rotation_template.id}",
@@ -584,7 +610,9 @@ class TestUpdateRotationTemplate:
         assert data["abbreviation"] is None
         assert data["clinic_location"] is None
 
-    def test_update_template_change_activity_type(self, client: TestClient, sample_rotation_template: RotationTemplate):
+    def test_update_template_change_activity_type(
+        self, client: TestClient, sample_rotation_template: RotationTemplate
+    ):
         """Test changing activity_type."""
         update_data = {
             "activity_type": "procedure",
@@ -599,7 +627,9 @@ class TestUpdateRotationTemplate:
         data = response.json()
         assert data["activity_type"] == "procedure"
 
-    def test_update_template_toggle_boolean_fields(self, client: TestClient, sample_rotation_template: RotationTemplate):
+    def test_update_template_toggle_boolean_fields(
+        self, client: TestClient, sample_rotation_template: RotationTemplate
+    ):
         """Test toggling boolean fields."""
         update_data = {
             "requires_procedure_credential": True,
@@ -642,7 +672,12 @@ class TestUpdateRotationTemplate:
 class TestDeleteRotationTemplate:
     """Tests for DELETE /api/rotation-templates/{template_id} endpoint."""
 
-    def test_delete_template_success(self, client: TestClient, db: Session, sample_rotation_template: RotationTemplate):
+    def test_delete_template_success(
+        self,
+        client: TestClient,
+        db: Session,
+        sample_rotation_template: RotationTemplate,
+    ):
         """Test successfully deleting a template."""
         template_id = sample_rotation_template.id
 
@@ -652,7 +687,11 @@ class TestDeleteRotationTemplate:
         assert response.content == b""
 
         # Verify template was deleted from database
-        db_template = db.query(RotationTemplate).filter(RotationTemplate.id == template_id).first()
+        db_template = (
+            db.query(RotationTemplate)
+            .filter(RotationTemplate.id == template_id)
+            .first()
+        )
         assert db_template is None
 
     def test_delete_template_not_found(self, client: TestClient):
@@ -671,7 +710,9 @@ class TestDeleteRotationTemplate:
 
         assert response.status_code == 422
 
-    def test_delete_template_twice(self, client: TestClient, sample_rotation_template: RotationTemplate):
+    def test_delete_template_twice(
+        self, client: TestClient, sample_rotation_template: RotationTemplate
+    ):
         """Test deleting same template twice returns 404 on second attempt."""
         template_id = sample_rotation_template.id
 
@@ -707,7 +748,9 @@ class TestDeleteRotationTemplate:
         assert response.status_code == 200
         assert response.json()["total"] == 0
 
-    def test_delete_template_verify_get_fails(self, client: TestClient, sample_rotation_template: RotationTemplate):
+    def test_delete_template_verify_get_fails(
+        self, client: TestClient, sample_rotation_template: RotationTemplate
+    ):
         """Test that GET fails after template is deleted."""
         template_id = sample_rotation_template.id
 
@@ -746,7 +789,9 @@ class TestRotationTemplateIntegration:
 
         # Update
         update_data = {"name": "Updated Lifecycle"}
-        response = client.put(f"/api/rotation-templates/{template_id}", json=update_data)
+        response = client.put(
+            f"/api/rotation-templates/{template_id}", json=update_data
+        )
         assert response.status_code == 200
         assert response.json()["name"] == "Updated Lifecycle"
 
@@ -802,7 +847,9 @@ class TestRotationTemplateIntegration:
             "name": "Updated Name",
             "abbreviation": "UN",
         }
-        response = client.put(f"/api/rotation-templates/{template_id}", json=update_data)
+        response = client.put(
+            f"/api/rotation-templates/{template_id}", json=update_data
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Updated Name"
@@ -840,7 +887,9 @@ class TestRotationTemplateIntegration:
 
         # Update capacity
         update_data = {"max_residents": 5}
-        response = client.put(f"/api/rotation-templates/{template_id}", json=update_data)
+        response = client.put(
+            f"/api/rotation-templates/{template_id}", json=update_data
+        )
         assert response.status_code == 200
         assert response.json()["max_residents"] == 5
 

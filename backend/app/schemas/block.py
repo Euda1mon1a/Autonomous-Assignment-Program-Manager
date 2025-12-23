@@ -1,4 +1,5 @@
 """Block schemas."""
+
 from datetime import date
 from uuid import UUID
 
@@ -9,6 +10,7 @@ from app.validators.date_validators import validate_academic_year_date
 
 class BlockBase(BaseModel):
     """Base block schema."""
+
     date: date
     time_of_day: str  # 'AM' or 'PM'
     block_number: int
@@ -32,11 +34,13 @@ class BlockBase(BaseModel):
 
 class BlockCreate(BlockBase):
     """Schema for creating a block."""
+
     pass
 
 
 class BlockResponse(BlockBase):
     """Schema for block response."""
+
     id: UUID
 
     class Config:
@@ -45,5 +49,6 @@ class BlockResponse(BlockBase):
 
 class BlockListResponse(BaseModel):
     """Schema for list of blocks."""
+
     items: list[BlockResponse]
     total: int

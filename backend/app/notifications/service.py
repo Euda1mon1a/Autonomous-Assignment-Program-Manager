@@ -1,4 +1,5 @@
 """Core notification service for schedule alerts and updates."""
+
 import uuid
 from datetime import datetime
 from typing import Any
@@ -41,6 +42,7 @@ class ScheduledNotification(BaseModel):
         status: Status (pending, sent, failed)
         created_at: When the notification was scheduled
     """
+
     id: UUID = Field(default_factory=uuid.uuid4)
     recipient_id: UUID
     notification_type: NotificationType
@@ -61,6 +63,7 @@ class NotificationPreferences(BaseModel):
         quiet_hours_start: Start of quiet hours (no notifications)
         quiet_hours_end: End of quiet hours
     """
+
     user_id: UUID
     enabled_channels: list[str] = ["in_app", "email"]
     notification_types: dict[str, bool] = Field(
@@ -104,7 +107,7 @@ class NotificationService:
         recipient_id: UUID,
         notification_type: NotificationType,
         data: dict[str, Any],
-        channels: list[str] | None = None
+        channels: list[str] | None = None,
     ) -> list[DeliveryResult]:
         """
         Send a single notification immediately.
@@ -121,11 +124,13 @@ class NotificationService:
         # Render the notification template
         rendered = render_notification(notification_type, data)
         if not rendered:
-            return [DeliveryResult(
-                success=False,
-                channel="template",
-                message=f"Template not found for type: {notification_type}"
-            )]
+            return [
+                DeliveryResult(
+                    success=False,
+                    channel="template",
+                    message=f"Template not found for type: {notification_type}",
+                )
+            ]
 
         # Determine which channels to use
         target_channels = channels or rendered.get("channels", ["in_app"])
@@ -136,7 +141,7 @@ class NotificationService:
             logger.info(
                 "Notification %s skipped for user %s due to preferences",
                 notification_type.value,
-                recipient_id
+                recipient_id,
             )
             return []
 
@@ -168,11 +173,13 @@ class NotificationService:
                 if result.success:
                     delivered_channels.append(channel_name)
             else:
-                results.append(DeliveryResult(
-                    success=False,
-                    channel=channel_name,
-                    message=f"Channel not found: {channel_name}"
-                ))
+                results.append(
+                    DeliveryResult(
+                        success=False,
+                        channel=channel_name,
+                        message=f"Channel not found: {channel_name}",
+                    )
+                )
 
         # Store notification record for in-app display
         if "in_app" in delivered_channels or any(r.success for r in results):
@@ -195,7 +202,7 @@ class NotificationService:
         recipient_ids: list[UUID],
         notification_type: NotificationType,
         data: dict[str, Any],
-        channels: list[str] | None = None
+        channels: list[str] | None = None,
     ) -> dict[str, list[DeliveryResult]]:
         """
         Send the same notification to multiple recipients.
@@ -232,15 +239,19 @@ class NotificationService:
         for recipient_id in recipient_ids:
             # Use cached preferences if available, otherwise use defaults
             if recipient_id in preferences_cache:
-                self._preferences_cache = {recipient_id: preferences_cache[recipient_id]}
+                self._preferences_cache = {
+                    recipient_id: preferences_cache[recipient_id]
+                }
             else:
-                self._preferences_cache = {recipient_id: NotificationPreferences(user_id=recipient_id)}
+                self._preferences_cache = {
+                    recipient_id: NotificationPreferences(user_id=recipient_id)
+                }
 
             delivery_results = await self.send_notification(
                 recipient_id=recipient_id,
                 notification_type=notification_type,
                 data=data,
-                channels=channels
+                channels=channels,
             )
             results[str(recipient_id)] = delivery_results
 
@@ -254,7 +265,7 @@ class NotificationService:
         recipient_id: UUID,
         notification_type: NotificationType,
         data: dict[str, Any],
-        send_at: datetime
+        send_at: datetime,
     ) -> ScheduledNotification:
         """
         Schedule a notification for future delivery.
@@ -284,7 +295,7 @@ class NotificationService:
             "Scheduled notification %s for user %s at %s",
             notification_type.value,
             recipient_id,
-            send_at
+            send_at,
         )
 
         # Return Pydantic model for API
@@ -320,7 +331,9 @@ class NotificationService:
         )
 
         # OPTIMIZATION: Batch-load all user preferences to avoid N+1 queries
-        unique_recipient_ids = list(set(record.recipient_id for record in due_notifications))
+        unique_recipient_ids = list(
+            set(record.recipient_id for record in due_notifications)
+        )
         if unique_recipient_ids:
             preferences_records = (
                 self.db.query(NotificationPreferenceRecord)
@@ -343,7 +356,9 @@ class NotificationService:
             # Add default preferences for users without records
             for user_id in unique_recipient_ids:
                 if user_id not in self._preferences_cache:
-                    self._preferences_cache[user_id] = NotificationPreferences(user_id=user_id)
+                    self._preferences_cache[user_id] = NotificationPreferences(
+                        user_id=user_id
+                    )
 
         for record in due_notifications:
             # Mark as processing
@@ -355,7 +370,7 @@ class NotificationService:
                 results = await self.send_notification(
                     recipient_id=record.recipient_id,
                     notification_type=notification_type,
-                    data=record.data or {}
+                    data=record.data or {},
                 )
 
                 # Update status based on results
@@ -387,10 +402,7 @@ class NotificationService:
         return sent_count
 
     def get_pending_notifications(
-        self,
-        user_id: UUID,
-        limit: int = 50,
-        unread_only: bool = True
+        self, user_id: UUID, limit: int = 50, unread_only: bool = True
     ) -> list[dict[str, Any]]:
         """
         Fetch pending/unread notifications for a user.
@@ -403,18 +415,13 @@ class NotificationService:
         Returns:
             List of notification dictionaries
         """
-        query = (
-            self.db.query(Notification)
-            .filter(Notification.recipient_id == user_id)
-        )
+        query = self.db.query(Notification).filter(Notification.recipient_id == user_id)
 
         if unread_only:
             query = query.filter(not Notification.is_read)
 
         notifications = (
-            query.order_by(Notification.created_at.desc())
-            .limit(limit)
-            .all()
+            query.order_by(Notification.created_at.desc()).limit(limit).all()
         )
 
         return [
@@ -446,7 +453,7 @@ class NotificationService:
             .filter(Notification.id.in_(notification_ids))
             .update(
                 {"is_read": True, "read_at": datetime.utcnow()},
-                synchronize_session=False
+                synchronize_session=False,
             )
         )
         self.db.commit()
@@ -485,9 +492,7 @@ class NotificationService:
         return NotificationPreferences(user_id=user_id)
 
     def update_user_preferences(
-        self,
-        user_id: UUID,
-        preferences: NotificationPreferences
+        self, user_id: UUID, preferences: NotificationPreferences
     ) -> NotificationPreferences:
         """
         Update user notification preferences.
@@ -528,9 +533,7 @@ class NotificationService:
         return preferences
 
     def _should_send_notification(
-        self,
-        preferences: NotificationPreferences,
-        notification_type: NotificationType
+        self, preferences: NotificationPreferences, notification_type: NotificationType
     ) -> bool:
         """
         Check if notification should be sent based on user preferences.
@@ -547,9 +550,16 @@ class NotificationService:
             return False
 
         # Check quiet hours
-        if preferences.quiet_hours_start is not None and preferences.quiet_hours_end is not None:
+        if (
+            preferences.quiet_hours_start is not None
+            and preferences.quiet_hours_end is not None
+        ):
             current_hour = datetime.utcnow().hour
-            if preferences.quiet_hours_start <= current_hour < preferences.quiet_hours_end:
+            if (
+                preferences.quiet_hours_start
+                <= current_hour
+                < preferences.quiet_hours_end
+            ):
                 # Don't send during quiet hours unless it's high priority
                 template = get_template(notification_type)
                 if template and template.priority != "high":
@@ -560,6 +570,7 @@ class NotificationService:
 
 # Convenience functions for common notification scenarios
 
+
 async def notify_schedule_published(
     db: Session,
     recipient_ids: list[UUID],
@@ -567,7 +578,7 @@ async def notify_schedule_published(
     coverage_rate: float,
     total_assignments: int,
     violations_count: int,
-    publisher_name: str
+    publisher_name: str,
 ) -> dict[str, list[DeliveryResult]]:
     """
     Send schedule published notifications to multiple recipients.
@@ -597,7 +608,7 @@ async def notify_schedule_published(
     return await service.send_bulk(
         recipient_ids=recipient_ids,
         notification_type=NotificationType.SCHEDULE_PUBLISHED,
-        data=data
+        data=data,
     )
 
 
@@ -608,7 +619,7 @@ async def notify_acgme_warning(
     severity: str,
     person_name: str,
     violation_details: str,
-    recommended_action: str
+    recommended_action: str,
 ) -> list[DeliveryResult]:
     """
     Send ACGME compliance warning notification.
@@ -638,5 +649,5 @@ async def notify_acgme_warning(
     return await service.send_notification(
         recipient_id=recipient_id,
         notification_type=NotificationType.ACGME_WARNING,
-        data=data
+        data=data,
     )

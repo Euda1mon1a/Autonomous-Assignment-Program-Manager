@@ -1,8 +1,10 @@
 """Feature flag models for configuration and audit logging."""
+
 import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     CheckConstraint,
     Column,
@@ -10,8 +12,6 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Index,
-    Integer,
-    JSON,
     String,
     Text,
 )
@@ -33,6 +33,7 @@ class FeatureFlag(Base):
     - A/B testing variants
     - Flag dependencies
     """
+
     __tablename__ = "feature_flags"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -41,7 +42,7 @@ class FeatureFlag(Base):
     description = Column(Text, nullable=True)
 
     # Flag type: 'boolean', 'percentage', 'variant'
-    flag_type = Column(String(20), nullable=False, default='boolean')
+    flag_type = Column(String(20), nullable=False, default="boolean")
 
     # Enabled status
     enabled = Column(Boolean, nullable=False, default=False)
@@ -76,23 +77,28 @@ class FeatureFlag(Base):
     # Metadata
     created_by = Column(GUID(), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     # Relationships
-    evaluations = relationship("FeatureFlagEvaluation", back_populates="flag", cascade="all, delete-orphan")
-    audit_logs = relationship("FeatureFlagAudit", back_populates="flag", cascade="all, delete-orphan")
+    evaluations = relationship(
+        "FeatureFlagEvaluation", back_populates="flag", cascade="all, delete-orphan"
+    )
+    audit_logs = relationship(
+        "FeatureFlagAudit", back_populates="flag", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         CheckConstraint(
-            "flag_type IN ('boolean', 'percentage', 'variant')",
-            name="check_flag_type"
+            "flag_type IN ('boolean', 'percentage', 'variant')", name="check_flag_type"
         ),
         CheckConstraint(
             "rollout_percentage IS NULL OR (rollout_percentage >= 0.0 AND rollout_percentage <= 1.0)",
-            name="check_rollout_percentage_range"
+            name="check_rollout_percentage_range",
         ),
-        Index('idx_feature_flag_enabled', 'enabled'),
-        Index('idx_feature_flag_type', 'flag_type'),
+        Index("idx_feature_flag_enabled", "enabled"),
+        Index("idx_feature_flag_type", "flag_type"),
     )
 
     def __repr__(self):
@@ -105,10 +111,16 @@ class FeatureFlagEvaluation(Base):
 
     Tracks every time a feature flag is evaluated for a user.
     """
+
     __tablename__ = "feature_flag_evaluations"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    flag_id = Column(GUID(), ForeignKey('feature_flags.id', ondelete='CASCADE'), nullable=False, index=True)
+    flag_id = Column(
+        GUID(),
+        ForeignKey("feature_flags.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
 
     # User context
     user_id = Column(GUID(), nullable=True, index=True)
@@ -132,12 +144,14 @@ class FeatureFlagEvaluation(Base):
     flag = relationship("FeatureFlag", back_populates="evaluations")
 
     __table_args__ = (
-        Index('idx_flag_eval_flag_user', 'flag_id', 'user_id'),
-        Index('idx_flag_eval_timestamp', 'evaluated_at'),
+        Index("idx_flag_eval_flag_user", "flag_id", "user_id"),
+        Index("idx_flag_eval_timestamp", "evaluated_at"),
     )
 
     def __repr__(self):
-        return f"<FeatureFlagEvaluation(flag_id='{self.flag_id}', enabled={self.enabled})>"
+        return (
+            f"<FeatureFlagEvaluation(flag_id='{self.flag_id}', enabled={self.enabled})>"
+        )
 
 
 class FeatureFlagAudit(Base):
@@ -146,17 +160,25 @@ class FeatureFlagAudit(Base):
 
     Tracks all modifications to feature flags for compliance and debugging.
     """
+
     __tablename__ = "feature_flag_audit"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    flag_id = Column(GUID(), ForeignKey('feature_flags.id', ondelete='CASCADE'), nullable=False, index=True)
+    flag_id = Column(
+        GUID(),
+        ForeignKey("feature_flags.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
 
     # Who made the change
     user_id = Column(GUID(), nullable=True, index=True)
     username = Column(String(100), nullable=True)
 
     # What changed
-    action = Column(String(50), nullable=False)  # 'created', 'updated', 'deleted', 'enabled', 'disabled'
+    action = Column(
+        String(50), nullable=False
+    )  # 'created', 'updated', 'deleted', 'enabled', 'disabled'
     changes = Column(JSON, nullable=True)  # Before/after values
 
     # Why (optional)
@@ -171,10 +193,10 @@ class FeatureFlagAudit(Base):
     __table_args__ = (
         CheckConstraint(
             "action IN ('created', 'updated', 'deleted', 'enabled', 'disabled')",
-            name="check_audit_action"
+            name="check_audit_action",
         ),
-        Index('idx_flag_audit_timestamp', 'created_at'),
-        Index('idx_flag_audit_user', 'user_id'),
+        Index("idx_flag_audit_timestamp", "created_at"),
+        Index("idx_flag_audit_user", "user_id"),
     )
 
     def __repr__(self):

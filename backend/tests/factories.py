@@ -1,13 +1,15 @@
 """FactoryBoy factories for test data generation."""
-import factory
+
 from datetime import date, timedelta
 from uuid import uuid4
 
-from app.models.person import Person
-from app.models.block import Block
-from app.models.assignment import Assignment
-from app.models.rotation_template import RotationTemplate
+import factory
+
 from app.models.absence import Absence
+from app.models.assignment import Assignment
+from app.models.block import Block
+from app.models.person import Person
+from app.models.rotation_template import RotationTemplate
 
 
 class PersonFactory(factory.Factory):
@@ -17,8 +19,10 @@ class PersonFactory(factory.Factory):
         model = Person
 
     id = factory.LazyFunction(uuid4)
-    name = factory.Faker('name')
-    email = factory.LazyAttribute(lambda o: f"{o.name.lower().replace(' ', '.')}@hospital.org")
+    name = factory.Faker("name")
+    email = factory.LazyAttribute(
+        lambda o: f"{o.name.lower().replace(' ', '.')}@hospital.org"
+    )
     type = "resident"
     pgy_level = factory.Iterator([1, 2, 3])
 
@@ -33,15 +37,17 @@ class PersonFactory(factory.Factory):
 
 class ResidentFactory(PersonFactory):
     """Factory specifically for residents."""
+
     type = "resident"
     pgy_level = factory.Iterator([1, 2, 3])
 
 
 class FacultyFactory(PersonFactory):
     """Factory specifically for faculty."""
+
     type = "faculty"
     pgy_level = None
-    performs_procedures = factory.Faker('boolean')
+    performs_procedures = factory.Faker("boolean")
     specialties = factory.LazyFunction(lambda: ["Sports Medicine"])
 
 
@@ -110,7 +116,7 @@ class AbsenceFactory(factory.Factory):
     is_blocking = None  # Auto-determined based on type
     return_date_tentative = False
     created_by_id = None  # Set when admin enters on behalf of someone
-    notes = factory.Faker('sentence')
+    notes = factory.Faker("sentence")
 
     class Params:
         # Trait for emergency absences (Hawaii default: 10 days, blocking, tentative return)
@@ -137,11 +143,13 @@ def create_week_of_blocks(start_date: date = None) -> list[Block]:
     for day_offset in range(7):
         block_date = start + timedelta(days=day_offset)
         for tod in ["AM", "PM"]:
-            blocks.append(BlockFactory(
-                date=block_date,
-                time_of_day=tod,
-                is_weekend=block_date.weekday() >= 5,
-            ))
+            blocks.append(
+                BlockFactory(
+                    date=block_date,
+                    time_of_day=tod,
+                    is_weekend=block_date.weekday() >= 5,
+                )
+            )
     return blocks
 
 

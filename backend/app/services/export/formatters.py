@@ -4,6 +4,7 @@ Data formatters for export services.
 Provides utility functions for transforming database models into
 export-friendly formats with field selection and custom transformations.
 """
+
 from datetime import date, datetime
 from typing import Any
 from uuid import UUID
@@ -61,7 +62,7 @@ def format_uuid(uuid_val: UUID | None) -> str | None:
 def format_assignment(
     assignment: Assignment,
     fields: list[str] | None = None,
-    include_relations: bool = False
+    include_relations: bool = False,
 ) -> dict[str, Any]:
     """
     Format assignment model for export.
@@ -83,7 +84,9 @@ def format_assignment(
         "activity_override": assignment.activity_override,
         "notes": assignment.notes,
         "override_reason": assignment.override_reason,
-        "override_acknowledged_at": format_datetime(assignment.override_acknowledged_at),
+        "override_acknowledged_at": format_datetime(
+            assignment.override_acknowledged_at
+        ),
         "confidence": assignment.confidence,
         "score": assignment.score,
         "created_by": assignment.created_by,
@@ -116,9 +119,7 @@ def format_assignment(
 
 
 def format_person(
-    person: Person,
-    fields: list[str] | None = None,
-    include_relations: bool = False
+    person: Person, fields: list[str] | None = None, include_relations: bool = False
 ) -> dict[str, Any]:
     """
     Format person model for export.
@@ -170,9 +171,7 @@ def format_person(
 
 
 def format_block(
-    block: Block,
-    fields: list[str] | None = None,
-    include_relations: bool = False
+    block: Block, fields: list[str] | None = None, include_relations: bool = False
 ) -> dict[str, Any]:
     """
     Format block model for export.
@@ -206,10 +205,7 @@ def format_block(
     return data
 
 
-def format_schedule_row(
-    assignment: Assignment,
-    flat: bool = True
-) -> dict[str, Any]:
+def format_schedule_row(assignment: Assignment, flat: bool = True) -> dict[str, Any]:
     """
     Format assignment as a flat schedule row for CSV export.
 
@@ -250,10 +246,7 @@ def format_schedule_row(
     return data
 
 
-def format_analytics_row(
-    person: Person,
-    metrics: dict[str, Any]
-) -> dict[str, Any]:
+def format_analytics_row(person: Person, metrics: dict[str, Any]) -> dict[str, Any]:
     """
     Format person with analytics metrics for export.
 
@@ -310,30 +303,81 @@ def get_available_fields(model_type: str) -> list[str]:
     """
     fields_map = {
         "assignment": [
-            "id", "block_id", "person_id", "rotation_template_id", "role",
-            "activity_override", "notes", "override_reason", "override_acknowledged_at",
-            "confidence", "score", "created_by", "created_at", "updated_at",
-            "activity_name", "abbreviation"
+            "id",
+            "block_id",
+            "person_id",
+            "rotation_template_id",
+            "role",
+            "activity_override",
+            "notes",
+            "override_reason",
+            "override_acknowledged_at",
+            "confidence",
+            "score",
+            "created_by",
+            "created_at",
+            "updated_at",
+            "activity_name",
+            "abbreviation",
         ],
         "person": [
-            "id", "name", "type", "email", "pgy_level", "target_clinical_blocks",
-            "performs_procedures", "specialties", "primary_duty", "faculty_role",
-            "sunday_call_count", "weekday_call_count", "fmit_weeks_count",
-            "created_at", "updated_at", "is_resident", "is_faculty",
-            "supervision_ratio", "weekly_clinic_limit", "block_clinic_limit",
-            "sm_clinic_weekly_target", "avoid_tuesday_call", "prefer_wednesday_call",
-            "is_sports_medicine"
+            "id",
+            "name",
+            "type",
+            "email",
+            "pgy_level",
+            "target_clinical_blocks",
+            "performs_procedures",
+            "specialties",
+            "primary_duty",
+            "faculty_role",
+            "sunday_call_count",
+            "weekday_call_count",
+            "fmit_weeks_count",
+            "created_at",
+            "updated_at",
+            "is_resident",
+            "is_faculty",
+            "supervision_ratio",
+            "weekly_clinic_limit",
+            "block_clinic_limit",
+            "sm_clinic_weekly_target",
+            "avoid_tuesday_call",
+            "prefer_wednesday_call",
+            "is_sports_medicine",
         ],
         "block": [
-            "id", "date", "time_of_day", "block_number", "is_weekend",
-            "is_holiday", "holiday_name", "display_name", "is_workday"
+            "id",
+            "date",
+            "time_of_day",
+            "block_number",
+            "is_weekend",
+            "is_holiday",
+            "holiday_name",
+            "display_name",
+            "is_workday",
         ],
         "schedule": [
-            "assignment_id", "date", "time_of_day", "block_number", "is_weekend",
-            "is_holiday", "person_id", "person_name", "person_type", "pgy_level",
-            "faculty_role", "role", "activity_name", "abbreviation",
-            "activity_override", "notes", "confidence", "score",
-            "created_at", "updated_at"
+            "assignment_id",
+            "date",
+            "time_of_day",
+            "block_number",
+            "is_weekend",
+            "is_holiday",
+            "person_id",
+            "person_name",
+            "person_type",
+            "pgy_level",
+            "faculty_role",
+            "role",
+            "activity_name",
+            "abbreviation",
+            "activity_override",
+            "notes",
+            "confidence",
+            "score",
+            "created_at",
+            "updated_at",
         ],
     }
 

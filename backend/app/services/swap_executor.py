@@ -1,4 +1,5 @@
 """Swap execution service."""
+
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from uuid import UUID, uuid4
@@ -110,7 +111,9 @@ class SwapExecutor:
         """Rollback an executed swap within the allowed window."""
         try:
             # Retrieve the swap record
-            swap_record = self.db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
+            swap_record = (
+                self.db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
+            )
 
             if not swap_record:
                 return RollbackResult(
@@ -144,9 +147,13 @@ class SwapExecutor:
             )
 
             # Reverse the call cascade
-            self._update_call_cascade(swap_record.source_week, swap_record.source_faculty_id)
+            self._update_call_cascade(
+                swap_record.source_week, swap_record.source_faculty_id
+            )
             if swap_record.target_week:
-                self._update_call_cascade(swap_record.target_week, swap_record.target_faculty_id)
+                self._update_call_cascade(
+                    swap_record.target_week, swap_record.target_faculty_id
+                )
 
             # Update swap record status
             swap_record.status = SwapStatus.ROLLED_BACK
@@ -253,9 +260,7 @@ class SwapExecutor:
                     if assignment.person_id == target_faculty_id:
                         # Transfer assignment to source faculty
                         assignment.person_id = source_faculty_id
-                        assignment.notes = (
-                            f"Swapped from faculty {target_faculty_id} via swap execution"
-                        )
+                        assignment.notes = f"Swapped from faculty {target_faculty_id} via swap execution"
 
     def _update_call_cascade(self, week: date, new_faculty_id: UUID) -> None:
         """

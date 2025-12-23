@@ -3,11 +3,12 @@ Response aggregation for API gateway.
 
 Provides response aggregation from multiple services with different strategies.
 """
+
 import asyncio
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -52,7 +53,7 @@ class AggregationConfig(BaseModel):
         default="shallow",
         description="Merge strategy: 'shallow' or 'deep'",
     )
-    array_key: Optional[str] = Field(
+    array_key: str | None = Field(
         default=None,
         description="Key to extract from responses for array aggregation",
     )
@@ -72,7 +73,7 @@ class ServiceResponse:
     service_name: str
     data: Any
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
     latency_ms: float = 0.0
 
 
@@ -83,7 +84,7 @@ class ResponseAggregator:
     Aggregates responses from multiple services using configurable strategies.
     """
 
-    def __init__(self, config: Optional[AggregationConfig] = None):
+    def __init__(self, config: AggregationConfig | None = None):
         """
         Initialize response aggregator.
 
@@ -183,7 +184,7 @@ class ResponseAggregator:
                         latency_ms=latency,
                     )
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 latency = (time.time() - start_time) * 1000
                 responses.append(
                     ServiceResponse(
@@ -232,8 +233,7 @@ class ResponseAggregator:
             "metadata": {
                 "sources": [r.service_name for r in responses],
                 "count": len(responses),
-                "avg_latency_ms": sum(r.latency_ms for r in responses)
-                / len(responses),
+                "avg_latency_ms": sum(r.latency_ms for r in responses) / len(responses),
             },
         }
 
@@ -285,14 +285,11 @@ class ResponseAggregator:
             "metadata": {
                 "sources": [r.service_name for r in responses],
                 "count": len(data),
-                "avg_latency_ms": sum(r.latency_ms for r in responses)
-                / len(responses),
+                "avg_latency_ms": sum(r.latency_ms for r in responses) / len(responses),
             },
         }
 
-    async def _first_success(
-        self, responses: list[ServiceResponse]
-    ) -> dict[str, Any]:
+    async def _first_success(self, responses: list[ServiceResponse]) -> dict[str, Any]:
         """
         Return first successful response.
 
@@ -354,12 +351,10 @@ class ResponseAggregator:
             raise ValueError("No successful responses")
 
         # Count identical responses
-        from collections import Counter
         import json
+        from collections import Counter
 
-        response_counts = Counter(
-            json.dumps(r.data, sort_keys=True) for r in responses
-        )
+        response_counts = Counter(json.dumps(r.data, sort_keys=True) for r in responses)
 
         # Find most common
         most_common = response_counts.most_common(1)[0]
@@ -374,9 +369,7 @@ class ResponseAggregator:
 
         # Find matching response
         consensus_data = json.loads(most_common[0])
-        matching_response = next(
-            r for r in responses if r.data == consensus_data
-        )
+        matching_response = next(r for r in responses if r.data == consensus_data)
 
         return {
             "data": consensus_data,

@@ -18,7 +18,7 @@ Event Versioning:
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -87,17 +87,15 @@ class EventMetadata(BaseModel):
     event_type: str
     event_version: int = Field(default=1, ge=1)
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    correlation_id: Optional[str] = None  # Links related events
-    causation_id: Optional[str] = None  # ID of event that caused this one
-    user_id: Optional[str] = None
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
-    session_id: Optional[str] = None
+    correlation_id: str | None = None  # Links related events
+    causation_id: str | None = None  # ID of event that caused this one
+    user_id: str | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
+    session_id: str | None = None
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat() + "Z"
-        }
+        json_encoders = {datetime: lambda v: v.isoformat() + "Z"}
 
 
 class BaseEvent(BaseModel):
@@ -117,9 +115,7 @@ class BaseEvent(BaseModel):
 
     class Config:
         frozen = True  # Make events immutable
-        json_encoders = {
-            datetime: lambda v: v.isoformat() + "Z"
-        }
+        json_encoders = {datetime: lambda v: v.isoformat() + "Z"}
 
     def to_dict(self) -> dict[str, Any]:
         """Convert event to dictionary for storage."""
@@ -144,8 +140,8 @@ class ScheduleCreatedEvent(BaseEvent):
     start_date: datetime
     end_date: datetime
     created_by: str
-    algorithm_version: Optional[str] = None
-    constraint_set: Optional[dict[str, Any]] = None
+    algorithm_version: str | None = None
+    constraint_set: dict[str, Any] | None = None
 
     def __init__(self, **data):
         if "metadata" not in data:
@@ -160,7 +156,7 @@ class ScheduleUpdatedEvent(BaseEvent):
     schedule_id: str
     updated_by: str
     changes: dict[str, Any]
-    reason: Optional[str] = None
+    reason: str | None = None
 
     def __init__(self, **data):
         if "metadata" not in data:
@@ -194,10 +190,10 @@ class AssignmentCreatedEvent(BaseEvent):
     assignment_id: str
     person_id: str
     block_id: str
-    rotation_id: Optional[str] = None
+    rotation_id: str | None = None
     role: str
     created_by: str
-    schedule_id: Optional[str] = None
+    schedule_id: str | None = None
 
     def __init__(self, **data):
         if "metadata" not in data:
@@ -213,7 +209,7 @@ class AssignmentUpdatedEvent(BaseEvent):
     updated_by: str
     changes: dict[str, Any]
     previous_values: dict[str, Any]
-    reason: Optional[str] = None
+    reason: str | None = None
 
     def __init__(self, **data):
         if "metadata" not in data:
@@ -227,7 +223,7 @@ class AssignmentDeletedEvent(BaseEvent):
     aggregate_type: str = "Assignment"
     assignment_id: str
     deleted_by: str
-    reason: Optional[str] = None
+    reason: str | None = None
     soft_delete: bool = True
 
     def __init__(self, **data):
@@ -248,9 +244,9 @@ class SwapRequestedEvent(BaseEvent):
     swap_id: str
     requester_id: str
     requester_assignment_id: str
-    target_assignment_id: Optional[str] = None
+    target_assignment_id: str | None = None
     swap_type: str  # "one_to_one" or "absorb"
-    reason: Optional[str] = None
+    reason: str | None = None
 
     def __init__(self, **data):
         if "metadata" not in data:
@@ -264,7 +260,7 @@ class SwapApprovedEvent(BaseEvent):
     aggregate_type: str = "Swap"
     swap_id: str
     approved_by: str
-    approval_notes: Optional[str] = None
+    approval_notes: str | None = None
 
     def __init__(self, **data):
         if "metadata" not in data:
@@ -301,7 +297,7 @@ class AbsenceCreatedEvent(BaseEvent):
     start_date: datetime
     end_date: datetime
     absence_type: str
-    reason: Optional[str] = None
+    reason: str | None = None
     created_by: str
 
     def __init__(self, **data):
@@ -316,7 +312,7 @@ class AbsenceApprovedEvent(BaseEvent):
     aggregate_type: str = "Absence"
     absence_id: str
     approved_by: str
-    approval_notes: Optional[str] = None
+    approval_notes: str | None = None
     coverage_assigned: bool = False
 
     def __init__(self, **data):
@@ -343,7 +339,9 @@ class ACGMEViolationDetectedEvent(BaseEvent):
 
     def __init__(self, **data):
         if "metadata" not in data:
-            data["metadata"] = EventMetadata(event_type=EventType.ACGME_VIOLATION_DETECTED)
+            data["metadata"] = EventMetadata(
+                event_type=EventType.ACGME_VIOLATION_DETECTED
+            )
         if "detected_at" not in data:
             data["detected_at"] = datetime.utcnow()
         super().__init__(**data)
@@ -362,7 +360,9 @@ class ACGMEOverrideAppliedEvent(BaseEvent):
 
     def __init__(self, **data):
         if "metadata" not in data:
-            data["metadata"] = EventMetadata(event_type=EventType.ACGME_OVERRIDE_APPLIED)
+            data["metadata"] = EventMetadata(
+                event_type=EventType.ACGME_OVERRIDE_APPLIED
+            )
         super().__init__(**data)
 
 
@@ -417,7 +417,9 @@ class ResilienceLevelChangedEvent(BaseEvent):
 
     def __init__(self, **data):
         if "metadata" not in data:
-            data["metadata"] = EventMetadata(event_type=EventType.RESILIENCE_LEVEL_CHANGED)
+            data["metadata"] = EventMetadata(
+                event_type=EventType.RESILIENCE_LEVEL_CHANGED
+            )
         super().__init__(**data)
 
 

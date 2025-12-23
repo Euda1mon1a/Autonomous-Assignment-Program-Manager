@@ -65,10 +65,7 @@ class CeleryHealthCheck:
 
         try:
             # Run check with timeout
-            result = await asyncio.wait_for(
-                self._perform_check(),
-                timeout=self.timeout
-            )
+            result = await asyncio.wait_for(self._perform_check(), timeout=self.timeout)
 
             response_time_ms = (time.time() - start_time) * 1000
             result["response_time_ms"] = round(response_time_ms, 2)
@@ -84,7 +81,7 @@ class CeleryHealthCheck:
 
             return result
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             response_time_ms = (time.time() - start_time) * 1000
             logger.error(f"Celery health check timed out after {self.timeout}s")
             return {
@@ -207,10 +204,12 @@ class CeleryHealthCheck:
 
             workers = []
             for worker_name, response in pong.items():
-                workers.append({
-                    "name": worker_name,
-                    "ok": response.get("ok") == "pong",
-                })
+                workers.append(
+                    {
+                        "name": worker_name,
+                        "ok": response.get("ok") == "pong",
+                    }
+                )
 
             return {
                 "status": "healthy",
@@ -285,11 +284,13 @@ class CeleryHealthCheck:
             queues = []
             for worker_name, worker_queues in active_queues.items():
                 for queue in worker_queues:
-                    queues.append({
-                        "name": queue["name"],
-                        "routing_key": queue.get("routing_key", "unknown"),
-                        "worker": worker_name,
-                    })
+                    queues.append(
+                        {
+                            "name": queue["name"],
+                            "routing_key": queue.get("routing_key", "unknown"),
+                            "worker": worker_name,
+                        }
+                    )
 
             return {
                 "status": "healthy",

@@ -10,7 +10,7 @@ Tests for:
 """
 
 from datetime import date, timedelta
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import numpy as np
@@ -32,7 +32,6 @@ from app.services.pareto_optimization_service import (
     ParetoOptimizationService,
     SchedulingProblem,
 )
-
 
 # ============================================================================
 # Fixtures
@@ -163,7 +162,9 @@ def sample_solutions() -> list[ParetoSolution]:
                 "consecutive_days": 1.0,
                 "specialty_distribution": 0.5,
             },
-            decision_variables={"block_1_person_1": {"block_id": "1", "person_id": "1"}},
+            decision_variables={
+                "block_1_person_1": {"block_id": "1", "person_id": "1"}
+            },
             is_feasible=True,
             constraint_violations=[],
         ),
@@ -177,7 +178,9 @@ def sample_solutions() -> list[ParetoSolution]:
                 "consecutive_days": 0.5,
                 "specialty_distribution": 0.6,
             },
-            decision_variables={"block_1_person_2": {"block_id": "1", "person_id": "2"}},
+            decision_variables={
+                "block_1_person_2": {"block_id": "1", "person_id": "2"}
+            },
             is_feasible=True,
             constraint_violations=[],
         ),
@@ -191,7 +194,9 @@ def sample_solutions() -> list[ParetoSolution]:
                 "consecutive_days": 1.5,
                 "specialty_distribution": 0.4,
             },
-            decision_variables={"block_1_person_3": {"block_id": "1", "person_id": "3"}},
+            decision_variables={
+                "block_1_person_3": {"block_id": "1", "person_id": "3"}
+            },
             is_feasible=True,
             constraint_violations=[],
         ),
@@ -211,8 +216,12 @@ class TestSchedulingProblem:
         """Test that SchedulingProblem initializes correctly."""
         n_persons = 5
         n_blocks = 10
-        person_data = [{"id": str(uuid4()), "name": f"Person {i}"} for i in range(n_persons)]
-        block_data = [{"id": str(uuid4()), "name": f"Block {i}"} for i in range(n_blocks)]
+        person_data = [
+            {"id": str(uuid4()), "name": f"Person {i}"} for i in range(n_persons)
+        ]
+        block_data = [
+            {"id": str(uuid4()), "name": f"Block {i}"} for i in range(n_blocks)
+        ]
 
         problem = SchedulingProblem(
             n_persons=n_persons,
@@ -266,23 +275,27 @@ class TestSchedulingProblem:
         )
 
         # Equal distribution: low variance
-        assignment_matrix = np.array([
-            [1, 0, 1],
-            [0, 1, 0],
-            [1, 0, 1],
-            [0, 1, 0],
-        ])
+        assignment_matrix = np.array(
+            [
+                [1, 0, 1],
+                [0, 1, 0],
+                [1, 0, 1],
+                [0, 1, 0],
+            ]
+        )
         fairness = problem._calculate_fairness(assignment_matrix)
         assert isinstance(fairness, float)
         assert fairness >= 0
 
         # Unequal distribution: high variance
-        assignment_matrix_unequal = np.array([
-            [1, 0, 0],
-            [1, 0, 0],
-            [1, 0, 0],
-            [1, 0, 0],
-        ])
+        assignment_matrix_unequal = np.array(
+            [
+                [1, 0, 0],
+                [1, 0, 0],
+                [1, 0, 0],
+                [1, 0, 0],
+            ]
+        )
         fairness_unequal = problem._calculate_fairness(assignment_matrix_unequal)
         assert fairness_unequal > fairness
 
@@ -298,22 +311,26 @@ class TestSchedulingProblem:
         )
 
         # All blocks covered
-        assignment_matrix = np.array([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-            [1, 0, 0],
-        ])
+        assignment_matrix = np.array(
+            [
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+                [1, 0, 0],
+            ]
+        )
         coverage = problem._calculate_coverage(assignment_matrix)
         assert coverage == -1.0  # Negated because pymoo minimizes
 
         # Partial coverage (2 out of 4 blocks)
-        assignment_matrix_partial = np.array([
-            [1, 0, 0],
-            [0, 0, 0],
-            [0, 1, 0],
-            [0, 0, 0],
-        ])
+        assignment_matrix_partial = np.array(
+            [
+                [1, 0, 0],
+                [0, 0, 0],
+                [0, 1, 0],
+                [0, 0, 0],
+            ]
+        )
         coverage_partial = problem._calculate_coverage(assignment_matrix_partial)
         assert coverage_partial == -0.5
 
@@ -341,12 +358,14 @@ class TestSchedulingProblem:
         )
 
         # Assignments matching preferences
-        assignment_matrix = np.array([
-            [1, 0, 0],  # Person 0 to clinic (match)
-            [0, 1, 0],  # Person 1 to admin (match)
-            [0, 0, 1],  # Person 2 to other (no preference)
-            [1, 0, 0],  # Person 0 to clinic (match)
-        ])
+        assignment_matrix = np.array(
+            [
+                [1, 0, 0],  # Person 0 to clinic (match)
+                [0, 1, 0],  # Person 1 to admin (match)
+                [0, 0, 1],  # Person 2 to other (no preference)
+                [1, 0, 0],  # Person 0 to clinic (match)
+            ]
+        )
         satisfaction = problem._calculate_preference_satisfaction(assignment_matrix)
         assert isinstance(satisfaction, float)
         # Should be negative (for minimization in pymoo)
@@ -364,27 +383,33 @@ class TestSchedulingProblem:
         )
 
         # Balanced workload (2 assignments each)
-        assignment_matrix_balanced = np.array([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-        ])
+        assignment_matrix_balanced = np.array(
+            [
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+            ]
+        )
         balance = problem._calculate_workload_balance(assignment_matrix_balanced)
         assert balance == 0.0
 
         # Unbalanced workload
-        assignment_matrix_unbalanced = np.array([
-            [1, 0, 0],
-            [1, 0, 0],
-            [1, 0, 0],
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 0],
-        ])
-        balance_unbalanced = problem._calculate_workload_balance(assignment_matrix_unbalanced)
+        assignment_matrix_unbalanced = np.array(
+            [
+                [1, 0, 0],
+                [1, 0, 0],
+                [1, 0, 0],
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 0],
+            ]
+        )
+        balance_unbalanced = problem._calculate_workload_balance(
+            assignment_matrix_unbalanced
+        )
         assert balance_unbalanced > 0
 
     def test_calculate_consecutive_days(self, sample_objectives):
@@ -399,35 +424,41 @@ class TestSchedulingProblem:
         )
 
         # No consecutive blocks
-        assignment_matrix_no_consecutive = np.array([
-            [1, 0],
-            [0, 1],
-            [1, 0],
-            [0, 1],
-            [1, 0],
-            [0, 1],
-            [1, 0],
-            [0, 1],
-            [1, 0],
-            [0, 1],
-        ])
+        assignment_matrix_no_consecutive = np.array(
+            [
+                [1, 0],
+                [0, 1],
+                [1, 0],
+                [0, 1],
+                [1, 0],
+                [0, 1],
+                [1, 0],
+                [0, 1],
+                [1, 0],
+                [0, 1],
+            ]
+        )
         penalty = problem._calculate_consecutive_days(assignment_matrix_no_consecutive)
         assert penalty == 0.0
 
         # Many consecutive blocks (penalty should trigger after 5)
-        assignment_matrix_consecutive = np.array([
-            [1, 0],
-            [1, 0],
-            [1, 0],
-            [1, 0],
-            [1, 0],
-            [1, 0],
-            [1, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0],
-        ])
-        penalty_consecutive = problem._calculate_consecutive_days(assignment_matrix_consecutive)
+        assignment_matrix_consecutive = np.array(
+            [
+                [1, 0],
+                [1, 0],
+                [1, 0],
+                [1, 0],
+                [1, 0],
+                [1, 0],
+                [1, 0],
+                [0, 0],
+                [0, 0],
+                [0, 0],
+            ]
+        )
+        penalty_consecutive = problem._calculate_consecutive_days(
+            assignment_matrix_consecutive
+        )
         assert penalty_consecutive > 0
 
     def test_calculate_specialty_distribution(self, sample_objectives):
@@ -449,23 +480,31 @@ class TestSchedulingProblem:
         )
 
         # Balanced specialty distribution
-        assignment_matrix_balanced = np.array([
-            [1, 0],  # cardiology
-            [0, 1],  # neurology
-            [1, 0],  # cardiology
-            [0, 1],  # neurology
-        ])
-        distribution = problem._calculate_specialty_distribution(assignment_matrix_balanced)
+        assignment_matrix_balanced = np.array(
+            [
+                [1, 0],  # cardiology
+                [0, 1],  # neurology
+                [1, 0],  # cardiology
+                [0, 1],  # neurology
+            ]
+        )
+        distribution = problem._calculate_specialty_distribution(
+            assignment_matrix_balanced
+        )
         assert distribution == 0.0  # Equal counts -> zero std
 
         # Unbalanced specialty distribution
-        assignment_matrix_unbalanced = np.array([
-            [1, 0],  # cardiology
-            [0, 0],  # neurology (not assigned)
-            [1, 0],  # cardiology
-            [1, 0],  # cardiology
-        ])
-        distribution_unbalanced = problem._calculate_specialty_distribution(assignment_matrix_unbalanced)
+        assignment_matrix_unbalanced = np.array(
+            [
+                [1, 0],  # cardiology
+                [0, 0],  # neurology (not assigned)
+                [1, 0],  # cardiology
+                [1, 0],  # cardiology
+            ]
+        )
+        distribution_unbalanced = problem._calculate_specialty_distribution(
+            assignment_matrix_unbalanced
+        )
         assert distribution_unbalanced > 0
 
     def test_evaluate_objectives(self, sample_objectives):
@@ -476,7 +515,10 @@ class TestSchedulingProblem:
             objectives=sample_objectives,
             constraints=[],
             person_data=[{"id": str(i)} for i in range(3)],
-            block_data=[{"id": str(i), "activity_type": "clinic", "specialty": "general"} for i in range(4)],
+            block_data=[
+                {"id": str(i), "activity_type": "clinic", "specialty": "general"}
+                for i in range(4)
+            ],
         )
 
         # Create decision variables
@@ -570,7 +612,7 @@ class TestParetoOptimizationService:
         assert isinstance(result, ParetoResult)
         assert result.total_solutions == 0
 
-    @patch('app.services.pareto_optimization_service.minimize')
+    @patch("app.services.pareto_optimization_service.minimize")
     def test_optimize_schedule_success(
         self,
         mock_minimize,
@@ -637,7 +679,9 @@ class TestParetoOptimizationService:
         # All frontier solutions should be in original solutions
         assert all(sol in sample_solutions for sol in frontier)
 
-    def test_find_pareto_frontier_dominance(self, pareto_service: ParetoOptimizationService):
+    def test_find_pareto_frontier_dominance(
+        self, pareto_service: ParetoOptimizationService
+    ):
         """Test Pareto frontier correctly identifies dominated solutions."""
         solutions = [
             # Solution 0: dominated by solution 1
@@ -772,9 +816,13 @@ class TestParetoOptimizationService:
             assert len(solution.weighted_score_breakdown) > 0
             # Weighted breakdown should sum to total score
             total = sum(solution.weighted_score_breakdown.values())
-            assert abs(total - solution.score) < 0.001  # Allow small floating point error
+            assert (
+                abs(total - solution.score) < 0.001
+            )  # Allow small floating point error
 
-    def test_calculate_hypervolume_empty(self, pareto_service: ParetoOptimizationService):
+    def test_calculate_hypervolume_empty(
+        self, pareto_service: ParetoOptimizationService
+    ):
         """Test hypervolume calculation with empty frontier."""
         hypervolume = pareto_service._calculate_hypervolume([], [])
         assert hypervolume is None
@@ -786,7 +834,9 @@ class TestParetoOptimizationService:
     ):
         """Test hypervolume calculation with valid solutions."""
         frontier_indices = [0, 1]
-        hypervolume = pareto_service._calculate_hypervolume(sample_solutions, frontier_indices)
+        hypervolume = pareto_service._calculate_hypervolume(
+            sample_solutions, frontier_indices
+        )
 
         assert hypervolume is None or isinstance(hypervolume, float)
         if hypervolume is not None:
@@ -833,7 +883,7 @@ class TestParetoOptimizationService:
 class TestParetoOptimizationIntegration:
     """Integration tests for Pareto optimization with real data."""
 
-    @patch('app.services.pareto_optimization_service.minimize')
+    @patch("app.services.pareto_optimization_service.minimize")
     def test_full_optimization_workflow(
         self,
         mock_minimize,
@@ -892,16 +942,40 @@ class TestParetoOptimizationIntegration:
     ):
         """Test that all six objectives are properly evaluated."""
         objectives = [
-            ParetoObjective(name=ObjectiveName.FAIRNESS, direction=ObjectiveDirection.MINIMIZE),
-            ParetoObjective(name=ObjectiveName.COVERAGE, direction=ObjectiveDirection.MAXIMIZE),
-            ParetoObjective(name=ObjectiveName.PREFERENCE_SATISFACTION, direction=ObjectiveDirection.MAXIMIZE),
-            ParetoObjective(name=ObjectiveName.WORKLOAD_BALANCE, direction=ObjectiveDirection.MINIMIZE),
-            ParetoObjective(name=ObjectiveName.CONSECUTIVE_DAYS, direction=ObjectiveDirection.MINIMIZE),
-            ParetoObjective(name=ObjectiveName.SPECIALTY_DISTRIBUTION, direction=ObjectiveDirection.MINIMIZE),
+            ParetoObjective(
+                name=ObjectiveName.FAIRNESS, direction=ObjectiveDirection.MINIMIZE
+            ),
+            ParetoObjective(
+                name=ObjectiveName.COVERAGE, direction=ObjectiveDirection.MAXIMIZE
+            ),
+            ParetoObjective(
+                name=ObjectiveName.PREFERENCE_SATISFACTION,
+                direction=ObjectiveDirection.MAXIMIZE,
+            ),
+            ParetoObjective(
+                name=ObjectiveName.WORKLOAD_BALANCE,
+                direction=ObjectiveDirection.MINIMIZE,
+            ),
+            ParetoObjective(
+                name=ObjectiveName.CONSECUTIVE_DAYS,
+                direction=ObjectiveDirection.MINIMIZE,
+            ),
+            ParetoObjective(
+                name=ObjectiveName.SPECIALTY_DISTRIBUTION,
+                direction=ObjectiveDirection.MINIMIZE,
+            ),
         ]
 
         person_data = [{"id": str(p.id), "name": p.name} for p in pareto_test_persons]
-        block_data = [{"id": str(b.id), "name": b.name, "activity_type": b.activity_type, "specialty": "general"} for b in pareto_test_blocks]
+        block_data = [
+            {
+                "id": str(b.id),
+                "name": b.name,
+                "activity_type": b.activity_type,
+                "specialty": "general",
+            }
+            for b in pareto_test_blocks
+        ]
 
         problem = SchedulingProblem(
             n_persons=len(pareto_test_persons),
@@ -942,7 +1016,9 @@ class TestParetoOptimizationEdgeCases:
         ]
         # In practice, the API should validate this, but service should handle gracefully
 
-    def test_zero_weight_objectives(self, pareto_service: ParetoOptimizationService, sample_solutions):
+    def test_zero_weight_objectives(
+        self, pareto_service: ParetoOptimizationService, sample_solutions
+    ):
         """Test ranking with zero-weight objectives."""
         weights = {
             "fairness": 0.0,
@@ -1113,7 +1189,7 @@ class TestParetoOptimizationEdgeCases:
 class TestParetoOptimizationPerformance:
     """Performance tests for Pareto optimization (marked as slow)."""
 
-    @patch('app.services.pareto_optimization_service.minimize')
+    @patch("app.services.pareto_optimization_service.minimize")
     def test_large_scale_optimization(
         self,
         mock_minimize,

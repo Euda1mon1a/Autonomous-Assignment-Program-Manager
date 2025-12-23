@@ -1,4 +1,5 @@
 """Automated backup scheduling service."""
+
 import json
 import logging
 from datetime import datetime, time, timedelta
@@ -7,14 +8,13 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.maintenance.backup import BackupService
-
 # Import custom exceptions
 from app.maintenance import (
     BackupError,
     ScheduleConfigurationError,
     ScheduleExecutionError,
 )
+from app.maintenance.backup import BackupService
 
 logger = logging.getLogger(__name__)
 
@@ -47,10 +47,7 @@ class BackupScheduler:
             ) from e
 
     def schedule_daily_backup(
-        self,
-        backup_time: time,
-        compress: bool = True,
-        enabled: bool = True
+        self, backup_time: time, compress: bool = True, enabled: bool = True
     ) -> dict[str, Any]:
         """
         Configure daily automated backups.
@@ -98,7 +95,7 @@ class BackupScheduler:
         day_of_week: int,
         backup_time: time,
         compress: bool = True,
-        enabled: bool = True
+        enabled: bool = True,
     ) -> dict[str, Any]:
         """
         Configure weekly full backups.
@@ -129,7 +126,15 @@ class BackupScheduler:
                 f"backup_time must be a datetime.time object, got {type(backup_time)}"
             )
 
-        day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        day_names = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
         logger.info(
             f"Scheduling weekly backup on {day_names[day_of_week]} at {backup_time.isoformat()}"
         )
@@ -157,9 +162,7 @@ class BackupScheduler:
             ) from e
 
     def set_retention_policy(
-        self,
-        days: int | None = None,
-        count: int | None = None
+        self, days: int | None = None, count: int | None = None
     ) -> dict[str, Any]:
         """
         Set backup retention policy.
@@ -229,11 +232,13 @@ class BackupScheduler:
             if next_daily <= now:
                 next_daily += timedelta(days=1)
 
-            next_backups.append({
-                "type": "daily",
-                "scheduled_time": next_daily.isoformat(),
-                "schedule": daily
-            })
+            next_backups.append(
+                {
+                    "type": "daily",
+                    "scheduled_time": next_daily.isoformat(),
+                    "schedule": daily,
+                }
+            )
 
         # Check weekly backup
         if self.config.get("weekly_backup", {}).get("enabled"):
@@ -247,19 +252,20 @@ class BackupScheduler:
                 days_ahead += 7
 
             next_weekly = datetime.combine(
-                now.date() + timedelta(days=days_ahead),
-                backup_time
+                now.date() + timedelta(days=days_ahead), backup_time
             )
 
             # If it's today but time has passed, schedule for next week
             if next_weekly <= now:
                 next_weekly += timedelta(days=7)
 
-            next_backups.append({
-                "type": "weekly",
-                "scheduled_time": next_weekly.isoformat(),
-                "schedule": weekly
-            })
+            next_backups.append(
+                {
+                    "type": "weekly",
+                    "scheduled_time": next_weekly.isoformat(),
+                    "schedule": weekly,
+                }
+            )
 
         if not next_backups:
             return None
@@ -288,35 +294,42 @@ class BackupScheduler:
             logger.info("Running scheduled daily backup")
             try:
                 backup_result = self.backup_service.create_backup(
-                    backup_type='full',
-                    compress=daily.get("compress", True)
+                    backup_type="full", compress=daily.get("compress", True)
                 )
-                results.append({
-                    "type": "daily",
-                    "status": "success",
-                    "backup": backup_result,
-                    "timestamp": now.isoformat()
-                })
+                results.append(
+                    {
+                        "type": "daily",
+                        "status": "success",
+                        "backup": backup_result,
+                        "timestamp": now.isoformat(),
+                    }
+                )
                 daily["last_run"] = now.isoformat()
-                logger.info(f"Daily backup completed successfully: {backup_result['backup_id']}")
+                logger.info(
+                    f"Daily backup completed successfully: {backup_result['backup_id']}"
+                )
             except BackupError as e:
                 logger.error(f"Backup error during daily backup: {e}")
-                results.append({
-                    "type": "daily",
-                    "status": "failed",
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                    "timestamp": now.isoformat()
-                })
+                results.append(
+                    {
+                        "type": "daily",
+                        "status": "failed",
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                        "timestamp": now.isoformat(),
+                    }
+                )
             except Exception as e:
                 logger.error(f"Unexpected error during daily backup: {e}")
-                results.append({
-                    "type": "daily",
-                    "status": "failed",
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                    "timestamp": now.isoformat()
-                })
+                results.append(
+                    {
+                        "type": "daily",
+                        "status": "failed",
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                        "timestamp": now.isoformat(),
+                    }
+                )
 
         # Check and run weekly backup
         weekly = self.config.get("weekly_backup", {})
@@ -324,35 +337,42 @@ class BackupScheduler:
             logger.info("Running scheduled weekly backup")
             try:
                 backup_result = self.backup_service.create_backup(
-                    backup_type='full',
-                    compress=weekly.get("compress", True)
+                    backup_type="full", compress=weekly.get("compress", True)
                 )
-                results.append({
-                    "type": "weekly",
-                    "status": "success",
-                    "backup": backup_result,
-                    "timestamp": now.isoformat()
-                })
+                results.append(
+                    {
+                        "type": "weekly",
+                        "status": "success",
+                        "backup": backup_result,
+                        "timestamp": now.isoformat(),
+                    }
+                )
                 weekly["last_run"] = now.isoformat()
-                logger.info(f"Weekly backup completed successfully: {backup_result['backup_id']}")
+                logger.info(
+                    f"Weekly backup completed successfully: {backup_result['backup_id']}"
+                )
             except BackupError as e:
                 logger.error(f"Backup error during weekly backup: {e}")
-                results.append({
-                    "type": "weekly",
-                    "status": "failed",
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                    "timestamp": now.isoformat()
-                })
+                results.append(
+                    {
+                        "type": "weekly",
+                        "status": "failed",
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                        "timestamp": now.isoformat(),
+                    }
+                )
             except Exception as e:
                 logger.error(f"Unexpected error during weekly backup: {e}")
-                results.append({
-                    "type": "weekly",
-                    "status": "failed",
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                    "timestamp": now.isoformat()
-                })
+                results.append(
+                    {
+                        "type": "weekly",
+                        "status": "failed",
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                        "timestamp": now.isoformat(),
+                    }
+                )
 
         # Apply retention policy after backups
         if results:
@@ -445,7 +465,7 @@ class BackupScheduler:
         """
         if self.config_path.exists():
             try:
-                with open(self.config_path, encoding='utf-8') as f:
+                with open(self.config_path, encoding="utf-8") as f:
                     config = json.load(f)
                 logger.debug(f"Loaded scheduler configuration from {self.config_path}")
                 return config
@@ -454,13 +474,15 @@ class BackupScheduler:
                 raise ScheduleConfigurationError(
                     f"Scheduler configuration file contains invalid JSON: {e}"
                 ) from e
-            except (OSError, IOError) as e:
+            except OSError as e:
                 logger.error(f"Error reading scheduler config file: {e}")
                 raise ScheduleConfigurationError(
                     f"Failed to read scheduler configuration: {e}"
                 ) from e
         else:
-            logger.debug("No existing scheduler configuration found, starting with empty config")
+            logger.debug(
+                "No existing scheduler configuration found, starting with empty config"
+            )
             return {}
 
     def _save_config(self):
@@ -472,7 +494,7 @@ class BackupScheduler:
         """
         try:
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.config_path, 'w', encoding='utf-8') as f:
+            with open(self.config_path, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=2)
             logger.debug(f"Saved scheduler configuration to {self.config_path}")
         except PermissionError as e:
@@ -480,7 +502,7 @@ class BackupScheduler:
             raise ScheduleConfigurationError(
                 f"Permission denied writing scheduler configuration: {e}"
             ) from e
-        except (OSError, IOError) as e:
+        except OSError as e:
             logger.error(f"Error writing scheduler config file: {e}")
             raise ScheduleConfigurationError(
                 f"Failed to save scheduler configuration: {e}"
@@ -504,9 +526,11 @@ class BackupScheduler:
         elif schedule["type"] == "weekly":
             # Run if it's the scheduled day, time is right, and hasn't run this week
             target_day = schedule.get("day_of_week")
-            if (now.weekday() == target_day and
-                now.time() >= backup_time and
-                (now - last_run).days >= 7):
+            if (
+                now.weekday() == target_day
+                and now.time() >= backup_time
+                and (now - last_run).days >= 7
+            ):
                 return True
 
         return False
@@ -534,7 +558,9 @@ class BackupScheduler:
 
         # Apply count-based retention
         if keep_count:
-            backups = self.backup_service.list_backups()  # Refresh after time-based deletion
+            backups = (
+                self.backup_service.list_backups()
+            )  # Refresh after time-based deletion
             if len(backups) > keep_count:
                 # Keep the most recent backups
                 backups_to_delete = backups[keep_count:]
@@ -545,5 +571,5 @@ class BackupScheduler:
         return {
             "deleted": deleted_count,
             "message": f"Deleted {deleted_count} old backup(s)",
-            "policy": policy
+            "policy": policy,
         }

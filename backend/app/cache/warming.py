@@ -38,15 +38,17 @@ Example:
     # Track cache misses and warm lazily
     await warmer.on_cache_miss("schedule:recent", priority=WarmingPriority.HIGH)
 """
+
 import asyncio
 import logging
 import time
 from collections import defaultdict
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from threading import RLock
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 import redis.asyncio as redis
 
@@ -102,7 +104,9 @@ class CacheWarmingConfig:
     lazy_warm_delay_ms: int = 100  # Delay before lazy warming (debounce)
     ttl_buffer_seconds: int = 300  # Refresh entries this many seconds before TTL expiry
     enable_background_warming: bool = True  # Enable background warming
-    background_check_interval_seconds: int = 60  # How often to check for background warming
+    background_check_interval_seconds: int = (
+        60  # How often to check for background warming
+    )
 
 
 @dataclass
@@ -137,9 +141,7 @@ class CacheWarmingMetrics:
             "total_warmed": self.total_warmed,
             "successful_warms": self.successful_warms,
             "failed_warms": self.failed_warms,
-            "success_rate": round(
-                self.successful_warms / max(self.total_warmed, 1), 3
-            ),
+            "success_rate": round(self.successful_warms / max(self.total_warmed, 1), 3),
             "cache_hits_after_warm": self.cache_hits_after_warm,
             "cache_misses_detected": self.cache_misses_detected,
             "lazy_warms_triggered": self.lazy_warms_triggered,
@@ -293,7 +295,8 @@ class CacheWarmer:
 
         # Registered warming functions
         self._warming_functions: dict[
-            str, tuple[Callable[[], Coroutine[Any, Any, dict[str, Any]]], WarmingPriority]
+            str,
+            tuple[Callable[[], Coroutine[Any, Any, dict[str, Any]]], WarmingPriority],
         ] = {}
 
         # Access pattern tracking for prediction
@@ -426,8 +429,7 @@ class CacheWarmer:
             functions_to_warm = [
                 (name, func, priority)
                 for name, (func, priority) in sorted_functions
-                if priority
-                not in (WarmingPriority.LOW, WarmingPriority.BACKGROUND)
+                if priority not in (WarmingPriority.LOW, WarmingPriority.BACKGROUND)
             ]
 
         total_entries = 0
@@ -451,9 +453,7 @@ class CacheWarmer:
                     entries = await asyncio.wait_for(func(), timeout=remaining_timeout)
 
                     # Warm cache entries
-                    warmed_count = await self._warm_entries(
-                        entries, priority=priority
-                    )
+                    warmed_count = await self._warm_entries(entries, priority=priority)
 
                     total_entries += len(entries)
                     entries_warmed += warmed_count
@@ -463,8 +463,10 @@ class CacheWarmer:
                         f"({priority.value})"
                     )
 
-                except asyncio.TimeoutError:
-                    error_msg = f"Timeout warming '{name}' after {remaining_timeout:.2f}s"
+                except TimeoutError:
+                    error_msg = (
+                        f"Timeout warming '{name}' after {remaining_timeout:.2f}s"
+                    )
                     logger.warning(error_msg)
                     self.progress.errors.append(error_msg)
 
@@ -780,9 +782,7 @@ class CacheWarmer:
             """Background warming loop."""
             while True:
                 try:
-                    await asyncio.sleep(
-                        self.config.background_check_interval_seconds
-                    )
+                    await asyncio.sleep(self.config.background_check_interval_seconds)
                     await self._execute_background_warming()
 
                 except asyncio.CancelledError:
@@ -902,7 +902,9 @@ class CacheWarmer:
         Args:
             priority_threshold: Only refresh entries at or above this priority
         """
-        logger.debug(f"Executing scheduled refresh (priority >= {priority_threshold.value})")
+        logger.debug(
+            f"Executing scheduled refresh (priority >= {priority_threshold.value})"
+        )
 
         # Filter functions by priority
         functions_to_refresh = [
@@ -971,9 +973,7 @@ class CacheWarmer:
                 hours=self.config.prediction_window_hours
             )
             self._access_patterns[cache_key] = [
-                access
-                for access in self._access_patterns[cache_key]
-                if access > cutoff
+                access for access in self._access_patterns[cache_key] if access > cutoff
             ]
 
     async def _predict_cache_accesses(

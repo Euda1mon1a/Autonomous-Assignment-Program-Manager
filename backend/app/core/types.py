@@ -4,13 +4,14 @@ Core type definitions for the Residency Scheduler.
 This module provides TypedDict definitions for common data structures
 used throughout the application, improving type safety and IDE support.
 """
-from typing import TypedDict, NotRequired, Literal
-from datetime import date, datetime
-from uuid import UUID
+
+from datetime import date
+from typing import Literal, NotRequired, TypedDict
 
 
 class ScheduleMetrics(TypedDict):
     """Metrics for a generated schedule."""
+
     total_assignments: int
     coverage_percentage: float
     violation_count: int
@@ -19,6 +20,7 @@ class ScheduleMetrics(TypedDict):
 
 class ComplianceResult(TypedDict):
     """Result of an ACGME compliance check."""
+
     is_compliant: bool
     violations: list[str]
     score: float
@@ -27,6 +29,7 @@ class ComplianceResult(TypedDict):
 
 class ValidationContext(TypedDict):
     """Context for validation operations."""
+
     schedule_id: str
     person_id: NotRequired[str]
     start_date: date
@@ -35,6 +38,7 @@ class ValidationContext(TypedDict):
 
 class PersonInfo(TypedDict):
     """Basic person information."""
+
     id: str
     name: str
     email: str
@@ -44,6 +48,7 @@ class PersonInfo(TypedDict):
 
 class AssignmentInfo(TypedDict):
     """Assignment information for scheduling."""
+
     block_id: str
     person_id: str
     rotation_template_id: str
@@ -52,6 +57,7 @@ class AssignmentInfo(TypedDict):
 
 class BlockInfo(TypedDict):
     """Schedule block information."""
+
     id: str
     date: date
     time_of_day: Literal["AM", "PM"]
@@ -59,6 +65,7 @@ class BlockInfo(TypedDict):
 
 class SwapInfo(TypedDict):
     """Swap request information."""
+
     source_faculty_id: str
     target_faculty_id: NotRequired[str]
     week_start: date
@@ -68,6 +75,7 @@ class SwapInfo(TypedDict):
 
 class ResilienceMetrics(TypedDict):
     """Resilience framework metrics."""
+
     utilization_rate: float
     safety_level: Literal["GREEN", "YELLOW", "ORANGE", "RED", "BLACK"]
     n1_vulnerabilities: int
@@ -76,6 +84,7 @@ class ResilienceMetrics(TypedDict):
 
 class APIResponse(TypedDict):
     """Standard API response structure."""
+
     success: bool
     data: NotRequired[dict]
     error: NotRequired[str]
@@ -84,12 +93,14 @@ class APIResponse(TypedDict):
 
 class DutyHoursPeriod(TypedDict):
     """Period information for duty hours breakdown."""
+
     start: str  # ISO format date string
-    end: str    # ISO format date string
+    end: str  # ISO format date string
 
 
 class DutyHoursDetails(TypedDict):
     """Detailed duty hours statistics."""
+
     total: float
     average_weekly: float
     weekend: float
@@ -99,6 +110,7 @@ class DutyHoursDetails(TypedDict):
 
 class DutyHoursDays(TypedDict):
     """Days worked statistics."""
+
     worked: int
     total_in_period: int
 
@@ -110,6 +122,7 @@ class DutyHoursBreakdown(TypedDict):
     Returned by advanced ACGME validator to provide detailed analysis
     of resident work hours including total, weekend, and night hours.
     """
+
     person_id: str
     person_name: str
     pgy_level: NotRequired[int]
@@ -120,6 +133,7 @@ class DutyHoursBreakdown(TypedDict):
 
 class FatigueFactors(TypedDict):
     """Contributing factors to fatigue score."""
+
     consecutive_days: int
     night_shifts: int
     weekend_days: int
@@ -134,6 +148,7 @@ class FatigueScore(TypedDict):
     Tracks workload intensity and fatigue risk based on consecutive
     duty days, night shifts, weekend work, and total hours.
     """
+
     person_id: str
     person_name: str
     pgy_level: NotRequired[int]
@@ -151,6 +166,7 @@ class RecoveryNeeds(TypedDict):
     Calculates rest hours needed and consecutive days off based
     on current fatigue levels and work intensity.
     """
+
     person_id: str
     person_name: NotRequired[str]
     current_fatigue_score: float
@@ -161,6 +177,7 @@ class RecoveryNeeds(TypedDict):
 
 class FatiguePredictionDay(TypedDict):
     """Single day fatigue prediction."""
+
     date: str  # ISO format date string
     fatigue_score: float
     risk_level: Literal["NONE", "LOW", "MODERATE", "HIGH"]
@@ -173,6 +190,7 @@ class FatigueTrend(TypedDict):
     Projects fatigue levels across upcoming days based on current
     schedule and historical patterns.
     """
+
     person_id: str
     person_name: str
     start_date: str  # ISO format date string
@@ -190,6 +208,7 @@ class HighRiskResident(TypedDict):
     Detailed information about residents approaching or exceeding
     safe fatigue thresholds.
     """
+
     person_id: str
     person_name: str
     pgy_level: NotRequired[int]
@@ -207,6 +226,7 @@ class AuditStatistics(TypedDict):
     Aggregated counts and metrics for audit trail analysis,
     including breakdowns by action, entity type, and severity.
     """
+
     totalEntries: int
     entriesByAction: dict[str, int]
     entriesByEntityType: dict[str, int]
@@ -222,6 +242,7 @@ class SwapMatchResult(TypedDict):
     Contains compatibility analysis for potential schedule swap partners,
     including overall score and breakdown of match factors.
     """
+
     candidate_id: str
     compatibility_score: float
     match_factors: dict[str, float]
@@ -235,6 +256,7 @@ class ACGMEViolation(TypedDict):
     Documents specific violations of ACGME work hour rules,
     including severity, affected parties, and dates.
     """
+
     rule_id: str
     rule_name: str
     severity: Literal["critical", "high", "medium", "low"]
@@ -250,6 +272,7 @@ class NotificationPayload(TypedDict):
     Structured data for sending notifications to users via
     various channels (email, in-app, etc.).
     """
+
     recipient_id: str
     notification_type: str
     title: str
@@ -264,6 +287,7 @@ class SwapDetails(TypedDict):
     Extended information about swap requests and execution,
     including validation results, timestamps, and status tracking.
     """
+
     swap_id: str
     success: bool
     source_faculty_id: str
@@ -273,7 +297,9 @@ class SwapDetails(TypedDict):
     source_week: str  # ISO format date
     target_week: NotRequired[str]  # ISO format date
     swap_type: Literal["one_to_one", "absorb"]
-    status: Literal["pending", "approved", "executed", "rejected", "cancelled", "rolled_back"]
+    status: Literal[
+        "pending", "approved", "executed", "rejected", "cancelled", "rolled_back"
+    ]
     executed_at: NotRequired[str]  # ISO format datetime
     rolled_back_at: NotRequired[str]  # ISO format datetime
     rollback_reason: NotRequired[str]
@@ -288,6 +314,7 @@ class CoverageReportItem(TypedDict):
 
     Detailed coverage statistics for a block, week, or other time unit.
     """
+
     period_start: str  # ISO format date
     period_end: str  # ISO format date
     total_blocks: int
@@ -304,6 +331,7 @@ class CoverageReport(TypedDict):
     Comprehensive coverage analysis for a date range,
     including overall statistics and period breakdowns.
     """
+
     start_date: str  # ISO format date
     end_date: str  # ISO format date
     overall_coverage_percentage: float
@@ -324,6 +352,7 @@ class ValidationResultDict(TypedDict):
     Note: Use this for dict returns; Pydantic ValidationResult
     exists in schemas.schedule for API responses.
     """
+
     valid: bool
     errors: list[str]
     warnings: NotRequired[list[str]]
@@ -339,6 +368,7 @@ class ScheduleGenerationMetrics(TypedDict):
     Comprehensive statistics about the schedule generation process,
     including solver performance, constraint satisfaction, and quality metrics.
     """
+
     status: Literal["success", "partial", "failed"]
     total_assignments: int
     total_blocks: int
@@ -360,6 +390,7 @@ class ResilienceAnalysisResult(TypedDict):
     Extended resilience metrics including N-1/N-2 contingency analysis,
     defense levels, and system health indicators.
     """
+
     utilization_rate: float
     safety_level: Literal["GREEN", "YELLOW", "ORANGE", "RED", "BLACK"]
     defense_level: NotRequired[int]  # 1-5
@@ -381,6 +412,7 @@ class WorkloadDistribution(TypedDict):
     Statistics about individual workload including assignments,
     utilization, and fairness metrics.
     """
+
     person_id: str
     person_name: str
     pgy_level: NotRequired[int]
@@ -398,6 +430,7 @@ class AnalyticsReport(TypedDict):
     Common structure for various analytics reports including
     monthly summaries, compliance reports, and workload analysis.
     """
+
     report_type: str
     period_start: str  # ISO format date
     period_end: str  # ISO format date

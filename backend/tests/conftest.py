@@ -4,6 +4,7 @@ Pytest configuration and fixtures for backend tests.
 Provides test database setup, API client, and common fixtures
 for testing the Residency Scheduler API.
 """
+
 from collections.abc import Generator
 from datetime import date, timedelta
 from uuid import uuid4
@@ -108,6 +109,7 @@ def auth_headers(client: TestClient, admin_user: User) -> dict:
 # ============================================================================
 # Sample Data Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def sample_resident(db: Session) -> Person:
@@ -286,6 +288,7 @@ def sample_assignment(
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
 
 def create_test_person(
     db: Session,

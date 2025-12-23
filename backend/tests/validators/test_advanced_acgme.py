@@ -9,6 +9,7 @@ Comprehensive test coverage for:
 - Duty hours breakdown calculation
 - Edge cases and boundary conditions
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -19,7 +20,6 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.validators.advanced_acgme import AdvancedACGMEValidator
-
 
 # ============================================================================
 # Fixtures
@@ -216,7 +216,9 @@ class TestValidate24Plus4Rule:
         # But we need 28 hours, so let's do 4 shifts + 2/3 of another
         # Actually, each block is 6 hours, so 28 hours = 4.67 blocks
         # Since we can't do partial blocks, let's create 4 blocks (24 hours)
-        create_blocks_with_assignments(db, pgy2_resident, start, 2, include_both_shifts=True)
+        create_blocks_with_assignments(
+            db, pgy2_resident, start, 2, include_both_shifts=True
+        )
 
         violations = validator.validate_24_plus_4_rule(
             pgy2_resident.id, start, start + timedelta(days=1)
@@ -226,7 +228,10 @@ class TestValidate24Plus4Rule:
         assert len(violations) == 0
 
     def test_non_resident_returns_no_violations(
-        self, db: Session, validator: AdvancedACGMEValidator, non_resident_faculty: Person
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        non_resident_faculty: Person,
     ):
         """Test that non-residents are not validated."""
         start = date.today()
@@ -333,7 +338,9 @@ class TestValidateNightFloatLimits:
         # Create PM shifts on days 0, 1, 2, then skip 3, then 4, 5, 6
         # Two sequences of 3 nights each
         create_blocks_with_assignments(db, pgy2_resident, start, 3, "PM")
-        create_blocks_with_assignments(db, pgy2_resident, start + timedelta(days=4), 3, "PM")
+        create_blocks_with_assignments(
+            db, pgy2_resident, start + timedelta(days=4), 3, "PM"
+        )
 
         violations = validator.validate_night_float_limits(
             pgy2_resident.id, start, start + timedelta(days=6)
@@ -369,7 +376,10 @@ class TestValidateNightFloatLimits:
         assert len(violations) == 0
 
     def test_non_resident_returns_no_violations(
-        self, db: Session, validator: AdvancedACGMEValidator, non_resident_faculty: Person
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        non_resident_faculty: Person,
     ):
         """Test that non-residents are not validated for night float."""
         start = date.today()
@@ -405,7 +415,11 @@ class TestValidateMoonlightingHours:
             week_start = start + timedelta(weeks=week)
             for day in range(5):  # 5 days per week
                 create_blocks_with_assignments(
-                    db, pgy2_resident, week_start + timedelta(days=day), 1, include_both_shifts=True
+                    db,
+                    pgy2_resident,
+                    week_start + timedelta(days=day),
+                    1,
+                    include_both_shifts=True,
                 )
 
         violations = validator.validate_moonlighting_hours(
@@ -451,7 +465,11 @@ class TestValidateMoonlightingHours:
             week_start = start + timedelta(weeks=week)
             for day in range(5):
                 create_blocks_with_assignments(
-                    db, pgy2_resident, week_start + timedelta(days=day), 1, include_both_shifts=True
+                    db,
+                    pgy2_resident,
+                    week_start + timedelta(days=day),
+                    1,
+                    include_both_shifts=True,
                 )
 
         # Add 100 hours of external moonlighting (25 hours/week)
@@ -477,7 +495,11 @@ class TestValidateMoonlightingHours:
             week_start = start + timedelta(weeks=week)
             for day in range(4):
                 create_blocks_with_assignments(
-                    db, pgy2_resident, week_start + timedelta(days=day), 1, include_both_shifts=True
+                    db,
+                    pgy2_resident,
+                    week_start + timedelta(days=day),
+                    1,
+                    include_both_shifts=True,
                 )
 
         # Add 80 hours of external moonlighting (20 hours/week)
@@ -489,7 +511,10 @@ class TestValidateMoonlightingHours:
         assert len(violations) == 0
 
     def test_non_resident_returns_no_violations(
-        self, db: Session, validator: AdvancedACGMEValidator, non_resident_faculty: Person
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        non_resident_faculty: Person,
     ):
         """Test that non-residents are not validated for moonlighting."""
         start = date.today()
@@ -500,7 +525,10 @@ class TestValidateMoonlightingHours:
         )
 
         violations = validator.validate_moonlighting_hours(
-            non_resident_faculty.id, start, start + timedelta(weeks=4), external_hours=200.0
+            non_resident_faculty.id,
+            start,
+            start + timedelta(weeks=4),
+            external_hours=200.0,
         )
 
         assert len(violations) == 0
@@ -527,7 +555,9 @@ class TestValidatePGYSpecificRules:
         start = date.today()
 
         # Create day with both shifts (12 hours - max possible per day)
-        create_blocks_with_assignments(db, pgy1_resident, start, 1, include_both_shifts=True)
+        create_blocks_with_assignments(
+            db, pgy1_resident, start, 1, include_both_shifts=True
+        )
 
         violations = validator.validate_pgy_specific_rules(
             pgy1_resident.id, start, start
@@ -543,7 +573,9 @@ class TestValidatePGYSpecificRules:
         start = date.today()
 
         # Create less than 16 hours per day (2 shifts = 12 hours)
-        create_blocks_with_assignments(db, pgy1_resident, start, 1, include_both_shifts=True)
+        create_blocks_with_assignments(
+            db, pgy1_resident, start, 1, include_both_shifts=True
+        )
 
         violations = validator.validate_pgy_specific_rules(
             pgy1_resident.id, start, start
@@ -558,7 +590,9 @@ class TestValidatePGYSpecificRules:
         start = date.today()
 
         # Create 2 consecutive days with both shifts (24 hours)
-        create_blocks_with_assignments(db, pgy2_resident, start, 2, include_both_shifts=True)
+        create_blocks_with_assignments(
+            db, pgy2_resident, start, 2, include_both_shifts=True
+        )
 
         violations = validator.validate_pgy_specific_rules(
             pgy2_resident.id, start, start + timedelta(days=1)
@@ -573,7 +607,9 @@ class TestValidatePGYSpecificRules:
         start = date.today()
 
         # Create 2 consecutive days with both shifts (24 hours)
-        create_blocks_with_assignments(db, pgy3_resident, start, 2, include_both_shifts=True)
+        create_blocks_with_assignments(
+            db, pgy3_resident, start, 2, include_both_shifts=True
+        )
 
         violations = validator.validate_pgy_specific_rules(
             pgy3_resident.id, start, start + timedelta(days=1)
@@ -594,7 +630,9 @@ class TestValidatePGYSpecificRules:
         start = date.today()
 
         # Create multiple days with both shifts (12 hours each day)
-        create_blocks_with_assignments(db, pgy2_resident, start, 3, include_both_shifts=True)
+        create_blocks_with_assignments(
+            db, pgy2_resident, start, 3, include_both_shifts=True
+        )
 
         violations = validator.validate_pgy_specific_rules(
             pgy2_resident.id, start, start + timedelta(days=2)
@@ -604,13 +642,18 @@ class TestValidatePGYSpecificRules:
         assert len(violations) == 0
 
     def test_non_resident_returns_no_violations(
-        self, db: Session, validator: AdvancedACGMEValidator, non_resident_faculty: Person
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        non_resident_faculty: Person,
     ):
         """Test that non-residents are not validated for PGY rules."""
         start = date.today()
 
         # Create excessive schedule for faculty
-        create_blocks_with_assignments(db, non_resident_faculty, start, 5, include_both_shifts=True)
+        create_blocks_with_assignments(
+            db, non_resident_faculty, start, 5, include_both_shifts=True
+        )
 
         violations = validator.validate_pgy_specific_rules(
             non_resident_faculty.id, start, start + timedelta(days=4)
@@ -644,7 +687,11 @@ class TestCalculateDutyHoursBreakdown:
             week_start = start + timedelta(weeks=week)
             for day in range(5):  # Mon-Fri
                 create_blocks_with_assignments(
-                    db, pgy2_resident, week_start + timedelta(days=day), 1, include_both_shifts=True
+                    db,
+                    pgy2_resident,
+                    week_start + timedelta(days=day),
+                    1,
+                    include_both_shifts=True,
                 )
 
         breakdown = validator.calculate_duty_hours_breakdown(
@@ -670,7 +717,9 @@ class TestCalculateDutyHoursBreakdown:
         # Create full week including weekend
         # Mon-Fri: 5 days * 2 shifts = 10 blocks = 60 hours weekday
         # Sat-Sun: 2 days * 2 shifts = 4 blocks = 24 hours weekend
-        create_blocks_with_assignments(db, pgy2_resident, start, 7, include_both_shifts=True)
+        create_blocks_with_assignments(
+            db, pgy2_resident, start, 7, include_both_shifts=True
+        )
 
         breakdown = validator.calculate_duty_hours_breakdown(
             pgy2_resident.id, start, start + timedelta(days=6)
@@ -712,7 +761,11 @@ class TestCalculateDutyHoursBreakdown:
             week_start = start + timedelta(weeks=week)
             for day in range(5):
                 create_blocks_with_assignments(
-                    db, pgy2_resident, week_start + timedelta(days=day), 1, include_both_shifts=True
+                    db,
+                    pgy2_resident,
+                    week_start + timedelta(days=day),
+                    1,
+                    include_both_shifts=True,
                 )
 
         breakdown = validator.calculate_duty_hours_breakdown(
@@ -837,10 +890,18 @@ class TestAssignmentsToHours:
         # Day 2: AM only (6 hours)
         # Day 3: PM only (6 hours)
         # Day 4: AM + PM (12 hours)
-        create_blocks_with_assignments(db, pgy2_resident, start, 1, include_both_shifts=True)
-        create_blocks_with_assignments(db, pgy2_resident, start + timedelta(days=1), 1, "AM")
-        create_blocks_with_assignments(db, pgy2_resident, start + timedelta(days=2), 1, "PM")
-        create_blocks_with_assignments(db, pgy2_resident, start + timedelta(days=3), 1, include_both_shifts=True)
+        create_blocks_with_assignments(
+            db, pgy2_resident, start, 1, include_both_shifts=True
+        )
+        create_blocks_with_assignments(
+            db, pgy2_resident, start + timedelta(days=1), 1, "AM"
+        )
+        create_blocks_with_assignments(
+            db, pgy2_resident, start + timedelta(days=2), 1, "PM"
+        )
+        create_blocks_with_assignments(
+            db, pgy2_resident, start + timedelta(days=3), 1, include_both_shifts=True
+        )
 
         hours_by_date = validator._assignments_to_hours(
             db.query(Assignment).filter(Assignment.person_id == pgy2_resident.id).all()
@@ -866,7 +927,9 @@ class TestEdgeCases:
         """Test validation with single-day period."""
         start = date.today()
 
-        create_blocks_with_assignments(db, pgy2_resident, start, 1, include_both_shifts=True)
+        create_blocks_with_assignments(
+            db, pgy2_resident, start, 1, include_both_shifts=True
+        )
 
         violations = validator.validate_24_plus_4_rule(pgy2_resident.id, start, start)
 
@@ -880,7 +943,9 @@ class TestEdgeCases:
         start = date.today()
 
         # Create assignments on days 0-2, skip 3-4, then 5-7
-        create_blocks_with_assignments(db, pgy2_resident, start, 3, include_both_shifts=True)
+        create_blocks_with_assignments(
+            db, pgy2_resident, start, 3, include_both_shifts=True
+        )
         create_blocks_with_assignments(
             db, pgy2_resident, start + timedelta(days=5), 3, include_both_shifts=True
         )

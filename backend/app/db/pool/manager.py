@@ -3,18 +3,18 @@
 This module provides the main connection pool manager that coordinates
 pool configuration, monitoring, health checks, and automatic recovery.
 """
+
 import logging
 import threading
 import time
-from typing import Optional
 
-from sqlalchemy import create_engine, event, text
+from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import Pool, QueuePool
 
 from app.db.pool.config import PoolConfig
-from app.db.pool.health import AutoRecovery, HealthCheckResult, PoolHealthChecker
+from app.db.pool.health import AutoRecovery, PoolHealthChecker
 from app.db.pool.monitoring import PoolMonitor
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class PoolManager:
     - Graceful shutdown
     """
 
-    def __init__(self, database_url: str, config: Optional[PoolConfig] = None):
+    def __init__(self, database_url: str, config: PoolConfig | None = None):
         """Initialize pool manager.
 
         Args:
@@ -40,13 +40,13 @@ class PoolManager:
         """
         self._database_url = database_url
         self._config = config or PoolConfig()
-        self._engine: Optional[Engine] = None
+        self._engine: Engine | None = None
         self._session_factory = None
-        self._pool: Optional[Pool] = None
-        self._monitor: Optional[PoolMonitor] = None
-        self._health_checker: Optional[PoolHealthChecker] = None
-        self._auto_recovery: Optional[AutoRecovery] = None
-        self._health_check_thread: Optional[threading.Thread] = None
+        self._pool: Pool | None = None
+        self._monitor: PoolMonitor | None = None
+        self._health_checker: PoolHealthChecker | None = None
+        self._auto_recovery: AutoRecovery | None = None
+        self._health_check_thread: threading.Thread | None = None
         self._shutdown_event = threading.Event()
         self._is_running = False
 
@@ -357,7 +357,7 @@ class PoolManager:
             raise RuntimeError("Pool manager not initialized")
         return self._engine
 
-    def get_monitor(self) -> Optional[PoolMonitor]:
+    def get_monitor(self) -> PoolMonitor | None:
         """Get the pool monitor.
 
         Returns:
@@ -365,7 +365,7 @@ class PoolManager:
         """
         return self._monitor
 
-    def get_health_checker(self) -> Optional[PoolHealthChecker]:
+    def get_health_checker(self) -> PoolHealthChecker | None:
         """Get the health checker.
 
         Returns:
@@ -444,7 +444,7 @@ class PoolManager:
 
 
 # Global pool manager instance
-_pool_manager: Optional[PoolManager] = None
+_pool_manager: PoolManager | None = None
 
 
 def get_pool_manager() -> PoolManager:
@@ -465,7 +465,7 @@ def get_pool_manager() -> PoolManager:
 
 
 def initialize_pool_manager(
-    database_url: str, config: Optional[PoolConfig] = None
+    database_url: str, config: PoolConfig | None = None
 ) -> PoolManager:
     """Initialize the global pool manager.
 

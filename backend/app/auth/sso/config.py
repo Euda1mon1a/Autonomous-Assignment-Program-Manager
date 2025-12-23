@@ -5,7 +5,6 @@ Configuration settings for enterprise SSO integration including
 SAML 2.0 Service Provider settings and OAuth2/OIDC provider settings.
 """
 
-from typing import Dict, Optional
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -44,8 +43,8 @@ class SAMLConfig(BaseModel):
     idp_x509_cert: str = Field(default="", description="IdP certificate")
 
     # Service Provider certificates (optional, for signing)
-    sp_x509_cert: Optional[str] = Field(default=None, description="SP certificate")
-    sp_private_key: Optional[str] = Field(default=None, description="SP private key")
+    sp_x509_cert: str | None = Field(default=None, description="SP certificate")
+    sp_private_key: str | None = Field(default=None, description="SP private key")
 
     # SAML settings
     name_id_format: str = Field(
@@ -54,7 +53,7 @@ class SAMLConfig(BaseModel):
     )
 
     # Attribute mapping (SAML attribute -> user field)
-    attribute_map: Dict[str, str] = Field(
+    attribute_map: dict[str, str] = Field(
         default={
             "email": "email",
             "username": "username",
@@ -125,13 +124,11 @@ class OAuth2Config(BaseModel):
     issuer: str = Field(default="", description="Expected token issuer")
 
     # OAuth2 settings
-    scope: str = Field(
-        default="openid profile email", description="OAuth2 scopes"
-    )
+    scope: str = Field(default="openid profile email", description="OAuth2 scopes")
     redirect_uri: str = Field(default="", description="OAuth2 redirect URI")
 
     # Attribute mapping (OAuth2 claim -> user field)
-    attribute_map: Dict[str, str] = Field(
+    attribute_map: dict[str, str] = Field(
         default={
             "email": "email",
             "preferred_username": "username",
@@ -231,7 +228,7 @@ def load_sso_config() -> SSOConfig:
         value = os.getenv(key, str(default)).lower()
         return value in ("true", "1", "yes", "on")
 
-    def get_dict(key: str, default: Dict[str, str]) -> Dict[str, str]:
+    def get_dict(key: str, default: dict[str, str]) -> dict[str, str]:
         """Get dictionary from environment (JSON format)."""
         import json
 

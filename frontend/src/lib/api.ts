@@ -9,12 +9,8 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios'
 
 // API base URL from environment or default for development
-<<<<<<< HEAD
 // Use /api/v1 directly to avoid 307 redirect which causes CORS issues
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
-=======
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
->>>>>>> origin/docs/session-14-summary
 
 /**
  * Standardized API error shape returned by all API operations.
@@ -136,7 +132,6 @@ function createApiClient(): AxiosInstance {
     withCredentials: true,
   })
 
-<<<<<<< HEAD
   // Request interceptor - debug logging
   client.interceptors.request.use(
     (config) => {
@@ -147,24 +142,12 @@ function createApiClient(): AxiosInstance {
       console.error('[api.ts] Request interceptor error:', error)
       return Promise.reject(error)
     }
-=======
-  // Request interceptor - no longer needed for auth token
-  // Tokens are sent automatically via httpOnly cookies
-  client.interceptors.request.use(
-    (config) => {
-      return config
-    },
-    (error) => Promise.reject(error)
->>>>>>> origin/docs/session-14-summary
   )
 
   // Response interceptor - transform errors
   client.interceptors.response.use(
     (response) => {
-<<<<<<< HEAD
       console.log(`[api.ts] RESPONSE: ${response.status} ${response.config.url}`)
-=======
->>>>>>> origin/docs/session-14-summary
       // Issue #5: Handle 207 Multi-Status as a successful response (partial success)
       // This is used for schedule generation that completes but has validation warnings
       return response
@@ -180,15 +163,11 @@ function createApiClient(): AxiosInstance {
       if (typeof window !== 'undefined') {
         // Handle 401 - redirect to login
         // Security: No need to clear localStorage since tokens are in httpOnly cookies
-<<<<<<< HEAD
         // Don't redirect if already on login page (prevents infinite loop)
         // Don't redirect for auth endpoints (let checkAuth handle gracefully)
         const requestUrl = error.config?.url || ''
         const isAuthEndpoint = requestUrl.includes('/auth/')
         if (apiError.status === 401 && !window.location.pathname.includes('/login') && !isAuthEndpoint) {
-=======
-        if (apiError.status === 401) {
->>>>>>> origin/docs/session-14-summary
           window.location.href = '/login'
         }
 

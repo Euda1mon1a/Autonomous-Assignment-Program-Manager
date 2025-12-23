@@ -13,7 +13,7 @@ from typing import Any
 from apscheduler.triggers.cron import CronTrigger as APCronTrigger
 from apscheduler.triggers.date import DateTrigger as APDateTrigger
 from apscheduler.triggers.interval import IntervalTrigger as APIntervalTrigger
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class CronTriggerConfig(BaseModel):

@@ -66,7 +66,9 @@ class ChangelogFormatter:
         # Header
         lines.append(f"# API Changelog: {diff.old_version} → {diff.new_version}")
         lines.append("")
-        lines.append(f"**Generated:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}")
+        lines.append(
+            f"**Generated:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}"
+        )
         lines.append("")
 
         # Summary
@@ -191,7 +193,9 @@ class ChangelogFormatter:
         lines.append("<html>")
         lines.append("<head>")
         lines.append("<meta charset='utf-8'>")
-        lines.append(f"<title>API Changelog: {diff.old_version} → {diff.new_version}</title>")
+        lines.append(
+            f"<title>API Changelog: {diff.old_version} → {diff.new_version}</title>"
+        )
         lines.append("<style>")
         lines.append(self._get_html_styles())
         lines.append("</style>")
@@ -201,7 +205,9 @@ class ChangelogFormatter:
         # Title
         lines.append("<div class='container'>")
         lines.append(f"<h1>API Changelog: {diff.old_version} → {diff.new_version}</h1>")
-        lines.append(f"<p class='meta'>Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}</p>")
+        lines.append(
+            f"<p class='meta'>Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}</p>"
+        )
 
         # Summary
         suggested_version = diff.suggest_version_bump(diff.old_version)
@@ -210,10 +216,16 @@ class ChangelogFormatter:
         lines.append("<ul>")
         lines.append(f"<li><strong>Old Version:</strong> {diff.old_version}</li>")
         lines.append(f"<li><strong>New Version:</strong> {diff.new_version}</li>")
-        lines.append(f"<li><strong>Suggested Version:</strong> {suggested_version}</li>")
+        lines.append(
+            f"<li><strong>Suggested Version:</strong> {suggested_version}</li>"
+        )
         lines.append(f"<li><strong>Total Changes:</strong> {len(diff.changes)}</li>")
-        lines.append(f"<li><strong>Breaking Changes:</strong> {len(diff.breaking_changes)}</li>")
-        lines.append(f"<li><strong>Non-Breaking Changes:</strong> {len(diff.non_breaking_changes)}</li>")
+        lines.append(
+            f"<li><strong>Breaking Changes:</strong> {len(diff.breaking_changes)}</li>"
+        )
+        lines.append(
+            f"<li><strong>Non-Breaking Changes:</strong> {len(diff.non_breaking_changes)}</li>"
+        )
         lines.append("</ul>")
         lines.append("</div>")
 
@@ -271,7 +283,9 @@ class ChangelogFormatter:
         # Details
         lines.append("<ul>")
         if change.path:
-            lines.append(f"<li><strong>Endpoint:</strong> <code>{change.method or ''} {change.path}</code></li>")
+            lines.append(
+                f"<li><strong>Endpoint:</strong> <code>{change.method or ''} {change.path}</code></li>"
+            )
         if change.change_type:
             lines.append(f"<li><strong>Type:</strong> {change.change_type.value}</li>")
         if change.breaking:
@@ -286,13 +300,17 @@ class ChangelogFormatter:
 
         # Migration guide
         if include_migration and change.migration_guide:
-            lines.append(f"<p class='migration-note'><strong>Migration:</strong> {change.migration_guide}</p>")
+            lines.append(
+                f"<p class='migration-note'><strong>Migration:</strong> {change.migration_guide}</p>"
+            )
 
         lines.append("</div>")
 
         return lines
 
-    def _change_to_dict(self, change: APIChange, include_migration: bool) -> dict[str, Any]:
+    def _change_to_dict(
+        self, change: APIChange, include_migration: bool
+    ) -> dict[str, Any]:
         """Convert APIChange to dictionary."""
         data = {
             "type": change.change_type.value,

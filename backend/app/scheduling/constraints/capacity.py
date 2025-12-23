@@ -10,6 +10,7 @@ Classes:
     - MaxPhysiciansInClinicConstraint: Physical space limits (hard)
     - CoverageConstraint: Maximize block coverage (soft)
 """
+
 import logging
 from collections import defaultdict
 from typing import Any
@@ -68,6 +69,7 @@ class OnePersonPerBlockConstraint(HardConstraint):
     ) -> None:
         """At most max_per_block residents per block."""
         import pulp
+
         x = variables.get("assignments", {})
 
         for block in context.blocks:
@@ -80,7 +82,7 @@ class OnePersonPerBlockConstraint(HardConstraint):
             if resident_vars:
                 model += (
                     pulp.lpSum(resident_vars) <= self.max_per_block,
-                    f"max_per_block_{b_i}"
+                    f"max_per_block_{b_i}",
                 )
 
     def validate(
@@ -98,14 +100,16 @@ class OnePersonPerBlockConstraint(HardConstraint):
 
         for block_id, count in block_counts.items():
             if count > self.max_per_block:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="CRITICAL",
-                    message=f"Block has {count} primary assignments (max: {self.max_per_block})",
-                    block_id=block_id,
-                    details={"count": count, "max": self.max_per_block},
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="CRITICAL",
+                        message=f"Block has {count} primary assignments (max: {self.max_per_block})",
+                        block_id=block_id,
+                        details={"count": count, "max": self.max_per_block},
+                    )
+                )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -149,7 +153,8 @@ class ClinicCapacityConstraint(HardConstraint):
                     template_block_vars = [
                         template_vars[r_i, b_i, t_i]
                         for r in context.residents
-                        if (r_i := context.resident_idx[r.id], b_i, t_i) in template_vars
+                        if (r_i := context.resident_idx[r.id], b_i, t_i)
+                        in template_vars
                     ]
 
                     if template_block_vars:
@@ -163,6 +168,7 @@ class ClinicCapacityConstraint(HardConstraint):
     ) -> None:
         """Enforce template capacity limits per block."""
         import pulp
+
         template_vars = variables.get("template_assignments", {})
 
         if not template_vars:
@@ -184,7 +190,7 @@ class ClinicCapacityConstraint(HardConstraint):
                     if template_block_vars:
                         model += (
                             pulp.lpSum(template_block_vars) <= template.max_residents,
-                            f"capacity_{b_i}_{t_i}_{constraint_count}"
+                            f"capacity_{b_i}_{t_i}_{constraint_count}",
                         )
                         constraint_count += 1
 
@@ -208,14 +214,16 @@ class ClinicCapacityConstraint(HardConstraint):
         for (block_id, template_id), count in by_block_template.items():
             limit = template_limits.get(template_id)
             if limit and count > limit:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="HIGH",
-                    message=f"{template_names.get(template_id, 'Template')}: {count} assigned (max: {limit})",
-                    block_id=block_id,
-                    details={"count": count, "limit": limit},
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="HIGH",
+                        message=f"{template_names.get(template_id, 'Template')}: {count} assigned (max: {limit})",
+                        block_id=block_id,
+                        details={"count": count, "limit": limit},
+                    )
+                )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -266,8 +274,9 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
 
         # Identify clinic templates
         clinic_template_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
         }
 
         if not clinic_template_ids:
@@ -315,8 +324,9 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
             return
 
         clinic_template_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
         }
 
         if not clinic_template_ids:
@@ -338,7 +348,7 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
             if clinic_vars:
                 model += (
                     pulp.lpSum(clinic_vars) <= self.max_physicians,
-                    f"max_physicians_clinic_{b_i}_{constraint_count}"
+                    f"max_physicians_clinic_{b_i}_{constraint_count}",
                 )
                 constraint_count += 1
 
@@ -352,8 +362,9 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
 
         # Identify clinic templates
         clinic_template_ids: set[Any] = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
         }
 
         if not clinic_template_ids:
@@ -371,14 +382,16 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
         for block_id, count in by_block.items():
             if count > self.max_physicians:
                 block_info = block_dates.get(block_id, ("Unknown", "Unknown"))
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="HIGH",
-                    message=f"Clinic has {count} physicians on {block_info[0]} {block_info[1]} (max: {self.max_physicians})",
-                    block_id=block_id,
-                    details={"count": count, "limit": self.max_physicians},
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="HIGH",
+                        message=f"Clinic has {count} physicians on {block_info[0]} {block_info[1]} (max: {self.max_physicians})",
+                        block_id=block_id,
+                        details={"count": count, "limit": self.max_physicians},
+                    )
+                )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -423,6 +436,7 @@ class CoverageConstraint(SoftConstraint):
     ) -> None:
         """Add coverage to objective."""
         import pulp
+
         x = variables.get("assignments", {})
 
         if not x:
@@ -439,17 +453,21 @@ class CoverageConstraint(SoftConstraint):
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
         assigned_blocks = {a.block_id for a in assignments}
 
-        coverage_rate = len(assigned_blocks) / len(workday_blocks) if workday_blocks else 0
+        coverage_rate = (
+            len(assigned_blocks) / len(workday_blocks) if workday_blocks else 0
+        )
 
         violations = []
         if coverage_rate < 0.9:
-            violations.append(ConstraintViolation(
-                constraint_name=self.name,
-                constraint_type=self.constraint_type,
-                severity="MEDIUM",
-                message=f"Coverage rate: {coverage_rate * 100:.1f}%",
-                details={"coverage_rate": coverage_rate},
-            ))
+            violations.append(
+                ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity="MEDIUM",
+                    message=f"Coverage rate: {coverage_rate * 100:.1f}%",
+                    details={"coverage_rate": coverage_rate},
+                )
+            )
 
         return ConstraintResult(
             satisfied=True,

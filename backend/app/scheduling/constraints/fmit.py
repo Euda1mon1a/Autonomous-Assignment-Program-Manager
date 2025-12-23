@@ -24,6 +24,7 @@ Classes:
     - FMITContinuityTurfConstraint: OB turf rules based on load shedding level (hard)
     - FMITStaffingFloorConstraint: Minimum faculty requirements for FMIT (hard)
 """
+
 import logging
 from collections import defaultdict
 from datetime import date, timedelta
@@ -117,8 +118,9 @@ class FMITWeekBlockingConstraint(HardConstraint):
 
         # Identify clinic templates
         clinic_template_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
         }
 
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
@@ -161,8 +163,9 @@ class FMITWeekBlockingConstraint(HardConstraint):
             return
 
         clinic_template_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
         }
 
         constraint_count = 0
@@ -184,7 +187,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
                             if t_i is not None and (f_i, b_i, t_i) in template_vars:
                                 model += (
                                     template_vars[f_i, b_i, t_i] == 0,
-                                    f"fmit_no_clinic_{f_i}_{b_i}_{constraint_count}"
+                                    f"fmit_no_clinic_{f_i}_{b_i}_{constraint_count}",
                                 )
                                 constraint_count += 1
 
@@ -192,7 +195,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
                         if (f_i, b_i, "overnight") in call_vars:
                             model += (
                                 call_vars[f_i, b_i, "overnight"] == 0,
-                                f"fmit_no_call_{f_i}_{b_i}_{constraint_count}"
+                                f"fmit_no_call_{f_i}_{b_i}_{constraint_count}",
                             )
                             constraint_count += 1
 
@@ -229,27 +232,35 @@ class FMITWeekBlockingConstraint(HardConstraint):
 
                 # Check if assigned to clinic
                 template = template_by_id.get(a.rotation_template_id)
-                if template and hasattr(template, 'activity_type') and template.activity_type == 'clinic':
-                    violations.append(ConstraintViolation(
-                        constraint_name=self.name,
-                        constraint_type=self.constraint_type,
-                        severity="CRITICAL",
-                        message=f"{faculty.name} assigned clinic on {block.date} during FMIT week ({friday_start} - {thursday_end})",
-                        person_id=faculty.id,
-                        block_id=block.id,
-                        details={
-                            "fmit_start": str(friday_start),
-                            "fmit_end": str(thursday_end),
-                            "assignment_type": "clinic",
-                        },
-                    ))
+                if (
+                    template
+                    and hasattr(template, "activity_type")
+                    and template.activity_type == "clinic"
+                ):
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="CRITICAL",
+                            message=f"{faculty.name} assigned clinic on {block.date} during FMIT week ({friday_start} - {thursday_end})",
+                            person_id=faculty.id,
+                            block_id=block.id,
+                            details={
+                                "fmit_start": str(friday_start),
+                                "fmit_end": str(thursday_end),
+                                "assignment_type": "clinic",
+                            },
+                        )
+                    )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
             violations=violations,
         )
 
-    def _identify_fmit_weeks(self, context: SchedulingContext) -> dict[Any, list[tuple[date, date]]]:
+    def _identify_fmit_weeks(
+        self, context: SchedulingContext
+    ) -> dict[Any, list[tuple[date, date]]]:
         """
         Identify FMIT weeks from existing assignments.
 
@@ -272,8 +283,10 @@ class FMITWeekBlockingConstraint(HardConstraint):
                 continue
 
             is_fmit = (
-                hasattr(template, 'activity_type') and template.activity_type == 'inpatient'
-                and hasattr(template, 'name') and 'FMIT' in template.name.upper()
+                hasattr(template, "activity_type")
+                and template.activity_type == "inpatient"
+                and hasattr(template, "name")
+                and "FMIT" in template.name.upper()
             )
 
             if not is_fmit:
@@ -378,7 +391,7 @@ class FMITMandatoryCallConstraint(HardConstraint):
                         if (f_i, b_i, "overnight") in call_vars:
                             model += (
                                 call_vars[f_i, b_i, "overnight"] == 1,
-                                f"fmit_fri_call_{f_i}_{constraint_count}"
+                                f"fmit_fri_call_{f_i}_{constraint_count}",
                             )
                             constraint_count += 1
 
@@ -388,7 +401,7 @@ class FMITMandatoryCallConstraint(HardConstraint):
                         if (f_i, b_i, "overnight") in call_vars:
                             model += (
                                 call_vars[f_i, b_i, "overnight"] == 1,
-                                f"fmit_sat_call_{f_i}_{constraint_count}"
+                                f"fmit_sat_call_{f_i}_{constraint_count}",
                             )
                             constraint_count += 1
 
@@ -411,7 +424,9 @@ class FMITMandatoryCallConstraint(HardConstraint):
         # For now, just return satisfied if we can't validate
         return ConstraintResult(satisfied=True, violations=[])
 
-    def _identify_fmit_weeks(self, context: SchedulingContext) -> dict[Any, list[tuple[date, date]]]:
+    def _identify_fmit_weeks(
+        self, context: SchedulingContext
+    ) -> dict[Any, list[tuple[date, date]]]:
         """Identify FMIT weeks (same as FMITWeekBlockingConstraint)."""
         fmit_weeks: dict[Any, set[tuple[date, date]]] = defaultdict(set)
 
@@ -426,8 +441,10 @@ class FMITMandatoryCallConstraint(HardConstraint):
                 continue
 
             is_fmit = (
-                hasattr(template, 'activity_type') and template.activity_type == 'inpatient'
-                and hasattr(template, 'name') and 'FMIT' in template.name.upper()
+                hasattr(template, "activity_type")
+                and template.activity_type == "inpatient"
+                and hasattr(template, "name")
+                and "FMIT" in template.name.upper()
             )
 
             if not is_fmit:
@@ -545,7 +562,7 @@ class PostFMITRecoveryConstraint(HardConstraint):
                             if t_i is not None and (f_i, b_i, t_i) in template_vars:
                                 model += (
                                     template_vars[f_i, b_i, t_i] == 0,
-                                    f"post_fmit_blocked_{f_i}_{b_i}_{constraint_count}"
+                                    f"post_fmit_blocked_{f_i}_{b_i}_{constraint_count}",
                                 )
                                 constraint_count += 1
 
@@ -554,7 +571,7 @@ class PostFMITRecoveryConstraint(HardConstraint):
                             if (f_i, b_i, call_type) in call_vars:
                                 model += (
                                     call_vars[f_i, b_i, call_type] == 0,
-                                    f"post_fmit_no_call_{f_i}_{b_i}_{constraint_count}"
+                                    f"post_fmit_no_call_{f_i}_{b_i}_{constraint_count}",
                                 )
                                 constraint_count += 1
 
@@ -593,22 +610,26 @@ class PostFMITRecoveryConstraint(HardConstraint):
             # Check if this is a recovery Friday
             if a.person_id in recovery_fridays:
                 if block.date in recovery_fridays[a.person_id]:
-                    violations.append(ConstraintViolation(
-                        constraint_name=self.name,
-                        constraint_type=self.constraint_type,
-                        severity="HIGH",
-                        message=f"{faculty.name} assigned on {block.date} which is post-FMIT recovery day",
-                        person_id=faculty.id,
-                        block_id=block.id,
-                        details={"recovery_date": str(block.date)},
-                    ))
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="HIGH",
+                            message=f"{faculty.name} assigned on {block.date} which is post-FMIT recovery day",
+                            person_id=faculty.id,
+                            block_id=block.id,
+                            details={"recovery_date": str(block.date)},
+                        )
+                    )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
             violations=violations,
         )
 
-    def _identify_fmit_weeks(self, context: SchedulingContext) -> dict[Any, list[tuple[date, date]]]:
+    def _identify_fmit_weeks(
+        self, context: SchedulingContext
+    ) -> dict[Any, list[tuple[date, date]]]:
         """Identify FMIT weeks (same as FMITWeekBlockingConstraint)."""
         fmit_weeks: dict[Any, set[tuple[date, date]]] = defaultdict(set)
 
@@ -623,8 +644,10 @@ class PostFMITRecoveryConstraint(HardConstraint):
                 continue
 
             is_fmit = (
-                hasattr(template, 'activity_type') and template.activity_type == 'inpatient'
-                and hasattr(template, 'name') and 'FMIT' in template.name.upper()
+                hasattr(template, "activity_type")
+                and template.activity_type == "inpatient"
+                and hasattr(template, "name")
+                and "FMIT" in template.name.upper()
             )
 
             if not is_fmit:
@@ -714,26 +737,28 @@ class FMITContinuityTurfConstraint(HardConstraint):
         violations: list[ConstraintViolation] = []
 
         # Get current load shedding level from context (default to NORMAL if not set)
-        load_shedding_level = getattr(context, 'load_shedding_level', 0)  # 0 = NORMAL
+        load_shedding_level = getattr(context, "load_shedding_level", 0)  # 0 = NORMAL
 
         # For now, this is a reporting constraint
         # In a full implementation, continuity deliveries would be tracked in context
         # and we would validate FM attendance based on load shedding level
 
         if load_shedding_level >= 2:  # ORANGE or higher
-            violations.append(ConstraintViolation(
-                constraint_name=self.name,
-                constraint_type=self.constraint_type,
-                severity="info" if load_shedding_level >= 3 else "warning",
-                message=f"FMIT continuity turf active: Load shedding level {load_shedding_level}. "
-                        f"{'All continuity to OB' if load_shedding_level >= 4 else 'OB coverage available'}",
-                person_id=None,
-                block_id=None,
-                details={
-                    "load_shedding_level": load_shedding_level,
-                    "turf_policy": self._get_turf_policy(load_shedding_level),
-                },
-            ))
+            violations.append(
+                ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity="info" if load_shedding_level >= 3 else "warning",
+                    message=f"FMIT continuity turf active: Load shedding level {load_shedding_level}. "
+                    f"{'All continuity to OB' if load_shedding_level >= 4 else 'OB coverage available'}",
+                    person_id=None,
+                    block_id=None,
+                    details={
+                        "load_shedding_level": load_shedding_level,
+                        "turf_policy": self._get_turf_policy(load_shedding_level),
+                    },
+                )
+            )
 
         return ConstraintResult(
             satisfied=True,  # This is informational, not a hard failure
@@ -874,19 +899,21 @@ class FMITStaffingFloorConstraint(HardConstraint):
         # Check minimum faculty threshold
         if total_faculty < self.MINIMUM_FACULTY_FOR_FMIT:
             for assignment in fmit_assignments:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="CRITICAL",
-                    message=f"Cannot assign FMIT: only {total_faculty} faculty available "
-                            f"(minimum {self.MINIMUM_FACULTY_FOR_FMIT} required)",
-                    person_id=assignment.person_id,
-                    block_id=assignment.block_id,
-                    details={
-                        "total_faculty": total_faculty,
-                        "minimum_required": self.MINIMUM_FACULTY_FOR_FMIT,
-                    },
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="CRITICAL",
+                        message=f"Cannot assign FMIT: only {total_faculty} faculty available "
+                        f"(minimum {self.MINIMUM_FACULTY_FOR_FMIT} required)",
+                        person_id=assignment.person_id,
+                        block_id=assignment.block_id,
+                        details={
+                            "total_faculty": total_faculty,
+                            "minimum_required": self.MINIMUM_FACULTY_FOR_FMIT,
+                        },
+                    )
+                )
 
         # Check utilization cap
         if total_faculty >= self.MINIMUM_FACULTY_FOR_FMIT:
@@ -900,22 +927,24 @@ class FMITStaffingFloorConstraint(HardConstraint):
                 concurrent_count = len(unique_faculty)
 
                 if concurrent_count > max_concurrent:
-                    violations.append(ConstraintViolation(
-                        constraint_name=self.name,
-                        constraint_type=self.constraint_type,
-                        severity="CRITICAL",
-                        message=f"Week {week_start}: {concurrent_count} concurrent FMIT exceeds cap "
-                                f"({max_concurrent} max for {total_faculty} faculty)",
-                        person_id=None,
-                        block_id=None,
-                        details={
-                            "week_start": str(week_start),
-                            "concurrent_fmit": concurrent_count,
-                            "max_allowed": max_concurrent,
-                            "total_faculty": total_faculty,
-                            "utilization_cap": self.FMIT_UTILIZATION_CAP,
-                        },
-                    ))
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="CRITICAL",
+                            message=f"Week {week_start}: {concurrent_count} concurrent FMIT exceeds cap "
+                            f"({max_concurrent} max for {total_faculty} faculty)",
+                            person_id=None,
+                            block_id=None,
+                            details={
+                                "week_start": str(week_start),
+                                "concurrent_fmit": concurrent_count,
+                                "max_allowed": max_concurrent,
+                                "total_faculty": total_faculty,
+                                "utilization_cap": self.FMIT_UTILIZATION_CAP,
+                            },
+                        )
+                    )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -931,8 +960,10 @@ class FMITStaffingFloorConstraint(HardConstraint):
     def _is_fmit_template(self, template: Any) -> bool:
         """Check if template is an FMIT rotation."""
         return (
-            hasattr(template, 'activity_type') and template.activity_type == 'inpatient'
-            and hasattr(template, 'name') and 'FMIT' in template.name.upper()
+            hasattr(template, "activity_type")
+            and template.activity_type == "inpatient"
+            and hasattr(template, "name")
+            and "FMIT" in template.name.upper()
         )
 
     def _block_all_fmit_assignments(
@@ -944,8 +975,7 @@ class FMITStaffingFloorConstraint(HardConstraint):
         """Block all FMIT template assignments in the model."""
         # Identify FMIT templates
         fmit_template_ids = {
-            t.id for t in context.templates
-            if self._is_fmit_template(t)
+            t.id for t in context.templates if self._is_fmit_template(t)
         }
 
         # Block all FMIT assignments

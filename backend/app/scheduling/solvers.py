@@ -8,12 +8,12 @@ This module provides multiple solver implementations:
 
 Each solver uses the modular constraint system from constraints.py.
 """
+
 import json
 import logging
 import time
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Optional
 from uuid import UUID
 
 from app.models.assignment import Assignment
@@ -33,7 +33,9 @@ class SolverResult:
     def __init__(
         self,
         success: bool,
-        assignments: list[tuple[UUID, UUID, UUID | None]],  # (person_id, block_id, template_id)
+        assignments: list[
+            tuple[UUID, UUID, UUID | None]
+        ],  # (person_id, block_id, template_id)
         status: str,
         objective_value: float = 0.0,
         runtime_seconds: float = 0.0,
@@ -49,7 +51,9 @@ class SolverResult:
         self.runtime_seconds = runtime_seconds
         self.solver_status = solver_status
         self.statistics = statistics or {}
-        self.explanations = explanations or {}  # (person_id, block_id) -> explanation dict
+        self.explanations = (
+            explanations or {}
+        )  # (person_id, block_id) -> explanation dict
         self.random_seed = random_seed
 
     def __repr__(self):
@@ -69,7 +73,9 @@ class BaseSolver(ABC):
         constraint_manager: ConstraintManager | None = None,
         timeout_seconds: float = 60.0,
     ):
-        self.constraint_manager = constraint_manager or ConstraintManager.create_default()
+        self.constraint_manager = (
+            constraint_manager or ConstraintManager.create_default()
+        )
         self.timeout_seconds = timeout_seconds
 
     @abstractmethod
@@ -251,7 +257,7 @@ class PuLPSolver(BaseSolver):
                 if rotation_vars:
                     prob += (
                         pulp.lpSum(rotation_vars) <= 1,
-                        f"one_rotation_res_{r_i}_{b_i}"
+                        f"one_rotation_res_{r_i}_{b_i}",
                     )
 
         # ==================================================
@@ -269,7 +275,7 @@ class PuLPSolver(BaseSolver):
                 if rotation_vars:
                     prob += (
                         pulp.lpSum(rotation_vars) <= 1,
-                        f"one_rotation_fac_{f_i}_{b_i}"
+                        f"one_rotation_fac_{f_i}_{b_i}",
                     )
 
         # ==================================================
@@ -286,10 +292,16 @@ class PuLPSolver(BaseSolver):
                     r_i = context.resident_idx[assignment.person_id]
                     if assignment.block_id in context.block_idx:
                         b_i = context.block_idx[assignment.block_id]
-                        if assignment.rotation_template_id and assignment.rotation_template_id in template_idx:
+                        if (
+                            assignment.rotation_template_id
+                            and assignment.rotation_template_id in template_idx
+                        ):
                             t_i = template_idx[assignment.rotation_template_id]
                             if (r_i, b_i, t_i) in x:
-                                prob += x[r_i, b_i, t_i] == 1, f"preserve_{r_i}_{b_i}_{t_i}"
+                                prob += (
+                                    x[r_i, b_i, t_i] == 1,
+                                    f"preserve_{r_i}_{b_i}_{t_i}",
+                                )
 
         # ==================================================
         # OBJECTIVE FUNCTION
@@ -347,11 +359,13 @@ class PuLPSolver(BaseSolver):
                 for template in context.templates:
                     t_i = template_idx[template.id]
                     if (r_i, b_i, t_i) in x and pulp.value(x[r_i, b_i, t_i]) == 1:
-                        assignments.append((
-                            resident.id,
-                            block.id,
-                            template.id,
-                        ))
+                        assignments.append(
+                            (
+                                resident.id,
+                                block.id,
+                                template.id,
+                            )
+                        )
 
         # ==================================================
         # EXTRACT SOLUTION - Faculty
@@ -364,11 +378,13 @@ class PuLPSolver(BaseSolver):
                 for template in context.templates:
                     t_i = template_idx[template.id]
                     if (f_i, b_i, t_i) in f and pulp.value(f[f_i, b_i, t_i]) == 1:
-                        assignments.append((
-                            faculty.id,
-                            block.id,
-                            template.id,
-                        ))
+                        assignments.append(
+                            (
+                                faculty.id,
+                                block.id,
+                                template.id,
+                            )
+                        )
                         faculty_assignment_count += 1
 
         logger.info(
@@ -391,7 +407,9 @@ class PuLPSolver(BaseSolver):
                 "total_templates": len(context.templates),
                 "resident_assignments": len(assignments) - faculty_assignment_count,
                 "faculty_assignments": faculty_assignment_count,
-                "coverage_rate": len(assignments) / len(workday_blocks) if workday_blocks else 0,
+                "coverage_rate": len(assignments) / len(workday_blocks)
+                if workday_blocks
+                else 0,
             },
         )
 
@@ -459,7 +477,7 @@ class SolverProgressCallback:
                         self.redis.setex(
                             f"solver_progress:{self.task_id}",
                             300,  # 5 minutes TTL
-                            json.dumps(progress_data)
+                            json.dumps(progress_data),
                         )
                         logger.debug(
                             f"Progress update for task {self.task_id}: "
@@ -502,8 +520,8 @@ class CPSATSolver(BaseSolver):
         constraint_manager: ConstraintManager | None = None,
         timeout_seconds: float = 60.0,
         num_workers: int = 4,
-        task_id: Optional[str] = None,
-        redis_client = None,
+        task_id: str | None = None,
+        redis_client=None,
     ):
         super().__init__(constraint_manager, timeout_seconds)
         self.num_workers = num_workers
@@ -627,7 +645,9 @@ class CPSATSolver(BaseSolver):
                     x_2d[r_i, b_i] = model.NewBoolVar(f"x_2d_{r_i}_{b_i}")
                     # x_2d = 1 iff at least one rotation is selected
                     model.Add(sum(rotation_vars) >= 1).OnlyEnforceIf(x_2d[r_i, b_i])
-                    model.Add(sum(rotation_vars) == 0).OnlyEnforceIf(x_2d[r_i, b_i].Not())
+                    model.Add(sum(rotation_vars) == 0).OnlyEnforceIf(
+                        x_2d[r_i, b_i].Not()
+                    )
 
         # ==================================================
         # FACULTY DECISION VARIABLES
@@ -656,7 +676,9 @@ class CPSATSolver(BaseSolver):
                 if rotation_vars:
                     f_2d[f_i, b_i] = model.NewBoolVar(f"f_2d_{f_i}_{b_i}")
                     model.Add(sum(rotation_vars) >= 1).OnlyEnforceIf(f_2d[f_i, b_i])
-                    model.Add(sum(rotation_vars) == 0).OnlyEnforceIf(f_2d[f_i, b_i].Not())
+                    model.Add(sum(rotation_vars) == 0).OnlyEnforceIf(
+                        f_2d[f_i, b_i].Not()
+                    )
 
         variables = {
             "assignments": x_2d,  # For legacy constraints (residents)
@@ -709,7 +731,10 @@ class CPSATSolver(BaseSolver):
                     r_i = context.resident_idx[assignment.person_id]
                     if assignment.block_id in context.block_idx:
                         b_i = context.block_idx[assignment.block_id]
-                        if assignment.rotation_template_id and assignment.rotation_template_id in template_idx:
+                        if (
+                            assignment.rotation_template_id
+                            and assignment.rotation_template_id in template_idx
+                        ):
                             t_i = template_idx[assignment.rotation_template_id]
                             if (r_i, b_i, t_i) in x:
                                 model.Add(x[r_i, b_i, t_i] == 1)
@@ -737,7 +762,9 @@ class CPSATSolver(BaseSolver):
         callback = None
         if self.task_id and self.redis_client:
             try:
-                callback_wrapper = SolverProgressCallback(self.task_id, self.redis_client)
+                callback_wrapper = SolverProgressCallback(
+                    self.task_id, self.redis_client
+                )
                 callback = callback_wrapper.get_callback()
                 logger.info(f"Progress tracking enabled for task {self.task_id}")
             except Exception as e:
@@ -757,19 +784,25 @@ class CPSATSolver(BaseSolver):
                 status_name = solver.StatusName(status)
                 final_data = {
                     "solutions_found": callback.solution_count if callback else 0,
-                    "current_objective": solver.ObjectiveValue() if status in [cp_model.OPTIMAL, cp_model.FEASIBLE] else 0,
-                    "best_bound": solver.BestObjectiveBound() if status in [cp_model.OPTIMAL, cp_model.FEASIBLE] else 0,
+                    "current_objective": solver.ObjectiveValue()
+                    if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]
+                    else 0,
+                    "best_bound": solver.BestObjectiveBound()
+                    if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]
+                    else 0,
                     "optimality_gap_pct": 0.0 if status == cp_model.OPTIMAL else None,
                     "progress_pct": 100.0 if status == cp_model.OPTIMAL else 99.0,
                     "elapsed_seconds": round(runtime, 2),
-                    "status": "completed" if status in [cp_model.OPTIMAL, cp_model.FEASIBLE] else "failed",
+                    "status": "completed"
+                    if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]
+                    else "failed",
                     "solver_status": status_name,
                     "timestamp": time.time(),
                 }
                 self.redis_client.setex(
                     f"solver_progress:{self.task_id}",
                     300,  # 5 minutes TTL
-                    json.dumps(final_data)
+                    json.dumps(final_data),
                 )
             except Exception as e:
                 logger.error(f"Failed to store final status in Redis: {e}")
@@ -797,11 +830,13 @@ class CPSATSolver(BaseSolver):
                 for template in context.templates:
                     t_i = template_idx[template.id]
                     if (r_i, b_i, t_i) in x and solver.Value(x[r_i, b_i, t_i]) == 1:
-                        assignments.append((
-                            resident.id,
-                            block.id,
-                            template.id,
-                        ))
+                        assignments.append(
+                            (
+                                resident.id,
+                                block.id,
+                                template.id,
+                            )
+                        )
 
         # ==================================================
         # EXTRACT SOLUTION - Faculty
@@ -814,11 +849,13 @@ class CPSATSolver(BaseSolver):
                 for template in context.templates:
                     t_i = template_idx[template.id]
                     if (f_i, b_i, t_i) in f and solver.Value(f[f_i, b_i, t_i]) == 1:
-                        assignments.append((
-                            faculty.id,
-                            block.id,
-                            template.id,
-                        ))
+                        assignments.append(
+                            (
+                                faculty.id,
+                                block.id,
+                                template.id,
+                            )
+                        )
                         faculty_assignment_count += 1
 
         logger.info(
@@ -841,14 +878,16 @@ class CPSATSolver(BaseSolver):
                 "total_templates": len(context.templates),
                 "resident_assignments": len(assignments) - faculty_assignment_count,
                 "faculty_assignments": faculty_assignment_count,
-                "coverage_rate": len(assignments) / len(workday_blocks) if workday_blocks else 0,
+                "coverage_rate": len(assignments) / len(workday_blocks)
+                if workday_blocks
+                else 0,
                 "branches": solver.NumBranches(),
                 "conflicts": solver.NumConflicts(),
             },
         )
 
     @staticmethod
-    def get_progress(task_id: str, redis_client) -> Optional[dict]:
+    def get_progress(task_id: str, redis_client) -> dict | None:
         """
         Query the current progress of a solver task from Redis.
 
@@ -1087,7 +1126,9 @@ class GreedySolver(BaseSolver):
         # Track existing assignments
         assigned_blocks = set()
         assignment_counts = {r.id: 0 for r in context.residents}
-        template_block_counts = defaultdict(lambda: defaultdict(int))  # template_id -> block_id -> count
+        template_block_counts = defaultdict(
+            lambda: defaultdict(int)
+        )  # template_id -> block_id -> count
 
         if existing_assignments:
             for a in existing_assignments:
@@ -1118,7 +1159,8 @@ class GreedySolver(BaseSolver):
         for block in sorted_blocks:
             # Find eligible residents
             eligible = [
-                r for r in context.residents
+                r
+                for r in context.residents
                 if self._is_available(r.id, block.id, context)
             ]
 
@@ -1131,7 +1173,9 @@ class GreedySolver(BaseSolver):
             for r in eligible:
                 # Invert so higher score = better candidate
                 # Max assignments across all residents - this resident's count
-                max_assigns = max(assignment_counts.values()) if assignment_counts else 0
+                max_assigns = (
+                    max(assignment_counts.values()) if assignment_counts else 0
+                )
                 candidate_scores[r.id] = (max_assigns - assignment_counts[r.id]) * 100
 
             # Select resident with fewest assignments (highest inverted score)
@@ -1145,7 +1189,10 @@ class GreedySolver(BaseSolver):
                     continue
 
                 # Check capacity constraint
-                if t.max_residents and template_block_counts[t.id][block.id] >= t.max_residents:
+                if (
+                    t.max_residents
+                    and template_block_counts[t.id][block.id] >= t.max_residents
+                ):
                     continue
 
                 # Found a valid template
@@ -1154,7 +1201,9 @@ class GreedySolver(BaseSolver):
 
             if not template:
                 # No valid template available, skip this block
-                logger.debug(f"No valid rotation template for resident {selected.name} in block {block.id}")
+                logger.debug(
+                    f"No valid rotation template for resident {selected.name} in block {block.id}"
+                )
                 continue
 
             # Generate explanation for this decision
@@ -1173,11 +1222,13 @@ class GreedySolver(BaseSolver):
                 )
                 explanations[(selected.id, block.id)] = explanation.model_dump()
 
-            assignments.append((
-                selected.id,
-                block.id,
-                template.id,
-            ))
+            assignments.append(
+                (
+                    selected.id,
+                    block.id,
+                    template.id,
+                )
+            )
             assignment_counts[selected.id] += 1
             template_block_counts[template.id][block.id] += 1
 
@@ -1186,8 +1237,12 @@ class GreedySolver(BaseSolver):
         logger.info(f"Greedy found {len(assignments)} assignments in {runtime:.2f}s")
 
         # Calculate confidence distribution
-        high_conf = sum(1 for e in explanations.values() if e.get("confidence") == "high")
-        med_conf = sum(1 for e in explanations.values() if e.get("confidence") == "medium")
+        high_conf = sum(
+            1 for e in explanations.values() if e.get("confidence") == "high"
+        )
+        med_conf = sum(
+            1 for e in explanations.values() if e.get("confidence") == "medium"
+        )
         low_conf = sum(1 for e in explanations.values() if e.get("confidence") == "low")
 
         return SolverResult(
@@ -1201,7 +1256,9 @@ class GreedySolver(BaseSolver):
                 "total_blocks": len(workday_blocks),
                 "total_residents": len(context.residents),
                 "total_templates": len(context.templates),
-                "coverage_rate": len(assignments) / len(sorted_blocks) if sorted_blocks else 0,
+                "coverage_rate": len(assignments) / len(sorted_blocks)
+                if sorted_blocks
+                else 0,
                 "high_confidence_assignments": high_conf,
                 "medium_confidence_assignments": med_conf,
                 "low_confidence_assignments": low_conf,
@@ -1209,7 +1266,9 @@ class GreedySolver(BaseSolver):
             explanations=explanations,
         )
 
-    def _is_available(self, person_id: UUID, block_id: UUID, context: SchedulingContext) -> bool:
+    def _is_available(
+        self, person_id: UUID, block_id: UUID, context: SchedulingContext
+    ) -> bool:
         """Check if person is available for block."""
         if person_id not in context.availability:
             return True
@@ -1221,6 +1280,7 @@ class GreedySolver(BaseSolver):
 # ==================================================
 # SOLVER FACTORY
 # ==================================================
+
 
 class SolverFactory:
     """
@@ -1279,9 +1339,12 @@ class SolverFactory:
         if cls._solvers["pyomo"] is None:
             try:
                 from app.scheduling.pyomo_solver import PyomoSolver
+
                 cls._solvers["pyomo"] = PyomoSolver
             except ImportError:
-                raise ValueError("PyomoSolver requires pyomo package: pip install pyomo")
+                raise ValueError(
+                    "PyomoSolver requires pyomo package: pip install pyomo"
+                )
         return cls._solvers["pyomo"]
 
     @classmethod
@@ -1306,6 +1369,7 @@ class SolverFactory:
                 QUBOSolver,
                 SimulatedQuantumAnnealingSolver,
             )
+
             cls._solvers["quantum"] = QuantumInspiredSolver
             cls._solvers["qubo"] = QUBOSolver
             cls._solvers["quantum_sa"] = SimulatedQuantumAnnealingSolver
@@ -1354,7 +1418,9 @@ class SolverFactory:
             >>> solver = SolverFactory.create("greedy", constraint_manager=manager)
         """
         if name not in cls._solvers:
-            raise ValueError(f"Unknown solver: {name}. Available: {list(cls._solvers.keys())}")
+            raise ValueError(
+                f"Unknown solver: {name}. Available: {list(cls._solvers.keys())}"
+            )
 
         # Handle lazy-loaded solvers
         if name == "pyomo":

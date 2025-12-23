@@ -257,8 +257,7 @@ class StressTester:
             if hasattr(manager, "constraints"):
                 # Get enabled constraints
                 constraints = [
-                    c.name for c in manager.constraints
-                    if getattr(c, "enabled", True)
+                    c.name for c in manager.constraints if getattr(c, "enabled", True)
                 ]
 
         return constraints
@@ -291,8 +290,10 @@ class StressTester:
 
         # Count ACGME-specific violations (80-hour, 1-in-7, supervision)
         acgme_violations = [
-            v for v in violations
-            if v.type in (
+            v
+            for v in violations
+            if v.type
+            in (
                 "80_HOUR_VIOLATION",
                 "1_IN_7_VIOLATION",
                 "SUPERVISION_RATIO_VIOLATION",
@@ -304,7 +305,9 @@ class StressTester:
         # Calculate compliance based on violations
         # Assumption: For each resident/block, we check ~3 ACGME rules
         # Total checks = (assignments / 10) * 3 (rough estimate)
-        total_assignments = getattr(validation, "statistics", {}).get("total_assignments", 100)
+        total_assignments = getattr(validation, "statistics", {}).get(
+            "total_assignments", 100
+        )
         estimated_checks = max(1, (total_assignments // 10) * 3)
 
         # Compliance = (checks passed) / (total checks)
@@ -339,8 +342,7 @@ class StressTester:
 
         # Check for supervision ratio violations
         supervision_violations = [
-            v for v in violations
-            if v.type == "SUPERVISION_RATIO_VIOLATION"
+            v for v in violations if v.type == "SUPERVISION_RATIO_VIOLATION"
         ]
 
         patient_safety_ok = len(supervision_violations) == 0
@@ -486,42 +488,50 @@ class StressTester:
             report_lines.append(f"\n{level.upper()}:")
 
             for result in level_results:
-                report_lines.extend([
-                    f"  Constraints Satisfied: {result.constraints_satisfied}",
-                    f"  Constraints Relaxed:   {result.constraints_relaxed}",
-                    f"  Constraints Violated:  {result.constraints_violated}",
-                    f"  ACGME Compliance:      {result.acgme_compliance:.1%}",
-                    f"  Patient Safety:        {'✓ PASS' if result.patient_safety_maintained else '✗ FAIL'}",
-                    f"  Graceful Degradation:  {'✓ PASS' if result.degradation_graceful else '✗ FAIL'}",
-                ])
+                report_lines.extend(
+                    [
+                        f"  Constraints Satisfied: {result.constraints_satisfied}",
+                        f"  Constraints Relaxed:   {result.constraints_relaxed}",
+                        f"  Constraints Violated:  {result.constraints_violated}",
+                        f"  ACGME Compliance:      {result.acgme_compliance:.1%}",
+                        f"  Patient Safety:        {'✓ PASS' if result.patient_safety_maintained else '✗ FAIL'}",
+                        f"  Graceful Degradation:  {'✓ PASS' if result.degradation_graceful else '✗ FAIL'}",
+                    ]
+                )
 
                 # Add key notes
                 if result.notes:
-                    key_notes = [n for n in result.notes if "✓" in n or "✗" in n or "⚠" in n]
+                    key_notes = [
+                        n for n in result.notes if "✓" in n or "✗" in n or "⚠" in n
+                    ]
                     if key_notes:
                         report_lines.append("  Key Notes:")
                         for note in key_notes[:3]:  # Show top 3 notes
                             report_lines.append(f"    - {note}")
 
         # Summary statistics
-        report_lines.extend([
-            "",
-            "-" * 80,
-            "SUMMARY:",
-            "-" * 80,
-        ])
+        report_lines.extend(
+            [
+                "",
+                "-" * 80,
+                "SUMMARY:",
+                "-" * 80,
+            ]
+        )
 
         total_tests = len(results)
         patient_safety_pass = sum(1 for r in results if r.patient_safety_maintained)
         graceful_pass = sum(1 for r in results if r.degradation_graceful)
         avg_compliance = sum(r.acgme_compliance for r in results) / total_tests
 
-        report_lines.extend([
-            f"Patient Safety Pass Rate:    {patient_safety_pass}/{total_tests} ({patient_safety_pass/total_tests:.1%})",
-            f"Graceful Degradation Rate:   {graceful_pass}/{total_tests} ({graceful_pass/total_tests:.1%})",
-            f"Average ACGME Compliance:    {avg_compliance:.1%}",
-            "",
-        ])
+        report_lines.extend(
+            [
+                f"Patient Safety Pass Rate:    {patient_safety_pass}/{total_tests} ({patient_safety_pass / total_tests:.1%})",
+                f"Graceful Degradation Rate:   {graceful_pass}/{total_tests} ({graceful_pass / total_tests:.1%})",
+                f"Average ACGME Compliance:    {avg_compliance:.1%}",
+                "",
+            ]
+        )
 
         # Overall verdict
         all_patient_safety = patient_safety_pass == total_tests
@@ -534,12 +544,14 @@ class StressTester:
         else:
             verdict = "✗ FAIL - Patient safety violations detected"
 
-        report_lines.extend([
-            "OVERALL VERDICT:",
-            verdict,
-            "",
-            "=" * 80,
-        ])
+        report_lines.extend(
+            [
+                "OVERALL VERDICT:",
+                verdict,
+                "",
+                "=" * 80,
+            ]
+        )
 
         return "\n".join(report_lines)
 

@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 # Try importing NetworkX for graph analysis
 try:
     import networkx as nx
+
     NETWORKX_AVAILABLE = True
 except ImportError:
     NETWORKX_AVAILABLE = False
@@ -42,6 +43,7 @@ except ImportError:
 # Try importing SQLAlchemy-Continuum for versioning
 try:
     from sqlalchemy_continuum import version_class
+
     VERSIONING_AVAILABLE = True
 except ImportError:
     VERSIONING_AVAILABLE = False
@@ -51,27 +53,31 @@ except ImportError:
 
 class FacultyProtocol(Protocol):
     """Protocol for faculty objects."""
+
     id: UUID
     name: str
 
 
 class BlockProtocol(Protocol):
     """Protocol for block objects."""
+
     id: UUID
     date: date
 
 
 class AssignmentProtocol(Protocol):
     """Protocol for assignment objects."""
+
     id: UUID
     person_id: UUID
     block_id: UUID
-    rotation_template_id: Optional[UUID]
+    rotation_template_id: UUID | None
 
 
 @dataclass
 class VulnerabilityInfo:
     """Information about a single vulnerability."""
+
     faculty_id: UUID
     faculty_name: str
     severity: str  # "critical", "high", "medium", "low"
@@ -96,6 +102,7 @@ class VulnerabilityInfo:
 @dataclass
 class FatalPairInfo:
     """Information about a fatal pair (N-2 vulnerability)."""
+
     faculty1_id: UUID
     faculty1_name: str
     faculty2_id: UUID
@@ -120,6 +127,7 @@ class FatalPairInfo:
 @dataclass
 class CentralityInfo:
     """Centrality score for a faculty member."""
+
     faculty_id: UUID
     faculty_name: str
     centrality_score: float
@@ -152,6 +160,7 @@ class CentralityInfo:
 @dataclass
 class N1SimulationResult:
     """Result of N-1 simulation for a single faculty loss."""
+
     faculty_id: UUID
     faculty_name: str
     blocks_affected: int
@@ -176,6 +185,7 @@ class N1SimulationResult:
 @dataclass
 class N2SimulationResult:
     """Result of N-2 simulation for a faculty pair loss."""
+
     faculty1_id: UUID
     faculty2_id: UUID
     blocks_affected: int
@@ -198,6 +208,7 @@ class N2SimulationResult:
 @dataclass
 class VulnerabilityAssessment:
     """Assessment of system vulnerability."""
+
     assessed_at: datetime
     period_start: date
     period_end: date
@@ -232,6 +243,7 @@ class VulnerabilityAssessment:
 @dataclass
 class ContingencyAnalysisResult:
     """Complete result from contingency analysis."""
+
     analysis_id: UUID
     analyzed_at: datetime
     period_start: date
@@ -257,7 +269,7 @@ class ContingencyAnalysisResult:
 
     # Metadata
     analysis_duration_ms: float
-    version_id: Optional[str] = None
+    version_id: str | None = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
@@ -313,7 +325,7 @@ class ContingencyService:
         self,
         start_date: date,
         end_date: date,
-        coverage_requirements: Optional[dict[UUID, int]] = None,
+        coverage_requirements: dict[UUID, int] | None = None,
         current_utilization: float = 0.0,
         include_n2: bool = True,
         max_n2_pairs: int = 100,
@@ -362,8 +374,13 @@ class ContingencyService:
         n2_fatal_pairs: list[FatalPairInfo] = []
         if include_n2:
             n2_fatal_pairs = self._run_n2_simulation_optimized(
-                faculty, blocks, assignments, coverage_requirements,
-                lookups, n1_vulnerabilities, max_n2_pairs
+                faculty,
+                blocks,
+                assignments,
+                coverage_requirements,
+                lookups,
+                n1_vulnerabilities,
+                max_n2_pairs,
             )
 
         n2_pass = len(n2_fatal_pairs) == 0
@@ -376,7 +393,8 @@ class ContingencyService:
 
         # Identify most critical faculty
         most_critical = [
-            v.faculty_id for v in n1_vulnerabilities
+            v.faculty_id
+            for v in n1_vulnerabilities
             if v.severity in ("critical", "high")
         ][:5]
 
@@ -418,8 +436,11 @@ class ContingencyService:
         logger.info(
             "Contingency analysis completed: n1_pass=%s, n2_pass=%s, "
             "vulnerabilities=%d, fatal_pairs=%d, duration=%.1fms",
-            n1_pass, n2_pass, len(n1_vulnerabilities),
-            len(n2_fatal_pairs), elapsed_ms
+            n1_pass,
+            n2_pass,
+            len(n1_vulnerabilities),
+            len(n2_fatal_pairs),
+            elapsed_ms,
         )
 
         return result
@@ -448,8 +469,7 @@ class ContingencyService:
         )
 
         critical_count = sum(
-            1 for v in result.n1_vulnerabilities
-            if v.severity == "critical"
+            1 for v in result.n1_vulnerabilities if v.severity == "critical"
         )
 
         return VulnerabilityAssessment(
@@ -457,9 +477,11 @@ class ContingencyService:
             period_start=start_date,
             period_end=end_date,
             total_faculty=len(set(s.faculty_id for s in result.n1_simulations)),
-            total_blocks=len(set(
-                b for s in result.n1_simulations for b in s.uncovered_blocks
-            )) if result.n1_simulations else 0,
+            total_blocks=len(
+                set(b for s in result.n1_simulations for b in s.uncovered_blocks)
+            )
+            if result.n1_simulations
+            else 0,
             total_assignments=0,  # Set from actual count
             n1_pass=result.n1_pass,
             n2_pass=result.n2_pass,
@@ -517,7 +539,7 @@ class ContingencyService:
         self,
         start_date: date,
         end_date: date,
-        services: Optional[dict[UUID, list[UUID]]] = None,
+        services: dict[UUID, list[UUID]] | None = None,
     ) -> list[CentralityInfo]:
         """
         Calculate centrality scores for all faculty.
@@ -564,10 +586,7 @@ class ContingencyService:
 
         blocks = (
             self.db.query(Block)
-            .filter(
-                Block.date >= start_date,
-                Block.date <= end_date
-            )
+            .filter(Block.date >= start_date, Block.date <= end_date)
             .order_by(Block.date, Block.id)
             .all()
         )
@@ -578,19 +597,18 @@ class ContingencyService:
             .options(
                 joinedload(Assignment.block),
                 joinedload(Assignment.person),
-                joinedload(Assignment.rotation_template)
+                joinedload(Assignment.rotation_template),
             )
-            .filter(
-                Block.date >= start_date,
-                Block.date <= end_date
-            )
+            .filter(Block.date >= start_date, Block.date <= end_date)
             .order_by(Block.date, Assignment.id)
             .all()
         )
 
         logger.debug(
             "Loaded data: faculty=%d, blocks=%d, assignments=%d",
-            len(faculty), len(blocks), len(assignments)
+            len(faculty),
+            len(blocks),
+            len(assignments),
         )
 
         return faculty, blocks, assignments
@@ -659,13 +677,15 @@ class ContingencyService:
 
             # Early termination: faculty with no assignments
             if not fac_assignments:
-                simulations.append(N1SimulationResult(
-                    faculty_id=fac.id,
-                    faculty_name=fac.name,
-                    blocks_affected=0,
-                    coverage_remaining=1.0,
-                    is_critical=False,
-                ))
+                simulations.append(
+                    N1SimulationResult(
+                        faculty_id=fac.id,
+                        faculty_name=fac.name,
+                        blocks_affected=0,
+                        coverage_remaining=1.0,
+                        is_critical=False,
+                    )
+                )
                 continue
 
             result = self._simulate_single_loss(
@@ -684,14 +704,16 @@ class ContingencyService:
                     result.blocks_affected, is_unique, len(blocks)
                 )
 
-                vulnerabilities.append(VulnerabilityInfo(
-                    faculty_id=fac.id,
-                    faculty_name=fac.name,
-                    severity=severity,
-                    affected_blocks=result.blocks_affected,
-                    is_unique_provider=is_unique,
-                    details=f"Loss would leave {result.blocks_affected} blocks under-covered",
-                ))
+                vulnerabilities.append(
+                    VulnerabilityInfo(
+                        faculty_id=fac.id,
+                        faculty_name=fac.name,
+                        severity=severity,
+                        affected_blocks=result.blocks_affected,
+                        is_unique_provider=is_unique,
+                        details=f"Loss would leave {result.blocks_affected} blocks under-covered",
+                    )
+                )
 
         # Sort vulnerabilities by severity
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
@@ -723,8 +745,7 @@ class ContingencyService:
 
             # Count coverage without this faculty
             remaining_coverage = sum(
-                1 for a in block_assignments
-                if a.person_id != faculty.id
+                1 for a in block_assignments if a.person_id != faculty.id
             )
 
             required = coverage_requirements.get(block_id, 1)
@@ -735,7 +756,9 @@ class ContingencyService:
                     uncovered_blocks.append(block_id)
 
         total_blocks = len(blocks)
-        coverage_remaining = 1.0 - (len(affected_blocks) / total_blocks) if total_blocks > 0 else 1.0
+        coverage_remaining = (
+            1.0 - (len(affected_blocks) / total_blocks) if total_blocks > 0 else 1.0
+        )
         is_critical = len(uncovered_blocks) > 0
 
         return N1SimulationResult(
@@ -797,7 +820,8 @@ class ContingencyService:
 
         # Get critical faculty from N-1 results
         critical_ids = {
-            v.faculty_id for v in n1_vulnerabilities
+            v.faculty_id
+            for v in n1_vulnerabilities
             if v.severity in ("critical", "high")
         }
 
@@ -806,9 +830,9 @@ class ContingencyService:
             sorted_faculty = sorted(
                 faculty,
                 key=lambda f: len(lookups["assignments_by_faculty"].get(f.id, [])),
-                reverse=True
+                reverse=True,
             )
-            analysis_faculty = sorted_faculty[:min(10, len(sorted_faculty))]
+            analysis_faculty = sorted_faculty[: min(10, len(sorted_faculty))]
         else:
             analysis_faculty = [f for f in faculty if f.id in critical_ids]
 
@@ -824,13 +848,15 @@ class ContingencyService:
             )
 
             if result.is_fatal:
-                fatal_pairs.append(FatalPairInfo(
-                    faculty1_id=fac1.id,
-                    faculty1_name=fac1.name,
-                    faculty2_id=fac2.id,
-                    faculty2_name=fac2.name,
-                    uncoverable_blocks=result.blocks_affected,
-                ))
+                fatal_pairs.append(
+                    FatalPairInfo(
+                        faculty1_id=fac1.id,
+                        faculty1_name=fac1.name,
+                        faculty2_id=fac2.id,
+                        faculty2_name=fac2.name,
+                        uncoverable_blocks=result.blocks_affected,
+                    )
+                )
 
             pairs_analyzed += 1
 
@@ -864,8 +890,7 @@ class ContingencyService:
 
             # Count coverage without both faculty
             remaining = sum(
-                1 for a in block_assignments
-                if a.person_id not in (fac1.id, fac2.id)
+                1 for a in block_assignments if a.person_id not in (fac1.id, fac2.id)
             )
 
             required = coverage_requirements.get(block_id, 1)
@@ -873,7 +898,9 @@ class ContingencyService:
                 uncovered.append(block_id)
 
         total_blocks = len(blocks)
-        coverage_remaining = 1.0 - (len(uncovered) / total_blocks) if total_blocks > 0 else 1.0
+        coverage_remaining = (
+            1.0 - (len(uncovered) / total_blocks) if total_blocks > 0 else 1.0
+        )
 
         return N2SimulationResult(
             faculty1_id=fac1.id,
@@ -905,37 +932,42 @@ class ContingencyService:
         assignment_counts = lookups["faculty_assignment_count"]
 
         # Try NetworkX for advanced metrics
-        nx_metrics = self._calculate_networkx_centrality(
-            faculty, assignments, services
-        ) if NETWORKX_AVAILABLE else {}
+        nx_metrics = (
+            self._calculate_networkx_centrality(faculty, assignments, services)
+            if NETWORKX_AVAILABLE
+            else {}
+        )
 
         for fac in faculty:
             # Services covered
             services_covered = sum(
-                1 for svc_faculty in services.values()
-                if fac.id in svc_faculty
+                1 for svc_faculty in services.values() if fac.id in svc_faculty
             )
 
             # Unique coverage
             unique_coverage = sum(
-                1 for svc_faculty in services.values()
-                if svc_faculty == [fac.id]
+                1 for svc_faculty in services.values() if svc_faculty == [fac.id]
             )
 
             # Replacement difficulty
             if services_covered > 0:
-                avg_alternatives = sum(
-                    len(svc_faculty) - 1
-                    for svc_faculty in services.values()
-                    if fac.id in svc_faculty
-                ) / services_covered
+                avg_alternatives = (
+                    sum(
+                        len(svc_faculty) - 1
+                        for svc_faculty in services.values()
+                        if fac.id in svc_faculty
+                    )
+                    / services_covered
+                )
                 replacement_difficulty = 1.0 / (1.0 + avg_alternatives)
             else:
                 replacement_difficulty = 0.0
 
             # Workload share
             my_assignments = assignment_counts.get(fac.id, 0)
-            workload_share = my_assignments / total_assignments if total_assignments > 0 else 0.0
+            workload_share = (
+                my_assignments / total_assignments if total_assignments > 0 else 0.0
+            )
 
             # Get NetworkX metrics if available
             node_key = f"faculty:{fac.id}"
@@ -947,35 +979,37 @@ class ContingencyService:
             # Combined score
             if nx_metrics:
                 score = (
-                    0.25 * nx_betweenness +
-                    0.25 * nx_pagerank +
-                    0.15 * nx_degree +
-                    0.10 * nx_eigenvector +
-                    0.15 * replacement_difficulty +
-                    0.10 * workload_share
+                    0.25 * nx_betweenness
+                    + 0.25 * nx_pagerank
+                    + 0.15 * nx_degree
+                    + 0.10 * nx_eigenvector
+                    + 0.15 * replacement_difficulty
+                    + 0.10 * workload_share
                 )
             else:
                 # Basic score without NetworkX
                 score = (
-                    0.30 * (services_covered / max(len(services), 1)) +
-                    0.30 * (unique_coverage / max(len(services), 1)) +
-                    0.20 * replacement_difficulty +
-                    0.20 * workload_share
+                    0.30 * (services_covered / max(len(services), 1))
+                    + 0.30 * (unique_coverage / max(len(services), 1))
+                    + 0.20 * replacement_difficulty
+                    + 0.20 * workload_share
                 )
 
-            scores.append(CentralityInfo(
-                faculty_id=fac.id,
-                faculty_name=fac.name,
-                centrality_score=score,
-                services_covered=services_covered,
-                unique_coverage_slots=unique_coverage,
-                replacement_difficulty=replacement_difficulty,
-                workload_share=workload_share,
-                betweenness=nx_betweenness,
-                degree=nx_degree,
-                eigenvector=nx_eigenvector,
-                pagerank=nx_pagerank,
-            ))
+            scores.append(
+                CentralityInfo(
+                    faculty_id=fac.id,
+                    faculty_name=fac.name,
+                    centrality_score=score,
+                    services_covered=services_covered,
+                    unique_coverage_slots=unique_coverage,
+                    replacement_difficulty=replacement_difficulty,
+                    workload_share=workload_share,
+                    betweenness=nx_betweenness,
+                    degree=nx_degree,
+                    eigenvector=nx_eigenvector,
+                    pagerank=nx_pagerank,
+                )
+            )
 
         scores.sort(key=lambda s: -s.centrality_score)
         return scores
@@ -1057,7 +1091,9 @@ class ContingencyService:
         # Vulnerability indicators
         critical_count = sum(1 for v in vulnerabilities if v.severity == "critical")
         if critical_count >= 3:
-            indicators.append(f"{critical_count} critical vulnerabilities - high cascade risk")
+            indicators.append(
+                f"{critical_count} critical vulnerabilities - high cascade risk"
+            )
         elif critical_count >= 1:
             indicators.append(f"{critical_count} critical vulnerabilities detected")
 
@@ -1120,7 +1156,7 @@ class ContingencyService:
     # Private Methods - Versioning
     # =========================================================================
 
-    def _get_current_version_id(self) -> Optional[str]:
+    def _get_current_version_id(self) -> str | None:
         """Get current version ID from SQLAlchemy-Continuum."""
         if not VERSIONING_AVAILABLE or version_class is None:
             return None

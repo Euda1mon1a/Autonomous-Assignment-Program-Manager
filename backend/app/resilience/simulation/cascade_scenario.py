@@ -28,7 +28,6 @@ Example:
 import math
 import random
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -117,14 +116,14 @@ class CascadeResult:
     config: CascadeConfig
     final_faculty_count: int
     collapsed: bool  # fell below minimum_viable
-    days_to_collapse: Optional[int]
+    days_to_collapse: int | None
     peak_workload: float
     total_departures: int
     departures_from_burnout: int  # when workload > burnout_threshold
     total_hires: int
     entered_vortex: bool  # point of no return
-    vortex_entry_day: Optional[int]
-    vortex_faculty_count: Optional[int]
+    vortex_entry_day: int | None
+    vortex_faculty_count: int | None
     time_in_burnout_zone: int  # days
     time_in_critical_zone: int  # days
     snapshots: list[DailySnapshot]
@@ -171,7 +170,7 @@ class BurnoutCascadeScenario:
             Workload units per faculty member (infinity if no faculty)
         """
         if self._faculty_count == 0:
-            return float('inf')
+            return float("inf")
         return self.config.total_workload_units / self._faculty_count
 
     def calculate_departure_probability(self, workload: float) -> float:
@@ -203,7 +202,9 @@ class BurnoutCascadeScenario:
 
         return min(
             1.0,
-            self.config.base_departure_rate * exponential_factor * self.config.burnout_multiplier
+            self.config.base_departure_rate
+            * exponential_factor
+            * self.config.burnout_multiplier,
         )
 
     def is_in_vortex(self) -> bool:
@@ -224,10 +225,7 @@ class BurnoutCascadeScenario:
         expected_departures = departure_prob * self._faculty_count
 
         # Expected hires per day (considering queue limit)
-        active_hiring_slots = min(
-            self.config.max_hiring_queue,
-            len(self._hiring_queue)
-        )
+        active_hiring_slots = min(self.config.max_hiring_queue, len(self._hiring_queue))
         expected_hires = self.config.hiring_rate * active_hiring_slots
 
         # In vortex if losing more than gaining
@@ -316,7 +314,7 @@ class BurnoutCascadeScenario:
             departures=departures,
             hires=hires,
             in_burnout_zone=workload > self.config.burnout_threshold,
-            in_critical_zone=workload > self.config.critical_threshold
+            in_critical_zone=workload > self.config.critical_threshold,
         )
 
         self._snapshots.append(snapshot)
@@ -324,7 +322,7 @@ class BurnoutCascadeScenario:
 
         return snapshot
 
-    def _detect_vortex_entry(self) -> Optional[tuple[int, int]]:
+    def _detect_vortex_entry(self) -> tuple[int, int] | None:
         """
         Detect when system entered extinction vortex.
 
@@ -346,7 +344,7 @@ class BurnoutCascadeScenario:
                 continue
 
             # Look at trend over last 30 days
-            recent_snapshots = self._snapshots[i-30:i]
+            recent_snapshots = self._snapshots[i - 30 : i]
             faculty_counts = [s.faculty_count for s in recent_snapshots]
 
             # Check if declining trend
@@ -410,7 +408,9 @@ class BurnoutCascadeScenario:
 
         # Time-based recommendations
         time_in_burnout = sum(1 for s in self._snapshots if s.in_burnout_zone)
-        burnout_pct = (time_in_burnout / len(self._snapshots) * 100) if self._snapshots else 0
+        burnout_pct = (
+            (time_in_burnout / len(self._snapshots) * 100) if self._snapshots else 0
+        )
 
         if burnout_pct > 50:
             recommendations.append(
@@ -421,7 +421,7 @@ class BurnoutCascadeScenario:
         # Departure analysis
         total_departures = sum(s.departures for s in self._snapshots)
         if self._departures_in_burnout > 0 and total_departures > 0:
-            burnout_departure_pct = (self._departures_in_burnout / total_departures * 100)
+            burnout_departure_pct = self._departures_in_burnout / total_departures * 100
             recommendations.append(
                 f"{burnout_departure_pct:.1f}% of departures occurred during burnout conditions. "
                 "Focus on workload management to improve retention."
@@ -461,8 +461,7 @@ class BurnoutCascadeScenario:
 
         # Calculate statistics
         peak_workload = max(
-            (s.workload_per_person for s in self._snapshots),
-            default=0.0
+            (s.workload_per_person for s in self._snapshots), default=0.0
         )
         total_departures = sum(s.departures for s in self._snapshots)
         total_hires = sum(s.hires for s in self._snapshots)
@@ -492,5 +491,5 @@ class BurnoutCascadeScenario:
             time_in_burnout_zone=time_in_burnout,
             time_in_critical_zone=time_in_critical,
             snapshots=self._snapshots,
-            recommendations=recommendations
+            recommendations=recommendations,
         )

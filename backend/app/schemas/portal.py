@@ -1,4 +1,5 @@
 """Pydantic schemas for faculty self-service portal."""
+
 from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
@@ -18,8 +19,10 @@ class SwapRequestStatus(str, Enum):
 # Schedule View Schemas
 # ============================================================================
 
+
 class FMITWeekInfo(BaseModel):
     """Information about an FMIT week."""
+
     week_start: date
     week_end: date
     is_past: bool = False
@@ -31,6 +34,7 @@ class FMITWeekInfo(BaseModel):
 
 class MyScheduleResponse(BaseModel):
     """Response for /my/schedule endpoint."""
+
     faculty_id: UUID
     faculty_name: str
     fmit_weeks: list[FMITWeekInfo]
@@ -43,8 +47,10 @@ class MyScheduleResponse(BaseModel):
 # Swap Request Schemas
 # ============================================================================
 
+
 class SwapRequestSummary(BaseModel):
     """Summary of a swap request."""
+
     id: UUID
     other_faculty_name: str
     week_to_give: date | None
@@ -56,6 +62,7 @@ class SwapRequestSummary(BaseModel):
 
 class MySwapsResponse(BaseModel):
     """Response for /my/swaps endpoint."""
+
     incoming_requests: list[SwapRequestSummary]
     outgoing_requests: list[SwapRequestSummary]
     recent_swaps: list[SwapRequestSummary]
@@ -63,6 +70,7 @@ class MySwapsResponse(BaseModel):
 
 class SwapRequestCreate(BaseModel):
     """Request to create a swap request."""
+
     week_to_offload: date
     preferred_target_faculty_id: UUID | None = None
     reason: str | None = Field(None, max_length=500)
@@ -71,6 +79,7 @@ class SwapRequestCreate(BaseModel):
 
 class SwapRequestResponse(BaseModel):
     """Response after creating a swap request."""
+
     success: bool
     request_id: UUID | None = None
     message: str
@@ -79,6 +88,7 @@ class SwapRequestResponse(BaseModel):
 
 class SwapRespondRequest(BaseModel):
     """Request to respond to a swap offer."""
+
     accept: bool
     counter_offer_week: date | None = None
     notes: str | None = Field(None, max_length=500)
@@ -88,8 +98,10 @@ class SwapRespondRequest(BaseModel):
 # Preferences Schemas
 # ============================================================================
 
+
 class PreferencesUpdate(BaseModel):
     """Request to update faculty preferences."""
+
     preferred_weeks: list[date] | None = None
     blocked_weeks: list[date] | None = None
     max_weeks_per_month: int | None = Field(None, ge=1, le=4)
@@ -104,6 +116,7 @@ class PreferencesUpdate(BaseModel):
 
 class PreferencesResponse(BaseModel):
     """Response for faculty preferences."""
+
     faculty_id: UUID
     preferred_weeks: list[date]
     blocked_weeks: list[date]
@@ -123,8 +136,10 @@ class PreferencesResponse(BaseModel):
 # Dashboard Schemas
 # ============================================================================
 
+
 class DashboardAlert(BaseModel):
     """An alert for the dashboard."""
+
     id: UUID
     alert_type: str  # conflict, swap_request, reminder
     severity: str  # critical, warning, info
@@ -135,6 +150,7 @@ class DashboardAlert(BaseModel):
 
 class DashboardStats(BaseModel):
     """Statistics for the dashboard."""
+
     weeks_assigned: int
     weeks_completed: int
     weeks_remaining: int
@@ -145,6 +161,7 @@ class DashboardStats(BaseModel):
 
 class DashboardResponse(BaseModel):
     """Response for /my/dashboard endpoint."""
+
     faculty_id: UUID
     faculty_name: str
     stats: DashboardStats
@@ -157,8 +174,10 @@ class DashboardResponse(BaseModel):
 # Marketplace Schemas
 # ============================================================================
 
+
 class MarketplaceEntry(BaseModel):
     """An entry in the swap marketplace."""
+
     request_id: UUID
     requesting_faculty_name: str
     week_available: date
@@ -170,6 +189,7 @@ class MarketplaceEntry(BaseModel):
 
 class MarketplaceResponse(BaseModel):
     """Response for /swaps/marketplace endpoint."""
+
     entries: list[MarketplaceEntry]
     total: int
     my_postings: int

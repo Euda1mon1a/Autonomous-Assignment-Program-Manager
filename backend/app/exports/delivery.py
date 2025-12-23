@@ -13,7 +13,6 @@ from datetime import datetime
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from pathlib import Path
 from typing import BinaryIO
 
 from app.core.config import get_settings
@@ -45,13 +44,27 @@ class EmailDeliveryService:
 
     def __init__(self):
         """Initialize email delivery service."""
-        self.smtp_host = settings.SMTP_HOST if hasattr(settings, "SMTP_HOST") else "localhost"
+        self.smtp_host = (
+            settings.SMTP_HOST if hasattr(settings, "SMTP_HOST") else "localhost"
+        )
         self.smtp_port = settings.SMTP_PORT if hasattr(settings, "SMTP_PORT") else 587
         self.smtp_user = settings.SMTP_USER if hasattr(settings, "SMTP_USER") else None
-        self.smtp_password = settings.SMTP_PASSWORD if hasattr(settings, "SMTP_PASSWORD") else None
-        self.from_email = settings.SMTP_FROM_EMAIL if hasattr(settings, "SMTP_FROM_EMAIL") else "noreply@hospital.org"
-        self.from_name = settings.SMTP_FROM_NAME if hasattr(settings, "SMTP_FROM_NAME") else "Residency Scheduler"
-        self.enabled = settings.SMTP_ENABLED if hasattr(settings, "SMTP_ENABLED") else True
+        self.smtp_password = (
+            settings.SMTP_PASSWORD if hasattr(settings, "SMTP_PASSWORD") else None
+        )
+        self.from_email = (
+            settings.SMTP_FROM_EMAIL
+            if hasattr(settings, "SMTP_FROM_EMAIL")
+            else "noreply@hospital.org"
+        )
+        self.from_name = (
+            settings.SMTP_FROM_NAME
+            if hasattr(settings, "SMTP_FROM_NAME")
+            else "Residency Scheduler"
+        )
+        self.enabled = (
+            settings.SMTP_ENABLED if hasattr(settings, "SMTP_ENABLED") else True
+        )
 
     def send_export(
         self,
@@ -107,9 +120,7 @@ class EmailDeliveryService:
             attachment = MIMEApplication(attachment_data, _subtype=None)
             attachment.add_header("Content-Type", content_type)
             attachment.add_header(
-                "Content-Disposition",
-                "attachment",
-                filename=filename
+                "Content-Disposition", "attachment", filename=filename
             )
             msg.attach(attachment)
 
@@ -134,11 +145,29 @@ class S3DeliveryService:
 
     def __init__(self):
         """Initialize S3 delivery service."""
-        self.bucket = settings.UPLOAD_S3_BUCKET if hasattr(settings, "UPLOAD_S3_BUCKET") else None
-        self.region = settings.UPLOAD_S3_REGION if hasattr(settings, "UPLOAD_S3_REGION") else "us-east-1"
-        self.access_key = settings.UPLOAD_S3_ACCESS_KEY if hasattr(settings, "UPLOAD_S3_ACCESS_KEY") else None
-        self.secret_key = settings.UPLOAD_S3_SECRET_KEY if hasattr(settings, "UPLOAD_S3_SECRET_KEY") else None
-        self.endpoint_url = settings.UPLOAD_S3_ENDPOINT_URL if hasattr(settings, "UPLOAD_S3_ENDPOINT_URL") else None
+        self.bucket = (
+            settings.UPLOAD_S3_BUCKET if hasattr(settings, "UPLOAD_S3_BUCKET") else None
+        )
+        self.region = (
+            settings.UPLOAD_S3_REGION
+            if hasattr(settings, "UPLOAD_S3_REGION")
+            else "us-east-1"
+        )
+        self.access_key = (
+            settings.UPLOAD_S3_ACCESS_KEY
+            if hasattr(settings, "UPLOAD_S3_ACCESS_KEY")
+            else None
+        )
+        self.secret_key = (
+            settings.UPLOAD_S3_SECRET_KEY
+            if hasattr(settings, "UPLOAD_S3_SECRET_KEY")
+            else None
+        )
+        self.endpoint_url = (
+            settings.UPLOAD_S3_ENDPOINT_URL
+            if hasattr(settings, "UPLOAD_S3_ENDPOINT_URL")
+            else None
+        )
 
     def upload_export(
         self,
@@ -196,12 +225,7 @@ class S3DeliveryService:
                 file_obj = file_data
                 file_obj.seek(0)
 
-            s3_client.upload_fileobj(
-                file_obj,
-                bucket,
-                key,
-                ExtraArgs=upload_params
-            )
+            s3_client.upload_fileobj(file_obj, bucket, key, ExtraArgs=upload_params)
 
             # Generate S3 URL
             if self.endpoint_url:
@@ -339,7 +363,7 @@ class ExportDeliveryService:
                 <div class="content">
                     <p>Your scheduled export is attached to this email.</p>
                     <p><strong>File:</strong> {filename}</p>
-                    <p><strong>Generated:</strong> {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
+                    <p><strong>Generated:</strong> {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")}</p>
                 </div>
                 <div class="footer">
                     <p>This is an automated message from the Residency Scheduling System.</p>

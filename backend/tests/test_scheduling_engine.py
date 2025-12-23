@@ -3,6 +3,7 @@ Tests for the Scheduling Engine.
 
 Tests the core scheduling algorithms and ACGME compliance checking.
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -99,9 +100,15 @@ class TestSchedulingEngineBasics:
         resident_id = sample_residents[0].id
         for block in sample_blocks:
             if block.date <= start_date + timedelta(days=2):
-                assert engine.availability_matrix[resident_id][block.id]["available"] is False
+                assert (
+                    engine.availability_matrix[resident_id][block.id]["available"]
+                    is False
+                )
             else:
-                assert engine.availability_matrix[resident_id][block.id]["available"] is True
+                assert (
+                    engine.availability_matrix[resident_id][block.id]["available"]
+                    is True
+                )
 
     def test_availability_matrix_with_partial_absence(
         self,
@@ -133,11 +140,23 @@ class TestSchedulingEngineBasics:
         resident_id = sample_residents[0].id
         for block in sample_blocks:
             if block.date <= start_date + timedelta(days=1):
-                assert engine.availability_matrix[resident_id][block.id]["available"] is True
-                assert engine.availability_matrix[resident_id][block.id]["partial_absence"] is True
+                assert (
+                    engine.availability_matrix[resident_id][block.id]["available"]
+                    is True
+                )
+                assert (
+                    engine.availability_matrix[resident_id][block.id]["partial_absence"]
+                    is True
+                )
             else:
-                assert engine.availability_matrix[resident_id][block.id]["available"] is True
-                assert engine.availability_matrix[resident_id][block.id]["partial_absence"] is False
+                assert (
+                    engine.availability_matrix[resident_id][block.id]["available"]
+                    is True
+                )
+                assert (
+                    engine.availability_matrix[resident_id][block.id]["partial_absence"]
+                    is False
+                )
 
 
 class TestGreedyAlgorithm:
@@ -187,8 +206,7 @@ class TestGreedyAlgorithm:
 
         # First resident should have no assignments
         first_resident_assignments = [
-            a for a in engine.assignments
-            if a.person_id == sample_residents[0].id
+            a for a in engine.assignments if a.person_id == sample_residents[0].id
         ]
         assert len(first_resident_assignments) == 0
 
@@ -319,8 +337,7 @@ class TestACGMECompliance:
 
         # Should have 80-hour violation
         hour_violations = [
-            v for v in result.violations
-            if v.type == "80_HOUR_VIOLATION"
+            v for v in result.violations if v.type == "80_HOUR_VIOLATION"
         ]
         assert len(hour_violations) > 0
 
@@ -363,8 +380,7 @@ class TestACGMECompliance:
 
         # Should have 1-in-7 violation (more than 6 consecutive days)
         day_off_violations = [
-            v for v in result.violations
-            if v.type == "1_IN_7_VIOLATION"
+            v for v in result.violations if v.type == "1_IN_7_VIOLATION"
         ]
         assert len(day_off_violations) > 0
 
@@ -422,8 +438,7 @@ class TestACGMECompliance:
 
         # Should have supervision ratio violation
         supervision_violations = [
-            v for v in result.violations
-            if v.type == "SUPERVISION_RATIO_VIOLATION"
+            v for v in result.violations if v.type == "SUPERVISION_RATIO_VIOLATION"
         ]
         assert len(supervision_violations) > 0
 
@@ -506,15 +521,11 @@ class TestFacultyAssignment:
 
         # Check for supervising assignments
         supervising_assignments = [
-            a for a in engine.assignments
-            if a.role == "supervising"
+            a for a in engine.assignments if a.role == "supervising"
         ]
 
         # Should have some supervising assignments if residents were assigned
-        primary_assignments = [
-            a for a in engine.assignments
-            if a.role == "primary"
-        ]
+        primary_assignments = [a for a in engine.assignments if a.role == "primary"]
 
         if len(primary_assignments) > 0:
             assert len(supervising_assignments) > 0
@@ -548,8 +559,7 @@ class TestFacultyAssignment:
 
         # Check supervising assignments are only for available faculty
         supervising_assignments = [
-            a for a in engine.assignments
-            if a.role == "supervising"
+            a for a in engine.assignments if a.role == "supervising"
         ]
 
         absent_faculty_ids = {f.id for f in sample_faculty_members[:-1]}

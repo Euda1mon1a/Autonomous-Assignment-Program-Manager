@@ -7,6 +7,7 @@ Generates transparent explanations for scheduling decisions, enabling:
 - Faster QA (filter low-confidence or soft-violation assignments)
 - Audit trail (immutable log with reproducibility)
 """
+
 import hashlib
 import json
 from datetime import datetime
@@ -255,9 +256,7 @@ class ExplainabilityService:
         """Build the inputs section of the explanation."""
         active_constraints = []
         if self.constraint_manager:
-            active_constraints = [
-                c.name for c in self.constraint_manager.get_enabled()
-            ]
+            active_constraints = [c.name for c in self.constraint_manager.get_enabled()]
 
         return DecisionInputs(
             block_id=block.id,
@@ -281,66 +280,80 @@ class ExplainabilityService:
 
         # Check availability (hard constraint)
         is_available = self._check_availability(person.id, block.id)
-        evaluations.append(ConstraintEvaluation(
-            constraint_name="Availability",
-            constraint_type=ConstraintType.HARD,
-            status=ConstraintStatus.SATISFIED if is_available else ConstraintStatus.VIOLATED,
-            weight=100.0,
-            penalty=0.0 if is_available else 10000.0,
-            details=None if is_available else "Person has blocking absence",
-        ))
+        evaluations.append(
+            ConstraintEvaluation(
+                constraint_name="Availability",
+                constraint_type=ConstraintType.HARD,
+                status=ConstraintStatus.SATISFIED
+                if is_available
+                else ConstraintStatus.VIOLATED,
+                weight=100.0,
+                penalty=0.0 if is_available else 10000.0,
+                details=None if is_available else "Person has blocking absence",
+            )
+        )
 
         # Check ACGME 80-hour rule (hard constraint)
         # Simplified check - actual implementation would use validator
-        evaluations.append(ConstraintEvaluation(
-            constraint_name="ACGME 80-Hour Rule",
-            constraint_type=ConstraintType.HARD,
-            status=ConstraintStatus.SATISFIED,  # Assume satisfied unless we have data
-            weight=100.0,
-            penalty=0.0,
-            details="Weekly hours within 80-hour limit",
-        ))
+        evaluations.append(
+            ConstraintEvaluation(
+                constraint_name="ACGME 80-Hour Rule",
+                constraint_type=ConstraintType.HARD,
+                status=ConstraintStatus.SATISFIED,  # Assume satisfied unless we have data
+                weight=100.0,
+                penalty=0.0,
+                details="Weekly hours within 80-hour limit",
+            )
+        )
 
         # Check ACGME 1-in-7 rule (hard constraint)
-        evaluations.append(ConstraintEvaluation(
-            constraint_name="ACGME 1-in-7 Rule",
-            constraint_type=ConstraintType.HARD,
-            status=ConstraintStatus.SATISFIED,
-            weight=100.0,
-            penalty=0.0,
-            details="Day off requirement satisfied",
-        ))
-
-        # Check clinic capacity if template provided (hard constraint)
-        if template and template.max_residents:
-            evaluations.append(ConstraintEvaluation(
-                constraint_name="Clinic Capacity",
+        evaluations.append(
+            ConstraintEvaluation(
+                constraint_name="ACGME 1-in-7 Rule",
                 constraint_type=ConstraintType.HARD,
                 status=ConstraintStatus.SATISFIED,
                 weight=100.0,
                 penalty=0.0,
-                details=f"Capacity limit: {template.max_residents}",
-            ))
+                details="Day off requirement satisfied",
+            )
+        )
+
+        # Check clinic capacity if template provided (hard constraint)
+        if template and template.max_residents:
+            evaluations.append(
+                ConstraintEvaluation(
+                    constraint_name="Clinic Capacity",
+                    constraint_type=ConstraintType.HARD,
+                    status=ConstraintStatus.SATISFIED,
+                    weight=100.0,
+                    penalty=0.0,
+                    details=f"Capacity limit: {template.max_residents}",
+                )
+            )
 
         # Equity (soft constraint)
-        evaluations.append(ConstraintEvaluation(
-            constraint_name="Workload Equity",
-            constraint_type=ConstraintType.SOFT,
-            status=ConstraintStatus.SATISFIED,
-            weight=10.0,
-            penalty=0.0,
-            details="Assignment balances workload",
-        ))
+        evaluations.append(
+            ConstraintEvaluation(
+                constraint_name="Workload Equity",
+                constraint_type=ConstraintType.SOFT,
+                status=ConstraintStatus.SATISFIED,
+                weight=10.0,
+                penalty=0.0,
+                details="Assignment balances workload",
+            )
+        )
 
         # Continuity (soft constraint)
-        evaluations.append(ConstraintEvaluation(
-            constraint_name="Rotation Continuity",
-            constraint_type=ConstraintType.SOFT,
-            status=ConstraintStatus.SATISFIED,
-            weight=5.0,
-            penalty=0.0,
-            details="Maintains rotation continuity",
-        ))
+        evaluations.append(
+            ConstraintEvaluation(
+                constraint_name="Rotation Continuity",
+                constraint_type=ConstraintType.SOFT,
+                status=ConstraintStatus.SATISFIED,
+                weight=5.0,
+                penalty=0.0,
+                details="Maintains rotation continuity",
+            )
+        )
 
         return evaluations
 
@@ -394,13 +407,15 @@ class ExplainabilityService:
             if not rejection_reasons and not violations:
                 rejection_reasons.append("Lower composite score")
 
-            alternatives.append(AlternativeCandidate(
-                person_id=candidate.id,
-                person_name=candidate.name,
-                score=score,
-                rejection_reasons=rejection_reasons,
-                constraint_violations=violations,
-            ))
+            alternatives.append(
+                AlternativeCandidate(
+                    person_id=candidate.id,
+                    person_name=candidate.name,
+                    score=score,
+                    rejection_reasons=rejection_reasons,
+                    constraint_violations=violations,
+                )
+            )
 
         return alternatives
 
@@ -441,13 +456,16 @@ class ExplainabilityService:
 
         # Factor 3: Hard constraint violations
         hard_violations = [
-            c for c in constraints
+            c
+            for c in constraints
             if c.constraint_type == ConstraintType.HARD
             and c.status == ConstraintStatus.VIOLATED
         ]
         if hard_violations:
             score -= 0.3
-            factors.append(f"Hard constraint violation: {hard_violations[0].constraint_name}")
+            factors.append(
+                f"Hard constraint violation: {hard_violations[0].constraint_name}"
+            )
 
         # Factor 4: Soft constraint penalties
         total_penalty = sum(c.penalty for c in constraints)
@@ -500,7 +518,8 @@ class ExplainabilityService:
 
         # Constraint notes
         soft_violations = [
-            c for c in constraints
+            c
+            for c in constraints
             if c.constraint_type == ConstraintType.SOFT
             and c.status == ConstraintStatus.VIOLATED
         ]

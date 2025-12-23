@@ -1,4 +1,5 @@
 """Metric definitions and calculations for schedule analytics."""
+
 import statistics
 from collections import Counter, defaultdict
 from typing import Any
@@ -22,7 +23,7 @@ def calculate_fairness_index(assignments: list[dict[str, Any]]) -> MetricResult:
             "trend": "stable",
             "benchmark": 0.9,
             "status": "good",
-            "description": "Perfect fairness (no assignments)"
+            "description": "Perfect fairness (no assignments)",
         }
 
     # Count assignments per person
@@ -36,7 +37,7 @@ def calculate_fairness_index(assignments: list[dict[str, Any]]) -> MetricResult:
             "trend": "stable",
             "benchmark": 0.9,
             "status": "good",
-            "description": "Perfect fairness (no people)"
+            "description": "Perfect fairness (no people)",
         }
 
     # Calculate Gini coefficient
@@ -68,13 +69,14 @@ def calculate_fairness_index(assignments: list[dict[str, Any]]) -> MetricResult:
             "min_assignments": min(counts),
             "max_assignments": max(counts),
             "mean_assignments": round(statistics.mean(counts), 2),
-            "std_dev": round(statistics.stdev(counts), 2) if n > 1 else 0
-        }
+            "std_dev": round(statistics.stdev(counts), 2) if n > 1 else 0,
+        },
     }
 
 
-def calculate_coverage_rate(blocks: list[dict[str, Any]],
-                            assignments: list[dict[str, Any]]) -> MetricResult:
+def calculate_coverage_rate(
+    blocks: list[dict[str, Any]], assignments: list[dict[str, Any]]
+) -> MetricResult:
     """
     Calculate percentage of blocks that are covered by assignments.
 
@@ -91,7 +93,7 @@ def calculate_coverage_rate(blocks: list[dict[str, Any]],
             "trend": "stable",
             "benchmark": 95.0,
             "status": "good",
-            "description": "No blocks to cover"
+            "description": "No blocks to cover",
         }
 
     total_blocks = len(blocks)
@@ -115,8 +117,8 @@ def calculate_coverage_rate(blocks: list[dict[str, Any]],
         "details": {
             "total_blocks": total_blocks,
             "covered_blocks": covered_blocks,
-            "uncovered_blocks": total_blocks - covered_blocks
-        }
+            "uncovered_blocks": total_blocks - covered_blocks,
+        },
     }
 
 
@@ -137,7 +139,7 @@ def calculate_acgme_compliance_rate(violations: int, total_checks: int) -> Metri
             "trend": "stable",
             "benchmark": 100.0,
             "status": "good",
-            "description": "No compliance checks performed"
+            "description": "No compliance checks performed",
         }
 
     compliance_rate = ((total_checks - violations) / total_checks) * 100
@@ -159,14 +161,13 @@ def calculate_acgme_compliance_rate(violations: int, total_checks: int) -> Metri
         "details": {
             "total_checks": total_checks,
             "violations": violations,
-            "compliance_checks_passed": total_checks - violations
-        }
+            "compliance_checks_passed": total_checks - violations,
+        },
     }
 
 
 def calculate_preference_satisfaction(
-    assignments: list[dict[str, Any]],
-    preferences: list[dict[str, Any]]
+    assignments: list[dict[str, Any]], preferences: list[dict[str, Any]]
 ) -> MetricResult:
     """
     Calculate how well assignments match stated preferences.
@@ -184,7 +185,7 @@ def calculate_preference_satisfaction(
             "trend": "stable",
             "benchmark": 80.0,
             "status": "good",
-            "description": "No preferences specified"
+            "description": "No preferences specified",
         }
 
     # Build preference map: person_id -> set of preferred rotation_template_ids
@@ -227,14 +228,13 @@ def calculate_preference_satisfaction(
         "details": {
             "total_preferences": len(preferences),
             "assignments_with_preferences": total_with_prefs,
-            "preferences_matched": matched
-        }
+            "preferences_matched": matched,
+        },
     }
 
 
 def calculate_consecutive_duty_stats(
-    person_id: str,
-    assignments: list[dict[str, Any]]
+    person_id: str, assignments: list[dict[str, Any]]
 ) -> ConsecutiveDutyStats:
     """
     Calculate consecutive duty pattern statistics for a person.
@@ -248,7 +248,8 @@ def calculate_consecutive_duty_stats(
     """
     # Filter assignments for this person and sort by date
     person_assignments = [
-        a for a in assignments
+        a
+        for a in assignments
         if a.get("person_id") == person_id and a.get("block_date")
     ]
 
@@ -259,7 +260,7 @@ def calculate_consecutive_duty_stats(
             "total_duty_days": 0,
             "average_rest_days": 0,
             "status": "good",
-            "description": "No assignments found"
+            "description": "No assignments found",
         }
 
     # Sort by date
@@ -301,12 +302,14 @@ def calculate_consecutive_duty_stats(
         "person_id": person_id,
         "max_consecutive_days": max_consecutive,
         "total_duty_days": len(duty_dates),
-        "average_rest_days": round(statistics.mean(rest_periods), 2) if rest_periods else 0,
+        "average_rest_days": round(statistics.mean(rest_periods), 2)
+        if rest_periods
+        else 0,
         "status": status,
         "description": f"Max {max_consecutive} consecutive days",
         "details": {
             "total_assignments": len(person_assignments),
             "unique_duty_dates": len(duty_dates),
-            "rest_periods": len(rest_periods)
-        }
+            "rest_periods": len(rest_periods),
+        },
     }

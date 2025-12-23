@@ -14,13 +14,11 @@ import logging
 import os
 from datetime import date, datetime, timedelta
 from typing import Any
-from uuid import UUID
 
 from celery import shared_task
 from sqlalchemy import select
 
 from app.compliance.reports import ComplianceReportGenerator
-from app.core.config import settings
 from app.db.session import SessionLocal
 from app.models.person import FacultyRole, Person
 from app.notifications.tasks import send_email
@@ -53,7 +51,7 @@ def save_report_to_file(report_bytes: bytes, filename: str, report_type: str) ->
 
         # Save file
         filepath = os.path.join(type_dir, filename)
-        with open(filepath, 'wb') as f:
+        with open(filepath, "wb") as f:
             f.write(report_bytes)
 
         logger.info(f"Report saved to: {filepath} ({len(report_bytes)} bytes)")
@@ -86,7 +84,7 @@ def save_report_data_to_json(report_data: dict, report_type: str) -> str:
         filename = f"{report_type}_{timestamp}.json"
         filepath = os.path.join(reports_dir, filename)
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(report_data, f, indent=2, default=str)
 
         logger.info(f"Report data saved to: {filepath}")
@@ -112,7 +110,7 @@ def get_program_directors_emails(db) -> list[str]:
         stmt = select(Person).where(
             Person.type == "faculty",
             Person.faculty_role == FacultyRole.PD.value,
-            Person.email.isnot(None)
+            Person.email.isnot(None),
         )
         result = db.execute(stmt)
         program_directors = result.scalars().all()
@@ -136,7 +134,7 @@ def get_compliance_stakeholder_emails() -> list[str]:
     # Get from environment or use default
     stakeholders = os.getenv(
         "COMPLIANCE_STAKEHOLDER_EMAILS",
-        "compliance@hospital.org,program-director@hospital.org"
+        "compliance@hospital.org,program-director@hospital.org",
     )
     return [email.strip() for email in stakeholders.split(",") if email.strip()]
 
@@ -151,7 +149,7 @@ def get_executive_stakeholder_emails() -> list[str]:
     # Get from environment or use default
     executives = os.getenv(
         "EXECUTIVE_STAKEHOLDER_EMAILS",
-        "chief-medical-officer@hospital.org,program-director@hospital.org"
+        "chief-medical-officer@hospital.org,program-director@hospital.org",
     )
     return [email.strip() for email in executives.split(",") if email.strip()]
 
@@ -236,20 +234,22 @@ def generate_daily_compliance_summary(self, lookback_days: int = 1) -> dict[str,
 The following compliance violations were detected in the daily compliance check:
 
 Period: {start_date} to {end_date}
-Total Violations: {summary['total_violations']}
-Total Residents: {summary['total_residents']}
-Compliance Rate: {summary['compliance_rate']:.1f}%
-Coverage Rate: {summary['coverage_rate']:.1f}%
+Total Violations: {summary["total_violations"]}
+Total Residents: {summary["total_residents"]}
+Compliance Rate: {summary["compliance_rate"]:.1f}%
+Coverage Rate: {summary["coverage_rate"]:.1f}%
 
 Please review the compliance report and take appropriate action.
 
 This is an automated alert from the Residency Scheduler system.
 """,
-                            html=None
+                            html=None,
                         )
                         logger.info(f"Violation alert email queued for {email}")
                     except Exception as e:
-                        logger.error(f"Failed to queue violation alert email for {email}: {e}")
+                        logger.error(
+                            f"Failed to queue violation alert email for {email}: {e}"
+                        )
 
             return {
                 "success": True,
@@ -327,16 +327,12 @@ def generate_weekly_compliance_report(
                     report_data, include_charts=True
                 )
 
-            filename = (
-                f"compliance_report_{last_monday}_{last_sunday}.{format}"
-            )
+            filename = f"compliance_report_{last_monday}_{last_sunday}.{format}"
 
             # Save report to file system
             try:
                 filepath = save_report_to_file(
-                    report_bytes=report_bytes,
-                    filename=filename,
-                    report_type="weekly"
+                    report_bytes=report_bytes, filename=filename, report_type="weekly"
                 )
             except Exception as e:
                 logger.error(f"Failed to save weekly report: {e}")
@@ -357,21 +353,23 @@ Report Period: {last_monday} to {last_sunday}
 Format: {format.upper()}
 
 Summary:
-- Total Residents: {report_data.work_hour_summary.get('total_residents', 0)}
-- Total Violations: {report_data.work_hour_summary.get('total_violations', 0)}
-- Compliance Rate: {report_data.work_hour_summary.get('compliance_rate', 100):.1f}%
+- Total Residents: {report_data.work_hour_summary.get("total_residents", 0)}
+- Total Violations: {report_data.work_hour_summary.get("total_violations", 0)}
+- Compliance Rate: {report_data.work_hour_summary.get("compliance_rate", 100):.1f}%
 
-Report File: {filepath if filepath else 'Failed to save'}
+Report File: {filepath if filepath else "Failed to save"}
 
 Please review the compliance report for the past week.
 
 This is an automated report from the Residency Scheduler system.
 """,
-                        html=None
+                        html=None,
                     )
                     logger.info(f"Weekly report email queued for {email}")
                 except Exception as e:
-                    logger.error(f"Failed to queue weekly report email for {email}: {e}")
+                    logger.error(
+                        f"Failed to queue weekly report email for {email}: {e}"
+                    )
 
             logger.info(
                 f"Weekly compliance report generated: {filename} "
@@ -453,9 +451,7 @@ def generate_monthly_executive_summary(self) -> dict[str, Any]:
             )
 
             # Generate Excel for data analysis
-            excel_bytes = generator.export_to_excel(
-                report_data, include_charts=True
-            )
+            excel_bytes = generator.export_to_excel(report_data, include_charts=True)
 
             filename_pdf = (
                 f"executive_summary_{first_of_prev_month.strftime('%Y-%m')}.pdf"
@@ -472,7 +468,7 @@ def generate_monthly_executive_summary(self) -> dict[str, Any]:
                 pdf_filepath = save_report_to_file(
                     report_bytes=pdf_bytes,
                     filename=filename_pdf,
-                    report_type="monthly_executive"
+                    report_type="monthly_executive",
                 )
             except Exception as e:
                 logger.error(f"Failed to save monthly PDF report: {e}")
@@ -481,7 +477,7 @@ def generate_monthly_executive_summary(self) -> dict[str, Any]:
                 excel_filepath = save_report_to_file(
                     report_bytes=excel_bytes,
                     filename=filename_excel,
-                    report_type="monthly_executive"
+                    report_type="monthly_executive",
                 )
             except Exception as e:
                 logger.error(f"Failed to save monthly Excel report: {e}")
@@ -495,28 +491,30 @@ def generate_monthly_executive_summary(self) -> dict[str, Any]:
                         subject=f"Monthly Executive Compliance Summary - {first_of_prev_month.strftime('%B %Y')}",
                         body=f"""Monthly Executive Compliance Summary
 
-Report Period: {first_of_prev_month.strftime('%B %Y')} ({first_of_prev_month} to {last_of_prev_month})
+Report Period: {first_of_prev_month.strftime("%B %Y")} ({first_of_prev_month} to {last_of_prev_month})
 
 Executive Summary:
-- Total Residents: {report_data.work_hour_summary.get('total_residents', 0)}
-- Total Violations: {report_data.work_hour_summary.get('total_violations', 0)}
-- Compliance Rate: {report_data.work_hour_summary.get('compliance_rate', 100):.1f}%
-- Average Weekly Hours: {report_data.work_hour_summary.get('avg_weekly_hours', 0):.1f}
-- Supervision Compliance: {report_data.supervision_summary.get('compliance_rate', 100):.1f}%
+- Total Residents: {report_data.work_hour_summary.get("total_residents", 0)}
+- Total Violations: {report_data.work_hour_summary.get("total_violations", 0)}
+- Compliance Rate: {report_data.work_hour_summary.get("compliance_rate", 100):.1f}%
+- Average Weekly Hours: {report_data.work_hour_summary.get("avg_weekly_hours", 0):.1f}
+- Supervision Compliance: {report_data.supervision_summary.get("compliance_rate", 100):.1f}%
 
 Report Files:
-- PDF Report: {pdf_filepath if pdf_filepath else 'Failed to save'}
-- Excel Data: {excel_filepath if excel_filepath else 'Failed to save'}
+- PDF Report: {pdf_filepath if pdf_filepath else "Failed to save"}
+- Excel Data: {excel_filepath if excel_filepath else "Failed to save"}
 
 Please review the monthly compliance summary for leadership review.
 
 This is an automated report from the Residency Scheduler system.
 """,
-                        html=None
+                        html=None,
                     )
                     logger.info(f"Monthly executive report email queued for {email}")
                 except Exception as e:
-                    logger.error(f"Failed to queue monthly executive email for {email}: {e}")
+                    logger.error(
+                        f"Failed to queue monthly executive email for {email}: {e}"
+                    )
 
             logger.info(
                 f"Monthly executive summary generated: {filename_pdf} "
@@ -620,9 +618,7 @@ def generate_custom_compliance_report(
             if resident_ids:
                 resident_uuids = [UUID(rid) for rid in resident_ids]
 
-            logger.info(
-                f"Generating custom compliance report for {start} to {end}"
-            )
+            logger.info(f"Generating custom compliance report for {start} to {end}")
 
             generator = ComplianceReportGenerator(db)
             report_data = generator.generate_compliance_data(
@@ -651,9 +647,7 @@ def generate_custom_compliance_report(
             filepath = None
             try:
                 filepath = save_report_to_file(
-                    report_bytes=report_bytes,
-                    filename=filename,
-                    report_type="custom"
+                    report_bytes=report_bytes, filename=filename, report_type="custom"
                 )
             except Exception as e:
                 logger.error(f"Failed to save custom report: {e}")
@@ -764,7 +758,9 @@ def check_violation_alerts(self, lookback_days: int = 1) -> dict[str, Any]:
                         )
 
                         if len(violations) > 10:
-                            violation_details += f"\n... and {len(violations) - 10} more violations"
+                            violation_details += (
+                                f"\n... and {len(violations) - 10} more violations"
+                            )
 
                         send_email.delay(
                             to=email,
@@ -784,11 +780,15 @@ Please review these violations and take appropriate corrective action immediatel
 
 This is an automated alert from the Residency Scheduler system.
 """,
-                            html=None
+                            html=None,
                         )
-                        logger.info(f"Critical violation alert email queued for {email}")
+                        logger.info(
+                            f"Critical violation alert email queued for {email}"
+                        )
                     except Exception as e:
-                        logger.error(f"Failed to queue violation alert email for {email}: {e}")
+                        logger.error(
+                            f"Failed to queue violation alert email for {email}: {e}"
+                        )
 
                 # Create in-app notifications for program directors
                 from app.models.notification import Notification
@@ -796,7 +796,7 @@ This is an automated alert from the Residency Scheduler system.
                 # Query program directors for in-app notifications
                 stmt = select(Person).where(
                     Person.type == "faculty",
-                    Person.faculty_role == FacultyRole.PD.value
+                    Person.faculty_role == FacultyRole.PD.value,
                 )
                 result = db.execute(stmt)
                 program_directors = result.scalars().all()
@@ -807,28 +807,36 @@ This is an automated alert from the Residency Scheduler system.
                         notification = Notification(
                             recipient_id=pd.id,
                             notification_type="COMPLIANCE_ALERT",
-                            subject=f"Critical Compliance Issues Detected",
+                            subject="Critical Compliance Issues Detected",
                             body=f"{len(critical_violations)} critical and {len(violations) - len(critical_violations)} "
-                                 f"total compliance violations detected between {start_date} and {end_date}. "
-                                 f"Immediate review required.",
+                            f"total compliance violations detected between {start_date} and {end_date}. "
+                            f"Immediate review required.",
                             priority="high",
                             data={
                                 "violation_count": len(violations),
                                 "critical_count": len(critical_violations),
                                 "start_date": str(start_date),
                                 "end_date": str(end_date),
-                                "violations": violations[:5]  # Include first 5 for quick view
-                            }
+                                "violations": violations[
+                                    :5
+                                ],  # Include first 5 for quick view
+                            },
                         )
                         db.add(notification)
-                        logger.info(f"Created in-app notification for program director {pd.id}")
+                        logger.info(
+                            f"Created in-app notification for program director {pd.id}"
+                        )
                     except Exception as e:
-                        logger.error(f"Failed to create in-app notification for PD {pd.id}: {e}")
+                        logger.error(
+                            f"Failed to create in-app notification for PD {pd.id}: {e}"
+                        )
 
                 # Commit all notifications
                 try:
                     db.commit()
-                    logger.info(f"Created {len(program_directors)} in-app notifications for program directors")
+                    logger.info(
+                        f"Created {len(program_directors)} in-app notifications for program directors"
+                    )
                 except Exception as e:
                     logger.error(f"Failed to commit in-app notifications: {e}")
                     db.rollback()

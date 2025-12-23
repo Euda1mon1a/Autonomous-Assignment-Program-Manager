@@ -1,4 +1,5 @@
 """OAuth2 PKCE schemas for request/response validation."""
+
 from typing import Literal
 from uuid import UUID
 
@@ -7,6 +8,7 @@ from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 class OAuth2ClientCreate(BaseModel):
     """Request to create a new OAuth2 client."""
+
     client_name: str = Field(..., min_length=1, max_length=255)
     client_uri: HttpUrl | None = None
     redirect_uris: list[str] = Field(..., min_items=1)
@@ -26,6 +28,7 @@ class OAuth2ClientCreate(BaseModel):
 
 class OAuth2ClientResponse(BaseModel):
     """OAuth2 client response."""
+
     id: UUID
     client_id: str
     client_name: str
@@ -43,6 +46,7 @@ class OAuth2ClientResponse(BaseModel):
 
 class PKCECodeChallenge(BaseModel):
     """PKCE code challenge for authorization request."""
+
     code_challenge: str = Field(..., min_length=43, max_length=128)
     code_challenge_method: Literal["S256", "plain"] = "S256"
 
@@ -58,6 +62,7 @@ class PKCECodeChallenge(BaseModel):
 
 class AuthorizationRequest(BaseModel):
     """OAuth2 authorization request with PKCE."""
+
     response_type: Literal["code"] = "code"
     client_id: str = Field(..., min_length=1, max_length=255)
     redirect_uri: str = Field(..., min_length=1, max_length=512)
@@ -70,12 +75,14 @@ class AuthorizationRequest(BaseModel):
 
 class AuthorizationResponse(BaseModel):
     """OAuth2 authorization response."""
+
     code: str
     state: str | None = None
 
 
 class TokenRequest(BaseModel):
     """OAuth2 token exchange request with PKCE."""
+
     grant_type: Literal["authorization_code"] = "authorization_code"
     code: str = Field(..., min_length=1, max_length=255)
     redirect_uri: str = Field(..., min_length=1, max_length=512)
@@ -87,13 +94,20 @@ class TokenRequest(BaseModel):
     def validate_code_verifier(cls, v: str) -> str:
         """Validate code verifier format."""
         # RFC 7636: code verifier is 43-128 characters, unreserved chars only
-        if not v.replace("-", "").replace("_", "").replace(".", "").replace("~", "").isalnum():
+        if (
+            not v.replace("-", "")
+            .replace("_", "")
+            .replace(".", "")
+            .replace("~", "")
+            .isalnum()
+        ):
             raise ValueError("Code verifier must contain only unreserved characters")
         return v
 
 
 class TokenResponse(BaseModel):
     """OAuth2 token response."""
+
     access_token: str
     token_type: str = "Bearer"
     expires_in: int
@@ -103,12 +117,14 @@ class TokenResponse(BaseModel):
 
 class TokenIntrospectionRequest(BaseModel):
     """Token introspection request."""
+
     token: str = Field(..., min_length=1)
     token_type_hint: Literal["access_token", "refresh_token"] | None = None
 
 
 class TokenIntrospectionResponse(BaseModel):
     """Token introspection response (RFC 7662)."""
+
     active: bool
     scope: str | None = None
     client_id: str | None = None
@@ -124,6 +140,7 @@ class TokenIntrospectionResponse(BaseModel):
 
 class OAuth2Error(BaseModel):
     """OAuth2 error response."""
+
     error: str
     error_description: str | None = None
     error_uri: str | None = None

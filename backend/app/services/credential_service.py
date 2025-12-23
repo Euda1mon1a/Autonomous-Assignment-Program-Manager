@@ -75,7 +75,9 @@ class CredentialService:
                 "error": "Procedure not found",
             }
 
-        faculty = self.credential_repo.list_qualified_faculty_for_procedure(procedure_id)
+        faculty = self.credential_repo.list_qualified_faculty_for_procedure(
+            procedure_id
+        )
         return {
             "procedure_id": procedure_id,
             "procedure_name": procedure.name,
@@ -93,7 +95,7 @@ class CredentialService:
         if not person:
             return {"items": [], "total": 0, "error": "Person not found"}
 
-        if person.type != 'faculty':
+        if person.type != "faculty":
             return {"items": [], "total": 0, "error": "Person is not faculty"}
 
         procedures = self.credential_repo.list_procedures_for_faculty(person_id)
@@ -114,8 +116,8 @@ class CredentialService:
         self,
         person_id: UUID,
         procedure_id: UUID,
-        status: str = 'active',
-        competency_level: str = 'qualified',
+        status: str = "active",
+        competency_level: str = "qualified",
         issued_date: date | None = None,
         expiration_date: date | None = None,
         last_verified_date: date | None = None,
@@ -135,8 +137,11 @@ class CredentialService:
         person = self.person_repo.get_by_id(person_id)
         if not person:
             return {"credential": None, "error": "Person not found"}
-        if person.type != 'faculty':
-            return {"credential": None, "error": "Only faculty can have procedure credentials"}
+        if person.type != "faculty":
+            return {
+                "credential": None,
+                "error": "Only faculty can have procedure credentials",
+            }
 
         # Validate procedure exists
         procedure = self.procedure_repo.get_by_id(procedure_id)
@@ -144,7 +149,9 @@ class CredentialService:
             return {"credential": None, "error": "Procedure not found"}
 
         # Check for existing credential
-        existing = self.credential_repo.get_by_person_and_procedure(person_id, procedure_id)
+        existing = self.credential_repo.get_by_person_and_procedure(
+            person_id, procedure_id
+        )
         if existing:
             return {
                 "credential": None,
@@ -212,7 +219,9 @@ class CredentialService:
 
     def verify_credential(self, credential_id: UUID) -> dict:
         """Mark a credential as verified today."""
-        return self.update_credential(credential_id, {"last_verified_date": date.today()})
+        return self.update_credential(
+            credential_id, {"last_verified_date": date.today()}
+        )
 
     def list_expiring_credentials(self, days: int = 30) -> dict:
         """List credentials expiring soon."""
@@ -225,7 +234,7 @@ class CredentialService:
         if not person:
             return {"error": "Person not found"}
 
-        if person.type != 'faculty':
+        if person.type != "faculty":
             return {"error": "Person is not faculty"}
 
         # Get all credentials for this person
@@ -239,11 +248,14 @@ class CredentialService:
 
         # Count expiring soon (within 30 days)
         from datetime import timedelta
+
         today = date.today()
         expiring_soon = sum(
-            1 for c in all_credentials
-            if c.is_valid and c.expiration_date and
-            c.expiration_date <= today + timedelta(days=30)
+            1
+            for c in all_credentials
+            if c.is_valid
+            and c.expiration_date
+            and c.expiration_date <= today + timedelta(days=30)
         )
 
         # Get procedures for active credentials

@@ -3,24 +3,30 @@
 Comprehensive test suite covering ICS file exports, webcal subscriptions,
 date filtering, and authentication for calendar endpoints.
 """
+
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.models.assignment import Assignment
+from app.models.calendar_subscription import CalendarSubscription
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
-from app.models.calendar_subscription import CalendarSubscription
-from app.models.assignment import Assignment
-from app.models.block import Block
 
 
 class TestExportAllCalendarsEndpoint:
     """Tests for GET /api/calendar/export/ics endpoint."""
 
-    def test_export_all_calendars_success(self, client: TestClient, db: Session, sample_blocks, sample_resident, sample_rotation_template):
+    def test_export_all_calendars_success(
+        self,
+        client: TestClient,
+        db: Session,
+        sample_blocks,
+        sample_resident,
+        sample_rotation_template,
+    ):
         """Test exporting all calendars as ICS file."""
         # Create an assignment
         assignment = Assignment(
@@ -41,7 +47,7 @@ class TestExportAllCalendarsEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -53,7 +59,14 @@ class TestExportAllCalendarsEndpoint:
         assert "BEGIN:VCALENDAR" in content
         assert "END:VCALENDAR" in content
 
-    def test_export_all_calendars_with_person_filter(self, client: TestClient, db: Session, sample_blocks, sample_resident, sample_rotation_template):
+    def test_export_all_calendars_with_person_filter(
+        self,
+        client: TestClient,
+        db: Session,
+        sample_blocks,
+        sample_resident,
+        sample_rotation_template,
+    ):
         """Test exporting calendars filtered by person_ids."""
         assignment = Assignment(
             id=uuid4(),
@@ -74,13 +87,20 @@ class TestExportAllCalendarsEndpoint:
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
                 "person_ids": [str(sample_resident.id)],
-            }
+            },
         )
 
         assert response.status_code == 200
         assert response.headers["content-type"] == "text/calendar"
 
-    def test_export_all_calendars_with_rotation_filter(self, client: TestClient, db: Session, sample_blocks, sample_resident, sample_rotation_template):
+    def test_export_all_calendars_with_rotation_filter(
+        self,
+        client: TestClient,
+        db: Session,
+        sample_blocks,
+        sample_resident,
+        sample_rotation_template,
+    ):
         """Test exporting calendars filtered by rotation_ids."""
         assignment = Assignment(
             id=uuid4(),
@@ -101,7 +121,7 @@ class TestExportAllCalendarsEndpoint:
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
                 "rotation_ids": [str(sample_rotation_template.id)],
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -123,7 +143,7 @@ class TestExportAllCalendarsEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         # Should handle gracefully
@@ -140,7 +160,7 @@ class TestExportAllCalendarsEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -157,7 +177,7 @@ class TestExportAllCalendarsEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -169,7 +189,14 @@ class TestExportAllCalendarsEndpoint:
 class TestExportPersonICSEndpoint:
     """Tests for GET /api/calendar/export/ics/{person_id} endpoint."""
 
-    def test_export_person_ics_success(self, client: TestClient, db: Session, sample_blocks, sample_resident, sample_rotation_template):
+    def test_export_person_ics_success(
+        self,
+        client: TestClient,
+        db: Session,
+        sample_blocks,
+        sample_resident,
+        sample_rotation_template,
+    ):
         """Test exporting ICS for a specific person."""
         assignment = Assignment(
             id=uuid4(),
@@ -189,7 +216,7 @@ class TestExportPersonICSEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -208,7 +235,7 @@ class TestExportPersonICSEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 404
@@ -220,18 +247,22 @@ class TestExportPersonICSEndpoint:
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=7)).isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 422
 
-    def test_export_person_ics_missing_dates(self, client: TestClient, sample_resident: Person):
+    def test_export_person_ics_missing_dates(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Test export without required date parameters."""
         response = client.get(f"/api/v1/calendar/export/ics/{sample_resident.id}")
 
         assert response.status_code == 422
 
-    def test_export_person_ics_with_include_types(self, client: TestClient, sample_resident: Person):
+    def test_export_person_ics_with_include_types(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Test export with include_types filter."""
         start = date.today()
         end = start + timedelta(days=7)
@@ -242,12 +273,14 @@ class TestExportPersonICSEndpoint:
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
                 "include_types": ["clinic", "inpatient"],
-            }
+            },
         )
 
         assert response.status_code in [200, 404]  # 404 if person not found
 
-    def test_export_person_ics_filename(self, client: TestClient, sample_resident: Person):
+    def test_export_person_ics_filename(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Test that export has proper filename including person_id."""
         start = date.today()
         end = start + timedelta(days=7)
@@ -257,7 +290,7 @@ class TestExportPersonICSEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         if response.status_code == 200:
@@ -269,7 +302,14 @@ class TestExportPersonICSEndpoint:
 class TestExportPersonCalendarEndpoint:
     """Tests for GET /api/calendar/export/person/{person_id} endpoint."""
 
-    def test_export_person_calendar_success(self, client: TestClient, db: Session, sample_blocks, sample_resident, sample_rotation_template):
+    def test_export_person_calendar_success(
+        self,
+        client: TestClient,
+        db: Session,
+        sample_blocks,
+        sample_resident,
+        sample_rotation_template,
+    ):
         """Test exporting calendar for a person (alternate endpoint)."""
         assignment = Assignment(
             id=uuid4(),
@@ -289,7 +329,7 @@ class TestExportPersonCalendarEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -306,7 +346,7 @@ class TestExportPersonCalendarEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 404
@@ -318,12 +358,14 @@ class TestExportPersonCalendarEndpoint:
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=7)).isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 422
 
-    def test_export_person_calendar_long_range(self, client: TestClient, sample_resident: Person):
+    def test_export_person_calendar_long_range(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Test exporting calendar for a long date range."""
         start = date.today()
         end = start + timedelta(days=365)  # Full year
@@ -333,7 +375,7 @@ class TestExportPersonCalendarEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         # Should handle gracefully even for large ranges
@@ -343,7 +385,14 @@ class TestExportPersonCalendarEndpoint:
 class TestExportRotationCalendarEndpoint:
     """Tests for GET /api/calendar/export/rotation/{rotation_id} endpoint."""
 
-    def test_export_rotation_calendar_success(self, client: TestClient, db: Session, sample_blocks, sample_resident, sample_rotation_template):
+    def test_export_rotation_calendar_success(
+        self,
+        client: TestClient,
+        db: Session,
+        sample_blocks,
+        sample_resident,
+        sample_rotation_template,
+    ):
         """Test exporting calendar for a rotation."""
         assignment = Assignment(
             id=uuid4(),
@@ -363,7 +412,7 @@ class TestExportRotationCalendarEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -380,7 +429,7 @@ class TestExportRotationCalendarEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 404
@@ -392,18 +441,24 @@ class TestExportRotationCalendarEndpoint:
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=7)).isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 422
 
-    def test_export_rotation_calendar_missing_dates(self, client: TestClient, sample_rotation_template: RotationTemplate):
+    def test_export_rotation_calendar_missing_dates(
+        self, client: TestClient, sample_rotation_template: RotationTemplate
+    ):
         """Test export without required date parameters."""
-        response = client.get(f"/api/v1/calendar/export/rotation/{sample_rotation_template.id}")
+        response = client.get(
+            f"/api/v1/calendar/export/rotation/{sample_rotation_template.id}"
+        )
 
         assert response.status_code == 422
 
-    def test_export_rotation_calendar_filename(self, client: TestClient, sample_rotation_template: RotationTemplate):
+    def test_export_rotation_calendar_filename(
+        self, client: TestClient, sample_rotation_template: RotationTemplate
+    ):
         """Test that export has proper filename including rotation_id."""
         start = date.today()
         end = start + timedelta(days=7)
@@ -413,7 +468,7 @@ class TestExportRotationCalendarEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         if response.status_code == 200:
@@ -425,7 +480,9 @@ class TestExportRotationCalendarEndpoint:
 class TestCreateSubscriptionEndpoint:
     """Tests for POST /api/calendar/subscribe endpoint."""
 
-    def test_create_subscription_success(self, client: TestClient, sample_resident: Person, auth_headers: dict):
+    def test_create_subscription_success(
+        self, client: TestClient, sample_resident: Person, auth_headers: dict
+    ):
         """Test creating a calendar subscription."""
         subscription_data = {
             "person_id": str(sample_resident.id),
@@ -433,9 +490,7 @@ class TestCreateSubscriptionEndpoint:
         }
 
         response = client.post(
-            "/api/v1/calendar/subscribe",
-            json=subscription_data,
-            headers=auth_headers
+            "/api/v1/calendar/subscribe", json=subscription_data, headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -447,7 +502,9 @@ class TestCreateSubscriptionEndpoint:
         assert data["label"] == "My Calendar"
         assert data["is_active"] is True
 
-    def test_create_subscription_with_expiration(self, client: TestClient, sample_resident: Person, auth_headers: dict):
+    def test_create_subscription_with_expiration(
+        self, client: TestClient, sample_resident: Person, auth_headers: dict
+    ):
         """Test creating subscription with custom expiration."""
         subscription_data = {
             "person_id": str(sample_resident.id),
@@ -456,16 +513,16 @@ class TestCreateSubscriptionEndpoint:
         }
 
         response = client.post(
-            "/api/v1/calendar/subscribe",
-            json=subscription_data,
-            headers=auth_headers
+            "/api/v1/calendar/subscribe", json=subscription_data, headers=auth_headers
         )
 
         assert response.status_code == 200
         data = response.json()
         assert "expires_at" in data
 
-    def test_create_subscription_person_not_found(self, client: TestClient, auth_headers: dict):
+    def test_create_subscription_person_not_found(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test creating subscription for non-existent person."""
         fake_id = uuid4()
         subscription_data = {
@@ -474,42 +531,41 @@ class TestCreateSubscriptionEndpoint:
         }
 
         response = client.post(
-            "/api/v1/calendar/subscribe",
-            json=subscription_data,
-            headers=auth_headers
+            "/api/v1/calendar/subscribe", json=subscription_data, headers=auth_headers
         )
 
         assert response.status_code == 404
 
-    def test_create_subscription_missing_person_id(self, client: TestClient, auth_headers: dict):
+    def test_create_subscription_missing_person_id(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test creating subscription without person_id."""
         subscription_data = {
             "label": "No Person",
         }
 
         response = client.post(
-            "/api/v1/calendar/subscribe",
-            json=subscription_data,
-            headers=auth_headers
+            "/api/v1/calendar/subscribe", json=subscription_data, headers=auth_headers
         )
 
         assert response.status_code == 422
 
-    def test_create_subscription_requires_auth(self, client: TestClient, sample_resident: Person):
+    def test_create_subscription_requires_auth(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Test that creating subscription requires authentication."""
         subscription_data = {
             "person_id": str(sample_resident.id),
             "label": "No Auth",
         }
 
-        response = client.post(
-            "/api/v1/calendar/subscribe",
-            json=subscription_data
-        )
+        response = client.post("/api/v1/calendar/subscribe", json=subscription_data)
 
         assert response.status_code == 401
 
-    def test_create_subscription_webcal_url_format(self, client: TestClient, sample_resident: Person, auth_headers: dict):
+    def test_create_subscription_webcal_url_format(
+        self, client: TestClient, sample_resident: Person, auth_headers: dict
+    ):
         """Test that webcal URL has proper format."""
         subscription_data = {
             "person_id": str(sample_resident.id),
@@ -517,9 +573,7 @@ class TestCreateSubscriptionEndpoint:
         }
 
         response = client.post(
-            "/api/v1/calendar/subscribe",
-            json=subscription_data,
-            headers=auth_headers
+            "/api/v1/calendar/subscribe", json=subscription_data, headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -530,7 +584,9 @@ class TestCreateSubscriptionEndpoint:
 class TestGetSubscriptionFeedEndpoint:
     """Tests for GET /api/calendar/subscribe/{token} endpoint."""
 
-    def test_get_subscription_feed_success(self, client: TestClient, db: Session, admin_user, sample_resident: Person):
+    def test_get_subscription_feed_success(
+        self, client: TestClient, db: Session, admin_user, sample_resident: Person
+    ):
         """Test getting subscription feed with valid token."""
         # Create a subscription
         subscription = CalendarSubscription(
@@ -558,7 +614,9 @@ class TestGetSubscriptionFeedEndpoint:
 
         assert response.status_code == 401
 
-    def test_get_subscription_feed_expired_token(self, client: TestClient, db: Session, admin_user, sample_resident: Person):
+    def test_get_subscription_feed_expired_token(
+        self, client: TestClient, db: Session, admin_user, sample_resident: Person
+    ):
         """Test getting subscription feed with expired token."""
         # Create expired subscription
         subscription = CalendarSubscription(
@@ -577,7 +635,9 @@ class TestGetSubscriptionFeedEndpoint:
 
         assert response.status_code == 401
 
-    def test_get_subscription_feed_inactive_token(self, client: TestClient, db: Session, admin_user, sample_resident: Person):
+    def test_get_subscription_feed_inactive_token(
+        self, client: TestClient, db: Session, admin_user, sample_resident: Person
+    ):
         """Test getting subscription feed with inactive token."""
         subscription = CalendarSubscription(
             id=uuid4(),
@@ -595,7 +655,9 @@ class TestGetSubscriptionFeedEndpoint:
 
         assert response.status_code == 401
 
-    def test_get_subscription_feed_no_auth_required(self, client: TestClient, db: Session, admin_user, sample_resident: Person):
+    def test_get_subscription_feed_no_auth_required(
+        self, client: TestClient, db: Session, admin_user, sample_resident: Person
+    ):
         """Test that subscription feed does not require authentication header."""
         subscription = CalendarSubscription(
             id=uuid4(),
@@ -615,7 +677,9 @@ class TestGetSubscriptionFeedEndpoint:
         # Should succeed - token is the auth
         assert response.status_code == 200
 
-    def test_get_subscription_feed_cache_headers(self, client: TestClient, db: Session, admin_user, sample_resident: Person):
+    def test_get_subscription_feed_cache_headers(
+        self, client: TestClient, db: Session, admin_user, sample_resident: Person
+    ):
         """Test that subscription feed includes proper cache headers."""
         subscription = CalendarSubscription(
             id=uuid4(),
@@ -648,7 +712,14 @@ class TestListSubscriptionsEndpoint:
         assert "total" in data
         assert data["total"] == 0
 
-    def test_list_subscriptions_with_data(self, client: TestClient, db: Session, admin_user, sample_resident: Person, auth_headers: dict):
+    def test_list_subscriptions_with_data(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_user,
+        sample_resident: Person,
+        auth_headers: dict,
+    ):
         """Test listing subscriptions with existing data."""
         # Create subscriptions
         for i in range(3):
@@ -670,7 +741,15 @@ class TestListSubscriptionsEndpoint:
         data = response.json()
         assert data["total"] >= 3
 
-    def test_list_subscriptions_filter_by_person(self, client: TestClient, db: Session, admin_user, sample_resident: Person, sample_faculty: Person, auth_headers: dict):
+    def test_list_subscriptions_filter_by_person(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_user,
+        sample_resident: Person,
+        sample_faculty: Person,
+        auth_headers: dict,
+    ):
         """Test filtering subscriptions by person_id."""
         # Create subscription for resident
         sub1 = CalendarSubscription(
@@ -699,7 +778,7 @@ class TestListSubscriptionsEndpoint:
         response = client.get(
             "/api/v1/calendar/subscriptions",
             params={"person_id": str(sample_resident.id)},
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -708,7 +787,14 @@ class TestListSubscriptionsEndpoint:
         for sub in data["subscriptions"]:
             assert sub["person_id"] == str(sample_resident.id)
 
-    def test_list_subscriptions_active_only(self, client: TestClient, db: Session, admin_user, sample_resident: Person, auth_headers: dict):
+    def test_list_subscriptions_active_only(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_user,
+        sample_resident: Person,
+        auth_headers: dict,
+    ):
         """Test filtering only active subscriptions."""
         # Create active subscription
         sub1 = CalendarSubscription(
@@ -737,7 +823,7 @@ class TestListSubscriptionsEndpoint:
         response = client.get(
             "/api/v1/calendar/subscriptions",
             params={"active_only": True},
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -752,7 +838,14 @@ class TestListSubscriptionsEndpoint:
 
         assert response.status_code == 401
 
-    def test_list_subscriptions_includes_urls(self, client: TestClient, db: Session, admin_user, sample_resident: Person, auth_headers: dict):
+    def test_list_subscriptions_includes_urls(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_user,
+        sample_resident: Person,
+        auth_headers: dict,
+    ):
         """Test that subscription list includes URLs."""
         subscription = CalendarSubscription(
             id=uuid4(),
@@ -779,7 +872,14 @@ class TestListSubscriptionsEndpoint:
 class TestRevokeSubscriptionEndpoint:
     """Tests for DELETE /api/calendar/subscribe/{token} endpoint."""
 
-    def test_revoke_subscription_success(self, client: TestClient, db: Session, admin_user, sample_resident: Person, auth_headers: dict):
+    def test_revoke_subscription_success(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_user,
+        sample_resident: Person,
+        auth_headers: dict,
+    ):
         """Test successfully revoking a subscription."""
         subscription = CalendarSubscription(
             id=uuid4(),
@@ -794,24 +894,26 @@ class TestRevokeSubscriptionEndpoint:
         db.commit()
 
         response = client.delete(
-            f"/api/v1/calendar/subscribe/{subscription.token}",
-            headers=auth_headers
+            f"/api/v1/calendar/subscribe/{subscription.token}", headers=auth_headers
         )
 
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
 
-    def test_revoke_subscription_not_found(self, client: TestClient, auth_headers: dict):
+    def test_revoke_subscription_not_found(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test revoking non-existent subscription."""
         response = client.delete(
-            "/api/v1/calendar/subscribe/nonexistent_token",
-            headers=auth_headers
+            "/api/v1/calendar/subscribe/nonexistent_token", headers=auth_headers
         )
 
         assert response.status_code == 404
 
-    def test_revoke_subscription_requires_auth(self, client: TestClient, db: Session, admin_user, sample_resident: Person):
+    def test_revoke_subscription_requires_auth(
+        self, client: TestClient, db: Session, admin_user, sample_resident: Person
+    ):
         """Test that revoking subscription requires authentication."""
         subscription = CalendarSubscription(
             id=uuid4(),
@@ -829,7 +931,13 @@ class TestRevokeSubscriptionEndpoint:
 
         assert response.status_code == 401
 
-    def test_revoke_subscription_unauthorized(self, client: TestClient, db: Session, sample_resident: Person, auth_headers: dict):
+    def test_revoke_subscription_unauthorized(
+        self,
+        client: TestClient,
+        db: Session,
+        sample_resident: Person,
+        auth_headers: dict,
+    ):
         """Test revoking subscription owned by different user."""
         # Create subscription owned by different user
         other_user_id = uuid4()
@@ -846,8 +954,7 @@ class TestRevokeSubscriptionEndpoint:
         db.commit()
 
         response = client.delete(
-            f"/api/v1/calendar/subscribe/{subscription.token}",
-            headers=auth_headers
+            f"/api/v1/calendar/subscribe/{subscription.token}", headers=auth_headers
         )
 
         assert response.status_code == 403
@@ -856,7 +963,9 @@ class TestRevokeSubscriptionEndpoint:
 class TestCalendarICSContent:
     """Tests for ICS file content validation."""
 
-    def test_ics_has_vcalendar_wrapper(self, client: TestClient, sample_resident: Person):
+    def test_ics_has_vcalendar_wrapper(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Test that ICS content has proper VCALENDAR wrapper."""
         start = date.today()
         end = start + timedelta(days=7)
@@ -866,7 +975,7 @@ class TestCalendarICSContent:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         if response.status_code == 200:
@@ -884,7 +993,7 @@ class TestCalendarICSContent:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         if response.status_code == 200:
@@ -901,7 +1010,7 @@ class TestCalendarICSContent:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         if response.status_code == 200:
@@ -921,7 +1030,7 @@ class TestCalendarEdgeCases:
             params={
                 "start_date": today.isoformat(),
                 "end_date": today.isoformat(),
-            }
+            },
         )
 
         # Should succeed
@@ -937,13 +1046,19 @@ class TestCalendarEdgeCases:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         # Should handle gracefully
         assert response.status_code in [200, 404, 400]
 
-    def test_subscription_token_uniqueness(self, client: TestClient, db: Session, sample_resident: Person, auth_headers: dict):
+    def test_subscription_token_uniqueness(
+        self,
+        client: TestClient,
+        db: Session,
+        sample_resident: Person,
+        auth_headers: dict,
+    ):
         """Test that multiple subscriptions get unique tokens."""
         tokens = set()
 
@@ -956,7 +1071,7 @@ class TestCalendarEdgeCases:
             response = client.post(
                 "/api/v1/calendar/subscribe",
                 json=subscription_data,
-                headers=auth_headers
+                headers=auth_headers,
             )
 
             assert response.status_code == 200
@@ -977,7 +1092,7 @@ class TestCalendarEdgeCases:
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
                 "person_ids": [],
-            }
+            },
         )
 
         # Should handle gracefully

@@ -4,12 +4,11 @@ Rate limiting module for API endpoints.
 Implements a sliding window rate limiter using Redis to prevent brute force attacks
 and API abuse. Uses Redis sorted sets for efficient time-based tracking.
 """
+
 import time
-from typing import Optional
 
 import redis
 from fastapi import HTTPException, Request, status
-from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -27,7 +26,7 @@ class RateLimiter:
     without the step-function behavior of fixed windows.
     """
 
-    def __init__(self, redis_client: Optional[redis.Redis] = None):
+    def __init__(self, redis_client: redis.Redis | None = None):
         """
         Initialize the rate limiter.
 
@@ -187,7 +186,7 @@ class RateLimiter:
 
 
 # Global rate limiter instance
-_rate_limiter: Optional[RateLimiter] = None
+_rate_limiter: RateLimiter | None = None
 
 
 def get_rate_limiter() -> RateLimiter:
@@ -364,7 +363,7 @@ class AccountLockout:
     MAX_LOCKOUT_SECONDS: int = 3600  # Maximum lockout: 1 hour
     BACKOFF_MULTIPLIER: float = 2.0  # Double lockout time each failure
 
-    def __init__(self, redis_client: Optional[redis.Redis] = None):
+    def __init__(self, redis_client: redis.Redis | None = None):
         """
         Initialize the account lockout handler.
 
@@ -431,8 +430,11 @@ class AccountLockout:
                 # Calculate exponential backoff lockout duration
                 excess_attempts = attempts - self.MAX_FAILED_ATTEMPTS
                 lockout_duration = min(
-                    int(self.BASE_LOCKOUT_SECONDS * (self.BACKOFF_MULTIPLIER ** excess_attempts)),
-                    self.MAX_LOCKOUT_SECONDS
+                    int(
+                        self.BASE_LOCKOUT_SECONDS
+                        * (self.BACKOFF_MULTIPLIER**excess_attempts)
+                    ),
+                    self.MAX_LOCKOUT_SECONDS,
                 )
 
                 # Set lockout
@@ -527,7 +529,7 @@ class AccountLockout:
 
 
 # Global account lockout instance
-_account_lockout: Optional[AccountLockout] = None
+_account_lockout: AccountLockout | None = None
 
 
 def get_account_lockout() -> AccountLockout:

@@ -2,8 +2,8 @@
 
 from app.models.absence import Absence
 from app.models.assignment import Assignment
-from app.models.idempotency import IdempotencyRequest, IdempotencyStatus
 from app.models.block import Block
+from app.models.calendar_subscription import CalendarSubscription
 from app.models.call_assignment import CallAssignment
 from app.models.certification import CertificationType, PersonCertification
 from app.models.clinic_session import (
@@ -20,13 +20,36 @@ from app.models.conflict_alert import (
 )
 from app.models.email_log import EmailLog, EmailStatus
 from app.models.email_template import EmailTemplate, EmailTemplateType
+from app.models.export_job import (
+    ExportDeliveryMethod,
+    ExportFormat,
+    ExportJob,
+    ExportJobExecution,
+    ExportJobStatus,
+    ExportTemplate,
+)
 from app.models.faculty_preference import FacultyPreference
+from app.models.feature_flag import (
+    FeatureFlag,
+    FeatureFlagAudit,
+    FeatureFlagEvaluation,
+)
+from app.models.gateway_auth import (
+    APIKey,
+    IPBlacklist,
+    IPWhitelist,
+    OAuth2Client,
+    RequestSignature,
+)
+from app.models.idempotency import IdempotencyRequest, IdempotencyStatus
 from app.models.intern_stagger import InternStaggerPattern
 from app.models.notification import (
     Notification,
     NotificationPreferenceRecord,
     ScheduledNotificationRecord,
 )
+from app.models.oauth2_authorization_code import OAuth2AuthorizationCode
+from app.models.oauth2_client import PKCEClient
 from app.models.person import Person, ScreenerRole
 from app.models.procedure import Procedure
 from app.models.procedure_credential import ProcedureCredential
@@ -70,48 +93,25 @@ from app.models.resilience import (
     ZoneIncidentRecord,
     ZoneStatus,
 )
-from app.models.rotation_template import RotationTemplate
 from app.models.rotation_halfday_requirement import RotationHalfDayRequirement
+from app.models.rotation_template import RotationTemplate
 from app.models.schedule_run import ScheduleRun
-from app.models.settings import ApplicationSettings
-from app.models.swap import SwapApproval, SwapRecord, SwapStatus, SwapType
-from app.models.token_blacklist import TokenBlacklist
-from app.models.user import User
-from app.models.calendar_subscription import CalendarSubscription
-from app.models.feature_flag import (
-    FeatureFlag,
-    FeatureFlagAudit,
-    FeatureFlagEvaluation,
-)
 from app.models.scheduled_job import JobExecution, ScheduledJob
-from app.models.export_job import (
-    ExportJob,
-    ExportJobExecution,
-    ExportFormat,
-    ExportDeliveryMethod,
-    ExportJobStatus,
-    ExportTemplate,
-)
-from app.models.gateway_auth import (
-    APIKey,
-    OAuth2Client,
-    IPWhitelist,
-    IPBlacklist,
-    RequestSignature,
-)
-from app.models.oauth2_client import PKCEClient
-from app.models.oauth2_authorization_code import OAuth2AuthorizationCode
 from app.models.schema_version import (
     SchemaChangeEvent,
     SchemaCompatibilityType,
     SchemaStatus,
     SchemaVersion,
 )
+from app.models.settings import ApplicationSettings
 from app.models.state_machine import (
     StateMachineInstance,
     StateMachineStatus,
     StateMachineTransition,
 )
+from app.models.swap import SwapApproval, SwapRecord, SwapStatus, SwapType
+from app.models.token_blacklist import TokenBlacklist
+from app.models.user import User
 from app.webhooks.models import (
     Webhook,
     WebhookDeadLetter,

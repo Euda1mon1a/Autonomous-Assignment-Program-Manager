@@ -1,15 +1,16 @@
 """Tests for metering service."""
+
 import json
 from datetime import datetime, timedelta
 from decimal import Decimal
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.metering.service import (
-    MeteringService,
-    MeteredResource,
     AggregationPeriod,
+    MeteredResource,
+    MeteringService,
     PricingConfig,
     UsageTier,
 )
@@ -301,9 +302,7 @@ class TestAggregation:
     """Test usage aggregation."""
 
     @pytest.mark.asyncio
-    async def test_aggregate_usage_single_resource(
-        self, metering_service, mock_redis
-    ):
+    async def test_aggregate_usage_single_resource(self, metering_service, mock_redis):
         """Test aggregating usage for a single resource."""
         # Mock events
         events = []

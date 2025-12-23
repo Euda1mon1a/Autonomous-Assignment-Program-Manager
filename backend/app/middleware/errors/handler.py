@@ -9,10 +9,11 @@ including:
 - Error fingerprinting and rate limiting
 - Integration with notification and reporting systems
 """
-import logging
-from typing import Callable, Optional
 
-from fastapi import FastAPI, Request, status
+import logging
+from collections.abc import Callable
+
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
@@ -29,7 +30,6 @@ from app.middleware.errors.reporters import (
     ErrorSeverityClassifier,
     get_reporter,
 )
-
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -94,6 +94,7 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
 
         # Override status code for HTTPException
         from fastapi import HTTPException
+
         if isinstance(exc, HTTPException):
             status_code = exc.status_code
         else:
@@ -200,6 +201,7 @@ def create_error_handler(exc_type: type) -> Callable:
     Returns:
         Async exception handler function
     """
+
     async def handler(request: Request, exc: Exception) -> JSONResponse:
         """Handle specific exception type."""
         # Create error handler middleware instance
@@ -233,16 +235,17 @@ def install_error_handlers(app: FastAPI, enable_middleware: bool = True) -> None
 
     else:
         # Install as exception handlers
-        from app.core.exceptions import (
-            AppException,
-            NotFoundError,
-            ValidationError,
-            ConflictError,
-            UnauthorizedError,
-            ForbiddenError,
-        )
         from fastapi import HTTPException
         from pydantic import ValidationError as PydanticValidationError
+
+        from app.core.exceptions import (
+            AppException,
+            ConflictError,
+            ForbiddenError,
+            NotFoundError,
+            UnauthorizedError,
+            ValidationError,
+        )
 
         # Register handlers for specific exception types
         exception_types = [
@@ -293,7 +296,7 @@ class ErrorHandlingConfig:
 
 
 # Global configuration
-_config: Optional[ErrorHandlingConfig] = None
+_config: ErrorHandlingConfig | None = None
 
 
 def get_config() -> ErrorHandlingConfig:

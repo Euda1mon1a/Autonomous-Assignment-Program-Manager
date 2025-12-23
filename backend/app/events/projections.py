@@ -20,22 +20,21 @@ import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from datetime import datetime
-from typing import Any, Optional
 
-from sqlalchemy import Column, DateTime, Integer, String, Text, desc
+from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.orm import Session
 
 from app.db.base import Base
 from app.db.types import GUID, JSONType
 from app.events.event_types import (
-    BaseEvent,
+    ACGMEOverrideAppliedEvent,
+    ACGMEViolationDetectedEvent,
     AssignmentCreatedEvent,
-    AssignmentUpdatedEvent,
     AssignmentDeletedEvent,
+    AssignmentUpdatedEvent,
+    BaseEvent,
     ScheduleCreatedEvent,
     ScheduleUpdatedEvent,
-    ACGMEViolationDetectedEvent,
-    ACGMEOverrideAppliedEvent,
 )
 
 logger = logging.getLogger(__name__)
@@ -279,13 +278,15 @@ class ScheduleProjection(EventProjection):
         elif isinstance(event, ScheduleUpdatedEvent):
             if event.schedule_id in self.schedules:
                 self.schedules[event.schedule_id].update(event.changes)
-                self.schedules[event.schedule_id]["updated_at"] = event.metadata.timestamp
+                self.schedules[event.schedule_id]["updated_at"] = (
+                    event.metadata.timestamp
+                )
 
     async def reset(self):
         """Reset schedule data."""
         self.schedules.clear()
 
-    def get_schedule(self, schedule_id: str) -> Optional[dict]:
+    def get_schedule(self, schedule_id: str) -> dict | None:
         """Get schedule summary."""
         return self.schedules.get(schedule_id)
 
@@ -327,13 +328,17 @@ class AssignmentProjection(EventProjection):
         elif isinstance(event, AssignmentUpdatedEvent):
             if event.assignment_id in self.assignments:
                 self.assignments[event.assignment_id].update(event.changes)
-                self.assignments[event.assignment_id]["updated_at"] = event.metadata.timestamp
+                self.assignments[event.assignment_id]["updated_at"] = (
+                    event.metadata.timestamp
+                )
 
         elif isinstance(event, AssignmentDeletedEvent):
             if event.assignment_id in self.assignments:
                 if event.soft_delete:
                     self.assignments[event.assignment_id]["status"] = "deleted"
-                    self.assignments[event.assignment_id]["deleted_at"] = event.metadata.timestamp
+                    self.assignments[event.assignment_id]["deleted_at"] = (
+                        event.metadata.timestamp
+                    )
                 else:
                     del self.assignments[event.assignment_id]
 
@@ -341,21 +346,23 @@ class AssignmentProjection(EventProjection):
         """Reset assignment data."""
         self.assignments.clear()
 
-    def get_assignment(self, assignment_id: str) -> Optional[dict]:
+    def get_assignment(self, assignment_id: str) -> dict | None:
         """Get assignment by ID."""
         return self.assignments.get(assignment_id)
 
     def get_assignments_by_person(self, person_id: str) -> list[dict]:
         """Get all assignments for a person."""
         return [
-            a for a in self.assignments.values()
+            a
+            for a in self.assignments.values()
             if a["person_id"] == person_id and a["status"] == "active"
         ]
 
     def get_assignments_by_block(self, block_id: str) -> list[dict]:
         """Get all assignments for a block."""
         return [
-            a for a in self.assignments.values()
+            a
+            for a in self.assignments.values()
             if a["block_id"] == block_id and a["status"] == "active"
         ]
 
@@ -417,8 +424,8 @@ class AuditProjection(EventProjection):
         self,
         limit: int = 100,
         offset: int = 0,
-        user_id: Optional[str] = None,
-        event_type: Optional[str] = None,
+        user_id: str | None = None,
+        event_type: str | None = None,
     ) -> list[dict]:
         """Get audit entries with filtering."""
         entries = self.audit_entries
@@ -433,7 +440,7 @@ class AuditProjection(EventProjection):
         entries = sorted(entries, key=lambda x: x["timestamp"], reverse=True)
 
         # Apply pagination
-        return entries[offset:offset + limit]
+        return entries[offset : offset + limit]
 
     def get_statistics(self) -> dict:
         """Get audit statistics."""
@@ -441,7 +448,9 @@ class AuditProjection(EventProjection):
             "total_events": self.statistics["total_events"],
             "events_by_type": dict(self.statistics["events_by_type"]),
             "events_by_user": dict(self.statistics["events_by_user"]),
-            "events_by_aggregate_type": dict(self.statistics["events_by_aggregate_type"]),
+            "events_by_aggregate_type": dict(
+                self.statistics["events_by_aggregate_type"]
+            ),
         }
 
 
@@ -493,10 +502,7 @@ class ACGMEComplianceProjection(EventProjection):
 
     def get_open_violations(self) -> list[dict]:
         """Get all open violations."""
-        return [
-            v for v in self.violations.values()
-            if v["status"] == "open"
-        ]
+        return [v for v in self.violations.values() if v["status"] == "open"]
 
     def get_overrides_by_person(self, person_id: str) -> list[dict]:
         """Get all overrides related to a person."""
@@ -532,9 +538,7 @@ class ProjectionManager:
             try:
                 await projection.process_event(event, event_sequence)
             except Exception as e:
-                logger.error(
-                    f"Error in projection {projection.projection_name}: {e}"
-                )
+                logger.error(f"Error in projection {projection.projection_name}: {e}")
 
     async def rebuild_all(self, event_store):
         """Rebuild all projections."""

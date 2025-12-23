@@ -1,9 +1,10 @@
-
 from pydantic import BaseModel, Field
 
 
 class SettingsBase(BaseModel):
-    scheduling_algorithm: str = Field(default="greedy", description="Algorithm: greedy, min_conflicts, cp_sat")
+    scheduling_algorithm: str = Field(
+        default="greedy", description="Algorithm: greedy, min_conflicts, cp_sat"
+    )
     work_hours_per_week: int = Field(default=80, ge=40, le=100)
     max_consecutive_days: int = Field(default=6, ge=1, le=7)
     min_days_off_per_week: int = Field(default=1, ge=1, le=3)
@@ -14,8 +15,10 @@ class SettingsBase(BaseModel):
     enable_holiday_scheduling: bool = False
     default_block_duration_hours: int = Field(default=4, ge=1, le=12)
 
+
 class SettingsCreate(SettingsBase):
     pass
+
 
 class SettingsUpdate(BaseModel):
     scheduling_algorithm: str | None = None
@@ -28,6 +31,7 @@ class SettingsUpdate(BaseModel):
     enable_weekend_scheduling: bool | None = None
     enable_holiday_scheduling: bool | None = None
     default_block_duration_hours: int | None = None
+
 
 class SettingsResponse(SettingsBase):
     class Config:

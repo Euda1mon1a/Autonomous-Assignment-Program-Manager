@@ -3,6 +3,7 @@
 Comprehensive test suite covering CRUD operations, filters, validation,
 date range queries, and error handling for absence endpoints.
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -52,7 +53,9 @@ class TestListAbsencesEndpoint:
         assert "end_date" in absence
         assert "absence_type" in absence
 
-    def test_list_absences_filter_by_person_id(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_list_absences_filter_by_person_id(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test filtering absences by person_id."""
         # Create absences for different people
         other_person = Person(
@@ -85,8 +88,7 @@ class TestListAbsencesEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/v1/absences",
-            params={"person_id": str(sample_resident.id)}
+            "/api/v1/absences", params={"person_id": str(sample_resident.id)}
         )
 
         assert response.status_code == 200
@@ -99,7 +101,9 @@ class TestListAbsencesEndpoint:
         for absence in items:
             assert absence["person_id"] == str(sample_resident.id)
 
-    def test_list_absences_filter_by_start_date(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_list_absences_filter_by_start_date(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test filtering absences by start_date."""
         # Create absences with different date ranges
         past_absence = Absence(
@@ -121,10 +125,7 @@ class TestListAbsencesEndpoint:
         db.commit()
 
         filter_date = (date.today() + timedelta(days=5)).isoformat()
-        response = client.get(
-            "/api/v1/absences",
-            params={"start_date": filter_date}
-        )
+        response = client.get("/api/v1/absences", params={"start_date": filter_date})
 
         assert response.status_code == 200
         data = response.json()
@@ -136,7 +137,9 @@ class TestListAbsencesEndpoint:
             absence_end = date.fromisoformat(absence["end_date"])
             assert absence_end >= date.fromisoformat(filter_date)
 
-    def test_list_absences_filter_by_end_date(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_list_absences_filter_by_end_date(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test filtering absences by end_date."""
         # Create absences with different date ranges
         near_absence = Absence(
@@ -158,10 +161,7 @@ class TestListAbsencesEndpoint:
         db.commit()
 
         filter_date = (date.today() + timedelta(days=10)).isoformat()
-        response = client.get(
-            "/api/v1/absences",
-            params={"end_date": filter_date}
-        )
+        response = client.get("/api/v1/absences", params={"end_date": filter_date})
 
         assert response.status_code == 200
         data = response.json()
@@ -173,7 +173,9 @@ class TestListAbsencesEndpoint:
             absence_start = date.fromisoformat(absence["start_date"])
             assert absence_start <= date.fromisoformat(filter_date)
 
-    def test_list_absences_filter_by_date_range(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_list_absences_filter_by_date_range(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test filtering absences by date range."""
         # Create absences across different time periods
         absences = [
@@ -209,10 +211,7 @@ class TestListAbsencesEndpoint:
 
         response = client.get(
             "/api/v1/absences",
-            params={
-                "start_date": filter_start,
-                "end_date": filter_end
-            }
+            params={"start_date": filter_start, "end_date": filter_end},
         )
 
         assert response.status_code == 200
@@ -231,7 +230,9 @@ class TestListAbsencesEndpoint:
             assert absence_end >= date.fromisoformat(filter_start)
             assert absence_start <= date.fromisoformat(filter_end)
 
-    def test_list_absences_filter_by_absence_type(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_list_absences_filter_by_absence_type(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test filtering absences by absence_type."""
         # Create absences with different types
         vacation = Absence(
@@ -260,10 +261,7 @@ class TestListAbsencesEndpoint:
         db.add(deployment)
         db.commit()
 
-        response = client.get(
-            "/api/v1/absences",
-            params={"absence_type": "vacation"}
-        )
+        response = client.get("/api/v1/absences", params={"absence_type": "vacation"})
 
         assert response.status_code == 200
         data = response.json()
@@ -274,7 +272,9 @@ class TestListAbsencesEndpoint:
         for absence in items:
             assert absence["absence_type"] == "vacation"
 
-    def test_list_absences_combined_filters(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_list_absences_combined_filters(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test combining multiple filters."""
         other_person = Person(
             id=uuid4(),
@@ -317,10 +317,7 @@ class TestListAbsencesEndpoint:
         # Filter by person and type
         response = client.get(
             "/api/v1/absences",
-            params={
-                "person_id": str(sample_resident.id),
-                "absence_type": "vacation"
-            }
+            params={"person_id": str(sample_resident.id), "absence_type": "vacation"},
         )
 
         assert response.status_code == 200
@@ -334,7 +331,9 @@ class TestListAbsencesEndpoint:
             assert absence["person_id"] == str(sample_resident.id)
             assert absence["absence_type"] == "vacation"
 
-    def test_list_absences_no_results(self, client: TestClient, sample_absence: Absence):
+    def test_list_absences_no_results(
+        self, client: TestClient, sample_absence: Absence
+    ):
         """Test filtering with parameters that have no matches."""
         # Query far in the future
         future_start = (date.today() + timedelta(days=365)).isoformat()
@@ -342,10 +341,7 @@ class TestListAbsencesEndpoint:
 
         response = client.get(
             "/api/v1/absences",
-            params={
-                "start_date": future_start,
-                "end_date": future_end
-            }
+            params={"start_date": future_start, "end_date": future_end},
         )
 
         assert response.status_code == 200
@@ -385,7 +381,9 @@ class TestGetAbsenceEndpoint:
 
         assert response.status_code == 422  # Validation error
 
-    def test_get_absence_with_notes(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_get_absence_with_notes(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test getting an absence that has notes."""
         absence = Absence(
             id=uuid4(),
@@ -444,12 +442,16 @@ class TestCreateAbsenceEndpoint:
 
         assert response.status_code == 400
 
-    def test_create_absence_invalid_date_range(self, client: TestClient, sample_resident: Person):
+    def test_create_absence_invalid_date_range(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Test creating absence with end_date before start_date."""
         absence_data = {
             "person_id": str(sample_resident.id),
             "start_date": (date.today() + timedelta(days=15)).isoformat(),
-            "end_date": (date.today() + timedelta(days=10)).isoformat(),  # Before start!
+            "end_date": (
+                date.today() + timedelta(days=10)
+            ).isoformat(),  # Before start!
             "absence_type": "vacation",
         }
 
@@ -468,7 +470,9 @@ class TestCreateAbsenceEndpoint:
 
         assert response.status_code == 422  # Validation error
 
-    def test_create_absence_invalid_absence_type(self, client: TestClient, sample_resident: Person):
+    def test_create_absence_invalid_absence_type(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Test creating absence with invalid absence_type."""
         absence_data = {
             "person_id": str(sample_resident.id),
@@ -481,7 +485,9 @@ class TestCreateAbsenceEndpoint:
 
         assert response.status_code == 422  # Validation error
 
-    def test_create_absence_deployment(self, client: TestClient, sample_resident: Person):
+    def test_create_absence_deployment(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Test creating deployment absence."""
         absence_data = {
             "person_id": str(sample_resident.id),
@@ -515,7 +521,9 @@ class TestCreateAbsenceEndpoint:
         assert data["absence_type"] == "tdy"
         assert data["tdy_location"] == "Tripler Army Medical Center"
 
-    def test_create_absence_without_optional_fields(self, client: TestClient, sample_resident: Person):
+    def test_create_absence_without_optional_fields(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Test creating absence without optional fields."""
         absence_data = {
             "person_id": str(sample_resident.id),
@@ -531,7 +539,9 @@ class TestCreateAbsenceEndpoint:
         # Optional fields should be None or have default values
         assert data.get("notes") is None or data.get("notes") == ""
 
-    def test_create_absence_same_start_end_date(self, client: TestClient, sample_resident: Person):
+    def test_create_absence_same_start_end_date(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Test creating absence with same start and end date (single day)."""
         absence_data = {
             "person_id": str(sample_resident.id),
@@ -548,7 +558,9 @@ class TestCreateAbsenceEndpoint:
 class TestUpdateAbsenceEndpoint:
     """Tests for PUT /api/absences/{absence_id} endpoint."""
 
-    def test_update_absence_success(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_update_absence_success(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test successfully updating an absence."""
         # Create an absence to update
         absence = Absence(
@@ -588,7 +600,9 @@ class TestUpdateAbsenceEndpoint:
 
         assert response.status_code == 404
 
-    def test_update_absence_partial_update(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_update_absence_partial_update(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test partial update (only some fields)."""
         # Create an absence to update
         absence = Absence(
@@ -622,7 +636,9 @@ class TestUpdateAbsenceEndpoint:
         assert data["absence_type"] == original_type
         assert data["notes"] == update_data["notes"]
 
-    def test_update_absence_change_type(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_update_absence_change_type(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test updating absence type."""
         # Create an absence to update
         absence = Absence(
@@ -646,7 +662,9 @@ class TestUpdateAbsenceEndpoint:
         data = response.json()
         assert data["absence_type"] == "conference"
 
-    def test_update_absence_invalid_type(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_update_absence_invalid_type(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test updating absence with invalid type."""
         # Create an absence to update
         absence = Absence(
@@ -668,7 +686,9 @@ class TestUpdateAbsenceEndpoint:
 
         assert response.status_code == 422  # Validation error
 
-    def test_update_absence_deployment_fields(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_update_absence_deployment_fields(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test updating deployment-specific fields."""
         # Create a deployment absence
         absence = Absence(
@@ -699,7 +719,9 @@ class TestUpdateAbsenceEndpoint:
 class TestDeleteAbsenceEndpoint:
     """Tests for DELETE /api/absences/{absence_id} endpoint."""
 
-    def test_delete_absence_success(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_delete_absence_success(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test successfully deleting an absence."""
         # Create an absence to delete
         absence = Absence(
@@ -735,7 +757,9 @@ class TestDeleteAbsenceEndpoint:
 
         assert response.status_code == 422  # Validation error
 
-    def test_delete_absence_twice(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_delete_absence_twice(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test deleting the same absence twice."""
         # Create an absence to delete
         absence = Absence(
@@ -761,7 +785,9 @@ class TestDeleteAbsenceEndpoint:
 class TestAbsenceStructureAndValidation:
     """Tests for absence data structure and field validation."""
 
-    def test_absence_response_has_all_fields(self, client: TestClient, sample_absence: Absence):
+    def test_absence_response_has_all_fields(
+        self, client: TestClient, sample_absence: Absence
+    ):
         """Test that absence response includes all expected fields."""
         response = client.get(f"/api/v1/absences/{sample_absence.id}")
 
@@ -778,7 +804,9 @@ class TestAbsenceStructureAndValidation:
         for field in optional_fields:
             assert field in data
 
-    def test_absence_date_format(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_absence_date_format(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test that absence dates are in ISO format."""
         # Create absences
         for i in range(3):
@@ -810,12 +838,22 @@ class TestAbsenceStructureAndValidation:
                 except ValueError:
                     pytest.fail(f"Invalid date format in absence: {absence}")
 
-    def test_absence_type_values(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_absence_type_values(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test that absence_type contains valid values."""
         valid_types = [
-            "vacation", "deployment", "tdy", "medical", "family_emergency",
-            "conference", "bereavement", "emergency_leave", "sick",
-            "convalescent", "maternity_paternity"
+            "vacation",
+            "deployment",
+            "tdy",
+            "medical",
+            "family_emergency",
+            "conference",
+            "bereavement",
+            "emergency_leave",
+            "sick",
+            "convalescent",
+            "maternity_paternity",
         ]
 
         # Create absences with various types
@@ -845,7 +883,9 @@ class TestAbsenceStructureAndValidation:
 class TestAbsenceEdgeCases:
     """Tests for edge cases and boundary conditions."""
 
-    def test_create_absence_far_future(self, client: TestClient, sample_resident: Person):
+    def test_create_absence_far_future(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Test creating absence far in the future."""
         absence_data = {
             "person_id": str(sample_resident.id),
@@ -858,7 +898,9 @@ class TestAbsenceEdgeCases:
 
         assert response.status_code == 201
 
-    def test_create_absence_past_date(self, client: TestClient, sample_resident: Person):
+    def test_create_absence_past_date(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Test creating absence with past dates."""
         absence_data = {
             "person_id": str(sample_resident.id),
@@ -872,7 +914,9 @@ class TestAbsenceEdgeCases:
         # Should succeed - historical absences are allowed
         assert response.status_code in [201, 400]
 
-    def test_overlapping_absences_same_person(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_overlapping_absences_same_person(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test creating overlapping absences for the same person."""
         # Create first absence
         absence1 = Absence(
@@ -898,7 +942,9 @@ class TestAbsenceEdgeCases:
         # May succeed or fail depending on business logic
         assert response.status_code in [201, 400]
 
-    def test_create_absence_long_notes(self, client: TestClient, sample_resident: Person):
+    def test_create_absence_long_notes(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Test creating absence with very long notes."""
         absence_data = {
             "person_id": str(sample_resident.id),
@@ -913,7 +959,9 @@ class TestAbsenceEdgeCases:
         # Should succeed unless there's a length limit
         assert response.status_code in [201, 422]
 
-    def test_update_absence_dates_to_invalid_range(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_update_absence_dates_to_invalid_range(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test updating absence to have invalid date range."""
         # Create an absence
         absence = Absence(
@@ -930,7 +978,9 @@ class TestAbsenceEdgeCases:
         # Try to update with invalid range
         update_data = {
             "start_date": (date.today() + timedelta(days=20)).isoformat(),
-            "end_date": (date.today() + timedelta(days=15)).isoformat(),  # Before start!
+            "end_date": (
+                date.today() + timedelta(days=15)
+            ).isoformat(),  # Before start!
         }
 
         response = client.put(f"/api/v1/absences/{absence.id}", json=update_data)
@@ -938,7 +988,9 @@ class TestAbsenceEdgeCases:
         # Should fail validation
         assert response.status_code in [400, 422]
 
-    def test_list_absences_boundary_dates(self, client: TestClient, db: Session, sample_resident: Person):
+    def test_list_absences_boundary_dates(
+        self, client: TestClient, db: Session, sample_resident: Person
+    ):
         """Test filtering with exact boundary dates."""
         # Create absences for specific dates
         base_date = date.today() + timedelta(days=50)
@@ -955,8 +1007,7 @@ class TestAbsenceEdgeCases:
 
         # Query with exact start date
         response = client.get(
-            "/api/v1/absences",
-            params={"start_date": base_date.isoformat()}
+            "/api/v1/absences", params={"start_date": base_date.isoformat()}
         )
 
         assert response.status_code == 200

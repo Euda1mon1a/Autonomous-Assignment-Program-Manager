@@ -12,9 +12,8 @@ Provides SAML 2.0 authentication flow including:
 import base64
 import uuid
 import zlib
-from datetime import datetime, timedelta
-from typing import Dict, Optional, Tuple
-from urllib.parse import quote, urlencode
+from datetime import datetime
+from urllib.parse import urlencode
 from xml.etree import ElementTree as ET
 
 from app.auth.sso.config import SAMLConfig
@@ -42,7 +41,7 @@ class SAMLProvider:
         """
         self.config = config
 
-    def generate_authn_request(self) -> Tuple[str, str]:
+    def generate_authn_request(self) -> tuple[str, str]:
         """
         Generate SAML Authentication Request.
 
@@ -82,7 +81,7 @@ class SAMLProvider:
 
     def parse_saml_response(
         self, saml_response: str, validate_signature: bool = True
-    ) -> Dict[str, any]:
+    ) -> dict[str, any]:
         """
         Parse and validate SAML response.
 
@@ -140,8 +139,8 @@ class SAMLProvider:
         }
 
     def generate_logout_request(
-        self, name_id: str, session_index: Optional[str] = None
-    ) -> Tuple[str, str]:
+        self, name_id: str, session_index: str | None = None
+    ) -> tuple[str, str]:
         """
         Generate SAML Logout Request.
 
@@ -157,7 +156,9 @@ class SAMLProvider:
 
         session_index_xml = ""
         if session_index:
-            session_index_xml = f"<samlp:SessionIndex>{session_index}</samlp:SessionIndex>"
+            session_index_xml = (
+                f"<samlp:SessionIndex>{session_index}</samlp:SessionIndex>"
+            )
 
         logout_request = f"""<?xml version="1.0" encoding="UTF-8"?>
 <samlp:LogoutRequest
@@ -209,7 +210,7 @@ class SAMLProvider:
 
         return metadata
 
-    def parse_idp_metadata(self, metadata_xml: str) -> Dict[str, str]:
+    def parse_idp_metadata(self, metadata_xml: str) -> dict[str, str]:
         """
         Parse Identity Provider metadata.
 
@@ -255,7 +256,10 @@ class SAMLProvider:
         slo_url = slo_element.get("Location") if slo_element is not None else ""
 
         # Extract X.509 certificate
-        cert_element = root.find(".//md:IDPSSODescriptor/md:KeyDescriptor/ds:KeyInfo/ds:X509Data/ds:X509Certificate", ns)
+        cert_element = root.find(
+            ".//md:IDPSSODescriptor/md:KeyDescriptor/ds:KeyInfo/ds:X509Data/ds:X509Certificate",
+            ns,
+        )
         x509_cert = cert_element.text.strip() if cert_element is not None else ""
 
         return {
@@ -326,9 +330,7 @@ class SAMLProvider:
 
         return assertion
 
-    def _validate_signature(
-        self, response: ET.Element, assertion: ET.Element
-    ) -> None:
+    def _validate_signature(self, response: ET.Element, assertion: ET.Element) -> None:
         """
         Validate XML signature on response or assertion.
 
@@ -401,7 +403,7 @@ class SAMLProvider:
                 f"Audience restriction violation: expected {self.config.entity_id}, got {audience.text}"
             )
 
-    def _extract_attributes(self, assertion: ET.Element) -> Dict[str, str]:
+    def _extract_attributes(self, assertion: ET.Element) -> dict[str, str]:
         """
         Extract and map attributes from assertion.
 
@@ -454,7 +456,7 @@ class SAMLProvider:
 
         return name_id.text
 
-    def _extract_session_index(self, assertion: ET.Element) -> Optional[str]:
+    def _extract_session_index(self, assertion: ET.Element) -> str | None:
         """
         Extract SessionIndex from assertion.
 

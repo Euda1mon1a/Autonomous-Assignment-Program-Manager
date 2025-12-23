@@ -1,7 +1,5 @@
 """Comprehensive tests for settings API routes."""
-from datetime import datetime
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -358,6 +356,7 @@ class TestUpdateSettingsEndpoint:
 
         # Wait a moment and update
         import time
+
         time.sleep(0.1)
 
         response = client.post(
@@ -540,6 +539,7 @@ class TestPatchSettingsEndpoint:
 
         # Wait a moment
         import time
+
         time.sleep(0.1)
 
         # Patch a field
@@ -624,6 +624,7 @@ class TestResetSettingsEndpoint:
 
         # Wait a moment
         import time
+
         time.sleep(0.1)
 
         # Reset

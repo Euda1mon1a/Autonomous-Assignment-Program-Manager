@@ -1,10 +1,19 @@
 """Clinic session model - tracks daily clinic staffing and screener ratios."""
+
 import uuid
-from datetime import date, datetime
+from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, CheckConstraint, Column, Date, DateTime, Float, Integer, String
-from sqlalchemy.orm import relationship
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    Integer,
+    String,
+)
 
 from app.db.base import Base
 from app.db.types import GUID
@@ -16,6 +25,7 @@ class SessionType(str, Enum):
 
     AM and PM sessions have different staffing requirements.
     """
+
     AM = "am"
     PM = "pm"
 
@@ -26,6 +36,7 @@ class ClinicType(str, Enum):
 
     Different clinic types may have different screener requirements.
     """
+
     FAMILY_MEDICINE = "family_medicine"
     SPORTS_MEDICINE = "sports_medicine"
     PEDIATRICS = "pediatrics"
@@ -38,11 +49,12 @@ class StaffingStatus(str, Enum):
 
     Based on screener ratio quality and coverage levels.
     """
-    OPTIMAL = "optimal"           # 1:3 or better
-    ADEQUATE = "adequate"         # 1:4
-    SUBOPTIMAL = "suboptimal"     # 1:5
-    INADEQUATE = "inadequate"     # 1:6 or worse
-    UNSTAFFED = "unstaffed"       # No screeners
+
+    OPTIMAL = "optimal"  # 1:3 or better
+    ADEQUATE = "adequate"  # 1:4
+    SUBOPTIMAL = "suboptimal"  # 1:5
+    INADEQUATE = "inadequate"  # 1:6 or worse
+    UNSTAFFED = "unstaffed"  # No screeners
 
 
 class ClinicSession(Base):
@@ -53,6 +65,7 @@ class ClinicSession(Base):
     RN fallback was used. Used for monitoring clinic staffing
     patterns and identifying understaffed sessions.
     """
+
     __tablename__ = "clinic_sessions"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -82,15 +95,17 @@ class ClinicSession(Base):
         CheckConstraint("session_type IN ('am', 'pm')", name="check_session_type"),
         CheckConstraint(
             "clinic_type IN ('family_medicine', 'sports_medicine', 'pediatrics', 'procedures')",
-            name="check_clinic_type"
+            name="check_clinic_type",
         ),
         CheckConstraint(
             "staffing_status IN ('optimal', 'adequate', 'suboptimal', 'inadequate', 'unstaffed')",
-            name="check_staffing_status"
+            name="check_staffing_status",
         ),
         CheckConstraint("physician_count >= 0", name="check_physician_count"),
         CheckConstraint("screener_count >= 0", name="check_screener_count"),
-        CheckConstraint("screener_ratio IS NULL OR screener_ratio >= 0", name="check_screener_ratio"),
+        CheckConstraint(
+            "screener_ratio IS NULL OR screener_ratio >= 0", name="check_screener_ratio"
+        ),
     )
 
     def __repr__(self):

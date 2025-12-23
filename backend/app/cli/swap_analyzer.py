@@ -17,6 +17,7 @@ Examples:
     # Full analysis with recommendations
     python -m app.cli.swap_analyzer -f fmit_schedule.xlsx --analyze-all --verbose
 """
+
 import argparse
 import sys
 from datetime import date, datetime
@@ -58,7 +59,9 @@ def print_swap_candidates(
     """Print swap candidates for a faculty/week."""
     candidates = swap_finder.find_swap_candidates(target_faculty, target_week)
 
-    print_header(f"Swap Candidates for {target_faculty} - Week of {target_week.strftime('%b %d, %Y')}")
+    print_header(
+        f"Swap Candidates for {target_faculty} - Week of {target_week.strftime('%b %d, %Y')}"
+    )
 
     if not candidates:
         print("No swap candidates found.")
@@ -68,7 +71,11 @@ def print_swap_candidates(
     print(f"Total candidates: {len(candidates)} | Viable: {len(viable)}\n")
 
     for i, candidate in enumerate(candidates, 1):
-        status = "✓" if candidate.back_to_back_ok and not candidate.external_conflict else "✗"
+        status = (
+            "✓"
+            if candidate.back_to_back_ok and not candidate.external_conflict
+            else "✗"
+        )
         swap_type = "1:1 swap" if candidate.gives_week else "absorb"
 
         print(f"{i}. [{status}] {candidate.faculty}")
@@ -114,7 +121,9 @@ def print_alternating_patterns(swap_finder: SwapFinder, threshold: int = 3) -> N
             print("  Suggested weeks to swap out:")
             for week, candidates in suggestions[:3]:  # Show top 3
                 viable_count = sum(1 for c in candidates if c.back_to_back_ok)
-                print(f"    - {week.strftime('%b %d')} ({viable_count} viable candidates)")
+                print(
+                    f"    - {week.strftime('%b %d')} ({viable_count} viable candidates)"
+                )
         print()
 
 
@@ -129,7 +138,11 @@ def print_full_analysis(swap_finder: SwapFinder, verbose: bool = False) -> None:
     print("\nSummary:")
     print(f"  Faculty members: {total_faculty}")
     print(f"  Total FMIT weeks assigned: {total_weeks}")
-    print(f"  Average weeks per faculty: {total_weeks / total_faculty:.1f}" if total_faculty else "")
+    print(
+        f"  Average weeks per faculty: {total_weeks / total_faculty:.1f}"
+        if total_faculty
+        else ""
+    )
 
     # Week distribution
     print_header("Week Distribution", "-")
@@ -153,8 +166,10 @@ def print_full_analysis(swap_finder: SwapFinder, verbose: bool = False) -> None:
     if swap_finder.external_conflicts:
         print_header("Known External Conflicts", "-")
         for conflict in swap_finder.external_conflicts:
-            print(f"  {conflict.faculty}: {conflict.conflict_type} "
-                  f"({conflict.start_date.strftime('%b %d')} - {conflict.end_date.strftime('%b %d')})")
+            print(
+                f"  {conflict.faculty}: {conflict.conflict_type} "
+                f"({conflict.start_date.strftime('%b %d')} - {conflict.end_date.strftime('%b %d')})"
+            )
             if conflict.description:
                 print(f"    {conflict.description}")
 
@@ -168,18 +183,21 @@ def main() -> int:
     )
 
     parser.add_argument(
-        "-f", "--file",
+        "-f",
+        "--file",
         type=str,
         required=True,
         help="Path to FMIT schedule Excel file",
     )
     parser.add_argument(
-        "-F", "--faculty",
+        "-F",
+        "--faculty",
         type=str,
         help="Target faculty member name (for swap candidate search)",
     )
     parser.add_argument(
-        "-w", "--week",
+        "-w",
+        "--week",
         type=str,
         help="Target week (Monday) in YYYY-MM-DD format",
     )
@@ -205,7 +223,8 @@ def main() -> int:
         help="Path to JSON file with external conflicts",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Show verbose output",
     )
@@ -222,17 +241,20 @@ def main() -> int:
     external_conflicts = []
     if args.conflicts_file:
         import json
+
         try:
             with open(args.conflicts_file) as f:
                 conflicts_data = json.load(f)
             for c in conflicts_data:
-                external_conflicts.append(ExternalConflict(
-                    faculty=c["faculty"],
-                    start_date=parse_date(c["start_date"]),
-                    end_date=parse_date(c["end_date"]),
-                    conflict_type=c.get("conflict_type", "leave"),
-                    description=c.get("description", ""),
-                ))
+                external_conflicts.append(
+                    ExternalConflict(
+                        faculty=c["faculty"],
+                        start_date=parse_date(c["start_date"]),
+                        end_date=parse_date(c["end_date"]),
+                        conflict_type=c.get("conflict_type", "leave"),
+                        description=c.get("description", ""),
+                    )
+                )
         except Exception as e:
             print(f"Warning: Failed to load conflicts file: {e}", file=sys.stderr)
 
@@ -263,14 +285,24 @@ def main() -> int:
             return 1
 
         if args.faculty not in swap_finder.faculty_weeks:
-            print(f"Error: Faculty '{args.faculty}' not found in schedule.", file=sys.stderr)
-            print(f"Available faculty: {', '.join(sorted(swap_finder.faculty_weeks.keys()))}", file=sys.stderr)
+            print(
+                f"Error: Faculty '{args.faculty}' not found in schedule.",
+                file=sys.stderr,
+            )
+            print(
+                f"Available faculty: {', '.join(sorted(swap_finder.faculty_weeks.keys()))}",
+                file=sys.stderr,
+            )
             return 1
 
-        print_swap_candidates(swap_finder, args.faculty, target_week, verbose=args.verbose)
+        print_swap_candidates(
+            swap_finder, args.faculty, target_week, verbose=args.verbose
+        )
     else:
         parser.print_help()
-        print("\nError: Specify --faculty and --week for swap search, or --analyze-all / --alternating for analysis")
+        print(
+            "\nError: Specify --faculty and --week for swap search, or --analyze-all / --alternating for analysis"
+        )
         return 1
 
     return 0

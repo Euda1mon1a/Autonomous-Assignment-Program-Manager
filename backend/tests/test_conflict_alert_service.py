@@ -1,4 +1,5 @@
 """Comprehensive tests for ConflictAlertService."""
+
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
@@ -26,6 +27,7 @@ def service(db: Session) -> ConflictAlertService:
 def sample_user(db: Session) -> User:
     """Create a sample user for acknowledgment/resolution operations."""
     from app.core.security import get_password_hash
+
     user = User(
         id=uuid4(),
         username="testuser",
@@ -51,7 +53,10 @@ class TestCreateAlert:
     """Tests for ConflictAlertService.create_alert()."""
 
     def test_create_basic_alert(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
     ):
         """Test creating a basic conflict alert."""
         alert = service.create_alert(
@@ -71,7 +76,10 @@ class TestCreateAlert:
         assert alert.status == ConflictAlertStatus.NEW
 
     def test_create_alert_with_default_severity(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
     ):
         """Test creating alert with default WARNING severity."""
         alert = service.create_alert(
@@ -102,7 +110,10 @@ class TestCreateAlert:
         assert alert.leave_id == sample_absence.id
 
     def test_create_alert_with_swap_reference(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
     ):
         """Test creating alert with a swap_id reference."""
         swap_id = uuid4()
@@ -117,7 +128,10 @@ class TestCreateAlert:
         assert alert.swap_id == swap_id
 
     def test_create_duplicate_alert_updates_existing(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
     ):
         """Test that creating duplicate alert updates existing instead of creating new."""
         # Create first alert
@@ -178,7 +192,10 @@ class TestGetAlert:
     """Tests for ConflictAlertService.get_alert()."""
 
     def test_get_alert_by_id(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
     ):
         """Test retrieving an alert by ID."""
         created_alert = service.create_alert(
@@ -216,7 +233,7 @@ class TestGetAlertsForFaculty:
                 faculty_id=sample_faculty.id,
                 conflict_type=ConflictType.BACK_TO_BACK,
                 fmit_week=date.today() + timedelta(days=7 * (i + 1)),
-                description=f"Alert {i+1}",
+                description=f"Alert {i + 1}",
             )
 
         # Create alert for different faculty
@@ -310,7 +327,9 @@ class TestGetAlertsForFaculty:
         )
         service.resolve_alert(resolved.id, sample_user.id)
 
-        alerts = service.get_alerts_for_faculty(sample_faculty.id, include_resolved=False)
+        alerts = service.get_alerts_for_faculty(
+            sample_faculty.id, include_resolved=False
+        )
 
         assert len(alerts) == 1
         assert alerts[0].status == ConflictAlertStatus.NEW
@@ -339,7 +358,9 @@ class TestGetAlertsForFaculty:
         )
         service.resolve_alert(resolved.id, sample_user.id)
 
-        alerts = service.get_alerts_for_faculty(sample_faculty.id, include_resolved=True)
+        alerts = service.get_alerts_for_faculty(
+            sample_faculty.id, include_resolved=True
+        )
 
         assert len(alerts) == 2
 
@@ -701,7 +722,9 @@ class TestResolveAlert:
         service.resolve_alert(alert.id, sample_user.id, notes="First resolution")
 
         # Second resolution
-        result = service.resolve_alert(alert.id, sample_user.id, notes="Second resolution")
+        result = service.resolve_alert(
+            alert.id, sample_user.id, notes="Second resolution"
+        )
 
         assert result is not None
         assert result.status == ConflictAlertStatus.RESOLVED
@@ -730,7 +753,9 @@ class TestIgnoreAlert:
 
         before_ignore = datetime.utcnow()
         ignored = service.ignore_alert(
-            alert.id, sample_user.id, reason="Not a real conflict - coverage already arranged"
+            alert.id,
+            sample_user.id,
+            reason="Not a real conflict - coverage already arranged",
         )
         after_ignore = datetime.utcnow()
 
@@ -759,7 +784,9 @@ class TestIgnoreAlert:
 
         service.acknowledge_alert(alert.id, sample_user.id)
 
-        ignored = service.ignore_alert(alert.id, sample_user.id, reason="False positive")
+        ignored = service.ignore_alert(
+            alert.id, sample_user.id, reason="False positive"
+        )
 
         assert ignored is not None
         assert ignored.status == ConflictAlertStatus.IGNORED
@@ -831,7 +858,9 @@ class TestGetAlertsBySeverity:
             severity=ConflictSeverity.INFO,
         )
 
-        critical_alerts = service.get_unresolved_alerts(severity=ConflictSeverity.CRITICAL)
+        critical_alerts = service.get_unresolved_alerts(
+            severity=ConflictSeverity.CRITICAL
+        )
 
         assert len(critical_alerts) == 1
         assert critical_alerts[0].id == critical.id
@@ -857,7 +886,9 @@ class TestGetAlertsBySeverity:
             severity=ConflictSeverity.WARNING,
         )
 
-        warning_alerts = service.get_unresolved_alerts(severity=ConflictSeverity.WARNING)
+        warning_alerts = service.get_unresolved_alerts(
+            severity=ConflictSeverity.WARNING
+        )
 
         assert len(warning_alerts) == 1
         assert warning_alerts[0].id == warning.id
@@ -1385,7 +1416,10 @@ class TestDeleteAlert:
     """Tests for ConflictAlertService.delete_alert()."""
 
     def test_delete_existing_alert(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
     ):
         """Test deleting an existing alert."""
         alert = service.create_alert(
@@ -1453,7 +1487,10 @@ class TestEdgeCases:
         assert alert.fmit_week == past_week
 
     def test_empty_description_handled(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
     ):
         """Test creating alert with empty description."""
         alert = service.create_alert(
@@ -1521,7 +1558,11 @@ class TestGenerateResolutionOptions:
     """Tests for ConflictAlertService.generate_resolution_options()."""
 
     def test_generate_options_for_leave_overlap(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date, db: Session
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
+        db: Session,
     ):
         """Test generating resolution options for leave/FMIT overlap conflict."""
         # Create another faculty who could swap
@@ -1552,7 +1593,10 @@ class TestGenerateResolutionOptions:
         assert all(opt.impact is not None for opt in options)
 
     def test_generate_options_for_back_to_back(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
     ):
         """Test generating resolution options for back-to-back conflict."""
         alert = service.create_alert(
@@ -1571,7 +1615,10 @@ class TestGenerateResolutionOptions:
         assert "adjust_time_boundaries" in [s.value for s in strategies]
 
     def test_generate_options_for_external_commitment(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
     ):
         """Test generating resolution options for external commitment conflict."""
         alert = service.create_alert(
@@ -1589,7 +1636,9 @@ class TestGenerateResolutionOptions:
         strategies = [opt.strategy for opt in options]
         assert "request_coverage_pool" in [s.value for s in strategies]
 
-    def test_generate_options_for_nonexistent_alert(self, service: ConflictAlertService):
+    def test_generate_options_for_nonexistent_alert(
+        self, service: ConflictAlertService
+    ):
         """Test generating options for non-existent alert returns empty list."""
         fake_id = uuid4()
         options = service.generate_resolution_options(fake_id)
@@ -1597,7 +1646,10 @@ class TestGenerateResolutionOptions:
         assert options == []
 
     def test_options_sorted_by_feasibility(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
     ):
         """Test that options are sorted by feasibility score (highest first)."""
         alert = service.create_alert(
@@ -1612,10 +1664,16 @@ class TestGenerateResolutionOptions:
         if len(options) > 1:
             # Check descending order of feasibility
             for i in range(len(options) - 1):
-                assert options[i].impact.feasibility_score >= options[i + 1].impact.feasibility_score
+                assert (
+                    options[i].impact.feasibility_score
+                    >= options[i + 1].impact.feasibility_score
+                )
 
     def test_max_options_limit(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
     ):
         """Test that max_options parameter limits returned options."""
         alert = service.create_alert(
@@ -1664,7 +1722,9 @@ class TestApplyAutoResolution:
         assert len(options) > 0
 
         # Apply first option
-        success, msg = service.apply_auto_resolution(alert.id, options[0].id, sample_user.id)
+        success, msg = service.apply_auto_resolution(
+            alert.id, options[0].id, sample_user.id
+        )
 
         assert success is True
         assert msg != ""
@@ -1712,7 +1772,9 @@ class TestApplyAutoResolution:
     ):
         """Test applying resolution to non-existent alert fails."""
         fake_id = uuid4()
-        success, msg = service.apply_auto_resolution(fake_id, "some_option", sample_user.id)
+        success, msg = service.apply_auto_resolution(
+            fake_id, "some_option", sample_user.id
+        )
 
         assert success is False
         assert "not found" in msg.lower()
@@ -1783,7 +1845,9 @@ class TestApplyAutoResolution:
         options = service.generate_resolution_options(alert.id)
         assert len(options) > 0
 
-        success, msg = service.apply_auto_resolution(alert.id, options[0].id, user_id=None)
+        success, msg = service.apply_auto_resolution(
+            alert.id, options[0].id, user_id=None
+        )
 
         # Should succeed even without user
         if success:
@@ -1804,7 +1868,10 @@ class TestValidateResolution:
         db: Session,
     ):
         """Test validating swap resolution with valid target faculty."""
-        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+        from app.services.conflict_alert_service import (
+            ResolutionOption,
+            ResolutionStrategy,
+        )
 
         target_faculty = Person(
             id=uuid4(),
@@ -1838,10 +1905,16 @@ class TestValidateResolution:
         assert is_valid is True
 
     def test_validate_swap_resolution_with_invalid_target(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
     ):
         """Test validating swap resolution with non-existent target."""
-        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+        from app.services.conflict_alert_service import (
+            ResolutionOption,
+            ResolutionStrategy,
+        )
 
         alert = service.create_alert(
             faculty_id=sample_faculty.id,
@@ -1867,10 +1940,16 @@ class TestValidateResolution:
         assert "not found" in msg.lower()
 
     def test_validate_coverage_request_always_valid(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
     ):
         """Test that coverage requests are always valid."""
-        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+        from app.services.conflict_alert_service import (
+            ResolutionOption,
+            ResolutionStrategy,
+        )
 
         alert = service.create_alert(
             faculty_id=sample_faculty.id,
@@ -1901,7 +1980,10 @@ class TestValidateResolution:
         sample_fmit_week: date,
     ):
         """Test validation fails for already resolved alert."""
-        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+        from app.services.conflict_alert_service import (
+            ResolutionOption,
+            ResolutionStrategy,
+        )
 
         alert = service.create_alert(
             faculty_id=sample_faculty.id,
@@ -1931,7 +2013,10 @@ class TestEstimateResolutionImpact:
 
     def test_estimate_swap_impact(self, service: ConflictAlertService):
         """Test estimating impact of swap resolution."""
-        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+        from app.services.conflict_alert_service import (
+            ResolutionOption,
+            ResolutionStrategy,
+        )
 
         resolution = ResolutionOption(
             id="test_swap",
@@ -1950,7 +2035,10 @@ class TestEstimateResolutionImpact:
 
     def test_estimate_backup_impact(self, service: ConflictAlertService):
         """Test estimating impact of backup reassignment."""
-        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+        from app.services.conflict_alert_service import (
+            ResolutionOption,
+            ResolutionStrategy,
+        )
 
         resolution = ResolutionOption(
             id="test_backup",
@@ -1968,7 +2056,10 @@ class TestEstimateResolutionImpact:
 
     def test_estimate_coverage_pool_impact(self, service: ConflictAlertService):
         """Test estimating impact of coverage pool request."""
-        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+        from app.services.conflict_alert_service import (
+            ResolutionOption,
+            ResolutionStrategy,
+        )
 
         resolution = ResolutionOption(
             id="test_coverage",
@@ -1985,7 +2076,10 @@ class TestEstimateResolutionImpact:
 
     def test_estimate_time_adjustment_impact(self, service: ConflictAlertService):
         """Test estimating impact of time boundary adjustment."""
-        from app.services.conflict_alert_service import ResolutionOption, ResolutionStrategy
+        from app.services.conflict_alert_service import (
+            ResolutionOption,
+            ResolutionStrategy,
+        )
 
         resolution = ResolutionOption(
             id="test_adjust",
@@ -2006,7 +2100,10 @@ class TestResolutionHistoryTracking:
     """Tests for resolution history tracking."""
 
     def test_get_resolution_history_for_conflict(
-        self, service: ConflictAlertService, sample_faculty: Person, sample_fmit_week: date
+        self,
+        service: ConflictAlertService,
+        sample_faculty: Person,
+        sample_fmit_week: date,
     ):
         """Test getting resolution history for a conflict."""
         alert = service.create_alert(
@@ -2071,7 +2168,9 @@ class TestResolutionIntegration:
         assert impact.feasibility_score > 0
 
         # Step 5: Apply resolution
-        success, msg = service.apply_auto_resolution(alert.id, best_option.id, sample_user.id)
+        success, msg = service.apply_auto_resolution(
+            alert.id, best_option.id, sample_user.id
+        )
 
         if success:
             # Step 6: Verify alert is resolved
@@ -2096,7 +2195,7 @@ class TestResolutionIntegration:
                 faculty_id=sample_faculty.id,
                 conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
                 fmit_week=date.today() + timedelta(days=7 * (i + 1)),
-                description=f"Conflict {i+1}",
+                description=f"Conflict {i + 1}",
             )
             alerts.append(alert)
 
@@ -2147,7 +2246,9 @@ class TestResolutionIntegration:
         # Apply resolution
         options = service.generate_resolution_options(alert.id)
         if options:
-            success, _ = service.apply_auto_resolution(alert.id, options[0].id, sample_user.id)
+            success, _ = service.apply_auto_resolution(
+                alert.id, options[0].id, sample_user.id
+            )
 
             if success:
                 # Check that we didn't create more conflicts

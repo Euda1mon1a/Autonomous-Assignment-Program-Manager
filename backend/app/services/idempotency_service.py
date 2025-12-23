@@ -7,13 +7,14 @@ This service handles:
 - Updating records with results
 - Cleaning up expired entries
 """
+
 import hashlib
 import json
 from datetime import datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
 from app.models.idempotency import IdempotencyRequest, IdempotencyStatus
@@ -46,9 +47,7 @@ class IdempotencyService:
         return hashlib.sha256(normalized.encode()).hexdigest()
 
     def get_existing_request(
-        self,
-        idempotency_key: str,
-        body_hash: str
+        self, idempotency_key: str, body_hash: str
     ) -> IdempotencyRequest | None:
         """
         Check for an existing non-expired idempotency request.
@@ -71,7 +70,9 @@ class IdempotencyService:
         )
         return existing
 
-    def check_key_conflict(self, idempotency_key: str, body_hash: str) -> IdempotencyRequest | None:
+    def check_key_conflict(
+        self, idempotency_key: str, body_hash: str
+    ) -> IdempotencyRequest | None:
         """
         Check if the same idempotency key was used with different parameters.
 
@@ -97,10 +98,7 @@ class IdempotencyService:
         return conflict
 
     def create_request(
-        self,
-        idempotency_key: str,
-        body_hash: str,
-        request_params: dict
+        self, idempotency_key: str, body_hash: str, request_params: dict
     ) -> IdempotencyRequest:
         """
         Create a new idempotency request record.
@@ -145,7 +143,7 @@ class IdempotencyService:
         request: IdempotencyRequest,
         result_ref: UUID | None = None,
         response_body: dict | None = None,
-        response_status_code: int = 200
+        response_status_code: int = 200,
     ) -> None:
         """
         Mark an idempotency request as completed.
@@ -167,7 +165,7 @@ class IdempotencyService:
         request: IdempotencyRequest,
         error_message: str,
         response_body: dict | None = None,
-        response_status_code: int = 500
+        response_status_code: int = 500,
     ) -> None:
         """
         Mark an idempotency request as failed.
@@ -201,7 +199,7 @@ class IdempotencyService:
             self.db.query(IdempotencyRequest)
             .filter(IdempotencyRequest.expires_at < datetime.utcnow())
             .limit(batch_size)
-            .delete(synchronize_session='fetch')
+            .delete(synchronize_session="fetch")
         )
         self.db.commit()
 
@@ -210,7 +208,9 @@ class IdempotencyService:
 
         return deleted
 
-    def timeout_stale_pending(self, timeout_minutes: int = 10, batch_size: int = 100) -> int:
+    def timeout_stale_pending(
+        self, timeout_minutes: int = 10, batch_size: int = 100
+    ) -> int:
         """
         Mark stale pending requests as failed.
 

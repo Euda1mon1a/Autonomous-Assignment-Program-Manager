@@ -2,8 +2,8 @@
 
 This endpoint provides a unified view of a user's schedule, swaps, and absences.
 """
-from datetime import date, datetime, timedelta
-from uuid import UUID
+
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session, joinedload
@@ -58,7 +58,9 @@ def _get_person_for_user(db: Session, current_user: User) -> Person | None:
 @router.get("/dashboard", response_model=MeDashboardResponse)
 async def get_my_dashboard(
     request: Request,
-    days_ahead: int = Query(30, ge=1, le=365, description="Number of days to look ahead"),
+    days_ahead: int = Query(
+        30, ge=1, le=365, description="Number of days to look ahead"
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> MeDashboardResponse:
@@ -88,7 +90,7 @@ async def get_my_dashboard(
     if not person:
         raise HTTPException(
             status_code=404,
-            detail="No person profile found for current user. Please contact your administrator to link your account to a person record."
+            detail="No person profile found for current user. Please contact your administrator to link your account to a person record.",
         )
 
     # Calculate date range
@@ -117,7 +119,10 @@ async def get_my_dashboard(
     for assignment in assignments:
         # Determine location
         location = None
-        if assignment.rotation_template and assignment.rotation_template.clinic_location:
+        if (
+            assignment.rotation_template
+            and assignment.rotation_template.clinic_location
+        ):
             location = assignment.rotation_template.clinic_location
 
         # Determine if can trade (primary role assignments can typically be traded)
@@ -145,8 +150,8 @@ async def get_my_dashboard(
         )
         .filter(
             (
-                (SwapRecord.source_faculty_id == person.id) |
-                (SwapRecord.target_faculty_id == person.id)
+                (SwapRecord.source_faculty_id == person.id)
+                | (SwapRecord.target_faculty_id == person.id)
             ),
             SwapRecord.status == SwapStatus.PENDING,
         )
@@ -158,9 +163,13 @@ async def get_my_dashboard(
     for swap in pending_swaps_query:
         # Determine the "other party" (not the current user)
         if swap.source_faculty_id == person.id:
-            other_party_name = swap.target_faculty.name if swap.target_faculty else "Unknown"
+            other_party_name = (
+                swap.target_faculty.name if swap.target_faculty else "Unknown"
+            )
         else:
-            other_party_name = swap.source_faculty.name if swap.source_faculty else "Unknown"
+            other_party_name = (
+                swap.source_faculty.name if swap.source_faculty else "Unknown"
+            )
 
         pending_swaps.append(
             DashboardSwapItem(
@@ -223,7 +232,9 @@ async def get_my_dashboard(
             )
 
         base_url = _get_base_url(request)
-        calendar_sync_url = CalendarService.generate_subscription_url(subscription.token, base_url)
+        calendar_sync_url = CalendarService.generate_subscription_url(
+            subscription.token, base_url
+        )
     except Exception:
         # If calendar sync fails, continue without it
         calendar_sync_url = None
@@ -234,8 +245,7 @@ async def get_my_dashboard(
 
     # Workload in next 4 weeks (count blocks)
     workload_next_4_weeks = sum(
-        1 for item in upcoming_schedule
-        if item.date <= four_weeks_date
+        1 for item in upcoming_schedule if item.date <= four_weeks_date
     )
 
     pending_swap_count = len(pending_swaps)

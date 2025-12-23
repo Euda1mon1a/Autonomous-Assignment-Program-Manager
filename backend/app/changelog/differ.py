@@ -116,8 +116,10 @@ class APIDiff:
 
         # Check for new features (minor bump)
         new_features = [
-            c for c in self.changes
-            if c.change_type in {
+            c
+            for c in self.changes
+            if c.change_type
+            in {
                 ChangeType.ENDPOINT_ADDED,
                 ChangeType.ENDPOINT_METHOD_ADDED,
                 ChangeType.OPTIONAL_PARAM_ADDED,
@@ -201,21 +203,29 @@ class APIDiffer:
 
             # Endpoint removed
             if path in old_paths and path not in new_paths:
-                methods = [m for m in old_path_item.keys() if m in {"get", "post", "put", "patch", "delete"}]
+                methods = [
+                    m
+                    for m in old_path_item.keys()
+                    if m in {"get", "post", "put", "patch", "delete"}
+                ]
                 self.changes.append(
                     APIChange(
                         change_type=ChangeType.ENDPOINT_REMOVED,
                         path=path,
                         description=f"Endpoint {path} removed",
                         old_value=methods,
-                        migration_guide=f"This endpoint has been removed. Please check the API documentation for alternative endpoints.",
+                        migration_guide="This endpoint has been removed. Please check the API documentation for alternative endpoints.",
                     )
                 )
                 continue
 
             # Endpoint added
             if path not in old_paths and path in new_paths:
-                methods = [m for m in new_path_item.keys() if m in {"get", "post", "put", "patch", "delete"}]
+                methods = [
+                    m
+                    for m in new_path_item.keys()
+                    if m in {"get", "post", "put", "patch", "delete"}
+                ]
                 self.changes.append(
                     APIChange(
                         change_type=ChangeType.ENDPOINT_ADDED,

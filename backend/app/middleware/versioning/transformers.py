@@ -4,10 +4,12 @@ API Response Transformers.
 Handles transformation of API responses between different versions
 to maintain backward compatibility while evolving the API.
 """
+
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from datetime import date, datetime
-from typing import Any, Callable, Optional, Union
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -291,11 +293,9 @@ class TransformRegistry:
             transformer: ResponseTransformer instance
         """
         self._global_transformers.append(transformer)
-        logger.debug(
-            f"Registered global transformer: {transformer.__class__.__name__}"
-        )
+        logger.debug(f"Registered global transformer: {transformer.__class__.__name__}")
 
-    def get(self, name: str) -> Optional[ResponseTransformer]:
+    def get(self, name: str) -> ResponseTransformer | None:
         """
         Get a named transformer.
 
@@ -310,8 +310,8 @@ class TransformRegistry:
     def transform(
         self,
         data: Any,
-        target_version: Optional[APIVersion] = None,
-        transformer_name: Optional[str] = None,
+        target_version: APIVersion | None = None,
+        transformer_name: str | None = None,
     ) -> Any:
         """
         Transform response data.
@@ -345,8 +345,8 @@ class TransformRegistry:
     def transform_pydantic(
         self,
         model: BaseModel,
-        target_version: Optional[APIVersion] = None,
-        transformer_name: Optional[str] = None,
+        target_version: APIVersion | None = None,
+        transformer_name: str | None = None,
     ) -> dict:
         """
         Transform Pydantic model to dict with version transformations.
@@ -367,7 +367,7 @@ class TransformRegistry:
 
 
 # Global transform registry instance
-_transform_registry: Optional[TransformRegistry] = None
+_transform_registry: TransformRegistry | None = None
 
 
 def get_transform_registry() -> TransformRegistry:
@@ -385,7 +385,7 @@ def get_transform_registry() -> TransformRegistry:
 
 def register_transformer(
     name: str,
-    transformer: Optional[ResponseTransformer] = None,
+    transformer: ResponseTransformer | None = None,
 ) -> Callable:
     """
     Decorator to register a transformer.
@@ -406,6 +406,7 @@ def register_transformer(
             def supports_version(self, version):
                 return True
     """
+
     def decorator(cls):
         if transformer is not None:
             instance = transformer
@@ -422,8 +423,8 @@ def register_transformer(
 
 def transform_response(
     data: Any,
-    version: Optional[APIVersion] = None,
-    transformer: Optional[str] = None,
+    version: APIVersion | None = None,
+    transformer: str | None = None,
 ) -> Any:
     """
     Convenience function to transform response data.
@@ -458,9 +459,10 @@ def transform_response(
 
 # Version-aware response helpers
 
+
 def version_aware_response(
     data: Any,
-    transformer: Optional[str] = None,
+    transformer: str | None = None,
 ) -> Any:
     """
     Create version-aware response that auto-transforms based on request version.

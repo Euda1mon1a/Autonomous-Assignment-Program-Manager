@@ -7,6 +7,7 @@ Signature format follows GitHub/Stripe webhook standards:
     X-Webhook-Signature: sha256=<hex-encoded-hmac>
     X-Webhook-Timestamp: <unix-timestamp>
 """
+
 import hashlib
 import hmac
 import json
@@ -38,10 +39,7 @@ class WebhookSignatureGenerator:
         self.timestamp_tolerance_seconds = timestamp_tolerance_seconds
 
     def generate_signature(
-        self,
-        payload: dict[str, Any],
-        secret: str,
-        timestamp: int | None = None
+        self, payload: dict[str, Any], secret: str, timestamp: int | None = None
     ) -> tuple[str, int]:
         """
         Generate HMAC-SHA256 signature for a webhook payload.
@@ -65,24 +63,18 @@ class WebhookSignatureGenerator:
             timestamp = int(datetime.utcnow().timestamp())
 
         # Create signing string: timestamp.payload_json
-        payload_json = json.dumps(payload, sort_keys=True, separators=(',', ':'))
+        payload_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
         signing_string = f"{timestamp}.{payload_json}"
 
         # Generate HMAC-SHA256 signature
         signature_bytes = hmac.new(
-            secret.encode('utf-8'),
-            signing_string.encode('utf-8'),
-            hashlib.sha256
+            secret.encode("utf-8"), signing_string.encode("utf-8"), hashlib.sha256
         ).hexdigest()
 
         return f"sha256={signature_bytes}", timestamp
 
     def verify_signature(
-        self,
-        payload: dict[str, Any],
-        signature: str,
-        timestamp: int,
-        secret: str
+        self, payload: dict[str, Any], signature: str, timestamp: int, secret: str
     ) -> bool:
         """
         Verify HMAC-SHA256 signature for a webhook payload.
@@ -116,11 +108,7 @@ class WebhookSignatureGenerator:
         return hmac.compare_digest(signature, expected_signature)
 
     def generate_headers(
-        self,
-        payload: dict[str, Any],
-        secret: str,
-        event_type: str,
-        delivery_id: str
+        self, payload: dict[str, Any], secret: str, event_type: str, delivery_id: str
     ) -> dict[str, str]:
         """
         Generate all webhook headers including signature.
@@ -153,7 +141,7 @@ class WebhookSignatureGenerator:
             self.EVENT_TYPE_HEADER: event_type,
             self.DELIVERY_ID_HEADER: delivery_id,
             "Content-Type": "application/json",
-            "User-Agent": "Residency-Scheduler-Webhook/1.0"
+            "User-Agent": "Residency-Scheduler-Webhook/1.0",
         }
 
     @staticmethod

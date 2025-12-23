@@ -24,21 +24,19 @@ Integration with Existing Framework:
 from app.resilience.thermodynamics.entropy import (
     ScheduleEntropyMonitor,
     calculate_schedule_entropy,
-    mutual_information,
     conditional_entropy,
     entropy_production_rate,
+    mutual_information,
 )
-
 from app.resilience.thermodynamics.free_energy import (
-    FreeEnergyMetrics,
-    calculate_free_energy,
     EnergyLandscapeAnalyzer,
+    FreeEnergyMetrics,
     adaptive_temperature,
+    calculate_free_energy,
 )
-
 from app.resilience.thermodynamics.phase_transitions import (
-    PhaseTransitionDetector,
     CriticalPhenomenaMonitor,
+    PhaseTransitionDetector,
     detect_critical_slowing,
     estimate_time_to_transition,
 )
@@ -50,13 +48,11 @@ __all__ = [
     "mutual_information",
     "conditional_entropy",
     "entropy_production_rate",
-
     # Free Energy
     "FreeEnergyMetrics",
     "calculate_free_energy",
     "EnergyLandscapeAnalyzer",
     "adaptive_temperature",
-
     # Phase Transitions
     "PhaseTransitionDetector",
     "CriticalPhenomenaMonitor",

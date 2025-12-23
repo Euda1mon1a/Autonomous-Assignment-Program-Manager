@@ -48,17 +48,17 @@ Example:
     await indexer.reindex_all("person", person_iterator)
 """
 
-import asyncio
 import hashlib
 import json
 import logging
 import time
 from collections import defaultdict
-from dataclasses import asdict, dataclass, field
+from collections.abc import AsyncIterator
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from threading import RLock
-from typing import Any, AsyncIterator, Callable
+from typing import Any
 
 import redis.asyncio as redis
 
@@ -283,7 +283,9 @@ class IndexHealth:
             "status": self.status.value,
             "doc_count": self.doc_count,
             "index_size_bytes": self.index_size_bytes,
-            "last_index_time": self.last_index_time.isoformat() if self.last_index_time else None,
+            "last_index_time": self.last_index_time.isoformat()
+            if self.last_index_time
+            else None,
             "last_reindex_time": (
                 self.last_reindex_time.isoformat() if self.last_reindex_time else None
             ),
@@ -601,7 +603,9 @@ class SearchIndexer:
             logger.error(f"Redis connection error creating index: {e}")
             raise
         except Exception as e:
-            logger.error(f"Error creating index '{mapping.index_name}': {e}", exc_info=True)
+            logger.error(
+                f"Error creating index '{mapping.index_name}': {e}", exc_info=True
+            )
             raise
 
     async def index_document(
@@ -1337,7 +1341,9 @@ class SearchIndexer:
                             version=int(metadata.get("version", 0)),
                             schema_hash=metadata.get("schema_hash", ""),
                             created_at=datetime.fromisoformat(
-                                metadata.get("created_at", datetime.utcnow().isoformat())
+                                metadata.get(
+                                    "created_at", datetime.utcnow().isoformat()
+                                )
                             ),
                             status=IndexStatus(metadata.get("status", "active")),
                             doc_count=int(metadata.get("doc_count", 0)),
@@ -1437,7 +1443,9 @@ class SearchIndexer:
             logger.error(f"Error getting mapping: {e}", exc_info=True)
             return None
 
-    def _validate_document(self, document: dict[str, Any], mapping: DocumentMapping) -> None:
+    def _validate_document(
+        self, document: dict[str, Any], mapping: DocumentMapping
+    ) -> None:
         """
         Validate document against mapping.
 
@@ -1562,7 +1570,9 @@ class SearchIndexer:
                 pattern = f"{self.key_prefix}:{self.namespace}:{index_name}:field:*"
                 cursor = 0
                 while True:
-                    cursor, keys = await redis_client.scan(cursor, match=pattern, count=100)
+                    cursor, keys = await redis_client.scan(
+                        cursor, match=pattern, count=100
+                    )
                     if keys:
                         await redis_client.delete(*keys)
                     if cursor == 0:

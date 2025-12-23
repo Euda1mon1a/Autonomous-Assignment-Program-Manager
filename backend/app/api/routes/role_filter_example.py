@@ -4,20 +4,19 @@ This module shows how to use RoleFilterService and its dependencies
 in FastAPI route handlers.
 """
 
-from typing import Dict, Any, List
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.dependencies.role_filter import (
-    require_resource_access,
     require_admin,
-    get_current_user_role,
-    check_endpoint_access,
+    require_resource_access,
 )
 from app.core.security import get_current_active_user
 from app.models.user import User
 from app.services.role_filter_service import (
-    RoleFilterService,
     ResourceType,
+    RoleFilterService,
     UserRole,
 )
 
@@ -26,8 +25,8 @@ router = APIRouter(prefix="/api/example", tags=["Role Filter Examples"])
 
 @router.get("/permissions")
 async def get_my_permissions(
-    current_user: User = Depends(get_current_active_user)
-) -> Dict[str, Any]:
+    current_user: User = Depends(get_current_active_user),
+) -> dict[str, Any]:
     """Get current user's permissions and accessible resources.
 
     Returns:
@@ -37,15 +36,17 @@ async def get_my_permissions(
         "user_id": str(current_user.id),
         "username": current_user.username,
         "role": current_user.role,
-        "accessible_resources": RoleFilterService.get_accessible_resources(current_user.role),
+        "accessible_resources": RoleFilterService.get_accessible_resources(
+            current_user.role
+        ),
         "role_description": RoleFilterService.get_role_description(current_user.role),
     }
 
 
 @router.get("/dashboard")
 async def get_dashboard(
-    current_user: User = Depends(get_current_active_user)
-) -> Dict[str, Any]:
+    current_user: User = Depends(get_current_active_user),
+) -> dict[str, Any]:
     """Get dashboard data filtered by user role.
 
     Different users will see different data based on their role:
@@ -60,8 +61,18 @@ async def get_dashboard(
     # Build complete dashboard data
     raw_data = {
         "schedules": [
-            {"id": 1, "person_id": str(current_user.id), "date": "2025-01-15", "activity": "Clinic"},
-            {"id": 2, "person_id": "other-user", "date": "2025-01-15", "activity": "ICU"},
+            {
+                "id": 1,
+                "person_id": str(current_user.id),
+                "date": "2025-01-15",
+                "activity": "Clinic",
+            },
+            {
+                "id": 2,
+                "person_id": "other-user",
+                "date": "2025-01-15",
+                "activity": "ICU",
+            },
         ],
         "people": [
             {"id": 1, "name": "Dr. Smith", "role": "faculty"},
@@ -87,9 +98,7 @@ async def get_dashboard(
 
     # Apply role-based filtering
     filtered_data = RoleFilterService.filter_for_role(
-        raw_data,
-        current_user.role,
-        str(current_user.id)
+        raw_data, current_user.role, str(current_user.id)
     )
 
     return {
@@ -101,8 +110,8 @@ async def get_dashboard(
 @router.get("/schedules")
 async def get_schedules(
     current_user: User = Depends(get_current_active_user),
-    _: None = Depends(require_resource_access(ResourceType.SCHEDULES))
-) -> Dict[str, Any]:
+    _: None = Depends(require_resource_access(ResourceType.SCHEDULES)),
+) -> dict[str, Any]:
     """Get all schedules (requires schedule access permission).
 
     This endpoint is accessible by:
@@ -130,8 +139,8 @@ async def get_schedules(
 
 @router.get("/my-schedule")
 async def get_my_schedule(
-    current_user: User = Depends(get_current_active_user)
-) -> Dict[str, Any]:
+    current_user: User = Depends(get_current_active_user),
+) -> dict[str, Any]:
     """Get current user's own schedule.
 
     Accessible by all authenticated users (faculty, residents, clinical staff can see their own).
@@ -141,16 +150,24 @@ async def get_my_schedule(
     """
     # Simulate fetching user's schedule
     all_schedules = [
-        {"id": 1, "person_id": str(current_user.id), "date": "2025-01-15", "activity": "Clinic"},
+        {
+            "id": 1,
+            "person_id": str(current_user.id),
+            "date": "2025-01-15",
+            "activity": "Clinic",
+        },
         {"id": 2, "person_id": "other-user", "date": "2025-01-15", "activity": "ICU"},
-        {"id": 3, "person_id": str(current_user.id), "date": "2025-01-16", "activity": "Rounds"},
+        {
+            "id": 3,
+            "person_id": str(current_user.id),
+            "date": "2025-01-16",
+            "activity": "Rounds",
+        },
     ]
 
     # Filter to only user's schedules
     my_schedules = RoleFilterService.filter_schedule_list(
-        all_schedules,
-        current_user.role,
-        str(current_user.id)
+        all_schedules, current_user.role, str(current_user.id)
     )
 
     return {
@@ -163,8 +180,8 @@ async def get_my_schedule(
 @router.get("/manifest")
 async def get_daily_manifest(
     current_user: User = Depends(get_current_active_user),
-    _: None = Depends(require_resource_access(ResourceType.MANIFEST))
-) -> Dict[str, Any]:
+    _: None = Depends(require_resource_access(ResourceType.MANIFEST)),
+) -> dict[str, Any]:
     """Get today's daily manifest.
 
     Accessible by:
@@ -203,8 +220,8 @@ async def get_daily_manifest(
 @router.get("/compliance")
 async def get_compliance_report(
     current_user: User = Depends(get_current_active_user),
-    _: None = Depends(require_resource_access(ResourceType.COMPLIANCE))
-) -> Dict[str, Any]:
+    _: None = Depends(require_resource_access(ResourceType.COMPLIANCE)),
+) -> dict[str, Any]:
     """Get compliance report (admin only).
 
     Accessible by:
@@ -237,8 +254,8 @@ async def create_user(
     email: str,
     role: str,
     current_user: User = Depends(get_current_active_user),
-    _: None = Depends(require_admin())
-) -> Dict[str, Any]:
+    _: None = Depends(require_admin()),
+) -> dict[str, Any]:
     """Create a new user (admin only).
 
     Only admins can create new users.
@@ -256,8 +273,7 @@ async def create_user(
         RoleFilterService.get_role_from_string(role)
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid role: {role}"
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid role: {role}"
         )
 
     return {
@@ -271,7 +287,7 @@ async def create_user(
 
 
 @router.get("/roles")
-async def list_roles() -> Dict[str, Any]:
+async def list_roles() -> dict[str, Any]:
     """List all available roles with their permissions.
 
     Public endpoint - shows all role types and their access levels.
@@ -291,9 +307,8 @@ async def list_roles() -> Dict[str, Any]:
 
 @router.get("/access-check/{endpoint_category}")
 async def check_access(
-    endpoint_category: str,
-    current_user: User = Depends(get_current_active_user)
-) -> Dict[str, Any]:
+    endpoint_category: str, current_user: User = Depends(get_current_active_user)
+) -> dict[str, Any]:
     """Check if current user can access a specific endpoint category.
 
     Args:
@@ -303,8 +318,7 @@ async def check_access(
         Access check result
     """
     can_access = RoleFilterService.can_access_endpoint(
-        current_user.role,
-        endpoint_category
+        current_user.role, endpoint_category
     )
 
     return {

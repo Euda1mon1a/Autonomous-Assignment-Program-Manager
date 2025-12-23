@@ -57,7 +57,7 @@ from datetime import datetime
 from typing import Any, Generic, TypeVar
 from uuid import UUID, uuid4
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import get_settings
@@ -152,9 +152,7 @@ class QueryResult:
         )
 
     @classmethod
-    def fail(
-        cls, error: str, metadata: dict[str, Any] | None = None
-    ) -> "QueryResult":
+    def fail(cls, error: str, metadata: dict[str, Any] | None = None) -> "QueryResult":
         """Create a failed result."""
         return cls(success=False, error=error, metadata=metadata or {})
 

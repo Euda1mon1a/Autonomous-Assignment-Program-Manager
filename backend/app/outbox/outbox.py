@@ -34,10 +34,11 @@ def relay_outbox_messages():
     relay = OutboxRelay()
     published_count = relay.publish_pending_messages(batch_size=100)
 """
+
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from celery import Celery
@@ -72,7 +73,7 @@ class OutboxWriter:
         aggregate_id: UUID,
         event_type: str,
         payload: dict[str, Any],
-        headers: Optional[dict[str, Any]] = None,
+        headers: dict[str, Any] | None = None,
         max_retries: int = 3,
     ) -> OutboxMessage:
         """
@@ -175,7 +176,7 @@ class OutboxRelay:
     def __init__(
         self,
         db: Session,
-        celery_app: Optional[Celery] = None,
+        celery_app: Celery | None = None,
         processing_timeout_minutes: int = 5,
     ):
         """
@@ -192,6 +193,7 @@ class OutboxRelay:
         # Import Celery app if not provided (avoids circular imports)
         if celery_app is None:
             from app.core.celery_app import celery_app as default_celery_app
+
             self.celery_app = default_celery_app
         else:
             self.celery_app = celery_app

@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field
 
 class TaskInfo(BaseModel):
     """Information about a Celery task."""
+
     task_id: str = Field(alias="taskId")
     task_name: str = Field(alias="taskName")
     worker: str | None = None
@@ -42,6 +43,7 @@ class TaskInfo(BaseModel):
 
 class ScheduledTaskInfo(BaseModel):
     """Information about a scheduled task."""
+
     task_id: str | None = Field(None, alias="taskId")
     task_name: str = Field(alias="taskName")
     worker: str | None = None
@@ -56,6 +58,7 @@ class ScheduledTaskInfo(BaseModel):
 
 class ReservedTaskInfo(BaseModel):
     """Information about a reserved (queued) task."""
+
     task_id: str = Field(alias="taskId")
     task_name: str = Field(alias="taskName")
     worker: str | None = None
@@ -75,6 +78,7 @@ class ReservedTaskInfo(BaseModel):
 
 class WorkerInfo(BaseModel):
     """Information about a Celery worker."""
+
     name: str
     status: str
     pool: str | None = None
@@ -87,6 +91,7 @@ class WorkerInfo(BaseModel):
 
 class WorkerStats(BaseModel):
     """Statistics about Celery workers."""
+
     total_workers: int = Field(alias="totalWorkers")
     online_workers: int = Field(alias="onlineWorkers")
     workers: list[WorkerInfo]
@@ -97,6 +102,7 @@ class WorkerStats(BaseModel):
 
 class WorkerHealth(BaseModel):
     """Worker health status."""
+
     healthy: bool
     total_workers: int = Field(alias="totalWorkers")
     online_workers: int = Field(alias="onlineWorkers")
@@ -115,6 +121,7 @@ class WorkerHealth(BaseModel):
 
 class QueueStatus(BaseModel):
     """Status of a task queue."""
+
     queue_name: str = Field(alias="queueName")
     active_tasks: int = Field(alias="activeTasks")
     reserved_tasks: int = Field(alias="reservedTasks")
@@ -126,6 +133,7 @@ class QueueStatus(BaseModel):
 
 class QueueLengths(BaseModel):
     """Queue lengths for all queues."""
+
     queues: dict[str, int]
     timestamp: str
 
@@ -140,6 +148,7 @@ class QueueLengths(BaseModel):
 
 class TaskStatistics(BaseModel):
     """Statistics for task executions."""
+
     task_name: str = Field(alias="taskName")
     time_range_hours: int = Field(alias="timeRangeHours")
     total_tasks: int = Field(alias="totalTasks")
@@ -160,6 +169,7 @@ class TaskStatistics(BaseModel):
 
 class RetryStatistics(BaseModel):
     """Statistics for task retries."""
+
     task_name: str = Field(alias="taskName")
     total_retries: int = Field(alias="totalRetries")
     tasks_with_retries: int = Field(alias="tasksWithRetries")
@@ -175,6 +185,7 @@ class RetryStatistics(BaseModel):
 
 class PerformanceMetrics(BaseModel):
     """Performance metrics for tasks."""
+
     task_name: str = Field(alias="taskName")
     time_range_hours: int = Field(alias="timeRangeHours")
     total_executions: int = Field(alias="totalExecutions")
@@ -196,6 +207,7 @@ class PerformanceMetrics(BaseModel):
 
 class ThroughputMetrics(BaseModel):
     """Throughput metrics for task processing."""
+
     queue_name: str = Field(alias="queueName")
     time_range_hours: int = Field(alias="timeRangeHours")
     total_tasks_processed: int = Field(alias="totalTasksProcessed")
@@ -212,6 +224,7 @@ class ThroughputMetrics(BaseModel):
 
 class WorkerUtilization(BaseModel):
     """Worker utilization metrics."""
+
     total_workers: int = Field(alias="totalWorkers")
     active_workers: int = Field(alias="activeWorkers")
     idle_workers: int = Field(alias="idleWorkers")
@@ -230,6 +243,7 @@ class WorkerUtilization(BaseModel):
 
 class TaskHistoryRecord(BaseModel):
     """Historical task execution record."""
+
     task_id: str = Field(alias="taskId")
     task_name: str = Field(alias="taskName")
     status: str
@@ -250,6 +264,7 @@ class TaskHistoryRecord(BaseModel):
 
 class TaskHistoryResponse(BaseModel):
     """Response containing task history."""
+
     task_name: str | None = Field(None, alias="taskName")
     total_count: int = Field(alias="totalCount")
     limit: int
@@ -264,6 +279,7 @@ class TaskHistoryResponse(BaseModel):
 
 class TimelineBucket(BaseModel):
     """Time bucket for timeline data."""
+
     timestamp: str
     total_tasks: int = Field(alias="totalTasks")
     successful_tasks: int = Field(alias="successfulTasks")
@@ -276,6 +292,7 @@ class TimelineBucket(BaseModel):
 
 class TaskTimeline(BaseModel):
     """Task execution timeline."""
+
     task_name: str = Field(alias="taskName")
     time_range_hours: int = Field(alias="timeRangeHours")
     granularity: str
@@ -288,6 +305,7 @@ class TaskTimeline(BaseModel):
 
 class FailureRecord(BaseModel):
     """Task failure record."""
+
     task_id: str = Field(alias="taskId")
     task_name: str = Field(alias="taskName")
     failed_at: str = Field(alias="failedAt")
@@ -306,6 +324,7 @@ class FailureRecord(BaseModel):
 
 class SlowTaskRecord(BaseModel):
     """Slow task record."""
+
     task_id: str = Field(alias="taskId")
     task_name: str = Field(alias="taskName")
     runtime_seconds: float = Field(alias="runtimeSeconds")
@@ -326,6 +345,7 @@ class SlowTaskRecord(BaseModel):
 
 class ScheduledTaskConfig(BaseModel):
     """Configuration for a scheduled (beat) task."""
+
     name: str
     task: str
     schedule: str
@@ -337,6 +357,7 @@ class ScheduledTaskConfig(BaseModel):
 
 class ScheduledTasksSummary(BaseModel):
     """Summary of scheduled tasks."""
+
     total_scheduled_tasks: int = Field(alias="totalScheduledTasks")
     scheduled_tasks: list[ScheduledTaskConfig] = Field(alias="scheduledTasks")
     timestamp: str
@@ -352,6 +373,7 @@ class ScheduledTasksSummary(BaseModel):
 
 class TaskRevocationRequest(BaseModel):
     """Request to revoke (cancel) a task."""
+
     task_id: str = Field(alias="taskId")
     terminate: bool = False
 
@@ -361,6 +383,7 @@ class TaskRevocationRequest(BaseModel):
 
 class TaskRevocationResponse(BaseModel):
     """Response to task revocation request."""
+
     task_id: str = Field(alias="taskId")
     success: bool
     message: str | None = None
@@ -371,6 +394,7 @@ class TaskRevocationResponse(BaseModel):
 
 class QueuePurgeRequest(BaseModel):
     """Request to purge a queue."""
+
     queue_name: str = Field(alias="queueName")
     confirm: bool = False
 
@@ -380,6 +404,7 @@ class QueuePurgeRequest(BaseModel):
 
 class QueuePurgeResponse(BaseModel):
     """Response to queue purge request."""
+
     queue_name: str = Field(alias="queueName")
     tasks_purged: int = Field(alias="tasksPurged")
     timestamp: str
@@ -395,6 +420,7 @@ class QueuePurgeResponse(BaseModel):
 
 class JobsDashboardOverview(BaseModel):
     """Overview data for jobs dashboard."""
+
     active_tasks_count: int = Field(alias="activeTasksCount")
     scheduled_tasks_count: int = Field(alias="scheduledTasksCount")
     reserved_tasks_count: int = Field(alias="reservedTasksCount")

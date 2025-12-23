@@ -5,36 +5,33 @@ Tests the full workflow from barrier detection through catalyst recommendation
 to pathway optimization, covering all integration points between components.
 """
 
-import pytest
 from datetime import date, timedelta
-from typing import Any
 from unittest.mock import AsyncMock
-from uuid import uuid4, UUID
+from uuid import UUID, uuid4
 
-from app.scheduling_catalyst.barriers import BarrierDetector, BarrierWeights
+import pytest
+
+from app.scheduling_catalyst.barriers import BarrierDetector
 from app.scheduling_catalyst.catalysts import CatalystAnalyzer, CatalystRecommendation
-from app.scheduling_catalyst.optimizer import (
-    TransitionOptimizer,
-    BatchOptimizer,
-    OptimizationConfig,
-    PathwayResult,
-)
 from app.scheduling_catalyst.integration import (
     DefenseIntegration,
     HubIntegration,
     ResilienceFrameworkIntegration,
 )
 from app.scheduling_catalyst.models import (
-    ActivationEnergy,
     BarrierType,
     CatalystMechanism,
     CatalystPerson,
     CatalystType,
     EnergyBarrier,
     ReactionPathway,
-    ReactionType,
 )
-
+from app.scheduling_catalyst.optimizer import (
+    BatchOptimizer,
+    OptimizationConfig,
+    PathwayResult,
+    TransitionOptimizer,
+)
 
 # ============================================================================
 # Test Fixtures
@@ -112,6 +109,7 @@ def absolute_barrier() -> EnergyBarrier:
 @pytest.fixture
 def mock_hub_metrics():
     """Create mock hub metrics for testing."""
+
     class MockHubMetrics:
         person_id: UUID = uuid4()
         composite_score: float = 0.85
@@ -292,7 +290,10 @@ class TestOptimizerIntegration:
 
             # If catalysts were applied, effective energy should be less
             if len(pathway.catalysts_applied) > 0:
-                assert pathway.effective_activation_energy <= pathway.total_activation_energy
+                assert (
+                    pathway.effective_activation_energy
+                    <= pathway.total_activation_energy
+                )
 
     @pytest.mark.asyncio
     async def test_optimizer_with_custom_catalysts(self, optimizer):
@@ -336,7 +337,10 @@ class TestOptimizerIntegration:
                 # For high-energy pathways, catalyst should be applied
                 assert coordinator in result.pathway.catalysts_applied
                 # Energy should be significantly reduced
-                assert result.pathway.effective_activation_energy < result.pathway.total_activation_energy
+                assert (
+                    result.pathway.effective_activation_energy
+                    < result.pathway.total_activation_energy
+                )
             else:
                 # Low energy pathways may proceed without catalysts
                 # But should still succeed
@@ -727,9 +731,7 @@ class TestEnergyReductionAccumulation:
 
         # Verify accounting
         if recommendation.recommended_catalysts:
-            calculated_residual = (
-                total_barrier_energy - recommendation.total_reduction
-            )
+            calculated_residual = total_barrier_energy - recommendation.total_reduction
             assert abs(calculated_residual - recommendation.residual_energy) < 0.01
 
     def test_pathway_energy_recalculation(self):
@@ -800,7 +802,7 @@ class TestFeasibilityDetermination:
                 catalyst_type=CatalystType.ENZYMATIC,
                 catalyst_score=0.95,
                 barriers_addressed=list(BarrierType),  # Addresses all types
-                reduction_factors={bt: 0.9 for bt in BarrierType},
+                reduction_factors=dict.fromkeys(BarrierType, 0.9),
             )
         ]
 
@@ -985,14 +987,18 @@ class TestEndToEndScenarios:
             # Should have emergency catalyst if any barriers existed
             if result.pathway.barriers:
                 has_emergency_catalyst = any(
-                    "emergency" in (
-                        c.mechanism_id if isinstance(c, CatalystMechanism)
+                    "emergency"
+                    in (
+                        c.mechanism_id
+                        if isinstance(c, CatalystMechanism)
                         else c.name.lower()
                     )
                     for c in result.pathway.catalysts_applied
                 )
                 # Emergency catalyst should be applied for this type
-                assert has_emergency_catalyst or len(result.pathway.catalysts_applied) > 0
+                assert (
+                    has_emergency_catalyst or len(result.pathway.catalysts_applied) > 0
+                )
 
     @pytest.mark.asyncio
     async def test_routine_swap_scenario(self, optimizer):
@@ -1031,7 +1037,7 @@ class TestEndToEndScenarios:
                     "target_date": (today + timedelta(days=i * 7)).isoformat(),
                     "change_type": "reassignment",
                     "new_person_id": uuid4(),
-                }
+                },
             )
             for i in range(1, 4)
         ]

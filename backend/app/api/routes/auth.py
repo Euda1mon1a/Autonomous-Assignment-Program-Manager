@@ -29,7 +29,6 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.auth import (
     RefreshTokenRequest,
-    Token,
     TokenWithRefresh,
     UserCreate,
     UserLogin,
@@ -85,9 +84,7 @@ async def login(
 
     # Decode access token to get user info for refresh token
     payload = jwt.decode(
-        token_response.access_token,
-        settings.SECRET_KEY,
-        algorithms=[ALGORITHM]
+        token_response.access_token, settings.SECRET_KEY, algorithms=[ALGORITHM]
     )
     user_id = payload.get("sub")
     username = payload.get("username")
@@ -100,7 +97,7 @@ async def login(
     return TokenWithRefresh(
         access_token=token_response.access_token,
         refresh_token=refresh_token,
-        token_type="bearer"
+        token_type="bearer",
     )
 
 
@@ -136,9 +133,7 @@ async def login_json(
 
     # Decode access token to get user info for refresh token
     payload = jwt.decode(
-        token_response.access_token,
-        settings.SECRET_KEY,
-        algorithms=[ALGORITHM]
+        token_response.access_token, settings.SECRET_KEY, algorithms=[ALGORITHM]
     )
     user_id = payload.get("sub")
     username = payload.get("username")
@@ -151,7 +146,7 @@ async def login_json(
     return TokenWithRefresh(
         access_token=token_response.access_token,
         refresh_token=refresh_token,
-        token_type="bearer"
+        token_type="bearer",
     )
 
 
@@ -171,11 +166,7 @@ async def logout(
     if token:
         try:
             # Decode token to get jti and expiration
-            payload = jwt.decode(
-                token,
-                settings.SECRET_KEY,
-                algorithms=[ALGORITHM]
-            )
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
             jti = payload.get("jti")
             exp = payload.get("exp")
 
@@ -189,7 +180,7 @@ async def logout(
                     jti=jti,
                     expires_at=expires_at,
                     user_id=current_user.id,
-                    reason="logout"
+                    reason="logout",
                 )
 
         except JWTError:
@@ -278,7 +269,7 @@ async def refresh_token(
     return TokenWithRefresh(
         access_token=new_access_token,
         refresh_token=new_refresh_token,
-        token_type="bearer"
+        token_type="bearer",
     )
 
 

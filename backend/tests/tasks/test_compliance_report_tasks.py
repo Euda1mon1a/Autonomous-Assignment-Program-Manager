@@ -1,20 +1,19 @@
 """Tests for compliance report tasks."""
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock, Mock
-from datetime import date, timedelta
-import os
+
 import json
-import tempfile
+from datetime import date
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
-from app.tasks.compliance_report_tasks import (
-    generate_daily_compliance_summary,
-    generate_weekly_compliance_report,
-    generate_monthly_executive_summary,
-    generate_custom_compliance_report,
-    check_violation_alerts,
-)
+import pytest
 
+from app.tasks.compliance_report_tasks import (
+    check_violation_alerts,
+    generate_custom_compliance_report,
+    generate_daily_compliance_summary,
+    generate_monthly_executive_summary,
+    generate_weekly_compliance_report,
+)
 
 # =============================================================================
 # Report Storage Tests
@@ -36,7 +35,7 @@ class TestReportStorage:
         filepath = reports_dir / filename
 
         # Save report
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(report_data, f)
 
         # Verify file exists and contains correct data
@@ -62,7 +61,7 @@ class TestReportStorage:
         # Save a test report
         report_data = {"test": "data"}
         filepath = reports_dir / "test_report.json"
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(report_data, f)
 
         assert filepath.exists()
@@ -76,9 +75,11 @@ class TestReportStorage:
 class TestDailyComplianceSummary:
     """Tests for daily compliance summary generation."""
 
-    @patch('app.tasks.compliance_report_tasks.SessionLocal')
-    @patch('app.tasks.compliance_report_tasks.ComplianceReportGenerator')
-    def test_generate_daily_compliance_summary_success(self, mock_generator, mock_session):
+    @patch("app.tasks.compliance_report_tasks.SessionLocal")
+    @patch("app.tasks.compliance_report_tasks.ComplianceReportGenerator")
+    def test_generate_daily_compliance_summary_success(
+        self, mock_generator, mock_session
+    ):
         """Test successful daily summary generation."""
         # Mock database session
         mock_db = MagicMock()
@@ -93,11 +94,9 @@ class TestDailyComplianceSummary:
         mock_report_data.work_hour_summary = {
             "total_residents": 10,
             "total_violations": 0,
-            "compliance_rate": 100.0
+            "compliance_rate": 100.0,
         }
-        mock_report_data.coverage_metrics = {
-            "coverage_rate_percent": 95.0
-        }
+        mock_report_data.coverage_metrics = {"coverage_rate_percent": 95.0}
         mock_gen_instance.generate_compliance_data.return_value = mock_report_data
 
         # Execute task
@@ -113,9 +112,11 @@ class TestDailyComplianceSummary:
         # Verify database session was closed
         mock_db.close.assert_called_once()
 
-    @patch('app.tasks.compliance_report_tasks.SessionLocal')
-    @patch('app.tasks.compliance_report_tasks.ComplianceReportGenerator')
-    def test_generate_daily_compliance_summary_with_violations(self, mock_generator, mock_session, caplog):
+    @patch("app.tasks.compliance_report_tasks.SessionLocal")
+    @patch("app.tasks.compliance_report_tasks.ComplianceReportGenerator")
+    def test_generate_daily_compliance_summary_with_violations(
+        self, mock_generator, mock_session, caplog
+    ):
         """Test daily summary with violations found."""
         # Mock database session
         mock_db = MagicMock()
@@ -130,11 +131,9 @@ class TestDailyComplianceSummary:
         mock_report_data.work_hour_summary = {
             "total_residents": 10,
             "total_violations": 3,
-            "compliance_rate": 70.0
+            "compliance_rate": 70.0,
         }
-        mock_report_data.coverage_metrics = {
-            "coverage_rate_percent": 95.0
-        }
+        mock_report_data.coverage_metrics = {"coverage_rate_percent": 95.0}
         mock_gen_instance.generate_compliance_data.return_value = mock_report_data
 
         # Execute task
@@ -156,8 +155,8 @@ class TestDailyComplianceSummary:
 class TestWeeklyComplianceReport:
     """Tests for weekly compliance report generation."""
 
-    @patch('app.tasks.compliance_report_tasks.SessionLocal')
-    @patch('app.tasks.compliance_report_tasks.ComplianceReportGenerator')
+    @patch("app.tasks.compliance_report_tasks.SessionLocal")
+    @patch("app.tasks.compliance_report_tasks.ComplianceReportGenerator")
     def test_generate_weekly_compliance_report_pdf(self, mock_generator, mock_session):
         """Test weekly report generation in PDF format."""
         # Mock database session
@@ -173,7 +172,7 @@ class TestWeeklyComplianceReport:
         mock_report_data.work_hour_summary = {
             "total_residents": 15,
             "total_violations": 2,
-            "compliance_rate": 86.7
+            "compliance_rate": 86.7,
         }
         mock_gen_instance.generate_compliance_data.return_value = mock_report_data
 
@@ -195,9 +194,11 @@ class TestWeeklyComplianceReport:
         # Verify PDF export was called
         mock_gen_instance.export_to_pdf.assert_called_once()
 
-    @patch('app.tasks.compliance_report_tasks.SessionLocal')
-    @patch('app.tasks.compliance_report_tasks.ComplianceReportGenerator')
-    def test_generate_weekly_compliance_report_excel(self, mock_generator, mock_session):
+    @patch("app.tasks.compliance_report_tasks.SessionLocal")
+    @patch("app.tasks.compliance_report_tasks.ComplianceReportGenerator")
+    def test_generate_weekly_compliance_report_excel(
+        self, mock_generator, mock_session
+    ):
         """Test weekly report generation in Excel format."""
         # Mock database session
         mock_db = MagicMock()
@@ -212,7 +213,7 @@ class TestWeeklyComplianceReport:
         mock_report_data.work_hour_summary = {
             "total_residents": 15,
             "total_violations": 2,
-            "compliance_rate": 86.7
+            "compliance_rate": 86.7,
         }
         mock_gen_instance.generate_compliance_data.return_value = mock_report_data
 
@@ -240,8 +241,8 @@ class TestWeeklyComplianceReport:
 class TestMonthlyExecutiveSummary:
     """Tests for monthly executive summary generation."""
 
-    @patch('app.tasks.compliance_report_tasks.SessionLocal')
-    @patch('app.tasks.compliance_report_tasks.ComplianceReportGenerator')
+    @patch("app.tasks.compliance_report_tasks.SessionLocal")
+    @patch("app.tasks.compliance_report_tasks.ComplianceReportGenerator")
     def test_generate_monthly_executive_summary(self, mock_generator, mock_session):
         """Test monthly executive summary generation."""
         # Mock database session
@@ -258,11 +259,9 @@ class TestMonthlyExecutiveSummary:
             "total_residents": 20,
             "total_violations": 5,
             "compliance_rate": 75.0,
-            "avg_weekly_hours": 65.5
+            "avg_weekly_hours": 65.5,
         }
-        mock_report_data.supervision_summary = {
-            "compliance_rate": 98.0
-        }
+        mock_report_data.supervision_summary = {"compliance_rate": 98.0}
         mock_gen_instance.generate_compliance_data.return_value = mock_report_data
 
         # Mock exports
@@ -294,8 +293,8 @@ class TestMonthlyExecutiveSummary:
 class TestCustomComplianceReport:
     """Tests for custom compliance report generation."""
 
-    @patch('app.tasks.compliance_report_tasks.SessionLocal')
-    @patch('app.tasks.compliance_report_tasks.ComplianceReportGenerator')
+    @patch("app.tasks.compliance_report_tasks.SessionLocal")
+    @patch("app.tasks.compliance_report_tasks.ComplianceReportGenerator")
     def test_generate_custom_compliance_report(self, mock_generator, mock_session):
         """Test custom report generation."""
         # Mock database session
@@ -311,7 +310,7 @@ class TestCustomComplianceReport:
         mock_report_data.work_hour_summary = {
             "total_residents": 8,
             "total_violations": 1,
-            "compliance_rate": 87.5
+            "compliance_rate": 87.5,
         }
         mock_gen_instance.generate_compliance_data.return_value = mock_report_data
 
@@ -324,7 +323,7 @@ class TestCustomComplianceReport:
             start_date="2025-01-01",
             end_date="2025-01-31",
             pgy_levels=[1, 2],
-            format="pdf"
+            format="pdf",
         )
 
         # Verify results
@@ -334,9 +333,11 @@ class TestCustomComplianceReport:
         assert result["parameters"]["pgy_levels"] == [1, 2]
         assert result["summary"]["total_residents"] == 8
 
-    @patch('app.tasks.compliance_report_tasks.SessionLocal')
-    @patch('app.tasks.compliance_report_tasks.ComplianceReportGenerator')
-    def test_generate_custom_compliance_report_with_resident_ids(self, mock_generator, mock_session):
+    @patch("app.tasks.compliance_report_tasks.SessionLocal")
+    @patch("app.tasks.compliance_report_tasks.ComplianceReportGenerator")
+    def test_generate_custom_compliance_report_with_resident_ids(
+        self, mock_generator, mock_session
+    ):
         """Test custom report with specific resident IDs."""
         # Mock database session
         mock_db = MagicMock()
@@ -351,7 +352,7 @@ class TestCustomComplianceReport:
         mock_report_data.work_hour_summary = {
             "total_residents": 2,
             "total_violations": 0,
-            "compliance_rate": 100.0
+            "compliance_rate": 100.0,
         }
         mock_gen_instance.generate_compliance_data.return_value = mock_report_data
 
@@ -365,7 +366,7 @@ class TestCustomComplianceReport:
             start_date="2025-01-01",
             end_date="2025-01-31",
             resident_ids=resident_ids,
-            format="pdf"
+            format="pdf",
         )
 
         # Verify results
@@ -381,9 +382,11 @@ class TestCustomComplianceReport:
 class TestViolationAlerts:
     """Tests for violation alerts checking."""
 
-    @patch('app.tasks.compliance_report_tasks.SessionLocal')
-    @patch('app.tasks.compliance_report_tasks.ComplianceReportGenerator')
-    def test_check_violation_alerts_no_violations(self, mock_generator, mock_session, caplog):
+    @patch("app.tasks.compliance_report_tasks.SessionLocal")
+    @patch("app.tasks.compliance_report_tasks.ComplianceReportGenerator")
+    def test_check_violation_alerts_no_violations(
+        self, mock_generator, mock_session, caplog
+    ):
         """Test violation check with no violations found."""
         # Mock database session
         mock_db = MagicMock()
@@ -408,11 +411,16 @@ class TestViolationAlerts:
         assert result["critical_violations"] == 0
 
         # Verify info log
-        assert any("No compliance violations found" in record.message for record in caplog.records)
+        assert any(
+            "No compliance violations found" in record.message
+            for record in caplog.records
+        )
 
-    @patch('app.tasks.compliance_report_tasks.SessionLocal')
-    @patch('app.tasks.compliance_report_tasks.ComplianceReportGenerator')
-    def test_check_violation_alerts_with_violations(self, mock_generator, mock_session, caplog):
+    @patch("app.tasks.compliance_report_tasks.SessionLocal")
+    @patch("app.tasks.compliance_report_tasks.ComplianceReportGenerator")
+    def test_check_violation_alerts_with_violations(
+        self, mock_generator, mock_session, caplog
+    ):
         """Test violation check with violations found."""
         # Mock database session
         mock_db = MagicMock()
@@ -426,7 +434,7 @@ class TestViolationAlerts:
         violations = [
             {"severity": "CRITICAL", "type": "80_HOUR_RULE"},
             {"severity": "WARNING", "type": "1_IN_7_RULE"},
-            {"severity": "CRITICAL", "type": "SUPERVISION"}
+            {"severity": "CRITICAL", "type": "SUPERVISION"},
         ]
         mock_report_data = MagicMock()
         mock_report_data.acgme_violations = violations
@@ -446,9 +454,11 @@ class TestViolationAlerts:
         assert any("Found 3 violations" in record.message for record in caplog.records)
         assert any("2 critical" in record.message for record in caplog.records)
 
-    @patch('app.tasks.compliance_report_tasks.SessionLocal')
-    @patch('app.tasks.compliance_report_tasks.ComplianceReportGenerator')
-    def test_check_violation_alerts_limits_violations(self, mock_generator, mock_session):
+    @patch("app.tasks.compliance_report_tasks.SessionLocal")
+    @patch("app.tasks.compliance_report_tasks.ComplianceReportGenerator")
+    def test_check_violation_alerts_limits_violations(
+        self, mock_generator, mock_session
+    ):
         """Test violation check limits returned violations to 10."""
         # Mock database session
         mock_db = MagicMock()
@@ -459,7 +469,9 @@ class TestViolationAlerts:
         mock_generator.return_value = mock_gen_instance
 
         # Mock report data with many violations
-        violations = [{"severity": "WARNING", "type": f"VIOLATION_{i}"} for i in range(20)]
+        violations = [
+            {"severity": "WARNING", "type": f"VIOLATION_{i}"} for i in range(20)
+        ]
         mock_report_data = MagicMock()
         mock_report_data.acgme_violations = violations
         mock_gen_instance.generate_compliance_data.return_value = mock_report_data
@@ -480,7 +492,7 @@ class TestViolationAlerts:
 class TestTaskErrorHandling:
     """Tests for task error handling and retries."""
 
-    @patch('app.tasks.compliance_report_tasks.SessionLocal')
+    @patch("app.tasks.compliance_report_tasks.SessionLocal")
     def test_task_retries_on_exception(self, mock_session):
         """Test that tasks retry on exceptions."""
         # Mock database session to raise exception
@@ -496,8 +508,8 @@ class TestTaskErrorHandling:
             task_func = generate_daily_compliance_summary.__wrapped__
             task_func(mock_task, lookback_days=1)
 
-    @patch('app.tasks.compliance_report_tasks.SessionLocal')
-    @patch('app.tasks.compliance_report_tasks.ComplianceReportGenerator')
+    @patch("app.tasks.compliance_report_tasks.SessionLocal")
+    @patch("app.tasks.compliance_report_tasks.ComplianceReportGenerator")
     def test_database_session_always_closes(self, mock_generator, mock_session):
         """Test database session is closed even on error."""
         # Mock database session
@@ -506,7 +518,9 @@ class TestTaskErrorHandling:
 
         # Mock generator to raise exception
         mock_gen_instance = MagicMock()
-        mock_gen_instance.generate_compliance_data.side_effect = Exception("Report generation failed")
+        mock_gen_instance.generate_compliance_data.side_effect = Exception(
+            "Report generation failed"
+        )
         mock_generator.return_value = mock_gen_instance
 
         # Execute task should handle exception

@@ -41,7 +41,9 @@ class CertificationController:
     ) -> CertificationTypeListResponse:
         """List all certification types."""
         result = self.service.list_certification_types(active_only=active_only)
-        return CertificationTypeListResponse(items=result["items"], total=result["total"])
+        return CertificationTypeListResponse(
+            items=result["items"], total=result["total"]
+        )
 
     def get_certification_type(self, cert_type_id: UUID) -> CertificationTypeResponse:
         """Get a certification type by ID."""
@@ -109,7 +111,9 @@ class CertificationController:
             person_id=person_id,
             include_expired=include_expired,
         )
-        return PersonCertificationListResponse(items=result["items"], total=result["total"])
+        return PersonCertificationListResponse(
+            items=result["items"], total=result["total"]
+        )
 
     def get_person_certification(self, cert_id: UUID) -> PersonCertificationResponse:
         """Get a person certification by ID."""
@@ -200,23 +204,25 @@ class CertificationController:
 
         items = []
         for cert in result["items"]:
-            items.append(ExpiringCertificationResponse(
-                id=cert.id,
-                person=PersonSummary(
-                    id=cert.person.id,
-                    name=cert.person.name,
-                    type=cert.person.type,
-                    email=cert.person.email,
-                ),
-                certification_type=CertificationTypeSummary(
-                    id=cert.certification_type.id,
-                    name=cert.certification_type.name,
-                    full_name=cert.certification_type.full_name,
-                ),
-                expiration_date=cert.expiration_date,
-                days_until_expiration=cert.days_until_expiration,
-                status=cert.status,
-            ))
+            items.append(
+                ExpiringCertificationResponse(
+                    id=cert.id,
+                    person=PersonSummary(
+                        id=cert.person.id,
+                        name=cert.person.name,
+                        type=cert.person.type,
+                        email=cert.person.email,
+                    ),
+                    certification_type=CertificationTypeSummary(
+                        id=cert.certification_type.id,
+                        name=cert.certification_type.name,
+                        full_name=cert.certification_type.full_name,
+                    ),
+                    expiration_date=cert.expiration_date,
+                    days_until_expiration=cert.days_until_expiration,
+                    status=cert.status,
+                )
+            )
 
         return ExpiringCertificationsListResponse(
             items=items,

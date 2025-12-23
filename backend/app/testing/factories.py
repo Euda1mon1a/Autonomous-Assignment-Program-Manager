@@ -8,8 +8,9 @@ Provides factories for:
 - ACGME validation responses
 - Schedule generation responses
 """
-from datetime import date, datetime, timedelta
-from typing import Any, Dict, List, Optional
+
+from datetime import date, datetime
+from typing import Any
 from uuid import uuid4
 
 from app.testing.mock_server import MockResponse
@@ -26,7 +27,7 @@ class MockResponseFactory:
     def success(
         data: Any = None,
         status_code: int = 200,
-        headers: Dict[str, str] = None,
+        headers: dict[str, str] = None,
     ) -> MockResponse:
         """
         Create a successful response.
@@ -50,7 +51,7 @@ class MockResponseFactory:
         message: str = "An error occurred",
         status_code: int = 400,
         error_type: str = "ValidationError",
-        details: Dict[str, Any] = None,
+        details: dict[str, Any] = None,
     ) -> MockResponse:
         """
         Create an error response.
@@ -78,7 +79,7 @@ class MockResponseFactory:
 
     @staticmethod
     def paginated(
-        items: List[Any],
+        items: list[Any],
         total: int = None,
         page: int = 1,
         page_size: int = 20,
@@ -112,7 +113,7 @@ class MockResponseFactory:
 
     @staticmethod
     def created(
-        resource: Dict[str, Any],
+        resource: dict[str, Any],
         resource_id: str = None,
         location: str = None,
     ) -> MockResponse:
@@ -206,7 +207,7 @@ class MockResponseFactory:
     def validation_error(
         field: str,
         message: str,
-        additional_errors: List[Dict[str, str]] = None,
+        additional_errors: list[dict[str, str]] = None,
     ) -> MockResponse:
         """
         Create a validation error response.
@@ -235,7 +236,7 @@ class MockResponseFactory:
 def create_mock_response(
     status_code: int = 200,
     body: Any = None,
-    headers: Dict[str, str] = None,
+    headers: dict[str, str] = None,
     delay_ms: int = 0,
 ) -> MockResponse:
     """
@@ -285,7 +286,7 @@ def create_error_response(
 
 
 def create_paginated_response(
-    items: List[Any],
+    items: list[Any],
     total: int = None,
     page: int = 1,
     page_size: int = 20,
@@ -315,7 +316,7 @@ def create_person_response(
     name: str = "Dr. Test Person",
     person_type: str = "resident",
     pgy_level: int = 2,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create a person resource response.
 
@@ -351,7 +352,7 @@ def create_assignment_response(
     person_id: str = None,
     block_id: str = None,
     rotation_template_id: str = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create an assignment resource response.
 
@@ -377,7 +378,7 @@ def create_block_response(
     block_id: str = None,
     block_date: date = None,
     time_of_day: str = "AM",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create a block resource response.
 
@@ -403,8 +404,8 @@ def create_block_response(
 
 def create_acgme_validation_response(
     is_compliant: bool = True,
-    violations: List[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    violations: list[dict[str, Any]] = None,
+) -> dict[str, Any]:
     """
     Create ACGME validation response.
 
@@ -432,7 +433,7 @@ def create_swap_request_response(
     swap_id: str = None,
     status: str = "pending",
     swap_type: str = "one_to_one",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create swap request response.
 
@@ -457,7 +458,7 @@ def create_swap_request_response(
 def create_schedule_generation_response(
     job_id: str = None,
     status: str = "pending",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create schedule generation job response.
 
@@ -480,7 +481,7 @@ def create_resilience_health_response(
     status: str = "operational",
     utilization: float = 0.65,
     defense_level: str = "GREEN",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create resilience health check response.
 

@@ -1,10 +1,8 @@
 """Tests for full-text search service."""
 
 import pytest
-from datetime import datetime
 
 from app.models.person import Person
-from app.models.procedure import Procedure
 from app.models.rotation_template import RotationTemplate
 from app.schemas.search import SearchRequest
 from app.search.full_text import (
@@ -138,7 +136,7 @@ class TestRelevanceScorer:
             {
                 "name": "John Doe",
                 "email": "john.doe@example.com",
-            }
+            },
         )
         assert score > 0
         assert score <= 1.0
@@ -150,7 +148,7 @@ class TestRelevanceScorer:
             {
                 "name": "John Doe",
                 "email": "john.doe@example.com",
-            }
+            },
         )
         assert score == 0.0
 
@@ -439,9 +437,7 @@ class TestFullTextSearchService:
         response = await search_service.search(request)
 
         # At least one result should have highlights
-        has_highlights = any(
-            item.highlights for item in response.items
-        )
+        has_highlights = any(item.highlights for item in response.items)
         assert has_highlights
 
     @pytest.mark.asyncio

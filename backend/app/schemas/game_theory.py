@@ -6,6 +6,7 @@ Request/response models for:
 - Evolutionary simulations
 - Validation results
 """
+
 from datetime import datetime
 from enum import Enum
 from uuid import UUID
@@ -15,6 +16,7 @@ from pydantic import BaseModel, Field
 
 class StrategyType(str, Enum):
     """Types of configuration strategies."""
+
     COOPERATIVE = "cooperative"
     AGGRESSIVE = "aggressive"
     TIT_FOR_TAT = "tit_for_tat"
@@ -28,6 +30,7 @@ class StrategyType(str, Enum):
 
 class SimulationStatus(str, Enum):
     """Status of a simulation."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -42,6 +45,7 @@ class SimulationStatus(str, Enum):
 
 class StrategyCreate(BaseModel):
     """Request to create a new configuration strategy."""
+
     name: str = Field(..., min_length=1, max_length=100)
     description: str | None = None
     strategy_type: StrategyType
@@ -65,6 +69,7 @@ class StrategyCreate(BaseModel):
 
 class StrategyUpdate(BaseModel):
     """Request to update a strategy."""
+
     name: str | None = None
     description: str | None = None
     utilization_target: float | None = None
@@ -78,6 +83,7 @@ class StrategyUpdate(BaseModel):
 
 class StrategyResponse(BaseModel):
     """Response containing strategy details."""
+
     id: UUID
     name: str
     description: str | None
@@ -108,6 +114,7 @@ class StrategyResponse(BaseModel):
 
 class StrategyListResponse(BaseModel):
     """Response containing list of strategies."""
+
     strategies: list[StrategyResponse]
     total: int
 
@@ -119,6 +126,7 @@ class StrategyListResponse(BaseModel):
 
 class TournamentCreate(BaseModel):
     """Request to create a new tournament."""
+
     name: str = Field(..., min_length=1, max_length=200)
     description: str | None = None
     strategy_ids: list[UUID] = Field(..., min_length=2)
@@ -137,6 +145,7 @@ class TournamentCreate(BaseModel):
 
 class TournamentResponse(BaseModel):
     """Response containing tournament details."""
+
     id: UUID
     name: str
     description: str | None
@@ -165,12 +174,14 @@ class TournamentResponse(BaseModel):
 
 class TournamentListResponse(BaseModel):
     """Response containing list of tournaments."""
+
     tournaments: list[TournamentResponse]
     total: int
 
 
 class TournamentRanking(BaseModel):
     """Ranking entry for a strategy in a tournament."""
+
     rank: int
     strategy_id: UUID
     strategy_name: str
@@ -184,6 +195,7 @@ class TournamentRanking(BaseModel):
 
 class TournamentResultsResponse(BaseModel):
     """Detailed tournament results."""
+
     id: UUID
     name: str
     status: SimulationStatus
@@ -203,6 +215,7 @@ class TournamentResultsResponse(BaseModel):
 
 class MatchResponse(BaseModel):
     """Response containing match details."""
+
     id: UUID
     tournament_id: UUID
 
@@ -229,6 +242,7 @@ class MatchResponse(BaseModel):
 
 class EvolutionCreate(BaseModel):
     """Request to create an evolutionary simulation."""
+
     name: str = Field(..., min_length=1, max_length=200)
     description: str | None = None
 
@@ -243,6 +257,7 @@ class EvolutionCreate(BaseModel):
 
 class EvolutionResponse(BaseModel):
     """Response containing evolution simulation details."""
+
     id: UUID
     name: str
     description: str | None
@@ -271,18 +286,21 @@ class EvolutionResponse(BaseModel):
 
 class EvolutionListResponse(BaseModel):
     """Response containing list of evolution simulations."""
+
     simulations: list[EvolutionResponse]
     total: int
 
 
 class PopulationSnapshot(BaseModel):
     """Population state at a point in time."""
+
     generation: int
     populations: dict[str, int]  # strategy_name -> count
 
 
 class EvolutionResultsResponse(BaseModel):
     """Detailed evolution results."""
+
     id: UUID
     name: str
     status: SimulationStatus
@@ -306,6 +324,7 @@ class EvolutionResultsResponse(BaseModel):
 
 class ValidationRequest(BaseModel):
     """Request to validate a strategy against TFT."""
+
     strategy_id: UUID
     turns: int = Field(100, ge=10, le=500)
     repetitions: int = Field(10, ge=1, le=50)
@@ -314,6 +333,7 @@ class ValidationRequest(BaseModel):
 
 class ValidationResponse(BaseModel):
     """Response containing validation results."""
+
     id: UUID
     strategy_id: UUID
     strategy_name: str
@@ -341,6 +361,7 @@ class ValidationResponse(BaseModel):
 
 class ConfigAnalysisRequest(BaseModel):
     """Request to analyze current resilience config using game theory."""
+
     utilization_target: float = Field(0.80, ge=0.0, le=1.0)
     cross_zone_borrowing: bool = True
     sacrifice_willingness: str = Field("medium", pattern="^(low|medium|high)$")
@@ -349,6 +370,7 @@ class ConfigAnalysisRequest(BaseModel):
 
 class ConfigAnalysisResponse(BaseModel):
     """Response from configuration analysis."""
+
     config_name: str
     matchup_results: dict[str, dict]
     average_score: float
@@ -359,12 +381,14 @@ class ConfigAnalysisResponse(BaseModel):
 
 class OptimalConfigRequest(BaseModel):
     """Request to find optimal configuration through evolution."""
+
     candidates: list[ConfigAnalysisRequest]
     generations: int = Field(100, ge=10, le=1000)
 
 
 class OptimalConfigResponse(BaseModel):
     """Response from optimal configuration search."""
+
     optimal_config: ConfigAnalysisRequest
     generations_to_win: int
     is_evolutionarily_stable: bool

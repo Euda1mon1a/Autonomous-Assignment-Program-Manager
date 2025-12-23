@@ -1,4 +1,5 @@
 """Call assignment model - overnight and weekend call."""
+
 import uuid
 from datetime import datetime
 
@@ -27,11 +28,14 @@ class CallAssignment(Base):
     - Different rotation requirements
     - Critical coverage that can't be missed
     """
+
     __tablename__ = "call_assignments"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     date = Column(Date, nullable=False)
-    person_id = Column(GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False)
+    person_id = Column(
+        GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False
+    )
     call_type = Column(String(50), nullable=False)  # 'overnight', 'weekend', 'backup'
 
     # Call metadata
@@ -45,7 +49,9 @@ class CallAssignment(Base):
 
     __table_args__ = (
         UniqueConstraint("date", "person_id", "call_type", name="unique_call_per_day"),
-        CheckConstraint("call_type IN ('overnight', 'weekend', 'backup')", name="check_call_type"),
+        CheckConstraint(
+            "call_type IN ('overnight', 'weekend', 'backup')", name="check_call_type"
+        ),
     )
 
     def __repr__(self):

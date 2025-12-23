@@ -29,8 +29,8 @@ from sqlalchemy_continuum import version_class
 
 from app.core.logging import get_logger
 from app.core.types import AuditStatistics
-from app.models.assignment import Assignment
 from app.models.absence import Absence
+from app.models.assignment import Assignment
 from app.models.schedule_run import ScheduleRun
 from app.models.swap import SwapRecord
 from app.models.user import User
@@ -114,7 +114,9 @@ def get_audit_logs(
     """
     try:
         # Determine which tables to query
-        tables_to_query = entity_types if entity_types else list(VERSION_TABLE_MAP.keys())
+        tables_to_query = (
+            entity_types if entity_types else list(VERSION_TABLE_MAP.keys())
+        )
 
         all_entries = []
 
@@ -187,11 +189,11 @@ def _query_version_table(
 
     if start_date:
         where_clauses.append("t.issued_at >= :start_date")
-        params["start_date"] = datetime.fromisoformat(start_date.replace('Z', ''))
+        params["start_date"] = datetime.fromisoformat(start_date.replace("Z", ""))
 
     if end_date:
         where_clauses.append("t.issued_at <= :end_date")
-        params["end_date"] = datetime.fromisoformat(end_date.replace('Z', ''))
+        params["end_date"] = datetime.fromisoformat(end_date.replace("Z", ""))
 
     if user_ids:
         placeholders = ",".join([f":user_{i}" for i in range(len(user_ids))])
@@ -277,7 +279,11 @@ def _build_audit_entry(
             )
 
         # Build the entry
-        timestamp = issued_at.isoformat() + "Z" if issued_at else datetime.utcnow().isoformat() + "Z"
+        timestamp = (
+            issued_at.isoformat() + "Z"
+            if issued_at
+            else datetime.utcnow().isoformat() + "Z"
+        )
 
         return AuditLogEntry(
             id=f"{entity_type}-{transaction_id}",
@@ -358,7 +364,9 @@ def _get_entity_name(db: Session, entity_type: str, entity_id: str) -> str | Non
             return "Absence"
 
         elif entity_type == "schedule_run":
-            schedule_run = db.query(ScheduleRun).filter(ScheduleRun.id == entity_id).first()
+            schedule_run = (
+                db.query(ScheduleRun).filter(ScheduleRun.id == entity_id).first()
+            )
             if schedule_run:
                 return f"Schedule Run - {schedule_run.start_date} to {schedule_run.end_date}"
             return "Schedule Run"
@@ -391,19 +399,28 @@ def _get_field_changes(
         VersionClass = version_class(model_class)
 
         # Get current and previous versions
-        current_version = db.query(VersionClass).filter(
-            VersionClass.id == entity_id,
-            VersionClass.transaction_id == transaction_id,
-        ).first()
+        current_version = (
+            db.query(VersionClass)
+            .filter(
+                VersionClass.id == entity_id,
+                VersionClass.transaction_id == transaction_id,
+            )
+            .first()
+        )
 
         if not current_version:
             return None
 
         # Get previous version
-        previous_version = db.query(VersionClass).filter(
-            VersionClass.id == entity_id,
-            VersionClass.transaction_id < transaction_id,
-        ).order_by(VersionClass.transaction_id.desc()).first()
+        previous_version = (
+            db.query(VersionClass)
+            .filter(
+                VersionClass.id == entity_id,
+                VersionClass.transaction_id < transaction_id,
+            )
+            .order_by(VersionClass.transaction_id.desc())
+            .first()
+        )
 
         if not previous_version:
             # This is the first version (create), no changes to show
@@ -415,7 +432,7 @@ def _get_field_changes(
             col_name = column.name
 
             # Skip internal columns
-            if col_name in ('transaction_id', 'operation_type', 'end_transaction_id'):
+            if col_name in ("transaction_id", "operation_type", "end_transaction_id"):
                 continue
 
             old_value = getattr(previous_version, col_name, None)
@@ -426,12 +443,14 @@ def _get_field_changes(
                 old_str = str(old_value) if old_value is not None else None
                 new_str = str(new_value) if new_value is not None else None
 
-                changes.append(FieldChange(
-                    field=col_name,
-                    oldValue=old_str,
-                    newValue=new_str,
-                    displayName=_format_field_name(col_name),
-                ))
+                changes.append(
+                    FieldChange(
+                        field=col_name,
+                        oldValue=old_str,
+                        newValue=new_str,
+                        displayName=_format_field_name(col_name),
+                    )
+                )
 
         return changes if changes else None
 
@@ -500,7 +519,8 @@ def _apply_filters(
     if search:
         search_lower = search.lower()
         filtered = [
-            e for e in filtered
+            e
+            for e in filtered
             if (e.entity_name and search_lower in e.entity_name.lower())
             or (e.reason and search_lower in e.reason.lower())
             or search_lower in e.action.lower()
@@ -580,12 +600,16 @@ def get_audit_statistics(
         # Count by entity type
         entries_by_entity_type = {}
         for entry in entries:
-            entries_by_entity_type[entry.entity_type] = entries_by_entity_type.get(entry.entity_type, 0) + 1
+            entries_by_entity_type[entry.entity_type] = (
+                entries_by_entity_type.get(entry.entity_type, 0) + 1
+            )
 
         # Count by severity
         entries_by_severity = {}
         for entry in entries:
-            entries_by_severity[entry.severity] = entries_by_severity.get(entry.severity, 0) + 1
+            entries_by_severity[entry.severity] = (
+                entries_by_severity.get(entry.severity, 0) + 1
+            )
 
         # Count ACGME overrides
         acgme_override_count = sum(1 for entry in entries if entry.acgme_override)
@@ -623,6 +647,7 @@ from pydantic import BaseModel
 
 class AuditLogEntry(BaseModel):
     """Pydantic model for audit log entries - used by tests and API."""
+
     id: int | str
     entity_type: str
     entity_id: str
@@ -637,6 +662,7 @@ class AuditLogEntry(BaseModel):
 
 class AuditLogResponse(BaseModel):
     """Pydantic model for paginated audit log responses."""
+
     items: list[AuditLogEntry]
     total: int
     page: int
@@ -646,6 +672,7 @@ class AuditLogResponse(BaseModel):
 
 class AuditStatistics(BaseModel):
     """Pydantic model for audit statistics."""
+
     total_changes: int
     changes_by_entity: dict[str, int]
     changes_by_operation: dict[str, int]
@@ -656,6 +683,7 @@ class AuditStatistics(BaseModel):
 # =============================================================================
 # AuditService Class Wrapper
 # =============================================================================
+
 
 class AuditService:
     """
@@ -673,6 +701,7 @@ class AuditService:
             db: SQLAlchemy database session
         """
         from app.repositories.audit_repository import AuditRepository
+
         self.db = db
         self.repository = AuditRepository(db)
 
@@ -837,7 +866,10 @@ class AuditService:
         config = config or {}
         export_format = config.get("format", "csv")
         filters = config.get("filters", {})
-        columns = config.get("columns", ["entity_type", "entity_id", "operation", "changed_at", "changed_by"])
+        columns = config.get(
+            "columns",
+            ["entity_type", "entity_id", "operation", "changed_at", "changed_by"],
+        )
 
         if export_format not in ("csv", "excel"):
             raise ValueError(f"Unsupported export format: {export_format}")
@@ -851,7 +883,7 @@ class AuditService:
 
         # Build CSV
         output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=columns, extrasaction='ignore')
+        writer = csv.DictWriter(output, fieldnames=columns, extrasaction="ignore")
         writer.writeheader()
 
         for entry in entries:
@@ -861,7 +893,9 @@ class AuditService:
                 "entity_id": entry.get("entity_id"),
                 "transaction_id": entry.get("transaction_id"),
                 "operation": entry.get("operation"),
-                "changed_at": str(entry.get("changed_at")) if entry.get("changed_at") else None,
+                "changed_at": str(entry.get("changed_at"))
+                if entry.get("changed_at")
+                else None,
                 "changed_by": entry.get("changed_by"),
             }
             writer.writerow(row)
@@ -916,6 +950,7 @@ class AuditService:
             List of version history entries
         """
         from app.repositories.audit_repository import AuditRepository
+
         repo = AuditRepository(db)
         return repo.get_entity_history("assignment", assignment_id)
 
@@ -932,6 +967,7 @@ class AuditService:
             List of version history entries
         """
         from app.repositories.audit_repository import AuditRepository
+
         repo = AuditRepository(db)
         return repo.get_entity_history("absence", absence_id)
 
@@ -953,6 +989,7 @@ class AuditService:
             List of recent changes
         """
         from datetime import timedelta
+
         from app.repositories.audit_repository import AuditRepository
 
         repo = AuditRepository(db)
@@ -1000,6 +1037,7 @@ class AuditService:
             List of changes by the user
         """
         from datetime import timedelta
+
         from app.repositories.audit_repository import AuditRepository
 
         repo = AuditRepository(db)

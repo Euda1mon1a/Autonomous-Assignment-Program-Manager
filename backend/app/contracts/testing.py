@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import httpx
 from fastapi import FastAPI
@@ -106,7 +106,9 @@ class ContractResponse(BaseModel):
     """Contract response specification."""
 
     status: int = Field(..., description="HTTP status code")
-    headers: dict[str, str] = Field(default_factory=dict, description="Response headers")
+    headers: dict[str, str] = Field(
+        default_factory=dict, description="Response headers"
+    )
     body: dict[str, Any] | list | str | None = Field(
         None, description="Response body (JSON, string, or None)"
     )
@@ -133,7 +135,9 @@ class ContractResponse(BaseModel):
 class ContractInteraction(BaseModel):
     """Represents a single request/response interaction in a contract."""
 
-    id: str = Field(default_factory=lambda: str(uuid4()), description="Unique interaction ID")
+    id: str = Field(
+        default_factory=lambda: str(uuid4()), description="Unique interaction ID"
+    )
     description: str = Field(..., description="Human-readable interaction description")
     provider_state: str | None = Field(
         None, description="Required provider state for this interaction"
@@ -162,7 +166,9 @@ class Contract(BaseModel):
     interactions: list[ContractInteraction] = Field(
         default_factory=list, description="List of interactions"
     )
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Contract metadata")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Contract metadata"
+    )
     created_at: datetime = Field(
         default_factory=datetime.utcnow, description="Contract creation timestamp"
     )
@@ -250,7 +256,9 @@ class Contract(BaseModel):
                 for interaction in self.interactions
             ],
             "metadata": {
-                "pactSpecification": {"version": self.format.value.replace("pact_v", "")},
+                "pactSpecification": {
+                    "version": self.format.value.replace("pact_v", "")
+                },
                 "created": self.created_at.isoformat(),
                 **self.metadata,
             },
@@ -643,7 +651,7 @@ class ContractTester:
     @staticmethod
     def load_contract(filepath: str) -> Contract:
         """Load contract from a JSON file."""
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             data = json.load(f)
 
         # Convert from Pact format to our Contract model
@@ -812,7 +820,11 @@ class ContractPublisher:
                 logger.warning(f"Failed to apply tag '{tag}': {str(e)}")
 
     async def fetch_contract(
-        self, consumer: str, provider: str, version: str | None = None, tag: str | None = None
+        self,
+        consumer: str,
+        provider: str,
+        version: str | None = None,
+        tag: str | None = None,
     ) -> Contract | None:
         """
         Fetch a contract from the broker.
@@ -842,7 +854,9 @@ class ContractPublisher:
                     return None
 
                 if response.status_code != 200:
-                    logger.error(f"Broker error {response.status_code}: {response.text}")
+                    logger.error(
+                        f"Broker error {response.status_code}: {response.text}"
+                    )
                     return None
 
                 pact_data = response.json()

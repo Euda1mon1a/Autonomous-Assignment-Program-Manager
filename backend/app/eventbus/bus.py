@@ -11,16 +11,15 @@ Provides both in-memory and distributed event bus capabilities with:
 """
 
 import asyncio
-import fnmatch
 import json
 import logging
-import pickle
 import re
 import uuid
 from collections import defaultdict
-from datetime import datetime, timedelta
+from collections.abc import Callable, Coroutine
+from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Coroutine, Optional
+from typing import Any
 
 import redis.asyncio as redis
 from pydantic import BaseModel, Field
@@ -61,8 +60,8 @@ class EventMetadata(BaseModel):
 
     event_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    correlation_id: Optional[str] = None
-    source: Optional[str] = None
+    correlation_id: str | None = None
+    source: str | None = None
     version: str = "1.0"
     retry_count: int = 0
     content_type: str = "application/json"
@@ -157,6 +156,7 @@ class EventFilter:
             key: Data field key
             value: Expected value
         """
+
         def filter_func(event: Event) -> bool:
             return event.data.get(key) == value
 
@@ -170,6 +170,7 @@ class EventFilter:
             key: Metadata field key
             value: Expected value
         """
+
         def filter_func(event: Event) -> bool:
             return getattr(event.metadata, key, None) == value
 
@@ -228,6 +229,7 @@ class EventTransformer:
         Args:
             enrichments: Dictionary of fields to add to event data
         """
+
         def transform_func(event: Event) -> Event:
             event.data.update(enrichments)
             return event
@@ -270,8 +272,8 @@ class EventSubscription(BaseModel):
     subscription_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     topic_pattern: str
     handler: Any  # EventHandler (can't serialize Callable)
-    filter: Optional[EventFilter] = None
-    transformer: Optional[EventTransformer] = None
+    filter: EventFilter | None = None
+    transformer: EventTransformer | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     max_retries: int = 3
     dead_letter_enabled: bool = True
@@ -343,7 +345,7 @@ class DeadLetterQueue:
     - TTL-based expiration
     """
 
-    def __init__(self, redis_client: Optional[redis.Redis] = None):
+    def __init__(self, redis_client: redis.Redis | None = None):
         """
         Initialize dead letter queue.
 
@@ -523,22 +525,22 @@ class EventStore:
             # Store event data
             event_key = f"{self._store_key_prefix}:{event.metadata.event_id}"
             event_data = event.to_json()
-            await self._redis.setex(event_key, 30 * 24 * 3600, event_data)  # 30 days TTL
+            await self._redis.setex(
+                event_key, 30 * 24 * 3600, event_data
+            )  # 30 days TTL
 
             # Add to topic index
             topic_index = f"{self._index_key_prefix}:topic:{event.topic}"
             timestamp_score = event.metadata.timestamp.timestamp()
             await self._redis.zadd(
-                topic_index,
-                {event.metadata.event_id: timestamp_score}
+                topic_index, {event.metadata.event_id: timestamp_score}
             )
             await self._redis.expire(topic_index, 30 * 24 * 3600)
 
             # Add to global time index
             time_index = f"{self._index_key_prefix}:time"
             await self._redis.zadd(
-                time_index,
-                {event.metadata.event_id: timestamp_score}
+                time_index, {event.metadata.event_id: timestamp_score}
             )
             await self._redis.expire(time_index, 30 * 24 * 3600)
 
@@ -550,9 +552,9 @@ class EventStore:
 
     async def replay(
         self,
-        topic: Optional[str] = None,
-        from_timestamp: Optional[datetime] = None,
-        to_timestamp: Optional[datetime] = None,
+        topic: str | None = None,
+        from_timestamp: datetime | None = None,
+        to_timestamp: datetime | None = None,
         limit: int = 1000,
     ) -> list[Event]:
         """
@@ -580,11 +582,7 @@ class EventStore:
 
             # Get event IDs from index
             event_ids = await self._redis.zrangebyscore(
-                index_key,
-                min_score,
-                max_score,
-                start=0,
-                num=limit
+                index_key, min_score, max_score, start=0, num=limit
             )
 
             # Fetch events
@@ -609,7 +607,7 @@ class EventStore:
             logger.error(f"Failed to replay events: {e}")
             return []
 
-    async def get_event(self, event_id: str) -> Optional[Event]:
+    async def get_event(self, event_id: str) -> Event | None:
         """
         Get a specific event by ID.
 
@@ -701,13 +699,13 @@ class EventBus:
         self._subscription_lock = asyncio.Lock()
 
         # Redis components
-        self._redis_client: Optional[redis.Redis] = None
-        self._redis_pubsub: Optional[redis.client.PubSub] = None
-        self._pubsub_task: Optional[asyncio.Task] = None
+        self._redis_client: redis.Redis | None = None
+        self._redis_pubsub: redis.client.PubSub | None = None
+        self._pubsub_task: asyncio.Task | None = None
 
         # Event store and dead letter queue
-        self._event_store: Optional[EventStore] = None
-        self._dead_letter_queue: Optional[DeadLetterQueue] = None
+        self._event_store: EventStore | None = None
+        self._dead_letter_queue: DeadLetterQueue | None = None
 
         # Settings
         self._settings = get_settings()
@@ -781,9 +779,9 @@ class EventBus:
         self,
         topic_pattern: str,
         handler: EventHandler,
-        event_filter: Optional[EventFilter] = None,
-        event_transformer: Optional[EventTransformer] = None,
-        max_retries: Optional[int] = None,
+        event_filter: EventFilter | None = None,
+        event_transformer: EventTransformer | None = None,
+        max_retries: int | None = None,
     ) -> str:
         """
         Subscribe to events matching a topic pattern.
@@ -866,7 +864,7 @@ class EventBus:
     async def publish(
         self,
         event: Event,
-        persist: Optional[bool] = None,
+        persist: bool | None = None,
     ) -> bool:
         """
         Publish an event to all matching subscribers.
@@ -890,7 +888,9 @@ class EventBus:
 
         try:
             # Persist event if enabled
-            should_persist = persist if persist is not None else self._enable_persistence
+            should_persist = (
+                persist if persist is not None else self._enable_persistence
+            )
             if should_persist and self._event_store:
                 await self._event_store.store(event)
 
@@ -902,7 +902,9 @@ class EventBus:
             if self._mode in (EventBusMode.DISTRIBUTED, EventBusMode.HYBRID):
                 await self._publish_to_redis(event)
 
-            logger.debug(f"Published event {event.metadata.event_id} to topic '{event.topic}'")
+            logger.debug(
+                f"Published event {event.metadata.event_id} to topic '{event.topic}'"
+            )
             return True
 
         except Exception as e:
@@ -928,9 +930,9 @@ class EventBus:
 
     async def replay(
         self,
-        topic: Optional[str] = None,
-        from_timestamp: Optional[datetime] = None,
-        to_timestamp: Optional[datetime] = None,
+        topic: str | None = None,
+        from_timestamp: datetime | None = None,
+        to_timestamp: datetime | None = None,
         limit: int = 1000,
     ) -> list[Event]:
         """
@@ -957,13 +959,15 @@ class EventBus:
             logger.warning("Event persistence is not enabled. Cannot replay events.")
             return []
 
-        return await self._event_store.replay(topic, from_timestamp, to_timestamp, limit)
+        return await self._event_store.replay(
+            topic, from_timestamp, to_timestamp, limit
+        )
 
     async def replay_and_publish(
         self,
-        topic: Optional[str] = None,
-        from_timestamp: Optional[datetime] = None,
-        to_timestamp: Optional[datetime] = None,
+        topic: str | None = None,
+        from_timestamp: datetime | None = None,
+        to_timestamp: datetime | None = None,
         limit: int = 1000,
     ) -> int:
         """
@@ -989,7 +993,9 @@ class EventBus:
         logger.info(f"Replayed and published {published_count} events")
         return published_count
 
-    def get_subscriptions(self, topic_pattern: Optional[str] = None) -> list[dict[str, Any]]:
+    def get_subscriptions(
+        self, topic_pattern: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         Get current subscriptions.
 
@@ -1006,20 +1012,22 @@ class EventBus:
                 continue
 
             for sub in subs:
-                subscriptions.append({
-                    "subscription_id": sub.subscription_id,
-                    "topic_pattern": sub.topic_pattern,
-                    "created_at": sub.created_at,
-                    "max_retries": sub.max_retries,
-                    "has_filter": sub.filter is not None,
-                    "has_transformer": sub.transformer is not None,
-                })
+                subscriptions.append(
+                    {
+                        "subscription_id": sub.subscription_id,
+                        "topic_pattern": sub.topic_pattern,
+                        "created_at": sub.created_at,
+                        "max_retries": sub.max_retries,
+                        "has_filter": sub.filter is not None,
+                        "has_transformer": sub.transformer is not None,
+                    }
+                )
 
         return subscriptions
 
     async def get_dead_letter_events(
         self,
-        topic: Optional[str] = None,
+        topic: str | None = None,
     ) -> list[DeadLetterEvent]:
         """
         Get events from dead letter queue.
@@ -1096,17 +1104,14 @@ class EventBus:
         Returns:
             Dictionary with statistics
         """
-        total_subscriptions = sum(
-            len(subs) for subs in self._subscriptions.values()
-        )
+        total_subscriptions = sum(len(subs) for subs in self._subscriptions.values())
 
         return {
             "mode": self._mode,
             "running": self._running,
             "total_subscriptions": total_subscriptions,
             "subscriptions_by_pattern": {
-                pattern: len(subs)
-                for pattern, subs in self._subscriptions.items()
+                pattern: len(subs) for pattern, subs in self._subscriptions.items()
             },
             "persistence_enabled": self._enable_persistence,
             "dead_letter_enabled": self._enable_dead_letter,
@@ -1272,7 +1277,7 @@ class EventBus:
 
                 if retry_count <= subscription.max_retries:
                     # Exponential backoff
-                    await asyncio.sleep(2 ** retry_count)
+                    await asyncio.sleep(2**retry_count)
 
         # All retries failed - add to dead letter queue
         logger.error(
@@ -1282,9 +1287,7 @@ class EventBus:
 
         if subscription.dead_letter_enabled and self._dead_letter_queue:
             await self._dead_letter_queue.add(
-                event,
-                last_error,
-                subscription.subscription_id
+                event, last_error, subscription.subscription_id
             )
 
 
@@ -1293,13 +1296,10 @@ class EventBus:
 # =============================================================================
 
 
-_event_bus_instance: Optional[EventBus] = None
+_event_bus_instance: EventBus | None = None
 
 
-def get_event_bus(
-    mode: EventBusMode = EventBusMode.IN_MEMORY,
-    **kwargs
-) -> EventBus:
+def get_event_bus(mode: EventBusMode = EventBusMode.IN_MEMORY, **kwargs) -> EventBus:
     """
     Get or create global event bus instance.
 

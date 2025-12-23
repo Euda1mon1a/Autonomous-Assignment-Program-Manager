@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 class AuditUser(BaseModel):
     """User who performed an action."""
+
     id: str
     name: str
     email: str | None = None
@@ -23,6 +24,7 @@ class AuditUser(BaseModel):
 
 class FieldChange(BaseModel):
     """Single field change tracking."""
+
     field: str
     old_value: Any = Field(alias="oldValue")
     new_value: Any = Field(alias="newValue")
@@ -34,6 +36,7 @@ class FieldChange(BaseModel):
 
 class AuditLogEntry(BaseModel):
     """Core audit log entry."""
+
     id: str
     timestamp: str
     entity_type: str = Field(alias="entityType")
@@ -57,6 +60,7 @@ class AuditLogEntry(BaseModel):
 
 class AuditLogResponse(BaseModel):
     """Paginated audit log response."""
+
     items: list[AuditLogEntry]
     total: int
     page: int
@@ -74,12 +78,14 @@ class AuditLogResponse(BaseModel):
 
 class DateRange(BaseModel):
     """Date range for filtering."""
+
     start: str
     end: str
 
 
 class AuditLogFilters(BaseModel):
     """Audit log filters for querying."""
+
     date_range: DateRange | None = Field(None, alias="dateRange")
     entity_types: list[str] | None = Field(None, alias="entityTypes")
     actions: list[str] | None = None
@@ -100,6 +106,7 @@ class AuditLogFilters(BaseModel):
 
 class AuditStatistics(BaseModel):
     """Audit statistics for dashboard."""
+
     total_entries: int = Field(alias="totalEntries")
     entries_by_action: dict[str, int] = Field(alias="entriesByAction")
     entries_by_entity_type: dict[str, int] = Field(alias="entriesByEntityType")
@@ -119,6 +126,7 @@ class AuditStatistics(BaseModel):
 
 class AuditExportConfig(BaseModel):
     """Export configuration."""
+
     format: str  # 'csv', 'json', 'pdf'
     filters: AuditLogFilters | None = None
     include_metadata: bool | None = Field(None, alias="includeMetadata")
@@ -136,6 +144,7 @@ class AuditExportConfig(BaseModel):
 
 class MarkReviewedRequest(BaseModel):
     """Request to mark audit entries as reviewed."""
+
     ids: list[str]
     reviewed_by: str = Field(alias="reviewedBy")
     notes: str | None = None

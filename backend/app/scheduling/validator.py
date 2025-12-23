@@ -7,6 +7,7 @@ Validates schedules against ACGME requirements:
 - 24+4 rule (max continuous duty)
 - Supervision ratios
 """
+
 from collections import defaultdict
 from datetime import date, timedelta
 
@@ -133,14 +134,10 @@ class ACGMEValidator:
             ]
 
             # 80-hour rule
-            violations.extend(
-                self._check_80_hour_rule(resident, resident_assignments)
-            )
+            violations.extend(self._check_80_hour_rule(resident, resident_assignments))
 
             # 1-in-7 rule
-            violations.extend(
-                self._check_1_in_7_rule(resident, resident_assignments)
-            )
+            violations.extend(self._check_1_in_7_rule(resident, resident_assignments))
 
         # Check supervision ratios
         violations.extend(self._check_supervision_ratios(assignments))
@@ -166,7 +163,9 @@ class ACGMEValidator:
             statistics={
                 "total_assignments": len(assignments),
                 "total_blocks": total_blocks,
-                "residents_scheduled": len({a.person_id for a in assignments if self._is_resident(a.person_id)}),
+                "residents_scheduled": len(
+                    {a.person_id for a in assignments if self._is_resident(a.person_id)}
+                ),
             },
         )
 
@@ -280,7 +279,9 @@ class ACGMEValidator:
 
         return violations
 
-    def _check_supervision_ratios(self, assignments: list[Assignment]) -> list[Violation]:
+    def _check_supervision_ratios(
+        self, assignments: list[Assignment]
+    ) -> list[Violation]:
         """
         Check faculty:resident supervision ratios.
 

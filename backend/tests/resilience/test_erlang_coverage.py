@@ -13,7 +13,6 @@ Tests include:
 """
 
 import pytest
-import numpy as np
 
 from app.resilience.erlang_coverage import (
     ErlangCCalculator,
@@ -308,7 +307,9 @@ class TestServiceLevel:
 
         sl_6 = calc.calculate_service_level(arrival_rate, service_time, 6, target_wait)
         sl_8 = calc.calculate_service_level(arrival_rate, service_time, 8, target_wait)
-        sl_10 = calc.calculate_service_level(arrival_rate, service_time, 10, target_wait)
+        sl_10 = calc.calculate_service_level(
+            arrival_rate, service_time, 10, target_wait
+        )
 
         assert sl_6 < sl_8 < sl_10
 

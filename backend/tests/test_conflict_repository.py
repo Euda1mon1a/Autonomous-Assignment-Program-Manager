@@ -1,4 +1,5 @@
 """Comprehensive tests for ConflictRepository."""
+
 from datetime import date, datetime, timedelta
 from uuid import UUID, uuid4
 
@@ -238,8 +239,7 @@ class TestConflictRepositoryUpdate:
         )
 
         updated = conflict_repo.update(
-            alert.id,
-            status=ConflictAlertStatus.ACKNOWLEDGED
+            alert.id, status=ConflictAlertStatus.ACKNOWLEDGED
         )
 
         assert updated is not None
@@ -276,10 +276,7 @@ class TestConflictRepositoryUpdate:
     def test_update_nonexistent_alert(self, conflict_repo: ConflictRepository):
         """Test updating non-existent alert returns None."""
         fake_id = uuid4()
-        result = conflict_repo.update(
-            fake_id,
-            status=ConflictAlertStatus.RESOLVED
-        )
+        result = conflict_repo.update(fake_id, status=ConflictAlertStatus.RESOLVED)
 
         assert result is None
 
@@ -399,7 +396,10 @@ class TestConflictRepositoryFindByFaculty:
 
         assert len(alerts) == 2
         assert all(a.faculty_id == sample_faculty_for_conflicts.id for a in alerts)
-        assert all(a.status in [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED] for a in alerts)
+        assert all(
+            a.status in [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+            for a in alerts
+        )
 
     def test_find_by_faculty_include_resolved(
         self,
@@ -425,8 +425,7 @@ class TestConflictRepositoryFindByFaculty:
 
         # Find all alerts including resolved
         alerts = conflict_repo.find_by_faculty(
-            sample_faculty_for_conflicts.id,
-            include_resolved=True
+            sample_faculty_for_conflicts.id, include_resolved=True
         )
 
         assert len(alerts) == 2
@@ -490,8 +489,7 @@ class TestConflictRepositoryFindByStatus:
 
         # Find NEW alerts for faculty 1 only
         alerts = conflict_repo.find_by_status(
-            ConflictAlertStatus.NEW,
-            faculty_id=sample_faculty_for_conflicts.id
+            ConflictAlertStatus.NEW, faculty_id=sample_faculty_for_conflicts.id
         )
 
         assert len(alerts) == 1
@@ -539,7 +537,10 @@ class TestConflictRepositoryFindBySeverity:
 
         assert len(alerts) == 1
         assert all(a.severity == ConflictSeverity.CRITICAL for a in alerts)
-        assert all(a.status in [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED] for a in alerts)
+        assert all(
+            a.status in [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+            for a in alerts
+        )
 
     def test_find_by_severity_include_resolved(
         self,
@@ -567,8 +568,7 @@ class TestConflictRepositoryFindBySeverity:
 
         # Find all critical alerts
         alerts = conflict_repo.find_by_severity(
-            ConflictSeverity.CRITICAL,
-            unresolved_only=False
+            ConflictSeverity.CRITICAL, unresolved_only=False
         )
 
         assert len(alerts) == 2
@@ -619,7 +619,10 @@ class TestConflictRepositoryFindByType:
 
         assert len(alerts) == 2
         assert all(a.conflict_type == ConflictType.LEAVE_FMIT_OVERLAP for a in alerts)
-        assert all(a.status in [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED] for a in alerts)
+        assert all(
+            a.status in [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+            for a in alerts
+        )
 
     def test_find_by_type_include_resolved(
         self,
@@ -645,8 +648,7 @@ class TestConflictRepositoryFindByType:
 
         # Find all back-to-back alerts
         alerts = conflict_repo.find_by_type(
-            ConflictType.BACK_TO_BACK,
-            unresolved_only=False
+            ConflictType.BACK_TO_BACK, unresolved_only=False
         )
 
         assert len(alerts) == 2
@@ -719,8 +721,7 @@ class TestConflictRepositoryFindByWeek:
 
         # Find alerts for faculty 1 only
         alerts = conflict_repo.find_by_week(
-            target_week,
-            faculty_id=sample_faculty_for_conflicts.id
+            target_week, faculty_id=sample_faculty_for_conflicts.id
         )
 
         assert len(alerts) == 1
@@ -955,7 +956,11 @@ class TestConflictRepositoryPagination:
 
         assert total == 2
         for alert in alerts:
-            assert base_date + timedelta(days=10) <= alert.fmit_week <= base_date + timedelta(days=30)
+            assert (
+                base_date + timedelta(days=10)
+                <= alert.fmit_week
+                <= base_date + timedelta(days=30)
+            )
 
     def test_find_with_multiple_filters(
         self,
@@ -1414,7 +1419,9 @@ class TestConflictRepositoryEdgeCases:
         assert alert1.conflict_type != alert2.conflict_type
 
         # Both should be findable
-        alerts = conflict_repo.find_by_week(target_week, sample_faculty_for_conflicts.id)
+        alerts = conflict_repo.find_by_week(
+            target_week, sample_faculty_for_conflicts.id
+        )
         assert len(alerts) == 2
 
     def test_ordering_consistency(
@@ -1492,7 +1499,11 @@ class TestConflictRepositoryEdgeCases:
         assert len(conflict_repo.find_by_faculty(sample_faculty_for_conflicts.id)) == 0
 
         # But included when we request resolved ones
-        assert len(conflict_repo.find_by_faculty(
-            sample_faculty_for_conflicts.id,
-            include_resolved=True
-        )) == 1
+        assert (
+            len(
+                conflict_repo.find_by_faculty(
+                    sample_faculty_for_conflicts.id, include_resolved=True
+                )
+            )
+            == 1
+        )

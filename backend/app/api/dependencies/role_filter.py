@@ -4,13 +4,15 @@ Provides dependency injection functions that can be used in route handlers
 to automatically filter data based on the current user's role.
 """
 
-from typing import Callable, Any, Dict
-from fastapi import Depends, Request
+from collections.abc import Callable
 from functools import wraps
+from typing import Any
+
+from fastapi import Depends
 
 from app.core.security import get_current_active_user
 from app.models.user import User
-from app.services.role_filter_service import RoleFilterService, ResourceType
+from app.services.role_filter_service import ResourceType, RoleFilterService
 
 
 def get_role_filter_service() -> RoleFilterService:
@@ -40,9 +42,8 @@ def require_resource_access(resource: ResourceType):
             # User has been verified to have access to schedules
             pass
     """
-    def check_access(
-        current_user: User = Depends(get_current_active_user)
-    ) -> None:
+
+    def check_access(current_user: User = Depends(get_current_active_user)) -> None:
         """Check if user has access to the resource.
 
         Raises:
@@ -53,7 +54,7 @@ def require_resource_access(resource: ResourceType):
         if not RoleFilterService.can_access(resource, current_user.role):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access denied: Your role '{current_user.role}' cannot access {resource.value}"
+                detail=f"Access denied: Your role '{current_user.role}' cannot access {resource.value}",
             )
 
     return check_access
@@ -74,9 +75,8 @@ def require_admin():
             # User has been verified to be admin
             pass
     """
-    def check_admin(
-        current_user: User = Depends(get_current_active_user)
-    ) -> None:
+
+    def check_admin(current_user: User = Depends(get_current_active_user)) -> None:
         """Check if user is admin.
 
         Raises:
@@ -87,16 +87,15 @@ def require_admin():
         if not RoleFilterService.is_admin(current_user.role):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied: Admin role required"
+                detail="Access denied: Admin role required",
             )
 
     return check_admin
 
 
 def apply_role_filter(
-    data: Dict[str, Any],
-    current_user: User = Depends(get_current_active_user)
-) -> Dict[str, Any]:
+    data: dict[str, Any], current_user: User = Depends(get_current_active_user)
+) -> dict[str, Any]:
     """Dependency to automatically filter response data based on user role.
 
     Args:
@@ -125,9 +124,7 @@ def apply_role_filter(
             )
     """
     return RoleFilterService.filter_for_role(
-        data,
-        current_user.role,
-        str(current_user.id)
+        data, current_user.role, str(current_user.id)
     )
 
 
@@ -157,11 +154,12 @@ def filter_response(filter_func: Callable = None):
                 "users": [...]
             }
     """
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             # Get current user from kwargs
-            current_user = kwargs.get('current_user')
+            current_user = kwargs.get("current_user")
             if not current_user:
                 # Try to find user in args
                 for arg in args:
@@ -178,20 +176,17 @@ def filter_response(filter_func: Callable = None):
                     return filter_func(result, current_user.role, str(current_user.id))
                 else:
                     return RoleFilterService.filter_for_role(
-                        result,
-                        current_user.role,
-                        str(current_user.id)
+                        result, current_user.role, str(current_user.id)
                     )
 
             return result
 
         return wrapper
+
     return decorator
 
 
-def get_current_user_role(
-    current_user: User = Depends(get_current_active_user)
-) -> str:
+def get_current_user_role(current_user: User = Depends(get_current_active_user)) -> str:
     """Dependency to get current user's role as string.
 
     Args:
@@ -230,9 +225,8 @@ def check_endpoint_access(endpoint_category: str):
             # User has been verified to have access to compliance endpoints
             pass
     """
-    def check_access(
-        current_user: User = Depends(get_current_active_user)
-    ) -> None:
+
+    def check_access(current_user: User = Depends(get_current_active_user)) -> None:
         """Check if user can access the endpoint category.
 
         Raises:
@@ -240,10 +234,12 @@ def check_endpoint_access(endpoint_category: str):
         """
         from fastapi import HTTPException, status
 
-        if not RoleFilterService.can_access_endpoint(current_user.role, endpoint_category):
+        if not RoleFilterService.can_access_endpoint(
+            current_user.role, endpoint_category
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access denied: Your role '{current_user.role}' cannot access {endpoint_category} endpoints"
+                detail=f"Access denied: Your role '{current_user.role}' cannot access {endpoint_category} endpoints",
             )
 
     return check_access

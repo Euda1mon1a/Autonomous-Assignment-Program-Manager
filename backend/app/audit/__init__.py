@@ -64,15 +64,7 @@ Environment variables:
 - AUDIT_ARCHIVE_RETENTION_YEARS: Archive retention in years (default: 7)
 """
 
-from app.audit.archiver import AuditArchiver, ArchiveResult
-from app.audit.restore import AuditRestorer, RestoreResult
-from app.audit.retention import RetentionPolicy, RetentionLevel
-from app.audit.storage import (
-    ArchiveStorageBackend,
-    LocalArchiveStorage,
-    S3ArchiveStorage,
-    get_storage_backend,
-)
+from app.audit.archiver import ArchiveResult, AuditArchiver
 from app.audit.enhanced_logging import (
     AuditContext,
     AuditSearchFilter,
@@ -83,6 +75,14 @@ from app.audit.enhanced_logging import (
     create_audit_log,
     generate_report,
     search_audit_logs,
+)
+from app.audit.restore import AuditRestorer, RestoreResult
+from app.audit.retention import RetentionLevel, RetentionPolicy
+from app.audit.storage import (
+    ArchiveStorageBackend,
+    LocalArchiveStorage,
+    S3ArchiveStorage,
+    get_storage_backend,
 )
 
 __all__ = [

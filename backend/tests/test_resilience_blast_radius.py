@@ -10,22 +10,19 @@ Tests cover:
 - Event handler registration and triggering
 """
 
+from uuid import uuid4
+
 import pytest
-from datetime import datetime
-from uuid import UUID, uuid4
 
 from app.resilience.blast_radius import (
     BlastRadiusManager,
     BorrowingPriority,
-    BorrowingRequest,
     ContainmentLevel,
     SchedulingZone,
     ZoneFacultyAssignment,
-    ZoneIncident,
     ZoneStatus,
     ZoneType,
 )
-
 
 # ============================================================================
 # Fixtures
@@ -607,7 +604,9 @@ class TestBorrowingRequests:
         # Add only minimum coverage
         for i in range(education.minimum_coverage):
             education.primary_faculty.append(
-                ZoneFacultyAssignment(uuid4(), f"Dr. Min {i}", "primary", available=True)
+                ZoneFacultyAssignment(
+                    uuid4(), f"Dr. Min {i}", "primary", available=True
+                )
             )
 
         assert not education.has_surplus()
@@ -868,7 +867,10 @@ class TestZoneHealthReports:
 
         assert report is not None
         assert report.total_zones == len(manager_with_faculty.zones)
-        assert report.zones_healthy + report.zones_degraded + report.zones_critical == report.total_zones
+        assert (
+            report.zones_healthy + report.zones_degraded + report.zones_critical
+            == report.total_zones
+        )
         assert len(report.zone_reports) == report.total_zones
         assert report.generated_at is not None
 

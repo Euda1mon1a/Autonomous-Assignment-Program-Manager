@@ -7,14 +7,14 @@ Supports multiple exporter backends:
 - OTLP (OpenTelemetry Protocol)
 - Console (for debugging)
 """
+
 import logging
 from enum import Enum
-from typing import Optional, Union
 
 from opentelemetry.sdk.trace.export import (
-    SpanExporter,
     BatchSpanProcessor,
     ConsoleSpanExporter,
+    SpanExporter,
 )
 
 logger = logging.getLogger(__name__)
@@ -46,9 +46,9 @@ class ExporterConfig:
     def __init__(
         self,
         exporter_type: ExporterType,
-        endpoint: Optional[str] = None,
+        endpoint: str | None = None,
         service_name: str = "residency-scheduler",
-        headers: Optional[dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
         insecure: bool = True,
         timeout: int = 10,
     ):
@@ -323,6 +323,7 @@ def create_multi_exporter_processor(
 
 # Convenience functions for common configurations
 
+
 def create_jaeger_processor(
     endpoint: str = "http://localhost:4317",
     **kwargs,
@@ -368,7 +369,7 @@ def create_zipkin_processor(
 def create_otlp_processor(
     endpoint: str = "http://localhost:4318/v1/traces",
     use_grpc: bool = False,
-    headers: Optional[dict[str, str]] = None,
+    headers: dict[str, str] | None = None,
     **kwargs,
 ) -> BatchSpanProcessor:
     """

@@ -10,17 +10,17 @@ This module provides comprehensive authentication mechanisms for the API gateway
 - Request signing verification (HMAC)
 - API key rotation support
 """
+
 import hashlib
 import hmac
 import ipaddress
 import logging
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException, Request, status
-from jose import JWTError, jwt
+from jose import jwt
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
@@ -35,12 +35,10 @@ from app.models.gateway_auth import (
     RequestSignature,
 )
 from app.models.user import User
-from app.schemas.auth import TokenData
 from app.schemas.gateway_auth import (
     APIKeyCreate,
     APIKeyResponse,
     GatewayAuthValidationResponse,
-    OAuth2TokenRequest,
     OAuth2TokenResponse,
     RequestSignatureVerifyRequest,
 )
@@ -57,6 +55,7 @@ HMAC_ALGORITHM = "sha256"
 
 class GatewayAuthenticationError(Exception):
     """Base exception for gateway authentication errors."""
+
     pass
 
 
@@ -93,9 +92,7 @@ class APIKeyManager:
         return full_key, key_hash, key_prefix
 
     async def create_api_key(
-        self,
-        key_data: APIKeyCreate,
-        owner_id: Optional[UUID] = None
+        self, key_data: APIKeyCreate, owner_id: UUID | None = None
     ) -> APIKeyResponse:
         """
         Create a new API key.
@@ -135,7 +132,7 @@ class APIKeyManager:
         response.api_key = full_key
         return response
 
-    async def validate_api_key(self, api_key: str) -> Optional[APIKey]:
+    async def validate_api_key(self, api_key: str) -> APIKey | None:
         """
         Validate an API key.
 
@@ -154,7 +151,7 @@ class APIKeyManager:
                 and_(
                     APIKey.key_hash == key_hash,
                     APIKey.is_active == True,
-                    APIKey.revoked_at.is_(None)
+                    APIKey.revoked_at.is_(None),
                 )
             )
         )
@@ -172,10 +169,7 @@ class APIKeyManager:
         return db_key
 
     async def rotate_api_key(
-        self,
-        key_id: UUID,
-        grace_period_hours: int = 24,
-        new_name: Optional[str] = None
+        self, key_id: UUID, grace_period_hours: int = 24, new_name: str | None = None
     ) -> tuple[APIKeyResponse, APIKey]:
         """
         Rotate an API key by creating a new one and linking to the old one.
@@ -231,10 +225,7 @@ class APIKeyManager:
         return new_key_response, old_key
 
     async def revoke_api_key(
-        self,
-        key_id: UUID,
-        reason: str,
-        revoked_by_id: Optional[UUID] = None
+        self, key_id: UUID, reason: str, revoked_by_id: UUID | None = None
     ) -> APIKey:
         """
         Revoke an API key immediately.
@@ -264,11 +255,7 @@ class APIKeyManager:
 
         return api_key
 
-    async def update_key_usage(
-        self,
-        api_key: APIKey,
-        client_ip: str
-    ) -> None:
+    async def update_key_usage(self, api_key: APIKey, client_ip: str) -> None:
         """
         Update API key usage statistics.
 
@@ -306,11 +293,7 @@ class OAuth2Manager:
         return client_id, client_secret, client_secret_hash
 
     async def create_client(
-        self,
-        name: str,
-        scopes: str,
-        owner_id: Optional[UUID] = None,
-        **kwargs
+        self, name: str, scopes: str, owner_id: UUID | None = None, **kwargs
     ) -> tuple[OAuth2Client, str]:
         """
         Create a new OAuth2 client.
@@ -324,7 +307,9 @@ class OAuth2Manager:
         Returns:
             Tuple of (OAuth2Client, client_secret)
         """
-        client_id, client_secret, client_secret_hash = self.generate_client_credentials()
+        client_id, client_secret, client_secret_hash = (
+            self.generate_client_credentials()
+        )
 
         client = OAuth2Client(
             client_id=client_id,
@@ -332,7 +317,7 @@ class OAuth2Manager:
             name=name,
             scopes=scopes,
             owner_id=owner_id,
-            **kwargs
+            **kwargs,
         )
 
         self.db.add(client)
@@ -344,10 +329,8 @@ class OAuth2Manager:
         return client, client_secret
 
     async def authenticate_client(
-        self,
-        client_id: str,
-        client_secret: str
-    ) -> Optional[OAuth2Client]:
+        self, client_id: str, client_secret: str
+    ) -> OAuth2Client | None:
         """
         Authenticate an OAuth2 client.
 
@@ -361,8 +344,7 @@ class OAuth2Manager:
         result = self.db.execute(
             select(OAuth2Client).where(
                 and_(
-                    OAuth2Client.client_id == client_id,
-                    OAuth2Client.is_active == True
+                    OAuth2Client.client_id == client_id, OAuth2Client.is_active == True
                 )
             )
         )
@@ -380,9 +362,7 @@ class OAuth2Manager:
         return client
 
     async def issue_access_token(
-        self,
-        client: OAuth2Client,
-        requested_scopes: Optional[str] = None
+        self, client: OAuth2Client, requested_scopes: str | None = None
     ) -> OAuth2TokenResponse:
         """
         Issue an access token for OAuth2 client credentials flow.
@@ -436,7 +416,7 @@ class OAuth2Manager:
             access_token=access_token,
             token_type="Bearer",
             expires_in=client.access_token_lifetime_seconds,
-            scope=" ".join(granted_scopes) if granted_scopes else None
+            scope=" ".join(granted_scopes) if granted_scopes else None,
         )
 
 
@@ -475,7 +455,9 @@ class IPFilterManager:
             logger.error(f"Invalid IP address or range: {e}")
             return False
 
-    async def is_ip_blacklisted(self, ip_address: str) -> tuple[bool, Optional[IPBlacklist]]:
+    async def is_ip_blacklisted(
+        self, ip_address: str
+    ) -> tuple[bool, IPBlacklist | None]:
         """
         Check if an IP address is blacklisted.
 
@@ -490,7 +472,8 @@ class IPFilterManager:
             select(IPBlacklist).where(
                 and_(
                     IPBlacklist.is_active == True,
-                    IPBlacklist.expires_at.is_(None) | (IPBlacklist.expires_at > datetime.utcnow())
+                    IPBlacklist.expires_at.is_(None)
+                    | (IPBlacklist.expires_at > datetime.utcnow()),
                 )
             )
         )
@@ -511,10 +494,8 @@ class IPFilterManager:
         return False, None
 
     async def is_ip_whitelisted(
-        self,
-        ip_address: str,
-        applies_to: str = "all"
-    ) -> tuple[bool, Optional[IPWhitelist]]:
+        self, ip_address: str, applies_to: str = "all"
+    ) -> tuple[bool, IPWhitelist | None]:
         """
         Check if an IP address is whitelisted.
 
@@ -530,8 +511,10 @@ class IPFilterManager:
             select(IPWhitelist).where(
                 and_(
                     IPWhitelist.is_active == True,
-                    IPWhitelist.expires_at.is_(None) | (IPWhitelist.expires_at > datetime.utcnow()),
-                    (IPWhitelist.applies_to == applies_to) | (IPWhitelist.applies_to == "all")
+                    IPWhitelist.expires_at.is_(None)
+                    | (IPWhitelist.expires_at > datetime.utcnow()),
+                    (IPWhitelist.applies_to == applies_to)
+                    | (IPWhitelist.applies_to == "all"),
                 )
             )
         )
@@ -548,8 +531,8 @@ class IPFilterManager:
         self,
         ip_address: str,
         applies_to: str = "all",
-        allowed_ips: Optional[list[str]] = None
-    ) -> tuple[bool, Optional[str]]:
+        allowed_ips: list[str] | None = None,
+    ) -> tuple[bool, str | None]:
         """
         Comprehensive IP check: blacklist, whitelist, and optional allowed IPs.
 
@@ -569,8 +552,7 @@ class IPFilterManager:
         # Check allowed IPs list (for API key restrictions)
         if allowed_ips:
             ip_allowed = any(
-                self._ip_in_range(ip_address, allowed_ip)
-                for allowed_ip in allowed_ips
+                self._ip_in_range(ip_address, allowed_ip) for allowed_ip in allowed_ips
             )
             if not ip_allowed:
                 return False, "IP not in allowed list for this API key"
@@ -597,7 +579,7 @@ class RequestSignatureValidator:
         method: str,
         path: str,
         timestamp: str,
-        body: Optional[str] = None
+        body: str | None = None,
     ) -> str:
         """
         Generate HMAC signature for a request.
@@ -621,9 +603,7 @@ class RequestSignatureValidator:
 
         # Generate HMAC
         signature = hmac.new(
-            secret.encode(),
-            signing_string.encode(),
-            hashlib.sha256
+            secret.encode(), signing_string.encode(), hashlib.sha256
         ).hexdigest()
 
         return signature
@@ -632,8 +612,8 @@ class RequestSignatureValidator:
         self,
         api_key: APIKey,
         request_data: RequestSignatureVerifyRequest,
-        client_ip: str
-    ) -> tuple[bool, Optional[str]]:
+        client_ip: str,
+    ) -> tuple[bool, str | None]:
         """
         Verify HMAC signature for a request.
 
@@ -652,7 +632,10 @@ class RequestSignatureValidator:
             # Check timestamp tolerance (prevent replay attacks)
             time_diff = abs((datetime.utcnow() - request_time).total_seconds())
             if time_diff > SIGNATURE_TOLERANCE_SECONDS:
-                return False, f"Request timestamp outside tolerance window ({SIGNATURE_TOLERANCE_SECONDS}s)"
+                return (
+                    False,
+                    f"Request timestamp outside tolerance window ({SIGNATURE_TOLERANCE_SECONDS}s)",
+                )
 
             # Check for signature replay
             signature_hash = hashlib.sha256(request_data.signature.encode()).hexdigest()
@@ -669,7 +652,7 @@ class RequestSignatureValidator:
                     request_data,
                     client_ip,
                     is_valid=False,
-                    failure_reason="Signature replay detected"
+                    failure_reason="Signature replay detected",
                 )
                 return False, "Signature has already been used (replay attack)"
 
@@ -682,7 +665,7 @@ class RequestSignatureValidator:
                 method=request_data.method,
                 path=request_data.path,
                 timestamp=request_data.timestamp,
-                body=request_data.body
+                body=request_data.body,
             )
 
             is_valid = hmac.compare_digest(request_data.signature, expected_signature)
@@ -690,11 +673,7 @@ class RequestSignatureValidator:
             # Log verification attempt
             failure_reason = None if is_valid else "Invalid signature"
             self._log_verification(
-                api_key.id,
-                request_data,
-                client_ip,
-                is_valid,
-                failure_reason
+                api_key.id, request_data, client_ip, is_valid, failure_reason
             )
 
             return is_valid, failure_reason
@@ -711,7 +690,7 @@ class RequestSignatureValidator:
         request_data: RequestSignatureVerifyRequest,
         client_ip: str,
         is_valid: bool,
-        failure_reason: Optional[str] = None
+        failure_reason: str | None = None,
     ) -> None:
         """Log signature verification attempt."""
         signature_hash = hashlib.sha256(request_data.signature.encode()).hexdigest()
@@ -750,11 +729,11 @@ class GatewayAuthenticator:
     async def validate_request(
         self,
         request: Request,
-        api_key: Optional[str] = None,
-        jwt_token: Optional[str] = None,
-        client_id: Optional[str] = None,
-        client_secret: Optional[str] = None,
-        signature_data: Optional[RequestSignatureVerifyRequest] = None,
+        api_key: str | None = None,
+        jwt_token: str | None = None,
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        signature_data: RequestSignatureVerifyRequest | None = None,
     ) -> GatewayAuthValidationResponse:
         """
         Validate a request using available authentication methods.
@@ -782,14 +761,14 @@ class GatewayAuthenticator:
         client_ip = self._get_client_ip(request)
 
         # Check IP blacklist first
-        is_blacklisted, blacklist_entry = await self.ip_filter_manager.is_ip_blacklisted(
-            client_ip
-        )
+        (
+            is_blacklisted,
+            blacklist_entry,
+        ) = await self.ip_filter_manager.is_ip_blacklisted(client_ip)
         if is_blacklisted:
             logger.warning(f"Blocked blacklisted IP: {client_ip}")
             return GatewayAuthValidationResponse(
-                is_valid=False,
-                error_message=f"Access denied: {blacklist_entry.reason}"
+                is_valid=False, error_message=f"Access denied: {blacklist_entry.reason}"
             )
 
         # Try API key authentication
@@ -802,28 +781,27 @@ class GatewayAuthenticator:
 
         # Try OAuth2 client credentials
         if client_id and client_secret:
-            return await self._validate_oauth2_client(client_id, client_secret, client_ip)
+            return await self._validate_oauth2_client(
+                client_id, client_secret, client_ip
+            )
 
         # No valid authentication method provided
         return GatewayAuthValidationResponse(
-            is_valid=False,
-            error_message="No valid authentication credentials provided"
+            is_valid=False, error_message="No valid authentication credentials provided"
         )
 
     async def _validate_api_key(
         self,
         api_key: str,
         client_ip: str,
-        signature_data: Optional[RequestSignatureVerifyRequest] = None
+        signature_data: RequestSignatureVerifyRequest | None = None,
     ) -> GatewayAuthValidationResponse:
         """Validate API key authentication."""
         # Validate API key
         db_key = await self.api_key_manager.validate_api_key(api_key)
         if not db_key:
             return GatewayAuthValidationResponse(
-                is_valid=False,
-                auth_type="api_key",
-                error_message="Invalid API key"
+                is_valid=False, auth_type="api_key", error_message="Invalid API key"
             )
 
         # Check IP restrictions
@@ -831,35 +809,29 @@ class GatewayAuthenticator:
         is_allowed, reason = await self.ip_filter_manager.check_ip_allowed(
             client_ip,
             applies_to="api_keys",
-            allowed_ips=allowed_ips if allowed_ips else None
+            allowed_ips=allowed_ips if allowed_ips else None,
         )
         if not is_allowed:
             return GatewayAuthValidationResponse(
-                is_valid=False,
-                auth_type="api_key",
-                error_message=reason
+                is_valid=False, auth_type="api_key", error_message=reason
             )
 
         # Verify signature if provided
         if signature_data:
             is_valid, error = await self.signature_validator.verify_signature(
-                db_key,
-                signature_data,
-                client_ip
+                db_key, signature_data, client_ip
             )
             if not is_valid:
                 return GatewayAuthValidationResponse(
                     is_valid=False,
                     auth_type="api_key",
-                    error_message=f"Signature verification failed: {error}"
+                    error_message=f"Signature verification failed: {error}",
                 )
 
         # Check rate limits
         rate_limit_key = f"api_key:{db_key.id}"
         rate_limit_info = await self._check_rate_limit(
-            rate_limit_key,
-            db_key.rate_limit_per_minute,
-            60
+            rate_limit_key, db_key.rate_limit_per_minute, 60
         )
 
         if not rate_limit_info["allowed"]:
@@ -868,7 +840,7 @@ class GatewayAuthenticator:
                 auth_type="api_key",
                 rate_limit_remaining=0,
                 rate_limit_reset_at=rate_limit_info["reset_at"],
-                error_message="Rate limit exceeded"
+                error_message="Rate limit exceeded",
             )
 
         # Update usage statistics
@@ -880,13 +852,11 @@ class GatewayAuthenticator:
             user_id=db_key.owner_id,
             scopes=db_key.get_scopes(),
             rate_limit_remaining=rate_limit_info["remaining"],
-            rate_limit_reset_at=rate_limit_info["reset_at"]
+            rate_limit_reset_at=rate_limit_info["reset_at"],
         )
 
     async def _validate_jwt(
-        self,
-        jwt_token: str,
-        client_ip: str
+        self, jwt_token: str, client_ip: str
     ) -> GatewayAuthValidationResponse:
         """Validate JWT token authentication."""
         token_data = verify_token(jwt_token, self.db)
@@ -894,19 +864,16 @@ class GatewayAuthenticator:
             return GatewayAuthValidationResponse(
                 is_valid=False,
                 auth_type="jwt",
-                error_message="Invalid or expired JWT token"
+                error_message="Invalid or expired JWT token",
             )
 
         # Check IP whitelist/blacklist
         is_allowed, reason = await self.ip_filter_manager.check_ip_allowed(
-            client_ip,
-            applies_to="all"
+            client_ip, applies_to="all"
         )
         if not is_allowed:
             return GatewayAuthValidationResponse(
-                is_valid=False,
-                auth_type="jwt",
-                error_message=reason
+                is_valid=False, auth_type="jwt", error_message=reason
             )
 
         # Get user
@@ -915,7 +882,7 @@ class GatewayAuthenticator:
             return GatewayAuthValidationResponse(
                 is_valid=False,
                 auth_type="jwt",
-                error_message="User not found or inactive"
+                error_message="User not found or inactive",
             )
 
         return GatewayAuthValidationResponse(
@@ -926,10 +893,7 @@ class GatewayAuthenticator:
         )
 
     async def _validate_oauth2_client(
-        self,
-        client_id: str,
-        client_secret: str,
-        client_ip: str
+        self, client_id: str, client_secret: str, client_ip: str
     ) -> GatewayAuthValidationResponse:
         """Validate OAuth2 client credentials."""
         client = await self.oauth2_manager.authenticate_client(client_id, client_secret)
@@ -937,27 +901,22 @@ class GatewayAuthenticator:
             return GatewayAuthValidationResponse(
                 is_valid=False,
                 auth_type="oauth2",
-                error_message="Invalid client credentials"
+                error_message="Invalid client credentials",
             )
 
         # Check IP whitelist/blacklist
         is_allowed, reason = await self.ip_filter_manager.check_ip_allowed(
-            client_ip,
-            applies_to="oauth2"
+            client_ip, applies_to="oauth2"
         )
         if not is_allowed:
             return GatewayAuthValidationResponse(
-                is_valid=False,
-                auth_type="oauth2",
-                error_message=reason
+                is_valid=False, auth_type="oauth2", error_message=reason
             )
 
         # Check rate limits
         rate_limit_key = f"oauth2_client:{client.id}"
         rate_limit_info = await self._check_rate_limit(
-            rate_limit_key,
-            client.rate_limit_per_minute,
-            60
+            rate_limit_key, client.rate_limit_per_minute, 60
         )
 
         if not rate_limit_info["allowed"]:
@@ -966,7 +925,7 @@ class GatewayAuthenticator:
                 auth_type="oauth2",
                 rate_limit_remaining=0,
                 rate_limit_reset_at=rate_limit_info["reset_at"],
-                error_message="Rate limit exceeded"
+                error_message="Rate limit exceeded",
             )
 
         return GatewayAuthValidationResponse(
@@ -975,33 +934,26 @@ class GatewayAuthenticator:
             user_id=client.owner_id,
             scopes=client.get_scopes(),
             rate_limit_remaining=rate_limit_info["remaining"],
-            rate_limit_reset_at=rate_limit_info["reset_at"]
+            rate_limit_reset_at=rate_limit_info["reset_at"],
         )
 
     async def _check_rate_limit(
-        self,
-        key: str,
-        max_requests: Optional[int],
-        window_seconds: int
+        self, key: str, max_requests: int | None, window_seconds: int
     ) -> dict:
         """Check rate limit for a key."""
         if max_requests is None:
-            return {
-                "allowed": True,
-                "remaining": 999999,
-                "reset_at": None
-            }
+            return {"allowed": True, "remaining": 999999, "reset_at": None}
 
         is_limited, info = self.rate_limiter.is_rate_limited(
-            key=key,
-            max_requests=max_requests,
-            window_seconds=window_seconds
+            key=key, max_requests=max_requests, window_seconds=window_seconds
         )
 
         return {
             "allowed": not is_limited,
             "remaining": info.get("remaining", 0),
-            "reset_at": datetime.fromtimestamp(info["reset_at"]) if "reset_at" in info else None
+            "reset_at": datetime.fromtimestamp(info["reset_at"])
+            if "reset_at" in info
+            else None,
         }
 
     def _get_client_ip(self, request: Request) -> str:
@@ -1020,15 +972,13 @@ class GatewayAuthenticator:
 
 # Utility functions for FastAPI dependencies
 
+
 async def get_gateway_authenticator(db: Session) -> GatewayAuthenticator:
     """Dependency to get GatewayAuthenticator instance."""
     return GatewayAuthenticator(db)
 
 
-async def require_api_key(
-    request: Request,
-    db: Session
-) -> APIKey:
+async def require_api_key(request: Request, db: Session) -> APIKey:
     """
     FastAPI dependency to require valid API key authentication.
 
@@ -1043,26 +993,23 @@ async def require_api_key(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="API key required",
-            headers={"WWW-Authenticate": "ApiKey"}
+            headers={"WWW-Authenticate": "ApiKey"},
         )
 
     # Validate
     authenticator = GatewayAuthenticator(db)
     validation = await authenticator._validate_api_key(
-        api_key_header,
-        authenticator._get_client_ip(request)
+        api_key_header, authenticator._get_client_ip(request)
     )
 
     if not validation.is_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=validation.error_message,
-            headers={"WWW-Authenticate": "ApiKey"}
+            headers={"WWW-Authenticate": "ApiKey"},
         )
 
     # Get and return the API key object
     key_hash = hashlib.sha256(api_key_header.encode()).hexdigest()
-    result = db.execute(
-        select(APIKey).where(APIKey.key_hash == key_hash)
-    )
+    result = db.execute(select(APIKey).where(APIKey.key_hash == key_hash))
     return result.scalar_one()

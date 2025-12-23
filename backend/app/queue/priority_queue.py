@@ -21,20 +21,17 @@ priority-based job execution with sophisticated scheduling and monitoring.
 import hashlib
 import json
 import logging
-import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import IntEnum
-from typing import Any, Optional
+from typing import Any
 from uuid import uuid4
 
-from celery import Task
 from celery.result import AsyncResult
 
 from app.core.celery_app import celery_app
-from app.core.exceptions import ConflictError, NotFoundError, ValidationError
-from app.queue.tasks import BaseQueueTask, TaskPriority, TaskStatus
+from app.core.exceptions import NotFoundError, ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -101,23 +98,23 @@ class JobMetadata:
     priority: JobPriority
     state: JobState
     created_at: datetime
-    scheduled_at: Optional[datetime] = None
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    scheduled_at: datetime | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
     args: tuple = field(default_factory=tuple)
     kwargs: dict = field(default_factory=dict)
     queue: str = "default"
     retry_count: int = 0
     max_retries: int = 3
-    timeout: Optional[int] = None
-    dedup_key: Optional[str] = None
-    parent_job_id: Optional[str] = None
+    timeout: int | None = None
+    dedup_key: str | None = None
+    parent_job_id: str | None = None
     dependencies: list[str] = field(default_factory=list)
-    progress: Optional[dict] = None
-    result: Optional[Any] = None
-    error: Optional[str] = None
-    error_type: Optional[str] = None
-    traceback: Optional[str] = None
+    progress: dict | None = None
+    result: Any | None = None
+    error: str | None = None
+    error_type: str | None = None
+    traceback: str | None = None
     tags: list[str] = field(default_factory=list)
     metadata: dict = field(default_factory=dict)
 
@@ -129,9 +126,13 @@ class JobMetadata:
             "priority": self.priority.name,
             "state": self.state,
             "created_at": self.created_at.isoformat(),
-            "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
+            "scheduled_at": self.scheduled_at.isoformat()
+            if self.scheduled_at
+            else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
             "queue": self.queue,
             "retry_count": self.retry_count,
             "max_retries": self.max_retries,
@@ -163,7 +164,7 @@ class QueueMetrics:
     dead_letter_count: int = 0
     avg_wait_time_seconds: float = 0.0
     avg_execution_time_seconds: float = 0.0
-    oldest_pending_job_age_seconds: Optional[float] = None
+    oldest_pending_job_age_seconds: float | None = None
     throughput_per_minute: float = 0.0
     success_rate: float = 0.0
     last_updated: datetime = field(default_factory=datetime.utcnow)
@@ -331,11 +332,11 @@ class PriorityQueueManager:
 
     def _check_deduplication(
         self,
-        dedup_key: Optional[str],
+        dedup_key: str | None,
         task_name: str,
         args: tuple,
         kwargs: dict,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Check if job is duplicate and return existing job ID if found.
 
@@ -379,16 +380,16 @@ class PriorityQueueManager:
         self,
         task_name: str,
         args: tuple = (),
-        kwargs: Optional[dict] = None,
+        kwargs: dict | None = None,
         priority: JobPriority = JobPriority.NORMAL,
-        countdown: Optional[int] = None,
-        eta: Optional[datetime] = None,
-        timeout: Optional[int] = None,
+        countdown: int | None = None,
+        eta: datetime | None = None,
+        timeout: int | None = None,
         max_retries: int = 3,
-        dedup_key: Optional[str] = None,
-        queue: Optional[str] = None,
-        tags: Optional[list[str]] = None,
-        metadata: Optional[dict] = None,
+        dedup_key: str | None = None,
+        queue: str | None = None,
+        tags: list[str] | None = None,
+        metadata: dict | None = None,
     ) -> str:
         """
         Enqueue a job with specified priority.
@@ -463,7 +464,10 @@ class PriorityQueueManager:
             priority=priority,
             state=JobState.SCHEDULED if (countdown or eta) else JobState.PENDING,
             created_at=datetime.utcnow(),
-            scheduled_at=eta or (datetime.utcnow() + timedelta(seconds=countdown) if countdown else None),
+            scheduled_at=eta
+            or (
+                datetime.utcnow() + timedelta(seconds=countdown) if countdown else None
+            ),
             args=args,
             kwargs=kwargs,
             queue=queue,
@@ -575,7 +579,7 @@ class PriorityQueueManager:
 
         return metadata.to_dict()
 
-    def get_job_progress(self, job_id: str) -> Optional[dict[str, Any]]:
+    def get_job_progress(self, job_id: str) -> dict[str, Any] | None:
         """
         Get job progress information.
 
@@ -607,7 +611,7 @@ class PriorityQueueManager:
         self,
         job_id: str,
         terminate: bool = False,
-        reason: Optional[str] = None,
+        reason: str | None = None,
     ) -> bool:
         """
         Cancel a job.
@@ -630,9 +634,7 @@ class PriorityQueueManager:
 
         # Check if job can be cancelled
         if metadata.state in [JobState.COMPLETED, JobState.FAILED, JobState.CANCELLED]:
-            logger.warning(
-                f"Job {job_id} cannot be cancelled (state={metadata.state})"
-            )
+            logger.warning(f"Job {job_id} cannot be cancelled (state={metadata.state})")
             return False
 
         # Revoke in Celery
@@ -658,8 +660,8 @@ class PriorityQueueManager:
     def retry_job(
         self,
         job_id: str,
-        countdown: Optional[int] = None,
-        priority: Optional[JobPriority] = None,
+        countdown: int | None = None,
+        priority: JobPriority | None = None,
     ) -> str:
         """
         Retry a failed job.
@@ -712,9 +714,9 @@ class PriorityQueueManager:
         self,
         job_id: str,
         reason: str,
-        error: Optional[str] = None,
-        error_type: Optional[str] = None,
-        traceback: Optional[str] = None,
+        error: str | None = None,
+        error_type: str | None = None,
+        traceback: str | None = None,
     ) -> None:
         """
         Send job to dead letter queue.
@@ -787,7 +789,7 @@ class PriorityQueueManager:
     def requeue_from_dead_letter(
         self,
         job_id: str,
-        priority: Optional[JobPriority] = None,
+        priority: JobPriority | None = None,
     ) -> str:
         """
         Requeue a job from dead letter queue.
@@ -828,7 +830,7 @@ class PriorityQueueManager:
 
     def get_queue_metrics(
         self,
-        priority: Optional[JobPriority] = None,
+        priority: JobPriority | None = None,
     ) -> dict[str, Any]:
         """
         Get queue metrics by priority.
@@ -855,7 +857,7 @@ class PriorityQueueManager:
             # Count jobs by state
             wait_times: list[float] = []
             execution_times: list[float] = []
-            oldest_pending_age: Optional[float] = None
+            oldest_pending_age: float | None = None
 
             for metadata in self._job_metadata.values():
                 if metadata.priority != prio:
@@ -876,11 +878,15 @@ class PriorityQueueManager:
 
                     # Calculate wait and execution times
                     if metadata.started_at:
-                        wait_time = (metadata.started_at - metadata.created_at).total_seconds()
+                        wait_time = (
+                            metadata.started_at - metadata.created_at
+                        ).total_seconds()
                         wait_times.append(wait_time)
 
                     if metadata.started_at and metadata.completed_at:
-                        exec_time = (metadata.completed_at - metadata.started_at).total_seconds()
+                        exec_time = (
+                            metadata.completed_at - metadata.started_at
+                        ).total_seconds()
                         execution_times.append(exec_time)
 
                 elif metadata.state == JobState.FAILED:
@@ -895,7 +901,9 @@ class PriorityQueueManager:
                 metrics.avg_wait_time_seconds = sum(wait_times) / len(wait_times)
 
             if execution_times:
-                metrics.avg_execution_time_seconds = sum(execution_times) / len(execution_times)
+                metrics.avg_execution_time_seconds = sum(execution_times) / len(
+                    execution_times
+                )
 
             metrics.oldest_pending_job_age_seconds = oldest_pending_age
 
@@ -932,8 +940,8 @@ class PriorityQueueManager:
 
     def purge_queue(
         self,
-        priority: Optional[JobPriority] = None,
-        state: Optional[JobState] = None,
+        priority: JobPriority | None = None,
+        state: JobState | None = None,
     ) -> int:
         """
         Purge jobs from queue.
@@ -991,7 +999,11 @@ class PriorityQueueManager:
         jobs_to_remove = []
 
         for job_id, metadata in self._job_metadata.items():
-            if metadata.state in [JobState.COMPLETED, JobState.FAILED, JobState.CANCELLED]:
+            if metadata.state in [
+                JobState.COMPLETED,
+                JobState.FAILED,
+                JobState.CANCELLED,
+            ]:
                 if metadata.completed_at and metadata.completed_at < cutoff_time:
                     jobs_to_remove.append(job_id)
 
@@ -1002,15 +1014,14 @@ class PriorityQueueManager:
                 self._dedup_index.pop(metadata.dedup_key, None)
 
         logger.info(
-            f"Cleaned up {len(jobs_to_remove)} old jobs "
-            f"(retention={retention_hours}h)"
+            f"Cleaned up {len(jobs_to_remove)} old jobs (retention={retention_hours}h)"
         )
 
         return len(jobs_to_remove)
 
     def cleanup_dead_letter_queue(
         self,
-        retention_hours: Optional[int] = None,
+        retention_hours: int | None = None,
     ) -> int:
         """
         Clean up old dead letter queue records.
@@ -1044,7 +1055,7 @@ class PriorityQueueManager:
     def get_jobs_by_tag(
         self,
         tag: str,
-        state: Optional[JobState] = None,
+        state: JobState | None = None,
     ) -> list[dict[str, Any]]:
         """
         Get jobs by tag.
@@ -1074,11 +1085,13 @@ class PriorityQueueManager:
         """
         total_jobs = len(self._job_metadata)
         total_pending = sum(
-            1 for m in self._job_metadata.values()
+            1
+            for m in self._job_metadata.values()
             if m.state in [JobState.PENDING, JobState.SCHEDULED]
         )
         total_running = sum(
-            1 for m in self._job_metadata.values()
+            1
+            for m in self._job_metadata.values()
             if m.state in [JobState.RUNNING, JobState.PROGRESS]
         )
         total_failed = sum(
@@ -1098,7 +1111,11 @@ class PriorityQueueManager:
         health_score = max(0, min(100, health_score))
 
         return {
-            "status": "healthy" if health_score >= 80 else "degraded" if health_score >= 50 else "unhealthy",
+            "status": "healthy"
+            if health_score >= 80
+            else "degraded"
+            if health_score >= 50
+            else "unhealthy",
             "health_score": round(health_score, 2),
             "total_jobs": total_jobs,
             "pending_jobs": total_pending,

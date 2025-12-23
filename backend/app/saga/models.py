@@ -2,6 +2,7 @@
 
 These models persist saga execution state to enable recovery on service restart.
 """
+
 import uuid
 from datetime import datetime
 
@@ -18,6 +19,7 @@ class SagaExecution(Base):
 
     Enables saga recovery after service restarts or crashes.
     """
+
     __tablename__ = "saga_executions"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -28,10 +30,7 @@ class SagaExecution(Base):
 
     # Execution status
     status = Column(
-        String(20),
-        nullable=False,
-        default=SagaStatus.PENDING.value,
-        index=True
+        String(20), nullable=False, default=SagaStatus.PENDING.value, index=True
     )
 
     # Input and context
@@ -54,7 +53,7 @@ class SagaExecution(Base):
         "SagaStepExecution",
         back_populates="saga",
         cascade="all, delete-orphan",
-        order_by="SagaStepExecution.step_order"
+        order_by="SagaStepExecution.step_order",
     )
 
     __table_args__ = (
@@ -91,7 +90,7 @@ class SagaExecution(Base):
             SagaStatus.COMPLETED.value,
             SagaStatus.FAILED.value,
             SagaStatus.TIMEOUT.value,
-            SagaStatus.CANCELLED.value
+            SagaStatus.CANCELLED.value,
         )
 
     @property
@@ -104,6 +103,7 @@ class SagaExecution(Base):
 
 class SagaStepExecution(Base):
     """Persisted state of a saga step execution."""
+
     __tablename__ = "saga_step_executions"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -113,7 +113,7 @@ class SagaStepExecution(Base):
         GUID(),
         ForeignKey("saga_executions.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Step identification
@@ -123,10 +123,7 @@ class SagaStepExecution(Base):
 
     # Execution status
     status = Column(
-        String(20),
-        nullable=False,
-        default=StepStatus.PENDING.value,
-        index=True
+        String(20), nullable=False, default=StepStatus.PENDING.value, index=True
     )
 
     # Step data
@@ -205,6 +202,7 @@ class SagaEvent(Base):
 
     Provides detailed audit trail of all saga activities.
     """
+
     __tablename__ = "saga_events"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -214,13 +212,13 @@ class SagaEvent(Base):
         GUID(),
         ForeignKey("saga_executions.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     step_id = Column(
         GUID(),
         ForeignKey("saga_step_executions.id", ondelete="CASCADE"),
         nullable=True,
-        index=True
+        index=True,
     )
 
     # Event details

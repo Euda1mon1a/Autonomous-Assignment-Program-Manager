@@ -1,4 +1,5 @@
 """Tests for swap validation service."""
+
 from datetime import date, timedelta
 from uuid import uuid4
 

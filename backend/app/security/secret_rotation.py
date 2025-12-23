@@ -29,13 +29,15 @@ Security Model:
 import hashlib
 import logging
 import secrets
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import Column, DateTime, Enum as SQLEnum, String, Text, Boolean
+from sqlalchemy import Boolean, Column, DateTime, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Session
 
@@ -47,6 +49,7 @@ logger = logging.getLogger(__name__)
 
 class SecretType(str, Enum):
     """Types of secrets that can be rotated."""
+
     JWT_SIGNING_KEY = "jwt_signing_key"
     DATABASE_PASSWORD = "database_password"
     API_KEY = "api_key"
@@ -59,6 +62,7 @@ class SecretType(str, Enum):
 
 class RotationStatus(str, Enum):
     """Status of a secret rotation."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     GRACE_PERIOD = "grace_period"
@@ -69,6 +73,7 @@ class RotationStatus(str, Enum):
 
 class RotationPriority(str, Enum):
     """Priority level for rotation notifications."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -78,6 +83,7 @@ class RotationPriority(str, Enum):
 @dataclass
 class RotationConfig:
     """Configuration for secret rotation."""
+
     secret_type: SecretType
     rotation_interval_days: int
     grace_period_hours: int | None = None
@@ -90,6 +96,7 @@ class RotationConfig:
 @dataclass
 class RotationResult:
     """Result of a secret rotation operation."""
+
     success: bool
     rotation_id: UUID
     secret_type: SecretType
@@ -109,6 +116,7 @@ class SecretRotationHistory(Base):
     Stores metadata about secret rotations for audit and compliance.
     Does NOT store the actual secret values - only hashes for verification.
     """
+
     __tablename__ = "secret_rotation_history"
 
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -121,7 +129,9 @@ class SecretRotationHistory(Base):
 
     # Rotation metadata
     rotation_reason = Column(String(255), nullable=False)
-    initiated_by = Column(PGUUID(as_uuid=True), nullable=True)  # User ID or NULL for automated
+    initiated_by = Column(
+        PGUUID(as_uuid=True), nullable=True
+    )  # User ID or NULL for automated
 
     # Timing information
     started_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
@@ -140,6 +150,7 @@ class SecretRotationHistory(Base):
 
     class Config:
         """Pydantic configuration."""
+
         from_attributes = True
 
 
@@ -339,7 +350,9 @@ class SecretRotationService:
                 priority=RotationPriority.MEDIUM,
                 details={
                     "rotation_id": str(rotation_id),
-                    "grace_period_ends": grace_period_ends.isoformat() if grace_period_ends else None,
+                    "grace_period_ends": grace_period_ends.isoformat()
+                    if grace_period_ends
+                    else None,
                     "initiated_by": str(initiated_by) if initiated_by else "automated",
                     "reason": reason,
                 },
@@ -461,7 +474,9 @@ class SecretRotationService:
             # Deactivate old secret
             if secret_type in self._active_secrets:
                 # Keep only the new secret
-                self._active_secrets[secret_type] = [self._active_secrets[secret_type][-1]]
+                self._active_secrets[secret_type] = [
+                    self._active_secrets[secret_type][-1]
+                ]
 
             # Update status
             history.status = RotationStatus.COMPLETED
@@ -504,10 +519,12 @@ class SecretRotationService:
                 self.db.query(SecretRotationHistory)
                 .filter(
                     SecretRotationHistory.secret_type == secret_type,
-                    SecretRotationHistory.status.in_([
-                        RotationStatus.COMPLETED,
-                        RotationStatus.GRACE_PERIOD,
-                    ]),
+                    SecretRotationHistory.status.in_(
+                        [
+                            RotationStatus.COMPLETED,
+                            RotationStatus.GRACE_PERIOD,
+                        ]
+                    ),
                 )
                 .order_by(SecretRotationHistory.started_at.desc())
                 .first()
@@ -638,10 +655,12 @@ class SecretRotationService:
             self.db.query(SecretRotationHistory)
             .filter(
                 SecretRotationHistory.secret_type == secret_type,
-                SecretRotationHistory.status.in_([
-                    RotationStatus.COMPLETED,
-                    RotationStatus.GRACE_PERIOD,
-                ]),
+                SecretRotationHistory.status.in_(
+                    [
+                        RotationStatus.COMPLETED,
+                        RotationStatus.GRACE_PERIOD,
+                    ]
+                ),
             )
             .order_by(SecretRotationHistory.started_at.desc())
             .first()
@@ -765,14 +784,14 @@ class SecretRotationService:
 
             # Log structured data for monitoring
             logger.info(
-                f"Secret rotation result notification",
+                "Secret rotation result notification",
                 extra={
                     "secret_name": secret_name,
                     "status": status,
                     "success": success,
                     "priority": priority,
                     "details": details,
-                }
+                },
             )
 
             # NOTE: The NotificationService requires a NotificationType enum value,
@@ -993,6 +1012,7 @@ class SecretRotationService:
 
 # Convenience functions for common operations
 
+
 async def rotate_jwt_key(
     db: Session,
     initiated_by: UUID | None = None,
@@ -1013,7 +1033,9 @@ async def rotate_jwt_key(
     return await service.rotate_secret(
         SecretType.JWT_SIGNING_KEY,
         initiated_by=initiated_by,
-        reason="Manual JWT key rotation" if initiated_by else "Scheduled JWT key rotation",
+        reason="Manual JWT key rotation"
+        if initiated_by
+        else "Scheduled JWT key rotation",
         force=force,
     )
 

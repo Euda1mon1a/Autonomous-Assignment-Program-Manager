@@ -50,8 +50,7 @@ def run_scheduled_exports(self):
                 try:
                     logger.info(f"Executing export job: {job.name} (ID: {job.id})")
                     execution = await scheduler.execute_job(
-                        job_id=str(job.id),
-                        triggered_by="scheduled"
+                        job_id=str(job.id), triggered_by="scheduled"
                     )
 
                     if execution.status == ExportJobStatus.COMPLETED:
@@ -60,7 +59,9 @@ def run_scheduled_exports(self):
                         failed_count += 1
 
                 except Exception as e:
-                    logger.error(f"Failed to execute export job {job.name}: {e}", exc_info=True)
+                    logger.error(
+                        f"Failed to execute export job {job.name}: {e}", exc_info=True
+                    )
                     failed_count += 1
 
             logger.info(
@@ -71,7 +72,7 @@ def run_scheduled_exports(self):
             return {
                 "executed": executed_count,
                 "failed": failed_count,
-                "total": len(due_jobs)
+                "total": len(due_jobs),
             }
 
     # Run async function
@@ -99,8 +100,7 @@ def execute_export_job(self, job_id: str, triggered_by: str = "manual"):
 
             try:
                 execution = await scheduler.execute_job(
-                    job_id=job_id,
-                    triggered_by=triggered_by
+                    job_id=job_id, triggered_by=triggered_by
                 )
 
                 return {
@@ -113,11 +113,10 @@ def execute_export_job(self, job_id: str, triggered_by: str = "manual"):
                 }
 
             except Exception as e:
-                logger.error(f"Failed to execute export job {job_id}: {e}", exc_info=True)
-                return {
-                    "success": False,
-                    "error": str(e)
-                }
+                logger.error(
+                    f"Failed to execute export job {job_id}: {e}", exc_info=True
+                )
+                return {"success": False, "error": str(e)}
 
     # Run async function
     return asyncio.run(_execute_export_job())
@@ -143,8 +142,9 @@ def cleanup_old_executions(self, retention_days: int = 90):
 
             # Delete old executions
             result = await db.execute(
-                select(ExportJobExecution)
-                .where(ExportJobExecution.started_at < cutoff_date)
+                select(ExportJobExecution).where(
+                    ExportJobExecution.started_at < cutoff_date
+                )
             )
             old_executions = result.scalars().all()
 
@@ -155,12 +155,14 @@ def cleanup_old_executions(self, retention_days: int = 90):
 
             await db.commit()
 
-            logger.info(f"Cleaned up {deleted_count} old export executions (older than {retention_days} days)")
+            logger.info(
+                f"Cleaned up {deleted_count} old export executions (older than {retention_days} days)"
+            )
 
             return {
                 "deleted": deleted_count,
                 "retention_days": retention_days,
-                "cutoff_date": cutoff_date.isoformat()
+                "cutoff_date": cutoff_date.isoformat(),
             }
 
     # Run async function
@@ -181,9 +183,7 @@ def export_health_check(self):
         """Async implementation of export health check."""
         async with get_async_session_context() as db:
             # Count total jobs
-            total_jobs_result = await db.execute(
-                select(ExportJob)
-            )
+            total_jobs_result = await db.execute(select(ExportJob))
             total_jobs = len(total_jobs_result.scalars().all())
 
             # Count enabled jobs
@@ -195,8 +195,7 @@ def export_health_check(self):
             # Count scheduled jobs
             scheduled_jobs_result = await db.execute(
                 select(ExportJob).where(
-                    ExportJob.enabled == True,
-                    ExportJob.schedule_enabled == True
+                    ExportJob.enabled == True, ExportJob.schedule_enabled == True
                 )
             )
             scheduled_jobs = len(scheduled_jobs_result.scalars().all())
@@ -204,20 +203,25 @@ def export_health_check(self):
             # Count recent executions (last 24 hours)
             last_24h = datetime.utcnow() - timedelta(hours=24)
             recent_executions_result = await db.execute(
-                select(ExportJobExecution)
-                .where(ExportJobExecution.started_at >= last_24h)
+                select(ExportJobExecution).where(
+                    ExportJobExecution.started_at >= last_24h
+                )
             )
             recent_executions = recent_executions_result.scalars().all()
 
-            successful = len([e for e in recent_executions if e.status == ExportJobStatus.COMPLETED])
-            failed = len([e for e in recent_executions if e.status == ExportJobStatus.FAILED])
+            successful = len(
+                [e for e in recent_executions if e.status == ExportJobStatus.COMPLETED]
+            )
+            failed = len(
+                [e for e in recent_executions if e.status == ExportJobStatus.FAILED]
+            )
 
             # Check for jobs that should have run but didn't
             overdue_jobs_result = await db.execute(
                 select(ExportJob).where(
                     ExportJob.enabled == True,
                     ExportJob.schedule_enabled == True,
-                    ExportJob.next_run_at < datetime.utcnow() - timedelta(hours=1)
+                    ExportJob.next_run_at < datetime.utcnow() - timedelta(hours=1),
                 )
             )
             overdue_jobs = len(overdue_jobs_result.scalars().all())
@@ -237,7 +241,7 @@ def export_health_check(self):
                 "successful_24h": successful,
                 "failed_24h": failed,
                 "overdue_jobs": overdue_jobs,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
             logger.info(f"Export health check: {result}")
@@ -267,8 +271,7 @@ def update_next_run_times(self):
             # Get all scheduled jobs
             result = await db.execute(
                 select(ExportJob).where(
-                    ExportJob.enabled == True,
-                    ExportJob.schedule_enabled == True
+                    ExportJob.enabled == True, ExportJob.schedule_enabled == True
                 )
             )
             scheduled_jobs = result.scalars().all()
@@ -278,17 +281,21 @@ def update_next_run_times(self):
             for job in scheduled_jobs:
                 if job.schedule_cron:
                     # Recalculate next run time
-                    job.next_run_at = scheduler._calculate_next_run_time(job.schedule_cron)
+                    job.next_run_at = scheduler._calculate_next_run_time(
+                        job.schedule_cron
+                    )
                     updated_count += 1
 
             await db.commit()
 
-            logger.info(f"Updated next_run_at for {updated_count} scheduled export jobs")
+            logger.info(
+                f"Updated next_run_at for {updated_count} scheduled export jobs"
+            )
 
             return {
                 "updated": updated_count,
                 "total_scheduled": len(scheduled_jobs),
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
     # Run async function

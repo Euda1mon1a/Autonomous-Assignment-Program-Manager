@@ -1,4 +1,5 @@
 """Notification models for database persistence."""
+
 import uuid
 from datetime import datetime
 
@@ -25,16 +26,14 @@ class Notification(Base):
     This model tracks all notifications sent to users, their read status,
     and delivery metadata.
     """
+
     __tablename__ = "notifications"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
 
     # Recipient
     recipient_id = Column(
-        GUID(),
-        ForeignKey("people.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True
+        GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
     # Notification content
@@ -59,8 +58,7 @@ class Notification(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "priority IN ('high', 'normal', 'low')",
-            name="check_notification_priority"
+            "priority IN ('high', 'normal', 'low')", name="check_notification_priority"
         ),
     )
 
@@ -75,16 +73,14 @@ class ScheduledNotificationRecord(Base):
     This replaces the in-memory queue with database persistence,
     allowing scheduled notifications to survive server restarts.
     """
+
     __tablename__ = "scheduled_notifications"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
 
     # Recipient
     recipient_id = Column(
-        GUID(),
-        ForeignKey("people.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True
+        GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
     # Notification details
@@ -107,7 +103,7 @@ class ScheduledNotificationRecord(Base):
     __table_args__ = (
         CheckConstraint(
             "status IN ('pending', 'processing', 'sent', 'failed', 'cancelled')",
-            name="check_scheduled_status"
+            name="check_scheduled_status",
         ),
     )
 
@@ -121,6 +117,7 @@ class NotificationPreferenceRecord(Base):
 
     Controls which notifications a user receives and through which channels.
     """
+
     __tablename__ = "notification_preferences"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -131,7 +128,7 @@ class NotificationPreferenceRecord(Base):
         ForeignKey("people.id", ondelete="CASCADE"),
         nullable=False,
         unique=True,
-        index=True
+        index=True,
     )
 
     # Channel preferences (comma-separated list)
@@ -155,15 +152,15 @@ class NotificationPreferenceRecord(Base):
     __table_args__ = (
         CheckConstraint(
             "quiet_hours_start IS NULL OR (quiet_hours_start >= 0 AND quiet_hours_start <= 23)",
-            name="check_quiet_start"
+            name="check_quiet_start",
         ),
         CheckConstraint(
             "quiet_hours_end IS NULL OR (quiet_hours_end >= 0 AND quiet_hours_end <= 23)",
-            name="check_quiet_end"
+            name="check_quiet_end",
         ),
         CheckConstraint(
             "email_digest_frequency IN ('daily', 'weekly')",
-            name="check_digest_frequency"
+            name="check_digest_frequency",
         ),
     )
 

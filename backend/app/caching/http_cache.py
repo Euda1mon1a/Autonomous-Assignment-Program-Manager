@@ -11,12 +11,13 @@ Implements RFC 7234 HTTP caching with:
 This service integrates with the existing Redis cache infrastructure
 and provides HTTP-specific caching semantics.
 """
+
 import logging
 import pickle
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Optional
+from datetime import datetime
+from typing import Any
 
 import redis.asyncio as redis
 
@@ -49,13 +50,13 @@ class CacheDirective:
     no_transform: bool = False  # Do not transform content
     must_revalidate: bool = False  # Must revalidate when stale
     proxy_revalidate: bool = False  # Proxy must revalidate
-    max_age: Optional[int] = None  # Max age in seconds
-    s_maxage: Optional[int] = None  # Shared cache max age
+    max_age: int | None = None  # Max age in seconds
+    s_maxage: int | None = None  # Shared cache max age
     immutable: bool = False  # Never changes (non-standard but widely supported)
 
     # Custom directives
-    stale_while_revalidate: Optional[int] = None  # Serve stale while revalidating
-    stale_if_error: Optional[int] = None  # Serve stale if error
+    stale_while_revalidate: int | None = None  # Serve stale while revalidating
+    stale_if_error: int | None = None  # Serve stale if error
 
     def to_header(self) -> str:
         """
@@ -212,10 +213,10 @@ class CachedResponse:
 
     # Cache metadata
     cached_at: float = field(default_factory=time.time)
-    etag: Optional[str] = None
-    last_modified: Optional[datetime] = None
-    max_age: Optional[int] = None
-    vary: Optional[list[str]] = None
+    etag: str | None = None
+    last_modified: datetime | None = None
+    max_age: int | None = None
+    vary: list[str] | None = None
 
     # Computed properties
     @property
@@ -267,7 +268,9 @@ class CachedResponse:
             "content_type": self.content_type,
             "cached_at": self.cached_at,
             "etag": self.etag,
-            "last_modified": self.last_modified.isoformat() if self.last_modified else None,
+            "last_modified": self.last_modified.isoformat()
+            if self.last_modified
+            else None,
             "max_age": self.max_age,
             "vary": self.vary,
         }
@@ -333,7 +336,7 @@ class HTTPCache:
         )
     """
 
-    def __init__(self, config: Optional[HTTPCacheConfig] = None):
+    def __init__(self, config: HTTPCacheConfig | None = None):
         """
         Initialize HTTP cache service.
 
@@ -341,7 +344,7 @@ class HTTPCache:
             config: Cache configuration
         """
         self.config = config or HTTPCacheConfig()
-        self._redis: Optional[redis.Redis] = None
+        self._redis: redis.Redis | None = None
         self._settings = get_settings()
 
     async def _get_redis(self) -> redis.Redis:
@@ -357,7 +360,9 @@ class HTTPCache:
 
         return self._redis
 
-    def _make_cache_key(self, key: str, vary_values: Optional[dict[str, str]] = None) -> str:
+    def _make_cache_key(
+        self, key: str, vary_values: dict[str, str] | None = None
+    ) -> str:
         """
         Generate Redis cache key.
 
@@ -386,8 +391,8 @@ class HTTPCache:
     async def get(
         self,
         key: str,
-        vary_values: Optional[dict[str, str]] = None,
-    ) -> Optional[CachedResponse]:
+        vary_values: dict[str, str] | None = None,
+    ) -> CachedResponse | None:
         """
         Get cached response.
 
@@ -438,8 +443,8 @@ class HTTPCache:
         self,
         key: str,
         response: CachedResponse,
-        max_age: Optional[int] = None,
-        vary_values: Optional[dict[str, str]] = None,
+        max_age: int | None = None,
+        vary_values: dict[str, str] | None = None,
     ) -> bool:
         """
         Store response in cache.
@@ -488,7 +493,7 @@ class HTTPCache:
     async def delete(
         self,
         key: str,
-        vary_values: Optional[dict[str, str]] = None,
+        vary_values: dict[str, str] | None = None,
     ) -> bool:
         """
         Delete cached response.
@@ -518,9 +523,9 @@ class HTTPCache:
     async def is_modified(
         self,
         key: str,
-        etag: Optional[str] = None,
-        if_modified_since: Optional[datetime] = None,
-        vary_values: Optional[dict[str, str]] = None,
+        etag: str | None = None,
+        if_modified_since: datetime | None = None,
+        vary_values: dict[str, str] | None = None,
     ) -> bool:
         """
         Check if resource has been modified.

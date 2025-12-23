@@ -9,32 +9,26 @@ This test module demonstrates and validates:
 - Workflow cancellation
 - State persistence and resumability
 """
+
 import asyncio
 from datetime import datetime, timedelta
-from uuid import uuid4
 
 import pytest
 
 from app.models.workflow import (
     StepStatus,
-    WorkflowInstance,
     WorkflowStatus,
     WorkflowStepExecution,
-    WorkflowTemplate,
 )
 from app.workflow.engine import (
-    ConditionEvaluationError,
-    StepExecutionError,
-    StepTimeoutError,
     WorkflowEngine,
     WorkflowExecutionError,
-    WorkflowTimeoutError,
 )
-
 
 # ============================================================================
 # Test Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def workflow_engine(db):
@@ -153,6 +147,7 @@ def conditional_template_definition():
 # Mock Step Handlers
 # ============================================================================
 
+
 async def mock_step_handler(input_data: dict) -> dict:
     """Mock step handler that succeeds."""
     await asyncio.sleep(0.1)  # Simulate work
@@ -178,6 +173,7 @@ async def mock_timeout_step_handler(input_data: dict) -> dict:
 # ============================================================================
 # Template Management Tests
 # ============================================================================
+
 
 def test_create_workflow_template(workflow_engine, simple_template_definition, db):
     """Test creating a workflow template."""
@@ -241,6 +237,7 @@ def test_get_template_by_name(workflow_engine, simple_template_definition, db):
 # Workflow Instance Tests
 # ============================================================================
 
+
 def test_create_workflow_instance(workflow_engine, simple_template_definition, db):
     """Test creating a workflow instance."""
     template = workflow_engine.create_template(
@@ -263,7 +260,9 @@ def test_create_workflow_instance(workflow_engine, simple_template_definition, d
     assert instance.timeout_at is not None
 
 
-def test_workflow_instance_timeout_calculation(workflow_engine, simple_template_definition, db):
+def test_workflow_instance_timeout_calculation(
+    workflow_engine, simple_template_definition, db
+):
     """Test that workflow timeout is calculated correctly."""
     template = workflow_engine.create_template(
         name="test_workflow",
@@ -287,6 +286,7 @@ def test_workflow_instance_timeout_calculation(workflow_engine, simple_template_
 # ============================================================================
 # Workflow Execution Tests
 # ============================================================================
+
 
 @pytest.mark.asyncio
 async def test_execute_simple_workflow(workflow_engine, simple_template_definition, db):
@@ -323,7 +323,9 @@ async def test_execute_simple_workflow(workflow_engine, simple_template_definiti
 
 
 @pytest.mark.asyncio
-async def test_execute_parallel_workflow(workflow_engine, parallel_template_definition, db):
+async def test_execute_parallel_workflow(
+    workflow_engine, parallel_template_definition, db
+):
     """Test executing workflow with parallel steps."""
     template = workflow_engine.create_template(
         name="parallel_workflow",
@@ -351,7 +353,9 @@ async def test_execute_parallel_workflow(workflow_engine, parallel_template_defi
 
 
 @pytest.mark.asyncio
-async def test_conditional_step_execution(workflow_engine, conditional_template_definition, db):
+async def test_conditional_step_execution(
+    workflow_engine, conditional_template_definition, db
+):
     """Test conditional step execution."""
     template = workflow_engine.create_template(
         name="conditional_workflow",
@@ -384,6 +388,7 @@ async def test_conditional_step_execution(workflow_engine, conditional_template_
 # Error Handling Tests
 # ============================================================================
 
+
 @pytest.mark.asyncio
 async def test_workflow_cancellation(workflow_engine, simple_template_definition, db):
     """Test cancelling a workflow instance."""
@@ -405,7 +410,9 @@ async def test_workflow_cancellation(workflow_engine, simple_template_definition
     assert cancelled_instance.cancelled_at is not None
 
 
-def test_cancel_completed_workflow_fails(workflow_engine, simple_template_definition, db):
+def test_cancel_completed_workflow_fails(
+    workflow_engine, simple_template_definition, db
+):
     """Test that completed workflows cannot be cancelled."""
     template = workflow_engine.create_template(
         name="test_workflow",
@@ -427,6 +434,7 @@ def test_cancel_completed_workflow_fails(workflow_engine, simple_template_defini
 # ============================================================================
 # Query and Statistics Tests
 # ============================================================================
+
 
 def test_query_workflow_instances(workflow_engine, simple_template_definition, db):
     """Test querying workflow instances with filters."""
@@ -492,6 +500,7 @@ def test_workflow_statistics(workflow_engine, simple_template_definition, db):
 # ============================================================================
 # Helper Function Tests
 # ============================================================================
+
 
 def test_build_execution_plan(workflow_engine, parallel_template_definition):
     """Test execution plan building with dependencies."""

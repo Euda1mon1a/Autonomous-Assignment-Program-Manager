@@ -1,12 +1,14 @@
 """Schemas for personal dashboard API."""
+
 from datetime import date, datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class DashboardUserInfo(BaseModel):
     """User information for dashboard."""
+
     id: UUID
     name: str
     role: str  # 'resident' or 'faculty'
@@ -19,6 +21,7 @@ class DashboardUserInfo(BaseModel):
 
 class DashboardScheduleItem(BaseModel):
     """Schedule item for dashboard."""
+
     date: date
     time_of_day: str  # 'AM' or 'PM'
     activity: str
@@ -33,6 +36,7 @@ class DashboardScheduleItem(BaseModel):
 
 class DashboardSwapItem(BaseModel):
     """Pending swap item for dashboard."""
+
     swap_id: UUID
     swap_type: str  # 'one_to_one' or 'absorb'
     status: str  # 'pending', 'approved', etc.
@@ -47,6 +51,7 @@ class DashboardSwapItem(BaseModel):
 
 class DashboardAbsenceItem(BaseModel):
     """Absence item for dashboard."""
+
     absence_id: UUID
     start_date: date
     end_date: date
@@ -59,6 +64,7 @@ class DashboardAbsenceItem(BaseModel):
 
 class DashboardSummary(BaseModel):
     """Summary statistics for dashboard."""
+
     next_assignment: date | None = None
     workload_next_4_weeks: int = 0  # Number of blocks
     pending_swap_count: int = 0
@@ -67,6 +73,7 @@ class DashboardSummary(BaseModel):
 
 class MeDashboardResponse(BaseModel):
     """Complete dashboard response."""
+
     user: DashboardUserInfo
     upcoming_schedule: list[DashboardScheduleItem] = []
     pending_swaps: list[DashboardSwapItem] = []

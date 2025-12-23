@@ -3,6 +3,7 @@ Tests for the People API endpoints.
 
 Tests CRUD operations for residents and faculty.
 """
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -20,7 +21,9 @@ class TestListPeople:
         assert data["items"] == []
         assert data["total"] == 0
 
-    def test_list_people_with_data(self, client: TestClient, sample_resident: Person, sample_faculty: Person):
+    def test_list_people_with_data(
+        self, client: TestClient, sample_resident: Person, sample_faculty: Person
+    ):
         """Should return all people."""
         response = client.get("/api/people")
         assert response.status_code == 200
@@ -28,7 +31,9 @@ class TestListPeople:
         assert data["total"] == 2
         assert len(data["items"]) == 2
 
-    def test_list_people_filter_by_type_resident(self, client: TestClient, sample_resident: Person, sample_faculty: Person):
+    def test_list_people_filter_by_type_resident(
+        self, client: TestClient, sample_resident: Person, sample_faculty: Person
+    ):
         """Should filter by type=resident."""
         response = client.get("/api/people?type=resident")
         assert response.status_code == 200
@@ -36,7 +41,9 @@ class TestListPeople:
         assert data["total"] == 1
         assert data["items"][0]["type"] == "resident"
 
-    def test_list_people_filter_by_type_faculty(self, client: TestClient, sample_resident: Person, sample_faculty: Person):
+    def test_list_people_filter_by_type_faculty(
+        self, client: TestClient, sample_resident: Person, sample_faculty: Person
+    ):
         """Should filter by type=faculty."""
         response = client.get("/api/people?type=faculty")
         assert response.status_code == 200
@@ -44,7 +51,9 @@ class TestListPeople:
         assert data["total"] == 1
         assert data["items"][0]["type"] == "faculty"
 
-    def test_list_people_filter_by_pgy_level(self, client: TestClient, sample_residents: list[Person]):
+    def test_list_people_filter_by_pgy_level(
+        self, client: TestClient, sample_residents: list[Person]
+    ):
         """Should filter by PGY level."""
         response = client.get("/api/people?pgy_level=1")
         assert response.status_code == 200
@@ -64,7 +73,9 @@ class TestListResidents:
         assert data["items"] == []
         assert data["total"] == 0
 
-    def test_list_residents_excludes_faculty(self, client: TestClient, sample_resident: Person, sample_faculty: Person):
+    def test_list_residents_excludes_faculty(
+        self, client: TestClient, sample_resident: Person, sample_faculty: Person
+    ):
         """Should only return residents, not faculty."""
         response = client.get("/api/people/residents")
         assert response.status_code == 200
@@ -72,7 +83,9 @@ class TestListResidents:
         assert data["total"] == 1
         assert data["items"][0]["type"] == "resident"
 
-    def test_list_residents_filter_by_pgy_level(self, client: TestClient, sample_residents: list[Person]):
+    def test_list_residents_filter_by_pgy_level(
+        self, client: TestClient, sample_residents: list[Person]
+    ):
         """Should filter residents by PGY level."""
         response = client.get("/api/people/residents?pgy_level=2")
         assert response.status_code == 200
@@ -92,7 +105,9 @@ class TestListFaculty:
         assert data["items"] == []
         assert data["total"] == 0
 
-    def test_list_faculty_excludes_residents(self, client: TestClient, sample_resident: Person, sample_faculty: Person):
+    def test_list_faculty_excludes_residents(
+        self, client: TestClient, sample_resident: Person, sample_faculty: Person
+    ):
         """Should only return faculty, not residents."""
         response = client.get("/api/people/faculty")
         assert response.status_code == 200
@@ -238,7 +253,9 @@ class TestUpdatePerson:
 class TestDeletePerson:
     """Tests for DELETE /api/people/{person_id} endpoint."""
 
-    def test_delete_person_success(self, client: TestClient, sample_resident: Person, db: Session):
+    def test_delete_person_success(
+        self, client: TestClient, sample_resident: Person, db: Session
+    ):
         """Should delete person."""
         person_id = str(sample_resident.id)
         response = client.delete(f"/api/people/{person_id}")
@@ -254,7 +271,9 @@ class TestDeletePerson:
         response = client.delete(f"/api/people/{fake_id}")
         assert response.status_code == 404
 
-    def test_delete_person_idempotent(self, client: TestClient, sample_resident: Person):
+    def test_delete_person_idempotent(
+        self, client: TestClient, sample_resident: Person
+    ):
         """Deleting same person twice should return 404 on second attempt."""
         person_id = str(sample_resident.id)
 

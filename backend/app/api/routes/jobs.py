@@ -15,7 +15,6 @@ Provides endpoints for monitoring and managing Celery background tasks:
 
 import logging
 from datetime import datetime
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -40,7 +39,6 @@ from app.schemas.jobs import (
     TaskRevocationRequest,
     TaskRevocationResponse,
     TaskStatistics,
-    TaskTimeline,
     ThroughputMetrics,
     WorkerHealth,
     WorkerStats,
@@ -115,7 +113,9 @@ async def get_jobs_dashboard_overview(
             totalWorkers=worker_stats.get("total_workers", 0),
             onlineWorkers=worker_stats.get("online_workers", 0),
             queueCounts=queue_counts,
-            workerUtilizationPercentage=utilization.get("average_utilization_percentage", 0.0),
+            workerUtilizationPercentage=utilization.get(
+                "average_utilization_percentage", 0.0
+            ),
             timestamp=datetime.utcnow().isoformat(),
         )
 
@@ -525,8 +525,7 @@ async def get_task_statistics(
     try:
         stats_service = JobStatsService()
         stats = stats_service.get_task_statistics(
-            task_name=task_name,
-            time_range_hours=hours
+            task_name=task_name, time_range_hours=hours
         )
 
         return TaskStatistics(**stats)
@@ -597,15 +596,16 @@ async def get_performance_metrics(
     try:
         stats_service = JobStatsService()
         metrics = stats_service.get_performance_metrics(
-            task_name=task_name,
-            time_range_hours=hours
+            task_name=task_name, time_range_hours=hours
         )
 
         return PerformanceMetrics(**metrics)
 
     except Exception as e:
         logger.error(f"Error getting performance metrics: {e}")
-        raise HTTPException(status_code=500, detail="Error fetching performance metrics")
+        raise HTTPException(
+            status_code=500, detail="Error fetching performance metrics"
+        )
 
 
 @router.get("/statistics/throughput", response_model=ThroughputMetrics)
@@ -635,8 +635,7 @@ async def get_throughput_metrics(
     try:
         stats_service = JobStatsService()
         metrics = stats_service.get_throughput_metrics(
-            queue_name=queue,
-            time_range_hours=hours
+            queue_name=queue, time_range_hours=hours
         )
 
         return ThroughputMetrics(**metrics)
@@ -679,16 +678,10 @@ async def get_task_history(
     try:
         history_service = JobHistoryService()
         history = history_service.get_task_history(
-            task_name=task_name,
-            limit=limit,
-            offset=offset,
-            status_filter=status
+            task_name=task_name, limit=limit, offset=offset, status_filter=status
         )
 
-        tasks = [
-            TaskHistoryRecord(**task)
-            for task in history.get("tasks", [])
-        ]
+        tasks = [TaskHistoryRecord(**task) for task in history.get("tasks", [])]
 
         return TaskHistoryResponse(
             taskName=history.get("task_name"),
@@ -732,10 +725,7 @@ async def get_recent_failures(
     """
     try:
         history_service = JobHistoryService()
-        failures = history_service.get_recent_failures(
-            limit=limit,
-            task_name=task_name
-        )
+        failures = history_service.get_recent_failures(limit=limit, task_name=task_name)
 
         return [FailureRecord(**failure) for failure in failures]
 
@@ -773,9 +763,7 @@ async def get_slow_tasks(
     try:
         history_service = JobHistoryService()
         slow_tasks = history_service.get_slow_tasks(
-            threshold_seconds=threshold,
-            limit=limit,
-            hours=hours
+            threshold_seconds=threshold, limit=limit, hours=hours
         )
 
         return [SlowTaskRecord(**task) for task in slow_tasks]
@@ -820,8 +808,7 @@ async def get_scheduled_tasks_summary(
         summary = stats_service.get_scheduled_tasks_summary()
 
         tasks = [
-            ScheduledTaskConfig(**task)
-            for task in summary.get("scheduled_tasks", [])
+            ScheduledTaskConfig(**task) for task in summary.get("scheduled_tasks", [])
         ]
 
         return ScheduledTasksSummary(
@@ -868,8 +855,7 @@ async def revoke_task(
     try:
         monitor = CeleryMonitorService()
         success = monitor.revoke_task(
-            task_id=request.task_id,
-            terminate=request.terminate
+            task_id=request.task_id, terminate=request.terminate
         )
 
         if success:
@@ -916,8 +902,7 @@ async def purge_queue(
     try:
         if not request.confirm:
             raise HTTPException(
-                status_code=400,
-                detail="Queue purge requires explicit confirmation"
+                status_code=400, detail="Queue purge requires explicit confirmation"
             )
 
         monitor = CeleryMonitorService()

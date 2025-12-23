@@ -1,4 +1,5 @@
 """Export API routes for CSV, JSON, and Excel data export."""
+
 import csv
 import io
 import json
@@ -37,7 +38,7 @@ def create_csv_response(content: str, filename: str) -> StreamingResponse:
     return StreamingResponse(
         iter([content]),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 
@@ -47,7 +48,7 @@ def create_json_response(data: list, filename: str) -> StreamingResponse:
     return StreamingResponse(
         iter([content]),
         media_type="application/json",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 
@@ -81,10 +82,7 @@ def export_people(
 
     # Default to CSV
     headers = ["Name", "Type", "PGY Level", "Email"]
-    rows = [
-        [p.name, p.type, p.pgy_level or "", p.email or ""]
-        for p in people
-    ]
+    rows = [[p.name, p.type, p.pgy_level or "", p.email or ""] for p in people]
     content = generate_csv(headers, rows)
     return create_csv_response(content, "people.csv")
 
@@ -208,8 +206,12 @@ def export_schedule(
 def export_schedule_xlsx(
     start_date: date = Query(..., description="Schedule start date"),
     end_date: date = Query(..., description="Schedule end date"),
-    block_number: int | None = Query(None, description="Block number for header (auto-calculated if not provided)"),
-    federal_holidays: str | None = Query(None, description="Comma-separated federal holiday dates (YYYY-MM-DD)"),
+    block_number: int | None = Query(
+        None, description="Block number for header (auto-calculated if not provided)"
+    ),
+    federal_holidays: str | None = Query(
+        None, description="Comma-separated federal holiday dates (YYYY-MM-DD)"
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
@@ -241,10 +243,10 @@ def export_schedule_xlsx(
                 date_str = date_str.strip()
                 if date_str:
                     holidays.append(datetime.strptime(date_str, "%Y-%m-%d").date())
-        except ValueError as e:
+        except ValueError:
             raise HTTPException(
                 status_code=400,
-                detail="Invalid date format in federal_holidays. Use YYYY-MM-DD format"
+                detail="Invalid date format in federal_holidays. Use YYYY-MM-DD format",
             )
 
     try:
@@ -253,19 +255,20 @@ def export_schedule_xlsx(
             start_date=start_date,
             end_date=end_date,
             block_number=block_number,
-            federal_holidays=holidays
+            federal_holidays=holidays,
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
-            status_code=500,
-            detail="An error occurred generating the Excel file"
+            status_code=500, detail="An error occurred generating the Excel file"
         )
 
     # Generate filename with date range
-    filename = f"schedule_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.xlsx"
+    filename = (
+        f"schedule_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.xlsx"
+    )
 
     return Response(
         content=xlsx_bytes,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )

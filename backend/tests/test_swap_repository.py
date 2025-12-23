@@ -1,4 +1,5 @@
 """Tests for SwapRepository."""
+
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
@@ -13,6 +14,7 @@ from app.repositories.swap_repository import SwapRepository
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def swap_repo(db: Session) -> SwapRepository:
@@ -90,6 +92,7 @@ def test_user(db: Session) -> User:
 # ============================================================================
 # SwapRecord CRUD Tests
 # ============================================================================
+
 
 class TestSwapRepositoryCreate:
     """Tests for create() method."""
@@ -305,6 +308,7 @@ class TestSwapRepositoryDelete:
 # Query Methods Tests
 # ============================================================================
 
+
 class TestSwapRepositoryFindByFaculty:
     """Tests for find_by_faculty() method."""
 
@@ -327,7 +331,9 @@ class TestSwapRepositoryFindByFaculty:
         )
 
         # Find swaps where faculty_a is source
-        results = swap_repo.find_by_faculty(faculty_a.id, as_source=True, as_target=False)
+        results = swap_repo.find_by_faculty(
+            faculty_a.id, as_source=True, as_target=False
+        )
 
         assert len(results) == 1
         assert results[0].id == swap1.id
@@ -351,7 +357,9 @@ class TestSwapRepositoryFindByFaculty:
         )
 
         # Find swaps where faculty_b is target
-        results = swap_repo.find_by_faculty(faculty_b.id, as_source=False, as_target=True)
+        results = swap_repo.find_by_faculty(
+            faculty_b.id, as_source=False, as_target=True
+        )
 
         assert len(results) == 1
         assert results[0].id == swap1.id
@@ -374,7 +382,9 @@ class TestSwapRepositoryFindByFaculty:
         )
 
         # Find all swaps involving faculty_a
-        results = swap_repo.find_by_faculty(faculty_a.id, as_source=True, as_target=True)
+        results = swap_repo.find_by_faculty(
+            faculty_a.id, as_source=True, as_target=True
+        )
 
         assert len(results) == 2
         swap_ids = {s.id for s in results}
@@ -390,7 +400,9 @@ class TestSwapRepositoryFindByFaculty:
             swap_type=SwapType.ONE_TO_ONE,
         )
 
-        results = swap_repo.find_by_faculty(faculty_a.id, as_source=False, as_target=False)
+        results = swap_repo.find_by_faculty(
+            faculty_a.id, as_source=False, as_target=False
+        )
 
         assert len(results) == 0
 
@@ -467,7 +479,9 @@ class TestSwapRepositoryFindByStatus:
         assert len(results) == 1
         assert results[0].id == swap1.id
 
-    def test_find_by_status_with_faculty_filter(self, swap_repo, faculty_a, faculty_b, faculty_c):
+    def test_find_by_status_with_faculty_filter(
+        self, swap_repo, faculty_a, faculty_b, faculty_c
+    ):
         """Test finding swaps by status filtered by faculty."""
         # Create pending swaps
         swap1 = swap_repo.create(
@@ -550,7 +564,9 @@ class TestSwapRepositoryFindByWeek:
         assert len(results) == 1
         assert results[0].id == swap.id
 
-    def test_find_by_week_with_faculty_filter(self, swap_repo, faculty_a, faculty_b, faculty_c):
+    def test_find_by_week_with_faculty_filter(
+        self, swap_repo, faculty_a, faculty_b, faculty_c
+    ):
         """Test finding swaps by week filtered by faculty."""
         week = date.today() + timedelta(days=7)
 
@@ -676,7 +692,9 @@ class TestSwapRepositoryFindRecent:
 
         assert len(results) == 3
 
-    def test_find_recent_with_faculty_filter(self, swap_repo, faculty_a, faculty_b, faculty_c, test_user):
+    def test_find_recent_with_faculty_filter(
+        self, swap_repo, faculty_a, faculty_b, faculty_c, test_user
+    ):
         """Test finding recent swaps filtered by faculty."""
         swap1 = swap_repo.create(
             source_faculty_id=faculty_a.id,
@@ -737,7 +755,9 @@ class TestSwapRepositoryFindWithPagination:
         assert len(records) == 5
         assert total == 25
 
-    def test_pagination_with_faculty_filter(self, swap_repo, faculty_a, faculty_b, faculty_c):
+    def test_pagination_with_faculty_filter(
+        self, swap_repo, faculty_a, faculty_b, faculty_c
+    ):
         """Test pagination with faculty filter."""
         # Create swaps for faculty_a
         for i in range(10):
@@ -757,12 +777,16 @@ class TestSwapRepositoryFindWithPagination:
                 swap_type=SwapType.ONE_TO_ONE,
             )
 
-        records, total = swap_repo.find_with_pagination(faculty_id=faculty_a.id, page_size=20)
+        records, total = swap_repo.find_with_pagination(
+            faculty_id=faculty_a.id, page_size=20
+        )
 
         assert len(records) == 10
         assert total == 10
 
-    def test_pagination_with_status_filter(self, swap_repo, faculty_a, faculty_b, test_user):
+    def test_pagination_with_status_filter(
+        self, swap_repo, faculty_a, faculty_b, test_user
+    ):
         """Test pagination with status filter."""
         # Create swaps with different statuses
         for i in range(5):
@@ -813,6 +837,7 @@ class TestSwapRepositoryFindWithPagination:
 # ============================================================================
 # Approval Methods Tests
 # ============================================================================
+
 
 class TestSwapRepositoryApprovals:
     """Tests for approval-related methods."""
@@ -924,7 +949,9 @@ class TestSwapRepositoryApprovals:
 
         assert swap_repo.is_fully_approved(swap.id) is True
 
-    def test_is_fully_approved_false_pending(self, swap_repo, faculty_a, faculty_b, faculty_c):
+    def test_is_fully_approved_false_pending(
+        self, swap_repo, faculty_a, faculty_b, faculty_c
+    ):
         """Test not fully approved when some pending."""
         swap = swap_repo.create(
             source_faculty_id=faculty_a.id,
@@ -971,6 +998,7 @@ class TestSwapRepositoryApprovals:
 # Statistics Methods Tests
 # ============================================================================
 
+
 class TestSwapRepositoryStatistics:
     """Tests for statistics methods."""
 
@@ -1006,7 +1034,9 @@ class TestSwapRepositoryStatistics:
         assert counts["approved"] == 1
         assert counts["executed"] == 1
 
-    def test_count_by_status_with_faculty_filter(self, swap_repo, faculty_a, faculty_b, faculty_c):
+    def test_count_by_status_with_faculty_filter(
+        self, swap_repo, faculty_a, faculty_b, faculty_c
+    ):
         """Test counting swaps by status filtered by faculty."""
         # Create swaps for faculty_a
         swap1 = swap_repo.create(
@@ -1029,7 +1059,9 @@ class TestSwapRepositoryStatistics:
         assert counts["pending"] == 1
         assert "rejected" not in counts
 
-    def test_count_executed_for_faculty(self, swap_repo, faculty_a, faculty_b, faculty_c, test_user):
+    def test_count_executed_for_faculty(
+        self, swap_repo, faculty_a, faculty_b, faculty_c, test_user
+    ):
         """Test counting executed swaps for a faculty member."""
         # Create and execute swaps
         swap1 = swap_repo.create(
@@ -1061,7 +1093,9 @@ class TestSwapRepositoryStatistics:
 
         assert count == 2
 
-    def test_count_executed_with_date_range(self, swap_repo, faculty_a, faculty_b, test_user, db):
+    def test_count_executed_with_date_range(
+        self, swap_repo, faculty_a, faculty_b, test_user, db
+    ):
         """Test counting executed swaps with date range filter."""
         # Create swaps and manually set executed_at
         swap1 = swap_repo.create(

@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 # Try to import NetworkX for advanced analysis
 try:
     import networkx as nx
+
     HAS_NETWORKX = True
 except ImportError:
     HAS_NETWORKX = False
@@ -40,23 +41,26 @@ except ImportError:
 
 class HubRiskLevel(str, Enum):
     """Risk level if this hub is lost."""
-    LOW = "low"            # Easy to cover, multiple backups
+
+    LOW = "low"  # Easy to cover, multiple backups
     MODERATE = "moderate"  # Some impact, backups available
-    HIGH = "high"          # Significant impact, limited backups
+    HIGH = "high"  # Significant impact, limited backups
     CRITICAL = "critical"  # Major disruption, no viable backups
     CATASTROPHIC = "catastrophic"  # System failure possible
 
 
 class HubProtectionStatus(str, Enum):
     """Current protection status of a hub."""
-    UNPROTECTED = "unprotected"       # No special measures
-    MONITORED = "monitored"           # Extra attention
-    PROTECTED = "protected"           # Active measures in place
-    REDUNDANT = "redundant"           # Backup hub trained
+
+    UNPROTECTED = "unprotected"  # No special measures
+    MONITORED = "monitored"  # Extra attention
+    PROTECTED = "protected"  # Active measures in place
+    REDUNDANT = "redundant"  # Backup hub trained
 
 
 class CrossTrainingPriority(str, Enum):
     """Priority for cross-training a skill."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -74,6 +78,7 @@ class FacultyCentrality:
     - Eigenvector: Connected to other important nodes (influence)
     - PageRank: Probability of being "visited" (overall importance)
     """
+
     faculty_id: UUID
     faculty_name: str
     calculated_at: datetime
@@ -106,11 +111,11 @@ class FacultyCentrality:
         }
 
         self.composite_score = (
-            self.degree_centrality * weights.get("degree", 0.2) +
-            self.betweenness_centrality * weights.get("betweenness", 0.3) +
-            self.eigenvector_centrality * weights.get("eigenvector", 0.2) +
-            self.pagerank * weights.get("pagerank", 0.15) +
-            self.replacement_difficulty * weights.get("replacement", 0.15)
+            self.degree_centrality * weights.get("degree", 0.2)
+            + self.betweenness_centrality * weights.get("betweenness", 0.3)
+            + self.eigenvector_centrality * weights.get("eigenvector", 0.2)
+            + self.pagerank * weights.get("pagerank", 0.15)
+            + self.replacement_difficulty * weights.get("replacement", 0.15)
         )
 
     @property
@@ -140,6 +145,7 @@ class HubProfile:
 
     Extends centrality with actionable information.
     """
+
     faculty_id: UUID
     faculty_name: str
     centrality: FacultyCentrality
@@ -170,6 +176,7 @@ class CrossTrainingRecommendation:
 
     Cross-training reduces hub concentration by distributing capabilities.
     """
+
     id: UUID
     skill: str
     current_holders: list[UUID]
@@ -189,6 +196,7 @@ class CrossTrainingRecommendation:
 @dataclass
 class HubDistributionReport:
     """Report on hub distribution across the system."""
+
     generated_at: datetime
 
     # Hub counts
@@ -216,6 +224,7 @@ class HubDistributionReport:
 @dataclass
 class HubProtectionPlan:
     """Plan to protect critical hubs during high-risk periods."""
+
     id: UUID
     hub_faculty_id: UUID
     hub_faculty_name: str
@@ -296,7 +305,9 @@ class HubAnalyzer:
 
         # Add faculty nodes
         for f in faculty:
-            G.add_node(f"faculty_{f.id}", type="faculty", name=getattr(f, 'name', str(f.id)))
+            G.add_node(
+                f"faculty_{f.id}", type="faculty", name=getattr(f, "name", str(f.id))
+            )
 
         # Add service nodes
         for service_id, capable_faculty in services.items():
@@ -307,7 +318,7 @@ class HubAnalyzer:
         # Add assignment edges with weight
         assignment_counts = {}
         for a in assignments:
-            key = str(getattr(a, 'faculty_id', a.get('faculty_id')))
+            key = str(getattr(a, "faculty_id", a.get("faculty_id")))
             assignment_counts[key] = assignment_counts.get(key, 0) + 1
 
         # Calculate centrality measures
@@ -335,19 +346,17 @@ class HubAnalyzer:
         results = []
 
         for f in faculty:
-            fac_id = f.id if hasattr(f, 'id') else f['id']
-            fac_name = getattr(f, 'name', str(fac_id))
+            fac_id = f.id if hasattr(f, "id") else f["id"]
+            fac_name = getattr(f, "name", str(fac_id))
             node_key = f"faculty_{fac_id}"
 
             # Count services this faculty can cover
-            covered_services = [
-                sid for sid, facs in services.items()
-                if fac_id in facs
-            ]
+            covered_services = [sid for sid, facs in services.items() if fac_id in facs]
 
             # Count unique services (only this person)
             unique_services = [
-                sid for sid, facs in services.items()
+                sid
+                for sid, facs in services.items()
                 if len(facs) == 1 and fac_id in facs
             ]
 
@@ -395,23 +404,21 @@ class HubAnalyzer:
         # Count assignments per faculty
         assignment_counts = {}
         for a in assignments:
-            fac_id = str(getattr(a, 'faculty_id', a.get('faculty_id')))
+            fac_id = str(getattr(a, "faculty_id", a.get("faculty_id")))
             assignment_counts[fac_id] = assignment_counts.get(fac_id, 0) + 1
 
         max_assignments = max(assignment_counts.values()) if assignment_counts else 1
 
         for f in faculty:
-            fac_id = f.id if hasattr(f, 'id') else f['id']
-            fac_name = getattr(f, 'name', str(fac_id))
+            fac_id = f.id if hasattr(f, "id") else f["id"]
+            fac_name = getattr(f, "name", str(fac_id))
 
             # Services covered
-            covered_services = [
-                sid for sid, facs in services.items()
-                if fac_id in facs
-            ]
+            covered_services = [sid for sid, facs in services.items() if fac_id in facs]
 
             unique_services = [
-                sid for sid, facs in services.items()
+                sid
+                for sid, facs in services.items()
                 if len(facs) == 1 and fac_id in facs
             ]
 
@@ -520,7 +527,9 @@ class HubAnalyzer:
         # Build risk factors
         risk_factors = []
         if centrality.unique_services > 0:
-            risk_factors.append(f"Single provider for {centrality.unique_services} services")
+            risk_factors.append(
+                f"Single provider for {centrality.unique_services} services"
+            )
         if centrality.betweenness_centrality > 0.5:
             risk_factors.append("High betweenness - critical path bottleneck")
         if centrality.replacement_difficulty > 0.7:
@@ -642,8 +651,7 @@ class HubAnalyzer:
         }
 
         self.cross_training_recommendations = sorted(
-            recommendations,
-            key=lambda r: priority_order.get(r.priority, 99)
+            recommendations, key=lambda r: priority_order.get(r.priority, 99)
         )
 
         return self.cross_training_recommendations
@@ -724,8 +732,12 @@ class HubAnalyzer:
         centrality_list = list(self.centrality_cache.values())
 
         # Count by risk level
-        catastrophic = sum(1 for c in centrality_list if c.risk_level == HubRiskLevel.CATASTROPHIC)
-        critical = sum(1 for c in centrality_list if c.risk_level == HubRiskLevel.CRITICAL)
+        catastrophic = sum(
+            1 for c in centrality_list if c.risk_level == HubRiskLevel.CATASTROPHIC
+        )
+        critical = sum(
+            1 for c in centrality_list if c.risk_level == HubRiskLevel.CRITICAL
+        )
         high = sum(1 for c in centrality_list if c.risk_level == HubRiskLevel.HIGH)
         total_hubs = sum(1 for c in centrality_list if c.is_hub)
 
@@ -764,9 +776,7 @@ class HubAnalyzer:
             )
 
         if spof > 0:
-            recommendations.append(
-                f"WARNING: {spof} single points of failure detected"
-            )
+            recommendations.append(f"WARNING: {spof} single points of failure detected")
 
         if concentration > 0.5:
             recommendations.append(
@@ -809,19 +819,26 @@ class HubAnalyzer:
         hubs = [c for c in centrality_list if c.is_hub]
 
         return {
-            "last_analysis": self._last_analysis.isoformat() if self._last_analysis else None,
+            "last_analysis": self._last_analysis.isoformat()
+            if self._last_analysis
+            else None,
             "total_faculty_analyzed": len(centrality_list),
             "total_hubs": len(hubs),
             "hubs_by_risk": {
-                "catastrophic": sum(1 for c in hubs if c.risk_level == HubRiskLevel.CATASTROPHIC),
-                "critical": sum(1 for c in hubs if c.risk_level == HubRiskLevel.CRITICAL),
+                "catastrophic": sum(
+                    1 for c in hubs if c.risk_level == HubRiskLevel.CATASTROPHIC
+                ),
+                "critical": sum(
+                    1 for c in hubs if c.risk_level == HubRiskLevel.CRITICAL
+                ),
                 "high": sum(1 for c in hubs if c.risk_level == HubRiskLevel.HIGH),
-                "moderate": sum(1 for c in hubs if c.risk_level == HubRiskLevel.MODERATE),
+                "moderate": sum(
+                    1 for c in hubs if c.risk_level == HubRiskLevel.MODERATE
+                ),
             },
             "active_protection_plans": len(self.protection_plans),
             "pending_cross_training": sum(
-                1 for r in self.cross_training_recommendations
-                if r.status == "pending"
+                1 for r in self.cross_training_recommendations if r.status == "pending"
             ),
         }
 

@@ -26,6 +26,14 @@ Example:
 """
 
 # Base classes and types
+# ACGME compliance constraints
+from .acgme import (
+    ACGMEConstraintValidator,
+    AvailabilityConstraint,
+    EightyHourRuleConstraint,
+    OneInSevenRuleConstraint,
+    SupervisionRatioConstraint,
+)
 from .base import (
     Constraint,
     ConstraintPriority,
@@ -37,13 +45,12 @@ from .base import (
     SoftConstraint,
 )
 
-# ACGME compliance constraints
-from .acgme import (
-    ACGMEConstraintValidator,
-    AvailabilityConstraint,
-    EightyHourRuleConstraint,
-    OneInSevenRuleConstraint,
-    SupervisionRatioConstraint,
+# Call equity and preference constraints
+from .call_equity import (
+    DeptChiefWednesdayPreferenceConstraint,
+    SundayCallEquityConstraint,
+    TuesdayCallPreferenceConstraint,
+    WeekdayCallEquityConstraint,
 )
 
 # Capacity and coverage constraints
@@ -54,12 +61,8 @@ from .capacity import (
     OnePersonPerBlockConstraint,
 )
 
-# Temporal constraints
-from .temporal import (
-    InvertedWednesdayConstraint,
-    WednesdayAMInternOnlyConstraint,
-    WednesdayPMSingleFacultyConstraint,
-)
+# Equity and continuity constraints
+from .equity import ContinuityConstraint, EquityConstraint
 
 # Faculty and preference constraints
 from .faculty import PreferenceConstraint
@@ -81,25 +84,14 @@ from .fmit import (
     is_sun_thurs,
 )
 
-# Equity and continuity constraints
-from .equity import ContinuityConstraint, EquityConstraint
-
-# Sports Medicine coordination constraints
-from .sports_medicine import SMResidentFacultyAlignmentConstraint
-
-# Post-call assignment constraints
-from .post_call import PostCallAutoAssignmentConstraint
+# Constraint manager
+from .manager import ConstraintManager
 
 # Night Float post-call constraints
 from .night_float_post_call import NightFloatPostCallConstraint
 
-# Call equity and preference constraints
-from .call_equity import (
-    DeptChiefWednesdayPreferenceConstraint,
-    SundayCallEquityConstraint,
-    TuesdayCallPreferenceConstraint,
-    WeekdayCallEquityConstraint,
-)
+# Post-call assignment constraints
+from .post_call import PostCallAutoAssignmentConstraint
 
 # Resilience-aware constraints
 from .resilience import (
@@ -110,8 +102,15 @@ from .resilience import (
     ZoneBoundaryConstraint,
 )
 
-# Constraint manager
-from .manager import ConstraintManager
+# Sports Medicine coordination constraints
+from .sports_medicine import SMResidentFacultyAlignmentConstraint
+
+# Temporal constraints
+from .temporal import (
+    InvertedWednesdayConstraint,
+    WednesdayAMInternOnlyConstraint,
+    WednesdayPMSingleFacultyConstraint,
+)
 
 # Define __all__ for explicit exports
 __all__ = [

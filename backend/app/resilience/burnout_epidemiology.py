@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 # Try to import NetworkX for graph analysis
 try:
     import networkx as nx
+
     HAS_NETWORKX = True
 except ImportError:
     HAS_NETWORKX = False
@@ -63,6 +64,7 @@ class BurnoutState(str, Enum):
     - BURNED_OUT: Active burnout (infectious period)
     - RECOVERED: Recovered from burnout, potentially immune (for a period)
     """
+
     SUSCEPTIBLE = "susceptible"
     AT_RISK = "at_risk"
     BURNED_OUT = "burned_out"
@@ -71,11 +73,12 @@ class BurnoutState(str, Enum):
 
 class InterventionLevel(str, Enum):
     """Intervention urgency level based on Rt."""
-    NONE = "none"              # Rt << 1, burnout declining
+
+    NONE = "none"  # Rt << 1, burnout declining
     MONITORING = "monitoring"  # Rt ~= 1, stable but watch closely
-    MODERATE = "moderate"      # Rt > 1, spreading slowly
+    MODERATE = "moderate"  # Rt > 1, spreading slowly
     AGGRESSIVE = "aggressive"  # Rt > 2, spreading rapidly
-    EMERGENCY = "emergency"    # Rt > 3, crisis intervention needed
+    EMERGENCY = "emergency"  # Rt > 3, crisis intervention needed
 
 
 # =============================================================================
@@ -98,6 +101,7 @@ class BurnoutSIRModel:
     - gamma: Recovery rate (1/gamma = average duration of burnout)
     - initial_infected: Starting set of burned out individuals
     """
+
     beta: float  # Infection rate (0.0 - 1.0)
     gamma: float  # Recovery rate (0.0 - 1.0)
     initial_infected: set[UUID]
@@ -120,7 +124,7 @@ class BurnoutSIRModel:
         R0 = 1: Endemic (stable)
         R0 < 1: Epidemic declines
         """
-        return self.beta / self.gamma if self.gamma > 0 else float('inf')
+        return self.beta / self.gamma if self.gamma > 0 else float("inf")
 
 
 @dataclass
@@ -131,6 +135,7 @@ class EpiReport:
     Contains reproduction number, current status, contact tracing data,
     and recommended interventions.
     """
+
     reproduction_number: float  # Rt (effective reproduction number)
     status: str  # "declining", "stable", "spreading", "crisis"
     secondary_cases: dict[str, int]  # Map of source -> number of secondary cases
@@ -199,7 +204,9 @@ class BurnoutEpidemiology:
             )
 
         self.network = social_network
-        self.burnout_history: dict[UUID, list[tuple[datetime, BurnoutState]]] = defaultdict(list)
+        self.burnout_history: dict[UUID, list[tuple[datetime, BurnoutState]]] = (
+            defaultdict(list)
+        )
 
         # Cache for performance
         self._contact_cache: dict[tuple[UUID, timedelta], set[UUID]] = {}
@@ -211,10 +218,7 @@ class BurnoutEpidemiology:
         )
 
     def record_burnout_state(
-        self,
-        resident_id: UUID,
-        state: BurnoutState,
-        timestamp: datetime = None
+        self, resident_id: UUID, state: BurnoutState, timestamp: datetime = None
     ):
         """
         Record a burnout state change for a resident.
@@ -229,9 +233,7 @@ class BurnoutEpidemiology:
         logger.debug(f"Recorded {state} for resident {resident_id} at {timestamp}")
 
     def get_close_contacts(
-        self,
-        resident_id: UUID,
-        time_window: timedelta = timedelta(weeks=4)
+        self, resident_id: UUID, time_window: timedelta = timedelta(weeks=4)
     ) -> set[UUID]:
         """
         Get close contacts for a resident within a time window.
@@ -271,7 +273,7 @@ class BurnoutEpidemiology:
     def calculate_reproduction_number(
         self,
         burned_out_residents: set[UUID],
-        time_window: timedelta = timedelta(weeks=4)
+        time_window: timedelta = timedelta(weeks=4),
     ) -> EpiReport:
         """
         Calculate the effective reproduction number (Rt) for burnout.
@@ -356,8 +358,7 @@ class BurnoutEpidemiology:
 
         # Identify super-spreaders (high secondary case counts)
         super_spreaders = [
-            UUID(uid) for uid, count in secondary_case_counts.items()
-            if count >= 3
+            UUID(uid) for uid, count in secondary_case_counts.items() if count >= 3
         ]
 
         # Get interventions
@@ -389,7 +390,7 @@ class BurnoutEpidemiology:
         initial_infected: set[UUID],
         beta: float = 0.05,
         gamma: float = 0.02,
-        steps: int = 52
+        steps: int = 52,
     ) -> list[dict]:
         """
         Simulate SIR epidemic spread over time.
@@ -408,9 +409,7 @@ class BurnoutEpidemiology:
         """
         # Validate model parameters
         model = BurnoutSIRModel(
-            beta=beta,
-            gamma=gamma,
-            initial_infected=initial_infected
+            beta=beta, gamma=gamma, initial_infected=initial_infected
         )
 
         # Initialize populations
@@ -423,17 +422,19 @@ class BurnoutEpidemiology:
 
         for step in range(steps):
             # Record current state
-            time_series.append({
-                "step": step,
-                "week": step,
-                "susceptible": len(susceptible),
-                "infected": len(infected),
-                "recovered": len(recovered),
-                "S": len(susceptible),
-                "I": len(infected),
-                "R": len(recovered),
-                "total": len(all_nodes),
-            })
+            time_series.append(
+                {
+                    "step": step,
+                    "week": step,
+                    "susceptible": len(susceptible),
+                    "infected": len(infected),
+                    "recovered": len(recovered),
+                    "S": len(susceptible),
+                    "I": len(infected),
+                    "R": len(recovered),
+                    "total": len(all_nodes),
+                }
+            )
 
             # SIR transitions
             new_infections = set()
@@ -473,10 +474,7 @@ class BurnoutEpidemiology:
 
         return time_series
 
-    def identify_super_spreaders(
-        self,
-        threshold_degree: int = 5
-    ) -> list[UUID]:
+    def identify_super_spreaders(self, threshold_degree: int = 5) -> list[UUID]:
         """
         Identify super-spreaders (high-connectivity nodes).
 
@@ -549,57 +547,67 @@ class BurnoutEpidemiology:
         interventions = []
 
         if rt < 0.5:
-            interventions.extend([
-                "Continue current preventive measures",
-                "Monitor for early warning signs",
-                "Maintain work-life balance programs",
-            ])
+            interventions.extend(
+                [
+                    "Continue current preventive measures",
+                    "Monitor for early warning signs",
+                    "Maintain work-life balance programs",
+                ]
+            )
 
         elif rt < 1.0:
-            interventions.extend([
-                "Increase monitoring of at-risk individuals",
-                "Offer voluntary support groups and counseling",
-                "Review workload distribution for equity",
-                "Strengthen peer support networks",
-            ])
+            interventions.extend(
+                [
+                    "Increase monitoring of at-risk individuals",
+                    "Offer voluntary support groups and counseling",
+                    "Review workload distribution for equity",
+                    "Strengthen peer support networks",
+                ]
+            )
 
         elif rt < 2.0:
-            interventions.extend([
-                "MODERATE INTERVENTION REQUIRED",
-                "Implement workload reduction for burned out individuals",
-                "Mandatory wellness check-ins for all staff",
-                "Increase staffing levels to reduce individual burden",
-                "Break transmission chains: reduce contact between burned out and at-risk",
-                "Provide mental health resources and counseling",
-                "Review and adjust schedule to reduce stress points",
-            ])
+            interventions.extend(
+                [
+                    "MODERATE INTERVENTION REQUIRED",
+                    "Implement workload reduction for burned out individuals",
+                    "Mandatory wellness check-ins for all staff",
+                    "Increase staffing levels to reduce individual burden",
+                    "Break transmission chains: reduce contact between burned out and at-risk",
+                    "Provide mental health resources and counseling",
+                    "Review and adjust schedule to reduce stress points",
+                ]
+            )
 
         elif rt < 3.0:
-            interventions.extend([
-                "AGGRESSIVE INTERVENTION REQUIRED",
-                "Mandatory time off for burned out individuals",
-                "Emergency staffing augmentation (temporary hires, locums)",
-                "Restructure teams to reduce super-spreader connectivity",
-                "Daily wellness monitoring for all staff",
-                "Implement crisis management protocols",
-                "Consider rotating high-stress assignments",
-                "Provide immediate access to mental health professionals",
-                "Leadership intervention and organizational restructuring",
-            ])
+            interventions.extend(
+                [
+                    "AGGRESSIVE INTERVENTION REQUIRED",
+                    "Mandatory time off for burned out individuals",
+                    "Emergency staffing augmentation (temporary hires, locums)",
+                    "Restructure teams to reduce super-spreader connectivity",
+                    "Daily wellness monitoring for all staff",
+                    "Implement crisis management protocols",
+                    "Consider rotating high-stress assignments",
+                    "Provide immediate access to mental health professionals",
+                    "Leadership intervention and organizational restructuring",
+                ]
+            )
 
         else:  # rt >= 3.0
-            interventions.extend([
-                "⚠️ EMERGENCY INTERVENTION REQUIRED ⚠️",
-                "IMMEDIATE ACTION: Remove burned out individuals from clinical duties",
-                "Emergency external support (crisis counseling, temporary replacements)",
-                "System-wide operational pause to prevent collapse",
-                "Comprehensive organizational assessment and restructuring",
-                "Bring in external organizational health consultants",
-                "Consider activating mutual aid agreements with other programs",
-                "Notify program leadership and institutional administration",
-                "Implement 24/7 mental health crisis support",
-                "Prepare contingency plans for further escalation",
-            ])
+            interventions.extend(
+                [
+                    "⚠️ EMERGENCY INTERVENTION REQUIRED ⚠️",
+                    "IMMEDIATE ACTION: Remove burned out individuals from clinical duties",
+                    "Emergency external support (crisis counseling, temporary replacements)",
+                    "System-wide operational pause to prevent collapse",
+                    "Comprehensive organizational assessment and restructuring",
+                    "Bring in external organizational health consultants",
+                    "Consider activating mutual aid agreements with other programs",
+                    "Notify program leadership and institutional administration",
+                    "Implement 24/7 mental health crisis support",
+                    "Prepare contingency plans for further escalation",
+                ]
+            )
 
         # Add super-spreader specific interventions
         super_spreaders = self.identify_super_spreaders()
@@ -644,6 +652,7 @@ class BurnoutEpidemiology:
         # Deterministic version for testing
         # In production, replace with: random.random() < probability
         import random
+
         return random.random() < probability
 
     def get_network_summary(self) -> dict[str, Any]:
@@ -653,7 +662,8 @@ class BurnoutEpidemiology:
             "total_edges": self.network.number_of_edges(),
             "average_degree": (
                 2 * self.network.number_of_edges() / self.network.number_of_nodes()
-                if self.network.number_of_nodes() > 0 else 0
+                if self.network.number_of_nodes() > 0
+                else 0
             ),
             "density": nx.density(self.network),
             "is_connected": nx.is_connected(self.network),
@@ -662,7 +672,7 @@ class BurnoutEpidemiology:
 
     def get_burnout_summary(self) -> dict[str, Any]:
         """Get summary of current burnout states."""
-        current_states = {state: 0 for state in BurnoutState}
+        current_states = dict.fromkeys(BurnoutState, 0)
 
         for resident_id in self.network.nodes():
             state = self._get_current_state(resident_id)

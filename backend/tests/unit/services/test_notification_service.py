@@ -10,34 +10,35 @@ Comprehensive tests covering:
 
 These are pure unit tests with extensive mocking to isolate the service layer.
 """
-import pytest
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, Mock, patch, call
-from uuid import uuid4, UUID
 
-from app.notifications.service import (
-    NotificationService,
-    NotificationPreferences,
-    ScheduledNotification,
-)
-from app.notifications.channels import (
-    DeliveryResult,
-    NotificationPayload,
-    InAppChannel,
-    EmailChannel,
-    WebhookChannel,
-)
-from app.notifications.templates import NotificationType, render_notification
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, Mock, patch
+from uuid import uuid4
+
+import pytest
+
 from app.models.notification import (
     Notification,
     NotificationPreferenceRecord,
     ScheduledNotificationRecord,
 )
-
+from app.notifications.channels import (
+    DeliveryResult,
+    EmailChannel,
+    InAppChannel,
+    NotificationPayload,
+    WebhookChannel,
+)
+from app.notifications.service import (
+    NotificationPreferences,
+    NotificationService,
+)
+from app.notifications.templates import NotificationType, render_notification
 
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def mock_db():
@@ -79,6 +80,7 @@ def sample_notification_data():
 # Test 1: Notification Creation - Single User
 # ============================================================================
 
+
 class TestNotificationCreationSingleUser:
     """Test creating notifications for a single user."""
 
@@ -92,26 +94,28 @@ class TestNotificationCreationSingleUser:
     ):
         """Test successfully creating a notification for a single user."""
         # Mock channel delivery
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Notification stored successfully"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True,
+                    channel="in_app",
+                    message="Notification stored successfully",
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             # Mock preferences
             with patch.object(
                 notification_service,
-                '_get_user_preferences',
-                return_value=NotificationPreferences(user_id=sample_recipient_id)
+                "_get_user_preferences",
+                return_value=NotificationPreferences(user_id=sample_recipient_id),
             ):
                 results = await notification_service.send_notification(
                     recipient_id=sample_recipient_id,
                     notification_type=NotificationType.SCHEDULE_PUBLISHED,
                     data=sample_notification_data,
-                    channels=["in_app"]
+                    channels=["in_app"],
                 )
 
                 # Verify delivery was successful
@@ -131,19 +135,19 @@ class TestNotificationCreationSingleUser:
         sample_recipient_id,
     ):
         """Test creating a high priority notification."""
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="in_app", message="Delivered"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             with patch.object(
                 notification_service,
-                '_get_user_preferences',
-                return_value=NotificationPreferences(user_id=sample_recipient_id)
+                "_get_user_preferences",
+                return_value=NotificationPreferences(user_id=sample_recipient_id),
             ):
                 results = await notification_service.send_notification(
                     recipient_id=sample_recipient_id,
@@ -176,19 +180,19 @@ class TestNotificationCreationSingleUser:
         sample_recipient_id,
     ):
         """Test creating a normal priority notification."""
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="in_app", message="Delivered"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             with patch.object(
                 notification_service,
-                '_get_user_preferences',
-                return_value=NotificationPreferences(user_id=sample_recipient_id)
+                "_get_user_preferences",
+                return_value=NotificationPreferences(user_id=sample_recipient_id),
             ):
                 results = await notification_service.send_notification(
                     recipient_id=sample_recipient_id,
@@ -215,6 +219,7 @@ class TestNotificationCreationSingleUser:
 # Test 2: Notification Creation - Multiple Users
 # ============================================================================
 
+
 class TestNotificationCreationMultipleUsers:
     """Test creating notifications for multiple users."""
 
@@ -228,19 +233,19 @@ class TestNotificationCreationMultipleUsers:
         """Test sending bulk notifications to multiple users."""
         recipient_ids = [uuid4() for _ in range(3)]
 
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="in_app", message="Delivered"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             with patch.object(
                 notification_service,
-                '_get_user_preferences',
-                side_effect=lambda uid: NotificationPreferences(user_id=uid)
+                "_get_user_preferences",
+                side_effect=lambda uid: NotificationPreferences(user_id=uid),
             ):
                 results = await notification_service.send_bulk(
                     recipient_ids=recipient_ids,
@@ -263,17 +268,13 @@ class TestNotificationCreationMultipleUsers:
         """Test bulk notification handles partial failures gracefully."""
         recipient_ids = [uuid4() for _ in range(3)]
 
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             # First two succeed, third fails
             success_result = DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered"
+                success=True, channel="in_app", message="Delivered"
             )
             failure_result = DeliveryResult(
-                success=False,
-                channel="in_app",
-                message="Delivery failed"
+                success=False, channel="in_app", message="Delivery failed"
             )
 
             mock_channel = Mock()
@@ -284,8 +285,8 @@ class TestNotificationCreationMultipleUsers:
 
             with patch.object(
                 notification_service,
-                '_get_user_preferences',
-                side_effect=lambda uid: NotificationPreferences(user_id=uid)
+                "_get_user_preferences",
+                side_effect=lambda uid: NotificationPreferences(user_id=uid),
             ):
                 results = await notification_service.send_bulk(
                     recipient_ids=recipient_ids,
@@ -307,6 +308,7 @@ class TestNotificationCreationMultipleUsers:
 # ============================================================================
 # Test 3: Delivery Channels - In-App
 # ============================================================================
+
 
 class TestDeliveryChannelInApp:
     """Test in-app notification delivery."""
@@ -352,6 +354,7 @@ class TestDeliveryChannelInApp:
 # ============================================================================
 # Test 4: Delivery Channels - Email (Mock SMTP)
 # ============================================================================
+
 
 class TestDeliveryChannelEmail:
     """Test email notification delivery with mocked SMTP."""
@@ -413,7 +416,9 @@ class TestDeliveryChannelEmail:
         channel = EmailChannel()
 
         # Mock _format_html to raise exception
-        with patch.object(channel, '_format_html', side_effect=Exception("Format error")):
+        with patch.object(
+            channel, "_format_html", side_effect=Exception("Format error")
+        ):
             payload = NotificationPayload(
                 recipient_id=uuid4(),
                 notification_type="test",
@@ -430,6 +435,7 @@ class TestDeliveryChannelEmail:
 # ============================================================================
 # Test 5: Delivery Channels - Webhook/Slack (Mock Webhook)
 # ============================================================================
+
 
 class TestDeliveryChannelWebhook:
     """Test webhook notification delivery (Slack, etc.) with mocked HTTP."""
@@ -485,6 +491,7 @@ class TestDeliveryChannelWebhook:
 # Test 6: Template Rendering - Variable Substitution
 # ============================================================================
 
+
 class TestTemplateVariableSubstitution:
     """Test template rendering with variable substitution."""
 
@@ -534,6 +541,7 @@ class TestTemplateVariableSubstitution:
 # ============================================================================
 # Test 7: Template Rendering - HTML vs Plain Text
 # ============================================================================
+
 
 class TestTemplateHTMLvsPlainText:
     """Test HTML vs plain text template rendering."""
@@ -588,6 +596,7 @@ class TestTemplateHTMLvsPlainText:
 # Test 8: Batching Logic - Batch Multiple Notifications
 # ============================================================================
 
+
 class TestBatchingMultipleNotifications:
     """Test batching multiple notifications."""
 
@@ -600,19 +609,19 @@ class TestBatchingMultipleNotifications:
         """Test batching sends notifications sequentially."""
         recipient_ids = [uuid4() for _ in range(5)]
 
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="in_app", message="Delivered"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             with patch.object(
                 notification_service,
-                '_get_user_preferences',
-                side_effect=lambda uid: NotificationPreferences(user_id=uid)
+                "_get_user_preferences",
+                side_effect=lambda uid: NotificationPreferences(user_id=uid),
             ):
                 results = await notification_service.send_bulk(
                     recipient_ids=recipient_ids,
@@ -638,6 +647,7 @@ class TestBatchingMultipleNotifications:
 # Test 9: Batching Logic - Immediate vs Scheduled Delivery
 # ============================================================================
 
+
 class TestImmediateVsScheduledDelivery:
     """Test immediate vs scheduled notification delivery."""
 
@@ -649,19 +659,19 @@ class TestImmediateVsScheduledDelivery:
         sample_recipient_id,
     ):
         """Test immediate notification delivery."""
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered immediately"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="in_app", message="Delivered immediately"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             with patch.object(
                 notification_service,
-                '_get_user_preferences',
-                return_value=NotificationPreferences(user_id=sample_recipient_id)
+                "_get_user_preferences",
+                return_value=NotificationPreferences(user_id=sample_recipient_id),
             ):
                 results = await notification_service.send_notification(
                     recipient_id=sample_recipient_id,
@@ -697,7 +707,7 @@ class TestImmediateVsScheduledDelivery:
         mock_record.status = "pending"
         mock_record.created_at = datetime.utcnow()
 
-        mock_db.refresh = Mock(side_effect=lambda r: setattr(r, 'id', mock_record.id))
+        mock_db.refresh = Mock(side_effect=lambda r: setattr(r, "id", mock_record.id))
 
         scheduled = notification_service.schedule_notification(
             recipient_id=sample_recipient_id,
@@ -736,21 +746,23 @@ class TestImmediateVsScheduledDelivery:
         mock_query.all.return_value = [mock_record]
         mock_db.query.return_value = mock_query
 
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="in_app", message="Delivered"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             with patch.object(
                 notification_service,
-                '_get_user_preferences',
-                return_value=NotificationPreferences(user_id=mock_record.recipient_id)
+                "_get_user_preferences",
+                return_value=NotificationPreferences(user_id=mock_record.recipient_id),
             ):
-                sent_count = await notification_service.process_scheduled_notifications()
+                sent_count = (
+                    await notification_service.process_scheduled_notifications()
+                )
 
                 # Verify notification was sent
                 assert sent_count == 1
@@ -760,6 +772,7 @@ class TestImmediateVsScheduledDelivery:
 # ============================================================================
 # Test 10: Retry Handling - Failed Delivery Retry
 # ============================================================================
+
 
 class TestRetryFailedDelivery:
     """Test retry logic for failed deliveries."""
@@ -789,8 +802,8 @@ class TestRetryFailedDelivery:
         # Force send_notification to raise an exception
         with patch.object(
             notification_service,
-            'send_notification',
-            side_effect=Exception("Delivery failed")
+            "send_notification",
+            side_effect=Exception("Delivery failed"),
         ):
             sent_count = await notification_service.process_scheduled_notifications()
 
@@ -821,22 +834,24 @@ class TestRetryFailedDelivery:
         mock_query.all.return_value = [mock_record]
         mock_db.query.return_value = mock_query
 
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             # First attempt fails, second succeeds (simulating retry)
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered on retry"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="in_app", message="Delivered on retry"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             with patch.object(
                 notification_service,
-                '_get_user_preferences',
-                return_value=NotificationPreferences(user_id=mock_record.recipient_id)
+                "_get_user_preferences",
+                return_value=NotificationPreferences(user_id=mock_record.recipient_id),
             ):
-                sent_count = await notification_service.process_scheduled_notifications()
+                sent_count = (
+                    await notification_service.process_scheduled_notifications()
+                )
 
                 # Should succeed on retry
                 assert sent_count == 1
@@ -846,6 +861,7 @@ class TestRetryFailedDelivery:
 # ============================================================================
 # Test 11: Retry Handling - Max Retry Limit
 # ============================================================================
+
 
 class TestMaxRetryLimit:
     """Test maximum retry limit enforcement."""
@@ -875,8 +891,8 @@ class TestMaxRetryLimit:
         # Simulate failure
         with patch.object(
             notification_service,
-            'send_notification',
-            side_effect=Exception("Permanent failure")
+            "send_notification",
+            side_effect=Exception("Permanent failure"),
         ):
             sent_count = await notification_service.process_scheduled_notifications()
 
@@ -890,6 +906,7 @@ class TestMaxRetryLimit:
 # ============================================================================
 # Test 12: User Preferences - Channel Filtering
 # ============================================================================
+
 
 class TestUserPreferencesChannelFiltering:
     """Test notification filtering based on user preferences."""
@@ -905,13 +922,11 @@ class TestUserPreferencesChannelFiltering:
         # User has disabled schedule_published notifications
         preferences = NotificationPreferences(
             user_id=sample_recipient_id,
-            notification_types={"schedule_published": False}
+            notification_types={"schedule_published": False},
         )
 
         with patch.object(
-            notification_service,
-            '_get_user_preferences',
-            return_value=preferences
+            notification_service, "_get_user_preferences", return_value=preferences
         ):
             results = await notification_service.send_notification(
                 recipient_id=sample_recipient_id,
@@ -939,23 +954,20 @@ class TestUserPreferencesChannelFiltering:
         """Test channels are filtered based on user preferences."""
         # User only wants in_app notifications
         preferences = NotificationPreferences(
-            user_id=sample_recipient_id,
-            enabled_channels=["in_app"]
+            user_id=sample_recipient_id, enabled_channels=["in_app"]
         )
 
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="in_app", message="Delivered"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             with patch.object(
-                notification_service,
-                '_get_user_preferences',
-                return_value=preferences
+                notification_service, "_get_user_preferences", return_value=preferences
             ):
                 results = await notification_service.send_notification(
                     recipient_id=sample_recipient_id,
@@ -968,7 +980,7 @@ class TestUserPreferencesChannelFiltering:
                         "recommended_action": "Test",
                         "detected_at": "2025-01-01 10:00:00 UTC",
                     },
-                    channels=["in_app", "email"]  # Request both channels
+                    channels=["in_app", "email"],  # Request both channels
                 )
 
                 # Only in_app should be delivered
@@ -979,6 +991,7 @@ class TestUserPreferencesChannelFiltering:
 # ============================================================================
 # Test 13: Quiet Hours - Notification Suppression
 # ============================================================================
+
 
 class TestQuietHoursNotificationSuppression:
     """Test quiet hours notification suppression."""
@@ -1000,9 +1013,7 @@ class TestQuietHoursNotificationSuppression:
         )
 
         with patch.object(
-            notification_service,
-            '_get_user_preferences',
-            return_value=preferences
+            notification_service, "_get_user_preferences", return_value=preferences
         ):
             results = await notification_service.send_notification(
                 recipient_id=sample_recipient_id,
@@ -1037,19 +1048,17 @@ class TestQuietHoursNotificationSuppression:
             quiet_hours_end=(current_hour + 1) % 24,
         )
 
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="in_app", message="Delivered"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             with patch.object(
-                notification_service,
-                '_get_user_preferences',
-                return_value=preferences
+                notification_service, "_get_user_preferences", return_value=preferences
             ):
                 results = await notification_service.send_notification(
                     recipient_id=sample_recipient_id,
@@ -1072,6 +1081,7 @@ class TestQuietHoursNotificationSuppression:
 # Test 14: Template Not Found Handling
 # ============================================================================
 
+
 class TestTemplateNotFoundHandling:
     """Test handling of missing templates."""
 
@@ -1082,7 +1092,7 @@ class TestTemplateNotFoundHandling:
         sample_recipient_id,
     ):
         """Test missing template returns error result."""
-        with patch('app.notifications.service.render_notification', return_value=None):
+        with patch("app.notifications.service.render_notification", return_value=None):
             results = await notification_service.send_notification(
                 recipient_id=sample_recipient_id,
                 notification_type=NotificationType.SCHEDULE_PUBLISHED,
@@ -1098,6 +1108,7 @@ class TestTemplateNotFoundHandling:
 # Test 15: Channel Not Found Handling
 # ============================================================================
 
+
 class TestChannelNotFoundHandling:
     """Test handling of invalid/missing channels."""
 
@@ -1109,14 +1120,13 @@ class TestChannelNotFoundHandling:
         sample_recipient_id,
     ):
         """Test invalid channel returns error result."""
-        with patch('app.notifications.service.get_channel', return_value=None):
+        with patch("app.notifications.service.get_channel", return_value=None):
             with patch.object(
                 notification_service,
-                '_get_user_preferences',
+                "_get_user_preferences",
                 return_value=NotificationPreferences(
-                    user_id=sample_recipient_id,
-                    enabled_channels=["invalid_channel"]
-                )
+                    user_id=sample_recipient_id, enabled_channels=["invalid_channel"]
+                ),
             ):
                 results = await notification_service.send_notification(
                     recipient_id=sample_recipient_id,
@@ -1129,7 +1139,7 @@ class TestChannelNotFoundHandling:
                         "publisher_name": "Admin",
                         "published_at": "2025-01-01 10:00:00 UTC",
                     },
-                    channels=["invalid_channel"]
+                    channels=["invalid_channel"],
                 )
 
                 # Should have error result for invalid channel
@@ -1141,6 +1151,7 @@ class TestChannelNotFoundHandling:
 # ============================================================================
 # Test 16: Notification Retrieval and Read Status
 # ============================================================================
+
 
 class TestNotificationRetrievalAndReadStatus:
     """Test retrieving and marking notifications as read."""
@@ -1213,6 +1224,7 @@ class TestNotificationRetrievalAndReadStatus:
 # ============================================================================
 # Test 17: Update User Preferences
 # ============================================================================
+
 
 class TestUpdateUserPreferences:
     """Test updating user notification preferences."""
@@ -1287,6 +1299,7 @@ class TestUpdateUserPreferences:
 # Test 18: Multiple Channel Delivery
 # ============================================================================
 
+
 class TestMultipleChannelDelivery:
     """Test delivering to multiple channels simultaneously."""
 
@@ -1298,26 +1311,28 @@ class TestMultipleChannelDelivery:
         sample_recipient_id,
     ):
         """Test notification is delivered to all specified channels."""
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             # Mock different channels
             def get_channel_side_effect(channel_name):
                 mock_channel = Mock()
-                mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                    success=True,
-                    channel=channel_name,
-                    message=f"{channel_name} delivered"
-                ))
+                mock_channel.deliver = AsyncMock(
+                    return_value=DeliveryResult(
+                        success=True,
+                        channel=channel_name,
+                        message=f"{channel_name} delivered",
+                    )
+                )
                 return mock_channel
 
             mock_get_channel.side_effect = get_channel_side_effect
 
             with patch.object(
                 notification_service,
-                '_get_user_preferences',
+                "_get_user_preferences",
                 return_value=NotificationPreferences(
                     user_id=sample_recipient_id,
-                    enabled_channels=["in_app", "email", "webhook"]
-                )
+                    enabled_channels=["in_app", "email", "webhook"],
+                ),
             ):
                 results = await notification_service.send_notification(
                     recipient_id=sample_recipient_id,
@@ -1330,7 +1345,7 @@ class TestMultipleChannelDelivery:
                         "recommended_action": "Test",
                         "detected_at": "2025-01-01 10:00:00 UTC",
                     },
-                    channels=["in_app", "email", "webhook"]
+                    channels=["in_app", "email", "webhook"],
                 )
 
                 # All three channels should have results

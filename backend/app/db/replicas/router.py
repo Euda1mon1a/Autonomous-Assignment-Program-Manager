@@ -4,10 +4,10 @@ Routes database queries to appropriate database instances:
 - Write operations (INSERT, UPDATE, DELETE) -> Primary
 - Read operations (SELECT) -> Replicas (with fallback to primary)
 """
+
 import logging
 import re
 from enum import Enum
-from typing import Optional
 
 from sqlalchemy.engine import Engine
 
@@ -75,8 +75,8 @@ class QueryRouter:
     def __init__(
         self,
         primary_engine: Engine,
-        balancer: Optional[LoadBalancer] = None,
-        fallback_to_primary: bool = True
+        balancer: LoadBalancer | None = None,
+        fallback_to_primary: bool = True,
     ):
         """Initialize query router.
 
@@ -96,10 +96,10 @@ class QueryRouter:
 
     def route_query(
         self,
-        query: Optional[str] = None,
-        query_type: Optional[QueryType] = None,
-        session_id: Optional[str] = None,
-        force_primary: bool = False
+        query: str | None = None,
+        query_type: QueryType | None = None,
+        session_id: str | None = None,
+        force_primary: bool = False,
     ) -> Engine:
         """Route a query to appropriate database engine.
 
@@ -129,7 +129,7 @@ class QueryRouter:
             logger.debug(f"Routing to primary (query_type={query_type})")
             return self.primary_engine
 
-    def _route_read_query(self, session_id: Optional[str] = None) -> Engine:
+    def _route_read_query(self, session_id: str | None = None) -> Engine:
         """Route a read query to a replica or primary.
 
         Args:
@@ -242,7 +242,7 @@ class RoutingPolicy:
         force_primary_for_user_writes: bool = True,
         force_primary_in_transaction: bool = True,
         allow_stale_reads: bool = False,
-        max_acceptable_lag_seconds: float = 30.0
+        max_acceptable_lag_seconds: float = 30.0,
     ):
         """Initialize routing policy.
 
@@ -261,7 +261,7 @@ class RoutingPolicy:
         self,
         query_type: QueryType,
         in_transaction: bool = False,
-        recent_write: bool = False
+        recent_write: bool = False,
     ) -> bool:
         """Determine if query should be forced to primary.
 

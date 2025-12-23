@@ -30,16 +30,16 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
 
 import numpy as np
-from scipy import signal, stats
+from scipy import stats
 
 logger = logging.getLogger(__name__)
 
 
 class TransitionSeverity(str, Enum):
     """Severity of detected phase transition risk."""
+
     NORMAL = "normal"
     ELEVATED = "elevated"
     HIGH = "high"
@@ -61,6 +61,7 @@ class CriticalSignal:
         description: Human-readable description
         detected_at: When signal was detected
     """
+
     signal_type: str
     metric_name: str
     severity: TransitionSeverity
@@ -82,9 +83,10 @@ class PhaseTransitionRisk:
         confidence: Confidence in prediction (0-1)
         recommendations: Suggested interventions
     """
+
     overall_severity: TransitionSeverity
     signals: list[CriticalSignal]
-    time_to_transition: Optional[float] = None
+    time_to_transition: float | None = None
     confidence: float = 0.0
     recommendations: list[str] = field(default_factory=list)
 
@@ -192,10 +194,8 @@ class PhaseTransitionDetector:
         )
 
     def _detect_variance_trend(
-        self,
-        metric_name: str,
-        values: list[float]
-    ) -> Optional[CriticalSignal]:
+        self, metric_name: str, values: list[float]
+    ) -> CriticalSignal | None:
         """
         Detect increasing variance (diverging fluctuations).
 
@@ -217,23 +217,25 @@ class PhaseTransitionDetector:
 
         # Thresholds
         if variance_increase > 0.5:  # 50% increase
-            severity = TransitionSeverity.CRITICAL if variance_increase > 1.0 else TransitionSeverity.HIGH
+            severity = (
+                TransitionSeverity.CRITICAL
+                if variance_increase > 1.0
+                else TransitionSeverity.HIGH
+            )
             return CriticalSignal(
                 signal_type="increasing_variance",
                 metric_name=metric_name,
                 severity=severity,
                 value=variance_increase,
                 threshold=0.5,
-                description=f"Variance increased {variance_increase:.1%} (fluctuations diverging)"
+                description=f"Variance increased {variance_increase:.1%} (fluctuations diverging)",
             )
 
         return None
 
     def _detect_autocorrelation(
-        self,
-        metric_name: str,
-        values: list[float]
-    ) -> Optional[CriticalSignal]:
+        self, metric_name: str, values: list[float]
+    ) -> CriticalSignal | None:
         """
         Detect increasing autocorrelation (critical slowing down).
 
@@ -247,23 +249,25 @@ class PhaseTransitionDetector:
 
         # High autocorrelation indicates critical slowing
         if autocorr > 0.7:
-            severity = TransitionSeverity.CRITICAL if autocorr > 0.85 else TransitionSeverity.HIGH
+            severity = (
+                TransitionSeverity.CRITICAL
+                if autocorr > 0.85
+                else TransitionSeverity.HIGH
+            )
             return CriticalSignal(
                 signal_type="critical_slowing_down",
                 metric_name=metric_name,
                 severity=severity,
                 value=autocorr,
                 threshold=0.7,
-                description=f"Critical slowing detected (autocorr={autocorr:.2f})"
+                description=f"Critical slowing detected (autocorr={autocorr:.2f})",
             )
 
         return None
 
     def _detect_flickering(
-        self,
-        metric_name: str,
-        values: list[float]
-    ) -> Optional[CriticalSignal]:
+        self, metric_name: str, values: list[float]
+    ) -> CriticalSignal | None:
         """
         Detect flickering (rapid state changes).
 
@@ -276,23 +280,25 @@ class PhaseTransitionDetector:
         flicker_rate = self._calculate_flicker_rate(values)
 
         if flicker_rate > 0.3:  # 30% of samples show flickering
-            severity = TransitionSeverity.HIGH if flicker_rate > 0.5 else TransitionSeverity.ELEVATED
+            severity = (
+                TransitionSeverity.HIGH
+                if flicker_rate > 0.5
+                else TransitionSeverity.ELEVATED
+            )
             return CriticalSignal(
                 signal_type="flickering",
                 metric_name=metric_name,
                 severity=severity,
                 value=flicker_rate,
                 threshold=0.3,
-                description=f"System flickering between states ({flicker_rate:.1%} rate)"
+                description=f"System flickering between states ({flicker_rate:.1%} rate)",
             )
 
         return None
 
     def _detect_skewness(
-        self,
-        metric_name: str,
-        values: list[float]
-    ) -> Optional[CriticalSignal]:
+        self, metric_name: str, values: list[float]
+    ) -> CriticalSignal | None:
         """
         Detect skewness changes in distribution.
 
@@ -312,7 +318,7 @@ class PhaseTransitionDetector:
                 severity=severity,
                 value=skewness,
                 threshold=1.0,
-                description=f"Distribution becoming skewed (skew={skewness:.2f})"
+                description=f"Distribution becoming skewed (skew={skewness:.2f})",
             )
 
         return None
@@ -347,8 +353,8 @@ class PhaseTransitionDetector:
         # Count direction changes
         changes = 0
         for i in range(1, len(values) - 1):
-            diff_before = values[i] - values[i-1]
-            diff_after = values[i+1] - values[i]
+            diff_before = values[i] - values[i - 1]
+            diff_after = values[i + 1] - values[i]
 
             # Significant direction change?
             if abs(diff_before) > threshold and abs(diff_after) > threshold:
@@ -357,13 +363,17 @@ class PhaseTransitionDetector:
 
         return changes / (len(values) - 2)
 
-    def _assess_overall_severity(self, signals: list[CriticalSignal]) -> TransitionSeverity:
+    def _assess_overall_severity(
+        self, signals: list[CriticalSignal]
+    ) -> TransitionSeverity:
         """Assess overall severity from all signals."""
         if not signals:
             return TransitionSeverity.NORMAL
 
         # Count by severity
-        critical_count = sum(1 for s in signals if s.severity == TransitionSeverity.CRITICAL)
+        critical_count = sum(
+            1 for s in signals if s.severity == TransitionSeverity.CRITICAL
+        )
         high_count = sum(1 for s in signals if s.severity == TransitionSeverity.HIGH)
 
         if critical_count >= 2:
@@ -377,7 +387,7 @@ class PhaseTransitionDetector:
         else:
             return TransitionSeverity.NORMAL
 
-    def _estimate_time_to_transition(self) -> Optional[float]:
+    def _estimate_time_to_transition(self) -> float | None:
         """
         Estimate time until phase transition.
 
@@ -415,34 +425,38 @@ class PhaseTransitionDetector:
         return estimated_hours
 
     def _generate_recommendations(
-        self,
-        signals: list[CriticalSignal],
-        severity: TransitionSeverity
+        self, signals: list[CriticalSignal], severity: TransitionSeverity
     ) -> list[str]:
         """Generate intervention recommendations."""
         recommendations = []
 
         if severity == TransitionSeverity.IMMINENT:
-            recommendations.extend([
-                "URGENT: Activate fallback schedules immediately",
-                "Escalate to RED defense level",
-                "Initiate load shedding protocols",
-                "Alert all stakeholders of imminent transition"
-            ])
+            recommendations.extend(
+                [
+                    "URGENT: Activate fallback schedules immediately",
+                    "Escalate to RED defense level",
+                    "Initiate load shedding protocols",
+                    "Alert all stakeholders of imminent transition",
+                ]
+            )
         elif severity == TransitionSeverity.CRITICAL:
-            recommendations.extend([
-                "Activate contingency plans",
-                "Increase monitoring frequency",
-                "Prepare fallback schedules",
-                "Escalate to ORANGE defense level"
-            ])
+            recommendations.extend(
+                [
+                    "Activate contingency plans",
+                    "Increase monitoring frequency",
+                    "Prepare fallback schedules",
+                    "Escalate to ORANGE defense level",
+                ]
+            )
         elif severity == TransitionSeverity.HIGH:
-            recommendations.extend([
-                "Review N-1/N-2 contingency status",
-                "Increase buffer capacity",
-                "Defer non-critical activities",
-                "Escalate to YELLOW defense level"
-            ])
+            recommendations.extend(
+                [
+                    "Review N-1/N-2 contingency status",
+                    "Increase buffer capacity",
+                    "Defer non-critical activities",
+                    "Escalate to YELLOW defense level",
+                ]
+            )
 
         # Signal-specific recommendations
         for signal in signals:
@@ -525,7 +539,10 @@ class CriticalPhenomenaMonitor:
             self.risk_history.pop(0)
 
         # Trigger alerts if critical
-        if risk.overall_severity in (TransitionSeverity.CRITICAL, TransitionSeverity.IMMINENT):
+        if risk.overall_severity in (
+            TransitionSeverity.CRITICAL,
+            TransitionSeverity.IMMINENT,
+        ):
             logger.error(
                 f"Critical phase transition risk detected: {risk.overall_severity.value}, "
                 f"{len(risk.signals)} signals, "
@@ -541,7 +558,7 @@ class CriticalPhenomenaMonitor:
 
         return risk
 
-    def get_current_risk(self) -> Optional[PhaseTransitionRisk]:
+    def get_current_risk(self) -> PhaseTransitionRisk | None:
         """Get most recent risk assessment."""
         return self.risk_history[-1] if self.risk_history else None
 
@@ -564,13 +581,12 @@ def detect_critical_slowing(metric_history: list[float]) -> bool:
 
     risk = detector.detect_critical_phenomena()
 
-    return any(
-        s.signal_type == "critical_slowing_down"
-        for s in risk.signals
-    )
+    return any(s.signal_type == "critical_slowing_down" for s in risk.signals)
 
 
-def estimate_time_to_transition(metric_histories: dict[str, list[float]]) -> Optional[float]:
+def estimate_time_to_transition(
+    metric_histories: dict[str, list[float]],
+) -> float | None:
     """
     Convenience function to estimate time to transition.
 

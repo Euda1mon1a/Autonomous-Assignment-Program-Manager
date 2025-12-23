@@ -6,9 +6,8 @@ Endpoints for analyzing schedule change barriers and finding catalysts:
 - Optimize transition pathways
 - Analyze swap feasibility
 """
+
 from datetime import date
-from typing import Any
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,11 +17,9 @@ from app.db.session import get_db
 from app.models.user import User
 from app.scheduling_catalyst import (
     BarrierDetector,
-    BarrierClassifier,
     CatalystAnalyzer,
-    TransitionOptimizer,
     PathwayResult,
-    BarrierType,
+    TransitionOptimizer,
 )
 from app.scheduling_catalyst.optimizer import OptimizationConfig
 from app.schemas.scheduling_catalyst import (
@@ -32,9 +29,7 @@ from app.schemas.scheduling_catalyst import (
     BarrierTypeEnum,
     BatchOptimizationRequest,
     BatchOptimizationResponse,
-    CatalystAnalysisRequest,
     CatalystCapacityResponse,
-    CatalystRecommendationResponse,
     EnergyBarrierResponse,
     PathwayOptimizationRequest,
     PathwayResultResponse,
@@ -78,22 +73,40 @@ def _pathway_result_to_response(result: PathwayResult) -> PathwayResultResponse:
     pathway = None
     if result.pathway:
         pathway = ReactionPathwayResponse(
-            pathway_id=str(result.pathway.pathway_id) if hasattr(result.pathway, 'pathway_id') else "default",
-            total_energy=result.pathway.total_energy if hasattr(result.pathway, 'total_energy') else 0.0,
-            catalyzed_energy=result.pathway.catalyzed_energy if hasattr(result.pathway, 'catalyzed_energy') else 0.0,
+            pathway_id=str(result.pathway.pathway_id)
+            if hasattr(result.pathway, "pathway_id")
+            else "default",
+            total_energy=result.pathway.total_energy
+            if hasattr(result.pathway, "total_energy")
+            else 0.0,
+            catalyzed_energy=result.pathway.catalyzed_energy
+            if hasattr(result.pathway, "catalyzed_energy")
+            else 0.0,
             transition_states=[
                 TransitionStateResponse(
-                    state_id=str(ts.state_id) if hasattr(ts, 'state_id') else "state",
-                    description=ts.description if hasattr(ts, 'description') else "",
-                    energy=ts.energy if hasattr(ts, 'energy') else 0.0,
-                    is_stable=ts.is_stable if hasattr(ts, 'is_stable') else False,
-                    duration_estimate_hours=getattr(ts, 'duration_estimate_hours', None),
+                    state_id=str(ts.state_id) if hasattr(ts, "state_id") else "state",
+                    description=ts.description if hasattr(ts, "description") else "",
+                    energy=ts.energy if hasattr(ts, "energy") else 0.0,
+                    is_stable=ts.is_stable if hasattr(ts, "is_stable") else False,
+                    duration_estimate_hours=getattr(
+                        ts, "duration_estimate_hours", None
+                    ),
                 )
-                for ts in (result.pathway.transition_states if hasattr(result.pathway, 'transition_states') else [])
+                for ts in (
+                    result.pathway.transition_states
+                    if hasattr(result.pathway, "transition_states")
+                    else []
+                )
             ],
-            catalysts_used=result.pathway.catalysts_used if hasattr(result.pathway, 'catalysts_used') else [],
-            estimated_duration_hours=getattr(result.pathway, 'estimated_duration_hours', None),
-            success_probability=result.pathway.success_probability if hasattr(result.pathway, 'success_probability') else 0.8,
+            catalysts_used=result.pathway.catalysts_used
+            if hasattr(result.pathway, "catalysts_used")
+            else [],
+            estimated_duration_hours=getattr(
+                result.pathway, "estimated_duration_hours", None
+            ),
+            success_probability=result.pathway.success_probability
+            if hasattr(result.pathway, "success_probability")
+            else 0.8,
         )
 
     return PathwayResultResponse(
@@ -213,6 +226,7 @@ async def analyze_swap_barriers(
         # Detect barriers (using a placeholder assignment_id for now)
         # In production, this would look up the actual assignment
         from uuid import uuid4
+
         barriers = await detector.detect_all_barriers(
             assignment_id=uuid4(),  # Placeholder - should be actual assignment ID
             proposed_change=proposed_change,
@@ -225,11 +239,17 @@ async def analyze_swap_barriers(
         # Generate recommendations
         recommendations = []
         if has_absolute:
-            recommendations.append("Swap contains absolute barriers and cannot proceed without escalation.")
+            recommendations.append(
+                "Swap contains absolute barriers and cannot proceed without escalation."
+            )
         elif activation_energy.value > 0.8:
-            recommendations.append("High activation energy detected. Consider using coordinator assistance.")
+            recommendations.append(
+                "High activation energy detected. Consider using coordinator assistance."
+            )
         elif activation_energy.value > 0.5:
-            recommendations.append("Moderate barriers detected. Auto-matcher may help find alternatives.")
+            recommendations.append(
+                "Moderate barriers detected. Auto-matcher may help find alternatives."
+            )
 
         blocking = [b for b in barriers if b.is_absolute]
 
@@ -268,20 +288,27 @@ async def get_catalyst_capacity(
         mechanism_catalysts = await analyzer.find_mechanism_catalysts([])
 
         # Calculate total capacity
-        total_capacity = sum(c.capacity for c in person_catalysts if hasattr(c, 'capacity'))
+        total_capacity = sum(
+            c.capacity for c in person_catalysts if hasattr(c, "capacity")
+        )
 
         # Identify bottlenecks (catalysts below 20% capacity)
         bottleneck_catalysts = [
-            c.name for c in person_catalysts
-            if hasattr(c, 'capacity') and c.capacity < 0.2
+            c.name
+            for c in person_catalysts
+            if hasattr(c, "capacity") and c.capacity < 0.2
         ]
 
         # Generate recommendations
         recommendations = []
         if len(bottleneck_catalysts) > 0:
-            recommendations.append(f"{len(bottleneck_catalysts)} catalyst(s) near capacity. Consider load balancing.")
+            recommendations.append(
+                f"{len(bottleneck_catalysts)} catalyst(s) near capacity. Consider load balancing."
+            )
         if len(person_catalysts) < 3:
-            recommendations.append("Low number of person catalysts. Consider cross-training more coordinators.")
+            recommendations.append(
+                "Low number of person catalysts. Consider cross-training more coordinators."
+            )
 
         return CatalystCapacityResponse(
             person_catalysts_available=len(person_catalysts),
@@ -334,14 +361,16 @@ async def optimize_batch(
             results.append(_pathway_result_to_response(result))
             if result.success:
                 successful += 1
-                if result.pathway and hasattr(result.pathway, 'catalyzed_energy'):
+                if result.pathway and hasattr(result.pathway, "catalyzed_energy"):
                     aggregate_energy += result.pathway.catalyzed_energy
         except Exception as e:
-            results.append(PathwayResultResponse(
-                success=False,
-                blocking_barriers=[],
-                recommendations=[f"Optimization failed: {str(e)}"],
-            ))
+            results.append(
+                PathwayResultResponse(
+                    success=False,
+                    blocking_barriers=[],
+                    recommendations=[f"Optimization failed: {str(e)}"],
+                )
+            )
 
     # Simple optimal order: process in order of lowest energy first
     # In production, this would use more sophisticated ordering

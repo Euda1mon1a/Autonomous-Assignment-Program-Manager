@@ -26,7 +26,9 @@ def list_procedures(
     specialty: str | None = Query(None, description="Filter by specialty"),
     category: str | None = Query(None, description="Filter by category"),
     is_active: bool | None = Query(None, description="Filter by active status"),
-    complexity_level: str | None = Query(None, description="Filter by complexity level"),
+    complexity_level: str | None = Query(
+        None, description="Filter by complexity level"
+    ),
     db=Depends(get_db),
 ):
     """List all procedures with optional filters."""

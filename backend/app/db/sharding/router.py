@@ -6,11 +6,10 @@ correct shard based on sharding keys.
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from collections.abc import Callable
+from typing import Any, TypeVar
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import DeclarativeMeta
 
 from app.db.sharding.strategies import ShardInfo, ShardingStrategy
 
@@ -32,8 +31,8 @@ class ShardKeyExtractor:
 
     def __init__(
         self,
-        key_field: Optional[str] = None,
-        extractor_func: Optional[Callable[[Any], Any]] = None,
+        key_field: str | None = None,
+        extractor_func: Callable[[Any], Any] | None = None,
     ) -> None:
         """
         Initialize shard key extractor.
@@ -144,7 +143,7 @@ class ShardRouter:
             logger.error(f"Routing failed: {e}", exc_info=True)
             raise ValueError(f"Failed to route object: {e}") from e
 
-    def route_batch(self, objects: List[Any]) -> Dict[int, List[Any]]:
+    def route_batch(self, objects: list[Any]) -> dict[int, list[Any]]:
         """
         Route multiple objects to their target shards.
 
@@ -154,7 +153,7 @@ class ShardRouter:
         Returns:
             Dictionary mapping shard_id -> list of objects
         """
-        shard_groups: Dict[int, List[Any]] = {}
+        shard_groups: dict[int, list[Any]] = {}
 
         for obj in objects:
             try:
@@ -168,7 +167,7 @@ class ShardRouter:
 
         return shard_groups
 
-    def get_shard_info(self, shard_id: int) -> Optional[ShardInfo]:
+    def get_shard_info(self, shard_id: int) -> ShardInfo | None:
         """
         Get information about a specific shard.
 
@@ -180,7 +179,7 @@ class ShardRouter:
         """
         return self.strategy.get_shard_info(shard_id)
 
-    def get_all_shard_ids(self) -> List[int]:
+    def get_all_shard_ids(self) -> list[int]:
         """
         Get all available shard IDs.
 
@@ -189,7 +188,7 @@ class ShardRouter:
         """
         return [shard.shard_id for shard in self.strategy.shards]
 
-    def get_active_shard_ids(self) -> List[int]:
+    def get_active_shard_ids(self) -> list[int]:
         """
         Get all active shard IDs.
 
@@ -213,7 +212,7 @@ class CrossShardQuery:
         )
     """
 
-    def __init__(self, shard_sessions: Dict[int, AsyncSession]) -> None:
+    def __init__(self, shard_sessions: dict[int, AsyncSession]) -> None:
         """
         Initialize cross-shard query executor.
 
@@ -249,8 +248,8 @@ class CrossShardQuery:
     async def execute_on_all_shards(
         self,
         query_func: Callable[[AsyncSession], Any],
-        shard_ids: Optional[List[int]] = None,
-    ) -> Dict[int, Any]:
+        shard_ids: list[int] | None = None,
+    ) -> dict[int, Any]:
         """
         Execute a query on multiple shards in parallel.
 
@@ -286,8 +285,8 @@ class CrossShardQuery:
     async def aggregate_results(
         self,
         query_func: Callable[[AsyncSession], Any],
-        aggregator: Callable[[List[Any]], Any],
-        shard_ids: Optional[List[int]] = None,
+        aggregator: Callable[[list[Any]], Any],
+        shard_ids: list[int] | None = None,
     ) -> Any:
         """
         Execute queries on multiple shards and aggregate results.
@@ -319,12 +318,12 @@ class CrossShardQuery:
 
     async def merge_sorted_results(
         self,
-        query_func: Callable[[AsyncSession], List[T]],
+        query_func: Callable[[AsyncSession], list[T]],
         key_func: Callable[[T], Any],
-        limit: Optional[int] = None,
+        limit: int | None = None,
         reverse: bool = False,
-        shard_ids: Optional[List[int]] = None,
-    ) -> List[T]:
+        shard_ids: list[int] | None = None,
+    ) -> list[T]:
         """
         Execute queries on multiple shards and merge sorted results.
 
@@ -341,12 +340,11 @@ class CrossShardQuery:
         Returns:
             Merged and sorted list of results
         """
-        import heapq
 
         shard_results = await self.execute_on_all_shards(query_func, shard_ids)
 
         # Flatten all results
-        all_results: List[T] = []
+        all_results: list[T] = []
         for results in shard_results.values():
             if results:
                 all_results.extend(results)
@@ -378,7 +376,7 @@ class ShardDistribution:
         """
         self.router = router
 
-    def analyze_distribution(self, keys: List[Any]) -> Dict[int, int]:
+    def analyze_distribution(self, keys: list[Any]) -> dict[int, int]:
         """
         Analyze how a set of keys would be distributed across shards.
 
@@ -388,7 +386,7 @@ class ShardDistribution:
         Returns:
             Dictionary mapping shard_id -> count of keys
         """
-        distribution: Dict[int, int] = {}
+        distribution: dict[int, int] = {}
 
         for key in keys:
             try:
@@ -399,7 +397,7 @@ class ShardDistribution:
 
         return distribution
 
-    def calculate_balance_score(self, distribution: Dict[int, int]) -> float:
+    def calculate_balance_score(self, distribution: dict[int, int]) -> float:
         """
         Calculate distribution balance score (0.0 = perfectly balanced, 1.0 = worst).
 
@@ -423,7 +421,7 @@ class ShardDistribution:
             return 0.0
 
         variance = sum((x - mean) ** 2 for x in counts) / len(counts)
-        std_dev = variance ** 0.5
+        std_dev = variance**0.5
 
         # Coefficient of variation
         cv = std_dev / mean
@@ -431,7 +429,7 @@ class ShardDistribution:
         # Normalize to 0-1 scale (CV of 1.0 = perfectly imbalanced)
         return min(cv, 1.0)
 
-    def get_distribution_report(self, keys: List[Any]) -> Dict[str, Any]:
+    def get_distribution_report(self, keys: list[Any]) -> dict[str, Any]:
         """
         Generate comprehensive distribution report.
 

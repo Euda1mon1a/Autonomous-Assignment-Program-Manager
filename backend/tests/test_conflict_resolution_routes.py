@@ -3,7 +3,8 @@
 Comprehensive test suite covering conflict analysis, resolution options,
 auto-resolution, batch resolution, and safety checks.
 """
-from datetime import date, datetime, timedelta
+
+from datetime import date, timedelta
 from uuid import uuid4
 
 import pytest
@@ -18,10 +19,10 @@ from app.models.conflict_alert import (
 )
 from app.models.person import Person
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def sample_conflict_alert(db: Session, sample_faculty: Person) -> ConflictAlert:
@@ -65,7 +66,11 @@ def multiple_conflict_alerts(
 ) -> list[ConflictAlert]:
     """Create multiple conflict alerts with different severities."""
     alerts = []
-    severities = [ConflictSeverity.CRITICAL, ConflictSeverity.WARNING, ConflictSeverity.INFO]
+    severities = [
+        ConflictSeverity.CRITICAL,
+        ConflictSeverity.WARNING,
+        ConflictSeverity.INFO,
+    ]
 
     for i, faculty in enumerate(sample_faculty_members):
         alert = ConflictAlert(
@@ -89,6 +94,7 @@ def multiple_conflict_alerts(
 # ============================================================================
 # Test Classes
 # ============================================================================
+
 
 class TestAnalyzeConflictEndpoint:
     """Tests for GET /api/conflict-resolution/{conflict_id}/analyze endpoint."""
@@ -222,7 +228,7 @@ class TestGetResolutionOptionsEndpoint:
         """Test getting resolution options with max_options parameter."""
         response = client.get(
             f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/options",
-            params={"max_options": 3}
+            params={"max_options": 3},
         )
 
         assert response.status_code in [200, 404]
@@ -239,14 +245,14 @@ class TestGetResolutionOptionsEndpoint:
         # Test below minimum (should be >= 1)
         response = client.get(
             f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/options",
-            params={"max_options": 0}
+            params={"max_options": 0},
         )
         assert response.status_code == 422  # Validation error
 
         # Test above maximum (should be <= 10)
         response = client.get(
             f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/options",
-            params={"max_options": 11}
+            params={"max_options": 11},
         )
         assert response.status_code == 422  # Validation error
 
@@ -318,7 +324,7 @@ class TestResolveConflictEndpoint:
         """Test resolving conflict with specific strategy."""
         response = client.post(
             f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/resolve",
-            params={"strategy": "swap_assignments"}
+            params={"strategy": "swap_assignments"},
         )
 
         # Response depends on whether strategy is applicable
@@ -371,7 +377,7 @@ class TestResolveConflictEndpoint:
         """Test resolving with invalid strategy name."""
         response = client.post(
             f"/api/v1/conflict-resolution/{sample_conflict_alert.id}/resolve",
-            params={"strategy": "invalid_strategy_name"}
+            params={"strategy": "invalid_strategy_name"},
         )
 
         # Should return validation error or handle gracefully
@@ -384,8 +390,7 @@ class TestBatchResolveConflictsEndpoint:
     def test_batch_resolve_empty_list(self, client: TestClient):
         """Test batch resolve with no conflicts specified."""
         response = client.post(
-            "/api/v1/conflict-resolution/batch/resolve",
-            params={"max_conflicts": 10}
+            "/api/v1/conflict-resolution/batch/resolve", params={"max_conflicts": 10}
         )
 
         # Should return report even if no conflicts to process
@@ -399,7 +404,7 @@ class TestBatchResolveConflictsEndpoint:
 
         response = client.post(
             "/api/v1/conflict-resolution/batch/resolve",
-            params={"conflict_ids": conflict_ids}
+            params={"conflict_ids": conflict_ids},
         )
 
         assert response.status_code in [200, 422]
@@ -417,8 +422,7 @@ class TestBatchResolveConflictsEndpoint:
     ):
         """Test batch resolve with max_conflicts limit."""
         response = client.post(
-            "/api/v1/conflict-resolution/batch/resolve",
-            params={"max_conflicts": 2}
+            "/api/v1/conflict-resolution/batch/resolve", params={"max_conflicts": 2}
         )
 
         assert response.status_code in [200, 422]
@@ -431,15 +435,13 @@ class TestBatchResolveConflictsEndpoint:
         """Test max_conflicts parameter validation."""
         # Test below minimum (should be >= 1)
         response = client.post(
-            "/api/v1/conflict-resolution/batch/resolve",
-            params={"max_conflicts": 0}
+            "/api/v1/conflict-resolution/batch/resolve", params={"max_conflicts": 0}
         )
         assert response.status_code == 422
 
         # Test above maximum (should be <= 100)
         response = client.post(
-            "/api/v1/conflict-resolution/batch/resolve",
-            params={"max_conflicts": 101}
+            "/api/v1/conflict-resolution/batch/resolve", params={"max_conflicts": 101}
         )
         assert response.status_code == 422
 
@@ -449,10 +451,7 @@ class TestBatchResolveConflictsEndpoint:
         """Test batch resolve with severity filter."""
         response = client.post(
             "/api/v1/conflict-resolution/batch/resolve",
-            params={
-                "max_conflicts": 10,
-                "severity_filter": "CRITICAL"
-            }
+            params={"max_conflicts": 10, "severity_filter": "CRITICAL"},
         )
 
         assert response.status_code in [200, 422]
@@ -461,10 +460,7 @@ class TestBatchResolveConflictsEndpoint:
         """Test batch resolve with invalid severity filter."""
         response = client.post(
             "/api/v1/conflict-resolution/batch/resolve",
-            params={
-                "max_conflicts": 10,
-                "severity_filter": "INVALID_SEVERITY"
-            }
+            params={"max_conflicts": 10, "severity_filter": "INVALID_SEVERITY"},
         )
 
         # Should handle invalid severity gracefully
@@ -476,10 +472,7 @@ class TestBatchResolveConflictsEndpoint:
         """Test batch resolve in dry-run mode."""
         response = client.post(
             "/api/v1/conflict-resolution/batch/resolve",
-            params={
-                "max_conflicts": 5,
-                "dry_run": True
-            }
+            params={"max_conflicts": 5, "dry_run": True},
         )
 
         assert response.status_code in [200, 422]
@@ -494,8 +487,7 @@ class TestBatchResolveConflictsEndpoint:
     ):
         """Test that batch resolution report has expected structure."""
         response = client.post(
-            "/api/v1/conflict-resolution/batch/resolve",
-            params={"max_conflicts": 5}
+            "/api/v1/conflict-resolution/batch/resolve", params={"max_conflicts": 5}
         )
 
         if response.status_code == 200:
@@ -525,8 +517,7 @@ class TestBatchResolveConflictsEndpoint:
     ):
         """Test that batch resolution includes performance metrics."""
         response = client.post(
-            "/api/v1/conflict-resolution/batch/resolve",
-            params={"max_conflicts": 3}
+            "/api/v1/conflict-resolution/batch/resolve", params={"max_conflicts": 3}
         )
 
         if response.status_code == 200:
@@ -652,7 +643,10 @@ class TestConflictResolutionEdgeCases:
         assert response.status_code == 200
 
     def test_batch_resolve_with_mixed_statuses(
-        self, client: TestClient, db: Session, multiple_conflict_alerts: list[ConflictAlert]
+        self,
+        client: TestClient,
+        db: Session,
+        multiple_conflict_alerts: list[ConflictAlert],
     ):
         """Test batch resolving conflicts with different statuses."""
         # Mark some as already resolved
@@ -664,7 +658,7 @@ class TestConflictResolutionEdgeCases:
 
         response = client.post(
             "/api/v1/conflict-resolution/batch/resolve",
-            params={"conflict_ids": conflict_ids}
+            params={"conflict_ids": conflict_ids},
         )
 
         # Should handle mixed statuses gracefully
@@ -765,7 +759,7 @@ class TestConflictResolutionErrorHandling:
         response = client.post(
             "/api/v1/conflict-resolution/batch/resolve",
             data="invalid json{",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         # Should return validation error

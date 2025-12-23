@@ -1,4 +1,5 @@
 """Tests for SwapNotificationService."""
+
 from datetime import date, datetime, timedelta
 from unittest.mock import Mock, patch
 from uuid import uuid4
@@ -16,6 +17,7 @@ from app.services.swap_notification_service import (
 # ============================================================================
 # Test Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def mock_db():
@@ -109,6 +111,7 @@ def service_with_faculty(mock_db, sample_faculty, sample_preferences):
 # Test SwapNotification Dataclass
 # ============================================================================
 
+
 class TestSwapNotification:
     """Tests for SwapNotification dataclass."""
 
@@ -126,7 +129,9 @@ class TestSwapNotification:
 
         assert notification.recipient_id == faculty_id
         assert notification.recipient_email == "test@hospital.org"
-        assert notification.notification_type == SwapNotificationType.SWAP_REQUEST_RECEIVED
+        assert (
+            notification.notification_type == SwapNotificationType.SWAP_REQUEST_RECEIVED
+        )
         assert notification.subject == "Test Subject"
         assert notification.body == "Test Body"
         assert notification.swap_id == swap_id
@@ -167,6 +172,7 @@ class TestSwapNotification:
 # Test SwapNotificationType Enum
 # ============================================================================
 
+
 class TestSwapNotificationType:
     """Tests for SwapNotificationType enum."""
 
@@ -184,6 +190,7 @@ class TestSwapNotificationType:
 # ============================================================================
 # Test notify_swap_request_received
 # ============================================================================
+
 
 class TestNotifySwapRequestReceived:
     """Tests for notify_swap_request_received method."""
@@ -203,7 +210,9 @@ class TestNotifySwapRequestReceived:
         assert notification is not None
         assert notification.recipient_id == faculty_id
         assert notification.recipient_email == "jane.smith@hospital.org"
-        assert notification.notification_type == SwapNotificationType.SWAP_REQUEST_RECEIVED
+        assert (
+            notification.notification_type == SwapNotificationType.SWAP_REQUEST_RECEIVED
+        )
         assert "Dr. John Doe" in notification.subject
         assert "Dr. John Doe" in notification.body
         assert sample_week.isoformat() in notification.body
@@ -368,6 +377,7 @@ class TestNotifySwapRequestReceived:
 # Test notify_swap_accepted
 # ============================================================================
 
+
 class TestNotifySwapAccepted:
     """Tests for notify_swap_accepted method."""
 
@@ -384,7 +394,9 @@ class TestNotifySwapAccepted:
 
         assert notification is not None
         assert notification.recipient_id == faculty_id
-        assert notification.notification_type == SwapNotificationType.SWAP_REQUEST_ACCEPTED
+        assert (
+            notification.notification_type == SwapNotificationType.SWAP_REQUEST_ACCEPTED
+        )
         assert "Dr. Alice Johnson" in notification.subject
         assert "accepted" in notification.subject.lower()
         assert "Dr. Alice Johnson" in notification.body
@@ -458,6 +470,7 @@ class TestNotifySwapAccepted:
 # Test notify_swap_rejected
 # ============================================================================
 
+
 class TestNotifySwapRejected:
     """Tests for notify_swap_rejected method."""
 
@@ -474,7 +487,9 @@ class TestNotifySwapRejected:
         )
 
         assert notification is not None
-        assert notification.notification_type == SwapNotificationType.SWAP_REQUEST_REJECTED
+        assert (
+            notification.notification_type == SwapNotificationType.SWAP_REQUEST_REJECTED
+        )
         assert "Dr. Bob Wilson" in notification.subject
         assert "declined" in notification.subject.lower()
         assert "Dr. Bob Wilson" in notification.body
@@ -537,6 +552,7 @@ class TestNotifySwapRejected:
 # Test notify_swap_executed
 # ============================================================================
 
+
 class TestNotifySwapExecuted:
     """Tests for notify_swap_executed method."""
 
@@ -562,6 +578,7 @@ class TestNotifySwapExecuted:
         def query_side_effect(model):
             if model == Person:
                 query = Mock()
+
                 # Return faculty in order based on call count
                 def filter_func(*args, **kwargs):
                     result = Mock()
@@ -569,6 +586,7 @@ class TestNotifySwapExecuted:
                     result.first.return_value = faculty_list[idx]
                     call_count[0] += 1
                     return result
+
                 query.filter = filter_func
                 return query
             elif model == FacultyPreference:
@@ -627,22 +645,30 @@ class TestNotifySwapExecuted:
         def query_side_effect(model):
             if model == Person:
                 query = Mock()
+
                 def filter_func(*args, **kwargs):
                     result = Mock()
                     # Return faculty1 for first call, faculty2 for second
-                    result.first.return_value = faculty1 if person_calls[0] == 0 else faculty2
+                    result.first.return_value = (
+                        faculty1 if person_calls[0] == 0 else faculty2
+                    )
                     person_calls[0] += 1
                     return result
+
                 query.filter = filter_func
                 return query
             elif model == FacultyPreference:
                 query = Mock()
+
                 def filter_func(*args, **kwargs):
                     result = Mock()
                     # Return prefs1 for first call, prefs2 for second
-                    result.first.return_value = prefs1 if prefs_calls[0] == 0 else prefs2
+                    result.first.return_value = (
+                        prefs1 if prefs_calls[0] == 0 else prefs2
+                    )
                     prefs_calls[0] += 1
                     return result
+
                 query.filter = filter_func
                 return query
             return Mock()
@@ -680,12 +706,14 @@ class TestNotifySwapExecuted:
         def query_side_effect(model):
             if model == Person:
                 query = Mock()
+
                 def filter_func(*args, **kwargs):
                     result = Mock()
                     # Return faculty1 for first, None for second
                     result.first.return_value = faculty1 if call_count[0] == 0 else None
                     call_count[0] += 1
                     return result
+
                 query.filter = filter_func
                 return query
             elif model == FacultyPreference:
@@ -727,6 +755,7 @@ class TestNotifySwapExecuted:
 # Test notify_swap_rolled_back
 # ============================================================================
 
+
 class TestNotifySwapRolledBack:
     """Tests for notify_swap_rolled_back method."""
 
@@ -738,8 +767,8 @@ class TestNotifySwapRolledBack:
         for i, fid in enumerate(faculty_ids):
             faculty = Mock(spec=Person)
             faculty.id = fid
-            faculty.name = f"Dr. Faculty {i+1}"
-            faculty.email = f"faculty{i+1}@hospital.org"
+            faculty.name = f"Dr. Faculty {i + 1}"
+            faculty.email = f"faculty{i + 1}@hospital.org"
             faculty_list.append(faculty)
 
         call_count = [0]
@@ -747,12 +776,14 @@ class TestNotifySwapRolledBack:
         def query_side_effect(model):
             if model == Person:
                 query = Mock()
+
                 def filter_func(*args, **kwargs):
                     result = Mock()
                     idx = call_count[0] % len(faculty_list)
                     result.first.return_value = faculty_list[idx]
                     call_count[0] += 1
                     return result
+
                 query.filter = filter_func
                 return query
             return Mock()
@@ -771,7 +802,9 @@ class TestNotifySwapRolledBack:
         assert len(notifications) == 2
         for i, notification in enumerate(notifications):
             assert notification.recipient_id == faculty_ids[i]
-            assert notification.notification_type == SwapNotificationType.SWAP_ROLLED_BACK
+            assert (
+                notification.notification_type == SwapNotificationType.SWAP_ROLLED_BACK
+            )
             assert reason in notification.body
             assert "rolled back" in notification.body.lower()
             assert sample_week.isoformat() in notification.subject
@@ -832,11 +865,13 @@ class TestNotifySwapRolledBack:
         def query_side_effect(model):
             if model == Person:
                 query = Mock()
+
                 def filter_func(*args, **kwargs):
                     result = Mock()
                     result.first.return_value = faculty1 if call_count[0] == 0 else None
                     call_count[0] += 1
                     return result
+
                 query.filter = filter_func
                 return query
             return Mock()
@@ -859,6 +894,7 @@ class TestNotifySwapRolledBack:
 # ============================================================================
 # Test notify_marketplace_match
 # ============================================================================
+
 
 class TestNotifyMarketplaceMatch:
     """Tests for notify_marketplace_match method."""
@@ -922,6 +958,7 @@ class TestNotifyMarketplaceMatch:
 # Test send_pending_notifications and get_pending_count
 # ============================================================================
 
+
 class TestPendingNotificationManagement:
     """Tests for notification queue management."""
 
@@ -952,7 +989,7 @@ class TestPendingNotificationManagement:
         )
         assert service_with_faculty.get_pending_count() == 2
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_send_pending_notifications(
         self, mock_print, service_with_faculty, faculty_id, swap_id, sample_week
     ):
@@ -982,7 +1019,7 @@ class TestPendingNotificationManagement:
         # Verify print was called (placeholder implementation)
         assert mock_print.call_count >= 2
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_send_pending_clears_queue(
         self, mock_print, service_with_faculty, faculty_id, swap_id, sample_week
     ):
@@ -1012,6 +1049,7 @@ class TestPendingNotificationManagement:
 # ============================================================================
 # Test Helper Methods
 # ============================================================================
+
 
 class TestHelperMethods:
     """Tests for internal helper methods."""
@@ -1106,7 +1144,7 @@ class TestHelperMethods:
         # Should not have "Reason:" when no reason provided
         assert "Reason:" not in body or "Reason: None" not in body
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_send_notification_placeholder(self, mock_print, mock_db):
         """Test _send_notification placeholder implementation."""
         service = SwapNotificationService(db=mock_db)
@@ -1132,6 +1170,7 @@ class TestHelperMethods:
 # ============================================================================
 # Integration Tests
 # ============================================================================
+
 
 class TestIntegrationScenarios:
     """Integration tests for common workflow scenarios."""
@@ -1161,12 +1200,16 @@ class TestIntegrationScenarios:
         def query_side_effect(model):
             if model == Person:
                 query = Mock()
+
                 def filter_func(*args, **kwargs):
                     result = Mock()
                     # Alternate between requester and target
-                    result.first.return_value = target if call_count[0] % 2 == 0 else requester
+                    result.first.return_value = (
+                        target if call_count[0] % 2 == 0 else requester
+                    )
                     call_count[0] += 1
                     return result
+
                 query.filter = filter_func
                 return query
             elif model == FacultyPreference:
@@ -1236,11 +1279,15 @@ class TestIntegrationScenarios:
         def query_side_effect(model):
             if model == Person:
                 query = Mock()
+
                 def filter_func(*args, **kwargs):
                     result = Mock()
-                    result.first.return_value = target if call_count[0] == 0 else requester
+                    result.first.return_value = (
+                        target if call_count[0] == 0 else requester
+                    )
                     call_count[0] += 1
                     return result
+
                 query.filter = filter_func
                 return query
             elif model == FacultyPreference:
@@ -1274,7 +1321,7 @@ class TestIntegrationScenarios:
         count = service.send_pending_notifications()
         assert count == 2
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_multiple_notifications_same_recipient(
         self, mock_print, service_with_faculty, faculty_id, sample_week
     ):

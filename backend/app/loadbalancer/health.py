@@ -141,36 +141,38 @@ class HTTPHealthProbe(HealthProbe):
         start_time = time.time()
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
+            async with (
+                aiohttp.ClientSession() as session,
+                session.get(
                     url,
                     timeout=aiohttp.ClientTimeout(total=self.timeout),
                     ssl=self.verify_ssl,
-                ) as response:
-                    response_time_ms = (time.time() - start_time) * 1000
+                ) as response,
+            ):
+                response_time_ms = (time.time() - start_time) * 1000
 
-                    if response.status == self.expected_status:
-                        return HealthCheckResult(
-                            status=HealthStatus.HEALTHY,
-                            response_time_ms=response_time_ms,
-                            details={
-                                "status_code": response.status,
-                                "url": url,
-                            },
-                        )
-                    else:
-                        return HealthCheckResult(
-                            status=HealthStatus.UNHEALTHY,
-                            response_time_ms=response_time_ms,
-                            error=f"Unexpected status code: {response.status}",
-                            details={
-                                "status_code": response.status,
-                                "expected": self.expected_status,
-                                "url": url,
-                            },
-                        )
+                if response.status == self.expected_status:
+                    return HealthCheckResult(
+                        status=HealthStatus.HEALTHY,
+                        response_time_ms=response_time_ms,
+                        details={
+                            "status_code": response.status,
+                            "url": url,
+                        },
+                    )
+                else:
+                    return HealthCheckResult(
+                        status=HealthStatus.UNHEALTHY,
+                        response_time_ms=response_time_ms,
+                        error=f"Unexpected status code: {response.status}",
+                        details={
+                            "status_code": response.status,
+                            "expected": self.expected_status,
+                            "url": url,
+                        },
+                    )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             response_time_ms = (time.time() - start_time) * 1000
             return HealthCheckResult(
                 status=HealthStatus.UNHEALTHY,
@@ -240,7 +242,7 @@ class TCPHealthProbe(HealthProbe):
                 },
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             response_time_ms = (time.time() - start_time) * 1000
             return HealthCheckResult(
                 status=HealthStatus.UNHEALTHY,
@@ -419,8 +421,7 @@ class ServiceHealthChecker:
                 # Log summary
                 total_instances = sum(len(r) for r in results.values())
                 healthy_instances = sum(
-                    sum(1 for check in r if check.is_healthy)
-                    for r in results.values()
+                    sum(1 for check in r if check.is_healthy) for r in results.values()
                 )
 
                 check_duration = time.time() - start_time

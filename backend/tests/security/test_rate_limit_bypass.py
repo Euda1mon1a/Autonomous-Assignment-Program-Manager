@@ -4,6 +4,7 @@ Tests for rate limit bypass detection module.
 Tests all detection techniques including IP rotation, user agent spoofing,
 distributed attacks, behavioral anomalies, and fingerprint mismatches.
 """
+
 import time
 from datetime import datetime
 from unittest.mock import Mock, patch
@@ -12,7 +13,6 @@ from uuid import uuid4
 import pytest
 import redis
 from fastapi import Request
-from fastapi.testclient import TestClient
 
 from app.security.rate_limit_bypass import (
     BypassDetection,
@@ -32,7 +32,7 @@ def redis_client():
             host="localhost",
             port=6379,
             db=15,  # Use separate DB for testing
-            decode_responses=True
+            decode_responses=True,
         )
         client.ping()
         yield client
@@ -138,11 +138,7 @@ class TestRateLimitBypassDetector:
 
         # Multiple IPs for same session
         for i in range(1, 5):
-            detection = detector._detect_ip_rotation(
-                f"192.168.1.{i}",
-                None,
-                session_id
-            )
+            detection = detector._detect_ip_rotation(f"192.168.1.{i}", None, session_id)
 
         # Should detect on 4th IP
         assert detection is not None
@@ -170,25 +166,19 @@ class TestRateLimitBypassDetector:
 
         # First UA - no detection
         detection = detector._detect_user_agent_spoofing(
-            ip_address,
-            user_id,
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            ip_address, user_id, "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
         )
         assert detection is None
 
         # Second UA - no detection
         detection = detector._detect_user_agent_spoofing(
-            ip_address,
-            user_id,
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+            ip_address, user_id, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
         )
         assert detection is None
 
         # Third UA - should trigger detection
         detection = detector._detect_user_agent_spoofing(
-            ip_address,
-            user_id,
-            "Mozilla/5.0 (X11; Linux x86_64)"
+            ip_address, user_id, "Mozilla/5.0 (X11; Linux x86_64)"
         )
         assert detection is not None
         assert detection.technique == BypassTechnique.USER_AGENT_SPOOFING
@@ -201,7 +191,7 @@ class TestRateLimitBypassDetector:
         detection = detector._detect_user_agent_spoofing(
             "192.168.1.100",
             None,  # No user ID
-            "Some User Agent"
+            "Some User Agent",
         )
         assert detection is None
 
@@ -211,16 +201,12 @@ class TestRateLimitBypassDetector:
 
         # Add requests from multiple IPs
         for i in range(1, detector.DISTRIBUTED_ATTACK_THRESHOLD):
-            detection = detector._detect_distributed_attack(
-                f"192.168.1.{i}",
-                endpoint
-            )
+            detection = detector._detect_distributed_attack(f"192.168.1.{i}", endpoint)
             assert detection is None  # Not enough IPs yet
 
         # Add one more IP to trigger detection
         detection = detector._detect_distributed_attack(
-            f"192.168.1.{detector.DISTRIBUTED_ATTACK_THRESHOLD}",
-            endpoint
+            f"192.168.1.{detector.DISTRIBUTED_ATTACK_THRESHOLD}", endpoint
         )
         assert detection is not None
         assert detection.technique == BypassTechnique.DISTRIBUTED_ATTACK
@@ -256,20 +242,14 @@ class TestRateLimitBypassDetector:
         }
 
         detection = detector._detect_behavioral_anomaly(
-            mock_request,
-            "192.168.1.100",
-            user_id,
-            "test_fingerprint"
+            mock_request, "192.168.1.100", user_id, "test_fingerprint"
         )
 
         # First request may not trigger (need to accumulate)
         # Run multiple times
         for _ in range(3):
             detection = detector._detect_behavioral_anomaly(
-                mock_request,
-                "192.168.1.100",
-                user_id,
-                "test_fingerprint"
+                mock_request, "192.168.1.100", user_id, "test_fingerprint"
             )
 
         assert detection is not None
@@ -286,24 +266,20 @@ class TestRateLimitBypassDetector:
         )
 
         detection = detector._detect_behavioral_anomaly(
-            mock_request,
-            "192.168.1.100",
-            user_id,
-            "test_fingerprint"
+            mock_request, "192.168.1.100", user_id, "test_fingerprint"
         )
 
         # May need multiple requests to accumulate
         for _ in range(3):
             detection = detector._detect_behavioral_anomaly(
-                mock_request,
-                "192.168.1.100",
-                user_id,
-                "test_fingerprint"
+                mock_request, "192.168.1.100", user_id, "test_fingerprint"
             )
 
         if detection:
             assert detection.technique == BypassTechnique.BEHAVIORAL_ANOMALY
-            assert "suspicious_proxy_chain" in detection.evidence["suspicious_behaviors"]
+            assert (
+                "suspicious_proxy_chain" in detection.evidence["suspicious_behaviors"]
+            )
 
     def test_fingerprint_mismatch_detection(self, detector):
         """Test fingerprint mismatch detection."""
@@ -312,25 +288,19 @@ class TestRateLimitBypassDetector:
 
         # First request - establish fingerprint
         detection = detector._detect_fingerprint_mismatch(
-            ip_address,
-            user_id,
-            "fingerprint1"
+            ip_address, user_id, "fingerprint1"
         )
         assert detection is None
 
         # Same fingerprint - no detection
         detection = detector._detect_fingerprint_mismatch(
-            ip_address,
-            user_id,
-            "fingerprint1"
+            ip_address, user_id, "fingerprint1"
         )
         assert detection is None
 
         # Different fingerprint - should detect
         detection = detector._detect_fingerprint_mismatch(
-            ip_address,
-            user_id,
-            "fingerprint2"
+            ip_address, user_id, "fingerprint2"
         )
         assert detection is not None
         assert detection.technique == BypassTechnique.FINGERPRINT_MISMATCH
@@ -342,7 +312,7 @@ class TestRateLimitBypassDetector:
         detection = detector._detect_fingerprint_mismatch(
             "192.168.1.100",
             None,  # No user ID
-            "fingerprint"
+            "fingerprint",
         )
         assert detection is None
 
@@ -423,7 +393,7 @@ class TestRateLimitBypassDetector:
             fingerprint="test_fp",
             evidence={"test": "data"},
             timestamp=datetime.utcnow(),
-            should_block=True
+            should_block=True,
         )
 
         # Log and alert (without DB for now)
@@ -433,7 +403,9 @@ class TestRateLimitBypassDetector:
         keys = redis_client.keys("bypass:detection:*")
         assert len(keys) > 0
 
-    def test_detect_bypass_attempt_returns_highest_severity(self, detector, mock_request):
+    def test_detect_bypass_attempt_returns_highest_severity(
+        self, detector, mock_request
+    ):
         """Test that multiple detections return the highest severity."""
         user_id = str(uuid4())
 
@@ -456,7 +428,9 @@ class TestRateLimitBypassDetector:
             assert detection.threat_level in (ThreatLevel.HIGH, ThreatLevel.CRITICAL)
 
     @pytest.mark.asyncio
-    async def test_check_for_bypass_auto_blocks(self, detector, mock_request, redis_client):
+    async def test_check_for_bypass_auto_blocks(
+        self, detector, mock_request, redis_client
+    ):
         """Test check_for_bypass automatically blocks on detection."""
         user_id = str(uuid4())
 
@@ -467,11 +441,11 @@ class TestRateLimitBypassDetector:
         mock_request.client.host = "192.168.1.4"
 
         # Check for bypass with auto-block enabled
-        with patch("app.security.rate_limit_bypass.get_bypass_detector", return_value=detector):
+        with patch(
+            "app.security.rate_limit_bypass.get_bypass_detector", return_value=detector
+        ):
             detection = await check_for_bypass(
-                mock_request,
-                user_id=user_id,
-                auto_block=True
+                mock_request, user_id=user_id, auto_block=True
             )
 
         if detection and detection.should_block:
@@ -479,7 +453,9 @@ class TestRateLimitBypassDetector:
             assert detector._is_blocked("192.168.1.4", user_id) is True
 
     @pytest.mark.asyncio
-    async def test_check_for_bypass_no_auto_block(self, detector, mock_request, redis_client):
+    async def test_check_for_bypass_no_auto_block(
+        self, detector, mock_request, redis_client
+    ):
         """Test check_for_bypass can skip auto-blocking."""
         user_id = str(uuid4())
 
@@ -490,11 +466,11 @@ class TestRateLimitBypassDetector:
         mock_request.client.host = "192.168.1.4"
 
         # Check for bypass with auto-block disabled
-        with patch("app.security.rate_limit_bypass.get_bypass_detector", return_value=detector):
+        with patch(
+            "app.security.rate_limit_bypass.get_bypass_detector", return_value=detector
+        ):
             detection = await check_for_bypass(
-                mock_request,
-                user_id=user_id,
-                auto_block=False
+                mock_request, user_id=user_id, auto_block=False
             )
 
         # Even with detection, should not block if auto_block=False
@@ -518,9 +494,7 @@ class TestBypassDetectorIntegration:
             mock_request.headers["User-Agent"] = f"UA-{i}"
 
             detection = detector.detect_bypass_attempt(
-                mock_request,
-                user_id=user_id,
-                session_id=session_id
+                mock_request, user_id=user_id, session_id=session_id
             )
 
             # Should eventually detect bypass

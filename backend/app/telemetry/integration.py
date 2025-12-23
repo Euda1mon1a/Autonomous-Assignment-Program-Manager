@@ -3,19 +3,19 @@ Integration utilities for OpenTelemetry tracing.
 
 Provides helper functions for integrating tracing into the FastAPI application.
 """
+
 import logging
-from typing import Optional
 
 from fastapi import FastAPI
 
 from app.core.config import get_settings
-from app.telemetry.tracer import TracerConfig, initialize_tracer, get_tracer_manager
 from app.telemetry.exporters import (
-    ExporterType,
     ExporterConfig,
+    ExporterType,
     create_span_processor,
 )
 from app.telemetry.middleware import TracingMiddleware
+from app.telemetry.tracer import TracerConfig, get_tracer_manager, initialize_tracer
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +128,7 @@ def shutdown_telemetry():
 
 # Example usage patterns
 
+
 def example_fastapi_integration():
     """
     Example of integrating telemetry into a FastAPI application.
@@ -160,7 +161,7 @@ def example_manual_tracing():
 
     This is for documentation purposes - not meant to be executed.
     """
-    from app.telemetry import traced, trace_service_method
+    from app.telemetry import trace_service_method, traced
 
     # Basic tracing
     @traced(name="process_data", capture_args=True)
@@ -182,8 +183,9 @@ def example_custom_spans():
 
     This is for documentation purposes - not meant to be executed.
     """
-    from app.telemetry import get_tracer
     from opentelemetry.trace import Status, StatusCode
+
+    from app.telemetry import get_tracer
 
     tracer = get_tracer(__name__)
 
@@ -211,7 +213,7 @@ def example_baggage_propagation():
 
     This is for documentation purposes - not meant to be executed.
     """
-    from app.telemetry import set_baggage, get_baggage
+    from app.telemetry import get_baggage, set_baggage
 
     async def handle_request(user_id: str, tenant_id: str):
         # Set baggage that will be propagated to downstream services

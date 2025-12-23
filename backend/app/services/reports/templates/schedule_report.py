@@ -1,4 +1,5 @@
 """Schedule overview report template."""
+
 import logging
 from collections import defaultdict
 from datetime import date
@@ -195,7 +196,10 @@ class ScheduleReportTemplate:
             ["Total Assignments", str(total_assignments)],
             ["Total Residents", str(len(residents))],
             ["Total Faculty", str(len(faculty))],
-            ["Avg Assignments/Person", f"{total_assignments / max(len(people), 1):.1f}"],
+            [
+                "Avg Assignments/Person",
+                f"{total_assignments / max(len(people), 1):.1f}",
+            ],
         ]
 
         stats_table = self.generator._create_table(
@@ -205,7 +209,9 @@ class ScheduleReportTemplate:
 
         return elements
 
-    def _create_coverage_section(self, coverage_data: dict[str, dict[str, Any]]) -> list:
+    def _create_coverage_section(
+        self, coverage_data: dict[str, dict[str, Any]]
+    ) -> list:
         """Create coverage summary section."""
         elements = []
 
@@ -224,12 +230,14 @@ class ScheduleReportTemplate:
         ]
 
         for rotation_name, stats in sorted(coverage_data.items()):
-            coverage_table_data.append([
-                rotation_name,
-                str(stats["total"]),
-                str(stats["residents"]),
-                str(stats["faculty"]),
-            ])
+            coverage_table_data.append(
+                [
+                    rotation_name,
+                    str(stats["total"]),
+                    str(stats["residents"]),
+                    str(stats["faculty"]),
+                ]
+            )
 
         coverage_table = self.generator._create_table(
             coverage_table_data,
@@ -271,12 +279,14 @@ class ScheduleReportTemplate:
             for assignment in sorted(
                 person_assignments, key=lambda a: (a.block.date, a.block.session)
             ):
-                assignment_data.append([
-                    str(assignment.block.date),
-                    assignment.block.session.upper(),
-                    assignment.activity_name,
-                    assignment.role,
-                ])
+                assignment_data.append(
+                    [
+                        str(assignment.block.date),
+                        assignment.block.session.upper(),
+                        assignment.activity_name,
+                        assignment.role,
+                    ]
+                )
 
             assignment_table = self.generator._create_table(
                 assignment_data,

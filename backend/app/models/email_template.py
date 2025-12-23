@@ -1,4 +1,5 @@
 """Email template model for reusable email content."""
+
 import enum
 import uuid
 from datetime import datetime
@@ -12,6 +13,7 @@ from app.db.types import GUID
 
 class EmailTemplateType(str, enum.Enum):
     """Email template types for different notification scenarios."""
+
     SCHEDULE_CHANGE = "schedule_change"
     SWAP_NOTIFICATION = "swap_notification"
     CERTIFICATION_EXPIRY = "certification_expiry"
@@ -26,6 +28,7 @@ class EmailTemplate(Base):
     Templates support Jinja2-style variable substitution for dynamic content.
     Admins can customize templates for different notification types.
     """
+
     __tablename__ = "email_templates"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -44,14 +47,14 @@ class EmailTemplate(Base):
 
     # Audit tracking
     created_by_id = Column(
-        GUID(),
-        ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=True
+        GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     # Relationship
     created_by = relationship("User", backref="email_templates")

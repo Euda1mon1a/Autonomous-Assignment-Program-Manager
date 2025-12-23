@@ -8,6 +8,7 @@ Tests the complete end-to-end flow of:
 4. External conflict integration
 5. Error handling for invalid requests
 """
+
 import io
 import json
 from datetime import date, timedelta
@@ -24,10 +25,7 @@ from app.models.person import Person
 class TestFMITSwapWorkflowBasic:
     """Test basic FMIT swap finder workflow."""
 
-    def create_fmit_excel(
-        self,
-        providers_schedule: dict[str, list[int]]
-    ) -> bytes:
+    def create_fmit_excel(self, providers_schedule: dict[str, list[int]]) -> bytes:
         """
         Create a mock FMIT Excel file.
 
@@ -45,7 +43,11 @@ class TestFMITSwapWorkflowBasic:
         # Header row - Provider and date columns
         ws["A1"] = "Provider"
         base_date = date(2025, 3, 3)  # Monday
-        max_week = max(max(weeks) for weeks in providers_schedule.values()) if providers_schedule else 4
+        max_week = (
+            max(max(weeks) for weeks in providers_schedule.values())
+            if providers_schedule
+            else 4
+        )
 
         for week_num in range(1, max_week + 1):
             col_idx = week_num + 1  # Column B, C, D, etc.
@@ -148,7 +150,9 @@ class TestFMITSwapWorkflowBasic:
         data = response.json()
 
         # Find Dr. Jones in candidates
-        jones = next((c for c in data["candidates"] if c["faculty"] == "Dr. Jones"), None)
+        jones = next(
+            (c for c in data["candidates"] if c["faculty"] == "Dr. Jones"), None
+        )
         assert jones is not None
 
         # Jones has week 2, taking week 1 would be back-to-back
@@ -192,8 +196,12 @@ class TestFMITSwapWorkflowBasic:
         # Dr. Smith should be flagged for excessive alternating
         if data["alternating_patterns"]:
             smith_pattern = next(
-                (p for p in data["alternating_patterns"] if p["faculty"] == "Dr. Smith"),
-                None
+                (
+                    p
+                    for p in data["alternating_patterns"]
+                    if p["faculty"] == "Dr. Smith"
+                ),
+                None,
             )
             assert smith_pattern is not None
             assert smith_pattern["cycle_count"] >= 2
@@ -209,7 +217,11 @@ class TestFMITSwapWorkflowWithConflicts:
         ws = wb.active
         ws["A1"] = "Provider"
         base_date = date(2025, 3, 3)
-        max_week = max(max(weeks) for weeks in providers_schedule.values()) if providers_schedule else 4
+        max_week = (
+            max(max(weeks) for weeks in providers_schedule.values())
+            if providers_schedule
+            else 4
+        )
 
         for week_num in range(1, max_week + 1):
             col_idx = week_num + 1
@@ -270,7 +282,9 @@ class TestFMITSwapWorkflowWithConflicts:
         data = response.json()
 
         # Find Dr. Jones in candidates
-        jones = next((c for c in data["candidates"] if c["faculty"] == "Dr. Jones"), None)
+        jones = next(
+            (c for c in data["candidates"] if c["faculty"] == "Dr. Jones"), None
+        )
         assert jones is not None
         assert jones["external_conflict"] == "conference"
 
@@ -333,7 +347,7 @@ class TestFMITSwapWorkflowWithConflicts:
         # The absence may not be matched if the faculty name doesn't match exactly
         db_faculty = next(
             (c for c in data["candidates"] if c["faculty"] == "Dr. Database Faculty"),
-            None
+            None,
         )
         # The test creates an absence but integration may require exact name matching
         # We just verify the candidate was returned
@@ -378,7 +392,9 @@ class TestFMITSwapWorkflowWithConflicts:
         assert data["total_candidates"] >= 2
 
         # Light should be viable (no back-to-back issues)
-        light = next((c for c in data["candidates"] if c["faculty"] == "Dr. Light"), None)
+        light = next(
+            (c for c in data["candidates"] if c["faculty"] == "Dr. Light"), None
+        )
         if light:
             assert light["back_to_back_ok"] is True
 
@@ -559,7 +575,11 @@ class TestFMITSwapWorkflowRanking:
         ws = wb.active
         ws["A1"] = "Provider"
         base_date = date(2025, 3, 3)
-        max_week = max(max(weeks) for weeks in providers_schedule.values()) if providers_schedule else 4
+        max_week = (
+            max(max(weeks) for weeks in providers_schedule.values())
+            if providers_schedule
+            else 4
+        )
 
         for week_num in range(1, max_week + 1):
             col_idx = week_num + 1
@@ -620,8 +640,7 @@ class TestFMITSwapWorkflowRanking:
 
         # Underload should be in candidates (ranking based on targets)
         underload = next(
-            (c for c in data["candidates"] if c["faculty"] == "Dr. Underload"),
-            None
+            (c for c in data["candidates"] if c["faculty"] == "Dr. Underload"), None
         )
         # Verify underload is a candidate (actual gap calculation may vary by implementation)
         assert underload is not None

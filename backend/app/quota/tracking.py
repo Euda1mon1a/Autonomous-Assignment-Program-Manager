@@ -4,9 +4,9 @@ Usage tracking for API quotas.
 This module provides Redis-based tracking of API usage for quota enforcement.
 Tracks usage on daily and monthly basis with automatic reset.
 """
+
 import logging
 from datetime import datetime, timedelta
-from typing import Optional
 
 import redis
 
@@ -196,8 +196,12 @@ class QuotaTracker:
 
         # Calculate remaining with overage
         if policy.allow_overage:
-            daily_limit_with_overage = int(daily_limit * (1 + policy.overage_percentage))
-            monthly_limit_with_overage = int(monthly_limit * (1 + policy.overage_percentage))
+            daily_limit_with_overage = int(
+                daily_limit * (1 + policy.overage_percentage)
+            )
+            monthly_limit_with_overage = int(
+                monthly_limit * (1 + policy.overage_percentage)
+            )
         else:
             daily_limit_with_overage = daily_limit
             monthly_limit_with_overage = monthly_limit
@@ -213,7 +217,7 @@ class QuotaTracker:
         policy: QuotaPolicy,
         resource_type: str = "api",
         amount: int = 1,
-    ) -> tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """
         Check if user has sufficient quota.
 
@@ -249,11 +253,17 @@ class QuotaTracker:
 
         # Check daily quota
         if daily_usage + amount > daily_limit:
-            return False, f"Daily {resource_type} quota exceeded ({daily_limit} per day)"
+            return (
+                False,
+                f"Daily {resource_type} quota exceeded ({daily_limit} per day)",
+            )
 
         # Check monthly quota
         if monthly_usage + amount > monthly_limit:
-            return False, f"Monthly {resource_type} quota exceeded ({monthly_limit} per month)"
+            return (
+                False,
+                f"Monthly {resource_type} quota exceeded ({monthly_limit} per month)",
+            )
 
         return True, None
 
@@ -274,7 +284,13 @@ class QuotaTracker:
         # Monthly reset: first day of next month at midnight UTC
         if now.month == 12:
             monthly_reset = now.replace(
-                year=now.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0
+                year=now.year + 1,
+                month=1,
+                day=1,
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0,
             )
         else:
             monthly_reset = now.replace(
@@ -352,7 +368,9 @@ class QuotaTracker:
             monthly_limit = policy.monthly_limit
 
         daily_percentage = (daily_usage / daily_limit * 100) if daily_limit > 0 else 0
-        monthly_percentage = (monthly_usage / monthly_limit * 100) if monthly_limit > 0 else 0
+        monthly_percentage = (
+            (monthly_usage / monthly_limit * 100) if monthly_limit > 0 else 0
+        )
 
         return daily_percentage, monthly_percentage
 
@@ -361,7 +379,7 @@ class QuotaTracker:
         user_id: str,
         policy: QuotaPolicy,
         resource_type: str = "api",
-    ) -> tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """
         Check if usage alerts should be triggered.
 
@@ -374,7 +392,9 @@ class QuotaTracker:
             tuple[bool, Optional[str]]: (should_alert, alert_level)
                 alert_level: "warning" or "critical" or None
         """
-        daily_pct, monthly_pct = self.get_usage_percentage(user_id, policy, resource_type)
+        daily_pct, monthly_pct = self.get_usage_percentage(
+            user_id, policy, resource_type
+        )
 
         # Use the higher percentage
         max_pct = max(daily_pct, monthly_pct) / 100.0

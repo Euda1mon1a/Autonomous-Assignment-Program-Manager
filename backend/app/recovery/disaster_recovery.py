@@ -19,7 +19,7 @@ import asyncio
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -155,9 +155,7 @@ class RecoveryTimeObjective(BaseModel):
     actual_recovery_time_minutes: float | None = Field(
         default=None, ge=0.0, description="Actual recovery time from last event"
     )
-    is_achievable: bool = Field(
-        default=True, description="Whether RTO is achievable"
-    )
+    is_achievable: bool = Field(default=True, description="Whether RTO is achievable")
     automated_failover_enabled: bool = Field(
         default=True, description="Whether automated failover is enabled"
     )
@@ -466,7 +464,9 @@ class DisasterRecoveryService:
             f"Registered RPO '{rpo.name}': {rpo.max_data_loss_minutes}min max data loss"
         )
 
-    async def verify_rpo(self, name: str | None = None) -> dict[str, RecoveryPointObjective]:
+    async def verify_rpo(
+        self, name: str | None = None
+    ) -> dict[str, RecoveryPointObjective]:
         """
         Verify RPO compliance for all or specific objectives.
 
@@ -562,7 +562,9 @@ class DisasterRecoveryService:
             f"Registered RTO '{rto.name}': {rto.max_downtime_minutes}min max downtime"
         )
 
-    async def verify_rto(self, name: str | None = None) -> dict[str, RecoveryTimeObjective]:
+    async def verify_rto(
+        self, name: str | None = None
+    ) -> dict[str, RecoveryTimeObjective]:
         """
         Verify RTO achievability for all or specific objectives.
 
@@ -733,7 +735,9 @@ class DisasterRecoveryService:
             for service, result in sync_results.items():
                 if result.status == SyncStatus.OUT_OF_SYNC:
                     event.data_loss_detected = True
-                    logger.warning(f"Data loss detected in {service}: {result.lag_seconds}s lag")
+                    logger.warning(
+                        f"Data loss detected in {service}: {result.lag_seconds}s lag"
+                    )
 
             # Step 3: Promote replica
             event.status = FailoverStatus.PROMOTING_REPLICA
@@ -785,7 +789,9 @@ class DisasterRecoveryService:
             self._failover_history.append(event)
             self._failover_in_progress = None
             self._current_status = (
-                RecoveryStatus.RECOVERED if event.successful else RecoveryStatus.RECOVERY_FAILED
+                RecoveryStatus.RECOVERED
+                if event.successful
+                else RecoveryStatus.RECOVERY_FAILED
             )
 
             await self._emit_event("failover_completed", event.__dict__)
@@ -1056,7 +1062,7 @@ class DisasterRecoveryService:
             raise ValueError(f"Recovery plan {plan_id} not found")
 
         if plan.status != RecoveryPlanStatus.APPROVED:
-            raise ValueError(f"Plan must be approved before execution")
+            raise ValueError("Plan must be approved before execution")
 
         if self._active_recovery:
             raise RuntimeError("Recovery already in progress")
@@ -1111,12 +1117,15 @@ class DisasterRecoveryService:
 
             self._active_recovery = None
 
-            await self._emit_event("recovery_plan_completed", {
-                "plan_id": str(plan_id),
-                "plan_name": plan.name,
-                "successful": plan.last_execution_successful,
-                "duration_minutes": plan.last_execution_duration_minutes,
-            })
+            await self._emit_event(
+                "recovery_plan_completed",
+                {
+                    "plan_id": str(plan_id),
+                    "plan_name": plan.name,
+                    "successful": plan.last_execution_successful,
+                    "duration_minutes": plan.last_execution_duration_minutes,
+                },
+            )
 
         return metrics
 
@@ -1199,10 +1208,7 @@ class DisasterRecoveryService:
         logger.warning("Rolling back recovery steps...")
 
         for step in reversed(plan.steps):
-            if (
-                step.status == RecoveryPlanStatus.COMPLETED
-                and step.rollback_possible
-            ):
+            if step.status == RecoveryPlanStatus.COMPLETED and step.rollback_possible:
                 try:
                     logger.info(f"Rolling back step: {step.name}")
                     # In production, execute actual rollback
@@ -1363,7 +1369,7 @@ class DisasterRecoveryService:
         doc = f"""# Disaster Recovery Plan: {plan.name}
 
 **Version:** {plan.version}
-**Last Updated:** {plan.last_updated_at.strftime('%Y-%m-%d %H:%M:%S UTC')}
+**Last Updated:** {plan.last_updated_at.strftime("%Y-%m-%d %H:%M:%S UTC")}
 **Status:** {plan.status.value}
 
 ## Description
@@ -1405,11 +1411,11 @@ class DisasterRecoveryService:
 #### {step.order}. {step.name}
 
 **Description:** {step.description}
-**Automated:** {'Yes' if step.is_automated else 'No'}
+**Automated:** {"Yes" if step.is_automated else "No"}
 **Estimated Duration:** {step.estimated_duration_minutes} minutes
-**Critical:** {'Yes' if step.is_critical else 'No'}
-**Rollback Possible:** {'Yes' if step.rollback_possible else 'No'}
-**Validation Required:** {'Yes' if step.validation_required else 'No'}
+**Critical:** {"Yes" if step.is_critical else "No"}
+**Rollback Possible:** {"Yes" if step.rollback_possible else "No"}
+**Validation Required:** {"Yes" if step.validation_required else "No"}
 
 """
             if step.dependencies:
@@ -1436,7 +1442,7 @@ class DisasterRecoveryService:
         else:
             doc += "No emergency contacts specified.\n"
 
-        doc += f"\n## Execution History\n\n"
+        doc += "\n## Execution History\n\n"
         doc += f"**Total Executions:** {plan.execution_count}\n"
         if plan.last_execution_at:
             doc += f"**Last Execution:** {plan.last_execution_at.strftime('%Y-%m-%d %H:%M:%S UTC')}\n"

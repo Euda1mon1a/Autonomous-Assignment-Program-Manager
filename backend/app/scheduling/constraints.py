@@ -14,6 +14,7 @@ Architecture:
 - SoftConstraint: Constraints with weights for optimization
 - ConstraintManager: Composes and manages constraints for solvers
 """
+
 import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -28,14 +29,16 @@ logger = logging.getLogger(__name__)
 
 class ConstraintPriority(Enum):
     """Priority levels for constraints."""
+
     CRITICAL = 100  # ACGME compliance, must satisfy
-    HIGH = 75       # Important operational constraints
-    MEDIUM = 50     # Preferences and soft requirements
-    LOW = 25        # Nice-to-have optimizations
+    HIGH = 75  # Important operational constraints
+    MEDIUM = 50  # Preferences and soft requirements
+    LOW = 25  # Nice-to-have optimizations
 
 
 class ConstraintType(Enum):
     """Types of constraints for categorization."""
+
     AVAILABILITY = "availability"
     DUTY_HOURS = "duty_hours"
     CONSECUTIVE_DAYS = "consecutive_days"
@@ -60,6 +63,7 @@ class ConstraintType(Enum):
 @dataclass
 class ConstraintViolation:
     """Represents a constraint violation."""
+
     constraint_name: str
     constraint_type: ConstraintType
     severity: str  # CRITICAL, HIGH, MEDIUM, LOW
@@ -72,6 +76,7 @@ class ConstraintViolation:
 @dataclass
 class ConstraintResult:
     """Result of applying a constraint."""
+
     satisfied: bool
     violations: list[ConstraintViolation] = field(default_factory=list)
     penalty: float = 0.0  # For soft constraints
@@ -137,7 +142,7 @@ class HardConstraint(Constraint):
 
     def get_penalty(self) -> float:
         """Hard constraints have infinite penalty when violated."""
-        return float('inf')
+        return float("inf")
 
 
 class SoftConstraint(Constraint):
@@ -175,9 +180,10 @@ class SchedulingContext:
     - preference_trails: Stigmergy preference data for soft optimization
     - zone_assignments: Faculty zone assignments for blast radius isolation
     """
+
     residents: list  # List of Person objects
-    faculty: list    # List of Person objects
-    blocks: list     # List of Block objects
+    faculty: list  # List of Person objects
+    blocks: list  # List of Block objects
     templates: list  # List of RotationTemplate objects
 
     # Lookup dictionaries for fast access
@@ -340,6 +346,7 @@ class SchedulingContext:
 # HARD CONSTRAINTS - ACGME Compliance
 # =============================================================================
 
+
 class AvailabilityConstraint(HardConstraint):
     """
     Ensures residents are only assigned to blocks when available.
@@ -416,7 +423,9 @@ class AvailabilityConstraint(HardConstraint):
                             if (r_i, b_i) in x:
                                 model += x[r_i, b_i] == 0, f"avail_{r_i}_{b_i}"
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """
         Validate that no assignments occur during absences.
 
@@ -455,14 +464,16 @@ class AvailabilityConstraint(HardConstraint):
                                 person_name = r.name
                                 break
 
-                        violations.append(ConstraintViolation(
-                            constraint_name=self.name,
-                            constraint_type=self.constraint_type,
-                            severity="CRITICAL",
-                            message=f"{person_name} assigned during absence",
-                            person_id=person_id,
-                            block_id=block_id,
-                        ))
+                        violations.append(
+                            ConstraintViolation(
+                                constraint_name=self.name,
+                                constraint_type=self.constraint_type,
+                                severity="CRITICAL",
+                                message=f"{person_name} assigned during absence",
+                                person_id=person_id,
+                                block_id=block_id,
+                            )
+                        )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -501,6 +512,7 @@ class OnePersonPerBlockConstraint(HardConstraint):
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
         """At most max_per_block residents per block."""
         import pulp
+
         x = variables.get("assignments", {})
 
         for block in context.blocks:
@@ -513,10 +525,12 @@ class OnePersonPerBlockConstraint(HardConstraint):
             if resident_vars:
                 model += (
                     pulp.lpSum(resident_vars) <= self.max_per_block,
-                    f"max_per_block_{b_i}"
+                    f"max_per_block_{b_i}",
                 )
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Check for multiple primary assignments per block."""
         violations = []
         block_counts = defaultdict(int)
@@ -527,14 +541,16 @@ class OnePersonPerBlockConstraint(HardConstraint):
 
         for block_id, count in block_counts.items():
             if count > self.max_per_block:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="CRITICAL",
-                    message=f"Block has {count} primary assignments (max: {self.max_per_block})",
-                    block_id=block_id,
-                    details={"count": count, "max": self.max_per_block},
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="CRITICAL",
+                        message=f"Block has {count} primary assignments (max: {self.max_per_block})",
+                        block_id=block_id,
+                        details={"count": count, "max": self.max_per_block},
+                    )
+                )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -583,7 +599,9 @@ class EightyHourRuleConstraint(HardConstraint):
             priority=ConstraintPriority.CRITICAL,
         )
         # Max blocks per 4-week window: (80 * 4) / 6 = 53.33 -> 53
-        self.max_blocks_per_window = (self.MAX_WEEKLY_HOURS * self.ROLLING_WEEKS) // self.HOURS_PER_BLOCK
+        self.max_blocks_per_window = (
+            self.MAX_WEEKLY_HOURS * self.ROLLING_WEEKS
+        ) // self.HOURS_PER_BLOCK
 
     def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
         """Enforce 80-hour rule via block count limits."""
@@ -599,8 +617,7 @@ class EightyHourRuleConstraint(HardConstraint):
 
             # Get all blocks in this window
             window_blocks = [
-                b for b in context.blocks
-                if window_start <= b.date <= window_end
+                b for b in context.blocks if window_start <= b.date <= window_end
             ]
 
             if not window_blocks:
@@ -620,6 +637,7 @@ class EightyHourRuleConstraint(HardConstraint):
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
         """Enforce 80-hour rule via block count limits."""
         import pulp
+
         x = variables.get("assignments", {})
         dates = sorted(context.blocks_by_date.keys())
 
@@ -631,8 +649,7 @@ class EightyHourRuleConstraint(HardConstraint):
             window_end = window_start + timedelta(days=self.ROLLING_WEEKS * 7 - 1)
 
             window_blocks = [
-                b for b in context.blocks
-                if window_start <= b.date <= window_end
+                b for b in context.blocks if window_start <= b.date <= window_end
             ]
 
             if not window_blocks:
@@ -648,11 +665,13 @@ class EightyHourRuleConstraint(HardConstraint):
                 if window_vars:
                     model += (
                         pulp.lpSum(window_vars) <= self.max_blocks_per_window,
-                        f"80hr_{r_i}_{window_count}"
+                        f"80hr_{r_i}_{window_count}",
                     )
             window_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Check 80-hour rule compliance."""
         violations = []
 
@@ -685,7 +704,8 @@ class EightyHourRuleConstraint(HardConstraint):
                 end_date = start_date + timedelta(days=27)
 
                 total_blocks = sum(
-                    count for d, count in dates_with_blocks.items()
+                    count
+                    for d, count in dates_with_blocks.items()
                     if start_date <= d <= end_date
                 )
 
@@ -693,17 +713,19 @@ class EightyHourRuleConstraint(HardConstraint):
                 avg_weekly = total_hours / self.ROLLING_WEEKS
 
                 if avg_weekly > self.MAX_WEEKLY_HOURS:
-                    violations.append(ConstraintViolation(
-                        constraint_name=self.name,
-                        constraint_type=self.constraint_type,
-                        severity="CRITICAL",
-                        message=f"{resident.name}: {avg_weekly:.1f} hours/week (limit: {self.MAX_WEEKLY_HOURS})",
-                        person_id=resident.id,
-                        details={
-                            "window_start": start_date.isoformat(),
-                            "average_weekly_hours": avg_weekly,
-                        },
-                    ))
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="CRITICAL",
+                            message=f"{resident.name}: {avg_weekly:.1f} hours/week (limit: {self.MAX_WEEKLY_HOURS})",
+                            person_id=resident.id,
+                            details={
+                                "window_start": start_date.isoformat(),
+                                "average_weekly_hours": avg_weekly,
+                            },
+                        )
+                    )
                     break  # One violation per resident is enough
 
         return ConstraintResult(
@@ -755,7 +777,7 @@ class OneInSevenRuleConstraint(HardConstraint):
 
                 # Create indicator variables for each day
                 day_worked_vars = []
-                for d in consecutive_dates[:self.MAX_CONSECUTIVE_DAYS + 1]:
+                for d in consecutive_dates[: self.MAX_CONSECUTIVE_DAYS + 1]:
                     day_blocks = context.blocks_by_date[d]
                     day_vars = [
                         x[r_i, context.block_idx[b.id]]
@@ -775,6 +797,7 @@ class OneInSevenRuleConstraint(HardConstraint):
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
         """Enforce max consecutive days (linear approximation)."""
         import pulp
+
         x = variables.get("assignments", {})
         dates = sorted(context.blocks_by_date.keys())
 
@@ -800,7 +823,7 @@ class OneInSevenRuleConstraint(HardConstraint):
                 # Sum of all blocks across 7 days <= 6 * 2 (max 2 blocks per day)
                 # This is a relaxation, but works for most cases
                 all_vars = []
-                for d in consecutive_dates[:self.MAX_CONSECUTIVE_DAYS + 1]:
+                for d in consecutive_dates[: self.MAX_CONSECUTIVE_DAYS + 1]:
                     for b in context.blocks_by_date[d]:
                         if (r_i, context.block_idx[b.id]) in x:
                             all_vars.append(x[r_i, context.block_idx[b.id]])
@@ -808,11 +831,13 @@ class OneInSevenRuleConstraint(HardConstraint):
                 if all_vars:
                     model += (
                         pulp.lpSum(all_vars) <= self.MAX_CONSECUTIVE_DAYS * 2,
-                        f"1in7_{r_i}_{constraint_count}"
+                        f"1in7_{r_i}_{constraint_count}",
                     )
                     constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Check for consecutive days violations."""
         violations = []
 
@@ -840,14 +865,16 @@ class OneInSevenRuleConstraint(HardConstraint):
                     consecutive = 1
 
             if max_consecutive > self.MAX_CONSECUTIVE_DAYS:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="HIGH",
-                    message=f"{resident.name}: {max_consecutive} consecutive duty days (limit: {self.MAX_CONSECUTIVE_DAYS})",
-                    person_id=resident.id,
-                    details={"consecutive_days": max_consecutive},
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="HIGH",
+                        message=f"{resident.name}: {max_consecutive} consecutive duty days (limit: {self.MAX_CONSECUTIVE_DAYS})",
+                        person_id=resident.id,
+                        details={"consecutive_days": max_consecutive},
+                    )
+                )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -936,7 +963,9 @@ class SupervisionRatioConstraint(HardConstraint):
         """Supervision ratio is typically handled post-hoc for residents."""
         pass
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Check supervision ratios per block."""
         violations = []
 
@@ -971,19 +1000,21 @@ class SupervisionRatioConstraint(HardConstraint):
             required = self.calculate_required_faculty(pgy1_count, other_count)
 
             if len(faculty) < required:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="CRITICAL",
-                    message=f"Block needs {required} faculty but has {len(faculty)} ({len(residents)} residents)",
-                    block_id=block_id,
-                    details={
-                        "residents": len(residents),
-                        "pgy1_count": pgy1_count,
-                        "faculty": len(faculty),
-                        "required": required,
-                    },
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="CRITICAL",
+                        message=f"Block needs {required} faculty but has {len(faculty)} ({len(residents)} residents)",
+                        block_id=block_id,
+                        details={
+                            "residents": len(residents),
+                            "pgy1_count": pgy1_count,
+                            "faculty": len(faculty),
+                            "required": required,
+                        },
+                    )
+                )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -1022,7 +1053,8 @@ class ClinicCapacityConstraint(HardConstraint):
                     template_block_vars = [
                         template_vars[r_i, b_i, t_i]
                         for r in context.residents
-                        if (r_i := context.resident_idx[r.id], b_i, t_i) in template_vars
+                        if (r_i := context.resident_idx[r.id], b_i, t_i)
+                        in template_vars
                     ]
 
                     if template_block_vars:
@@ -1031,6 +1063,7 @@ class ClinicCapacityConstraint(HardConstraint):
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
         """Enforce template capacity limits per block."""
         import pulp
+
         template_vars = variables.get("template_assignments", {})
 
         if not template_vars:
@@ -1052,11 +1085,13 @@ class ClinicCapacityConstraint(HardConstraint):
                     if template_block_vars:
                         model += (
                             pulp.lpSum(template_block_vars) <= template.max_residents,
-                            f"capacity_{b_i}_{t_i}_{constraint_count}"
+                            f"capacity_{b_i}_{t_i}_{constraint_count}",
                         )
                         constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Check capacity violations."""
         violations = []
 
@@ -1072,14 +1107,16 @@ class ClinicCapacityConstraint(HardConstraint):
         for (block_id, template_id), count in by_block_template.items():
             limit = template_limits.get(template_id)
             if limit and count > limit:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="HIGH",
-                    message=f"{template_names.get(template_id, 'Template')}: {count} assigned (max: {limit})",
-                    block_id=block_id,
-                    details={"count": count, "limit": limit},
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="HIGH",
+                        message=f"{template_names.get(template_id, 'Template')}: {count} assigned (max: {limit})",
+                        block_id=block_id,
+                        details={"count": count, "limit": limit},
+                    )
+                )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -1125,8 +1162,9 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
 
         # Identify clinic templates
         clinic_template_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
         }
 
         if not clinic_template_ids:
@@ -1169,8 +1207,9 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
             return
 
         clinic_template_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
         }
 
         if not clinic_template_ids:
@@ -1192,18 +1231,21 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
             if clinic_vars:
                 model += (
                     pulp.lpSum(clinic_vars) <= self.max_physicians,
-                    f"max_physicians_clinic_{b_i}_{constraint_count}"
+                    f"max_physicians_clinic_{b_i}_{constraint_count}",
                 )
                 constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Check maximum physicians in clinic per block."""
         violations = []
 
         # Identify clinic templates
         clinic_template_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
         }
 
         if not clinic_template_ids:
@@ -1221,14 +1263,16 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
         for block_id, count in by_block.items():
             if count > self.max_physicians:
                 block_info = block_dates.get(block_id, ("Unknown", "Unknown"))
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="HIGH",
-                    message=f"Clinic has {count} physicians on {block_info[0]} {block_info[1]} (max: {self.max_physicians})",
-                    block_id=block_id,
-                    details={"count": count, "limit": self.max_physicians},
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="HIGH",
+                        message=f"Clinic has {count} physicians on {block_info[0]} {block_info[1]} (max: {self.max_physicians})",
+                        block_id=block_id,
+                        details={"count": count, "limit": self.max_physicians},
+                    )
+                )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -1263,9 +1307,9 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
     def _is_wednesday_am(self, block) -> bool:
         """Check if a block is Wednesday AM."""
         return (
-            hasattr(block, 'date') and
-            block.date.weekday() == self.WEDNESDAY and
-            block.time_of_day == 'AM'
+            hasattr(block, "date")
+            and block.date.weekday() == self.WEDNESDAY
+            and block.time_of_day == "AM"
         )
 
     def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
@@ -1277,8 +1321,9 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
 
         # Identify clinic templates
         clinic_template_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
         }
 
         if not clinic_template_ids:
@@ -1318,8 +1363,9 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
             return
 
         clinic_template_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
         }
 
         if not clinic_template_ids:
@@ -1347,17 +1393,20 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
                     if (r_i, b_i, t_i) in template_vars:
                         model += (
                             template_vars[(r_i, b_i, t_i)] == 0,
-                            f"wed_am_intern_only_{r_i}_{b_i}_{t_i}"
+                            f"wed_am_intern_only_{r_i}_{b_i}_{t_i}",
                         )
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Check that Wednesday AM clinic has only interns."""
         violations = []
 
         # Build lookup tables
         clinic_template_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
         }
 
         if not clinic_template_ids:
@@ -1383,15 +1432,17 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
             # Check if resident is NOT PGY-1
             pgy = pgy_levels.get(a.person_id)
             if pgy and pgy != 1:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="HIGH",
-                    message=f"PGY-{pgy} resident {resident_names.get(a.person_id, 'Unknown')} assigned to Wednesday AM clinic on {block.date}",
-                    person_id=a.person_id,
-                    block_id=a.block_id,
-                    details={"pgy_level": pgy, "date": str(block.date)},
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="HIGH",
+                        message=f"PGY-{pgy} resident {resident_names.get(a.person_id, 'Unknown')} assigned to Wednesday AM clinic on {block.date}",
+                        person_id=a.person_id,
+                        block_id=a.block_id,
+                        details={"pgy_level": pgy, "date": str(block.date)},
+                    )
+                )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -1402,6 +1453,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
 # =============================================================================
 # SOFT CONSTRAINTS - Optimization
 # =============================================================================
+
 
 class EquityConstraint(SoftConstraint):
     """
@@ -1432,7 +1484,8 @@ class EquityConstraint(SoftConstraint):
 
         # Check if residents have individual targets
         has_individual_targets = any(
-            hasattr(r, 'target_clinical_blocks') and r.target_clinical_blocks is not None
+            hasattr(r, "target_clinical_blocks")
+            and r.target_clinical_blocks is not None
             for r in context.residents
         )
 
@@ -1447,10 +1500,15 @@ class EquityConstraint(SoftConstraint):
                     if (r_i, context.block_idx[b.id]) in x
                 )
 
-                if hasattr(resident, 'target_clinical_blocks') and resident.target_clinical_blocks:
+                if (
+                    hasattr(resident, "target_clinical_blocks")
+                    and resident.target_clinical_blocks
+                ):
                     target = resident.target_clinical_blocks
                     # Create deviation variable (absolute value approximation)
-                    deviation = model.NewIntVar(0, len(context.blocks), f"deviation_{r_i}")
+                    deviation = model.NewIntVar(
+                        0, len(context.blocks), f"deviation_{r_i}"
+                    )
                     model.Add(deviation >= resident_total - target)
                     model.Add(deviation >= target - resident_total)
                     total_deviation += deviation
@@ -1474,6 +1532,7 @@ class EquityConstraint(SoftConstraint):
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
         """Add equity objective to model with support for individual targets."""
         import pulp
+
         x = variables.get("assignments", {})
 
         if not x:
@@ -1481,7 +1540,8 @@ class EquityConstraint(SoftConstraint):
 
         # Check if residents have individual targets
         has_individual_targets = any(
-            hasattr(r, 'target_clinical_blocks') and r.target_clinical_blocks is not None
+            hasattr(r, "target_clinical_blocks")
+            and r.target_clinical_blocks is not None
             for r in context.residents
         )
 
@@ -1497,16 +1557,27 @@ class EquityConstraint(SoftConstraint):
                     if (r_i, context.block_idx[b.id]) in x
                 ]
 
-                if resident_vars and hasattr(resident, 'target_clinical_blocks') and resident.target_clinical_blocks:
+                if (
+                    resident_vars
+                    and hasattr(resident, "target_clinical_blocks")
+                    and resident.target_clinical_blocks
+                ):
                     resident_total = pulp.lpSum(resident_vars)
                     target = resident.target_clinical_blocks
 
                     # Create deviation variables (absolute value via two inequalities)
-                    deviation_pos = pulp.LpVariable(f"deviation_pos_{r_i}", lowBound=0, cat="Integer")
-                    deviation_neg = pulp.LpVariable(f"deviation_neg_{r_i}", lowBound=0, cat="Integer")
+                    deviation_pos = pulp.LpVariable(
+                        f"deviation_pos_{r_i}", lowBound=0, cat="Integer"
+                    )
+                    deviation_neg = pulp.LpVariable(
+                        f"deviation_neg_{r_i}", lowBound=0, cat="Integer"
+                    )
 
                     # resident_total - target = deviation_pos - deviation_neg
-                    model += resident_total - target == deviation_pos - deviation_neg, f"deviation_def_{r_i}"
+                    model += (
+                        resident_total - target == deviation_pos - deviation_neg,
+                        f"deviation_def_{r_i}",
+                    )
 
                     total_deviation.append(deviation_pos + deviation_neg)
 
@@ -1514,7 +1585,9 @@ class EquityConstraint(SoftConstraint):
                 variables["equity_penalty"] = pulp.lpSum(total_deviation)
             else:
                 # No targets set, use original logic
-                max_assigns = pulp.LpVariable("max_assignments", lowBound=0, cat="Integer")
+                max_assigns = pulp.LpVariable(
+                    "max_assignments", lowBound=0, cat="Integer"
+                )
                 for resident in context.residents:
                     r_i = context.resident_idx[resident.id]
                     resident_vars = [
@@ -1525,7 +1598,7 @@ class EquityConstraint(SoftConstraint):
                     if resident_vars:
                         model += (
                             pulp.lpSum(resident_vars) <= max_assigns,
-                            f"equity_{r_i}"
+                            f"equity_{r_i}",
                         )
                 variables["equity_penalty"] = max_assigns
         else:
@@ -1540,14 +1613,13 @@ class EquityConstraint(SoftConstraint):
                     if (r_i, context.block_idx[b.id]) in x
                 ]
                 if resident_vars:
-                    model += (
-                        pulp.lpSum(resident_vars) <= max_assigns,
-                        f"equity_{r_i}"
-                    )
+                    model += (pulp.lpSum(resident_vars) <= max_assigns, f"equity_{r_i}")
 
             variables["equity_penalty"] = max_assigns
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Calculate equity score."""
         by_resident = defaultdict(int)
         for a in assignments:
@@ -1567,13 +1639,15 @@ class EquityConstraint(SoftConstraint):
 
         violations = []
         if spread > len(context.blocks) // len(context.residents):
-            violations.append(ConstraintViolation(
-                constraint_name=self.name,
-                constraint_type=self.constraint_type,
-                severity="MEDIUM",
-                message=f"Workload imbalance: {min_count} to {max_count} assignments",
-                details={"min": min_count, "max": max_count, "spread": spread},
-            ))
+            violations.append(
+                ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity="MEDIUM",
+                    message=f"Workload imbalance: {min_count} to {max_count} assignments",
+                    details={"min": min_count, "max": max_count, "spread": spread},
+                )
+            )
 
         return ConstraintResult(
             satisfied=True,  # Soft constraint
@@ -1609,6 +1683,7 @@ class CoverageConstraint(SoftConstraint):
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
         """Add coverage to objective."""
         import pulp
+
         x = variables.get("assignments", {})
 
         if not x:
@@ -1616,22 +1691,28 @@ class CoverageConstraint(SoftConstraint):
 
         variables["coverage_bonus"] = pulp.lpSum(x.values())
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Calculate coverage rate."""
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
         assigned_blocks = {a.block_id for a in assignments}
 
-        coverage_rate = len(assigned_blocks) / len(workday_blocks) if workday_blocks else 0
+        coverage_rate = (
+            len(assigned_blocks) / len(workday_blocks) if workday_blocks else 0
+        )
 
         violations = []
         if coverage_rate < 0.9:
-            violations.append(ConstraintViolation(
-                constraint_name=self.name,
-                constraint_type=self.constraint_type,
-                severity="MEDIUM",
-                message=f"Coverage rate: {coverage_rate * 100:.1f}%",
-                details={"coverage_rate": coverage_rate},
-            ))
+            violations.append(
+                ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity="MEDIUM",
+                    message=f"Coverage rate: {coverage_rate * 100:.1f}%",
+                    details={"coverage_rate": coverage_rate},
+                )
+            )
 
         return ConstraintResult(
             satisfied=True,
@@ -1664,7 +1745,9 @@ class ContinuityConstraint(SoftConstraint):
         """Continuity is complex for PuLP, handled via preference."""
         pass
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Calculate continuity score (template changes)."""
         # Group by resident, sorted by date
         by_resident = defaultdict(list)
@@ -1678,9 +1761,9 @@ class ContinuityConstraint(SoftConstraint):
         for _person_id, date_templates in by_resident.items():
             sorted_dt = sorted(date_templates, key=lambda x: x[0])
             for i in range(1, len(sorted_dt)):
-                if sorted_dt[i][1] != sorted_dt[i-1][1]:
+                if sorted_dt[i][1] != sorted_dt[i - 1][1]:
                     # Different template on consecutive assignment
-                    if (sorted_dt[i][0] - sorted_dt[i-1][0]).days <= 1:
+                    if (sorted_dt[i][0] - sorted_dt[i - 1][0]).days <= 1:
                         total_changes += 1
 
         return ConstraintResult(
@@ -1718,7 +1801,9 @@ class PreferenceConstraint(SoftConstraint):
         """Add preference bonus to objective."""
         pass
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Calculate preference satisfaction."""
         total_preference = 0.0
         max_preference = 0.0
@@ -1726,7 +1811,9 @@ class PreferenceConstraint(SoftConstraint):
         for a in assignments:
             person_prefs = self.preferences.get(a.person_id, {})
             if a.rotation_template_id:
-                pref_score = person_prefs.get(a.rotation_template_id, 0.5)  # Neutral default
+                pref_score = person_prefs.get(
+                    a.rotation_template_id, 0.5
+                )  # Neutral default
                 total_preference += pref_score
                 max_preference += 1.0
 
@@ -1746,6 +1833,7 @@ class PreferenceConstraint(SoftConstraint):
 # =============================================================================
 # RESILIENCE-AWARE SOFT CONSTRAINTS
 # =============================================================================
+
 
 class HubProtectionConstraint(SoftConstraint):
     """
@@ -1767,7 +1855,7 @@ class HubProtectionConstraint(SoftConstraint):
     """
 
     # Hub score thresholds
-    HIGH_HUB_THRESHOLD = 0.4      # Above this = significant hub
+    HIGH_HUB_THRESHOLD = 0.4  # Above this = significant hub
     CRITICAL_HUB_THRESHOLD = 0.6  # Above this = critical hub (2x penalty)
 
     def __init__(self, weight: float = 15.0):
@@ -1851,6 +1939,7 @@ class HubProtectionConstraint(SoftConstraint):
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
         """Add hub protection penalty to PuLP model."""
         import pulp
+
         x = variables.get("assignments", {})
 
         if not x or not context.hub_scores:
@@ -1881,7 +1970,9 @@ class HubProtectionConstraint(SoftConstraint):
         if penalty_terms:
             variables["hub_penalty"] = pulp.lpSum(penalty_terms)
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """
         Validate hub protection and calculate penalty.
 
@@ -1920,20 +2011,24 @@ class HubProtectionConstraint(SoftConstraint):
 
             # Report if hub is over-assigned (> average)
             if count > avg_assignments * 1.2:  # 20% above average
-                severity = "HIGH" if hub_score >= self.CRITICAL_HUB_THRESHOLD else "MEDIUM"
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity=severity,
-                    message=f"Hub faculty {faculty.name} (score={hub_score:.2f}) has {count} assignments (avg={avg_assignments:.1f})",
-                    person_id=faculty.id,
-                    details={
-                        "hub_score": hub_score,
-                        "assignment_count": count,
-                        "average_assignments": avg_assignments,
-                        "is_critical_hub": hub_score >= self.CRITICAL_HUB_THRESHOLD,
-                    },
-                ))
+                severity = (
+                    "HIGH" if hub_score >= self.CRITICAL_HUB_THRESHOLD else "MEDIUM"
+                )
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity=severity,
+                        message=f"Hub faculty {faculty.name} (score={hub_score:.2f}) has {count} assignments (avg={avg_assignments:.1f})",
+                        person_id=faculty.id,
+                        details={
+                            "hub_score": hub_score,
+                            "assignment_count": count,
+                            "average_assignments": avg_assignments,
+                            "is_critical_hub": hub_score >= self.CRITICAL_HUB_THRESHOLD,
+                        },
+                    )
+                )
 
         return ConstraintResult(
             satisfied=True,  # Soft constraint
@@ -2040,6 +2135,7 @@ class UtilizationBufferConstraint(SoftConstraint):
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
         """Add utilization buffer constraint to PuLP model."""
         import pulp
+
         x = variables.get("assignments", {})
 
         if not x:
@@ -2057,7 +2153,9 @@ class UtilizationBufferConstraint(SoftConstraint):
 
         variables["utilization_penalty"] = over_util
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """
         Validate utilization buffer and calculate penalty.
 
@@ -2075,13 +2173,18 @@ class UtilizationBufferConstraint(SoftConstraint):
         workday_blocks = len([b for b in context.blocks if not b.is_weekend])
 
         # Capacity = faculty who can work * average available blocks
-        available_faculty = len([
-            f for f in context.faculty
-            if any(
-                context.availability.get(f.id, {}).get(b.id, {}).get("available", True)
-                for b in context.blocks
-            )
-        ])
+        available_faculty = len(
+            [
+                f
+                for f in context.faculty
+                if any(
+                    context.availability.get(f.id, {})
+                    .get(b.id, {})
+                    .get("available", True)
+                    for b in context.blocks
+                )
+            ]
+        )
 
         if available_faculty == 0 or workday_blocks == 0:
             return ConstraintResult(satisfied=True, penalty=0.0)
@@ -2091,7 +2194,11 @@ class UtilizationBufferConstraint(SoftConstraint):
         utilization = total_assignments / max_capacity if max_capacity > 0 else 0
 
         # Calculate penalty
-        target = context.target_utilization if context.target_utilization else self.target_utilization
+        target = (
+            context.target_utilization
+            if context.target_utilization
+            else self.target_utilization
+        )
 
         if utilization <= target:
             penalty = 0.0
@@ -2099,7 +2206,7 @@ class UtilizationBufferConstraint(SoftConstraint):
         else:
             # Quadratic penalty above threshold
             over_threshold = utilization - target
-            penalty = (over_threshold ** 2) * self.weight * 100
+            penalty = (over_threshold**2) * self.weight * 100
             buffer_remaining = 0.0
 
             # Determine severity based on how far over
@@ -2110,20 +2217,22 @@ class UtilizationBufferConstraint(SoftConstraint):
             else:
                 severity = "MEDIUM"
 
-            violations.append(ConstraintViolation(
-                constraint_name=self.name,
-                constraint_type=self.constraint_type,
-                severity=severity,
-                message=f"Utilization {utilization:.0%} exceeds target {target:.0%} (buffer exhausted)",
-                details={
-                    "utilization_rate": utilization,
-                    "target_utilization": target,
-                    "buffer_remaining": buffer_remaining,
-                    "total_assignments": total_assignments,
-                    "max_capacity": max_capacity,
-                    "danger_zone": utilization >= 0.90,
-                },
-            ))
+            violations.append(
+                ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity=severity,
+                    message=f"Utilization {utilization:.0%} exceeds target {target:.0%} (buffer exhausted)",
+                    details={
+                        "utilization_rate": utilization,
+                        "target_utilization": target,
+                        "buffer_remaining": buffer_remaining,
+                        "total_assignments": total_assignments,
+                        "max_capacity": max_capacity,
+                        "danger_zone": utilization >= 0.90,
+                    },
+                )
+            )
 
         return ConstraintResult(
             satisfied=True,  # Soft constraint
@@ -2135,6 +2244,7 @@ class UtilizationBufferConstraint(SoftConstraint):
 # =============================================================================
 # TIER 2: STRATEGIC RESILIENCE CONSTRAINTS
 # =============================================================================
+
 
 class ZoneBoundaryConstraint(SoftConstraint):
     """
@@ -2157,12 +2267,12 @@ class ZoneBoundaryConstraint(SoftConstraint):
 
     # Zone type priority multipliers
     ZONE_PRIORITY = {
-        "inpatient": 2.0,      # Critical - highest isolation
-        "outpatient": 1.5,     # Important
-        "on_call": 1.5,        # Important
-        "education": 1.0,      # Standard
-        "research": 0.8,       # Flexible
-        "admin": 0.5,          # Most flexible
+        "inpatient": 2.0,  # Critical - highest isolation
+        "outpatient": 1.5,  # Important
+        "on_call": 1.5,  # Important
+        "education": 1.0,  # Standard
+        "research": 0.8,  # Flexible
+        "admin": 0.5,  # Most flexible
     }
 
     def __init__(self, weight: float = 12.0):
@@ -2215,6 +2325,7 @@ class ZoneBoundaryConstraint(SoftConstraint):
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
         """Add zone boundary penalty to PuLP model."""
         import pulp
+
         x = variables.get("assignments", {})
 
         if not x or not context.zone_assignments or not context.block_zones:
@@ -2244,7 +2355,9 @@ class ZoneBoundaryConstraint(SoftConstraint):
         if penalty_terms:
             variables["zone_penalty"] = pulp.lpSum(penalty_terms)
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """
         Validate zone boundary compliance.
 
@@ -2274,7 +2387,9 @@ class ZoneBoundaryConstraint(SoftConstraint):
         if cross_zone_count > 0:
             # Determine severity based on percentage
             total_assignments = len(assignments)
-            cross_zone_pct = cross_zone_count / total_assignments if total_assignments > 0 else 0
+            cross_zone_pct = (
+                cross_zone_count / total_assignments if total_assignments > 0 else 0
+            )
 
             if cross_zone_pct >= 0.20:
                 severity = "HIGH"
@@ -2283,18 +2398,20 @@ class ZoneBoundaryConstraint(SoftConstraint):
             else:
                 severity = "LOW"
 
-            violations.append(ConstraintViolation(
-                constraint_name=self.name,
-                constraint_type=self.constraint_type,
-                severity=severity,
-                message=f"{cross_zone_count} cross-zone assignments ({cross_zone_pct:.0%} of total) - blast radius isolation weakened",
-                details={
-                    "cross_zone_count": cross_zone_count,
-                    "total_assignments": total_assignments,
-                    "cross_zone_percentage": cross_zone_pct,
-                    "zone_violations": dict(zone_violation_details),
-                },
-            ))
+            violations.append(
+                ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity=severity,
+                    message=f"{cross_zone_count} cross-zone assignments ({cross_zone_pct:.0%} of total) - blast radius isolation weakened",
+                    details={
+                        "cross_zone_count": cross_zone_count,
+                        "total_assignments": total_assignments,
+                        "cross_zone_percentage": cross_zone_pct,
+                        "zone_violations": dict(zone_violation_details),
+                    },
+                )
+            )
 
         return ConstraintResult(
             satisfied=True,  # Soft constraint
@@ -2324,8 +2441,8 @@ class PreferenceTrailConstraint(SoftConstraint):
     """
 
     # Trail strength thresholds
-    STRONG_TRAIL_THRESHOLD = 0.6   # Above this = strong signal
-    WEAK_TRAIL_THRESHOLD = 0.3     # Below this = ignore
+    STRONG_TRAIL_THRESHOLD = 0.6  # Above this = strong signal
+    WEAK_TRAIL_THRESHOLD = 0.3  # Below this = ignore
 
     def __init__(self, weight: float = 8.0):
         super().__init__(
@@ -2363,7 +2480,9 @@ class PreferenceTrailConstraint(SoftConstraint):
                     continue
 
                 # Determine slot type from block
-                slot_type = f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+                slot_type = (
+                    f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+                )
 
                 # Check if we have a preference for this slot type
                 trail_strength = faculty_prefs.get(slot_type, 0.5)
@@ -2383,6 +2502,7 @@ class PreferenceTrailConstraint(SoftConstraint):
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
         """Add preference trail bonus/penalty to PuLP model."""
         import pulp
+
         x = variables.get("assignments", {})
 
         if not x or not context.preference_trails:
@@ -2405,7 +2525,9 @@ class PreferenceTrailConstraint(SoftConstraint):
                 if (f_i, b_i) not in x:
                     continue
 
-                slot_type = f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+                slot_type = (
+                    f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+                )
                 trail_strength = faculty_prefs.get(slot_type, 0.5)
 
                 if trail_strength >= self.STRONG_TRAIL_THRESHOLD:
@@ -2420,7 +2542,9 @@ class PreferenceTrailConstraint(SoftConstraint):
         if penalty_terms:
             variables["trail_penalty"] = pulp.lpSum(penalty_terms)
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """
         Validate preference trail alignment.
 
@@ -2453,7 +2577,9 @@ class PreferenceTrailConstraint(SoftConstraint):
             if not block:
                 continue
 
-            slot_type = f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+            slot_type = (
+                f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+            )
             trail_strength = faculty_prefs.get(slot_type, 0.5)
             total_checked += 1
 
@@ -2469,19 +2595,21 @@ class PreferenceTrailConstraint(SoftConstraint):
 
             # Report if significant misalignment
             if misaligned_count > 0 and misalignment_rate >= 0.10:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="MEDIUM" if misalignment_rate >= 0.20 else "LOW",
-                    message=f"{misaligned_count} assignments against preference trails ({misalignment_rate:.0%})",
-                    details={
-                        "aligned_count": aligned_count,
-                        "misaligned_count": misaligned_count,
-                        "total_checked": total_checked,
-                        "alignment_rate": alignment_rate,
-                        "misalignment_rate": misalignment_rate,
-                    },
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="MEDIUM" if misalignment_rate >= 0.20 else "LOW",
+                        message=f"{misaligned_count} assignments against preference trails ({misalignment_rate:.0%})",
+                        details={
+                            "aligned_count": aligned_count,
+                            "misaligned_count": misaligned_count,
+                            "total_checked": total_checked,
+                            "alignment_rate": alignment_rate,
+                            "misalignment_rate": misalignment_rate,
+                        },
+                    )
+                )
 
         return ConstraintResult(
             satisfied=True,  # Soft constraint
@@ -2544,9 +2672,11 @@ class N1VulnerabilityConstraint(SoftConstraint):
                     continue
 
                 # Check availability
-                is_available = context.availability.get(
-                    faculty.id, {}
-                ).get(block.id, {}).get("available", True)
+                is_available = (
+                    context.availability.get(faculty.id, {})
+                    .get(block.id, {})
+                    .get("available", True)
+                )
 
                 if is_available and (f_i, b_i) in x:
                     available_for_block.append((f_i, faculty.id))
@@ -2564,6 +2694,7 @@ class N1VulnerabilityConstraint(SoftConstraint):
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
         """Add N-1 vulnerability penalty to PuLP model."""
         import pulp
+
         x = variables.get("assignments", {})
 
         if not x:
@@ -2580,9 +2711,11 @@ class N1VulnerabilityConstraint(SoftConstraint):
                 if f_i is None:
                     continue
 
-                is_available = context.availability.get(
-                    faculty.id, {}
-                ).get(block.id, {}).get("available", True)
+                is_available = (
+                    context.availability.get(faculty.id, {})
+                    .get(block.id, {})
+                    .get("available", True)
+                )
 
                 if is_available and (f_i, b_i) in x:
                     available_for_block.append(f_i)
@@ -2595,7 +2728,9 @@ class N1VulnerabilityConstraint(SoftConstraint):
         if penalty_terms:
             variables["n1_penalty"] = pulp.lpSum(penalty_terms)
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """
         Validate N-1 compliance of the schedule.
 
@@ -2636,7 +2771,9 @@ class N1VulnerabilityConstraint(SoftConstraint):
 
         # Report violations
         if n1_vulnerable_blocks:
-            vulnerability_rate = len(n1_vulnerable_blocks) / len(context.blocks) if context.blocks else 0
+            vulnerability_rate = (
+                len(n1_vulnerable_blocks) / len(context.blocks) if context.blocks else 0
+            )
 
             if vulnerability_rate >= 0.20:
                 severity = "CRITICAL"
@@ -2645,19 +2782,21 @@ class N1VulnerabilityConstraint(SoftConstraint):
             else:
                 severity = "MEDIUM"
 
-            violations.append(ConstraintViolation(
-                constraint_name=self.name,
-                constraint_type=self.constraint_type,
-                severity=severity,
-                message=f"{len(n1_vulnerable_blocks)} blocks have single-point-of-failure coverage ({vulnerability_rate:.0%})",
-                details={
-                    "n1_vulnerable_blocks": len(n1_vulnerable_blocks),
-                    "total_blocks": len(context.blocks),
-                    "vulnerability_rate": vulnerability_rate,
-                    "sole_provider_counts": dict(sole_providers),
-                    "n1_pass": len(n1_vulnerable_blocks) == 0,
-                },
-            ))
+            violations.append(
+                ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity=severity,
+                    message=f"{len(n1_vulnerable_blocks)} blocks have single-point-of-failure coverage ({vulnerability_rate:.0%})",
+                    details={
+                        "n1_vulnerable_blocks": len(n1_vulnerable_blocks),
+                        "total_blocks": len(context.blocks),
+                        "vulnerability_rate": vulnerability_rate,
+                        "sole_provider_counts": dict(sole_providers),
+                        "n1_pass": len(n1_vulnerable_blocks) == 0,
+                    },
+                )
+            )
 
         # Report sole providers
         for faculty_id, sole_count in sole_providers.items():
@@ -2668,17 +2807,19 @@ class N1VulnerabilityConstraint(SoftConstraint):
                     break
 
             if sole_count >= 3:  # Report faculty who are sole provider for 3+ blocks
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="HIGH" if sole_count >= 5 else "MEDIUM",
-                    message=f"Faculty {faculty_name} is sole provider for {sole_count} blocks - single point of failure risk",
-                    person_id=faculty_id,
-                    details={
-                        "sole_coverage_blocks": sole_count,
-                        "recommendation": "Cross-train backup faculty",
-                    },
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="HIGH" if sole_count >= 5 else "MEDIUM",
+                        message=f"Faculty {faculty_name} is sole provider for {sole_count} blocks - single point of failure risk",
+                        person_id=faculty_id,
+                        details={
+                            "sole_coverage_blocks": sole_count,
+                            "recommendation": "Cross-train backup faculty",
+                        },
+                    )
+                )
 
         return ConstraintResult(
             satisfied=True,  # Soft constraint
@@ -2690,6 +2831,7 @@ class N1VulnerabilityConstraint(SoftConstraint):
 # =============================================================================
 # CONSTRAINT MANAGER
 # =============================================================================
+
 
 class ConstraintManager:
     """
@@ -2978,7 +3120,11 @@ class ConstraintManager:
 
         # Tier 1: Core resilience constraints (ENABLED)
         manager.add(HubProtectionConstraint(weight=15.0))
-        manager.add(UtilizationBufferConstraint(weight=20.0, target_utilization=target_utilization))
+        manager.add(
+            UtilizationBufferConstraint(
+                weight=20.0, target_utilization=target_utilization
+            )
+        )
 
         # Tier 2: Strategic resilience constraints
         manager.add(ZoneBoundaryConstraint(weight=12.0))

@@ -7,8 +7,9 @@ scheduling preferences.
 Classes:
     - PreferenceConstraint: Optimize based on resident/faculty preferences (soft)
 """
+
 import logging
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from .base import (
@@ -30,7 +31,7 @@ class PreferenceConstraint(SoftConstraint):
 
     def __init__(
         self,
-        preferences: Optional[dict[UUID, dict[UUID, float]]] = None,
+        preferences: dict[UUID, dict[UUID, float]] | None = None,
         weight: float = 2.0,
     ) -> None:
         super().__init__(
@@ -72,7 +73,9 @@ class PreferenceConstraint(SoftConstraint):
         for a in assignments:
             person_prefs = self.preferences.get(a.person_id, {})
             if a.rotation_template_id:
-                pref_score = person_prefs.get(a.rotation_template_id, 0.5)  # Neutral default
+                pref_score = person_prefs.get(
+                    a.rotation_template_id, 0.5
+                )  # Neutral default
                 total_preference += pref_score
                 max_preference += 1.0
 

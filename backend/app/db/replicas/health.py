@@ -5,11 +5,11 @@ This module provides health monitoring for database replicas, including:
 - Replication lag detection
 - Automatic marking of unhealthy replicas
 """
+
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Optional
+from datetime import datetime
 
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
@@ -31,9 +31,9 @@ class ReplicaHealth:
     """
 
     is_healthy: bool
-    lag_seconds: Optional[float] = None
-    last_check: Optional[datetime] = None
-    error_message: Optional[str] = None
+    lag_seconds: float | None = None
+    last_check: datetime | None = None
+    error_message: str | None = None
     consecutive_failures: int = 0
 
 
@@ -50,7 +50,7 @@ class HealthChecker:
         self,
         max_lag_seconds: float = 30.0,
         max_consecutive_failures: int = 3,
-        health_check_timeout: float = 5.0
+        health_check_timeout: float = 5.0,
     ):
         """Initialize health checker.
 
@@ -86,7 +86,9 @@ class HealthChecker:
             with engine.connect() as conn:
                 # Set statement timeout for this connection
                 conn.execute(
-                    text(f"SET statement_timeout = {int(self.health_check_timeout * 1000)}")
+                    text(
+                        f"SET statement_timeout = {int(self.health_check_timeout * 1000)}"
+                    )
                 )
 
                 # Verify connection is alive
@@ -102,8 +104,10 @@ class HealthChecker:
                     is_healthy=is_healthy,
                     lag_seconds=lag_seconds,
                     last_check=datetime.utcnow(),
-                    error_message=None if is_healthy else f"Replication lag too high: {lag_seconds}s",
-                    consecutive_failures=0 if is_healthy else 1
+                    error_message=None
+                    if is_healthy
+                    else f"Replication lag too high: {lag_seconds}s",
+                    consecutive_failures=0 if is_healthy else 1,
                 )
 
                 # Update cache
@@ -121,9 +125,7 @@ class HealthChecker:
             # Connection or query error
             previous_health = self._health_cache.get(replica_name)
             consecutive_failures = (
-                previous_health.consecutive_failures + 1
-                if previous_health
-                else 1
+                previous_health.consecutive_failures + 1 if previous_health else 1
             )
 
             is_healthy = consecutive_failures < self.max_consecutive_failures
@@ -133,7 +135,7 @@ class HealthChecker:
                 lag_seconds=None,
                 last_check=datetime.utcnow(),
                 error_message=str(e),
-                consecutive_failures=consecutive_failures
+                consecutive_failures=consecutive_failures,
             )
 
             self._health_cache[replica_name] = health
@@ -154,14 +156,14 @@ class HealthChecker:
                 lag_seconds=None,
                 last_check=datetime.utcnow(),
                 error_message=f"Unexpected error: {e}",
-                consecutive_failures=self.max_consecutive_failures
+                consecutive_failures=self.max_consecutive_failures,
             )
 
             self._health_cache[replica_name] = health
 
             return health
 
-    def _measure_replication_lag(self, connection) -> Optional[float]:
+    def _measure_replication_lag(self, connection) -> float | None:
         """Measure replication lag using PostgreSQL system views.
 
         Args:
@@ -172,9 +174,7 @@ class HealthChecker:
         """
         try:
             # Check if this is a standby (replica)
-            result = connection.execute(
-                text("SELECT pg_is_in_recovery()")
-            ).scalar()
+            result = connection.execute(text("SELECT pg_is_in_recovery()")).scalar()
 
             if not result:
                 # This is the primary, not a replica
@@ -212,10 +212,8 @@ class HealthChecker:
             return None
 
     def get_cached_health(
-        self,
-        replica_name: str,
-        max_age_seconds: float = 10.0
-    ) -> Optional[ReplicaHealth]:
+        self, replica_name: str, max_age_seconds: float = 10.0
+    ) -> ReplicaHealth | None:
         """Get cached health status if recent enough.
 
         Args:
@@ -242,7 +240,7 @@ class HealthChecker:
         engine: Engine,
         replica_name: str,
         use_cache: bool = True,
-        cache_max_age: float = 10.0
+        cache_max_age: float = 10.0,
     ) -> bool:
         """Quick health check with optional caching.
 

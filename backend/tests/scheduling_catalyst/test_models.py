@@ -1,13 +1,14 @@
 """Tests for scheduling_catalyst models."""
 
-import pytest
 from uuid import uuid4
+
+import pytest
 
 from app.scheduling_catalyst.models import (
     ActivationEnergy,
     BarrierType,
-    CatalystPerson,
     CatalystMechanism,
+    CatalystPerson,
     CatalystType,
     EnergyBarrier,
     ReactionPathway,

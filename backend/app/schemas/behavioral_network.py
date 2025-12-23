@@ -10,7 +10,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-
 # =============================================================================
 # Enums
 # =============================================================================
@@ -18,6 +17,7 @@ from pydantic import BaseModel, Field
 
 class BehavioralRole(str, Enum):
     """Informal roles revealed by swap behavior."""
+
     NEUTRAL = "neutral"
     POWER_BROKER = "power_broker"
     MARTYR = "martyr"
@@ -28,6 +28,7 @@ class BehavioralRole(str, Enum):
 
 class BurdenCategory(str, Enum):
     """Categories of shift burden."""
+
     MINIMAL = "minimal"
     LOW = "low"
     MODERATE = "moderate"
@@ -38,6 +39,7 @@ class BurdenCategory(str, Enum):
 
 class EquityStatus(str, Enum):
     """Status of burden equity for a person."""
+
     BALANCED = "balanced"
     LIGHT = "light"
     HEAVY = "heavy"
@@ -47,6 +49,7 @@ class EquityStatus(str, Enum):
 
 class ProtectionLevel(str, Enum):
     """Protection level for martyrs."""
+
     NONE = "none"
     MONITORING = "monitoring"
     SOFT_LIMIT = "soft_limit"
@@ -60,6 +63,7 @@ class ProtectionLevel(str, Enum):
 
 class BurdenCalculationRequest(BaseModel):
     """Request to calculate shift burden."""
+
     shift_id: UUID
     faculty_id: UUID
     date: datetime
@@ -73,6 +77,7 @@ class BurdenCalculationRequest(BaseModel):
 
 class SwapRecordInput(BaseModel):
     """Input for recording a swap in the network."""
+
     source_id: UUID
     source_name: str
     target_id: UUID
@@ -85,12 +90,14 @@ class SwapRecordInput(BaseModel):
 
 class MartyrProtectionCheckRequest(BaseModel):
     """Request to check martyr protection level."""
+
     faculty_id: UUID
     current_allostatic_load: float = Field(default=0.0, ge=0, le=100)
 
 
 class SwapBlockCheckRequest(BaseModel):
     """Request to check if a swap should be blocked."""
+
     target_id: UUID
     source_burden: float = Field(..., ge=0)
     target_current_load: float = Field(default=0.0, ge=0, le=100)
@@ -103,6 +110,7 @@ class SwapBlockCheckRequest(BaseModel):
 
 class ShiftBurdenResponse(BaseModel):
     """Response with calculated shift burden."""
+
     shift_id: UUID
     faculty_id: UUID
     date: datetime
@@ -116,6 +124,7 @@ class ShiftBurdenResponse(BaseModel):
 
 class FacultyBurdenProfileResponse(BaseModel):
     """Comprehensive burden profile for a faculty member."""
+
     faculty_id: UUID
     faculty_name: str
     period_start: datetime
@@ -143,6 +152,7 @@ class FacultyBurdenProfileResponse(BaseModel):
 
 class SwapNetworkNodeResponse(BaseModel):
     """Network node (faculty member) response."""
+
     faculty_id: UUID
     faculty_name: str
     degree: int
@@ -160,6 +170,7 @@ class SwapNetworkNodeResponse(BaseModel):
 
 class SwapNetworkAnalysisResponse(BaseModel):
     """Complete swap network analysis response."""
+
     analyzed_at: datetime
     period_start: datetime
     period_end: datetime
@@ -184,6 +195,7 @@ class SwapNetworkAnalysisResponse(BaseModel):
 
 class MartyrProtectionResponse(BaseModel):
     """Response for martyr protection check."""
+
     faculty_id: UUID
     protection_level: ProtectionLevel
     reason: str
@@ -192,12 +204,14 @@ class MartyrProtectionResponse(BaseModel):
 
 class SwapBlockDecisionResponse(BaseModel):
     """Response for swap block decision."""
+
     should_block: bool
     reason: str
 
 
 class BurdenEquityAnalysisResponse(BaseModel):
     """Response for burden equity analysis."""
+
     mean_burden: float
     std_burden: float
     mean_hours: float
@@ -215,6 +229,7 @@ class BurdenEquityAnalysisResponse(BaseModel):
 
 class RecommendationItem(BaseModel):
     """A single recommendation item."""
+
     priority: str = Field(..., pattern="^(CRITICAL|HIGH|MEDIUM|LOW)$")
     action: str
     details: str
@@ -222,6 +237,7 @@ class RecommendationItem(BaseModel):
 
 class ShadowOrgChartReportResponse(BaseModel):
     """Complete shadow org chart report response."""
+
     generated_at: datetime
     period_start: datetime
     period_end: datetime

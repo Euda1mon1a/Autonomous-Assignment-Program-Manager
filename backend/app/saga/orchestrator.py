@@ -8,9 +8,9 @@ This module provides the core saga orchestration logic including:
 - State persistence for recovery
 - Event logging and monitoring
 """
+
 import asyncio
 import logging
-from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID, uuid4
@@ -81,8 +81,7 @@ class SagaOrchestrator:
             raise ValueError(f"Saga '{definition.name}' already registered")
 
         logger.info(
-            f"Registering saga '{definition.name}' "
-            f"with {len(definition.steps)} steps"
+            f"Registering saga '{definition.name}' with {len(definition.steps)} steps"
         )
         self._registered_sagas[definition.name] = definition
 
@@ -151,14 +150,14 @@ class SagaOrchestrator:
             saga_exec.id,
             "saga_started",
             {"saga_name": saga_name, "input_size": len(str(input_data))},
-            f"Started saga '{saga_name}'"
+            f"Started saga '{saga_name}'",
         )
 
         try:
             # Execute saga with timeout
             result = await asyncio.wait_for(
                 self._execute_saga_steps(definition, context, saga_exec),
-                timeout=definition.timeout_seconds
+                timeout=definition.timeout_seconds,
             )
 
             # Mark saga as completed
@@ -173,24 +172,28 @@ class SagaOrchestrator:
                 saga_exec.id,
                 "saga_completed",
                 {"status": result.status.value, "duration": result.duration_seconds},
-                f"Saga completed with status: {result.status.value}"
+                f"Saga completed with status: {result.status.value}",
             )
 
             return result
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             # Handle saga timeout
-            logger.error(f"Saga {saga_id} timed out after {definition.timeout_seconds}s")
+            logger.error(
+                f"Saga {saga_id} timed out after {definition.timeout_seconds}s"
+            )
             saga_exec.status = SagaStatus.TIMEOUT.value
             saga_exec.completed_at = datetime.utcnow()
-            saga_exec.error_message = f"Saga timed out after {definition.timeout_seconds}s"
+            saga_exec.error_message = (
+                f"Saga timed out after {definition.timeout_seconds}s"
+            )
             self.db.commit()
 
             await self._log_event(
                 saga_exec.id,
                 "saga_timeout",
                 {"timeout_seconds": definition.timeout_seconds},
-                f"Saga timed out"
+                "Saga timed out",
             )
 
             # Trigger compensation for completed steps
@@ -212,7 +215,7 @@ class SagaOrchestrator:
                 saga_exec.id,
                 "saga_error",
                 {"error": str(e)},
-                f"Saga failed with error: {str(e)}"
+                f"Saga failed with error: {str(e)}",
             )
 
             raise
@@ -251,9 +254,7 @@ class SagaOrchestrator:
             for group in step_groups:
                 if len(group) == 1:
                     # Sequential execution
-                    step_result = await self._execute_step(
-                        group[0], context, saga_exec
-                    )
+                    step_result = await self._execute_step(group[0], context, saga_exec)
                     result.step_results.append(step_result)
 
                     if step_result.status == StepStatus.FAILED:
@@ -270,8 +271,7 @@ class SagaOrchestrator:
 
                     # Check for failures
                     failed_steps = [
-                        r for r in step_results
-                        if r.status == StepStatus.FAILED
+                        r for r in step_results if r.status == StepStatus.FAILED
                     ]
                     if failed_steps:
                         failures = ", ".join(s.step_name for s in failed_steps)
@@ -296,8 +296,7 @@ class SagaOrchestrator:
             return result
 
     def _group_steps_for_execution(
-        self,
-        steps: list[SagaStepDefinition]
+        self, steps: list[SagaStepDefinition]
     ) -> list[list[SagaStepDefinition]]:
         """Group steps for sequential or parallel execution.
 
@@ -373,7 +372,7 @@ class SagaOrchestrator:
             "step_started",
             {"step_name": step_def.name},
             f"Started step '{step_def.name}'",
-            step_id=step_exec.id
+            step_id=step_exec.id,
         )
 
         # Prepare input data (merge context)
@@ -389,8 +388,7 @@ class SagaOrchestrator:
             try:
                 # Execute step with timeout
                 output = await asyncio.wait_for(
-                    step_def.action(step_input),
-                    timeout=step_def.timeout_seconds
+                    step_def.action(step_input), timeout=step_def.timeout_seconds
                 )
 
                 # Step succeeded
@@ -414,16 +412,17 @@ class SagaOrchestrator:
                     "step_completed",
                     {
                         "step_name": step_def.name,
-                        "duration": result.completed_at.timestamp() - result.started_at.timestamp(),
-                        "retries": attempt
+                        "duration": result.completed_at.timestamp()
+                        - result.started_at.timestamp(),
+                        "retries": attempt,
                     },
                     f"Step '{step_def.name}' completed",
-                    step_id=step_exec.id
+                    step_id=step_exec.id,
                 )
 
                 return result
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 error_msg = f"Step timed out after {step_def.timeout_seconds}s"
                 logger.error(f"Step {step_def.name} timed out (attempt {attempt + 1})")
 
@@ -432,7 +431,7 @@ class SagaOrchestrator:
                     "step_timeout",
                     {"step_name": step_def.name, "attempt": attempt + 1},
                     error_msg,
-                    step_id=step_exec.id
+                    step_id=step_exec.id,
                 )
 
                 if attempt < max_attempts - 1:
@@ -458,15 +457,19 @@ class SagaOrchestrator:
                 error_msg = str(e)
                 logger.error(
                     f"Step {step_def.name} failed (attempt {attempt + 1}): {e}",
-                    exc_info=True
+                    exc_info=True,
                 )
 
                 await self._log_event(
                     saga_exec.id,
                     "step_error",
-                    {"step_name": step_def.name, "attempt": attempt + 1, "error": error_msg},
+                    {
+                        "step_name": step_def.name,
+                        "attempt": attempt + 1,
+                        "error": error_msg,
+                    },
                     f"Step error: {error_msg}",
-                    step_id=step_exec.id
+                    step_id=step_exec.id,
                 )
 
                 if attempt < max_attempts - 1 and step_def.idempotent:
@@ -513,14 +516,11 @@ class SagaOrchestrator:
             saga_exec.id,
             "parallel_execution_started",
             {"step_count": len(steps), "steps": [s.name for s in steps]},
-            f"Starting parallel execution of {len(steps)} steps"
+            f"Starting parallel execution of {len(steps)} steps",
         )
 
         # Execute all steps concurrently
-        tasks = [
-            self._execute_step(step, context, saga_exec)
-            for step in steps
-        ]
+        tasks = [self._execute_step(step, context, saga_exec) for step in steps]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -528,12 +528,14 @@ class SagaOrchestrator:
         final_results: list[SagaStepResult] = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                final_results.append(SagaStepResult(
-                    step_name=steps[i].name,
-                    status=StepStatus.FAILED,
-                    error_message=str(result),
-                    completed_at=datetime.utcnow(),
-                ))
+                final_results.append(
+                    SagaStepResult(
+                        step_name=steps[i].name,
+                        status=StepStatus.FAILED,
+                        error_message=str(result),
+                        completed_at=datetime.utcnow(),
+                    )
+                )
             else:
                 final_results.append(result)
 
@@ -542,10 +544,14 @@ class SagaOrchestrator:
             "parallel_execution_completed",
             {
                 "step_count": len(steps),
-                "succeeded": sum(1 for r in final_results if r.status == StepStatus.COMPLETED),
-                "failed": sum(1 for r in final_results if r.status == StepStatus.FAILED),
+                "succeeded": sum(
+                    1 for r in final_results if r.status == StepStatus.COMPLETED
+                ),
+                "failed": sum(
+                    1 for r in final_results if r.status == StepStatus.FAILED
+                ),
             },
-            f"Parallel execution completed"
+            "Parallel execution completed",
         )
 
         return final_results
@@ -572,16 +578,12 @@ class SagaOrchestrator:
         self.db.commit()
 
         await self._log_event(
-            saga_exec.id,
-            "compensation_started",
-            {},
-            "Starting saga compensation"
+            saga_exec.id, "compensation_started", {}, "Starting saga compensation"
         )
 
         # Get completed steps in reverse order
         completed_steps = [
-            s for s in saga_exec.steps
-            if s.status == StepStatus.COMPLETED.value
+            s for s in saga_exec.steps if s.status == StepStatus.COMPLETED.value
         ]
         completed_steps.reverse()
 
@@ -591,12 +593,13 @@ class SagaOrchestrator:
         for step_exec in completed_steps:
             # Find step definition
             step_def = next(
-                (s for s in definition.steps if s.name == step_exec.step_name),
-                None
+                (s for s in definition.steps if s.name == step_exec.step_name), None
             )
 
             if not step_def or not step_def.compensation:
-                logger.warning(f"No compensation defined for step '{step_exec.step_name}'")
+                logger.warning(
+                    f"No compensation defined for step '{step_exec.step_name}'"
+                )
                 continue
 
             try:
@@ -609,7 +612,7 @@ class SagaOrchestrator:
                     "step_compensating",
                     {"step_name": step_exec.step_name},
                     f"Compensating step '{step_exec.step_name}'",
-                    step_id=step_exec.id
+                    step_id=step_exec.id,
                 )
 
                 # Execute compensation
@@ -621,7 +624,7 @@ class SagaOrchestrator:
 
                 await asyncio.wait_for(
                     step_def.compensation(compensation_input),
-                    timeout=step_def.timeout_seconds
+                    timeout=step_def.timeout_seconds,
                 )
 
                 # Mark as compensated
@@ -636,7 +639,7 @@ class SagaOrchestrator:
                     "step_compensated",
                     {"step_name": step_exec.step_name},
                     f"Step '{step_exec.step_name}' compensated",
-                    step_id=step_exec.id
+                    step_id=step_exec.id,
                 )
 
             except Exception as e:
@@ -653,17 +656,14 @@ class SagaOrchestrator:
                     "compensation_error",
                     {"step_name": step_exec.step_name, "error": str(e)},
                     error_msg,
-                    step_id=step_exec.id
+                    step_id=step_exec.id,
                 )
 
         await self._log_event(
             saga_exec.id,
             "compensation_completed",
-            {
-                "compensated": compensated_count,
-                "errors": len(compensation_errors)
-            },
-            f"Compensation completed: {compensated_count} steps compensated"
+            {"compensated": compensated_count, "errors": len(compensation_errors)},
+            f"Compensation completed: {compensated_count} steps compensated",
         )
 
         if compensation_errors:
@@ -723,8 +723,7 @@ class SagaOrchestrator:
         """
         # Check if step already exists (for recovery)
         existing = next(
-            (s for s in saga_exec.steps if s.step_name == step_def.name),
-            None
+            (s for s in saga_exec.steps if s.step_name == step_def.name), None
         )
 
         if existing:
@@ -846,10 +845,9 @@ class SagaOrchestrator:
         stmt = (
             select(SagaExecution)
             .where(
-                SagaExecution.status.in_([
-                    SagaStatus.RUNNING.value,
-                    SagaStatus.COMPENSATING.value
-                ])
+                SagaExecution.status.in_(
+                    [SagaStatus.RUNNING.value, SagaStatus.COMPENSATING.value]
+                )
             )
             .options(selectinload(SagaExecution.steps))
         )
@@ -863,7 +861,9 @@ class SagaOrchestrator:
 
         for saga_exec in pending_sagas:
             try:
-                logger.info(f"Recovering saga {saga_exec.id} (status: {saga_exec.status})")
+                logger.info(
+                    f"Recovering saga {saga_exec.id} (status: {saga_exec.status})"
+                )
 
                 # Mark as failed for manual review
                 # In production, you might want to attempt recovery instead
@@ -875,13 +875,15 @@ class SagaOrchestrator:
                     saga_exec.id,
                     "saga_recovered",
                     {"previous_status": saga_exec.status},
-                    "Saga marked as failed after service restart"
+                    "Saga marked as failed after service restart",
                 )
 
                 recovered_ids.append(saga_exec.id)
 
             except Exception as e:
-                logger.error(f"Failed to recover saga {saga_exec.id}: {e}", exc_info=True)
+                logger.error(
+                    f"Failed to recover saga {saga_exec.id}: {e}", exc_info=True
+                )
 
         self.db.commit()
 
@@ -903,12 +905,14 @@ class SagaOrchestrator:
             select(SagaExecution)
             .where(
                 SagaExecution.completed_at < cutoff,
-                SagaExecution.status.in_([
-                    SagaStatus.COMPLETED.value,
-                    SagaStatus.FAILED.value,
-                    SagaStatus.TIMEOUT.value,
-                    SagaStatus.CANCELLED.value
-                ])
+                SagaExecution.status.in_(
+                    [
+                        SagaStatus.COMPLETED.value,
+                        SagaStatus.FAILED.value,
+                        SagaStatus.TIMEOUT.value,
+                        SagaStatus.CANCELLED.value,
+                    ]
+                ),
             )
             .limit(batch_size)
         )

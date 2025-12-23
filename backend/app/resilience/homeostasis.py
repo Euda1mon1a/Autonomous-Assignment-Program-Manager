@@ -41,42 +41,47 @@ logger = logging.getLogger(__name__)
 
 class FeedbackType(str, Enum):
     """Type of feedback loop."""
+
     NEGATIVE = "negative"  # Stabilizing
     POSITIVE = "positive"  # Destabilizing
 
 
 class DeviationSeverity(str, Enum):
     """Severity of deviation from setpoint."""
-    NONE = "none"          # Within tolerance
-    MINOR = "minor"        # Slight deviation
+
+    NONE = "none"  # Within tolerance
+    MINOR = "minor"  # Slight deviation
     MODERATE = "moderate"  # Noticeable deviation
-    MAJOR = "major"        # Significant deviation
+    MAJOR = "major"  # Significant deviation
     CRITICAL = "critical"  # System stability threatened
 
 
 class VolatilityLevel(str, Enum):
     """Level of volatility in a metric's values."""
-    STABLE = "stable"          # Low variance, predictable
-    NORMAL = "normal"          # Expected fluctuation
-    ELEVATED = "elevated"      # Higher than normal variance
-    HIGH = "high"              # Concerning instability
-    CRITICAL = "critical"      # Approaching phase transition
+
+    STABLE = "stable"  # Low variance, predictable
+    NORMAL = "normal"  # Expected fluctuation
+    ELEVATED = "elevated"  # Higher than normal variance
+    HIGH = "high"  # Concerning instability
+    CRITICAL = "critical"  # Approaching phase transition
 
 
 class CorrectiveActionType(str, Enum):
     """Types of corrective actions."""
-    REDISTRIBUTE = "redistribute"      # Redistribute workload
+
+    REDISTRIBUTE = "redistribute"  # Redistribute workload
     RECRUIT_BACKUP = "recruit_backup"  # Bring in backup coverage
     DEFER_ACTIVITY = "defer_activity"  # Postpone non-critical work
     PROTECT_RESOURCE = "protect_resource"  # Shield overloaded faculty
-    REDUCE_SCOPE = "reduce_scope"      # Reduce service scope
-    ALERT_ONLY = "alert_only"          # Just notify, no automatic action
+    REDUCE_SCOPE = "reduce_scope"  # Reduce service scope
+    ALERT_ONLY = "alert_only"  # Just notify, no automatic action
 
 
 class AllostasisState(str, Enum):
     """Allostatic state of the system."""
+
     HOMEOSTASIS = "homeostasis"  # Stable, within normal operating range
-    ALLOSTASIS = "allostasis"    # Actively compensating for stress
+    ALLOSTASIS = "allostasis"  # Actively compensating for stress
     ALLOSTATIC_LOAD = "allostatic_load"  # Chronic compensation, accumulating wear
     ALLOSTATIC_OVERLOAD = "allostatic_overload"  # System failing to compensate
 
@@ -89,6 +94,7 @@ class Setpoint:
     The system monitors current values and triggers corrections
     when deviation exceeds tolerance.
     """
+
     id: UUID
     name: str
     description: str
@@ -107,7 +113,9 @@ class Setpoint:
             Tuple of (deviation_amount, severity)
         """
         deviation = abs(current_value - self.target_value)
-        relative_deviation = deviation / self.target_value if self.target_value > 0 else deviation
+        relative_deviation = (
+            deviation / self.target_value if self.target_value > 0 else deviation
+        )
 
         if relative_deviation <= self.tolerance:
             return deviation, DeviationSeverity.NONE
@@ -130,6 +138,7 @@ class VolatilityMetrics:
     small parameter changes produce dramatic shifts. Monitoring volatility
     provides early warning of approaching instability.
     """
+
     volatility: float  # Coefficient of variation (std_dev / mean)
     jitter: float  # Oscillation frequency (direction changes / observations)
     momentum: float  # Rate of change (slope of recent values)
@@ -139,7 +148,11 @@ class VolatilityMetrics:
     @property
     def is_warning(self) -> bool:
         """Whether volatility warrants attention."""
-        return self.level in (VolatilityLevel.ELEVATED, VolatilityLevel.HIGH, VolatilityLevel.CRITICAL)
+        return self.level in (
+            VolatilityLevel.ELEVATED,
+            VolatilityLevel.HIGH,
+            VolatilityLevel.CRITICAL,
+        )
 
     @property
     def is_critical(self) -> bool:
@@ -155,6 +168,7 @@ class FeedbackLoop:
     Negative feedback loops stabilize the system by counteracting deviation.
     Positive feedback loops (detected, not created) destabilize.
     """
+
     id: UUID
     name: str
     description: str
@@ -180,7 +194,7 @@ class FeedbackLoop:
 
         # Trim history if needed
         if len(self.value_history) > self.max_history_size:
-            self.value_history = self.value_history[-self.max_history_size:]
+            self.value_history = self.value_history[-self.max_history_size :]
 
         self.last_checked = ts
 
@@ -195,8 +209,8 @@ class FeedbackLoop:
             return "insufficient_data"
 
         # Check trend direction
-        first_half = statistics.mean(recent[:len(recent)//2])
-        second_half = statistics.mean(recent[len(recent)//2:])
+        first_half = statistics.mean(recent[: len(recent) // 2])
+        second_half = statistics.mean(recent[len(recent) // 2 :])
 
         diff = second_half - first_half
         threshold = self.setpoint.tolerance * self.setpoint.target_value
@@ -338,7 +352,9 @@ class FeedbackLoop:
 
         current_value = self.value_history[-1][1]
         target = self.setpoint.target_value
-        critical_threshold = self.setpoint.tolerance * 5 * target  # 5x tolerance = CRITICAL
+        critical_threshold = (
+            self.setpoint.tolerance * 5 * target
+        )  # 5x tolerance = CRITICAL
 
         deviation = abs(current_value - target)
         if critical_threshold == 0:
@@ -366,9 +382,9 @@ class FeedbackLoop:
         # Determine volatility level based on multiple factors
         # Higher volatility + high jitter + low distance = more critical
         risk_score = (
-            volatility * 2.0 +  # Variance is primary indicator
-            jitter * 1.5 +      # Oscillation amplifies risk
-            (1.0 - distance) * 1.0  # Proximity to threshold
+            volatility * 2.0  # Variance is primary indicator
+            + jitter * 1.5  # Oscillation amplifies risk
+            + (1.0 - distance) * 1.0  # Proximity to threshold
         )
 
         if risk_score < 0.2:
@@ -394,6 +410,7 @@ class FeedbackLoop:
 @dataclass
 class CorrectiveAction:
     """A corrective action triggered by feedback loop deviation."""
+
     id: UUID
     feedback_loop_id: UUID
     action_type: CorrectiveActionType
@@ -419,6 +436,7 @@ class AllostasisMetrics:
     Even if the system "handles" each crisis, the biological/organizational
     cost accumulates until sudden failure.
     """
+
     id: UUID
     entity_id: UUID  # Faculty ID or system UUID
     entity_type: str  # "faculty" or "system"
@@ -434,7 +452,7 @@ class AllostasisMetrics:
     cross_coverage_events: int = 0
 
     # Calculated scores
-    acute_stress_score: float = 0.0    # Recent/immediate stress
+    acute_stress_score: float = 0.0  # Recent/immediate stress
     chronic_stress_score: float = 0.0  # Accumulated over time
     total_allostatic_load: float = 0.0
 
@@ -446,21 +464,23 @@ class AllostasisMetrics:
         """Calculate allostatic load from component factors."""
         # Acute stress (recent, higher weight)
         self.acute_stress_score = (
-            self.consecutive_weekend_calls * 4.0 +
-            self.nights_past_month * 2.0 +
-            self.schedule_changes_absorbed * 1.5 +
-            self.coverage_gap_responses * 2.0
+            self.consecutive_weekend_calls * 4.0
+            + self.nights_past_month * 2.0
+            + self.schedule_changes_absorbed * 1.5
+            + self.coverage_gap_responses * 2.0
         )
 
         # Chronic stress (accumulated)
         self.chronic_stress_score = (
-            self.holidays_worked_this_year * 5.0 +
-            self.overtime_hours_month * 0.5 +
-            self.cross_coverage_events * 1.0
+            self.holidays_worked_this_year * 5.0
+            + self.overtime_hours_month * 0.5
+            + self.cross_coverage_events * 1.0
         )
 
         # Total with chronic stress having more weight long-term
-        self.total_allostatic_load = self.acute_stress_score + (self.chronic_stress_score * 1.2)
+        self.total_allostatic_load = self.acute_stress_score + (
+            self.chronic_stress_score * 1.2
+        )
 
     @property
     def state(self) -> AllostasisState:
@@ -496,15 +516,16 @@ class PositiveFeedbackRisk:
     Positive feedback loops amplify deviation and destabilize systems.
     We detect these patterns and recommend interventions.
     """
+
     id: UUID
     name: str
     description: str
     detected_at: datetime
 
     # The loop pattern
-    trigger: str           # What starts the loop
-    amplification: str     # How it gets worse
-    consequence: str       # End result if unchecked
+    trigger: str  # What starts the loop
+    amplification: str  # How it gets worse
+    consequence: str  # End result if unchecked
 
     # Detection metrics
     evidence: list[str]
@@ -524,6 +545,7 @@ class VolatilityAlert:
     High volatility often precedes system instability (bifurcation).
     These alerts trigger before threshold crossings to enable proactive response.
     """
+
     id: UUID
     feedback_loop_name: str
     detected_at: datetime
@@ -542,6 +564,7 @@ class VolatilityAlert:
 @dataclass
 class HomeostasisStatus:
     """Overall homeostasis status for the system."""
+
     timestamp: datetime
     overall_state: AllostasisState
     feedback_loops_healthy: int
@@ -742,7 +765,9 @@ class HomeostasisMonitor:
             try:
                 action.executed = True
                 action.effective = handler(action)
-                action.execution_result = "success" if action.effective else "ineffective"
+                action.execution_result = (
+                    "success" if action.effective else "ineffective"
+                )
             except Exception as e:
                 action.execution_result = f"error: {e}"
                 logger.error(f"Correction handler failed: {e}")
@@ -819,10 +844,16 @@ class HomeostasisMonitor:
             entity_id=entity_id,
             entity_type=entity_type,
             calculated_at=datetime.now(),
-            consecutive_weekend_calls=stress_factors.get("consecutive_weekend_calls", 0),
+            consecutive_weekend_calls=stress_factors.get(
+                "consecutive_weekend_calls", 0
+            ),
             nights_past_month=stress_factors.get("nights_past_month", 0),
-            schedule_changes_absorbed=stress_factors.get("schedule_changes_absorbed", 0),
-            holidays_worked_this_year=stress_factors.get("holidays_worked_this_year", 0),
+            schedule_changes_absorbed=stress_factors.get(
+                "schedule_changes_absorbed", 0
+            ),
+            holidays_worked_this_year=stress_factors.get(
+                "holidays_worked_this_year", 0
+            ),
             overtime_hours_month=stress_factors.get("overtime_hours_month", 0.0),
             coverage_gap_responses=stress_factors.get("coverage_gap_responses", 0),
             cross_coverage_events=stress_factors.get("cross_coverage_events", 0),
@@ -869,74 +900,88 @@ class HomeostasisMonitor:
 
         # Check for burnout cascade
         high_load_count = sum(
-            1 for m in faculty_metrics
-            if m.state in (AllostasisState.ALLOSTATIC_LOAD, AllostasisState.ALLOSTATIC_OVERLOAD)
+            1
+            for m in faculty_metrics
+            if m.state
+            in (AllostasisState.ALLOSTATIC_LOAD, AllostasisState.ALLOSTATIC_OVERLOAD)
         )
         if high_load_count > 0:
-            high_load_ratio = high_load_count / len(faculty_metrics) if faculty_metrics else 0
+            high_load_ratio = (
+                high_load_count / len(faculty_metrics) if faculty_metrics else 0
+            )
             if high_load_ratio > 0.3:  # >30% faculty with high allostatic load
-                risks.append(PositiveFeedbackRisk(
-                    id=uuid4(),
-                    name="burnout_cascade",
-                    description="High allostatic load may trigger burnout cascade",
-                    detected_at=datetime.now(),
-                    trigger="Multiple faculty with high stress load",
-                    amplification="Burnout leads to sick calls, increasing load on others",
-                    consequence="Accelerating departures and system collapse",
-                    evidence=[
-                        f"{high_load_count}/{len(faculty_metrics)} faculty with high allostatic load",
-                        f"High load ratio: {high_load_ratio:.0%}",
-                    ],
-                    confidence=min(0.95, high_load_ratio + 0.4),
-                    severity=DeviationSeverity.CRITICAL if high_load_ratio > 0.5 else DeviationSeverity.MAJOR,
-                    intervention="Immediately reduce workload for highest-load faculty, consider temporary service reduction",
-                    urgency="immediate" if high_load_ratio > 0.5 else "soon",
-                ))
+                risks.append(
+                    PositiveFeedbackRisk(
+                        id=uuid4(),
+                        name="burnout_cascade",
+                        description="High allostatic load may trigger burnout cascade",
+                        detected_at=datetime.now(),
+                        trigger="Multiple faculty with high stress load",
+                        amplification="Burnout leads to sick calls, increasing load on others",
+                        consequence="Accelerating departures and system collapse",
+                        evidence=[
+                            f"{high_load_count}/{len(faculty_metrics)} faculty with high allostatic load",
+                            f"High load ratio: {high_load_ratio:.0%}",
+                        ],
+                        confidence=min(0.95, high_load_ratio + 0.4),
+                        severity=DeviationSeverity.CRITICAL
+                        if high_load_ratio > 0.5
+                        else DeviationSeverity.MAJOR,
+                        intervention="Immediately reduce workload for highest-load faculty, consider temporary service reduction",
+                        urgency="immediate" if high_load_ratio > 0.5 else "soon",
+                    )
+                )
 
         # Check for coverage gap spiral
         coverage_rate = system_metrics.get("coverage_rate", 1.0)
         if coverage_rate < 0.85:
-            risks.append(PositiveFeedbackRisk(
-                id=uuid4(),
-                name="coverage_spiral",
-                description="Low coverage may trigger quality/error spiral",
-                detected_at=datetime.now(),
-                trigger=f"Coverage at {coverage_rate:.0%}",
-                amplification="Low coverage leads to errors, investigations take time away",
-                consequence="Further coverage degradation, potential accreditation issues",
-                evidence=[
-                    f"Coverage rate: {coverage_rate:.0%}",
-                    "Below safe threshold of 85%",
-                ],
-                confidence=0.7,
-                severity=DeviationSeverity.MAJOR,
-                intervention="Activate backup coverage immediately, consider fallback schedule",
-                urgency="immediate",
-            ))
+            risks.append(
+                PositiveFeedbackRisk(
+                    id=uuid4(),
+                    name="coverage_spiral",
+                    description="Low coverage may trigger quality/error spiral",
+                    detected_at=datetime.now(),
+                    trigger=f"Coverage at {coverage_rate:.0%}",
+                    amplification="Low coverage leads to errors, investigations take time away",
+                    consequence="Further coverage degradation, potential accreditation issues",
+                    evidence=[
+                        f"Coverage rate: {coverage_rate:.0%}",
+                        "Below safe threshold of 85%",
+                    ],
+                    confidence=0.7,
+                    severity=DeviationSeverity.MAJOR,
+                    intervention="Activate backup coverage immediately, consider fallback schedule",
+                    urgency="immediate",
+                )
+            )
 
         # Check for attrition cascade
-        avg_load = statistics.mean(
-            [m.total_allostatic_load for m in faculty_metrics]
-        ) if faculty_metrics else 0
+        avg_load = (
+            statistics.mean([m.total_allostatic_load for m in faculty_metrics])
+            if faculty_metrics
+            else 0
+        )
 
         if avg_load > 60:  # High system-wide stress
-            risks.append(PositiveFeedbackRisk(
-                id=uuid4(),
-                name="attrition_cascade",
-                description="High system stress may trigger departure cascade",
-                detected_at=datetime.now(),
-                trigger=f"Average allostatic load: {avg_load:.1f}",
-                amplification="High stress causes departures, remaining faculty take on more",
-                consequence="Self-reinforcing departure cycle, program viability at risk",
-                evidence=[
-                    f"Average faculty stress: {avg_load:.1f}",
-                    "Above warning threshold of 60",
-                ],
-                confidence=0.6,
-                severity=DeviationSeverity.MAJOR,
-                intervention="Review workload distribution, consider service reduction, protect high-risk faculty",
-                urgency="soon",
-            ))
+            risks.append(
+                PositiveFeedbackRisk(
+                    id=uuid4(),
+                    name="attrition_cascade",
+                    description="High system stress may trigger departure cascade",
+                    detected_at=datetime.now(),
+                    trigger=f"Average allostatic load: {avg_load:.1f}",
+                    amplification="High stress causes departures, remaining faculty take on more",
+                    consequence="Self-reinforcing departure cycle, program viability at risk",
+                    evidence=[
+                        f"Average faculty stress: {avg_load:.1f}",
+                        "Above warning threshold of 60",
+                    ],
+                    confidence=0.6,
+                    severity=DeviationSeverity.MAJOR,
+                    intervention="Review workload distribution, consider service reduction, protect high-risk faculty",
+                    urgency="soon",
+                )
+            )
 
         self.positive_feedback_risks = risks
         return risks
@@ -965,14 +1010,22 @@ class HomeostasisMonitor:
                 evidence = []
 
                 if metrics.volatility > 0.15:
-                    evidence.append(f"High variance: {metrics.volatility:.1%} coefficient of variation")
+                    evidence.append(
+                        f"High variance: {metrics.volatility:.1%} coefficient of variation"
+                    )
                 if metrics.jitter > 0.5:
-                    evidence.append(f"High oscillation: {metrics.jitter:.1%} direction changes")
+                    evidence.append(
+                        f"High oscillation: {metrics.jitter:.1%} direction changes"
+                    )
                 if metrics.distance_to_critical < 0.3:
-                    evidence.append(f"Near critical threshold: {metrics.distance_to_critical:.1%} margin")
+                    evidence.append(
+                        f"Near critical threshold: {metrics.distance_to_critical:.1%} margin"
+                    )
                 if abs(metrics.momentum) > 1.0:
                     direction = "increasing" if metrics.momentum > 0 else "decreasing"
-                    evidence.append(f"Rapid {direction}: {abs(metrics.momentum):.1f}x tolerance/interval")
+                    evidence.append(
+                        f"Rapid {direction}: {abs(metrics.momentum):.1f}x tolerance/interval"
+                    )
 
                 # Determine severity and urgency
                 if metrics.level == VolatilityLevel.CRITICAL:
@@ -1076,9 +1129,13 @@ class HomeostasisMonitor:
                 [m.total_allostatic_load for m in faculty_metrics]
             )
         else:
-            avg_load = statistics.mean(
-                [m.total_allostatic_load for m in self.allostasis_metrics.values()]
-            ) if self.allostasis_metrics else 0.0
+            avg_load = (
+                statistics.mean(
+                    [m.total_allostatic_load for m in self.allostasis_metrics.values()]
+                )
+                if self.allostasis_metrics
+                else 0.0
+            )
 
         # Determine overall state (volatility can escalate state)
         if avg_load > 80:
@@ -1093,13 +1150,21 @@ class HomeostasisMonitor:
         # Build recommendations
         recommendations = []
         if overall_state == AllostasisState.ALLOSTATIC_OVERLOAD:
-            recommendations.append("CRITICAL: System in allostatic overload - immediate intervention required")
+            recommendations.append(
+                "CRITICAL: System in allostatic overload - immediate intervention required"
+            )
             recommendations.append("Activate load shedding to RED or BLACK level")
         elif overall_state == AllostasisState.ALLOSTATIC_LOAD:
-            recommendations.append("System accumulating stress - review workload distribution")
-            recommendations.append("Protect high-load faculty from additional assignments")
+            recommendations.append(
+                "System accumulating stress - review workload distribution"
+            )
+            recommendations.append(
+                "Protect high-load faculty from additional assignments"
+            )
         elif overall_state == AllostasisState.ALLOSTASIS:
-            recommendations.append("System actively compensating - monitor for sustained deviation")
+            recommendations.append(
+                "System actively compensating - monitor for sustained deviation"
+            )
 
         for risk in self.positive_feedback_risks:
             if risk.urgency == "immediate":
@@ -1110,7 +1175,9 @@ class HomeostasisMonitor:
             if alert.urgency == "immediate":
                 recommendations.append(f"VOLATILITY ALERT: {alert.intervention}")
             elif alert.urgency == "soon" and len(recommendations) < 5:
-                recommendations.append(f"Volatility warning: {alert.feedback_loop_name} unstable")
+                recommendations.append(
+                    f"Volatility warning: {alert.feedback_loop_name} unstable"
+                )
 
         return HomeostasisStatus(
             timestamp=datetime.now(),

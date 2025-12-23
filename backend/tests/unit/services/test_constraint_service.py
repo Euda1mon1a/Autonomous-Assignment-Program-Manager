@@ -8,37 +8,32 @@ Tests constraint validation functionality including:
 - Error handling
 """
 
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
-from unittest.mock import Mock
 
-from app.scheduling.constraints.base import (
-    Constraint,
-    ConstraintPriority,
-    ConstraintResult,
-    ConstraintType,
-    ConstraintViolation,
-    HardConstraint,
-    SoftConstraint,
-    SchedulingContext,
-)
-from app.scheduling.constraints.manager import ConstraintManager
+import pytest
+
+from app.models.assignment import Assignment
+from app.models.block import Block
+from app.models.person import Person
 from app.scheduling.constraints.acgme import (
     AvailabilityConstraint,
     EightyHourRuleConstraint,
     OneInSevenRuleConstraint,
     SupervisionRatioConstraint,
 )
+from app.scheduling.constraints.base import (
+    ConstraintType,
+    HardConstraint,
+    SchedulingContext,
+    SoftConstraint,
+)
 from app.scheduling.constraints.capacity import (
-    ClinicCapacityConstraint,
     CoverageConstraint,
     OnePersonPerBlockConstraint,
 )
-from app.scheduling.constraints.equity import EquityConstraint, ContinuityConstraint
-from app.models.assignment import Assignment
-from app.models.block import Block
-from app.models.person import Person
+from app.scheduling.constraints.equity import ContinuityConstraint, EquityConstraint
+from app.scheduling.constraints.manager import ConstraintManager
 
 
 class TestConstraintManager:
@@ -55,9 +50,11 @@ class TestConstraintManager:
     def test_add_multiple_constraints_chaining(self):
         """Test adding multiple constraints with method chaining."""
         manager = ConstraintManager()
-        result = manager.add(AvailabilityConstraint()).add(
-            EightyHourRuleConstraint()
-        ).add(EquityConstraint(weight=10.0))
+        result = (
+            manager.add(AvailabilityConstraint())
+            .add(EightyHourRuleConstraint())
+            .add(EquityConstraint(weight=10.0))
+        )
 
         assert result is manager
         assert len(manager.constraints) == 3
@@ -235,7 +232,10 @@ class TestScheduleConstraintValidation:
         assert result.satisfied is False
         assert len(result.violations) > 0
         assert result.violations[0].constraint_type == ConstraintType.DUTY_HOURS
-        assert "80" in result.violations[0].message or "hour" in result.violations[0].message.lower()
+        assert (
+            "80" in result.violations[0].message
+            or "hour" in result.violations[0].message.lower()
+        )
 
     def test_1_in_7_rule_no_violation(self, db, sample_resident):
         """Test 1-in-7 rule passes when resident has days off."""
@@ -409,7 +409,9 @@ class TestScheduleConstraintValidation:
 class TestSupervisionRatioValidation:
     """Test suite for supervision ratio validation."""
 
-    def test_pgy1_supervision_ratio_compliant(self, db, sample_residents, sample_faculty_members):
+    def test_pgy1_supervision_ratio_compliant(
+        self, db, sample_residents, sample_faculty_members
+    ):
         """Test PGY-1 supervision ratio passes when compliant (1:2)."""
         # Get PGY-1 residents
         pgy1_residents = [r for r in sample_residents if r.pgy_level == 1]
@@ -458,7 +460,9 @@ class TestSupervisionRatioValidation:
         assert result.satisfied is True
         assert len(result.violations) == 0
 
-    def test_pgy1_supervision_ratio_violation(self, db, sample_residents, sample_faculty_members):
+    def test_pgy1_supervision_ratio_violation(
+        self, db, sample_residents, sample_faculty_members
+    ):
         """Test PGY-1 supervision ratio detects violations (too many residents)."""
         # Get PGY-1 residents (need to ensure they exist)
         pgy1_residents = [r for r in sample_residents if r.pgy_level == 1]
@@ -521,7 +525,9 @@ class TestSupervisionRatioValidation:
         assert len(result.violations) > 0
         assert result.violations[0].constraint_type == ConstraintType.SUPERVISION
 
-    def test_pgy23_supervision_ratio_compliant(self, db, sample_residents, sample_faculty_members):
+    def test_pgy23_supervision_ratio_compliant(
+        self, db, sample_residents, sample_faculty_members
+    ):
         """Test PGY-2/3 supervision ratio passes when compliant (1:4)."""
         # Get PGY-2/3 residents
         pgy23_residents = [r for r in sample_residents if r.pgy_level >= 2]
@@ -1019,7 +1025,9 @@ class TestConstraintServiceScheduleIdValidation:
             ScheduleIdValidationError,
         )
 
-        with pytest.raises(ScheduleIdValidationError, match="valid UUID or alphanumeric"):
+        with pytest.raises(
+            ScheduleIdValidationError, match="valid UUID or alphanumeric"
+        ):
             ConstraintService.validate_schedule_id("schedule@invalid.format")
 
 

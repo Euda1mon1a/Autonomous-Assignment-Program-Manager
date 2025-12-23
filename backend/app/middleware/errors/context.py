@@ -3,10 +3,10 @@
 This module captures relevant request context when errors occur,
 enabling better debugging, monitoring, and error grouping.
 """
+
 import hashlib
-import json
-from typing import Any, Dict, Optional
 from datetime import datetime
+from typing import Any
 
 from fastapi import Request
 from starlette.datastructures import Headers
@@ -27,7 +27,7 @@ class ErrorContext:
         self.exc = exc
         self.timestamp = datetime.utcnow()
 
-    def get_request_info(self, include_headers: bool = False) -> Dict[str, Any]:
+    def get_request_info(self, include_headers: bool = False) -> dict[str, Any]:
         """
         Extract relevant request information.
 
@@ -69,7 +69,7 @@ class ErrorContext:
 
         return info
 
-    def _sanitize_headers(self, headers: Headers) -> Dict[str, str]:
+    def _sanitize_headers(self, headers: Headers) -> dict[str, str]:
         """
         Sanitize request headers to remove sensitive information.
 
@@ -97,7 +97,7 @@ class ErrorContext:
 
         return sanitized
 
-    def get_exception_info(self, include_args: bool = True) -> Dict[str, Any]:
+    def get_exception_info(self, include_args: bool = True) -> dict[str, Any]:
         """
         Extract exception information.
 
@@ -116,9 +116,7 @@ class ErrorContext:
         # Add exception arguments if requested
         if include_args and hasattr(self.exc, "args"):
             # Filter out potentially sensitive args
-            info["args"] = [
-                self._sanitize_arg(arg) for arg in self.exc.args
-            ]
+            info["args"] = [self._sanitize_arg(arg) for arg in self.exc.args]
 
         # Add custom exception attributes
         if hasattr(self.exc, "status_code"):
@@ -160,7 +158,7 @@ class ErrorContext:
 
         return arg_str
 
-    def get_environment_info(self) -> Dict[str, Any]:
+    def get_environment_info(self) -> dict[str, Any]:
         """
         Get environment information.
 
@@ -182,7 +180,7 @@ class ErrorContext:
         self,
         include_headers: bool = False,
         include_exception_args: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Convert error context to dictionary.
 
@@ -332,7 +330,7 @@ class ErrorRateLimiter:
         """
         self.max_errors = max_errors
         self.window_seconds = window_seconds
-        self._error_counts: Dict[str, list] = {}
+        self._error_counts: dict[str, list] = {}
 
     def should_report(self, fingerprint: str) -> bool:
         """
@@ -387,7 +385,7 @@ class ErrorRateLimiter:
 
 
 # Global rate limiter instance
-_rate_limiter: Optional[ErrorRateLimiter] = None
+_rate_limiter: ErrorRateLimiter | None = None
 
 
 def get_rate_limiter() -> ErrorRateLimiter:

@@ -9,14 +9,11 @@ Tests coverage for health monitoring endpoints including:
 - Component status reporting
 - Error scenarios and fault tolerance
 """
-from unittest.mock import MagicMock, patch
 
-import pytest
+from unittest.mock import patch
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-
-from app.main import app
-
 
 # ============================================================================
 # Test Classes
@@ -193,7 +190,9 @@ class TestResilienceHealthEndpoint:
         assert "status" in response.json()
 
     @patch("app.main.get_metrics")
-    def test_resilience_health_degraded_on_error(self, mock_get_metrics, client: TestClient):
+    def test_resilience_health_degraded_on_error(
+        self, mock_get_metrics, client: TestClient
+    ):
         """Test resilience health returns degraded status on error."""
         # Mock an exception during metrics retrieval
         mock_get_metrics.side_effect = Exception("Metrics unavailable")
@@ -302,7 +301,9 @@ class TestHealthCheckComponentStatus:
             # All values should be JSON-serializable types
             for key, value in data.items():
                 assert isinstance(key, str)
-                assert isinstance(value, (str, bool, int, float, list, dict, type(None)))
+                assert isinstance(
+                    value, (str, bool, int, float, list, dict, type(None))
+                )
 
 
 class TestHealthCheckErrorScenarios:
@@ -317,7 +318,9 @@ class TestHealthCheckErrorScenarios:
         assert response.status_code in [200, 500, 503]
 
     @patch("app.main.get_metrics")
-    def test_resilience_health_error_handling(self, mock_get_metrics, client: TestClient):
+    def test_resilience_health_error_handling(
+        self, mock_get_metrics, client: TestClient
+    ):
         """Test resilience health handles errors gracefully."""
         # Simulate metrics error
         mock_get_metrics.side_effect = RuntimeError("Metrics service down")
@@ -407,6 +410,7 @@ class TestHealthCheckIntegration:
         """Test health checks remain responsive during database operations."""
         # Perform a database operation
         from app.models.person import Person
+
         people = db.query(Person).all()
         assert len(people) > 0
 
@@ -460,8 +464,10 @@ class TestHealthCheckIntegration:
             assert "application/json" in response.headers["content-type"]
 
             # Should not leak server information (security)
-            assert "server" not in response.headers or \
-                   "FastAPI" not in response.headers.get("server", "")
+            assert (
+                "server" not in response.headers
+                or "FastAPI" not in response.headers.get("server", "")
+            )
 
 
 class TestHealthCheckMonitoring:
@@ -509,6 +515,7 @@ class TestHealthCheckMonitoring:
 
         # Should be fast
         import time
+
         start = time.time()
         response = client.get("/health")
         elapsed = time.time() - start

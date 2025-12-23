@@ -10,7 +10,6 @@ Manages multiple circuit breakers for different services:
 """
 
 import logging
-from typing import Optional
 
 from app.resilience.circuit_breaker.breaker import (
     CircuitBreaker,
@@ -75,14 +74,14 @@ class CircuitBreakerRegistry:
     def register(
         self,
         name: str,
-        failure_threshold: Optional[int] = None,
-        success_threshold: Optional[int] = None,
-        timeout_seconds: Optional[float] = None,
-        call_timeout_seconds: Optional[float] = None,
-        half_open_max_calls: Optional[int] = None,
-        excluded_exceptions: Optional[tuple[type[Exception], ...]] = None,
-        fallback_function: Optional[callable] = None,
-        config: Optional[CircuitBreakerConfig] = None,
+        failure_threshold: int | None = None,
+        success_threshold: int | None = None,
+        timeout_seconds: float | None = None,
+        call_timeout_seconds: float | None = None,
+        half_open_max_calls: int | None = None,
+        excluded_exceptions: tuple[type[Exception], ...] | None = None,
+        fallback_function: callable | None = None,
+        config: CircuitBreakerConfig | None = None,
     ) -> CircuitBreaker:
         """
         Register a new circuit breaker.
@@ -213,10 +212,7 @@ class CircuitBreakerRegistry:
         Returns:
             Dictionary mapping names to status dicts
         """
-        return {
-            name: breaker.get_status()
-            for name, breaker in self._breakers.items()
-        }
+        return {name: breaker.get_status() for name, breaker in self._breakers.items()}
 
     def reset_all(self):
         """Reset all circuit breakers to initial state."""
@@ -296,12 +292,8 @@ class CircuitBreakerRegistry:
         open_breakers = self.get_open_breakers()
         half_open_breakers = self.get_half_open_breakers()
 
-        total_requests = sum(
-            status["total_requests"] for status in statuses.values()
-        )
-        total_failures = sum(
-            status["failed_requests"] for status in statuses.values()
-        )
+        total_requests = sum(status["total_requests"] for status in statuses.values())
+        total_failures = sum(status["failed_requests"] for status in statuses.values())
         total_rejections = sum(
             status["rejected_requests"] for status in statuses.values()
         )
@@ -325,7 +317,7 @@ class CircuitBreakerRegistry:
 
 
 # Global registry instance
-_registry: Optional[CircuitBreakerRegistry] = None
+_registry: CircuitBreakerRegistry | None = None
 
 
 def get_registry() -> CircuitBreakerRegistry:

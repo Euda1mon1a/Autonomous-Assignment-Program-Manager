@@ -1,4 +1,5 @@
 """Notification system for schedule alerts and updates."""
+
 from sqlalchemy.orm import Session
 
 from app.notifications.channels import (

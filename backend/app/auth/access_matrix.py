@@ -26,10 +26,11 @@ Usage:
 
 import json
 import logging
+from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException, status
@@ -57,6 +58,7 @@ class UserRole(str, Enum):
     - MSA: Medical Support Assistant
     - RESIDENT: Basic view + self-management
     """
+
     ADMIN = "admin"
     COORDINATOR = "coordinator"
     FACULTY = "faculty"
@@ -69,6 +71,7 @@ class UserRole(str, Enum):
 
 class ResourceType(str, Enum):
     """Resource types in the system."""
+
     # Core scheduling resources
     SCHEDULE = "schedule"
     ASSIGNMENT = "assignment"
@@ -118,6 +121,7 @@ class ResourceType(str, Enum):
 
 class PermissionAction(str, Enum):
     """Permission actions that can be performed on resources."""
+
     CREATE = "create"
     READ = "read"
     UPDATE = "update"
@@ -137,26 +141,28 @@ class PermissionContext(BaseModel):
 
     Allows for context-aware permission checks (e.g., "own" resources).
     """
+
     user_id: UUID
     user_role: UserRole
-    resource_owner_id: Optional[UUID] = None
-    resource_metadata: Dict[str, Any] = Field(default_factory=dict)
-    ip_address: Optional[str] = None
+    resource_owner_id: UUID | None = None
+    resource_metadata: dict[str, Any] = Field(default_factory=dict)
+    ip_address: str | None = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
 class PermissionAuditEntry(BaseModel):
     """Audit entry for permission changes."""
+
     id: UUID = Field(default_factory=uuid4)
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     action: str  # "granted", "revoked", "checked", "denied"
     role: UserRole
     resource: ResourceType
     permission: PermissionAction
-    user_id: Optional[UUID] = None
-    context: Optional[Dict[str, Any]] = None
+    user_id: UUID | None = None
+    context: dict[str, Any] | None = None
     result: bool
-    reason: Optional[str] = None
+    reason: str | None = None
 
 
 # ============================================================================
@@ -172,7 +178,7 @@ class RoleHierarchy:
     """
 
     # Role hierarchy map (role -> parent roles)
-    HIERARCHY: Dict[UserRole, Set[UserRole]] = {
+    HIERARCHY: dict[UserRole, set[UserRole]] = {
         UserRole.ADMIN: set(),  # Top level, no parents
         UserRole.COORDINATOR: {UserRole.ADMIN},
         UserRole.FACULTY: {UserRole.ADMIN, UserRole.COORDINATOR},
@@ -184,7 +190,7 @@ class RoleHierarchy:
     }
 
     @classmethod
-    def get_inherited_roles(cls, role: UserRole) -> Set[UserRole]:
+    def get_inherited_roles(cls, role: UserRole) -> set[UserRole]:
         """
         Get all roles that the given role inherits from.
 
@@ -232,253 +238,232 @@ class AccessControlMatrix:
     """
 
     # Core permission matrix: {role: {resource: {actions}}}
-    PERMISSION_MATRIX: Dict[UserRole, Dict[ResourceType, Set[PermissionAction]]] = {
+    PERMISSION_MATRIX: dict[UserRole, dict[ResourceType, set[PermissionAction]]] = {
         # ADMIN: Full access to everything
         UserRole.ADMIN: {
             resource: {action for action in PermissionAction}
             for resource in ResourceType
         },
-
         # COORDINATOR: Schedule management and oversight
         UserRole.COORDINATOR: {
             ResourceType.SCHEDULE: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE,
-                PermissionAction.DELETE, PermissionAction.LIST, PermissionAction.EXPORT,
-                PermissionAction.IMPORT, PermissionAction.EXECUTE
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.LIST,
+                PermissionAction.EXPORT,
+                PermissionAction.IMPORT,
+                PermissionAction.EXECUTE,
             },
             ResourceType.ASSIGNMENT: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE,
-                PermissionAction.DELETE, PermissionAction.LIST, PermissionAction.MANAGE
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.LIST,
+                PermissionAction.MANAGE,
             },
             ResourceType.BLOCK: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE,
-                PermissionAction.DELETE, PermissionAction.LIST
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.LIST,
             },
             ResourceType.ROTATION: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE,
-                PermissionAction.DELETE, PermissionAction.LIST
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.LIST,
             },
             ResourceType.PERSON: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE,
-                PermissionAction.DELETE, PermissionAction.LIST
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.LIST,
             },
             ResourceType.RESIDENT: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE,
-                PermissionAction.DELETE, PermissionAction.LIST
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.LIST,
             },
             ResourceType.FACULTY_MEMBER: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE,
-                PermissionAction.DELETE, PermissionAction.LIST
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.LIST,
             },
             ResourceType.ABSENCE: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE,
-                PermissionAction.DELETE, PermissionAction.LIST, PermissionAction.APPROVE,
-                PermissionAction.REJECT
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.LIST,
+                PermissionAction.APPROVE,
+                PermissionAction.REJECT,
             },
             ResourceType.LEAVE: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE,
-                PermissionAction.DELETE, PermissionAction.LIST, PermissionAction.APPROVE,
-                PermissionAction.REJECT
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.LIST,
+                PermissionAction.APPROVE,
+                PermissionAction.REJECT,
             },
             ResourceType.SWAP: {
-                PermissionAction.READ, PermissionAction.UPDATE, PermissionAction.LIST,
-                PermissionAction.APPROVE, PermissionAction.REJECT, PermissionAction.EXECUTE
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.LIST,
+                PermissionAction.APPROVE,
+                PermissionAction.REJECT,
+                PermissionAction.EXECUTE,
             },
             ResourceType.SWAP_REQUEST: {
-                PermissionAction.READ, PermissionAction.UPDATE, PermissionAction.LIST,
-                PermissionAction.APPROVE, PermissionAction.REJECT
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.LIST,
+                PermissionAction.APPROVE,
+                PermissionAction.REJECT,
             },
             ResourceType.CONFLICT: {
-                PermissionAction.READ, PermissionAction.UPDATE, PermissionAction.LIST,
-                PermissionAction.MANAGE
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.LIST,
+                PermissionAction.MANAGE,
             },
             ResourceType.CONFLICT_ALERT: {
-                PermissionAction.READ, PermissionAction.UPDATE, PermissionAction.LIST,
-                PermissionAction.MANAGE
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.LIST,
+                PermissionAction.MANAGE,
             },
             ResourceType.REPORT: {
-                PermissionAction.READ, PermissionAction.LIST, PermissionAction.EXPORT
+                PermissionAction.READ,
+                PermissionAction.LIST,
+                PermissionAction.EXPORT,
             },
-            ResourceType.ANALYTICS: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
+            ResourceType.ANALYTICS: {PermissionAction.READ, PermissionAction.LIST},
             ResourceType.NOTIFICATION: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.LIST
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.LIST,
             },
             ResourceType.RESILIENCE_METRIC: {
-                PermissionAction.READ, PermissionAction.LIST
+                PermissionAction.READ,
+                PermissionAction.LIST,
             },
             ResourceType.CONTINGENCY_PLAN: {
-                PermissionAction.READ, PermissionAction.UPDATE, PermissionAction.LIST
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.LIST,
             },
         },
-
         # FACULTY: View schedules, manage own availability and swaps
         UserRole.FACULTY: {
-            ResourceType.SCHEDULE: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.ASSIGNMENT: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.BLOCK: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.ROTATION: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
+            ResourceType.SCHEDULE: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.ASSIGNMENT: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.BLOCK: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.ROTATION: {PermissionAction.READ, PermissionAction.LIST},
             ResourceType.PERSON: {
                 PermissionAction.READ  # Own profile
             },
             ResourceType.ABSENCE: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
             },
             ResourceType.LEAVE: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
             },
             ResourceType.SWAP: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE,
-                PermissionAction.LIST
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.LIST,
             },
             ResourceType.SWAP_REQUEST: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE,
-                PermissionAction.LIST, PermissionAction.APPROVE, PermissionAction.REJECT
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.LIST,
+                PermissionAction.APPROVE,
+                PermissionAction.REJECT,
             },
-            ResourceType.PROCEDURE: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.CREDENTIAL: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.CERTIFICATION: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.NOTIFICATION: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
+            ResourceType.PROCEDURE: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.CREDENTIAL: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.CERTIFICATION: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.NOTIFICATION: {PermissionAction.READ, PermissionAction.LIST},
         },
-
         # CLINICAL_STAFF: View access to schedules and manifests
         UserRole.CLINICAL_STAFF: {
-            ResourceType.SCHEDULE: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.ASSIGNMENT: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.BLOCK: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.ROTATION: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.PERSON: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.NOTIFICATION: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
+            ResourceType.SCHEDULE: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.ASSIGNMENT: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.BLOCK: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.ROTATION: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.PERSON: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.NOTIFICATION: {PermissionAction.READ, PermissionAction.LIST},
         },
-
         # RN, LPN, MSA: Same as CLINICAL_STAFF (inherit via hierarchy)
         UserRole.RN: {
-            ResourceType.SCHEDULE: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.ASSIGNMENT: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.BLOCK: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.ROTATION: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.PERSON: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.NOTIFICATION: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
+            ResourceType.SCHEDULE: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.ASSIGNMENT: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.BLOCK: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.ROTATION: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.PERSON: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.NOTIFICATION: {PermissionAction.READ, PermissionAction.LIST},
         },
         UserRole.LPN: {
-            ResourceType.SCHEDULE: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.ASSIGNMENT: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.BLOCK: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.ROTATION: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.PERSON: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.NOTIFICATION: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
+            ResourceType.SCHEDULE: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.ASSIGNMENT: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.BLOCK: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.ROTATION: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.PERSON: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.NOTIFICATION: {PermissionAction.READ, PermissionAction.LIST},
         },
         UserRole.MSA: {
-            ResourceType.SCHEDULE: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.ASSIGNMENT: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.BLOCK: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.ROTATION: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.PERSON: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.NOTIFICATION: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
+            ResourceType.SCHEDULE: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.ASSIGNMENT: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.BLOCK: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.ROTATION: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.PERSON: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.NOTIFICATION: {PermissionAction.READ, PermissionAction.LIST},
         },
-
         # RESIDENT: View own schedule, manage own swaps
         UserRole.RESIDENT: {
-            ResourceType.SCHEDULE: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.ASSIGNMENT: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.BLOCK: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.ROTATION: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
+            ResourceType.SCHEDULE: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.ASSIGNMENT: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.BLOCK: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.ROTATION: {PermissionAction.READ, PermissionAction.LIST},
             ResourceType.PERSON: {
                 PermissionAction.READ  # Own profile
             },
-            ResourceType.ABSENCE: {
-                PermissionAction.CREATE, PermissionAction.READ
-            },
-            ResourceType.LEAVE: {
-                PermissionAction.CREATE, PermissionAction.READ
-            },
+            ResourceType.ABSENCE: {PermissionAction.CREATE, PermissionAction.READ},
+            ResourceType.LEAVE: {PermissionAction.CREATE, PermissionAction.READ},
             ResourceType.SWAP: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE,
-                PermissionAction.LIST
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.LIST,
             },
             ResourceType.SWAP_REQUEST: {
-                PermissionAction.CREATE, PermissionAction.READ, PermissionAction.UPDATE,
-                PermissionAction.LIST, PermissionAction.APPROVE, PermissionAction.REJECT
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.LIST,
+                PermissionAction.APPROVE,
+                PermissionAction.REJECT,
             },
-            ResourceType.CONFLICT: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
-            ResourceType.NOTIFICATION: {
-                PermissionAction.READ, PermissionAction.LIST
-            },
+            ResourceType.CONFLICT: {PermissionAction.READ, PermissionAction.LIST},
+            ResourceType.NOTIFICATION: {PermissionAction.READ, PermissionAction.LIST},
         },
     }
 
@@ -490,8 +475,8 @@ class AccessControlMatrix:
             enable_audit: Whether to enable audit logging
         """
         self.enable_audit = enable_audit
-        self.audit_log: List[PermissionAuditEntry] = []
-        self._context_evaluators: Dict[str, Callable] = {}
+        self.audit_log: list[PermissionAuditEntry] = []
+        self._context_evaluators: dict[str, Callable] = {}
         self._register_default_context_evaluators()
 
     def _register_default_context_evaluators(self) -> None:
@@ -518,7 +503,7 @@ class AccessControlMatrix:
         role: UserRole | str,
         resource: ResourceType | str,
         action: PermissionAction | str,
-        context: Optional[PermissionContext] = None,
+        context: PermissionContext | None = None,
     ) -> bool:
         """
         Check if a role has permission to perform an action on a resource.
@@ -538,7 +523,9 @@ class AccessControlMatrix:
                 role = UserRole(role)
             except ValueError:
                 logger.warning(f"Invalid role: {role}")
-                self._audit_permission_check(role, resource, action, False, "Invalid role")
+                self._audit_permission_check(
+                    role, resource, action, False, "Invalid role"
+                )
                 return False
 
         if isinstance(resource, str):
@@ -546,7 +533,9 @@ class AccessControlMatrix:
                 resource = ResourceType(resource)
             except ValueError:
                 logger.warning(f"Invalid resource: {resource}")
-                self._audit_permission_check(role, resource, action, False, "Invalid resource")
+                self._audit_permission_check(
+                    role, resource, action, False, "Invalid resource"
+                )
                 return False
 
         if isinstance(action, str):
@@ -554,7 +543,9 @@ class AccessControlMatrix:
                 action = PermissionAction(action)
             except ValueError:
                 logger.warning(f"Invalid action: {action}")
-                self._audit_permission_check(role, resource, action, False, "Invalid action")
+                self._audit_permission_check(
+                    role, resource, action, False, "Invalid action"
+                )
                 return False
 
         # Check static permissions in matrix
@@ -570,14 +561,19 @@ class AccessControlMatrix:
 
         # Apply context-aware checks if context is provided
         if context and has_static_permission:
-            has_permission = self._check_context_permission(role, resource, action, context)
+            has_permission = self._check_context_permission(
+                role, resource, action, context
+            )
         else:
             has_permission = has_static_permission
 
         # Audit the permission check
         self._audit_permission_check(
-            role, resource, action, has_permission,
-            context=context.model_dump() if context else None
+            role,
+            resource,
+            action,
+            has_permission,
+            context=context.model_dump() if context else None,
         )
 
         return has_permission
@@ -593,12 +589,16 @@ class AccessControlMatrix:
         resource_permissions = role_permissions.get(resource, set())
 
         # MANAGE action includes all CRUD operations
-        if action in {
-            PermissionAction.CREATE,
-            PermissionAction.READ,
-            PermissionAction.UPDATE,
-            PermissionAction.DELETE,
-        } and PermissionAction.MANAGE in resource_permissions:
+        if (
+            action
+            in {
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+            }
+            and PermissionAction.MANAGE in resource_permissions
+        ):
             return True
 
         return action in resource_permissions
@@ -637,8 +637,8 @@ class AccessControlMatrix:
         resource: ResourceType | str,
         action: PermissionAction | str,
         result: bool,
-        reason: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None,
+        reason: str | None = None,
+        context: dict[str, Any] | None = None,
     ) -> None:
         """Audit a permission check."""
         if not self.enable_audit:
@@ -647,8 +647,12 @@ class AccessControlMatrix:
         entry = PermissionAuditEntry(
             action="checked",
             role=role if isinstance(role, UserRole) else UserRole(role),
-            resource=resource if isinstance(resource, ResourceType) else ResourceType(resource),
-            permission=action if isinstance(action, PermissionAction) else PermissionAction(action),
+            resource=resource
+            if isinstance(resource, ResourceType)
+            else ResourceType(resource),
+            permission=action
+            if isinstance(action, PermissionAction)
+            else PermissionAction(action),
             result=result,
             reason=reason,
             context=context,
@@ -660,7 +664,9 @@ class AccessControlMatrix:
             f"action={action}, result={result}"
         )
 
-    def get_role_permissions(self, role: UserRole | str) -> Dict[ResourceType, Set[PermissionAction]]:
+    def get_role_permissions(
+        self, role: UserRole | str
+    ) -> dict[ResourceType, set[PermissionAction]]:
         """
         Get all permissions for a role, including inherited permissions.
 
@@ -694,7 +700,7 @@ class AccessControlMatrix:
 
     def get_resource_permissions(
         self, resource: ResourceType | str
-    ) -> Dict[UserRole, Set[PermissionAction]]:
+    ) -> dict[UserRole, set[PermissionAction]]:
         """
         Get all role permissions for a specific resource.
 
@@ -750,7 +756,9 @@ class AccessControlMatrix:
         lines = ["Role,Resource,Actions"]
         for role in UserRole:
             role_perms = self.get_role_permissions(role)
-            for resource, actions in sorted(role_perms.items(), key=lambda x: x[0].value):
+            for resource, actions in sorted(
+                role_perms.items(), key=lambda x: x[0].value
+            ):
                 action_str = ";".join(sorted(a.value for a in actions))
                 lines.append(f"{role.value},{resource.value},{action_str}")
         return "\n".join(lines)
@@ -771,7 +779,9 @@ class AccessControlMatrix:
             lines.append("|----------|---------|")
 
             role_perms = self.get_role_permissions(role)
-            for resource, actions in sorted(role_perms.items(), key=lambda x: x[0].value):
+            for resource, actions in sorted(
+                role_perms.items(), key=lambda x: x[0].value
+            ):
                 action_str = ", ".join(sorted(a.value for a in actions))
                 lines.append(f"| {resource.value} | {action_str} |")
 
@@ -781,10 +791,10 @@ class AccessControlMatrix:
 
     def get_audit_log(
         self,
-        limit: Optional[int] = None,
-        role: Optional[UserRole] = None,
-        resource: Optional[ResourceType] = None,
-    ) -> List[PermissionAuditEntry]:
+        limit: int | None = None,
+        role: UserRole | None = None,
+        resource: ResourceType | None = None,
+    ) -> list[PermissionAuditEntry]:
         """
         Get audit log entries with optional filtering.
 
@@ -819,7 +829,7 @@ class AccessControlMatrix:
 
 
 # Global ACM instance
-_acm_instance: Optional[AccessControlMatrix] = None
+_acm_instance: AccessControlMatrix | None = None
 
 
 def get_acm() -> AccessControlMatrix:
@@ -834,7 +844,7 @@ def has_permission(
     role: UserRole | str,
     resource: ResourceType | str,
     action: PermissionAction | str,
-    context: Optional[PermissionContext] = None,
+    context: PermissionContext | None = None,
 ) -> bool:
     """
     Convenience function to check permissions using global ACM.
@@ -859,7 +869,7 @@ class PermissionDenied(HTTPException):
         self,
         resource: ResourceType | str,
         action: PermissionAction | str,
-        detail: Optional[str] = None,
+        detail: str | None = None,
     ):
         """
         Initialize permission denied exception.
@@ -881,7 +891,7 @@ class PermissionDenied(HTTPException):
 def require_permission(
     resource: ResourceType | str,
     action: PermissionAction | str,
-    context_builder: Optional[Callable] = None,
+    context_builder: Callable | None = None,
 ):
     """
     Decorator to require specific permissions for a route.
@@ -896,6 +906,7 @@ def require_permission(
         async def create_schedule(user: User = Depends(get_current_user)):
             ...
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -903,8 +914,7 @@ def require_permission(
             user = kwargs.get("current_user") or kwargs.get("user")
             if not user:
                 raise PermissionDenied(
-                    resource, action,
-                    detail="Authentication required"
+                    resource, action, detail="Authentication required"
                 )
 
             # Build context if builder provided
@@ -919,4 +929,5 @@ def require_permission(
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator

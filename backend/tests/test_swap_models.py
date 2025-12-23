@@ -1,4 +1,5 @@
 """Tests for FMIT swap models."""
+
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
@@ -133,9 +134,7 @@ class TestSwapRecordModel:
         assert swap.target_faculty_id == target.id
 
         # Verify we can query and find the swap
-        retrieved_swap = db.query(SwapRecord).filter(
-            SwapRecord.id == swap.id
-        ).first()
+        retrieved_swap = db.query(SwapRecord).filter(SwapRecord.id == swap.id).first()
         assert retrieved_swap is not None
         assert retrieved_swap.source_faculty_id == source.id
 

@@ -18,14 +18,13 @@ import asyncio
 import enum
 import logging
 import multiprocessing
-import os
 import random
 import time
 import uuid
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Callable, Optional
+from typing import Any
 
 from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String
 from sqlalchemy.orm import Session
@@ -167,9 +166,9 @@ class ChaosExperimentConfig:
     max_duration_minutes: int = 15
     auto_rollback: bool = True
     slo_thresholds: list[SLOThreshold] = field(default_factory=list)
-    target_component: Optional[str] = None  # Specific component to target
-    target_zone_id: Optional[uuid.UUID] = None  # Specific zone (for zone isolation)
-    target_user_id: Optional[uuid.UUID] = None  # Specific user (for user isolation)
+    target_component: str | None = None  # Specific component to target
+    target_zone_id: uuid.UUID | None = None  # Specific zone (for zone isolation)
+    target_user_id: uuid.UUID | None = None  # Specific user (for user isolation)
     injector_params: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -181,12 +180,12 @@ class ExperimentResult:
     experiment_id: uuid.UUID
     status: ChaosExperimentStatus
     started_at: datetime
-    ended_at: Optional[datetime] = None
+    ended_at: datetime | None = None
     total_injections: int = 0
     successful_injections: int = 0
     failed_injections: int = 0
     slo_breaches: list[str] = field(default_factory=list)
-    rollback_reason: Optional[str] = None
+    rollback_reason: str | None = None
     observations: list[str] = field(default_factory=list)
     metrics_snapshot: dict[str, Any] = field(default_factory=dict)
 
@@ -354,7 +353,7 @@ class LatencyInjector:
         min_ms: int = 100,
         max_ms: int = 1000,
         probability: float = 1.0,
-        target_function: Optional[str] = None,
+        target_function: str | None = None,
     ):
         """
         Initialize latency injector.
@@ -430,7 +429,7 @@ class ErrorInjector:
         error_type: type[Exception] = Exception,
         error_message: str = "Chaos engineering: injected error",
         probability: float = 0.1,
-        target_operations: Optional[list[str]] = None,
+        target_operations: list[str] | None = None,
     ):
         """
         Initialize error injector.
@@ -447,7 +446,7 @@ class ErrorInjector:
         self.target_operations = target_operations or []
         self.active = False
 
-    def should_inject(self, operation_name: Optional[str] = None) -> bool:
+    def should_inject(self, operation_name: str | None = None) -> bool:
         """
         Determine if error should be injected.
 
@@ -465,7 +464,7 @@ class ErrorInjector:
 
         return random.random() < self.probability
 
-    def inject(self, operation_name: Optional[str] = None) -> None:
+    def inject(self, operation_name: str | None = None) -> None:
         """
         Inject an error if conditions are met.
 
@@ -484,7 +483,7 @@ class ErrorInjector:
             raise self.error_type(self.error_message)
 
     @contextmanager
-    def context(self, operation_name: Optional[str] = None):
+    def context(self, operation_name: str | None = None):
         """Context manager for error injection."""
         self.active = True
         try:
@@ -505,7 +504,7 @@ class CPUStressor:
         self,
         cpu_percent: int = 50,
         duration_seconds: int = 10,
-        num_processes: Optional[int] = None,
+        num_processes: int | None = None,
     ):
         """
         Initialize CPU stressor.
@@ -844,7 +843,7 @@ class ChaosExperiment:
     def __init__(
         self,
         config: ChaosExperimentConfig,
-        db: Optional[Session] = None,
+        db: Session | None = None,
     ):
         """
         Initialize chaos experiment.
@@ -858,8 +857,8 @@ class ChaosExperiment:
         self.experiment_id = uuid.uuid4()
         self.status = ChaosExperimentStatus.PENDING
         self.slo_monitor = SLOMonitor(config.slo_thresholds)
-        self.started_at: Optional[datetime] = None
-        self.ended_at: Optional[datetime] = None
+        self.started_at: datetime | None = None
+        self.ended_at: datetime | None = None
         self.observations: list[str] = []
         self.injection_count = 0
         self.successful_injections = 0
@@ -868,9 +867,9 @@ class ChaosExperiment:
 
     def should_apply_to_request(
         self,
-        user_id: Optional[uuid.UUID] = None,
-        component: Optional[str] = None,
-        zone_id: Optional[uuid.UUID] = None,
+        user_id: uuid.UUID | None = None,
+        component: str | None = None,
+        zone_id: uuid.UUID | None = None,
     ) -> bool:
         """
         Determine if chaos should be applied to a specific request.

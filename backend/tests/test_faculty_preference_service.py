@@ -1,4 +1,5 @@
 """Comprehensive tests for FacultyPreferenceService."""
+
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
@@ -43,9 +44,9 @@ def multiple_faculty(db: Session) -> list[Person]:
     for i in range(5):
         faculty = Person(
             id=uuid4(),
-            name=f"Dr. Faculty {i+1}",
+            name=f"Dr. Faculty {i + 1}",
             type="faculty",
-            email=f"faculty{i+1}@hospital.org",
+            email=f"faculty{i + 1}@hospital.org",
             performs_procedures=True,
             specialties=["General"],
         )
@@ -130,9 +131,11 @@ class TestGetOrCreatePreferences:
         result = faculty_preference_service.get_or_create_preferences(faculty_member.id)
 
         # Verify it's persisted by querying directly
-        saved = db.query(FacultyPreference).filter(
-            FacultyPreference.faculty_id == faculty_member.id
-        ).first()
+        saved = (
+            db.query(FacultyPreference)
+            .filter(FacultyPreference.faculty_id == faculty_member.id)
+            .first()
+        )
 
         assert saved is not None
         assert saved.id == result.id
@@ -368,6 +371,7 @@ class TestUpdatePreferences:
 
         # Wait a tiny bit to ensure timestamp difference
         import time
+
         time.sleep(0.01)
 
         result = faculty_preference_service.update_preferences(
@@ -1368,7 +1372,9 @@ class TestSwapAutoMatching:
     """Tests for swap auto-matching functionality."""
 
     @pytest.fixture
-    def swap_requests(self, db: Session, multiple_faculty: list[Person]) -> list[SwapRecord]:
+    def swap_requests(
+        self, db: Session, multiple_faculty: list[Person]
+    ) -> list[SwapRecord]:
         """Create multiple swap requests for testing."""
         swap1 = SwapRecord(
             id=uuid4(),
@@ -1637,9 +1643,9 @@ class TestAutoSuggestSwaps:
         for i in range(4):
             block = Block(
                 id=uuid4(),
-                name=f"Week {i+1}",
-                start_date=date.today() + timedelta(weeks=i+1),
-                end_date=date.today() + timedelta(weeks=i+1, days=6),
+                name=f"Week {i + 1}",
+                start_date=date.today() + timedelta(weeks=i + 1),
+                end_date=date.today() + timedelta(weeks=i + 1, days=6),
             )
             blocks.append(block)
             db.add(block)
@@ -1696,7 +1702,9 @@ class TestAutoSuggestSwaps:
         db.add_all([pref_0, pref_1])
         db.commit()
 
-        suggestions = faculty_preference_service.auto_suggest_swaps(multiple_faculty[0].id)
+        suggestions = faculty_preference_service.auto_suggest_swaps(
+            multiple_faculty[0].id
+        )
 
         # Should suggest swapping with person 1
         assert len(suggestions) >= 1
@@ -1725,7 +1733,9 @@ class TestAutoSuggestSwaps:
         db.add(pref_0)
         db.commit()
 
-        suggestions = faculty_preference_service.auto_suggest_swaps(multiple_faculty[0].id)
+        suggestions = faculty_preference_service.auto_suggest_swaps(
+            multiple_faculty[0].id
+        )
 
         # Should have no suggestions
         assert len(suggestions) == 0
@@ -1739,8 +1749,7 @@ class TestAutoSuggestSwaps:
     ):
         """Test that auto_suggest_swaps respects the limit parameter."""
         suggestions = faculty_preference_service.auto_suggest_swaps(
-            multiple_faculty[0].id,
-            limit=2
+            multiple_faculty[0].id, limit=2
         )
 
         assert len(suggestions) <= 2
@@ -1800,7 +1809,9 @@ class TestLearnFromSwapHistory:
         db.add_all([approval1, approval2])
         db.commit()
 
-        insights = faculty_preference_service.learn_from_swap_history(multiple_faculty[0].id)
+        insights = faculty_preference_service.learn_from_swap_history(
+            multiple_faculty[0].id
+        )
 
         assert "acceptance_rate" in insights
         assert "commonly_desired_weeks" in insights
@@ -1818,7 +1829,9 @@ class TestLearnFromSwapHistory:
         multiple_faculty: list[Person],
     ):
         """Test learning from swap history with no data."""
-        insights = faculty_preference_service.learn_from_swap_history(multiple_faculty[0].id)
+        insights = faculty_preference_service.learn_from_swap_history(
+            multiple_faculty[0].id
+        )
 
         assert insights["acceptance_rate"] == 0.5  # Neutral default
         assert insights["commonly_desired_weeks"] == []
@@ -1878,7 +1891,9 @@ class TestLearnFromSwapHistory:
         db.add_all([approval1, approval2])
         db.commit()
 
-        insights = faculty_preference_service.learn_from_swap_history(multiple_faculty[0].id)
+        insights = faculty_preference_service.learn_from_swap_history(
+            multiple_faculty[0].id
+        )
 
         assert insights["total_swaps"] == 2
         assert insights["acceptance_rate"] == 0.5  # 1 approved, 1 rejected
@@ -1900,14 +1915,14 @@ class TestLearnFromSwapHistory:
             target_week=date(2024, 1, 8),
             swap_type=SwapType.ONE_TO_ONE,
             status=SwapStatus.EXECUTED,
-            requested_at=datetime.utcnow() - timedelta(days=400),  # More than 365 days ago
+            requested_at=datetime.utcnow()
+            - timedelta(days=400),  # More than 365 days ago
         )
         db.add(old_swap)
         db.commit()
 
         insights = faculty_preference_service.learn_from_swap_history(
-            multiple_faculty[0].id,
-            lookback_days=365
+            multiple_faculty[0].id, lookback_days=365
         )
 
         # Should not include the old swap

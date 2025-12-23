@@ -21,18 +21,17 @@ The replay service is useful for:
 
 import asyncio
 import logging
+from collections.abc import AsyncIterator, Callable
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Optional, AsyncIterator
+from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import and_, desc
 from sqlalchemy.orm import Session
 
 from app.events.event_store import EventStore, StoredEvent
 from app.events.event_types import BaseEvent, EventType, get_event_class
-
 
 logger = logging.getLogger(__name__)
 
@@ -84,25 +83,25 @@ class ReplayFilterConfig(BaseModel):
     Allows selective replay of events based on various criteria.
     """
 
-    aggregate_ids: Optional[list[str]] = Field(
+    aggregate_ids: list[str] | None = Field(
         None, description="Only replay events for these aggregate IDs"
     )
-    aggregate_types: Optional[list[str]] = Field(
+    aggregate_types: list[str] | None = Field(
         None, description="Only replay events for these aggregate types"
     )
-    event_types: Optional[list[EventType]] = Field(
+    event_types: list[EventType] | None = Field(
         None, description="Only replay these event types"
     )
-    user_ids: Optional[list[str]] = Field(
+    user_ids: list[str] | None = Field(
         None, description="Only replay events from these users"
     )
-    correlation_ids: Optional[list[str]] = Field(
+    correlation_ids: list[str] | None = Field(
         None, description="Only replay events with these correlation IDs"
     )
-    exclude_event_types: Optional[list[EventType]] = Field(
+    exclude_event_types: list[EventType] | None = Field(
         None, description="Exclude these event types from replay"
     )
-    exclude_aggregate_types: Optional[list[str]] = Field(
+    exclude_aggregate_types: list[str] | None = Field(
         None, description="Exclude these aggregate types from replay"
     )
 
@@ -127,7 +126,10 @@ class ReplayFilterConfig(BaseModel):
             return False
         if self.user_ids and event.metadata.user_id not in self.user_ids:
             return False
-        if self.correlation_ids and event.metadata.correlation_id not in self.correlation_ids:
+        if (
+            self.correlation_ids
+            and event.metadata.correlation_id not in self.correlation_ids
+        ):
             return False
 
         # Exclude filters (any match = exclude)
@@ -135,7 +137,10 @@ class ReplayFilterConfig(BaseModel):
             et.value for et in self.exclude_event_types
         ]:
             return False
-        if self.exclude_aggregate_types and event.aggregate_type in self.exclude_aggregate_types:
+        if (
+            self.exclude_aggregate_types
+            and event.aggregate_type in self.exclude_aggregate_types
+        ):
             return False
 
         return True
@@ -174,13 +179,13 @@ class ReplayTargetConfig(BaseModel):
     """
 
     target_type: ReplayTarget
-    target_timestamp: Optional[datetime] = None
-    target_sequence_number: Optional[int] = None
-    target_event_count: Optional[int] = None
+    target_timestamp: datetime | None = None
+    target_sequence_number: int | None = None
+    target_event_count: int | None = None
 
     @field_validator("target_timestamp")
     @classmethod
-    def validate_timestamp_target(cls, v: Optional[datetime], info) -> Optional[datetime]:
+    def validate_timestamp_target(cls, v: datetime | None, info) -> datetime | None:
         """Validate timestamp target is set when target_type is TIMESTAMP."""
         if info.data.get("target_type") == ReplayTarget.TIMESTAMP and not v:
             raise ValueError("target_timestamp required when target_type is TIMESTAMP")
@@ -188,7 +193,7 @@ class ReplayTargetConfig(BaseModel):
 
     @field_validator("target_sequence_number")
     @classmethod
-    def validate_sequence_target(cls, v: Optional[int], info) -> Optional[int]:
+    def validate_sequence_target(cls, v: int | None, info) -> int | None:
         """Validate sequence target is set when target_type is SEQUENCE_NUMBER."""
         if info.data.get("target_type") == ReplayTarget.SEQUENCE_NUMBER and v is None:
             raise ValueError(
@@ -198,10 +203,12 @@ class ReplayTargetConfig(BaseModel):
 
     @field_validator("target_event_count")
     @classmethod
-    def validate_count_target(cls, v: Optional[int], info) -> Optional[int]:
+    def validate_count_target(cls, v: int | None, info) -> int | None:
         """Validate count target is set when target_type is EVENT_COUNT."""
         if info.data.get("target_type") == ReplayTarget.EVENT_COUNT and v is None:
-            raise ValueError("target_event_count required when target_type is EVENT_COUNT")
+            raise ValueError(
+                "target_event_count required when target_type is EVENT_COUNT"
+            )
         return v
 
 
@@ -216,16 +223,12 @@ class ReplayConfig(BaseModel):
     start_timestamp: datetime = Field(
         ..., description="Start replaying from this timestamp"
     )
-    target: ReplayTargetConfig = Field(
-        ..., description="When to stop the replay"
-    )
-    speed: ReplaySpeed = Field(
-        ReplaySpeed.NORMAL, description="Replay speed setting"
-    )
-    filters: Optional[ReplayFilterConfig] = Field(
+    target: ReplayTargetConfig = Field(..., description="When to stop the replay")
+    speed: ReplaySpeed = Field(ReplaySpeed.NORMAL, description="Replay speed setting")
+    filters: ReplayFilterConfig | None = Field(
         None, description="Event filtering configuration"
     )
-    transformer: Optional[ReplayTransformer] = Field(
+    transformer: ReplayTransformer | None = Field(
         None, description="Event transformation configuration"
     )
     batch_size: int = Field(
@@ -234,9 +237,7 @@ class ReplayConfig(BaseModel):
     verify_after_replay: bool = Field(
         True, description="Verify event integrity after replay"
     )
-    emit_events: bool = Field(
-        False, description="Emit replayed events to event bus"
-    )
+    emit_events: bool = Field(False, description="Emit replayed events to event bus")
     checkpoint_interval: int = Field(
         1000, ge=1, description="Create checkpoint every N events"
     )
@@ -275,13 +276,13 @@ class ReplayProgress(BaseModel):
     events_filtered: int
     events_transformed: int
     events_failed: int
-    current_sequence: Optional[int] = None
-    current_timestamp: Optional[datetime] = None
+    current_sequence: int | None = None
+    current_timestamp: datetime | None = None
     started_at: datetime
     updated_at: datetime
-    completed_at: Optional[datetime] = None
-    error_message: Optional[str] = None
-    last_checkpoint: Optional[ReplayCheckpoint] = None
+    completed_at: datetime | None = None
+    error_message: str | None = None
+    last_checkpoint: ReplayCheckpoint | None = None
 
     @property
     def progress_percentage(self) -> float:
@@ -341,7 +342,7 @@ class EventReplayService:
     progress tracking, and verification.
     """
 
-    def __init__(self, db: Session, event_store: Optional[EventStore] = None):
+    def __init__(self, db: Session, event_store: EventStore | None = None):
         """
         Initialize Event Replay Service.
 
@@ -358,7 +359,7 @@ class EventReplayService:
     async def start_replay(
         self,
         config: ReplayConfig,
-        handler: Optional[Callable[[BaseEvent], Any]] = None,
+        handler: Callable[[BaseEvent], Any] | None = None,
     ) -> str:
         """
         Start an event replay operation.
@@ -402,7 +403,7 @@ class EventReplayService:
     async def _execute_replay(
         self,
         config: ReplayConfig,
-        handler: Optional[Callable[[BaseEvent], Any]] = None,
+        handler: Callable[[BaseEvent], Any] | None = None,
     ) -> None:
         """
         Execute the replay operation.
@@ -516,7 +517,10 @@ class EventReplayService:
         target = config.target
         if target.target_type == ReplayTarget.TIMESTAMP and target.target_timestamp:
             query = query.filter(StoredEvent.timestamp <= target.target_timestamp)
-        elif target.target_type == ReplayTarget.SEQUENCE_NUMBER and target.target_sequence_number:
+        elif (
+            target.target_type == ReplayTarget.SEQUENCE_NUMBER
+            and target.target_sequence_number
+        ):
             query = query.filter(
                 StoredEvent.sequence_number <= target.target_sequence_number
             )
@@ -540,9 +544,7 @@ class EventReplayService:
                     event = self.event_store._deserialize_event(stored)
                     yield event
                 except Exception as e:
-                    logger.error(
-                        f"Error deserializing event {stored.event_id}: {e}"
-                    )
+                    logger.error(f"Error deserializing event {stored.event_id}: {e}")
 
             offset += len(batch)
 
@@ -563,11 +565,16 @@ class EventReplayService:
         target = config.target
         if target.target_type == ReplayTarget.TIMESTAMP and target.target_timestamp:
             query = query.filter(StoredEvent.timestamp <= target.target_timestamp)
-        elif target.target_type == ReplayTarget.SEQUENCE_NUMBER and target.target_sequence_number:
+        elif (
+            target.target_type == ReplayTarget.SEQUENCE_NUMBER
+            and target.target_sequence_number
+        ):
             query = query.filter(
                 StoredEvent.sequence_number <= target.target_sequence_number
             )
-        elif target.target_type == ReplayTarget.EVENT_COUNT and target.target_event_count:
+        elif (
+            target.target_type == ReplayTarget.EVENT_COUNT and target.target_event_count
+        ):
             return target.target_event_count
 
         return query.count()
@@ -719,7 +726,7 @@ class EventReplayService:
         logger.info(f"Replay {replay_id} cancellation requested")
         return True
 
-    async def get_progress(self, replay_id: str) -> Optional[ReplayProgress]:
+    async def get_progress(self, replay_id: str) -> ReplayProgress | None:
         """
         Get current progress of a replay operation.
 
@@ -831,9 +838,7 @@ class EventReplayService:
             if sequences[i] != sequences[i - 1] + 1:
                 gap = (sequences[i - 1], sequences[i])
                 result.sequence_gaps.append(gap)
-                result.warnings.append(
-                    f"Sequence gap detected: {gap[0]} -> {gap[1]}"
-                )
+                result.warnings.append(f"Sequence gap detected: {gap[0]} -> {gap[1]}")
 
     async def _verify_timestamp_ordering(
         self, config: ReplayConfig, result: ReplayVerificationResult
@@ -866,9 +871,7 @@ class EventReplayService:
                     f"({events[i - 1][0]}) -> {events[i][1]} ({events[i][0]})"
                 )
 
-    async def cleanup_completed_replays(
-        self, older_than_hours: int = 24
-    ) -> int:
+    async def cleanup_completed_replays(self, older_than_hours: int = 24) -> int:
         """
         Clean up completed replay tracking data.
 
@@ -883,7 +886,8 @@ class EventReplayService:
 
         for replay_id, progress in list(self._active_replays.items()):
             if (
-                progress.status in [ReplayStatus.COMPLETED, ReplayStatus.FAILED, ReplayStatus.CANCELLED]
+                progress.status
+                in [ReplayStatus.COMPLETED, ReplayStatus.FAILED, ReplayStatus.CANCELLED]
                 and progress.updated_at < cutoff
             ):
                 del self._active_replays[replay_id]
@@ -912,9 +916,9 @@ class EventReplayService:
 async def create_replay_from_timestamp(
     db: Session,
     start_timestamp: datetime,
-    end_timestamp: Optional[datetime] = None,
-    event_types: Optional[list[EventType]] = None,
-    handler: Optional[Callable[[BaseEvent], Any]] = None,
+    end_timestamp: datetime | None = None,
+    event_types: list[EventType] | None = None,
+    handler: Callable[[BaseEvent], Any] | None = None,
 ) -> str:
     """
     Quick helper to create a simple timestamp-based replay.
@@ -953,8 +957,8 @@ async def create_replay_from_timestamp(
 async def replay_aggregate_history(
     db: Session,
     aggregate_id: str,
-    up_to_timestamp: Optional[datetime] = None,
-    handler: Optional[Callable[[BaseEvent], Any]] = None,
+    up_to_timestamp: datetime | None = None,
+    handler: Callable[[BaseEvent], Any] | None = None,
 ) -> str:
     """
     Replay all events for a specific aggregate.

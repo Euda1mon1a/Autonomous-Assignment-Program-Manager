@@ -102,6 +102,11 @@ References:
 """
 
 # Models
+# Metrics and monitoring
+from app.outbox.metrics import (
+    OutboxMetricsCollector,
+    OutboxMonitor,
+)
 from app.outbox.models import (
     OutboxArchive,
     OutboxMessage,
@@ -113,12 +118,6 @@ from app.outbox.outbox import (
     OutboxCleaner,
     OutboxRelay,
     OutboxWriter,
-)
-
-# Metrics and monitoring
-from app.outbox.metrics import (
-    OutboxMetricsCollector,
-    OutboxMonitor,
 )
 
 # Tasks are imported separately to avoid circular imports

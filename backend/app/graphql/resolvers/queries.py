@@ -1,10 +1,10 @@
 """GraphQL query resolvers."""
-from datetime import date, datetime
-from typing import Optional
+
+from datetime import date
 from uuid import UUID
 
 import strawberry
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func
 from sqlalchemy.orm import Session, selectinload
 
 from app.graphql.types import (
@@ -33,7 +33,7 @@ class Query:
     """Root query type."""
 
     @strawberry.field
-    def person(self, info, id: strawberry.ID) -> Optional[Person]:
+    def person(self, info, id: strawberry.ID) -> Person | None:
         """Get a single person by ID."""
         db: Session = info.context["db"]
 
@@ -47,7 +47,7 @@ class Query:
     def people(
         self,
         info,
-        filter: Optional[PersonFilterInput] = None,
+        filter: PersonFilterInput | None = None,
         offset: int = 0,
         limit: int = 50,
     ) -> PersonConnection:
@@ -65,7 +65,9 @@ class Query:
             if filter.faculty_role:
                 query = query.filter(DBPerson.faculty_role == filter.faculty_role.value)
             if filter.performs_procedures is not None:
-                query = query.filter(DBPerson.performs_procedures == filter.performs_procedures)
+                query = query.filter(
+                    DBPerson.performs_procedures == filter.performs_procedures
+                )
 
         # Get total count
         total = query.count()
@@ -84,11 +86,13 @@ class Query:
         )
 
     @strawberry.field
-    def assignment(self, info, id: strawberry.ID) -> Optional[Assignment]:
+    def assignment(self, info, id: strawberry.ID) -> Assignment | None:
         """Get a single assignment by ID."""
         db: Session = info.context["db"]
 
-        db_assignment = db.query(DBAssignment).filter(DBAssignment.id == UUID(id)).first()
+        db_assignment = (
+            db.query(DBAssignment).filter(DBAssignment.id == UUID(id)).first()
+        )
         if not db_assignment:
             return None
 
@@ -98,7 +102,7 @@ class Query:
     def assignments(
         self,
         info,
-        filter: Optional[AssignmentFilterInput] = None,
+        filter: AssignmentFilterInput | None = None,
         offset: int = 0,
         limit: int = 50,
     ) -> AssignmentConnection:
@@ -118,7 +122,10 @@ class Query:
             if filter.block_id:
                 query = query.filter(DBAssignment.block_id == UUID(filter.block_id))
             if filter.rotation_template_id:
-                query = query.filter(DBAssignment.rotation_template_id == UUID(filter.rotation_template_id))
+                query = query.filter(
+                    DBAssignment.rotation_template_id
+                    == UUID(filter.rotation_template_id)
+                )
             if filter.role:
                 query = query.filter(DBAssignment.role == filter.role.value)
             if filter.start_date or filter.end_date:
@@ -133,7 +140,12 @@ class Query:
         total = query.count()
 
         # Apply pagination
-        db_assignments = query.order_by(DBAssignment.created_at.desc()).offset(offset).limit(limit).all()
+        db_assignments = (
+            query.order_by(DBAssignment.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
 
         # Convert to GraphQL types
         items = [assignment_from_db(a) for a in db_assignments]
@@ -146,7 +158,7 @@ class Query:
         )
 
     @strawberry.field
-    def block(self, info, id: strawberry.ID) -> Optional[Block]:
+    def block(self, info, id: strawberry.ID) -> Block | None:
         """Get a single block by ID."""
         db: Session = info.context["db"]
 
@@ -160,7 +172,7 @@ class Query:
     def blocks(
         self,
         info,
-        filter: Optional[BlockFilterInput] = None,
+        filter: BlockFilterInput | None = None,
         offset: int = 0,
         limit: int = 100,
     ) -> BlockConnection:
@@ -188,7 +200,12 @@ class Query:
         total = query.count()
 
         # Apply pagination
-        db_blocks = query.order_by(DBBlock.date, DBBlock.time_of_day).offset(offset).limit(limit).all()
+        db_blocks = (
+            query.order_by(DBBlock.date, DBBlock.time_of_day)
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
 
         # Convert to GraphQL types
         items = [block_from_db(b) for b in db_blocks]
@@ -214,32 +231,49 @@ class Query:
         total_people = db.query(func.count(DBPerson.id)).scalar()
 
         # Get total blocks in range
-        total_blocks = db.query(func.count(DBBlock.id)).filter(
-            and_(
-                DBBlock.date >= start_date,
-                DBBlock.date <= end_date,
+        total_blocks = (
+            db.query(func.count(DBBlock.id))
+            .filter(
+                and_(
+                    DBBlock.date >= start_date,
+                    DBBlock.date <= end_date,
+                )
             )
-        ).scalar()
+            .scalar()
+        )
 
         # Get total assignments in range
-        total_assignments = db.query(func.count(DBAssignment.id)).join(DBBlock).filter(
-            and_(
-                DBBlock.date >= start_date,
-                DBBlock.date <= end_date,
+        total_assignments = (
+            db.query(func.count(DBAssignment.id))
+            .join(DBBlock)
+            .filter(
+                and_(
+                    DBBlock.date >= start_date,
+                    DBBlock.date <= end_date,
+                )
             )
-        ).scalar()
+            .scalar()
+        )
 
         # Calculate metrics
-        coverage_percentage = (total_assignments / total_blocks * 100) if total_blocks > 0 else 0.0
+        coverage_percentage = (
+            (total_assignments / total_blocks * 100) if total_blocks > 0 else 0.0
+        )
 
         # Calculate average confidence score as proxy for compliance
-        avg_confidence = db.query(func.avg(DBAssignment.confidence)).join(DBBlock).filter(
-            and_(
-                DBBlock.date >= start_date,
-                DBBlock.date <= end_date,
-                DBAssignment.confidence.isnot(None),
+        avg_confidence = (
+            db.query(func.avg(DBAssignment.confidence))
+            .join(DBBlock)
+            .filter(
+                and_(
+                    DBBlock.date >= start_date,
+                    DBBlock.date <= end_date,
+                    DBAssignment.confidence.isnot(None),
+                )
             )
-        ).scalar() or 0.0
+            .scalar()
+            or 0.0
+        )
 
         metrics = ScheduleMetrics(
             total_assignments=total_assignments or 0,
@@ -263,8 +297,8 @@ class Query:
         self,
         info,
         person_id: strawberry.ID,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
         offset: int = 0,
         limit: int = 50,
     ) -> AssignmentConnection:

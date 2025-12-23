@@ -36,7 +36,6 @@ Usage:
     )
 """
 
-import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -44,12 +43,12 @@ from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import and_, or_, select, text
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 # Optional import - sqlalchemy_continuum may not be installed
 try:
     from sqlalchemy_continuum import version_class
+
     HAS_CONTINUUM = True
 except ImportError:
     version_class = None
@@ -57,7 +56,6 @@ except ImportError:
 
 from app.core.exceptions import (
     AppException,
-    ConflictError,
     ForbiddenError,
     NotFoundError,
     ValidationError,
@@ -73,6 +71,7 @@ logger = logging.getLogger(__name__)
 
 class RollbackStatus(str, Enum):
     """Status of a rollback point or operation."""
+
     CREATED = "created"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -84,6 +83,7 @@ class RollbackStatus(str, Enum):
 
 class RollbackScope(str, Enum):
     """Scope of rollback operation."""
+
     FULL = "full"  # Rollback entire snapshot
     SELECTIVE = "selective"  # Rollback specific entities
     CASCADING = "cascading"  # Rollback with dependencies
@@ -96,6 +96,7 @@ class EntitySnapshot:
 
     Captures the complete state including version history and relationships.
     """
+
     entity_type: str
     entity_id: UUID
     version_id: int | None
@@ -113,6 +114,7 @@ class RollbackPoint:
     Captures complete state of specified entities for later restoration.
     Includes metadata, authorization info, and dependency tracking.
     """
+
     id: UUID
     name: str
     description: str | None
@@ -134,6 +136,7 @@ class RollbackResult:
     Provides detailed information about success/failure, entities affected,
     and any errors encountered during rollback.
     """
+
     success: bool
     rollback_point_id: UUID
     executed_at: datetime
@@ -154,6 +157,7 @@ class RollbackVerificationResult:
 
     Validates that rollback successfully restored entities to expected state.
     """
+
     passed: bool
     rollback_point_id: UUID
     verified_at: datetime
@@ -167,7 +171,9 @@ class RollbackVerificationResult:
 class RollbackAuthorizationError(ForbiddenError):
     """Raised when user lacks authorization for rollback operation."""
 
-    def __init__(self, message: str = "Insufficient permissions for rollback operation"):
+    def __init__(
+        self, message: str = "Insufficient permissions for rollback operation"
+    ):
         super().__init__(message)
 
 
@@ -358,7 +364,8 @@ class RollbackManager:
         # Determine entities to restore
         if effective_scope == RollbackScope.SELECTIVE and entity_ids:
             snapshots_to_restore = [
-                s for s in rollback_point.entity_snapshots
+                s
+                for s in rollback_point.entity_snapshots
                 if (s.entity_type, s.entity_id) in entity_ids
             ]
         elif effective_scope == RollbackScope.CASCADING:
@@ -512,7 +519,8 @@ class RollbackManager:
         snapshots_to_verify = rollback_point.entity_snapshots
         if entity_ids:
             snapshots_to_verify = [
-                s for s in snapshots_to_verify
+                s
+                for s in snapshots_to_verify
                 if (s.entity_type, s.entity_id) in entity_ids
             ]
 
@@ -526,11 +534,13 @@ class RollbackManager:
 
                 if not current_state:
                     entities_failed += 1
-                    mismatches.append({
-                        "entity_type": snapshot.entity_type,
-                        "entity_id": str(snapshot.entity_id),
-                        "error": "Entity not found",
-                    })
+                    mismatches.append(
+                        {
+                            "entity_type": snapshot.entity_type,
+                            "entity_id": str(snapshot.entity_id),
+                            "error": "Entity not found",
+                        }
+                    )
                     continue
 
                 # Compare states (ignore timestamps and audit fields)
@@ -542,21 +552,25 @@ class RollbackManager:
 
                 if state_mismatches:
                     entities_failed += 1
-                    mismatches.append({
-                        "entity_type": snapshot.entity_type,
-                        "entity_id": str(snapshot.entity_id),
-                        "mismatches": state_mismatches,
-                    })
+                    mismatches.append(
+                        {
+                            "entity_type": snapshot.entity_type,
+                            "entity_id": str(snapshot.entity_id),
+                            "mismatches": state_mismatches,
+                        }
+                    )
                 else:
                     entities_verified += 1
 
             except Exception as e:
                 entities_failed += 1
-                mismatches.append({
-                    "entity_type": snapshot.entity_type,
-                    "entity_id": str(snapshot.entity_id),
-                    "error": str(e),
-                })
+                mismatches.append(
+                    {
+                        "entity_type": snapshot.entity_type,
+                        "entity_id": str(snapshot.entity_id),
+                        "error": str(e),
+                    }
+                )
                 logger.error(
                     f"Verification failed for {snapshot.entity_type} "
                     f"{snapshot.entity_id}: {str(e)}"
@@ -663,14 +677,16 @@ class RollbackManager:
                     snapshot.entity_type == entity_type
                     and snapshot.entity_id == entity_id
                 ):
-                    history.append({
-                        "rollback_point_id": str(point.id),
-                        "rollback_point_name": point.name,
-                        "created_at": point.created_at.isoformat(),
-                        "created_by": str(point.created_by),
-                        "status": point.status.value,
-                        "snapshot_timestamp": snapshot.timestamp.isoformat(),
-                    })
+                    history.append(
+                        {
+                            "rollback_point_id": str(point.id),
+                            "rollback_point_name": point.name,
+                            "created_at": point.created_at.isoformat(),
+                            "created_by": str(point.created_by),
+                            "status": point.status.value,
+                            "snapshot_timestamp": snapshot.timestamp.isoformat(),
+                        }
+                    )
                     break
 
         # Sort by timestamp descending
@@ -793,9 +809,9 @@ class RollbackManager:
 
         try:
             # Get entity
-            entity = self.db.query(model_class).filter(
-                model_class.id == entity_id
-            ).first()
+            entity = (
+                self.db.query(model_class).filter(model_class.id == entity_id).first()
+            )
 
             if not entity:
                 logger.warning(f"Entity not found: {entity_type} {entity_id}")
@@ -806,9 +822,12 @@ class RollbackManager:
             if HAS_CONTINUUM and version_class:
                 try:
                     VersionClass = version_class(model_class)
-                    version_obj = self.db.query(VersionClass).filter(
-                        VersionClass.id == entity_id
-                    ).order_by(VersionClass.transaction_id.desc()).first()
+                    version_obj = (
+                        self.db.query(VersionClass)
+                        .filter(VersionClass.id == entity_id)
+                        .order_by(VersionClass.transaction_id.desc())
+                        .first()
+                    )
                     if version_obj:
                         version_id = version_obj.transaction_id
                 except Exception:
@@ -848,9 +867,9 @@ class RollbackManager:
         snapshots = []
         try:
             # Get all entities (with limit to prevent memory issues)
-            entities = self.db.query(model_class).limit(
-                self.MAX_ENTITIES_PER_ROLLBACK
-            ).all()
+            entities = (
+                self.db.query(model_class).limit(self.MAX_ENTITIES_PER_ROLLBACK).all()
+            )
 
             for entity in entities:
                 snapshot = self._create_entity_snapshot(
@@ -860,9 +879,7 @@ class RollbackManager:
                     snapshots.append(snapshot)
 
         except Exception as e:
-            logger.error(
-                f"Failed to snapshot entities of type {entity_type}: {str(e)}"
-            )
+            logger.error(f"Failed to snapshot entities of type {entity_type}: {str(e)}")
 
         return snapshots
 
@@ -872,9 +889,7 @@ class RollbackManager:
         for column in entity.__table__.columns:
             value = getattr(entity, column.name, None)
             # Convert to JSON-serializable format
-            if isinstance(value, (datetime, UUID)):
-                value = str(value)
-            elif hasattr(value, '__dict__'):
+            if isinstance(value, (datetime, UUID)) or hasattr(value, "__dict__"):
                 value = str(value)
             state[column.name] = value
         return state
@@ -924,9 +939,11 @@ class RollbackManager:
             raise ValidationError(f"Unsupported entity type: {snapshot.entity_type}")
 
         # Get current entity
-        entity = self.db.query(model_class).filter(
-            model_class.id == snapshot.entity_id
-        ).first()
+        entity = (
+            self.db.query(model_class)
+            .filter(model_class.id == snapshot.entity_id)
+            .first()
+        )
 
         if not entity:
             # Entity was deleted, recreate it
@@ -945,7 +962,7 @@ class RollbackManager:
                 if "created_at" in key or "updated_at" in key or "_at" in key:
                     if value and isinstance(value, str):
                         try:
-                            value = datetime.fromisoformat(value.replace('Z', ''))
+                            value = datetime.fromisoformat(value.replace("Z", ""))
                         except Exception:
                             pass
 
@@ -1013,9 +1030,7 @@ class RollbackManager:
         if not model_class:
             return None
 
-        entity = self.db.query(model_class).filter(
-            model_class.id == entity_id
-        ).first()
+        entity = self.db.query(model_class).filter(model_class.id == entity_id).first()
 
         if not entity:
             return None
@@ -1057,11 +1072,13 @@ class RollbackManager:
                 val2 = val2.strip()
 
             if val1 != val2:
-                mismatches.append({
-                    "field": key,
-                    "expected": val1,
-                    "actual": val2,
-                })
+                mismatches.append(
+                    {
+                        "field": key,
+                        "expected": val1,
+                        "actual": val2,
+                    }
+                )
 
         return mismatches
 

@@ -21,7 +21,6 @@ import re
 import secrets
 import string
 from abc import ABC, abstractmethod
-from typing import Any
 
 
 class BaseMasker(ABC):
@@ -112,7 +111,7 @@ class HashMasker(BaseMasker):
         hash_value = hash_obj.hexdigest()
 
         if self.truncate:
-            return hash_value[:self.truncate]
+            return hash_value[: self.truncate]
 
         return hash_value
 
@@ -126,12 +125,7 @@ class PartialMasker(BaseMasker):
         - "555-123-4567" (show_start=0, show_end=4) -> "***-***-4567"
     """
 
-    def __init__(
-        self,
-        show_start: int = 1,
-        show_end: int = 4,
-        mask_char: str = "*"
-    ):
+    def __init__(self, show_start: int = 1, show_end: int = 4, mask_char: str = "*"):
         """
         Initialize partial masker.
 
@@ -150,8 +144,8 @@ class PartialMasker(BaseMasker):
             # Value too short, mask entirely
             return self.mask_char * len(value)
 
-        start = value[:self.show_start]
-        end = value[-self.show_end:] if self.show_end > 0 else ""
+        start = value[: self.show_start]
+        end = value[-self.show_end :] if self.show_end > 0 else ""
         middle_length = len(value) - self.show_start - self.show_end
         middle = self.mask_char * min(middle_length, 5)  # Cap asterisks for readability
 
@@ -166,10 +160,7 @@ class TokenMasker(BaseMasker):
     """
 
     def __init__(
-        self,
-        token_length: int = 16,
-        reversible: bool = False,
-        prefix: str = "TOK_"
+        self, token_length: int = 16, reversible: bool = False, prefix: str = "TOK_"
     ):
         """
         Initialize token masker.
@@ -193,7 +184,7 @@ class TokenMasker(BaseMasker):
 
         # Generate new token
         token_chars = string.ascii_uppercase + string.digits
-        token = ''.join(secrets.choice(token_chars) for _ in range(self.token_length))
+        token = "".join(secrets.choice(token_chars) for _ in range(self.token_length))
         full_token = f"{self.prefix}{token}"
 
         # Store mapping if reversible
@@ -249,7 +240,7 @@ class FormatPreservingMasker(BaseMasker):
             else:
                 result.append(secrets.choice(string.ascii_letters))
 
-        return ''.join(result)
+        return "".join(result)
 
 
 class EmailMasker(BaseMasker):
@@ -273,18 +264,20 @@ class EmailMasker(BaseMasker):
 
     def mask(self, value: str) -> str:
         """Mask email address."""
-        if '@' not in value:
+        if "@" not in value:
             # Not a valid email, use basic masking
             return PartialMasker(show_start=1, show_end=4).mask(value)
 
-        username, domain = value.split('@', 1)
+        username, domain = value.split("@", 1)
 
         if self.strategy == "partial":
             masked_username = PartialMasker(show_start=1, show_end=0).mask(username)
             # Mask domain too
-            if '.' in domain:
-                domain_parts = domain.split('.')
-                masked_domain_name = PartialMasker(show_start=1, show_end=0).mask(domain_parts[0])
+            if "." in domain:
+                domain_parts = domain.split(".")
+                masked_domain_name = PartialMasker(show_start=1, show_end=0).mask(
+                    domain_parts[0]
+                )
                 masked_domain = f"{masked_domain_name}.{'.'.join(domain_parts[1:])}"
             else:
                 masked_domain = PartialMasker(show_start=1, show_end=0).mask(domain)
@@ -321,11 +314,11 @@ class PhoneMasker(BaseMasker):
     def mask(self, value: str) -> str:
         """Mask phone number, showing only last N digits."""
         # Extract digits
-        digits = ''.join(c for c in value if c.isdigit())
+        digits = "".join(c for c in value if c.isdigit())
 
         if len(digits) <= self.show_last_digits:
             # Too short, mask entirely
-            return re.sub(r'\d', '*', value)
+            return re.sub(r"\d", "*", value)
 
         # Mask all but last N digits
         mask_count = len(digits) - self.show_last_digits
@@ -335,14 +328,14 @@ class PhoneMasker(BaseMasker):
         for char in value:
             if char.isdigit():
                 if masked_index < mask_count:
-                    result.append('*')
+                    result.append("*")
                     masked_index += 1
                 else:
                     result.append(char)
             else:
                 result.append(char)
 
-        return ''.join(result)
+        return "".join(result)
 
 
 class SSNMasker(BaseMasker):
@@ -355,7 +348,7 @@ class SSNMasker(BaseMasker):
     def mask(self, value: str) -> str:
         """Mask SSN, showing only last 4 digits."""
         # Extract digits
-        digits = ''.join(c for c in value if c.isdigit())
+        digits = "".join(c for c in value if c.isdigit())
 
         if len(digits) != 9:
             # Invalid SSN, use basic masking
@@ -364,9 +357,9 @@ class SSNMasker(BaseMasker):
         last_four = digits[-4:]
 
         # Preserve original format
-        if '-' in value:
+        if "-" in value:
             return f"XXX-XX-{last_four}"
-        elif ' ' in value:
+        elif " " in value:
             return f"XXX XX {last_four}"
         else:
             return f"XXXXX{last_four}"
@@ -400,7 +393,7 @@ class NameMasker(BaseMasker):
             return value
 
         if self.strategy == "initial":
-            return ' '.join(f"{p[0]}." for p in parts)
+            return " ".join(f"{p[0]}." for p in parts)
 
         elif self.strategy == "first_only":
             if len(parts) == 1:

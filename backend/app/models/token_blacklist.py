@@ -1,4 +1,5 @@
 """Token blacklist model for JWT invalidation."""
+
 import uuid
 from datetime import datetime
 
@@ -18,6 +19,7 @@ class TokenBlacklist(Base):
     This provides stateful token invalidation for the otherwise
     stateless JWT authentication system.
     """
+
     __tablename__ = "token_blacklist"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -40,9 +42,7 @@ class TokenBlacklist(Base):
     # Reason for blacklisting
     reason = Column(String(100), default="logout")
 
-    __table_args__ = (
-        Index('idx_blacklist_jti_expires', 'jti', 'expires_at'),
-    )
+    __table_args__ = (Index("idx_blacklist_jti_expires", "jti", "expires_at"),)
 
     def __repr__(self):
         return f"<TokenBlacklist(jti='{self.jti}', reason='{self.reason}')>"

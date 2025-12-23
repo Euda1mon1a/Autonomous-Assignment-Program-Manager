@@ -11,6 +11,7 @@ Provides comprehensive verification for incoming webhook requests including:
 This service is designed for verifying webhooks RECEIVED by the application
 from external services (e.g., payment processors, third-party integrations).
 """
+
 import hashlib
 import hmac
 import ipaddress
@@ -47,7 +48,7 @@ class VerificationResult:
         self,
         valid: bool,
         failure_reason: str | None = None,
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
     ):
         """
         Initialize verification result.
@@ -86,7 +87,7 @@ class WebhookVerificationService:
         timestamp_tolerance_seconds: int | None = None,
         enable_ip_whitelist: bool = True,
         enable_retry_detection: bool = True,
-        max_payload_size_bytes: int = 1048576  # 1MB default
+        max_payload_size_bytes: int = 1048576,  # 1MB default
     ):
         """
         Initialize webhook verification service.
@@ -99,8 +100,7 @@ class WebhookVerificationService:
             max_payload_size_bytes: Maximum allowed payload size
         """
         self.timestamp_tolerance = (
-            timestamp_tolerance_seconds
-            or settings.WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS
+            timestamp_tolerance_seconds or settings.WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS
         )
         self.enable_ip_whitelist = enable_ip_whitelist
         self.enable_retry_detection = enable_retry_detection
@@ -118,7 +118,7 @@ class WebhookVerificationService:
         secret: str | None = None,
         algorithm: SignatureAlgorithm = SignatureAlgorithm.SHA256,
         ip_whitelist: list[str] | None = None,
-        required_headers: list[str] | None = None
+        required_headers: list[str] | None = None,
     ) -> VerificationResult:
         """
         Perform comprehensive webhook verification.
@@ -162,7 +162,9 @@ class WebhookVerificationService:
         if required_headers:
             headers_result = self._verify_required_headers(request, required_headers)
             if not headers_result:
-                logger.warning(f"Webhook missing required headers: {headers_result.failure_reason}")
+                logger.warning(
+                    f"Webhook missing required headers: {headers_result.failure_reason}"
+                )
                 return headers_result
 
         # Step 3: Extract and parse payload
@@ -185,7 +187,7 @@ class WebhookVerificationService:
             )
             return VerificationResult(
                 False,
-                f"Payload too large: {payload_size} bytes exceeds maximum {self.max_payload_size}"
+                f"Payload too large: {payload_size} bytes exceeds maximum {self.max_payload_size}",
             )
 
         # Step 5: Load webhook secret if webhook_id provided
@@ -201,7 +203,9 @@ class WebhookVerificationService:
             return VerificationResult(False, "No secret available for verification")
 
         # Step 6: Extract signature and timestamp from headers
-        signature = request.headers.get("X-Webhook-Signature") or request.headers.get("X-Hub-Signature-256")
+        signature = request.headers.get("X-Webhook-Signature") or request.headers.get(
+            "X-Hub-Signature-256"
+        )
         timestamp_str = request.headers.get("X-Webhook-Timestamp")
 
         if not signature:
@@ -217,12 +221,16 @@ class WebhookVerificationService:
             timestamp = int(timestamp_str)
         except ValueError:
             logger.warning(f"Invalid timestamp format: {timestamp_str}")
-            return VerificationResult(False, f"Invalid timestamp format: {timestamp_str}")
+            return VerificationResult(
+                False, f"Invalid timestamp format: {timestamp_str}"
+            )
 
         # Step 8: Verify timestamp freshness
         timestamp_result = self._verify_timestamp(timestamp)
         if not timestamp_result:
-            logger.warning(f"Webhook timestamp verification failed: {timestamp_result.failure_reason}")
+            logger.warning(
+                f"Webhook timestamp verification failed: {timestamp_result.failure_reason}"
+            )
             return timestamp_result
 
         # Step 9: Verify signature
@@ -231,11 +239,13 @@ class WebhookVerificationService:
             signature=signature,
             timestamp=timestamp,
             secret=secret,
-            algorithm=algorithm
+            algorithm=algorithm,
         )
 
         if not signature_result:
-            logger.warning(f"Webhook signature verification failed: {signature_result.failure_reason}")
+            logger.warning(
+                f"Webhook signature verification failed: {signature_result.failure_reason}"
+            )
             return signature_result
 
         # Step 10: Detect retries/duplicates if enabled
@@ -261,15 +271,12 @@ class WebhookVerificationService:
                 "timestamp": timestamp,
                 "algorithm": algorithm.value,
                 "payload_size": payload_size,
-                "client_ip": request.client.host if request.client else None
-            }
+                "client_ip": request.client.host if request.client else None,
+            },
         )
 
     async def verify_and_raise(
-        self,
-        request: Request,
-        db: AsyncSession,
-        **kwargs
+        self, request: Request, db: AsyncSession, **kwargs
     ) -> dict[str, Any]:
         """
         Verify webhook and raise HTTPException on failure.
@@ -305,7 +312,7 @@ class WebhookVerificationService:
         if not result:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Webhook verification failed: {result.failure_reason}"
+                detail=f"Webhook verification failed: {result.failure_reason}",
             )
 
         # Extract payload from request
@@ -322,7 +329,7 @@ class WebhookVerificationService:
         signature: str,
         timestamp: int,
         secret: str,
-        algorithm: SignatureAlgorithm = SignatureAlgorithm.SHA256
+        algorithm: SignatureAlgorithm = SignatureAlgorithm.SHA256,
     ) -> VerificationResult:
         """
         Verify HMAC signature for webhook payload.
@@ -351,14 +358,13 @@ class WebhookVerificationService:
                 if sig_algo != algorithm.value:
                     return VerificationResult(
                         False,
-                        f"Algorithm mismatch: expected {algorithm.value}, got {sig_algo}"
+                        f"Algorithm mismatch: expected {algorithm.value}, got {sig_algo}",
                     )
 
             # Constant-time comparison to prevent timing attacks
             if not hmac.compare_digest(signature_value, expected_sig):
                 return VerificationResult(
-                    False,
-                    "Signature mismatch - invalid secret or tampered payload"
+                    False, "Signature mismatch - invalid secret or tampered payload"
                 )
 
             return VerificationResult(True, metadata={"algorithm": algorithm.value})
@@ -387,7 +393,7 @@ class WebhookVerificationService:
                 return VerificationResult(
                     False,
                     f"Timestamp outside tolerance: {time_diff}s > {self.timestamp_tolerance}s "
-                    f"(potential replay attack)"
+                    f"(potential replay attack)",
                 )
 
             # Calculate when the webhook was sent
@@ -398,8 +404,8 @@ class WebhookVerificationService:
                 metadata={
                     "timestamp": timestamp,
                     "age_seconds": time_diff,
-                    "webhook_time": webhook_time.isoformat()
-                }
+                    "webhook_time": webhook_time.isoformat(),
+                },
             )
 
         except Exception as e:
@@ -407,9 +413,7 @@ class WebhookVerificationService:
             return VerificationResult(False, f"Timestamp verification error: {e}")
 
     def _verify_ip_address(
-        self,
-        request: Request,
-        ip_whitelist: list[str]
+        self, request: Request, ip_whitelist: list[str]
     ) -> VerificationResult:
         """
         Verify request originates from whitelisted IP address.
@@ -442,7 +446,10 @@ class WebhookVerificationService:
                         if client_addr in network:
                             return VerificationResult(
                                 True,
-                                metadata={"client_ip": client_ip, "matched_network": allowed}
+                                metadata={
+                                    "client_ip": client_ip,
+                                    "matched_network": allowed,
+                                },
                             )
                     else:
                         # Individual IP comparison
@@ -450,25 +457,23 @@ class WebhookVerificationService:
                         if client_addr == allowed_addr:
                             return VerificationResult(
                                 True,
-                                metadata={"client_ip": client_ip, "matched_ip": allowed}
+                                metadata={
+                                    "client_ip": client_ip,
+                                    "matched_ip": allowed,
+                                },
                             )
                 except ValueError as e:
                     logger.warning(f"Invalid IP in whitelist: {allowed} - {e}")
                     continue
 
-            return VerificationResult(
-                False,
-                f"IP address {client_ip} not in whitelist"
-            )
+            return VerificationResult(False, f"IP address {client_ip} not in whitelist")
 
         except ValueError as e:
             logger.warning(f"Invalid client IP address: {client_ip} - {e}")
             return VerificationResult(False, f"Invalid client IP: {client_ip}")
 
     def _verify_required_headers(
-        self,
-        request: Request,
-        required_headers: list[str]
+        self, request: Request, required_headers: list[str]
     ) -> VerificationResult:
         """
         Verify all required headers are present in request.
@@ -491,16 +496,13 @@ class WebhookVerificationService:
 
         if missing_headers:
             return VerificationResult(
-                False,
-                f"Missing required headers: {', '.join(missing_headers)}"
+                False, f"Missing required headers: {', '.join(missing_headers)}"
             )
 
         return VerificationResult(True)
 
     async def _detect_retry(
-        self,
-        db: AsyncSession,
-        delivery_id: str
+        self, db: AsyncSession, delivery_id: str
     ) -> VerificationResult:
         """
         Detect if webhook delivery is a retry (duplicate).
@@ -515,9 +517,7 @@ class WebhookVerificationService:
         try:
             # Check if we've seen this delivery ID before
             result = await db.execute(
-                select(WebhookDelivery).where(
-                    WebhookDelivery.id == delivery_id
-                )
+                select(WebhookDelivery).where(WebhookDelivery.id == delivery_id)
             )
             existing_delivery = result.scalar_one_or_none()
 
@@ -528,9 +528,10 @@ class WebhookVerificationService:
                     metadata={
                         "delivery_id": delivery_id,
                         "original_attempt_at": existing_delivery.first_attempted_at.isoformat()
-                        if existing_delivery.first_attempted_at else None,
-                        "attempt_count": existing_delivery.attempt_count
-                    }
+                        if existing_delivery.first_attempted_at
+                        else None,
+                        "attempt_count": existing_delivery.attempt_count,
+                    },
                 )
 
             return VerificationResult(True, metadata={"delivery_id": delivery_id})
@@ -538,10 +539,7 @@ class WebhookVerificationService:
         except Exception as e:
             logger.error(f"Error detecting retry for {delivery_id}: {e}", exc_info=True)
             # Don't fail verification on retry detection errors
-            return VerificationResult(
-                True,
-                metadata={"retry_detection_error": str(e)}
-            )
+            return VerificationResult(True, metadata={"retry_detection_error": str(e)})
 
     # =========================================================================
     # Helper Methods
@@ -552,7 +550,7 @@ class WebhookVerificationService:
         payload: dict[str, Any],
         timestamp: int,
         secret: str,
-        algorithm: SignatureAlgorithm = SignatureAlgorithm.SHA256
+        algorithm: SignatureAlgorithm = SignatureAlgorithm.SHA256,
     ) -> str:
         """
         Generate HMAC signature for comparison.
@@ -567,7 +565,7 @@ class WebhookVerificationService:
             Hex-encoded HMAC signature (without algorithm prefix)
         """
         # Create signing string: timestamp.payload_json
-        payload_json = json.dumps(payload, sort_keys=True, separators=(',', ':'))
+        payload_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
         signing_string = f"{timestamp}.{payload_json}"
 
         # Select hash algorithm
@@ -579,18 +577,12 @@ class WebhookVerificationService:
 
         # Generate HMAC
         signature = hmac.new(
-            secret.encode('utf-8'),
-            signing_string.encode('utf-8'),
-            hash_func
+            secret.encode("utf-8"), signing_string.encode("utf-8"), hash_func
         ).hexdigest()
 
         return signature
 
-    async def _get_webhook(
-        self,
-        db: AsyncSession,
-        webhook_id: UUID
-    ) -> Webhook | None:
+    async def _get_webhook(self, db: AsyncSession, webhook_id: UUID) -> Webhook | None:
         """
         Retrieve webhook configuration from database.
 
@@ -602,9 +594,7 @@ class WebhookVerificationService:
             Webhook model or None if not found
         """
         try:
-            result = await db.execute(
-                select(Webhook).where(Webhook.id == webhook_id)
-            )
+            result = await db.execute(select(Webhook).where(Webhook.id == webhook_id))
             return result.scalar_one_or_none()
         except Exception as e:
             logger.error(f"Error fetching webhook {webhook_id}: {e}", exc_info=True)
@@ -631,13 +621,12 @@ class WebhookVerificationService:
             True
         """
         import secrets
+
         return secrets.token_urlsafe(length)
 
     @staticmethod
     def rotate_webhook_secret(
-        old_secret: str,
-        verify_with_both: bool = True,
-        grace_period_hours: int = 24
+        old_secret: str, verify_with_both: bool = True, grace_period_hours: int = 24
     ) -> tuple[str, dict[str, Any]]:
         """
         Generate new webhook secret and return rotation metadata.
@@ -686,7 +675,7 @@ class WebhookVerificationService:
         self,
         request: Request,
         result: VerificationResult,
-        additional_context: dict[str, Any] | None = None
+        additional_context: dict[str, Any] | None = None,
     ) -> None:
         """
         Log detailed information about verification failure.
@@ -706,12 +695,12 @@ class WebhookVerificationService:
             "method": request.method,
             "timestamp": datetime.utcnow().isoformat(),
             **context,
-            **result.metadata
+            **result.metadata,
         }
 
         logger.warning(
             f"Webhook verification failed: {result.failure_reason}",
-            extra={"webhook_verification": log_data}
+            extra={"webhook_verification": log_data},
         )
 
         # Optional: Send to monitoring/alerting system
@@ -719,5 +708,5 @@ class WebhookVerificationService:
         if "replay attack" in result.failure_reason.lower():
             logger.critical(
                 f"Potential replay attack detected from {log_data['client_ip']}",
-                extra={"security_alert": log_data}
+                extra={"security_alert": log_data},
             )

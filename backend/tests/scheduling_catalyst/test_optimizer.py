@@ -1,23 +1,23 @@
 """Tests for scheduling_catalyst optimizer."""
 
-import pytest
 from datetime import date, timedelta
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
+import pytest
+
+from app.scheduling_catalyst.models import (
+    BarrierType,
+    CatalystPerson,
+    CatalystType,
+    EnergyBarrier,
+    ReactionType,
+)
 from app.scheduling_catalyst.optimizer import (
     BatchOptimizer,
     OptimizationConfig,
     PathwayResult,
     TransitionOptimizer,
-)
-from app.scheduling_catalyst.models import (
-    BarrierType,
-    CatalystMechanism,
-    CatalystPerson,
-    CatalystType,
-    EnergyBarrier,
-    ReactionType,
 )
 
 
@@ -480,9 +480,7 @@ class TestConstraintSatisfaction:
 
         # Should have barriers detected
         if result.pathway:
-            absolute_barriers = [
-                b for b in result.pathway.barriers if b.is_absolute
-            ]
+            absolute_barriers = [b for b in result.pathway.barriers if b.is_absolute]
             # Same-day should create absolute barrier
             if absolute_barriers:
                 assert result.success is False
@@ -509,7 +507,9 @@ class TestConstraintSatisfaction:
 
             if non_absolute and not absolute:
                 # Should succeed or get close with catalysts
-                assert result.success or result.pathway.effective_activation_energy < 1.0
+                assert (
+                    result.success or result.pathway.effective_activation_energy < 1.0
+                )
 
     @pytest.mark.asyncio
     async def test_constraint_hierarchy(self, optimizer):
@@ -523,13 +523,15 @@ class TestConstraintSatisfaction:
         assert weights.regulatory > weights.electronic
         assert weights.kinetic > weights.thermodynamic
         # Regulatory barriers should have highest weight
-        assert weights.regulatory == max([
-            weights.kinetic,
-            weights.thermodynamic,
-            weights.steric,
-            weights.electronic,
-            weights.regulatory,
-        ])
+        assert weights.regulatory == max(
+            [
+                weights.kinetic,
+                weights.thermodynamic,
+                weights.steric,
+                weights.electronic,
+                weights.regulatory,
+            ]
+        )
 
     @pytest.mark.asyncio
     async def test_feasibility_determination(self, optimizer):
@@ -673,7 +675,10 @@ class TestAdvancedPathwayAnalysis:
                 # Each pathway should have comparable metrics
                 assert pathway.total_activation_energy >= 0
                 assert pathway.effective_activation_energy >= 0
-                assert pathway.effective_activation_energy <= pathway.total_activation_energy
+                assert (
+                    pathway.effective_activation_energy
+                    <= pathway.total_activation_energy
+                )
                 assert pathway.estimated_duration is not None
 
                 # Catalyst efficiency

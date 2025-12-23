@@ -26,10 +26,8 @@ Formulas:
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
-from scipy.special import factorial
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +35,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SpecialistCoverage:
     """Recommended specialist coverage configuration."""
+
     specialty: str
     required_specialists: int
     predicted_wait_probability: float  # P(wait > 0)
@@ -47,6 +46,7 @@ class SpecialistCoverage:
 @dataclass
 class ErlangMetrics:
     """Complete Erlang C metrics for a configuration."""
+
     wait_probability: float  # P(wait > 0)
     avg_wait_time: float  # Average wait time in same units as service_time
     service_level: float  # P(answer within target time)
@@ -437,7 +437,7 @@ class ErlangCCalculator:
         arrival_rate: float,
         service_time: float,
         servers: int,
-        target_wait: Optional[float] = None,
+        target_wait: float | None = None,
     ) -> ErlangMetrics:
         """
         Calculate complete Erlang C metrics for a configuration.
@@ -467,18 +467,12 @@ class ErlangCCalculator:
         if target_wait is None:
             target_wait = service_time * 0.5  # Default to half service time
 
-        wait_prob = self.calculate_wait_probability(
-            arrival_rate, service_time, servers
-        )
-        avg_wait = self.calculate_avg_wait_time(
-            arrival_rate, service_time, servers
-        )
+        wait_prob = self.calculate_wait_probability(arrival_rate, service_time, servers)
+        avg_wait = self.calculate_avg_wait_time(arrival_rate, service_time, servers)
         service_level = self.calculate_service_level(
             arrival_rate, service_time, servers, target_wait
         )
-        occupancy = self.calculate_occupancy(
-            arrival_rate, service_time, servers
-        )
+        occupancy = self.calculate_occupancy(arrival_rate, service_time, servers)
 
         return ErlangMetrics(
             wait_probability=wait_prob,
@@ -491,8 +485,8 @@ class ErlangCCalculator:
         self,
         arrival_rate: float,
         service_time: float,
-        min_servers: Optional[int] = None,
-        max_servers: Optional[int] = None,
+        min_servers: int | None = None,
+        max_servers: int | None = None,
     ) -> list[dict]:
         """
         Generate staffing table showing metrics for different server counts.
@@ -535,14 +529,16 @@ class ErlangCCalculator:
                     arrival_rate, service_time, servers, target_wait
                 )
 
-                table.append({
-                    "servers": servers,
-                    "offered_load": offered_load,
-                    "wait_probability": metrics.wait_probability,
-                    "avg_wait_time": metrics.avg_wait_time,
-                    "service_level": metrics.service_level,
-                    "occupancy": metrics.occupancy,
-                })
+                table.append(
+                    {
+                        "servers": servers,
+                        "offered_load": offered_load,
+                        "wait_probability": metrics.wait_probability,
+                        "avg_wait_time": metrics.avg_wait_time,
+                        "service_level": metrics.service_level,
+                        "occupancy": metrics.occupancy,
+                    }
+                )
 
             except ValueError:
                 # Skip unstable configurations

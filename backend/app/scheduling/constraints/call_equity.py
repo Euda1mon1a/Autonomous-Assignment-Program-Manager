@@ -19,11 +19,10 @@ Call Schedule Overview:
     - Sunday night: Separate equity pool (worst day)
     - Mon-Thurs nights: Combined equity pool
 """
+
 import logging
 from collections import defaultdict
-from datetime import date, timedelta
 from typing import Any
-from uuid import UUID
 
 from .base import (
     ConstraintPriority,
@@ -85,7 +84,8 @@ class SundayCallEquityConstraint(SoftConstraint):
 
         # Find Sunday blocks
         sunday_blocks = [
-            b for b in context.blocks
+            b
+            for b in context.blocks
             if b.date.weekday() == 6  # Sunday
         ]
 
@@ -134,10 +134,7 @@ class SundayCallEquityConstraint(SoftConstraint):
         if not call_vars:
             return
 
-        sunday_blocks = [
-            b for b in context.blocks
-            if b.date.weekday() == 6
-        ]
+        sunday_blocks = [b for b in context.blocks if b.date.weekday() == 6]
 
         if not sunday_blocks:
             return
@@ -161,7 +158,7 @@ class SundayCallEquityConstraint(SoftConstraint):
         # Minimize variance through auxiliary constraints
         # (PuLP doesn't handle quadratic well, so we minimize max)
         if faculty_counts:
-            max_calls = pulp.LpVariable("max_sunday_calls", lowBound=0, cat='Integer')
+            max_calls = pulp.LpVariable("max_sunday_calls", lowBound=0, cat="Integer")
             for count in faculty_counts:
                 model += count <= max_calls, f"sunday_max_{len(faculty_counts)}"
 
@@ -194,7 +191,7 @@ class SundayCallEquityConstraint(SoftConstraint):
                 continue
 
             # Check if this is an overnight call assignment
-            if hasattr(a, 'call_type') and a.call_type == 'overnight':
+            if hasattr(a, "call_type") and a.call_type == "overnight":
                 sunday_counts[a.person_id] += 1
 
         if not sunday_counts:
@@ -203,7 +200,9 @@ class SundayCallEquityConstraint(SoftConstraint):
         # Calculate penalty based on variance
         counts = list(sunday_counts.values())
         mean_count = sum(counts) / len(counts) if counts else 0
-        variance = sum((c - mean_count) ** 2 for c in counts) / len(counts) if counts else 0
+        variance = (
+            sum((c - mean_count) ** 2 for c in counts) / len(counts) if counts else 0
+        )
 
         penalty = variance * self.weight
 
@@ -212,17 +211,19 @@ class SundayCallEquityConstraint(SoftConstraint):
         min_count = min(counts) if counts else 0
 
         if max_count - min_count > 2:  # More than 2 difference is concerning
-            violations.append(ConstraintViolation(
-                constraint_name=self.name,
-                constraint_type=self.constraint_type,
-                severity="MEDIUM",
-                message=f"Sunday call imbalance: range {min_count}-{max_count} (variance: {variance:.2f})",
-                details={
-                    "min_count": min_count,
-                    "max_count": max_count,
-                    "variance": variance,
-                },
-            ))
+            violations.append(
+                ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity="MEDIUM",
+                    message=f"Sunday call imbalance: range {min_count}-{max_count} (variance: {variance:.2f})",
+                    details={
+                        "min_count": min_count,
+                        "max_count": max_count,
+                        "variance": variance,
+                    },
+                )
+            )
 
         return ConstraintResult(
             satisfied=True,  # Soft constraint, always "satisfied"
@@ -267,7 +268,8 @@ class WeekdayCallEquityConstraint(SoftConstraint):
 
         # Find Mon-Thurs blocks (weekday 0-3)
         weekday_blocks = [
-            b for b in context.blocks
+            b
+            for b in context.blocks
             if b.date.weekday() in (0, 1, 2, 3)  # Mon-Thurs
         ]
 
@@ -314,10 +316,7 @@ class WeekdayCallEquityConstraint(SoftConstraint):
         if not call_vars:
             return
 
-        weekday_blocks = [
-            b for b in context.blocks
-            if b.date.weekday() in (0, 1, 2, 3)
-        ]
+        weekday_blocks = [b for b in context.blocks if b.date.weekday() in (0, 1, 2, 3)]
 
         if not weekday_blocks:
             return
@@ -338,7 +337,7 @@ class WeekdayCallEquityConstraint(SoftConstraint):
                 faculty_counts.append(pulp.lpSum(weekday_vars))
 
         if faculty_counts:
-            max_calls = pulp.LpVariable("max_weekday_calls", lowBound=0, cat='Integer')
+            max_calls = pulp.LpVariable("max_weekday_calls", lowBound=0, cat="Integer")
             for i, count in enumerate(faculty_counts):
                 model += count <= max_calls, f"weekday_max_{i}"
 
@@ -364,7 +363,7 @@ class WeekdayCallEquityConstraint(SoftConstraint):
             if not block or block.date.weekday() not in (0, 1, 2, 3):
                 continue
 
-            if hasattr(a, 'call_type') and a.call_type == 'overnight':
+            if hasattr(a, "call_type") and a.call_type == "overnight":
                 weekday_counts[a.person_id] += 1
 
         if not weekday_counts:
@@ -372,7 +371,9 @@ class WeekdayCallEquityConstraint(SoftConstraint):
 
         counts = list(weekday_counts.values())
         mean_count = sum(counts) / len(counts) if counts else 0
-        variance = sum((c - mean_count) ** 2 for c in counts) / len(counts) if counts else 0
+        variance = (
+            sum((c - mean_count) ** 2 for c in counts) / len(counts) if counts else 0
+        )
 
         penalty = variance * self.weight
 
@@ -381,17 +382,19 @@ class WeekdayCallEquityConstraint(SoftConstraint):
         min_count = min(counts) if counts else 0
 
         if max_count - min_count > 3:
-            violations.append(ConstraintViolation(
-                constraint_name=self.name,
-                constraint_type=self.constraint_type,
-                severity="MEDIUM",
-                message=f"Weekday call imbalance: range {min_count}-{max_count}",
-                details={
-                    "min_count": min_count,
-                    "max_count": max_count,
-                    "variance": variance,
-                },
-            ))
+            violations.append(
+                ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity="MEDIUM",
+                    message=f"Weekday call imbalance: range {min_count}-{max_count}",
+                    details={
+                        "min_count": min_count,
+                        "max_count": max_count,
+                        "variance": variance,
+                    },
+                )
+            )
 
         return ConstraintResult(
             satisfied=True,
@@ -439,7 +442,8 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
 
         # Find Tuesday blocks (weekday 1)
         tuesday_blocks = [
-            b for b in context.blocks
+            b
+            for b in context.blocks
             if b.date.weekday() == 1  # Tuesday
         ]
 
@@ -449,7 +453,10 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
         # Find PD and APD faculty
         penalty_vars = []
         for faculty in context.faculty:
-            if not hasattr(faculty, 'avoid_tuesday_call') or not faculty.avoid_tuesday_call:
+            if (
+                not hasattr(faculty, "avoid_tuesday_call")
+                or not faculty.avoid_tuesday_call
+            ):
                 continue
 
             f_i = context.resident_idx.get(faculty.id)
@@ -480,17 +487,17 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
         if not call_vars:
             return
 
-        tuesday_blocks = [
-            b for b in context.blocks
-            if b.date.weekday() == 1
-        ]
+        tuesday_blocks = [b for b in context.blocks if b.date.weekday() == 1]
 
         if not tuesday_blocks:
             return
 
         penalty_vars: list[Any] = []
         for faculty in context.faculty:
-            if not hasattr(faculty, 'avoid_tuesday_call') or not faculty.avoid_tuesday_call:
+            if (
+                not hasattr(faculty, "avoid_tuesday_call")
+                or not faculty.avoid_tuesday_call
+            ):
                 continue
 
             f_i = context.resident_idx.get(faculty.id)
@@ -522,27 +529,32 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
             if not faculty:
                 continue
 
-            if not hasattr(faculty, 'avoid_tuesday_call') or not faculty.avoid_tuesday_call:
+            if (
+                not hasattr(faculty, "avoid_tuesday_call")
+                or not faculty.avoid_tuesday_call
+            ):
                 continue
 
             block = block_by_id.get(a.block_id)
             if not block or block.date.weekday() != 1:
                 continue
 
-            if hasattr(a, 'call_type') and a.call_type == 'overnight':
+            if hasattr(a, "call_type") and a.call_type == "overnight":
                 penalty += self.weight
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="LOW",
-                    message=f"{faculty.name} ({faculty.faculty_role}) assigned Tuesday call on {block.date}",
-                    person_id=faculty.id,
-                    block_id=block.id,
-                    details={
-                        "date": str(block.date),
-                        "role": faculty.faculty_role,
-                    },
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="LOW",
+                        message=f"{faculty.name} ({faculty.faculty_role}) assigned Tuesday call on {block.date}",
+                        person_id=faculty.id,
+                        block_id=block.id,
+                        details={
+                            "date": str(block.date),
+                            "role": faculty.faculty_role,
+                        },
+                    )
+                )
 
         return ConstraintResult(
             satisfied=True,
@@ -590,7 +602,8 @@ class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
 
         # Find Wednesday blocks (weekday 2)
         wednesday_blocks = [
-            b for b in context.blocks
+            b
+            for b in context.blocks
             if b.date.weekday() == 2  # Wednesday
         ]
 
@@ -600,7 +613,10 @@ class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
         # Find Dept Chief
         bonus_vars = []
         for faculty in context.faculty:
-            if not hasattr(faculty, 'prefer_wednesday_call') or not faculty.prefer_wednesday_call:
+            if (
+                not hasattr(faculty, "prefer_wednesday_call")
+                or not faculty.prefer_wednesday_call
+            ):
                 continue
 
             f_i = context.resident_idx.get(faculty.id)
@@ -632,17 +648,17 @@ class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
         if not call_vars:
             return
 
-        wednesday_blocks = [
-            b for b in context.blocks
-            if b.date.weekday() == 2
-        ]
+        wednesday_blocks = [b for b in context.blocks if b.date.weekday() == 2]
 
         if not wednesday_blocks:
             return
 
         bonus_vars: list[Any] = []
         for faculty in context.faculty:
-            if not hasattr(faculty, 'prefer_wednesday_call') or not faculty.prefer_wednesday_call:
+            if (
+                not hasattr(faculty, "prefer_wednesday_call")
+                or not faculty.prefer_wednesday_call
+            ):
                 continue
 
             f_i = context.resident_idx.get(faculty.id)
@@ -674,14 +690,17 @@ class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
             if not faculty:
                 continue
 
-            if not hasattr(faculty, 'prefer_wednesday_call') or not faculty.prefer_wednesday_call:
+            if (
+                not hasattr(faculty, "prefer_wednesday_call")
+                or not faculty.prefer_wednesday_call
+            ):
                 continue
 
             block = block_by_id.get(a.block_id)
             if not block or block.date.weekday() != 2:
                 continue
 
-            if hasattr(a, 'call_type') and a.call_type == 'overnight':
+            if hasattr(a, "call_type") and a.call_type == "overnight":
                 bonus += self.weight
 
         # Return negative penalty (bonus)

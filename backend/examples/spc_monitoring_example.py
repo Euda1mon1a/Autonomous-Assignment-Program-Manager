@@ -38,7 +38,9 @@ def example_1_basic_monitoring():
 
     print(f"Resident ID: {resident_id}")
     print(f"Weekly hours: {weekly_hours}")
-    print(f"Target: {chart.target_hours}h, 3σ limits: [{chart.lcl_3sigma:.1f}h, {chart.ucl_3sigma:.1f}h]")
+    print(
+        f"Target: {chart.target_hours}h, 3σ limits: [{chart.lcl_3sigma:.1f}h, {chart.ucl_3sigma:.1f}h]"
+    )
     print()
 
     # Detect violations
@@ -60,13 +62,43 @@ def example_2_historical_control_limits():
     print("Example 2: Calculate Control Limits from Historical Data")
     print("-" * 70)
 
-    from app.resilience.spc_monitoring import calculate_control_limits, WorkloadControlChart
+    from app.resilience.spc_monitoring import (
+        WorkloadControlChart,
+        calculate_control_limits,
+    )
 
     # Historical weekly hours for last academic year
     historical_data = [
-        58, 62, 59, 61, 63, 60, 58, 62, 64, 57,  # Weeks 1-10
-        59, 61, 60, 58, 62, 61, 59, 60, 63, 58,  # Weeks 11-20
-        60, 62, 59, 61, 60, 58, 62, 61, 59, 60,  # Weeks 21-30
+        58,
+        62,
+        59,
+        61,
+        63,
+        60,
+        58,
+        62,
+        64,
+        57,  # Weeks 1-10
+        59,
+        61,
+        60,
+        58,
+        62,
+        61,
+        59,
+        60,
+        63,
+        58,  # Weeks 11-20
+        60,
+        62,
+        59,
+        61,
+        60,
+        58,
+        62,
+        61,
+        59,
+        60,  # Weeks 21-30
     ]
 
     print(f"Historical data: {len(historical_data)} weeks")
@@ -85,8 +117,7 @@ def example_2_historical_control_limits():
 
     # Use empirical limits for future monitoring
     chart = WorkloadControlChart(
-        target_hours=limits['centerline'],
-        sigma=limits['sigma']
+        target_hours=limits["centerline"], sigma=limits["sigma"]
     )
 
     print("Using empirical control limits for ongoing monitoring...")
@@ -104,7 +135,7 @@ def example_3_process_capability():
     weekly_hours = [58, 62, 59, 61, 63, 60, 58, 62, 64, 57]
 
     # ACGME specification: 0-80 hours/week
-    lsl = 0   # Lower spec limit
+    lsl = 0  # Lower spec limit
     usl = 80  # Upper spec limit (ACGME maximum)
 
     print(f"Weekly hours: {weekly_hours}")
@@ -134,9 +165,9 @@ def example_3_process_capability():
     print("  Cpk ≥ 2.0:  🏆 World-class (6σ quality)")
     print()
 
-    if capability['cpk'] >= 1.33:
+    if capability["cpk"] >= 1.33:
         print("✅ Process is capable of maintaining ACGME compliance")
-    elif capability['cpk'] >= 1.0:
+    elif capability["cpk"] >= 1.0:
         print("⚠️  Process marginally capable - improvement recommended")
     else:
         print("❌ Process not capable - ACGME violations likely")
@@ -204,7 +235,7 @@ def example_4_combined_analysis():
             print("      → Monitor closely")
             print("      → Investigate root causes")
 
-    if capability['cpk'] < 1.0:
+    if capability["cpk"] < 1.0:
         print("   ❌ Process incapable - systemic changes needed")
         print("      → Redistribute workload more evenly")
         print("      → Review scheduling algorithm parameters")

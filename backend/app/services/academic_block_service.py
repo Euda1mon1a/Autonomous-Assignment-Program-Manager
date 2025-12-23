@@ -4,6 +4,7 @@ Academic block service for business logic.
 Handles grouping of daily scheduling blocks into rotation periods
 and generating block matrix views for program coordinators.
 """
+
 from collections import defaultdict
 from datetime import date, timedelta
 from typing import Optional
@@ -50,7 +51,7 @@ class AcademicBlockService:
     def get_block_matrix(
         self,
         academic_year: str,
-        pgy_level: Optional[int] = None,
+        pgy_level: int | None = None,
     ) -> BlockMatrixResponse:
         """
         Get academic block matrix for program coordinators.
@@ -154,7 +155,7 @@ class AcademicBlockService:
 
             if end_year != start_year + 1:
                 raise ValueError(
-                    f"Invalid academic year: end year must be start year + 1"
+                    "Invalid academic year: end year must be start year + 1"
                 )
 
             # Academic year: July 1 of start year to June 30 of end year
@@ -209,7 +210,7 @@ class AcademicBlockService:
 
         return blocks
 
-    def _get_residents(self, pgy_level: Optional[int] = None) -> list[ResidentRow]:
+    def _get_residents(self, pgy_level: int | None = None) -> list[ResidentRow]:
         """
         Get residents for matrix rows.
 
@@ -330,7 +331,8 @@ class AcademicBlockService:
         """
         # Filter assignments to this block period
         block_assignments = [
-            a for a in assignments
+            a
+            for a in assignments
             if a.block and block.start_date <= a.block.date <= block.end_date
         ]
 
@@ -360,7 +362,7 @@ class AcademicBlockService:
 
     def _get_primary_rotation(
         self, assignments: list[Assignment]
-    ) -> tuple[Optional[str], Optional[str]]:
+    ) -> tuple[str | None, str | None]:
         """
         Get the primary rotation from a list of assignments.
 
@@ -381,7 +383,10 @@ class AcademicBlockService:
 
         for assignment in assignments:
             if assignment.rotation_template:
-                abbr = assignment.rotation_template.abbreviation or assignment.rotation_template.name[:3].upper()
+                abbr = (
+                    assignment.rotation_template.abbreviation
+                    or assignment.rotation_template.name[:3].upper()
+                )
                 full_name = assignment.rotation_template.name
                 rotation_counts[abbr] += 1
                 rotation_names[abbr] = full_name
@@ -494,7 +499,9 @@ class AcademicBlockService:
         """
         total_cells = len(cells)
         compliant_cells = sum(1 for cell in cells if cell.acgme_status.is_compliant)
-        compliance_rate = (compliant_cells / total_cells * 100) if total_cells > 0 else 0
+        compliance_rate = (
+            (compliant_cells / total_cells * 100) if total_cells > 0 else 0
+        )
 
         total_hours = sum(cell.hours for cell in cells)
         avg_hours = total_hours / len(residents) if residents else 0
@@ -525,7 +532,8 @@ class AcademicBlockService:
         """
         # Filter assignments to this block
         block_assignments = [
-            a for a in assignments
+            a
+            for a in assignments
             if a.block and block.start_date <= a.block.date <= block.end_date
         ]
 

@@ -13,7 +13,6 @@ from uuid import UUID
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import quoted_name
 
 logger = logging.getLogger(__name__)
 
@@ -113,18 +112,22 @@ class AuditRepository:
                 )
 
                 try:
-                    rows = self.db.execute(query, self._build_query_params(filters)).fetchall()
+                    rows = self.db.execute(
+                        query, self._build_query_params(filters)
+                    ).fetchall()
 
                     for row in rows:
-                        all_entries.append({
-                            "id": row[0],
-                            "entity_type": model_name,
-                            "entity_id": str(row[1]),
-                            "transaction_id": row[2],
-                            "operation": self._operation_name(row[3]),
-                            "changed_at": row[4],
-                            "changed_by": row[5],
-                        })
+                        all_entries.append(
+                            {
+                                "id": row[0],
+                                "entity_type": model_name,
+                                "entity_id": str(row[1]),
+                                "transaction_id": row[2],
+                                "operation": self._operation_name(row[3]),
+                                "changed_at": row[4],
+                                "changed_by": row[5],
+                            }
+                        )
                 except Exception as e:
                     logger.warning(f"Error querying {table_name}: {e}")
                     continue
@@ -306,10 +309,7 @@ class AuditRepository:
 
             rows = self.db.execute(query).fetchall()
 
-            return [
-                {"user_id": row[0], "change_count": row[1]}
-                for row in rows
-            ]
+            return [{"user_id": row[0], "change_count": row[1]} for row in rows]
 
         except Exception as e:
             logger.error(f"Error getting users with audit activity: {e}")
@@ -413,7 +413,9 @@ class AuditRepository:
         if filters.get("operation"):
             op_map = {"insert": 0, "update": 1, "delete": 2}
             if filters["operation"] in op_map:
-                where_clauses.append(f"v.operation_type = {op_map[filters['operation']]}")
+                where_clauses.append(
+                    f"v.operation_type = {op_map[filters['operation']]}"
+                )
 
         if filters.get("start_date"):
             where_clauses.append("t.issued_at >= :start_date")
@@ -461,19 +463,12 @@ class AuditRepository:
 
         if sort_by == "changed_at":
             entries.sort(
-                key=lambda x: x.get("changed_at") or datetime.min,
-                reverse=reverse
+                key=lambda x: x.get("changed_at") or datetime.min, reverse=reverse
             )
         elif sort_by == "entity_type":
-            entries.sort(
-                key=lambda x: x.get("entity_type", ""),
-                reverse=reverse
-            )
+            entries.sort(key=lambda x: x.get("entity_type", ""), reverse=reverse)
         elif sort_by == "operation":
-            entries.sort(
-                key=lambda x: x.get("operation", ""),
-                reverse=reverse
-            )
+            entries.sort(key=lambda x: x.get("operation", ""), reverse=reverse)
 
         return entries
 

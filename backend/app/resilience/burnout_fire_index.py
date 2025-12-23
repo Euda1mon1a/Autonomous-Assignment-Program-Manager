@@ -83,11 +83,12 @@ class DangerClass(str, Enum):
 
     Matches fire danger rating system classes.
     """
-    LOW = "low"                    # FWI < 20: Normal operations
-    MODERATE = "moderate"          # FWI 20-40: Monitor closely
-    HIGH = "high"                  # FWI 40-60: Reduce workload
-    VERY_HIGH = "very_high"        # FWI 60-80: Significant restrictions
-    EXTREME = "extreme"            # FWI 80+: Emergency measures
+
+    LOW = "low"  # FWI < 20: Normal operations
+    MODERATE = "moderate"  # FWI 20-40: Monitor closely
+    HIGH = "high"  # FWI 40-60: Reduce workload
+    VERY_HIGH = "very_high"  # FWI 60-80: Significant restrictions
+    EXTREME = "extreme"  # FWI 80+: Emergency measures
 
 
 @dataclass
@@ -97,12 +98,13 @@ class BurnoutCodeReport:
 
     Mirrors the six FWI System codes for fire danger.
     """
+
     ffmc: float  # Fine Fuel Moisture Code (0-100): recent hours
-    dmc: float   # Duff Moisture Code (0-100): monthly load
-    dc: float    # Drought Code (0-100): yearly satisfaction
-    isi: float   # Initial Spread Index (0-100+): spread rate
-    bui: float   # Buildup Index (0-100+): combined burden
-    fwi: float   # Fire Weather Index (0-100+): final danger
+    dmc: float  # Duff Moisture Code (0-100): monthly load
+    dc: float  # Drought Code (0-100): yearly satisfaction
+    isi: float  # Initial Spread Index (0-100+): spread rate
+    bui: float  # Buildup Index (0-100+): combined burden
+    fwi: float  # Fire Weather Index (0-100+): final danger
 
 
 @dataclass
@@ -112,6 +114,7 @@ class FireDangerReport:
 
     Provides danger classification, scores, and recommended actions.
     """
+
     resident_id: UUID
     danger_class: DangerClass
     fwi_score: float
@@ -162,9 +165,9 @@ class BurnoutDangerRating:
 
     def __init__(
         self,
-        ffmc_target: float = 60.0,   # Target 60 hours/2 weeks
-        dmc_target: float = 240.0,   # Target 240 hours/3 months
-        dc_baseline: float = 1.0,    # Full satisfaction baseline
+        ffmc_target: float = 60.0,  # Target 60 hours/2 weeks
+        dmc_target: float = 240.0,  # Target 240 hours/3 months
+        dc_baseline: float = 1.0,  # Full satisfaction baseline
     ):
         """
         Initialize burnout danger rating system.
@@ -328,7 +331,7 @@ class BurnoutDangerRating:
         # 0.5 satisfaction → 0.5 dissatisfaction → ~60 DC
         # 0.0 satisfaction → 1.0 dissatisfaction → 100 DC
         # Use exponential curve for more sensitivity
-        dc = 100.0 * (dissatisfaction ** 1.5)
+        dc = 100.0 * (dissatisfaction**1.5)
 
         logger.debug(
             f"DC: yearly_satisfaction={yearly_satisfaction:.2f}, "
@@ -433,9 +436,7 @@ class BurnoutDangerRating:
 
         bui = (0.9 * dmc * dc) / denominator
 
-        logger.debug(
-            f"BUI: dmc={dmc:.1f}, dc={dc:.1f}, bui={bui:.1f}"
-        )
+        logger.debug(f"BUI: dmc={dmc:.1f}, dc={dc:.1f}, bui={bui:.1f}")
 
         return bui
 
@@ -480,7 +481,7 @@ class BurnoutDangerRating:
         # Calculate fuel effect (fD) based on BUI
         if bui <= 80:
             # Low to moderate BUI: power law
-            fD = (0.626 * (bui ** 0.809)) + 2.0
+            fD = (0.626 * (bui**0.809)) + 2.0
         else:
             # High BUI: exponential saturation
             fD = 1000.0 / (25.0 + 108.64 * (2.71828 ** (-0.023 * bui)))
@@ -489,9 +490,7 @@ class BurnoutDangerRating:
         # Scale factor to keep FWI in 0-100+ range with reasonable distribution
         fwi = 0.12 * isi * fD
 
-        logger.debug(
-            f"FWI: isi={isi:.1f}, bui={bui:.1f}, fD={fD:.2f}, fwi={fwi:.1f}"
-        )
+        logger.debug(f"FWI: isi={isi:.1f}, bui={bui:.1f}, fD={fD:.2f}, fwi={fwi:.1f}")
 
         return fwi
 
@@ -717,8 +716,6 @@ class BurnoutDangerRating:
         # Sort by FWI (highest risk first)
         reports.sort(key=lambda r: r.fwi_score, reverse=True)
 
-        logger.info(
-            f"Calculated burnout danger for {len(reports)} residents"
-        )
+        logger.info(f"Calculated burnout danger for {len(reports)} residents")
 
         return reports

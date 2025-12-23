@@ -1,4 +1,5 @@
 """Base classes for leave providers."""
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import date

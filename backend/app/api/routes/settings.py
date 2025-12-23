@@ -1,11 +1,12 @@
 """Settings API routes with database persistence."""
+
 import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_active_user, get_admin_user
+from app.core.security import get_admin_user, get_current_active_user
 from app.db.session import get_db
 from app.models.settings import ApplicationSettings
 from app.models.user import User
@@ -68,8 +69,11 @@ def update_settings(
     db.commit()
     db.refresh(settings)
 
-    logger.info("Settings updated: algorithm=%s, work_hours=%d",
-                settings.scheduling_algorithm, settings.work_hours_per_week)
+    logger.info(
+        "Settings updated: algorithm=%s, work_hours=%d",
+        settings.scheduling_algorithm,
+        settings.work_hours_per_week,
+    )
     return SettingsResponse(**settings.to_dict())
 
 

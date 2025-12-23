@@ -75,7 +75,7 @@ class HealthAggregator:
         self,
         enable_history: bool = True,
         history_size: int = 100,
-        timeout: float = 10.0
+        timeout: float = 10.0,
     ):
         """
         Initialize health aggregator.
@@ -129,20 +129,16 @@ class HealthAggregator:
             redis_task = asyncio.create_task(self.redis_check.check())
 
             db_result, redis_result = await asyncio.gather(
-                db_task,
-                redis_task,
-                return_exceptions=True
+                db_task, redis_task, return_exceptions=True
             )
 
             # Determine overall readiness
-            db_healthy = (
-                not isinstance(db_result, Exception)
-                and db_result.get("status") in ["healthy", "degraded"]
-            )
-            redis_healthy = (
-                not isinstance(redis_result, Exception)
-                and redis_result.get("status") in ["healthy", "degraded"]
-            )
+            db_healthy = not isinstance(db_result, Exception) and db_result.get(
+                "status"
+            ) in ["healthy", "degraded"]
+            redis_healthy = not isinstance(
+                redis_result, Exception
+            ) and redis_result.get("status") in ["healthy", "degraded"]
 
             if db_healthy and redis_healthy:
                 status = "healthy"
@@ -175,9 +171,15 @@ class HealthAggregator:
 
         # Run all health checks in parallel
         tasks = {
-            "database": asyncio.create_task(self._check_with_timeout("database", self.database_check)),
-            "redis": asyncio.create_task(self._check_with_timeout("redis", self.redis_check)),
-            "celery": asyncio.create_task(self._check_with_timeout("celery", self.celery_check)),
+            "database": asyncio.create_task(
+                self._check_with_timeout("database", self.database_check)
+            ),
+            "redis": asyncio.create_task(
+                self._check_with_timeout("redis", self.redis_check)
+            ),
+            "celery": asyncio.create_task(
+                self._check_with_timeout("celery", self.celery_check)
+            ),
         }
 
         # Wait for all checks to complete
@@ -218,9 +220,7 @@ class HealthAggregator:
         return aggregated_result
 
     async def _check_with_timeout(
-        self,
-        service_name: str,
-        health_checker: Any
+        self, service_name: str, health_checker: Any
     ) -> HealthCheckResult:
         """
         Execute a health check with timeout handling.
@@ -260,8 +260,7 @@ class HealthAggregator:
             )
 
     def _aggregate_status(
-        self,
-        service_results: dict[str, HealthCheckResult]
+        self, service_results: dict[str, HealthCheckResult]
     ) -> HealthStatus:
         """
         Aggregate status from individual service results.
@@ -300,8 +299,7 @@ class HealthAggregator:
         return HealthStatus.HEALTHY
 
     def _build_summary(
-        self,
-        service_results: dict[str, HealthCheckResult]
+        self, service_results: dict[str, HealthCheckResult]
     ) -> dict[str, Any]:
         """
         Build summary statistics from service results.
@@ -314,21 +312,20 @@ class HealthAggregator:
         """
         total_services = len(service_results)
         healthy_count = sum(
-            1 for r in service_results.values()
-            if r.status == HealthStatus.HEALTHY
+            1 for r in service_results.values() if r.status == HealthStatus.HEALTHY
         )
         degraded_count = sum(
-            1 for r in service_results.values()
-            if r.status == HealthStatus.DEGRADED
+            1 for r in service_results.values() if r.status == HealthStatus.DEGRADED
         )
         unhealthy_count = sum(
-            1 for r in service_results.values()
-            if r.status == HealthStatus.UNHEALTHY
+            1 for r in service_results.values() if r.status == HealthStatus.UNHEALTHY
         )
 
-        avg_response_time = sum(
-            r.response_time_ms for r in service_results.values()
-        ) / total_services if total_services > 0 else 0.0
+        avg_response_time = (
+            sum(r.response_time_ms for r in service_results.values()) / total_services
+            if total_services > 0
+            else 0.0
+        )
 
         return {
             "total_services": total_services,
@@ -402,8 +399,7 @@ class HealthAggregator:
 
         # Calculate uptime percentage
         healthy_checks = sum(
-            1 for check in recent_checks
-            if check.status == HealthStatus.HEALTHY
+            1 for check in recent_checks if check.status == HealthStatus.HEALTHY
         )
         uptime_percentage = (healthy_checks / len(recent_checks)) * 100
 

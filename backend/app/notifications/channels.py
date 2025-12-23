@@ -1,4 +1,5 @@
 """Notification delivery channels."""
+
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -27,6 +28,7 @@ class NotificationPayload(BaseModel):
         priority: Priority level (high, normal, low)
         created_at: Timestamp of creation
     """
+
     id: UUID = Field(default_factory=uuid.uuid4)
     recipient_id: UUID
     notification_type: str
@@ -47,6 +49,7 @@ class DeliveryResult(BaseModel):
         message: Success or error message
         metadata: Additional delivery metadata
     """
+
     success: bool
     channel: str
     message: str
@@ -63,9 +66,7 @@ class NotificationChannel(ABC):
 
     @abstractmethod
     async def deliver(
-        self,
-        payload: NotificationPayload,
-        db: Session | None = None
+        self, payload: NotificationPayload, db: Session | None = None
     ) -> DeliveryResult:
         """
         Deliver a notification through this channel.
@@ -99,9 +100,7 @@ class InAppChannel(NotificationChannel):
         return "in_app"
 
     async def deliver(
-        self,
-        payload: NotificationPayload,
-        db: Session | None = None
+        self, payload: NotificationPayload, db: Session | None = None
     ) -> DeliveryResult:
         """
         Store notification in database for in-app display.
@@ -117,7 +116,7 @@ class InAppChannel(NotificationChannel):
             return DeliveryResult(
                 success=False,
                 channel=self.channel_name,
-                message="Database session required for in-app notifications"
+                message="Database session required for in-app notifications",
             )
 
         try:
@@ -144,14 +143,14 @@ class InAppChannel(NotificationChannel):
                 success=True,
                 channel=self.channel_name,
                 message="Notification stored successfully",
-                metadata={"notification_id": str(payload.id)}
+                metadata={"notification_id": str(payload.id)},
             )
 
         except Exception as e:
             return DeliveryResult(
                 success=False,
                 channel=self.channel_name,
-                message=f"Failed to store notification: {str(e)}"
+                message=f"Failed to store notification: {str(e)}",
             )
 
 
@@ -177,9 +176,7 @@ class EmailChannel(NotificationChannel):
         return "email"
 
     async def deliver(
-        self,
-        payload: NotificationPayload,
-        db: Session | None = None
+        self, payload: NotificationPayload, db: Session | None = None
     ) -> DeliveryResult:
         """
         Prepare email payload for delivery.
@@ -207,20 +204,22 @@ class EmailChannel(NotificationChannel):
             # Uncomment when infrastructure ready:
             # from app.notifications.tasks import send_email
             # send_email.delay(**email_payload)
-            logger.debug("Email prepared for %s: %s", payload.recipient_id, payload.subject)
+            logger.debug(
+                "Email prepared for %s: %s", payload.recipient_id, payload.subject
+            )
 
             return DeliveryResult(
                 success=True,
                 channel=self.channel_name,
                 message="Email queued for delivery",
-                metadata={"email_payload": email_payload}
+                metadata={"email_payload": email_payload},
             )
 
         except Exception as e:
             return DeliveryResult(
                 success=False,
                 channel=self.channel_name,
-                message=f"Failed to prepare email: {str(e)}"
+                message=f"Failed to prepare email: {str(e)}",
             )
 
     def _format_html(self, payload: NotificationPayload) -> str:
@@ -287,9 +286,7 @@ class WebhookChannel(NotificationChannel):
         return "webhook"
 
     async def deliver(
-        self,
-        payload: NotificationPayload,
-        db: Session | None = None
+        self, payload: NotificationPayload, db: Session | None = None
     ) -> DeliveryResult:
         """
         Prepare webhook payload for external delivery.
@@ -319,23 +316,22 @@ class WebhookChannel(NotificationChannel):
             # if self.webhook_url:
             #     from app.notifications.tasks import send_webhook
             #     send_webhook.delay(self.webhook_url, webhook_payload)
-            logger.debug("Webhook prepared for %s", self.webhook_url or "no URL configured")
+            logger.debug(
+                "Webhook prepared for %s", self.webhook_url or "no URL configured"
+            )
 
             return DeliveryResult(
                 success=True,
                 channel=self.channel_name,
                 message="Webhook queued for delivery",
-                metadata={
-                    "webhook_url": self.webhook_url,
-                    "payload": webhook_payload
-                }
+                metadata={"webhook_url": self.webhook_url, "payload": webhook_payload},
             )
 
         except Exception as e:
             return DeliveryResult(
                 success=False,
                 channel=self.channel_name,
-                message=f"Failed to prepare webhook: {str(e)}"
+                message=f"Failed to prepare webhook: {str(e)}",
             )
 
 

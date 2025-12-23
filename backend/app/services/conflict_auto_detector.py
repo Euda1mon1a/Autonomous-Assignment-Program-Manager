@@ -5,6 +5,7 @@ Detects conflicts between leave records and FMIT schedule assignments,
 creating alerts when overlaps are found. Also detects ACGME compliance
 violations and supervision ratio issues.
 """
+
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
 @dataclass
 class ConflictInfo:
     """Information about a detected conflict."""
+
     faculty_id: UUID
     faculty_name: str
     conflict_type: str  # leave_fmit_overlap, back_to_back, double_booking, etc.
@@ -84,15 +86,19 @@ class ConflictAutoDetector:
                 absence.end_date,
             )
             for fmit_week in fmit_conflicts:
-                conflicts.append(ConflictInfo(
-                    faculty_id=absence.person_id,
-                    faculty_name=absence.person.name if absence.person else "Unknown",
-                    conflict_type="leave_fmit_overlap",
-                    fmit_week=fmit_week,
-                    leave_id=absence_id,
-                    severity="critical",
-                    description=f"{absence.absence_type} conflicts with FMIT week {fmit_week}",
-                ))
+                conflicts.append(
+                    ConflictInfo(
+                        faculty_id=absence.person_id,
+                        faculty_name=absence.person.name
+                        if absence.person
+                        else "Unknown",
+                        conflict_type="leave_fmit_overlap",
+                        fmit_week=fmit_week,
+                        leave_id=absence_id,
+                        severity="critical",
+                        description=f"{absence.absence_type} conflicts with FMIT week {fmit_week}",
+                    )
+                )
 
         return conflicts
 
@@ -147,15 +153,19 @@ class ConflictAutoDetector:
                     absence.end_date,
                 )
                 for fmit_week in fmit_conflicts:
-                    conflicts.append(ConflictInfo(
-                        faculty_id=absence.person_id,
-                        faculty_name=absence.person.name if absence.person else "Unknown",
-                        conflict_type="leave_fmit_overlap",
-                        fmit_week=fmit_week,
-                        leave_id=absence.id,
-                        severity="critical",
-                        description=f"{absence.absence_type} conflicts with FMIT week {fmit_week}",
-                    ))
+                    conflicts.append(
+                        ConflictInfo(
+                            faculty_id=absence.person_id,
+                            faculty_name=absence.person.name
+                            if absence.person
+                            else "Unknown",
+                            conflict_type="leave_fmit_overlap",
+                            fmit_week=fmit_week,
+                            leave_id=absence.id,
+                            severity="critical",
+                            description=f"{absence.absence_type} conflicts with FMIT week {fmit_week}",
+                        )
+                    )
 
         # 2. Check for double-booking across systems
         conflicts.extend(
@@ -239,18 +249,25 @@ class ConflictAutoDetector:
             severity_enum = ConflictSeverity[severity_key]
 
             # Check if a similar alert already exists
-            existing = self.db.query(ConflictAlert).filter(
-                and_(
-                    ConflictAlert.faculty_id == conflict.faculty_id,
-                    ConflictAlert.conflict_type == conflict_type_enum,
-                    ConflictAlert.fmit_week == (conflict.fmit_week or conflict.start_date),
-                    ConflictAlert.status.in_(["new", "acknowledged"]),
+            existing = (
+                self.db.query(ConflictAlert)
+                .filter(
+                    and_(
+                        ConflictAlert.faculty_id == conflict.faculty_id,
+                        ConflictAlert.conflict_type == conflict_type_enum,
+                        ConflictAlert.fmit_week
+                        == (conflict.fmit_week or conflict.start_date),
+                        ConflictAlert.status.in_(["new", "acknowledged"]),
+                    )
                 )
-            ).first()
+                .first()
+            )
 
             if existing:
                 # Update existing alert if severity increased
-                if self._severity_priority(conflict.severity) > self._severity_priority(existing.severity.value.lower()):
+                if self._severity_priority(conflict.severity) > self._severity_priority(
+                    existing.severity.value.lower()
+                ):
                     existing.severity = severity_enum
                     existing.description = conflict.description
                     self.db.commit()
@@ -339,17 +356,19 @@ class ConflictAutoDetector:
             conflicts = []
             sorted_weeks = sorted(fmit_weeks)
             for i in range(len(sorted_weeks) - 1):
-                gap = (sorted_weeks[i+1] - sorted_weeks[i]).days
+                gap = (sorted_weeks[i + 1] - sorted_weeks[i]).days
                 if gap <= 14:  # Less than 2 week gap
-                    conflicts.append(ConflictInfo(
-                        faculty_id=faculty_id,
-                        faculty_name="",  # Would be populated from query
-                        conflict_type="back_to_back",
-                        fmit_week=sorted_weeks[i],
-                        severity="high",
-                        description=f"Back-to-back FMIT: {sorted_weeks[i]} and {sorted_weeks[i+1]}",
-                        suggested_resolution="Add at least 2 weeks between FMIT rotations",
-                    ))
+                    conflicts.append(
+                        ConflictInfo(
+                            faculty_id=faculty_id,
+                            faculty_name="",  # Would be populated from query
+                            conflict_type="back_to_back",
+                            fmit_week=sorted_weeks[i],
+                            severity="high",
+                            description=f"Back-to-back FMIT: {sorted_weeks[i]} and {sorted_weeks[i + 1]}",
+                            suggested_resolution="Add at least 2 weeks between FMIT rotations",
+                        )
+                    )
             return conflicts
         return []
 
@@ -378,7 +397,9 @@ class ConflictAutoDetector:
             .select_from(Assignment)
             .join(Person, Assignment.person_id == Person.id)
             .join(Block, Assignment.block_id == Block.id)
-            .join(RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id)
+            .join(
+                RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
+            )
             .filter(
                 and_(
                     Block.date >= start_date,
@@ -397,18 +418,25 @@ class ConflictAutoDetector:
             assignments_by_person_block[key].append((person_id, person_name))
 
         # Check for double-booking (person assigned multiple times to same block)
-        for (person_id, person_name, block_date, time_of_day), assignments in assignments_by_person_block.items():
+        for (
+            person_id,
+            person_name,
+            block_date,
+            time_of_day,
+        ), assignments in assignments_by_person_block.items():
             if len(assignments) > 1:
-                conflicts.append(ConflictInfo(
-                    faculty_id=person_id,
-                    faculty_name=person_name,
-                    conflict_type="residency_fmit_double_booking",
-                    severity="critical",
-                    description=f"Double-booked on {block_date} {time_of_day}: multiple concurrent assignments",
-                    start_date=block_date,
-                    end_date=block_date,
-                    suggested_resolution="Remove one of the conflicting assignments",
-                ))
+                conflicts.append(
+                    ConflictInfo(
+                        faculty_id=person_id,
+                        faculty_name=person_name,
+                        conflict_type="residency_fmit_double_booking",
+                        severity="critical",
+                        description=f"Double-booked on {block_date} {time_of_day}: multiple concurrent assignments",
+                        start_date=block_date,
+                        end_date=block_date,
+                        suggested_resolution="Remove one of the conflicting assignments",
+                    )
+                )
 
         return conflicts
 
@@ -449,11 +477,15 @@ class ConflictAutoDetector:
 
         for person in residents:
             # Check 80-hour work week violations
-            week_violations = self._check_80_hour_violations(person, start_date, end_date)
+            week_violations = self._check_80_hour_violations(
+                person, start_date, end_date
+            )
             conflicts.extend(week_violations)
 
             # Check 1-in-7 rest day violations
-            rest_violations = self._check_1_in_7_violations(person, start_date, end_date)
+            rest_violations = self._check_1_in_7_violations(
+                person, start_date, end_date
+            )
             conflicts.extend(rest_violations)
 
         return conflicts
@@ -495,17 +527,19 @@ class ConflictAutoDetector:
             hours_worked = work_blocks * 4.0
 
             if hours_worked > 80:
-                conflicts.append(ConflictInfo(
-                    faculty_id=person.id,
-                    faculty_name=person.name,
-                    conflict_type="work_hour_violation",
-                    severity="critical",
-                    description=f"ACGME 80-hour violation: {hours_worked:.1f} hours in week of {week_start}",
-                    start_date=week_start,
-                    end_date=week_end,
-                    hours_worked=hours_worked,
-                    suggested_resolution="Reduce work hours or redistribute assignments to comply with 80-hour limit",
-                ))
+                conflicts.append(
+                    ConflictInfo(
+                        faculty_id=person.id,
+                        faculty_name=person.name,
+                        conflict_type="work_hour_violation",
+                        severity="critical",
+                        description=f"ACGME 80-hour violation: {hours_worked:.1f} hours in week of {week_start}",
+                        start_date=week_start,
+                        end_date=week_end,
+                        hours_worked=hours_worked,
+                        suggested_resolution="Reduce work hours or redistribute assignments to comply with 80-hour limit",
+                    )
+                )
 
             # Move to next week
             current_date = week_end + timedelta(days=1)
@@ -550,38 +584,42 @@ class ConflictAutoDetector:
         streak_start = work_days[0]
 
         for i in range(1, len(work_days)):
-            if (work_days[i] - work_days[i-1]).days == 1:
+            if (work_days[i] - work_days[i - 1]).days == 1:
                 consecutive_days += 1
             else:
                 # Streak broken
                 if consecutive_days > 6:
-                    conflicts.append(ConflictInfo(
-                        faculty_id=person.id,
-                        faculty_name=person.name,
-                        conflict_type="rest_day_violation",
-                        severity="critical",
-                        description=f"ACGME 1-in-7 violation: {consecutive_days} consecutive work days starting {streak_start}",
-                        start_date=streak_start,
-                        end_date=work_days[i-1],
-                        consecutive_days=consecutive_days,
-                        suggested_resolution="Ensure at least 1 day off every 7 days",
-                    ))
+                    conflicts.append(
+                        ConflictInfo(
+                            faculty_id=person.id,
+                            faculty_name=person.name,
+                            conflict_type="rest_day_violation",
+                            severity="critical",
+                            description=f"ACGME 1-in-7 violation: {consecutive_days} consecutive work days starting {streak_start}",
+                            start_date=streak_start,
+                            end_date=work_days[i - 1],
+                            consecutive_days=consecutive_days,
+                            suggested_resolution="Ensure at least 1 day off every 7 days",
+                        )
+                    )
                 consecutive_days = 1
                 streak_start = work_days[i]
 
         # Check final streak
         if consecutive_days > 6:
-            conflicts.append(ConflictInfo(
-                faculty_id=person.id,
-                faculty_name=person.name,
-                conflict_type="rest_day_violation",
-                severity="critical",
-                description=f"ACGME 1-in-7 violation: {consecutive_days} consecutive work days starting {streak_start}",
-                start_date=streak_start,
-                end_date=work_days[-1],
-                consecutive_days=consecutive_days,
-                suggested_resolution="Ensure at least 1 day off every 7 days",
-            ))
+            conflicts.append(
+                ConflictInfo(
+                    faculty_id=person.id,
+                    faculty_name=person.name,
+                    conflict_type="rest_day_violation",
+                    severity="critical",
+                    description=f"ACGME 1-in-7 violation: {consecutive_days} consecutive work days starting {streak_start}",
+                    start_date=streak_start,
+                    end_date=work_days[-1],
+                    consecutive_days=consecutive_days,
+                    suggested_resolution="Ensure at least 1 day off every 7 days",
+                )
+            )
 
         return conflicts
 
@@ -610,7 +648,9 @@ class ConflictAutoDetector:
             self.db.query(Block)
             .options(
                 selectinload(Block.assignments).joinedload(Assignment.person),
-                selectinload(Block.assignments).joinedload(Assignment.rotation_template),
+                selectinload(Block.assignments).joinedload(
+                    Assignment.rotation_template
+                ),
             )
             .filter(
                 and_(
@@ -651,48 +691,54 @@ class ConflictAutoDetector:
             if pgy1_count > 0 or pgy2_3_count > 0:
                 # Check if supervision required (skip if no residents or already has faculty)
                 if faculty_count == 0:
-                    conflicts.append(ConflictInfo(
-                        faculty_id=faculty_id or assignments[0].person_id,
-                        faculty_name=f"Block {block.display_name}",
-                        conflict_type="missing_supervision",
-                        severity="critical",
-                        description=f"No faculty supervision on {block.display_name} with {pgy1_count + pgy2_3_count} residents",
-                        start_date=block.date,
-                        end_date=block.date,
-                        supervision_ratio=0.0,
-                        suggested_resolution="Assign at least one supervising faculty member",
-                    ))
+                    conflicts.append(
+                        ConflictInfo(
+                            faculty_id=faculty_id or assignments[0].person_id,
+                            faculty_name=f"Block {block.display_name}",
+                            conflict_type="missing_supervision",
+                            severity="critical",
+                            description=f"No faculty supervision on {block.display_name} with {pgy1_count + pgy2_3_count} residents",
+                            start_date=block.date,
+                            end_date=block.date,
+                            supervision_ratio=0.0,
+                            suggested_resolution="Assign at least one supervising faculty member",
+                        )
+                    )
                 else:
                     # Check ratios
                     if pgy1_count > 0:
                         pgy1_ratio = pgy1_count / faculty_count
                         if pgy1_ratio > 2.0:
-                            conflicts.append(ConflictInfo(
-                                faculty_id=faculty_id or assignments[0].person_id,
-                                faculty_name=f"Block {block.display_name}",
-                                conflict_type="supervision_ratio_violation",
-                                severity="high",
-                                description=f"PGY-1 supervision ratio violation on {block.display_name}: {pgy1_ratio:.1f}:1 (max 2:1)",
-                                start_date=block.date,
-                                end_date=block.date,
-                                supervision_ratio=pgy1_ratio,
-                                suggested_resolution="Increase faculty supervision or reduce PGY-1 assignments",
-                            ))
+                            conflicts.append(
+                                ConflictInfo(
+                                    faculty_id=faculty_id or assignments[0].person_id,
+                                    faculty_name=f"Block {block.display_name}",
+                                    conflict_type="supervision_ratio_violation",
+                                    severity="high",
+                                    description=f"PGY-1 supervision ratio violation on {block.display_name}: {pgy1_ratio:.1f}:1 (max 2:1)",
+                                    start_date=block.date,
+                                    end_date=block.date,
+                                    supervision_ratio=pgy1_ratio,
+                                    suggested_resolution="Increase faculty supervision or reduce PGY-1 assignments",
+                                )
+                            )
 
                     if pgy2_3_count > 0:
                         pgy2_3_ratio = pgy2_3_count / faculty_count
                         if pgy2_3_ratio > 4.0:
-                            conflicts.append(ConflictInfo(
-                                faculty_id=faculty_id or assignments[0].person_id,
-                                faculty_name=f"Block {block.display_name}",
-                                conflict_type="supervision_ratio_violation",
-                                severity="medium",
-                                description=f"PGY-2/3 supervision ratio violation on {block.display_name}: {pgy2_3_ratio:.1f}:1 (max 4:1)",
-                                start_date=block.date,
-                                end_date=block.date,
-                                supervision_ratio=pgy2_3_ratio,
-                                suggested_resolution="Increase faculty supervision or reduce PGY-2/3 assignments",
-                            ))
+                            conflicts.append(
+                                ConflictInfo(
+                                    faculty_id=faculty_id or assignments[0].person_id,
+                                    faculty_name=f"Block {block.display_name}",
+                                    conflict_type="supervision_ratio_violation",
+                                    severity="medium",
+                                    description=f"PGY-2/3 supervision ratio violation on {block.display_name}: {pgy2_3_ratio:.1f}:1 (max 4:1)",
+                                    start_date=block.date,
+                                    end_date=block.date,
+                                    supervision_ratio=pgy2_3_ratio,
+                                    suggested_resolution="Increase faculty supervision or reduce PGY-2/3 assignments",
+                                )
+                            )
 
         return conflicts
 
@@ -764,7 +810,8 @@ class ConflictAutoDetector:
             "by_severity": dict(severity_counts),
             "by_type": dict(type_counts),
             "affected_people": [
-                {"id": str(pid), "name": name} for pid, name in sorted(affected_people, key=lambda x: x[1])
+                {"id": str(pid), "name": name}
+                for pid, name in sorted(affected_people, key=lambda x: x[1])
             ],
         }
 

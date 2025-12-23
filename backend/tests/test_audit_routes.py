@@ -1,4 +1,5 @@
 """Tests for audit API routes."""
+
 from datetime import datetime, timedelta
 
 import pytest
@@ -37,7 +38,7 @@ class TestAuditAuthentication:
         """Test that POST /api/audit/mark-reviewed requires authentication."""
         response = client.post(
             "/api/audit/mark-reviewed",
-            json={"ids": ["audit-001"], "reviewedBy": "user-001"}
+            json={"ids": ["audit-001"], "reviewedBy": "user-001"},
         )
         assert response.status_code == 401
 
@@ -63,9 +64,7 @@ class TestAuditLogsEndpoint:
     def test_get_logs_custom_pagination(self, client: TestClient, auth_headers: dict):
         """Test pagination parameters."""
         response = client.get(
-            "/api/audit/logs",
-            params={"page": 2, "page_size": 10},
-            headers=auth_headers
+            "/api/audit/logs", params={"page": 2, "page_size": 10}, headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -73,12 +72,14 @@ class TestAuditLogsEndpoint:
         assert data["page"] == 2
         assert data["pageSize"] == 10
 
-    def test_get_logs_filter_by_entity_type(self, client: TestClient, auth_headers: dict):
+    def test_get_logs_filter_by_entity_type(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test filtering by entity types."""
         response = client.get(
             "/api/audit/logs",
             params={"entity_types": "assignment,person"},
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -92,9 +93,7 @@ class TestAuditLogsEndpoint:
     def test_get_logs_filter_by_action(self, client: TestClient, auth_headers: dict):
         """Test filtering by action types."""
         response = client.get(
-            "/api/audit/logs",
-            params={"actions": "create,update"},
-            headers=auth_headers
+            "/api/audit/logs", params={"actions": "create,update"}, headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -108,7 +107,7 @@ class TestAuditLogsEndpoint:
         response = client.get(
             "/api/audit/logs",
             params={"severity": "warning,critical"},
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -122,7 +121,7 @@ class TestAuditLogsEndpoint:
         response = client.get(
             "/api/audit/logs",
             params={"user_ids": "user-001,user-002"},
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -131,12 +130,14 @@ class TestAuditLogsEndpoint:
         for item in data["items"]:
             assert item["user"]["id"] in ["user-001", "user-002"]
 
-    def test_get_logs_acgme_overrides_only(self, client: TestClient, auth_headers: dict):
+    def test_get_logs_acgme_overrides_only(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test filtering for ACGME overrides only."""
         response = client.get(
             "/api/audit/logs",
             params={"acgme_overrides_only": True},
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -149,9 +150,7 @@ class TestAuditLogsEndpoint:
     def test_get_logs_search_query(self, client: TestClient, auth_headers: dict):
         """Test search functionality."""
         response = client.get(
-            "/api/audit/logs",
-            params={"search": "ACGME"},
-            headers=auth_headers
+            "/api/audit/logs", params={"search": "ACGME"}, headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -166,11 +165,8 @@ class TestAuditLogsEndpoint:
 
         response = client.get(
             "/api/audit/logs",
-            params={
-                "start_date": start,
-                "end_date": end
-            },
-            headers=auth_headers
+            params={"start_date": start, "end_date": end},
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -180,9 +176,7 @@ class TestAuditLogsEndpoint:
     def test_get_logs_entity_id_filter(self, client: TestClient, auth_headers: dict):
         """Test filtering by specific entity ID."""
         response = client.get(
-            "/api/audit/logs",
-            params={"entity_id": "assign-123"},
-            headers=auth_headers
+            "/api/audit/logs", params={"entity_id": "assign-123"}, headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -195,11 +189,8 @@ class TestAuditLogsEndpoint:
         """Test sorting parameters."""
         response = client.get(
             "/api/audit/logs",
-            params={
-                "sort_by": "timestamp",
-                "sort_direction": "asc"
-            },
-            headers=auth_headers
+            params={"sort_by": "timestamp", "sort_direction": "asc"},
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -215,9 +206,9 @@ class TestAuditLogsEndpoint:
                 "actions": "override",
                 "severity": "warning,critical",
                 "page": 1,
-                "page_size": 50
+                "page_size": 50,
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -231,9 +222,7 @@ class TestAuditLogsEndpoint:
     def test_get_logs_invalid_page(self, client: TestClient, auth_headers: dict):
         """Test validation for invalid page number."""
         response = client.get(
-            "/api/audit/logs",
-            params={"page": 0},
-            headers=auth_headers
+            "/api/audit/logs", params={"page": 0}, headers=auth_headers
         )
 
         assert response.status_code == 422  # Validation error
@@ -243,7 +232,7 @@ class TestAuditLogsEndpoint:
         response = client.get(
             "/api/audit/logs",
             params={"page_size": 200},  # Over 100 limit
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 422
@@ -329,7 +318,9 @@ class TestAuditStatisticsEndpoint:
         assert "start" in data["dateRange"]
         assert "end" in data["dateRange"]
 
-    def test_get_statistics_with_date_range(self, client: TestClient, auth_headers: dict):
+    def test_get_statistics_with_date_range(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test statistics with custom date range."""
         now = datetime.utcnow()
         start = (now - timedelta(days=30)).isoformat()
@@ -337,11 +328,8 @@ class TestAuditStatisticsEndpoint:
 
         response = client.get(
             "/api/audit/statistics",
-            params={
-                "start_date": start,
-                "end_date": end
-            },
-            headers=auth_headers
+            params={"start_date": start, "end_date": end},
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -402,12 +390,8 @@ class TestAuditExportEndpoint:
         """Test exporting audit logs in JSON format."""
         response = client.post(
             "/api/audit/export",
-            json={
-                "format": "json",
-                "includeMetadata": True,
-                "includeChanges": True
-            },
-            headers=auth_headers
+            json={"format": "json", "includeMetadata": True, "includeChanges": True},
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -419,12 +403,8 @@ class TestAuditExportEndpoint:
         """Test exporting audit logs in CSV format."""
         response = client.post(
             "/api/audit/export",
-            json={
-                "format": "csv",
-                "includeMetadata": False,
-                "includeChanges": True
-            },
-            headers=auth_headers
+            json={"format": "csv", "includeMetadata": False, "includeChanges": True},
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -435,12 +415,8 @@ class TestAuditExportEndpoint:
         """Test exporting audit logs in PDF format."""
         response = client.post(
             "/api/audit/export",
-            json={
-                "format": "pdf",
-                "includeMetadata": True,
-                "includeChanges": True
-            },
-            headers=auth_headers
+            json={"format": "pdf", "includeMetadata": True, "includeChanges": True},
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -457,10 +433,10 @@ class TestAuditExportEndpoint:
                     "entityTypes": ["assignment"],
                     "actions": ["override"],
                     "severity": ["critical"],
-                    "acgmeOverridesOnly": True
-                }
+                    "acgmeOverridesOnly": True,
+                },
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -475,14 +451,9 @@ class TestAuditExportEndpoint:
             "/api/audit/export",
             json={
                 "format": "csv",
-                "filters": {
-                    "dateRange": {
-                        "start": start,
-                        "end": end
-                    }
-                }
+                "filters": {"dateRange": {"start": start, "end": end}},
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -494,7 +465,7 @@ class TestAuditExportEndpoint:
             json={
                 "format": "xml"  # Unsupported format
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 400
@@ -503,28 +474,25 @@ class TestAuditExportEndpoint:
     def test_export_json_contains_data(self, client: TestClient, auth_headers: dict):
         """Test that JSON export contains valid data."""
         response = client.post(
-            "/api/audit/export",
-            json={"format": "json"},
-            headers=auth_headers
+            "/api/audit/export", json={"format": "json"}, headers=auth_headers
         )
 
         assert response.status_code == 200
         # The response should be valid JSON
         import json
+
         data = json.loads(response.content)
         assert isinstance(data, list)
 
     def test_export_csv_has_headers(self, client: TestClient, auth_headers: dict):
         """Test that CSV export has proper headers."""
         response = client.post(
-            "/api/audit/export",
-            json={"format": "csv"},
-            headers=auth_headers
+            "/api/audit/export", json={"format": "csv"}, headers=auth_headers
         )
 
         assert response.status_code == 200
-        content = response.content.decode('utf-8')
-        lines = content.split('\n')
+        content = response.content.decode("utf-8")
+        lines = content.split("\n")
 
         # First line should be headers
         assert len(lines) > 0
@@ -544,9 +512,9 @@ class TestMarkReviewedEndpoint:
             json={
                 "ids": ["audit-001", "audit-002"],
                 "reviewedBy": "user-001",
-                "notes": "Reviewed for monthly compliance check"
+                "notes": "Reviewed for monthly compliance check",
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 204
@@ -555,11 +523,8 @@ class TestMarkReviewedEndpoint:
         """Test marking reviewed without notes."""
         response = client.post(
             "/api/audit/mark-reviewed",
-            json={
-                "ids": ["audit-001"],
-                "reviewedBy": "user-002"
-            },
-            headers=auth_headers
+            json={"ids": ["audit-001"], "reviewedBy": "user-002"},
+            headers=auth_headers,
         )
 
         assert response.status_code == 204
@@ -568,24 +533,21 @@ class TestMarkReviewedEndpoint:
         """Test validation for empty IDs list."""
         response = client.post(
             "/api/audit/mark-reviewed",
-            json={
-                "ids": [],
-                "reviewedBy": "user-001"
-            },
-            headers=auth_headers
+            json={"ids": [], "reviewedBy": "user-001"},
+            headers=auth_headers,
         )
 
         assert response.status_code == 400
         assert "no audit entry ids" in response.json()["detail"].lower()
 
-    def test_mark_reviewed_missing_reviewer(self, client: TestClient, auth_headers: dict):
+    def test_mark_reviewed_missing_reviewer(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test validation for missing reviewer."""
         response = client.post(
             "/api/audit/mark-reviewed",
-            json={
-                "ids": ["audit-001"]
-            },
-            headers=auth_headers
+            json={"ids": ["audit-001"]},
+            headers=auth_headers,
         )
 
         assert response.status_code == 422  # Validation error
@@ -597,23 +559,25 @@ class TestMarkReviewedEndpoint:
             json={
                 "ids": ["audit-007"],  # Critical ACGME override
                 "reviewedBy": "user-002",
-                "notes": "Reviewed emergency override - appropriate justification"
+                "notes": "Reviewed emergency override - appropriate justification",
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 204
 
-    def test_mark_reviewed_multiple_entries(self, client: TestClient, auth_headers: dict):
+    def test_mark_reviewed_multiple_entries(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test marking multiple entries as reviewed."""
         response = client.post(
             "/api/audit/mark-reviewed",
             json={
                 "ids": ["audit-002", "audit-007"],
                 "reviewedBy": "user-001",
-                "notes": "Batch review of ACGME overrides for Q4"
+                "notes": "Batch review of ACGME overrides for Q4",
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 204
@@ -622,7 +586,9 @@ class TestMarkReviewedEndpoint:
 class TestAuditLogStructure:
     """Tests for audit log entry structure and fields."""
 
-    def test_audit_entry_has_required_fields(self, client: TestClient, auth_headers: dict):
+    def test_audit_entry_has_required_fields(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test that audit entries have all required fields."""
         response = client.get("/api/audit/logs", headers=auth_headers)
         data = response.json()
@@ -654,11 +620,13 @@ class TestAuditLogStructure:
 
             # Should be parseable as ISO datetime
             try:
-                datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
             except ValueError:
                 pytest.fail(f"Invalid timestamp format: {timestamp}")
 
-    def test_audit_entry_changes_structure(self, client: TestClient, auth_headers: dict):
+    def test_audit_entry_changes_structure(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test field changes structure when present."""
         response = client.get("/api/audit/logs", headers=auth_headers)
         data = response.json()

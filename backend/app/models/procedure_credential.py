@@ -1,4 +1,5 @@
 """ProcedureCredential model - tracks faculty credentials for procedures."""
+
 import uuid
 from datetime import date, datetime
 
@@ -29,19 +30,28 @@ class ProcedureCredential(Base):
     - Competency level
     - Supervision capacity limits
     """
+
     __tablename__ = "procedure_credentials"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
 
     # Links to person (faculty) and procedure
-    person_id = Column(GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False)
-    procedure_id = Column(GUID(), ForeignKey("procedures.id", ondelete="CASCADE"), nullable=False)
+    person_id = Column(
+        GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False
+    )
+    procedure_id = Column(
+        GUID(), ForeignKey("procedures.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Credential status
-    status = Column(String(50), nullable=False, default='active')  # 'active', 'expired', 'suspended', 'pending'
+    status = Column(
+        String(50), nullable=False, default="active"
+    )  # 'active', 'expired', 'suspended', 'pending'
 
     # Competency level
-    competency_level = Column(String(50), default='qualified')  # 'trainee', 'qualified', 'expert', 'master'
+    competency_level = Column(
+        String(50), default="qualified"
+    )  # 'trainee', 'qualified', 'expert', 'master'
 
     # Dates
     issued_date = Column(Date, default=date.today)
@@ -66,7 +76,9 @@ class ProcedureCredential(Base):
 
     # Unique constraint: one credential per person per procedure
     __table_args__ = (
-        UniqueConstraint('person_id', 'procedure_id', name='uq_person_procedure_credential'),
+        UniqueConstraint(
+            "person_id", "procedure_id", name="uq_person_procedure_credential"
+        ),
     )
 
     def __repr__(self):
@@ -75,7 +87,7 @@ class ProcedureCredential(Base):
     @property
     def is_valid(self) -> bool:
         """Check if credential is currently valid."""
-        if self.status != 'active':
+        if self.status != "active":
             return False
         return not (self.expiration_date and self.expiration_date < date.today())
 

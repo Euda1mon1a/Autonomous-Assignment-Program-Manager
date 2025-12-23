@@ -11,7 +11,7 @@ Tests cover:
 - Migration verification
 - Lock management for concurrent migrations
 """
-import os
+
 import tempfile
 import time
 from datetime import datetime, timedelta
@@ -24,8 +24,8 @@ from sqlalchemy.orm import Session
 from app.migrations.runner import (
     DependencyResolver,
     Migration,
-    MigrationDiscovery,
     MigrationDependencyError,
+    MigrationDiscovery,
     MigrationExecutionRecord,
     MigrationHooks,
     MigrationLock,
@@ -49,7 +49,7 @@ class TestMigration:
             version="001",
             description="Test migration",
             dependencies=["000"],
-            checksum="abc123"
+            checksum="abc123",
         )
 
         assert migration.name == "test_migration"
@@ -256,9 +256,7 @@ class TestDependencyResolver:
 
         # Filter to version 002
         filtered = resolver.filter_to_target(
-            migrations,
-            target_version="002",
-            current_version=None
+            migrations, target_version="002", current_version=None
         )
 
         versions = [m.version for m in filtered]
@@ -277,9 +275,7 @@ class TestDependencyResolver:
 
         # Filter from current version 002
         filtered = resolver.filter_to_target(
-            migrations,
-            target_version="head",
-            current_version="002"
+            migrations, target_version="head", current_version="002"
         )
 
         versions = [m.version for m in filtered]
@@ -302,16 +298,10 @@ class TestMigrationDiscovery:
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create migration files
             self._create_migration_file(
-                tmpdir,
-                "001_initial.py",
-                revision="001",
-                dependencies=[]
+                tmpdir, "001_initial.py", revision="001", dependencies=[]
             )
             self._create_migration_file(
-                tmpdir,
-                "002_add_table.py",
-                revision="002",
-                dependencies=["001"]
+                tmpdir, "002_add_table.py", revision="002", dependencies=["001"]
             )
 
             discovery = MigrationDiscovery()
@@ -326,11 +316,7 @@ class TestMigrationDiscovery:
         """Should ignore files that don't match pattern."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create valid migration
-            self._create_migration_file(
-                tmpdir,
-                "001_valid.py",
-                revision="001"
-            )
+            self._create_migration_file(tmpdir, "001_valid.py", revision="001")
 
             # Create files that should be ignored
             Path(tmpdir, "__init__.py").touch()
@@ -359,10 +345,7 @@ class TestMigrationDiscovery:
 
     @staticmethod
     def _create_migration_file(
-        directory: str,
-        filename: str,
-        revision: str = "001",
-        dependencies: list = None
+        directory: str, filename: str, revision: str = "001", dependencies: list = None
     ):
         """Helper to create a migration file."""
         dependencies = dependencies or []
@@ -398,7 +381,7 @@ class TestMigrationRunner:
             target_version="head",
             current_version=None,
             dry_run=False,
-            created_by="test_user"
+            created_by="test_user",
         )
 
         assert run_record.id is not None
@@ -419,23 +402,18 @@ class TestMigrationRunner:
 
         migrations = [
             Migration(
-                name="test1",
-                version="001",
-                dependencies=[],
-                upgrade_func=mock_upgrade
+                name="test1", version="001", dependencies=[], upgrade_func=mock_upgrade
             ),
             Migration(
                 name="test2",
                 version="002",
                 dependencies=["001"],
-                upgrade_func=mock_upgrade
+                upgrade_func=mock_upgrade,
             ),
         ]
 
         result = runner.run_migrations(
-            migrations=migrations,
-            dry_run=True,
-            acquire_lock=False
+            migrations=migrations, dry_run=True, acquire_lock=False
         )
 
         assert result.dry_run is True
@@ -448,25 +426,22 @@ class TestMigrationRunner:
 
         migrations = [
             Migration(
-                name="test1",
-                version="001",
-                dependencies=[],
-                upgrade_func=lambda: None
+                name="test1", version="001", dependencies=[], upgrade_func=lambda: None
             ),
         ]
 
         result = runner.run_migrations(
-            migrations=migrations,
-            dry_run=True,
-            acquire_lock=True
+            migrations=migrations, dry_run=True, acquire_lock=True
         )
 
         assert result.success is True
 
         # Lock should be released after execution
-        locks = db.query(MigrationLock).filter(
-            MigrationLock.lock_name == "migrations"
-        ).all()
+        locks = (
+            db.query(MigrationLock)
+            .filter(MigrationLock.lock_name == "migrations")
+            .all()
+        )
 
         if locks:
             assert locks[0].status == MigrationLockStatus.UNLOCKED.value
@@ -498,29 +473,23 @@ class TestMigrationRunner:
             pre_run=pre_run_hook,
             post_run=post_run_hook,
             pre_migration=pre_migration_hook,
-            post_migration=post_migration_hook
+            post_migration=post_migration_hook,
         )
 
         migrations = [
             Migration(
-                name="test1",
-                version="001",
-                dependencies=[],
-                upgrade_func=lambda: None
+                name="test1", version="001", dependencies=[], upgrade_func=lambda: None
             ),
             Migration(
                 name="test2",
                 version="002",
                 dependencies=["001"],
-                upgrade_func=lambda: None
+                upgrade_func=lambda: None,
             ),
         ]
 
         result = runner.run_migrations(
-            migrations=migrations,
-            dry_run=True,
-            hooks=hooks,
-            acquire_lock=False
+            migrations=migrations, dry_run=True, hooks=hooks, acquire_lock=False
         )
 
         assert hook_calls["pre_run"] == 1
@@ -540,14 +509,12 @@ class TestMigrationRunner:
                 name="test1",
                 version="001",
                 dependencies=[],
-                upgrade_func=failing_upgrade
+                upgrade_func=failing_upgrade,
             ),
         ]
 
         result = runner.run_migrations(
-            migrations=migrations,
-            dry_run=True,
-            acquire_lock=False
+            migrations=migrations, dry_run=True, acquire_lock=False
         )
 
         assert result.success is False
@@ -569,20 +536,18 @@ class TestMigrationRunner:
                 name="test1",
                 version="001",
                 dependencies=[],
-                upgrade_func=working_upgrade
+                upgrade_func=working_upgrade,
             ),
             Migration(
                 name="test2",
                 version="002",
                 dependencies=["001"],
-                upgrade_func=failing_upgrade
+                upgrade_func=failing_upgrade,
             ),
         ]
 
         result = runner.run_migrations(
-            migrations=migrations,
-            dry_run=True,
-            acquire_lock=False
+            migrations=migrations, dry_run=True, acquire_lock=False
         )
 
         # First migration succeeds, second fails
@@ -596,17 +561,12 @@ class TestMigrationRunner:
 
         migrations = [
             Migration(
-                name="test1",
-                version="001",
-                dependencies=[],
-                upgrade_func=lambda: None
+                name="test1", version="001", dependencies=[], upgrade_func=lambda: None
             ),
         ]
 
         result = runner.run_migrations(
-            migrations=migrations,
-            dry_run=True,
-            acquire_lock=False
+            migrations=migrations, dry_run=True, acquire_lock=False
         )
 
         # Get progress
@@ -625,25 +585,16 @@ class TestMigrationRunner:
         # Create multiple runs
         migrations = [
             Migration(
-                name="test1",
-                version="001",
-                dependencies=[],
-                upgrade_func=lambda: None
+                name="test1", version="001", dependencies=[], upgrade_func=lambda: None
             ),
         ]
 
         runner.run_migrations(
-            migrations=migrations,
-            dry_run=True,
-            acquire_lock=False,
-            run_name="run1"
+            migrations=migrations, dry_run=True, acquire_lock=False, run_name="run1"
         )
 
         runner.run_migrations(
-            migrations=migrations,
-            dry_run=False,
-            acquire_lock=False,
-            run_name="run2"
+            migrations=migrations, dry_run=False, acquire_lock=False, run_name="run2"
         )
 
         # List all runs
@@ -651,9 +602,7 @@ class TestMigrationRunner:
         assert len(runs) >= 2
 
         # Filter by status
-        completed_runs = runner.list_runs(
-            status=MigrationRunStatus.COMPLETED
-        )
+        completed_runs = runner.list_runs(status=MigrationRunStatus.COMPLETED)
         assert len(completed_runs) >= 1
 
 
@@ -669,7 +618,7 @@ class TestMigrationResult:
             completed_migrations=5,
             failed_migrations=0,
             dry_run=False,
-            execution_time=10.5
+            execution_time=10.5,
         )
 
         assert result.success is True
@@ -685,7 +634,7 @@ class TestMigrationResult:
             completed_migrations=3,
             failed_migrations=2,
             error_message="Migration 4 failed",
-            dry_run=False
+            dry_run=False,
         )
 
         assert result.success is False
@@ -699,7 +648,7 @@ class TestMigrationResult:
             success=True,
             total_migrations=3,
             completed_migrations=3,
-            dry_run=True
+            dry_run=True,
         )
 
         assert result.dry_run is True
@@ -715,7 +664,7 @@ class TestMigrationModels:
             id=uuid4(),
             run_name="test_run",
             total_migrations=10,
-            status=MigrationRunStatus.RUNNING.value
+            status=MigrationRunStatus.RUNNING.value,
         )
 
         db.add(record)
@@ -736,7 +685,7 @@ class TestMigrationModels:
             migration_version="001",
             status=MigrationRunStatus.COMPLETED.value,
             execution_order=1,
-            dependencies=["000"]
+            dependencies=["000"],
         )
 
         db.add(record)
@@ -754,7 +703,7 @@ class TestMigrationModels:
             lock_name="test_lock",
             lock_holder="test_holder",
             status=MigrationLockStatus.LOCKED.value,
-            expires_at=datetime.utcnow() + timedelta(hours=1)
+            expires_at=datetime.utcnow() + timedelta(hours=1),
         )
 
         db.add(lock)
@@ -772,7 +721,7 @@ class TestMigrationModels:
             lock_name="test_lock",
             lock_holder="test_holder",
             status=MigrationLockStatus.LOCKED.value,
-            expires_at=datetime.utcnow() - timedelta(hours=1)
+            expires_at=datetime.utcnow() - timedelta(hours=1),
         )
 
         db.add(lock)
@@ -787,7 +736,7 @@ class TestMigrationModels:
             lock_name="test_lock",
             lock_holder="test_holder",
             status=MigrationLockStatus.LOCKED.value,
-            expires_at=datetime.utcnow() + timedelta(hours=1)
+            expires_at=datetime.utcnow() + timedelta(hours=1),
         )
 
         db.add(lock)

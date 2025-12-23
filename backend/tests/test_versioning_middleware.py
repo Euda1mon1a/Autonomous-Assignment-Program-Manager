@@ -4,22 +4,21 @@ Tests for API versioning middleware.
 Tests version detection, deprecation warnings, response transformation,
 and version-aware routing.
 """
-import pytest
+
 from datetime import datetime, timedelta
-from fastapi import FastAPI, Request
+
+import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from fastapi.responses import JSONResponse
 
 from app.middleware.versioning import (
     APIVersion,
-    VersioningMiddleware,
-    VersionedAPIRouter,
     DeprecationManager,
+    VersionedAPIRouter,
+    VersioningMiddleware,
     VersionStatus,
     get_api_version,
     get_deprecation_manager,
-    ResponseTransformer,
-    TransformRegistry,
     transform_response,
 )
 
@@ -111,10 +110,7 @@ class TestVersioningMiddleware:
 
     def test_version_detection_from_header(self, client):
         """Test version detection from Accept-Version header."""
-        response = client.get(
-            "/api/v1/unversioned",
-            headers={"Accept-Version": "v2"}
-        )
+        response = client.get("/api/v1/unversioned", headers={"Accept-Version": "v2"})
         # Header should override URL
         assert response.json()["version"] == "v2"
 
@@ -130,10 +126,7 @@ class TestVersioningMiddleware:
     def test_version_priority_order(self, client):
         """Test version detection priority: URL > Header > Query > Default."""
         # URL takes precedence over header
-        response = client.get(
-            "/api/v2/test",
-            headers={"Accept-Version": "v1"}
-        )
+        response = client.get("/api/v2/test", headers={"Accept-Version": "v1"})
         assert response.json()["version"] == "v2"
 
     def test_default_version(self, client):
@@ -284,11 +277,7 @@ class TestVersionedAPIRouter:
 
         @v2_router.get("/users")
         async def get_users_v2():
-            return {
-                "data": {"users": []},
-                "metadata": {"count": 0},
-                "format": "v2"
-            }
+            return {"data": {"users": []}, "metadata": {"count": 0}, "format": "v2"}
 
         test_app.include_router(v1_router)
         test_app.include_router(v2_router)
@@ -314,10 +303,7 @@ class TestVersionedAPIRouter:
         """Test that version requirements are enforced."""
         # Try to access v2 endpoint with v3 version
         # This should work since no max_version set
-        response = client.get(
-            "/api/v2/users",
-            headers={"Accept-Version": "v3"}
-        )
+        response = client.get("/api/v2/users", headers={"Accept-Version": "v3"})
         assert response.status_code == 200
 
 
@@ -386,8 +372,8 @@ class TestResponseTransformers:
     def test_transform_registry(self):
         """Test transform registry."""
         from app.middleware.versioning.transformers import (
-            TransformRegistry,
             DateFormatTransformer,
+            TransformRegistry,
         )
 
         registry = TransformRegistry()
@@ -470,6 +456,7 @@ class TestVersionIntegration:
         @router.get("/changelog")
         async def get_changelog():
             from app.middleware.versioning.middleware import version_changelog
+
             return version_changelog()
 
         @router.get("/deprecations")
@@ -493,10 +480,7 @@ class TestVersionIntegration:
         assert response.json()["version"] == "v2"
 
         # Test header detection
-        response = client.get(
-            "/current-version",
-            headers={"Accept-Version": "v3"}
-        )
+        response = client.get("/current-version", headers={"Accept-Version": "v3"})
         assert response.json()["version"] == "v3"
 
     def test_changelog_endpoint(self, client):

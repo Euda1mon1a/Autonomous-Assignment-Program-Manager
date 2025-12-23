@@ -1,4 +1,5 @@
 """Tests for notification delivery channels."""
+
 import uuid
 from datetime import datetime
 from unittest.mock import MagicMock, Mock
@@ -10,7 +11,6 @@ from app.notifications.channels import (
     DeliveryResult,
     EmailChannel,
     InAppChannel,
-    NotificationChannel,
     NotificationPayload,
     WebhookChannel,
     get_channel,
@@ -29,7 +29,7 @@ class TestNotificationPayload:
             subject="Test Subject",
             body="Test Body",
             data={"key": "value"},
-            priority="high"
+            priority="high",
         )
 
         assert payload.recipient_id == recipient_id
@@ -48,7 +48,7 @@ class TestNotificationPayload:
             recipient_id=recipient_id,
             notification_type="test_type",
             subject="Test Subject",
-            body="Test Body"
+            body="Test Body",
         )
 
         # Default values should be set
@@ -64,13 +64,13 @@ class TestNotificationPayload:
             recipient_id=recipient_id,
             notification_type="test",
             subject="Test",
-            body="Body"
+            body="Body",
         )
         payload2 = NotificationPayload(
             recipient_id=recipient_id,
             notification_type="test",
             subject="Test",
-            body="Body"
+            body="Body",
         )
 
         assert payload1.id != payload2.id
@@ -85,7 +85,7 @@ class TestDeliveryResult:
             success=True,
             channel="email",
             message="Email sent successfully",
-            metadata={"email_id": "123"}
+            metadata={"email_id": "123"},
         )
 
         assert result.success is True
@@ -96,9 +96,7 @@ class TestDeliveryResult:
     def test_delivery_result_without_metadata(self):
         """Test DeliveryResult with None metadata."""
         result = DeliveryResult(
-            success=False,
-            channel="webhook",
-            message="Webhook failed"
+            success=False, channel="webhook", message="Webhook failed"
         )
 
         assert result.success is False
@@ -128,7 +126,7 @@ class TestInAppChannel:
             notification_type="schedule_change",
             subject="Schedule Updated",
             body="Your schedule has been changed",
-            priority="high"
+            priority="high",
         )
 
         result = await channel.deliver(payload, db)
@@ -150,7 +148,7 @@ class TestInAppChannel:
             recipient_id=recipient_id,
             notification_type="schedule_change",
             subject="Schedule Updated",
-            body="Your schedule has been changed"
+            body="Your schedule has been changed",
         )
 
         result = await channel.deliver(payload, db=None)
@@ -173,7 +171,7 @@ class TestInAppChannel:
             recipient_id=recipient_id,
             notification_type="test",
             subject="Test",
-            body="Test"
+            body="Test",
         )
 
         # Mock the payload.id property to raise an exception when converted to string
@@ -222,7 +220,7 @@ class TestEmailChannel:
             notification_type="schedule_reminder",
             subject="Schedule Reminder",
             body="You have an upcoming shift",
-            priority="normal"
+            priority="normal",
         )
 
         result = await channel.deliver(payload)
@@ -252,7 +250,7 @@ class TestEmailChannel:
             recipient_id=recipient_id,
             notification_type="test",
             subject="Test",
-            body="Test body"
+            body="Test body",
         )
 
         result = await channel.deliver(payload, db)
@@ -270,7 +268,7 @@ class TestEmailChannel:
             notification_type="test",
             subject="Test Subject",
             body="Test body content",
-            priority="normal"
+            priority="normal",
         )
 
         html = channel._format_html(payload)
@@ -291,7 +289,7 @@ class TestEmailChannel:
             notification_type="emergency",
             subject="Emergency Alert",
             body="Urgent message",
-            priority="high"
+            priority="high",
         )
 
         html = channel._format_html(payload)
@@ -312,7 +310,7 @@ class TestEmailChannel:
             notification_type="info",
             subject="Information",
             body="Low priority info",
-            priority="low"
+            priority="low",
         )
 
         html = channel._format_html(payload)
@@ -333,7 +331,7 @@ class TestEmailChannel:
             notification_type="test",
             subject="Test",
             body="Body",
-            priority="normal"
+            priority="normal",
         )
 
         html = channel._format_html(payload)
@@ -344,9 +342,9 @@ class TestEmailChannel:
         assert "<head>" in html
         assert "<style>" in html
         assert "<body>" in html
-        assert "<div class=\"header\">" in html
-        assert "<div class=\"content priority-normal\">" in html
-        assert "<div class=\"footer\">" in html
+        assert '<div class="header">' in html
+        assert '<div class="content priority-normal">' in html
+        assert '<div class="footer">' in html
 
         # Check CSS classes exist
         assert ".header" in html
@@ -390,7 +388,7 @@ class TestWebhookChannel:
             subject="System Alert",
             body="System status changed",
             data={"status": "degraded", "service": "api"},
-            priority="high"
+            priority="high",
         )
 
         result = await channel.deliver(payload)
@@ -426,7 +424,7 @@ class TestWebhookChannel:
             recipient_id=recipient_id,
             notification_type="test",
             subject="Test",
-            body="Test"
+            body="Test",
         )
 
         result = await channel.deliver(payload)
@@ -446,7 +444,7 @@ class TestWebhookChannel:
             recipient_id=recipient_id,
             notification_type="test",
             subject="Test",
-            body="Test"
+            body="Test",
         )
 
         result = await channel.deliver(payload, db)
@@ -466,7 +464,7 @@ class TestWebhookChannel:
             subject="Schedule Updated",
             body="Your schedule has been modified",
             data={"shift_id": "123", "reason": "coverage"},
-            priority="normal"
+            priority="normal",
         )
 
         result = await channel.deliver(payload)
@@ -475,8 +473,15 @@ class TestWebhookChannel:
 
         # Verify all required fields are present
         required_fields = [
-            "event", "notification_id", "type", "recipient_id",
-            "subject", "body", "priority", "timestamp", "data"
+            "event",
+            "notification_id",
+            "type",
+            "recipient_id",
+            "subject",
+            "body",
+            "priority",
+            "timestamp",
+            "data",
         ]
         for field in required_fields:
             assert field in webhook_payload, f"Missing field: {field}"
@@ -492,7 +497,7 @@ class TestWebhookChannel:
             notification_type="test",
             subject="Test",
             body="Test",
-            data=None
+            data=None,
         )
 
         result = await channel.deliver(payload)
@@ -580,8 +585,12 @@ class TestChannelAbstractInterface:
     def test_all_channels_have_channel_name(self):
         """Test all channel implementations have channel_name property."""
         for channel_class in AVAILABLE_CHANNELS.values():
-            channel = channel_class() if channel_class != EmailChannel and channel_class != WebhookChannel else channel_class()
-            assert hasattr(channel, 'channel_name')
+            channel = (
+                channel_class()
+                if channel_class != EmailChannel and channel_class != WebhookChannel
+                else channel_class()
+            )
+            assert hasattr(channel, "channel_name")
             assert isinstance(channel.channel_name, str)
             assert len(channel.channel_name) > 0
 
@@ -593,7 +602,7 @@ class TestChannelAbstractInterface:
             recipient_id=recipient_id,
             notification_type="test",
             subject="Test",
-            body="Test"
+            body="Test",
         )
 
         for channel_class in AVAILABLE_CHANNELS.values():
@@ -605,9 +614,9 @@ class TestChannelAbstractInterface:
                 result = await channel.deliver(payload)
 
             assert isinstance(result, DeliveryResult)
-            assert hasattr(result, 'success')
-            assert hasattr(result, 'channel')
-            assert hasattr(result, 'message')
+            assert hasattr(result, "success")
+            assert hasattr(result, "channel")
+            assert hasattr(result, "message")
 
 
 class TestPriorityHandling:
@@ -624,7 +633,7 @@ class TestPriorityHandling:
             notification_type="emergency",
             subject="Emergency",
             body="High priority message",
-            priority="high"
+            priority="high",
         )
 
         result = await channel.deliver(payload)
@@ -644,7 +653,7 @@ class TestPriorityHandling:
             notification_type="info",
             subject="Information",
             body="Normal priority message",
-            priority="normal"
+            priority="normal",
         )
 
         result = await channel.deliver(payload)
@@ -664,7 +673,7 @@ class TestPriorityHandling:
             notification_type="info",
             subject="FYI",
             body="Low priority message",
-            priority="low"
+            priority="low",
         )
 
         result = await channel.deliver(payload)
@@ -685,7 +694,7 @@ class TestPriorityHandling:
                 notification_type="test",
                 subject="Test",
                 body="Test",
-                priority=priority
+                priority=priority,
             )
 
             result = await channel.deliver(payload)
@@ -704,7 +713,7 @@ class TestPriorityHandling:
                 notification_type="test",
                 subject="Test",
                 body="Test",
-                priority=priority
+                priority=priority,
             )
 
             result = await channel.deliver(payload, db)

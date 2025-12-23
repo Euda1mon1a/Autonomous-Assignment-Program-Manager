@@ -33,9 +33,7 @@ class BlockRepository(BaseRepository[Block]):
 
         return query.order_by(Block.date, Block.time_of_day).all()
 
-    def get_by_date_and_time(
-        self, date: date, time_of_day: str
-    ) -> Block | None:
+    def get_by_date_and_time(self, date: date, time_of_day: str) -> Block | None:
         """Get a block by date and time of day."""
         return (
             self.db.query(Block)
@@ -46,9 +44,7 @@ class BlockRepository(BaseRepository[Block]):
             .first()
         )
 
-    def get_ids_in_date_range(
-        self, start_date: date, end_date: date
-    ) -> list[UUID]:
+    def get_ids_in_date_range(self, start_date: date, end_date: date) -> list[UUID]:
         """Get all block IDs in a date range."""
         results = (
             self.db.query(Block.id)
@@ -60,9 +56,7 @@ class BlockRepository(BaseRepository[Block]):
         )
         return [r[0] for r in results]
 
-    def exists_for_date_and_time(
-        self, date: date, time_of_day: str
-    ) -> bool:
+    def exists_for_date_and_time(self, date: date, time_of_day: str) -> bool:
         """Check if a block exists for a specific date and time."""
         return (
             self.db.query(Block)

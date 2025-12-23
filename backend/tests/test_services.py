@@ -8,6 +8,7 @@ Tests for:
 - AbsenceService
 - CertificationService
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -35,14 +36,18 @@ class TestPersonServiceQueries:
         assert len(pgy2_residents) == 1
         assert pgy2_residents[0].pgy_level == 2
 
-    def test_filter_faculty_by_specialty(self, db: Session, sample_faculty_members: list):
+    def test_filter_faculty_by_specialty(
+        self, db: Session, sample_faculty_members: list
+    ):
         """Test filtering faculty by specialty."""
         faculty = db.query(Person).filter(Person.type == "faculty").all()
 
         assert len(faculty) == 3
         assert all(f.type == "faculty" for f in faculty)
 
-    def test_count_people_by_type(self, db: Session, sample_residents: list, sample_faculty_members: list):
+    def test_count_people_by_type(
+        self, db: Session, sample_residents: list, sample_faculty_members: list
+    ):
         """Test counting people by type."""
         resident_count = db.query(Person).filter(Person.type == "resident").count()
         faculty_count = db.query(Person).filter(Person.type == "faculty").count()
@@ -106,11 +111,7 @@ class TestAbsenceQueries:
         db.commit()
 
         # Query blocking absences
-        blocking_absences = (
-            db.query(Absence)
-            .filter(Absence.is_blocking)
-            .all()
-        )
+        blocking_absences = db.query(Absence).filter(Absence.is_blocking).all()
 
         assert len(blocking_absences) == 1
         assert blocking_absences[0].absence_type == "deployment"
@@ -184,9 +185,7 @@ class TestAssignmentQueries:
         from app.models.assignment import Assignment
 
         assignments = (
-            db.query(Assignment)
-            .filter(Assignment.block_id == sample_block.id)
-            .all()
+            db.query(Assignment).filter(Assignment.block_id == sample_block.id).all()
         )
 
         assert len(assignments) == 1

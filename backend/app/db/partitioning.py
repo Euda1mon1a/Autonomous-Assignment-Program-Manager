@@ -47,7 +47,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -60,6 +60,7 @@ settings = get_settings()
 
 class PartitionStrategy(str, Enum):
     """Partition strategy types."""
+
     DAILY = "daily"
     WEEKLY = "weekly"
     MONTHLY = "monthly"
@@ -72,6 +73,7 @@ class PartitionStrategy(str, Enum):
 
 class PartitionStatus(str, Enum):
     """Partition status."""
+
     ACTIVE = "active"
     ARCHIVED = "archived"
     DETACHED = "detached"
@@ -81,13 +83,14 @@ class PartitionStatus(str, Enum):
 @dataclass
 class PartitionConfig:
     """Configuration for table partitioning."""
+
     table_name: str
     partition_column: str
     strategy: PartitionStrategy
-    retention_months: Optional[int] = None
+    retention_months: int | None = None
     auto_create: bool = True
     auto_archive: bool = False
-    archive_location: Optional[str] = None
+    archive_location: str | None = None
     pruning_enabled: bool = True
 
     def __post_init__(self):
@@ -99,16 +102,17 @@ class PartitionConfig:
 @dataclass
 class PartitionInfo:
     """Information about a partition."""
+
     partition_name: str
     parent_table: str
     strategy: str
-    range_start: Optional[datetime] = None
-    range_end: Optional[datetime] = None
+    range_start: datetime | None = None
+    range_end: datetime | None = None
     row_count: int = 0
     size_bytes: int = 0
     status: PartitionStatus = PartitionStatus.ACTIVE
-    created_at: Optional[datetime] = None
-    last_modified: Optional[datetime] = None
+    created_at: datetime | None = None
+    last_modified: datetime | None = None
 
     @property
     def size_mb(self) -> float:
@@ -124,14 +128,15 @@ class PartitionInfo:
 @dataclass
 class PartitionStatistics:
     """Statistics for partitioned table."""
+
     table_name: str
     total_partitions: int
     active_partitions: int
     archived_partitions: int
     total_rows: int
     total_size_bytes: int
-    oldest_partition: Optional[str] = None
-    newest_partition: Optional[str] = None
+    oldest_partition: str | None = None
+    newest_partition: str | None = None
     avg_partition_size_mb: float = 0.0
     partitions: list[PartitionInfo] = None
 
@@ -178,11 +183,11 @@ class PartitioningService:
         table_name: str,
         partition_column: str,
         strategy: PartitionStrategy = PartitionStrategy.MONTHLY,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         months_ahead: int = 3,
         months_behind: int = 12,
-        detach_existing: bool = False
+        detach_existing: bool = False,
     ) -> list[str]:
         """
         Create time-based partitions for a table.
@@ -204,12 +209,18 @@ class PartitioningService:
             ValueError: If strategy is not time-based
             RuntimeError: If partition creation fails
         """
-        if strategy not in (PartitionStrategy.DAILY, PartitionStrategy.WEEKLY,
-                           PartitionStrategy.MONTHLY, PartitionStrategy.QUARTERLY,
-                           PartitionStrategy.YEARLY):
+        if strategy not in (
+            PartitionStrategy.DAILY,
+            PartitionStrategy.WEEKLY,
+            PartitionStrategy.MONTHLY,
+            PartitionStrategy.QUARTERLY,
+            PartitionStrategy.YEARLY,
+        ):
             raise ValueError(f"Strategy {strategy} is not time-based")
 
-        logger.info(f"Creating {strategy} partitions for {table_name}.{partition_column}")
+        logger.info(
+            f"Creating {strategy} partitions for {table_name}.{partition_column}"
+        )
 
         # Determine date range
         now = datetime.now()
@@ -243,17 +254,16 @@ class PartitioningService:
                 created_partitions.append(partition_name)
                 logger.debug(f"Created partition: {partition_name}")
             except Exception as e:
-                logger.error(f"Failed to create partition for range {range_start} to {range_end}: {e}")
+                logger.error(
+                    f"Failed to create partition for range {range_start} to {range_end}: {e}"
+                )
                 # Continue creating other partitions
 
         logger.info(f"Created {len(created_partitions)} partitions for {table_name}")
         return created_partitions
 
     def _convert_to_partitioned_table(
-        self,
-        table_name: str,
-        partition_column: str,
-        strategy: PartitionStrategy
+        self, table_name: str, partition_column: str, strategy: PartitionStrategy
     ) -> None:
         """
         Convert an existing table to a partitioned table.
@@ -301,7 +311,7 @@ class PartitioningService:
         partition_column: str,
         range_start: datetime,
         range_end: datetime,
-        strategy: PartitionStrategy
+        strategy: PartitionStrategy,
     ) -> str:
         """
         Create a single time-based partition.
@@ -348,10 +358,7 @@ class PartitioningService:
             raise RuntimeError(f"Partition creation failed: {e}")
 
     def _generate_partition_ranges(
-        self,
-        start_date: datetime,
-        end_date: datetime,
-        strategy: PartitionStrategy
+        self, start_date: datetime, end_date: datetime, strategy: PartitionStrategy
     ) -> list[tuple[datetime, datetime]]:
         """
         Generate partition ranges based on strategy.
@@ -396,9 +403,7 @@ class PartitioningService:
         return ranges
 
     def _generate_partition_suffix(
-        self,
-        date: datetime,
-        strategy: PartitionStrategy
+        self, date: datetime, strategy: PartitionStrategy
     ) -> str:
         """
         Generate partition name suffix based on date and strategy.
@@ -433,7 +438,7 @@ class PartitioningService:
         table_name: str,
         partition_column: str,
         ranges: list[tuple[Any, Any]],
-        partition_names: Optional[list[str]] = None
+        partition_names: list[str] | None = None,
     ) -> list[str]:
         """
         Create range-based partitions.
@@ -498,7 +503,7 @@ class PartitioningService:
         table_name: str,
         partition_column: str,
         num_partitions: int = 4,
-        partition_prefix: Optional[str] = None
+        partition_prefix: str | None = None,
     ) -> list[str]:
         """
         Create hash-based partitions for even data distribution.
@@ -556,10 +561,7 @@ class PartitioningService:
     # =========================================================================
 
     def detach_partition(
-        self,
-        table_name: str,
-        partition_name: str,
-        concurrent: bool = True
+        self, table_name: str, partition_name: str, concurrent: bool = True
     ) -> bool:
         """
         Detach a partition from its parent table.
@@ -594,8 +596,8 @@ class PartitioningService:
         self,
         table_name: str,
         partition_name: str,
-        range_start: Optional[datetime] = None,
-        range_end: Optional[datetime] = None
+        range_start: datetime | None = None,
+        range_end: datetime | None = None,
     ) -> bool:
         """
         Attach an existing table as a partition.
@@ -635,11 +637,7 @@ class PartitioningService:
             logger.error(f"Failed to attach partition {partition_name}: {e}")
             return False
 
-    def drop_partition(
-        self,
-        partition_name: str,
-        cascade: bool = False
-    ) -> bool:
+    def drop_partition(self, partition_name: str, cascade: bool = False) -> bool:
         """
         Drop a partition table.
 
@@ -673,8 +671,8 @@ class PartitioningService:
         self,
         table_name: str,
         older_than_months: int = 24,
-        archive_location: Optional[str] = None,
-        delete_after_archive: bool = False
+        archive_location: str | None = None,
+        delete_after_archive: bool = False,
     ) -> list[str]:
         """
         Archive partitions older than specified threshold.
@@ -703,8 +701,7 @@ class PartitioningService:
                 # Export partition data
                 if archive_location:
                     success = self._export_partition_data(
-                        partition.partition_name,
-                        archive_location
+                        partition.partition_name, archive_location
                     )
 
                     if success:
@@ -719,9 +716,7 @@ class PartitioningService:
         return archived
 
     def cleanup_empty_partitions(
-        self,
-        table_name: str,
-        detach_only: bool = True
+        self, table_name: str, detach_only: bool = True
     ) -> list[str]:
         """
         Clean up partitions with no data.
@@ -757,11 +752,7 @@ class PartitioningService:
     # Query Optimization
     # =========================================================================
 
-    def enable_partition_pruning(
-        self,
-        table_name: str,
-        enable: bool = True
-    ) -> None:
+    def enable_partition_pruning(self, table_name: str, enable: bool = True) -> None:
         """
         Enable or disable partition pruning for better query performance.
 
@@ -788,10 +779,7 @@ class PartitioningService:
             self.db.rollback()
             logger.error(f"Failed to set partition pruning: {e}")
 
-    def analyze_partition_query(
-        self,
-        query: str
-    ) -> dict[str, Any]:
+    def analyze_partition_query(self, query: str) -> dict[str, Any]:
         """
         Analyze a query to see which partitions will be scanned.
 
@@ -815,20 +803,14 @@ class PartitioningService:
             return {
                 "query": query,
                 "partitions_scanned": partitions_scanned,
-                "explain_plan": explain_plan
+                "explain_plan": explain_plan,
             }
         except Exception as e:
             logger.error(f"Failed to analyze query: {e}")
-            return {
-                "query": query,
-                "error": str(e)
-            }
+            return {"query": query, "error": str(e)}
 
     def create_partition_wise_join(
-        self,
-        table1: str,
-        table2: str,
-        enable: bool = True
+        self, table1: str, table2: str, enable: bool = True
     ) -> None:
         """
         Enable partition-wise joins for better performance.
@@ -856,10 +838,7 @@ class PartitioningService:
     # Statistics and Monitoring
     # =========================================================================
 
-    def get_partition_info(
-        self,
-        table_name: str
-    ) -> list[PartitionInfo]:
+    def get_partition_info(self, table_name: str) -> list[PartitionInfo]:
         """
         Get information about all partitions for a table.
 
@@ -901,7 +880,7 @@ class PartitioningService:
                     range_end=range_end,
                     size_bytes=row[3] or 0,
                     row_count=row[4] or 0,
-                    status=PartitionStatus.ACTIVE
+                    status=PartitionStatus.ACTIVE,
                 )
                 partitions.append(partition)
 
@@ -910,10 +889,7 @@ class PartitioningService:
             logger.error(f"Failed to get partition info for {table_name}: {e}")
             return []
 
-    def get_partition_statistics(
-        self,
-        table_name: str
-    ) -> PartitionStatistics:
+    def get_partition_statistics(self, table_name: str) -> PartitionStatistics:
         """
         Get comprehensive statistics for a partitioned table.
 
@@ -932,20 +908,24 @@ class PartitioningService:
                 active_partitions=0,
                 archived_partitions=0,
                 total_rows=0,
-                total_size_bytes=0
+                total_size_bytes=0,
             )
 
         total_rows = sum(p.row_count for p in partitions)
         total_size = sum(p.size_bytes for p in partitions)
         active_count = sum(1 for p in partitions if p.status == PartitionStatus.ACTIVE)
-        archived_count = sum(1 for p in partitions if p.status == PartitionStatus.ARCHIVED)
+        archived_count = sum(
+            1 for p in partitions if p.status == PartitionStatus.ARCHIVED
+        )
 
         # Sort by name to get oldest/newest
         sorted_partitions = sorted(partitions, key=lambda p: p.partition_name)
         oldest = sorted_partitions[0].partition_name if sorted_partitions else None
         newest = sorted_partitions[-1].partition_name if sorted_partitions else None
 
-        avg_size_mb = (total_size / len(partitions) / (1024 * 1024)) if partitions else 0
+        avg_size_mb = (
+            (total_size / len(partitions) / (1024 * 1024)) if partitions else 0
+        )
 
         return PartitionStatistics(
             table_name=table_name,
@@ -957,13 +937,10 @@ class PartitioningService:
             oldest_partition=oldest,
             newest_partition=newest,
             avg_partition_size_mb=avg_size_mb,
-            partitions=partitions
+            partitions=partitions,
         )
 
-    def get_partition_health(
-        self,
-        table_name: str
-    ) -> dict[str, Any]:
+    def get_partition_health(self, table_name: str) -> dict[str, Any]:
         """
         Check partition health and identify potential issues.
 
@@ -993,7 +970,9 @@ class PartitioningService:
         empty_count = sum(1 for p in stats.partitions if p.row_count == 0)
         if empty_count > 0:
             issues.append(f"{empty_count} empty partitions found")
-            recommendations.append("Run cleanup_empty_partitions() to remove unused partitions")
+            recommendations.append(
+                "Run cleanup_empty_partitions() to remove unused partitions"
+            )
 
         # Check partition size
         large_partitions = [p for p in stats.partitions if p.size_gb > 10]
@@ -1010,7 +989,7 @@ class PartitioningService:
             "total_size_gb": stats.total_size_gb,
             "issues": issues,
             "recommendations": recommendations,
-            "statistics": stats
+            "statistics": stats,
         }
 
     # =========================================================================
@@ -1021,7 +1000,7 @@ class PartitioningService:
         self,
         table_name: str,
         months_ahead: int = 3,
-        strategy: PartitionStrategy = PartitionStrategy.MONTHLY
+        strategy: PartitionStrategy = PartitionStrategy.MONTHLY,
     ) -> list[str]:
         """
         Automatically create partitions for future months.
@@ -1062,7 +1041,7 @@ class PartitioningService:
             partition_column=partition_column,
             strategy=strategy,
             start_date=start_date,
-            end_date=end_date
+            end_date=end_date,
         )
 
     # =========================================================================
@@ -1094,9 +1073,14 @@ class PartitioningService:
 
     def _get_partition_type(self, strategy: PartitionStrategy) -> str:
         """Get PostgreSQL partition type for strategy."""
-        if strategy in (PartitionStrategy.DAILY, PartitionStrategy.WEEKLY,
-                       PartitionStrategy.MONTHLY, PartitionStrategy.QUARTERLY,
-                       PartitionStrategy.YEARLY, PartitionStrategy.RANGE):
+        if strategy in (
+            PartitionStrategy.DAILY,
+            PartitionStrategy.WEEKLY,
+            PartitionStrategy.MONTHLY,
+            PartitionStrategy.QUARTERLY,
+            PartitionStrategy.YEARLY,
+            PartitionStrategy.RANGE,
+        ):
             return "RANGE"
         elif strategy == PartitionStrategy.HASH:
             return "HASH"
@@ -1105,11 +1089,7 @@ class PartitioningService:
         else:
             return "RANGE"
 
-    def _create_partition_indexes(
-        self,
-        parent_table: str,
-        partition_name: str
-    ) -> None:
+    def _create_partition_indexes(self, parent_table: str, partition_name: str) -> None:
         """Create indexes on a partition matching the parent table."""
         # In PostgreSQL 11+, partition indexes are automatically created
         # This is a placeholder for custom index logic
@@ -1122,9 +1102,7 @@ class PartitioningService:
             self.detach_partition(table_name, partition.partition_name)
 
     def _export_partition_data(
-        self,
-        partition_name: str,
-        archive_location: str
+        self, partition_name: str, archive_location: str
     ) -> bool:
         """
         Export partition data to archive location.
@@ -1159,9 +1137,8 @@ class PartitioningService:
         return False
 
     def _parse_partition_bound(
-        self,
-        bound_expr: str
-    ) -> tuple[Optional[datetime], Optional[datetime]]:
+        self, bound_expr: str
+    ) -> tuple[datetime | None, datetime | None]:
         """
         Parse partition bound expression to extract range.
 
@@ -1178,6 +1155,7 @@ class PartitioningService:
         try:
             # Extract dates from bound expression
             import re
+
             matches = re.findall(r"'([^']+)'", bound_expr)
             if len(matches) >= 2:
                 range_start = datetime.fromisoformat(matches[0])
@@ -1188,10 +1166,7 @@ class PartitioningService:
 
         return None, None
 
-    def _extract_partitions_from_plan(
-        self,
-        explain_plan: dict
-    ) -> list[str]:
+    def _extract_partitions_from_plan(self, explain_plan: dict) -> list[str]:
         """
         Extract partition names from EXPLAIN plan.
 
@@ -1220,10 +1195,9 @@ class PartitioningService:
 # Utility Functions
 # =============================================================================
 
+
 def get_recommended_partition_strategy(
-    table_name: str,
-    row_count: int,
-    data_retention_months: int = 24
+    table_name: str, row_count: int, data_retention_months: int = 24
 ) -> PartitionStrategy:
     """
     Get recommended partitioning strategy based on table characteristics.
@@ -1254,9 +1228,7 @@ def get_recommended_partition_strategy(
 
 
 def estimate_partition_size(
-    current_size_bytes: int,
-    current_rows: int,
-    partition_rows: int
+    current_size_bytes: int, current_rows: int, partition_rows: int
 ) -> int:
     """
     Estimate partition size based on current table metrics.

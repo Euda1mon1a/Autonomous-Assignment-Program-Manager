@@ -6,10 +6,9 @@ Handles the actual HTTP delivery of webhooks with:
 - Dead letter queue for failed deliveries
 - Comprehensive logging
 """
-import asyncio
+
 import logging
 from datetime import datetime, timedelta
-from typing import Any
 
 import httpx
 from sqlalchemy import select
@@ -41,7 +40,7 @@ class WebhookDeliveryManager:
         self,
         base_retry_delay_seconds: int = 60,
         max_retry_delay_seconds: int = 3600,
-        timestamp_tolerance_seconds: int = 300
+        timestamp_tolerance_seconds: int = 300,
     ):
         """
         Initialize the delivery manager.
@@ -53,13 +52,12 @@ class WebhookDeliveryManager:
         """
         self.base_retry_delay = base_retry_delay_seconds
         self.max_retry_delay = max_retry_delay_seconds
-        self.signature_generator = WebhookSignatureGenerator(timestamp_tolerance_seconds)
+        self.signature_generator = WebhookSignatureGenerator(
+            timestamp_tolerance_seconds
+        )
 
     async def deliver(
-        self,
-        db: AsyncSession,
-        delivery_id: str,
-        raise_on_error: bool = False
+        self, db: AsyncSession, delivery_id: str, raise_on_error: bool = False
     ) -> bool:
         """
         Attempt to deliver a webhook.
@@ -77,8 +75,7 @@ class WebhookDeliveryManager:
         """
         # Load delivery
         result = await db.execute(
-            select(WebhookDelivery)
-            .where(WebhookDelivery.id == delivery_id)
+            select(WebhookDelivery).where(WebhookDelivery.id == delivery_id)
         )
         delivery = result.scalar_one_or_none()
 
@@ -93,7 +90,9 @@ class WebhookDeliveryManager:
         webhook = result.scalar_one_or_none()
 
         if not webhook:
-            logger.error(f"Webhook {delivery.webhook_id} not found for delivery {delivery_id}")
+            logger.error(
+                f"Webhook {delivery.webhook_id} not found for delivery {delivery_id}"
+            )
             return False
 
         # Update delivery status
@@ -109,9 +108,7 @@ class WebhookDeliveryManager:
         try:
             # Make HTTP request
             success = await self._send_webhook(
-                webhook=webhook,
-                delivery=delivery,
-                raise_on_error=raise_on_error
+                webhook=webhook, delivery=delivery, raise_on_error=raise_on_error
             )
 
             if success:
@@ -142,10 +139,7 @@ class WebhookDeliveryManager:
             return False
 
     async def _send_webhook(
-        self,
-        webhook: Webhook,
-        delivery: WebhookDelivery,
-        raise_on_error: bool = False
+        self, webhook: Webhook, delivery: WebhookDelivery, raise_on_error: bool = False
     ) -> bool:
         """
         Send the actual HTTP request to the webhook endpoint.
@@ -163,7 +157,7 @@ class WebhookDeliveryManager:
             payload=delivery.payload,
             secret=webhook.secret,
             event_type=delivery.event_type,
-            delivery_id=str(delivery.id)
+            delivery_id=str(delivery.id),
         )
 
         # Add custom headers
@@ -176,13 +170,13 @@ class WebhookDeliveryManager:
         try:
             async with httpx.AsyncClient(timeout=webhook.timeout_seconds) as client:
                 response = await client.post(
-                    webhook.url,
-                    json=delivery.payload,
-                    headers=headers
+                    webhook.url, json=delivery.payload, headers=headers
                 )
 
             # Calculate response time
-            response_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            response_time_ms = int(
+                (datetime.utcnow() - start_time).total_seconds() * 1000
+            )
 
             # Update delivery with response details
             delivery.http_status_code = response.status_code
@@ -222,17 +216,16 @@ class WebhookDeliveryManager:
             return False
 
         except Exception as e:
-            logger.error(f"Unexpected error sending webhook to {webhook.url}: {e}", exc_info=True)
+            logger.error(
+                f"Unexpected error sending webhook to {webhook.url}: {e}", exc_info=True
+            )
             delivery.error_message = f"Unexpected error: {str(e)}"
             if raise_on_error:
                 raise
             return False
 
     async def _handle_delivery_failure(
-        self,
-        db: AsyncSession,
-        delivery: WebhookDelivery,
-        webhook: Webhook
+        self, db: AsyncSession, delivery: WebhookDelivery, webhook: Webhook
     ) -> None:
         """
         Handle a failed delivery attempt.
@@ -290,10 +283,7 @@ class WebhookDeliveryManager:
         return min(delay, self.max_retry_delay)
 
     async def _move_to_dead_letter(
-        self,
-        db: AsyncSession,
-        delivery: WebhookDelivery,
-        webhook: Webhook
+        self, db: AsyncSession, delivery: WebhookDelivery, webhook: Webhook
     ) -> None:
         """
         Move a failed delivery to the dead letter queue.
@@ -310,16 +300,14 @@ class WebhookDeliveryManager:
             payload=delivery.payload,
             total_attempts=delivery.attempt_count,
             last_error_message=delivery.error_message,
-            last_http_status=delivery.http_status_code
+            last_http_status=delivery.http_status_code,
         )
 
         db.add(dead_letter)
         logger.info(f"Created dead letter entry for delivery {delivery.id}")
 
     async def process_pending_deliveries(
-        self,
-        db: AsyncSession,
-        batch_size: int = 10
+        self, db: AsyncSession, batch_size: int = 10
     ) -> int:
         """
         Process pending webhook deliveries that are ready for retry.
@@ -337,14 +325,16 @@ class WebhookDeliveryManager:
         result = await db.execute(
             select(WebhookDelivery)
             .where(
-                WebhookDelivery.status.in_([
-                    WebhookDeliveryStatus.PENDING.value,
-                    WebhookDeliveryStatus.FAILED.value
-                ])
+                WebhookDelivery.status.in_(
+                    [
+                        WebhookDeliveryStatus.PENDING.value,
+                        WebhookDeliveryStatus.FAILED.value,
+                    ]
+                )
             )
             .where(
-                (WebhookDelivery.next_retry_at.is_(None)) |
-                (WebhookDelivery.next_retry_at <= datetime.utcnow())
+                (WebhookDelivery.next_retry_at.is_(None))
+                | (WebhookDelivery.next_retry_at <= datetime.utcnow())
             )
             .limit(batch_size)
         )
@@ -357,8 +347,12 @@ class WebhookDeliveryManager:
                 await self.deliver(db, str(delivery.id))
                 processed += 1
             except Exception as e:
-                logger.error(f"Error processing delivery {delivery.id}: {e}", exc_info=True)
+                logger.error(
+                    f"Error processing delivery {delivery.id}: {e}", exc_info=True
+                )
                 continue
 
-        logger.info(f"Processed {processed}/{len(deliveries)} pending webhook deliveries")
+        logger.info(
+            f"Processed {processed}/{len(deliveries)} pending webhook deliveries"
+        )
         return processed

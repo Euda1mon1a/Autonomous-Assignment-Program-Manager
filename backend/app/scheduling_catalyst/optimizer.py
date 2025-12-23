@@ -10,14 +10,13 @@ finding the lowest-energy reaction pathway in chemistry. It considers:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.scheduling_catalyst.barriers import BarrierDetector, BarrierWeights
-from app.scheduling_catalyst.catalysts import CatalystAnalyzer, CatalystRecommendation
+from app.scheduling_catalyst.catalysts import CatalystAnalyzer
 from app.scheduling_catalyst.models import (
     ActivationEnergy,
     BarrierType,
@@ -46,7 +45,7 @@ class PathwayResult:
     """
 
     success: bool
-    pathway: Optional[ReactionPathway] = None
+    pathway: ReactionPathway | None = None
     alternative_pathways: list[ReactionPathway] = field(default_factory=list)
     blocking_barriers: list[EnergyBarrier] = field(default_factory=list)
     recommendations: list[str] = field(default_factory=list)
@@ -83,8 +82,8 @@ class TransitionOptimizer:
     def __init__(
         self,
         db: AsyncSession,
-        config: Optional[OptimizationConfig] = None,
-        barrier_weights: Optional[BarrierWeights] = None,
+        config: OptimizationConfig | None = None,
+        barrier_weights: BarrierWeights | None = None,
     ) -> None:
         """
         Initialize the optimizer.
@@ -103,7 +102,7 @@ class TransitionOptimizer:
         self,
         assignment_id: UUID,
         proposed_change: dict[str, Any],
-        available_catalysts: Optional[list[CatalystPerson | CatalystMechanism]] = None,
+        available_catalysts: list[CatalystPerson | CatalystMechanism] | None = None,
     ) -> PathwayResult:
         """
         Find the optimal transition pathway for a schedule change.
@@ -127,7 +126,9 @@ class TransitionOptimizer:
             return PathwayResult(
                 success=False,
                 blocking_barriers=absolute_barriers,
-                recommendations=self._generate_blocking_recommendations(absolute_barriers),
+                recommendations=self._generate_blocking_recommendations(
+                    absolute_barriers
+                ),
             )
 
         # Step 3: Calculate initial activation energy
@@ -143,7 +144,9 @@ class TransitionOptimizer:
         # Step 5: Find catalysts
         if available_catalysts is None:
             recommendation = await self.catalyst_analyzer.recommend_catalysts(barriers)
-            catalysts_to_use = [m.catalyst for m in recommendation.recommended_catalysts]
+            catalysts_to_use = [
+                m.catalyst for m in recommendation.recommended_catalysts
+            ]
         else:
             catalysts_to_use = available_catalysts
 
@@ -171,9 +174,7 @@ class TransitionOptimizer:
         return PathwayResult(
             success=False,
             pathway=pathway,  # Include partial pathway
-            blocking_barriers=[
-                b for b in barriers if b.energy_contribution > 0.5
-            ],
+            blocking_barriers=[b for b in barriers if b.energy_contribution > 0.5],
             recommendations=self._generate_infeasibility_recommendations(
                 barriers, pathway
             ),
@@ -460,19 +461,19 @@ class TransitionOptimizer:
             if barrier.barrier_type == BarrierType.REGULATORY:
                 if "acgme" in barrier.source.lower():
                     recommendations.append(
-                        f"ACGME violation cannot be overridden. "
-                        f"Consider adjusting other assignments to maintain compliance."
+                        "ACGME violation cannot be overridden. "
+                        "Consider adjusting other assignments to maintain compliance."
                     )
             elif barrier.barrier_type == BarrierType.ELECTRONIC:
                 if "consent" in barrier.source.lower():
                     recommendations.append(
-                        f"Obtain consent from the other party before proceeding."
+                        "Obtain consent from the other party before proceeding."
                     )
             elif barrier.barrier_type == BarrierType.STERIC:
                 if "credential" in barrier.source.lower():
                     recommendations.append(
-                        f"Required credentials are missing. "
-                        f"Consider a different assignee or expedite credentialing."
+                        "Required credentials are missing. "
+                        "Consider a different assignee or expedite credentialing."
                     )
 
         if not recommendations:
@@ -504,19 +505,19 @@ class TransitionOptimizer:
             if barrier.barrier_type not in addressed_types:
                 unaddressed.append(barrier)
 
-        for barrier in sorted(unaddressed, key=lambda b: b.energy_contribution, reverse=True)[:3]:
+        for barrier in sorted(
+            unaddressed, key=lambda b: b.energy_contribution, reverse=True
+        )[:3]:
             if barrier.barrier_type == BarrierType.KINETIC:
                 recommendations.append(
-                    f"Request freeze horizon override from a coordinator."
+                    "Request freeze horizon override from a coordinator."
                 )
             elif barrier.barrier_type == BarrierType.THERMODYNAMIC:
                 recommendations.append(
-                    f"Use auto-matcher to find better swap candidates."
+                    "Use auto-matcher to find better swap candidates."
                 )
             elif barrier.barrier_type == BarrierType.ELECTRONIC:
-                recommendations.append(
-                    f"Obtain coordinator approval to proceed."
-                )
+                recommendations.append("Obtain coordinator approval to proceed.")
 
         if not recommendations:
             recommendations.append(
@@ -539,7 +540,7 @@ class BatchOptimizer:
     def __init__(
         self,
         db: AsyncSession,
-        config: Optional[OptimizationConfig] = None,
+        config: OptimizationConfig | None = None,
     ) -> None:
         """Initialize the batch optimizer."""
         self.db = db

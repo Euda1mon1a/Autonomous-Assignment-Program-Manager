@@ -6,17 +6,12 @@ Comprehensive test suite covering all resilience endpoints including:
 - Tier 3: Cognitive load, stigmergy, hub analysis
 - Historical data and event tracking
 """
-from datetime import date, timedelta
-from uuid import UUID, uuid4
 
-import pytest
+from datetime import date, timedelta
+from uuid import uuid4
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-
-from app.models.assignment import Assignment
-from app.models.block import Block
-from app.models.person import Person
-
 
 # ============================================================================
 # Tier 1: Critical Resilience Endpoints
@@ -56,10 +51,7 @@ class TestSystemHealthEndpoint:
 
         response = client.get(
             "/api/v1/resilience/health",
-            params={
-                "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            }
+            params={"start_date": start.isoformat(), "end_date": end.isoformat()},
         )
 
         assert response.status_code == 200
@@ -72,8 +64,7 @@ class TestSystemHealthEndpoint:
     ):
         """Test health check with full N-1/N-2 contingency analysis."""
         response = client.get(
-            "/api/v1/resilience/health",
-            params={"include_contingency": True}
+            "/api/v1/resilience/health", params={"include_contingency": True}
         )
 
         assert response.status_code == 200
@@ -87,10 +78,7 @@ class TestSystemHealthEndpoint:
         self, client: TestClient, sample_faculty_members, sample_blocks
     ):
         """Test health check without persisting to database."""
-        response = client.get(
-            "/api/v1/resilience/health",
-            params={"persist": False}
-        )
+        response = client.get("/api/v1/resilience/health", params={"persist": False})
 
         assert response.status_code == 200
         data = response.json()
@@ -152,10 +140,7 @@ class TestCrisisActivationEndpoint:
         response = client.post(
             "/api/v1/resilience/crisis/activate",
             headers=auth_headers,
-            json={
-                "severity": "minor",
-                "reason": "Unexpected faculty absence"
-            }
+            json={"severity": "minor", "reason": "Unexpected faculty absence"},
         )
 
         assert response.status_code == 200
@@ -172,10 +157,7 @@ class TestCrisisActivationEndpoint:
         response = client.post(
             "/api/v1/resilience/crisis/activate",
             headers=auth_headers,
-            json={
-                "severity": "moderate",
-                "reason": "Multiple faculty absences"
-            }
+            json={"severity": "moderate", "reason": "Multiple faculty absences"},
         )
 
         assert response.status_code == 200
@@ -190,8 +172,8 @@ class TestCrisisActivationEndpoint:
             headers=auth_headers,
             json={
                 "severity": "severe",
-                "reason": "Natural disaster affecting staffing"
-            }
+                "reason": "Natural disaster affecting staffing",
+            },
         )
 
         assert response.status_code == 200
@@ -205,8 +187,8 @@ class TestCrisisActivationEndpoint:
             headers=auth_headers,
             json={
                 "severity": "critical",
-                "reason": "Major emergency - pandemic conditions"
-            }
+                "reason": "Major emergency - pandemic conditions",
+            },
         )
 
         assert response.status_code == 200
@@ -218,36 +200,32 @@ class TestCrisisActivationEndpoint:
         """Test activating crisis without authentication."""
         response = client.post(
             "/api/v1/resilience/crisis/activate",
-            json={
-                "severity": "minor",
-                "reason": "Test"
-            }
+            json={"severity": "minor", "reason": "Test"},
         )
 
         # Should require authentication
         assert response.status_code in [401, 403]
 
-    def test_activate_crisis_invalid_severity(self, client: TestClient, auth_headers: dict):
+    def test_activate_crisis_invalid_severity(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test activating crisis with invalid severity."""
         response = client.post(
             "/api/v1/resilience/crisis/activate",
             headers=auth_headers,
-            json={
-                "severity": "invalid_level",
-                "reason": "Test"
-            }
+            json={"severity": "invalid_level", "reason": "Test"},
         )
 
         assert response.status_code == 422  # Validation error
 
-    def test_activate_crisis_missing_reason(self, client: TestClient, auth_headers: dict):
+    def test_activate_crisis_missing_reason(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test activating crisis without reason."""
         response = client.post(
             "/api/v1/resilience/crisis/activate",
             headers=auth_headers,
-            json={
-                "severity": "minor"
-            }
+            json={"severity": "minor"},
         )
 
         assert response.status_code == 422  # Validation error
@@ -262,10 +240,7 @@ class TestCrisisDeactivationEndpoint:
         activate_response = client.post(
             "/api/v1/resilience/crisis/activate",
             headers=auth_headers,
-            json={
-                "severity": "minor",
-                "reason": "Test crisis"
-            }
+            json={"severity": "minor", "reason": "Test crisis"},
         )
         assert activate_response.status_code == 200
 
@@ -273,9 +248,7 @@ class TestCrisisDeactivationEndpoint:
         response = client.post(
             "/api/v1/resilience/crisis/deactivate",
             headers=auth_headers,
-            json={
-                "reason": "Crisis resolved"
-            }
+            json={"reason": "Crisis resolved"},
         )
 
         assert response.status_code == 200
@@ -293,13 +266,13 @@ class TestCrisisDeactivationEndpoint:
         client.post(
             "/api/v1/resilience/crisis/activate",
             headers=auth_headers,
-            json={"severity": "moderate", "reason": "Test"}
+            json={"severity": "moderate", "reason": "Test"},
         )
 
         response = client.post(
             "/api/v1/resilience/crisis/deactivate",
             headers=auth_headers,
-            json={"reason": "Recovery complete"}
+            json={"reason": "Recovery complete"},
         )
 
         assert response.status_code == 200
@@ -311,8 +284,7 @@ class TestCrisisDeactivationEndpoint:
     def test_deactivate_crisis_unauthenticated(self, client: TestClient):
         """Test deactivating crisis without authentication."""
         response = client.post(
-            "/api/v1/resilience/crisis/deactivate",
-            json={"reason": "Test"}
+            "/api/v1/resilience/crisis/deactivate", json={"reason": "Test"}
         )
 
         assert response.status_code in [401, 403]
@@ -361,7 +333,7 @@ class TestFallbacksListEndpoint:
             "holiday_skeleton",
             "pandemic_essential",
             "mass_casualty",
-            "weather_emergency"
+            "weather_emergency",
         ]
 
         for expected in expected_scenarios:
@@ -371,15 +343,14 @@ class TestFallbacksListEndpoint:
 class TestFallbackActivationEndpoint:
     """Tests for POST /api/resilience/fallbacks/activate endpoint."""
 
-    def test_activate_fallback_single_loss(self, client: TestClient, auth_headers: dict):
+    def test_activate_fallback_single_loss(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test activating single faculty loss fallback."""
         response = client.post(
             "/api/v1/resilience/fallbacks/activate",
             headers=auth_headers,
-            json={
-                "scenario": "single_faculty_loss",
-                "reason": "Faculty deployed"
-            }
+            json={"scenario": "single_faculty_loss", "reason": "Faculty deployed"},
         )
 
         # May succeed or fail depending on whether fallback is precomputed
@@ -396,10 +367,7 @@ class TestFallbackActivationEndpoint:
         response = client.post(
             "/api/v1/resilience/fallbacks/activate",
             headers=auth_headers,
-            json={
-                "scenario": "pandemic_essential",
-                "reason": "COVID-19 surge"
-            }
+            json={"scenario": "pandemic_essential", "reason": "COVID-19 surge"},
         )
 
         assert response.status_code in [200, 404]
@@ -408,10 +376,7 @@ class TestFallbackActivationEndpoint:
         """Test activating fallback without authentication."""
         response = client.post(
             "/api/v1/resilience/fallbacks/activate",
-            json={
-                "scenario": "single_faculty_loss",
-                "reason": "Test"
-            }
+            json={"scenario": "single_faculty_loss", "reason": "Test"},
         )
 
         assert response.status_code in [401, 403]
@@ -423,10 +388,7 @@ class TestFallbackActivationEndpoint:
         response = client.post(
             "/api/v1/resilience/fallbacks/activate",
             headers=auth_headers,
-            json={
-                "scenario": "invalid_scenario",
-                "reason": "Test"
-            }
+            json={"scenario": "invalid_scenario", "reason": "Test"},
         )
 
         assert response.status_code in [400, 422]
@@ -442,8 +404,8 @@ class TestFallbackDeactivationEndpoint:
             headers=auth_headers,
             json={
                 "scenario": "single_faculty_loss",
-                "reason": "Normal operations restored"
-            }
+                "reason": "Normal operations restored",
+            },
         )
 
         # Should succeed even if no fallback is active
@@ -455,10 +417,7 @@ class TestFallbackDeactivationEndpoint:
         """Test deactivating fallback without authentication."""
         response = client.post(
             "/api/v1/resilience/fallbacks/deactivate",
-            json={
-                "scenario": "single_faculty_loss",
-                "reason": "Test"
-            }
+            json={"scenario": "single_faculty_loss", "reason": "Test"},
         )
 
         assert response.status_code in [401, 403]
@@ -500,10 +459,7 @@ class TestSetLoadSheddingLevelEndpoint:
         response = client.post(
             "/api/v1/resilience/load-shedding",
             headers=auth_headers,
-            json={
-                "level": "yellow",
-                "reason": "Increased demand"
-            }
+            json={"level": "yellow", "reason": "Increased demand"},
         )
 
         assert response.status_code == 200
@@ -516,10 +472,7 @@ class TestSetLoadSheddingLevelEndpoint:
         response = client.post(
             "/api/v1/resilience/load-shedding",
             headers=auth_headers,
-            json={
-                "level": "orange",
-                "reason": "Staff shortage"
-            }
+            json={"level": "orange", "reason": "Staff shortage"},
         )
 
         assert response.status_code == 200
@@ -531,10 +484,7 @@ class TestSetLoadSheddingLevelEndpoint:
         response = client.post(
             "/api/v1/resilience/load-shedding",
             headers=auth_headers,
-            json={
-                "level": "red",
-                "reason": "Critical shortage"
-            }
+            json={"level": "red", "reason": "Critical shortage"},
         )
 
         assert response.status_code == 200
@@ -545,10 +495,7 @@ class TestSetLoadSheddingLevelEndpoint:
         """Test setting load shedding without authentication."""
         response = client.post(
             "/api/v1/resilience/load-shedding",
-            json={
-                "level": "yellow",
-                "reason": "Test"
-            }
+            json={"level": "yellow", "reason": "Test"},
         )
 
         assert response.status_code in [401, 403]
@@ -560,10 +507,7 @@ class TestSetLoadSheddingLevelEndpoint:
         response = client.post(
             "/api/v1/resilience/load-shedding",
             headers=auth_headers,
-            json={
-                "level": "invalid",
-                "reason": "Test"
-            }
+            json={"level": "invalid", "reason": "Test"},
         )
 
         assert response.status_code == 422
@@ -599,10 +543,7 @@ class TestVulnerabilityReportEndpoint:
 
         response = client.get(
             "/api/v1/resilience/vulnerability",
-            params={
-                "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            }
+            params={"start_date": start.isoformat(), "end_date": end.isoformat()},
         )
 
         assert response.status_code == 200
@@ -655,10 +596,7 @@ class TestComprehensiveReportEndpoint:
 
         response = client.get(
             "/api/v1/resilience/report",
-            params={
-                "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            }
+            params={"start_date": start.isoformat(), "end_date": end.isoformat()},
         )
 
         assert response.status_code == 200
@@ -690,8 +628,7 @@ class TestHealthCheckHistoryEndpoint:
     def test_health_check_history_pagination(self, client: TestClient):
         """Test pagination of health check history."""
         response = client.get(
-            "/api/v1/resilience/history/health",
-            params={"page": 1, "page_size": 10}
+            "/api/v1/resilience/history/health", params={"page": 1, "page_size": 10}
         )
 
         assert response.status_code == 200
@@ -702,8 +639,7 @@ class TestHealthCheckHistoryEndpoint:
     def test_health_check_history_filter_by_status(self, client: TestClient):
         """Test filtering health check history by status."""
         response = client.get(
-            "/api/v1/resilience/history/health",
-            params={"status": "healthy"}
+            "/api/v1/resilience/history/health", params={"status": "healthy"}
         )
 
         assert response.status_code == 200
@@ -729,8 +665,7 @@ class TestEventHistoryEndpoint:
     def test_event_history_pagination(self, client: TestClient):
         """Test pagination of event history."""
         response = client.get(
-            "/api/v1/resilience/history/events",
-            params={"page": 2, "page_size": 20}
+            "/api/v1/resilience/history/events", params={"page": 2, "page_size": 20}
         )
 
         assert response.status_code == 200
@@ -742,7 +677,7 @@ class TestEventHistoryEndpoint:
         """Test filtering events by type."""
         response = client.get(
             "/api/v1/resilience/history/events",
-            params={"event_type": "crisis_activated"}
+            params={"event_type": "crisis_activated"},
         )
 
         assert response.status_code == 200
@@ -790,10 +725,7 @@ class TestCheckHomeostasisEndpoint:
         """Test checking homeostasis with provided metrics."""
         response = client.post(
             "/api/v1/resilience/tier2/homeostasis/check",
-            json={
-                "coverage_rate": 0.92,
-                "faculty_utilization": 0.78
-            }
+            json={"coverage_rate": 0.92, "faculty_utilization": 0.78},
         )
 
         assert response.status_code == 200
@@ -811,10 +743,7 @@ class TestAllostasisCalculateEndpoint:
 
         response = client.post(
             "/api/v1/resilience/tier2/allostasis/calculate",
-            params={
-                "entity_id": str(entity_id),
-                "entity_type": "faculty"
-            },
+            params={"entity_id": str(entity_id), "entity_type": "faculty"},
             json={
                 "consecutive_weekend_calls": 2,
                 "nights_past_month": 8,
@@ -822,8 +751,8 @@ class TestAllostasisCalculateEndpoint:
                 "holidays_worked_this_year": 1,
                 "overtime_hours_month": 12.0,
                 "coverage_gap_responses": 2,
-                "cross_coverage_events": 1
-            }
+                "cross_coverage_events": 1,
+            },
         )
 
         assert response.status_code == 200
@@ -882,8 +811,8 @@ class TestCreateZoneEndpoint:
                 "zone_type": "inpatient",
                 "description": "Test zone for inpatient services",
                 "minimum_coverage": 2,
-                "optimal_coverage": 3
-            }
+                "optimal_coverage": 3,
+            },
         )
 
         assert response.status_code == 200
@@ -929,8 +858,8 @@ class TestApplyStressEndpoint:
                 "magnitude": 0.2,
                 "duration_days": 90,
                 "capacity_impact": -0.15,
-                "demand_impact": 0.0
-            }
+                "demand_impact": 0.0,
+            },
         )
 
         assert response.status_code == 200
@@ -952,8 +881,8 @@ class TestPredictStressResponseEndpoint:
                 "magnitude": 0.3,
                 "duration_days": 14,
                 "capacity_impact": 0.0,
-                "demand_impact": 0.25
-            }
+                "demand_impact": 0.25,
+            },
         )
 
         assert response.status_code == 200
@@ -1001,7 +930,7 @@ class TestStartCognitiveSessionEndpoint:
         response = client.post(
             "/api/v1/resilience/tier3/cognitive/session/start",
             headers=auth_headers,
-            params={"user_id": str(user_id)}
+            params={"user_id": str(user_id)},
         )
 
         assert response.status_code == 200
@@ -1021,7 +950,7 @@ class TestCognitiveSessionStatusEndpoint:
         start_response = client.post(
             "/api/v1/resilience/tier3/cognitive/session/start",
             headers=auth_headers,
-            params={"user_id": str(user_id)}
+            params={"user_id": str(user_id)},
         )
         assert start_response.status_code == 200
         session_id = start_response.json()["session_id"]
@@ -1071,8 +1000,8 @@ class TestRecordPreferenceEndpoint:
                 "faculty_id": str(faculty_id),
                 "trail_type": "preference",
                 "slot_type": "clinic",
-                "strength": 0.7
-            }
+                "strength": 0.7,
+            },
         )
 
         assert response.status_code == 200
@@ -1157,7 +1086,7 @@ class TestResilienceIntegration:
         activate = client.post(
             "/api/v1/resilience/crisis/activate",
             headers=auth_headers,
-            json={"severity": "moderate", "reason": "Testing workflow"}
+            json={"severity": "moderate", "reason": "Testing workflow"},
         )
         assert activate.status_code == 200
         assert activate.json()["crisis_mode"] is True
@@ -1170,7 +1099,7 @@ class TestResilienceIntegration:
         deactivate = client.post(
             "/api/v1/resilience/crisis/deactivate",
             headers=auth_headers,
-            json={"reason": "Workflow test complete"}
+            json={"reason": "Workflow test complete"},
         )
         assert deactivate.status_code == 200
         assert deactivate.json()["crisis_mode"] is False
@@ -1199,23 +1128,18 @@ class TestResilienceErrorHandling:
         """Test health check with invalid date range."""
         response = client.get(
             "/api/v1/resilience/health",
-            params={
-                "start_date": "invalid-date",
-                "end_date": "2024-01-01"
-            }
+            params={"start_date": "invalid-date", "end_date": "2024-01-01"},
         )
 
         assert response.status_code == 422
 
-    def test_activate_crisis_without_admin_role(
-        self, client: TestClient, db: Session
-    ):
+    def test_activate_crisis_without_admin_role(self, client: TestClient, db: Session):
         """Test that non-admin users cannot activate crisis."""
         # This test assumes role-based access control is enforced
         # Implementation may vary
         response = client.post(
             "/api/v1/resilience/crisis/activate",
-            json={"severity": "minor", "reason": "Test"}
+            json={"severity": "minor", "reason": "Test"},
         )
 
         # Should require authentication or admin role
@@ -1226,7 +1150,7 @@ class TestResilienceErrorHandling:
         response = client.post(
             "/api/v1/resilience/crisis/activate",
             headers=auth_headers,
-            data="not valid json"
+            data="not valid json",
         )
 
         assert response.status_code in [400, 422]

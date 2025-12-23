@@ -27,12 +27,12 @@ This module implements:
 
 import logging
 import statistics
-from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Callable
-from uuid import UUID, uuid4
+from typing import Any
+from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
@@ -44,36 +44,40 @@ logger = logging.getLogger(__name__)
 
 class BehavioralRole(str, Enum):
     """Informal roles revealed by swap behavior."""
-    NEUTRAL = "neutral"        # Normal swap behavior
+
+    NEUTRAL = "neutral"  # Normal swap behavior
     POWER_BROKER = "power_broker"  # Swaps always approved, others seek them out
-    MARTYR = "martyr"          # Always absorbs bad shifts, rarely swaps away
-    EVADER = "evader"          # Systematically avoids difficult shifts
-    ISOLATE = "isolate"        # Never participates in swap network
+    MARTYR = "martyr"  # Always absorbs bad shifts, rarely swaps away
+    EVADER = "evader"  # Systematically avoids difficult shifts
+    ISOLATE = "isolate"  # Never participates in swap network
     STABILIZER = "stabilizer"  # Flexible, helps balance the system
 
 
 class BurdenCategory(str, Enum):
     """Categories of shift burden."""
-    MINIMAL = "minimal"      # Admin, easy clinics
-    LOW = "low"              # Standard daytime
-    MODERATE = "moderate"    # Busy daytime, early AM
-    HIGH = "high"            # Evening, weekend day
-    SEVERE = "severe"        # Night, weekend night
-    EXTREME = "extreme"      # Holiday, on-call, ICU night
+
+    MINIMAL = "minimal"  # Admin, easy clinics
+    LOW = "low"  # Standard daytime
+    MODERATE = "moderate"  # Busy daytime, early AM
+    HIGH = "high"  # Evening, weekend day
+    SEVERE = "severe"  # Night, weekend night
+    EXTREME = "extreme"  # Holiday, on-call, ICU night
 
 
 class EquityStatus(str, Enum):
     """Status of burden equity for a person."""
-    BALANCED = "balanced"      # Within 1 std dev of mean
-    LIGHT = "light"            # >1 std dev below mean (carrying less)
-    HEAVY = "heavy"            # >1 std dev above mean (carrying more)
+
+    BALANCED = "balanced"  # Within 1 std dev of mean
+    LIGHT = "light"  # >1 std dev below mean (carrying less)
+    HEAVY = "heavy"  # >1 std dev above mean (carrying more)
     VERY_LIGHT = "very_light"  # >2 std dev below mean (possible evasion)
-    CRUSHING = "crushing"      # >2 std dev above mean (burnout risk)
+    CRUSHING = "crushing"  # >2 std dev above mean (burnout risk)
 
 
 class ProtectionLevel(str, Enum):
     """Protection level for martyrs."""
-    NONE = "none"              # No protection needed
+
+    NONE = "none"  # No protection needed
     MONITORING = "monitoring"  # Watch for over-volunteering
     SOFT_LIMIT = "soft_limit"  # Warn when taking extra burden
     HARD_LIMIT = "hard_limit"  # Block additional burden absorption
@@ -91,14 +95,12 @@ DEFAULT_BURDEN_WEIGHTS = {
     "evening": 1.5,
     "night": 2.5,
     "overnight": 3.0,
-
     # Day of week
     "weekday": 1.0,
     "friday": 1.2,
     "saturday": 1.8,
     "sunday": 2.0,
     "holiday": 3.0,
-
     # Shift type
     "clinic": 0.8,
     "inpatient": 1.2,
@@ -109,7 +111,6 @@ DEFAULT_BURDEN_WEIGHTS = {
     "admin": 0.3,
     "conference": 0.4,
     "teaching": 0.6,
-
     # Combiners (multiplicative)
     "weekend_night": 3.5,
     "holiday_night": 4.0,
@@ -120,6 +121,7 @@ DEFAULT_BURDEN_WEIGHTS = {
 @dataclass
 class ShiftBurden:
     """Burden calculation for a single shift."""
+
     shift_id: UUID
     faculty_id: UUID
     date: datetime
@@ -134,6 +136,7 @@ class ShiftBurden:
 @dataclass
 class FacultyBurdenProfile:
     """Comprehensive burden profile for a faculty member."""
+
     faculty_id: UUID
     faculty_name: str
     period_start: datetime
@@ -148,7 +151,7 @@ class FacultyBurdenProfile:
     # Burden metrics
     total_burden: float = 0.0
     burden_per_hour: float = 0.0  # efficiency of burden carrying
-    high_burden_shifts: int = 0   # severe/extreme shifts
+    high_burden_shifts: int = 0  # severe/extreme shifts
 
     # Equity assessment
     equity_status: EquityStatus = EquityStatus.BALANCED
@@ -167,31 +170,33 @@ class FacultyBurdenProfile:
 @dataclass
 class SwapEdge:
     """An edge in the swap network graph."""
+
     source_id: UUID
     target_id: UUID
     swap_count: int = 0
     source_initiated: int = 0  # Source asked target
     target_initiated: int = 0  # Target asked source
-    burden_flow: float = 0.0   # Net burden transferred (+ = source gave to target)
+    burden_flow: float = 0.0  # Net burden transferred (+ = source gave to target)
     success_rate: float = 1.0  # What % of attempted swaps succeeded
 
 
 @dataclass
 class SwapNetworkNode:
     """A node in the swap network (faculty member)."""
+
     faculty_id: UUID
     faculty_name: str
 
     # Network metrics
-    degree: int = 0              # Number of unique swap partners
-    in_degree: int = 0           # Times asked to take swaps
-    out_degree: int = 0          # Times initiated swap requests
-    swap_count: int = 0          # Total swaps involved in
+    degree: int = 0  # Number of unique swap partners
+    in_degree: int = 0  # Times asked to take swaps
+    out_degree: int = 0  # Times initiated swap requests
+    swap_count: int = 0  # Total swaps involved in
 
     # Burden flow (positive = net giver, negative = net receiver)
     net_burden_flow: float = 0.0
     burden_absorbed: float = 0.0  # Total burden taken from others
-    burden_offloaded: float = 0.0 # Total burden given to others
+    burden_offloaded: float = 0.0  # Total burden given to others
 
     # Success metrics
     requests_made: int = 0
@@ -200,8 +205,8 @@ class SwapNetworkNode:
     requests_accepted: int = 0
 
     # Derived metrics
-    approval_rate: float = 0.0   # How often their requests are granted
-    acceptance_rate: float = 0.0 # How often they accept others' requests
+    approval_rate: float = 0.0  # How often their requests are granted
+    acceptance_rate: float = 0.0  # How often they accept others' requests
 
     # Behavioral classification
     behavioral_role: BehavioralRole = BehavioralRole.NEUTRAL
@@ -211,6 +216,7 @@ class SwapNetworkNode:
 @dataclass
 class SwapNetworkAnalysis:
     """Complete swap network analysis."""
+
     analyzed_at: datetime
     period_start: datetime
     period_end: datetime
@@ -252,7 +258,7 @@ class BehavioralNetworkAnalyzer:
         self,
         burden_weights: dict[str, float] | None = None,
         martyr_threshold: float = 1.5,  # std devs above mean burden
-        evader_threshold: float = -1.5, # std devs below mean burden
+        evader_threshold: float = -1.5,  # std devs below mean burden
         min_swaps_for_classification: int = 3,
     ):
         self.burden_weights = burden_weights or DEFAULT_BURDEN_WEIGHTS
@@ -387,11 +393,14 @@ class BehavioralNetworkAnalyzer:
         # Breakdown by type
         for shift in shifts:
             shift_type = shift.shift_type
-            profile.shift_breakdown[shift_type] = profile.shift_breakdown.get(shift_type, 0) + 1
+            profile.shift_breakdown[shift_type] = (
+                profile.shift_breakdown.get(shift_type, 0) + 1
+            )
 
         # High burden count
         profile.high_burden_shifts = sum(
-            1 for s in shifts
+            1
+            for s in shifts
             if s.category in (BurdenCategory.SEVERE, BurdenCategory.EXTREME)
         )
 
@@ -405,7 +414,9 @@ class BehavioralNetworkAnalyzer:
             std_burden = statistics.stdev(all_faculty_burdens)
 
             if std_burden > 0:
-                profile.std_devs_from_mean = (profile.total_burden - mean_burden) / std_burden
+                profile.std_devs_from_mean = (
+                    profile.total_burden - mean_burden
+                ) / std_burden
 
                 if profile.std_devs_from_mean > 2:
                     profile.equity_status = EquityStatus.CRUSHING
@@ -538,13 +549,14 @@ class BehavioralNetworkAnalyzer:
         n = len(self.nodes)
         possible_edges = n * (n - 1) / 2
         actual_edges = len(self.edges)
-        analysis.network_density = actual_edges / possible_edges if possible_edges > 0 else 0
+        analysis.network_density = (
+            actual_edges / possible_edges if possible_edges > 0 else 0
+        )
 
         # Calculate degrees
         for node in self.nodes.values():
             node.degree = sum(
-                1 for edge_key in self.edges
-                if node.faculty_id in edge_key
+                1 for edge_key in self.edges if node.faculty_id in edge_key
             )
             node.in_degree = node.requests_received
             node.out_degree = node.requests_made
@@ -602,7 +614,9 @@ class BehavioralNetworkAnalyzer:
             return
 
         # Calculate burden flow statistics
-        burden_flows = [n.net_burden_flow for n in self.nodes.values() if n.swap_count > 0]
+        burden_flows = [
+            n.net_burden_flow for n in self.nodes.values() if n.swap_count > 0
+        ]
         if len(burden_flows) < 2:
             return
 
@@ -611,14 +625,20 @@ class BehavioralNetworkAnalyzer:
 
         for node in self.nodes.values():
             if node.swap_count < self.min_swaps:
-                if node.swap_count == 0 and node.requests_made == 0 and node.requests_received == 0:
+                if (
+                    node.swap_count == 0
+                    and node.requests_made == 0
+                    and node.requests_received == 0
+                ):
                     node.behavioral_role = BehavioralRole.ISOLATE
                     node.role_confidence = 1.0
                 continue
 
             burden_ratio = (
-                node.burden_absorbed / max(1.0, node.burden_offloaded)
-            ) if node.burden_offloaded or node.burden_absorbed else 0
+                (node.burden_absorbed / max(1.0, node.burden_offloaded))
+                if node.burden_offloaded or node.burden_absorbed
+                else 0
+            )
 
             # Identify martyrs based on heavy burden absorption even in small samples
             if burden_ratio >= 2:
@@ -627,7 +647,9 @@ class BehavioralNetworkAnalyzer:
                 continue
 
             # Calculate z-score for burden flow
-            z_score = (node.net_burden_flow - mean_flow) / std_flow if std_flow > 0 else 0
+            z_score = (
+                (node.net_burden_flow - mean_flow) / std_flow if std_flow > 0 else 0
+            )
 
             # Classify based on burden flow and approval patterns
             if z_score >= self.martyr_threshold:
@@ -638,7 +660,10 @@ class BehavioralNetworkAnalyzer:
                 # Offloads significantly more burden than average
                 node.behavioral_role = BehavioralRole.EVADER
                 node.role_confidence = min(1.0, abs(z_score) / 3)
-            elif node.approval_rate > 0.9 and node.requests_received > node.requests_made * 2:
+            elif (
+                node.approval_rate > 0.9
+                and node.requests_received > node.requests_made * 2
+            ):
                 # High approval rate + others seek them out
                 node.behavioral_role = BehavioralRole.POWER_BROKER
                 node.role_confidence = node.approval_rate
@@ -688,23 +713,23 @@ class BehavioralNetworkAnalyzer:
             return (
                 ProtectionLevel.HARD_LIMIT,
                 f"Martyr at high stress ({current_allostatic_load:.0f}/100). "
-                f"Additional burden absorption blocked."
+                f"Additional burden absorption blocked.",
             )
         elif node.burden_absorbed > node.burden_offloaded * 3:
             return (
                 ProtectionLevel.HARD_LIMIT,
                 f"Severe burden imbalance: absorbed {node.burden_absorbed:.0f} vs "
-                f"offloaded {node.burden_offloaded:.0f}. Additional absorption blocked."
+                f"offloaded {node.burden_offloaded:.0f}. Additional absorption blocked.",
             )
         elif node.burden_absorbed > node.burden_offloaded * 2:
             return (
                 ProtectionLevel.SOFT_LIMIT,
-                f"Significant burden imbalance. Recommend declining additional swaps."
+                "Significant burden imbalance. Recommend declining additional swaps.",
             )
         else:
             return (
                 ProtectionLevel.MONITORING,
-                f"Identified as martyr pattern. Monitoring burden absorption."
+                "Identified as martyr pattern. Monitoring burden absorption.",
             )
 
     def should_block_swap(
@@ -735,7 +760,10 @@ class BehavioralNetworkAnalyzer:
             return True, f"BLOCKED: {reason}"
 
         if protection_level == ProtectionLevel.SOFT_LIMIT and source_burden > 15:
-            return True, f"BLOCKED: High-burden shift ({source_burden:.0f}) declined. {reason}"
+            return (
+                True,
+                f"BLOCKED: High-burden shift ({source_burden:.0f}) declined. {reason}",
+            )
 
         return False, ""
 
@@ -774,11 +802,17 @@ class BehavioralNetworkAnalyzer:
         gini = cumulative / (n * sum(sorted_burdens)) if sum(sorted_burdens) > 0 else 0
 
         # Categorize faculty
-        crushing = [p for p in burden_profiles if p.equity_status == EquityStatus.CRUSHING]
+        crushing = [
+            p for p in burden_profiles if p.equity_status == EquityStatus.CRUSHING
+        ]
         heavy = [p for p in burden_profiles if p.equity_status == EquityStatus.HEAVY]
-        balanced = [p for p in burden_profiles if p.equity_status == EquityStatus.BALANCED]
+        balanced = [
+            p for p in burden_profiles if p.equity_status == EquityStatus.BALANCED
+        ]
         light = [p for p in burden_profiles if p.equity_status == EquityStatus.LIGHT]
-        very_light = [p for p in burden_profiles if p.equity_status == EquityStatus.VERY_LIGHT]
+        very_light = [
+            p for p in burden_profiles if p.equity_status == EquityStatus.VERY_LIGHT
+        ]
 
         # Generate recommendations
         recommendations = []
@@ -802,7 +836,10 @@ class BehavioralNetworkAnalyzer:
 
         # Check for hours vs burden discrepancy (the "forensic accounting" insight)
         for profile in burden_profiles:
-            if profile.total_hours > mean_hours and profile.total_burden < mean_burden * 0.7:
+            if (
+                profile.total_hours > mean_hours
+                and profile.total_burden < mean_burden * 0.7
+            ):
                 recommendations.append(
                     f"Possible burden-light pattern: {profile.faculty_name} has "
                     f"{profile.total_hours:.0f}h but only {profile.total_burden:.0f} burden "
@@ -941,7 +978,9 @@ class ShadowOrgChartService:
             "detailed_roles": {
                 "power_brokers": [str(uid) for uid in network.power_brokers],
                 "martyrs": [str(uid) for uid in network.martyrs],
-                "martyrs_burnout_risk": [str(uid) for uid in network.martyr_burnout_risk],
+                "martyrs_burnout_risk": [
+                    str(uid) for uid in network.martyr_burnout_risk
+                ],
                 "evaders": [str(uid) for uid in network.evaders],
             },
         }
@@ -953,25 +992,31 @@ class ShadowOrgChartService:
         recommendations = []
 
         if network.martyr_burnout_risk:
-            recommendations.append({
-                "priority": "CRITICAL",
-                "action": "Enable martyr protection",
-                "details": f"{len(network.martyr_burnout_risk)} faculty at burnout risk need shift absorption blocked",
-            })
+            recommendations.append(
+                {
+                    "priority": "CRITICAL",
+                    "action": "Enable martyr protection",
+                    "details": f"{len(network.martyr_burnout_risk)} faculty at burnout risk need shift absorption blocked",
+                }
+            )
 
         if equity_analysis and equity_analysis.get("gini_coefficient", 0) > 0.3:
-            recommendations.append({
-                "priority": "HIGH",
-                "action": "Rebalance workload",
-                "details": f"Gini coefficient {equity_analysis['gini_coefficient']:.2f} indicates significant inequity",
-            })
+            recommendations.append(
+                {
+                    "priority": "HIGH",
+                    "action": "Rebalance workload",
+                    "details": f"Gini coefficient {equity_analysis['gini_coefficient']:.2f} indicates significant inequity",
+                }
+            )
 
         if len(network.isolates) > network.total_faculty * 0.3:
-            recommendations.append({
-                "priority": "MEDIUM",
-                "action": "Increase swap network participation",
-                "details": f"{len(network.isolates)} faculty not participating in swaps",
-            })
+            recommendations.append(
+                {
+                    "priority": "MEDIUM",
+                    "action": "Increase swap network participation",
+                    "details": f"{len(network.isolates)} faculty not participating in swaps",
+                }
+            )
 
         report["recommendations"] = recommendations
 

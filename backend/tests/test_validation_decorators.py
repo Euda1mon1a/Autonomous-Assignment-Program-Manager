@@ -4,50 +4,48 @@ Tests for request validation decorators.
 Validates decorator functionality including query validation, body validation,
 cross-field validation, and error handling.
 """
-import pytest
-from datetime import date
+
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
 from app.validation import (
-    validate_request,
-    validate_query,
-    validate_body,
-    validate_cross_field,
-    validate_pagination,
-    validate_date_range_params,
-    validate_conditional_field,
+    email_format,
+    enum_values,
+    numeric_range,
+    person_type_rule,
+    pgy_level_rule,
     required,
     string_length,
-    numeric_range,
-    enum_values,
-    email_format,
-    uuid_format,
-    pgy_level_rule,
-    person_type_rule,
-    ValidationContext,
+    validate_body,
+    validate_conditional_field,
+    validate_pagination,
+    validate_query,
+    validate_request,
 )
-
 
 # Test FastAPI app
 app = FastAPI()
 
 
 @app.get("/test-query")
-@validate_query({
-    "page": [required, numeric_range(min_value=1)],
-    "limit": [numeric_range(min_value=1, max_value=100)]
-})
+@validate_query(
+    {
+        "page": [required, numeric_range(min_value=1)],
+        "limit": [numeric_range(min_value=1, max_value=100)],
+    }
+)
 def test_query_validation(page: int, limit: int = 20):
     """Test endpoint with query validation."""
     return {"page": page, "limit": limit}
 
 
 @app.post("/test-body")
-@validate_body({
-    "name": [required, string_length(min_length=1, max_length=100)],
-    "email": [required, email_format()]
-})
+@validate_body(
+    {
+        "name": [required, string_length(min_length=1, max_length=100)],
+        "email": [required, email_format()],
+    }
+)
 async def test_body_validation(request: Request):
     """Test endpoint with body validation."""
     body = await request.json()
@@ -56,16 +54,14 @@ async def test_body_validation(request: Request):
 
 @app.post("/test-cross-field")
 @validate_request(
-    body_rules={
-        "start_date": [required],
-        "end_date": [required]
-    },
+    body_rules={"start_date": [required], "end_date": [required]},
     cross_field_validator=lambda data, ctx: (
         ctx.add_field_error("end_date", "Must be after start date")
-        if data.get("start_date") and data.get("end_date") and
-        data["start_date"] > data["end_date"]
+        if data.get("start_date")
+        and data.get("end_date")
+        and data["start_date"] > data["end_date"]
         else None
-    )
+    ),
 )
 async def test_cross_field_validation(request: Request):
     """Test endpoint with cross-field validation."""
@@ -81,16 +77,18 @@ def test_pagination_validation(page: int = 1, limit: int = 20):
 
 
 @app.post("/test-person")
-@validate_body({
-    "name": [required, string_length(min_length=1)],
-    "type": [required, person_type_rule()],
-    "pgy_level": []  # Conditionally required
-})
+@validate_body(
+    {
+        "name": [required, string_length(min_length=1)],
+        "type": [required, person_type_rule()],
+        "pgy_level": [],  # Conditionally required
+    }
+)
 @validate_conditional_field(
     field="pgy_level",
     condition_field="type",
     condition_value="resident",
-    rules=[required, pgy_level_rule()]
+    rules=[required, pgy_level_rule()],
 )
 async def test_conditional_validation(request: Request):
     """Test endpoint with conditional field validation."""
@@ -148,17 +146,13 @@ class TestBodyValidation:
     def test_valid_body(self):
         """Test validation passes with valid body."""
         response = client.post(
-            "/test-body",
-            json={"name": "John Doe", "email": "john@example.com"}
+            "/test-body", json={"name": "John Doe", "email": "john@example.com"}
         )
         assert response.status_code == 200
 
     def test_missing_required_field(self):
         """Test validation fails when required field is missing."""
-        response = client.post(
-            "/test-body",
-            json={"name": "John Doe"}
-        )
+        response = client.post("/test-body", json={"name": "John Doe"})
         assert response.status_code == 422
         data = response.json()
         errors = data["detail"]["errors"]
@@ -167,8 +161,7 @@ class TestBodyValidation:
     def test_invalid_email_format(self):
         """Test validation fails with invalid email format."""
         response = client.post(
-            "/test-body",
-            json={"name": "John Doe", "email": "invalid-email"}
+            "/test-body", json={"name": "John Doe", "email": "invalid-email"}
         )
         assert response.status_code == 422
         data = response.json()
@@ -179,8 +172,7 @@ class TestBodyValidation:
         """Test validation fails when string exceeds max length."""
         long_name = "a" * 101
         response = client.post(
-            "/test-body",
-            json={"name": long_name, "email": "john@example.com"}
+            "/test-body", json={"name": long_name, "email": "john@example.com"}
         )
         assert response.status_code == 422
         data = response.json()
@@ -190,8 +182,7 @@ class TestBodyValidation:
     def test_empty_string_fails_required(self):
         """Test validation fails when required field is empty string."""
         response = client.post(
-            "/test-body",
-            json={"name": "", "email": "john@example.com"}
+            "/test-body", json={"name": "", "email": "john@example.com"}
         )
         assert response.status_code == 422
         data = response.json()
@@ -206,7 +197,7 @@ class TestCrossFieldValidation:
         """Test validation passes with valid date range."""
         response = client.post(
             "/test-cross-field",
-            json={"start_date": "2024-01-01", "end_date": "2024-12-31"}
+            json={"start_date": "2024-01-01", "end_date": "2024-12-31"},
         )
         assert response.status_code == 200
 
@@ -214,7 +205,7 @@ class TestCrossFieldValidation:
         """Test validation fails when end date is before start date."""
         response = client.post(
             "/test-cross-field",
-            json={"start_date": "2024-12-31", "end_date": "2024-01-01"}
+            json={"start_date": "2024-12-31", "end_date": "2024-01-01"},
         )
         assert response.status_code == 422
         data = response.json()
@@ -223,10 +214,7 @@ class TestCrossFieldValidation:
 
     def test_missing_field_for_cross_validation(self):
         """Test cross-field validation when one field is missing."""
-        response = client.post(
-            "/test-cross-field",
-            json={"start_date": "2024-01-01"}
-        )
+        response = client.post("/test-cross-field", json={"start_date": "2024-01-01"})
         assert response.status_code == 422
         # Should fail on required validation, not cross-field
 
@@ -261,8 +249,7 @@ class TestConditionalValidation:
     def test_resident_requires_pgy_level(self):
         """Test that pgy_level is required for residents."""
         response = client.post(
-            "/test-person",
-            json={"name": "John Doe", "type": "resident"}
+            "/test-person", json={"name": "John Doe", "type": "resident"}
         )
         assert response.status_code == 422
         data = response.json()
@@ -273,7 +260,7 @@ class TestConditionalValidation:
         """Test resident with valid pgy_level."""
         response = client.post(
             "/test-person",
-            json={"name": "John Doe", "type": "resident", "pgy_level": 2}
+            json={"name": "John Doe", "type": "resident", "pgy_level": 2},
         )
         assert response.status_code == 200
 
@@ -281,15 +268,14 @@ class TestConditionalValidation:
         """Test resident with invalid pgy_level."""
         response = client.post(
             "/test-person",
-            json={"name": "John Doe", "type": "resident", "pgy_level": 5}
+            json={"name": "John Doe", "type": "resident", "pgy_level": 5},
         )
         assert response.status_code == 422
 
     def test_faculty_does_not_require_pgy_level(self):
         """Test that pgy_level is not required for faculty."""
         response = client.post(
-            "/test-person",
-            json={"name": "Dr. Smith", "type": "faculty"}
+            "/test-person", json={"name": "Dr. Smith", "type": "faculty"}
         )
         assert response.status_code == 200
 
@@ -407,12 +393,10 @@ class TestValidationRules:
 
     def test_all_of_combinator(self):
         """Test all_of rule combinator."""
-        from app.validation import validation_scope, all_of
+        from app.validation import all_of, validation_scope
 
         rule = all_of(
-            required,
-            string_length(min_length=3),
-            enum_values(["test", "demo"])
+            required, string_length(min_length=3), enum_values(["test", "demo"])
         )
 
         with validation_scope() as ctx:
@@ -441,34 +425,30 @@ class TestErrorMessages:
 
     def test_localized_messages(self):
         """Test localized error messages."""
-        from app.validation import Locale, get_error_message, ValidationMessageType
+        from app.validation import Locale, ValidationMessageType, get_error_message
 
         # English
         msg = get_error_message(
-            ValidationMessageType.REQUIRED,
-            Locale.EN_US,
-            field="Name"
+            ValidationMessageType.REQUIRED, Locale.EN_US, field="Name"
         )
         assert "required" in msg.lower()
 
         # Spanish
         msg = get_error_message(
-            ValidationMessageType.REQUIRED,
-            Locale.ES_ES,
-            field="Nombre"
+            ValidationMessageType.REQUIRED, Locale.ES_ES, field="Nombre"
         )
         assert "requerido" in msg.lower()
 
     def test_error_message_parameters(self):
         """Test error messages with parameters."""
-        from app.validation import get_error_message, ValidationMessageType, Locale
+        from app.validation import Locale, ValidationMessageType, get_error_message
 
         msg = get_error_message(
             ValidationMessageType.OUT_OF_RANGE,
             Locale.EN_US,
             field="Age",
             min_value=18,
-            max_value=65
+            max_value=65,
         )
         assert "18" in msg
         assert "65" in msg

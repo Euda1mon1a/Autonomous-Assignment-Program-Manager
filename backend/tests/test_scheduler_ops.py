@@ -1,19 +1,15 @@
 """Tests for scheduler operations API endpoints."""
-import pytest
-from datetime import datetime
-from fastapi.testclient import TestClient
 
-from app.schemas.scheduler_ops import (
-    ApprovalAction,
-    FixItMode,
-    TaskStatus,
-)
+import pytest
+from fastapi.testclient import TestClient
 
 
 class TestSitrepEndpoint:
     """Test suite for situation report endpoint."""
 
-    def test_sitrep_returns_valid_response(self, client: TestClient, auth_headers: dict):
+    def test_sitrep_returns_valid_response(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test that sitrep endpoint returns valid structure."""
         response = client.get("/api/scheduler/sitrep", headers=auth_headers)
 
@@ -31,7 +27,9 @@ class TestSitrepEndpoint:
         assert "last_update" in data
         assert "crisis_mode" in data
 
-    def test_sitrep_task_metrics_structure(self, client: TestClient, auth_headers: dict):
+    def test_sitrep_task_metrics_structure(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test task metrics have correct structure."""
         response = client.get("/api/scheduler/sitrep", headers=auth_headers)
 

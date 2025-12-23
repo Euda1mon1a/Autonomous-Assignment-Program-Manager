@@ -15,10 +15,10 @@ Key Rules:
 Classes:
     - SMResidentFacultyAlignmentConstraint: Hard constraint for alignment
 """
+
 import logging
 from collections import defaultdict
 from typing import Any
-from uuid import UUID
 
 from .base import (
     ConstraintPriority,
@@ -92,7 +92,8 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
             return
 
         sm_faculty_indices = [
-            context.resident_idx.get(f.id) for f in sm_faculty
+            context.resident_idx.get(f.id)
+            for f in sm_faculty
             if context.resident_idx.get(f.id) is not None
         ]
 
@@ -163,7 +164,8 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
             return
 
         sm_faculty_indices = [
-            context.resident_idx.get(f.id) for f in sm_faculty
+            context.resident_idx.get(f.id)
+            for f in sm_faculty
             if context.resident_idx.get(f.id) is not None
         ]
 
@@ -200,8 +202,9 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
                     # Simplified: sum(faculty) >= (1/N) * sum(residents) where N = max residents
                     max_residents = len(resident_vars)
                     model += (
-                        pulp.lpSum(faculty_vars) >= (1.0 / max_residents) * pulp.lpSum(resident_vars),
-                        f"sm_alignment_{b_i}_{t_i}_{constraint_count}"
+                        pulp.lpSum(faculty_vars)
+                        >= (1.0 / max_residents) * pulp.lpSum(resident_vars),
+                        f"sm_alignment_{b_i}_{t_i}_{constraint_count}",
                     )
                     constraint_count += 1
 
@@ -234,7 +237,9 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
         template_by_id = {t.id: t for t in context.templates}
 
         # Group assignments by block and template
-        assignments_by_block_template = defaultdict(lambda: {"residents": [], "faculty": []})
+        assignments_by_block_template = defaultdict(
+            lambda: {"residents": [], "faculty": []}
+        )
 
         for a in assignments:
             if a.rotation_template_id not in sm_template_ids:
@@ -258,18 +263,20 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
 
                 for a in residents:
                     resident = person_by_id.get(a.person_id)
-                    violations.append(ConstraintViolation(
-                        constraint_name=self.name,
-                        constraint_type=self.constraint_type,
-                        severity="HIGH",
-                        message=f"SM resident {resident.name if resident else 'Unknown'} assigned to SM clinic on {block.date if block else 'Unknown'} without SM faculty",
-                        person_id=a.person_id,
-                        block_id=block_id,
-                        details={
-                            "template": template.name if template else "Unknown",
-                            "date": str(block.date) if block else "Unknown",
-                        },
-                    ))
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="HIGH",
+                            message=f"SM resident {resident.name if resident else 'Unknown'} assigned to SM clinic on {block.date if block else 'Unknown'} without SM faculty",
+                            person_id=a.person_id,
+                            block_id=block_id,
+                            details={
+                                "template": template.name if template else "Unknown",
+                                "date": str(block.date) if block else "Unknown",
+                            },
+                        )
+                    )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -281,12 +288,15 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
         sm_templates: set[Any] = set()
         for t in context.templates:
             # Check requires_specialty field
-            if hasattr(t, 'requires_specialty') and t.requires_specialty == 'Sports Medicine':
+            if (
+                hasattr(t, "requires_specialty")
+                and t.requires_specialty == "Sports Medicine"
+            ):
                 sm_templates.add(t.id)
             # Also check name for "Sports Medicine" or "SM"
-            elif hasattr(t, 'name'):
+            elif hasattr(t, "name"):
                 name_upper = t.name.upper()
-                if 'SPORTS MEDICINE' in name_upper or name_upper == 'SM':
+                if "SPORTS MEDICINE" in name_upper or name_upper == "SM":
                     sm_templates.add(t.id)
         return sm_templates
 
@@ -294,11 +304,15 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
         """Get Sports Medicine faculty members."""
         sm_faculty: list[Any] = []
         for f in context.faculty:
-            if hasattr(f, 'is_sports_medicine') and f.is_sports_medicine:
-                sm_faculty.append(f)
-            elif hasattr(f, 'faculty_role') and f.faculty_role == 'sports_med':
-                sm_faculty.append(f)
-            elif hasattr(f, 'specialties') and f.specialties and 'Sports Medicine' in f.specialties:
+            if (
+                hasattr(f, "is_sports_medicine")
+                and f.is_sports_medicine
+                or hasattr(f, "faculty_role")
+                and f.faculty_role == "sports_med"
+                or hasattr(f, "specialties")
+                and f.specialties
+                and "Sports Medicine" in f.specialties
+            ):
                 sm_faculty.append(f)
         return sm_faculty
 

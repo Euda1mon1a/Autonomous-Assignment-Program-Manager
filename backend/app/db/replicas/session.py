@@ -3,10 +3,11 @@
 Provides session factories and context managers that automatically route
 queries to primary or replica databases based on operation type.
 """
+
 import logging
 import uuid
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator, Optional
 
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
@@ -14,7 +15,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.db.replicas.balancer import LoadBalancer, StickySessionBalancer
 from app.db.replicas.health import HealthChecker
-from app.db.replicas.router import QueryRouter, QueryType, RoutingPolicy
+from app.db.replicas.router import QueryRouter, RoutingPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +30,10 @@ class ReplicaAwareSessionFactory:
     def __init__(
         self,
         primary_engine: Engine,
-        replica_engines: Optional[dict[str, Engine]] = None,
-        routing_policy: Optional[RoutingPolicy] = None,
+        replica_engines: dict[str, Engine] | None = None,
+        routing_policy: RoutingPolicy | None = None,
         enable_sticky_sessions: bool = False,
-        enable_health_checks: bool = True
+        enable_health_checks: bool = True,
     ):
         """Initialize session factory.
 
@@ -56,13 +57,13 @@ class ReplicaAwareSessionFactory:
                 self.balancer = StickySessionBalancer(
                     self.replica_engines,
                     health_checker=self.health_checker,
-                    enable_health_checks=enable_health_checks
+                    enable_health_checks=enable_health_checks,
                 )
             else:
                 self.balancer = LoadBalancer(
                     self.replica_engines,
                     health_checker=self.health_checker,
-                    enable_health_checks=enable_health_checks
+                    enable_health_checks=enable_health_checks,
                 )
         else:
             self.balancer = None
@@ -71,14 +72,12 @@ class ReplicaAwareSessionFactory:
         self.router = QueryRouter(
             primary_engine=primary_engine,
             balancer=self.balancer,
-            fallback_to_primary=True
+            fallback_to_primary=True,
         )
 
         # Session makers for primary and replicas
         self.primary_session_maker = sessionmaker(
-            autocommit=False,
-            autoflush=False,
-            bind=primary_engine
+            autocommit=False, autoflush=False, bind=primary_engine
         )
 
         logger.info(
@@ -89,10 +88,8 @@ class ReplicaAwareSessionFactory:
         )
 
     def create_session(
-        self,
-        session_id: Optional[str] = None,
-        force_primary: bool = False
-    ) -> 'ReplicaAwareSession':
+        self, session_id: str | None = None, force_primary: bool = False
+    ) -> "ReplicaAwareSession":
         """Create a new replica-aware session.
 
         Args:
@@ -114,15 +111,13 @@ class ReplicaAwareSessionFactory:
             router=self.router,
             routing_policy=self.routing_policy,
             session_id=session_id,
-            force_primary=force_primary
+            force_primary=force_primary,
         )
 
     @contextmanager
     def session_scope(
-        self,
-        session_id: Optional[str] = None,
-        force_primary: bool = False
-    ) -> Generator['ReplicaAwareSession', None, None]:
+        self, session_id: str | None = None, force_primary: bool = False
+    ) -> Generator["ReplicaAwareSession", None, None]:
         """Provide a transactional scope with replica routing.
 
         Usage:
@@ -161,7 +156,7 @@ class ReplicaAwareSessionFactory:
         return {
             "replica_count": len(self.replica_engines),
             "sticky_sessions": self.enable_sticky_sessions,
-            "routing_stats": self.router.get_routing_stats()
+            "routing_stats": self.router.get_routing_stats(),
         }
 
 
@@ -180,7 +175,7 @@ class ReplicaAwareSession:
         router: QueryRouter,
         routing_policy: RoutingPolicy,
         session_id: str,
-        force_primary: bool = False
+        force_primary: bool = False,
     ):
         """Initialize replica-aware session.
 
@@ -206,6 +201,7 @@ class ReplicaAwareSession:
 
     def _setup_event_listeners(self) -> None:
         """Set up SQLAlchemy event listeners for tracking state."""
+
         # Track transaction begin/end
         @event.listens_for(self._session, "after_transaction_create")
         def track_transaction_start(session, transaction):
@@ -238,16 +234,20 @@ class ReplicaAwareSession:
             Result of query execution
         """
         # Determine query type and routing
-        query_str = str(statement.compile()) if hasattr(statement, 'compile') else str(statement)
+        query_str = (
+            str(statement.compile())
+            if hasattr(statement, "compile")
+            else str(statement)
+        )
         query_type = self._router.classify_query(query_str)
 
         # Check routing policy
         force_primary = (
-            self._force_primary or
-            self._routing_policy.should_force_primary(
+            self._force_primary
+            or self._routing_policy.should_force_primary(
                 query_type=query_type,
                 in_transaction=self._in_transaction,
-                recent_write=self._recent_write
+                recent_write=self._recent_write,
             )
         )
 
@@ -256,7 +256,7 @@ class ReplicaAwareSession:
             query=query_str,
             query_type=query_type,
             session_id=self._session_id,
-            force_primary=force_primary
+            force_primary=force_primary,
         )
 
         # Execute on appropriate engine

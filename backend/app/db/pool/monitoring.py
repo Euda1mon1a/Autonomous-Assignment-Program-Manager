@@ -4,11 +4,11 @@ This module provides real-time monitoring of connection pool metrics,
 including active connections, idle connections, waiting requests, and
 performance statistics.
 """
+
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from threading import Lock
-from typing import Dict, List, Optional
 
 from sqlalchemy.pool import Pool
 
@@ -69,7 +69,7 @@ class PoolStatistics:
     avg_checkout_duration: float = 0.0
     peak_connections: int = 0
     peak_utilization: float = 0.0
-    checkout_durations: List[float] = field(default_factory=list)
+    checkout_durations: list[float] = field(default_factory=list)
 
     def update_avg_checkout_duration(self, duration: float):
         """Update average checkout duration with new sample.
@@ -102,10 +102,10 @@ class PoolMonitor:
         """
         self._pool = pool
         self._stats = PoolStatistics()
-        self._snapshots: List[PoolSnapshot] = []
+        self._snapshots: list[PoolSnapshot] = []
         self._max_snapshots = 100
         self._lock = Lock()
-        self._checkout_times: Dict[int, float] = {}
+        self._checkout_times: dict[int, float] = {}
 
     def capture_snapshot(self) -> PoolSnapshot:
         """Capture current pool state.
@@ -246,7 +246,7 @@ class PoolMonitor:
                 checkout_durations=self._stats.checkout_durations.copy(),
             )
 
-    def get_metrics_summary(self) -> Dict[str, any]:
+    def get_metrics_summary(self) -> dict[str, any]:
         """Get summary of pool metrics for reporting.
 
         Returns:
@@ -285,7 +285,7 @@ class PoolMonitor:
             self._snapshots.clear()
             self._checkout_times.clear()
 
-    def get_health_metrics(self) -> Dict[str, any]:
+    def get_health_metrics(self) -> dict[str, any]:
         """Get health-related metrics for monitoring.
 
         Returns:

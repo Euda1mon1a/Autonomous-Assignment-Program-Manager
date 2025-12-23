@@ -1,6 +1,6 @@
 """Timezone-aware formatting utilities for display and serialization."""
-from datetime import date, datetime, time, timezone
-from typing import Optional, Union
+
+from datetime import UTC, date, datetime, time
 
 from app.utils.timezone.converter import TimezoneConverter
 from app.utils.timezone.detector import TimezoneDetector
@@ -30,8 +30,8 @@ class TimezoneFormatter:
     def format_datetime(
         cls,
         dt: datetime,
-        tz_name: Optional[str] = None,
-        format_string: Optional[str] = None,
+        tz_name: str | None = None,
+        format_string: str | None = None,
         include_timezone: bool = True,
     ) -> str:
         """
@@ -67,8 +67,8 @@ class TimezoneFormatter:
     @classmethod
     def format_date(
         cls,
-        d: Union[date, datetime],
-        format_string: Optional[str] = None,
+        d: date | datetime,
+        format_string: str | None = None,
     ) -> str:
         """
         Format date for display.
@@ -96,8 +96,8 @@ class TimezoneFormatter:
     @classmethod
     def format_time(
         cls,
-        t: Union[time, datetime],
-        format_string: Optional[str] = None,
+        t: time | datetime,
+        format_string: str | None = None,
         include_seconds: bool = False,
     ) -> str:
         """
@@ -131,7 +131,7 @@ class TimezoneFormatter:
     def format_iso8601(
         cls,
         dt: datetime,
-        tz_name: Optional[str] = None,
+        tz_name: str | None = None,
         utc: bool = False,
     ) -> str:
         """
@@ -156,7 +156,7 @@ class TimezoneFormatter:
                 tz_name = tz_name or TimezoneConverter.DEFAULT_TIMEZONE
                 dt_utc = TimezoneConverter.local_to_utc(dt, tz_name)
             else:
-                dt_utc = dt.astimezone(timezone.utc)
+                dt_utc = dt.astimezone(UTC)
             return dt_utc.isoformat()
         else:
             # Convert to target timezone
@@ -171,8 +171,8 @@ class TimezoneFormatter:
     def format_relative(
         cls,
         dt: datetime,
-        reference: Optional[datetime] = None,
-        tz_name: Optional[str] = None,
+        reference: datetime | None = None,
+        tz_name: str | None = None,
     ) -> str:
         """
         Format datetime as relative time (e.g., "2 hours ago", "in 3 days").
@@ -201,12 +201,12 @@ class TimezoneFormatter:
         if dt.tzinfo is None:
             dt = TimezoneConverter.local_to_utc(dt, tz_name)
         else:
-            dt = dt.astimezone(timezone.utc)
+            dt = dt.astimezone(UTC)
 
         if reference.tzinfo is None:
             reference = TimezoneConverter.local_to_utc(reference, tz_name)
         else:
-            reference = reference.astimezone(timezone.utc)
+            reference = reference.astimezone(UTC)
 
         # Calculate difference
         delta = reference - dt
@@ -244,10 +244,10 @@ class TimezoneFormatter:
     @classmethod
     def format_date_range(
         cls,
-        start: Union[date, datetime],
-        end: Union[date, datetime],
+        start: date | datetime,
+        end: date | datetime,
         include_time: bool = False,
-        tz_name: Optional[str] = None,
+        tz_name: str | None = None,
     ) -> str:
         """
         Format a date range for display.
@@ -291,9 +291,7 @@ class TimezoneFormatter:
 
         # Same year
         if isinstance(start, date) and isinstance(end, date) and start.year == end.year:
-            return (
-                f"{start.strftime('%B %d')} - {end.strftime('%B %d')}, {start.year}"
-            )
+            return f"{start.strftime('%B %d')} - {end.strftime('%B %d')}, {start.year}"
 
         # Different years or include time
         if include_time and isinstance(start, datetime) and isinstance(end, datetime):
@@ -309,7 +307,7 @@ class TimezoneFormatter:
     def format_for_user(
         cls,
         dt: datetime,
-        user_tz: Optional[str] = None,
+        user_tz: str | None = None,
         style: str = "full",
     ) -> str:
         """
@@ -361,8 +359,7 @@ class TimezoneFormatter:
         try:
             info = TimezoneDetector.get_timezone_info(tz_name)
             return (
-                f"{info['name']} ({info['abbreviation']}, "
-                f"{info['utc_offset_string']})"
+                f"{info['name']} ({info['abbreviation']}, {info['utc_offset_string']})"
             )
         except Exception:
             return tz_name
@@ -372,7 +369,7 @@ class TimezoneFormatter:
         cls,
         block_date: date,
         time_of_day: str,
-        tz_name: Optional[str] = None,
+        tz_name: str | None = None,
         include_date: bool = True,
     ) -> str:
         """
@@ -468,7 +465,7 @@ class TimezoneFormatter:
     def format_api_response(
         cls,
         dt: datetime,
-        tz_name: Optional[str] = None,
+        tz_name: str | None = None,
         include_offset: bool = True,
     ) -> dict:
         """

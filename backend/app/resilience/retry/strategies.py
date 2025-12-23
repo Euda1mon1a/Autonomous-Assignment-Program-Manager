@@ -9,14 +9,13 @@ Defines different strategies for calculating retry delays:
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional
 
 
 class BackoffStrategy(Enum):
     """Types of backoff strategies."""
 
-    FIXED = "fixed"            # Fixed delay
-    LINEAR = "linear"          # Linear backoff
+    FIXED = "fixed"  # Fixed delay
+    LINEAR = "linear"  # Linear backoff
     EXPONENTIAL = "exponential"  # Exponential backoff
 
 
@@ -25,7 +24,7 @@ class RetryStrategy(ABC):
 
     def __init__(
         self,
-        max_delay: Optional[float] = None,
+        max_delay: float | None = None,
     ):
         """
         Initialize retry strategy.
@@ -77,7 +76,7 @@ class FixedDelayStrategy(RetryStrategy):
     def __init__(
         self,
         delay: float = 1.0,
-        max_delay: Optional[float] = None,
+        max_delay: float | None = None,
     ):
         """
         Initialize fixed delay strategy.
@@ -116,7 +115,7 @@ class LinearBackoffStrategy(RetryStrategy):
         self,
         base_delay: float = 1.0,
         increment: float = 1.0,
-        max_delay: Optional[float] = None,
+        max_delay: float | None = None,
     ):
         """
         Initialize linear backoff strategy.
@@ -164,7 +163,7 @@ class ExponentialBackoffStrategy(RetryStrategy):
         self,
         base_delay: float = 1.0,
         multiplier: float = 2.0,
-        max_delay: Optional[float] = None,
+        max_delay: float | None = None,
     ):
         """
         Initialize exponential backoff strategy.
@@ -188,7 +187,7 @@ class ExponentialBackoffStrategy(RetryStrategy):
         Returns:
             Exponential delay: base_delay * (multiplier ^ attempt)
         """
-        return self.base_delay * (self.multiplier ** attempt)
+        return self.base_delay * (self.multiplier**attempt)
 
 
 class ExponentialBackoffWithCeiling(RetryStrategy):
@@ -230,13 +229,13 @@ class ExponentialBackoffWithCeiling(RetryStrategy):
         Returns:
             Exponential delay capped at max_delay
         """
-        return self.base_delay * (self.multiplier ** attempt)
+        return self.base_delay * (self.multiplier**attempt)
 
 
 def get_retry_strategy(
     strategy: BackoffStrategy,
     base_delay: float = 1.0,
-    max_delay: Optional[float] = None,
+    max_delay: float | None = None,
     **kwargs,
 ) -> RetryStrategy:
     """

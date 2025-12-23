@@ -70,7 +70,9 @@ class AssignmentRepository(BaseRepository[Assignment]):
             query = query.filter(Assignment.role == role)
         if activity_type:
             # Filter by activity_type in the rotation_template
-            query = query.filter(Assignment.rotation_template.has(activity_type=activity_type))
+            query = query.filter(
+                Assignment.rotation_template.has(activity_type=activity_type)
+            )
 
         return query.all()
 
@@ -92,9 +94,7 @@ class AssignmentRepository(BaseRepository[Assignment]):
     def get_by_block_ids(self, block_ids: list[UUID]) -> list[Assignment]:
         """Get assignments for a list of block IDs."""
         return (
-            self.db.query(Assignment)
-            .filter(Assignment.block_id.in_(block_ids))
-            .all()
+            self.db.query(Assignment).filter(Assignment.block_id.in_(block_ids)).all()
         )
 
     def delete_by_block_ids(self, block_ids: list[UUID]) -> int:

@@ -38,6 +38,7 @@ class CanaryState(str, Enum):
                      ↓
                 ROLLING_BACK → ROLLED_BACK (failure)
     """
+
     PREPARING = "preparing"  # Initial setup, pre-flight checks
     RAMPING = "ramping"  # Gradually increasing traffic
     MONITORING = "monitoring"  # At target traffic, observing metrics
@@ -49,6 +50,7 @@ class CanaryState(str, Enum):
 
 class CanaryOutcome(str, Enum):
     """Final outcome of a canary release."""
+
     SUCCESS = "success"  # Canary passed all checks
     AUTOMATIC_ROLLBACK = "automatic_rollback"  # Auto-rolled back due to metrics
     MANUAL_ROLLBACK = "manual_rollback"  # Manually rolled back
@@ -59,6 +61,7 @@ class CanaryOutcome(str, Enum):
 
 class RollbackReason(str, Enum):
     """Reason for rolling back a canary release."""
+
     ERROR_RATE_SPIKE = "error_rate_spike"  # Error rate exceeded threshold
     LATENCY_DEGRADATION = "latency_degradation"  # Response time increased
     AVAILABILITY_DROP = "availability_drop"  # Service availability decreased
@@ -77,6 +80,7 @@ class UserSegment:
     Segments allow testing new versions with specific user groups
     before full rollout (e.g., internal users, beta testers, specific regions).
     """
+
     id: UUID = field(default_factory=uuid4)
     name: str = ""
     description: str = ""
@@ -98,8 +102,13 @@ class UserSegment:
     created_at: datetime = field(default_factory=datetime.utcnow)
     is_active: bool = True
 
-    def matches(self, user_id: UUID, user_role: str = None,
-                organization_id: UUID = None, user_hash: int = None) -> bool:
+    def matches(
+        self,
+        user_id: UUID,
+        user_role: str = None,
+        organization_id: UUID = None,
+        user_hash: int = None,
+    ) -> bool:
         """
         Check if a user matches this segment criteria.
 
@@ -143,6 +152,7 @@ class TrafficSplit:
 
     Controls what percentage of traffic goes to canary vs baseline.
     """
+
     canary_percentage: float = 0.0  # 0.0 to 100.0
     baseline_percentage: float = 100.0  # Should be (100 - canary_percentage)
 
@@ -158,15 +168,13 @@ class TrafficSplit:
         """Validate percentages sum to 100."""
         total = self.canary_percentage + self.baseline_percentage
         if not (99.9 <= total <= 100.1):  # Allow small floating point error
-            raise ValueError(
-                f"Traffic percentages must sum to 100, got {total}"
-            )
+            raise ValueError(f"Traffic percentages must sum to 100, got {total}")
 
     def can_ramp_up(self) -> bool:
         """Check if we can increase canary traffic."""
         return (
-            self.canary_percentage < self.target_percentage and
-            self.canary_percentage < self.max_ramp_percentage
+            self.canary_percentage < self.target_percentage
+            and self.canary_percentage < self.max_ramp_percentage
         )
 
     def ramp_up(self) -> "TrafficSplit":
@@ -179,7 +187,7 @@ class TrafficSplit:
         new_canary = min(
             self.canary_percentage + self.ramp_increment,
             self.target_percentage,
-            self.max_ramp_percentage
+            self.max_ramp_percentage,
         )
         new_baseline = 100.0 - new_canary
 
@@ -200,6 +208,7 @@ class CanaryMetrics:
 
     Tracks both canary and baseline metrics to detect regressions.
     """
+
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
     # Request metrics
@@ -250,6 +259,7 @@ class MetricComparison:
 
     Determines if canary is performing acceptably compared to baseline.
     """
+
     metric_name: str
     canary_value: float
     baseline_value: float
@@ -268,7 +278,7 @@ class MetricComparison:
                 abs(self.difference) / self.baseline_value * 100.0
             )
         else:
-            self.difference_percentage = 0.0 if self.canary_value == 0 else float('inf')
+            self.difference_percentage = 0.0 if self.canary_value == 0 else float("inf")
 
         self.is_acceptable = self.difference_percentage <= self.threshold
 
@@ -322,6 +332,7 @@ class CanaryRelease:
 
     Tracks the entire lifecycle of a canary deployment.
     """
+
     id: UUID = field(default_factory=uuid4)
     config: CanaryConfig = field(default_factory=CanaryConfig)
 
@@ -330,10 +341,11 @@ class CanaryRelease:
     outcome: CanaryOutcome = CanaryOutcome.IN_PROGRESS
 
     # Traffic management
-    current_traffic: TrafficSplit = field(default_factory=lambda: TrafficSplit(
-        canary_percentage=5.0,
-        baseline_percentage=95.0
-    ))
+    current_traffic: TrafficSplit = field(
+        default_factory=lambda: TrafficSplit(
+            canary_percentage=5.0, baseline_percentage=95.0
+        )
+    )
 
     # Metrics
     metrics_history: list[CanaryMetrics] = field(default_factory=list)
@@ -502,7 +514,7 @@ class CanaryReleaseManager:
         release.last_ramp_at = datetime.utcnow()
         release.log_event(
             "started",
-            f"Started canary at {release.current_traffic.canary_percentage}% traffic"
+            f"Started canary at {release.current_traffic.canary_percentage}% traffic",
         )
 
         self._emit_event("release_started", release)
@@ -623,8 +635,9 @@ class CanaryReleaseManager:
         # Compare latency
         if metrics.baseline_p50_latency > 0:
             latency_increase = (
-                (metrics.canary_p50_latency - metrics.baseline_p50_latency) /
-                metrics.baseline_p50_latency * 100.0
+                (metrics.canary_p50_latency - metrics.baseline_p50_latency)
+                / metrics.baseline_p50_latency
+                * 100.0
             )
             latency_comp = MetricComparison(
                 metric_name="p50_latency",
@@ -633,7 +646,9 @@ class CanaryReleaseManager:
                 threshold=config.max_latency_increase_percentage,
             )
             latency_comp.difference_percentage = abs(latency_increase)
-            latency_comp.is_acceptable = latency_increase <= config.max_latency_increase_percentage
+            latency_comp.is_acceptable = (
+                latency_increase <= config.max_latency_increase_percentage
+            )
             comparisons.append(latency_comp)
 
         # Compare availability
@@ -649,7 +664,9 @@ class CanaryReleaseManager:
 
         return comparisons
 
-    def check_rollback_conditions(self, release_id: UUID) -> tuple[bool, RollbackReason | None]:
+    def check_rollback_conditions(
+        self, release_id: UUID
+    ) -> tuple[bool, RollbackReason | None]:
         """
         Check if canary should be rolled back based on metrics.
 
@@ -682,15 +699,18 @@ class CanaryReleaseManager:
         # Check latency degradation
         if config.rollback_on_latency_degradation and metrics.baseline_p50_latency > 0:
             latency_increase = (
-                (metrics.canary_p50_latency - metrics.baseline_p50_latency) /
-                metrics.baseline_p50_latency * 100.0
+                (metrics.canary_p50_latency - metrics.baseline_p50_latency)
+                / metrics.baseline_p50_latency
+                * 100.0
             )
             if latency_increase > config.max_latency_increase_percentage:
                 return True, RollbackReason.LATENCY_DEGRADATION
 
         # Check availability drop
         if config.rollback_on_availability_drop:
-            availability_drop = metrics.baseline_availability - metrics.canary_availability
+            availability_drop = (
+                metrics.baseline_availability - metrics.canary_availability
+            )
             if availability_drop > config.max_availability_decrease:
                 return True, RollbackReason.AVAILABILITY_DROP
 
@@ -748,7 +768,7 @@ class CanaryReleaseManager:
         release.log_event(
             "rollback_initiated",
             f"Rolling back due to {reason.value}: {message}",
-            {"reason": reason.value}
+            {"reason": reason.value},
         )
 
         # Complete rollback
@@ -761,8 +781,7 @@ class CanaryReleaseManager:
         release.completed_at = datetime.utcnow()
 
         release.log_event(
-            "rollback_complete",
-            "Rollback complete, all traffic routed to baseline"
+            "rollback_complete", "Rollback complete, all traffic routed to baseline"
         )
 
         self._emit_event("release_rolled_back", release)
@@ -794,15 +813,14 @@ class CanaryReleaseManager:
 
         release.log_event(
             "ramp_up",
-            f"Ramped up canary traffic from {old_percentage}% to {new_percentage}%"
+            f"Ramped up canary traffic from {old_percentage}% to {new_percentage}%",
         )
 
         # Check if we've reached target
         if new_percentage >= release.config.target_traffic_percentage:
             release.state = CanaryState.MONITORING
             release.log_event(
-                "target_reached",
-                f"Reached target traffic of {new_percentage}%"
+                "target_reached", f"Reached target traffic of {new_percentage}%"
             )
 
         self._emit_event("traffic_ramped", release)
@@ -867,7 +885,10 @@ class CanaryReleaseManager:
             min_observation = timedelta(
                 minutes=release.config.minimum_observation_minutes
             )
-            if release.last_ramp_at and datetime.utcnow() - release.last_ramp_at > min_observation:
+            if (
+                release.last_ramp_at
+                and datetime.utcnow() - release.last_ramp_at > min_observation
+            ):
                 self.complete_release(release_id)
                 return {
                     "action": "complete",
@@ -898,8 +919,7 @@ class CanaryReleaseManager:
         release.completed_at = datetime.utcnow()
 
         release.log_event(
-            "complete",
-            f"Canary release completed successfully at 100% traffic"
+            "complete", "Canary release completed successfully at 100% traffic"
         )
 
         self._emit_event("release_completed", release)
@@ -998,17 +1018,26 @@ class CanaryReleaseManager:
             },
             "timing": {
                 "created_at": release.created_at.isoformat(),
-                "started_at": release.started_at.isoformat() if release.started_at else None,
-                "completed_at": release.completed_at.isoformat() if release.completed_at else None,
+                "started_at": release.started_at.isoformat()
+                if release.started_at
+                else None,
+                "completed_at": release.completed_at.isoformat()
+                if release.completed_at
+                else None,
                 "elapsed_minutes": (
                     (datetime.utcnow() - release.started_at).total_seconds() / 60.0
-                    if release.started_at else 0
+                    if release.started_at
+                    else 0
                 ),
             },
             "rollback": {
-                "reason": release.rollback_reason.value if release.rollback_reason else None,
+                "reason": release.rollback_reason.value
+                if release.rollback_reason
+                else None,
                 "message": release.rollback_message,
-            } if release.rollback_reason else None,
+            }
+            if release.rollback_reason
+            else None,
         }
 
     def get_active_releases(self) -> list[CanaryRelease]:
@@ -1019,7 +1048,8 @@ class CanaryReleaseManager:
             List of active CanaryRelease instances
         """
         return [
-            r for r in self.releases.values()
+            r
+            for r in self.releases.values()
             if r.state not in (CanaryState.COMPLETE, CanaryState.ROLLED_BACK)
         ]
 
@@ -1114,7 +1144,10 @@ class CanaryReleaseManager:
             "canary" or "baseline"
         """
         release = self.releases.get(release_id)
-        if not release or release.state in (CanaryState.COMPLETE, CanaryState.ROLLED_BACK):
+        if not release or release.state in (
+            CanaryState.COMPLETE,
+            CanaryState.ROLLED_BACK,
+        ):
             return "baseline"
 
         # Check if user matches any target segment

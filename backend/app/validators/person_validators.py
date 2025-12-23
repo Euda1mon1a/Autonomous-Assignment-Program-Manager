@@ -8,6 +8,7 @@ Validates person data including:
 - Specialty validation
 - Supervision ratio validation
 """
+
 from typing import Optional
 
 from app.validators.common import (
@@ -18,7 +19,6 @@ from app.validators.common import (
     validate_phone_number,
     validate_string_length,
 )
-
 
 # Valid person types
 VALID_PERSON_TYPES = ["resident", "faculty"]
@@ -110,7 +110,7 @@ def validate_pgy_level(pgy_level: int | None, person_type: str) -> int | None:
             pgy_level,
             min_value=MIN_PGY_LEVEL,
             max_value=MAX_PGY_LEVEL,
-            field_name="PGY level"
+            field_name="PGY level",
         )
 
     return pgy_level
@@ -198,7 +198,9 @@ def validate_specialties(specialties: list[str] | None) -> list[str] | None:
         if not specialty_clean:
             raise ValidationError(f"Specialty at index {i} cannot be empty")
 
-        validate_string_length(specialty_clean, min_length=2, max_length=100, field_name="Specialty")
+        validate_string_length(
+            specialty_clean, min_length=2, max_length=100, field_name="Specialty"
+        )
 
         # Check for duplicates
         specialty_lower = specialty_clean.lower()
@@ -272,9 +274,7 @@ def validate_person_phone(phone: str | None) -> str | None:
 
 
 def validate_target_clinical_blocks(
-    blocks: int | None,
-    person_type: str,
-    pgy_level: int | None = None
+    blocks: int | None, person_type: str, pgy_level: int | None = None
 ) -> int | None:
     """
     Validate target clinical blocks for a person.
@@ -304,7 +304,7 @@ def validate_target_clinical_blocks(
         blocks,
         min_value=0,
         max_value=365 * 2,  # Max 2 blocks per day for whole year
-        field_name="Target clinical blocks"
+        field_name="Target clinical blocks",
     )
 
     # Warn if outside typical ranges for residents
@@ -327,9 +327,7 @@ def validate_target_clinical_blocks(
 
 
 def validate_supervision_requirements(
-    person_type: str,
-    pgy_level: int | None,
-    performs_procedures: bool = False
+    person_type: str, pgy_level: int | None, performs_procedures: bool = False
 ) -> dict[str, any]:
     """
     Validate and return supervision requirements for a person.
@@ -359,12 +357,14 @@ def validate_supervision_requirements(
         return {
             "needs_supervision": False,
             "supervision_ratio": 0,
-            "requires_procedure_supervision": False
+            "requires_procedure_supervision": False,
         }
 
     if person_type_lower == "resident":
         if pgy_level is None:
-            raise ValidationError("Cannot determine supervision for resident without PGY level")
+            raise ValidationError(
+                "Cannot determine supervision for resident without PGY level"
+            )
 
         # PGY-1 requires closer supervision
         ratio = 2 if pgy_level == 1 else 4
@@ -372,7 +372,7 @@ def validate_supervision_requirements(
         return {
             "needs_supervision": True,
             "supervision_ratio": ratio,
-            "requires_procedure_supervision": performs_procedures
+            "requires_procedure_supervision": performs_procedures,
         }
 
     raise ValidationError(f"Unknown person type: {person_type}")
@@ -381,7 +381,7 @@ def validate_supervision_requirements(
 def validate_call_counts(
     sunday_call_count: int | None = None,
     weekday_call_count: int | None = None,
-    fmit_weeks_count: int | None = None
+    fmit_weeks_count: int | None = None,
 ) -> tuple[int, int, int]:
     """
     Validate call and FMIT equity tracking counts.
@@ -405,9 +405,15 @@ def validate_call_counts(
     fmit = fmit_weeks_count if fmit_weeks_count is not None else 0
 
     # Validate ranges
-    sunday = validate_integer_range(sunday, min_value=0, max_value=52, field_name="Sunday call count")
-    weekday = validate_integer_range(weekday, min_value=0, max_value=365, field_name="Weekday call count")
-    fmit = validate_integer_range(fmit, min_value=0, max_value=52, field_name="FMIT weeks count")
+    sunday = validate_integer_range(
+        sunday, min_value=0, max_value=52, field_name="Sunday call count"
+    )
+    weekday = validate_integer_range(
+        weekday, min_value=0, max_value=365, field_name="Weekday call count"
+    )
+    fmit = validate_integer_range(
+        fmit, min_value=0, max_value=52, field_name="FMIT weeks count"
+    )
 
     # FMIT typically capped around 6 per year
     if fmit > 12:
@@ -438,10 +444,7 @@ def validate_primary_duty(primary_duty: str | None, person_type: str) -> str | N
 
     # Validate length and content
     validated = validate_string_length(
-        primary_duty.strip(),
-        min_length=2,
-        max_length=255,
-        field_name="Primary duty"
+        primary_duty.strip(), min_length=2, max_length=255, field_name="Primary duty"
     )
 
     return validated

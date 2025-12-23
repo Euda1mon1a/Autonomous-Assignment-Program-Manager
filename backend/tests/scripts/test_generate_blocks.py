@@ -2,12 +2,13 @@
 
 Tests the block date calculation logic and argument validation.
 """
+
 from datetime import date, timedelta
 
-import pytest
 
-
-def calculate_block_dates(block_number: int, academic_year_start: date) -> tuple[date, date]:
+def calculate_block_dates(
+    block_number: int, academic_year_start: date
+) -> tuple[date, date]:
     """
     Calculate start and end dates for a given block number.
 

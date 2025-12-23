@@ -18,11 +18,10 @@ References:
 
 import logging
 import math
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
-from uuid import UUID
+from typing import Any
 
 import numpy as np
 
@@ -43,6 +42,7 @@ class EntropyMetrics:
         entropy_production_rate: Rate of entropy generation
         normalized_entropy: Entropy relative to maximum possible
     """
+
     person_entropy: float
     rotation_entropy: float
     time_entropy: float
@@ -121,13 +121,13 @@ def calculate_schedule_entropy(assignments: list[Any]) -> EntropyMetrics:
         )
 
     # Extract distributions
-    person_dist = [a.person_id for a in assignments if hasattr(a, 'person_id')]
+    person_dist = [a.person_id for a in assignments if hasattr(a, "person_id")]
     rotation_dist = [
         a.rotation_template_id
         for a in assignments
-        if hasattr(a, 'rotation_template_id') and a.rotation_template_id is not None
+        if hasattr(a, "rotation_template_id") and a.rotation_template_id is not None
     ]
-    time_dist = [a.block_id for a in assignments if hasattr(a, 'block_id')]
+    time_dist = [a.block_id for a in assignments if hasattr(a, "block_id")]
 
     # Calculate individual entropies
     H_person = calculate_shannon_entropy(person_dist) if person_dist else 0.0
@@ -244,9 +244,7 @@ def conditional_entropy(dist_X: list[Any], dist_Y: list[Any]) -> float:
 
 
 def entropy_production_rate(
-    old_assignments: list[Any],
-    new_assignments: list[Any],
-    time_delta: float = 1.0
+    old_assignments: list[Any], new_assignments: list[Any], time_delta: float = 1.0
 ) -> float:
     """
     Calculate entropy production rate from schedule changes.
@@ -326,7 +324,9 @@ class ScheduleEntropyMonitor:
         # Calculate production rate if we have previous state
         if len(self.entropy_history) >= 2:
             dS = self.entropy_history[-1] - self.entropy_history[-2]
-            dt = (self.timestamp_history[-1] - self.timestamp_history[-2]).total_seconds() / 3600
+            dt = (
+                self.timestamp_history[-1] - self.timestamp_history[-2]
+            ).total_seconds() / 3600
 
             if dt > 0:
                 production_rate = max(0.0, dS) / dt
@@ -427,7 +427,9 @@ class ScheduleEntropyMonitor:
         return {
             "current_entropy": self.entropy_history[-1],
             "rate_of_change": self.get_entropy_rate_of_change(),
-            "production_rate": self.production_rate_history[-1] if self.production_rate_history else 0.0,
+            "production_rate": self.production_rate_history[-1]
+            if self.production_rate_history
+            else 0.0,
             "critical_slowing": self.detect_critical_slowing(),
             "measurements": len(self.entropy_history),
         }

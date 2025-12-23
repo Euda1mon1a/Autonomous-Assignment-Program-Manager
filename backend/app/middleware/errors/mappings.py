@@ -4,26 +4,27 @@ This module provides structured mappings between Python exceptions,
 custom application exceptions, and HTTP status codes according to
 RFC 7231 and RFC 7807 standards.
 """
-from typing import Dict, Type
 
 from fastapi import HTTPException
 from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy.exc import (
-    IntegrityError,
-    DataError,
-    OperationalError,
     DatabaseError,
+    DataError,
+    IntegrityError,
+    OperationalError,
 )
 
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import (
     AppException,
-    NotFoundError,
-    ValidationError as AppValidationError,
     ConflictError,
-    UnauthorizedError,
     ForbiddenError,
+    NotFoundError,
+    UnauthorizedError,
 )
-from app.core.error_codes import ErrorCode
+from app.core.exceptions import (
+    ValidationError as AppValidationError,
+)
 
 
 class ExceptionMapping:
@@ -52,7 +53,7 @@ class ExceptionMapping:
 
 
 # Exception type to mapping configuration
-EXCEPTION_MAPPINGS: Dict[Type[Exception], ExceptionMapping] = {
+EXCEPTION_MAPPINGS: dict[type[Exception], ExceptionMapping] = {
     # Application exceptions (custom hierarchy)
     NotFoundError: ExceptionMapping(
         status_code=404,

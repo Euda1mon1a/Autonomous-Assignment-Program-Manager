@@ -36,8 +36,9 @@ logger = logging.getLogger(__name__)
 
 class StressType(str, Enum):
     """Types of system stress."""
-    FACULTY_LOSS = "faculty_loss"          # Decrease in capacity
-    DEMAND_SURGE = "demand_surge"          # Increase in requirements
+
+    FACULTY_LOSS = "faculty_loss"  # Decrease in capacity
+    DEMAND_SURGE = "demand_surge"  # Increase in requirements
     QUALITY_PRESSURE = "quality_pressure"  # Need for higher standards
     TIME_COMPRESSION = "time_compression"  # Same work in less time
     RESOURCE_SCARCITY = "resource_scarcity"  # Limited supporting resources
@@ -46,22 +47,24 @@ class StressType(str, Enum):
 
 class CompensationType(str, Enum):
     """Types of compensation responses."""
-    OVERTIME = "overtime"                    # Extra hours worked
-    CROSS_COVERAGE = "cross_coverage"        # Faculty covering unfamiliar areas
-    DEFERRED_LEAVE = "deferred_leave"        # Postponed time off
+
+    OVERTIME = "overtime"  # Extra hours worked
+    CROSS_COVERAGE = "cross_coverage"  # Faculty covering unfamiliar areas
+    DEFERRED_LEAVE = "deferred_leave"  # Postponed time off
     SERVICE_REDUCTION = "service_reduction"  # Reduced scope
-    EFFICIENCY_GAIN = "efficiency_gain"      # Working smarter (limited)
+    EFFICIENCY_GAIN = "efficiency_gain"  # Working smarter (limited)
     BACKUP_ACTIVATION = "backup_activation"  # Emergency backup pools
-    QUALITY_TRADE = "quality_trade"          # Accepting lower standards (dangerous)
+    QUALITY_TRADE = "quality_trade"  # Accepting lower standards (dangerous)
 
 
 class EquilibriumState(str, Enum):
     """State of system equilibrium."""
-    STABLE = "stable"           # At sustainable equilibrium
+
+    STABLE = "stable"  # At sustainable equilibrium
     COMPENSATING = "compensating"  # Actively shifting to new equilibrium
-    STRESSED = "stressed"       # New equilibrium found but strained
+    STRESSED = "stressed"  # New equilibrium found but strained
     UNSUSTAINABLE = "unsustainable"  # Cannot reach stable equilibrium
-    CRITICAL = "critical"       # System failing to equilibrate
+    CRITICAL = "critical"  # System failing to equilibrate
 
 
 @dataclass
@@ -71,20 +74,21 @@ class SystemStress:
 
     Represents a change in conditions that the system must respond to.
     """
+
     id: UUID
     stress_type: StressType
     description: str
     applied_at: datetime
 
     # Quantification
-    magnitude: float          # 0.0 - 1.0 (fraction of system affected)
-    duration_days: int        # Expected duration
-    is_acute: bool            # True = sudden, False = gradual
-    is_reversible: bool       # Can the stress be removed?
+    magnitude: float  # 0.0 - 1.0 (fraction of system affected)
+    duration_days: int  # Expected duration
+    is_acute: bool  # True = sudden, False = gradual
+    is_reversible: bool  # Can the stress be removed?
 
     # Impact on capacity
-    capacity_impact: float    # Negative = capacity reduction (e.g., -0.20 = 20% loss)
-    demand_impact: float      # Positive = demand increase (e.g., 0.15 = 15% more)
+    capacity_impact: float  # Negative = capacity reduction (e.g., -0.20 = 20% loss)
+    demand_impact: float  # Positive = demand increase (e.g., 0.15 = 15% more)
 
     # Current status
     is_active: bool = True
@@ -98,6 +102,7 @@ class CompensationResponse:
 
     The system's attempt to counteract the stress and restore equilibrium.
     """
+
     id: UUID
     stress_id: UUID
     compensation_type: CompensationType
@@ -106,12 +111,12 @@ class CompensationResponse:
 
     # Quantification
     compensation_magnitude: float  # How much of the stress is counteracted (0.0 - 1.0)
-    effectiveness: float           # 0.0 - 1.0, actual vs expected
+    effectiveness: float  # 0.0 - 1.0, actual vs expected
 
     # Costs
-    immediate_cost: float         # Direct cost (overtime pay, etc.)
-    hidden_cost: float            # Indirect cost (burnout, quality)
-    sustainability_days: int      # How long can this be maintained
+    immediate_cost: float  # Direct cost (overtime pay, etc.)
+    hidden_cost: float  # Indirect cost (burnout, quality)
+    sustainability_days: int  # How long can this be maintained
 
     # Tracking
     is_active: bool = True
@@ -127,6 +132,7 @@ class EquilibriumShift:
     Le Chatelier's principle tells us the new equilibrium will be
     DIFFERENT from the old one, and compensation is always partial.
     """
+
     id: UUID
     calculated_at: datetime
 
@@ -152,10 +158,10 @@ class EquilibriumShift:
     sustainable_capacity: float  # What's sustainable long-term
 
     # Costs and sustainability
-    compensation_debt: float     # Accumulated cost of compensating
-    daily_debt_rate: float       # How fast debt accumulates
-    burnout_risk: float          # 0.0 - 1.0
-    days_until_exhaustion: int   # When compensation fails
+    compensation_debt: float  # Accumulated cost of compensating
+    daily_debt_rate: float  # How fast debt accumulates
+    burnout_risk: float  # 0.0 - 1.0
+    days_until_exhaustion: int  # When compensation fails
 
     # State
     equilibrium_state: EquilibriumState
@@ -169,6 +175,7 @@ class StressResponsePrediction:
 
     Used for planning and decision-making before stress is applied.
     """
+
     id: UUID
     predicted_at: datetime
 
@@ -183,8 +190,8 @@ class StressResponsePrediction:
     predicted_coverage_rate: float  # Coverage after shift
 
     # Costs
-    predicted_daily_cost: float    # Per-day cost of compensation
-    predicted_total_cost: float    # Total cost over duration
+    predicted_daily_cost: float  # Per-day cost of compensation
+    predicted_total_cost: float  # Total cost over duration
     predicted_burnout_increase: float  # How much burnout will increase
 
     # Recommendations
@@ -196,6 +203,7 @@ class StressResponsePrediction:
 @dataclass
 class EquilibriumReport:
     """Comprehensive equilibrium analysis report."""
+
     generated_at: datetime
 
     # Current state
@@ -219,7 +227,7 @@ class EquilibriumReport:
 
     # Predictions
     days_until_equilibrium: int  # -1 if stable
-    days_until_exhaustion: int   # -1 if sustainable
+    days_until_exhaustion: int  # -1 if sustainable
 
     # Recommendations
     recommendations: list[str]
@@ -403,7 +411,9 @@ class LeChatelierAnalyzer:
         # Calculate compensation efficiency (diminishing returns)
         if len(active_compensations) > 1:
             # Multiple compensations interfere with each other
-            compensation_efficiency = 1.0 / (1.0 + 0.1 * (len(active_compensations) - 1))
+            compensation_efficiency = 1.0 / (
+                1.0 + 0.1 * (len(active_compensations) - 1)
+            )
         else:
             compensation_efficiency = 1.0
 
@@ -430,8 +440,10 @@ class LeChatelierAnalyzer:
         # Daily debt rate
         daily_debt_rate = total_hidden_cost / max(
             1,
-            sum(c.sustainability_days for c in active_compensations) / len(active_compensations)
-            if active_compensations else 1
+            sum(c.sustainability_days for c in active_compensations)
+            / len(active_compensations)
+            if active_compensations
+            else 1,
         )
 
         # Burnout risk
@@ -442,10 +454,11 @@ class LeChatelierAnalyzer:
 
         # Days until exhaustion
         if active_compensations:
-            min_sustainability = min(c.sustainability_days for c in active_compensations)
+            min_sustainability = min(
+                c.sustainability_days for c in active_compensations
+            )
             elapsed = max(
-                (datetime.now() - c.initiated_at).days
-                for c in active_compensations
+                (datetime.now() - c.initiated_at).days for c in active_compensations
             )
             days_until_exhaustion = max(0, min_sustainability - elapsed)
         else:
@@ -464,9 +477,10 @@ class LeChatelierAnalyzer:
             equilibrium_state = EquilibriumState.CRITICAL
 
         is_sustainable = (
-            new_coverage >= self.sustainability_threshold and
-            burnout_risk < 0.5 and
-            days_until_exhaustion < 0 or days_until_exhaustion > 30
+            new_coverage >= self.sustainability_threshold
+            and burnout_risk < 0.5
+            and days_until_exhaustion < 0
+            or days_until_exhaustion > 30
         )
 
         shift = EquilibriumShift(
@@ -534,12 +548,16 @@ class LeChatelierAnalyzer:
         natural_compensation = abs(capacity_impact) * self.base_compensation_rate
 
         # Predicted new state
-        predicted_new_capacity = current_capacity + capacity_impact + natural_compensation
+        predicted_new_capacity = (
+            current_capacity + capacity_impact + natural_compensation
+        )
         predicted_new_demand = current_demand * (1 + demand_impact)
         predicted_coverage = min(1.0, predicted_new_capacity / predicted_new_demand)
 
         # Calculate costs
-        daily_cost = abs(capacity_impact) * self.compensation_cost_multiplier * 100  # Arbitrary units
+        daily_cost = (
+            abs(capacity_impact) * self.compensation_cost_multiplier * 100
+        )  # Arbitrary units
         total_cost = daily_cost * duration_days
         burnout_increase = magnitude * 0.2  # 20% of magnitude converts to burnout
 
@@ -556,23 +574,31 @@ class LeChatelierAnalyzer:
 
         if predicted_coverage < 0.7:
             recommendations.append("CRITICAL: Predicted coverage below safe threshold")
-            recommendations.append("Activate fallback schedule before stress materializes")
+            recommendations.append(
+                "Activate fallback schedule before stress materializes"
+            )
             recommendations.append("Consider load shedding to reduce demand")
 
         elif predicted_coverage < 0.85:
             recommendations.append("Coverage will be tight - prepare backup coverage")
-            recommendations.append("Defer non-essential activities during stress period")
+            recommendations.append(
+                "Defer non-essential activities during stress period"
+            )
 
         if burnout_increase > 0.3:
             recommendations.append("High burnout risk - protect high-load faculty")
             recommendations.append("Plan recovery time after stress period")
 
         if duration_days > 30:
-            recommendations.append("Extended stress period - consider permanent adjustments")
+            recommendations.append(
+                "Extended stress period - consider permanent adjustments"
+            )
             recommendations.append("Compensation debt will accumulate significantly")
 
         if additional_intervention > 0.1:
-            recommendations.append(f"Additional {additional_intervention:.0%} intervention needed")
+            recommendations.append(
+                f"Additional {additional_intervention:.0%} intervention needed"
+            )
             recommendations.append("Consider external support or service reduction")
 
         # Sustainability assessment
@@ -630,10 +656,12 @@ class LeChatelierAnalyzer:
         compensation_cost = compensation * self.compensation_cost_multiplier
 
         return {
-            'capacity': effective_capacity,
-            'sustainable_capacity': raw_new_capacity,  # What's sustainable long-term
-            'compensation_debt': compensation_cost,
-            'compensation_ratio': compensation / stress_reduction if stress_reduction > 0 else 0,
+            "capacity": effective_capacity,
+            "sustainable_capacity": raw_new_capacity,  # What's sustainable long-term
+            "compensation_debt": compensation_cost,
+            "compensation_ratio": compensation / stress_reduction
+            if stress_reduction > 0
+            else 0,
         }
 
     def resolve_stress(
@@ -648,7 +676,9 @@ class LeChatelierAnalyzer:
             stress.resolved_at = datetime.now()
 
             # Restore capacity
-            self._current_capacity = min(1.0, self._current_capacity - stress.capacity_impact)
+            self._current_capacity = min(
+                1.0, self._current_capacity - stress.capacity_impact
+            )
 
             # End related compensations
             for comp in self.compensations.values():
@@ -670,7 +700,9 @@ class LeChatelierAnalyzer:
             comp.is_active = False
             comp.ended_at = datetime.now()
             comp.end_reason = reason
-            logger.info(f"Compensation ended: {comp.compensation_type.value} - {reason}")
+            logger.info(
+                f"Compensation ended: {comp.compensation_type.value} - {reason}"
+            )
 
     def get_report(self) -> EquilibriumReport:
         """Generate comprehensive equilibrium report."""
@@ -701,10 +733,11 @@ class LeChatelierAnalyzer:
 
         # Calculate sustainability
         if active_compensations:
-            min_sustainability = min(c.sustainability_days for c in active_compensations)
+            min_sustainability = min(
+                c.sustainability_days for c in active_compensations
+            )
             max_elapsed = max(
-                (datetime.now() - c.initiated_at).days
-                for c in active_compensations
+                (datetime.now() - c.initiated_at).days for c in active_compensations
             )
             days_until_exhaustion = max(0, min_sustainability - max_elapsed)
         else:
@@ -724,19 +757,29 @@ class LeChatelierAnalyzer:
         recommendations = []
 
         if current_state == EquilibriumState.CRITICAL:
-            recommendations.append("CRITICAL: System cannot reach equilibrium - immediate intervention required")
+            recommendations.append(
+                "CRITICAL: System cannot reach equilibrium - immediate intervention required"
+            )
 
         if current_state == EquilibriumState.UNSUSTAINABLE:
-            recommendations.append("System equilibrium unsustainable - reduce demand or increase capacity")
+            recommendations.append(
+                "System equilibrium unsustainable - reduce demand or increase capacity"
+            )
 
         if self._compensation_debt > 75:
-            recommendations.append(f"High compensation debt ({self._compensation_debt:.0f}) - schedule recovery")
+            recommendations.append(
+                f"High compensation debt ({self._compensation_debt:.0f}) - schedule recovery"
+            )
 
         if days_until_exhaustion >= 0 and days_until_exhaustion < 14:
-            recommendations.append(f"Compensation exhaustion in {days_until_exhaustion} days - plan transition")
+            recommendations.append(
+                f"Compensation exhaustion in {days_until_exhaustion} days - plan transition"
+            )
 
         if total_stress > 0 and total_compensation < total_stress * 0.3:
-            recommendations.append("Compensation insufficient - consider additional measures")
+            recommendations.append(
+                "Compensation insufficient - consider additional measures"
+            )
 
         if not recommendations:
             recommendations.append("System at stable equilibrium - continue monitoring")
@@ -754,7 +797,9 @@ class LeChatelierAnalyzer:
             latest_shift=latest_shift,
             compensation_debt=self._compensation_debt,
             sustainability_score=sustainability_score,
-            days_until_equilibrium=-1 if current_state == EquilibriumState.STABLE else 7,
+            days_until_equilibrium=-1
+            if current_state == EquilibriumState.STABLE
+            else 7,
             days_until_exhaustion=days_until_exhaustion,
             recommendations=recommendations,
         )

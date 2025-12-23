@@ -13,7 +13,7 @@ import logging
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -29,30 +29,34 @@ logger = logging.getLogger(__name__)
 
 class DeploymentSlot(str, enum.Enum):
     """Deployment slot identifier."""
+
     BLUE = "blue"
     GREEN = "green"
 
 
 class DeploymentState(str, enum.Enum):
     """State of a deployment slot."""
-    INACTIVE = "inactive"          # Not running
-    STARTING = "starting"          # Starting up
-    HEALTHY = "healthy"            # Running and healthy
-    DEGRADED = "degraded"          # Running but unhealthy
-    DRAINING = "draining"          # Draining active sessions
-    STOPPED = "stopped"            # Stopped cleanly
+
+    INACTIVE = "inactive"  # Not running
+    STARTING = "starting"  # Starting up
+    HEALTHY = "healthy"  # Running and healthy
+    DEGRADED = "degraded"  # Running but unhealthy
+    DRAINING = "draining"  # Draining active sessions
+    STOPPED = "stopped"  # Stopped cleanly
 
 
 class TrafficSplitStrategy(str, enum.Enum):
     """Strategy for splitting traffic during deployment."""
-    INSTANT = "instant"            # Immediate 100% cutover
-    CANARY = "canary"              # Gradual increase (10%, 50%, 100%)
-    PROGRESSIVE = "progressive"    # Linear increase over time
+
+    INSTANT = "instant"  # Immediate 100% cutover
+    CANARY = "canary"  # Gradual increase (10%, 50%, 100%)
+    PROGRESSIVE = "progressive"  # Linear increase over time
     STICKY_SESSION = "sticky_session"  # Route by session affinity
 
 
 class RollbackReason(str, enum.Enum):
     """Reason for deployment rollback."""
+
     HEALTH_CHECK_FAILED = "health_check_failed"
     HIGH_ERROR_RATE = "high_error_rate"
     MANUAL_TRIGGER = "manual_trigger"
@@ -63,6 +67,7 @@ class RollbackReason(str, enum.Enum):
 
 class HealthCheckType(str, enum.Enum):
     """Type of health check."""
+
     HTTP_ENDPOINT = "http_endpoint"
     DATABASE_CONNECTIVITY = "database_connectivity"
     REDIS_CONNECTIVITY = "redis_connectivity"
@@ -74,6 +79,7 @@ class HealthCheckType(str, enum.Enum):
 @dataclass
 class DeploymentConfig:
     """Configuration for blue-green deployment."""
+
     # Health check settings
     health_check_endpoint: str = "/health"
     health_check_interval_seconds: int = 10
@@ -118,6 +124,7 @@ class DeploymentConfig:
 @dataclass
 class HealthCheckResult:
     """Result of a health check."""
+
     check_type: HealthCheckType
     is_healthy: bool
     response_time_ms: float
@@ -140,6 +147,7 @@ class HealthCheckResult:
 @dataclass
 class SessionDrainStatus:
     """Status of session draining process."""
+
     slot: DeploymentSlot
     started_at: datetime
     active_sessions: int
@@ -152,6 +160,7 @@ class SessionDrainStatus:
 @dataclass
 class DeploymentStatus:
     """Current status of a deployment."""
+
     deployment_id: UUID
     slot: DeploymentSlot
     state: DeploymentState
@@ -166,9 +175,8 @@ class DeploymentStatus:
     @property
     def is_healthy(self) -> bool:
         """Check if deployment is healthy."""
-        return (
-            self.state == DeploymentState.HEALTHY and
-            all(check.is_healthy for check in self.health_checks[-3:] if check)
+        return self.state == DeploymentState.HEALTHY and all(
+            check.is_healthy for check in self.health_checks[-3:] if check
         )
 
 
@@ -183,6 +191,7 @@ class DeploymentRecord(Base):
 
     Tracks deployment history, state transitions, and outcomes.
     """
+
     __tablename__ = "deployments"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -234,6 +243,7 @@ class DeploymentHealthCheck(Base):
 
     Stores detailed health check results for analysis and debugging.
     """
+
     __tablename__ = "deployment_health_checks"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -257,6 +267,7 @@ class TrafficSwitchEvent(Base):
 
     Tracks when and how traffic was shifted between slots.
     """
+
     __tablename__ = "traffic_switch_events"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -316,7 +327,9 @@ class HealthCheck:
 
                 is_healthy = response.status_code == 200
                 details = {}
-                if response.headers.get("content-type", "").startswith("application/json"):
+                if response.headers.get("content-type", "").startswith(
+                    "application/json"
+                ):
                     try:
                         details = response.json()
                     except Exception:
@@ -358,7 +371,9 @@ class HealthCheck:
                     check_type=HealthCheckType.DATABASE_CONNECTIVITY,
                     is_healthy=is_healthy,
                     response_time_ms=elapsed_ms,
-                    message="Database connected" if is_healthy else "Database unreachable",
+                    message="Database connected"
+                    if is_healthy
+                    else "Database unreachable",
                 )
         except Exception as e:
             elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
@@ -417,7 +432,9 @@ class HealthCheck:
 
                 is_healthy = response.status_code == 200
                 details = {}
-                if response.headers.get("content-type", "").startswith("application/json"):
+                if response.headers.get("content-type", "").startswith(
+                    "application/json"
+                ):
                     try:
                         details = response.json()
                     except Exception:
@@ -427,7 +444,9 @@ class HealthCheck:
                     check_type=HealthCheckType.CELERY_WORKERS,
                     is_healthy=is_healthy,
                     response_time_ms=elapsed_ms,
-                    message="Celery workers active" if is_healthy else "Celery workers unavailable",
+                    message="Celery workers active"
+                    if is_healthy
+                    else "Celery workers unavailable",
                     details=details,
                 )
         except Exception as e:
@@ -461,18 +480,23 @@ class HealthCheck:
                 for endpoint in critical_endpoints:
                     try:
                         response = await client.get(f"{self.base_url}{endpoint}")
-                        results.append({
-                            "endpoint": endpoint,
-                            "status": response.status_code,
-                            "healthy": response.status_code in (200, 401, 403),  # Auth errors are OK
-                        })
+                        results.append(
+                            {
+                                "endpoint": endpoint,
+                                "status": response.status_code,
+                                "healthy": response.status_code
+                                in (200, 401, 403),  # Auth errors are OK
+                            }
+                        )
                     except Exception as e:
-                        results.append({
-                            "endpoint": endpoint,
-                            "status": 0,
-                            "healthy": False,
-                            "error": str(e),
-                        })
+                        results.append(
+                            {
+                                "endpoint": endpoint,
+                                "status": 0,
+                                "healthy": False,
+                                "error": str(e),
+                            }
+                        )
 
             elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
             is_healthy = all(r["healthy"] for r in results)
@@ -635,11 +659,14 @@ class BlueGreenDeploymentManager:
         self._slot_states[slot] = DeploymentState.STARTING
 
         # Emit event
-        self._emit_event("deployment_started", {
-            "deployment_id": deployment_id,
-            "slot": slot.value,
-            "version": version,
-        })
+        self._emit_event(
+            "deployment_started",
+            {
+                "deployment_id": deployment_id,
+                "slot": slot.value,
+                "version": version,
+            },
+        )
 
         # Send notification
         if self.config.notify_on_start:
@@ -690,7 +717,9 @@ class BlueGreenDeploymentManager:
                 self.db.add(health_record)
 
             # Update deployment record
-            deployment = self.db.query(DeploymentRecord).filter_by(id=deployment_id).first()
+            deployment = (
+                self.db.query(DeploymentRecord).filter_by(id=deployment_id).first()
+            )
             if deployment:
                 deployment.last_health_check = datetime.utcnow()
                 if all(r.is_healthy for r in health_results):
@@ -756,11 +785,17 @@ class BlueGreenDeploymentManager:
 
         try:
             if strategy == TrafficSplitStrategy.INSTANT:
-                await self._instant_switch(from_slot, to_slot, deployment_id, triggered_by)
+                await self._instant_switch(
+                    from_slot, to_slot, deployment_id, triggered_by
+                )
             elif strategy == TrafficSplitStrategy.CANARY:
-                await self._canary_switch(from_slot, to_slot, deployment_id, triggered_by)
+                await self._canary_switch(
+                    from_slot, to_slot, deployment_id, triggered_by
+                )
             elif strategy == TrafficSplitStrategy.PROGRESSIVE:
-                await self._progressive_switch(from_slot, to_slot, deployment_id, triggered_by)
+                await self._progressive_switch(
+                    from_slot, to_slot, deployment_id, triggered_by
+                )
             else:
                 logger.error(f"Unsupported traffic strategy: {strategy}")
                 return False
@@ -770,7 +805,9 @@ class BlueGreenDeploymentManager:
 
             # Update deployment record
             if self.db and deployment_id:
-                deployment = self.db.query(DeploymentRecord).filter_by(id=deployment_id).first()
+                deployment = (
+                    self.db.query(DeploymentRecord).filter_by(id=deployment_id).first()
+                )
                 if deployment:
                     deployment.traffic_switched_at = datetime.utcnow()
                     deployment.traffic_percent = 100.0
@@ -778,11 +815,14 @@ class BlueGreenDeploymentManager:
                 self.db.commit()
 
             # Emit event
-            self._emit_event("traffic_switched", {
-                "from_slot": from_slot.value,
-                "to_slot": to_slot.value,
-                "strategy": strategy.value,
-            })
+            self._emit_event(
+                "traffic_switched",
+                {
+                    "from_slot": from_slot.value,
+                    "to_slot": to_slot.value,
+                    "strategy": strategy.value,
+                },
+            )
 
             # Send notification
             if self.config.notify_on_success:
@@ -792,7 +832,9 @@ class BlueGreenDeploymentManager:
                     "success",
                 )
 
-            logger.info(f"Traffic switch complete: {to_slot.value} now receiving 100% traffic")
+            logger.info(
+                f"Traffic switch complete: {to_slot.value} now receiving 100% traffic"
+            )
             return True
 
         except Exception as e:
@@ -873,7 +915,9 @@ class BlueGreenDeploymentManager:
                 # Verify health before proceeding
                 health = await self.verify_slot_health(to_slot, deployment_id)
                 if not health.is_healthy:
-                    raise RuntimeError(f"Health check failed at {stage_percent}% canary stage")
+                    raise RuntimeError(
+                        f"Health check failed at {stage_percent}% canary stage"
+                    )
 
     async def _progressive_switch(
         self,
@@ -939,6 +983,7 @@ class BlueGreenDeploymentManager:
         drained_sessions = 0
 
         import asyncio
+
         elapsed = 0.0
         while elapsed < self.config.session_drain_timeout_seconds:
             # Check remaining sessions
@@ -961,7 +1006,9 @@ class BlueGreenDeploymentManager:
             drained_sessions=drained_sessions,
             is_complete=is_complete,
             elapsed_seconds=elapsed,
-            estimated_remaining_seconds=max(0, self.config.session_drain_timeout_seconds - elapsed),
+            estimated_remaining_seconds=max(
+                0, self.config.session_drain_timeout_seconds - elapsed
+            ),
         )
 
         logger.info(
@@ -997,14 +1044,20 @@ class BlueGreenDeploymentManager:
             # Get deployment record
             deployment = None
             if self.db:
-                deployment = self.db.query(DeploymentRecord).filter_by(id=deployment_id).first()
+                deployment = (
+                    self.db.query(DeploymentRecord).filter_by(id=deployment_id).first()
+                )
 
             if not deployment:
                 logger.error(f"Deployment {deployment_id} not found")
                 return False
 
             slot = DeploymentSlot(deployment.slot)
-            other_slot = DeploymentSlot.GREEN if slot == DeploymentSlot.BLUE else DeploymentSlot.BLUE
+            other_slot = (
+                DeploymentSlot.GREEN
+                if slot == DeploymentSlot.BLUE
+                else DeploymentSlot.BLUE
+            )
 
             # Switch traffic back to other slot
             success = await self.switch_traffic(
@@ -1028,16 +1081,19 @@ class BlueGreenDeploymentManager:
                 self.db.commit()
 
             # Emit event
-            self._emit_event("deployment_rolled_back", {
-                "deployment_id": deployment_id,
-                "reason": reason.value,
-                "message": message,
-            })
+            self._emit_event(
+                "deployment_rolled_back",
+                {
+                    "deployment_id": deployment_id,
+                    "reason": reason.value,
+                    "message": message,
+                },
+            )
 
             # Send notification
             if self.config.notify_on_failure:
                 await self._send_notification(
-                    f"Deployment Rolled Back",
+                    "Deployment Rolled Back",
                     f"Deployment {deployment_id} rolled back: {reason.value}",
                     "warning",
                 )
@@ -1062,18 +1118,27 @@ class BlueGreenDeploymentManager:
             is_successful: Whether deployment was successful
         """
         if self.db:
-            deployment = self.db.query(DeploymentRecord).filter_by(id=deployment_id).first()
+            deployment = (
+                self.db.query(DeploymentRecord).filter_by(id=deployment_id).first()
+            )
             if deployment:
                 deployment.completed_at = datetime.utcnow()
                 deployment.is_successful = is_successful
-                deployment.state = DeploymentState.HEALTHY.value if is_successful else DeploymentState.STOPPED.value
+                deployment.state = (
+                    DeploymentState.HEALTHY.value
+                    if is_successful
+                    else DeploymentState.STOPPED.value
+                )
                 self.db.commit()
 
         # Emit event
-        self._emit_event("deployment_completed", {
-            "deployment_id": deployment_id,
-            "is_successful": is_successful,
-        })
+        self._emit_event(
+            "deployment_completed",
+            {
+                "deployment_id": deployment_id,
+                "is_successful": is_successful,
+            },
+        )
 
         # Send notification
         if is_successful and self.config.notify_on_success:
@@ -1108,11 +1173,14 @@ class BlueGreenDeploymentManager:
 
             # Placeholder implementation
             import asyncio
+
             await asyncio.sleep(2)  # Simulate migration time
 
             # Update deployment record
             if self.db and deployment_id:
-                deployment = self.db.query(DeploymentRecord).filter_by(id=deployment_id).first()
+                deployment = (
+                    self.db.query(DeploymentRecord).filter_by(id=deployment_id).first()
+                )
                 if deployment:
                     deployment.migration_completed = True
                     deployment.migration_version = "latest"

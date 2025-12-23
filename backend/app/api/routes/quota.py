@@ -8,6 +8,7 @@ Provides endpoints for:
 - Resetting quotas (admin)
 - Viewing alerts
 """
+
 import logging
 from datetime import datetime
 
@@ -121,7 +122,9 @@ async def get_quota_status(
     ```
     """
     try:
-        summary = quota_manager.get_usage_summary(str(current_user.id), current_user.role)
+        summary = quota_manager.get_usage_summary(
+            str(current_user.id), current_user.role
+        )
         return QuotaStatus(**summary)
     except Exception as e:
         logger.error(f"Failed to get quota status for user {current_user.id}: {e}")
@@ -204,7 +207,9 @@ async def get_quota_report(
         )
 
     try:
-        summary = quota_manager.get_usage_summary(str(current_user.id), current_user.role)
+        summary = quota_manager.get_usage_summary(
+            str(current_user.id), current_user.role
+        )
 
         # Calculate total usage and limit based on period
         total_usage = 0
@@ -393,7 +398,10 @@ async def set_custom_quota(
         expires_at = None
         if request.ttl_seconds:
             from datetime import timedelta
-            expires_at = (datetime.utcnow() + timedelta(seconds=request.ttl_seconds)).isoformat()
+
+            expires_at = (
+                datetime.utcnow() + timedelta(seconds=request.ttl_seconds)
+            ).isoformat()
 
         logger.info(
             f"Admin {admin_user.username} set custom quota for user {request.user_id}"
@@ -438,7 +446,9 @@ async def remove_custom_quota(
                 detail="Failed to remove custom quota",
             )
 
-        logger.info(f"Admin {admin_user.username} removed custom quota for user {user_id}")
+        logger.info(
+            f"Admin {admin_user.username} removed custom quota for user {user_id}"
+        )
 
         return {
             "success": True,

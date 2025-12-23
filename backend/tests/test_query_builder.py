@@ -8,7 +8,10 @@ from sqlalchemy import func
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.orm import Session
 
-from app.db.query_builder import FilterOperator, QueryBuilder, SortOrder, create_query_builder
+from app.db.query_builder import (
+    QueryBuilder,
+    create_query_builder,
+)
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
@@ -26,7 +29,9 @@ class TestQueryBuilderBasicFilters:
         assert len(result) == 3
         assert all(p.type == "resident" for p in result)
 
-    def test_filter_by_multiple_fields(self, db: Session, sample_residents: list[Person]):
+    def test_filter_by_multiple_fields(
+        self, db: Session, sample_residents: list[Person]
+    ):
         """Test multiple equality filters (AND)."""
         qb = QueryBuilder(Person, db)
         result = qb.filter_by(type="resident", pgy_level=2).all()
@@ -88,7 +93,9 @@ class TestQueryBuilderBasicFilters:
 
         assert all(p.pgy_level not in [1] for p in result)
 
-    def test_filter_is_null(self, db: Session, sample_resident: Person, sample_faculty: Person):
+    def test_filter_is_null(
+        self, db: Session, sample_resident: Person, sample_faculty: Person
+    ):
         """Test IS NULL filter."""
         qb = QueryBuilder(Person, db)
         result = qb.filter_is_null("pgy_level").all()
@@ -234,7 +241,11 @@ class TestQueryBuilderPagination:
         db.commit()
 
         qb = QueryBuilder(Person, db)
-        result = qb.filter_by(type="resident").order_by("name").paginate(page=1, page_size=10)
+        result = (
+            qb.filter_by(type="resident")
+            .order_by("name")
+            .paginate(page=1, page_size=10)
+        )
 
         assert result["page"] == 1
         assert result["page_size"] == 10
@@ -256,7 +267,11 @@ class TestQueryBuilderPagination:
         db.commit()
 
         qb = QueryBuilder(Person, db)
-        result = qb.filter_by(type="resident").order_by("name").paginate(page=2, page_size=10)
+        result = (
+            qb.filter_by(type="resident")
+            .order_by("name")
+            .paginate(page=2, page_size=10)
+        )
 
         assert result["page"] == 2
         assert len(result["items"]) == 10
@@ -285,7 +300,9 @@ class TestQueryBuilderPagination:
     def test_limit_offset(self, db: Session, sample_residents: list[Person]):
         """Test limit and offset."""
         qb = QueryBuilder(Person, db)
-        result = qb.filter_by(type="resident").order_by("pgy_level").limit(2).offset(1).all()
+        result = (
+            qb.filter_by(type="resident").order_by("pgy_level").limit(2).offset(1).all()
+        )
 
         assert len(result) == 2
         # Should skip first resident (PGY 1) and get PGY 2 and 3
@@ -521,7 +538,9 @@ class TestQueryBuilderSubqueries:
 
         # Create subquery to get person IDs with assignments
         subquery_qb = QueryBuilder(Assignment, db)
-        subquery = subquery_qb.select_columns(Assignment.person_id).distinct().as_subquery()
+        subquery = (
+            subquery_qb.select_columns(Assignment.person_id).distinct().as_subquery()
+        )
 
         # Find residents with assignments
         qb = QueryBuilder(Person, db)
@@ -686,7 +705,9 @@ class TestQueryBuilderClone:
     def test_clone_preserves_filters(self, db: Session, sample_residents: list[Person]):
         """Test that cloning preserves existing filters."""
         base_qb = (
-            QueryBuilder(Person, db).filter_by(type="resident").filter_gte("pgy_level", 2)
+            QueryBuilder(Person, db)
+            .filter_by(type="resident")
+            .filter_gte("pgy_level", 2)
         )
 
         cloned_qb = base_qb.clone()

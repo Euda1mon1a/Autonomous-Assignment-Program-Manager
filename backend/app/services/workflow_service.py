@@ -6,6 +6,7 @@ This service provides high-level operations for:
 - Monitoring workflow progress
 - Handling workflow errors
 """
+
 import logging
 from datetime import datetime
 from typing import Any
@@ -134,8 +135,7 @@ class WorkflowService:
             query = query.filter(WorkflowTemplate.tags.contains(tags))
 
         return query.order_by(
-            WorkflowTemplate.name,
-            WorkflowTemplate.version.desc()
+            WorkflowTemplate.name, WorkflowTemplate.version.desc()
         ).all()
 
     def deactivate_template(self, template_id: UUID) -> WorkflowTemplate:
@@ -158,7 +158,9 @@ class WorkflowService:
         template.is_active = False
         self.db.commit()
 
-        logger.info(f"Deactivated workflow template '{template.name}' v{template.version}")
+        logger.info(
+            f"Deactivated workflow template '{template.name}' v{template.version}"
+        )
         return template
 
     # ========================================================================
@@ -220,6 +222,7 @@ class WorkflowService:
 
             # Start execution
             import asyncio
+
             if async_execution:
                 # Execute asynchronously
                 asyncio.create_task(
@@ -229,8 +232,7 @@ class WorkflowService:
                     )
                 )
                 logger.info(
-                    f"Started async workflow '{template_name}' "
-                    f"instance {instance.id}"
+                    f"Started async workflow '{template_name}' instance {instance.id}"
                 )
             else:
                 # Execute synchronously (blocking)
@@ -251,8 +253,7 @@ class WorkflowService:
         except Exception as e:
             self.db.rollback()
             logger.error(
-                f"Failed to start workflow '{template_name}': {str(e)}",
-                exc_info=True
+                f"Failed to start workflow '{template_name}': {str(e)}", exc_info=True
             )
             raise
 

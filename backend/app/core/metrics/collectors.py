@@ -7,7 +7,6 @@ that need periodic collection or complex calculation.
 
 import logging
 import os
-import platform
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -307,7 +306,9 @@ class SystemResourceCollector(Collector):
 
             # Open file descriptors
             try:
-                num_fds = self._process.num_fds() if hasattr(self._process, "num_fds") else 0
+                num_fds = (
+                    self._process.num_fds() if hasattr(self._process, "num_fds") else 0
+                )
                 yield GaugeMetricFamily(
                     "process_open_fds_count",
                     "Number of open file descriptors",

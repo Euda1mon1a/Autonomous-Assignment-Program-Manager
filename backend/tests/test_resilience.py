@@ -10,6 +10,7 @@ Tests cover:
 6. Resilience Service (orchestration)
 7. Resilience API endpoints
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -48,6 +49,7 @@ from app.resilience.utilization import (
 # Utilization Monitor Tests
 # ============================================================================
 
+
 class TestUtilizationMonitor:
     """Tests for UtilizationMonitor (queuing theory)."""
 
@@ -71,7 +73,7 @@ class TestUtilizationMonitor:
         monitor = UtilizationMonitor()
 
         # Create mock faculty
-        faculty = [type('obj', (object,), {'id': uuid4()})() for _ in range(10)]
+        faculty = [type("obj", (object,), {"id": uuid4()})() for _ in range(10)]
 
         metrics = monitor.calculate_utilization(
             available_faculty=faculty,
@@ -87,7 +89,7 @@ class TestUtilizationMonitor:
     def test_utilization_calculation_warning(self):
         """Test utilization at warning level (YELLOW)."""
         monitor = UtilizationMonitor()
-        faculty = [type('obj', (object,), {'id': uuid4()})() for _ in range(10)]
+        faculty = [type("obj", (object,), {"id": uuid4()})() for _ in range(10)]
 
         metrics = monitor.calculate_utilization(
             available_faculty=faculty,
@@ -101,7 +103,7 @@ class TestUtilizationMonitor:
     def test_utilization_calculation_critical(self):
         """Test utilization at critical level (RED/BLACK)."""
         monitor = UtilizationMonitor()
-        faculty = [type('obj', (object,), {'id': uuid4()})() for _ in range(10)]
+        faculty = [type("obj", (object,), {"id": uuid4()})() for _ in range(10)]
 
         metrics = monitor.calculate_utilization(
             available_faculty=faculty,
@@ -115,7 +117,7 @@ class TestUtilizationMonitor:
     def test_wait_time_multiplier(self):
         """Test M/M/1 queue wait time multiplier calculation."""
         monitor = UtilizationMonitor()
-        faculty = [type('obj', (object,), {'id': uuid4()})() for _ in range(10)]
+        faculty = [type("obj", (object,), {"id": uuid4()})() for _ in range(10)]
 
         # At 50% utilization, multiplier should be ~1x
         metrics_50 = monitor.calculate_utilization(
@@ -139,6 +141,7 @@ class TestUtilizationMonitor:
 # ============================================================================
 # Defense in Depth Tests
 # ============================================================================
+
 
 class TestDefenseInDepth:
     """Tests for Defense in Depth (nuclear safety paradigm)."""
@@ -218,6 +221,7 @@ class TestDefenseInDepth:
 # Contingency Analysis Tests
 # ============================================================================
 
+
 class TestContingencyAnalyzer:
     """Tests for N-1/N-2 Contingency Analysis."""
 
@@ -232,21 +236,27 @@ class TestContingencyAnalyzer:
 
         # Create mock data with redundancy
         faculty = [
-            type('obj', (object,), {'id': uuid4(), 'name': f'Faculty {i}'})()
+            type("obj", (object,), {"id": uuid4(), "name": f"Faculty {i}"})()
             for i in range(5)
         ]
         blocks = [
-            type('obj', (object,), {'id': uuid4(), 'date': date.today()})()
+            type("obj", (object,), {"id": uuid4(), "date": date.today()})()
             for _ in range(10)
         ]
         # Each block covered by multiple faculty
         assignments = []
         for i, block in enumerate(blocks):
             for j in range(2):  # 2 faculty per block
-                assignments.append(type('obj', (object,), {
-                    'block_id': block.id,
-                    'person_id': faculty[(i + j) % len(faculty)].id,
-                })())
+                assignments.append(
+                    type(
+                        "obj",
+                        (object,),
+                        {
+                            "block_id": block.id,
+                            "person_id": faculty[(i + j) % len(faculty)].id,
+                        },
+                    )()
+                )
 
         coverage_requirements = {b.id: 1 for b in blocks}
 
@@ -266,22 +276,34 @@ class TestContingencyAnalyzer:
         analyzer = ContingencyAnalyzer()
 
         faculty = [
-            type('obj', (object,), {'id': uuid4(), 'name': f'Faculty {i}'})()
+            type("obj", (object,), {"id": uuid4(), "name": f"Faculty {i}"})()
             for i in range(3)
         ]
 
         # Faculty 0 covers many more assignments
         assignments = []
         for i in range(10):
-            assignments.append(type('obj', (object,), {
-                'block_id': uuid4(),
-                'person_id': faculty[0].id,
-            })())
+            assignments.append(
+                type(
+                    "obj",
+                    (object,),
+                    {
+                        "block_id": uuid4(),
+                        "person_id": faculty[0].id,
+                    },
+                )()
+            )
         for i in range(2):
-            assignments.append(type('obj', (object,), {
-                'block_id': uuid4(),
-                'person_id': faculty[1].id,
-            })())
+            assignments.append(
+                type(
+                    "obj",
+                    (object,),
+                    {
+                        "block_id": uuid4(),
+                        "person_id": faculty[1].id,
+                    },
+                )()
+            )
 
         services = {}  # Empty for this test
 
@@ -295,6 +317,7 @@ class TestContingencyAnalyzer:
 # ============================================================================
 # Static Stability Tests
 # ============================================================================
+
 
 class TestFallbackScheduler:
     """Tests for Static Stability (pre-computed fallbacks)."""
@@ -347,6 +370,7 @@ class TestFallbackScheduler:
 # Sacrifice Hierarchy Tests
 # ============================================================================
 
+
 class TestSacrificeHierarchy:
     """Tests for Sacrifice Hierarchy (triage load shedding)."""
 
@@ -358,9 +382,18 @@ class TestSacrificeHierarchy:
     def test_activity_priorities(self):
         """Test activity priority order."""
         # PATIENT_SAFETY should be highest priority (lowest number)
-        assert ActivityCategory.PATIENT_SAFETY.value < ActivityCategory.ACGME_REQUIREMENTS.value
-        assert ActivityCategory.ACGME_REQUIREMENTS.value < ActivityCategory.EDUCATION_CORE.value
-        assert ActivityCategory.EDUCATION_CORE.value < ActivityCategory.EDUCATION_OPTIONAL.value
+        assert (
+            ActivityCategory.PATIENT_SAFETY.value
+            < ActivityCategory.ACGME_REQUIREMENTS.value
+        )
+        assert (
+            ActivityCategory.ACGME_REQUIREMENTS.value
+            < ActivityCategory.EDUCATION_CORE.value
+        )
+        assert (
+            ActivityCategory.EDUCATION_CORE.value
+            < ActivityCategory.EDUCATION_OPTIONAL.value
+        )
 
     def test_level_activation(self):
         """Test load shedding level activation."""
@@ -392,13 +425,16 @@ class TestSacrificeHierarchy:
         status = hierarchy.get_status()
 
         # Patient safety should always be protected
-        assert ActivityCategory.PATIENT_SAFETY.name in status.activities_protected or \
-               any("PATIENT" in a for a in status.activities_protected)
+        assert (
+            ActivityCategory.PATIENT_SAFETY.name in status.activities_protected
+            or any("PATIENT" in a for a in status.activities_protected)
+        )
 
 
 # ============================================================================
 # Resilience Service Tests
 # ============================================================================
+
 
 class TestResilienceService:
     """Tests for ResilienceService orchestration."""
@@ -472,6 +508,7 @@ class TestResilienceService:
 # Integration Tests with Database
 # ============================================================================
 
+
 class TestResilienceWithDatabase:
     """Integration tests requiring database."""
 
@@ -512,7 +549,13 @@ class TestResilienceWithDatabase:
         )
 
         assert report is not None
-        assert report.overall_status in ("healthy", "warning", "degraded", "critical", "emergency")
+        assert report.overall_status in (
+            "healthy",
+            "warning",
+            "degraded",
+            "critical",
+            "emergency",
+        )
         assert report.utilization is not None
         assert report.defense_level is not None
 
@@ -520,6 +563,7 @@ class TestResilienceWithDatabase:
 # ============================================================================
 # API Endpoint Tests
 # ============================================================================
+
 
 class TestResilienceAPI:
     """Tests for resilience API endpoints."""
@@ -567,6 +611,7 @@ class TestResilienceAPI:
 # Edge Case Tests
 # ============================================================================
 
+
 class TestResilienceEdgeCases:
     """Tests for edge cases and error handling."""
 
@@ -581,12 +626,14 @@ class TestResilienceEdgeCases:
         )
 
         # Should handle gracefully (100% or infinite utilization)
-        assert metrics.utilization_rate >= 1.0 or metrics.level == UtilizationLevel.BLACK
+        assert (
+            metrics.utilization_rate >= 1.0 or metrics.level == UtilizationLevel.BLACK
+        )
 
     def test_zero_blocks(self):
         """Test handling of zero required blocks."""
         monitor = UtilizationMonitor()
-        faculty = [type('obj', (object,), {'id': uuid4()})() for _ in range(5)]
+        faculty = [type("obj", (object,), {"id": uuid4()})() for _ in range(5)]
 
         metrics = monitor.calculate_utilization(
             available_faculty=faculty,
@@ -619,7 +666,9 @@ class TestResilienceEdgeCases:
         service = ResilienceService()
 
         service.activate_crisis_response(severity="minor", reason="Initial")
-        result = service.activate_crisis_response(severity="critical", reason="Escalated")
+        result = service.activate_crisis_response(
+            severity="critical", reason="Escalated"
+        )
 
         # Should escalate
         assert result["crisis_mode"] is True
@@ -646,7 +695,6 @@ class TestResilienceEdgeCases:
 from datetime import datetime
 
 from app.resilience.homeostasis import (
-    DeviationSeverity,
     FeedbackLoop,
     FeedbackType,
     HomeostasisMonitor,
@@ -853,8 +901,8 @@ class TestHomeostasisMonitorVolatility:
         status = monitor.get_status()
 
         # New fields should be present
-        assert hasattr(status, 'feedback_loops_volatile')
-        assert hasattr(status, 'volatility_alerts')
+        assert hasattr(status, "feedback_loops_volatile")
+        assert hasattr(status, "volatility_alerts")
         assert status.feedback_loops_volatile >= 0
         assert status.volatility_alerts >= 0
 

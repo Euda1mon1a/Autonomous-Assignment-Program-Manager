@@ -11,6 +11,7 @@ Tests the end-to-end flow of:
 7. Leave webhook - external system notification
 8. Leave provider switching - database vs external sources
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -366,9 +367,9 @@ class TestLeaveDeletion:
 
         if response.status_code in [204, 200]:
             # Verify it's deleted
-            deleted = integration_db.query(Absence).filter(
-                Absence.id == leave_id
-            ).first()
+            deleted = (
+                integration_db.query(Absence).filter(Absence.id == leave_id).first()
+            )
             assert deleted is None
 
     def test_delete_nonexistent_leave(
@@ -625,6 +626,7 @@ class TestLeaveConflictDetection:
 
         # Create FMIT rotation template
         from app.models.rotation_template import RotationTemplate
+
         fmit_template = RotationTemplate(
             id=uuid4(),
             name="FMIT Inpatient",
@@ -639,6 +641,7 @@ class TestLeaveConflictDetection:
         for i in range(7):
             for time_of_day in ["AM", "PM"]:
                 from app.models.block import Block
+
                 block = Block(
                     id=uuid4(),
                     date=start + timedelta(days=i),
@@ -793,14 +796,20 @@ class TestBulkLeaveImport:
 
         records = []
         for i, fac in enumerate(faculty):
-            records.append({
-                "faculty_id": str(fac.id),
-                "start_date": (date.today() + timedelta(days=30 + i * 10)).isoformat(),
-                "end_date": (date.today() + timedelta(days=35 + i * 10)).isoformat(),
-                "leave_type": "vacation",
-                "is_blocking": True,
-                "description": f"Bulk import {i + 1}",
-            })
+            records.append(
+                {
+                    "faculty_id": str(fac.id),
+                    "start_date": (
+                        date.today() + timedelta(days=30 + i * 10)
+                    ).isoformat(),
+                    "end_date": (
+                        date.today() + timedelta(days=35 + i * 10)
+                    ).isoformat(),
+                    "leave_type": "vacation",
+                    "is_blocking": True,
+                    "description": f"Bulk import {i + 1}",
+                }
+            )
 
         response = integration_client.post(
             "/api/leave/bulk-import",

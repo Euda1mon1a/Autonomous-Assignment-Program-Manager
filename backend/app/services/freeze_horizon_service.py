@@ -79,10 +79,14 @@ class FreezeCheckResult:
     def to_dict(self) -> dict:
         return {
             "is_frozen": self.is_frozen,
-            "assignment_date": self.assignment_date.isoformat() if self.assignment_date else None,
+            "assignment_date": self.assignment_date.isoformat()
+            if self.assignment_date
+            else None,
             "days_until_assignment": self.days_until_assignment,
             "freeze_horizon_days": self.freeze_horizon_days,
-            "freeze_scope": self.freeze_scope.value if isinstance(self.freeze_scope, FreezeScope) else self.freeze_scope,
+            "freeze_scope": self.freeze_scope.value
+            if isinstance(self.freeze_scope, FreezeScope)
+            else self.freeze_scope,
             "requires_override": self.requires_override,
             "can_use_emergency_bypass": self.can_use_emergency_bypass,
             "message": self.message,
@@ -92,6 +96,7 @@ class FreezeCheckResult:
 @dataclass
 class FreezeOverrideRequest:
     """Request to override a freeze horizon violation."""
+
     reason_code: OverrideReasonCode
     reason_text: str  # Required even for structured codes (additional context)
     initiated_by: str  # User ID or system identifier
@@ -102,6 +107,7 @@ class FreezeOverrideRequest:
 @dataclass
 class FreezeOverrideAuditRecord:
     """Audit record for a freeze horizon override."""
+
     id: UUID
     timestamp: datetime
     assignment_id: UUID
@@ -237,7 +243,7 @@ class FreezeHorizonService:
         if days_until < 0:
             message = f"Assignment date has passed ({abs(days_until)} days ago). Change requires override."
         elif days_until == 0:
-            message = f"Assignment is TODAY. Change requires override."
+            message = "Assignment is TODAY. Change requires override."
         else:
             message = f"Assignment is in {days_until} days (within {freeze_horizon_days}-day freeze horizon). Change requires override."
 
@@ -269,6 +275,7 @@ class FreezeHorizonService:
         """
         # Get block date
         from app.models.block import Block
+
         block = self.db.query(Block).filter(Block.id == assignment.block_id).first()
 
         if not block:
@@ -306,7 +313,10 @@ class FreezeHorizonService:
         # Check if emergency bypass is allowed
         if freeze_result.freeze_scope == FreezeScope.NON_EMERGENCY_ONLY:
             if override_request.reason_code in self.EMERGENCY_REASON_CODES:
-                return True, f"Emergency override accepted: {override_request.reason_code.value}"
+                return (
+                    True,
+                    f"Emergency override accepted: {override_request.reason_code.value}",
+                )
             else:
                 return False, (
                     f"Reason code '{override_request.reason_code.value}' is not classified as emergency. "
@@ -314,8 +324,14 @@ class FreezeHorizonService:
                 )
 
         # ALL_CHANGES_REQUIRE_OVERRIDE - any override with reason is valid
-        if override_request.reason_text and len(override_request.reason_text.strip()) >= 10:
-            return True, f"Override accepted with reason: {override_request.reason_code.value}"
+        if (
+            override_request.reason_text
+            and len(override_request.reason_text.strip()) >= 10
+        ):
+            return (
+                True,
+                f"Override accepted with reason: {override_request.reason_code.value}",
+            )
 
         return False, "Override requires a reason with at least 10 characters"
 
@@ -351,9 +367,8 @@ class FreezeHorizonService:
             reason_text=override_request.reason_text,
             initiated_by=override_request.initiated_by,
             initiating_module=override_request.initiating_module,
-            is_emergency=override_request.is_emergency or (
-                override_request.reason_code in self.EMERGENCY_REASON_CODES
-            ),
+            is_emergency=override_request.is_emergency
+            or (override_request.reason_code in self.EMERGENCY_REASON_CODES),
             freeze_scope_at_time=freeze_result.freeze_scope,
             freeze_horizon_at_time=freeze_result.freeze_horizon_days,
         )
@@ -412,7 +427,9 @@ class FreezeHorizonService:
         is_valid, message = self.validate_override(freeze_result, override_request)
 
         if not is_valid:
-            freeze_result.message = f"{freeze_result.message}. Override rejected: {message}"
+            freeze_result.message = (
+                f"{freeze_result.message}. Override rejected: {message}"
+            )
             raise FreezeHorizonViolation(freeze_result)
 
         # Override is valid - create audit record

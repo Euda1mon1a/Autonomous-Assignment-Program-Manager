@@ -11,25 +11,27 @@ Tests cover:
 - Empty/edge cases
 """
 
-import pytest
 from datetime import date, datetime
 from uuid import UUID, uuid4
 
+import pytest
+
 from app.analytics.stability_metrics import (
+    HAS_NETWORKX,
     StabilityMetrics,
     StabilityMetricsComputer,
     compute_stability_metrics,
-    HAS_NETWORKX,
 )
-
 
 # ============================================================================
 # Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def mock_db_session():
     """Create a mock database session."""
+
     class MockQuery:
         def __init__(self, items):
             self.items = items
@@ -60,8 +62,11 @@ def mock_db_session():
 @pytest.fixture
 def mock_assignments():
     """Create mock assignments for testing."""
+
     class MockAssignment:
-        def __init__(self, id, person_id, block_id, rotation_template_id=None, role="primary"):
+        def __init__(
+            self, id, person_id, block_id, rotation_template_id=None, role="primary"
+        ):
             self.id = id
             self.person_id = person_id
             self.block_id = block_id
@@ -69,12 +74,12 @@ def mock_assignments():
             self.role = role
             self.activity_override = None
 
-    person1 = UUID('00000000-0000-0000-0000-000000000001')
-    person2 = UUID('00000000-0000-0000-0000-000000000002')
-    person3 = UUID('00000000-0000-0000-0000-000000000003')
+    person1 = UUID("00000000-0000-0000-0000-000000000001")
+    person2 = UUID("00000000-0000-0000-0000-000000000002")
+    person3 = UUID("00000000-0000-0000-0000-000000000003")
 
-    rotation1 = UUID('10000000-0000-0000-0000-000000000001')
-    rotation2 = UUID('10000000-0000-0000-0000-000000000002')
+    rotation1 = UUID("10000000-0000-0000-0000-000000000001")
+    rotation2 = UUID("10000000-0000-0000-0000-000000000002")
 
     assignments = [
         MockAssignment(uuid4(), person1, uuid4(), rotation1, "primary"),
@@ -90,6 +95,7 @@ def mock_assignments():
 # ============================================================================
 # Test StabilityMetrics Dataclass
 # ============================================================================
+
 
 def test_stability_metrics_creation():
     """Test basic StabilityMetrics creation."""
@@ -212,6 +218,7 @@ def test_stability_metrics_to_dict():
 # Test StabilityMetricsComputer
 # ============================================================================
 
+
 def test_computer_initialization(mock_db_session):
     """Test StabilityMetricsComputer initialization."""
     computer = StabilityMetricsComputer(mock_db_session)
@@ -262,7 +269,9 @@ def test_calculate_churn_rate_with_changes(mock_assignments):
     new_assignments = mock_assignments[1:].copy()  # Remove first
 
     class MockAssignment:
-        def __init__(self, id, person_id, block_id, rotation_template_id=None, role="primary"):
+        def __init__(
+            self, id, person_id, block_id, rotation_template_id=None, role="primary"
+        ):
             self.id = id
             self.person_id = person_id
             self.block_id = block_id
@@ -270,8 +279,10 @@ def test_calculate_churn_rate_with_changes(mock_assignments):
             self.role = role
             self.activity_override = None
 
-    new_person = UUID('00000000-0000-0000-0000-000000000009')
-    new_assignments.append(MockAssignment(uuid4(), new_person, uuid4(), None, "primary"))
+    new_person = UUID("00000000-0000-0000-0000-000000000009")
+    new_assignments.append(
+        MockAssignment(uuid4(), new_person, uuid4(), None, "primary")
+    )
 
     result = computer._calculate_churn_rate(mock_assignments, new_assignments)
 
@@ -293,6 +304,7 @@ def test_calculate_n1_vulnerability(mock_assignments):
 
 def test_calculate_n1_vulnerability_single_point_of_failure():
     """Test N-1 vulnerability with clear single point of failure."""
+
     class MockAssignment:
         def __init__(self, person_id, block_id, rotation_template_id):
             self.person_id = person_id
@@ -301,10 +313,10 @@ def test_calculate_n1_vulnerability_single_point_of_failure():
             self.activity_override = None
 
     # One person covers a unique rotation
-    person1 = UUID('00000000-0000-0000-0000-000000000001')
-    person2 = UUID('00000000-0000-0000-0000-000000000002')
-    rotation1 = UUID('10000000-0000-0000-0000-000000000001')  # Unique to person1
-    rotation2 = UUID('10000000-0000-0000-0000-000000000002')  # Shared
+    person1 = UUID("00000000-0000-0000-0000-000000000001")
+    person2 = UUID("00000000-0000-0000-0000-000000000002")
+    rotation1 = UUID("10000000-0000-0000-0000-000000000001")  # Unique to person1
+    rotation2 = UUID("10000000-0000-0000-0000-000000000002")  # Shared
 
     assignments = [
         MockAssignment(person1, uuid4(), rotation1),  # Unique coverage
@@ -359,12 +371,14 @@ def test_build_dependency_graph(mock_assignments):
     # Graph should be created (or mock if NetworkX not available)
     if HAS_NETWORKX:
         import networkx as nx
+
         assert isinstance(graph, nx.DiGraph)
     # If no NetworkX, mock graph is returned
 
 
 def test_assignment_differs():
     """Test assignment difference detection."""
+
     class MockAssignment:
         def __init__(self, rotation_id, role, override):
             self.rotation_template_id = rotation_id
@@ -373,8 +387,8 @@ def test_assignment_differs():
 
     computer = StabilityMetricsComputer(None)
 
-    rotation1 = UUID('10000000-0000-0000-0000-000000000001')
-    rotation2 = UUID('10000000-0000-0000-0000-000000000002')
+    rotation1 = UUID("10000000-0000-0000-0000-000000000001")
+    rotation2 = UUID("10000000-0000-0000-0000-000000000002")
 
     # Same assignments
     a1 = MockAssignment(rotation1, "primary", None)
@@ -398,6 +412,7 @@ def test_assignment_differs():
 # Test Convenience Function
 # ============================================================================
 
+
 def test_compute_stability_metrics_function(mock_db_session, mock_assignments):
     """Test the convenience compute_stability_metrics function."""
     mock_db_session.set_assignments(mock_assignments)
@@ -419,6 +434,7 @@ def test_compute_stability_metrics_function(mock_db_session, mock_assignments):
 # ============================================================================
 # Integration/Edge Cases
 # ============================================================================
+
 
 def test_date_range_filtering(mock_db_session, mock_assignments):
     """Test computing metrics with date range."""
@@ -450,8 +466,10 @@ def test_metrics_with_version_id(mock_db_session, mock_assignments):
 # Test New Implementations (SQLAlchemy-Continuum Integration)
 # ============================================================================
 
+
 def test_get_previous_assignments_no_history(mock_db_session, mock_assignments):
     """Test _get_previous_assignments when no version history exists."""
+
     # Mock db.execute to return no results
     class MockExecuteResult:
         def fetchone(self):
@@ -486,6 +504,7 @@ def test_count_new_violations_no_assignments(mock_db_session):
 
 def test_count_new_violations_error_handling(mock_db_session, mock_assignments):
     """Test _count_new_violations handles errors gracefully."""
+
     # Mock db.query to raise an exception
     def mock_query_error(model):
         raise Exception("Database error")
@@ -505,6 +524,7 @@ def test_count_new_violations_error_handling(mock_db_session, mock_assignments):
 
 def test_days_since_major_change_no_history(mock_db_session):
     """Test _days_since_major_change when no transaction history exists."""
+
     # Mock db.execute to return empty results
     class MockExecuteResult:
         def fetchall(self):
@@ -541,6 +561,7 @@ def test_days_since_major_change_with_reference_date(mock_db_session):
 
 def test_version_history_integration_fallback(mock_db_session, mock_assignments):
     """Test that version history methods fall back gracefully on errors."""
+
     # Mock execute to raise an exception
     def mock_execute_error(query, params=None):
         raise Exception("Database connection error")
@@ -560,10 +581,12 @@ def test_version_history_integration_fallback(mock_db_session, mock_assignments)
 
 def test_compute_with_version_history_fallback(mock_db_session, mock_assignments):
     """Test full compute_stability_metrics with version history fallback."""
+
     # Set up mock to simulate no version history
     class MockExecuteResult:
         def fetchone(self):
             return None
+
         def fetchall(self):
             return []
 

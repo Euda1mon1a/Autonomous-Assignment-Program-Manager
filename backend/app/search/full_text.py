@@ -30,12 +30,10 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from typing import Any
-from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
-from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.person import Person
 from app.models.procedure import Procedure
@@ -83,13 +81,15 @@ class SearchAnalytics:
             result_count: Number of results returned
             execution_time_ms: Query execution time in milliseconds
         """
-        self.query_log.append({
-            "query": query,
-            "entity_types": entity_types,
-            "result_count": result_count,
-            "execution_time_ms": execution_time_ms,
-            "timestamp": datetime.utcnow().isoformat(),
-        })
+        self.query_log.append(
+            {
+                "query": query,
+                "entity_types": entity_types,
+                "result_count": result_count,
+                "execution_time_ms": execution_time_ms,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+        )
 
         self.popular_queries[query.lower()] += 1
 
@@ -117,9 +117,7 @@ class SearchAnalytics:
         total_results = sum(log["result_count"] for log in self.query_log)
 
         top_queries = sorted(
-            self.popular_queries.items(),
-            key=lambda x: x[1],
-            reverse=True
+            self.popular_queries.items(), key=lambda x: x[1], reverse=True
         )[:10]
 
         return {
@@ -144,15 +142,36 @@ class QueryTokenizer:
 
     # Common stop words to filter out
     STOP_WORDS = {
-        "a", "an", "and", "are", "as", "at", "be", "by", "for",
-        "from", "has", "he", "in", "is", "it", "its", "of", "on",
-        "that", "the", "to", "was", "will", "with"
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "at",
+        "be",
+        "by",
+        "for",
+        "from",
+        "has",
+        "he",
+        "in",
+        "is",
+        "it",
+        "its",
+        "of",
+        "on",
+        "that",
+        "the",
+        "to",
+        "was",
+        "will",
+        "with",
     }
 
     def __init__(self):
         """Initialize tokenizer."""
         self.phrase_pattern = re.compile(r'"([^"]+)"')
-        self.word_pattern = re.compile(r'\b\w+\b')
+        self.word_pattern = re.compile(r"\b\w+\b")
 
     def tokenize(self, query: str) -> dict[str, Any]:
         """
@@ -235,8 +254,8 @@ class SpellCorrector:
                     dp[i][j] = dp[i - 1][j - 1]
                 else:
                     dp[i][j] = 1 + min(
-                        dp[i - 1][j],      # deletion
-                        dp[i][j - 1],      # insertion
+                        dp[i - 1][j],  # deletion
+                        dp[i][j - 1],  # insertion
                         dp[i - 1][j - 1],  # substitution
                     )
 
@@ -301,10 +320,10 @@ class SpellCorrector:
         corrected_query = query
         for original, correction in corrections.items():
             corrected_query = re.sub(
-                r'\b' + re.escape(original) + r'\b',
+                r"\b" + re.escape(original) + r"\b",
                 correction,
                 corrected_query,
-                flags=re.IGNORECASE
+                flags=re.IGNORECASE,
             )
 
         return {
@@ -371,6 +390,7 @@ class RelevanceScorer:
             return 0.0
 
         import math
+
         return math.log(len(documents) / doc_count)
 
     @staticmethod
@@ -612,38 +632,29 @@ class FullTextSearchService:
         all_results = []
 
         if "person" in search_request.entity_types:
-            person_results = await self._search_persons(
-                parsed,
-                search_request.filters
-            )
+            person_results = await self._search_persons(parsed, search_request.filters)
             all_results.extend(person_results)
 
         if "rotation" in search_request.entity_types:
             rotation_results = await self._search_rotations(
-                parsed,
-                search_request.filters
+                parsed, search_request.filters
             )
             all_results.extend(rotation_results)
 
         if "procedure" in search_request.entity_types:
             procedure_results = await self._search_procedures(
-                parsed,
-                search_request.filters
+                parsed, search_request.filters
             )
             all_results.extend(procedure_results)
 
         if "assignment" in search_request.entity_types:
             assignment_results = await self._search_assignments(
-                parsed,
-                search_request.filters
+                parsed, search_request.filters
             )
             all_results.extend(assignment_results)
 
         if "swap" in search_request.entity_types:
-            swap_results = await self._search_swaps(
-                parsed,
-                search_request.filters
-            )
+            swap_results = await self._search_swaps(parsed, search_request.filters)
             all_results.extend(swap_results)
 
         # Sort by relevance score
@@ -674,7 +685,8 @@ class FullTextSearchService:
             total=total,
             page=search_request.page,
             page_size=search_request.page_size,
-            total_pages=(total + search_request.page_size - 1) // search_request.page_size,
+            total_pages=(total + search_request.page_size - 1)
+            // search_request.page_size,
             facets=facets,
             query=search_request.query,
         )
@@ -732,19 +744,17 @@ class FullTextSearchService:
                     "name": person.name,
                     "email": person.email or "",
                     "type": person.type,
-                }
+                },
             )
 
             # Generate highlights
             highlights = {}
             if tokens:
-                highlights["name"] = [TextHighlighter.highlight(
-                    person.name, tokens
-                )]
+                highlights["name"] = [TextHighlighter.highlight(person.name, tokens)]
                 if person.email:
-                    highlights["email"] = [TextHighlighter.highlight(
-                        person.email, tokens
-                    )]
+                    highlights["email"] = [
+                        TextHighlighter.highlight(person.email, tokens)
+                    ]
 
             # Build subtitle
             subtitle_parts = [person.type.title()]
@@ -753,22 +763,24 @@ class FullTextSearchService:
             if person.faculty_role:
                 subtitle_parts.append(person.faculty_role.upper())
 
-            results.append(SearchResultItem(
-                id=str(person.id),
-                type="person",
-                title=person.name,
-                subtitle=" | ".join(subtitle_parts),
-                score=score,
-                highlights=highlights,
-                entity={
-                    "id": str(person.id),
-                    "name": person.name,
-                    "email": person.email,
-                    "type": person.type,
-                    "pgy_level": person.pgy_level,
-                    "faculty_role": person.faculty_role,
-                }
-            ))
+            results.append(
+                SearchResultItem(
+                    id=str(person.id),
+                    type="person",
+                    title=person.name,
+                    subtitle=" | ".join(subtitle_parts),
+                    score=score,
+                    highlights=highlights,
+                    entity={
+                        "id": str(person.id),
+                        "name": person.name,
+                        "email": person.email,
+                        "type": person.type,
+                        "pgy_level": person.pgy_level,
+                        "faculty_role": person.faculty_role,
+                    },
+                )
+            )
 
         return results
 
@@ -823,30 +835,30 @@ class FullTextSearchService:
                     "name": rotation.name,
                     "type": rotation.activity_type,
                     "abbreviation": rotation.abbreviation or "",
-                }
+                },
             )
 
             # Generate highlights
             highlights = {}
             if tokens:
-                highlights["name"] = [TextHighlighter.highlight(
-                    rotation.name, tokens
-                )]
+                highlights["name"] = [TextHighlighter.highlight(rotation.name, tokens)]
 
-            results.append(SearchResultItem(
-                id=str(rotation.id),
-                type="rotation",
-                title=rotation.name,
-                subtitle=rotation.activity_type.title(),
-                score=score,
-                highlights=highlights,
-                entity={
-                    "id": str(rotation.id),
-                    "name": rotation.name,
-                    "activity_type": rotation.activity_type,
-                    "abbreviation": rotation.abbreviation,
-                }
-            ))
+            results.append(
+                SearchResultItem(
+                    id=str(rotation.id),
+                    type="rotation",
+                    title=rotation.name,
+                    subtitle=rotation.activity_type.title(),
+                    score=score,
+                    highlights=highlights,
+                    entity={
+                        "id": str(rotation.id),
+                        "name": rotation.name,
+                        "activity_type": rotation.activity_type,
+                        "abbreviation": rotation.abbreviation,
+                    },
+                )
+            )
 
         return results
 
@@ -897,29 +909,29 @@ class FullTextSearchService:
                 {
                     "name": procedure.name,
                     "category": procedure.category or "",
-                }
+                },
             )
 
             # Generate highlights
             highlights = {}
             if tokens:
-                highlights["name"] = [TextHighlighter.highlight(
-                    procedure.name, tokens
-                )]
+                highlights["name"] = [TextHighlighter.highlight(procedure.name, tokens)]
 
-            results.append(SearchResultItem(
-                id=str(procedure.id),
-                type="procedure",
-                title=procedure.name,
-                subtitle=procedure.category or "Procedure",
-                score=score,
-                highlights=highlights,
-                entity={
-                    "id": str(procedure.id),
-                    "name": procedure.name,
-                    "category": procedure.category,
-                }
-            ))
+            results.append(
+                SearchResultItem(
+                    id=str(procedure.id),
+                    type="procedure",
+                    title=procedure.name,
+                    subtitle=procedure.category or "Procedure",
+                    score=score,
+                    highlights=highlights,
+                    entity={
+                        "id": str(procedure.id),
+                        "name": procedure.name,
+                        "category": procedure.category,
+                    },
+                )
+            )
 
         return results
 
@@ -976,24 +988,26 @@ class FullTextSearchService:
                     "person": person_name,
                     "activity": activity_name,
                     "role": assignment.role,
-                }
+                },
             )
 
-            results.append(SearchResultItem(
-                id=str(assignment.id),
-                type="assignment",
-                title=f"{person_name} - {activity_name}",
-                subtitle=assignment.role.title(),
-                score=score,
-                highlights={},
-                entity={
-                    "id": str(assignment.id),
-                    "person_id": str(assignment.person_id),
-                    "person_name": person_name,
-                    "activity": activity_name,
-                    "role": assignment.role,
-                }
-            ))
+            results.append(
+                SearchResultItem(
+                    id=str(assignment.id),
+                    type="assignment",
+                    title=f"{person_name} - {activity_name}",
+                    subtitle=assignment.role.title(),
+                    score=score,
+                    highlights={},
+                    entity={
+                        "id": str(assignment.id),
+                        "person_id": str(assignment.person_id),
+                        "person_name": person_name,
+                        "activity": activity_name,
+                        "role": assignment.role,
+                    },
+                )
+            )
 
         return results
 
@@ -1043,22 +1057,24 @@ class FullTextSearchService:
                 {
                     "status": swap.status,
                     "type": swap.swap_type or "",
-                }
+                },
             )
 
-            results.append(SearchResultItem(
-                id=str(swap.id),
-                type="swap",
-                title=f"Swap Request - {swap.status.title()}",
-                subtitle=swap.swap_type or "Swap",
-                score=score,
-                highlights={},
-                entity={
-                    "id": str(swap.id),
-                    "status": swap.status,
-                    "swap_type": swap.swap_type,
-                }
-            ))
+            results.append(
+                SearchResultItem(
+                    id=str(swap.id),
+                    type="swap",
+                    title=f"Swap Request - {swap.status.title()}",
+                    subtitle=swap.swap_type or "Swap",
+                    score=score,
+                    highlights={},
+                    entity={
+                        "id": str(swap.id),
+                        "status": swap.status,
+                        "swap_type": swap.swap_type,
+                    },
+                )
+            )
 
         return results
 
@@ -1105,9 +1121,7 @@ class FullTextSearchService:
 
         # Convert defaultdict to regular dict
         return {
-            key: dict(value_dict)
-            for key, value_dict in facets.items()
-            if value_dict
+            key: dict(value_dict) for key, value_dict in facets.items() if value_dict
         }
 
     def suggest_spelling(self, query: str) -> dict[str, Any]:

@@ -12,13 +12,13 @@ This module provides:
 - cache_warm(): Decorator for cache warming
 - invalidate_on_write(): Decorator for write-through invalidation
 """
+
 import asyncio
 import functools
-import inspect
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
-from app.core.cache.keys import CacheKeyGenerator
 from app.core.cache.redis_cache import get_cache
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ def cached(
     tags: list[str] | Callable[..., list[str]] | None = None,
     use_l1: bool = True,
     use_l2: bool = True,
-    key_builder: Callable[..., str] | None = None
+    key_builder: Callable[..., str] | None = None,
 ):
     """
     Decorator to cache function results.
@@ -65,6 +65,7 @@ def cached(
         async def get_user_profile(user_id: int):
             return await db.fetch_user(user_id)
     """
+
     def decorator(func: Callable) -> Callable:
         cache = get_cache(namespace)
         func_name = key_prefix or func.__name__
@@ -101,7 +102,7 @@ def cached(
                     ttl=ttl,
                     tags=cache_tags,
                     use_l1=use_l1,
-                    use_l2=use_l2
+                    use_l2=use_l2,
                 )
 
             return result
@@ -123,7 +124,7 @@ def cache_invalidate(
     namespace: str = "default",
     tags: list[str] | Callable[..., list[str]] | None = None,
     patterns: list[str] | Callable[..., list[str]] | None = None,
-    clear_all: bool = False
+    clear_all: bool = False,
 ):
     """
     Decorator to invalidate cache when function executes.
@@ -156,6 +157,7 @@ def cache_invalidate(
         async def delete_user(user_id: int):
             await db.delete_user(user_id)
     """
+
     def decorator(func: Callable) -> Callable:
         cache = get_cache(namespace)
         is_async = asyncio.iscoroutinefunction(func)
@@ -163,14 +165,7 @@ def cache_invalidate(
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             # Invalidate before function execution (for write-through)
-            await _invalidate_cache(
-                cache,
-                tags,
-                patterns,
-                clear_all,
-                args,
-                kwargs
-            )
+            await _invalidate_cache(cache, tags, patterns, clear_all, args, kwargs)
 
             # Execute function
             result = await func(*args, **kwargs)
@@ -194,7 +189,7 @@ def cache_invalidate(
 def cache_warm(
     namespace: str = "default",
     entries_func: Callable[..., dict[str, Any]] | None = None,
-    ttl: int = 3600
+    ttl: int = 3600,
 ):
     """
     Decorator to warm cache on function execution.
@@ -229,6 +224,7 @@ def cache_warm(
                 "states": await db.get_states()
             }
     """
+
     def decorator(func: Callable) -> Callable:
         cache = get_cache(namespace)
         is_async = asyncio.iscoroutinefunction(func)
@@ -252,7 +248,9 @@ def cache_warm(
             # Warm cache
             if entries:
                 count = await cache.warm(entries, ttl=ttl)
-                logger.info(f"Cache warmed with {count} entries in namespace '{namespace}'")
+                logger.info(
+                    f"Cache warmed with {count} entries in namespace '{namespace}'"
+                )
 
             return result
 
@@ -269,7 +267,7 @@ def cache_warm(
 def invalidate_on_write(
     namespace: str = "default",
     key_builder: Callable[..., str | list[str]] | None = None,
-    invalidate_before: bool = True
+    invalidate_before: bool = True,
 ):
     """
     Decorator for write-through cache invalidation.
@@ -304,6 +302,7 @@ def invalidate_on_write(
         async def update_user(user_id: int, data: dict):
             await db.update_user(user_id, data)
     """
+
     def decorator(func: Callable) -> Callable:
         cache = get_cache(namespace)
         is_async = asyncio.iscoroutinefunction(func)
@@ -347,6 +346,7 @@ def invalidate_on_write(
 
 # Helper functions
 
+
 def _build_cache_key(func_name: str, args: tuple, kwargs: dict) -> str:
     """
     Build a cache key from function arguments.
@@ -374,9 +374,7 @@ def _build_cache_key(func_name: str, args: tuple, kwargs: dict) -> str:
 
 
 def _resolve_tags(
-    tags: list[str] | Callable | None,
-    args: tuple,
-    kwargs: dict
+    tags: list[str] | Callable | None, args: tuple, kwargs: dict
 ) -> list[str]:
     """
     Resolve tags from static list or callable.
@@ -406,7 +404,7 @@ async def _invalidate_cache(
     patterns: list[str] | Callable | None,
     clear_all: bool,
     args: tuple,
-    kwargs: dict
+    kwargs: dict,
 ) -> None:
     """
     Execute cache invalidation.
@@ -446,6 +444,7 @@ async def _invalidate_cache(
 
 # Utility decorators for specific patterns
 
+
 def cached_property_async(ttl: int = 300, namespace: str = "default"):
     """
     Decorator for caching async property-like methods.
@@ -463,18 +462,11 @@ def cached_property_async(ttl: int = 300, namespace: str = "default"):
             async def expensive_computation(self, user_id: int):
                 return await self._compute(user_id)
     """
-    return cached(
-        namespace=namespace,
-        ttl=ttl,
-        use_l1=True,
-        use_l2=True
-    )
+    return cached(namespace=namespace, ttl=ttl, use_l1=True, use_l2=True)
 
 
 def read_through(
-    namespace: str,
-    ttl: int = 300,
-    tags: list[str] | Callable | None = None
+    namespace: str, ttl: int = 300, tags: list[str] | Callable | None = None
 ):
     """
     Decorator for read-through caching pattern.
@@ -494,19 +486,10 @@ def read_through(
         async def get_user(user_id: int):
             return await db.get_user(user_id)
     """
-    return cached(
-        namespace=namespace,
-        ttl=ttl,
-        tags=tags,
-        use_l1=True,
-        use_l2=True
-    )
+    return cached(namespace=namespace, ttl=ttl, tags=tags, use_l1=True, use_l2=True)
 
 
-def write_through(
-    namespace: str,
-    key_builder: Callable[..., str | list[str]]
-):
+def write_through(namespace: str, key_builder: Callable[..., str | list[str]]):
     """
     Decorator for write-through caching pattern.
 
@@ -528,7 +511,5 @@ def write_through(
             await db.update_user(user_id, data)
     """
     return invalidate_on_write(
-        namespace=namespace,
-        key_builder=key_builder,
-        invalidate_before=True
+        namespace=namespace, key_builder=key_builder, invalidate_before=True
     )

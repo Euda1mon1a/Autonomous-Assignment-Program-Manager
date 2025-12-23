@@ -7,6 +7,7 @@ Defines Pydantic models for session management including:
 - Activity logging
 - Session lifecycle events
 """
+
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -88,7 +89,9 @@ class SessionData(BaseModel):
     device_info: DeviceInfo = Field(default_factory=DeviceInfo)
 
     # Activity tracking
-    request_count: int = Field(default=0, description="Number of requests in this session")
+    request_count: int = Field(
+        default=0, description="Number of requests in this session"
+    )
     last_ip: str | None = None
 
     # Custom data

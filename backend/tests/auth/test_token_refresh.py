@@ -11,14 +11,14 @@ Tests cover:
 - Metrics collection
 """
 
-import pytest
 from datetime import datetime, timedelta
 from uuid import uuid4
+
+import pytest
 
 from app.auth.token_refresh import (
     DeviceFingerprint,
     RefreshTokenCreate,
-    RefreshTokenData,
     RefreshTokenService,
     RefreshTokenStatus,
     TokenRotationStrategy,
@@ -116,7 +116,9 @@ class TestRefreshTokenCreation:
 
         # Verify all tokens are active
         user_tokens = token_service.get_user_tokens(sample_user["user_id"])
-        active_tokens = [t for t in user_tokens if t.status == RefreshTokenStatus.ACTIVE]
+        active_tokens = [
+            t for t in user_tokens if t.status == RefreshTokenStatus.ACTIVE
+        ]
         assert len(active_tokens) == token_service.max_tokens_per_user
 
         # Create one more - should revoke oldest
@@ -124,7 +126,9 @@ class TestRefreshTokenCreation:
 
         # Verify still at max
         user_tokens = token_service.get_user_tokens(sample_user["user_id"])
-        active_tokens = [t for t in user_tokens if t.status == RefreshTokenStatus.ACTIVE]
+        active_tokens = [
+            t for t in user_tokens if t.status == RefreshTokenStatus.ACTIVE
+        ]
         assert len(active_tokens) == token_service.max_tokens_per_user
 
         # Verify new token is active
@@ -178,10 +182,12 @@ class TestTokenValidationAndRotation:
         )
 
         # Validate and rotate
-        new_token_data, new_token_string, status = (
-            await token_service.validate_and_rotate_token(
-                token_string, device_fingerprint
-            )
+        (
+            new_token_data,
+            new_token_string,
+            status,
+        ) = await token_service.validate_and_rotate_token(
+            token_string, device_fingerprint
         )
 
         assert status == "rotated"
@@ -239,10 +245,12 @@ class TestTokenValidationAndRotation:
             device_id="different-device",
         )
 
-        result_data, result_string, status = (
-            await token_service.validate_and_rotate_token(
-                token_string, different_device
-            )
+        (
+            result_data,
+            result_string,
+            status,
+        ) = await token_service.validate_and_rotate_token(
+            token_string, different_device
         )
 
         assert result_data is None
@@ -263,9 +271,11 @@ class TestTokenValidationAndRotation:
         # Manually expire token
         token_data.expires_at = datetime.utcnow() - timedelta(hours=1)
 
-        result_data, result_string, status = (
-            await token_service.validate_and_rotate_token(token_string)
-        )
+        (
+            result_data,
+            result_string,
+            status,
+        ) = await token_service.validate_and_rotate_token(token_string)
 
         assert result_data is None
         assert result_string is None
@@ -274,9 +284,11 @@ class TestTokenValidationAndRotation:
     @pytest.mark.asyncio
     async def test_invalid_token_rejection(self, token_service):
         """Test that invalid tokens are rejected."""
-        result_data, result_string, status = (
-            await token_service.validate_and_rotate_token("invalid-token")
-        )
+        (
+            result_data,
+            result_string,
+            status,
+        ) = await token_service.validate_and_rotate_token("invalid-token")
 
         assert result_data is None
         assert result_string is None
@@ -298,17 +310,21 @@ class TestTokenReuseDetection:
         family_id = token_data.family_id
 
         # First use - should rotate
-        new_token_data, new_token_string, status = (
-            await token_service.validate_and_rotate_token(token_string)
-        )
+        (
+            new_token_data,
+            new_token_string,
+            status,
+        ) = await token_service.validate_and_rotate_token(token_string)
 
         assert status == "rotated"
         assert token_data.status == RefreshTokenStatus.USED
 
         # Try to reuse old token - should detect and revoke family
-        reuse_data, reuse_string, reuse_status = (
-            await token_service.validate_and_rotate_token(token_string)
-        )
+        (
+            reuse_data,
+            reuse_string,
+            reuse_status,
+        ) = await token_service.validate_and_rotate_token(token_string)
 
         assert reuse_data is None
         assert reuse_string is None
@@ -345,9 +361,11 @@ class TestTokenReuseDetection:
         )
 
         # Try to reuse token1 (already used twice ago)
-        reuse_data, reuse_string, reuse_status = (
-            await token_service.validate_and_rotate_token(token1_string)
-        )
+        (
+            reuse_data,
+            reuse_string,
+            reuse_status,
+        ) = await token_service.validate_and_rotate_token(token1_string)
 
         assert reuse_data is None
         assert "reuse detected" in reuse_status.lower()
@@ -380,9 +398,11 @@ class TestTokenRevocation:
         assert token_data.metadata["revoke_reason"] == "test_revoke"
 
         # Try to use revoked token
-        result_data, result_string, status = (
-            await token_service.validate_and_rotate_token(token_string)
-        )
+        (
+            result_data,
+            result_string,
+            status,
+        ) = await token_service.validate_and_rotate_token(token_string)
 
         assert result_data is None
         assert "not found" in status.lower()  # Token removed from storage
@@ -455,7 +475,9 @@ class TestTokenRevocation:
 
         # Verify kept token is still active
         user_tokens = token_service.get_user_tokens(sample_user["user_id"])
-        active_tokens = [t for t in user_tokens if t.status == RefreshTokenStatus.ACTIVE]
+        active_tokens = [
+            t for t in user_tokens if t.status == RefreshTokenStatus.ACTIVE
+        ]
         assert len(active_tokens) == 1
         assert active_tokens[0].token_id == keep_token_id
 

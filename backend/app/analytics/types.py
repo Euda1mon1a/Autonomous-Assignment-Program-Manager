@@ -1,5 +1,5 @@
 """Type definitions for analytics module using TypedDict."""
-from datetime import datetime
+
 from typing import TypedDict
 
 

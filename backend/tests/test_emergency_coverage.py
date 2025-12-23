@@ -7,6 +7,7 @@ Tests covering:
 - Emergency staffing logic (replacement finding, priority handling)
 - Edge cases (no replacements, multiple assignments, cascading effects)
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -182,9 +183,7 @@ class TestEmergencyAbsenceHandling:
         assert result["replacements_found"] >= 0
 
         # Verify absence was recorded
-        absence = db.query(Absence).filter(
-            Absence.person_id == resident.id
-        ).first()
+        absence = db.query(Absence).filter(Absence.person_id == resident.id).first()
         assert absence is not None
         assert absence.absence_type == "deployment"
         assert absence.deployment_orders is True
@@ -227,9 +226,7 @@ class TestEmergencyAbsenceHandling:
         assert "status" in result
 
         # Verify absence was recorded
-        absence = db.query(Absence).filter(
-            Absence.person_id == resident.id
-        ).first()
+        absence = db.query(Absence).filter(Absence.person_id == resident.id).first()
         assert absence is not None
         assert absence.absence_type == "family_emergency"
         assert absence.deployment_orders is False
@@ -651,7 +648,8 @@ class TestPriorityHandling:
 
         # Check details for UNCOVERED status
         critical_gaps = [
-            d for d in result["details"]
+            d
+            for d in result["details"]
             if d.get("status") == "UNCOVERED - REQUIRES ATTENTION"
         ]
         assert len(critical_gaps) > 0
@@ -769,8 +767,7 @@ class TestPriorityHandling:
 
         # Check that critical is covered or flagged
         critical_details = [
-            d for d in result["details"]
-            if d.get("is_critical") is True
+            d for d in result["details"] if d.get("is_critical") is True
         ]
         assert len(critical_details) > 0
 
@@ -837,8 +834,10 @@ class TestEdgeCases:
         )
 
         # Should find all affected assignments
-        total_actions = result["replacements_found"] + result["coverage_gaps"] + len(
-            [d for d in result["details"] if d.get("status") == "cancelled"]
+        total_actions = (
+            result["replacements_found"]
+            + result["coverage_gaps"]
+            + len([d for d in result["details"] if d.get("status") == "cancelled"])
         )
         assert total_actions > 0
 
@@ -917,13 +916,16 @@ class TestEdgeCases:
 
         # Refresh assignment and check notes
         db.refresh(assignment)
-        updated_assignment = db.query(Assignment).filter(
-            Assignment.id == assignment_id
-        ).first()
+        updated_assignment = (
+            db.query(Assignment).filter(Assignment.id == assignment_id).first()
+        )
 
         if result["replacements_found"] > 0:
             assert updated_assignment.notes is not None
-            assert "Replaced" in updated_assignment.notes or updated_assignment.person_id != resident.id
+            assert (
+                "Replaced" in updated_assignment.notes
+                or updated_assignment.person_id != resident.id
+            )
 
     @pytest.mark.asyncio
     async def test_multiple_emergencies_same_block(
@@ -1187,9 +1189,7 @@ class TestIntegrationScenarios:
         assert total_handled == 3  # All 3 assignments should be handled
 
         # Verify absence recorded as deployment
-        absence = db.query(Absence).filter(
-            Absence.person_id == deployed.id
-        ).first()
+        absence = db.query(Absence).filter(Absence.person_id == deployed.id).first()
         assert absence is not None
         assert absence.deployment_orders is True
         assert (absence.end_date - absence.start_date).days >= 89

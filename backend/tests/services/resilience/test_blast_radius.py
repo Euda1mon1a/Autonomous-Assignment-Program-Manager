@@ -4,15 +4,15 @@ Tests for the blast radius service which manages zone-based failure
 containment following the AWS Availability Zone pattern.
 """
 
-import pytest
 from uuid import uuid4
+
+import pytest
 
 from app.services.resilience.blast_radius import (
     BlastRadiusAnalysisResult,
     BlastRadiusService,
     IncidentRecordResult,
     ZoneCreationResult,
-    ZoneHealthResult,
 )
 
 
@@ -28,10 +28,7 @@ class TestBlastRadiusService:
     @pytest.fixture
     def service_with_zones(self):
         """Create a service with zone isolation enabled."""
-        return BlastRadiusService(
-            db=None,
-            config={"enable_zone_isolation": True}
-        )
+        return BlastRadiusService(db=None, config={"enable_zone_isolation": True})
 
     def test_service_initialization(self, service):
         """Test BlastRadiusService initializes correctly."""
@@ -46,7 +43,7 @@ class TestBlastRadiusService:
             config={
                 "enable_zone_isolation": False,
                 "auto_escalate_containment": False,
-            }
+            },
         )
         assert service._enable_zone_isolation is False
         assert service._auto_escalate is False
@@ -61,7 +58,11 @@ class TestBlastRadiusService:
         assert result.zones_degraded >= 0
         assert result.zones_critical >= 0
         assert result.containment_level in [
-            "none", "soft", "moderate", "strict", "lockdown"
+            "none",
+            "soft",
+            "moderate",
+            "strict",
+            "lockdown",
         ]
         assert result.severity in ["healthy", "warning", "degraded", "critical"]
         assert result.analyzed_at is not None
@@ -102,8 +103,12 @@ class TestBlastRadiusService:
     def test_create_zone_with_different_types(self, service):
         """Test zone creation with different zone types."""
         zone_types = [
-            "inpatient", "outpatient", "education",
-            "research", "admin", "on_call"
+            "inpatient",
+            "outpatient",
+            "education",
+            "research",
+            "admin",
+            "on_call",
         ]
 
         for zone_type in zone_types:
@@ -139,6 +144,7 @@ class TestBlastRadiusService:
         assert create_result.success is True
 
         from uuid import UUID
+
         zone_id = UUID(create_result.zone_id)
         faculty_id = uuid4()
 
@@ -172,6 +178,7 @@ class TestBlastRadiusService:
         assert create_result.success is True
 
         from uuid import UUID
+
         zone_id = UUID(create_result.zone_id)
 
         result = service.record_incident(
@@ -243,8 +250,7 @@ class TestBlastRadiusService:
         """Test getting zone by type when none exists."""
         # Clear any existing zones by creating fresh service
         fresh_service = BlastRadiusService(
-            db=None,
-            config={"enable_zone_isolation": False}
+            db=None, config={"enable_zone_isolation": False}
         )
         zone = fresh_service.get_zone_by_type("research")
         # May be None if no zones of that type exist
@@ -253,10 +259,13 @@ class TestBlastRadiusService:
     def test_request_borrowing(self, service):
         """Test requesting faculty borrowing between zones."""
         # Create two zones
-        zone1_result = service.create_zone(name="Requesting Zone", zone_type="inpatient")
+        zone1_result = service.create_zone(
+            name="Requesting Zone", zone_type="inpatient"
+        )
         zone2_result = service.create_zone(name="Lending Zone", zone_type="inpatient")
 
         from uuid import UUID
+
         zone1_id = UUID(zone1_result.zone_id)
         zone2_id = UUID(zone2_result.zone_id)
 
@@ -333,6 +342,7 @@ class TestBlastRadiusServiceIntegration:
         assert create_result.success is True
 
         from uuid import UUID
+
         zone_id = UUID(create_result.zone_id)
 
         # 2. Assign faculty
@@ -369,8 +379,7 @@ class TestBlastRadiusServiceIntegration:
     def test_auto_escalate_containment(self):
         """Test auto-escalation of containment when critical zones detected."""
         service = BlastRadiusService(
-            db=None,
-            config={"auto_escalate_containment": True}
+            db=None, config={"auto_escalate_containment": True}
         )
 
         # Initially containment should be none
@@ -381,5 +390,9 @@ class TestBlastRadiusServiceIntegration:
         result = service.calculate_blast_radius()
         # Result should reflect the containment level
         assert result.containment_level in [
-            "none", "soft", "moderate", "strict", "lockdown"
+            "none",
+            "soft",
+            "moderate",
+            "strict",
+            "lockdown",
         ]

@@ -185,8 +185,7 @@ import hashlib
 import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
-from enum import Enum
-from typing import Any, Optional, TypedDict, NotRequired
+from typing import Any, NotRequired, TypedDict
 from uuid import UUID, uuid4
 
 from app.resilience.mtf_types import (
@@ -230,6 +229,7 @@ class SystemStateDict(TypedDict, total=False):
     SystemHealthState object. All fields are optional (total=False)
     to allow partial state representations.
     """
+
     n1_pass: bool
     n2_pass: bool
     coverage_rate: float
@@ -247,6 +247,7 @@ class MTFComplianceResultDict(TypedDict):
 
     Provides type safety for compliance results passed as dictionaries.
     """
+
     is_compliant: bool
     score: float
     violations: list[dict[str, Any]]
@@ -261,6 +262,7 @@ class ContingencyAnalysisDict(TypedDict):
     Tracks system resilience to faculty losses and identifies
     single/dual points of failure.
     """
+
     n1_pass: bool
     n2_pass: bool
     single_point_failures: NotRequired[list[str]]
@@ -276,6 +278,7 @@ class CapacityMetricsDict(TypedDict):
     Tracks system capacity, current utilization, and any deficits
     for resource planning and load shedding decisions.
     """
+
     capacity: int
     utilization: float
     deficit: NotRequired[int]
@@ -290,6 +293,7 @@ class CascadePredictionDict(TypedDict, total=False):
 
     Used for predicting system collapse timelines.
     """
+
     days_until_exhaustion: int
     probability: float
     trigger_event: str
@@ -301,6 +305,7 @@ class PositiveFeedbackRiskDict(TypedDict):
 
     Identifies self-reinforcing failure cycles.
     """
+
     confidence: float
     risk_type: NotRequired[str]
     description: NotRequired[str]
@@ -332,7 +337,7 @@ class MTFViolation:
     severity: str  # 'critical', 'warning', 'info'
     description: str
     affected_items: list[str] = field(default_factory=list)
-    recommendation: Optional[str] = None
+    recommendation: str | None = None
 
 
 @dataclass
@@ -355,7 +360,7 @@ class MTFComplianceResult:
     score: float  # 0.0 to 100.0
     violations: list[MTFViolation] = field(default_factory=list)
     recommendations: list[str] = field(default_factory=list)
-    checked_at: Optional[date] = None
+    checked_at: date | None = None
 
 
 @dataclass
@@ -454,8 +459,8 @@ class CircuitBreakerCheck:
 
     tripped: bool
     state: str
-    trigger: Optional[str]
-    trigger_details: Optional[str]
+    trigger: str | None
+    trigger_details: str | None
     locked_operations: list[str]
     allowed_operations: list[str]
     override_active: bool
@@ -494,7 +499,7 @@ class IronDomeStatus:
     circuit_breaker_state: str
     scheduling_locked: bool
     override_active: bool
-    trigger: Optional[str]
+    trigger: str | None
     mfrs_generated: int
     rffs_generated: int
     locked_operations: list[str]
@@ -538,12 +543,12 @@ class DRRSTranslator:
     # C4 = Not Mission Capable (major deficiencies, cannot fully perform mission)
     # C5 = Not Mission Capable - Critical (only emergency operations possible)
     LOAD_SHEDDING_TO_DRRS = {
-        LoadSheddingLevel.NORMAL: DRRSCategory.C1,      # All services operational
-        LoadSheddingLevel.YELLOW: DRRSCategory.C2,      # Minor load shedding (elective procedures delayed)
-        LoadSheddingLevel.ORANGE: DRRSCategory.C3,      # Moderate load shedding (non-essential services suspended)
-        LoadSheddingLevel.RED: DRRSCategory.C4,         # Major load shedding (essential services only)
-        LoadSheddingLevel.BLACK: DRRSCategory.C4,       # Severe load shedding (emergency and urgent only)
-        LoadSheddingLevel.CRITICAL: DRRSCategory.C5,    # Critical - patient safety only, system near collapse
+        LoadSheddingLevel.NORMAL: DRRSCategory.C1,  # All services operational
+        LoadSheddingLevel.YELLOW: DRRSCategory.C2,  # Minor load shedding (elective procedures delayed)
+        LoadSheddingLevel.ORANGE: DRRSCategory.C3,  # Moderate load shedding (non-essential services suspended)
+        LoadSheddingLevel.RED: DRRSCategory.C4,  # Major load shedding (essential services only)
+        LoadSheddingLevel.BLACK: DRRSCategory.C4,  # Severe load shedding (emergency and urgent only)
+        LoadSheddingLevel.CRITICAL: DRRSCategory.C5,  # Critical - patient safety only, system near collapse
     }
 
     # Map EquilibriumState to Mission Capability Status
@@ -552,11 +557,11 @@ class DRRSTranslator:
     # PMC = Partially Mission Capable (can perform some but not all missions)
     # NMC = Not Mission Capable (cannot perform primary mission without augmentation)
     EQUILIBRIUM_TO_MISSION = {
-        EquilibriumState.STABLE: MissionCapabilityStatus.FMC,           # System mathematically sustainable
-        EquilibriumState.COMPENSATING: MissionCapabilityStatus.PMC,     # System using compensation mechanisms
-        EquilibriumState.STRESSED: MissionCapabilityStatus.PMC,         # System under stress but holding
-        EquilibriumState.UNSUSTAINABLE: MissionCapabilityStatus.NMC,    # System math doesn't work long-term
-        EquilibriumState.CRITICAL: MissionCapabilityStatus.NMC,         # System approaching collapse
+        EquilibriumState.STABLE: MissionCapabilityStatus.FMC,  # System mathematically sustainable
+        EquilibriumState.COMPENSATING: MissionCapabilityStatus.PMC,  # System using compensation mechanisms
+        EquilibriumState.STRESSED: MissionCapabilityStatus.PMC,  # System under stress but holding
+        EquilibriumState.UNSUSTAINABLE: MissionCapabilityStatus.NMC,  # System math doesn't work long-term
+        EquilibriumState.CRITICAL: MissionCapabilityStatus.NMC,  # System approaching collapse
     }
 
     # Military Occupational Specialty (MOS) codes for medical personnel
@@ -564,12 +569,12 @@ class DRRSTranslator:
     # what type of medical personnel are needed. Different services use different
     # codes (Army uses 60-series for medical officers, 68-series for enlisted).
     MOS_DESCRIPTIONS = {
-        "60H": "Physician, Attending",                  # Board-certified attending physician
-        "60M": "Physician, Resident",                   # Physician in residency training
-        "66H": "Nurse Practitioner",                    # Advanced practice registered nurse
-        "68W": "Combat Medic/Healthcare Specialist",    # Enlisted medic/EMT equivalent
-        "68C": "Practical Nursing Specialist",          # Licensed Practical Nurse (LPN)
-        "68K": "Medical Laboratory Specialist",         # Lab technician
+        "60H": "Physician, Attending",  # Board-certified attending physician
+        "60M": "Physician, Resident",  # Physician in residency training
+        "66H": "Nurse Practitioner",  # Advanced practice registered nurse
+        "68W": "Combat Medic/Healthcare Specialist",  # Enlisted medic/EMT equivalent
+        "68C": "Practical Nursing Specialist",  # Licensed Practical Nurse (LPN)
+        "68K": "Medical Laboratory Specialist",  # Lab technician
     }
 
     def translate_load_shedding(
@@ -679,15 +684,21 @@ class DRRSTranslator:
 
         # Check for single point of failure (N-1 failure)
         if not n1_pass:
-            deficiencies.append("Single Point of Failure: Any faculty loss causes service gaps")
+            deficiencies.append(
+                "Single Point of Failure: Any faculty loss causes service gaps"
+            )
 
         # Check for dual point vulnerabilities (N-2 failure)
         if not n2_pass:
-            deficiencies.append("Dual Point of Failure: Two faculty losses cause critical gaps")
+            deficiencies.append(
+                "Dual Point of Failure: Two faculty losses cause critical gaps"
+            )
 
         # Check for coverage degradation
         if coverage_rate < 0.90:
-            deficiencies.append(f"Coverage degraded: {coverage_rate*100:.0f}% vs 90% minimum")
+            deficiencies.append(
+                f"Coverage degraded: {coverage_rate * 100:.0f}% vs 90% minimum"
+            )
 
         # Determine S-rating based on deficiency count and N-1 status
         # N-1 failure is the critical threshold - if you can't survive ANY single loss,
@@ -695,11 +706,20 @@ class DRRSTranslator:
         if not deficiencies:
             return EquipmentReadinessLevel.S1, deficiencies  # Perfect - no deficiencies
         elif len(deficiencies) == 1 and n1_pass:
-            return EquipmentReadinessLevel.S2, deficiencies  # Minor - 1 deficiency, resilient
+            return (
+                EquipmentReadinessLevel.S2,
+                deficiencies,
+            )  # Minor - 1 deficiency, resilient
         elif n1_pass:
-            return EquipmentReadinessLevel.S3, deficiencies  # Significant - multiple issues
+            return (
+                EquipmentReadinessLevel.S3,
+                deficiencies,
+            )  # Significant - multiple issues
         else:
-            return EquipmentReadinessLevel.S4, deficiencies  # Major - single point of failure exists
+            return (
+                EquipmentReadinessLevel.S4,
+                deficiencies,
+            )  # Major - single point of failure exists
 
     def generate_sitrep_summary(
         self,
@@ -802,6 +822,7 @@ class MFRDocument:
         distribution_list: List of roles/positions who must receive this MFR
                            (DIO, Risk Management, Patient Safety Officer, Commander, etc.)
     """
+
     id: UUID
     generated_at: datetime
     mfr_type: MFRType
@@ -852,12 +873,21 @@ class MFRGenerator:
         MFRType.RISK_ACCEPTANCE: {
             "header_template": "MEMORANDUM FOR RECORD\n\nSUBJECT: Risk Acceptance - {subject}",
             "requires_signature": True,  # Must have commander acknowledgment
-            "distribution": ["Designated Institutional Official", "Risk Management", "Quality Assurance"],
+            "distribution": [
+                "Designated Institutional Official",
+                "Risk Management",
+                "Quality Assurance",
+            ],
         },
         MFRType.SAFETY_CONCERN: {
             "header_template": "MEMORANDUM FOR RECORD\n\nSUBJECT: Patient/Staff Safety Concern - {subject}",
             "requires_signature": True,  # Critical - requires signature
-            "distribution": ["DIO", "Risk Management", "Patient Safety Officer", "Commander"],
+            "distribution": [
+                "DIO",
+                "Risk Management",
+                "Patient Safety Officer",
+                "Commander",
+            ],
         },
         MFRType.COMPLIANCE_VIOLATION: {
             "header_template": "MEMORANDUM FOR RECORD\n\nSUBJECT: ACGME/DHA Compliance Concern - {subject}",
@@ -872,7 +902,12 @@ class MFRGenerator:
         MFRType.STAND_DOWN: {
             "header_template": "MEMORANDUM FOR RECORD\n\nSUBJECT: Safety Stand-Down Initiated - {subject}",
             "requires_signature": True,  # Critical event - requires signature
-            "distribution": ["Commander", "DIO", "Risk Management", "Patient Safety Officer"],
+            "distribution": [
+                "Commander",
+                "DIO",
+                "Risk Management",
+                "Patient Safety Officer",
+            ],
         },
     }
 
@@ -927,14 +962,20 @@ class MFRGenerator:
         )
 
         # Generate recommendations
-        recommendations = self._generate_recommendations(mfr_type, system_state, risk_level)
+        recommendations = self._generate_recommendations(
+            mfr_type, system_state, risk_level
+        )
 
         # Generate hash for immutability verification
         hash_content = f"{mfr_id}{now.isoformat()}{header}{body}"
         document_hash = hashlib.sha256(hash_content.encode()).hexdigest()
 
         # Convert system_state to dict for snapshot
-        state_snapshot: SystemStateDict = system_state.to_dict() if isinstance(system_state, SystemHealthState) else system_state  # type: ignore[assignment]
+        state_snapshot: SystemStateDict = (
+            system_state.to_dict()
+            if isinstance(system_state, SystemHealthState)
+            else system_state
+        )  # type: ignore[assignment]
 
         return MFRDocument(
             id=mfr_id,
@@ -1003,7 +1044,7 @@ class MFRGenerator:
         # Coverage
         if coverage < 0.90:
             findings.append(
-                f"COVERAGE DEGRADED: Current coverage at {coverage*100:.0f}%, "
+                f"COVERAGE DEGRADED: Current coverage at {coverage * 100:.0f}%, "
                 f"below 90% minimum standard."
             )
 
@@ -1015,7 +1056,12 @@ class MFRGenerator:
             )
 
         # Equilibrium
-        if eq_state in ("unsustainable", "critical", EquilibriumState.UNSUSTAINABLE, EquilibriumState.CRITICAL):
+        if eq_state in (
+            "unsustainable",
+            "critical",
+            EquilibriumState.UNSUSTAINABLE,
+            EquilibriumState.CRITICAL,
+        ):
             findings.append(
                 "UNSUSTAINABLE OPERATIONS: Current staffing model mathematically cannot "
                 "be maintained. System will degrade further without intervention."
@@ -1033,7 +1079,9 @@ class MFRGenerator:
 
         return findings
 
-    def _assess_risk_level(self, system_state: SystemHealthState | SystemStateDict) -> RiskLevel:
+    def _assess_risk_level(
+        self, system_state: SystemHealthState | SystemStateDict
+    ) -> RiskLevel:
         """
         Assess overall risk level from system state using weighted scoring.
 
@@ -1168,10 +1216,10 @@ class MFRGenerator:
 
         body += "3. FINDINGS:\n"
         for i, finding in enumerate(findings, 1):
-            body += f"   {chr(96+i)}. {finding}\n"
+            body += f"   {chr(96 + i)}. {finding}\n"
 
         if scheduler_objection:
-            body += f"\n4. SCHEDULER OBJECTION:\n"
+            body += "\n4. SCHEDULER OBJECTION:\n"
             body += f"   {scheduler_name} has documented the following objection:\n"
             body += f'   "{scheduler_objection}"\n\n'
             body += "5. "
@@ -1205,7 +1253,9 @@ class MFRGenerator:
 
         if risk_level in (RiskLevel.CRITICAL, RiskLevel.CATASTROPHIC):
             recs.append("IMMEDIATE: Notify Commander and DIO of conditions")
-            recs.append("IMMEDIATE: Initiate Safety Stand-Down protocol if not already active")
+            recs.append(
+                "IMMEDIATE: Initiate Safety Stand-Down protocol if not already active"
+            )
 
         # Handle both SystemHealthState and dict
         if isinstance(system_state, SystemHealthState):
@@ -1222,7 +1272,9 @@ class MFRGenerator:
             recs.append("Activate reserve/backup coverage pools")
 
         if coverage < 0.85:
-            recs.append("Consider diversion of non-emergency cases to partner facilities")
+            recs.append(
+                "Consider diversion of non-emergency cases to partner facilities"
+            )
             recs.append("Implement graduated return-to-normal coverage plan")
 
         if avg_load > 60:
@@ -1259,6 +1311,7 @@ class CircuitBreakerOverride:
         expires_at: When the override automatically expires (time-limited)
         mfr_id: Associated MFR documenting the risk acceptance, if generated
     """
+
     id: UUID
     authority: OverrideAuthority
     reason: str
@@ -1284,6 +1337,7 @@ class CircuitBreakerStatus:
         locked_operations: Operations currently prohibited
         allowed_operations: Operations always permitted (emergency/patient safety)
     """
+
     state: CircuitBreakerState
     triggered_at: datetime | None
     trigger: CircuitBreakerTrigger | None
@@ -1364,7 +1418,8 @@ class CircuitBreaker:
         average_allostatic_load: float,
         volatility_level: str,
         compensation_debt: float,
-        positive_feedback_risks: list[PositiveFeedbackRisk | PositiveFeedbackRiskDict] | None = None,
+        positive_feedback_risks: list[PositiveFeedbackRisk | PositiveFeedbackRiskDict]
+        | None = None,
     ) -> tuple[bool, CircuitBreakerTrigger | None, str | None]:
         """
         Check conditions and trip circuit breaker if thresholds breached.
@@ -1421,7 +1476,7 @@ class CircuitBreaker:
         # Below 70% means significant service gaps already exist
         elif coverage_rate < self.THRESHOLDS["coverage_rate_critical"]:
             trigger = CircuitBreakerTrigger.COVERAGE_COLLAPSE
-            details = f"Coverage rate ({coverage_rate*100:.0f}%) below critical threshold (70%)"
+            details = f"Coverage rate ({coverage_rate * 100:.0f}%) below critical threshold (70%)"
 
         # Priority 4: Allostatic overload - faculty burnout imminent
         # Above 80 means personnel are in chronic stress, attrition risk high
@@ -1446,8 +1501,13 @@ class CircuitBreaker:
         elif positive_feedback_risks:
             # Handle both PositiveFeedbackRisk and dict
             high_confidence_risks = [
-                r for r in positive_feedback_risks
-                if (r.confidence if isinstance(r, PositiveFeedbackRisk) else r.get("confidence", 0))
+                r
+                for r in positive_feedback_risks
+                if (
+                    r.confidence
+                    if isinstance(r, PositiveFeedbackRisk)
+                    else r.get("confidence", 0)
+                )
                 > self.THRESHOLDS["positive_feedback_confidence"]
             ]
             if high_confidence_risks:
@@ -1477,9 +1537,7 @@ class CircuitBreaker:
         self.trip_count += 1
         self.last_trip = datetime.now()
 
-        logger.critical(
-            f"CIRCUIT BREAKER TRIPPED: {trigger.value} - {details}"
-        )
+        logger.critical(f"CIRCUIT BREAKER TRIPPED: {trigger.value} - {details}")
 
     def _conditions_safe(
         self,
@@ -1634,6 +1692,7 @@ class RFFDocument:
         projected_without_support: Timeline projection of what happens without support
         document_hash: SHA-256 hash for immutability verification
     """
+
     id: UUID
     generated_at: datetime
     requesting_unit: str
@@ -1707,7 +1766,9 @@ class RFFDrafter:
         # Generate SMEAC paragraphs (Situation, Mission, Execution, Admin, Command)
         situation = self._generate_situation(system_state, cascade_prediction)
         mission_impact = self._generate_mission_impact(mission_affected, system_state)
-        execution = self._generate_execution(mos_required, personnel_count, duration_days)
+        execution = self._generate_execution(
+            mos_required, personnel_count, duration_days
+        )
         sustainment = self._generate_sustainment(duration_days)
         command_and_signal = self._generate_command()
 
@@ -1758,7 +1819,7 @@ class RFFDrafter:
         header += f"REQUESTING UNIT: {unit}\n"
         if uic:
             header += f"UIC: {uic}\n"
-        header += f"PRIORITY: IMMEDIATE\n"
+        header += "PRIORITY: IMMEDIATE\n"
         return header
 
     def _generate_situation(
@@ -1782,11 +1843,13 @@ class RFFDrafter:
             n1_pass = system_state.get("n1_pass", True)
             load = system_state.get("average_allostatic_load", 0)
 
-        situation += f"   b. Current Status:\n"
-        situation += f"      - Coverage Rate: {coverage*100:.0f}%\n"
+        situation += "   b. Current Status:\n"
+        situation += f"      - Coverage Rate: {coverage * 100:.0f}%\n"
 
         if not n1_pass:
-            situation += "      - N-1 Analysis: FAILED (single point of failure exists)\n"
+            situation += (
+                "      - N-1 Analysis: FAILED (single point of failure exists)\n"
+            )
 
         if load > 50:
             situation += f"      - Personnel Stress Level: {load:.0f}/100 (elevated)\n"
@@ -1799,7 +1862,9 @@ class RFFDrafter:
                 days_to_failure = cascade_prediction.get("days_until_exhaustion", 999)
 
             if days_to_failure < 30:
-                situation += f"\n   c. CRITICAL: Based on cascade analysis, unit will reach\n"
+                situation += (
+                    "\n   c. CRITICAL: Based on cascade analysis, unit will reach\n"
+                )
                 situation += f"      mission failure state in {days_to_failure} days without intervention.\n"
 
         return situation
@@ -1828,10 +1893,19 @@ class RFFDrafter:
             impact += f"\n   b. Current Load Shedding: {load_level}\n"
             impact += "      Non-essential services have been suspended.\n"
 
-        if eq_state in ("unsustainable", "critical", EquilibriumState.UNSUSTAINABLE, EquilibriumState.CRITICAL):
-            eq_str = eq_state.value if hasattr(eq_state, 'value') else str(eq_state)
-            impact += f"\n   c. CRITICAL: Current operational tempo is {eq_str.upper()}.\n"
-            impact += "      Unit cannot maintain mission without additional resources.\n"
+        if eq_state in (
+            "unsustainable",
+            "critical",
+            EquilibriumState.UNSUSTAINABLE,
+            EquilibriumState.CRITICAL,
+        ):
+            eq_str = eq_state.value if hasattr(eq_state, "value") else str(eq_state)
+            impact += (
+                f"\n   c. CRITICAL: Current operational tempo is {eq_str.upper()}.\n"
+            )
+            impact += (
+                "      Unit cannot maintain mission without additional resources.\n"
+            )
 
         return impact
 
@@ -1847,7 +1921,7 @@ class RFFDrafter:
         execution += "   a. Request:\n"
         execution += f"      - Personnel Count: {count}\n"
         execution += f"      - Duration: {duration} days\n"
-        execution += f"      - MOS Required:\n"
+        execution += "      - MOS Required:\n"
 
         mos_desc = DRRSTranslator.MOS_DESCRIPTIONS
         for mos in mos_required:
@@ -1882,7 +1956,9 @@ class RFFDrafter:
 
         return command
 
-    def _compile_metrics(self, system_state: SystemHealthState | SystemStateDict) -> SupportingMetrics:
+    def _compile_metrics(
+        self, system_state: SystemHealthState | SystemStateDict
+    ) -> SupportingMetrics:
         """Compile supporting metrics for the RFF."""
         # Handle both SystemHealthState and dict
         if isinstance(system_state, SystemHealthState):
@@ -1929,9 +2005,7 @@ class RFFDrafter:
             outcomes.append(
                 f"Day {days_to_fail}: System exhaustion - compensation mechanisms fail"
             )
-            outcomes.append(
-                f"Day {days_to_fail + 7}: Estimated ACGME citation risk"
-            )
+            outcomes.append(f"Day {days_to_fail + 7}: Estimated ACGME citation risk")
             mission_failure_likely = True
 
         # Handle both SystemHealthState and dict
@@ -2035,8 +2109,12 @@ class IronDomeService:
             personnel_percentage=personnel_pct,
             capability_rating=s_rating.value,
             deficiencies=deficiencies,
-            load_shedding_level=load_shedding_level.value if hasattr(load_shedding_level, 'value') else str(load_shedding_level),
-            equilibrium_state=equilibrium_state.value if hasattr(equilibrium_state, 'value') else str(equilibrium_state),
+            load_shedding_level=load_shedding_level.value
+            if hasattr(load_shedding_level, "value")
+            else str(load_shedding_level),
+            equilibrium_state=equilibrium_state.value
+            if hasattr(equilibrium_state, "value")
+            else str(equilibrium_state),
             executive_summary=summary,
         )
 
@@ -2048,7 +2126,8 @@ class IronDomeService:
         average_allostatic_load: float,
         volatility_level: str,
         compensation_debt: float,
-        positive_feedback_risks: list[PositiveFeedbackRisk | PositiveFeedbackRiskDict] | None = None,
+        positive_feedback_risks: list[PositiveFeedbackRisk | PositiveFeedbackRiskDict]
+        | None = None,
     ) -> CircuitBreakerCheck:
         """
         Check circuit breaker and trip if thresholds breached.
@@ -2119,7 +2198,7 @@ class IronDomeService:
         # Trip circuit breaker manually
         self.circuit_breaker._trip(
             CircuitBreakerTrigger.MANUAL_ACTIVATION,
-            f"Safety stand-down initiated by {initiator}: {reason}"
+            f"Safety stand-down initiated by {initiator}: {reason}",
         )
 
         # Generate MFR

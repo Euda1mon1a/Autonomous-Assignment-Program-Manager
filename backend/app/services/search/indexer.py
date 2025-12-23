@@ -33,7 +33,7 @@ class SearchIndexer:
     def __init__(
         self,
         db: Session,
-        backend: Optional[SearchBackend] = None,
+        backend: SearchBackend | None = None,
     ):
         """
         Initialize search indexer.
@@ -50,16 +50,16 @@ class SearchIndexer:
 
         # Specialized analyzers for different entity types
         self.analyzers = {
-            'person': PersonNameAnalyzer(),
-            'rotation': MedicalTermAnalyzer(),
-            'procedure': MedicalTermAnalyzer(),
-            'default': StandardAnalyzer(),
+            "person": PersonNameAnalyzer(),
+            "rotation": MedicalTermAnalyzer(),
+            "procedure": MedicalTermAnalyzer(),
+            "default": StandardAnalyzer(),
         }
 
     async def search(
         self,
         query: SearchQuery,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute a search query.
 
@@ -85,24 +85,24 @@ class SearchIndexer:
         )
 
         # Calculate pagination metadata
-        total_pages = (results['total'] + query.page_size - 1) // query.page_size
+        total_pages = (results["total"] + query.page_size - 1) // query.page_size
 
         return {
-            'items': results['items'],
-            'total': results['total'],
-            'facets': results.get('facets', {}),
-            'page': query.page,
-            'page_size': query.page_size,
-            'total_pages': total_pages,
-            'query': query.query_string,
+            "items": results["items"],
+            "total": results["total"],
+            "facets": results.get("facets", {}),
+            "page": query.page,
+            "page_size": query.page_size,
+            "total_pages": total_pages,
+            "query": query.query_string,
         }
 
     async def quick_search(
         self,
         query_string: str,
-        entity_type: str = 'person',
+        entity_type: str = "person",
         limit: int = 20,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Perform a quick search with minimal parameters.
 
@@ -118,17 +118,17 @@ class SearchIndexer:
         query.page_size = limit
 
         results = await self.search(query)
-        return results['items']
+        return results["items"]
 
     async def search_people(
         self,
         query_string: str,
-        person_type: Optional[str] = None,
-        pgy_level: Optional[int] = None,
-        faculty_role: Optional[str] = None,
+        person_type: str | None = None,
+        pgy_level: int | None = None,
+        faculty_role: str | None = None,
         page: int = 1,
         page_size: int = 20,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Search for people (residents and faculty).
 
@@ -143,12 +143,7 @@ class SearchIndexer:
         Returns:
             Search results with pagination
         """
-        builder = (
-            QueryBuilder()
-            .search(query_string)
-            .in_people()
-            .page(page, page_size)
-        )
+        builder = QueryBuilder().search(query_string).in_people().page(page, page_size)
 
         if person_type:
             builder = builder.filter_type(person_type)
@@ -165,10 +160,10 @@ class SearchIndexer:
     async def search_rotations(
         self,
         query_string: str,
-        category: Optional[str] = None,
+        category: str | None = None,
         page: int = 1,
         page_size: int = 20,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Search for rotation templates.
 
@@ -182,14 +177,11 @@ class SearchIndexer:
             Search results with pagination
         """
         builder = (
-            QueryBuilder()
-            .search(query_string)
-            .in_rotations()
-            .page(page, page_size)
+            QueryBuilder().search(query_string).in_rotations().page(page, page_size)
         )
 
         if category:
-            builder = builder.filter('category', category)
+            builder = builder.filter("category", category)
 
         query = builder.build()
         return await self.search(query)
@@ -199,7 +191,7 @@ class SearchIndexer:
         query_string: str,
         page: int = 1,
         page_size: int = 20,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Search for procedures.
 
@@ -226,7 +218,7 @@ class SearchIndexer:
         query_string: str,
         page: int = 1,
         page_size: int = 20,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Search across all entity types.
 
@@ -251,9 +243,9 @@ class SearchIndexer:
     async def suggest(
         self,
         query_string: str,
-        entity_type: str = 'person',
+        entity_type: str = "person",
         limit: int = 10,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Get autocomplete suggestions.
 
@@ -274,8 +266,8 @@ class SearchIndexer:
     async def get_facets(
         self,
         query_string: str,
-        entity_types: List[str],
-    ) -> Dict[str, Dict[str, int]]:
+        entity_types: list[str],
+    ) -> dict[str, dict[str, int]]:
         """
         Get facet counts for a query without full results.
 
@@ -294,13 +286,13 @@ class SearchIndexer:
             offset=0,
         )
 
-        return results.get('facets', {})
+        return results.get("facets", {})
 
     async def count_results(
         self,
         query_string: str,
-        entity_types: List[str],
-        filters: Optional[Dict[str, Any]] = None,
+        entity_types: list[str],
+        filters: dict[str, Any] | None = None,
     ) -> int:
         """
         Count total results for a query without retrieving them.
@@ -321,7 +313,7 @@ class SearchIndexer:
             offset=0,
         )
 
-        return results['total']
+        return results["total"]
 
     def get_analyzer(self, entity_type: str) -> StandardAnalyzer:
         """
@@ -333,7 +325,7 @@ class SearchIndexer:
         Returns:
             Analyzer instance
         """
-        return self.analyzers.get(entity_type, self.analyzers['default'])
+        return self.analyzers.get(entity_type, self.analyzers["default"])
 
 
 class SearchService:
@@ -357,13 +349,13 @@ class SearchService:
     async def search(
         self,
         query_string: str,
-        entity_types: List[str],
-        filters: Optional[Dict[str, Any]] = None,
+        entity_types: list[str],
+        filters: dict[str, Any] | None = None,
         page: int = 1,
         page_size: int = 20,
-        sort_by: str = 'relevance',
-        sort_order: str = 'desc',
-    ) -> Dict[str, Any]:
+        sort_by: str = "relevance",
+        sort_order: str = "desc",
+    ) -> dict[str, Any]:
         """
         Execute a search query.
 
@@ -398,11 +390,11 @@ class SearchService:
     async def search_people(
         self,
         query_string: str,
-        person_type: Optional[str] = None,
-        pgy_level: Optional[int] = None,
+        person_type: str | None = None,
+        pgy_level: int | None = None,
         page: int = 1,
         page_size: int = 20,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Search for people."""
         return await self.indexer.search_people(
             query_string=query_string,
@@ -415,9 +407,9 @@ class SearchService:
     async def suggest(
         self,
         query_string: str,
-        entity_type: str = 'person',
+        entity_type: str = "person",
         limit: int = 10,
-    ) -> List[str]:
+    ) -> list[str]:
         """Get autocomplete suggestions."""
         return await self.indexer.suggest(
             query_string=query_string,

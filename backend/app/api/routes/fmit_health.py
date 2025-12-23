@@ -8,6 +8,7 @@ subsystem, including:
 - Coverage reports by date range
 - Alert summaries by severity
 """
+
 from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
@@ -37,6 +38,7 @@ router = APIRouter()
 
 class FMITHealthStatus(BaseModel):
     """Overall FMIT subsystem health status."""
+
     timestamp: datetime
     status: str  # "healthy", "degraded", "critical"
     total_swaps_this_month: int
@@ -49,6 +51,7 @@ class FMITHealthStatus(BaseModel):
 
 class FMITDetailedStatus(BaseModel):
     """Detailed FMIT system status."""
+
     timestamp: datetime
     pending_swaps: int
     approved_swaps: int
@@ -69,6 +72,7 @@ class FMITDetailedStatus(BaseModel):
 
 class FMITMetrics(BaseModel):
     """FMIT-specific metrics."""
+
     timestamp: datetime
     total_swaps_this_month: int
     pending_swap_requests: int
@@ -84,6 +88,7 @@ class FMITMetrics(BaseModel):
 
 class CoverageReportItem(BaseModel):
     """Coverage information for a specific week."""
+
     week_start: date
     total_fmit_slots: int
     covered_slots: int
@@ -94,6 +99,7 @@ class CoverageReportItem(BaseModel):
 
 class CoverageReport(BaseModel):
     """Coverage report for a date range."""
+
     start_date: date
     end_date: date
     total_weeks: int
@@ -103,6 +109,7 @@ class CoverageReport(BaseModel):
 
 class AlertSummaryBySeverity(BaseModel):
     """Alert counts grouped by severity."""
+
     timestamp: datetime
     critical_count: int
     warning_count: int
@@ -116,6 +123,7 @@ class AlertSummaryBySeverity(BaseModel):
 
 class CoverageGap(BaseModel):
     """Represents a coverage gap with details."""
+
     gap_id: str
     date: date
     time_of_day: str
@@ -131,6 +139,7 @@ class CoverageGap(BaseModel):
 
 class CoverageGapsResponse(BaseModel):
     """Response for coverage gaps endpoint."""
+
     timestamp: datetime
     total_gaps: int
     critical_gaps: int
@@ -143,6 +152,7 @@ class CoverageGapsResponse(BaseModel):
 
 class CoverageSuggestion(BaseModel):
     """Auto-suggested solution for a coverage gap."""
+
     gap_id: str
     suggestion_type: str  # "assign_available", "swap_recommended", "overtime"
     priority: int  # 1-5, 1 being highest
@@ -154,6 +164,7 @@ class CoverageSuggestion(BaseModel):
 
 class CoverageSuggestionsResponse(BaseModel):
     """Response for coverage suggestions endpoint."""
+
     timestamp: datetime
     total_suggestions: int
     gaps_addressed: int
@@ -162,6 +173,7 @@ class CoverageSuggestionsResponse(BaseModel):
 
 class CoverageForecast(BaseModel):
     """Forecast for future coverage gaps."""
+
     forecast_date: date
     predicted_coverage_percentage: float
     predicted_gaps: int
@@ -172,6 +184,7 @@ class CoverageForecast(BaseModel):
 
 class CoverageForecastResponse(BaseModel):
     """Response for coverage forecast endpoint."""
+
     timestamp: datetime
     forecast_start_date: date
     forecast_end_date: date
@@ -185,28 +198,41 @@ class CoverageForecastResponse(BaseModel):
 # ============================================================================
 
 
-def calculate_coverage_percentage(db: Session, start_date: date, end_date: date) -> float:
+def calculate_coverage_percentage(
+    db: Session, start_date: date, end_date: date
+) -> float:
     """Calculate overall coverage percentage for FMIT assignments in date range."""
     # Get all FMIT blocks in the date range
-    total_blocks = db.query(Block).filter(
-        and_(
-            Block.date >= start_date,
-            Block.date <= end_date,
-            Block.service_type == "FMIT"  # Assuming FMIT blocks have this service_type
+    total_blocks = (
+        db.query(Block)
+        .filter(
+            and_(
+                Block.date >= start_date,
+                Block.date <= end_date,
+                Block.service_type
+                == "FMIT",  # Assuming FMIT blocks have this service_type
+            )
         )
-    ).count()
+        .count()
+    )
 
     if total_blocks == 0:
         return 100.0
 
     # Get covered blocks (those with assignments)
-    covered_blocks = db.query(Block).join(Assignment).filter(
-        and_(
-            Block.date >= start_date,
-            Block.date <= end_date,
-            Block.service_type == "FMIT"
+    covered_blocks = (
+        db.query(Block)
+        .join(Assignment)
+        .filter(
+            and_(
+                Block.date >= start_date,
+                Block.date <= end_date,
+                Block.service_type == "FMIT",
+            )
         )
-    ).distinct().count()
+        .distinct()
+        .count()
+    )
 
     return (covered_blocks / total_blocks * 100.0) if total_blocks > 0 else 100.0
 
@@ -214,17 +240,23 @@ def calculate_coverage_percentage(db: Session, start_date: date, end_date: date)
 def get_health_status(db: Session) -> str:
     """Determine overall health status based on metrics."""
     # Count critical issues
-    critical_alerts = db.query(ConflictAlert).filter(
-        and_(
-            ConflictAlert.severity == ConflictSeverity.CRITICAL,
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
+    critical_alerts = (
+        db.query(ConflictAlert)
+        .filter(
+            and_(
+                ConflictAlert.severity == ConflictSeverity.CRITICAL,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
         )
-    ).count()
+        .count()
+    )
 
     # Check pending swaps
-    pending_swaps = db.query(SwapRecord).filter(
-        SwapRecord.status == SwapStatus.PENDING
-    ).count()
+    pending_swaps = (
+        db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.PENDING).count()
+    )
 
     # Calculate recent coverage
     today = date.today()
@@ -251,7 +283,9 @@ def classify_gap_severity(days_until: int, gap_size: int) -> str:
         return "low"
 
 
-def detect_coverage_gaps(db: Session, start_date: date, end_date: date) -> list[CoverageGap]:
+def detect_coverage_gaps(
+    db: Session, start_date: date, end_date: date
+) -> list[CoverageGap]:
     """Detect all coverage gaps in the date range."""
     gaps = []
     today = date.today()
@@ -264,7 +298,7 @@ def detect_coverage_gaps(db: Session, start_date: date, end_date: date) -> list[
             and_(
                 Block.date >= start_date,
                 Block.date <= end_date,
-                Block.service_type == "FMIT"
+                Block.service_type == "FMIT",
             )
         )
         .limit(100)
@@ -310,24 +344,28 @@ def detect_coverage_gaps(db: Session, start_date: date, end_date: date) -> list[
                             department = assignment.rotation_template.requires_specialty
                         break
 
-            gaps.append(CoverageGap(
-                gap_id=f"{block.id}_{block.date}_{block.time_of_day}",
-                date=block.date,
-                time_of_day=block.time_of_day,
-                block_id=str(block.id),
-                severity=severity,
-                days_until=days_until,
-                affected_area=affected_area,
-                department=department,
-                current_assignments=current_count,
-                required_assignments=required_count,
-                gap_size=gap_size,
-            ))
+            gaps.append(
+                CoverageGap(
+                    gap_id=f"{block.id}_{block.date}_{block.time_of_day}",
+                    date=block.date,
+                    time_of_day=block.time_of_day,
+                    block_id=str(block.id),
+                    severity=severity,
+                    days_until=days_until,
+                    affected_area=affected_area,
+                    department=department,
+                    current_assignments=current_count,
+                    required_assignments=required_count,
+                    gap_size=gap_size,
+                )
+            )
 
     return gaps
 
 
-def find_available_faculty(db: Session, target_date: date, time_of_day: str) -> list[str]:
+def find_available_faculty(
+    db: Session, target_date: date, time_of_day: str
+) -> list[str]:
     """Find faculty available for a specific date/time."""
     # Get all faculty (people with faculty role)
     all_faculty = (
@@ -340,41 +378,49 @@ def find_available_faculty(db: Session, target_date: date, time_of_day: str) -> 
     available = []
 
     # Find block for target date/time
-    target_block = db.query(Block).filter(
-        and_(
-            Block.date == target_date,
-            Block.time_of_day == time_of_day
-        )
-    ).first()
+    target_block = (
+        db.query(Block)
+        .filter(and_(Block.date == target_date, Block.time_of_day == time_of_day))
+        .first()
+    )
 
     if not target_block:
         return []
 
     for faculty in all_faculty:
         # Check if faculty already has assignment on this block
-        existing = db.query(Assignment).filter(
-            and_(
-                Assignment.block_id == target_block.id,
-                Assignment.person_id == faculty.id
+        existing = (
+            db.query(Assignment)
+            .filter(
+                and_(
+                    Assignment.block_id == target_block.id,
+                    Assignment.person_id == faculty.id,
+                )
             )
-        ).first()
+            .first()
+        )
 
         if not existing:
             # Check for conflicts (assignments on other blocks at same time)
-            same_time_blocks = db.query(Block).filter(
-                and_(
-                    Block.date == target_date,
-                    Block.time_of_day == time_of_day
+            same_time_blocks = (
+                db.query(Block)
+                .filter(
+                    and_(Block.date == target_date, Block.time_of_day == time_of_day)
                 )
-            ).all()
+                .all()
+            )
 
             block_ids = [b.id for b in same_time_blocks]
-            conflicts = db.query(Assignment).filter(
-                and_(
-                    Assignment.person_id == faculty.id,
-                    Assignment.block_id.in_(block_ids)
+            conflicts = (
+                db.query(Assignment)
+                .filter(
+                    and_(
+                        Assignment.person_id == faculty.id,
+                        Assignment.block_id.in_(block_ids),
+                    )
                 )
-            ).count()
+                .count()
+            )
 
             if conflicts == 0:
                 available.append(f"{faculty.first_name} {faculty.last_name}")
@@ -390,35 +436,48 @@ def calculate_conflict_score(db: Session, faculty_id: str, target_date: date) ->
     week_start = target_date - timedelta(days=target_date.weekday())
     week_end = week_start + timedelta(days=6)
 
-    week_assignments = db.query(Assignment).join(Block).filter(
-        and_(
-            Assignment.person_id == faculty_id,
-            Block.date >= week_start,
-            Block.date <= week_end
+    week_assignments = (
+        db.query(Assignment)
+        .join(Block)
+        .filter(
+            and_(
+                Assignment.person_id == faculty_id,
+                Block.date >= week_start,
+                Block.date <= week_end,
+            )
         )
-    ).count()
+        .count()
+    )
 
     # More assignments = higher score
     score += min(week_assignments / 10.0, 0.5)
 
     # Check for adjacent day assignments (prefer spacing)
     adjacent_dates = [target_date - timedelta(days=1), target_date + timedelta(days=1)]
-    adjacent_assignments = db.query(Assignment).join(Block).filter(
-        and_(
-            Assignment.person_id == faculty_id,
-            Block.date.in_(adjacent_dates)
+    adjacent_assignments = (
+        db.query(Assignment)
+        .join(Block)
+        .filter(
+            and_(Assignment.person_id == faculty_id, Block.date.in_(adjacent_dates))
         )
-    ).count()
+        .count()
+    )
 
     score += adjacent_assignments * 0.15
 
     # Check for active alerts
-    active_alerts = db.query(ConflictAlert).filter(
-        and_(
-            ConflictAlert.faculty_id == faculty_id,
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
+    active_alerts = (
+        db.query(ConflictAlert)
+        .filter(
+            and_(
+                ConflictAlert.faculty_id == faculty_id,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
         )
-    ).count()
+        .count()
+    )
 
     score += min(active_alerts / 5.0, 0.2)
 
@@ -476,25 +535,39 @@ async def get_fmit_health(
     today = date.today()
     month_start = today.replace(day=1)
     if today.month == 12:
-        month_end = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
+        month_end = today.replace(year=today.year + 1, month=1, day=1) - timedelta(
+            days=1
+        )
     else:
         month_end = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
 
     # Get metrics
-    total_swaps_this_month = db.query(SwapRecord).filter(
-        and_(
-            SwapRecord.requested_at >= datetime.combine(month_start, datetime.min.time()),
-            SwapRecord.requested_at <= datetime.combine(month_end, datetime.max.time())
+    total_swaps_this_month = (
+        db.query(SwapRecord)
+        .filter(
+            and_(
+                SwapRecord.requested_at
+                >= datetime.combine(month_start, datetime.min.time()),
+                SwapRecord.requested_at
+                <= datetime.combine(month_end, datetime.max.time()),
+            )
         )
-    ).count()
+        .count()
+    )
 
-    pending_swaps = db.query(SwapRecord).filter(
-        SwapRecord.status == SwapStatus.PENDING
-    ).count()
+    pending_swaps = (
+        db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.PENDING).count()
+    )
 
-    active_alerts = db.query(ConflictAlert).filter(
-        ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
-    ).count()
+    active_alerts = (
+        db.query(ConflictAlert)
+        .filter(
+            ConflictAlert.status.in_(
+                [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+            )
+        )
+        .count()
+    )
 
     # Coverage for next 30 days
     coverage = calculate_coverage_percentage(db, today, today + timedelta(days=30))
@@ -518,12 +591,18 @@ async def get_fmit_health(
         issues.append(f"Coverage at {coverage:.1f}% (target: 90%+)")
         recommendations.append("Review uncovered FMIT slots and assign faculty")
 
-    critical_alerts = db.query(ConflictAlert).filter(
-        and_(
-            ConflictAlert.severity == ConflictSeverity.CRITICAL,
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
+    critical_alerts = (
+        db.query(ConflictAlert)
+        .filter(
+            and_(
+                ConflictAlert.severity == ConflictSeverity.CRITICAL,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
         )
-    ).count()
+        .count()
+    )
 
     if critical_alerts > 0:
         issues.append(f"{critical_alerts} critical alerts require immediate attention")
@@ -556,43 +635,93 @@ async def get_fmit_detailed_status(
     timestamp = datetime.utcnow()
 
     # Swap counts by status
-    pending_swaps = db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.PENDING).count()
-    approved_swaps = db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.APPROVED).count()
-    executed_swaps = db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.EXECUTED).count()
-    rejected_swaps = db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.REJECTED).count()
-    cancelled_swaps = db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.CANCELLED).count()
-    rolled_back_swaps = db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.ROLLED_BACK).count()
+    pending_swaps = (
+        db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.PENDING).count()
+    )
+    approved_swaps = (
+        db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.APPROVED).count()
+    )
+    executed_swaps = (
+        db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.EXECUTED).count()
+    )
+    rejected_swaps = (
+        db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.REJECTED).count()
+    )
+    cancelled_swaps = (
+        db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.CANCELLED).count()
+    )
+    rolled_back_swaps = (
+        db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.ROLLED_BACK).count()
+    )
 
     # Alert counts
-    active_alerts = db.query(ConflictAlert).filter(
-        ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
-    ).count()
-    new_alerts = db.query(ConflictAlert).filter(ConflictAlert.status == ConflictAlertStatus.NEW).count()
-    acknowledged_alerts = db.query(ConflictAlert).filter(ConflictAlert.status == ConflictAlertStatus.ACKNOWLEDGED).count()
-    resolved_alerts = db.query(ConflictAlert).filter(ConflictAlert.status == ConflictAlertStatus.RESOLVED).count()
+    active_alerts = (
+        db.query(ConflictAlert)
+        .filter(
+            ConflictAlert.status.in_(
+                [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+            )
+        )
+        .count()
+    )
+    new_alerts = (
+        db.query(ConflictAlert)
+        .filter(ConflictAlert.status == ConflictAlertStatus.NEW)
+        .count()
+    )
+    acknowledged_alerts = (
+        db.query(ConflictAlert)
+        .filter(ConflictAlert.status == ConflictAlertStatus.ACKNOWLEDGED)
+        .count()
+    )
+    resolved_alerts = (
+        db.query(ConflictAlert)
+        .filter(ConflictAlert.status == ConflictAlertStatus.RESOLVED)
+        .count()
+    )
 
     # Alerts by severity
-    critical_alerts = db.query(ConflictAlert).filter(
-        and_(
-            ConflictAlert.severity == ConflictSeverity.CRITICAL,
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
+    critical_alerts = (
+        db.query(ConflictAlert)
+        .filter(
+            and_(
+                ConflictAlert.severity == ConflictSeverity.CRITICAL,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
         )
-    ).count()
-    warning_alerts = db.query(ConflictAlert).filter(
-        and_(
-            ConflictAlert.severity == ConflictSeverity.WARNING,
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
+        .count()
+    )
+    warning_alerts = (
+        db.query(ConflictAlert)
+        .filter(
+            and_(
+                ConflictAlert.severity == ConflictSeverity.WARNING,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
         )
-    ).count()
-    info_alerts = db.query(ConflictAlert).filter(
-        and_(
-            ConflictAlert.severity == ConflictSeverity.INFO,
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
+        .count()
+    )
+    info_alerts = (
+        db.query(ConflictAlert)
+        .filter(
+            and_(
+                ConflictAlert.severity == ConflictSeverity.INFO,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
         )
-    ).count()
+        .count()
+    )
 
     # Recent swap activity (last 10)
-    recent_swaps = db.query(SwapRecord).order_by(SwapRecord.requested_at.desc()).limit(10).all()
+    recent_swaps = (
+        db.query(SwapRecord).order_by(SwapRecord.requested_at.desc()).limit(10).all()
+    )
     recent_swap_activity = [
         {
             "id": str(swap.id),
@@ -606,7 +735,12 @@ async def get_fmit_detailed_status(
     ]
 
     # Recent alerts (last 10)
-    recent_alert_list = db.query(ConflictAlert).order_by(ConflictAlert.created_at.desc()).limit(10).all()
+    recent_alert_list = (
+        db.query(ConflictAlert)
+        .order_by(ConflictAlert.created_at.desc())
+        .limit(10)
+        .all()
+    )
     recent_alerts = [
         {
             "id": str(alert.id),
@@ -662,7 +796,9 @@ async def get_fmit_metrics(
     today = date.today()
     month_start = today.replace(day=1)
     if today.month == 12:
-        month_end = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
+        month_end = today.replace(year=today.year + 1, month=1, day=1) - timedelta(
+            days=1
+        )
     else:
         month_end = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
 
@@ -670,48 +806,68 @@ async def get_fmit_metrics(
     month_end_dt = datetime.combine(month_end, datetime.max.time())
 
     # Swap metrics
-    total_swaps_this_month = db.query(SwapRecord).filter(
-        and_(
-            SwapRecord.requested_at >= month_start_dt,
-            SwapRecord.requested_at <= month_end_dt
+    total_swaps_this_month = (
+        db.query(SwapRecord)
+        .filter(
+            and_(
+                SwapRecord.requested_at >= month_start_dt,
+                SwapRecord.requested_at <= month_end_dt,
+            )
         )
-    ).count()
+        .count()
+    )
 
-    pending_swaps = db.query(SwapRecord).filter(
-        SwapRecord.status == SwapStatus.PENDING
-    ).count()
+    pending_swaps = (
+        db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.PENDING).count()
+    )
 
     # Coverage
     coverage = calculate_coverage_percentage(db, today, today + timedelta(days=30))
 
     # Approval rate
-    completed_swaps = db.query(SwapRecord).filter(
-        and_(
-            SwapRecord.requested_at >= month_start_dt,
-            SwapRecord.requested_at <= month_end_dt,
-            SwapRecord.status.in_([SwapStatus.APPROVED, SwapStatus.EXECUTED, SwapStatus.REJECTED])
+    completed_swaps = (
+        db.query(SwapRecord)
+        .filter(
+            and_(
+                SwapRecord.requested_at >= month_start_dt,
+                SwapRecord.requested_at <= month_end_dt,
+                SwapRecord.status.in_(
+                    [SwapStatus.APPROVED, SwapStatus.EXECUTED, SwapStatus.REJECTED]
+                ),
+            )
         )
-    ).count()
+        .count()
+    )
 
-    approved_or_executed = db.query(SwapRecord).filter(
-        and_(
-            SwapRecord.requested_at >= month_start_dt,
-            SwapRecord.requested_at <= month_end_dt,
-            SwapRecord.status.in_([SwapStatus.APPROVED, SwapStatus.EXECUTED])
+    approved_or_executed = (
+        db.query(SwapRecord)
+        .filter(
+            and_(
+                SwapRecord.requested_at >= month_start_dt,
+                SwapRecord.requested_at <= month_end_dt,
+                SwapRecord.status.in_([SwapStatus.APPROVED, SwapStatus.EXECUTED]),
+            )
         )
-    ).count()
+        .count()
+    )
 
-    approval_rate = (approved_or_executed / completed_swaps * 100.0) if completed_swaps > 0 else 0.0
+    approval_rate = (
+        (approved_or_executed / completed_swaps * 100.0) if completed_swaps > 0 else 0.0
+    )
 
     # Average processing time (for executed swaps)
-    executed_swaps_with_times = db.query(SwapRecord).filter(
-        and_(
-            SwapRecord.status == SwapStatus.EXECUTED,
-            SwapRecord.executed_at.isnot(None),
-            SwapRecord.requested_at >= month_start_dt,
-            SwapRecord.requested_at <= month_end_dt
+    executed_swaps_with_times = (
+        db.query(SwapRecord)
+        .filter(
+            and_(
+                SwapRecord.status == SwapStatus.EXECUTED,
+                SwapRecord.executed_at.isnot(None),
+                SwapRecord.requested_at >= month_start_dt,
+                SwapRecord.requested_at <= month_end_dt,
+            )
         )
-    ).all()
+        .all()
+    )
 
     if executed_swaps_with_times:
         total_hours = sum(
@@ -723,48 +879,76 @@ async def get_fmit_metrics(
         avg_processing_time = None
 
     # Active alerts
-    active_alerts = db.query(ConflictAlert).filter(
-        ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
-    ).count()
+    active_alerts = (
+        db.query(ConflictAlert)
+        .filter(
+            ConflictAlert.status.in_(
+                [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+            )
+        )
+        .count()
+    )
 
     # Alert resolution rate
-    total_alerts = db.query(ConflictAlert).filter(
-        ConflictAlert.created_at >= month_start_dt
-    ).count()
+    total_alerts = (
+        db.query(ConflictAlert)
+        .filter(ConflictAlert.created_at >= month_start_dt)
+        .count()
+    )
 
-    resolved_alerts = db.query(ConflictAlert).filter(
-        and_(
-            ConflictAlert.created_at >= month_start_dt,
-            ConflictAlert.status == ConflictAlertStatus.RESOLVED
+    resolved_alerts = (
+        db.query(ConflictAlert)
+        .filter(
+            and_(
+                ConflictAlert.created_at >= month_start_dt,
+                ConflictAlert.status == ConflictAlertStatus.RESOLVED,
+            )
         )
-    ).count()
+        .count()
+    )
 
-    alert_resolution_rate = (resolved_alerts / total_alerts * 100.0) if total_alerts > 0 else 0.0
+    alert_resolution_rate = (
+        (resolved_alerts / total_alerts * 100.0) if total_alerts > 0 else 0.0
+    )
 
     # Critical alerts
-    critical_alerts = db.query(ConflictAlert).filter(
-        and_(
-            ConflictAlert.severity == ConflictSeverity.CRITICAL,
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
+    critical_alerts = (
+        db.query(ConflictAlert)
+        .filter(
+            and_(
+                ConflictAlert.severity == ConflictSeverity.CRITICAL,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
         )
-    ).count()
+        .count()
+    )
 
     # Swap type breakdown
-    one_to_one_count = db.query(SwapRecord).filter(
-        and_(
-            SwapRecord.requested_at >= month_start_dt,
-            SwapRecord.requested_at <= month_end_dt,
-            SwapRecord.swap_type == SwapType.ONE_TO_ONE
+    one_to_one_count = (
+        db.query(SwapRecord)
+        .filter(
+            and_(
+                SwapRecord.requested_at >= month_start_dt,
+                SwapRecord.requested_at <= month_end_dt,
+                SwapRecord.swap_type == SwapType.ONE_TO_ONE,
+            )
         )
-    ).count()
+        .count()
+    )
 
-    absorb_count = db.query(SwapRecord).filter(
-        and_(
-            SwapRecord.requested_at >= month_start_dt,
-            SwapRecord.requested_at <= month_end_dt,
-            SwapRecord.swap_type == SwapType.ABSORB
+    absorb_count = (
+        db.query(SwapRecord)
+        .filter(
+            and_(
+                SwapRecord.requested_at >= month_start_dt,
+                SwapRecord.requested_at <= month_end_dt,
+                SwapRecord.swap_type == SwapType.ABSORB,
+            )
         )
-    ).count()
+        .count()
+    )
 
     return FMITMetrics(
         timestamp=timestamp,
@@ -784,8 +968,12 @@ async def get_fmit_metrics(
 @router.get("/coverage", response_model=CoverageReport)
 async def get_coverage_report(
     start_date: date | None = Query(None, description="Start date (default: today)"),
-    end_date: date | None = Query(None, description="End date (default: 30 days from start)"),
-    period: str = Query("weekly", description="Grouping period: daily, weekly, or monthly"),
+    end_date: date | None = Query(
+        None, description="End date (default: 30 days from start)"
+    ),
+    period: str = Query(
+        "weekly", description="Grouping period: daily, weekly, or monthly"
+    ),
     db: Session = Depends(get_db),
 ):
     """
@@ -827,9 +1015,13 @@ async def get_coverage_report(
         if period == "monthly":
             # For monthly, use calendar month boundaries
             if current.month == 12:
-                week_end = current.replace(year=current.year + 1, month=1, day=1) - timedelta(days=1)
+                week_end = current.replace(
+                    year=current.year + 1, month=1, day=1
+                ) - timedelta(days=1)
             else:
-                week_end = current.replace(month=current.month + 1, day=1) - timedelta(days=1)
+                week_end = current.replace(month=current.month + 1, day=1) - timedelta(
+                    days=1
+                )
             week_end = min(week_end, end_date)
         else:
             week_end = min(current + timedelta(days=increment - 1), end_date)
@@ -841,7 +1033,7 @@ async def get_coverage_report(
                 and_(
                     Block.date >= current,
                     Block.date <= week_end,
-                    Block.service_type == "FMIT"
+                    Block.service_type == "FMIT",
                 )
             )
             .limit(100)
@@ -878,18 +1070,24 @@ async def get_coverage_report(
                     covered_count += 1
                     for assignment in assignments:
                         if assignment.person:
-                            faculty_names.add(f"{assignment.person.first_name} {assignment.person.last_name}")
+                            faculty_names.add(
+                                f"{assignment.person.first_name} {assignment.person.last_name}"
+                            )
 
-        week_coverage = (covered_count / total_slots * 100.0) if total_slots > 0 else 100.0
+        week_coverage = (
+            (covered_count / total_slots * 100.0) if total_slots > 0 else 100.0
+        )
 
-        weeks.append(CoverageReportItem(
-            week_start=current,
-            total_fmit_slots=total_slots,
-            covered_slots=covered_count,
-            uncovered_slots=total_slots - covered_count,
-            coverage_percentage=week_coverage,
-            faculty_assigned=sorted(faculty_names),
-        ))
+        weeks.append(
+            CoverageReportItem(
+                week_start=current,
+                total_fmit_slots=total_slots,
+                covered_slots=covered_count,
+                uncovered_slots=total_slots - covered_count,
+                coverage_percentage=week_coverage,
+                faculty_assigned=sorted(faculty_names),
+            )
+        )
 
         if period == "monthly":
             # Move to first day of next month
@@ -912,8 +1110,12 @@ async def get_coverage_report(
 @router.get("/coverage/gaps", response_model=CoverageGapsResponse)
 async def get_coverage_gaps(
     start_date: date | None = Query(None, description="Start date (default: today)"),
-    end_date: date | None = Query(None, description="End date (default: 60 days from start)"),
-    severity_filter: str | None = Query(None, description="Filter by severity: critical, high, medium, low"),
+    end_date: date | None = Query(
+        None, description="End date (default: 60 days from start)"
+    ),
+    severity_filter: str | None = Query(
+        None, description="Filter by severity: critical, high, medium, low"
+    ),
     db: Session = Depends(get_db),
 ):
     """
@@ -970,8 +1172,12 @@ async def get_coverage_gaps(
 @router.get("/coverage/suggestions", response_model=CoverageSuggestionsResponse)
 async def get_coverage_suggestions(
     start_date: date | None = Query(None, description="Start date (default: today)"),
-    end_date: date | None = Query(None, description="End date (default: 30 days from start)"),
-    max_suggestions: int = Query(20, description="Maximum number of suggestions to return"),
+    end_date: date | None = Query(
+        None, description="End date (default: 30 days from start)"
+    ),
+    max_suggestions: int = Query(
+        20, description="Maximum number of suggestions to return"
+    ),
     db: Session = Depends(get_db),
 ):
     """
@@ -1023,12 +1229,16 @@ async def get_coverage_suggestions(
                 # Get faculty person object
                 name_parts = faculty_name.split()
                 if len(name_parts) >= 2:
-                    person = db.query(Person).filter(
-                        and_(
-                            Person.first_name == name_parts[0],
-                            Person.last_name == " ".join(name_parts[1:])
+                    person = (
+                        db.query(Person)
+                        .filter(
+                            and_(
+                                Person.first_name == name_parts[0],
+                                Person.last_name == " ".join(name_parts[1:]),
+                            )
                         )
-                    ).first()
+                        .first()
+                    )
 
                     if person:
                         score = calculate_conflict_score(db, str(person.id), gap.date)
@@ -1134,7 +1344,9 @@ async def get_coverage_forecast(
 
         # Calculate predicted gaps based on expected blocks
         expected_blocks_per_week = 10  # Assumption
-        predicted_gaps = int(expected_blocks_per_week * (100 - predicted_coverage) / 100)
+        predicted_gaps = int(
+            expected_blocks_per_week * (100 - predicted_coverage) / 100
+        )
 
         # Identify risk factors
         risk_factors = []
@@ -1143,27 +1355,40 @@ async def get_coverage_forecast(
             risk_factors.append("Below target coverage threshold (85%)")
 
         # Check for upcoming holidays or known conflicts
-        holiday_blocks = db.query(Block).filter(
-            and_(
-                Block.date >= forecast_date,
-                Block.date <= week_end,
-                Block.is_holiday == True
+        holiday_blocks = (
+            db.query(Block)
+            .filter(
+                and_(
+                    Block.date >= forecast_date,
+                    Block.date <= week_end,
+                    Block.is_holiday == True,
+                )
             )
-        ).count()
+            .count()
+        )
 
         if holiday_blocks > 0:
-            risk_factors.append(f"{holiday_blocks} holiday blocks may reduce availability")
+            risk_factors.append(
+                f"{holiday_blocks} holiday blocks may reduce availability"
+            )
 
         # Check pending swaps affecting this period
-        pending_swaps_future = db.query(SwapRecord).filter(
-            and_(
-                SwapRecord.status == SwapStatus.PENDING,
-                SwapRecord.created_at <= datetime.combine(week_end, datetime.max.time())
+        pending_swaps_future = (
+            db.query(SwapRecord)
+            .filter(
+                and_(
+                    SwapRecord.status == SwapStatus.PENDING,
+                    SwapRecord.created_at
+                    <= datetime.combine(week_end, datetime.max.time()),
+                )
             )
-        ).count()
+            .count()
+        )
 
         if pending_swaps_future > 5:
-            risk_factors.append(f"{pending_swaps_future} pending swaps may impact schedule")
+            risk_factors.append(
+                f"{pending_swaps_future} pending swaps may impact schedule"
+            )
 
         if week_num > 8 and confidence < 0.7:
             risk_factors.append("Long-range forecast - lower confidence")
@@ -1192,7 +1417,9 @@ async def get_coverage_forecast(
         forecasts.append(forecast)
         forecast_coverage_values.append(predicted_coverage)
 
-    avg_predicted_coverage = sum(forecast_coverage_values) / len(forecast_coverage_values)
+    avg_predicted_coverage = sum(forecast_coverage_values) / len(
+        forecast_coverage_values
+    )
 
     return CoverageForecastResponse(
         timestamp=timestamp,
@@ -1221,38 +1448,62 @@ async def get_alert_summary(
     timestamp = datetime.utcnow()
 
     # Counts by severity (active only)
-    critical_count = db.query(ConflictAlert).filter(
-        and_(
-            ConflictAlert.severity == ConflictSeverity.CRITICAL,
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
+    critical_count = (
+        db.query(ConflictAlert)
+        .filter(
+            and_(
+                ConflictAlert.severity == ConflictSeverity.CRITICAL,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
         )
-    ).count()
+        .count()
+    )
 
-    warning_count = db.query(ConflictAlert).filter(
-        and_(
-            ConflictAlert.severity == ConflictSeverity.WARNING,
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
+    warning_count = (
+        db.query(ConflictAlert)
+        .filter(
+            and_(
+                ConflictAlert.severity == ConflictSeverity.WARNING,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
         )
-    ).count()
+        .count()
+    )
 
-    info_count = db.query(ConflictAlert).filter(
-        and_(
-            ConflictAlert.severity == ConflictSeverity.INFO,
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
+    info_count = (
+        db.query(ConflictAlert)
+        .filter(
+            and_(
+                ConflictAlert.severity == ConflictSeverity.INFO,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
         )
-    ).count()
+        .count()
+    )
 
     total_count = critical_count + warning_count + info_count
 
     # Counts by type (active only)
     by_type = {}
     for conflict_type in ConflictType:
-        count = db.query(ConflictAlert).filter(
-            and_(
-                ConflictAlert.conflict_type == conflict_type,
-                ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
+        count = (
+            db.query(ConflictAlert)
+            .filter(
+                and_(
+                    ConflictAlert.conflict_type == conflict_type,
+                    ConflictAlert.status.in_(
+                        [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                    ),
+                )
             )
-        ).count()
+            .count()
+        )
         by_type[conflict_type.value] = count
 
     # Counts by status (all)
@@ -1262,21 +1513,34 @@ async def get_alert_summary(
         by_status[status.value] = count
 
     # Oldest unresolved alert
-    oldest_unresolved_alert = db.query(ConflictAlert).filter(
-        ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
-    ).order_by(ConflictAlert.created_at.asc()).first()
+    oldest_unresolved_alert = (
+        db.query(ConflictAlert)
+        .filter(
+            ConflictAlert.status.in_(
+                [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+            )
+        )
+        .order_by(ConflictAlert.created_at.asc())
+        .first()
+    )
 
-    oldest_unresolved = oldest_unresolved_alert.created_at if oldest_unresolved_alert else None
+    oldest_unresolved = (
+        oldest_unresolved_alert.created_at if oldest_unresolved_alert else None
+    )
 
     # Average resolution time (for resolved alerts in last 30 days)
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    resolved_alerts = db.query(ConflictAlert).filter(
-        and_(
-            ConflictAlert.status == ConflictAlertStatus.RESOLVED,
-            ConflictAlert.resolved_at.isnot(None),
-            ConflictAlert.created_at >= thirty_days_ago
+    resolved_alerts = (
+        db.query(ConflictAlert)
+        .filter(
+            and_(
+                ConflictAlert.status == ConflictAlertStatus.RESOLVED,
+                ConflictAlert.resolved_at.isnot(None),
+                ConflictAlert.created_at >= thirty_days_ago,
+            )
         )
-    ).all()
+        .all()
+    )
 
     if resolved_alerts:
         total_resolution_hours = sum(

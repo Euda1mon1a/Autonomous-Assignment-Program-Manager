@@ -3,6 +3,7 @@ Rate limit response schemas.
 
 Pydantic schemas for rate limit status and configuration endpoints.
 """
+
 from pydantic import BaseModel, Field
 
 
@@ -12,7 +13,10 @@ class RateLimitStatus(BaseModel):
 
     Returned by GET /api/rate-limit/status endpoint.
     """
-    tier: str = Field(..., description="Rate limit tier (free, standard, premium, admin)")
+
+    tier: str = Field(
+        ..., description="Rate limit tier (free, standard, premium, admin)"
+    )
     limits: "RateLimitLimits" = Field(..., description="Rate limit thresholds")
     remaining: "RateLimitRemaining" = Field(..., description="Remaining requests")
     reset: "RateLimitReset" = Field(..., description="Reset timestamps")
@@ -21,6 +25,7 @@ class RateLimitStatus(BaseModel):
 
 class RateLimitLimits(BaseModel):
     """Rate limit thresholds."""
+
     per_minute: int = Field(..., description="Maximum requests per minute")
     per_hour: int = Field(..., description="Maximum requests per hour")
     burst_size: int = Field(..., description="Maximum burst requests")
@@ -28,6 +33,7 @@ class RateLimitLimits(BaseModel):
 
 class RateLimitRemaining(BaseModel):
     """Remaining request counts."""
+
     per_minute: int = Field(..., description="Remaining requests this minute")
     per_hour: int = Field(..., description="Remaining requests this hour")
     burst: int = Field(..., description="Remaining burst tokens")
@@ -35,12 +41,14 @@ class RateLimitRemaining(BaseModel):
 
 class RateLimitReset(BaseModel):
     """Reset timestamps (Unix epoch seconds)."""
+
     minute: int = Field(..., description="Unix timestamp when minute window resets")
     hour: int = Field(..., description="Unix timestamp when hour window resets")
 
 
 class BurstStatus(BaseModel):
     """Token bucket burst status."""
+
     tokens: float = Field(..., description="Current tokens in bucket")
     capacity: int = Field(..., description="Bucket capacity (max tokens)")
     refill_rate: float = Field(..., description="Tokens added per second")
@@ -52,10 +60,13 @@ class RateLimitConfig(BaseModel):
 
     Used for setting custom limits or viewing tier configurations.
     """
+
     requests_per_minute: int = Field(..., gt=0, description="Requests per minute limit")
     requests_per_hour: int = Field(..., gt=0, description="Requests per hour limit")
     burst_size: int = Field(..., gt=0, description="Token bucket capacity")
-    burst_refill_rate: float = Field(..., gt=0, description="Tokens per second refill rate")
+    burst_refill_rate: float = Field(
+        ..., gt=0, description="Tokens per second refill rate"
+    )
 
 
 class CustomLimitRequest(BaseModel):
@@ -64,6 +75,7 @@ class CustomLimitRequest(BaseModel):
 
     Admin-only endpoint: POST /api/rate-limit/custom
     """
+
     user_id: str = Field(..., description="User ID to apply custom limit")
     config: RateLimitConfig = Field(..., description="Custom rate limit configuration")
     ttl_seconds: int = Field(
@@ -75,6 +87,7 @@ class CustomLimitRequest(BaseModel):
 
 class CustomLimitResponse(BaseModel):
     """Response after setting custom rate limit."""
+
     success: bool = Field(..., description="Whether operation succeeded")
     message: str = Field(..., description="Result message")
     user_id: str = Field(..., description="User ID affected")
@@ -88,6 +101,7 @@ class TierInfo(BaseModel):
 
     Returned by GET /api/rate-limit/tiers endpoint.
     """
+
     tier: str = Field(..., description="Tier name")
     config: RateLimitConfig = Field(..., description="Tier configuration")
     roles: list[str] = Field(..., description="User roles that get this tier")
@@ -95,6 +109,7 @@ class TierInfo(BaseModel):
 
 class AllTiersResponse(BaseModel):
     """Response listing all available tiers."""
+
     tiers: list[TierInfo] = Field(..., description="All rate limit tiers")
 
 
@@ -105,6 +120,7 @@ class EndpointLimitInfo(BaseModel):
     Some endpoints (e.g., schedule generation) have tighter limits
     than the general tier limits.
     """
+
     endpoint: str = Field(..., description="Endpoint path or pattern")
     limits: RateLimitConfig | None = Field(
         None,
@@ -114,6 +130,7 @@ class EndpointLimitInfo(BaseModel):
 
 class EndpointLimitsResponse(BaseModel):
     """Response listing endpoint-specific limits."""
+
     endpoints: list[EndpointLimitInfo] = Field(
         ...,
         description="Endpoints with custom rate limits",
@@ -127,6 +144,7 @@ class RateLimitHeaders(BaseModel):
     These headers are automatically added to all API responses
     by the RateLimitMiddleware.
     """
+
     x_ratelimit_tier: str = Field(
         ...,
         alias="X-RateLimit-Tier",
@@ -178,6 +196,7 @@ class RateLimitErrorDetail(BaseModel):
 
     Automatically returned when rate limit is exceeded.
     """
+
     error: str = Field(default="Rate limit exceeded", description="Error type")
     message: str = Field(..., description="Human-readable error message")
     tier: str = Field(..., description="Current rate limit tier")

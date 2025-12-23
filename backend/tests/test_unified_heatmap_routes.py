@@ -1,7 +1,7 @@
 """Comprehensive tests for unified heatmap API routes."""
+
 from datetime import date, timedelta
-from io import BytesIO
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -12,7 +12,6 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
-
 
 # ============================================================================
 # Test Data Fixtures
@@ -98,7 +97,9 @@ def sample_heatmap_data(db: Session, sample_blocks: list[Block]) -> dict:
             id=uuid4(),
             block_id=block.id,
             person_id=resident1.id if i % 2 == 0 else resident2.id,
-            rotation_template_id=clinic_template.id if i % 3 == 0 else procedures_template.id,
+            rotation_template_id=clinic_template.id
+            if i % 3 == 0
+            else procedures_template.id,
             role="primary",
         )
         assignments.append(assignment)
@@ -196,7 +197,10 @@ class TestGetHeatmapData:
         )
 
         assert response.status_code == 400
-        assert "start_date must be before or equal to end_date" in response.json()["detail"]
+        assert (
+            "start_date must be before or equal to end_date"
+            in response.json()["detail"]
+        )
 
     def test_get_heatmap_data_both_flags_false(
         self,
@@ -219,7 +223,10 @@ class TestGetHeatmapData:
         )
 
         assert response.status_code == 400
-        assert "At least one of include_fmit or include_residency must be True" in response.json()["detail"]
+        assert (
+            "At least one of include_fmit or include_residency must be True"
+            in response.json()["detail"]
+        )
 
     def test_get_heatmap_data_fmit_only(
         self,
@@ -298,7 +305,9 @@ class TestGetHeatmapData:
         data = response.json()
         assert len(data["x_labels"]) == 1
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.generate_coverage_heatmap")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.generate_coverage_heatmap"
+    )
     def test_get_heatmap_data_service_error(
         self,
         mock_generate: MagicMock,
@@ -397,7 +406,10 @@ class TestPostHeatmapData:
         )
 
         assert response.status_code == 400
-        assert "start_date must be before or equal to end_date" in response.json()["detail"]
+        assert (
+            "start_date must be before or equal to end_date"
+            in response.json()["detail"]
+        )
 
 
 # ============================================================================
@@ -408,7 +420,9 @@ class TestPostHeatmapData:
 class TestGetHeatmapRender:
     """Tests for GET /heatmap/render endpoint."""
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.generate_plotly_heatmap")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.generate_plotly_heatmap"
+    )
     def test_render_heatmap_success(
         self,
         mock_render: MagicMock,
@@ -470,9 +484,14 @@ class TestGetHeatmapRender:
         )
 
         assert response.status_code == 400
-        assert "start_date must be before or equal to end_date" in response.json()["detail"]
+        assert (
+            "start_date must be before or equal to end_date"
+            in response.json()["detail"]
+        )
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.generate_plotly_heatmap")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.generate_plotly_heatmap"
+    )
     def test_render_heatmap_service_error(
         self,
         mock_render: MagicMock,
@@ -506,7 +525,9 @@ class TestGetHeatmapRender:
 class TestPostHeatmapRender:
     """Tests for POST /heatmap/render endpoint."""
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.generate_plotly_heatmap")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.generate_plotly_heatmap"
+    )
     def test_post_render_heatmap_success(
         self,
         mock_render: MagicMock,
@@ -557,7 +578,9 @@ class TestPostHeatmapRender:
 class TestGetHeatmapExport:
     """Tests for GET /heatmap/export endpoint."""
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.export_heatmap_image")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.export_heatmap_image"
+    )
     def test_export_heatmap_png_success(
         self,
         mock_export: MagicMock,
@@ -588,7 +611,9 @@ class TestGetHeatmapExport:
         assert "unified_heatmap" in response.headers["content-disposition"]
         assert ".png" in response.headers["content-disposition"]
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.export_heatmap_image")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.export_heatmap_image"
+    )
     def test_export_heatmap_svg_success(
         self,
         mock_export: MagicMock,
@@ -617,7 +642,9 @@ class TestGetHeatmapExport:
         assert response.headers["content-type"] == "image/svg+xml"
         assert ".svg" in response.headers["content-disposition"]
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.export_heatmap_image")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.export_heatmap_image"
+    )
     def test_export_heatmap_pdf_success(
         self,
         mock_export: MagicMock,
@@ -677,9 +704,14 @@ class TestGetHeatmapExport:
         )
 
         assert response.status_code == 400
-        assert "start_date must be before or equal to end_date" in response.json()["detail"]
+        assert (
+            "start_date must be before or equal to end_date"
+            in response.json()["detail"]
+        )
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.export_heatmap_image")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.export_heatmap_image"
+    )
     def test_export_heatmap_value_error(
         self,
         mock_export: MagicMock,
@@ -702,7 +734,9 @@ class TestGetHeatmapExport:
         assert response.status_code == 400
         assert "Invalid format" in response.json()["detail"]
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.export_heatmap_image")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.export_heatmap_image"
+    )
     def test_export_heatmap_service_error(
         self,
         mock_export: MagicMock,
@@ -725,7 +759,9 @@ class TestGetHeatmapExport:
         assert response.status_code == 500
         assert "Failed to export heatmap" in response.json()["detail"]
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.export_heatmap_image")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.export_heatmap_image"
+    )
     def test_export_heatmap_custom_dimensions(
         self,
         mock_export: MagicMock,
@@ -763,7 +799,9 @@ class TestGetHeatmapExport:
 class TestPostHeatmapExport:
     """Tests for POST /heatmap/export endpoint."""
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.export_heatmap_image")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.export_heatmap_image"
+    )
     def test_post_export_heatmap_success(
         self,
         mock_export: MagicMock,
@@ -839,7 +877,9 @@ class TestPostHeatmapExport:
 class TestGetPersonCoverageData:
     """Tests for GET /person-coverage/data endpoint."""
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.generate_person_coverage_heatmap")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.generate_person_coverage_heatmap"
+    )
     def test_get_person_coverage_success(
         self,
         mock_generate: MagicMock,
@@ -905,9 +945,14 @@ class TestGetPersonCoverageData:
         )
 
         assert response.status_code == 400
-        assert "start_date must be before or equal to end_date" in response.json()["detail"]
+        assert (
+            "start_date must be before or equal to end_date"
+            in response.json()["detail"]
+        )
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.generate_person_coverage_heatmap")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.generate_person_coverage_heatmap"
+    )
     def test_get_person_coverage_with_call_assignments(
         self,
         mock_generate: MagicMock,
@@ -938,7 +983,9 @@ class TestGetPersonCoverageData:
         call_args = mock_generate.call_args
         assert call_args.kwargs["include_call"] is True
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.generate_person_coverage_heatmap")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.generate_person_coverage_heatmap"
+    )
     def test_get_person_coverage_service_error(
         self,
         mock_generate: MagicMock,
@@ -969,7 +1016,9 @@ class TestGetPersonCoverageData:
 class TestPostPersonCoverageData:
     """Tests for POST /person-coverage/data endpoint."""
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.generate_person_coverage_heatmap")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.generate_person_coverage_heatmap"
+    )
     def test_post_person_coverage_success(
         self,
         mock_generate: MagicMock,
@@ -1037,7 +1086,10 @@ class TestPostPersonCoverageData:
         )
 
         assert response.status_code == 400
-        assert "start_date must be before or equal to end_date" in response.json()["detail"]
+        assert (
+            "start_date must be before or equal to end_date"
+            in response.json()["detail"]
+        )
 
 
 # ============================================================================
@@ -1048,7 +1100,9 @@ class TestPostPersonCoverageData:
 class TestGetWeeklyFMITData:
     """Tests for GET /weekly-fmit/data endpoint."""
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.generate_weekly_fmit_heatmap")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.generate_weekly_fmit_heatmap"
+    )
     def test_get_weekly_fmit_success(
         self,
         mock_generate: MagicMock,
@@ -1114,9 +1168,14 @@ class TestGetWeeklyFMITData:
         )
 
         assert response.status_code == 400
-        assert "start_date must be before or equal to end_date" in response.json()["detail"]
+        assert (
+            "start_date must be before or equal to end_date"
+            in response.json()["detail"]
+        )
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.generate_weekly_fmit_heatmap")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.generate_weekly_fmit_heatmap"
+    )
     def test_get_weekly_fmit_service_error(
         self,
         mock_generate: MagicMock,
@@ -1147,7 +1206,9 @@ class TestGetWeeklyFMITData:
 class TestPostWeeklyFMITData:
     """Tests for POST /weekly-fmit/data endpoint."""
 
-    @patch("app.services.unified_heatmap_service.UnifiedHeatmapService.generate_weekly_fmit_heatmap")
+    @patch(
+        "app.services.unified_heatmap_service.UnifiedHeatmapService.generate_weekly_fmit_heatmap"
+    )
     def test_post_weekly_fmit_success(
         self,
         mock_generate: MagicMock,
@@ -1208,7 +1269,10 @@ class TestPostWeeklyFMITData:
         )
 
         assert response.status_code == 400
-        assert "start_date must be before or equal to end_date" in response.json()["detail"]
+        assert (
+            "start_date must be before or equal to end_date"
+            in response.json()["detail"]
+        )
 
 
 # ============================================================================

@@ -31,7 +31,9 @@ router = APIRouter()
 
 @router.get("", response_model=PersonListResponse)
 def list_people(
-    type: str | None = Query(None, description="Filter by type: 'resident' or 'faculty'"),
+    type: str | None = Query(
+        None, description="Filter by type: 'resident' or 'faculty'"
+    ),
     pgy_level: int | None = Query(None, description="Filter residents by PGY level"),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),

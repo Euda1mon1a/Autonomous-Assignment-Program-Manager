@@ -4,6 +4,7 @@ FMIT Scheduler Orchestration Service.
 Higher-level service that orchestrates FMIT scheduling operations,
 including assignment management, conflict detection, and fair schedule generation.
 """
+
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, timedelta
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
 @dataclass
 class FMITWeekAssignment:
     """Represents a faculty's FMIT assignment for a week."""
+
     faculty_id: UUID
     faculty_name: str
     week_start: date
@@ -35,6 +37,7 @@ class FMITWeekAssignment:
 @dataclass
 class FMITScheduleResult:
     """Result of getting FMIT schedule."""
+
     assignments: list[FMITWeekAssignment]
     total_weeks: int
     faculty_count: int
@@ -45,6 +48,7 @@ class FMITScheduleResult:
 @dataclass
 class FacultyLoadResult:
     """Result of faculty load calculation."""
+
     faculty_id: UUID
     faculty_name: str
     year: int
@@ -57,6 +61,7 @@ class FacultyLoadResult:
 @dataclass
 class AssignmentResult:
     """Result of assignment operation."""
+
     success: bool
     message: str
     assignment_ids: list[UUID] = field(default_factory=list)
@@ -67,6 +72,7 @@ class AssignmentResult:
 @dataclass
 class ScheduleValidationResult:
     """Result of schedule validation."""
+
     valid: bool
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -78,6 +84,7 @@ class ScheduleValidationResult:
 @dataclass
 class FairScheduleResult:
     """Result of fair schedule generation."""
+
     success: bool
     message: str
     total_weeks: int
@@ -171,15 +178,17 @@ class FMITSchedulerService:
             faculty_ids.add(person_id)
             week_end = week_start + timedelta(days=6)
 
-            week_assignments.append(FMITWeekAssignment(
-                faculty_id=person_id,
-                faculty_name=person.name,
-                week_start=week_start,
-                week_end=week_end,
-                assignment_ids=[a.id for a in assignments_list],
-                rotation_template_id=fmit_template.id,
-                is_complete=len(assignments_list) >= self.BLOCKS_PER_WEEK,
-            ))
+            week_assignments.append(
+                FMITWeekAssignment(
+                    faculty_id=person_id,
+                    faculty_name=person.name,
+                    week_start=week_start,
+                    week_end=week_end,
+                    assignment_ids=[a.id for a in assignments_list],
+                    rotation_template_id=fmit_template.id,
+                    is_complete=len(assignments_list) >= self.BLOCKS_PER_WEEK,
+                )
+            )
 
         # Sort by week start date
         week_assignments.sort(key=lambda x: x.week_start)
@@ -235,10 +244,14 @@ class FMITSchedulerService:
         from app.models.person import Person
 
         # Validate faculty exists
-        faculty = self.db.query(Person).filter(
-            Person.id == faculty_id,
-            Person.type == "faculty",
-        ).first()
+        faculty = (
+            self.db.query(Person)
+            .filter(
+                Person.id == faculty_id,
+                Person.type == "faculty",
+            )
+            .first()
+        )
         if not faculty:
             return AssignmentResult(
                 success=False,
@@ -442,10 +455,14 @@ class FMITSchedulerService:
         from app.models.person import Person
 
         # Get faculty
-        faculty = self.db.query(Person).filter(
-            Person.id == faculty_id,
-            Person.type == "faculty",
-        ).first()
+        faculty = (
+            self.db.query(Person)
+            .filter(
+                Person.id == faculty_id,
+                Person.type == "faculty",
+            )
+            .first()
+        )
         if not faculty:
             return FacultyLoadResult(
                 faculty_id=faculty_id,
@@ -595,9 +612,7 @@ class FMITSchedulerService:
                 faculty_loads[selected.id] += 1
                 assignments_created += len(result.assignment_ids)
             else:
-                warnings.append(
-                    f"Week {current_week}: {result.message}"
-                )
+                warnings.append(f"Week {current_week}: {result.message}")
 
             current_week += timedelta(days=7)
 
@@ -643,21 +658,16 @@ class FMITSchedulerService:
         current_week = self._get_week_start(start_date)
         while current_week <= end_date:
             week_assignments = [
-                a for a in schedule_result.assignments
-                if a.week_start == current_week
+                a for a in schedule_result.assignments if a.week_start == current_week
             ]
 
             if not week_assignments:
                 coverage_gaps.append(current_week)
                 errors.append(f"No FMIT coverage for week {current_week}")
             elif len(week_assignments) > 1:
-                warnings.append(
-                    f"Multiple faculty assigned to week {current_week}"
-                )
+                warnings.append(f"Multiple faculty assigned to week {current_week}")
             elif week_assignments and not week_assignments[0].is_complete:
-                warnings.append(
-                    f"Incomplete assignment for week {current_week}"
-                )
+                warnings.append(f"Incomplete assignment for week {current_week}")
 
             current_week += timedelta(days=7)
 
@@ -701,6 +711,7 @@ class FMITSchedulerService:
     def _get_fmit_template(self) -> Optional["RotationTemplate"]:
         """Get the FMIT rotation template."""
         from app.models.rotation_template import RotationTemplate
+
         return (
             self.db.query(RotationTemplate)
             .filter(RotationTemplate.name == self.FMIT_ROTATION_NAME)
@@ -841,7 +852,8 @@ class FMITSchedulerService:
 
             schedule = self.get_fmit_schedule(buffer_start, buffer_end)
             person_weeks = [
-                a.week_start for a in schedule.assignments
+                a.week_start
+                for a in schedule.assignments
                 if a.faculty_id == person.id and a.week_start != week_start
             ]
 

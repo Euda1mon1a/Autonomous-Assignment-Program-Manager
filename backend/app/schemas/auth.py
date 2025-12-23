@@ -1,20 +1,31 @@
 """Authentication schemas."""
-from uuid import UUID
+
 import re
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, field_validator
 
-COMMON_PASSWORDS = {'password', 'password123', '123456', '12345678', 'qwerty', 'admin', 'welcome'}
+COMMON_PASSWORDS = {
+    "password",
+    "password123",
+    "123456",
+    "12345678",
+    "qwerty",
+    "admin",
+    "welcome",
+}
 
 
 class Token(BaseModel):
     """JWT token response."""
+
     access_token: str
     token_type: str = "bearer"
 
 
 class TokenWithRefresh(BaseModel):
     """JWT token response with refresh token."""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -22,11 +33,13 @@ class TokenWithRefresh(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     """Request to refresh access token using refresh token."""
+
     refresh_token: str
 
 
 class TokenData(BaseModel):
     """Data extracted from JWT token."""
+
     user_id: str | None = None
     username: str | None = None
     jti: str | None = None  # JWT ID for blacklist support
@@ -34,6 +47,7 @@ class TokenData(BaseModel):
 
 class UserLogin(BaseModel):
     """User login request."""
+
     username: str
     password: str
 
@@ -51,6 +65,7 @@ class UserCreate(BaseModel):
     - msa: Medical Support Assistant (same permissions as clinical_staff)
     - resident: View own schedule, manage swaps, view conflicts
     """
+
     username: str
     email: EmailStr
     password: str
@@ -64,13 +79,15 @@ class UserCreate(BaseModel):
         if len(v) > 128:
             raise ValueError("Password must be less than 128 characters")
 
-        has_lower = bool(re.search(r'[a-z]', v))
-        has_upper = bool(re.search(r'[A-Z]', v))
-        has_digit = bool(re.search(r'\d', v))
+        has_lower = bool(re.search(r"[a-z]", v))
+        has_upper = bool(re.search(r"[A-Z]", v))
+        has_digit = bool(re.search(r"\d", v))
         has_special = bool(re.search(r'[!@#$%^&*(),.?":{}|<>]', v))
 
         if sum([has_lower, has_upper, has_digit, has_special]) < 3:
-            raise ValueError("Password must contain at least 3 of: lowercase, uppercase, numbers, special characters")
+            raise ValueError(
+                "Password must contain at least 3 of: lowercase, uppercase, numbers, special characters"
+            )
 
         if v.lower() in COMMON_PASSWORDS:
             raise ValueError("Password is too common")
@@ -80,6 +97,7 @@ class UserCreate(BaseModel):
 
 class UserUpdate(BaseModel):
     """User update request."""
+
     email: EmailStr | None = None
     password: str | None = None
     role: str | None = None
@@ -87,6 +105,7 @@ class UserUpdate(BaseModel):
 
 class UserResponse(BaseModel):
     """User response (without password)."""
+
     id: UUID
     username: str
     email: str
@@ -99,4 +118,5 @@ class UserResponse(BaseModel):
 
 class UserInDB(UserResponse):
     """User with hashed password (internal use)."""
+
     hashed_password: str

@@ -8,6 +8,7 @@ Provides endpoints for:
 These endpoints are designed to be called by n8n workflows for
 autonomous scheduling operations via Slack commands.
 """
+
 import logging
 import secrets
 import uuid
@@ -15,7 +16,7 @@ from datetime import datetime, timedelta
 from itertools import islice
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import and_, desc, func
+from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_active_user
@@ -35,7 +36,6 @@ from app.schemas.scheduler_ops import (
     FixItRequest,
     FixItResponse,
     RecentTaskInfo,
-    SchedulerOpsError,
     SitrepResponse,
     TaskMetrics,
     TaskStatus,
@@ -114,6 +114,7 @@ def _calculate_task_metrics(db: Session) -> TaskMetrics:
         try:
             # Use Redis to query recent task keys
             from redis import Redis
+
             from app.core.config import get_settings
 
             settings = get_settings()
@@ -131,6 +132,7 @@ def _calculate_task_metrics(db: Session) -> TaskMetrics:
                     task_data = redis_client.get(key)
                     if task_data:
                         import json
+
                         result = json.loads(task_data)
                         status = result.get("status", "")
 
@@ -167,7 +169,11 @@ def _calculate_task_metrics(db: Session) -> TaskMetrics:
                 success_rate=1.0,
             )
 
-        success_rate = total_completed / (total_completed + total_failed) if (total_completed + total_failed) > 0 else 1.0
+        success_rate = (
+            total_completed / (total_completed + total_failed)
+            if (total_completed + total_failed) > 0
+            else 1.0
+        )
 
         return TaskMetrics(
             total_tasks=total_tasks,
@@ -200,10 +206,12 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
     recent_tasks = []
 
     try:
-        from app.core.celery_app import celery_app
-        from redis import Redis
-        from app.core.config import get_settings
         import json
+
+        from redis import Redis
+
+        from app.core.celery_app import celery_app
+        from app.core.config import get_settings
 
         settings = get_settings()
         redis_client = Redis.from_url(settings.redis_url_with_password)
@@ -227,7 +235,9 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
 
                 # Parse task information
                 status_str = result.get("status", "UNKNOWN")
-                task_name = result.get("task_name") or result.get("name", "Unknown Task")
+                task_name = result.get("task_name") or result.get(
+                    "name", "Unknown Task"
+                )
                 date_done = result.get("date_done")
                 traceback = result.get("traceback")
 
@@ -247,7 +257,9 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
                 if date_done:
                     try:
                         # Celery date_done is in ISO format
-                        completed_at = datetime.fromisoformat(date_done.replace("Z", "+00:00"))
+                        completed_at = datetime.fromisoformat(
+                            date_done.replace("Z", "+00:00")
+                        )
                     except (ValueError, AttributeError):
                         pass
 
@@ -256,7 +268,9 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
                 if status_str == "FAILURE":
                     error_result = result.get("result")
                     if isinstance(error_result, dict):
-                        error_message = error_result.get("exc_message") or error_result.get("exc_type")
+                        error_message = error_result.get(
+                            "exc_message"
+                        ) or error_result.get("exc_type")
                     elif isinstance(error_result, str):
                         error_message = error_result[:200]  # Truncate long errors
 
@@ -264,13 +278,15 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
                     if not error_message and traceback:
                         error_message = traceback.split("\n")[-1][:200]
 
-                task_data_list.append({
-                    "task_id": task_id,
-                    "name": task_name,
-                    "status": task_status,
-                    "completed_at": completed_at,
-                    "error_message": error_message,
-                })
+                task_data_list.append(
+                    {
+                        "task_id": task_id,
+                        "name": task_name,
+                        "status": task_status,
+                        "completed_at": completed_at,
+                        "error_message": error_message,
+                    }
+                )
 
             except (json.JSONDecodeError, Exception) as parse_error:
                 logger.debug(f"Error parsing task key {key}: {parse_error}")
@@ -279,7 +295,7 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
         # Sort by completion time (most recent first)
         task_data_list.sort(
             key=lambda x: x["completed_at"] if x["completed_at"] else datetime.min,
-            reverse=True
+            reverse=True,
         )
 
         # Get task result keys from Redis using non-blocking SCAN and limit the sample size
@@ -307,7 +323,9 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
 
                 # Parse task information
                 status_str = result.get("status", "UNKNOWN")
-                task_name = result.get("task_name") or result.get("name", "Unknown Task")
+                task_name = result.get("task_name") or result.get(
+                    "name", "Unknown Task"
+                )
                 date_done = result.get("date_done")
                 traceback = result.get("traceback")
 
@@ -327,7 +345,9 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
                 if date_done:
                     try:
                         # Celery date_done is in ISO format
-                        completed_at = datetime.fromisoformat(date_done.replace("Z", "+00:00"))
+                        completed_at = datetime.fromisoformat(
+                            date_done.replace("Z", "+00:00")
+                        )
                     except (ValueError, AttributeError):
                         pass
 
@@ -336,7 +356,9 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
                 if status_str == "FAILURE":
                     error_result = result.get("result")
                     if isinstance(error_result, dict):
-                        error_message = error_result.get("exc_message") or error_result.get("exc_type")
+                        error_message = error_result.get(
+                            "exc_message"
+                        ) or error_result.get("exc_type")
                     elif isinstance(error_result, str):
                         error_message = error_result[:200]  # Truncate long errors
 
@@ -344,13 +366,15 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
                     if not error_message and traceback:
                         error_message = traceback.split("\n")[-1][:200]
 
-                task_data_list.append({
-                    "task_id": task_id,
-                    "name": task_name,
-                    "status": task_status,
-                    "completed_at": completed_at,
-                    "error_message": error_message,
-                })
+                task_data_list.append(
+                    {
+                        "task_id": task_id,
+                        "name": task_name,
+                        "status": task_status,
+                        "completed_at": completed_at,
+                        "error_message": error_message,
+                    }
+                )
 
             except (json.JSONDecodeError, Exception) as parse_error:
                 logger.debug(f"Error parsing task key {key}: {parse_error}")
@@ -359,7 +383,7 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
         # Sort by completion time (most recent first)
         task_data_list.sort(
             key=lambda x: x["completed_at"] if x["completed_at"] else datetime.min,
-            reverse=True
+            reverse=True,
         )
 
         # Get active tasks to supplement recent tasks
@@ -387,15 +411,17 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
                 if args or kwargs:
                     description += f" | Args: {args[:50]}" if args else ""
 
-                task_data_list.append({
-                    "task_id": task_id,
-                    "name": task_name,
-                    "status": TaskStatus.IN_PROGRESS,
-                    "started_at": started_at,
-                    "completed_at": None,
-                    "error_message": None,
-                    "description": description,
-                })
+                task_data_list.append(
+                    {
+                        "task_id": task_id,
+                        "name": task_name,
+                        "status": TaskStatus.IN_PROGRESS,
+                        "started_at": started_at,
+                        "completed_at": None,
+                        "error_message": None,
+                        "description": description,
+                    }
+                )
 
         # Take the most recent tasks up to limit
         for task_data in task_data_list[:limit]:
@@ -478,7 +504,9 @@ def _calculate_coverage_metrics(db: Session) -> CoverageMetrics:
         coverage_rate = covered_blocks / total_blocks if total_blocks > 0 else 0.0
 
         # Get faculty count and calculate utilization
-        faculty_count = db.query(func.count(Person.id)).filter(Person.type == "faculty").scalar()
+        faculty_count = (
+            db.query(func.count(Person.id)).filter(Person.type == "faculty").scalar()
+        )
 
         # Estimate utilization (assignments per faculty per day)
         avg_assignments_per_day = covered_blocks / 30 if covered_blocks > 0 else 0
@@ -676,12 +704,16 @@ async def initiate_fix_it_mode(
         for i in range(min(tasks_retried, 10)):  # Show up to 10 tasks
             affected_tasks.append(
                 AffectedTask(
-                    task_id=f"task-{i+1}",
-                    task_name=f"Scheduled task #{i+1}",
+                    task_id=f"task-{i + 1}",
+                    task_name=f"Scheduled task #{i + 1}",
                     previous_status=TaskStatus.FAILED,
-                    new_status=TaskStatus.COMPLETED if i < tasks_fixed else TaskStatus.FAILED,
+                    new_status=TaskStatus.COMPLETED
+                    if i < tasks_fixed
+                    else TaskStatus.FAILED,
                     action_taken=(
-                        "Retried with corrective action" if i < tasks_fixed else "Retry failed"
+                        "Retried with corrective action"
+                        if i < tasks_fixed
+                        else "Retry failed"
                     ),
                     retry_count=request.max_retries,
                 )
@@ -692,14 +724,20 @@ async def initiate_fix_it_mode(
         if not request.dry_run and tasks_retried > 0:
             # Estimate 30 seconds per task
             estimated_seconds = tasks_retried * 30
-            estimated_completion = datetime.utcnow() + timedelta(seconds=estimated_seconds)
+            estimated_completion = datetime.utcnow() + timedelta(
+                seconds=estimated_seconds
+            )
 
         # Build warnings
         warnings = []
         if request.mode == FixItMode.GREEDY:
-            warnings.append("Greedy mode may impact schedule quality. Review results carefully.")
+            warnings.append(
+                "Greedy mode may impact schedule quality. Review results carefully."
+            )
         if request.auto_approve:
-            warnings.append("Auto-approve is enabled. Changes will be applied without review.")
+            warnings.append(
+                "Auto-approve is enabled. Changes will be applied without review."
+            )
 
         response = FixItResponse(
             status="completed" if not request.dry_run else "dry_run",
@@ -776,7 +814,9 @@ async def approve_task(
                 approved_by=request.approved_by,
                 approved_at=datetime.utcnow(),
                 message="Invalid or expired approval token.",
-                warnings=["Token not found in system. It may have expired or already been used."],
+                warnings=[
+                    "Token not found in system. It may have expired or already been used."
+                ],
             )
 
         # Get tasks associated with token
@@ -901,7 +941,9 @@ async def generate_approval_token(
             "used": False,
         }
 
-        logger.info(f"Generated approval token {token[:8]}... for {len(task_ids)} tasks")
+        logger.info(
+            f"Generated approval token {token[:8]}... for {len(task_ids)} tasks"
+        )
 
         return {
             "token": token,

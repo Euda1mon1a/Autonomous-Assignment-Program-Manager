@@ -17,6 +17,7 @@ Algorithms:
 The engine uses a modular constraint system (constraints.py) and pluggable solvers (solvers.py)
 for flexible, maintainable scheduling.
 """
+
 import time
 from datetime import date, timedelta
 from uuid import UUID
@@ -81,7 +82,9 @@ class SchedulingEngine:
         self.availability_matrix: dict = {}
         self.assignments: list[Assignment] = []
         self.validator = ACGMEValidator(db)
-        self.constraint_manager = constraint_manager or ConstraintManager.create_default()
+        self.constraint_manager = (
+            constraint_manager or ConstraintManager.create_default()
+        )
 
         # Initialize resilience service for health monitoring
         self.resilience = ResilienceService(
@@ -144,8 +147,8 @@ class SchedulingEngine:
                         f"Preserving {len(fmit_assignments)} FMIT faculty assignments"
                     )
 
-            # Issue #2: Delete existing assignments for this date range to avoid duplicates
-            self._delete_existing_assignments(preserve_ids=preserve_ids)
+            # NOTE: Deletion deferred until after successful solve (see Step 5.5)
+            # This prevents data loss if the solver fails
 
             # Step 2: Load absences and build availability matrix
             self._build_availability_matrix()
@@ -169,7 +172,10 @@ class SchedulingEngine:
 
             # Step 4: Create scheduling context (with resilience data if available)
             context = self._build_context(
-                residents, faculty, blocks, templates,
+                residents,
+                faculty,
+                blocks,
+                templates,
                 include_resilience=check_resilience,
             )
 
@@ -198,7 +204,9 @@ class SchedulingEngine:
 
             # Step 10: Update run record with results
             runtime = time.time() - start_time
-            self._update_run_with_results(run, algorithm, validation, runtime, solver_result)
+            self._update_run_with_results(
+                run, algorithm, validation, runtime, solver_result
+            )
 
             # Issue #3: Single atomic commit - all or nothing
             self.db.commit()
@@ -222,15 +230,29 @@ class SchedulingEngine:
                 "run_id": run.id,
                 "solver_stats": solver_result.statistics,
                 "resilience": {
-                    "pre_generation_status": self._pre_health_report.overall_status if self._pre_health_report else None,
-                    "post_generation_status": post_health_report.overall_status if post_health_report else None,
-                    "utilization_rate": post_health_report.utilization.utilization_rate if post_health_report else None,
-                    "n1_compliant": post_health_report.n1_pass if post_health_report else None,
-                    "n2_compliant": post_health_report.n2_pass if post_health_report else None,
+                    "pre_generation_status": self._pre_health_report.overall_status
+                    if self._pre_health_report
+                    else None,
+                    "post_generation_status": post_health_report.overall_status
+                    if post_health_report
+                    else None,
+                    "utilization_rate": post_health_report.utilization.utilization_rate
+                    if post_health_report
+                    else None,
+                    "n1_compliant": post_health_report.n1_pass
+                    if post_health_report
+                    else None,
+                    "n2_compliant": post_health_report.n2_pass
+                    if post_health_report
+                    else None,
                     "warnings": resilience_warnings,
-                    "immediate_actions": post_health_report.immediate_actions if post_health_report else [],
+                    "immediate_actions": post_health_report.immediate_actions
+                    if post_health_report
+                    else [],
                     # New: Include resilience constraint activity
-                    "resilience_constraints_active": context.has_resilience_data() if context else False,
+                    "resilience_constraints_active": context.has_resilience_data()
+                    if context
+                    else False,
                     "hub_faculty_count": len(context.hub_scores) if context else 0,
                 },
             }
@@ -325,8 +347,10 @@ class SchedulingEngine:
                     self.constraint_manager.enable("HubProtection")
 
             # Get current utilization from pre-generation check
-            if hasattr(self, '_pre_health_report') and self._pre_health_report:
-                context.current_utilization = self._pre_health_report.utilization.utilization_rate
+            if hasattr(self, "_pre_health_report") and self._pre_health_report:
+                context.current_utilization = (
+                    self._pre_health_report.utilization.utilization_rate
+                )
                 context.target_utilization = self.resilience.config.max_utilization
 
                 # Enable utilization buffer constraint
@@ -352,7 +376,9 @@ class SchedulingEngine:
             preference_trails = self._get_preference_trails(faculty)
             if preference_trails:
                 context.preference_trails = preference_trails
-                logger.debug(f"Loaded preference trails for {len(preference_trails)} faculty")
+                logger.debug(
+                    f"Loaded preference trails for {len(preference_trails)} faculty"
+                )
 
                 # Enable preference trail constraint
                 if self.constraint_manager:
@@ -414,10 +440,12 @@ class SchedulingEngine:
 
         try:
             # Check if we have cached hub analysis results
-            if hasattr(self.resilience, 'hub_analyzer'):
+            if hasattr(self.resilience, "hub_analyzer"):
                 # Get latest centrality data
                 for fac in faculty:
-                    centrality = self.resilience.hub_analyzer.get_faculty_centrality(fac.id)
+                    centrality = self.resilience.hub_analyzer.get_faculty_centrality(
+                        fac.id
+                    )
                     if centrality:
                         hub_scores[fac.id] = centrality.composite_score
         except Exception as e:
@@ -440,7 +468,7 @@ class SchedulingEngine:
 
         try:
             # Use contingency analyzer if available
-            if hasattr(self.resilience, 'contingency'):
+            if hasattr(self.resilience, "contingency"):
                 # This would need existing assignments to analyze
                 # For now, return empty - will be populated after solving
                 pass
@@ -449,7 +477,9 @@ class SchedulingEngine:
 
         return n1_vulnerable
 
-    def _get_preference_trails(self, faculty: list[Person]) -> dict[UUID, dict[str, float]]:
+    def _get_preference_trails(
+        self, faculty: list[Person]
+    ) -> dict[UUID, dict[str, float]]:
         """
         Get preference trail data from stigmergy system.
 
@@ -459,9 +489,11 @@ class SchedulingEngine:
         preference_trails = {}
 
         try:
-            if hasattr(self.resilience, 'stigmergy'):
+            if hasattr(self.resilience, "stigmergy"):
                 for fac in faculty:
-                    prefs = self.resilience.get_faculty_preferences(fac.id, min_strength=0.3)
+                    prefs = self.resilience.get_faculty_preferences(
+                        fac.id, min_strength=0.3
+                    )
                     if prefs:
                         faculty_prefs = {}
                         for trail in prefs:
@@ -494,7 +526,7 @@ class SchedulingEngine:
         }
 
         try:
-            if hasattr(self.resilience, 'blast_radius'):
+            if hasattr(self.resilience, "blast_radius"):
                 blast_radius = self.resilience.blast_radius
 
                 # Get faculty zone assignments
@@ -566,10 +598,14 @@ class SchedulingEngine:
 
         while current_date <= self.end_date:
             for time_of_day in ["AM", "PM"]:
-                existing = self.db.query(Block).filter(
-                    Block.date == current_date,
-                    Block.time_of_day == time_of_day,
-                ).first()
+                existing = (
+                    self.db.query(Block)
+                    .filter(
+                        Block.date == current_date,
+                        Block.time_of_day == time_of_day,
+                    )
+                    .first()
+                )
 
                 if existing:
                     blocks.append(existing)
@@ -642,16 +678,24 @@ class SchedulingEngine:
         people = self.db.query(Person).all()
 
         # Get all blocks in range
-        blocks = self.db.query(Block).filter(
-            Block.date >= self.start_date,
-            Block.date <= self.end_date,
-        ).all()
+        blocks = (
+            self.db.query(Block)
+            .filter(
+                Block.date >= self.start_date,
+                Block.date <= self.end_date,
+            )
+            .all()
+        )
 
         # Get absences in range
-        absences = self.db.query(Absence).filter(
-            Absence.start_date <= self.end_date,
-            Absence.end_date >= self.start_date,
-        ).all()
+        absences = (
+            self.db.query(Absence)
+            .filter(
+                Absence.start_date <= self.end_date,
+                Absence.end_date >= self.start_date,
+            )
+            .all()
+        )
 
         # Build matrix
         for person in people:
@@ -720,7 +764,9 @@ class SchedulingEngine:
             self.db.query(Assignment)
             .join(Block, Assignment.block_id == Block.id)
             .join(Person, Assignment.person_id == Person.id)
-            .join(RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id)
+            .join(
+                RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
+            )
             .filter(
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
@@ -797,9 +843,9 @@ class SchedulingEngine:
         for block_id, block_assignments in assignments_by_block.items():
             # Get resident details for this block
             resident_ids = [a.person_id for a in block_assignments]
-            residents_in_block = self.db.query(Person).filter(
-                Person.id.in_(resident_ids)
-            ).all()
+            residents_in_block = (
+                self.db.query(Person).filter(Person.id.in_(resident_ids)).all()
+            )
 
             # Calculate required faculty
             pgy1_count = sum(1 for r in residents_in_block if r.pgy_level == 1)
@@ -810,13 +856,12 @@ class SchedulingEngine:
             required = max(1, required) if residents_in_block else 0
 
             # Find available faculty
-            available = [
-                f for f in faculty
-                if self._is_available(f.id, block_id)
-            ]
+            available = [f for f in faculty if self._is_available(f.id, block_id)]
 
             # Assign faculty (balance load)
-            selected = sorted(available, key=lambda f: faculty_assignments[f.id])[:required]
+            selected = sorted(available, key=lambda f: faculty_assignments[f.id])[
+                :required
+            ]
 
             for fac in selected:
                 assignment = Assignment(
@@ -904,7 +949,14 @@ class SchedulingEngine:
                 f"({self.start_date} to {self.end_date}), preserved {preserved_count}"
             )
 
-    def _update_run_status(self, run: ScheduleRun, status: str, total_assigned: int, violations: int, runtime: float):
+    def _update_run_status(
+        self,
+        run: ScheduleRun,
+        status: str,
+        total_assigned: int,
+        violations: int,
+        runtime: float,
+    ):
         """Update run record with final status."""
         run.status = status
         run.total_blocks_assigned = total_assigned
@@ -941,6 +993,7 @@ class SchedulingEngine:
     def _empty_validation(self):
         """Return empty validation result."""
         from app.schemas.schedule import ValidationResult
+
         return ValidationResult(
             valid=True,
             total_violations=0,
@@ -956,14 +1009,23 @@ class SchedulingEngine:
         """
         try:
             faculty = self._get_faculty()
-            blocks = self.db.query(Block).filter(
-                Block.date >= self.start_date,
-                Block.date <= self.end_date,
-            ).all()
-            existing_assignments = self.db.query(Assignment).join(Block).filter(
-                Block.date >= self.start_date,
-                Block.date <= self.end_date,
-            ).all()
+            blocks = (
+                self.db.query(Block)
+                .filter(
+                    Block.date >= self.start_date,
+                    Block.date <= self.end_date,
+                )
+                .all()
+            )
+            existing_assignments = (
+                self.db.query(Assignment)
+                .join(Block)
+                .filter(
+                    Block.date >= self.start_date,
+                    Block.date <= self.end_date,
+                )
+                .all()
+            )
 
             report = self.resilience.check_health(
                 faculty=faculty,

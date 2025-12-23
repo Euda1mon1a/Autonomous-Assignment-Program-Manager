@@ -4,13 +4,14 @@ Rate limiting tier definitions with token bucket and sliding window algorithms.
 Implements a multi-tier rate limiting system with per-endpoint limits,
 burst handling via token bucket, and graceful degradation.
 """
+
 import logging
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 import redis
+
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -24,11 +25,12 @@ class RateLimitTier(str, Enum):
     Each tier has different rate limits for API consumption.
     Higher tiers get more requests and higher burst capacity.
     """
-    FREE = "free"           # Default tier for unauthenticated requests
-    STANDARD = "standard"   # Clinical staff, residents
-    PREMIUM = "premium"     # Faculty, coordinators
-    ADMIN = "admin"         # Admin users
-    INTERNAL = "internal"   # Internal services (bypass limits)
+
+    FREE = "free"  # Default tier for unauthenticated requests
+    STANDARD = "standard"  # Clinical staff, residents
+    PREMIUM = "premium"  # Faculty, coordinators
+    ADMIN = "admin"  # Admin users
+    INTERNAL = "internal"  # Internal services (bypass limits)
 
 
 @dataclass
@@ -44,6 +46,7 @@ class RateLimitConfig:
         burst_size: Maximum burst requests (token bucket capacity)
         burst_refill_rate: Tokens added per second (token bucket refill)
     """
+
     requests_per_minute: int
     requests_per_hour: int
     burst_size: int
@@ -64,10 +67,11 @@ class EndpointLimit:
         requests_per_hour: Override for this endpoint
         burst_size: Override for burst capacity
     """
+
     endpoint: str
-    requests_per_minute: Optional[int] = None
-    requests_per_hour: Optional[int] = None
-    burst_size: Optional[int] = None
+    requests_per_minute: int | None = None
+    requests_per_hour: int | None = None
+    burst_size: int | None = None
 
 
 # Tier configurations
@@ -136,7 +140,7 @@ ENDPOINT_LIMITS = {
 }
 
 
-def get_tier_for_role(role: Optional[str]) -> RateLimitTier:
+def get_tier_for_role(role: str | None) -> RateLimitTier:
     """
     Determine rate limit tier based on user role.
 
@@ -176,7 +180,7 @@ def get_tier_config(tier: RateLimitTier) -> RateLimitConfig:
     return TIER_CONFIGS[tier]
 
 
-def get_endpoint_limit(endpoint: str) -> Optional[EndpointLimit]:
+def get_endpoint_limit(endpoint: str) -> EndpointLimit | None:
     """
     Get endpoint-specific rate limit if configured.
 
@@ -395,7 +399,7 @@ class SlidingWindowCounter:
             }
 
 
-def get_custom_limit(user_id: str, redis_client: redis.Redis) -> Optional[RateLimitConfig]:
+def get_custom_limit(user_id: str, redis_client: redis.Redis) -> RateLimitConfig | None:
     """
     Get custom rate limit for a specific user if configured.
 

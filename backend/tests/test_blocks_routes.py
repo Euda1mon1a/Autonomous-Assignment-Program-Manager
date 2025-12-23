@@ -3,6 +3,7 @@
 Comprehensive test suite covering CRUD operations, filters, validation,
 date range queries, and error handling for block endpoints.
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -49,10 +50,7 @@ class TestListBlocksEndpoint:
     def test_list_blocks_filter_by_start_date(self, client: TestClient, sample_blocks):
         """Test filtering blocks by start_date."""
         filter_date = (date.today() + timedelta(days=3)).isoformat()
-        response = client.get(
-            "/api/blocks",
-            params={"start_date": filter_date}
-        )
+        response = client.get("/api/blocks", params={"start_date": filter_date})
 
         assert response.status_code == 200
         data = response.json()
@@ -65,10 +63,7 @@ class TestListBlocksEndpoint:
     def test_list_blocks_filter_by_end_date(self, client: TestClient, sample_blocks):
         """Test filtering blocks by end_date."""
         filter_date = (date.today() + timedelta(days=3)).isoformat()
-        response = client.get(
-            "/api/blocks",
-            params={"end_date": filter_date}
-        )
+        response = client.get("/api/blocks", params={"end_date": filter_date})
 
         assert response.status_code == 200
         data = response.json()
@@ -100,11 +95,7 @@ class TestListBlocksEndpoint:
         filter_end = (start + timedelta(days=9)).isoformat()
 
         response = client.get(
-            "/api/blocks",
-            params={
-                "start_date": filter_start,
-                "end_date": filter_end
-            }
+            "/api/blocks", params={"start_date": filter_start, "end_date": filter_end}
         )
 
         assert response.status_code == 200
@@ -116,7 +107,11 @@ class TestListBlocksEndpoint:
         # All blocks should be in range
         for block in data["items"]:
             block_date = date.fromisoformat(block["date"])
-            assert date.fromisoformat(filter_start) <= block_date <= date.fromisoformat(filter_end)
+            assert (
+                date.fromisoformat(filter_start)
+                <= block_date
+                <= date.fromisoformat(filter_end)
+            )
 
     def test_list_blocks_filter_by_block_number(self, client: TestClient, db: Session):
         """Test filtering blocks by block_number."""
@@ -135,10 +130,7 @@ class TestListBlocksEndpoint:
                 db.add(block)
         db.commit()
 
-        response = client.get(
-            "/api/blocks",
-            params={"block_number": 2}
-        )
+        response = client.get("/api/blocks", params={"block_number": 2})
 
         assert response.status_code == 200
         data = response.json()
@@ -173,8 +165,8 @@ class TestListBlocksEndpoint:
             params={
                 "start_date": filter_start,
                 "end_date": filter_end,
-                "block_number": 2
-            }
+                "block_number": 2,
+            },
         )
 
         assert response.status_code == 200
@@ -183,7 +175,11 @@ class TestListBlocksEndpoint:
         # Validate combined filters
         for block in data["items"]:
             block_date = date.fromisoformat(block["date"])
-            assert date.fromisoformat(filter_start) <= block_date <= date.fromisoformat(filter_end)
+            assert (
+                date.fromisoformat(filter_start)
+                <= block_date
+                <= date.fromisoformat(filter_end)
+            )
             assert block["block_number"] == 2
 
     def test_list_blocks_no_results_in_range(self, client: TestClient, sample_blocks):
@@ -193,11 +189,7 @@ class TestListBlocksEndpoint:
         future_end = (date.today() + timedelta(days=400)).isoformat()
 
         response = client.get(
-            "/api/blocks",
-            params={
-                "start_date": future_start,
-                "end_date": future_end
-            }
+            "/api/blocks", params={"start_date": future_start, "end_date": future_end}
         )
 
         assert response.status_code == 200
@@ -353,7 +345,11 @@ class TestCreateBlockEndpoint:
 
         assert response.status_code == 422  # Validation error
         error_detail = str(response.json()["detail"])
-        assert "AM" in error_detail or "PM" in error_detail or "time_of_day" in error_detail
+        assert (
+            "AM" in error_detail
+            or "PM" in error_detail
+            or "time_of_day" in error_detail
+        )
 
     def test_create_block_missing_required_fields(self, client: TestClient):
         """Test creating block with missing required fields."""
@@ -442,7 +438,7 @@ class TestGenerateBlocksEndpoint:
                 "start_date": test_date.isoformat(),
                 "end_date": test_date.isoformat(),
                 "base_block_number": 1,
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -466,7 +462,7 @@ class TestGenerateBlocksEndpoint:
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
                 "base_block_number": 1,
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -483,7 +479,7 @@ class TestGenerateBlocksEndpoint:
                 "start_date": test_date.isoformat(),
                 "end_date": test_date.isoformat(),
                 "base_block_number": 5,
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -504,7 +500,7 @@ class TestGenerateBlocksEndpoint:
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
                 "base_block_number": 1,
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -521,7 +517,7 @@ class TestGenerateBlocksEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         # Should handle gracefully (either error or return 0 blocks)
@@ -546,7 +542,7 @@ class TestGenerateBlocksEndpoint:
                 "start_date": test_date.isoformat(),
                 "end_date": test_date.isoformat(),
                 # base_block_number not provided, should default to 1
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -625,7 +621,9 @@ class TestDeleteBlockEndpoint:
 class TestBlockStructureAndValidation:
     """Tests for block data structure and field validation."""
 
-    def test_block_response_has_all_fields(self, client: TestClient, sample_block: Block):
+    def test_block_response_has_all_fields(
+        self, client: TestClient, sample_block: Block
+    ):
         """Test that block response includes all expected fields."""
         response = client.get(f"/api/blocks/{sample_block.id}")
 
@@ -633,7 +631,14 @@ class TestBlockStructureAndValidation:
         data = response.json()
 
         # Required fields
-        required_fields = ["id", "date", "time_of_day", "block_number", "is_weekend", "is_holiday"]
+        required_fields = [
+            "id",
+            "date",
+            "time_of_day",
+            "block_number",
+            "is_weekend",
+            "is_holiday",
+        ]
         for field in required_fields:
             assert field in data
 
@@ -737,7 +742,7 @@ class TestBlockEdgeCases:
             params={
                 "start_date": test_date.isoformat(),
                 "end_date": test_date.isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -762,8 +767,7 @@ class TestBlockEdgeCases:
 
         # Query with exact start date
         response = client.get(
-            "/api/blocks",
-            params={"start_date": base_date.isoformat()}
+            "/api/blocks", params={"start_date": base_date.isoformat()}
         )
 
         assert response.status_code == 200

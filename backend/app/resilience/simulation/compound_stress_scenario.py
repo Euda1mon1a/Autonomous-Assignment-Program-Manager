@@ -19,30 +19,30 @@ FMIT must continue. The mission is non-negotiable.
 This answers: "What if everything happens all at once?"
 """
 
-import math
 import random
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 
 class StaffType(Enum):
     """Types of staff in the simulation."""
+
     FACULTY = "faculty"
     SCREENER_DEDICATED = "screener_dedicated"  # MA, LVN
-    SCREENER_RN = "screener_rn"                # RN fallback
-    SCREENER_EMT = "screener_emt"              # Active duty medic
-    INTERN = "intern"                          # PGY-1
-    SENIOR_RESIDENT = "senior_resident"        # PGY-2/3
+    SCREENER_RN = "screener_rn"  # RN fallback
+    SCREENER_EMT = "screener_emt"  # Active duty medic
+    INTERN = "intern"  # PGY-1
+    SENIOR_RESIDENT = "senior_resident"  # PGY-2/3
 
 
 class DefenseLevel(Enum):
     """System defense levels."""
-    GREEN = 0   # Normal
+
+    GREEN = 0  # Normal
     YELLOW = 1  # Warning
     ORANGE = 2  # Degraded - OB turf acceptable
-    RED = 3     # Crisis - OB turf preferred
-    BLACK = 4   # Survival mode - OB turf mandatory
+    RED = 3  # Crisis - OB turf preferred
+    BLACK = 4  # Survival mode - OB turf mandatory
 
 
 @dataclass
@@ -52,33 +52,34 @@ class CompoundStressConfig:
 
     Models everything happening at once during PCS season.
     """
+
     # === FACULTY ===
-    initial_faculty: int = 4          # Your PCS arrival reality
-    expected_faculty: int = 10        # Normal staffing
-    minimum_faculty_for_fmit: int = 5 # Below this, FMIT is at risk
-    faculty_pcs_departures: int = 3   # How many leave during PCS
+    initial_faculty: int = 4  # Your PCS arrival reality
+    expected_faculty: int = 10  # Normal staffing
+    minimum_faculty_for_fmit: int = 5  # Below this, FMIT is at risk
+    faculty_pcs_departures: int = 3  # How many leave during PCS
     faculty_arrival_lag_days: int = 45
-    faculty_onboarding_days: int = 21 # 50% productivity during onboarding
+    faculty_onboarding_days: int = 21  # 50% productivity during onboarding
 
     # === SCREENERS ===
     initial_screeners_dedicated: int = 2
-    initial_screeners_rn: int = 3     # Available for fallback
-    initial_screeners_emt: int = 2    # Active duty medics
+    initial_screeners_rn: int = 3  # Available for fallback
+    initial_screeners_emt: int = 2  # Active duty medics
     screener_turnover_rate: float = 0.40  # 40% annual (higher than faculty)
-    optimal_screener_ratio: float = 2.5   # Per physician
+    optimal_screener_ratio: float = 2.5  # Per physician
     minimum_screener_ratio: float = 1.0
 
     # === RESIDENTS ===
-    initial_interns: int = 4          # PGY-1
-    initial_seniors: int = 4          # PGY-2/3
-    july_intern_competency: float = 0.5   # 50% effective in July
+    initial_interns: int = 4  # PGY-1
+    initial_seniors: int = 4  # PGY-2/3
+    july_intern_competency: float = 0.5  # 50% effective in July
     intern_competency_gain_per_month: float = 0.08  # Ramp up
 
     # === FMIT (NON-NEGOTIABLE) ===
-    fmit_weeks_per_year: int = 52     # Every week needs coverage
-    fmit_faculty_required: int = 1     # Per week minimum
+    fmit_weeks_per_year: int = 52  # Every week needs coverage
+    fmit_faculty_required: int = 1  # Per week minimum
     fmit_can_turf_to_ob: bool = True  # Only at ORANGE+ defense
-    fmit_turf_penalty: float = 10.0   # Score penalty for OB turf
+    fmit_turf_penalty: float = 10.0  # Score penalty for OB turf
 
     # === CALL ===
     call_nights_per_week: int = 7
@@ -92,16 +93,16 @@ class CompoundStressConfig:
 
     # === BURNOUT DYNAMICS ===
     # Reduced rates to model long grind, not immediate collapse
-    base_burnout_rate: float = 0.0003     # Daily base rate (~10%/year baseline)
+    base_burnout_rate: float = 0.0003  # Daily base rate (~10%/year baseline)
     workload_burnout_multiplier: float = 3.0  # Less aggressive
     burnout_contagion_rate: float = 0.01  # Spreads to teammates
-    burnout_threshold: float = 1.5        # Workload multiplier
+    burnout_threshold: float = 1.5  # Workload multiplier
     critical_threshold: float = 2.0
 
     # === ACGME CONTINUITY (FM-specific) ===
     # Residents must have minimum continuity weeks per year
     min_continuity_weeks_per_resident: int = 40  # ACGME FM requirement
-    continuity_patients_per_resident: int = 120   # Panel size target
+    continuity_patients_per_resident: int = 120  # Panel size target
 
     # === SIMULATION ===
     duration_days: int = 365
@@ -111,6 +112,7 @@ class CompoundStressConfig:
 @dataclass
 class DailyState:
     """Complete system state for a single day."""
+
     day: int
 
     # Staffing counts
@@ -150,6 +152,7 @@ class DailyState:
 @dataclass
 class CompoundStressResult:
     """Results from compound stress simulation."""
+
     config: CompoundStressConfig
 
     # Survival
@@ -229,8 +232,9 @@ class CompoundStressScenario:
         """Calculate intern competency based on time since July."""
         # Assume simulation starts July 1 (day 0)
         months_elapsed = self._day / 30.0
-        competency = self.config.july_intern_competency + \
-                     (months_elapsed * self.config.intern_competency_gain_per_month)
+        competency = self.config.july_intern_competency + (
+            months_elapsed * self.config.intern_competency_gain_per_month
+        )
         return min(1.0, competency)
 
     def _calculate_effective_physicians(self) -> float:
@@ -243,7 +247,9 @@ class CompoundStressScenario:
 
         # Interns count based on competency
         intern_competency = self._calculate_intern_competency()
-        effective_interns = self._interns * intern_competency * 0.7  # Never fully independent
+        effective_interns = (
+            self._interns * intern_competency * 0.7
+        )  # Never fully independent
 
         return effective_faculty + effective_seniors + effective_interns
 
@@ -263,15 +269,20 @@ class CompoundStressScenario:
         current_ratio = total_screeners / physicians
         if current_ratio < self.config.minimum_screener_ratio:
             # Need fallback
-            deficit = (self.config.minimum_screener_ratio * physicians) - total_screeners
+            deficit = (
+                self.config.minimum_screener_ratio * physicians
+            ) - total_screeners
             rn_needed = min(int(deficit), self._screener_rn_available)
             total_screeners += rn_needed
 
             current_ratio = total_screeners / physicians
             if current_ratio < self.config.minimum_screener_ratio:
                 emt_needed = min(
-                    int((self.config.minimum_screener_ratio * physicians) - total_screeners),
-                    self._screener_emt_available
+                    int(
+                        (self.config.minimum_screener_ratio * physicians)
+                        - total_screeners
+                    ),
+                    self._screener_emt_available,
                 )
                 total_screeners += emt_needed
 
@@ -284,20 +295,23 @@ class CompoundStressScenario:
         """Calculate workload per physician."""
         physicians = self._calculate_effective_physicians()
         if physicians <= 0:
-            return float('inf')
+            return float("inf")
 
         # Base clinic workload
         clinic_workload = self.config.clinic_sessions_per_week / 5  # Daily
 
         # Normalize to expected staffing
-        expected_physicians = self.config.expected_faculty + self._seniors + \
-                             (self._interns * 0.7)
+        expected_physicians = (
+            self.config.expected_faculty + self._seniors + (self._interns * 0.7)
+        )
 
         return clinic_workload / physicians * (expected_physicians / 10)
 
     def _calculate_call_interval(self) -> float:
         """Calculate average days between call for each physician."""
-        call_eligible = self._faculty + self._seniors  # Interns don't take independent call
+        call_eligible = (
+            self._faculty + self._seniors
+        )  # Interns don't take independent call
         if call_eligible <= 0:
             return 0.0
         return call_eligible / self.config.call_nights_per_week
@@ -359,7 +373,10 @@ class CompoundStressScenario:
         elif available_for_fmit == 1:
             # Only one faculty - they're on FMIT, no one for backup
             # Must turf to OB at ORANGE+
-            if self.config.fmit_can_turf_to_ob and defense_level.value >= DefenseLevel.ORANGE.value:
+            if (
+                self.config.fmit_can_turf_to_ob
+                and defense_level.value >= DefenseLevel.ORANGE.value
+            ):
                 return True, True
             else:
                 # Can't turf yet but only one faculty
@@ -409,7 +426,9 @@ class CompoundStressScenario:
 
             # Call frequency multiplier
             if call_interval < self.config.sustainable_call_interval_days:
-                call_stress = self.config.sustainable_call_interval_days / max(1, call_interval)
+                call_stress = self.config.sustainable_call_interval_days / max(
+                    1, call_interval
+                )
                 departure_prob *= self.config.call_burnout_multiplier * call_stress
 
             # Team burnout contagion
@@ -459,7 +478,10 @@ class CompoundStressScenario:
         self._screener_arriving = new_screener_queue
 
         # Reduce onboarding count after onboarding period
-        if self._faculty_onboarding > 0 and self._day % self.config.faculty_onboarding_days == 0:
+        if (
+            self._faculty_onboarding > 0
+            and self._day % self.config.faculty_onboarding_days == 0
+        ):
             self._faculty_onboarding = max(0, self._faculty_onboarding - 1)
 
         # Try to hire replacements
@@ -470,7 +492,9 @@ class CompoundStressScenario:
     def _attempt_hiring(self):
         """Attempt to hire replacements."""
         # Faculty hiring
-        faculty_deficit = self.config.expected_faculty - self._faculty - len(self._faculty_arriving)
+        faculty_deficit = (
+            self.config.expected_faculty - self._faculty - len(self._faculty_arriving)
+        )
         if faculty_deficit > 0 and len(self._faculty_arriving) < 3:
             if self._rng.random() < 0.03:  # 3% daily chance to initiate hire
                 arrival_day = self._day + self.config.faculty_arrival_lag_days
@@ -496,7 +520,9 @@ class CompoundStressScenario:
             sessions_per_physician *= 0.6
         elif screener_ratio < self.config.optimal_screener_ratio:
             # Moderate slowdown
-            efficiency = 0.6 + (0.4 * screener_ratio / self.config.optimal_screener_ratio)
+            efficiency = 0.6 + (
+                0.4 * screener_ratio / self.config.optimal_screener_ratio
+            )
             sessions_per_physician *= efficiency
 
         covered = int(physicians * sessions_per_physician / 5)  # Daily
@@ -573,8 +599,8 @@ class CompoundStressScenario:
             faculty_count=self._faculty,
             faculty_onboarding=self._faculty_onboarding,
             screener_dedicated=self._screener_dedicated,
-            screener_rn_active=getattr(self, '_rn_active', 0),
-            screener_emt_active=getattr(self, '_emt_active', 0),
+            screener_rn_active=getattr(self, "_rn_active", 0),
+            screener_emt_active=getattr(self, "_emt_active", 0),
             intern_count=self._interns,
             senior_count=self._seniors,
             effective_faculty=self._faculty - (self._faculty_onboarding * 0.5),
@@ -658,20 +684,22 @@ class CompoundStressScenario:
         states = self._states
 
         days_in_crisis = sum(
-            1 for s in states
+            1
+            for s in states
             if s.defense_level in (DefenseLevel.RED, DefenseLevel.BLACK)
         )
 
         days_below_min_ratio = sum(
-            1 for s in states
-            if s.screener_ratio < self.config.minimum_screener_ratio
+            1 for s in states if s.screener_ratio < self.config.minimum_screener_ratio
         )
 
         rn_fallback_days = sum(1 for s in states if s.screener_rn_active > 0)
         emt_fallback_days = sum(1 for s in states if s.screener_emt_active > 0)
 
         peak_workload = max(s.workload_per_physician for s in states)
-        peak_call = min(s.call_interval_days for s in states if s.call_interval_days > 0)
+        peak_call = min(
+            s.call_interval_days for s in states if s.call_interval_days > 0
+        )
 
         # FMIT survival is THE metric
         fmit_survived = self._fmit_failed == 0
@@ -683,7 +711,9 @@ class CompoundStressScenario:
             days_survived=self._day,
             final_faculty=self._faculty,
             final_screeners=self._screener_dedicated,
-            final_defense_level=states[-1].defense_level if states else DefenseLevel.BLACK,
+            final_defense_level=states[-1].defense_level
+            if states
+            else DefenseLevel.BLACK,
             fmit_weeks_covered=self._fmit_covered,
             fmit_weeks_turfed=self._fmit_turfed,
             fmit_weeks_failed=self._fmit_failed,
@@ -728,6 +758,7 @@ def run_compound_monte_carlo(config: CompoundStressConfig, n_runs: int = 100) ->
         "avg_days_survived": sum(r.days_survived for r in results) / n_runs,
         "avg_fmit_turfed": sum(r.fmit_weeks_turfed for r in results) / n_runs,
         "avg_fmit_failed": sum(r.fmit_weeks_failed for r in results) / n_runs,
-        "avg_burnout_departures": sum(r.total_burnout_departures for r in results) / n_runs,
+        "avg_burnout_departures": sum(r.total_burnout_departures for r in results)
+        / n_runs,
         "avg_days_crisis": sum(r.days_in_crisis for r in results) / n_runs,
     }

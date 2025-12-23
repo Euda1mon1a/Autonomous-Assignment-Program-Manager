@@ -9,14 +9,12 @@ Provides enhanced response logging capabilities:
 - Streaming response handling
 """
 
-import io
 import json
 import logging
 import time
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 from fastapi import Request, Response
-from starlette.background import BackgroundTask
 from starlette.responses import StreamingResponse
 
 from app.middleware.logging.filters import SensitiveDataFilter
@@ -35,7 +33,7 @@ class ResponseLogger:
         self,
         max_body_size: int = 10 * 1024,  # 10 KB
         filter_sensitive: bool = True,
-        sensitive_filter: Optional[SensitiveDataFilter] = None,
+        sensitive_filter: SensitiveDataFilter | None = None,
     ):
         """
         Initialize response logger.
@@ -55,7 +53,7 @@ class ResponseLogger:
         response: Response,
         request_id: str,
         duration_ms: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Log response details.
 
@@ -122,7 +120,7 @@ class ResponseLogger:
 
     def _parse_response_body(
         self, body: bytes, content_type: str
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Parse and filter response body.
 
@@ -193,7 +191,7 @@ class StreamingResponseLogger:
     using background tasks to log after response is sent.
     """
 
-    def __init__(self, response_logger: Optional[ResponseLogger] = None):
+    def __init__(self, response_logger: ResponseLogger | None = None):
         """
         Initialize streaming response logger.
 
@@ -201,7 +199,7 @@ class StreamingResponseLogger:
             response_logger: ResponseLogger instance to use
         """
         self.response_logger = response_logger or ResponseLogger()
-        self._stream_data: Dict[str, Any] = {}
+        self._stream_data: dict[str, Any] = {}
 
     def log_streaming_response(
         self,
@@ -259,7 +257,7 @@ class ResponseMetrics:
 
     def __init__(self):
         """Initialize response metrics tracker."""
-        self.metrics: Dict[str, Any] = {
+        self.metrics: dict[str, Any] = {
             "total_requests": 0,
             "status_codes": {},
             "response_times": {
@@ -330,7 +328,7 @@ class ResponseMetrics:
         endpoint["max_duration_ms"] = max(endpoint["max_duration_ms"], duration_ms)
         endpoint["total_size_bytes"] += response_size
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get current metrics snapshot."""
         return self.metrics.copy()
 

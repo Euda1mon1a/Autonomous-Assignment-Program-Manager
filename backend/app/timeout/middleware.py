@@ -10,9 +10,10 @@ Provides global request timeout handling with:
 """
 
 import asyncio
+import builtins
 import logging
 import time
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -75,7 +76,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
         app,
         default_timeout: float = 30.0,
         timeout_header: bool = True,
-        exclude_paths: Optional[list[str]] = None,
+        exclude_paths: list[str] | None = None,
     ):
         """
         Initialize timeout middleware.
@@ -89,7 +90,13 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.default_timeout = default_timeout
         self.timeout_header = timeout_header
-        self.exclude_paths = exclude_paths or ["/health", "/metrics", "/docs", "/redoc", "/openapi.json"]
+        self.exclude_paths = exclude_paths or [
+            "/health",
+            "/metrics",
+            "/docs",
+            "/redoc",
+            "/openapi.json",
+        ]
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """
@@ -115,10 +122,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
 
         try:
             # Execute request with timeout
-            response = await asyncio.wait_for(
-                call_next(request),
-                timeout=timeout
-            )
+            response = await asyncio.wait_for(call_next(request), timeout=timeout)
 
             # Add timeout headers if enabled
             if self.timeout_header:
@@ -130,7 +134,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
 
             return response
 
-        except asyncio.TimeoutError:
+        except builtins.TimeoutError:
             elapsed = time.monotonic() - start_time
 
             # Log timeout
@@ -142,17 +146,15 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
             # Record metrics
             if PROMETHEUS_AVAILABLE:
                 timeout_requests.labels(
-                    method=request.method,
-                    path=request.url.path,
-                    timeout_type="global"
+                    method=request.method, path=request.url.path, timeout_type="global"
                 ).inc()
                 timeout_duration.labels(
-                    method=request.method,
-                    path=request.url.path
+                    method=request.method, path=request.url.path
                 ).observe(elapsed)
 
             # Return timeout error response
             from fastapi.responses import JSONResponse
+
             return JSONResponse(
                 status_code=504,
                 content={
@@ -163,7 +165,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
                 headers={
                     "X-Timeout-Limit": str(timeout),
                     "X-Timeout-Elapsed": f"{elapsed:.3f}",
-                }
+                },
             )
 
         except TimeoutError as e:
@@ -178,16 +180,14 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
             # Record metrics
             if PROMETHEUS_AVAILABLE:
                 timeout_requests.labels(
-                    method=request.method,
-                    path=request.url.path,
-                    timeout_type="handler"
+                    method=request.method, path=request.url.path, timeout_type="handler"
                 ).inc()
                 timeout_duration.labels(
-                    method=request.method,
-                    path=request.url.path
+                    method=request.method, path=request.url.path
                 ).observe(elapsed)
 
             from fastapi.responses import JSONResponse
+
             return JSONResponse(
                 status_code=504,
                 content={
@@ -198,7 +198,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
                 headers={
                     "X-Timeout-Limit": str(e.timeout),
                     "X-Timeout-Elapsed": f"{elapsed:.3f}",
-                }
+                },
             )
 
         finally:
@@ -206,7 +206,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
             timeout_ctx.reset(token_remaining)
             timeout_start_ctx.reset(token_start)
 
-    def _get_endpoint_timeout(self, request: Request) -> Optional[float]:
+    def _get_endpoint_timeout(self, request: Request) -> float | None:
         """
         Get endpoint-specific timeout from route metadata.
 

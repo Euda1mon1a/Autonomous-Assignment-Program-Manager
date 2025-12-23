@@ -10,6 +10,7 @@ This module provides:
 - Key versioning for cache busting
 - Automatic serialization of complex parameters
 """
+
 import hashlib
 import json
 from typing import Any
@@ -34,7 +35,7 @@ class CacheKeyGenerator:
         namespace: str = "cache",
         version: str = "v1",
         prefix: str = "cache",
-        separator: str = ":"
+        separator: str = ":",
     ):
         """
         Initialize cache key generator.
@@ -55,7 +56,7 @@ class CacheKeyGenerator:
         function_name: str,
         include_namespace: bool = True,
         include_version: bool = True,
-        **kwargs
+        **kwargs,
     ) -> str:
         """
         Generate a cache key from function name and parameters.
@@ -91,10 +92,7 @@ class CacheKeyGenerator:
         return self.separator.join(components)
 
     def generate_tagged(
-        self,
-        function_name: str,
-        tags: list[str],
-        **kwargs
+        self, function_name: str, tags: list[str], **kwargs
     ) -> tuple[str, list[str]]:
         """
         Generate a cache key with associated tags for tag-based invalidation.
@@ -117,10 +115,7 @@ class CacheKeyGenerator:
         cache_key = self.generate(function_name, **kwargs)
 
         # Generate tag keys
-        tag_keys = [
-            f"{self.prefix}:tag:{self.namespace}:{tag}"
-            for tag in tags
-        ]
+        tag_keys = [f"{self.prefix}:tag:{self.namespace}:{tag}" for tag in tags]
 
         return cache_key, tag_keys
 
@@ -128,7 +123,7 @@ class CacheKeyGenerator:
         self,
         function_name: str | None = None,
         include_namespace: bool = True,
-        include_version: bool = True
+        include_version: bool = True,
     ) -> str:
         """
         Generate a Redis SCAN pattern for matching multiple keys.
@@ -190,10 +185,7 @@ class CacheKeyGenerator:
 
 
 def generate_cache_key(
-    namespace: str,
-    function_name: str,
-    version: str = "v1",
-    **kwargs
+    namespace: str, function_name: str, version: str = "v1", **kwargs
 ) -> str:
     """
     Quick helper function to generate a cache key.

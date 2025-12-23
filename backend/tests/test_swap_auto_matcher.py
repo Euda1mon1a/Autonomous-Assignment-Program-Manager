@@ -1,4 +1,5 @@
 """Comprehensive tests for SwapAutoMatcher service."""
+
 from datetime import date, datetime, timedelta
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
@@ -10,14 +11,13 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.faculty_preference import FacultyPreference
 from app.models.person import Person
-from app.models.swap import SwapApproval, SwapRecord, SwapStatus, SwapType
+from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.schemas.swap_matching import (
     MatchingCriteria,
     MatchPriority,
     MatchType,
 )
 from app.services.swap_auto_matcher import SwapAutoMatcher
-
 
 # ============================================================================
 # Fixtures
@@ -31,9 +31,9 @@ def faculty_members(db: Session) -> list[Person]:
     for i in range(6):
         faculty = Person(
             id=uuid4(),
-            name=f"Dr. Faculty {i+1}",
+            name=f"Dr. Faculty {i + 1}",
             type="faculty",
-            email=f"faculty{i+1}@hospital.org",
+            email=f"faculty{i + 1}@hospital.org",
             performs_procedures=True,
             specialties=["General"],
         )
@@ -76,7 +76,7 @@ def sample_blocks(db: Session) -> list[Block]:
     for i in range(12):  # 12 weeks
         block = Block(
             id=uuid4(),
-            name=f"Week {i+1}",
+            name=f"Week {i + 1}",
             start_date=start_date + timedelta(weeks=i),
             end_date=start_date + timedelta(weeks=i, days=6),
         )
@@ -90,7 +90,9 @@ def sample_blocks(db: Session) -> list[Block]:
 
 
 @pytest.fixture
-def faculty_preferences(db: Session, faculty_members: list[Person]) -> list[FacultyPreference]:
+def faculty_preferences(
+    db: Session, faculty_members: list[Person]
+) -> list[FacultyPreference]:
     """Create faculty preferences for testing."""
     preferences = []
     base_date = date.today() + timedelta(days=14)
@@ -132,9 +134,7 @@ def faculty_preferences(db: Session, faculty_members: list[Person]) -> list[Facu
 
 @pytest.fixture
 def pending_swap_requests(
-    db: Session,
-    faculty_members: list[Person],
-    sample_blocks: list[Block]
+    db: Session, faculty_members: list[Person], sample_blocks: list[Block]
 ) -> list[SwapRecord]:
     """Create pending swap requests for testing."""
     base_date = date.today() + timedelta(days=14)
@@ -710,8 +710,7 @@ class TestSuggestOptimalMatches:
     ):
         """Test suggesting optimal matches when matches exist."""
         matches = swap_auto_matcher.suggest_optimal_matches(
-            pending_swap_requests[0].id,
-            top_k=5
+            pending_swap_requests[0].id, top_k=5
         )
 
         assert len(matches) >= 1
@@ -741,14 +740,15 @@ class TestSuggestOptimalMatches:
     ):
         """Test that matches are sorted by compatibility score (highest first)."""
         matches = swap_auto_matcher.suggest_optimal_matches(
-            pending_swap_requests[0].id,
-            top_k=10
+            pending_swap_requests[0].id, top_k=10
         )
 
         if len(matches) > 1:
             # Verify descending order
             for i in range(len(matches) - 1):
-                assert matches[i].compatibility_score >= matches[i+1].compatibility_score
+                assert (
+                    matches[i].compatibility_score >= matches[i + 1].compatibility_score
+                )
 
     def test_suggest_optimal_matches_respects_top_k(
         self,
@@ -758,8 +758,7 @@ class TestSuggestOptimalMatches:
     ):
         """Test that suggest_optimal_matches respects the top_k parameter."""
         matches = swap_auto_matcher.suggest_optimal_matches(
-            pending_swap_requests[0].id,
-            top_k=2
+            pending_swap_requests[0].id, top_k=2
         )
 
         assert len(matches) <= 2
@@ -809,8 +808,7 @@ class TestSuggestOptimalMatches:
     ):
         """Test that scoring breakdown contains all 5 factors."""
         matches = swap_auto_matcher.suggest_optimal_matches(
-            pending_swap_requests[0].id,
-            top_k=1
+            pending_swap_requests[0].id, top_k=1
         )
 
         assert len(matches) >= 1
@@ -1098,8 +1096,7 @@ class TestSuggestProactiveSwaps:
         db.commit()
 
         suggestions = swap_auto_matcher.suggest_proactive_swaps(
-            faculty_members[0].id,
-            limit=5
+            faculty_members[0].id, limit=5
         )
 
         # Should suggest swaps for blocked week
@@ -1121,8 +1118,7 @@ class TestSuggestProactiveSwaps:
         """Test proactive suggestions when no conflicts exist."""
         # Faculty 5 has no preferences or assignments
         suggestions = swap_auto_matcher.suggest_proactive_swaps(
-            faculty_members[5].id,
-            limit=5
+            faculty_members[5].id, limit=5
         )
 
         # Should return empty list or very low benefit suggestions
@@ -1149,8 +1145,7 @@ class TestSuggestProactiveSwaps:
         db.commit()
 
         suggestions = swap_auto_matcher.suggest_proactive_swaps(
-            faculty_members[0].id,
-            limit=2
+            faculty_members[0].id, limit=2
         )
 
         assert len(suggestions) <= 2
@@ -1176,14 +1171,13 @@ class TestSuggestProactiveSwaps:
         db.commit()
 
         suggestions = swap_auto_matcher.suggest_proactive_swaps(
-            faculty_members[0].id,
-            limit=10
+            faculty_members[0].id, limit=10
         )
 
         if len(suggestions) > 1:
             # Verify descending order by benefit score
             for i in range(len(suggestions) - 1):
-                assert suggestions[i].benefit_score >= suggestions[i+1].benefit_score
+                assert suggestions[i].benefit_score >= suggestions[i + 1].benefit_score
 
 
 # ============================================================================
@@ -1239,9 +1233,7 @@ class TestEdgeCasesAndErrorHandling:
     ):
         """Test matching with ABSORB type swaps."""
         # pending_swap_requests[3] is an ABSORB type
-        matches = swap_auto_matcher.find_compatible_swaps(
-            pending_swap_requests[3].id
-        )
+        matches = swap_auto_matcher.find_compatible_swaps(pending_swap_requests[3].id)
 
         # ABSORB swaps should still find compatible matches
         assert isinstance(matches, list)
@@ -1350,8 +1342,7 @@ class TestEdgeCasesAndErrorHandling:
         if len(matches) > 0:
             # Should have warning about imminent swap
             has_imminent_warning = any(
-                "soon" in " ".join(match.warnings).lower()
-                for match in matches
+                "soon" in " ".join(match.warnings).lower() for match in matches
             )
             assert has_imminent_warning or len(matches[0].warnings) >= 0
 
@@ -1449,8 +1440,7 @@ class TestEdgeCasesAndErrorHandling:
             for match in matches:
                 if match.match.request_b_id == swap2.id:
                     has_workload_warning = any(
-                        "workload" in warning.lower()
-                        for warning in match.warnings
+                        "workload" in warning.lower() for warning in match.warnings
                     )
                     # May or may not have warning depending on threshold
                     assert isinstance(match.warnings, list)
@@ -1464,8 +1454,7 @@ class TestEdgeCasesAndErrorHandling:
     ):
         """Test that match explanations are generated correctly."""
         matches = swap_auto_matcher.suggest_optimal_matches(
-            pending_swap_requests[0].id,
-            top_k=5
+            pending_swap_requests[0].id, top_k=5
         )
 
         if len(matches) > 0:
@@ -1484,8 +1473,7 @@ class TestEdgeCasesAndErrorHandling:
     ):
         """Test that recommended actions vary based on priority."""
         matches = swap_auto_matcher.suggest_optimal_matches(
-            pending_swap_requests[0].id,
-            top_k=10
+            pending_swap_requests[0].id, top_k=10
         )
 
         if len(matches) > 0:
@@ -1535,8 +1523,8 @@ class TestMockedDependencies:
         # Mock the preference alignment scoring
         with patch.object(
             swap_auto_matcher.preference_service,
-            '_score_preference_alignment',
-            return_value=1.0
+            "_score_preference_alignment",
+            return_value=1.0,
         ):
             score = swap_auto_matcher.score_swap_compatibility(swap_a, swap_b)
 
@@ -1573,8 +1561,8 @@ class TestMockedDependencies:
 
         with patch.object(
             swap_auto_matcher.validation_service,
-            'validate_swap',
-            return_value=mock_validation
+            "validate_swap",
+            return_value=mock_validation,
         ):
             # Should proceed normally with valid validation
             score = swap_auto_matcher.score_swap_compatibility(swap_a, swap_b)

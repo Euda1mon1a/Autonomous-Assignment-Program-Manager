@@ -3,6 +3,7 @@ Tests for the Schedule API endpoints.
 
 Tests schedule generation, validation, and retrieval.
 """
+
 from datetime import date, timedelta
 
 import pytest
@@ -155,7 +156,9 @@ class TestValidateSchedule:
         start_date = date.today().isoformat()
         end_date = (date.today() + timedelta(days=6)).isoformat()
 
-        response = client.get(f"/api/schedule/validate?start_date={start_date}&end_date={end_date}")
+        response = client.get(
+            f"/api/schedule/validate?start_date={start_date}&end_date={end_date}"
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -172,7 +175,9 @@ class TestValidateSchedule:
         start_date = date.today().isoformat()
         end_date = (date.today() + timedelta(days=6)).isoformat()
 
-        response = client.get(f"/api/schedule/validate?start_date={start_date}&end_date={end_date}")
+        response = client.get(
+            f"/api/schedule/validate?start_date={start_date}&end_date={end_date}"
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -182,7 +187,9 @@ class TestValidateSchedule:
 
     def test_validate_schedule_invalid_date_format(self, client: TestClient):
         """Should return 400 for invalid date format."""
-        response = client.get("/api/schedule/validate?start_date=invalid&end_date=2024-01-07")
+        response = client.get(
+            "/api/schedule/validate?start_date=invalid&end_date=2024-01-07"
+        )
         assert response.status_code == 400
         assert "date" in response.json()["detail"].lower()
 
@@ -199,7 +206,7 @@ class TestValidateSchedule:
         from uuid import uuid4
 
         weekday_blocks = [b for b in sample_blocks if not b.is_weekend]
-        for block in weekday_blocks[:len(weekday_blocks) // 2]:
+        for block in weekday_blocks[: len(weekday_blocks) // 2]:
             assignment = Assignment(
                 id=uuid4(),
                 block_id=block.id,
@@ -212,7 +219,9 @@ class TestValidateSchedule:
         start_date = date.today().isoformat()
         end_date = (date.today() + timedelta(days=6)).isoformat()
 
-        response = client.get(f"/api/schedule/validate?start_date={start_date}&end_date={end_date}")
+        response = client.get(
+            f"/api/schedule/validate?start_date={start_date}&end_date={end_date}"
+        )
         assert response.status_code == 200
 
         data = response.json()

@@ -4,6 +4,7 @@ Comprehensive tests for academic blocks API routes.
 Tests the /matrix/academic-blocks and /matrix/blocks endpoints,
 covering CRUD operations, filtering, validation, and edge cases.
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -16,10 +17,10 @@ from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 
-
 # ============================================================================
 # Test Data Setup Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def academic_year_2024() -> str:
@@ -73,9 +74,9 @@ def sample_residents_all_pgy(db: Session) -> list[Person]:
         for i in range(2):  # 2 residents per PGY level
             resident = Person(
                 id=uuid4(),
-                name=f"Dr. Resident PGY{pgy}-{i+1}",
+                name=f"Dr. Resident PGY{pgy}-{i + 1}",
                 type="resident",
-                email=f"resident.pgy{pgy}.{i+1}@hospital.org",
+                email=f"resident.pgy{pgy}.{i + 1}@hospital.org",
                 pgy_level=pgy,
             )
             db.add(resident)
@@ -155,22 +156,21 @@ def sample_assignments_academic_year(
 # Authentication Tests
 # ============================================================================
 
+
 class TestAcademicBlocksAuthentication:
     """Tests for academic blocks API authentication requirements."""
 
     def test_get_matrix_requires_authentication(self, client: TestClient):
         """Test that GET /matrix/academic-blocks requires authentication."""
         response = client.get(
-            "/api/matrix/academic-blocks",
-            params={"academic_year": "2024-2025"}
+            "/api/matrix/academic-blocks", params={"academic_year": "2024-2025"}
         )
         assert response.status_code == 401
 
     def test_list_blocks_requires_authentication(self, client: TestClient):
         """Test that GET /matrix/blocks requires authentication."""
         response = client.get(
-            "/api/matrix/blocks",
-            params={"academic_year": "2024-2025"}
+            "/api/matrix/blocks", params={"academic_year": "2024-2025"}
         )
         assert response.status_code == 401
 
@@ -178,6 +178,7 @@ class TestAcademicBlocksAuthentication:
 # ============================================================================
 # Block Matrix Endpoint Tests
 # ============================================================================
+
 
 class TestGetAcademicBlockMatrix:
     """Tests for GET /matrix/academic-blocks endpoint."""
@@ -403,8 +404,7 @@ class TestGetAcademicBlockMatrix:
 
         # Should have cells with rotation data
         cells_with_rotation = [
-            cell for cell in data["cells"]
-            if cell.get("rotation") is not None
+            cell for cell in data["cells"] if cell.get("rotation") is not None
         ]
         assert len(cells_with_rotation) > 0
 
@@ -432,6 +432,7 @@ class TestGetAcademicBlockMatrix:
 # ============================================================================
 # Block Matrix Validation Tests
 # ============================================================================
+
 
 class TestAcademicBlockMatrixValidation:
     """Tests for validation and error handling in block matrix endpoint."""
@@ -547,6 +548,7 @@ class TestAcademicBlockMatrixValidation:
 # ============================================================================
 # Block List Endpoint Tests
 # ============================================================================
+
 
 class TestListAcademicBlocks:
     """Tests for GET /matrix/blocks endpoint."""
@@ -740,6 +742,7 @@ class TestListAcademicBlocks:
 # Block List Validation Tests
 # ============================================================================
 
+
 class TestListAcademicBlocksValidation:
     """Tests for validation and error handling in blocks list endpoint."""
 
@@ -803,6 +806,7 @@ class TestListAcademicBlocksValidation:
 # ============================================================================
 # Edge Cases and Special Scenarios
 # ============================================================================
+
 
 class TestAcademicBlocksEdgeCases:
     """Tests for edge cases and special scenarios."""
@@ -883,7 +887,9 @@ class TestAcademicBlocksEdgeCases:
         assert data_2024["academic_year"] != data_2023["academic_year"]
 
         # Date ranges should be different
-        assert data_2024["blocks"][0]["start_date"] != data_2023["blocks"][0]["start_date"]
+        assert (
+            data_2024["blocks"][0]["start_date"] != data_2023["blocks"][0]["start_date"]
+        )
 
     def test_matrix_acgme_compliance_calculation(
         self,
@@ -995,6 +1001,7 @@ class TestAcademicBlocksEdgeCases:
 # ============================================================================
 # Response Format Tests
 # ============================================================================
+
 
 class TestAcademicBlocksResponseFormat:
     """Tests for response format and data types."""
@@ -1113,6 +1120,7 @@ class TestAcademicBlocksResponseFormat:
             try:
                 # Should be valid UUID
                 from uuid import UUID
+
                 UUID(resident_id)
             except (ValueError, AttributeError):
                 pytest.fail(f"Invalid UUID format: {resident_id}")

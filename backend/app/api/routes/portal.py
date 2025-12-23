@@ -29,12 +29,13 @@ Related Models:
 Related Schemas:
     - app.schemas.portal: Request/response models for all portal endpoints
 """
+
 from collections import defaultdict
 from datetime import datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.security import get_current_user
 from app.db.session import get_db
@@ -46,7 +47,6 @@ from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.models.user import User
-from app.services.swap_notification_service import SwapNotificationService
 from app.schemas.portal import (
     DashboardAlert,
     DashboardResponse,
@@ -63,6 +63,7 @@ from app.schemas.portal import (
     SwapRequestSummary,
     SwapRespondRequest,
 )
+from app.services.swap_notification_service import SwapNotificationService
 
 router = APIRouter(prefix="/portal", tags=["portal"])
 
@@ -104,9 +105,9 @@ def get_my_schedule(
     faculty = _get_faculty_for_user(db, current_user)
 
     # Query actual FMIT weeks from schedule
-    fmit_template = db.query(RotationTemplate).filter(
-        RotationTemplate.name == "FMIT"
-    ).first()
+    fmit_template = (
+        db.query(RotationTemplate).filter(RotationTemplate.name == "FMIT").first()
+    )
 
     fmit_weeks = []
     if fmit_template:
@@ -155,31 +156,36 @@ def get_my_schedule(
                 .filter(
                     ConflictAlert.faculty_id == faculty.id,
                     ConflictAlert.fmit_week == week_start,
-                    ConflictAlert.status.in_([
-                        ConflictAlertStatus.NEW,
-                        ConflictAlertStatus.ACKNOWLEDGED
-                    ])
+                    ConflictAlert.status.in_(
+                        [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                    ),
                 )
                 .first()
             )
 
             has_conflict = conflict_alert is not None
-            conflict_description = conflict_alert.description if conflict_alert else None
+            conflict_description = (
+                conflict_alert.description if conflict_alert else None
+            )
 
-            fmit_weeks.append(FMITWeekInfo(
-                week_start=week_start,
-                week_end=week_end,
-                is_past=week_end < today,
-                has_conflict=has_conflict,
-                conflict_description=conflict_description,
-                can_request_swap=not has_pending_swap and week_start > today,
-                pending_swap_request=has_pending_swap,
-            ))
+            fmit_weeks.append(
+                FMITWeekInfo(
+                    week_start=week_start,
+                    week_end=week_end,
+                    is_past=week_end < today,
+                    has_conflict=has_conflict,
+                    conflict_description=conflict_description,
+                    can_request_swap=not has_pending_swap and week_start > today,
+                    pending_swap_request=has_pending_swap,
+                )
+            )
 
     # Get target weeks from preferences or use default
-    preferences = db.query(FacultyPreference).filter(
-        FacultyPreference.faculty_id == faculty.id
-    ).first()
+    preferences = (
+        db.query(FacultyPreference)
+        .filter(FacultyPreference.faculty_id == faculty.id)
+        .first()
+    )
     target_weeks = preferences.target_weeks_per_year if preferences else 6
 
     return MyScheduleResponse(
@@ -232,7 +238,9 @@ def get_my_swaps(
     # Incoming requests: where this faculty is the target and status is pending
     incoming_swaps = (
         db.query(SwapRecord)
-        .options(joinedload(SwapRecord.source_faculty), joinedload(SwapRecord.target_faculty))
+        .options(
+            joinedload(SwapRecord.source_faculty), joinedload(SwapRecord.target_faculty)
+        )
         .filter(
             SwapRecord.target_faculty_id == faculty.id,
             SwapRecord.status == SwapStatus.PENDING,
@@ -244,7 +252,9 @@ def get_my_swaps(
     # Outgoing requests: where this faculty is the source and status is pending
     outgoing_swaps = (
         db.query(SwapRecord)
-        .options(joinedload(SwapRecord.source_faculty), joinedload(SwapRecord.target_faculty))
+        .options(
+            joinedload(SwapRecord.source_faculty), joinedload(SwapRecord.target_faculty)
+        )
         .filter(
             SwapRecord.source_faculty_id == faculty.id,
             SwapRecord.status == SwapStatus.PENDING,
@@ -257,10 +267,15 @@ def get_my_swaps(
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     recent_swaps = (
         db.query(SwapRecord)
-        .options(joinedload(SwapRecord.source_faculty), joinedload(SwapRecord.target_faculty))
+        .options(
+            joinedload(SwapRecord.source_faculty), joinedload(SwapRecord.target_faculty)
+        )
         .filter(
-            (SwapRecord.source_faculty_id == faculty.id) | (SwapRecord.target_faculty_id == faculty.id),
-            SwapRecord.status.in_([SwapStatus.EXECUTED, SwapStatus.APPROVED, SwapStatus.REJECTED]),
+            (SwapRecord.source_faculty_id == faculty.id)
+            | (SwapRecord.target_faculty_id == faculty.id),
+            SwapRecord.status.in_(
+                [SwapStatus.EXECUTED, SwapStatus.APPROVED, SwapStatus.REJECTED]
+            ),
             SwapRecord.requested_at >= thirty_days_ago,
         )
         .order_by(SwapRecord.requested_at.desc())
@@ -341,9 +356,9 @@ def create_swap_request(
 
     # Implement swap request creation
     # 1. Verify week is assigned to this faculty
-    fmit_template = db.query(RotationTemplate).filter(
-        RotationTemplate.name == "FMIT"
-    ).first()
+    fmit_template = (
+        db.query(RotationTemplate).filter(RotationTemplate.name == "FMIT").first()
+    )
 
     if not fmit_template:
         raise HTTPException(
@@ -362,7 +377,7 @@ def create_swap_request(
         .options(
             joinedload(Assignment.block),
             joinedload(Assignment.person),
-            joinedload(Assignment.rotation_template)
+            joinedload(Assignment.rotation_template),
         )
         .filter(
             Assignment.person_id == faculty.id,
@@ -383,8 +398,7 @@ def create_swap_request(
     existing_swap = (
         db.query(SwapRecord)
         .options(
-            joinedload(SwapRecord.source_faculty),
-            joinedload(SwapRecord.target_faculty)
+            joinedload(SwapRecord.source_faculty), joinedload(SwapRecord.target_faculty)
         )
         .filter(
             SwapRecord.source_faculty_id == faculty.id,
@@ -523,8 +537,7 @@ def respond_to_swap(
     swap = (
         db.query(SwapRecord)
         .options(
-            joinedload(SwapRecord.source_faculty),
-            joinedload(SwapRecord.target_faculty)
+            joinedload(SwapRecord.source_faculty), joinedload(SwapRecord.target_faculty)
         )
         .filter(SwapRecord.id == swap_id)
         .first()
@@ -685,9 +698,15 @@ def get_my_preferences(
         max_consecutive_weeks=preferences.max_consecutive_weeks or 1,
         min_gap_between_weeks=preferences.min_gap_between_weeks or 2,
         target_weeks_per_year=preferences.target_weeks_per_year or 6,
-        notify_swap_requests=preferences.notify_swap_requests if preferences.notify_swap_requests is not None else True,
-        notify_schedule_changes=preferences.notify_schedule_changes if preferences.notify_schedule_changes is not None else True,
-        notify_conflict_alerts=preferences.notify_conflict_alerts if preferences.notify_conflict_alerts is not None else True,
+        notify_swap_requests=preferences.notify_swap_requests
+        if preferences.notify_swap_requests is not None
+        else True,
+        notify_schedule_changes=preferences.notify_schedule_changes
+        if preferences.notify_schedule_changes is not None
+        else True,
+        notify_conflict_alerts=preferences.notify_conflict_alerts
+        if preferences.notify_conflict_alerts is not None
+        else True,
         notify_reminder_days=preferences.notify_reminder_days or 7,
         notes=preferences.notes,
         updated_at=preferences.updated_at,
@@ -823,9 +842,15 @@ def update_my_preferences(
         max_consecutive_weeks=preferences.max_consecutive_weeks or 1,
         min_gap_between_weeks=preferences.min_gap_between_weeks or 2,
         target_weeks_per_year=preferences.target_weeks_per_year or 6,
-        notify_swap_requests=preferences.notify_swap_requests if preferences.notify_swap_requests is not None else True,
-        notify_schedule_changes=preferences.notify_schedule_changes if preferences.notify_schedule_changes is not None else True,
-        notify_conflict_alerts=preferences.notify_conflict_alerts if preferences.notify_conflict_alerts is not None else True,
+        notify_swap_requests=preferences.notify_swap_requests
+        if preferences.notify_swap_requests is not None
+        else True,
+        notify_schedule_changes=preferences.notify_schedule_changes
+        if preferences.notify_schedule_changes is not None
+        else True,
+        notify_conflict_alerts=preferences.notify_conflict_alerts
+        if preferences.notify_conflict_alerts is not None
+        else True,
         notify_reminder_days=preferences.notify_reminder_days or 7,
         notes=preferences.notes,
         updated_at=preferences.updated_at,
@@ -869,9 +894,9 @@ def get_my_dashboard(
     today = datetime.utcnow().date()
 
     # Get FMIT template
-    fmit_template = db.query(RotationTemplate).filter(
-        RotationTemplate.name == "FMIT"
-    ).first()
+    fmit_template = (
+        db.query(RotationTemplate).filter(RotationTemplate.name == "FMIT").first()
+    )
 
     # Initialize counters
     weeks_assigned = 0
@@ -923,16 +948,17 @@ def get_my_dashboard(
                     .filter(
                         ConflictAlert.faculty_id == faculty.id,
                         ConflictAlert.fmit_week == week_start,
-                        ConflictAlert.status.in_([
-                            ConflictAlertStatus.NEW,
-                            ConflictAlertStatus.ACKNOWLEDGED
-                        ])
+                        ConflictAlert.status.in_(
+                            [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                        ),
                     )
                     .first()
                 )
 
                 has_conflict = conflict_alert is not None
-                conflict_description = conflict_alert.description if conflict_alert else None
+                conflict_description = (
+                    conflict_alert.description if conflict_alert else None
+                )
 
                 # Check for pending swaps
                 pending_swap = (
@@ -947,20 +973,24 @@ def get_my_dashboard(
 
                 has_pending_swap = pending_swap is not None
 
-                upcoming_weeks.append(FMITWeekInfo(
-                    week_start=week_start,
-                    week_end=week_end,
-                    is_past=False,  # All upcoming weeks are not past
-                    has_conflict=has_conflict,
-                    conflict_description=conflict_description,
-                    can_request_swap=not has_pending_swap,
-                    pending_swap_request=has_pending_swap,
-                ))
+                upcoming_weeks.append(
+                    FMITWeekInfo(
+                        week_start=week_start,
+                        week_end=week_end,
+                        is_past=False,  # All upcoming weeks are not past
+                        has_conflict=has_conflict,
+                        conflict_description=conflict_description,
+                        can_request_swap=not has_pending_swap,
+                        pending_swap_request=has_pending_swap,
+                    )
+                )
 
     # Get target weeks from preferences
-    preferences = db.query(FacultyPreference).filter(
-        FacultyPreference.faculty_id == faculty.id
-    ).first()
+    preferences = (
+        db.query(FacultyPreference)
+        .filter(FacultyPreference.faculty_id == faculty.id)
+        .first()
+    )
     target_weeks = preferences.target_weeks_per_year if preferences else 6
 
     # Count pending swap requests (incoming)
@@ -990,10 +1020,9 @@ def get_my_dashboard(
         .filter(
             ConflictAlert.faculty_id == faculty.id,
             ConflictAlert.created_at >= thirty_days_ago,
-            ConflictAlert.status.in_([
-                ConflictAlertStatus.NEW,
-                ConflictAlertStatus.ACKNOWLEDGED
-            ])
+            ConflictAlert.status.in_(
+                [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+            ),
         )
         .order_by(ConflictAlert.created_at.desc())
         .limit(10)
@@ -1005,7 +1034,7 @@ def get_my_dashboard(
     for alert in recent_alerts_query:
         # Determine severity based on alert type
         severity = "warning"  # Default
-        if hasattr(alert, 'severity') and alert.severity:
+        if hasattr(alert, "severity") and alert.severity:
             severity = alert.severity
         elif "critical" in alert.description.lower() if alert.description else False:
             severity = "critical"
@@ -1015,14 +1044,16 @@ def get_my_dashboard(
         if alert.fmit_week:
             action_url = f"/portal/my/schedule?week={alert.fmit_week.isoformat()}"
 
-        recent_alerts.append(DashboardAlert(
-            id=alert.id,
-            alert_type="conflict",
-            severity=severity,
-            message=alert.description or "Conflict detected",
-            created_at=alert.created_at,
-            action_url=action_url,
-        ))
+        recent_alerts.append(
+            DashboardAlert(
+                id=alert.id,
+                alert_type="conflict",
+                severity=severity,
+                message=alert.description or "Conflict detected",
+                created_at=alert.created_at,
+                action_url=action_url,
+            )
+        )
 
     # Get pending swap decisions (incoming swaps requiring response)
     incoming_swaps = (
@@ -1040,15 +1071,19 @@ def get_my_dashboard(
     # Convert to SwapRequestSummary
     pending_swap_decisions = []
     for swap in incoming_swaps:
-        pending_swap_decisions.append(SwapRequestSummary(
-            id=swap.id,
-            other_faculty_name=swap.source_faculty.name if swap.source_faculty else "Unknown",
-            week_to_give=swap.target_week,  # What they want from us
-            week_to_receive=swap.source_week,  # What we would get
-            status=swap.status.value,
-            created_at=swap.requested_at,
-            is_incoming=True,
-        ))
+        pending_swap_decisions.append(
+            SwapRequestSummary(
+                id=swap.id,
+                other_faculty_name=swap.source_faculty.name
+                if swap.source_faculty
+                else "Unknown",
+                week_to_give=swap.target_week,  # What they want from us
+                week_to_receive=swap.source_week,  # What we would get
+                status=swap.status.value,
+                created_at=swap.requested_at,
+                is_incoming=True,
+            )
+        )
 
     # Build stats
     stats = DashboardStats(
@@ -1115,7 +1150,8 @@ def get_swap_marketplace(
         .options(joinedload(SwapRecord.source_faculty))
         .filter(
             SwapRecord.status == SwapStatus.PENDING,
-            SwapRecord.source_faculty_id != faculty.id,  # Exclude current user's own requests
+            SwapRecord.source_faculty_id
+            != faculty.id,  # Exclude current user's own requests
         )
         .order_by(SwapRecord.requested_at.desc())
         .all()
@@ -1132,9 +1168,9 @@ def get_swap_marketplace(
     )
 
     # Get faculty's current FMIT schedule to check compatibility
-    fmit_template = db.query(RotationTemplate).filter(
-        RotationTemplate.name == "FMIT"
-    ).first()
+    fmit_template = (
+        db.query(RotationTemplate).filter(RotationTemplate.name == "FMIT").first()
+    )
 
     faculty_scheduled_weeks = set()
     if fmit_template:
@@ -1166,7 +1202,9 @@ def get_swap_marketplace(
 
         entry = MarketplaceEntry(
             request_id=swap.id,
-            requesting_faculty_name=swap.source_faculty.name if swap.source_faculty else "Unknown",
+            requesting_faculty_name=swap.source_faculty.name
+            if swap.source_faculty
+            else "Unknown",
             week_available=swap.source_week,
             reason=swap.reason,
             posted_at=swap.requested_at,
@@ -1201,10 +1239,14 @@ def _get_faculty_for_user(db: Session, user: User) -> Person:
         HTTPException: 403 if no faculty profile found for user's email
     """
     # First try to find by email match
-    faculty = db.query(Person).filter(
-        Person.email == user.email,
-        Person.type == "faculty",
-    ).first()
+    faculty = (
+        db.query(Person)
+        .filter(
+            Person.email == user.email,
+            Person.type == "faculty",
+        )
+        .first()
+    )
 
     if not faculty:
         raise HTTPException(
@@ -1236,7 +1278,7 @@ def _get_week_start(any_date):
         This ensures consistent week boundaries across all swap and scheduling
         operations.
     """
-    from datetime import date, timedelta
+    from datetime import timedelta
 
     # Ensure we have a date object
     if isinstance(any_date, datetime):

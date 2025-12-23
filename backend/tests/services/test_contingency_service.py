@@ -12,16 +12,13 @@ from uuid import UUID, uuid4
 import pytest
 
 from app.services.resilience.contingency import (
-    CentralityInfo,
     ContingencyAnalysisResult,
     ContingencyService,
     FatalPairInfo,
     N1SimulationResult,
-    N2SimulationResult,
     VulnerabilityAssessment,
     VulnerabilityInfo,
 )
-
 
 # ============================================================================
 # Test Fixtures
@@ -31,7 +28,9 @@ from app.services.resilience.contingency import (
 class MockPerson:
     """Mock person/faculty for testing."""
 
-    def __init__(self, id: UUID = None, name: str = "Test Faculty", type: str = "faculty"):
+    def __init__(
+        self, id: UUID = None, name: str = "Test Faculty", type: str = "faculty"
+    ):
         self.id = id or uuid4()
         self.name = name
         self.type = type
@@ -84,10 +83,7 @@ def mock_faculty():
 def mock_blocks():
     """Create mock blocks for a 7-day period."""
     today = date.today()
-    return [
-        MockBlock(block_date=today + timedelta(days=i))
-        for i in range(7)
-    ]
+    return [MockBlock(block_date=today + timedelta(days=i)) for i in range(7)]
 
 
 @pytest.fixture
@@ -98,33 +94,43 @@ def mock_assignments(mock_faculty, mock_blocks):
     # Create diverse assignment patterns
     # Faculty 0 covers blocks 0-3 (heavy load)
     for i in range(4):
-        assignments.append(MockAssignment(
-            person_id=mock_faculty[0].id,
-            block_id=mock_blocks[i].id,
-        ))
+        assignments.append(
+            MockAssignment(
+                person_id=mock_faculty[0].id,
+                block_id=mock_blocks[i].id,
+            )
+        )
 
     # Faculty 1 covers blocks 2-5 (overlaps with faculty 0)
     for i in range(2, 6):
-        assignments.append(MockAssignment(
-            person_id=mock_faculty[1].id,
-            block_id=mock_blocks[i].id,
-        ))
+        assignments.append(
+            MockAssignment(
+                person_id=mock_faculty[1].id,
+                block_id=mock_blocks[i].id,
+            )
+        )
 
     # Faculty 2 is sole provider for block 6 (critical)
-    assignments.append(MockAssignment(
-        person_id=mock_faculty[2].id,
-        block_id=mock_blocks[6].id,
-    ))
+    assignments.append(
+        MockAssignment(
+            person_id=mock_faculty[2].id,
+            block_id=mock_blocks[6].id,
+        )
+    )
 
     # Faculty 3 covers blocks 0, 6 (light load)
-    assignments.append(MockAssignment(
-        person_id=mock_faculty[3].id,
-        block_id=mock_blocks[0].id,
-    ))
-    assignments.append(MockAssignment(
-        person_id=mock_faculty[3].id,
-        block_id=mock_blocks[6].id,
-    ))
+    assignments.append(
+        MockAssignment(
+            person_id=mock_faculty[3].id,
+            block_id=mock_blocks[0].id,
+        )
+    )
+    assignments.append(
+        MockAssignment(
+            person_id=mock_faculty[3].id,
+            block_id=mock_blocks[6].id,
+        )
+    )
 
     # Faculty 4 has no assignments (available backup)
     # No assignments for faculty 4
@@ -229,11 +235,15 @@ class TestContingencyServiceInit:
 class TestLookupTables:
     """Tests for lookup table construction."""
 
-    def test_build_lookup_tables(self, mock_db, mock_faculty, mock_blocks, mock_assignments):
+    def test_build_lookup_tables(
+        self, mock_db, mock_faculty, mock_blocks, mock_assignments
+    ):
         """Test building optimized lookup tables."""
         service = ContingencyService(db=mock_db)
 
-        lookups = service._build_lookup_tables(mock_faculty, mock_blocks, mock_assignments)
+        lookups = service._build_lookup_tables(
+            mock_faculty, mock_blocks, mock_assignments
+        )
 
         # Check structure
         assert "assignments_by_faculty" in lookups
@@ -250,11 +260,15 @@ class TestLookupTables:
         for block in mock_blocks:
             assert block.id in lookups["block_by_id"]
 
-    def test_assignment_counts(self, mock_db, mock_faculty, mock_blocks, mock_assignments):
+    def test_assignment_counts(
+        self, mock_db, mock_faculty, mock_blocks, mock_assignments
+    ):
         """Test assignment counts in lookup tables."""
         service = ContingencyService(db=mock_db)
 
-        lookups = service._build_lookup_tables(mock_faculty, mock_blocks, mock_assignments)
+        lookups = service._build_lookup_tables(
+            mock_faculty, mock_blocks, mock_assignments
+        )
 
         # Faculty 0 should have 4 assignments
         assert lookups["faculty_assignment_count"].get(mock_faculty[0].id, 0) == 4
@@ -271,46 +285,63 @@ class TestLookupTables:
 class TestN1Simulation:
     """Tests for N-1 simulation."""
 
-    def test_simulate_single_loss_no_impact(self, mock_db, mock_faculty, mock_blocks, mock_assignments):
+    def test_simulate_single_loss_no_impact(
+        self, mock_db, mock_faculty, mock_blocks, mock_assignments
+    ):
         """Test simulating loss of faculty with no critical impact."""
         service = ContingencyService(db=mock_db)
-        lookups = service._build_lookup_tables(mock_faculty, mock_blocks, mock_assignments)
+        lookups = service._build_lookup_tables(
+            mock_faculty, mock_blocks, mock_assignments
+        )
         coverage_requirements = {b.id: 1 for b in mock_blocks}
 
         # Simulate loss of faculty 0 (blocks 0-3 are covered)
         # Blocks 0, 2, 3 have backup; block 1 may not
         result = service._simulate_single_loss(
-            mock_faculty[0], mock_blocks, mock_assignments,
-            coverage_requirements, lookups
+            mock_faculty[0],
+            mock_blocks,
+            mock_assignments,
+            coverage_requirements,
+            lookups,
         )
 
         assert result.faculty_id == mock_faculty[0].id
         assert result.faculty_name == mock_faculty[0].name
 
-    def test_simulate_single_loss_critical(self, mock_db, mock_faculty, mock_blocks, mock_assignments):
+    def test_simulate_single_loss_critical(
+        self, mock_db, mock_faculty, mock_blocks, mock_assignments
+    ):
         """Test simulating loss of sole provider (critical)."""
         service = ContingencyService(db=mock_db)
-        lookups = service._build_lookup_tables(mock_faculty, mock_blocks, mock_assignments)
+        lookups = service._build_lookup_tables(
+            mock_faculty, mock_blocks, mock_assignments
+        )
         coverage_requirements = {b.id: 1 for b in mock_blocks}
 
         # Simulate loss of faculty 2 (sole provider for block 6)
         result = service._simulate_single_loss(
-            mock_faculty[2], mock_blocks, mock_assignments,
-            coverage_requirements, lookups
+            mock_faculty[2],
+            mock_blocks,
+            mock_assignments,
+            coverage_requirements,
+            lookups,
         )
 
         # Block 6 should be affected but faculty 3 also covers it
         assert result.faculty_id == mock_faculty[2].id
 
-    def test_n1_simulation_optimized(self, mock_db, mock_faculty, mock_blocks, mock_assignments):
+    def test_n1_simulation_optimized(
+        self, mock_db, mock_faculty, mock_blocks, mock_assignments
+    ):
         """Test full N-1 simulation with optimizations."""
         service = ContingencyService(db=mock_db)
-        lookups = service._build_lookup_tables(mock_faculty, mock_blocks, mock_assignments)
+        lookups = service._build_lookup_tables(
+            mock_faculty, mock_blocks, mock_assignments
+        )
         coverage_requirements = {b.id: 1 for b in mock_blocks}
 
         simulations, vulnerabilities = service._run_n1_simulation_optimized(
-            mock_faculty, mock_blocks, mock_assignments,
-            coverage_requirements, lookups
+            mock_faculty, mock_blocks, mock_assignments, coverage_requirements, lookups
         )
 
         # Should have simulation for each faculty
@@ -377,25 +408,36 @@ class TestN1Simulation:
 class TestN2Simulation:
     """Tests for N-2 simulation."""
 
-    def test_simulate_pair_loss(self, mock_db, mock_faculty, mock_blocks, mock_assignments):
+    def test_simulate_pair_loss(
+        self, mock_db, mock_faculty, mock_blocks, mock_assignments
+    ):
         """Test simulating loss of two faculty members."""
         service = ContingencyService(db=mock_db)
-        lookups = service._build_lookup_tables(mock_faculty, mock_blocks, mock_assignments)
+        lookups = service._build_lookup_tables(
+            mock_faculty, mock_blocks, mock_assignments
+        )
         coverage_requirements = {b.id: 1 for b in mock_blocks}
 
         result = service._simulate_pair_loss(
-            mock_faculty[0], mock_faculty[1],
-            mock_blocks, mock_assignments,
-            coverage_requirements, lookups
+            mock_faculty[0],
+            mock_faculty[1],
+            mock_blocks,
+            mock_assignments,
+            coverage_requirements,
+            lookups,
         )
 
         assert result.faculty1_id == mock_faculty[0].id
         assert result.faculty2_id == mock_faculty[1].id
 
-    def test_n2_simulation_optimized(self, mock_db, mock_faculty, mock_blocks, mock_assignments):
+    def test_n2_simulation_optimized(
+        self, mock_db, mock_faculty, mock_blocks, mock_assignments
+    ):
         """Test N-2 simulation with optimizations."""
         service = ContingencyService(db=mock_db)
-        lookups = service._build_lookup_tables(mock_faculty, mock_blocks, mock_assignments)
+        lookups = service._build_lookup_tables(
+            mock_faculty, mock_blocks, mock_assignments
+        )
         coverage_requirements = {b.id: 1 for b in mock_blocks}
 
         # Create some vulnerabilities for N-2 to focus on
@@ -410,8 +452,13 @@ class TestN2Simulation:
         ]
 
         fatal_pairs = service._run_n2_simulation_optimized(
-            mock_faculty, mock_blocks, mock_assignments,
-            coverage_requirements, lookups, n1_vulns, max_pairs=50
+            mock_faculty,
+            mock_blocks,
+            mock_assignments,
+            coverage_requirements,
+            lookups,
+            n1_vulns,
+            max_pairs=50,
         )
 
         # Should return a list (possibly empty)
@@ -426,14 +473,18 @@ class TestN2Simulation:
 class TestCentralityCalculation:
     """Tests for centrality calculation."""
 
-    def test_calculate_centrality_basic(self, mock_db, mock_faculty, mock_blocks, mock_assignments):
+    def test_calculate_centrality_basic(
+        self, mock_db, mock_faculty, mock_blocks, mock_assignments
+    ):
         """Test basic centrality calculation without NetworkX."""
         service = ContingencyService(db=mock_db)
-        lookups = service._build_lookup_tables(mock_faculty, mock_blocks, mock_assignments)
+        lookups = service._build_lookup_tables(
+            mock_faculty, mock_blocks, mock_assignments
+        )
 
         services = {}  # Empty services mapping
 
-        with patch('app.services.resilience.contingency.NETWORKX_AVAILABLE', False):
+        with patch("app.services.resilience.contingency.NETWORKX_AVAILABLE", False):
             scores = service._calculate_centrality_optimized(
                 mock_faculty, mock_assignments, services, lookups
             )
@@ -444,10 +495,14 @@ class TestCentralityCalculation:
         for i in range(len(scores) - 1):
             assert scores[i].centrality_score >= scores[i + 1].centrality_score
 
-    def test_calculate_centrality_with_services(self, mock_db, mock_faculty, mock_blocks, mock_assignments):
+    def test_calculate_centrality_with_services(
+        self, mock_db, mock_faculty, mock_blocks, mock_assignments
+    ):
         """Test centrality calculation with service mapping."""
         service = ContingencyService(db=mock_db)
-        lookups = service._build_lookup_tables(mock_faculty, mock_blocks, mock_assignments)
+        lookups = service._build_lookup_tables(
+            mock_faculty, mock_blocks, mock_assignments
+        )
 
         # Create service mapping where faculty 2 is sole provider for a service
         services = {
@@ -455,7 +510,7 @@ class TestCentralityCalculation:
             uuid4(): [mock_faculty[2].id],  # Sole provider
         }
 
-        with patch('app.services.resilience.contingency.NETWORKX_AVAILABLE', False):
+        with patch("app.services.resilience.contingency.NETWORKX_AVAILABLE", False):
             scores = service._calculate_centrality_optimized(
                 mock_faculty, mock_assignments, services, lookups
             )
@@ -568,7 +623,9 @@ class TestFullAnalysis:
         assert len(result.n1_vulnerabilities) == 0
         assert len(result.n2_fatal_pairs) == 0
 
-    def test_analyze_contingency_with_data(self, mock_db, mock_faculty, mock_blocks, mock_assignments):
+    def test_analyze_contingency_with_data(
+        self, mock_db, mock_faculty, mock_blocks, mock_assignments
+    ):
         """Test analysis with mock data."""
         service = create_service_with_mock_data(
             mock_db, mock_faculty, mock_blocks, mock_assignments
@@ -584,7 +641,9 @@ class TestFullAnalysis:
         assert result.period_start == date.today()
         assert result.analysis_duration_ms > 0
 
-    def test_analyze_contingency_skip_n2(self, mock_db, mock_faculty, mock_blocks, mock_assignments):
+    def test_analyze_contingency_skip_n2(
+        self, mock_db, mock_faculty, mock_blocks, mock_assignments
+    ):
         """Test analysis with N-2 disabled."""
         service = create_service_with_mock_data(
             mock_db, mock_faculty, mock_blocks, mock_assignments
@@ -628,7 +687,9 @@ class TestFullAnalysis:
 class TestVulnerabilityAssessment:
     """Tests for quick vulnerability assessment."""
 
-    def test_get_vulnerability_assessment(self, mock_db, mock_faculty, mock_blocks, mock_assignments):
+    def test_get_vulnerability_assessment(
+        self, mock_db, mock_faculty, mock_blocks, mock_assignments
+    ):
         """Test quick vulnerability assessment."""
         service = create_service_with_mock_data(
             mock_db, mock_faculty, mock_blocks, mock_assignments
@@ -652,7 +713,9 @@ class TestVulnerabilityAssessment:
 class TestSingleFacultySimulation:
     """Tests for single faculty loss simulation."""
 
-    def test_simulate_faculty_loss(self, mock_db, mock_faculty, mock_blocks, mock_assignments):
+    def test_simulate_faculty_loss(
+        self, mock_db, mock_faculty, mock_blocks, mock_assignments
+    ):
         """Test simulating loss of a specific faculty member."""
         service = create_service_with_mock_data(
             mock_db, mock_faculty, mock_blocks, mock_assignments
@@ -667,7 +730,9 @@ class TestSingleFacultySimulation:
         assert result.faculty_id == mock_faculty[0].id
         assert result.simulation_time_ms > 0
 
-    def test_simulate_unknown_faculty(self, mock_db, mock_faculty, mock_blocks, mock_assignments):
+    def test_simulate_unknown_faculty(
+        self, mock_db, mock_faculty, mock_blocks, mock_assignments
+    ):
         """Test simulating loss of unknown faculty."""
         service = create_service_with_mock_data(
             mock_db, mock_faculty, mock_blocks, mock_assignments

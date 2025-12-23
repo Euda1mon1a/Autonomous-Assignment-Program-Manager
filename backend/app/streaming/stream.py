@@ -15,24 +15,16 @@ import asyncio
 import json
 import logging
 import time
-from collections import defaultdict, deque
+from collections import deque
+from collections.abc import AsyncGenerator, Callable, Coroutine
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
 from typing import (
     Any,
-    AsyncGenerator,
-    Callable,
-    Coroutine,
-    Dict,
     Generic,
-    List,
-    Optional,
-    Set,
     TypeVar,
-    Union,
 )
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
@@ -43,7 +35,7 @@ logger = logging.getLogger(__name__)
 # Type variables for generic stream handling
 T = TypeVar("T")
 FilterFunc = Callable[[T], bool]
-TransformFunc = Callable[[T], Union[T, Coroutine[Any, Any, T]]]
+TransformFunc = Callable[[T], T | Coroutine[Any, Any, T]]
 
 
 class StreamEventType(str, Enum):
@@ -86,10 +78,10 @@ class StreamMetrics:
     bytes_sent: int = 0
     consumers_count: int = 0
     errors_count: int = 0
-    last_message_at: Optional[float] = None
+    last_message_at: float | None = None
     backpressure_events: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert metrics to dictionary.
 
@@ -125,9 +117,9 @@ class StreamEvent(Generic[T]):
     """A single streaming event."""
 
     event_type: StreamEventType
-    data: Optional[T] = None
+    data: T | None = None
     id: str = field(default_factory=lambda: str(uuid4()))
-    retry: Optional[int] = None
+    retry: int | None = None
     timestamp: float = field(default_factory=time.time)
 
     def to_sse_format(self, data_format: StreamFormat = StreamFormat.JSON) -> str:
@@ -196,13 +188,11 @@ class StreamConsumer(Generic[T]):
         self.event = asyncio.Event()
         self.active = True
         self.created_at = time.time()
-        self.last_read_at: Optional[float] = None
+        self.last_read_at: float | None = None
         self.messages_received = 0
         self.messages_read = 0
 
-    async def add_message(
-        self, message: StreamEvent[T], block: bool = False
-    ) -> bool:
+    async def add_message(self, message: StreamEvent[T], block: bool = False) -> bool:
         """
         Add a message to the consumer's buffer.
 
@@ -226,9 +216,7 @@ class StreamConsumer(Generic[T]):
             elif self.backpressure_strategy == BackpressureStrategy.DROP_NEWEST:
                 return False
             elif self.backpressure_strategy == BackpressureStrategy.ERROR:
-                raise asyncio.QueueFull(
-                    f"Buffer full for consumer {self.consumer_id}"
-                )
+                raise asyncio.QueueFull(f"Buffer full for consumer {self.consumer_id}")
             elif self.backpressure_strategy == BackpressureStrategy.BLOCK:
                 if block:
                     # Wait for buffer to have space
@@ -242,7 +230,7 @@ class StreamConsumer(Generic[T]):
         self.event.set()
         return True
 
-    async def read_message(self, timeout: Optional[float] = None) -> Optional[StreamEvent[T]]:
+    async def read_message(self, timeout: float | None = None) -> StreamEvent[T] | None:
         """
         Read next message from buffer.
 
@@ -259,7 +247,7 @@ class StreamConsumer(Generic[T]):
         if not self.buffer:
             try:
                 await asyncio.wait_for(self.event.wait(), timeout=timeout)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 return None
 
         if not self.buffer:
@@ -289,10 +277,10 @@ class DataStream(Generic[T]):
 
     def __init__(
         self,
-        stream_id: Optional[str] = None,
+        stream_id: str | None = None,
         buffer_size: int = 1000,
         backpressure_strategy: BackpressureStrategy = BackpressureStrategy.DROP_OLDEST,
-        heartbeat_interval: Optional[float] = 30.0,
+        heartbeat_interval: float | None = 30.0,
     ):
         """
         Initialize a data stream.
@@ -308,14 +296,14 @@ class DataStream(Generic[T]):
         self.backpressure_strategy = backpressure_strategy
         self.heartbeat_interval = heartbeat_interval
 
-        self.consumers: Dict[str, StreamConsumer[T]] = {}
-        self.filters: List[FilterFunc] = []
-        self.transformers: List[TransformFunc] = []
+        self.consumers: dict[str, StreamConsumer[T]] = {}
+        self.filters: list[FilterFunc] = []
+        self.transformers: list[TransformFunc] = []
         self.metrics = StreamMetrics(stream_id=self.stream_id)
 
         self._lock = asyncio.Lock()
         self._closed = False
-        self._heartbeat_task: Optional[asyncio.Task] = None
+        self._heartbeat_task: asyncio.Task | None = None
 
         # Start heartbeat if enabled
         if self.heartbeat_interval:
@@ -323,9 +311,9 @@ class DataStream(Generic[T]):
 
     async def add_consumer(
         self,
-        consumer_id: Optional[str] = None,
-        buffer_size: Optional[int] = None,
-        backpressure_strategy: Optional[BackpressureStrategy] = None,
+        consumer_id: str | None = None,
+        buffer_size: int | None = None,
+        backpressure_strategy: BackpressureStrategy | None = None,
     ) -> str:
         """
         Add a new consumer to the stream.
@@ -403,7 +391,7 @@ class DataStream(Generic[T]):
         self,
         data: T,
         event_type: StreamEventType = StreamEventType.DATA,
-        event_id: Optional[str] = None,
+        event_id: str | None = None,
     ) -> int:
         """
         Publish a message to all consumers.
@@ -475,7 +463,7 @@ class DataStream(Generic[T]):
         return delivered_count
 
     async def publish_batch(
-        self, messages: List[T], event_type: StreamEventType = StreamEventType.DATA
+        self, messages: list[T], event_type: StreamEventType = StreamEventType.DATA
     ) -> int:
         """
         Publish multiple messages in a batch.
@@ -496,7 +484,7 @@ class DataStream(Generic[T]):
     async def consume(
         self,
         consumer_id: str,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
     ) -> AsyncGenerator[StreamEvent[T], None]:
         """
         Consume messages from the stream.
@@ -544,7 +532,7 @@ class DataStream(Generic[T]):
             except Exception as e:
                 logger.error(f"Heartbeat error in stream {self.stream_id}: {e}")
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """
         Get stream metrics.
 
@@ -580,14 +568,14 @@ class SSEStreamManager:
 
     def __init__(self):
         """Initialize SSE stream manager."""
-        self.streams: Dict[str, DataStream] = {}
+        self.streams: dict[str, DataStream] = {}
         self._lock = asyncio.Lock()
 
     async def create_stream(
         self,
-        stream_id: Optional[str] = None,
+        stream_id: str | None = None,
         buffer_size: int = 1000,
-        heartbeat_interval: Optional[float] = 30.0,
+        heartbeat_interval: float | None = 30.0,
     ) -> str:
         """
         Create a new SSE stream.
@@ -612,7 +600,7 @@ class SSEStreamManager:
         logger.info(f"Created SSE stream {stream.stream_id}")
         return stream.stream_id
 
-    async def get_stream(self, stream_id: str) -> Optional[DataStream]:
+    async def get_stream(self, stream_id: str) -> DataStream | None:
         """
         Get an existing stream.
 
@@ -641,7 +629,7 @@ class SSEStreamManager:
     async def stream_response(
         self,
         stream_id: str,
-        consumer_id: Optional[str] = None,
+        consumer_id: str | None = None,
         data_format: StreamFormat = StreamFormat.JSON,
     ) -> StreamingResponse:
         """
@@ -690,7 +678,7 @@ class SSEStreamManager:
             },
         )
 
-    def get_all_metrics(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_metrics(self) -> dict[str, dict[str, Any]]:
         """
         Get metrics for all streams.
 
@@ -710,7 +698,7 @@ class WebSocketStreamWrapper:
         self,
         websocket: WebSocket,
         stream: DataStream,
-        consumer_id: Optional[str] = None,
+        consumer_id: str | None = None,
         data_format: StreamFormat = StreamFormat.JSON,
     ):
         """
@@ -799,7 +787,7 @@ class WebSocketStreamWrapper:
 
 
 # Global SSE stream manager
-_sse_manager: Optional[SSEStreamManager] = None
+_sse_manager: SSEStreamManager | None = None
 
 
 def get_sse_manager() -> SSEStreamManager:
@@ -816,9 +804,9 @@ def get_sse_manager() -> SSEStreamManager:
 
 
 async def create_sse_stream(
-    stream_id: Optional[str] = None,
+    stream_id: str | None = None,
     buffer_size: int = 1000,
-    heartbeat_interval: Optional[float] = 30.0,
+    heartbeat_interval: float | None = 30.0,
 ) -> str:
     """
     Create a new SSE stream.
@@ -866,7 +854,7 @@ async def publish_to_stream(
     return await stream.publish(data, event_type=event_type)
 
 
-async def get_stream_metrics(stream_id: str) -> Dict[str, Any]:
+async def get_stream_metrics(stream_id: str) -> dict[str, Any]:
     """
     Get metrics for a specific stream.
 

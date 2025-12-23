@@ -14,8 +14,9 @@ Critical for:
 - Network retry resilience
 - Race condition handling
 """
+
 from datetime import date, datetime, timedelta
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -69,7 +70,7 @@ class TestScheduleGenerationIdempotencyLoad:
             return client.post(
                 "/api/schedule/generate",
                 json=schedule_data,
-                headers={"Idempotency-Key": idempotency_key}
+                headers={"Idempotency-Key": idempotency_key},
             )
 
         # Execute concurrently using thread pool (since TestClient is sync)
@@ -81,35 +82,40 @@ class TestScheduleGenerationIdempotencyLoad:
 
         # All requests should succeed (200 or 207 for partial success)
         success_codes = [r.status_code for r in responses]
-        assert all(code in [200, 207] for code in success_codes), \
+        assert all(code in [200, 207] for code in success_codes), (
             f"Some requests failed: {success_codes}"
+        )
 
         # All responses should return the same run ID
         run_ids = [r.json().get("run_id") for r in responses]
         unique_ids = set(run_ids)
-        assert len(unique_ids) == 1, \
+        assert len(unique_ids) == 1, (
             f"Expected 1 unique run ID, got {len(unique_ids)}: {unique_ids}"
+        )
 
         # Database should have exactly 1 new schedule run
         final_count = db.query(ScheduleRun).count()
-        assert final_count == initial_count + 1, \
+        assert final_count == initial_count + 1, (
             f"Expected 1 new schedule run, database has {final_count - initial_count}"
+        )
 
         # Verify idempotency record exists and is completed
-        idem_record = db.query(IdempotencyRequest).filter(
-            IdempotencyRequest.idempotency_key == idempotency_key
-        ).first()
+        idem_record = (
+            db.query(IdempotencyRequest)
+            .filter(IdempotencyRequest.idempotency_key == idempotency_key)
+            .first()
+        )
         assert idem_record is not None
         assert idem_record.is_completed
 
         # At least some responses should have X-Idempotency-Replayed header
         replayed_responses = [
-            r for r in responses
-            if r.headers.get("X-Idempotency-Replayed") == "true"
+            r for r in responses if r.headers.get("X-Idempotency-Replayed") == "true"
         ]
         # After the first request, all others should be replayed
-        assert len(replayed_responses) >= 90, \
+        assert len(replayed_responses) >= 90, (
             f"Expected ~99 replayed responses, got {len(replayed_responses)}"
+        )
 
     def test_schedule_generation_network_retry_simulation(
         self,
@@ -147,7 +153,7 @@ class TestScheduleGenerationIdempotencyLoad:
         r1 = client.post(
             "/api/schedule/generate",
             json=schedule_data,
-            headers={"Idempotency-Key": idempotency_key}
+            headers={"Idempotency-Key": idempotency_key},
         )
         responses.append(r1)
         assert r1.status_code in [200, 207]
@@ -157,7 +163,7 @@ class TestScheduleGenerationIdempotencyLoad:
             r = client.post(
                 "/api/schedule/generate",
                 json=schedule_data,
-                headers={"Idempotency-Key": idempotency_key}
+                headers={"Idempotency-Key": idempotency_key},
             )
             responses.append(r)
             assert r.status_code in [200, 207]
@@ -171,7 +177,7 @@ class TestScheduleGenerationIdempotencyLoad:
             return client.post(
                 "/api/schedule/generate",
                 json=schedule_data,
-                headers={"Idempotency-Key": idempotency_key}
+                headers={"Idempotency-Key": idempotency_key},
             )
 
         with ThreadPoolExecutor(max_workers=5) as executor:
@@ -187,10 +193,13 @@ class TestScheduleGenerationIdempotencyLoad:
         assert len(set(run_ids)) == 1
 
         # Database should have exactly 1 schedule run
-        schedule_runs = db.query(ScheduleRun).filter(
-            ScheduleRun.start_date == start_date,
-            ScheduleRun.end_date == end_date
-        ).all()
+        schedule_runs = (
+            db.query(ScheduleRun)
+            .filter(
+                ScheduleRun.start_date == start_date, ScheduleRun.end_date == end_date
+            )
+            .all()
+        )
         assert len(schedule_runs) == 1
 
     def test_schedule_generation_idempotency_key_isolation(
@@ -225,7 +234,7 @@ class TestScheduleGenerationIdempotencyLoad:
             r = client.post(
                 "/api/schedule/generate",
                 json=schedule_data,
-                headers={"Idempotency-Key": key}
+                headers={"Idempotency-Key": key},
             )
             responses.append(r)
 
@@ -238,9 +247,11 @@ class TestScheduleGenerationIdempotencyLoad:
 
         # Each idempotency key should have its own record
         for key in idempotency_keys:
-            idem_record = db.query(IdempotencyRequest).filter(
-                IdempotencyRequest.idempotency_key == key
-            ).first()
+            idem_record = (
+                db.query(IdempotencyRequest)
+                .filter(IdempotencyRequest.idempotency_key == key)
+                .first()
+            )
             assert idem_record is not None
             assert idem_record.is_completed
 
@@ -271,7 +282,7 @@ class TestScheduleGenerationIdempotencyLoad:
         r1 = client.post(
             "/api/schedule/generate",
             json=first_request,
-            headers={"Idempotency-Key": idempotency_key}
+            headers={"Idempotency-Key": idempotency_key},
         )
         assert r1.status_code in [200, 207]
 
@@ -285,7 +296,7 @@ class TestScheduleGenerationIdempotencyLoad:
         r2 = client.post(
             "/api/schedule/generate",
             json=second_request,
-            headers={"Idempotency-Key": idempotency_key}
+            headers={"Idempotency-Key": idempotency_key},
         )
 
         # Should be rejected with 422 (conflict)
@@ -293,9 +304,11 @@ class TestScheduleGenerationIdempotencyLoad:
         assert "different request parameters" in r2.json()["detail"].lower()
 
         # Only one schedule run should exist for this key
-        idem_records = db.query(IdempotencyRequest).filter(
-            IdempotencyRequest.idempotency_key == idempotency_key
-        ).all()
+        idem_records = (
+            db.query(IdempotencyRequest)
+            .filter(IdempotencyRequest.idempotency_key == idempotency_key)
+            .all()
+        )
         assert len(idem_records) == 1
 
 
@@ -332,15 +345,17 @@ class TestIdempotencyExpiry:
         r1 = client.post(
             "/api/schedule/generate",
             json=schedule_data,
-            headers={"Idempotency-Key": idempotency_key}
+            headers={"Idempotency-Key": idempotency_key},
         )
         assert r1.status_code in [200, 207]
         first_run_id = r1.json().get("run_id")
 
         # Manually expire the idempotency record
-        idem_record = db.query(IdempotencyRequest).filter(
-            IdempotencyRequest.idempotency_key == idempotency_key
-        ).first()
+        idem_record = (
+            db.query(IdempotencyRequest)
+            .filter(IdempotencyRequest.idempotency_key == idempotency_key)
+            .first()
+        )
         assert idem_record is not None
 
         # Set expiration to past
@@ -361,7 +376,7 @@ class TestIdempotencyExpiry:
         r2 = client.post(
             "/api/schedule/generate",
             json=schedule_data_2,
-            headers={"Idempotency-Key": idempotency_key}
+            headers={"Idempotency-Key": idempotency_key},
         )
 
         # Should create a new schedule (idempotency key expired)
@@ -391,7 +406,7 @@ class TestIdempotencyExpiry:
                 body_hash=f"hash-{i}",
                 status="completed",
                 expires_at=datetime.utcnow() - timedelta(hours=1),
-                request_params={}
+                request_params={},
             )
             db.add(request)
 
@@ -402,7 +417,7 @@ class TestIdempotencyExpiry:
                 body_hash=f"hash-active-{i}",
                 status="completed",
                 expires_at=datetime.utcnow() + timedelta(hours=24),
-                request_params={}
+                request_params={},
             )
             db.add(request)
 
@@ -452,7 +467,7 @@ class TestIdempotencyServiceConcurrency:
                 request = service.create_request(
                     idempotency_key=idempotency_key,
                     body_hash=body_hash,
-                    request_params=request_params
+                    request_params=request_params,
                 )
                 db.commit()
                 return request
@@ -476,9 +491,11 @@ class TestIdempotencyServiceConcurrency:
         assert all(r.idempotency_key == idempotency_key for r in results)
 
         # Database should have exactly 1 record
-        records = db.query(IdempotencyRequest).filter(
-            IdempotencyRequest.idempotency_key == idempotency_key
-        ).all()
+        records = (
+            db.query(IdempotencyRequest)
+            .filter(IdempotencyRequest.idempotency_key == idempotency_key)
+            .all()
+        )
         assert len(records) == 1
 
     def test_concurrent_mark_completed(self, db: Session):
@@ -494,7 +511,7 @@ class TestIdempotencyServiceConcurrency:
         request = service.create_request(
             idempotency_key=f"complete-{uuid4()}",
             body_hash="hash-123",
-            request_params={}
+            request_params={},
         )
         db.commit()
         db.refresh(request)
@@ -509,7 +526,7 @@ class TestIdempotencyServiceConcurrency:
                 request,
                 result_ref=result_ref,
                 response_body=response_body,
-                response_status_code=200
+                response_status_code=200,
             )
             db.commit()
 
@@ -563,19 +580,21 @@ class TestIdempotencyHeaderPropagation:
         r1 = client.post(
             "/api/schedule/generate",
             json=schedule_data,
-            headers={"Idempotency-Key": idempotency_key}
+            headers={"Idempotency-Key": idempotency_key},
         )
         assert r1.status_code in [200, 207]
 
         # Should NOT have replay header (or it should be "false")
-        assert "X-Idempotency-Replayed" not in r1.headers or \
-               r1.headers.get("X-Idempotency-Replayed") == "false"
+        assert (
+            "X-Idempotency-Replayed" not in r1.headers
+            or r1.headers.get("X-Idempotency-Replayed") == "false"
+        )
 
         # Second request (replayed)
         r2 = client.post(
             "/api/schedule/generate",
             json=schedule_data,
-            headers={"Idempotency-Key": idempotency_key}
+            headers={"Idempotency-Key": idempotency_key},
         )
         assert r2.status_code in [200, 207]
 

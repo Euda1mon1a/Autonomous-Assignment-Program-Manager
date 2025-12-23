@@ -17,11 +17,11 @@ import json
 import logging
 import random
 import time
-from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 from urllib.parse import urljoin
 
 import httpx
@@ -104,7 +104,7 @@ class ShadowTrafficFilter:
     exclude_users: list[str] = field(default_factory=list)
     min_request_size: int = 0
     max_request_size: int = 10_485_760  # 10 MB
-    custom_filter: Optional[Callable[[dict[str, Any]], bool]] = None
+    custom_filter: Callable[[dict[str, Any]], bool] | None = None
 
 
 @dataclass
@@ -130,8 +130,8 @@ class ResponseComparison:
 
     request_id: str
     timestamp: datetime
-    primary_status: Optional[int] = None
-    shadow_status: Optional[int] = None
+    primary_status: int | None = None
+    shadow_status: int | None = None
     primary_response_time: float = 0.0
     shadow_response_time: float = 0.0
     status_match: bool = False
@@ -139,8 +139,8 @@ class ResponseComparison:
     headers_match: bool = False
     diff_severity: DiffSeverity = DiffSeverity.NONE
     diff_details: dict[str, Any] = field(default_factory=dict)
-    primary_error: Optional[str] = None
-    shadow_error: Optional[str] = None
+    primary_error: str | None = None
+    shadow_error: str | None = None
 
 
 @dataclass
@@ -160,7 +160,7 @@ class DiffReport:
     comparison: ResponseComparison
     request_method: str
     request_path: str
-    request_body: Optional[str] = None
+    request_body: str | None = None
     diff_summary: str = ""
     recommendation: str = ""
 
@@ -181,7 +181,7 @@ class ShadowHealthMetrics:
     """
 
     status: str = "unknown"
-    last_check: Optional[datetime] = None
+    last_check: datetime | None = None
     success_rate: float = 0.0
     avg_response_time: float = 0.0
     error_count: int = 0
@@ -290,8 +290,8 @@ class ShadowTrafficManager:
     def __init__(
         self,
         config: ShadowConfig,
-        traffic_filter: Optional[ShadowTrafficFilter] = None,
-        alert_callback: Optional[Callable[[DiffReport], None]] = None,
+        traffic_filter: ShadowTrafficFilter | None = None,
+        alert_callback: Callable[[DiffReport], None] | None = None,
     ):
         """
         Initialize shadow traffic manager.
@@ -306,7 +306,7 @@ class ShadowTrafficManager:
         self.alert_callback = alert_callback
 
         # HTTP client for shadow requests
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
         # Metrics storage
         self._comparisons: list[ResponseComparison] = []
@@ -321,7 +321,7 @@ class ShadowTrafficManager:
         self._semaphore = asyncio.Semaphore(config.max_concurrent)
 
         # Last health check
-        self._last_health_check: Optional[datetime] = None
+        self._last_health_check: datetime | None = None
 
         logger.info(
             f"Shadow traffic manager initialized: "
@@ -367,8 +367,8 @@ class ShadowTrafficManager:
         self,
         method: str,
         path: str,
-        body: Optional[bytes],
-        user_id: Optional[str] = None,
+        body: bytes | None,
+        user_id: str | None = None,
     ) -> bool:
         """
         Determine if request should be filtered (excluded).
@@ -437,7 +437,7 @@ class ShadowTrafficManager:
         self,
         method: str,
         path: str,
-        body: Optional[bytes],
+        body: bytes | None,
     ) -> str:
         """
         Generate unique request ID for tracking.
@@ -487,9 +487,9 @@ class ShadowTrafficManager:
         method: str,
         path: str,
         headers: dict[str, str],
-        body: Optional[bytes],
+        body: bytes | None,
         request_id: str,
-    ) -> tuple[Optional[httpx.Response], float, Optional[str]]:
+    ) -> tuple[httpx.Response | None, float, str | None]:
         """
         Send request to shadow service.
 
@@ -505,7 +505,7 @@ class ShadowTrafficManager:
         """
         url = urljoin(self.config.shadow_url, path)
         start_time = time.time()
-        error: Optional[str] = None
+        error: str | None = None
 
         try:
             client = await self._get_client()
@@ -530,7 +530,7 @@ class ShadowTrafficManager:
 
             return response, response_time, None
 
-        except httpx.TimeoutException as e:
+        except httpx.TimeoutException:
             response_time = (time.time() - start_time) * 1000
             error = f"Timeout after {self.config.timeout}s"
             logger.warning(f"Shadow request timeout: request_id={request_id}")
@@ -561,9 +561,9 @@ class ShadowTrafficManager:
         primary_body: Any,
         primary_headers: dict[str, str],
         primary_response_time: float,
-        shadow_response: Optional[httpx.Response],
+        shadow_response: httpx.Response | None,
         shadow_response_time: float,
-        shadow_error: Optional[str],
+        shadow_error: str | None,
     ) -> ResponseComparison:
         """
         Compare primary and shadow responses.
@@ -701,7 +701,7 @@ class ShadowTrafficManager:
         comparison: ResponseComparison,
         method: str,
         path: str,
-        body: Optional[bytes],
+        body: bytes | None,
     ) -> None:
         """
         Handle alerting for response differences.
@@ -724,9 +724,9 @@ class ShadowTrafficManager:
             DiffSeverity.CRITICAL,
         ]
 
-        if severity_order.index(
-            comparison.diff_severity
-        ) < severity_order.index(self.config.diff_threshold):
+        if severity_order.index(comparison.diff_severity) < severity_order.index(
+            self.config.diff_threshold
+        ):
             return
 
         # Create diff report
@@ -812,11 +812,11 @@ class ShadowTrafficManager:
         method: str,
         path: str,
         headers: dict[str, str],
-        body: Optional[bytes],
-        user_id: Optional[str],
+        body: bytes | None,
+        user_id: str | None,
         primary_response: dict[str, Any],
         primary_response_time: float,
-    ) -> Optional[ResponseComparison]:
+    ) -> ResponseComparison | None:
         """
         Duplicate request to shadow service and compare responses.
 
@@ -886,10 +886,12 @@ class ShadowTrafficManager:
 
         # Send shadow request (with concurrency control)
         async with self._semaphore:
-            shadow_response, shadow_response_time, shadow_error = (
-                await self._send_shadow_request(
-                    method, path, shadow_headers, body, request_id
-                )
+            (
+                shadow_response,
+                shadow_response_time,
+                shadow_error,
+            ) = await self._send_shadow_request(
+                method, path, shadow_headers, body, request_id
             )
 
         # Update health metrics
@@ -996,9 +998,9 @@ class ShadowTrafficManager:
 
         # Calculate average response times
         if self._primary_response_times:
-            metrics.primary_avg_response_time = sum(
+            metrics.primary_avg_response_time = sum(self._primary_response_times) / len(
                 self._primary_response_times
-            ) / len(self._primary_response_times)
+            )
 
         if self._shadow_response_times:
             metrics.shadow_avg_response_time = sum(self._shadow_response_times) / len(

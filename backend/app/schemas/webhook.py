@@ -1,10 +1,10 @@
 """Webhook schemas for API request/response validation."""
+
 from datetime import datetime
 from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator
-
 
 # ============================================================================
 # Webhook Schemas
@@ -17,14 +17,24 @@ class WebhookCreate(BaseModel):
     url: HttpUrl = Field(..., description="Webhook endpoint URL")
     name: str = Field(..., min_length=1, max_length=255, description="Webhook name")
     description: str | None = Field(None, description="Optional description")
-    event_types: list[str] = Field(..., min_length=1, description="Event types to subscribe to")
-    secret: str | None = Field(None, min_length=32, description="Shared secret (auto-generated if not provided)")
-    custom_headers: dict[str, str] | None = Field(None, description="Custom headers for requests")
-    timeout_seconds: int = Field(30, ge=1, le=300, description="Request timeout in seconds")
+    event_types: list[str] = Field(
+        ..., min_length=1, description="Event types to subscribe to"
+    )
+    secret: str | None = Field(
+        None,
+        min_length=32,
+        description="Shared secret (auto-generated if not provided)",
+    )
+    custom_headers: dict[str, str] | None = Field(
+        None, description="Custom headers for requests"
+    )
+    timeout_seconds: int = Field(
+        30, ge=1, le=300, description="Request timeout in seconds"
+    )
     max_retries: int = Field(5, ge=0, le=10, description="Maximum retry attempts")
     metadata: dict[str, Any] | None = Field(None, description="Optional metadata")
 
-    @field_validator('event_types')
+    @field_validator("event_types")
     @classmethod
     def validate_event_types(cls, v: list[str]) -> list[str]:
         """Ensure event types are unique."""
@@ -44,7 +54,7 @@ class WebhookUpdate(BaseModel):
     max_retries: int | None = Field(None, ge=0, le=10)
     metadata: dict[str, Any] | None = None
 
-    @field_validator('event_types')
+    @field_validator("event_types")
     @classmethod
     def validate_event_types(cls, v: list[str] | None) -> list[str] | None:
         """Ensure event types are unique."""

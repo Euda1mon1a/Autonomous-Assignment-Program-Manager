@@ -3,7 +3,7 @@
 import asyncio
 
 import pytest
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.timeout.middleware import TimeoutMiddleware
@@ -64,9 +64,7 @@ class TestTimeoutMiddleware:
     def test_excluded_paths_no_timeout(self, app):
         """Test that excluded paths don't have timeout applied."""
         app.add_middleware(
-            TimeoutMiddleware,
-            default_timeout=0.1,
-            exclude_paths=["/health"]
+            TimeoutMiddleware, default_timeout=0.1, exclude_paths=["/health"]
         )
         client = TestClient(app)
 
@@ -79,11 +77,7 @@ class TestTimeoutMiddleware:
 
     def test_timeout_headers_disabled(self, app):
         """Test disabling timeout headers."""
-        app.add_middleware(
-            TimeoutMiddleware,
-            default_timeout=1.0,
-            timeout_header=False
-        )
+        app.add_middleware(TimeoutMiddleware, default_timeout=1.0, timeout_header=False)
         client = TestClient(app)
 
         response = client.get("/quick")

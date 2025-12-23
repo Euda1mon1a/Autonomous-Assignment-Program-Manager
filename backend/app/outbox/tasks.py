@@ -25,6 +25,7 @@ Add to celery_app.py beat_schedule:
         "options": {"queue": "outbox"},
     },
 """
+
 import logging
 from typing import Any
 

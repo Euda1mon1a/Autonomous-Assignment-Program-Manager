@@ -404,11 +404,7 @@ async def run_contingency_analysis(
 
     # Calculate coverage gaps based on scenario type
     if request.scenario == ContingencyScenario.FACULTY_ABSENCE:
-<<<<<<< HEAD
         # Faculty absence: affects supervision ratios and coverage
-=======
-        ***REMOVED*** absence: affects supervision ratios and coverage
->>>>>>> origin/docs/session-14-summary
         # Estimate ~10-15 blocks per faculty member
         estimated_blocks_per_person = 12
         total_affected_blocks = num_affected * estimated_blocks_per_person

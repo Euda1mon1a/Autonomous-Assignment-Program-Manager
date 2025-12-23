@@ -15,6 +15,7 @@ Uses contextvars for async-safe context management. Each async task
 gets its own isolated context that doesn't interfere with other
 concurrent requests.
 """
+
 import logging
 from contextvars import ContextVar
 from typing import Optional
@@ -31,9 +32,11 @@ logger = logging.getLogger(__name__)
 
 # Context variables for tenant tracking
 # These are async-safe and isolated per request/task
-_tenant_id: ContextVar[Optional[UUID]] = ContextVar("tenant_id", default=None)
-_tenant_slug: ContextVar[Optional[str]] = ContextVar("tenant_slug", default=None)
-_bypass_tenant_filter: ContextVar[bool] = ContextVar("bypass_tenant_filter", default=False)
+_tenant_id: ContextVar[UUID | None] = ContextVar("tenant_id", default=None)
+_tenant_slug: ContextVar[str | None] = ContextVar("tenant_slug", default=None)
+_bypass_tenant_filter: ContextVar[bool] = ContextVar(
+    "bypass_tenant_filter", default=False
+)
 
 
 class TenantContext:
@@ -53,8 +56,8 @@ class TenantContext:
 
     def __init__(
         self,
-        tenant_id: Optional[UUID] = None,
-        tenant_slug: Optional[str] = None,
+        tenant_id: UUID | None = None,
+        tenant_slug: str | None = None,
         bypass: bool = False,
     ):
         """
@@ -89,7 +92,7 @@ class TenantContext:
             _bypass_tenant_filter.reset(self._bypass_token)
 
 
-def get_current_tenant_id() -> Optional[UUID]:
+def get_current_tenant_id() -> UUID | None:
     """
     Get the current tenant ID from context.
 
@@ -104,7 +107,7 @@ def get_current_tenant_id() -> Optional[UUID]:
     return _tenant_id.get()
 
 
-def get_current_tenant_slug() -> Optional[str]:
+def get_current_tenant_slug() -> str | None:
     """
     Get the current tenant slug from context.
 
@@ -125,8 +128,8 @@ def is_bypassing_tenant_filter() -> bool:
 
 
 def set_current_tenant(
-    tenant_id: Optional[UUID] = None,
-    tenant_slug: Optional[str] = None,
+    tenant_id: UUID | None = None,
+    tenant_slug: str | None = None,
     bypass: bool = False,
 ) -> None:
     """

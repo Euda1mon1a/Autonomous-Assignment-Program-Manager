@@ -44,7 +44,9 @@ from app.resilience.stigmergy import (
 # =============================================================================
 
 
-def persist_cognitive_session(db: Session, session: CognitiveSession) -> CognitiveSessionRecord:
+def persist_cognitive_session(
+    db: Session, session: CognitiveSession
+) -> CognitiveSessionRecord:
     """
     Persist a cognitive session to the database.
 
@@ -72,7 +74,9 @@ def persist_cognitive_session(db: Session, session: CognitiveSession) -> Cogniti
     return record
 
 
-def update_cognitive_session(db: Session, session: CognitiveSession) -> CognitiveSessionRecord | None:
+def update_cognitive_session(
+    db: Session, session: CognitiveSession
+) -> CognitiveSessionRecord | None:
     """
     Update an existing cognitive session record.
 
@@ -83,9 +87,11 @@ def update_cognitive_session(db: Session, session: CognitiveSession) -> Cognitiv
     Returns:
         Updated CognitiveSessionRecord or None
     """
-    record = db.query(CognitiveSessionRecord).filter(
-        CognitiveSessionRecord.id == session.id
-    ).first()
+    record = (
+        db.query(CognitiveSessionRecord)
+        .filter(CognitiveSessionRecord.id == session.id)
+        .first()
+    )
 
     if record:
         record.ended_at = session.ended_at
@@ -99,7 +105,9 @@ def update_cognitive_session(db: Session, session: CognitiveSession) -> Cognitiv
     return record
 
 
-def persist_decision(db: Session, decision: Decision, session_id: UUID = None) -> CognitiveDecisionRecord:
+def persist_decision(
+    db: Session, decision: Decision, session_id: UUID = None
+) -> CognitiveDecisionRecord:
     """
     Persist a decision to the database.
 
@@ -155,9 +163,11 @@ def update_decision_resolution(
     Returns:
         Updated CognitiveDecisionRecord or None
     """
-    record = db.query(CognitiveDecisionRecord).filter(
-        CognitiveDecisionRecord.id == decision_id
-    ).first()
+    record = (
+        db.query(CognitiveDecisionRecord)
+        .filter(CognitiveDecisionRecord.id == decision_id)
+        .first()
+    )
 
     if record:
         record.outcome = outcome.value
@@ -200,7 +210,9 @@ def get_session_history(
 # =============================================================================
 
 
-def persist_preference_trail(db: Session, trail: PreferenceTrail) -> PreferenceTrailRecord:
+def persist_preference_trail(
+    db: Session, trail: PreferenceTrail
+) -> PreferenceTrailRecord:
     """
     Persist or update a preference trail in the database.
 
@@ -212,9 +224,11 @@ def persist_preference_trail(db: Session, trail: PreferenceTrail) -> PreferenceT
         Created or updated PreferenceTrailRecord
     """
     # Check if trail already exists
-    existing = db.query(PreferenceTrailRecord).filter(
-        PreferenceTrailRecord.id == trail.id
-    ).first()
+    existing = (
+        db.query(PreferenceTrailRecord)
+        .filter(PreferenceTrailRecord.id == trail.id)
+        .first()
+    )
 
     if existing:
         # Update existing record
@@ -280,7 +294,9 @@ def persist_trail_signal(
     return record
 
 
-def load_preference_trails(db: Session, faculty_id: UUID = None) -> list[PreferenceTrailRecord]:
+def load_preference_trails(
+    db: Session, faculty_id: UUID = None
+) -> list[PreferenceTrailRecord]:
     """
     Load preference trails from database.
 
@@ -310,9 +326,11 @@ def delete_weak_trails(db: Session, min_strength: float = 0.01) -> int:
     Returns:
         Number of trails deleted
     """
-    count = db.query(PreferenceTrailRecord).filter(
-        PreferenceTrailRecord.strength < min_strength
-    ).delete()
+    count = (
+        db.query(PreferenceTrailRecord)
+        .filter(PreferenceTrailRecord.strength < min_strength)
+        .delete()
+    )
     db.commit()
     return count
 
@@ -404,7 +422,9 @@ def persist_hub_protection_plan(
         reason=plan.reason,
         workload_reduction=plan.workload_reduction,
         backup_assigned=plan.backup_assigned,
-        backup_faculty_ids=[str(f) for f in plan.backup_faculty_ids] if plan.backup_faculty_ids else None,
+        backup_faculty_ids=[str(f) for f in plan.backup_faculty_ids]
+        if plan.backup_faculty_ids
+        else None,
         critical_only=plan.critical_only,
         status=plan.status,
         created_by=created_by,
@@ -431,9 +451,11 @@ def update_protection_plan_status(
     Returns:
         Updated HubProtectionPlanRecord or None
     """
-    record = db.query(HubProtectionPlanRecord).filter(
-        HubProtectionPlanRecord.id == plan_id
-    ).first()
+    record = (
+        db.query(HubProtectionPlanRecord)
+        .filter(HubProtectionPlanRecord.id == plan_id)
+        .first()
+    )
 
     if record:
         record.status = status
@@ -464,8 +486,12 @@ def persist_cross_training_recommendation(
     record = CrossTrainingRecommendationRecord(
         id=recommendation.id,
         skill=recommendation.skill,
-        current_holders=[str(h) for h in recommendation.current_holders] if recommendation.current_holders else None,
-        recommended_trainees=[str(t) for t in recommendation.recommended_trainees] if recommendation.recommended_trainees else None,
+        current_holders=[str(h) for h in recommendation.current_holders]
+        if recommendation.current_holders
+        else None,
+        recommended_trainees=[str(t) for t in recommendation.recommended_trainees]
+        if recommendation.recommended_trainees
+        else None,
         priority=recommendation.priority.value,
         reason=recommendation.reason,
         estimated_training_hours=recommendation.estimated_training_hours,
@@ -488,12 +514,16 @@ def get_active_protection_plans(db: Session) -> list[HubProtectionPlanRecord]:
     Returns:
         List of active HubProtectionPlanRecord
     """
-    return db.query(HubProtectionPlanRecord).filter(
-        HubProtectionPlanRecord.status == "active"
-    ).all()
+    return (
+        db.query(HubProtectionPlanRecord)
+        .filter(HubProtectionPlanRecord.status == "active")
+        .all()
+    )
 
 
-def get_latest_centrality_scores(db: Session, limit: int = 50) -> list[FacultyCentralityRecord]:
+def get_latest_centrality_scores(
+    db: Session, limit: int = 50
+) -> list[FacultyCentralityRecord]:
     """
     Get the most recent centrality scores.
 
@@ -504,9 +534,12 @@ def get_latest_centrality_scores(db: Session, limit: int = 50) -> list[FacultyCe
     Returns:
         List of FacultyCentralityRecord
     """
-    return db.query(FacultyCentralityRecord).order_by(
-        FacultyCentralityRecord.calculated_at.desc()
-    ).limit(limit).all()
+    return (
+        db.query(FacultyCentralityRecord)
+        .order_by(FacultyCentralityRecord.calculated_at.desc())
+        .limit(limit)
+        .all()
+    )
 
 
 def get_pending_cross_training(db: Session) -> list[CrossTrainingRecommendationRecord]:
@@ -519,6 +552,9 @@ def get_pending_cross_training(db: Session) -> list[CrossTrainingRecommendationR
     Returns:
         List of pending CrossTrainingRecommendationRecord
     """
-    return db.query(CrossTrainingRecommendationRecord).filter(
-        CrossTrainingRecommendationRecord.status.in_(["pending", "approved"])
-    ).order_by(CrossTrainingRecommendationRecord.priority.desc()).all()
+    return (
+        db.query(CrossTrainingRecommendationRecord)
+        .filter(CrossTrainingRecommendationRecord.status.in_(["pending", "approved"]))
+        .order_by(CrossTrainingRecommendationRecord.priority.desc())
+        .all()
+    )

@@ -4,22 +4,29 @@ Request validation decorators for FastAPI routes.
 Provides decorators for validating query parameters, request bodies,
 and combined request data with support for custom rules and cross-field validation.
 """
+
 import functools
 import inspect
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from fastapi import HTTPException, Request
 from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
 
-from .context import ValidationContext, create_validation_context, clear_validation_context
+from .context import (
+    ValidationContext,
+    clear_validation_context,
+    create_validation_context,
+)
 from .messages import Locale
 from .rules import ValidationRule
 
 
 def validate_request(
-    query_rules: Optional[dict[str, list[ValidationRule]]] = None,
-    body_rules: Optional[dict[str, list[ValidationRule]]] = None,
-    cross_field_validator: Optional[Callable[[dict[str, Any], ValidationContext], None]] = None,
+    query_rules: dict[str, list[ValidationRule]] | None = None,
+    body_rules: dict[str, list[ValidationRule]] | None = None,
+    cross_field_validator: Callable[[dict[str, Any], ValidationContext], None]
+    | None = None,
     locale: Locale = Locale.EN_US,
 ) -> Callable:
     """
@@ -50,6 +57,7 @@ def validate_request(
         ... async def create_item(request: Request, page: int, limit: int):
         ...     pass
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
@@ -95,7 +103,7 @@ def validate_request(
                         detail={
                             "message": "Validation failed",
                             "errors": ctx.get_errors_list(),
-                        }
+                        },
                     )
 
                 # Call original function
@@ -131,7 +139,9 @@ def validate_request(
 
                 # Cross-field validation
                 if cross_field_validator:
-                    request_data = ctx.get_data("request_data", query_params if request else {})
+                    request_data = ctx.get_data(
+                        "request_data", query_params if request else {}
+                    )
                     cross_field_validator(request_data, ctx)
 
                 # Check for validation errors
@@ -141,7 +151,7 @@ def validate_request(
                         detail={
                             "message": "Validation failed",
                             "errors": ctx.get_errors_list(),
-                        }
+                        },
                     )
 
                 # Call original function
@@ -237,9 +247,7 @@ def validate_cross_field(
 
 
 def _validate_fields(
-    data: dict[str, Any],
-    rules: dict[str, list[ValidationRule]],
-    ctx: ValidationContext
+    data: dict[str, Any], rules: dict[str, list[ValidationRule]], ctx: ValidationContext
 ) -> None:
     """
     Validate fields against rules.
@@ -292,7 +300,7 @@ def validate_pagination(
             "page": [numeric_range(min_value=1)],
             "limit": [numeric_range(min_value=1, max_value=max_limit)],
         },
-        locale=locale
+        locale=locale,
     )
 
 
@@ -315,13 +323,13 @@ def validate_uuid_param(
         ... async def get_person(person_id: str):
         ...     pass
     """
-    from .rules import uuid_format, required
+    from .rules import required, uuid_format
 
     return validate_query(
         rules={
             param_name: [required, uuid_format()],
         },
-        locale=locale
+        locale=locale,
     )
 
 
@@ -370,8 +378,7 @@ def validate_date_range_params(
 
             if start > end:
                 ctx.add_field_error(
-                    end_param,
-                    f"{end_param} must be after {start_param}"
+                    end_param, f"{end_param} must be after {start_param}"
                 )
 
     return validate_request(cross_field_validator=cross_validator, locale=locale)
@@ -409,6 +416,7 @@ def validate_conditional_field(
         ... async def create_person(person_data: dict):
         ...     pass
     """
+
     def cross_validator(data: dict[str, Any], ctx: ValidationContext) -> None:
         if data.get(condition_field) == condition_value:
             value = data.get(field)

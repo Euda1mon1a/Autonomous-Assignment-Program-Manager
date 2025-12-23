@@ -1,13 +1,16 @@
 """Type definitions for saga orchestration."""
+
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Awaitable, Callable
+from typing import Any
 from uuid import UUID
 
 
 class SagaStatus(str, Enum):
     """Status of a saga execution."""
+
     PENDING = "pending"  # Saga created but not started
     RUNNING = "running"  # Saga currently executing
     COMPENSATING = "compensating"  # Rolling back completed steps
@@ -19,6 +22,7 @@ class SagaStatus(str, Enum):
 
 class StepStatus(str, Enum):
     """Status of a saga step execution."""
+
     PENDING = "pending"  # Step not yet started
     RUNNING = "running"  # Step currently executing
     COMPLETED = "completed"  # Step completed successfully
@@ -29,6 +33,7 @@ class StepStatus(str, Enum):
 
 class StepType(str, Enum):
     """Type of saga step execution."""
+
     SEQUENTIAL = "sequential"  # Execute one at a time
     PARALLEL = "parallel"  # Execute concurrently
 
@@ -52,6 +57,7 @@ class SagaStepDefinition:
         idempotent: Whether the step can be safely retried
         parallel_group: Group name for parallel execution (None = sequential)
     """
+
     name: str
     action: StepFunction
     compensation: CompensationFunction | None = None
@@ -82,6 +88,7 @@ class SagaDefinition:
         description: Human-readable description
         version: Saga definition version (for compatibility)
     """
+
     name: str
     steps: list[SagaStepDefinition]
     timeout_seconds: int = 3600  # 1 hour default
@@ -130,6 +137,7 @@ class SagaStepResult:
         completed_at: When step execution completed
         retry_count: Number of times step was retried
     """
+
     step_name: str
     status: StepStatus
     output_data: dict[str, Any] = field(default_factory=dict)
@@ -152,6 +160,7 @@ class SagaExecutionResult:
         compensated_steps: Number of steps that were compensated
         error_message: Error message if saga failed
     """
+
     saga_id: UUID
     status: SagaStatus
     step_results: list[SagaStepResult] = field(default_factory=list)
@@ -179,7 +188,7 @@ class SagaExecutionResult:
             SagaStatus.COMPLETED,
             SagaStatus.FAILED,
             SagaStatus.TIMEOUT,
-            SagaStatus.CANCELLED
+            SagaStatus.CANCELLED,
         )
 
 
@@ -195,6 +204,7 @@ class SagaContext:
         accumulated_data: Data accumulated from step outputs
         metadata: Additional metadata (user_id, trace_id, etc.)
     """
+
     saga_id: UUID
     input_data: dict[str, Any]
     accumulated_data: dict[str, Any] = field(default_factory=dict)

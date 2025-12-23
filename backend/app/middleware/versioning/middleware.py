@@ -8,10 +8,10 @@ Handles automatic version detection from multiple sources:
 
 Stores detected version in request.state for downstream use.
 """
+
 import logging
 import re
 from contextvars import ContextVar
-from datetime import datetime
 from enum import Enum
 from typing import Optional
 
@@ -35,6 +35,7 @@ class APIVersion(str, Enum):
     Each version represents a major API contract. Breaking changes
     require a new version.
     """
+
     V1 = "v1"
     V2 = "v2"
     V3 = "v3"
@@ -210,7 +211,7 @@ class VersioningMiddleware(BaseHTTPMiddleware):
         # 4. Default version
         return self.default_version
 
-    def _extract_from_url(self, path: str) -> Optional[APIVersion]:
+    def _extract_from_url(self, path: str) -> APIVersion | None:
         """
         Extract version from URL path.
 
@@ -230,7 +231,7 @@ class VersioningMiddleware(BaseHTTPMiddleware):
             return APIVersion.from_string(version_str)
         return None
 
-    def _extract_from_header(self, headers: Headers) -> Optional[APIVersion]:
+    def _extract_from_header(self, headers: Headers) -> APIVersion | None:
         """
         Extract version from Accept-Version header.
 
@@ -250,7 +251,7 @@ class VersioningMiddleware(BaseHTTPMiddleware):
             return APIVersion.from_string(version_header)
         return None
 
-    def _extract_from_query(self, query_params) -> Optional[APIVersion]:
+    def _extract_from_query(self, query_params) -> APIVersion | None:
         """
         Extract version from query parameter.
 
@@ -308,18 +309,22 @@ def require_version(min_version: APIVersion):
         async def new_feature_endpoint():
             pass
     """
+
     def decorator(func):
         async def wrapper(*args, **kwargs):
             current = get_api_version()
             if current < min_version:
                 from fastapi import HTTPException
+
                 raise HTTPException(
                     status_code=400,
                     detail=f"This endpoint requires API version {min_version.value} or higher. "
-                           f"Current version: {current.value}"
+                    f"Current version: {current.value}",
                 )
             return await func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 

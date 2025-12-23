@@ -1,6 +1,6 @@
 """Timezone conversion utilities for UTC and local time handling."""
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
@@ -43,7 +43,7 @@ class TimezoneConverter:
     def utc_to_local(
         cls,
         dt: datetime,
-        tz_name: Optional[str] = None,
+        tz_name: str | None = None,
     ) -> datetime:
         """
         Convert UTC datetime to local timezone.
@@ -66,10 +66,10 @@ class TimezoneConverter:
 
         # Ensure datetime is UTC-aware
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        elif dt.tzinfo != timezone.utc:
+            dt = dt.replace(tzinfo=UTC)
+        elif dt.tzinfo != UTC:
             # Convert to UTC first if in different timezone
-            dt = dt.astimezone(timezone.utc)
+            dt = dt.astimezone(UTC)
 
         # Convert to target timezone
         return dt.astimezone(target_tz)
@@ -78,7 +78,7 @@ class TimezoneConverter:
     def local_to_utc(
         cls,
         dt: datetime,
-        tz_name: Optional[str] = None,
+        tz_name: str | None = None,
     ) -> datetime:
         """
         Convert local datetime to UTC.
@@ -107,7 +107,7 @@ class TimezoneConverter:
             dt = dt.astimezone(source_tz)
 
         # Convert to UTC
-        return dt.astimezone(timezone.utc)
+        return dt.astimezone(UTC)
 
     @classmethod
     def convert_between_timezones(
@@ -161,10 +161,10 @@ class TimezoneConverter:
             >>> now.tzinfo == timezone.utc
             True
         """
-        return datetime.now(timezone.utc)
+        return datetime.now(UTC)
 
     @classmethod
-    def now_local(cls, tz_name: Optional[str] = None) -> datetime:
+    def now_local(cls, tz_name: str | None = None) -> datetime:
         """
         Get current local datetime (aware).
 
@@ -187,8 +187,8 @@ class TimezoneConverter:
     def make_aware(
         cls,
         dt: datetime,
-        tz_name: Optional[str] = None,
-        is_dst: Optional[bool] = None,
+        tz_name: str | None = None,
+        is_dst: bool | None = None,
     ) -> datetime:
         """
         Make a naive datetime timezone-aware.
@@ -225,7 +225,7 @@ class TimezoneConverter:
     def make_naive(
         cls,
         dt: datetime,
-        target_tz: Optional[str] = None,
+        target_tz: str | None = None,
     ) -> datetime:
         """
         Make a timezone-aware datetime naive.
@@ -264,7 +264,7 @@ class TimezoneConverter:
         return local_dt.replace(tzinfo=None)
 
     @classmethod
-    def get_utc_offset(cls, tz_name: str, dt: Optional[datetime] = None) -> timedelta:
+    def get_utc_offset(cls, tz_name: str, dt: datetime | None = None) -> timedelta:
         """
         Get UTC offset for a timezone at a specific datetime.
 
@@ -292,7 +292,7 @@ class TimezoneConverter:
         return dt.utcoffset()
 
     @classmethod
-    def is_dst(cls, dt: datetime, tz_name: Optional[str] = None) -> bool:
+    def is_dst(cls, dt: datetime, tz_name: str | None = None) -> bool:
         """
         Check if a datetime is in Daylight Saving Time.
 
@@ -332,7 +332,7 @@ class TimezoneConverter:
         cls,
         start: datetime,
         end: datetime,
-        tz_name: Optional[str] = None,
+        tz_name: str | None = None,
     ) -> tuple[datetime, datetime]:
         """
         Normalize a datetime range to UTC.
@@ -362,18 +362,18 @@ class TimezoneConverter:
         if start.tzinfo is None:
             start = cls.local_to_utc(start, tz_name)
         else:
-            start = start.astimezone(timezone.utc)
+            start = start.astimezone(UTC)
 
         # Convert end to UTC
         if end.tzinfo is None:
             end = cls.local_to_utc(end, tz_name)
         else:
-            end = end.astimezone(timezone.utc)
+            end = end.astimezone(UTC)
 
         return start, end
 
     @classmethod
-    def today_start_utc(cls, tz_name: Optional[str] = None) -> datetime:
+    def today_start_utc(cls, tz_name: str | None = None) -> datetime:
         """
         Get start of today in UTC for a given timezone.
 
@@ -399,10 +399,10 @@ class TimezoneConverter:
         local_start = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
 
         # Convert to UTC
-        return local_start.astimezone(timezone.utc)
+        return local_start.astimezone(UTC)
 
     @classmethod
-    def today_end_utc(cls, tz_name: Optional[str] = None) -> datetime:
+    def today_end_utc(cls, tz_name: str | None = None) -> datetime:
         """
         Get end of today in UTC for a given timezone.
 
@@ -424,9 +424,7 @@ class TimezoneConverter:
 
         # Get today in local timezone
         local_now = datetime.now(tz)
-        local_end = local_now.replace(
-            hour=23, minute=59, second=59, microsecond=999999
-        )
+        local_end = local_now.replace(hour=23, minute=59, second=59, microsecond=999999)
 
         # Convert to UTC
-        return local_end.astimezone(timezone.utc)
+        return local_end.astimezone(UTC)

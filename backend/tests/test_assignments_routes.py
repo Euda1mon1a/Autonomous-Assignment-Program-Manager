@@ -3,6 +3,7 @@
 Tests all CRUD operations, filtering, authentication, authorization,
 ACGME validation, optimistic locking, and error handling.
 """
+
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
@@ -17,10 +18,10 @@ from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.user import User
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def admin_user(db: Session) -> User:
@@ -253,6 +254,7 @@ def test_assignment(
 # Authentication Tests
 # ============================================================================
 
+
 class TestAssignmentRouteAuthentication:
     """Test that all assignment routes require authentication."""
 
@@ -262,7 +264,9 @@ class TestAssignmentRouteAuthentication:
         assert response.status_code == 401
         assert "Not authenticated" in response.json()["detail"]
 
-    def test_get_assignment_requires_auth(self, client: TestClient, test_assignment: Assignment):
+    def test_get_assignment_requires_auth(
+        self, client: TestClient, test_assignment: Assignment
+    ):
         """Test that getting a single assignment requires authentication."""
         response = client.get(f"/api/assignments/{test_assignment.id}")
         assert response.status_code == 401
@@ -287,7 +291,9 @@ class TestAssignmentRouteAuthentication:
         )
         assert response.status_code == 401
 
-    def test_update_assignment_requires_auth(self, client: TestClient, test_assignment: Assignment):
+    def test_update_assignment_requires_auth(
+        self, client: TestClient, test_assignment: Assignment
+    ):
         """Test that updating an assignment requires authentication."""
         response = client.put(
             f"/api/assignments/{test_assignment.id}",
@@ -298,7 +304,9 @@ class TestAssignmentRouteAuthentication:
         )
         assert response.status_code == 401
 
-    def test_delete_assignment_requires_auth(self, client: TestClient, test_assignment: Assignment):
+    def test_delete_assignment_requires_auth(
+        self, client: TestClient, test_assignment: Assignment
+    ):
         """Test that deleting an assignment requires authentication."""
         response = client.delete(f"/api/assignments/{test_assignment.id}")
         assert response.status_code == 401
@@ -319,6 +327,7 @@ class TestAssignmentRouteAuthentication:
 # ============================================================================
 # Authorization Tests (Role-Based Access Control)
 # ============================================================================
+
 
 class TestAssignmentRoleBasedAccessControl:
     """Test role-based access control for assignment routes."""
@@ -551,6 +560,7 @@ class TestAssignmentRoleBasedAccessControl:
 # CRUD Operation Tests
 # ============================================================================
 
+
 class TestAssignmentCRUDOperations:
     """Test basic CRUD operations for assignments."""
 
@@ -777,6 +787,7 @@ class TestAssignmentCRUDOperations:
 # ============================================================================
 # Filtering Tests
 # ============================================================================
+
 
 class TestAssignmentFiltering:
     """Test assignment filtering functionality."""
@@ -1121,6 +1132,7 @@ class TestAssignmentFiltering:
 # Optimistic Locking Tests
 # ============================================================================
 
+
 class TestOptimisticLocking:
     """Test optimistic locking for concurrent updates."""
 
@@ -1249,6 +1261,7 @@ class TestOptimisticLocking:
 # ACGME Validation Tests
 # ============================================================================
 
+
 class TestACGMEValidation:
     """Test ACGME validation during assignment create/update."""
 
@@ -1329,6 +1342,7 @@ class TestACGMEValidation:
 # ============================================================================
 # Bulk Delete Tests
 # ============================================================================
+
 
 class TestBulkDelete:
     """Test bulk delete functionality."""
@@ -1444,6 +1458,7 @@ class TestBulkDelete:
 # ============================================================================
 # Edge Cases and Error Handling
 # ============================================================================
+
 
 class TestEdgeCasesAndErrorHandling:
     """Test edge cases and error handling."""

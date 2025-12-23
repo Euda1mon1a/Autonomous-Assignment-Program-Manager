@@ -26,7 +26,7 @@ import logging
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import Column, DateTime, Integer, String, Text
@@ -74,7 +74,9 @@ class SnapshotRecord(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     def __repr__(self):
-        return f"<SnapshotRecord(migration={self.migration_id}, table={self.table_name})>"
+        return (
+            f"<SnapshotRecord(migration={self.migration_id}, table={self.table_name})>"
+        )
 
 
 class RollbackRecord(Base):
@@ -114,7 +116,7 @@ class RollbackResult:
         success: bool,
         records_restored: int = 0,
         records_failed: int = 0,
-        error_message: Optional[str] = None
+        error_message: str | None = None,
     ):
         self.rollback_id = rollback_id
         self.success = success
@@ -151,7 +153,7 @@ class RollbackManager:
         migration_id: UUID,
         query: Any,
         table_name: str,
-        strategy: RollbackStrategy = RollbackStrategy.SNAPSHOT
+        strategy: RollbackStrategy = RollbackStrategy.SNAPSHOT,
     ) -> UUID:
         """
         Create a snapshot of data before migration.
@@ -169,7 +171,9 @@ class RollbackManager:
             SQLAlchemyError: If database operation fails
         """
         try:
-            logger.info(f"Creating snapshot for migration {migration_id}, table {table_name}")
+            logger.info(
+                f"Creating snapshot for migration {migration_id}, table {table_name}"
+            )
 
             # Get all records
             records = query.all()
@@ -198,7 +202,7 @@ class RollbackManager:
                 table_name=table_name,
                 record_count=record_count,
                 snapshot_data=json.dumps(snapshot_data),
-                strategy=strategy.value
+                strategy=strategy.value,
             )
 
             self.db.add(snapshot)
@@ -215,7 +219,7 @@ class RollbackManager:
             logger.error(f"Failed to create snapshot: {e}")
             raise
 
-    def get_snapshot(self, snapshot_id: UUID) -> Optional[SnapshotRecord]:
+    def get_snapshot(self, snapshot_id: UUID) -> SnapshotRecord | None:
         """
         Get snapshot record by ID.
 
@@ -225,9 +229,11 @@ class RollbackManager:
         Returns:
             SnapshotRecord if found, None otherwise
         """
-        return self.db.query(SnapshotRecord).filter(
-            SnapshotRecord.id == snapshot_id
-        ).first()
+        return (
+            self.db.query(SnapshotRecord)
+            .filter(SnapshotRecord.id == snapshot_id)
+            .first()
+        )
 
     def list_snapshots(self, migration_id: UUID) -> list[SnapshotRecord]:
         """
@@ -239,14 +245,15 @@ class RollbackManager:
         Returns:
             List of SnapshotRecord objects
         """
-        return self.db.query(SnapshotRecord).filter(
-            SnapshotRecord.migration_id == migration_id
-        ).order_by(SnapshotRecord.created_at.desc()).all()
+        return (
+            self.db.query(SnapshotRecord)
+            .filter(SnapshotRecord.migration_id == migration_id)
+            .order_by(SnapshotRecord.created_at.desc())
+            .all()
+        )
 
     def rollback_to_snapshot(
-        self,
-        snapshot_id: UUID,
-        model_class: Any
+        self, snapshot_id: UUID, model_class: Any
     ) -> RollbackResult:
         """
         Rollback to a snapshot by restoring data.
@@ -273,7 +280,7 @@ class RollbackManager:
             snapshot_id=snapshot_id,
             status=RollbackStatus.IN_PROGRESS.value,
             strategy=snapshot.strategy,
-            started_at=datetime.utcnow()
+            started_at=datetime.utcnow(),
         )
         self.db.add(rollback_record)
         self.db.commit()
@@ -295,7 +302,7 @@ class RollbackManager:
             for record_data in snapshot_data:
                 try:
                     # Get record ID
-                    record_id = record_data.get('id')
+                    record_id = record_data.get("id")
                     if not record_id:
                         logger.warning("Snapshot record missing ID, skipping")
                         records_failed += 1
@@ -306,9 +313,11 @@ class RollbackManager:
                         record_id = UUID(record_id)
 
                     # Find existing record
-                    existing = self.db.query(model_class).filter(
-                        model_class.id == record_id
-                    ).first()
+                    existing = (
+                        self.db.query(model_class)
+                        .filter(model_class.id == record_id)
+                        .first()
+                    )
 
                     if existing:
                         # Update existing record
@@ -345,7 +354,9 @@ class RollbackManager:
             # Update rollback record
             success = records_failed == 0
             rollback_record.status = (
-                RollbackStatus.COMPLETED.value if success else RollbackStatus.FAILED.value
+                RollbackStatus.COMPLETED.value
+                if success
+                else RollbackStatus.FAILED.value
             )
             rollback_record.records_restored = records_restored
             rollback_record.records_failed = records_failed
@@ -362,7 +373,7 @@ class RollbackManager:
                 success=success,
                 records_restored=records_restored,
                 records_failed=records_failed,
-                error_message=error_message
+                error_message=error_message,
             )
 
         except Exception as e:
@@ -380,13 +391,11 @@ class RollbackManager:
                 success=False,
                 records_restored=records_restored,
                 records_failed=records_failed,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     def rollback_migration(
-        self,
-        migration_id: UUID,
-        model_class: Any
+        self, migration_id: UUID, model_class: Any
     ) -> RollbackResult:
         """
         Rollback a migration using its most recent snapshot.
@@ -407,7 +416,9 @@ class RollbackManager:
             raise ValueError(f"No snapshot found for migration {migration_id}")
 
         snapshot = snapshots[0]  # Most recent
-        logger.info(f"Rolling back migration {migration_id} using snapshot {snapshot.id}")
+        logger.info(
+            f"Rolling back migration {migration_id} using snapshot {snapshot.id}"
+        )
 
         return self.rollback_to_snapshot(snapshot.id, model_class)
 
@@ -439,9 +450,11 @@ class RollbackManager:
         cutoff_date = datetime.utcnow() - timedelta(days=days)
 
         try:
-            deleted = self.db.query(SnapshotRecord).filter(
-                SnapshotRecord.created_at < cutoff_date
-            ).delete()
+            deleted = (
+                self.db.query(SnapshotRecord)
+                .filter(SnapshotRecord.created_at < cutoff_date)
+                .delete()
+            )
 
             self.db.commit()
             logger.info(f"Cleaned up {deleted} snapshots older than {days} days")
@@ -454,9 +467,7 @@ class RollbackManager:
             raise
 
     def get_rollback_history(
-        self,
-        migration_id: Optional[UUID] = None,
-        limit: int = 50
+        self, migration_id: UUID | None = None, limit: int = 50
     ) -> list[RollbackRecord]:
         """
         Get rollback history with optional filtering.
@@ -495,8 +506,8 @@ class RollbackManager:
         estimated_seconds = snapshot.record_count / RECORDS_PER_SECOND
 
         return {
-            'snapshot_id': str(snapshot_id),
-            'record_count': snapshot.record_count,
-            'estimated_seconds': round(estimated_seconds, 2),
-            'estimated_minutes': round(estimated_seconds / 60, 2)
+            "snapshot_id": str(snapshot_id),
+            "record_count": snapshot.record_count,
+            "estimated_seconds": round(estimated_seconds, 2),
+            "estimated_minutes": round(estimated_seconds / 60, 2),
         }

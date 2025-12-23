@@ -1,8 +1,9 @@
 """Tests for scheduling_catalyst catalyst analysis."""
 
-import pytest
 from unittest.mock import AsyncMock
 from uuid import uuid4
+
+import pytest
 
 from app.scheduling_catalyst.catalysts import (
     CatalystAnalyzer,
@@ -276,10 +277,7 @@ class TestCatalystAnalyzer:
         catalysts = await analyzer.find_person_catalysts(barriers)
         assert len(catalysts) >= 1
         # Should find coordinators for electronic barriers
-        assert any(
-            BarrierType.ELECTRONIC in c.barriers_addressed
-            for c in catalysts
-        )
+        assert any(BarrierType.ELECTRONIC in c.barriers_addressed for c in catalysts)
 
     @pytest.mark.asyncio
     async def test_find_mechanism_catalysts(self, analyzer):

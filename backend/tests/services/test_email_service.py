@@ -2,10 +2,8 @@
 
 import os
 from datetime import date, timedelta
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
-
-import pytest
 
 from app.models.certification import CertificationType, PersonCertification
 from app.models.person import Person
@@ -462,15 +460,15 @@ class TestEmailServiceComplianceSummary:
         for i in range(count):
             person = Person(
                 id=uuid4(),
-                name=f"Dr. {name_prefix} {i+1}",
+                name=f"Dr. {name_prefix} {i + 1}",
                 type="faculty",
-                email=f"{name_prefix.lower()}{i+1}@example.com",
+                email=f"{name_prefix.lower()}{i + 1}@example.com",
             )
 
             cert_type = CertificationType(
                 id=uuid4(),
-                name=f"CERT{i+1}",
-                full_name=f"Certification Type {i+1}",
+                name=f"CERT{i + 1}",
+                full_name=f"Certification Type {i + 1}",
             )
 
             cert = PersonCertification(
@@ -539,7 +537,10 @@ class TestEmailServiceComplianceSummary:
         assert "Dr. Expiring 2" in email_content
         assert "Dr. Expiring 3" in email_content
         # Should not show expired section
-        assert "Expired Certifications" not in email_content or "Expired Certifications (0)" in email_content
+        assert (
+            "Expired Certifications" not in email_content
+            or "Expired Certifications (0)" in email_content
+        )
 
     @patch("app.services.email_service.smtplib.SMTP")
     def test_send_compliance_summary_expired_only(self, mock_smtp):

@@ -1,4 +1,5 @@
 """Main batch operations service."""
+
 import asyncio
 import logging
 from datetime import datetime, timedelta
@@ -85,7 +86,9 @@ class BatchService:
 
             # If dry run, return validation results without processing
             if request.dry_run:
-                _batch_operations[operation_id]["status"] = BatchOperationStatus.COMPLETED
+                _batch_operations[operation_id]["status"] = (
+                    BatchOperationStatus.COMPLETED
+                )
                 return BatchResponse(
                     operation_id=operation_id,
                     operation_type=BatchOperationType.CREATE,
@@ -123,12 +126,14 @@ class BatchService:
             processing_time_ms = (completed_at - start_time).total_seconds() * 1000
 
             # Update stored status
-            _batch_operations[operation_id].update({
-                "status": status,
-                "succeeded": succeeded,
-                "failed": failed,
-                "completed_at": completed_at,
-            })
+            _batch_operations[operation_id].update(
+                {
+                    "status": status,
+                    "succeeded": succeeded,
+                    "failed": failed,
+                    "completed_at": completed_at,
+                }
+            )
 
             return BatchResponse(
                 operation_id=operation_id,
@@ -211,7 +216,9 @@ class BatchService:
 
             # If dry run, return validation results without processing
             if request.dry_run:
-                _batch_operations[operation_id]["status"] = BatchOperationStatus.COMPLETED
+                _batch_operations[operation_id]["status"] = (
+                    BatchOperationStatus.COMPLETED
+                )
                 return BatchResponse(
                     operation_id=operation_id,
                     operation_type=BatchOperationType.UPDATE,
@@ -248,12 +255,14 @@ class BatchService:
             processing_time_ms = (completed_at - start_time).total_seconds() * 1000
 
             # Update stored status
-            _batch_operations[operation_id].update({
-                "status": status,
-                "succeeded": succeeded,
-                "failed": failed,
-                "completed_at": completed_at,
-            })
+            _batch_operations[operation_id].update(
+                {
+                    "status": status,
+                    "succeeded": succeeded,
+                    "failed": failed,
+                    "completed_at": completed_at,
+                }
+            )
 
             return BatchResponse(
                 operation_id=operation_id,
@@ -313,7 +322,9 @@ class BatchService:
 
         try:
             # Validate batch
-            validation_result = self.validator.validate_delete_batch(request.assignments)
+            validation_result = self.validator.validate_delete_batch(
+                request.assignments
+            )
 
             if not validation_result.valid:
                 _batch_operations[operation_id]["status"] = BatchOperationStatus.FAILED
@@ -332,7 +343,9 @@ class BatchService:
 
             # If dry run, return validation results without processing
             if request.dry_run:
-                _batch_operations[operation_id]["status"] = BatchOperationStatus.COMPLETED
+                _batch_operations[operation_id]["status"] = (
+                    BatchOperationStatus.COMPLETED
+                )
                 return BatchResponse(
                     operation_id=operation_id,
                     operation_type=BatchOperationType.DELETE,
@@ -368,12 +381,14 @@ class BatchService:
             processing_time_ms = (completed_at - start_time).total_seconds() * 1000
 
             # Update stored status
-            _batch_operations[operation_id].update({
-                "status": status,
-                "succeeded": succeeded,
-                "failed": failed,
-                "completed_at": completed_at,
-            })
+            _batch_operations[operation_id].update(
+                {
+                    "status": status,
+                    "succeeded": succeeded,
+                    "failed": failed,
+                    "completed_at": completed_at,
+                }
+            )
 
             return BatchResponse(
                 operation_id=operation_id,
@@ -428,8 +443,9 @@ class BatchService:
         if operation["status"] == BatchOperationStatus.PROCESSING and completed > 0:
             elapsed = (datetime.utcnow() - operation["created_at"]).total_seconds()
             estimated_total_time = (elapsed / completed) * total
-            estimated_completion = operation["created_at"] + \
-                                   timedelta(seconds=estimated_total_time)
+            estimated_completion = operation["created_at"] + timedelta(
+                seconds=estimated_total_time
+            )
 
         return BatchStatusResponse(
             operation_id=operation_id,

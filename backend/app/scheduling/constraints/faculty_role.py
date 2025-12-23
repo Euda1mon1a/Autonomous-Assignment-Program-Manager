@@ -17,6 +17,7 @@ Role-based Clinic Limits:
     - Sports Medicine: 0 regular clinic (4 SM clinic/week instead)
     - Core Faculty: max 4 clinic half-days/week (16/block)
 """
+
 import logging
 from collections import defaultdict
 from datetime import date, timedelta
@@ -82,8 +83,9 @@ class FacultyRoleClinicConstraint(HardConstraint):
 
         # Identify clinic templates
         clinic_template_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
         }
 
         if not clinic_template_ids:
@@ -91,7 +93,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
 
         # Get faculty from context
         for faculty in context.faculty:
-            if not hasattr(faculty, 'faculty_role') or not faculty.faculty_role:
+            if not hasattr(faculty, "faculty_role") or not faculty.faculty_role:
                 continue
 
             f_i = context.resident_idx.get(faculty.id)
@@ -135,8 +137,9 @@ class FacultyRoleClinicConstraint(HardConstraint):
             return
 
         clinic_template_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
         }
 
         if not clinic_template_ids:
@@ -144,7 +147,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
 
         constraint_count = 0
         for faculty in context.faculty:
-            if not hasattr(faculty, 'faculty_role') or not faculty.faculty_role:
+            if not hasattr(faculty, "faculty_role") or not faculty.faculty_role:
                 continue
 
             f_i = context.resident_idx.get(faculty.id)
@@ -168,7 +171,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
                 if week_clinic_vars and weekly_limit >= 0:
                     model += (
                         pulp.lpSum(week_clinic_vars) <= weekly_limit,
-                        f"faculty_clinic_limit_{f_i}_{constraint_count}"
+                        f"faculty_clinic_limit_{f_i}_{constraint_count}",
                     )
                     constraint_count += 1
 
@@ -190,8 +193,9 @@ class FacultyRoleClinicConstraint(HardConstraint):
 
         # Identify clinic templates
         clinic_template_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type") and t.activity_type == "clinic"
         }
 
         # Count clinic assignments by faculty and week
@@ -214,26 +218,28 @@ class FacultyRoleClinicConstraint(HardConstraint):
         # Check limits
         for faculty_id, weekly_counts in faculty_weekly_counts.items():
             faculty = faculty_by_id.get(faculty_id)
-            if not faculty or not hasattr(faculty, 'faculty_role'):
+            if not faculty or not hasattr(faculty, "faculty_role"):
                 continue
 
             weekly_limit = faculty.weekly_clinic_limit
 
             for week_start, count in weekly_counts.items():
                 if count > weekly_limit:
-                    violations.append(ConstraintViolation(
-                        constraint_name=self.name,
-                        constraint_type=self.constraint_type,
-                        severity="HIGH",
-                        message=f"{faculty.name} ({faculty.faculty_role}): {count} clinic half-days in week of {week_start} (limit: {weekly_limit})",
-                        person_id=faculty_id,
-                        details={
-                            "week_start": str(week_start),
-                            "count": count,
-                            "limit": weekly_limit,
-                            "role": faculty.faculty_role,
-                        },
-                    ))
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="HIGH",
+                            message=f"{faculty.name} ({faculty.faculty_role}): {count} clinic half-days in week of {week_start} (limit: {weekly_limit})",
+                            person_id=faculty_id,
+                            details={
+                                "week_start": str(week_start),
+                                "count": count,
+                                "limit": weekly_limit,
+                                "role": faculty.faculty_role,
+                            },
+                        )
+                    )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -288,9 +294,14 @@ class SMFacultyClinicConstraint(HardConstraint):
 
         # Identify regular clinic templates (not SM clinic)
         regular_clinic_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
-            and (not hasattr(t, 'requires_specialty') or t.requires_specialty != 'Sports Medicine')
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type")
+            and t.activity_type == "clinic"
+            and (
+                not hasattr(t, "requires_specialty")
+                or t.requires_specialty != "Sports Medicine"
+            )
         }
 
         if not regular_clinic_ids:
@@ -298,10 +309,16 @@ class SMFacultyClinicConstraint(HardConstraint):
 
         # Find SM faculty
         for faculty in context.faculty:
-            if not hasattr(faculty, 'is_sports_medicine') or not faculty.is_sports_medicine:
+            if (
+                not hasattr(faculty, "is_sports_medicine")
+                or not faculty.is_sports_medicine
+            ):
                 continue
             # Check role specifically for sports_med role
-            if hasattr(faculty, 'faculty_role') and faculty.faculty_role == 'sports_med':
+            if (
+                hasattr(faculty, "faculty_role")
+                and faculty.faculty_role == "sports_med"
+            ):
                 f_i = context.resident_idx.get(faculty.id)
                 if f_i is None:
                     continue
@@ -326,9 +343,14 @@ class SMFacultyClinicConstraint(HardConstraint):
             return
 
         regular_clinic_ids = {
-            t.id for t in context.templates
-            if hasattr(t, 'activity_type') and t.activity_type == 'clinic'
-            and (not hasattr(t, 'requires_specialty') or t.requires_specialty != 'Sports Medicine')
+            t.id
+            for t in context.templates
+            if hasattr(t, "activity_type")
+            and t.activity_type == "clinic"
+            and (
+                not hasattr(t, "requires_specialty")
+                or t.requires_specialty != "Sports Medicine"
+            )
         }
 
         if not regular_clinic_ids:
@@ -336,7 +358,10 @@ class SMFacultyClinicConstraint(HardConstraint):
 
         constraint_count = 0
         for faculty in context.faculty:
-            if hasattr(faculty, 'faculty_role') and faculty.faculty_role == 'sports_med':
+            if (
+                hasattr(faculty, "faculty_role")
+                and faculty.faculty_role == "sports_med"
+            ):
                 f_i = context.resident_idx.get(faculty.id)
                 if f_i is None:
                     continue
@@ -348,7 +373,7 @@ class SMFacultyClinicConstraint(HardConstraint):
                         if t_i is not None and (f_i, b_i, t_i) in template_vars:
                             model += (
                                 template_vars[f_i, b_i, t_i] == 0,
-                                f"sm_no_regular_clinic_{f_i}_{b_i}_{constraint_count}"
+                                f"sm_no_regular_clinic_{f_i}_{b_i}_{constraint_count}",
                             )
                             constraint_count += 1
 
@@ -369,7 +394,10 @@ class SMFacultyClinicConstraint(HardConstraint):
                 continue
 
             # Check if SM faculty
-            if not (hasattr(faculty, 'faculty_role') and faculty.faculty_role == 'sports_med'):
+            if not (
+                hasattr(faculty, "faculty_role")
+                and faculty.faculty_role == "sports_med"
+            ):
                 continue
 
             # Check if regular clinic
@@ -378,20 +406,26 @@ class SMFacultyClinicConstraint(HardConstraint):
                 continue
 
             is_regular_clinic = (
-                hasattr(template, 'activity_type') and template.activity_type == 'clinic'
-                and (not hasattr(template, 'requires_specialty') or template.requires_specialty != 'Sports Medicine')
+                hasattr(template, "activity_type")
+                and template.activity_type == "clinic"
+                and (
+                    not hasattr(template, "requires_specialty")
+                    or template.requires_specialty != "Sports Medicine"
+                )
             )
 
             if is_regular_clinic:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="HIGH",
-                    message=f"SM faculty {faculty.name} assigned to regular clinic (should only do SM clinic)",
-                    person_id=faculty.id,
-                    block_id=a.block_id,
-                    details={"template_name": template.name},
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="HIGH",
+                        message=f"SM faculty {faculty.name} assigned to regular clinic (should only do SM clinic)",
+                        person_id=faculty.id,
+                        block_id=a.block_id,
+                        details={"template_name": template.name},
+                    )
+                )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,

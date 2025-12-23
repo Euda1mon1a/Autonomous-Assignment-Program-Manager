@@ -189,20 +189,22 @@ class BlastRadiusService:
             # Convert zone reports to detail dicts
             zone_details = []
             for zr in report.zone_reports:
-                zone_details.append({
-                    "zone_id": str(zr.zone_id),
-                    "zone_name": zr.zone_name,
-                    "zone_type": zr.zone_type.value,
-                    "status": zr.status.value,
-                    "containment_level": zr.containment_level.value,
-                    "is_self_sufficient": zr.is_self_sufficient,
-                    "has_surplus": zr.has_surplus,
-                    "available_faculty": zr.available_faculty,
-                    "minimum_required": zr.minimum_required,
-                    "capacity_ratio": zr.capacity_ratio,
-                    "active_incidents": zr.active_incidents,
-                    "recommendations": zr.recommendations,
-                })
+                zone_details.append(
+                    {
+                        "zone_id": str(zr.zone_id),
+                        "zone_name": zr.zone_name,
+                        "zone_type": zr.zone_type.value,
+                        "status": zr.status.value,
+                        "containment_level": zr.containment_level.value,
+                        "is_self_sufficient": zr.is_self_sufficient,
+                        "has_surplus": zr.has_surplus,
+                        "available_faculty": zr.available_faculty,
+                        "minimum_required": zr.minimum_required,
+                        "capacity_ratio": zr.capacity_ratio,
+                        "active_incidents": zr.active_incidents,
+                        "recommendations": zr.recommendations,
+                    }
+                )
 
             # Determine severity
             severity = self._determine_severity(report)
@@ -212,7 +214,7 @@ class BlastRadiusService:
                 if self._manager.global_containment == ContainmentLevel.NONE:
                     self._manager.set_global_containment(
                         ContainmentLevel.MODERATE,
-                        f"Auto-escalated due to {report.zones_critical} critical zones"
+                        f"Auto-escalated due to {report.zones_critical} critical zones",
                     )
                     logger.warning("Auto-escalated containment to MODERATE")
 
@@ -291,21 +293,23 @@ class BlastRadiusService:
         """
         zones = []
         for zone in self._manager.zones.values():
-            zones.append({
-                "id": str(zone.id),
-                "name": zone.name,
-                "zone_type": zone.zone_type.value,
-                "description": zone.description,
-                "services": zone.services,
-                "minimum_coverage": zone.minimum_coverage,
-                "optimal_coverage": zone.optimal_coverage,
-                "priority": zone.priority,
-                "status": zone.status.value,
-                "containment_level": zone.containment_level.value,
-                "borrowing_limit": zone.borrowing_limit,
-                "lending_limit": zone.lending_limit,
-                "is_active": True,
-            })
+            zones.append(
+                {
+                    "id": str(zone.id),
+                    "name": zone.name,
+                    "zone_type": zone.zone_type.value,
+                    "description": zone.description,
+                    "services": zone.services,
+                    "minimum_coverage": zone.minimum_coverage,
+                    "optimal_coverage": zone.optimal_coverage,
+                    "priority": zone.priority,
+                    "status": zone.status.value,
+                    "containment_level": zone.containment_level.value,
+                    "borrowing_limit": zone.borrowing_limit,
+                    "lending_limit": zone.lending_limit,
+                    "is_active": True,
+                }
+            )
         return zones
 
     def create_zone(

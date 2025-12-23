@@ -11,13 +11,11 @@ domain objects. These schemas are for API communication.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
-from uuid import UUID
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.events.event_types import EventType
-
 
 # =============================================================================
 # Event Query and Filter Schemas
@@ -48,26 +46,26 @@ class EventFilterRequest(BaseModel):
     from the event store.
     """
 
-    aggregate_id: Optional[str] = Field(
+    aggregate_id: str | None = Field(
         None, description="Filter by specific aggregate (entity) ID"
     )
-    aggregate_type: Optional[str] = Field(
+    aggregate_type: str | None = Field(
         None, description="Filter by aggregate type (e.g., 'Schedule', 'Assignment')"
     )
-    event_types: Optional[list[EventType]] = Field(
+    event_types: list[EventType] | None = Field(
         None, description="Filter by specific event types"
     )
-    user_id: Optional[str] = Field(None, description="Filter by user who triggered event")
-    correlation_id: Optional[str] = Field(
+    user_id: str | None = Field(None, description="Filter by user who triggered event")
+    correlation_id: str | None = Field(
         None, description="Filter by correlation ID (related events)"
     )
-    causation_id: Optional[str] = Field(
+    causation_id: str | None = Field(
         None, description="Filter by causation ID (event that caused this)"
     )
-    start_timestamp: Optional[datetime] = Field(
+    start_timestamp: datetime | None = Field(
         None, description="Filter events after this timestamp"
     )
-    end_timestamp: Optional[datetime] = Field(
+    end_timestamp: datetime | None = Field(
         None, description="Filter events before this timestamp"
     )
     page: int = Field(1, ge=1, description="Page number for pagination")
@@ -85,9 +83,7 @@ class EventFilterRequest(BaseModel):
             and self.end_timestamp
             and self.start_timestamp > self.end_timestamp
         ):
-            raise ValueError(
-                "start_timestamp must be before or equal to end_timestamp"
-            )
+            raise ValueError("start_timestamp must be before or equal to end_timestamp")
         return self
 
 
@@ -98,13 +94,13 @@ class EventStreamRequest(BaseModel):
     Used for real-time event subscriptions and replay scenarios.
     """
 
-    aggregate_id: Optional[str] = None
-    aggregate_type: Optional[str] = None
-    event_types: Optional[list[EventType]] = None
+    aggregate_id: str | None = None
+    aggregate_type: str | None = None
+    event_types: list[EventType] | None = None
     from_sequence: int = Field(
         0, ge=0, description="Start streaming from this sequence number"
     )
-    max_events: Optional[int] = Field(
+    max_events: int | None = Field(
         None, ge=1, le=10000, description="Maximum events to stream"
     )
     include_snapshots: bool = Field(
@@ -120,10 +116,10 @@ class EventReplayRequest(BaseModel):
     """
 
     aggregate_id: str = Field(..., description="ID of aggregate to replay")
-    up_to_timestamp: Optional[datetime] = Field(
+    up_to_timestamp: datetime | None = Field(
         None, description="Replay events up to this timestamp"
     )
-    up_to_sequence: Optional[int] = Field(
+    up_to_sequence: int | None = Field(
         None, ge=0, description="Replay events up to this sequence number"
     )
     include_metadata: bool = Field(
@@ -156,12 +152,12 @@ class EventMetadataResponse(BaseModel):
     event_type: str
     event_version: int
     timestamp: datetime
-    correlation_id: Optional[str] = None
-    causation_id: Optional[str] = None
-    user_id: Optional[str] = None
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
-    session_id: Optional[str] = None
+    correlation_id: str | None = None
+    causation_id: str | None = None
+    user_id: str | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
+    session_id: str | None = None
 
     class Config:
         from_attributes = True
@@ -181,7 +177,7 @@ class EventResponse(BaseModel):
     data: dict[str, Any] = Field(
         default_factory=dict, description="Event-specific data"
     )
-    sequence_number: Optional[int] = Field(
+    sequence_number: int | None = Field(
         None, description="Sequence number in event stream"
     )
 
@@ -224,15 +220,15 @@ class ScheduleEventData(BaseModel):
     """Data schema for schedule events."""
 
     schedule_id: str
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    created_by: Optional[str] = None
-    updated_by: Optional[str] = None
-    published_by: Optional[str] = None
-    algorithm_version: Optional[str] = None
-    constraint_set: Optional[dict[str, Any]] = None
-    changes: Optional[dict[str, Any]] = None
-    reason: Optional[str] = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    created_by: str | None = None
+    updated_by: str | None = None
+    published_by: str | None = None
+    algorithm_version: str | None = None
+    constraint_set: dict[str, Any] | None = None
+    changes: dict[str, Any] | None = None
+    reason: str | None = None
     notification_sent: bool = False
 
 
@@ -251,17 +247,17 @@ class AssignmentEventData(BaseModel):
     """Data schema for assignment events."""
 
     assignment_id: str
-    person_id: Optional[str] = None
-    block_id: Optional[str] = None
-    rotation_id: Optional[str] = None
-    role: Optional[str] = None
-    created_by: Optional[str] = None
-    updated_by: Optional[str] = None
-    deleted_by: Optional[str] = None
-    schedule_id: Optional[str] = None
-    changes: Optional[dict[str, Any]] = None
-    previous_values: Optional[dict[str, Any]] = None
-    reason: Optional[str] = None
+    person_id: str | None = None
+    block_id: str | None = None
+    rotation_id: str | None = None
+    role: str | None = None
+    created_by: str | None = None
+    updated_by: str | None = None
+    deleted_by: str | None = None
+    schedule_id: str | None = None
+    changes: dict[str, Any] | None = None
+    previous_values: dict[str, Any] | None = None
+    reason: str | None = None
     soft_delete: bool = True
 
 
@@ -280,15 +276,15 @@ class SwapEventData(BaseModel):
     """Data schema for swap events."""
 
     swap_id: str
-    requester_id: Optional[str] = None
-    requester_assignment_id: Optional[str] = None
-    target_assignment_id: Optional[str] = None
-    swap_type: Optional[str] = None  # "one_to_one" or "absorb"
-    reason: Optional[str] = None
-    approved_by: Optional[str] = None
-    executed_by: Optional[str] = None
-    approval_notes: Optional[str] = None
-    assignment_changes: Optional[list[dict[str, Any]]] = None
+    requester_id: str | None = None
+    requester_assignment_id: str | None = None
+    target_assignment_id: str | None = None
+    swap_type: str | None = None  # "one_to_one" or "absorb"
+    reason: str | None = None
+    approved_by: str | None = None
+    executed_by: str | None = None
+    approval_notes: str | None = None
+    assignment_changes: list[dict[str, Any]] | None = None
     acgme_validated: bool = True
 
 
@@ -306,18 +302,18 @@ class SwapEventResponse(EventResponse):
 class ConflictEventData(BaseModel):
     """Data schema for conflict/ACGME violation events."""
 
-    violation_id: Optional[str] = None
-    person_id: Optional[str] = None
-    violation_type: Optional[str] = None  # "80_hour", "1_in_7", "supervision_ratio"
-    severity: Optional[str] = None  # "warning", "critical"
-    detected_at: Optional[datetime] = None
-    details: Optional[dict[str, Any]] = None
-    override_id: Optional[str] = None
-    assignment_id: Optional[str] = None
-    override_reason: Optional[str] = None
-    applied_by: Optional[str] = None
-    justification: Optional[str] = None
-    approval_level: Optional[str] = None  # "coordinator", "program_director"
+    violation_id: str | None = None
+    person_id: str | None = None
+    violation_type: str | None = None  # "80_hour", "1_in_7", "supervision_ratio"
+    severity: str | None = None  # "warning", "critical"
+    detected_at: datetime | None = None
+    details: dict[str, Any] | None = None
+    override_id: str | None = None
+    assignment_id: str | None = None
+    override_reason: str | None = None
+    applied_by: str | None = None
+    justification: str | None = None
+    approval_level: str | None = None  # "coordinator", "program_director"
 
 
 class ConflictEventResponse(EventResponse):
@@ -335,13 +331,13 @@ class UserEventData(BaseModel):
     """Data schema for user/person events."""
 
     person_id: str
-    name: Optional[str] = None
-    email: Optional[str] = None
-    role: Optional[str] = None
-    created_by: Optional[str] = None
-    updated_by: Optional[str] = None
-    changes: Optional[dict[str, Any]] = None
-    activation_status: Optional[bool] = None
+    name: str | None = None
+    email: str | None = None
+    role: str | None = None
+    created_by: str | None = None
+    updated_by: str | None = None
+    changes: dict[str, Any] | None = None
+    activation_status: bool | None = None
 
 
 class UserEventResponse(EventResponse):
@@ -375,7 +371,7 @@ class EventCountByUser(BaseModel):
     """Count of events by user."""
 
     user_id: str
-    username: Optional[str] = None
+    username: str | None = None
     count: int
     percentage: float = Field(..., ge=0.0, le=100.0)
 
@@ -388,14 +384,14 @@ class EventStatisticsResponse(BaseModel):
     """
 
     total_events: int
-    date_range_start: Optional[datetime] = None
-    date_range_end: Optional[datetime] = None
+    date_range_start: datetime | None = None
+    date_range_end: datetime | None = None
     by_event_type: list[EventCountByType] = Field(default_factory=list)
     by_aggregate_type: list[EventCountByAggregate] = Field(default_factory=list)
     by_user: list[EventCountByUser] = Field(default_factory=list)
     events_per_day_avg: float = Field(0.0, ge=0.0)
-    most_active_aggregate: Optional[str] = None
-    most_active_user: Optional[str] = None
+    most_active_aggregate: str | None = None
+    most_active_user: str | None = None
 
 
 # =============================================================================
@@ -413,11 +409,11 @@ class SchemaVersionInfo(BaseModel):
     event_type: str
     version: int
     introduced_at: datetime
-    deprecated_at: Optional[datetime] = None
+    deprecated_at: datetime | None = None
     migration_available: bool = True
     breaking_changes: bool = False
     changes_description: str
-    migration_notes: Optional[str] = None
+    migration_notes: str | None = None
 
 
 class SchemaVersionListResponse(BaseModel):
@@ -499,12 +495,8 @@ class BulkEventValidationRequest(BaseModel):
     """Request to validate multiple events."""
 
     event_ids: list[str] = Field(..., min_length=1, max_length=1000)
-    strict_mode: bool = Field(
-        False, description="Fail on warnings, not just errors"
-    )
-    include_details: bool = Field(
-        True, description="Include detailed error messages"
-    )
+    strict_mode: bool = Field(False, description="Fail on warnings, not just errors")
+    include_details: bool = Field(True, description="Include detailed error messages")
 
 
 class BulkEventValidationResponse(BaseModel):
@@ -560,7 +552,7 @@ class SnapshotListResponse(BaseModel):
     aggregate_type: str
     snapshots: list[SnapshotResponse]
     total: int
-    latest_snapshot: Optional[SnapshotResponse] = None
+    latest_snapshot: SnapshotResponse | None = None
 
 
 # =============================================================================
@@ -584,13 +576,13 @@ class ProjectionInfo(BaseModel):
     projection_name: str
     description: str
     status: ProjectionStatus
-    last_processed_event_id: Optional[str] = None
-    last_processed_timestamp: Optional[datetime] = None
+    last_processed_event_id: str | None = None
+    last_processed_timestamp: datetime | None = None
     events_processed: int = 0
     events_pending: int = 0
     error_count: int = 0
-    last_error: Optional[str] = None
-    rebuild_requested_at: Optional[datetime] = None
+    last_error: str | None = None
+    rebuild_requested_at: datetime | None = None
 
 
 class ProjectionRebuildRequest(BaseModel):
@@ -600,7 +592,7 @@ class ProjectionRebuildRequest(BaseModel):
     from_beginning: bool = Field(
         True, description="Rebuild from first event (clear existing data)"
     )
-    from_timestamp: Optional[datetime] = Field(
+    from_timestamp: datetime | None = Field(
         None, description="Rebuild from specific timestamp"
     )
 

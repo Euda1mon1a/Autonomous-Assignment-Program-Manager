@@ -7,11 +7,11 @@ Provides Redis-based caching for expensive operations:
 - Constraint validation results
 - Solver intermediate results
 """
+
 import hashlib
 import logging
 import pickle
 from collections import defaultdict
-from datetime import datetime
 from functools import lru_cache
 from threading import RLock
 from typing import Any
@@ -165,7 +165,9 @@ class ScheduleCache:
             cursor = 0
             deleted_count = 0
             while True:
-                cursor, matched_keys = self._redis.scan(cursor, match=pattern, count=100)
+                cursor, matched_keys = self._redis.scan(
+                    cursor, match=pattern, count=100
+                )
                 if matched_keys:
                     self._redis.delete(*matched_keys)
                     deleted_count += len(matched_keys)

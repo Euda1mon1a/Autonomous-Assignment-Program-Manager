@@ -4,11 +4,10 @@ Throttling strategies for request handling.
 Implements different strategies for handling requests when
 capacity is reached, including queuing, rejection, and degradation.
 """
-import asyncio
+
 import logging
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional
 
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
@@ -38,9 +37,9 @@ class ThrottleDecision:
     def __init__(
         self,
         action: ThrottleAction,
-        reason: Optional[str] = None,
-        wait_time: Optional[float] = None,
-        retry_after: Optional[int] = None,
+        reason: str | None = None,
+        wait_time: float | None = None,
+        retry_after: int | None = None,
     ):
         """
         Initialize throttle decision.

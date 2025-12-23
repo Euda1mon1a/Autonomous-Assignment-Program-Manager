@@ -33,86 +33,103 @@ from sqlalchemy.orm import Session
 # Custom Exceptions
 class MaintenanceError(Exception):
     """Base exception for all maintenance module errors."""
+
     pass
 
 
 class BackupError(MaintenanceError):
     """Base exception for backup-related errors."""
+
     pass
 
 
 class BackupCreationError(BackupError):
     """Raised when backup creation fails."""
+
     pass
 
 
 class BackupReadError(BackupError):
     """Raised when reading a backup file fails."""
+
     pass
 
 
 class BackupWriteError(BackupError):
     """Raised when writing a backup file fails."""
+
     pass
 
 
 class BackupNotFoundError(BackupError):
     """Raised when a requested backup cannot be found."""
+
     pass
 
 
 class BackupValidationError(BackupError):
     """Raised when backup validation fails."""
+
     pass
 
 
 class BackupPermissionError(BackupError):
     """Raised when backup operation lacks necessary permissions."""
+
     pass
 
 
 class BackupStorageError(BackupError):
     """Raised when there are storage issues (e.g., disk space)."""
+
     pass
 
 
 class RestoreError(MaintenanceError):
     """Base exception for restore-related errors."""
+
     pass
 
 
 class RestoreValidationError(RestoreError):
     """Raised when restore validation fails."""
+
     pass
 
 
 class RestoreDataError(RestoreError):
     """Raised when restore data is corrupted or invalid."""
+
     pass
 
 
 class RestorePermissionError(RestoreError):
     """Raised when restore operation lacks necessary permissions."""
+
     pass
 
 
 class RestoreRollbackError(RestoreError):
     """Raised when restore rollback operation fails."""
+
     pass
 
 
 class SchedulerError(MaintenanceError):
     """Base exception for scheduler-related errors."""
+
     pass
 
 
 class ScheduleConfigurationError(SchedulerError):
     """Raised when schedule configuration is invalid."""
+
     pass
 
 
 class ScheduleExecutionError(SchedulerError):
     """Raised when scheduled backup execution fails."""
+
     pass
 
 
@@ -149,9 +166,9 @@ __all__ = [
 
 def quick_backup(
     db: Session,
-    backup_type: str = 'full',
+    backup_type: str = "full",
     compress: bool = True,
-    backup_dir: str = "backups"
+    backup_dir: str = "backups",
 ) -> str:
     """
     Convenience function to quickly create a backup.
@@ -179,9 +196,9 @@ def quick_backup(
 def quick_restore(
     db: Session,
     backup_id: str,
-    mode: str = 'replace',
+    mode: str = "replace",
     dry_run: bool = False,
-    backup_dir: str = "backups"
+    backup_dir: str = "backups",
 ) -> dict[str, Any]:
     """
     Convenience function to quickly restore from a backup.
@@ -207,18 +224,12 @@ def quick_restore(
         ...     print("Restore completed successfully")
     """
     service = RestoreService(db, backup_dir)
-    options = {
-        'mode': mode,
-        'dry_run': dry_run
-    }
+    options = {"mode": mode, "dry_run": dry_run}
     return service.restore_from_backup(backup_id, options)
 
 
 def create_schedule_snapshot(
-    db: Session,
-    start_date: date,
-    end_date: date,
-    backup_dir: str = "backups"
+    db: Session, start_date: date, end_date: date, backup_dir: str = "backups"
 ) -> str:
     """
     Convenience function to create a snapshot of a specific date range.
@@ -270,10 +281,7 @@ def list_all_backups(db: Session, backup_dir: str = "backups") -> list:
 
 
 def setup_daily_backup(
-    db: Session,
-    hour: int = 2,
-    minute: int = 0,
-    backup_dir: str = "backups"
+    db: Session, hour: int = 2, minute: int = 0, backup_dir: str = "backups"
 ) -> dict[str, Any]:
     """
     Convenience function to set up daily automated backups.
@@ -305,7 +313,7 @@ def setup_weekly_backup(
     day: int = 6,
     hour: int = 2,
     minute: int = 0,
-    backup_dir: str = "backups"
+    backup_dir: str = "backups",
 ) -> dict[str, Any]:
     """
     Convenience function to set up weekly automated backups.

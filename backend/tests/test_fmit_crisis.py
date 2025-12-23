@@ -6,20 +6,18 @@ Tests the two new constraints for production fork:
 2. FMITStaffingFloorConstraint - Minimum faculty requirements for FMIT
 """
 
-import pytest
 from datetime import date, timedelta
-from uuid import uuid4
 from unittest.mock import Mock
+from uuid import uuid4
 
+import pytest
+
+from app.scheduling.constraints.base import (
+    SchedulingContext,
+)
 from app.scheduling.constraints.fmit import (
     FMITContinuityTurfConstraint,
     FMITStaffingFloorConstraint,
-    get_fmit_week_dates,
-)
-from app.scheduling.constraints.base import (
-    ConstraintResult,
-    ConstraintViolation,
-    SchedulingContext,
 )
 
 
@@ -143,11 +141,12 @@ class TestFMITStaffingFloorConstraint:
     @pytest.fixture
     def mock_faculty(self):
         """Create mock faculty objects."""
+
         def create_faculty(count):
             return [
-                Mock(id=uuid4(), name=f"Faculty {i}", role="core")
-                for i in range(count)
+                Mock(id=uuid4(), name=f"Faculty {i}", role="core") for i in range(count)
             ]
+
         return create_faculty
 
     @pytest.fixture
@@ -194,7 +193,9 @@ class TestFMITStaffingFloorConstraint:
         assert result.satisfied is True
         assert len(result.violations) == 0
 
-    def test_below_minimum_faculty_blocks_fmit(self, constraint, mock_faculty, mock_fmit_template):
+    def test_below_minimum_faculty_blocks_fmit(
+        self, constraint, mock_faculty, mock_fmit_template
+    ):
         """Test FMIT is blocked when faculty count < 5."""
         # Create context with only 4 faculty
         context = SchedulingContext(
@@ -206,9 +207,7 @@ class TestFMITStaffingFloorConstraint:
 
         # Create FMIT assignment
         assignment = self._create_assignment(
-            context.faculty[0].id,
-            context.blocks[0].id,
-            mock_fmit_template.id
+            context.faculty[0].id, context.blocks[0].id, mock_fmit_template.id
         )
 
         result = constraint.validate([assignment], context)
@@ -220,7 +219,9 @@ class TestFMITStaffingFloorConstraint:
         assert "only 4 faculty available" in violation.message
         assert "minimum 5 required" in violation.message
 
-    def test_exactly_minimum_faculty_allows_fmit(self, constraint, mock_faculty, mock_fmit_template):
+    def test_exactly_minimum_faculty_allows_fmit(
+        self, constraint, mock_faculty, mock_fmit_template
+    ):
         """Test FMIT is allowed with exactly 5 faculty."""
         # Create context with exactly 5 faculty
         context = SchedulingContext(
@@ -232,9 +233,7 @@ class TestFMITStaffingFloorConstraint:
 
         # Create 1 FMIT assignment (5 * 0.20 = 1 allowed)
         assignment = self._create_assignment(
-            context.faculty[0].id,
-            context.blocks[0].id,
-            mock_fmit_template.id
+            context.faculty[0].id, context.blocks[0].id, mock_fmit_template.id
         )
 
         result = constraint.validate([assignment], context)
@@ -242,7 +241,9 @@ class TestFMITStaffingFloorConstraint:
         assert result.satisfied is True
         assert len(result.violations) == 0
 
-    def test_utilization_cap_with_10_faculty(self, constraint, mock_faculty, mock_fmit_template):
+    def test_utilization_cap_with_10_faculty(
+        self, constraint, mock_faculty, mock_fmit_template
+    ):
         """Test utilization cap with 10 faculty allows max 2 concurrent FMIT."""
         context = SchedulingContext(
             residents=[],
@@ -254,14 +255,10 @@ class TestFMITStaffingFloorConstraint:
         # Create 2 concurrent FMIT assignments (10 * 0.20 = 2 allowed)
         assignments = [
             self._create_assignment(
-                context.faculty[0].id,
-                context.blocks[0].id,
-                mock_fmit_template.id
+                context.faculty[0].id, context.blocks[0].id, mock_fmit_template.id
             ),
             self._create_assignment(
-                context.faculty[1].id,
-                context.blocks[0].id,
-                mock_fmit_template.id
+                context.faculty[1].id, context.blocks[0].id, mock_fmit_template.id
             ),
         ]
 
@@ -270,7 +267,9 @@ class TestFMITStaffingFloorConstraint:
         assert result.satisfied is True
         assert len(result.violations) == 0
 
-    def test_exceeding_utilization_cap_fails(self, constraint, mock_faculty, mock_fmit_template):
+    def test_exceeding_utilization_cap_fails(
+        self, constraint, mock_faculty, mock_fmit_template
+    ):
         """Test exceeding utilization cap creates violation."""
         context = SchedulingContext(
             residents=[],
@@ -282,9 +281,7 @@ class TestFMITStaffingFloorConstraint:
         # Create 3 concurrent FMIT assignments (10 * 0.20 = 2 allowed, so 3 exceeds)
         assignments = [
             self._create_assignment(
-                context.faculty[i].id,
-                context.blocks[0].id,
-                mock_fmit_template.id
+                context.faculty[i].id, context.blocks[0].id, mock_fmit_template.id
             )
             for i in range(3)
         ]
@@ -298,7 +295,9 @@ class TestFMITStaffingFloorConstraint:
         assert "3 concurrent FMIT exceeds cap" in violation.message
         assert "2 max for 10 faculty" in violation.message
 
-    def test_utilization_cap_edge_case_5_faculty(self, constraint, mock_faculty, mock_fmit_template):
+    def test_utilization_cap_edge_case_5_faculty(
+        self, constraint, mock_faculty, mock_fmit_template
+    ):
         """Test edge case: 5 faculty * 0.20 = 1.0, should allow exactly 1 FMIT."""
         context = SchedulingContext(
             residents=[],
@@ -309,9 +308,7 @@ class TestFMITStaffingFloorConstraint:
 
         # 5 * 0.20 = 1, should allow 1
         assignment = self._create_assignment(
-            context.faculty[0].id,
-            context.blocks[0].id,
-            mock_fmit_template.id
+            context.faculty[0].id, context.blocks[0].id, mock_fmit_template.id
         )
 
         result = constraint.validate([assignment], context)
@@ -320,9 +317,7 @@ class TestFMITStaffingFloorConstraint:
         # Try 2 concurrent (should fail)
         assignments = [
             self._create_assignment(
-                context.faculty[i].id,
-                context.blocks[0].id,
-                mock_fmit_template.id
+                context.faculty[i].id, context.blocks[0].id, mock_fmit_template.id
             )
             for i in range(2)
         ]
@@ -330,7 +325,9 @@ class TestFMITStaffingFloorConstraint:
         result = constraint.validate(assignments, context)
         assert result.satisfied is False
 
-    def test_utilization_cap_rounds_up(self, constraint, mock_faculty, mock_fmit_template):
+    def test_utilization_cap_rounds_up(
+        self, constraint, mock_faculty, mock_fmit_template
+    ):
         """Test that at least 1 FMIT is always allowed if above minimum."""
         # 6 faculty * 0.20 = 1.2 -> should allow max(1, int(1.2)) = 1
         context = SchedulingContext(
@@ -341,38 +338,48 @@ class TestFMITStaffingFloorConstraint:
         )
 
         assignment = self._create_assignment(
-            context.faculty[0].id,
-            context.blocks[0].id,
-            mock_fmit_template.id
+            context.faculty[0].id, context.blocks[0].id, mock_fmit_template.id
         )
 
         result = constraint.validate([assignment], context)
         assert result.satisfied is True
 
-    def test_multiple_weeks_tracked_separately(self, constraint, mock_faculty, mock_fmit_template):
+    def test_multiple_weeks_tracked_separately(
+        self, constraint, mock_faculty, mock_fmit_template
+    ):
         """Test that different FMIT weeks are tracked separately."""
         context = SchedulingContext(
             residents=[],
             faculty=mock_faculty(10),
-            blocks=self._create_fmit_week_blocks(date(2025, 1, 3)) +
-                   self._create_fmit_week_blocks(date(2025, 1, 10)),
+            blocks=self._create_fmit_week_blocks(date(2025, 1, 3))
+            + self._create_fmit_week_blocks(date(2025, 1, 10)),
             templates=[mock_fmit_template],
         )
 
         # 2 FMIT in week 1, 2 FMIT in week 2 (both weeks at cap but valid)
         assignments = [
             # Week 1
-            self._create_assignment(context.faculty[0].id, context.blocks[0].id, mock_fmit_template.id),
-            self._create_assignment(context.faculty[1].id, context.blocks[0].id, mock_fmit_template.id),
+            self._create_assignment(
+                context.faculty[0].id, context.blocks[0].id, mock_fmit_template.id
+            ),
+            self._create_assignment(
+                context.faculty[1].id, context.blocks[0].id, mock_fmit_template.id
+            ),
             # Week 2
-            self._create_assignment(context.faculty[2].id, context.blocks[7].id, mock_fmit_template.id),
-            self._create_assignment(context.faculty[3].id, context.blocks[7].id, mock_fmit_template.id),
+            self._create_assignment(
+                context.faculty[2].id, context.blocks[7].id, mock_fmit_template.id
+            ),
+            self._create_assignment(
+                context.faculty[3].id, context.blocks[7].id, mock_fmit_template.id
+            ),
         ]
 
         result = constraint.validate(assignments, context)
         assert result.satisfied is True
 
-    def test_non_fmit_assignments_ignored(self, constraint, mock_faculty, mock_fmit_template, mock_non_fmit_template):
+    def test_non_fmit_assignments_ignored(
+        self, constraint, mock_faculty, mock_fmit_template, mock_non_fmit_template
+    ):
         """Test non-FMIT assignments don't count toward cap."""
         context = SchedulingContext(
             residents=[],
@@ -383,17 +390,29 @@ class TestFMITStaffingFloorConstraint:
 
         # 2 FMIT (at cap) + 5 clinic (ignored)
         assignments = [
-            self._create_assignment(context.faculty[0].id, context.blocks[0].id, mock_fmit_template.id),
-            self._create_assignment(context.faculty[1].id, context.blocks[0].id, mock_fmit_template.id),
-            self._create_assignment(context.faculty[2].id, context.blocks[0].id, mock_non_fmit_template.id),
-            self._create_assignment(context.faculty[3].id, context.blocks[0].id, mock_non_fmit_template.id),
-            self._create_assignment(context.faculty[4].id, context.blocks[0].id, mock_non_fmit_template.id),
+            self._create_assignment(
+                context.faculty[0].id, context.blocks[0].id, mock_fmit_template.id
+            ),
+            self._create_assignment(
+                context.faculty[1].id, context.blocks[0].id, mock_fmit_template.id
+            ),
+            self._create_assignment(
+                context.faculty[2].id, context.blocks[0].id, mock_non_fmit_template.id
+            ),
+            self._create_assignment(
+                context.faculty[3].id, context.blocks[0].id, mock_non_fmit_template.id
+            ),
+            self._create_assignment(
+                context.faculty[4].id, context.blocks[0].id, mock_non_fmit_template.id
+            ),
         ]
 
         result = constraint.validate(assignments, context)
         assert result.satisfied is True
 
-    def test_violation_details_comprehensive(self, constraint, mock_faculty, mock_fmit_template):
+    def test_violation_details_comprehensive(
+        self, constraint, mock_faculty, mock_fmit_template
+    ):
         """Test violation details contain all relevant information."""
         context = SchedulingContext(
             residents=[],
@@ -404,7 +423,9 @@ class TestFMITStaffingFloorConstraint:
 
         # 2 concurrent FMIT with only 5 faculty (exceeds cap)
         assignments = [
-            self._create_assignment(context.faculty[i].id, context.blocks[0].id, mock_fmit_template.id)
+            self._create_assignment(
+                context.faculty[i].id, context.blocks[0].id, mock_fmit_template.id
+            )
             for i in range(2)
         ]
 
@@ -495,7 +516,7 @@ class TestFMITCrisisIntegration:
             id=uuid4(),
             person_id=context.faculty[0].id,
             block_id=context.blocks[0].id,
-            rotation_template_id=context.templates[0].id
+            rotation_template_id=context.templates[0].id,
         )
 
         # Staffing floor should block it

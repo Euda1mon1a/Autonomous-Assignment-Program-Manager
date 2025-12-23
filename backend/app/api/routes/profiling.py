@@ -16,7 +16,7 @@ Provides endpoints for performance profiling and analysis:
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -26,7 +26,6 @@ from app.profiling import (
     CPUProfiler,
     FlameGraphGenerator,
     MemoryProfiler,
-    MetricCollector,
     PerformanceAnalyzer,
     PerformanceReporter,
     ProfilerContext,
@@ -64,7 +63,7 @@ class ProfilingStatusResponse(BaseModel):
     sql_collection: bool = Field(..., description="SQL query collection status")
     request_collection: bool = Field(..., description="Request collection status")
     trace_collection: bool = Field(..., description="Trace collection status")
-    stats: Dict[str, Any] = Field(..., description="Current profiling statistics")
+    stats: dict[str, Any] = Field(..., description="Current profiling statistics")
 
 
 class ProfilingSessionRequest(BaseModel):
@@ -80,19 +79,17 @@ class ProfilingSessionRequest(BaseModel):
 class AnalyzeRequest(BaseModel):
     """Analyze profiling data request."""
 
-    cpu_threshold_percent: Optional[float] = Field(
-        80.0, description="CPU usage threshold"
-    )
-    memory_threshold_mb: Optional[float] = Field(
+    cpu_threshold_percent: float | None = Field(80.0, description="CPU usage threshold")
+    memory_threshold_mb: float | None = Field(
         1000.0, description="Memory usage threshold"
     )
-    duration_threshold_ms: Optional[float] = Field(
+    duration_threshold_ms: float | None = Field(
         1000.0, description="Duration threshold"
     )
-    sql_slow_threshold_ms: Optional[float] = Field(
+    sql_slow_threshold_ms: float | None = Field(
         100.0, description="SQL slow query threshold"
     )
-    request_slow_threshold_ms: Optional[float] = Field(
+    request_slow_threshold_ms: float | None = Field(
         1000.0, description="Request slow threshold"
     )
 
@@ -151,7 +148,7 @@ async def get_profiling_status() -> ProfilingStatusResponse:
 )
 async def start_profiling_session(
     request: ProfilingSessionRequest,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Start a profiling session.
 
@@ -203,7 +200,7 @@ async def start_profiling_session(
     summary="Stop Profiling Session",
     description="Stop current profiling session",
 )
-async def stop_profiling_session() -> Dict[str, Any]:
+async def stop_profiling_session() -> dict[str, Any]:
     """
     Stop profiling session.
 
@@ -241,7 +238,7 @@ async def stop_profiling_session() -> Dict[str, Any]:
 )
 async def get_profiling_report(
     format: str = Query("json", description="Report format (json or html)"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Generate profiling report.
 
@@ -270,7 +267,9 @@ async def get_profiling_report(
     bottlenecks.extend(
         bottleneck_detector.detect_request_bottlenecks(request_collector.items)
     )
-    bottlenecks.extend(bottleneck_detector.detect_trace_bottlenecks(trace_collector.items))
+    bottlenecks.extend(
+        bottleneck_detector.detect_trace_bottlenecks(trace_collector.items)
+    )
 
     # Generate report
     report = performance_reporter.generate_report(
@@ -300,7 +299,7 @@ async def get_query_metrics(
     limit: int = Query(100, description="Maximum number of queries to return"),
     slow_only: bool = Query(False, description="Return only slow queries"),
     threshold_ms: float = Query(100.0, description="Slow query threshold in ms"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get SQL query metrics.
 
@@ -346,7 +345,7 @@ async def get_request_metrics(
     limit: int = Query(100, description="Maximum number of requests to return"),
     slow_only: bool = Query(False, description="Return only slow requests"),
     threshold_ms: float = Query(1000.0, description="Slow request threshold in ms"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get HTTP request metrics.
 
@@ -390,10 +389,10 @@ async def get_request_metrics(
 )
 async def get_traces(
     limit: int = Query(100, description="Maximum number of traces to return"),
-    trace_id: Optional[str] = Query(None, description="Filter by trace ID"),
+    trace_id: str | None = Query(None, description="Filter by trace ID"),
     slow_only: bool = Query(False, description="Return only slow traces"),
     threshold_ms: float = Query(1000.0, description="Slow trace threshold in ms"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get distributed traces.
 
@@ -438,7 +437,7 @@ async def get_traces(
 async def detect_bottlenecks(
     sql_threshold_ms: float = Query(100.0, description="SQL slow query threshold"),
     request_threshold_ms: float = Query(1000.0, description="Request slow threshold"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Detect performance bottlenecks.
 
@@ -490,7 +489,7 @@ async def detect_bottlenecks(
 async def generate_flamegraph(
     type: str = Query("cpu", description="Type of flame graph (cpu or traces)"),
     profile_index: int = Query(-1, description="Profile result index (-1 for latest)"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Generate flame graph data.
 
@@ -510,7 +509,9 @@ async def generate_flamegraph(
     """
     if type == "cpu":
         if not cpu_profiler.results:
-            raise HTTPException(status_code=404, detail="No CPU profiling data available")
+            raise HTTPException(
+                status_code=404, detail="No CPU profiling data available"
+            )
 
         profile = cpu_profiler.results[profile_index]
         flame_data = flame_graph_generator.generate_from_profile(profile)
@@ -522,9 +523,7 @@ async def generate_flamegraph(
         flame_data = flame_graph_generator.generate_from_traces(trace_collector.items)
 
     else:
-        raise HTTPException(
-            status_code=400, detail=f"Invalid flame graph type: {type}"
-        )
+        raise HTTPException(status_code=400, detail=f"Invalid flame graph type: {type}")
 
     return flame_data
 
@@ -534,7 +533,7 @@ async def generate_flamegraph(
     summary="Analyze Profiling Data",
     description="Perform detailed analysis of profiling data",
 )
-async def analyze_profiling_data(request: AnalyzeRequest) -> Dict[str, Any]:
+async def analyze_profiling_data(request: AnalyzeRequest) -> dict[str, Any]:
     """
     Analyze profiling data.
 
@@ -616,7 +615,7 @@ async def analyze_profiling_data(request: AnalyzeRequest) -> Dict[str, Any]:
     summary="Clear Profiling Data",
     description="Clear all collected profiling data",
 )
-async def clear_profiling_data() -> Dict[str, Any]:
+async def clear_profiling_data() -> dict[str, Any]:
     """
     Clear all profiling data.
 

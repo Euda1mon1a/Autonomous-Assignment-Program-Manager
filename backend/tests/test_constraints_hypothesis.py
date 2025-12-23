@@ -1,8 +1,10 @@
 """Property-based tests for scheduling constraints using Hypothesis."""
-import pytest
+
 from datetime import date, timedelta
-from hypothesis import given, strategies as st, settings
 from uuid import uuid4
+
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from app.scheduling.constraints import (
     EightyHourRuleConstraint,
@@ -10,12 +12,9 @@ from app.scheduling.constraints import (
     SchedulingContext,
 )
 
-
 # Strategy to generate a list of daily work hours (0-12 hours per day)
 daily_hours_strategy = st.lists(
-    st.integers(min_value=0, max_value=12),
-    min_size=28,
-    max_size=56
+    st.integers(min_value=0, max_value=12), min_size=28, max_size=56
 )
 
 
@@ -76,14 +75,14 @@ def test_80_hour_rule_catches_all_violations(daily_hours):
         blocks=blocks,
         templates=[],
         start_date=start_date,
-        end_date=start_date + timedelta(days=len(daily_hours)-1),
+        end_date=start_date + timedelta(days=len(daily_hours) - 1),
     )
     context.availability = {resident.id: {b.id: {"available": True} for b in blocks}}
 
     # Check for actual violations (manual calculation)
     has_violation = False
     for window_start in range(len(daily_hours) - 27):
-        window_hours = sum(daily_hours[window_start:window_start+28])
+        window_hours = sum(daily_hours[window_start : window_start + 28])
         weekly_avg = window_hours / 4
         if weekly_avg > 80:
             has_violation = True
@@ -94,8 +93,9 @@ def test_80_hour_rule_catches_all_violations(daily_hours):
 
     # Property: constraint should find violation if one exists
     if has_violation:
-        assert not result.satisfied or len(result.violations) > 0, \
+        assert not result.satisfied or len(result.violations) > 0, (
             f"Constraint missed violation in window with {weekly_avg} hours/week avg"
+        )
 
 
 @given(st.lists(st.booleans(), min_size=7, max_size=14))
@@ -140,12 +140,13 @@ def test_one_in_seven_rule_property(work_days):
         blocks=blocks,
         templates=[],
         start_date=start_date,
-        end_date=start_date + timedelta(days=len(work_days)-1),
+        end_date=start_date + timedelta(days=len(work_days) - 1),
     )
     context.availability = {resident.id: {b.id: {"available": True} for b in blocks}}
 
     result = constraint.validate(assignments, context)
 
     if has_violation:
-        assert not result.satisfied or len(result.violations) > 0, \
+        assert not result.satisfied or len(result.violations) > 0, (
             f"Constraint missed {max_consecutive} consecutive work days"
+        )

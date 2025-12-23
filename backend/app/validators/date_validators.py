@@ -8,13 +8,16 @@ Provides validators for:
 - Block date validation
 - ACGME work period validation
 """
+
 from datetime import date, datetime, timedelta
 from typing import Optional
 
 from app.validators.common import ValidationError
 
 
-def validate_date_not_null(value: date | datetime | None, field_name: str = "Date") -> date:
+def validate_date_not_null(
+    value: date | datetime | None, field_name: str = "Date"
+) -> date:
     """
     Validate date is not None and convert to date if datetime.
 
@@ -46,7 +49,7 @@ def validate_date_range(
     allow_same_day: bool = True,
     max_days: int | None = None,
     start_field_name: str = "Start date",
-    end_field_name: str = "End date"
+    end_field_name: str = "End date",
 ) -> tuple[date, date]:
     """
     Validate date range is valid.
@@ -102,7 +105,7 @@ def validate_date_in_range(
     check_date: date | datetime,
     start_date: date | datetime,
     end_date: date | datetime,
-    field_name: str = "Date"
+    field_name: str = "Date",
 ) -> date:
     """
     Validate date falls within specified range.
@@ -189,7 +192,7 @@ def validate_academic_year_dates(start_date: date, end_date: date) -> tuple[date
         end_date,
         allow_same_day=False,
         start_field_name="Academic year start",
-        end_field_name="Academic year end"
+        end_field_name="Academic year end",
     )
 
     # Calculate days
@@ -242,8 +245,7 @@ def validate_block_date(block_date: date) -> date:
 
 
 def validate_acgme_work_period(
-    start_date: date | datetime,
-    end_date: date | datetime
+    start_date: date | datetime, end_date: date | datetime
 ) -> tuple[date, date]:
     """
     Validate ACGME work period for duty hour calculations.
@@ -268,7 +270,7 @@ def validate_acgme_work_period(
         allow_same_day=True,
         max_days=28,  # Maximum rolling period
         start_field_name="ACGME period start",
-        end_field_name="ACGME period end"
+        end_field_name="ACGME period end",
     )
 
     days = (end - start).days + 1  # +1 to include both days
@@ -287,9 +289,7 @@ def validate_acgme_work_period(
 
 
 def validate_future_date(
-    check_date: date | datetime,
-    allow_today: bool = True,
-    field_name: str = "Date"
+    check_date: date | datetime, allow_today: bool = True, field_name: str = "Date"
 ) -> date:
     """
     Validate date is in the future.
@@ -310,9 +310,7 @@ def validate_future_date(
 
     if allow_today:
         if validated < today:
-            raise ValidationError(
-                f"{field_name} ({validated}) cannot be in the past"
-            )
+            raise ValidationError(f"{field_name} ({validated}) cannot be in the past")
     else:
         if validated <= today:
             raise ValidationError(
@@ -323,9 +321,7 @@ def validate_future_date(
 
 
 def validate_past_date(
-    check_date: date | datetime,
-    allow_today: bool = True,
-    field_name: str = "Date"
+    check_date: date | datetime, allow_today: bool = True, field_name: str = "Date"
 ) -> date:
     """
     Validate date is in the past.
@@ -346,9 +342,7 @@ def validate_past_date(
 
     if allow_today:
         if validated > today:
-            raise ValidationError(
-                f"{field_name} ({validated}) cannot be in the future"
-            )
+            raise ValidationError(f"{field_name} ({validated}) cannot be in the future")
     else:
         if validated >= today:
             raise ValidationError(
@@ -362,7 +356,7 @@ def validate_time_between_dates(
     start_date: date | datetime,
     end_date: date | datetime,
     min_hours: float | None = None,
-    max_hours: float | None = None
+    max_hours: float | None = None,
 ) -> timedelta:
     """
     Validate time duration between dates.
@@ -454,7 +448,7 @@ def validate_session_time(session: str) -> str:
 
     session_upper = session.upper().strip()
 
-    if session_upper not in ('AM', 'PM'):
+    if session_upper not in ("AM", "PM"):
         raise ValidationError(f"Session must be 'AM' or 'PM', got '{session}'")
 
     return session_upper

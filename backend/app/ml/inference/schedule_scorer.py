@@ -4,9 +4,10 @@ Schedule Scorer - ML-based schedule quality evaluation.
 Uses trained ML models to score and evaluate schedule quality,
 suggest improvements, and optimize assignments.
 """
+
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,10 +33,10 @@ class ScheduleScorer:
 
     def __init__(
         self,
-        preference_model_path: Optional[Path] = None,
-        workload_model_path: Optional[Path] = None,
-        conflict_model_path: Optional[Path] = None,
-        db: Optional[AsyncSession] = None,
+        preference_model_path: Path | None = None,
+        workload_model_path: Path | None = None,
+        conflict_model_path: Path | None = None,
+        db: AsyncSession | None = None,
     ):
         """
         Initialize schedule scorer.
@@ -49,7 +50,9 @@ class ScheduleScorer:
         self.db = db
 
         # Initialize ML models
-        self.preference_predictor = PreferencePredictor(model_path=preference_model_path)
+        self.preference_predictor = PreferencePredictor(
+            model_path=preference_model_path
+        )
         self.workload_optimizer = WorkloadOptimizer(model_path=workload_model_path)
         self.conflict_predictor = ConflictPredictor(model_path=conflict_model_path)
 
@@ -58,7 +61,7 @@ class ScheduleScorer:
     def score_schedule(
         self,
         schedule: dict[str, Any],
-        weights: Optional[dict[str, float]] = None,
+        weights: dict[str, float] | None = None,
     ) -> dict[str, Any]:
         """
         Score overall schedule quality.
@@ -291,13 +294,15 @@ class ScheduleScorer:
             )
 
             for suggestion in workload_suggestions[:5]:  # Top 5 workload suggestions
-                suggestions.append({
-                    "type": "workload_rebalancing",
-                    "priority": suggestion.get("priority", 0),
-                    "impact": "high",
-                    "action": suggestion.get("action"),
-                    "details": suggestion,
-                })
+                suggestions.append(
+                    {
+                        "type": "workload_rebalancing",
+                        "priority": suggestion.get("priority", 0),
+                        "impact": "high",
+                        "action": suggestion.get("action"),
+                        "details": suggestion,
+                    }
+                )
 
         # 2. High-risk conflict assignments
         assignments = schedule.get("assignments", [])
@@ -307,13 +312,17 @@ class ScheduleScorer:
             )
 
             for risk_item in high_risk[:5]:  # Top 5 risky assignments
-                suggestions.append({
-                    "type": "conflict_mitigation",
-                    "priority": risk_item["conflict_probability"],
-                    "impact": "critical" if risk_item["conflict_probability"] >= 0.8 else "high",
-                    "action": "review_or_reassign",
-                    "details": risk_item,
-                })
+                suggestions.append(
+                    {
+                        "type": "conflict_mitigation",
+                        "priority": risk_item["conflict_probability"],
+                        "impact": "critical"
+                        if risk_item["conflict_probability"] >= 0.8
+                        else "high",
+                        "action": "review_or_reassign",
+                        "details": risk_item,
+                    }
+                )
 
         # 3. Low-preference assignments
         for assignment in assignments:
@@ -325,16 +334,18 @@ class ScheduleScorer:
             )
 
             if score < 0.3:  # Very low preference
-                suggestions.append({
-                    "type": "preference_improvement",
-                    "priority": 1.0 - score,  # Lower score = higher priority
-                    "impact": "medium",
-                    "action": "consider_alternative",
-                    "details": {
-                        "assignment": assignment,
-                        "preference_score": score,
-                    },
-                })
+                suggestions.append(
+                    {
+                        "type": "preference_improvement",
+                        "priority": 1.0 - score,  # Lower score = higher priority
+                        "impact": "medium",
+                        "action": "consider_alternative",
+                        "details": {
+                            "assignment": assignment,
+                            "preference_score": score,
+                        },
+                    }
+                )
 
         # Sort by priority (highest first)
         suggestions.sort(key=lambda x: x["priority"], reverse=True)
@@ -381,7 +392,11 @@ class ScheduleScorer:
             components_comparison[component] = {
                 "schedule_a": a_score,
                 "schedule_b": b_score,
-                "winner": "schedule_a" if a_score > b_score else "schedule_b" if b_score > a_score else "tie",
+                "winner": "schedule_a"
+                if a_score > b_score
+                else "schedule_b"
+                if b_score > a_score
+                else "tie",
             }
 
         return {
@@ -453,36 +468,48 @@ class ScheduleScorer:
         report.append(f"### 1. Preference Score: {pref['average_score']:.2%}")
         report.append(f"- Total Assignments: {pref['total_assignments']}")
         report.append(f"- Low Preference Assignments: {pref['low_preference_count']}")
-        report.append(f"- Distribution: Excellent={pref['distribution']['excellent']}, "
-                     f"Good={pref['distribution']['good']}, "
-                     f"Acceptable={pref['distribution']['acceptable']}, "
-                     f"Poor={pref['distribution']['poor']}\n")
+        report.append(
+            f"- Distribution: Excellent={pref['distribution']['excellent']}, "
+            f"Good={pref['distribution']['good']}, "
+            f"Acceptable={pref['distribution']['acceptable']}, "
+            f"Poor={pref['distribution']['poor']}\n"
+        )
 
         # Workload
         workload = score_result["components"]["workload"]
         report.append(f"### 2. Workload Balance: {workload['balance_score']:.2%}")
-        report.append(f"- Overloaded People: {workload['overloaded_count']}/{workload['total_people']}")
-        report.append(f"- Gini Coefficient: {workload['fairness_metrics']['gini_coefficient']:.3f} "
-                     f"(lower is more fair)")
-        report.append(f"- Workload Range: {workload['fairness_metrics']['min_workload']:.1%} - "
-                     f"{workload['fairness_metrics']['max_workload']:.1%}\n")
+        report.append(
+            f"- Overloaded People: {workload['overloaded_count']}/{workload['total_people']}"
+        )
+        report.append(
+            f"- Gini Coefficient: {workload['fairness_metrics']['gini_coefficient']:.3f} "
+            f"(lower is more fair)"
+        )
+        report.append(
+            f"- Workload Range: {workload['fairness_metrics']['min_workload']:.1%} - "
+            f"{workload['fairness_metrics']['max_workload']:.1%}\n"
+        )
 
         # Conflict
         conflict = score_result["components"]["conflict"]
         report.append(f"### 3. Conflict Safety: {conflict['safety_score']:.2%}")
         report.append(f"- High Risk Assignments: {conflict['high_risk_count']}")
         report.append(f"- Average Risk: {conflict['average_risk']:.2%}")
-        report.append(f"- Risk Distribution: Critical={conflict['risk_distribution']['critical']}, "
-                     f"High={conflict['risk_distribution']['high']}, "
-                     f"Medium={conflict['risk_distribution']['medium']}, "
-                     f"Low={conflict['risk_distribution']['low']}\n")
+        report.append(
+            f"- Risk Distribution: Critical={conflict['risk_distribution']['critical']}, "
+            f"High={conflict['risk_distribution']['high']}, "
+            f"Medium={conflict['risk_distribution']['medium']}, "
+            f"Low={conflict['risk_distribution']['low']}\n"
+        )
 
         # Suggestions
         if suggestions:
             report.append("## Top Improvement Suggestions\n")
             for i, suggestion in enumerate(suggestions, 1):
-                report.append(f"{i}. **{suggestion['type'].replace('_', ' ').title()}** "
-                            f"(Impact: {suggestion['impact']})")
+                report.append(
+                    f"{i}. **{suggestion['type'].replace('_', ' ').title()}** "
+                    f"(Impact: {suggestion['impact']})"
+                )
                 report.append(f"   - Action: {suggestion['action']}")
                 report.append(f"   - Priority: {suggestion['priority']:.2f}\n")
 

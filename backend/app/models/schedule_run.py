@@ -1,4 +1,5 @@
 """Schedule run model - audit trail for generated schedules."""
+
 import uuid
 from datetime import datetime
 
@@ -20,19 +21,24 @@ class ScheduleRun(Base):
     Version history is tracked via SQLAlchemy-Continuum.
     Access history: schedule_run.versions
     """
+
     __tablename__ = "schedule_runs"
     __versioned__ = {}  # Enable audit trail - tracks all changes with who/what/when
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
-    algorithm = Column(String(50), nullable=False)  # 'greedy', 'min_conflicts', 'cp_sat'
+    algorithm = Column(
+        String(50), nullable=False
+    )  # 'greedy', 'min_conflicts', 'cp_sat'
 
     # Results
     status = Column(String(50), nullable=False)  # 'success', 'partial', 'failed'
     total_blocks_assigned = Column(Integer)
     acgme_violations = Column(Integer, default=0)
-    acgme_override_count = Column(Integer, default=0)  # Number of acknowledged overrides
+    acgme_override_count = Column(
+        Integer, default=0
+    )  # Number of acknowledged overrides
     runtime_seconds = Column(Numeric(10, 2))
 
     # Configuration snapshot

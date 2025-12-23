@@ -1,4 +1,5 @@
 """CLI commands for FMIT scheduling management."""
+
 from datetime import date, datetime, timedelta
 from uuid import UUID
 
@@ -9,9 +10,13 @@ app = typer.Typer(help="FMIT scheduling management commands")
 
 @app.command()
 def scan_conflicts(
-    faculty_id: str | None = typer.Option(None, "--faculty", "-f", help="Filter by faculty ID"),
+    faculty_id: str | None = typer.Option(
+        None, "--faculty", "-f", help="Filter by faculty ID"
+    ),
     days: int = typer.Option(90, "--days", "-d", help="Days ahead to scan"),
-    output: str = typer.Option("table", "--output", "-o", help="Output format: table, json"),
+    output: str = typer.Option(
+        "table", "--output", "-o", help="Output format: table, json"
+    ),
 ):
     """
     Scan for schedule conflicts between leave and FMIT assignments.
@@ -64,7 +69,9 @@ def scan_conflicts(
 @app.command()
 def list_swaps(
     status: str | None = typer.Option(None, "--status", "-s", help="Filter by status"),
-    faculty_id: str | None = typer.Option(None, "--faculty", "-f", help="Filter by faculty ID"),
+    faculty_id: str | None = typer.Option(
+        None, "--faculty", "-f", help="Filter by faculty ID"
+    ),
     limit: int = typer.Option(20, "--limit", "-l", help="Maximum records to show"),
 ):
     """
@@ -89,6 +96,7 @@ def list_swaps(
 
         if faculty_id:
             from sqlalchemy import or_
+
             fid = UUID(faculty_id)
             query = query.filter(
                 or_(
@@ -118,7 +126,9 @@ def list_swaps(
                 f"ID: {swap.id}"
             )
             typer.echo(f"    Week: {swap.source_week} | Type: {swap.swap_type.value}")
-            typer.echo(f"    Requested: {swap.requested_at.strftime('%Y-%m-%d %H:%M')}\n")
+            typer.echo(
+                f"    Requested: {swap.requested_at.strftime('%Y-%m-%d %H:%M')}\n"
+            )
 
     finally:
         db.close()
@@ -126,9 +136,15 @@ def list_swaps(
 
 @app.command()
 def list_alerts(
-    faculty_id: str | None = typer.Option(None, "--faculty", "-f", help="Filter by faculty ID"),
-    severity: str | None = typer.Option(None, "--severity", "-s", help="Filter by severity"),
-    include_resolved: bool = typer.Option(False, "--include-resolved", "-r", help="Include resolved alerts"),
+    faculty_id: str | None = typer.Option(
+        None, "--faculty", "-f", help="Filter by faculty ID"
+    ),
+    severity: str | None = typer.Option(
+        None, "--severity", "-s", help="Filter by severity"
+    ),
+    include_resolved: bool = typer.Option(
+        False, "--include-resolved", "-r", help="Include resolved alerts"
+    ),
 ):
     """
     List conflict alerts.
@@ -159,10 +175,9 @@ def list_alerts(
 
         if not include_resolved:
             query = query.filter(
-                ConflictAlert.status.in_([
-                    ConflictAlertStatus.NEW,
-                    ConflictAlertStatus.ACKNOWLEDGED
-                ])
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                )
             )
 
         alerts = query.order_by(ConflictAlert.fmit_week).all()
@@ -212,28 +227,36 @@ def stats():
     try:
         # Swap stats
         total_swaps = db.query(SwapRecord).count()
-        pending_swaps = db.query(SwapRecord).filter(
-            SwapRecord.status == SwapStatus.PENDING
-        ).count()
-        executed_swaps = db.query(SwapRecord).filter(
-            SwapRecord.status == SwapStatus.EXECUTED
-        ).count()
+        pending_swaps = (
+            db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.PENDING).count()
+        )
+        executed_swaps = (
+            db.query(SwapRecord)
+            .filter(SwapRecord.status == SwapStatus.EXECUTED)
+            .count()
+        )
 
         # Alert stats
         total_alerts = db.query(ConflictAlert).count()
-        unresolved_alerts = db.query(ConflictAlert).filter(
-            ConflictAlert.status.in_([
-                ConflictAlertStatus.NEW,
-                ConflictAlertStatus.ACKNOWLEDGED
-            ])
-        ).count()
-        critical_alerts = db.query(ConflictAlert).filter(
-            ConflictAlert.severity == ConflictSeverity.CRITICAL,
-            ConflictAlert.status.in_([
-                ConflictAlertStatus.NEW,
-                ConflictAlertStatus.ACKNOWLEDGED
-            ])
-        ).count()
+        unresolved_alerts = (
+            db.query(ConflictAlert)
+            .filter(
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                )
+            )
+            .count()
+        )
+        critical_alerts = (
+            db.query(ConflictAlert)
+            .filter(
+                ConflictAlert.severity == ConflictSeverity.CRITICAL,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
+            .count()
+        )
 
         # Preference stats
         total_preferences = db.query(FacultyPreference).count()
@@ -268,7 +291,9 @@ def stats():
 def create_alert(
     faculty_id: str = typer.Argument(..., help="Faculty ID"),
     week: str = typer.Argument(..., help="FMIT week date (YYYY-MM-DD)"),
-    conflict_type: str = typer.Option("leave_fmit_overlap", "--type", "-t", help="Conflict type"),
+    conflict_type: str = typer.Option(
+        "leave_fmit_overlap", "--type", "-t", help="Conflict type"
+    ),
     severity: str = typer.Option("warning", "--severity", "-s", help="Severity level"),
     description: str = typer.Option("Manual alert", "--desc", "-d", help="Description"),
 ):

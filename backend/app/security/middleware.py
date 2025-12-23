@@ -4,15 +4,16 @@ Security headers middleware.
 Automatically adds security headers to all HTTP responses.
 Implements defense-in-depth security strategy for the API.
 """
+
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from app.security.headers import SecurityHeaders
 from app.security.csp import ContentSecurityPolicy
+from app.security.headers import SecurityHeaders
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # Log configuration at startup
         mode = "development" if self.debug else "production"
-        csp_status = "enabled (API-only)" if self.api_only else "enabled" if self.enable_csp else "disabled"
+        csp_status = (
+            "enabled (API-only)"
+            if self.api_only
+            else "enabled"
+            if self.enable_csp
+            else "disabled"
+        )
         logger.info(
             f"Security headers middleware initialized: mode={mode}, CSP={csp_status}"
         )
@@ -93,8 +100,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Add Content-Security-Policy if enabled
         if self.enable_csp:
             csp_header, csp_value = ContentSecurityPolicy.get_header(
-                debug=self.debug,
-                api_only=self.api_only
+                debug=self.debug, api_only=self.api_only
             )
             response.headers[csp_header] = csp_value
 
@@ -179,8 +185,7 @@ class SecurityHeadersConfig:
 
         if self.enable_csp:
             name, value = ContentSecurityPolicy.get_header(
-                debug=self.debug,
-                api_only=self.csp_api_only
+                debug=self.debug, api_only=self.csp_api_only
             )
             headers[name] = value
 
@@ -211,6 +216,7 @@ def create_security_headers_middleware(
         >>> middleware = create_security_headers_middleware(debug=False)
         >>> app.add_middleware(middleware)
     """
+
     # Create a configured middleware class
     class ConfiguredSecurityHeadersMiddleware(SecurityHeadersMiddleware):
         def __init__(self, app: ASGIApp):

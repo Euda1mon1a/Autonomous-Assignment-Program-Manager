@@ -38,28 +38,28 @@ Usage:
     )
 """
 
-from app.scheduling_catalyst.models import (
-    ActivationEnergy,
-    BarrierType,
-    CatalystType,
-    CatalystPerson,
-    CatalystMechanism,
-    EnergyBarrier,
-    TransitionState,
-    ReactionPathway,
-    ScheduleReaction,
-)
 from app.scheduling_catalyst.barriers import (
-    BarrierDetector,
     BarrierClassifier,
+    BarrierDetector,
 )
 from app.scheduling_catalyst.catalysts import (
     CatalystAnalyzer,
     CatalystScorer,
 )
+from app.scheduling_catalyst.models import (
+    ActivationEnergy,
+    BarrierType,
+    CatalystMechanism,
+    CatalystPerson,
+    CatalystType,
+    EnergyBarrier,
+    ReactionPathway,
+    ScheduleReaction,
+    TransitionState,
+)
 from app.scheduling_catalyst.optimizer import (
-    TransitionOptimizer,
     PathwayResult,
+    TransitionOptimizer,
 )
 
 __all__ = [

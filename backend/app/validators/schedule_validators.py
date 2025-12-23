@@ -8,6 +8,7 @@ Validates scheduling data including:
 - Schedule conflict pre-validation
 - ACGME rule pre-validation
 """
+
 from datetime import date, timedelta
 from typing import Optional
 from uuid import UUID
@@ -20,7 +21,6 @@ from app.models.block import Block
 from app.models.person import Person
 from app.validators.common import ValidationError, validate_string_length, validate_uuid
 from app.validators.date_validators import validate_block_date, validate_date_range
-
 
 # Valid assignment roles
 VALID_ASSIGNMENT_ROLES = ["primary", "supervising", "backup"]
@@ -107,10 +107,7 @@ def validate_rotation_name(name: str) -> str:
         raise ValidationError("Rotation name cannot be empty")
 
     return validate_string_length(
-        name.strip(),
-        min_length=1,
-        max_length=255,
-        field_name="Rotation name"
+        name.strip(), min_length=1, max_length=255, field_name="Rotation name"
     )
 
 
@@ -133,10 +130,7 @@ def validate_rotation_abbreviation(abbrev: str | None) -> str | None:
         return None
 
     validated = validate_string_length(
-        abbrev.strip(),
-        min_length=2,
-        max_length=10,
-        field_name="Rotation abbreviation"
+        abbrev.strip(), min_length=2, max_length=10, field_name="Rotation abbreviation"
     )
 
     # Convert to uppercase
@@ -160,10 +154,7 @@ def validate_activity_override(activity: str | None) -> str | None:
         return None
 
     return validate_string_length(
-        activity.strip(),
-        min_length=1,
-        max_length=255,
-        field_name="Activity override"
+        activity.strip(), min_length=1, max_length=255, field_name="Activity override"
     )
 
 
@@ -185,10 +176,7 @@ def validate_notes(notes: str | None, max_length: int = 1000) -> str | None:
         return None
 
     return validate_string_length(
-        notes.strip(),
-        min_length=1,
-        max_length=max_length,
-        field_name="Notes"
+        notes.strip(), min_length=1, max_length=max_length, field_name="Notes"
     )
 
 
@@ -196,7 +184,7 @@ async def validate_no_duplicate_assignment(
     db: AsyncSession,
     person_id: UUID,
     block_id: UUID,
-    exclude_assignment_id: UUID | None = None
+    exclude_assignment_id: UUID | None = None,
 ) -> None:
     """
     Validate that person is not already assigned to this block.
@@ -218,8 +206,7 @@ async def validate_no_duplicate_assignment(
 
     # Build query
     query = select(Assignment).where(
-        Assignment.person_id == person_id,
-        Assignment.block_id == block_id
+        Assignment.person_id == person_id, Assignment.block_id == block_id
     )
 
     # Exclude specific assignment (for updates)
@@ -233,8 +220,8 @@ async def validate_no_duplicate_assignment(
 
     if existing:
         raise ValidationError(
-            f"Person is already assigned to this block. "
-            f"Cannot create duplicate assignment."
+            "Person is already assigned to this block. "
+            "Cannot create duplicate assignment."
         )
 
 
@@ -254,9 +241,7 @@ async def validate_block_exists(db: AsyncSession, block_id: UUID) -> Block:
     """
     validate_uuid(block_id)
 
-    result = await db.execute(
-        select(Block).where(Block.id == block_id)
-    )
+    result = await db.execute(select(Block).where(Block.id == block_id))
     block = result.scalar_one_or_none()
 
     if block is None:
@@ -281,9 +266,7 @@ async def validate_person_exists(db: AsyncSession, person_id: UUID) -> Person:
     """
     validate_uuid(person_id)
 
-    result = await db.execute(
-        select(Person).where(Person.id == person_id)
-    )
+    result = await db.execute(select(Person).where(Person.id == person_id))
     person = result.scalar_one_or_none()
 
     if person is None:
@@ -293,9 +276,7 @@ async def validate_person_exists(db: AsyncSession, person_id: UUID) -> Person:
 
 
 async def validate_supervision_ratio(
-    db: AsyncSession,
-    block_id: UUID,
-    new_resident_id: UUID | None = None
+    db: AsyncSession, block_id: UUID, new_resident_id: UUID | None = None
 ) -> None:
     """
     Pre-validate ACGME supervision ratios for a block.
@@ -317,9 +298,7 @@ async def validate_supervision_ratio(
 
     # Get all assignments for this block
     result = await db.execute(
-        select(Assignment)
-        .join(Person)
-        .where(Assignment.block_id == block_id)
+        select(Assignment).join(Person).where(Assignment.block_id == block_id)
     )
     assignments = result.scalars().all()
 
@@ -365,10 +344,7 @@ async def validate_supervision_ratio(
 
 
 async def validate_weekly_hours_limit(
-    db: AsyncSession,
-    person_id: UUID,
-    check_date: date,
-    additional_hours: float = 12.0
+    db: AsyncSession, person_id: UUID, check_date: date, additional_hours: float = 12.0
 ) -> None:
     """
     Pre-validate ACGME 80-hour weekly limit.
@@ -402,7 +378,7 @@ async def validate_weekly_hours_limit(
         .where(
             Assignment.person_id == person_id,
             Block.date >= start_date,
-            Block.date <= end_date
+            Block.date <= end_date,
         )
     )
     assignments = result.scalars().all()
@@ -420,8 +396,7 @@ async def validate_weekly_hours_limit(
 
         # Count blocks in this week
         week_blocks = sum(
-            1 for a in assignments
-            if week_start <= a.block.date <= week_end
+            1 for a in assignments if week_start <= a.block.date <= week_end
         )
 
         week_hours = week_blocks * hours_per_block
@@ -438,9 +413,7 @@ async def validate_weekly_hours_limit(
 
 
 async def validate_one_in_seven_rule(
-    db: AsyncSession,
-    person_id: UUID,
-    check_date: date
+    db: AsyncSession, person_id: UUID, check_date: date
 ) -> None:
     """
     Pre-validate ACGME 1-in-7 rule (one 24-hour period off every 7 days).
@@ -471,7 +444,7 @@ async def validate_one_in_seven_rule(
         .where(
             Assignment.person_id == person_id,
             Block.date >= start_date,
-            Block.date <= end_date
+            Block.date <= end_date,
         )
         .distinct()
     )
@@ -485,7 +458,7 @@ async def validate_one_in_seven_rule(
         # Check if these are 7 consecutive days
         sorted_dates = sorted(assigned_dates)
         for i in range(len(sorted_dates) - 6):
-            consecutive = sorted_dates[i:i+7]
+            consecutive = sorted_dates[i : i + 7]
             if (consecutive[-1] - consecutive[0]).days == 6:
                 raise ValidationError(
                     f"Adding this assignment would violate ACGME 1-in-7 rule. "

@@ -1,4 +1,5 @@
 """Schedule-related schemas."""
+
 from datetime import date
 from enum import Enum
 from typing import Literal
@@ -11,14 +12,16 @@ from app.validators.date_validators import validate_academic_year_date
 
 class SchedulingAlgorithm(str, Enum):
     """Available scheduling algorithms."""
-    GREEDY = "greedy"      # Fast heuristic, good for initial solutions
-    CP_SAT = "cp_sat"      # OR-Tools constraint programming, optimal solutions
-    PULP = "pulp"          # PuLP linear programming, fast for large problems
-    HYBRID = "hybrid"      # Combines CP-SAT and PuLP for best results
+
+    GREEDY = "greedy"  # Fast heuristic, good for initial solutions
+    CP_SAT = "cp_sat"  # OR-Tools constraint programming, optimal solutions
+    PULP = "pulp"  # PuLP linear programming, fast for large problems
+    HYBRID = "hybrid"  # Combines CP-SAT and PuLP for best results
 
 
 class ScheduleRequest(BaseModel):
     """Request schema for schedule generation."""
+
     start_date: date
     end_date: date
     pgy_levels: list[int] | None = None  # Filter residents by PGY level
@@ -28,7 +31,7 @@ class ScheduleRequest(BaseModel):
         default=60.0,
         ge=5.0,
         le=300.0,
-        description="Maximum solver runtime in seconds (5-300)"
+        description="Maximum solver runtime in seconds (5-300)",
     )
 
     @field_validator("start_date", "end_date")
@@ -37,8 +40,8 @@ class ScheduleRequest(BaseModel):
         """Validate dates are within academic year bounds."""
         return validate_academic_year_date(v, field_name="date")
 
-    @model_validator(mode='after')
-    def validate_date_range(self) -> 'ScheduleRequest':
+    @model_validator(mode="after")
+    def validate_date_range(self) -> "ScheduleRequest":
         """Ensure start_date is before or equal to end_date."""
         if self.start_date > self.end_date:
             raise ValueError(
@@ -50,6 +53,7 @@ class ScheduleRequest(BaseModel):
 
 class Violation(BaseModel):
     """Schema for a single ACGME violation."""
+
     type: str  # 'SUPERVISION_RATIO', '80_HOUR', '1_IN_7', etc.
     severity: str  # 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'
     person_id: UUID | None = None
@@ -61,6 +65,7 @@ class Violation(BaseModel):
 
 class ValidationResult(BaseModel):
     """Schema for ACGME validation results."""
+
     valid: bool
     total_violations: int
     violations: list[Violation]
@@ -70,6 +75,7 @@ class ValidationResult(BaseModel):
 
 class SolverStatistics(BaseModel):
     """Statistics from the solver run."""
+
     total_blocks: int | None = None
     total_residents: int | None = None
     coverage_rate: float | None = None
@@ -79,6 +85,7 @@ class SolverStatistics(BaseModel):
 
 class ScheduleResponse(BaseModel):
     """Response schema for schedule generation."""
+
     status: str  # 'success', 'partial', 'failed'
     message: str
     total_blocks_assigned: int
@@ -91,6 +98,7 @@ class ScheduleResponse(BaseModel):
 
 class EmergencyRequest(BaseModel):
     """Request schema for emergency coverage."""
+
     person_id: UUID
     start_date: date
     end_date: date
@@ -103,8 +111,8 @@ class EmergencyRequest(BaseModel):
         """Validate dates are within academic year bounds."""
         return validate_academic_year_date(v, field_name="date")
 
-    @model_validator(mode='after')
-    def validate_date_order(self) -> 'EmergencyRequest':
+    @model_validator(mode="after")
+    def validate_date_order(self) -> "EmergencyRequest":
         """Ensure start_date is before or equal to end_date."""
         if self.start_date > self.end_date:
             raise ValueError(
@@ -116,6 +124,7 @@ class EmergencyRequest(BaseModel):
 
 class EmergencyResponse(BaseModel):
     """Response schema for emergency coverage."""
+
     status: str  # 'success', 'partial', 'failed'
     replacements_found: int
     coverage_gaps: int
@@ -125,8 +134,10 @@ class EmergencyResponse(BaseModel):
 
 # Import/Conflict Analysis Schemas
 
+
 class ConflictItem(BaseModel):
     """Schema for a single scheduling conflict."""
+
     provider: str
     date: str
     time: str
@@ -139,6 +150,7 @@ class ConflictItem(BaseModel):
 
 class ScheduleSummary(BaseModel):
     """Summary of an imported schedule."""
+
     providers: list[str]
     date_range: list[str | None]  # [start, end] as ISO strings
     total_slots: int
@@ -148,6 +160,7 @@ class ScheduleSummary(BaseModel):
 
 class Recommendation(BaseModel):
     """Recommendation for resolving conflicts."""
+
     type: str  # 'consolidate_fmit', 'specialty_coverage', 'resolve_double_booking'
     providers: list[str] | None = None
     count: int | None = None
@@ -156,6 +169,7 @@ class Recommendation(BaseModel):
 
 class ConflictSummary(BaseModel):
     """Summary of conflicts found."""
+
     total_conflicts: int
     errors: int
     warnings: int
@@ -163,6 +177,7 @@ class ConflictSummary(BaseModel):
 
 class ImportAnalysisResponse(BaseModel):
     """Response schema for schedule import and analysis."""
+
     success: bool
     error: str | None = None
     fmit_schedule: ScheduleSummary | None = None
@@ -174,8 +189,10 @@ class ImportAnalysisResponse(BaseModel):
 
 # SwapFinder API Schemas
 
+
 class FacultyTargetInput(BaseModel):
     """Input schema for faculty target configuration."""
+
     name: str
     target_weeks: int = Field(default=6, ge=0, le=52)
     role: Literal["faculty", "chief", "pd", "adjunct"] = "faculty"
@@ -184,10 +201,13 @@ class FacultyTargetInput(BaseModel):
 
 class ExternalConflictInput(BaseModel):
     """Input schema for external conflicts (leave, conferences, etc.)."""
+
     faculty: str
     start_date: date
     end_date: date
-    conflict_type: Literal["leave", "conference", "tdy", "training", "deployment", "medical"]
+    conflict_type: Literal[
+        "leave", "conference", "tdy", "training", "deployment", "medical"
+    ]
     description: str = ""
 
     @field_validator("start_date", "end_date")
@@ -196,8 +216,8 @@ class ExternalConflictInput(BaseModel):
         """Validate dates are within academic year bounds."""
         return validate_academic_year_date(v, field_name="date")
 
-    @model_validator(mode='after')
-    def validate_dates(self) -> 'ExternalConflictInput':
+    @model_validator(mode="after")
+    def validate_dates(self) -> "ExternalConflictInput":
         if self.start_date > self.end_date:
             raise ValueError("start_date must be before or equal to end_date")
         return self
@@ -205,25 +225,26 @@ class ExternalConflictInput(BaseModel):
 
 class SwapFinderRequest(BaseModel):
     """Request schema for finding swap candidates."""
-    target_faculty: str = Field(..., description="Faculty member looking to offload a week")
+
+    target_faculty: str = Field(
+        ..., description="Faculty member looking to offload a week"
+    )
     target_week: date = Field(..., description="Monday of the week to offload")
     faculty_targets: list[FacultyTargetInput] = Field(
         default=[],
-        description="Faculty target week allocations (optional - enhances ranking)"
+        description="Faculty target week allocations (optional - enhances ranking)",
     )
     external_conflicts: list[ExternalConflictInput] = Field(
-        default=[],
-        description="Known external conflicts (leave, conferences, etc.)"
+        default=[], description="Known external conflicts (leave, conferences, etc.)"
     )
     include_absence_conflicts: bool = Field(
-        default=True,
-        description="Cross-reference with database absence records"
+        default=True, description="Cross-reference with database absence records"
     )
     schedule_release_days: int = Field(
         default=90,
         ge=0,
         le=365,
-        description="Days ahead that clinic schedules are released"
+        description="Days ahead that clinic schedules are released",
     )
 
     @field_validator("target_week")
@@ -235,6 +256,7 @@ class SwapFinderRequest(BaseModel):
 
 class SwapCandidateResponse(BaseModel):
     """Response schema for a single swap candidate."""
+
     faculty: str
     can_take_week: str  # ISO date
     gives_week: str | None = None  # ISO date for 1:1 swap
@@ -247,6 +269,7 @@ class SwapCandidateResponse(BaseModel):
 
 class AlternatingPatternInfo(BaseModel):
     """Info about faculty with excessive alternating patterns."""
+
     faculty: str
     cycle_count: int
     fmit_weeks: list[str]  # ISO dates
@@ -255,6 +278,7 @@ class AlternatingPatternInfo(BaseModel):
 
 class SwapFinderResponse(BaseModel):
     """Response schema for swap finder results."""
+
     success: bool
     target_faculty: str
     target_week: str

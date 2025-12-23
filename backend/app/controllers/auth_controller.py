@@ -1,6 +1,5 @@
 """Auth controller for request/response handling."""
 
-
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -50,7 +49,9 @@ class AuthController:
 
         if result["error"]:
             # Record failed attempt and check if account should be locked
-            is_now_locked, attempts_remaining, new_lockout_seconds = self.lockout.record_failed_attempt(username)
+            is_now_locked, attempts_remaining, new_lockout_seconds = (
+                self.lockout.record_failed_attempt(username)
+            )
 
             if is_now_locked:
                 raise HTTPException(
@@ -93,7 +94,9 @@ class AuthController:
 
         if result["error"]:
             # Determine appropriate status code using structured error codes
-            error_code = result.get("error_code") or get_error_code_from_message(result["error"])
+            error_code = result.get("error_code") or get_error_code_from_message(
+                result["error"]
+            )
 
             if error_code == ErrorCode.FORBIDDEN:
                 status_code = status.HTTP_403_FORBIDDEN

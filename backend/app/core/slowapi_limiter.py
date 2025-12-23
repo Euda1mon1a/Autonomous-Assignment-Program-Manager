@@ -4,13 +4,13 @@ Global rate limiting module using slowapi.
 Implements rate limiting on all API endpoints using slowapi, which provides
 a Redis-backed sliding window rate limiter compatible with FastAPI.
 """
+
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 from starlette.responses import JSONResponse
 
@@ -48,7 +48,7 @@ def get_client_identifier(request: Request) -> str:
     return get_remote_address(request)
 
 
-def get_redis_url() -> Optional[str]:
+def get_redis_url() -> str | None:
     """
     Get Redis URL for rate limiting storage.
 
@@ -124,6 +124,7 @@ def get_limiter() -> Limiter:
 # Rate limit decorators for different endpoint types
 # These can be used on individual routes for custom limits
 
+
 def limit_auth(func: Callable) -> Callable:
     """
     Rate limit decorator for authentication endpoints.
@@ -131,9 +132,7 @@ def limit_auth(func: Callable) -> Callable:
     More restrictive limits to prevent brute force attacks.
     Uses settings-based configuration.
     """
-    return limiter.limit(
-        f"{settings.RATE_LIMIT_LOGIN_ATTEMPTS}/minute"
-    )(func)
+    return limiter.limit(f"{settings.RATE_LIMIT_LOGIN_ATTEMPTS}/minute")(func)
 
 
 def limit_registration(func: Callable) -> Callable:
@@ -142,9 +141,7 @@ def limit_registration(func: Callable) -> Callable:
 
     Restrictive limits to prevent automated account creation.
     """
-    return limiter.limit(
-        f"{settings.RATE_LIMIT_REGISTER_ATTEMPTS}/minute"
-    )(func)
+    return limiter.limit(f"{settings.RATE_LIMIT_REGISTER_ATTEMPTS}/minute")(func)
 
 
 def limit_read(func: Callable) -> Callable:

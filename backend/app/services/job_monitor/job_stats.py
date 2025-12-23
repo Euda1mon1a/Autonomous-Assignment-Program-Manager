@@ -31,9 +31,7 @@ class JobStatsService:
         self._state = State()
 
     def get_task_statistics(
-        self,
-        task_name: str | None = None,
-        time_range_hours: int = 24
+        self, task_name: str | None = None, time_range_hours: int = 24
     ) -> dict[str, Any]:
         """
         Get statistics for tasks over a time range.
@@ -111,11 +109,21 @@ class JobStatsService:
             stats = {}
 
             # Initialize known queues from celery config
-            known_queues = ["default", "resilience", "notifications", "metrics", "cleanup"]
+            known_queues = [
+                "default",
+                "resilience",
+                "notifications",
+                "metrics",
+                "cleanup",
+            ]
 
             for queue_name in known_queues:
-                active_count = sum(1 for t in active_tasks if t.get("queue") == queue_name)
-                reserved_count = sum(1 for t in reserved_tasks if t.get("queue") == queue_name)
+                active_count = sum(
+                    1 for t in active_tasks if t.get("queue") == queue_name
+                )
+                reserved_count = sum(
+                    1 for t in reserved_tasks if t.get("queue") == queue_name
+                )
 
                 stats[queue_name] = {
                     "queue_name": queue_name,
@@ -169,9 +177,7 @@ class JobStatsService:
             }
 
     def get_performance_metrics(
-        self,
-        task_name: str | None = None,
-        time_range_hours: int = 24
+        self, task_name: str | None = None, time_range_hours: int = 24
     ) -> dict[str, Any]:
         """
         Get performance metrics for tasks.
@@ -252,9 +258,7 @@ class JobStatsService:
             return {}
 
     def get_failure_analysis(
-        self,
-        task_name: str | None = None,
-        time_range_hours: int = 24
+        self, task_name: str | None = None, time_range_hours: int = 24
     ) -> dict[str, Any]:
         """
         Analyze task failures to identify common issues.
@@ -299,9 +303,7 @@ class JobStatsService:
             }
 
     def get_throughput_metrics(
-        self,
-        queue_name: str | None = None,
-        time_range_hours: int = 24
+        self, queue_name: str | None = None, time_range_hours: int = 24
     ) -> dict[str, Any]:
         """
         Get throughput metrics for task processing.
@@ -365,12 +367,14 @@ class JobStatsService:
 
             scheduled_tasks = []
             for task_name, task_config in beat_schedule.items():
-                scheduled_tasks.append({
-                    "name": task_name,
-                    "task": task_config.get("task"),
-                    "schedule": str(task_config.get("schedule")),
-                    "options": task_config.get("options", {}),
-                })
+                scheduled_tasks.append(
+                    {
+                        "name": task_name,
+                        "task": task_config.get("task"),
+                        "schedule": str(task_config.get("schedule")),
+                        "options": task_config.get("options", {}),
+                    }
+                )
 
             return {
                 "total_scheduled_tasks": len(scheduled_tasks),
@@ -424,14 +428,18 @@ class JobStatsService:
 
             active_workers = len(workers_with_tasks)
             idle_workers = total_workers - active_workers
-            utilization = (active_workers / total_workers) * 100 if total_workers > 0 else 0.0
+            utilization = (
+                (active_workers / total_workers) * 100 if total_workers > 0 else 0.0
+            )
 
             return {
                 "total_workers": total_workers,
                 "active_workers": active_workers,
                 "idle_workers": idle_workers,
                 "average_utilization_percentage": round(utilization, 2),
-                "tasks_per_worker": round(len(active_tasks) / total_workers, 2) if total_workers > 0 else 0.0,
+                "tasks_per_worker": round(len(active_tasks) / total_workers, 2)
+                if total_workers > 0
+                else 0.0,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 

@@ -14,6 +14,7 @@ Functions:
     - lorenz_curve: Generate Lorenz curve coordinates
     - equity_report: Comprehensive equity analysis with recommendations
 """
+
 import logging
 from typing import Any
 
@@ -22,10 +23,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def gini_coefficient(
-    values: list[float],
-    weights: list[float] | None = None
-) -> float:
+def gini_coefficient(values: list[float], weights: list[float] | None = None) -> float:
     """
     Calculate the Gini coefficient for a distribution of values.
 
@@ -165,8 +163,7 @@ def lorenz_curve(values: list[float]) -> tuple[np.ndarray, np.ndarray]:
 
 
 def equity_report(
-    provider_hours: dict[str, float],
-    intensity_weights: dict[str, float] | None = None
+    provider_hours: dict[str, float], intensity_weights: dict[str, float] | None = None
 ) -> dict[str, Any]:
     """
     Generate comprehensive equity analysis report for provider workloads.
@@ -247,8 +244,7 @@ def equity_report(
     if weights is not None:
         # Use intensity-adjusted hours for identification
         adjusted_hours = {
-            pid: provider_hours[pid] * intensity_weights[pid]
-            for pid in provider_ids
+            pid: provider_hours[pid] * intensity_weights[pid] for pid in provider_ids
         }
         std_adjusted_hours = float(np.std(np.array(list(adjusted_hours.values()))))
     else:
@@ -280,21 +276,21 @@ def equity_report(
         if overload_delta > mean_adjusted_hours * 0.2:  # 20% above mean
             recommendations.append(
                 f"Provider {most_overloaded} is {overload_delta:.1f} hours "
-                f"({(overload_delta/mean_adjusted_hours*100):.1f}%) above average. "
+                f"({(overload_delta / mean_adjusted_hours * 100):.1f}%) above average. "
                 "Consider reducing their assignments."
             )
 
         if underload_delta > mean_adjusted_hours * 0.2:  # 20% below mean
             recommendations.append(
                 f"Provider {most_underloaded} is {underload_delta:.1f} hours "
-                f"({(underload_delta/mean_adjusted_hours*100):.1f}%) below average. "
+                f"({(underload_delta / mean_adjusted_hours * 100):.1f}%) below average. "
                 "Consider increasing their assignments."
             )
 
         if std_adjusted_hours > mean_adjusted_hours * 0.25:  # High variation
             recommendations.append(
                 f"High variation in workload (σ={std_adjusted_hours:.1f}, "
-                f"{(std_adjusted_hours/mean_adjusted_hours*100):.1f}% of mean). "
+                f"{(std_adjusted_hours / mean_adjusted_hours * 100):.1f}% of mean). "
                 "Review assignment algorithm for bias."
             )
 

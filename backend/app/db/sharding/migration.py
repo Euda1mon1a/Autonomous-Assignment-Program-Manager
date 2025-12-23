@@ -9,14 +9,13 @@ This module provides utilities for:
 """
 
 import logging
+from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field
-from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import DeclarativeMeta
 
 from app.db.sharding.manager import ShardManager
 from app.db.sharding.strategies import DirectoryShardingStrategy, ShardInfo
@@ -47,16 +46,16 @@ class MigrationPlan(BaseModel):
     table_name: str = Field(..., description="Table being migrated")
     source_shard_id: int = Field(..., description="Source shard ID")
     target_shard_id: int = Field(..., description="Target shard ID")
-    keys_to_migrate: List[Any] = Field(..., description="List of keys to migrate")
+    keys_to_migrate: list[Any] = Field(..., description="List of keys to migrate")
     status: MigrationStatus = Field(
         default=MigrationStatus.PENDING, description="Migration status"
     )
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
     records_migrated: int = Field(default=0, description="Number of records migrated")
     records_failed: int = Field(default=0, description="Number of failed records")
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
     class Config:
         """Pydantic config."""
@@ -72,7 +71,7 @@ class MigrationResult(BaseModel):
     records_migrated: int
     records_failed: int
     duration_seconds: float
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class ShardMigration:
@@ -102,12 +101,12 @@ class ShardMigration:
             manager: Shard manager instance
         """
         self.manager = manager
-        self.active_migrations: Dict[str, MigrationPlan] = {}
+        self.active_migrations: dict[str, MigrationPlan] = {}
 
     async def execute(
         self,
         plan: MigrationPlan,
-        fetch_func: Callable[[AsyncSession, Any], Optional[T]],
+        fetch_func: Callable[[AsyncSession, Any], T | None],
         insert_func: Callable[[AsyncSession, T], None],
         delete_source: bool = True,
         batch_size: int = 100,
@@ -183,8 +182,8 @@ class ShardMigration:
     async def _migrate_batch(
         self,
         plan: MigrationPlan,
-        keys: List[Any],
-        fetch_func: Callable[[AsyncSession, Any], Optional[T]],
+        keys: list[Any],
+        fetch_func: Callable[[AsyncSession, Any], T | None],
         insert_func: Callable[[AsyncSession, T], None],
         delete_source: bool,
     ) -> None:
@@ -226,9 +225,7 @@ class ShardMigration:
                     plan.records_migrated += 1
 
                 except Exception as e:
-                    logger.error(
-                        f"Failed to migrate record {key}: {e}", exc_info=True
-                    )
+                    logger.error(f"Failed to migrate record {key}: {e}", exc_info=True)
                     plan.records_failed += 1
                     await target_session.rollback()
 
@@ -239,7 +236,7 @@ class ShardMigration:
     async def rollback(
         self,
         plan: MigrationPlan,
-        fetch_func: Callable[[AsyncSession, Any], Optional[T]],
+        fetch_func: Callable[[AsyncSession, Any], T | None],
         insert_func: Callable[[AsyncSession, T], None],
     ) -> MigrationResult:
         """
@@ -276,7 +273,7 @@ class ShardMigration:
 
         return result
 
-    def get_migration_status(self, migration_id: str) -> Optional[MigrationPlan]:
+    def get_migration_status(self, migration_id: str) -> MigrationPlan | None:
         """
         Get status of an active migration.
 
@@ -325,8 +322,8 @@ class ShardRebalancer:
         self.manager = manager
 
     async def analyze_distribution(
-        self, table_name: str, keys: List[Any]
-    ) -> Dict[str, Any]:
+        self, table_name: str, keys: list[Any]
+    ) -> dict[str, Any]:
         """
         Analyze current data distribution.
 
@@ -343,9 +340,9 @@ class ShardRebalancer:
     def create_rebalancing_plan(
         self,
         table_name: str,
-        current_distribution: Dict[int, List[Any]],
+        current_distribution: dict[int, list[Any]],
         strategy: RebalancingStrategy = RebalancingStrategy.UNIFORM,
-    ) -> List[MigrationPlan]:
+    ) -> list[MigrationPlan]:
         """
         Create migration plans to rebalance data.
 
@@ -358,25 +355,21 @@ class ShardRebalancer:
             List of migration plans to execute
         """
         if strategy == RebalancingStrategy.UNIFORM:
-            return self._create_uniform_rebalance_plan(
-                table_name, current_distribution
-            )
+            return self._create_uniform_rebalance_plan(table_name, current_distribution)
         elif strategy == RebalancingStrategy.WEIGHTED:
             return self._create_weighted_rebalance_plan(
                 table_name, current_distribution
             )
         elif strategy == RebalancingStrategy.MINIMAL_MOVEMENT:
-            return self._create_minimal_movement_plan(
-                table_name, current_distribution
-            )
+            return self._create_minimal_movement_plan(table_name, current_distribution)
         else:
             raise ValueError(f"Unknown rebalancing strategy: {strategy}")
 
     def _create_uniform_rebalance_plan(
         self,
         table_name: str,
-        current_distribution: Dict[int, List[Any]],
-    ) -> List[MigrationPlan]:
+        current_distribution: dict[int, list[Any]],
+    ) -> list[MigrationPlan]:
         """
         Create plan for uniform distribution.
 
@@ -398,7 +391,7 @@ class ShardRebalancer:
         target_per_shard = len(all_keys) // num_shards
 
         # Create migration plans
-        plans: List[MigrationPlan] = []
+        plans: list[MigrationPlan] = []
         shard_ids = sorted(current_distribution.keys())
 
         # Identify over-loaded and under-loaded shards
@@ -446,8 +439,8 @@ class ShardRebalancer:
     def _create_weighted_rebalance_plan(
         self,
         table_name: str,
-        current_distribution: Dict[int, List[Any]],
-    ) -> List[MigrationPlan]:
+        current_distribution: dict[int, list[Any]],
+    ) -> list[MigrationPlan]:
         """
         Create plan for weighted distribution.
 
@@ -479,7 +472,7 @@ class ShardRebalancer:
         }
 
         # Create migration plans (similar to uniform, but with weighted targets)
-        plans: List[MigrationPlan] = []
+        plans: list[MigrationPlan] = []
         # Implementation similar to uniform but using target_counts
         # (Simplified for brevity - full implementation would follow similar logic)
 
@@ -488,8 +481,8 @@ class ShardRebalancer:
     def _create_minimal_movement_plan(
         self,
         table_name: str,
-        current_distribution: Dict[int, List[Any]],
-    ) -> List[MigrationPlan]:
+        current_distribution: dict[int, list[Any]],
+    ) -> list[MigrationPlan]:
         """
         Create plan with minimal data movement.
 
@@ -524,8 +517,8 @@ class ShardRebalancer:
         self,
         table_name: str,
         new_shard: ShardInfo,
-        current_keys: List[Any],
-    ) -> List[MigrationPlan]:
+        current_keys: list[Any],
+    ) -> list[MigrationPlan]:
         """
         Create migration plan when adding a new shard.
 
@@ -551,7 +544,7 @@ class ShardRebalancer:
             keys_per_shard = len(current_keys) // (num_existing_shards + 1)
 
             # Take keys from each existing shard
-            plans: List[MigrationPlan] = []
+            plans: list[MigrationPlan] = []
             keys_to_migrate = current_keys[:keys_per_shard]
 
             if keys_to_migrate:
@@ -568,8 +561,8 @@ class ShardRebalancer:
         self,
         table_name: str,
         shard_id: int,
-        current_distribution: Dict[int, List[Any]],
-    ) -> List[MigrationPlan]:
+        current_distribution: dict[int, list[Any]],
+    ) -> list[MigrationPlan]:
         """
         Create migration plan when removing a shard.
 
@@ -589,13 +582,11 @@ class ShardRebalancer:
             return []
 
         # Distribute keys to remaining shards
-        remaining_shards = [
-            sid for sid in current_distribution.keys() if sid != shard_id
-        ]
+        remaining_shards = [sid for sid in current_distribution if sid != shard_id]
         if not remaining_shards:
             raise ValueError("Cannot remove the last shard")
 
-        plans: List[MigrationPlan] = []
+        plans: list[MigrationPlan] = []
         keys_per_shard = len(keys_to_migrate) // len(remaining_shards)
 
         for i, target_shard_id in enumerate(remaining_shards):

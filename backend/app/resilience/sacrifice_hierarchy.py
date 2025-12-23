@@ -35,13 +35,14 @@ class ActivityCategory(IntEnum):
     Lower number = higher priority = more protected.
     These are NEVER sacrificed unless higher-priority items are at risk.
     """
-    PATIENT_SAFETY = 1       # ICU coverage, OR staffing, trauma response
-    ACGME_REQUIREMENTS = 2   # Minimum case numbers, required rotations
-    CONTINUITY_OF_CARE = 3   # Clinic follow-ups, chronic disease management
-    EDUCATION_CORE = 4       # Didactics, simulation labs
-    RESEARCH = 5             # Studies, publications, grants
-    ADMINISTRATION = 6       # Meetings, committees, paperwork
-    EDUCATION_OPTIONAL = 7   # Conferences, electives, enrichment
+
+    PATIENT_SAFETY = 1  # ICU coverage, OR staffing, trauma response
+    ACGME_REQUIREMENTS = 2  # Minimum case numbers, required rotations
+    CONTINUITY_OF_CARE = 3  # Clinic follow-ups, chronic disease management
+    EDUCATION_CORE = 4  # Didactics, simulation labs
+    RESEARCH = 5  # Studies, publications, grants
+    ADMINISTRATION = 6  # Meetings, committees, paperwork
+    EDUCATION_OPTIONAL = 7  # Conferences, electives, enrichment
 
 
 class LoadSheddingLevel(IntEnum):
@@ -50,17 +51,19 @@ class LoadSheddingLevel(IntEnum):
 
     Each level suspends activities up to and including that priority.
     """
-    NORMAL = 0           # No shedding - all activities
-    YELLOW = 1           # Suspend optional education
-    ORANGE = 2           # Also suspend admin and research
-    RED = 3              # Also suspend core education
-    BLACK = 4            # Essential services only (patient safety + ACGME minimum)
-    CRITICAL = 5         # Patient safety only
+
+    NORMAL = 0  # No shedding - all activities
+    YELLOW = 1  # Suspend optional education
+    ORANGE = 2  # Also suspend admin and research
+    RED = 3  # Also suspend core education
+    BLACK = 4  # Essential services only (patient safety + ACGME minimum)
+    CRITICAL = 5  # Patient safety only
 
 
 @dataclass
 class Activity:
     """An activity that can be scheduled."""
+
     id: UUID
     name: str
     category: ActivityCategory
@@ -74,6 +77,7 @@ class Activity:
 @dataclass
 class SacrificeDecision:
     """Record of a sacrifice decision for audit trail."""
+
     timestamp: datetime
     level: LoadSheddingLevel
     activities_suspended: list[str]
@@ -87,6 +91,7 @@ class SacrificeDecision:
 @dataclass
 class LoadSheddingStatus:
     """Current load shedding status."""
+
     level: LoadSheddingLevel
     level_name: str
     active_since: datetime | None
@@ -130,7 +135,9 @@ class SacrificeHierarchy:
         """Register an activity for load shedding consideration."""
         self.activities[activity.id] = activity
 
-    def get_sacrificed_categories(self, level: LoadSheddingLevel) -> list[ActivityCategory]:
+    def get_sacrificed_categories(
+        self, level: LoadSheddingLevel
+    ) -> list[ActivityCategory]:
         """Get categories that are sacrificed at a given level."""
         if level == LoadSheddingLevel.NORMAL:
             return []
@@ -168,7 +175,9 @@ class SacrificeHierarchy:
             ]
         return []
 
-    def get_protected_categories(self, level: LoadSheddingLevel) -> list[ActivityCategory]:
+    def get_protected_categories(
+        self, level: LoadSheddingLevel
+    ) -> list[ActivityCategory]:
         """Get categories that are protected at a given level."""
         sacrificed = set(self.get_sacrificed_categories(level))
         all_categories = set(ActivityCategory)
@@ -277,7 +286,9 @@ class SacrificeHierarchy:
         if sacrificed:
             decision = SacrificeDecision(
                 timestamp=datetime.now(),
-                level=self.calculate_required_level(available_capacity, sum(a.faculty_hours for a in current_demand)),
+                level=self.calculate_required_level(
+                    available_capacity, sum(a.faculty_hours for a in current_demand)
+                ),
                 activities_suspended=[a.name for a in sacrificed],
                 reason=reason,
                 coverage_before=sum(a.faculty_hours for a in current_demand),
@@ -375,7 +386,9 @@ class SacrificeHierarchy:
                 restored.append(activity.name)
 
         if restored:
-            logger.info(f"Load shedding reduced to {to_level.name}. Restored: {restored}")
+            logger.info(
+                f"Load shedding reduced to {to_level.name}. Restored: {restored}"
+            )
 
     def is_activity_suspended(self, activity_id: UUID) -> bool:
         """Check if an activity is currently suspended."""
@@ -392,7 +405,8 @@ class SacrificeHierarchy:
     def get_active_activities(self) -> list[Activity]:
         """Get list of activities still active."""
         return [
-            a for a in self.activities.values()
+            a
+            for a in self.activities.values()
             if a.id not in self._suspended_activities
         ]
 
@@ -441,13 +455,15 @@ class SacrificeHierarchy:
 
         plan = []
         for activity in sorted_activities:
-            plan.append({
-                "activity": activity.name,
-                "category": activity.category.name,
-                "hours_required": activity.faculty_hours,
-                "can_defer_further": activity.can_be_deferred,
-                "max_deferral_days": activity.deferral_limit_days,
-            })
+            plan.append(
+                {
+                    "activity": activity.name,
+                    "category": activity.category.name,
+                    "hours_required": activity.faculty_hours,
+                    "can_defer_further": activity.can_be_deferred,
+                    "max_deferral_days": activity.deferral_limit_days,
+                }
+            )
 
         return plan
 
@@ -464,10 +480,12 @@ class SacrificeHierarchy:
                 "total_hours": sum(a.faculty_hours for a in activities),
                 "suspended_count": len(suspended),
                 "suspended_hours": sum(a.faculty_hours for a in suspended),
-                "is_protected": category in self.get_protected_categories(self.current_level),
+                "is_protected": category
+                in self.get_protected_categories(self.current_level),
                 "sacrifice_order": (
                     self.SACRIFICE_ORDER.index(category)
-                    if category in self.SACRIFICE_ORDER else -1
+                    if category in self.SACRIFICE_ORDER
+                    else -1
                 ),
             }
 

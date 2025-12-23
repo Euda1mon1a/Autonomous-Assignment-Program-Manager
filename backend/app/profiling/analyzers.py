@@ -7,7 +7,7 @@ Provides tools to analyze profiling data and identify performance issues.
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from app.profiling.collectors import RequestMetrics, SQLQuery, Trace
 from app.profiling.profiler import ProfileResult
@@ -20,11 +20,11 @@ class Bottleneck:
     bottleneck_type: str  # "cpu", "memory", "sql", "request", "trace"
     severity: str  # "low", "medium", "high", "critical"
     description: str
-    affected_items: List[str]
-    metrics: Dict[str, Any]
-    recommendations: List[str] = field(default_factory=list)
+    affected_items: list[str]
+    metrics: dict[str, Any]
+    recommendations: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "bottleneck_type": self.bottleneck_type,
@@ -46,9 +46,9 @@ class PerformanceInsight:
     priority: int  # 1 (highest) to 5 (lowest)
     impact: str  # "low", "medium", "high"
     effort: str  # "low", "medium", "high"
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "category": self.category,
@@ -87,8 +87,8 @@ class PerformanceAnalyzer:
         self.duration_threshold = duration_threshold_ms
 
     def analyze_profile_results(
-        self, results: List[ProfileResult]
-    ) -> List[PerformanceInsight]:
+        self, results: list[ProfileResult]
+    ) -> list[PerformanceInsight]:
         """
         Analyze profiling results for insights.
 
@@ -190,8 +190,8 @@ class PerformanceAnalyzer:
         return insights
 
     def compare_profiles(
-        self, baseline: List[ProfileResult], current: List[ProfileResult]
-    ) -> Dict[str, Any]:
+        self, baseline: list[ProfileResult], current: list[ProfileResult]
+    ) -> dict[str, Any]:
         """
         Compare two sets of profile results.
 
@@ -225,11 +225,7 @@ class PerformanceAnalyzer:
                 else 0
             ),
             "memory_change_percent": (
-                (
-                    (current_avg_memory - baseline_avg_memory)
-                    / baseline_avg_memory
-                    * 100
-                )
+                ((current_avg_memory - baseline_avg_memory) / baseline_avg_memory * 100)
                 if baseline_avg_memory > 0
                 else 0
             ),
@@ -280,7 +276,7 @@ class BottleneckDetector:
         self.request_slow_threshold = request_slow_threshold_ms
         self.n_plus_one_threshold = n_plus_one_threshold
 
-    def detect_sql_bottlenecks(self, queries: List[SQLQuery]) -> List[Bottleneck]:
+    def detect_sql_bottlenecks(self, queries: list[SQLQuery]) -> list[Bottleneck]:
         """
         Detect SQL-related bottlenecks.
 
@@ -378,8 +374,8 @@ class BottleneckDetector:
         return bottlenecks
 
     def detect_request_bottlenecks(
-        self, requests: List[RequestMetrics]
-    ) -> List[Bottleneck]:
+        self, requests: list[RequestMetrics]
+    ) -> list[Bottleneck]:
         """
         Detect request-related bottlenecks.
 
@@ -408,9 +404,7 @@ class BottleneckDetector:
                     bottleneck_type="request",
                     severity="high" if avg_duration > 3000 else "medium",
                     description=f"Found {len(slow_requests)} slow HTTP requests",
-                    affected_items=[
-                        f"{r.method} {r.path}" for r in slow_requests[:10]
-                    ],
+                    affected_items=[f"{r.method} {r.path}" for r in slow_requests[:10]],
                     metrics={
                         "count": len(slow_requests),
                         "avg_duration_ms": avg_duration,
@@ -426,11 +420,15 @@ class BottleneckDetector:
             )
 
         # Detect high error rates
-        failed_requests = [r for r in requests if r.status_code and r.status_code >= 500]
+        failed_requests = [
+            r for r in requests if r.status_code and r.status_code >= 500
+        ]
 
         if failed_requests:
             error_rate = len(failed_requests) / len(requests) * 100
-            severity = "critical" if error_rate > 5 else "high" if error_rate > 1 else "medium"
+            severity = (
+                "critical" if error_rate > 5 else "high" if error_rate > 1 else "medium"
+            )
 
             bottlenecks.append(
                 Bottleneck(
@@ -456,7 +454,7 @@ class BottleneckDetector:
 
         return bottlenecks
 
-    def detect_trace_bottlenecks(self, traces: List[Trace]) -> List[Bottleneck]:
+    def detect_trace_bottlenecks(self, traces: list[Trace]) -> list[Bottleneck]:
         """
         Detect trace-related bottlenecks.
 
@@ -533,9 +531,7 @@ class QueryAnalyzer:
     Provides detailed analysis of query patterns and performance.
     """
 
-    def analyze_query_patterns(
-        self, queries: List[SQLQuery]
-    ) -> Dict[str, Any]:
+    def analyze_query_patterns(self, queries: list[SQLQuery]) -> dict[str, Any]:
         """
         Analyze query patterns and statistics.
 
@@ -563,9 +559,7 @@ class QueryAnalyzer:
                 {
                     "pattern": pattern[:200],
                     "count": len(pattern_queries),
-                    "avg_duration_ms": (
-                        statistics.mean(durations) if durations else 0
-                    ),
+                    "avg_duration_ms": (statistics.mean(durations) if durations else 0),
                     "max_duration_ms": max(durations) if durations else 0,
                     "total_duration_ms": sum(durations) if durations else 0,
                 }

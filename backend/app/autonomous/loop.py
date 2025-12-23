@@ -15,26 +15,27 @@ Loop outline:
 No LLM required to get this working.
 """
 
-from dataclasses import dataclass, field
+import logging
+import time
+from dataclasses import dataclass
 from datetime import date, datetime
 from enum import Enum
-from typing import Any, Callable
-import time
-import logging
 
 from sqlalchemy.orm import Session
 
-from app.resilience.service import ResilienceConfig
-
-from app.autonomous.evaluator import ScheduleEvaluator, EvaluationResult
-from app.autonomous.generator import CandidateGenerator, GeneratorConfig, ScheduleCandidate
+from app.autonomous.evaluator import EvaluationResult, ScheduleEvaluator
+from app.autonomous.generator import (
+    CandidateGenerator,
+    GeneratorConfig,
+    ScheduleCandidate,
+)
 from app.autonomous.state import (
-    StateStore,
-    RunState,
     GeneratorParams,
     IterationRecord,
+    RunState,
+    StateStore,
 )
-
+from app.resilience.service import ResilienceConfig
 
 logger = logging.getLogger(__name__)
 
@@ -207,7 +208,9 @@ class AutonomousLoop:
             state = store.load_run(resume_run_id)
             if state is None:
                 raise ValueError(f"Run {resume_run_id} not found")
-            logger.info(f"Resuming run {resume_run_id} at iteration {state.current_iteration}")
+            logger.info(
+                f"Resuming run {resume_run_id} at iteration {state.current_iteration}"
+            )
         else:
             state = store.create_run(
                 scenario=scenario,
@@ -235,6 +238,7 @@ class AutonomousLoop:
 
         # Create adapter (lazy import to avoid circular dependency)
         from app.autonomous.adapter import ParameterAdapter
+
         adapter = ParameterAdapter()
 
         return cls(
@@ -260,7 +264,9 @@ class AutonomousLoop:
             LoopResult with final state and best candidate
         """
         self._start_time = time.time()
-        self.store.log(self.state, f"Starting loop run, target score: {self.config.target_score}")
+        self.store.log(
+            self.state, f"Starting loop run, target score: {self.config.target_score}"
+        )
 
         stop_reason = StopReason.RUNNING
 
@@ -288,7 +294,9 @@ class AutonomousLoop:
             stop_reason = StopReason.ERROR
 
         # Final save
-        self.state.status = "completed" if stop_reason == StopReason.TARGET_REACHED else "exhausted"
+        self.state.status = (
+            "completed" if stop_reason == StopReason.TARGET_REACHED else "exhausted"
+        )
         self.store.save_state(self.state)
 
         if self._best_candidate:
@@ -303,7 +311,7 @@ class AutonomousLoop:
         self.store.log(
             self.state,
             f"Loop completed: {stop_reason.value}, score={self.state.best_score:.4f}, "
-            f"iterations={self.state.current_iteration}, time={total_time:.1f}s"
+            f"iterations={self.state.current_iteration}, time={total_time:.1f}s",
         )
 
         return LoopResult(
@@ -340,7 +348,9 @@ class AutonomousLoop:
         )
 
         if not candidates:
-            logger.warning(f"Iteration {self.state.current_iteration + 1}: No candidates generated")
+            logger.warning(
+                f"Iteration {self.state.current_iteration + 1}: No candidates generated"
+            )
             self.state.current_iteration += 1
             return
 
@@ -355,7 +365,9 @@ class AutonomousLoop:
             )
 
             # Track best this iteration
-            if best_this_iteration is None or evaluation.is_better_than(best_this_iteration[1]):
+            if best_this_iteration is None or evaluation.is_better_than(
+                best_this_iteration[1]
+            ):
                 best_this_iteration = (candidate, evaluation)
 
         if best_this_iteration is None:
@@ -368,7 +380,9 @@ class AutonomousLoop:
         self.state.update_with_result(evaluation, params)
 
         # 5. Update global best if improved
-        if self._best_evaluation is None or evaluation.is_better_than(self._best_evaluation):
+        if self._best_evaluation is None or evaluation.is_better_than(
+            self._best_evaluation
+        ):
             self._best_candidate = candidate
             self._best_evaluation = evaluation
             logger.info(
@@ -450,7 +464,7 @@ class AutonomousLoop:
 
         self.store.log(
             self.state,
-            f"Progress: iter={self.state.current_iteration}, best={self.state.best_score:.4f}"
+            f"Progress: iter={self.state.current_iteration}, best={self.state.best_score:.4f}",
         )
 
     def abort(self) -> None:
@@ -485,7 +499,9 @@ class AutonomousLoopWithAdvisor(AutonomousLoop):
                     last_evaluation=self._best_evaluation,
                     history=self.store.load_history(self.state.run_id)[-5:],
                 )
-                if llm_suggestion and not self.advisor.validate_suggestion(llm_suggestion):
+                if llm_suggestion and not self.advisor.validate_suggestion(
+                    llm_suggestion
+                ):
                     logger.warning("LLM suggestion rejected by validator")
                     llm_suggestion = None
             except Exception as e:
@@ -502,6 +518,5 @@ class AutonomousLoopWithAdvisor(AutonomousLoop):
         # Log LLM usage if any
         if llm_suggestion:
             self.store.log(
-                self.state,
-                f"LLM suggestion applied: {llm_suggestion.type.value}"
+                self.state, f"LLM suggestion applied: {llm_suggestion.type.value}"
             )

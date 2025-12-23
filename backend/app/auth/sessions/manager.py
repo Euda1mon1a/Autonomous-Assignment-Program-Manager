@@ -9,6 +9,7 @@ Provides high-level session management operations:
 - Force logout
 - Activity logging
 """
+
 import logging
 import secrets
 from datetime import datetime, timedelta
@@ -22,7 +23,6 @@ from app.auth.sessions.models import (
     DeviceType,
     SessionActivity,
     SessionActivityType,
-    SessionCreate,
     SessionData,
     SessionListResponse,
     SessionResponse,
@@ -203,7 +203,9 @@ class SessionManager:
 
         # Check concurrent session limit
         existing_sessions = await self.storage.get_user_sessions(user_id_str)
-        active_sessions = [s for s in existing_sessions if s.status == SessionStatus.ACTIVE]
+        active_sessions = [
+            s for s in existing_sessions if s.status == SessionStatus.ACTIVE
+        ]
 
         if len(active_sessions) >= self.max_sessions_per_user:
             # Remove oldest session to make room

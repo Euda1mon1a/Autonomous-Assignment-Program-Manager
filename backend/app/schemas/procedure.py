@@ -1,4 +1,5 @@
 """Procedure schemas."""
+
 from datetime import datetime
 from uuid import UUID
 
@@ -7,20 +8,21 @@ from pydantic import BaseModel, field_validator
 
 class ProcedureBase(BaseModel):
     """Base procedure schema."""
+
     name: str
     description: str | None = None
     category: str | None = None  # 'surgical', 'office', 'obstetric', 'clinic'
     specialty: str | None = None  # 'Sports Medicine', 'OB/GYN', etc.
     supervision_ratio: int = 1
     requires_certification: bool = True
-    complexity_level: str = 'standard'
+    complexity_level: str = "standard"
     min_pgy_level: int = 1
     is_active: bool = True
 
     @field_validator("complexity_level")
     @classmethod
     def validate_complexity(cls, v: str) -> str:
-        valid_levels = ('basic', 'standard', 'advanced', 'complex')
+        valid_levels = ("basic", "standard", "advanced", "complex")
         if v not in valid_levels:
             raise ValueError(f"complexity_level must be one of {valid_levels}")
         return v
@@ -42,11 +44,13 @@ class ProcedureBase(BaseModel):
 
 class ProcedureCreate(ProcedureBase):
     """Schema for creating a procedure."""
+
     pass
 
 
 class ProcedureUpdate(BaseModel):
     """Schema for updating a procedure."""
+
     name: str | None = None
     description: str | None = None
     category: str | None = None
@@ -62,7 +66,7 @@ class ProcedureUpdate(BaseModel):
     def validate_complexity(cls, v: str | None) -> str | None:
         if v is None:
             return v
-        valid_levels = ('basic', 'standard', 'advanced', 'complex')
+        valid_levels = ("basic", "standard", "advanced", "complex")
         if v not in valid_levels:
             raise ValueError(f"complexity_level must be one of {valid_levels}")
         return v
@@ -79,6 +83,7 @@ class ProcedureUpdate(BaseModel):
 
 class ProcedureResponse(ProcedureBase):
     """Schema for procedure response."""
+
     id: UUID
     created_at: datetime
     updated_at: datetime
@@ -89,12 +94,14 @@ class ProcedureResponse(ProcedureBase):
 
 class ProcedureListResponse(BaseModel):
     """Schema for list of procedures."""
+
     items: list[ProcedureResponse]
     total: int
 
 
 class ProcedureSummary(BaseModel):
     """Minimal procedure info for embedding in other responses."""
+
     id: UUID
     name: str
     specialty: str | None = None

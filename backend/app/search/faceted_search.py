@@ -30,20 +30,18 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from enum import Enum
 from typing import Any
-from uuid import UUID
 
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.core.cache import CachePrefix, CacheTTL, get_service_cache
-from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.person import Person
 from app.models.procedure import Procedure
 from app.models.rotation_template import RotationTemplate
 from app.models.swap import SwapRecord
-from app.schemas.search import SearchRequest, SearchResponse, SearchResultItem
+from app.schemas.search import SearchResultItem
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +54,8 @@ class FacetType(str, Enum):
     aggregated, and presented to users.
     """
 
-    TERM = "term"              # Discrete values (e.g., person type, status)
-    RANGE = "range"            # Numeric ranges (e.g., age, count)
+    TERM = "term"  # Discrete values (e.g., person type, status)
+    RANGE = "range"  # Numeric ranges (e.g., age, count)
     DATE_RANGE = "date_range"  # Date ranges (e.g., this week, this month)
     HIERARCHICAL = "hierarchical"  # Nested categories (e.g., specialty > subspecialty)
 
@@ -69,11 +67,11 @@ class FacetOrder(str, Enum):
     Determines how facet values are sorted in the UI.
     """
 
-    COUNT_DESC = "count_desc"    # By count, descending (most popular first)
-    COUNT_ASC = "count_asc"      # By count, ascending
-    VALUE_ASC = "value_asc"      # Alphabetically by value
-    VALUE_DESC = "value_desc"    # Reverse alphabetically
-    CUSTOM = "custom"            # Custom ordering defined by application
+    COUNT_DESC = "count_desc"  # By count, descending (most popular first)
+    COUNT_ASC = "count_asc"  # By count, ascending
+    VALUE_ASC = "value_asc"  # Alphabetically by value
+    VALUE_DESC = "value_desc"  # Reverse alphabetically
+    CUSTOM = "custom"  # Custom ordering defined by application
 
 
 class DateRangePeriod(str, Enum):
@@ -107,9 +105,15 @@ class FacetValue(BaseModel):
     key: str = Field(..., description="Facet key (for filtering)")
     count: int = Field(..., description="Number of results with this value")
     selected: bool = Field(default=False, description="Whether this facet is selected")
-    parent: str | None = Field(default=None, description="Parent key for hierarchical facets")
-    children: list["FacetValue"] = Field(default_factory=list, description="Child facets")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    parent: str | None = Field(
+        default=None, description="Parent key for hierarchical facets"
+    )
+    children: list["FacetValue"] = Field(
+        default_factory=list, description="Child facets"
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
 
 class RangeFacetValue(BaseModel):
@@ -121,8 +125,12 @@ class RangeFacetValue(BaseModel):
     """
 
     label: str = Field(..., description="Human-readable label")
-    min_value: float | None = Field(default=None, description="Minimum value (inclusive)")
-    max_value: float | None = Field(default=None, description="Maximum value (exclusive)")
+    min_value: float | None = Field(
+        default=None, description="Minimum value (inclusive)"
+    )
+    max_value: float | None = Field(
+        default=None, description="Maximum value (exclusive)"
+    )
     count: int = Field(..., description="Number of results in this range")
     selected: bool = Field(default=False, description="Whether this range is selected")
 
@@ -155,16 +163,18 @@ class Facet(BaseModel):
     type: FacetType = Field(..., description="Facet type")
     values: list[FacetValue] = Field(default_factory=list, description="Facet values")
     range_values: list[RangeFacetValue] = Field(
-        default_factory=list,
-        description="Range values (for range facets)"
+        default_factory=list, description="Range values (for range facets)"
     )
     date_range_values: list[DateRangeFacetValue] = Field(
-        default_factory=list,
-        description="Date range values (for date facets)"
+        default_factory=list, description="Date range values (for date facets)"
     )
     total_count: int = Field(default=0, description="Total results across all values")
-    order: FacetOrder = Field(default=FacetOrder.COUNT_DESC, description="Ordering strategy")
-    multi_select: bool = Field(default=True, description="Allow multiple value selection")
+    order: FacetOrder = Field(
+        default=FacetOrder.COUNT_DESC, description="Ordering strategy"
+    )
+    multi_select: bool = Field(
+        default=True, description="Allow multiple value selection"
+    )
 
     class Config:
         use_enum_values = True
@@ -185,20 +195,25 @@ class FacetConfig(BaseModel):
             "faculty_role",
             "rotation_type",
             "status",
-            "date_range"
+            "date_range",
         ],
-        description="List of facet names to enable"
+        description="List of facet names to enable",
     )
     max_facet_values: int = Field(default=10, description="Maximum values per facet")
-    min_facet_count: int = Field(default=1, description="Minimum count to show facet value")
-    enable_hierarchical: bool = Field(default=True, description="Enable hierarchical facets")
+    min_facet_count: int = Field(
+        default=1, description="Minimum count to show facet value"
+    )
+    enable_hierarchical: bool = Field(
+        default=True, description="Enable hierarchical facets"
+    )
     enable_range_facets: bool = Field(default=True, description="Enable range facets")
-    enable_date_facets: bool = Field(default=True, description="Enable date range facets")
+    enable_date_facets: bool = Field(
+        default=True, description="Enable date range facets"
+    )
     cache_facets: bool = Field(default=True, description="Enable facet caching")
     cache_ttl: int = Field(default=CacheTTL.MEDIUM, description="Cache TTL in seconds")
     dynamic_ordering: bool = Field(
-        default=True,
-        description="Dynamically order facets by popularity"
+        default=True, description="Dynamically order facets by popularity"
     )
 
 
@@ -231,16 +246,13 @@ class FacetAnalytics(BaseModel):
     total_selections: int = Field(default=0, description="Total times selected")
     unique_users: set[str] = Field(default_factory=set, description="Unique user IDs")
     avg_result_reduction: float = Field(
-        default=0.0,
-        description="Average % reduction in results when applied"
+        default=0.0, description="Average % reduction in results when applied"
     )
     popular_combinations: dict[str, int] = Field(
-        default_factory=dict,
-        description="Popular facet combinations"
+        default_factory=dict, description="Popular facet combinations"
     )
     last_updated: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Last analytics update"
+        default_factory=datetime.utcnow, description="Last analytics update"
     )
 
 
@@ -259,8 +271,7 @@ class FacetedSearchResponse(BaseModel):
     total_pages: int = Field(..., description="Total number of pages")
     facets: list[Facet] = Field(default_factory=list, description="Available facets")
     applied_facets: list[FacetSelection] = Field(
-        default_factory=list,
-        description="Currently applied facets"
+        default_factory=list, description="Currently applied facets"
     )
     query: str = Field(..., description="Original query string")
     execution_time_ms: float = Field(default=0.0, description="Search execution time")
@@ -495,7 +506,11 @@ class FacetedSearchService:
                         query_obj = query_obj.filter(Person.type == value)
 
             elif selection.facet_name == "pgy_level" and selection.values:
-                pgy_levels = [int(v.replace("PGY-", "")) for v in selection.values if v.startswith("PGY-")]
+                pgy_levels = [
+                    int(v.replace("PGY-", ""))
+                    for v in selection.values
+                    if v.startswith("PGY-")
+                ]
                 if pgy_levels:
                     query_obj = query_obj.filter(Person.pgy_level.in_(pgy_levels))
 
@@ -506,22 +521,24 @@ class FacetedSearchService:
 
         results = []
         for person in persons:
-            results.append(SearchResultItem(
-                id=str(person.id),
-                type="person",
-                title=person.name,
-                subtitle=person.type.title(),
-                score=1.0,
-                highlights={},
-                entity={
-                    "id": str(person.id),
-                    "name": person.name,
-                    "email": person.email,
-                    "type": person.type,
-                    "pgy_level": person.pgy_level,
-                    "faculty_role": person.faculty_role,
-                }
-            ))
+            results.append(
+                SearchResultItem(
+                    id=str(person.id),
+                    type="person",
+                    title=person.name,
+                    subtitle=person.type.title(),
+                    score=1.0,
+                    highlights={},
+                    entity={
+                        "id": str(person.id),
+                        "name": person.name,
+                        "email": person.email,
+                        "type": person.type,
+                        "pgy_level": person.pgy_level,
+                        "faculty_role": person.faculty_role,
+                    },
+                )
+            )
 
         return results
 
@@ -562,19 +579,21 @@ class FacetedSearchService:
 
         results = []
         for rotation in rotations:
-            results.append(SearchResultItem(
-                id=str(rotation.id),
-                type="rotation",
-                title=rotation.name,
-                subtitle=rotation.activity_type.title(),
-                score=1.0,
-                highlights={},
-                entity={
-                    "id": str(rotation.id),
-                    "name": rotation.name,
-                    "activity_type": rotation.activity_type,
-                }
-            ))
+            results.append(
+                SearchResultItem(
+                    id=str(rotation.id),
+                    type="rotation",
+                    title=rotation.name,
+                    subtitle=rotation.activity_type.title(),
+                    score=1.0,
+                    highlights={},
+                    entity={
+                        "id": str(rotation.id),
+                        "name": rotation.name,
+                        "activity_type": rotation.activity_type,
+                    },
+                )
+            )
 
         return results
 
@@ -613,19 +632,21 @@ class FacetedSearchService:
 
         results = []
         for procedure in procedures:
-            results.append(SearchResultItem(
-                id=str(procedure.id),
-                type="procedure",
-                title=procedure.name,
-                subtitle=procedure.category or "Procedure",
-                score=1.0,
-                highlights={},
-                entity={
-                    "id": str(procedure.id),
-                    "name": procedure.name,
-                    "category": procedure.category,
-                }
-            ))
+            results.append(
+                SearchResultItem(
+                    id=str(procedure.id),
+                    type="procedure",
+                    title=procedure.name,
+                    subtitle=procedure.category or "Procedure",
+                    score=1.0,
+                    highlights={},
+                    entity={
+                        "id": str(procedure.id),
+                        "name": procedure.name,
+                        "category": procedure.category,
+                    },
+                )
+            )
 
         return results
 
@@ -670,18 +691,20 @@ class FacetedSearchService:
 
         results = []
         for assignment in assignments:
-            results.append(SearchResultItem(
-                id=str(assignment.id),
-                type="assignment",
-                title=f"Assignment - {assignment.role}",
-                subtitle=assignment.role.title(),
-                score=1.0,
-                highlights={},
-                entity={
-                    "id": str(assignment.id),
-                    "role": assignment.role,
-                }
-            ))
+            results.append(
+                SearchResultItem(
+                    id=str(assignment.id),
+                    type="assignment",
+                    title=f"Assignment - {assignment.role}",
+                    subtitle=assignment.role.title(),
+                    score=1.0,
+                    highlights={},
+                    entity={
+                        "id": str(assignment.id),
+                        "role": assignment.role,
+                    },
+                )
+            )
 
         return results
 
@@ -720,19 +743,21 @@ class FacetedSearchService:
 
         results = []
         for swap in swaps:
-            results.append(SearchResultItem(
-                id=str(swap.id),
-                type="swap",
-                title=f"Swap - {swap.status}",
-                subtitle=swap.swap_type or "Swap",
-                score=1.0,
-                highlights={},
-                entity={
-                    "id": str(swap.id),
-                    "status": swap.status,
-                    "swap_type": swap.swap_type,
-                }
-            ))
+            results.append(
+                SearchResultItem(
+                    id=str(swap.id),
+                    type="swap",
+                    title=f"Swap - {swap.status}",
+                    subtitle=swap.swap_type or "Swap",
+                    score=1.0,
+                    highlights={},
+                    entity={
+                        "id": str(swap.id),
+                        "status": swap.status,
+                        "swap_type": swap.swap_type,
+                    },
+                )
+            )
 
         return results
 
@@ -794,7 +819,10 @@ class FacetedSearchService:
                 facets.append(status_facet)
 
         # Generate date range facets
-        if facet_config.enable_date_facets and "date_range" in facet_config.enabled_facets:
+        if (
+            facet_config.enable_date_facets
+            and "date_range" in facet_config.enabled_facets
+        ):
             date_facet = self._generate_date_range_facet(
                 results, facet_config, facet_selections
             )
@@ -802,7 +830,10 @@ class FacetedSearchService:
                 facets.append(date_facet)
 
         # Generate hierarchical facets
-        if facet_config.enable_hierarchical and "specialty" in facet_config.enabled_facets:
+        if (
+            facet_config.enable_hierarchical
+            and "specialty" in facet_config.enabled_facets
+        ):
             specialty_facet = self._generate_specialty_hierarchical_facet(
                 results, facet_config, facet_selections
             )
@@ -865,7 +896,7 @@ class FacetedSearchService:
         facet_values.sort(key=lambda x: x.count, reverse=True)
 
         # Limit values
-        facet_values = facet_values[:config.max_facet_values]
+        facet_values = facet_values[: config.max_facet_values]
 
         return Facet(
             name="person_type",
@@ -995,7 +1026,7 @@ class FacetedSearchService:
 
         # Sort by count descending
         facet_values.sort(key=lambda x: x.count, reverse=True)
-        facet_values = facet_values[:config.max_facet_values]
+        facet_values = facet_values[: config.max_facet_values]
 
         return Facet(
             name="faculty_role",
@@ -1055,7 +1086,7 @@ class FacetedSearchService:
 
         # Sort by count descending
         facet_values.sort(key=lambda x: x.count, reverse=True)
-        facet_values = facet_values[:config.max_facet_values]
+        facet_values = facet_values[: config.max_facet_values]
 
         return Facet(
             name="rotation_type",
@@ -1115,7 +1146,7 @@ class FacetedSearchService:
 
         # Sort by count descending
         facet_values.sort(key=lambda x: x.count, reverse=True)
-        facet_values = facet_values[:config.max_facet_values]
+        facet_values = facet_values[: config.max_facet_values]
 
         return Facet(
             name="status",
@@ -1166,7 +1197,8 @@ class FacetedSearchService:
                 label="This Month",
                 period=DateRangePeriod.THIS_MONTH,
                 start_date=today.replace(day=1),
-                end_date=(today.replace(day=1) + timedelta(days=32)).replace(day=1) - timedelta(days=1),
+                end_date=(today.replace(day=1) + timedelta(days=32)).replace(day=1)
+                - timedelta(days=1),
                 count=0,
             ),
             DateRangeFacetValue(
@@ -1279,7 +1311,7 @@ class FacetedSearchService:
             name="specialty",
             label="Specialty",
             type=FacetType.HIERARCHICAL,
-            values=facet_values[:config.max_facet_values],
+            values=facet_values[: config.max_facet_values],
             total_count=sum(v.count for v in facet_values),
             order=FacetOrder.COUNT_DESC,
             multi_select=True,
@@ -1295,6 +1327,7 @@ class FacetedSearchService:
         Returns:
             Reordered facets
         """
+
         # Sort by analytics data (if available)
         def get_popularity_score(facet: Facet) -> float:
             analytics = self._facet_analytics.get(facet.name)

@@ -4,8 +4,9 @@ Main documentation generator.
 Orchestrates the generation of comprehensive API documentation including
 enhanced OpenAPI schemas, Markdown documentation, and code examples.
 """
+
 import json
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import FastAPI
 
@@ -55,13 +56,10 @@ class DocumentationGenerator:
                 "constraints": {
                     "enforce_acgme": True,
                     "max_consecutive_days": 6,
-                    "min_faculty_per_block": 2
+                    "min_faculty_per_block": 2,
                 },
-                "preferences": {
-                    "balance_workload": True,
-                    "respect_time_off": True
-                }
-            }
+                "preferences": {"balance_workload": True, "respect_time_off": True},
+            },
         )
 
         # Schedule generation response
@@ -78,8 +76,8 @@ class DocumentationGenerator:
                 "acgme_compliant": True,
                 "conflicts": [],
                 "warnings": [],
-                "generated_at": "2025-12-20T10:00:00Z"
-            }
+                "generated_at": "2025-12-20T10:00:00Z",
+            },
         )
 
     def _add_assignment_examples(self) -> None:
@@ -93,8 +91,8 @@ class DocumentationGenerator:
                 "person_id": "550e8400-e29b-41d4-a716-446655440000",
                 "block_id": "550e8400-e29b-41d4-a716-446655440002",
                 "rotation_template_id": "550e8400-e29b-41d4-a716-446655440003",
-                "notes": "Primary assignment for clinic rotation"
-            }
+                "notes": "Primary assignment for clinic rotation",
+            },
         )
 
         self.enhancer.add_example(
@@ -108,8 +106,8 @@ class DocumentationGenerator:
                 "rotation_template_id": "550e8400-e29b-41d4-a716-446655440003",
                 "notes": "Primary assignment for clinic rotation",
                 "created_at": "2025-12-20T10:00:00Z",
-                "updated_at": "2025-12-20T10:00:00Z"
-            }
+                "updated_at": "2025-12-20T10:00:00Z",
+            },
         )
 
     def _add_swap_examples(self) -> None:
@@ -124,8 +122,8 @@ class DocumentationGenerator:
                 "target_assignment_id": "550e8400-e29b-41d4-a716-446655440006",
                 "swap_type": "ONE_TO_ONE",
                 "reason": "Personal commitment on original date",
-                "notes": "Willing to take any equivalent shift in exchange"
-            }
+                "notes": "Willing to take any equivalent shift in exchange",
+            },
         )
 
         self.enhancer.add_example(
@@ -141,8 +139,8 @@ class DocumentationGenerator:
                 "reason": "Personal commitment on original date",
                 "notes": "Willing to take any equivalent shift in exchange",
                 "created_at": "2025-12-20T10:00:00Z",
-                "expires_at": "2025-12-27T10:00:00Z"
-            }
+                "expires_at": "2025-12-27T10:00:00Z",
+            },
         )
 
     def _add_leave_examples(self) -> None:
@@ -158,8 +156,8 @@ class DocumentationGenerator:
                 "start_date": "2025-03-15",
                 "end_date": "2025-03-22",
                 "reason": "Family vacation",
-                "emergency": False
-            }
+                "emergency": False,
+            },
         )
 
         self.enhancer.add_example(
@@ -176,11 +174,11 @@ class DocumentationGenerator:
                 "emergency": False,
                 "status": "PENDING",
                 "created_at": "2025-12-20T10:00:00Z",
-                "coverage_assignments": []
-            }
+                "coverage_assignments": [],
+            },
         )
 
-    def get_enhanced_openapi_schema(self) -> Dict[str, Any]:
+    def get_enhanced_openapi_schema(self) -> dict[str, Any]:
         """
         Get enhanced OpenAPI schema with examples and metadata.
 
@@ -201,10 +199,7 @@ class DocumentationGenerator:
         return generator.generate_full_documentation()
 
     def get_endpoint_documentation(
-        self,
-        path: str,
-        method: str,
-        format: str = "markdown"
+        self, path: str, method: str, format: str = "markdown"
     ) -> str:
         """
         Get documentation for a specific endpoint.
@@ -230,11 +225,8 @@ class DocumentationGenerator:
             return generator.generate_endpoint_specific_doc(path, method)
 
     def get_code_examples(
-        self,
-        path: str,
-        method: str,
-        language: Optional[str] = None
-    ) -> Dict[str, str]:
+        self, path: str, method: str, language: str | None = None
+    ) -> dict[str, str]:
         """
         Get code examples for an endpoint.
 
@@ -253,7 +245,7 @@ class DocumentationGenerator:
 
         return examples
 
-    def get_error_documentation(self) -> Dict[str, Any]:
+    def get_error_documentation(self) -> dict[str, Any]:
         """
         Get comprehensive error code documentation.
 
@@ -274,7 +266,7 @@ class DocumentationGenerator:
         generator = MarkdownGenerator(schema)
         return generator._generate_changelog()
 
-    def get_version_info(self) -> Dict[str, Any]:
+    def get_version_info(self) -> dict[str, Any]:
         """
         Get API versioning information.
 
@@ -292,7 +284,7 @@ class DocumentationGenerator:
             filepath: Path to output file
         """
         schema = self.get_enhanced_openapi_schema()
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(schema, f, indent=2)
 
     def export_markdown_docs(self, filepath: str) -> None:
@@ -303,10 +295,10 @@ class DocumentationGenerator:
             filepath: Path to output file
         """
         docs = self.get_markdown_documentation()
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             f.write(docs)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Get documentation statistics.
 
@@ -337,5 +329,7 @@ class DocumentationGenerator:
             "total_tags": len(tags),
             "schemas": len(schema.get("components", {}).get("schemas", {})),
             "error_codes": len(schema.get("components", {}).get("x-error-codes", {})),
-            "security_schemes": len(schema.get("components", {}).get("securitySchemes", {})),
+            "security_schemes": len(
+                schema.get("components", {}).get("securitySchemes", {})
+            ),
         }

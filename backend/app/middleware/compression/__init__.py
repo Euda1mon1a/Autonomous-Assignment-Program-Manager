@@ -29,11 +29,12 @@ Usage:
     from app.middleware.compression import PRODUCTION_CONFIG
     app.add_middleware(CompressionMiddleware, config=PRODUCTION_CONFIG)
 """
+
 from app.middleware.compression.config import (
-    CompressionConfig,
     DEFAULT_CONFIG,
     DEVELOPMENT_CONFIG,
     PRODUCTION_CONFIG,
+    CompressionConfig,
     get_compression_config,
     is_compressible_content_type,
     should_exclude_path,

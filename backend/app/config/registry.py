@@ -6,9 +6,10 @@ and rollback capabilities.
 
 import asyncio
 import logging
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from app.config.loader import ConfigLoader, ConfigLoadError
 from app.config.validator import ConfigValidationError, ConfigValidator
@@ -25,7 +26,7 @@ class ConfigChangeEvent:
         self,
         old_config: Settings,
         new_config: Settings,
-        changed_fields: List[str],
+        changed_fields: list[str],
         source: str = "unknown",
     ):
         """
@@ -64,9 +65,9 @@ class ConfigRegistry:
 
     def __init__(
         self,
-        loader: Optional[ConfigLoader] = None,
-        validator: Optional[ConfigValidator] = None,
-        watcher: Optional[ConfigWatcher] = None,
+        loader: ConfigLoader | None = None,
+        validator: ConfigValidator | None = None,
+        watcher: ConfigWatcher | None = None,
         enable_auto_reload: bool = True,
     ):
         """
@@ -84,14 +85,14 @@ class ConfigRegistry:
         self.enable_auto_reload = enable_auto_reload
 
         # Current configuration
-        self._current_config: Optional[Settings] = None
+        self._current_config: Settings | None = None
 
         # Configuration history for rollback
-        self._config_history: List[Settings] = []
+        self._config_history: list[Settings] = []
         self._max_history = 10
 
         # Change notification callbacks
-        self._change_callbacks: List[Callable[[ConfigChangeEvent], None]] = []
+        self._change_callbacks: list[Callable[[ConfigChangeEvent], None]] = []
 
         # Lock for thread-safe operations
         self._lock = asyncio.Lock()
@@ -196,7 +197,7 @@ class ConfigRegistry:
 
     async def update(
         self,
-        updates: Dict[str, Any],
+        updates: dict[str, Any],
         validate: bool = True,
         source: str = "api",
     ) -> Settings:
@@ -261,7 +262,7 @@ class ConfigRegistry:
     def _update_config(
         self,
         new_config: Settings,
-        old_config: Optional[Settings],
+        old_config: Settings | None,
         source: str = "unknown",
     ) -> None:
         """
@@ -296,9 +297,9 @@ class ConfigRegistry:
 
     def _detect_changes(
         self,
-        old_config: Optional[Settings],
+        old_config: Settings | None,
         new_config: Settings,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Detect which fields changed between configurations.
 
@@ -329,7 +330,9 @@ class ConfigRegistry:
         Args:
             event: Configuration change event
         """
-        logger.info(f"Notifying {len(self._change_callbacks)} listeners of config change")
+        logger.info(
+            f"Notifying {len(self._change_callbacks)} listeners of config change"
+        )
 
         for callback in self._change_callbacks:
             try:
@@ -374,7 +377,7 @@ class ConfigRegistry:
         except Exception as e:
             logger.error(f"Auto-reload failed: {e}", exc_info=True)
 
-    async def rollback(self, steps: int = 1) -> Optional[Settings]:
+    async def rollback(self, steps: int = 1) -> Settings | None:
         """
         Rollback configuration to a previous version.
 
@@ -438,7 +441,7 @@ class ConfigRegistry:
             self._change_callbacks.remove(callback)
             logger.info(f"Unregistered config change callback: {callback.__name__}")
 
-    def get_current_config(self) -> Optional[Settings]:
+    def get_current_config(self) -> Settings | None:
         """
         Get current configuration.
 
@@ -447,7 +450,7 @@ class ConfigRegistry:
         """
         return self._current_config
 
-    def get_config_history(self) -> List[Settings]:
+    def get_config_history(self) -> list[Settings]:
         """
         Get configuration history.
 

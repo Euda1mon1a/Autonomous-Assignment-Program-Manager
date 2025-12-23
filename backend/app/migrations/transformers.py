@@ -19,8 +19,9 @@ Example:
 
 import logging
 import re
-from datetime import datetime, date
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from datetime import date, datetime
+from typing import Any
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class TransformationError(Exception):
     """Raised when a transformation fails."""
+
     pass
 
 
@@ -42,7 +44,9 @@ class TransformationPipeline:
         """Initialize empty pipeline."""
         self.steps: list[Callable[[Any], dict[str, Any]]] = []
 
-    def add_step(self, transform_func: Callable[[Any], dict[str, Any]]) -> "TransformationPipeline":
+    def add_step(
+        self, transform_func: Callable[[Any], dict[str, Any]]
+    ) -> "TransformationPipeline":
         """
         Add a transformation step to the pipeline.
 
@@ -103,11 +107,11 @@ class DataTransformer:
         Returns:
             Dict with normalized email
         """
-        if not hasattr(record, 'email') or not record.email:
+        if not hasattr(record, "email") or not record.email:
             return {}
 
         normalized = record.email.strip().lower()
-        return {'email': normalized}
+        return {"email": normalized}
 
     @staticmethod
     def capitalize_name(record: Any) -> dict[str, Any]:
@@ -120,17 +124,17 @@ class DataTransformer:
         Returns:
             Dict with capitalized name
         """
-        if not hasattr(record, 'name') or not record.name:
+        if not hasattr(record, "name") or not record.name:
             return {}
 
         # Handle special cases like "McDonald", "O'Brien"
         name = record.name.strip()
         capitalized = name.title()
 
-        return {'name': capitalized}
+        return {"name": capitalized}
 
     @staticmethod
-    def normalize_phone_number(record: Any, field: str = 'phone') -> dict[str, Any]:
+    def normalize_phone_number(record: Any, field: str = "phone") -> dict[str, Any]:
         """
         Normalize phone number to (XXX) XXX-XXXX format.
 
@@ -149,7 +153,7 @@ class DataTransformer:
             return {}
 
         # Remove all non-digits
-        digits = re.sub(r'\D', '', phone)
+        digits = re.sub(r"\D", "", phone)
 
         # Format if 10 digits
         if len(digits) == 10:
@@ -159,7 +163,7 @@ class DataTransformer:
         return {}
 
     @staticmethod
-    def ensure_uuid(record: Any, field: str = 'id') -> dict[str, Any]:
+    def ensure_uuid(record: Any, field: str = "id") -> dict[str, Any]:
         """
         Ensure field is a valid UUID.
 
@@ -292,9 +296,9 @@ class DataTransformer:
         # String values
         if isinstance(value, str):
             lower = value.lower().strip()
-            if lower in ('true', 'yes', '1', 'y', 't'):
+            if lower in ("true", "yes", "1", "y", "t"):
                 return {field: True}
-            elif lower in ('false', 'no', '0', 'n', 'f'):
+            elif lower in ("false", "no", "0", "n", "f"):
                 return {field: False}
 
         # Numeric values
@@ -304,7 +308,9 @@ class DataTransformer:
         return {}
 
     @staticmethod
-    def map_enum_value(record: Any, field: str, mapping: dict[Any, Any]) -> dict[str, Any]:
+    def map_enum_value(
+        record: Any, field: str, mapping: dict[Any, Any]
+    ) -> dict[str, Any]:
         """
         Map old enum values to new ones.
 
@@ -326,7 +332,7 @@ class DataTransformer:
         value = getattr(record, field)
 
         # Handle enum objects
-        if hasattr(value, 'value'):
+        if hasattr(value, "value"):
             value = value.value
 
         if value in mapping:
@@ -346,10 +352,10 @@ class DataTransformer:
         Returns:
             Dict with audit fields
         """
-        updates = {'updated_at': datetime.utcnow()}
+        updates = {"updated_at": datetime.utcnow()}
 
-        if hasattr(record, 'updated_by'):
-            updates['updated_by'] = user
+        if hasattr(record, "updated_by"):
+            updates["updated_by"] = user
 
         return updates
 
@@ -357,8 +363,8 @@ class DataTransformer:
     def validate_and_fix_range(
         record: Any,
         field: str,
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None
+        min_value: float | None = None,
+        max_value: float | None = None,
     ) -> dict[str, Any]:
         """
         Validate numeric field is within range and fix if needed.
@@ -384,11 +390,15 @@ class DataTransformer:
 
         if min_value is not None and value < min_value:
             clamped = min_value
-            logger.warning(f"Field {field} value {value} below minimum {min_value}, clamping")
+            logger.warning(
+                f"Field {field} value {value} below minimum {min_value}, clamping"
+            )
 
         if max_value is not None and value > max_value:
             clamped = max_value
-            logger.warning(f"Field {field} value {value} above maximum {max_value}, clamping")
+            logger.warning(
+                f"Field {field} value {value} above maximum {max_value}, clamping"
+            )
 
         if clamped != value:
             return {field: clamped}
@@ -397,9 +407,7 @@ class DataTransformer:
 
     @staticmethod
     def conditional_update(
-        record: Any,
-        condition_func: Callable[[Any], bool],
-        updates: dict[str, Any]
+        record: Any, condition_func: Callable[[Any], bool], updates: dict[str, Any]
     ) -> dict[str, Any]:
         """
         Apply updates only if condition is met.
@@ -446,7 +454,9 @@ class DataTransformer:
         return {target: value}
 
     @staticmethod
-    def rename_field_value(record: Any, old_field: str, new_field: str) -> dict[str, Any]:
+    def rename_field_value(
+        record: Any, old_field: str, new_field: str
+    ) -> dict[str, Any]:
         """
         Move value from old field to new field.
 
@@ -462,10 +472,7 @@ class DataTransformer:
             return {}
 
         value = getattr(record, old_field)
-        return {
-            new_field: value,
-            old_field: None
-        }
+        return {new_field: value, old_field: None}
 
 
 # Convenience functions for common transformations
@@ -491,7 +498,9 @@ def create_person_normalizer() -> TransformationPipeline:
     pipeline = TransformationPipeline()
     pipeline.add_step(DataTransformer.normalize_email)
     pipeline.add_step(DataTransformer.capitalize_name)
-    pipeline.add_step(lambda r: DataTransformer.trim_whitespace(r, ['name', 'email', 'primary_duty']))
+    pipeline.add_step(
+        lambda r: DataTransformer.trim_whitespace(r, ["name", "email", "primary_duty"])
+    )
     return pipeline
 
 

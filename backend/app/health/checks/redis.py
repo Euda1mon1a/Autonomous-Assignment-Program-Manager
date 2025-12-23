@@ -65,10 +65,7 @@ class RedisHealthCheck:
 
         try:
             # Run check with timeout
-            result = await asyncio.wait_for(
-                self._perform_check(),
-                timeout=self.timeout
-            )
+            result = await asyncio.wait_for(self._perform_check(), timeout=self.timeout)
 
             response_time_ms = (time.time() - start_time) * 1000
             result["response_time_ms"] = round(response_time_ms, 2)
@@ -84,7 +81,7 @@ class RedisHealthCheck:
 
             return result
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             response_time_ms = (time.time() - start_time) * 1000
             logger.error(f"Redis health check timed out after {self.timeout}s")
             return {

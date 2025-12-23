@@ -11,7 +11,7 @@ Tasks integrate with AnalyticsEngine and StabilityMetricsComputer.
 """
 
 from datetime import date, datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from celery import shared_task
@@ -25,6 +25,7 @@ logger = get_logger(__name__)
 def get_db_session() -> Session:
     """Get a database session for task execution."""
     from app.core.database import SessionLocal
+
     return SessionLocal()
 
 
@@ -36,8 +37,8 @@ def get_db_session() -> Session:
 )
 def compute_schedule_metrics(
     self,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> dict[str, Any]:
     """
     Compute comprehensive schedule metrics for a date range.
@@ -149,12 +150,8 @@ def compute_version_diff(
         engine = AnalyticsEngine(db)
 
         # Get schedule runs
-        run1 = db.query(ScheduleRun).filter(
-            ScheduleRun.id == UUID(run_id_1)
-        ).first()
-        run2 = db.query(ScheduleRun).filter(
-            ScheduleRun.id == UUID(run_id_2)
-        ).first()
+        run1 = db.query(ScheduleRun).filter(ScheduleRun.id == UUID(run_id_1)).first()
+        run2 = db.query(ScheduleRun).filter(ScheduleRun.id == UUID(run_id_2)).first()
 
         if not run1 or not run2:
             error_msg = f"Schedule run not found: run1={bool(run1)}, run2={bool(run2)}"
@@ -174,12 +171,12 @@ def compute_version_diff(
 
         # Calculate metric deltas
         fairness_change = (
-            analysis2["metrics"]["fairness"]["value"] -
-            analysis1["metrics"]["fairness"]["value"]
+            analysis2["metrics"]["fairness"]["value"]
+            - analysis1["metrics"]["fairness"]["value"]
         )
         coverage_change = (
-            analysis2["metrics"]["coverage"]["value"] -
-            analysis1["metrics"]["coverage"]["value"]
+            analysis2["metrics"]["coverage"]["value"]
+            - analysis1["metrics"]["coverage"]["value"]
         )
 
         result = {
@@ -191,15 +188,16 @@ def compute_version_diff(
             },
             "summary": {
                 "improved": (
-                    fairness_change > 0 and
-                    coverage_change >= 0 and
-                    comparison["differences"]["violations_delta"] <= 0
+                    fairness_change > 0
+                    and coverage_change >= 0
+                    and comparison["differences"]["violations_delta"] <= 0
                 ),
-                "violations_changed": comparison["differences"]["violations_delta"] != 0,
+                "violations_changed": comparison["differences"]["violations_delta"]
+                != 0,
                 "significant_change": (
-                    abs(fairness_change) > 0.1 or
-                    abs(coverage_change) > 5.0 or
-                    abs(comparison["differences"]["violations_delta"]) > 0
+                    abs(fairness_change) > 0.1
+                    or abs(coverage_change) > 5.0
+                    or abs(comparison["differences"]["violations_delta"]) > 0
                 ),
             },
             "task_status": "completed",
@@ -340,9 +338,9 @@ def cleanup_old_snapshots(
         cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
 
         # Query old schedule runs
-        old_runs = db.query(ScheduleRun).filter(
-            ScheduleRun.created_at < cutoff_date
-        ).all()
+        old_runs = (
+            db.query(ScheduleRun).filter(ScheduleRun.created_at < cutoff_date).all()
+        )
 
         # Count by status before deletion
         status_counts = {}
@@ -431,12 +429,14 @@ def generate_fairness_trend_report(
                 analysis = engine.analyze_schedule(current_date, week_end)
                 fairness = analysis["metrics"]["fairness"]
 
-                weekly_metrics.append({
-                    "week_start": current_date.isoformat(),
-                    "week_end": week_end.isoformat(),
-                    "fairness_value": fairness["value"],
-                    "status": fairness["status"],
-                })
+                weekly_metrics.append(
+                    {
+                        "week_start": current_date.isoformat(),
+                        "week_end": week_end.isoformat(),
+                        "fairness_value": fairness["value"],
+                        "status": fairness["status"],
+                    }
+                )
             except Exception as e:
                 logger.warning(f"Failed to get metrics for week {current_date}: {e}")
 
@@ -466,10 +466,7 @@ def generate_fairness_trend_report(
             trend_direction = "stable"
 
         # Identify anomalies (fairness < 0.75)
-        anomalies = [
-            m for m in weekly_metrics
-            if m["fairness_value"] < 0.75
-        ]
+        anomalies = [m for m in weekly_metrics if m["fairness_value"] < 0.75]
 
         # Generate recommendations
         recommendations = []

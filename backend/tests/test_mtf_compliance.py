@@ -12,8 +12,6 @@ Tests cover:
 from datetime import datetime, timedelta
 from uuid import uuid4
 
-import pytest
-
 from app.resilience.mtf_compliance import (
     CircuitBreaker,
     DRRSTranslator,
@@ -28,7 +26,6 @@ from app.schemas.mtf_compliance import (
     EquipmentReadinessLevel,
     MFRPriority,
     MFRType,
-    MissionCapabilityStatus,
     MissionType,
     OverrideAuthority,
     PersonnelReadinessLevel,
@@ -38,7 +35,6 @@ from app.schemas.resilience import (
     EquilibriumState,
     LoadSheddingLevel,
 )
-
 
 # =============================================================================
 # DRRS Translator Tests
@@ -51,7 +47,9 @@ class TestDRRSTranslator:
     def test_load_shedding_to_drrs_normal(self):
         """Test NORMAL load shedding translates to C-1."""
         translator = DRRSTranslator()
-        rating, explanation = translator.translate_load_shedding(LoadSheddingLevel.NORMAL)
+        rating, explanation = translator.translate_load_shedding(
+            LoadSheddingLevel.NORMAL
+        )
 
         assert rating == DRRSCategory.C1
         assert "Fully Mission Capable" in explanation
@@ -481,14 +479,18 @@ class TestCircuitBreaker:
         # Trip and override with expired time
         cb._trip(CircuitBreakerTrigger.N1_VIOLATION, "test")
 
-        cb.override = type('obj', (object,), {
-            'id': uuid4(),
-            'authority': OverrideAuthority.COMMANDER,
-            'reason': 'test',
-            'activated_at': datetime.now() - timedelta(hours=2),
-            'expires_at': datetime.now() - timedelta(hours=1),  # Expired
-            'mfr_id': None,
-        })()
+        cb.override = type(
+            "obj",
+            (object,),
+            {
+                "id": uuid4(),
+                "authority": OverrideAuthority.COMMANDER,
+                "reason": "test",
+                "activated_at": datetime.now() - timedelta(hours=2),
+                "expires_at": datetime.now() - timedelta(hours=1),  # Expired
+                "mfr_id": None,
+            },
+        )()
 
         # Override should not be active
         assert cb._override_active() is False

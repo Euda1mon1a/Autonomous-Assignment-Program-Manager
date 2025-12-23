@@ -67,7 +67,9 @@ class CertificationScheduler:
             )
 
             self.scheduler.start()
-            logger.info(f"Certification scheduler started. Daily check at {self.check_hour}:00")
+            logger.info(
+                f"Certification scheduler started. Daily check at {self.check_hour}:00"
+            )
 
         except ImportError:
             logger.warning(
@@ -106,7 +108,9 @@ class CertificationScheduler:
             # 2. Send reminder emails for each threshold
             total_reminders_sent = 0
             for days in REMINDER_THRESHOLDS:
-                sent = self._send_reminders_for_threshold(db, cert_service, email_service, days)
+                sent = self._send_reminders_for_threshold(
+                    db, cert_service, email_service, days
+                )
                 total_reminders_sent += sent
 
             logger.info(f"Sent {total_reminders_sent} reminder emails")

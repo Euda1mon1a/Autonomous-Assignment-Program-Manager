@@ -8,6 +8,7 @@ Tests for:
 - Error handling
 - Call cascade updates
 """
+
 from datetime import date, datetime, timedelta
 from unittest.mock import MagicMock, Mock, patch
 from uuid import UUID, uuid4
@@ -15,16 +16,14 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy.orm import Session
 
-from app.models.assignment import Assignment
 from app.models.person import Person
-from app.models.swap import SwapRecord, SwapStatus, SwapType
+from app.models.swap import SwapRecord, SwapStatus
 from app.models.user import User
 from app.services.swap_executor import (
     ExecutionResult,
     RollbackResult,
     SwapExecutor,
 )
-
 
 # ============================================================================
 # Fixtures
@@ -378,7 +377,11 @@ class TestSwapExecutionErrorHandling:
 
     @patch.object(SwapExecutor, "execute_swap")
     def test_execute_swap_database_error(
-        self, mock_execute: Mock, swap_executor: SwapExecutor, faculty_a: Person, faculty_b: Person
+        self,
+        mock_execute: Mock,
+        swap_executor: SwapExecutor,
+        faculty_a: Person,
+        faculty_b: Person,
     ):
         """Test handling of database errors during execution."""
         # Configure mock to return a failure result
@@ -435,7 +438,7 @@ class TestSwapExecutionErrorHandling:
         )
 
         assert result.success is False
-        assert "Swap execution failed: Invalid value" == result.message
+        assert result.message == "Swap execution failed: Invalid value"
         assert result.error_code == "EXECUTION_FAILED"
 
 

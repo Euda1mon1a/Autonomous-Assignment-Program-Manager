@@ -7,6 +7,7 @@ Endpoints for:
 - TFT validation
 - Configuration analysis
 """
+
 import logging
 from uuid import UUID
 
@@ -24,7 +25,6 @@ from app.schemas.game_theory import (
     EvolutionListResponse,
     EvolutionResponse,
     EvolutionResultsResponse,
-    MatchResponse,
     PopulationSnapshot,
     SimulationStatus,
     StrategyCreate,
@@ -40,7 +40,7 @@ from app.schemas.game_theory import (
     ValidationRequest,
     ValidationResponse,
 )
-from app.services.game_theory import GameTheoryService, get_game_theory_service
+from app.services.game_theory import get_game_theory_service
 
 logger = logging.getLogger(__name__)
 
@@ -196,8 +196,7 @@ async def update_strategy(
     """Update a strategy."""
     service = get_game_theory_service(db)
     strategy = service.update_strategy(
-        strategy_id,
-        **request.model_dump(exclude_unset=True)
+        strategy_id, **request.model_dump(exclude_unset=True)
     )
 
     if not strategy:
@@ -306,10 +305,7 @@ async def create_tournament(
     # Validate strategies exist
     for sid in request.strategy_ids:
         if not service.get_strategy(sid):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Strategy {sid} not found"
-            )
+            raise HTTPException(status_code=400, detail=f"Strategy {sid} not found")
 
     tournament = service.create_tournament(
         name=request.name,
@@ -391,7 +387,9 @@ async def get_tournament(
     )
 
 
-@router.get("/tournaments/{tournament_id}/results", response_model=TournamentResultsResponse)
+@router.get(
+    "/tournaments/{tournament_id}/results", response_model=TournamentResultsResponse
+)
 async def get_tournament_results(
     tournament_id: UUID,
     db: Session = Depends(get_db),
@@ -405,25 +403,28 @@ async def get_tournament_results(
 
     if tournament.status != "completed":
         raise HTTPException(
-            status_code=400,
-            detail=f"Tournament is {tournament.status}, not completed"
+            status_code=400, detail=f"Tournament is {tournament.status}, not completed"
         )
 
     # Parse rankings
     rankings = []
     if tournament.rankings:
         for r in tournament.rankings:
-            rankings.append(TournamentRanking(
-                rank=r.get("rank", 0),
-                strategy_id=UUID(r["strategy_id"]) if r.get("strategy_id") else None,
-                strategy_name=r.get("strategy_name", "Unknown"),
-                total_score=r.get("total_score", 0),
-                average_score=r.get("average_score", 0),
-                wins=r.get("wins", 0),
-                losses=r.get("losses", 0),
-                ties=r.get("ties", 0),
-                cooperation_rate=r.get("cooperation_rate", 0),
-            ))
+            rankings.append(
+                TournamentRanking(
+                    rank=r.get("rank", 0),
+                    strategy_id=UUID(r["strategy_id"])
+                    if r.get("strategy_id")
+                    else None,
+                    strategy_name=r.get("strategy_name", "Unknown"),
+                    total_score=r.get("total_score", 0),
+                    average_score=r.get("average_score", 0),
+                    wins=r.get("wins", 0),
+                    losses=r.get("losses", 0),
+                    ties=r.get("ties", 0),
+                    cooperation_rate=r.get("cooperation_rate", 0),
+                )
+            )
 
     return TournamentResultsResponse(
         id=tournament.id,
@@ -434,7 +435,10 @@ async def get_tournament_results(
         payoff_matrix=tournament.payoff_matrix or {},
         total_matches=tournament.total_matches or 0,
         total_turns=(tournament.total_matches or 0) * tournament.turns_per_match,
-        average_cooperation_rate=sum(r.cooperation_rate for r in rankings) / len(rankings) if rankings else 0,
+        average_cooperation_rate=sum(r.cooperation_rate for r in rankings)
+        / len(rankings)
+        if rankings
+        else 0,
     )
 
 
@@ -514,10 +518,7 @@ async def create_evolution(
     # Validate strategies exist
     for sid_str in request.initial_composition.keys():
         if not service.get_strategy(UUID(sid_str)):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Strategy {sid_str} not found"
-            )
+            raise HTTPException(status_code=400, detail=f"Strategy {sid_str} not found")
 
     evolution = service.create_evolution(
         name=request.name,
@@ -597,7 +598,9 @@ async def get_evolution(
     )
 
 
-@router.get("/evolution/{evolution_id}/results", response_model=EvolutionResultsResponse)
+@router.get(
+    "/evolution/{evolution_id}/results", response_model=EvolutionResultsResponse
+)
 async def get_evolution_results(
     evolution_id: UUID,
     db: Session = Depends(get_db),
@@ -611,18 +614,19 @@ async def get_evolution_results(
 
     if evolution.status != "completed":
         raise HTTPException(
-            status_code=400,
-            detail=f"Evolution is {evolution.status}, not completed"
+            status_code=400, detail=f"Evolution is {evolution.status}, not completed"
         )
 
     # Parse population history
     history = []
     if evolution.population_history:
         for snapshot in evolution.population_history:
-            history.append(PopulationSnapshot(
-                generation=snapshot.get("generation", 0),
-                populations=snapshot.get("populations", {}),
-            ))
+            history.append(
+                PopulationSnapshot(
+                    generation=snapshot.get("generation", 0),
+                    populations=snapshot.get("populations", {}),
+                )
+            )
 
     return EvolutionResultsResponse(
         id=evolution.id,

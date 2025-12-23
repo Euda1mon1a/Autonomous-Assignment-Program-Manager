@@ -11,27 +11,23 @@ This test suite covers:
 - Version tagging and metadata
 """
 
-import pytest
 from datetime import datetime, timedelta
 from uuid import uuid4
 
-from app.versioning.data_versioning import (
-    DataVersioningService,
-    VersionMetadata,
-    VersionDiff,
-    VersionBranch,
-    MergeConflict,
-    BranchInfo,
-    PointInTimeQuery,
-)
+import pytest
+
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
-
+from app.versioning.data_versioning import (
+    DataVersioningService,
+    MergeConflict,
+)
 
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def versioning_service(db):
@@ -88,15 +84,17 @@ def sample_assignment(db, sample_person, sample_block):
 # Version History Tests
 # =============================================================================
 
+
 class TestVersionHistory:
     """Test suite for version history functionality."""
 
     @pytest.mark.asyncio
-    async def test_get_version_history_empty(self, versioning_service, sample_assignment):
+    async def test_get_version_history_empty(
+        self, versioning_service, sample_assignment
+    ):
         """Test getting version history for a new entity."""
         history = await versioning_service.get_version_history(
-            "assignment",
-            sample_assignment.id
+            "assignment", sample_assignment.id
         )
 
         # Should have at least one version (creation)
@@ -106,26 +104,20 @@ class TestVersionHistory:
     async def test_get_version_history_invalid_entity_type(self, versioning_service):
         """Test that invalid entity types raise ValueError."""
         with pytest.raises(ValueError, match="Unsupported entity type"):
-            await versioning_service.get_version_history(
-                "invalid_type",
-                uuid4()
-            )
+            await versioning_service.get_version_history("invalid_type", uuid4())
 
     @pytest.mark.asyncio
     async def test_get_version_by_id(self, versioning_service, sample_assignment):
         """Test getting a specific version by ID."""
         # Get version history first
         history = await versioning_service.get_version_history(
-            "assignment",
-            sample_assignment.id
+            "assignment", sample_assignment.id
         )
 
         if history:
             version_id = history[0]["version_id"]
             version_data = await versioning_service.get_version_by_id(
-                "assignment",
-                sample_assignment.id,
-                version_id
+                "assignment", sample_assignment.id, version_id
             )
 
             # Version data should exist
@@ -136,6 +128,7 @@ class TestVersionHistory:
 # Point-in-Time Query Tests
 # =============================================================================
 
+
 class TestPointInTimeQueries:
     """Test suite for point-in-time query functionality."""
 
@@ -143,9 +136,7 @@ class TestPointInTimeQueries:
     async def test_query_at_time_present(self, versioning_service, sample_assignment):
         """Test querying entity state at current time."""
         result = await versioning_service.query_at_time(
-            "assignment",
-            sample_assignment.id,
-            datetime.utcnow()
+            "assignment", sample_assignment.id, datetime.utcnow()
         )
 
         assert isinstance(result, dict)
@@ -161,9 +152,7 @@ class TestPointInTimeQueries:
         """Test querying entity state in the past."""
         past_time = datetime.utcnow() - timedelta(days=30)
         result = await versioning_service.query_at_time(
-            "assignment",
-            sample_assignment.id,
-            past_time
+            "assignment", sample_assignment.id, past_time
         )
 
         # Entity likely didn't exist 30 days ago
@@ -174,17 +163,14 @@ class TestPointInTimeQueries:
         """Test that invalid entity types raise ValueError."""
         with pytest.raises(ValueError, match="Unsupported entity type"):
             await versioning_service.query_at_time(
-                "invalid_type",
-                uuid4(),
-                datetime.utcnow()
+                "invalid_type", uuid4(), datetime.utcnow()
             )
 
     @pytest.mark.asyncio
     async def test_query_all_at_time(self, versioning_service):
         """Test querying all entities at a point in time."""
         results = await versioning_service.query_all_at_time(
-            "assignment",
-            datetime.utcnow()
+            "assignment", datetime.utcnow()
         )
 
         assert isinstance(results, list)
@@ -194,6 +180,7 @@ class TestPointInTimeQueries:
 # Version Comparison Tests
 # =============================================================================
 
+
 class TestVersionComparison:
     """Test suite for version comparison functionality."""
 
@@ -201,17 +188,13 @@ class TestVersionComparison:
     async def test_compare_versions_invalid_entity_type(self, versioning_service):
         """Test that invalid entity types raise ValueError."""
         with pytest.raises(ValueError, match="Unsupported entity type"):
-            await versioning_service.compare_versions(
-                "invalid_type",
-                uuid4(),
-                1,
-                2
-            )
+            await versioning_service.compare_versions("invalid_type", uuid4(), 1, 2)
 
 
 # =============================================================================
 # Rollback Tests
 # =============================================================================
+
 
 class TestVersionRollback:
     """Test suite for version rollback functionality."""
@@ -221,16 +204,14 @@ class TestVersionRollback:
         """Test that invalid entity types raise ValueError."""
         with pytest.raises(ValueError, match="Unsupported entity type"):
             await versioning_service.rollback_to_version(
-                "invalid_type",
-                uuid4(),
-                1,
-                "test_user"
+                "invalid_type", uuid4(), 1, "test_user"
             )
 
 
 # =============================================================================
 # Branch Management Tests
 # =============================================================================
+
 
 class TestBranchManagement:
     """Test suite for branch management functionality."""
@@ -242,7 +223,7 @@ class TestBranchManagement:
             parent_branch="main",
             new_branch_name="feature-test",
             user_id="test_user",
-            description="Test branch"
+            description="Test branch",
         )
 
         assert isinstance(branch, dict)
@@ -255,28 +236,18 @@ class TestBranchManagement:
     @pytest.mark.asyncio
     async def test_create_duplicate_branch(self, versioning_service):
         """Test that creating a duplicate branch raises ValueError."""
-        await versioning_service.create_branch(
-            "main",
-            "duplicate-branch",
-            "test_user"
-        )
+        await versioning_service.create_branch("main", "duplicate-branch", "test_user")
 
         with pytest.raises(ValueError, match="already exists"):
             await versioning_service.create_branch(
-                "main",
-                "duplicate-branch",
-                "test_user"
+                "main", "duplicate-branch", "test_user"
             )
 
     @pytest.mark.asyncio
     async def test_get_branch_info(self, versioning_service):
         """Test getting branch information."""
         # Create a branch first
-        await versioning_service.create_branch(
-            "main",
-            "info-test",
-            "test_user"
-        )
+        await versioning_service.create_branch("main", "info-test", "test_user")
 
         info = await versioning_service.get_branch_info("info-test")
 
@@ -312,11 +283,7 @@ class TestBranchManagement:
     async def test_delete_branch(self, versioning_service):
         """Test deleting a branch."""
         # Create a branch
-        await versioning_service.create_branch(
-            "main",
-            "delete-test",
-            "test_user"
-        )
+        await versioning_service.create_branch("main", "delete-test", "test_user")
 
         # Delete it
         result = await versioning_service.delete_branch("delete-test", "test_user")
@@ -343,6 +310,7 @@ class TestBranchManagement:
 # Merge Conflict Tests
 # =============================================================================
 
+
 class TestMergeConflicts:
     """Test suite for merge conflict detection."""
 
@@ -355,8 +323,7 @@ class TestMergeConflicts:
 
         # Detect conflicts
         conflicts = await versioning_service.detect_merge_conflicts(
-            "branch-a",
-            "branch-b"
+            "branch-a", "branch-b"
         )
 
         assert isinstance(conflicts, list)
@@ -366,8 +333,7 @@ class TestMergeConflicts:
         """Test that invalid branches raise ValueError."""
         with pytest.raises(ValueError, match="not found"):
             await versioning_service.detect_merge_conflicts(
-                "nonexistent1",
-                "nonexistent2"
+                "nonexistent1", "nonexistent2"
             )
 
     @pytest.mark.asyncio
@@ -385,9 +351,7 @@ class TestMergeConflicts:
         }
 
         result = await versioning_service.resolve_conflict(
-            conflict,
-            "source",
-            "test_user"
+            conflict, "source", "test_user"
         )
 
         assert result is True
@@ -397,6 +361,7 @@ class TestMergeConflicts:
 # Tagging and Metadata Tests
 # =============================================================================
 
+
 class TestVersionMetadata:
     """Test suite for version tagging and metadata."""
 
@@ -404,11 +369,7 @@ class TestVersionMetadata:
     async def test_tag_version(self, versioning_service, sample_assignment):
         """Test tagging a version."""
         result = await versioning_service.tag_version(
-            "assignment",
-            sample_assignment.id,
-            1,
-            "approved",
-            "test_user"
+            "assignment", sample_assignment.id, 1, "approved", "test_user"
         )
 
         assert result is True
@@ -418,11 +379,7 @@ class TestVersionMetadata:
         """Test that invalid entity types raise ValueError."""
         with pytest.raises(ValueError, match="Unsupported entity type"):
             await versioning_service.tag_version(
-                "invalid_type",
-                uuid4(),
-                1,
-                "tag",
-                "user"
+                "invalid_type", uuid4(), 1, "tag", "user"
             )
 
     @pytest.mark.asyncio
@@ -433,7 +390,7 @@ class TestVersionMetadata:
             sample_assignment.id,
             1,
             "This version looks good",
-            "test_user"
+            "test_user",
         )
 
         assert result is True
@@ -443,17 +400,14 @@ class TestVersionMetadata:
         """Test that invalid entity types raise ValueError."""
         with pytest.raises(ValueError, match="Unsupported entity type"):
             await versioning_service.add_version_comment(
-                "invalid_type",
-                uuid4(),
-                1,
-                "comment",
-                "user"
+                "invalid_type", uuid4(), 1, "comment", "user"
             )
 
 
 # =============================================================================
 # Lineage and Comparison Tests
 # =============================================================================
+
 
 class TestLineageAndComparison:
     """Test suite for lineage and branch comparison."""
@@ -462,8 +416,7 @@ class TestLineageAndComparison:
     async def test_get_entity_lineage(self, versioning_service, sample_assignment):
         """Test getting entity lineage."""
         lineage = await versioning_service.get_entity_lineage(
-            "assignment",
-            sample_assignment.id
+            "assignment", sample_assignment.id
         )
 
         assert isinstance(lineage, dict)
@@ -476,10 +429,7 @@ class TestLineageAndComparison:
     async def test_get_lineage_invalid_entity_type(self, versioning_service):
         """Test that invalid entity types raise ValueError."""
         with pytest.raises(ValueError, match="Unsupported entity type"):
-            await versioning_service.get_entity_lineage(
-                "invalid_type",
-                uuid4()
-            )
+            await versioning_service.get_entity_lineage("invalid_type", uuid4())
 
     @pytest.mark.asyncio
     async def test_compare_branches(self, versioning_service):
@@ -488,10 +438,7 @@ class TestLineageAndComparison:
         await versioning_service.create_branch("main", "compare-a", "user1")
         await versioning_service.create_branch("main", "compare-b", "user2")
 
-        comparison = await versioning_service.compare_branches(
-            "compare-a",
-            "compare-b"
-        )
+        comparison = await versioning_service.compare_branches("compare-a", "compare-b")
 
         assert isinstance(comparison, dict)
         assert comparison["branch1"] == "compare-a"
@@ -504,15 +451,13 @@ class TestLineageAndComparison:
     async def test_compare_invalid_branches(self, versioning_service):
         """Test that comparing invalid branches raises ValueError."""
         with pytest.raises(ValueError, match="not found"):
-            await versioning_service.compare_branches(
-                "nonexistent1",
-                "nonexistent2"
-            )
+            await versioning_service.compare_branches("nonexistent1", "nonexistent2")
 
 
 # =============================================================================
 # Edge Cases and Error Handling
 # =============================================================================
+
 
 class TestEdgeCases:
     """Test suite for edge cases and error handling."""

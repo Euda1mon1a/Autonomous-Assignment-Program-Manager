@@ -64,16 +64,15 @@ Usage Examples:
 """
 
 # Core decorator and executor
-from app.resilience.retry.decorator import (
-    RetryConfig,
-    RetryExecutor,
-    retry,
-)
-
 # Context tracking
 from app.resilience.retry.context import (
     RetryAttempt,
     RetryContext,
+)
+from app.resilience.retry.decorator import (
+    RetryConfig,
+    RetryExecutor,
+    retry,
 )
 
 # Exceptions

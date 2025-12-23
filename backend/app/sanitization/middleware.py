@@ -10,9 +10,10 @@ and other injection attacks. It processes:
 
 The middleware can be configured with different sanitization rules and exclusions.
 """
+
 import json
 import logging
-from typing import Any, Callable, Optional, Set
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -20,7 +21,7 @@ from starlette.types import ASGIApp
 
 from app.sanitization.html import sanitize_html, strip_all_tags
 from app.sanitization.sql import detect_sql_injection
-from app.sanitization.xss import detect_xss, normalize_unicode, sanitize_input
+from app.sanitization.xss import detect_xss, normalize_unicode
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +55,9 @@ class SanitizationConfig:
         sanitize_path_params: bool = True,
         sanitize_body: bool = True,
         sanitize_headers: bool = False,
-        allowed_html_fields: Optional[Set[str]] = None,
-        excluded_paths: Optional[Set[str]] = None,
-        excluded_fields: Optional[Set[str]] = None,
+        allowed_html_fields: set[str] | None = None,
+        excluded_paths: set[str] | None = None,
+        excluded_fields: set[str] | None = None,
         detect_only: bool = False,
     ):
         """
@@ -85,13 +86,25 @@ class SanitizationConfig:
         self.sanitize_body = sanitize_body
         self.sanitize_headers = sanitize_headers
         self.allowed_html_fields = allowed_html_fields or {
-            'description', 'notes', 'comments', 'content', 'body'
+            "description",
+            "notes",
+            "comments",
+            "content",
+            "body",
         }
         self.excluded_paths = excluded_paths or {
-            '/docs', '/redoc', '/openapi.json', '/metrics', '/health'
+            "/docs",
+            "/redoc",
+            "/openapi.json",
+            "/metrics",
+            "/health",
         }
         self.excluded_fields = excluded_fields or {
-            'password', 'hashed_password', 'token', 'secret', 'api_key'
+            "password",
+            "hashed_password",
+            "token",
+            "secret",
+            "api_key",
         }
         self.detect_only = detect_only
 
@@ -122,7 +135,7 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: ASGIApp,
-        config: Optional[SanitizationConfig] = None,
+        config: SanitizationConfig | None = None,
     ):
         """
         Initialize sanitization middleware.
@@ -134,11 +147,7 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.config = config or SanitizationConfig()
 
-    async def dispatch(
-        self,
-        request: Request,
-        call_next: Callable
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """
         Process request and sanitize inputs.
 
@@ -171,9 +180,9 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
                 f"Error in sanitization middleware: {e}",
                 exc_info=True,
                 extra={
-                    'path': request.url.path,
-                    'method': request.method,
-                }
+                    "path": request.url.path,
+                    "method": request.method,
+                },
             )
             # Continue without sanitization if middleware fails
             return await call_next(request)
@@ -188,10 +197,7 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
         Returns:
             True if path should be excluded
         """
-        return any(
-            path.startswith(excluded)
-            for excluded in self.config.excluded_paths
-        )
+        return any(path.startswith(excluded) for excluded in self.config.excluded_paths)
 
     def _is_excluded_field(self, field_name: str) -> bool:
         """
@@ -203,9 +209,7 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
         Returns:
             True if field should be excluded
         """
-        return field_name.lower() in {
-            f.lower() for f in self.config.excluded_fields
-        }
+        return field_name.lower() in {f.lower() for f in self.config.excluded_fields}
 
     async def _sanitize_request(self, request: Request) -> None:
         """
@@ -219,11 +223,11 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
             await self._sanitize_query_params(request)
 
         # Sanitize path parameters
-        if self.config.sanitize_path_params and hasattr(request, 'path_params'):
+        if self.config.sanitize_path_params and hasattr(request, "path_params"):
             await self._sanitize_path_params(request)
 
         # Sanitize request body
-        if self.config.sanitize_body and request.method in {'POST', 'PUT', 'PATCH'}:
+        if self.config.sanitize_body and request.method in {"POST", "PUT", "PATCH"}:
             await self._sanitize_body(request)
 
     async def _sanitize_query_params(self, request: Request) -> None:
@@ -255,7 +259,7 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
             request: FastAPI request object
         """
         try:
-            if hasattr(request, 'path_params') and request.path_params:
+            if hasattr(request, "path_params") and request.path_params:
                 sanitized_params = {}
                 for key, value in request.path_params.items():
                     if isinstance(value, str) and not self._is_excluded_field(key):
@@ -370,10 +374,10 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
         threats_detected = []
 
         if detect_xss(value, strict=self.config.strict_mode):
-            threats_detected.append('XSS')
+            threats_detected.append("XSS")
 
         if detect_sql_injection(value, strict=self.config.strict_mode):
-            threats_detected.append('SQL Injection')
+            threats_detected.append("SQL Injection")
 
         # Log threats
         if threats_detected:
@@ -381,10 +385,10 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
                 f"Potential threats detected in field '{field_name}': "
                 f"{', '.join(threats_detected)}",
                 extra={
-                    'field': field_name,
-                    'threats': threats_detected,
-                    'value_preview': value[:100] if len(value) > 100 else value,
-                }
+                    "field": field_name,
+                    "threats": threats_detected,
+                    "value_preview": value[:100] if len(value) > 100 else value,
+                },
             )
 
             # If detect_only mode, just log and return original
@@ -397,7 +401,7 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
 
         # Truncate if too long
         if len(value) > self.config.max_string_length:
-            value = value[:self.config.max_string_length]
+            value = value[: self.config.max_string_length]
             logger.warning(
                 f"Truncated field '{field_name}' from {len(value)} to "
                 f"{self.config.max_string_length} characters"
@@ -421,7 +425,7 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
 def create_sanitization_middleware(
     strict_mode: bool = True,
     detect_only: bool = False,
-    allowed_html_fields: Optional[Set[str]] = None,
+    allowed_html_fields: set[str] | None = None,
 ) -> SanitizationMiddleware:
     """
     Factory function to create sanitization middleware with custom config.

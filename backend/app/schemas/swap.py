@@ -1,4 +1,5 @@
 """Pydantic schemas for FMIT swap API."""
+
 from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
@@ -30,7 +31,7 @@ class SwapExecuteRequest(BaseModel):
     swap_type: SwapTypeSchema
     reason: str | None = Field(None, max_length=500)
 
-    @field_validator('source_week', 'target_week')
+    @field_validator("source_week", "target_week")
     @classmethod
     def validate_dates_in_range(cls, v: date | None) -> date | None:
         """Validate dates are within academic year bounds."""
@@ -38,10 +39,10 @@ class SwapExecuteRequest(BaseModel):
             return validate_academic_year_date(v, field_name="date")
         return v
 
-    @field_validator('target_week')
+    @field_validator("target_week")
     @classmethod
     def validate_swap_type_consistency(cls, v, info):
-        if info.data.get('swap_type') == SwapTypeSchema.ONE_TO_ONE and v is None:
+        if info.data.get("swap_type") == SwapTypeSchema.ONE_TO_ONE and v is None:
             raise ValueError("target_week required for one-to-one swaps")
         return v
 
@@ -63,7 +64,7 @@ class SwapHistoryFilter(BaseModel):
     page: int = Field(1, ge=1)
     page_size: int = Field(20, ge=1, le=100)
 
-    @field_validator('start_date', 'end_date')
+    @field_validator("start_date", "end_date")
     @classmethod
     def validate_dates_in_range(cls, v: date | None) -> date | None:
         """Validate dates are within academic year bounds."""

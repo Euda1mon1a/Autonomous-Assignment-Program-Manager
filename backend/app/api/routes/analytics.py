@@ -7,20 +7,18 @@ what-if analysis, and research data exports.
 import logging
 import statistics
 import uuid
-from collections import Counter, defaultdict
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_, func
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy import and_
+from sqlalchemy.orm import Session, joinedload
 
 from app.analytics.engine import AnalyticsEngine
 from app.analytics.metrics import (
-    calculate_acgme_compliance_rate,
     calculate_consecutive_duty_stats,
     calculate_coverage_rate,
     calculate_fairness_index,
-    calculate_preference_satisfaction,
 )
 from app.core.security import get_current_active_user
 from app.db.session import get_db
@@ -59,9 +57,7 @@ router = APIRouter()
 
 
 def _create_metric_value(
-    name: str,
-    metric_dict: dict,
-    unit: str | None = None
+    name: str, metric_dict: dict, unit: str | None = None
 ) -> MetricValue:
     """Convert metric dict to MetricValue schema."""
     return MetricValue(
@@ -79,6 +75,7 @@ def _create_metric_value(
 def _anonymize_id(original_id: str, salt: str = "research") -> str:
     """Anonymize an ID for research export."""
     import hashlib
+
     return hashlib.sha256(f"{original_id}{salt}".encode()).hexdigest()[:16]
 
 
@@ -109,15 +106,13 @@ async def get_current_metrics(
 
         if not latest_run:
             raise HTTPException(
-                status_code=404,
-                detail="No successful schedule runs found"
+                status_code=404, detail="No successful schedule runs found"
             )
 
         # Use analytics engine to get comprehensive data
         engine = AnalyticsEngine(db)
         analysis = engine.analyze_schedule(
-            start_date=latest_run.start_date,
-            end_date=latest_run.end_date
+            start_date=latest_run.start_date, end_date=latest_run.end_date
         )
 
         # Convert to response schema
@@ -128,38 +123,37 @@ async def get_current_metrics(
             period={
                 "start_date": latest_run.start_date.isoformat(),
                 "end_date": latest_run.end_date.isoformat(),
-                "total_days": str((latest_run.end_date - latest_run.start_date).days + 1)
+                "total_days": str(
+                    (latest_run.end_date - latest_run.start_date).days + 1
+                ),
             },
             fairnessIndex=_create_metric_value(
-                "Fairness Index",
-                analysis["metrics"]["fairness"]
+                "Fairness Index", analysis["metrics"]["fairness"]
             ),
             coverageRate=_create_metric_value(
-                "Coverage Rate",
-                analysis["metrics"]["coverage"],
-                unit="%"
+                "Coverage Rate", analysis["metrics"]["coverage"], unit="%"
             ),
             acgmeCompliance=_create_metric_value(
-                "ACGME Compliance",
-                analysis["metrics"]["compliance"],
-                unit="%"
+                "ACGME Compliance", analysis["metrics"]["compliance"], unit="%"
             ),
             preferenceSatisfaction=MetricValue(
                 name="Preference Satisfaction",
                 value=0.0,  # Placeholder - would calculate from preferences
                 unit="%",
                 status="good",
-                description="Preference satisfaction not yet implemented"
+                description="Preference satisfaction not yet implemented",
             ),
             totalBlocks=analysis["summary"]["total_blocks"],
             totalAssignments=analysis["summary"]["total_assignments"],
             uniqueResidents=analysis["summary"]["unique_people"],
             violations={
                 "total": analysis["violations"]["total"],
-                "overrides_acknowledged": analysis["violations"]["overrides_acknowledged"],
-                "unacknowledged": analysis["violations"]["unacknowledged"]
+                "overrides_acknowledged": analysis["violations"][
+                    "overrides_acknowledged"
+                ],
+                "unacknowledged": analysis["violations"]["unacknowledged"],
             },
-            workloadDistribution=analysis["workload"]
+            workloadDistribution=analysis["workload"],
         )
 
     except HTTPException:
@@ -167,14 +161,15 @@ async def get_current_metrics(
     except Exception as e:
         logger.error(f"Error getting current metrics: {e}")
         raise HTTPException(
-            status_code=500,
-            detail="An error occurred retrieving metrics"
+            status_code=500, detail="An error occurred retrieving metrics"
         )
 
 
 @router.get("/analytics/metrics/history", response_model=list[MetricTimeSeries])
 async def get_metrics_history(
-    metric_name: str = Query(..., description="Metric name (fairness, coverage, compliance, violations)"),
+    metric_name: str = Query(
+        ..., description="Metric name (fairness, coverage, compliance, violations)"
+    ),
     start_date: datetime = Query(..., description="Start date (ISO format)"),
     end_date: datetime = Query(..., description="End date (ISO format)"),
     db: Session = Depends(get_db),
@@ -194,7 +189,7 @@ async def get_metrics_history(
                 and_(
                     ScheduleRun.start_date >= start_date.date(),
                     ScheduleRun.end_date <= end_date.date(),
-                    ScheduleRun.status == "success"
+                    ScheduleRun.status == "success",
                 )
             )
             .order_by(ScheduleRun.created_at)
@@ -210,8 +205,7 @@ async def get_metrics_history(
         for run in runs:
             try:
                 analysis = engine.analyze_schedule(
-                    start_date=run.start_date,
-                    end_date=run.end_date
+                    start_date=run.start_date, end_date=run.end_date
                 )
 
                 # Extract the requested metric
@@ -234,8 +228,8 @@ async def get_metrics_history(
                         metadata={
                             "run_id": str(run.id),
                             "start_date": run.start_date.isoformat(),
-                            "end_date": run.end_date.isoformat()
-                        }
+                            "end_date": run.end_date.isoformat(),
+                        },
                     )
                 )
             except Exception as e:
@@ -257,8 +251,8 @@ async def get_metrics_history(
 
         # Determine trend direction
         if len(values) >= 2:
-            first_half_avg = statistics.mean(values[:len(values)//2])
-            second_half_avg = statistics.mean(values[len(values)//2:])
+            first_half_avg = statistics.mean(values[: len(values) // 2])
+            second_half_avg = statistics.mean(values[len(values) // 2 :])
             if metric_name == "violations":
                 # For violations, lower is better
                 trend = "improving" if second_half_avg < first_half_avg else "declining"
@@ -277,15 +271,14 @@ async def get_metrics_history(
                 endDate=end_date.isoformat(),
                 dataPoints=data_points,
                 statistics=stats,
-                trendDirection=trend
+                trendDirection=trend,
             )
         ]
 
     except Exception as e:
         logger.error(f"Error getting metrics history: {e}")
         raise HTTPException(
-            status_code=500,
-            detail="An error occurred retrieving metrics history"
+            status_code=500, detail="An error occurred retrieving metrics history"
         )
 
 
@@ -312,7 +305,7 @@ async def get_fairness_trend(
             .filter(
                 and_(
                     ScheduleRun.start_date >= start_date,
-                    ScheduleRun.status == "success"
+                    ScheduleRun.status == "success",
                 )
             )
             .order_by(ScheduleRun.created_at)
@@ -322,7 +315,7 @@ async def get_fairness_trend(
         if not runs:
             raise HTTPException(
                 status_code=404,
-                detail=f"No schedule runs found in the last {months} months"
+                detail=f"No schedule runs found in the last {months} months",
             )
 
         engine = AnalyticsEngine(db)
@@ -332,8 +325,7 @@ async def get_fairness_trend(
         for run in runs:
             try:
                 analysis = engine.analyze_schedule(
-                    start_date=run.start_date,
-                    end_date=run.end_date
+                    start_date=run.start_date, end_date=run.end_date
                 )
 
                 fairness = analysis["metrics"]["fairness"]
@@ -345,7 +337,7 @@ async def get_fairness_trend(
                         date=run.start_date.isoformat(),
                         fairnessIndex=fairness_index,
                         giniCoefficient=round(gini, 3),
-                        residentsCount=analysis["summary"]["unique_people"]
+                        residentsCount=analysis["summary"]["unique_people"],
                     )
                 )
                 fairness_values.append(fairness_index)
@@ -356,8 +348,7 @@ async def get_fairness_trend(
 
         if not data_points:
             raise HTTPException(
-                status_code=500,
-                detail="Could not analyze any schedule runs"
+                status_code=500, detail="Could not analyze any schedule runs"
             )
 
         # Calculate statistics
@@ -365,8 +356,12 @@ async def get_fairness_trend(
 
         # Determine trend
         if len(fairness_values) >= 2:
-            first_half_avg = statistics.mean(fairness_values[:len(fairness_values)//2])
-            second_half_avg = statistics.mean(fairness_values[len(fairness_values)//2:])
+            first_half_avg = statistics.mean(
+                fairness_values[: len(fairness_values) // 2]
+            )
+            second_half_avg = statistics.mean(
+                fairness_values[len(fairness_values) // 2 :]
+            )
             if second_half_avg > first_half_avg + 0.02:
                 trend = "improving"
             elif second_half_avg < first_half_avg - 0.02:
@@ -384,13 +379,21 @@ async def get_fairness_trend(
         # Generate recommendations
         recommendations = []
         if avg_fairness < 0.85:
-            recommendations.append("Overall fairness is below target - review workload distribution policies")
+            recommendations.append(
+                "Overall fairness is below target - review workload distribution policies"
+            )
         if trend == "declining":
-            recommendations.append("Fairness is declining - investigate recent scheduling changes")
+            recommendations.append(
+                "Fairness is declining - investigate recent scheduling changes"
+            )
         elif trend == "improving":
-            recommendations.append("Fairness is improving - current approach is effective")
+            recommendations.append(
+                "Fairness is improving - current approach is effective"
+            )
         if len(set(dp.residents_count for dp in data_points)) > 1:
-            recommendations.append("Resident count has changed - ensure fairness metrics account for cohort size")
+            recommendations.append(
+                "Resident count has changed - ensure fairness metrics account for cohort size"
+            )
 
         return FairnessTrendReport(
             periodMonths=months,
@@ -401,7 +404,7 @@ async def get_fairness_trend(
             trend=trend,
             mostUnfairPeriod=most_unfair,
             mostFairPeriod=most_fair,
-            recommendations=recommendations
+            recommendations=recommendations,
         )
 
     except HTTPException:
@@ -409,12 +412,13 @@ async def get_fairness_trend(
     except Exception as e:
         logger.error(f"Error getting fairness trend: {e}")
         raise HTTPException(
-            status_code=500,
-            detail="An error occurred retrieving fairness trend"
+            status_code=500, detail="An error occurred retrieving fairness trend"
         )
 
 
-@router.get("/analytics/compare/{version_a}/{version_b}", response_model=VersionComparison)
+@router.get(
+    "/analytics/compare/{version_a}/{version_b}", response_model=VersionComparison
+)
 async def compare_versions(
     version_a: str,
     version_b: str,
@@ -437,8 +441,7 @@ async def compare_versions(
 
         if not run_a or not run_b:
             raise HTTPException(
-                status_code=404,
-                detail="One or both schedule versions not found"
+                status_code=404, detail="One or both schedule versions not found"
             )
 
         # Analyze both versions
@@ -472,7 +475,7 @@ async def compare_versions(
                     versionBValue=round(val_b, 2),
                     difference=round(diff, 2),
                     percentChange=round(pct_change, 2),
-                    improvement=improved
+                    improvement=improved,
                 )
             )
 
@@ -487,8 +490,11 @@ async def compare_versions(
                 versionAValue=float(violations_a),
                 versionBValue=float(violations_b),
                 difference=float(violations_diff),
-                percentChange=round((violations_diff / violations_a * 100) if violations_a != 0 else 0, 2),
-                improvement=violations_diff < 0  # Lower is better
+                percentChange=round(
+                    (violations_diff / violations_a * 100) if violations_a != 0 else 0,
+                    2,
+                ),
+                improvement=violations_diff < 0,  # Lower is better
             )
         )
 
@@ -506,7 +512,7 @@ async def compare_versions(
 
         residents_affected = max(
             analysis_a["summary"]["unique_people"],
-            analysis_b["summary"]["unique_people"]
+            analysis_b["summary"]["unique_people"],
         )
 
         # Generate summary
@@ -524,7 +530,9 @@ async def compare_versions(
                 )
 
         if not recommendations:
-            recommendations.append("Version B is ready for deployment - all metrics improved or stable")
+            recommendations.append(
+                "Version B is ready for deployment - all metrics improved or stable"
+            )
 
         return VersionComparison(
             versionA=version_a,
@@ -536,7 +544,7 @@ async def compare_versions(
             assignmentsChanged=assignments_changed,
             residentsAffected=residents_affected,
             summary=summary,
-            recommendations=recommendations
+            recommendations=recommendations,
         )
 
     except HTTPException:
@@ -544,8 +552,7 @@ async def compare_versions(
     except Exception as e:
         logger.error(f"Error comparing versions: {e}")
         raise HTTPException(
-            status_code=500,
-            detail="An error occurred comparing versions"
+            status_code=500, detail="An error occurred comparing versions"
         )
 
 
@@ -564,8 +571,7 @@ async def what_if_analysis(
     try:
         if not proposed_changes:
             raise HTTPException(
-                status_code=400,
-                detail="No changes provided for analysis"
+                status_code=400, detail="No changes provided for analysis"
             )
 
         # Get current state
@@ -578,14 +584,12 @@ async def what_if_analysis(
 
         if not latest_run:
             raise HTTPException(
-                status_code=404,
-                detail="No baseline schedule found for comparison"
+                status_code=404, detail="No baseline schedule found for comparison"
             )
 
         engine = AnalyticsEngine(db)
         current_analysis = engine.analyze_schedule(
-            latest_run.start_date,
-            latest_run.end_date
+            latest_run.start_date, latest_run.end_date
         )
 
         # Simulate the changes (simplified - in production would create temp tables)
@@ -607,14 +611,13 @@ async def what_if_analysis(
                     db.query(Assignment)
                     .join(Block)
                     .options(
-                        joinedload(Assignment.block),
-                        joinedload(Assignment.person)
+                        joinedload(Assignment.block), joinedload(Assignment.person)
                     )
                     .filter(
                         and_(
                             Assignment.person_id == change.person_id,
                             Block.date >= latest_run.start_date,
-                            Block.date <= latest_run.end_date
+                            Block.date <= latest_run.end_date,
                         )
                     )
                     .count()
@@ -635,7 +638,7 @@ async def what_if_analysis(
                 workload_changes[person.name] = {
                     "old_utilization": round(old_util, 2),
                     "new_utilization": round(new_util, 2),
-                    "change": round(new_util - old_util, 2)
+                    "change": round(new_util - old_util, 2),
                 }
 
                 # Check for potential violations
@@ -646,7 +649,7 @@ async def what_if_analysis(
                             severity="warning",
                             personId=change.person_id,
                             personName=person.name,
-                            message=f"Would exceed target workload by {new_assignments - target} blocks"
+                            message=f"Would exceed target workload by {new_assignments - target} blocks",
                         )
                     )
 
@@ -664,10 +667,11 @@ async def what_if_analysis(
             WhatIfMetricImpact(
                 metricName="Fairness Index",
                 currentValue=current_analysis["metrics"]["fairness"]["value"],
-                predictedValue=current_analysis["metrics"]["fairness"]["value"] - (0.02 if fairness_impact == "negative" else 0),
+                predictedValue=current_analysis["metrics"]["fairness"]["value"]
+                - (0.02 if fairness_impact == "negative" else 0),
                 change=-0.02 if fairness_impact == "negative" else 0,
                 impactSeverity=fairness_impact,
-                confidence=0.7
+                confidence=0.7,
             )
         )
 
@@ -695,7 +699,7 @@ async def what_if_analysis(
             recommendation=recommendation,
             safeToApply=safe_to_apply,
             affectedResidents=list(affected_residents),
-            workloadChanges=workload_changes
+            workloadChanges=workload_changes,
         )
 
     except HTTPException:
@@ -703,8 +707,7 @@ async def what_if_analysis(
     except Exception as e:
         logger.error(f"Error in what-if analysis: {e}")
         raise HTTPException(
-            status_code=500,
-            detail="An error occurred performing what-if analysis"
+            status_code=500, detail="An error occurred performing what-if analysis"
         )
 
 
@@ -727,10 +730,7 @@ async def export_for_research(
         blocks = (
             db.query(Block)
             .filter(
-                and_(
-                    Block.date >= start_date.date(),
-                    Block.date <= end_date.date()
-                )
+                and_(Block.date >= start_date.date(), Block.date <= end_date.date())
             )
             .limit(100)
             .all()
@@ -742,13 +742,10 @@ async def export_for_research(
             .options(
                 joinedload(Assignment.block),
                 joinedload(Assignment.person),
-                joinedload(Assignment.rotation_template)
+                joinedload(Assignment.rotation_template),
             )
             .filter(
-                and_(
-                    Block.date >= start_date.date(),
-                    Block.date <= end_date.date()
-                )
+                and_(Block.date >= start_date.date(), Block.date <= end_date.date())
             )
             .limit(100)
             .all()
@@ -757,10 +754,7 @@ async def export_for_research(
         # Get all residents
         resident_ids = {a.person_id for a in assignments}
         residents = (
-            db.query(Person)
-            .filter(Person.id.in_(resident_ids))
-            .limit(100)
-            .all()
+            db.query(Person).filter(Person.id.in_(resident_ids)).limit(100).all()
         )
 
         # Build resident workload data
@@ -774,14 +768,13 @@ async def export_for_research(
                     "id": str(a.id),
                     "person_id": str(a.person_id),
                     "block_id": str(a.block_id),
-                    "block_date": a.block.date
+                    "block_date": a.block.date,
                 }
                 for a in person_assignments
             ]
 
             duty_stats = calculate_consecutive_duty_stats(
-                str(resident.id),
-                assignment_dicts
+                str(resident.id), assignment_dicts
             )
 
             # Count clinical vs non-clinical (simplified)
@@ -791,7 +784,9 @@ async def export_for_research(
             target = resident.target_clinical_blocks or 48
             utilization = (len(person_assignments) / target * 100) if target > 0 else 0
 
-            resident_id = _anonymize_id(str(resident.id)) if anonymize else str(resident.id)
+            resident_id = (
+                _anonymize_id(str(resident.id)) if anonymize else str(resident.id)
+            )
 
             resident_workload.append(
                 ResidentWorkloadData(
@@ -803,7 +798,7 @@ async def export_for_research(
                     clinicalBlocks=clinical_blocks,
                     nonClinicalBlocks=non_clinical_blocks,
                     maxConsecutiveDays=duty_stats["max_consecutive_days"],
-                    averageRestDays=duty_stats["average_rest_days"]
+                    averageRestDays=duty_stats["average_rest_days"],
                 )
             )
 
@@ -817,7 +812,9 @@ async def export_for_research(
 
         rotation_coverage = []
         for rotation_id, data in rotation_counts.items():
-            rotation_id_display = _anonymize_id(rotation_id) if anonymize else rotation_id
+            rotation_id_display = (
+                _anonymize_id(rotation_id) if anonymize else rotation_id
+            )
             rotation_coverage.append(
                 RotationCoverageData(
                     rotationId=rotation_id_display,
@@ -825,7 +822,7 @@ async def export_for_research(
                     activityType="clinical",
                     totalAssignments=data["assignments"],
                     uniqueResidents=len(data["residents"]),
-                    averageDuration=4.0  # Placeholder
+                    averageDuration=4.0,  # Placeholder
                 )
             )
 
@@ -835,7 +832,7 @@ async def export_for_research(
             .filter(
                 and_(
                     ScheduleRun.start_date >= start_date.date(),
-                    ScheduleRun.end_date <= end_date.date()
+                    ScheduleRun.end_date <= end_date.date(),
                 )
             )
             .all()
@@ -844,15 +841,21 @@ async def export_for_research(
         total_violations = sum(r.acgme_violations or 0 for r in runs)
         total_overrides = sum(r.acgme_override_count or 0 for r in runs)
         total_checks = len(blocks)
-        compliance_rate = ((total_checks - total_violations) / total_checks * 100) if total_checks > 0 else 100
+        compliance_rate = (
+            ((total_checks - total_violations) / total_checks * 100)
+            if total_checks > 0
+            else 100
+        )
 
         compliance_data = ComplianceData(
             totalChecks=total_checks,
             totalViolations=total_violations,
             complianceRate=round(compliance_rate, 2),
-            violationsByType={"unspecified": total_violations},  # Would need more detail
+            violationsByType={
+                "unspecified": total_violations
+            },  # Would need more detail
             violationsBySeverity={"high": total_violations},  # Would need more detail
-            overrideCount=total_overrides
+            overrideCount=total_overrides,
         )
 
         # Calculate aggregate metrics
@@ -870,14 +873,14 @@ async def export_for_research(
             "gini_coefficient": 1 - fairness["value"],
             "min_assignments": fairness["details"]["min_assignments"],
             "max_assignments": fairness["details"]["max_assignments"],
-            "mean_assignments": fairness["details"]["mean_assignments"]
+            "mean_assignments": fairness["details"]["mean_assignments"],
         }
 
         coverage_metrics = {
             "coverage_rate": coverage["value"],
             "total_blocks": coverage["details"]["total_blocks"],
             "covered_blocks": coverage["details"]["covered_blocks"],
-            "uncovered_blocks": coverage["details"]["uncovered_blocks"]
+            "uncovered_blocks": coverage["details"]["uncovered_blocks"],
         }
 
         return ResearchDataExport(
@@ -898,7 +901,7 @@ async def export_for_research(
             institutionType="Military Medical Facility" if not anonymize else None,
             programSize="medium" if len(residents) < 50 else "large",
             speciality="Emergency Medicine" if not anonymize else None,
-            notes="Exported for research analysis"
+            notes="Exported for research analysis",
         )
 
     except HTTPException:
@@ -906,6 +909,5 @@ async def export_for_research(
     except Exception as e:
         logger.error(f"Error exporting research data: {e}")
         raise HTTPException(
-            status_code=500,
-            detail="An error occurred exporting research data"
+            status_code=500, detail="An error occurred exporting research data"
         )

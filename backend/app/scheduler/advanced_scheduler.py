@@ -14,7 +14,6 @@ job scheduler infrastructure while adding advanced enterprise features.
 """
 
 import asyncio
-import hashlib
 import logging
 import time
 import traceback
@@ -22,16 +21,14 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 from uuid import UUID, uuid4
 
 import redis
 from croniter import croniter
 
 from app.core.config import get_settings
-from app.db.session import SessionLocal
 from app.scheduler.jobs import get_job_function
-from app.scheduler.persistence import JobPersistence
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +83,7 @@ class TaskDependency:
 
     task_id: str
     dependency_type: str = "completion"  # completion, success, failure
-    timeout: Optional[int] = None  # seconds to wait for dependency
+    timeout: int | None = None  # seconds to wait for dependency
 
 
 @dataclass
@@ -99,13 +96,13 @@ class TaskExecution:
     status: TaskStatus
     priority: TaskPriority
     scheduled_time: datetime
-    started_time: Optional[datetime] = None
-    completed_time: Optional[datetime] = None
-    result: Optional[Any] = None
-    error: Optional[str] = None
-    traceback_str: Optional[str] = None
+    started_time: datetime | None = None
+    completed_time: datetime | None = None
+    result: Any | None = None
+    error: str | None = None
+    traceback_str: str | None = None
     retry_count: int = 0
-    lock_id: Optional[str] = None
+    lock_id: str | None = None
     dependencies: list[TaskDependency] = field(default_factory=list)
     metrics: dict[str, Any] = field(default_factory=dict)
 
@@ -120,11 +117,11 @@ class TaskDefinition:
     priority: TaskPriority = TaskPriority.NORMAL
     args: list[Any] = field(default_factory=list)
     kwargs: dict[str, Any] = field(default_factory=dict)
-    retry_config: Optional[RetryConfig] = None
+    retry_config: RetryConfig | None = None
     dependencies: list[TaskDependency] = field(default_factory=list)
     require_lock: bool = False
     lock_timeout: int = 300  # seconds
-    timeout: Optional[int] = None  # task execution timeout
+    timeout: int | None = None  # task execution timeout
     tags: list[str] = field(default_factory=list)
 
 
@@ -145,7 +142,7 @@ class DistributedTaskLock:
     end
     """
 
-    def __init__(self, redis_client: Optional[redis.Redis] = None):
+    def __init__(self, redis_client: redis.Redis | None = None):
         """
         Initialize distributed lock.
 
@@ -167,7 +164,7 @@ class DistributedTaskLock:
         timeout: int = 300,
         retry_delay: float = 0.5,
         max_wait: int = 30,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Acquire a distributed lock for a task.
 
@@ -245,7 +242,7 @@ class DistributedTaskLock:
         except redis.RedisError:
             return False
 
-    def get_lock_ttl(self, task_id: str) -> Optional[int]:
+    def get_lock_ttl(self, task_id: str) -> int | None:
         """
         Get remaining TTL for a task lock.
 
@@ -311,7 +308,9 @@ class TaskDependencyGraph:
             for dep in dependencies:
                 self.graph[task_id].discard(dep.task_id)
                 self.reverse_graph[dep.task_id].discard(task_id)
-            raise ValueError(f"Adding task {task_id} would create a circular dependency")
+            raise ValueError(
+                f"Adding task {task_id} would create a circular dependency"
+            )
 
     def remove_task(self, task_id: str) -> None:
         """
@@ -453,11 +452,10 @@ class PriorityTaskQueue:
         self.task_index[task_execution.task_id] = task_execution
 
         logger.debug(
-            f"Enqueued task {task_execution.task_name} "
-            f"with priority {priority.name}"
+            f"Enqueued task {task_execution.task_name} with priority {priority.name}"
         )
 
-    def dequeue(self) -> Optional[TaskExecution]:
+    def dequeue(self) -> TaskExecution | None:
         """
         Remove and return the highest priority task.
 
@@ -473,7 +471,7 @@ class PriorityTaskQueue:
 
         return None
 
-    def peek(self) -> Optional[TaskExecution]:
+    def peek(self) -> TaskExecution | None:
         """
         Return the highest priority task without removing it.
 
@@ -509,7 +507,7 @@ class PriorityTaskQueue:
         except ValueError:
             return False
 
-    def size(self, priority: Optional[TaskPriority] = None) -> int:
+    def size(self, priority: TaskPriority | None = None) -> int:
         """
         Get queue size.
 
@@ -602,7 +600,7 @@ class TaskRetryManager:
             delay = config.initial_delay * (attempt + 1)
 
         elif config.strategy == RetryStrategy.EXPONENTIAL:
-            delay = config.initial_delay * (config.backoff_multiplier ** attempt)
+            delay = config.initial_delay * (config.backoff_multiplier**attempt)
 
         else:
             delay = config.initial_delay
@@ -613,6 +611,7 @@ class TaskRetryManager:
         # Add jitter if enabled (±20% random variation)
         if config.jitter:
             import random
+
             jitter_factor = random.uniform(0.8, 1.2)
             delay = int(delay * jitter_factor)
 
@@ -729,7 +728,7 @@ class SchedulerHealthMonitor:
 
         # Trim log if too large
         if len(self.error_log) > self.max_error_log_size:
-            self.error_log = self.error_log[-self.max_error_log_size:]
+            self.error_log = self.error_log[-self.max_error_log_size :]
 
     def get_health_status(self) -> dict[str, Any]:
         """
@@ -743,17 +742,18 @@ class SchedulerHealthMonitor:
         total_tasks = self.metrics["tasks_executed"]
         success_rate = (
             self.metrics["tasks_succeeded"] / total_tasks * 100
-            if total_tasks > 0 else 0
+            if total_tasks > 0
+            else 0
         )
 
         avg_execution_time = (
-            self.metrics["total_execution_time"] / total_tasks
-            if total_tasks > 0 else 0
+            self.metrics["total_execution_time"] / total_tasks if total_tasks > 0 else 0
         )
 
         lock_success_rate = (
-            self.metrics["lock_acquisitions"] /
-            (self.metrics["lock_acquisitions"] + self.metrics["lock_failures"]) * 100
+            self.metrics["lock_acquisitions"]
+            / (self.metrics["lock_acquisitions"] + self.metrics["lock_failures"])
+            * 100
             if self.metrics["lock_acquisitions"] + self.metrics["lock_failures"] > 0
             else 0
         )
@@ -771,7 +771,9 @@ class SchedulerHealthMonitor:
     def reset_metrics(self) -> None:
         """Reset all metrics."""
         self.start_time = datetime.utcnow()
-        self.metrics = {k: 0 if isinstance(v, int) else 0.0 for k, v in self.metrics.items()}
+        self.metrics = {
+            k: 0 if isinstance(v, int) else 0.0 for k, v in self.metrics.items()
+        }
         self.error_log = []
 
 
@@ -791,7 +793,7 @@ class AdvancedTaskScheduler:
 
     def __init__(
         self,
-        redis_client: Optional[redis.Redis] = None,
+        redis_client: redis.Redis | None = None,
         max_concurrent_tasks: int = 10,
     ):
         """
@@ -813,7 +815,7 @@ class AdvancedTaskScheduler:
         self.task_history: list[TaskExecution] = []
 
         self._running = False
-        self._executor_task: Optional[asyncio.Task] = None
+        self._executor_task: asyncio.Task | None = None
 
     def register_task(self, task_def: TaskDefinition) -> None:
         """
@@ -861,7 +863,7 @@ class AdvancedTaskScheduler:
     def schedule_task(
         self,
         task_id: str,
-        scheduled_time: Optional[datetime] = None,
+        scheduled_time: datetime | None = None,
         **kwargs,
     ) -> UUID:
         """
@@ -908,8 +910,8 @@ class AdvancedTaskScheduler:
         self,
         task_id: str,
         cron_expression: str,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
     ) -> list[UUID]:
         """
         Schedule task using cron expression.
@@ -1076,7 +1078,10 @@ class AdvancedTaskScheduler:
 
             # Check dependency type
             if dep.dependency_type == "completion":
-                if dep_execution.status not in [TaskStatus.COMPLETED, TaskStatus.FAILED]:
+                if dep_execution.status not in [
+                    TaskStatus.COMPLETED,
+                    TaskStatus.FAILED,
+                ]:
                     return False
             elif dep.dependency_type == "success":
                 if dep_execution.status != TaskStatus.COMPLETED:
@@ -1112,7 +1117,9 @@ class AdvancedTaskScheduler:
                 )
 
                 if not lock_id:
-                    raise Exception(f"Failed to acquire lock for task {task_execution.task_id}")
+                    raise Exception(
+                        f"Failed to acquire lock for task {task_execution.task_id}"
+                    )
 
                 task_execution.lock_id = lock_id
                 self.health_monitor.record_lock_acquisition(True)
@@ -1127,7 +1134,9 @@ class AdvancedTaskScheduler:
                     timeout=task_def.timeout,
                 )
             else:
-                result = await asyncio.to_thread(func, *task_def.args, **task_def.kwargs)
+                result = await asyncio.to_thread(
+                    func, *task_def.args, **task_def.kwargs
+                )
 
             # Record success
             task_execution.status = TaskStatus.COMPLETED
@@ -1222,7 +1231,7 @@ class AdvancedTaskScheduler:
 
         return health
 
-    def get_task_status(self, execution_id: UUID) -> Optional[dict[str, Any]]:
+    def get_task_status(self, execution_id: UUID) -> dict[str, Any] | None:
         """
         Get status of a specific task execution.
 
@@ -1266,8 +1275,12 @@ class AdvancedTaskScheduler:
             "status": execution.status.value,
             "priority": execution.priority.name,
             "scheduled_time": execution.scheduled_time.isoformat(),
-            "started_time": execution.started_time.isoformat() if execution.started_time else None,
-            "completed_time": execution.completed_time.isoformat() if execution.completed_time else None,
+            "started_time": execution.started_time.isoformat()
+            if execution.started_time
+            else None,
+            "completed_time": execution.completed_time.isoformat()
+            if execution.completed_time
+            else None,
             "retry_count": execution.retry_count,
             "error": execution.error,
             "metrics": execution.metrics,
@@ -1275,7 +1288,7 @@ class AdvancedTaskScheduler:
 
 
 # Global scheduler instance
-_advanced_scheduler: Optional[AdvancedTaskScheduler] = None
+_advanced_scheduler: AdvancedTaskScheduler | None = None
 
 
 def get_advanced_scheduler() -> AdvancedTaskScheduler:

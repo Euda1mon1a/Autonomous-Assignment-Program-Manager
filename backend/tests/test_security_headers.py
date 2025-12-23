@@ -4,7 +4,8 @@ Tests for security headers middleware.
 Tests the SecurityHeadersMiddleware implementation that adds
 OWASP recommended security headers to all API responses.
 """
-from unittest.mock import MagicMock, patch
+
+from unittest.mock import patch
 
 import pytest
 from fastapi import FastAPI
@@ -12,7 +13,6 @@ from fastapi.testclient import TestClient
 from starlette.responses import JSONResponse
 
 from app.middleware.security_headers import SecurityHeadersMiddleware
-
 
 # ============================================================================
 # Test Fixtures
@@ -70,7 +70,9 @@ class TestSecurityHeadersPresence:
     def test_referrer_policy_header(self, test_client):
         """Test Referrer-Policy header is set correctly."""
         response = test_client.get("/test")
-        assert response.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+        assert (
+            response.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+        )
 
     def test_content_security_policy_header(self, test_client):
         """Test Content-Security-Policy header is present."""

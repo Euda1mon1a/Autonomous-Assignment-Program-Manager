@@ -272,9 +272,9 @@ class JobPersistence:
             execution_id: Execution ID
             result: Job execution result
         """
-        execution = self.db.query(JobExecution).filter(
-            JobExecution.id == execution_id
-        ).first()
+        execution = (
+            self.db.query(JobExecution).filter(JobExecution.id == execution_id).first()
+        )
 
         if execution:
             execution.finished_at = datetime.utcnow()
@@ -301,9 +301,9 @@ class JobPersistence:
             error: Error message
             traceback: Full traceback
         """
-        execution = self.db.query(JobExecution).filter(
-            JobExecution.id == execution_id
-        ).first()
+        execution = (
+            self.db.query(JobExecution).filter(JobExecution.id == execution_id).first()
+        )
 
         if execution:
             execution.finished_at = datetime.utcnow()
@@ -386,24 +386,24 @@ class JobPersistence:
             return {}
 
         # Count executions by status
-        executions = self.db.query(
-            JobExecution.status,
-            func.count(JobExecution.id).label("count")
-        ).filter(
-            JobExecution.job_id == job_id
-        ).group_by(
-            JobExecution.status
-        ).all()
+        executions = (
+            self.db.query(
+                JobExecution.status, func.count(JobExecution.id).label("count")
+            )
+            .filter(JobExecution.job_id == job_id)
+            .group_by(JobExecution.status)
+            .all()
+        )
 
         status_counts = {status: count for status, count in executions}
 
         # Get average runtime
-        avg_runtime = self.db.query(
-            func.avg(JobExecution.runtime_seconds)
-        ).filter(
-            JobExecution.job_id == job_id,
-            JobExecution.status == "success"
-        ).scalar() or 0
+        avg_runtime = (
+            self.db.query(func.avg(JobExecution.runtime_seconds))
+            .filter(JobExecution.job_id == job_id, JobExecution.status == "success")
+            .scalar()
+            or 0
+        )
 
         return {
             "job_id": str(job.id),
@@ -413,6 +413,10 @@ class JobPersistence:
             "failure_count": status_counts.get("failure", 0),
             "missed_count": status_counts.get("missed", 0),
             "average_runtime_seconds": float(avg_runtime),
-            "last_run_time": job.last_run_time.isoformat() if job.last_run_time else None,
-            "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None,
+            "last_run_time": job.last_run_time.isoformat()
+            if job.last_run_time
+            else None,
+            "next_run_time": job.next_run_time.isoformat()
+            if job.next_run_time
+            else None,
         }

@@ -1,4 +1,5 @@
 """Swap validation service."""
+
 from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import TYPE_CHECKING, Optional
@@ -54,9 +55,13 @@ class SwapValidationService:
         target_faculty = self._get_faculty(target_faculty_id)
 
         if not source_faculty:
-            errors.append(ValidationError("SOURCE_NOT_FOUND", "Source faculty not found"))
+            errors.append(
+                ValidationError("SOURCE_NOT_FOUND", "Source faculty not found")
+            )
         if not target_faculty:
-            errors.append(ValidationError("TARGET_NOT_FOUND", "Target faculty not found"))
+            errors.append(
+                ValidationError("TARGET_NOT_FOUND", "Target faculty not found")
+            )
 
         if errors:
             return SwapValidationResult(valid=False, errors=errors, warnings=warnings)
@@ -65,31 +70,39 @@ class SwapValidationService:
         target_weeks = self._get_faculty_fmit_weeks(target_faculty_id)
         if self._creates_back_to_back(target_weeks, source_week):
             back_to_back = True
-            errors.append(ValidationError(
-                "BACK_TO_BACK",
-                f"Taking week {source_week} would create back-to-back FMIT for {target_faculty.name}"
-            ))
+            errors.append(
+                ValidationError(
+                    "BACK_TO_BACK",
+                    f"Taking week {source_week} would create back-to-back FMIT for {target_faculty.name}",
+                )
+            )
 
         # Check external conflicts
         conflict = self._check_external_conflicts(target_faculty_id, source_week)
         if conflict:
             external_conflict = conflict
-            errors.append(ValidationError(
-                "EXTERNAL_CONFLICT",
-                f"{target_faculty.name} has {conflict} conflict during week {source_week}"
-            ))
+            errors.append(
+                ValidationError(
+                    "EXTERNAL_CONFLICT",
+                    f"{target_faculty.name} has {conflict} conflict during week {source_week}",
+                )
+            )
 
         # Past date check
         if source_week < date.today():
-            errors.append(ValidationError("PAST_DATE", f"Cannot swap past week {source_week}"))
+            errors.append(
+                ValidationError("PAST_DATE", f"Cannot swap past week {source_week}")
+            )
 
         # Warning for imminent swaps
         if source_week < date.today() + timedelta(days=14):
-            warnings.append(ValidationError(
-                "IMMINENT_SWAP",
-                f"Week {source_week} is within 2 weeks",
-                severity="warning"
-            ))
+            warnings.append(
+                ValidationError(
+                    "IMMINENT_SWAP",
+                    f"Week {source_week} is within 2 weeks",
+                    severity="warning",
+                )
+            )
 
         return SwapValidationResult(
             valid=len(errors) == 0,
@@ -102,22 +115,33 @@ class SwapValidationService:
 
     def _get_faculty(self, faculty_id: UUID) -> Optional["Person"]:
         from app.models.person import Person
-        return self.db.query(Person).filter(Person.id == faculty_id, Person.type == "faculty").first()
+
+        return (
+            self.db.query(Person)
+            .filter(Person.id == faculty_id, Person.type == "faculty")
+            .first()
+        )
 
     def _get_faculty_fmit_weeks(self, faculty_id: UUID) -> list[date]:
         return []  # Placeholder - needs schedule data source
 
     def _creates_back_to_back(self, existing_weeks: list[date], new_week: date) -> bool:
         from app.services.xlsx_import import has_back_to_back_conflict
+
         return has_back_to_back_conflict(sorted(existing_weeks + [new_week]))
 
     def _check_external_conflicts(self, faculty_id: UUID, week: date) -> str | None:
         from app.models.absence import Absence
+
         week_end = week + timedelta(days=6)
-        conflict = self.db.query(Absence).filter(
-            Absence.person_id == faculty_id,
-            Absence.start_date <= week_end,
-            Absence.end_date >= week,
-            Absence.is_blocking,
-        ).first()
+        conflict = (
+            self.db.query(Absence)
+            .filter(
+                Absence.person_id == faculty_id,
+                Absence.start_date <= week_end,
+                Absence.end_date >= week,
+                Absence.is_blocking,
+            )
+            .first()
+        )
         return conflict.absence_type if conflict else None

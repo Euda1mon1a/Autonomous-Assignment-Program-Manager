@@ -1,4 +1,5 @@
 """Conflict detection schemas."""
+
 from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
@@ -8,6 +9,7 @@ from pydantic import BaseModel, Field
 
 class ConflictSeverityEnum(str, Enum):
     """Severity level of a conflict."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -16,6 +18,7 @@ class ConflictSeverityEnum(str, Enum):
 
 class ConflictTypeEnum(str, Enum):
     """Type of schedule conflict."""
+
     # Cross-system conflicts
     LEAVE_FMIT_OVERLAP = "leave_fmit_overlap"
     RESIDENCY_FMIT_DOUBLE_BOOKING = "residency_fmit_double_booking"
@@ -39,6 +42,7 @@ class ConflictTypeEnum(str, Enum):
 
 class ConflictStatusEnum(str, Enum):
     """Status of a conflict alert."""
+
     NEW = "new"
     ACKNOWLEDGED = "acknowledged"
     RESOLVED = "resolved"
@@ -47,6 +51,7 @@ class ConflictStatusEnum(str, Enum):
 
 class ConflictBase(BaseModel):
     """Base conflict information schema."""
+
     faculty_id: UUID
     faculty_name: str
     conflict_type: ConflictTypeEnum
@@ -62,6 +67,7 @@ class ConflictBase(BaseModel):
 
 class ConflictInfo(ConflictBase):
     """Detailed conflict information for detection results."""
+
     # Additional metadata for grouping and analysis
     start_date: date | None = None
     end_date: date | None = None
@@ -79,6 +85,7 @@ class ConflictInfo(ConflictBase):
 
 class ConflictAlertCreate(BaseModel):
     """Schema for creating a conflict alert."""
+
     faculty_id: UUID
     conflict_type: ConflictTypeEnum
     severity: ConflictSeverityEnum
@@ -90,12 +97,14 @@ class ConflictAlertCreate(BaseModel):
 
 class ConflictAlertUpdate(BaseModel):
     """Schema for updating a conflict alert."""
+
     status: ConflictStatusEnum | None = None
     resolution_notes: str | None = None
 
 
 class ConflictAlertResponse(BaseModel):
     """Schema for conflict alert response."""
+
     id: UUID
     faculty_id: UUID
     conflict_type: ConflictTypeEnum
@@ -122,6 +131,7 @@ class ConflictAlertResponse(BaseModel):
 
 class ConflictGroup(BaseModel):
     """Schema for grouped conflicts."""
+
     group_by: str  # "type", "person", "severity", "date"
     group_key: str  # The value being grouped by
     conflict_count: int
@@ -135,6 +145,7 @@ class ConflictGroup(BaseModel):
 
 class ConflictDetectionRequest(BaseModel):
     """Request schema for conflict detection."""
+
     faculty_id: UUID | None = None
     start_date: date | None = None
     end_date: date | None = None
@@ -144,6 +155,7 @@ class ConflictDetectionRequest(BaseModel):
 
 class ConflictDetectionResponse(BaseModel):
     """Response schema for conflict detection."""
+
     total_conflicts: int
     conflicts: list[ConflictInfo]
     groups: list[ConflictGroup] | None = None
@@ -156,6 +168,7 @@ class ConflictDetectionResponse(BaseModel):
 
 class ACGMEComplianceCheck(BaseModel):
     """Schema for ACGME compliance checking results."""
+
     person_id: UUID
     person_name: str
     check_period_start: date
@@ -166,7 +179,9 @@ class ACGMEComplianceCheck(BaseModel):
     hours_violations: list[str] = Field(default_factory=list)
 
     # 1-in-7 day off compliance
-    consecutive_work_days: list[dict] = Field(default_factory=list)  # [{start, end, days}]
+    consecutive_work_days: list[dict] = Field(
+        default_factory=list
+    )  # [{start, end, days}]
     rest_day_violations: list[str] = Field(default_factory=list)
 
     # Overall compliance
@@ -176,6 +191,7 @@ class ACGMEComplianceCheck(BaseModel):
 
 class SupervisionRatioCheck(BaseModel):
     """Schema for supervision ratio checking results."""
+
     block_id: UUID
     block_date: date
     block_time: str

@@ -3,6 +3,7 @@
 Comprehensive test suite covering certification type and person certification CRUD operations,
 compliance monitoring, expiration tracking, and admin functions.
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -13,10 +14,10 @@ from sqlalchemy.orm import Session
 from app.models.certification import CertificationType, PersonCertification
 from app.models.person import Person
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def sample_cert_type(db: Session) -> CertificationType:
@@ -140,6 +141,7 @@ def expired_person_cert(
 # Certification Type Endpoints
 # ============================================================================
 
+
 class TestListCertificationTypesEndpoint:
     """Tests for GET /api/certifications/types endpoint."""
 
@@ -175,7 +177,9 @@ class TestListCertificationTypesEndpoint:
         assert "required_for_faculty" in cert
         assert "is_active" in cert
 
-    def test_list_certification_types_active_only(self, client: TestClient, db: Session):
+    def test_list_certification_types_active_only(
+        self, client: TestClient, db: Session
+    ):
         """Test filtering by active_only parameter."""
         # Create active and inactive cert types
         active = CertificationType(
@@ -201,7 +205,9 @@ class TestListCertificationTypesEndpoint:
         assert data["items"][0]["name"] == "BLS"
 
         # Explicitly set active_only=False
-        response = client.get("/api/v1/certifications/types", params={"active_only": False})
+        response = client.get(
+            "/api/v1/certifications/types", params={"active_only": False}
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 2
@@ -380,6 +386,7 @@ class TestUpdateCertificationTypeEndpoint:
 # Expiration & Compliance Endpoints
 # ============================================================================
 
+
 class TestGetExpiringCertificationsEndpoint:
     """Tests for GET /api/certifications/expiring endpoint."""
 
@@ -518,6 +525,7 @@ class TestGetPersonComplianceEndpoint:
 # ============================================================================
 # Person Certification Endpoints
 # ============================================================================
+
 
 class TestListCertificationsForPersonEndpoint:
     """Tests for GET /api/certifications/by-person/{person_id} endpoint."""
@@ -905,6 +913,7 @@ class TestDeletePersonCertificationEndpoint:
 # Admin Endpoints
 # ============================================================================
 
+
 class TestTriggerCertificationRemindersEndpoint:
     """Tests for POST /api/certifications/admin/send-reminders endpoint."""
 
@@ -935,13 +944,11 @@ class TestTriggerCertificationRemindersEndpoint:
 
         assert response.status_code == 401
 
-    def test_trigger_reminders_requires_admin(
-        self, client: TestClient, db: Session
-    ):
+    def test_trigger_reminders_requires_admin(self, client: TestClient, db: Session):
         """Test that triggering reminders requires admin role."""
         # Create non-admin user
-        from app.models.user import User
         from app.core.security import get_password_hash
+        from app.models.user import User
 
         user = User(
             id=uuid4(),
@@ -974,6 +981,7 @@ class TestTriggerCertificationRemindersEndpoint:
 # ============================================================================
 # Edge Cases and Validation
 # ============================================================================
+
 
 class TestCertificationEdgeCases:
     """Tests for edge cases and boundary conditions."""
@@ -1014,7 +1022,9 @@ class TestCertificationEdgeCases:
             "person_id": str(sample_resident.id),
             "certification_type_id": str(sample_cert_type.id),
             "issued_date": date.today().isoformat(),
-            "expiration_date": (date.today() + timedelta(days=3650)).isoformat(),  # 10 years
+            "expiration_date": (
+                date.today() + timedelta(days=3650)
+            ).isoformat(),  # 10 years
         }
 
         response = client.post(

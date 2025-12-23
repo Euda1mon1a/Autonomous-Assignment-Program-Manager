@@ -34,7 +34,7 @@ class JobHistoryService:
         offset: int = 0,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
-        status_filter: str | None = None
+        status_filter: str | None = None,
     ) -> dict[str, Any]:
         """
         Get historical task execution records.
@@ -160,10 +160,7 @@ class JobHistoryService:
             return None
 
     def get_task_timeline(
-        self,
-        task_name: str,
-        hours: int = 24,
-        granularity: str = "hour"
+        self, task_name: str, hours: int = 24, granularity: str = "hour"
     ) -> dict[str, Any]:
         """
         Get task execution timeline showing frequency over time.
@@ -216,9 +213,7 @@ class JobHistoryService:
             }
 
     def get_recent_failures(
-        self,
-        limit: int = 50,
-        task_name: str | None = None
+        self, limit: int = 50, task_name: str | None = None
     ) -> list[dict[str, Any]]:
         """
         Get recent task failures for debugging.
@@ -262,10 +257,7 @@ class JobHistoryService:
             return []
 
     def get_slow_tasks(
-        self,
-        threshold_seconds: float = 60.0,
-        limit: int = 50,
-        hours: int = 24
+        self, threshold_seconds: float = 60.0, limit: int = 50, hours: int = 24
     ) -> list[dict[str, Any]]:
         """
         Get tasks that exceeded a runtime threshold.
@@ -309,7 +301,7 @@ class JobHistoryService:
     def get_task_success_rate_history(
         self,
         task_name: str,
-        hours: int = 168  # 7 days
+        hours: int = 168,  # 7 days
     ) -> dict[str, Any]:
         """
         Get historical success rate trend for a task.
@@ -360,11 +352,7 @@ class JobHistoryService:
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    def search_tasks(
-        self,
-        query: str,
-        limit: int = 50
-    ) -> list[dict[str, Any]]:
+    def search_tasks(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
         """
         Search task history by various criteria.
 

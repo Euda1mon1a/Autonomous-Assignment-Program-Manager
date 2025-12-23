@@ -133,7 +133,9 @@ class FacultyPreferenceCache:
         key = f"{self.KEY_PREFIX}blocked:{faculty_id}:{week_date.isoformat()}"
         return self._get(key)
 
-    def set_week_blocked(self, faculty_id: UUID, week_date: date, is_blocked: bool) -> None:
+    def set_week_blocked(
+        self, faculty_id: UUID, week_date: date, is_blocked: bool
+    ) -> None:
         """Cache whether a week is blocked."""
         key = f"{self.KEY_PREFIX}blocked:{faculty_id}:{week_date.isoformat()}"
         self._put(key, is_blocked)
@@ -152,7 +154,9 @@ class FacultyPreferenceCache:
         key = f"{self.KEY_PREFIX}preferred:{faculty_id}:{week_date.isoformat()}"
         return self._get(key)
 
-    def set_week_preferred(self, faculty_id: UUID, week_date: date, is_preferred: bool) -> None:
+    def set_week_preferred(
+        self, faculty_id: UUID, week_date: date, is_preferred: bool
+    ) -> None:
         """Cache whether a week is preferred."""
         key = f"{self.KEY_PREFIX}preferred:{faculty_id}:{week_date.isoformat()}"
         self._put(key, is_preferred)
@@ -192,7 +196,9 @@ class FacultyPreferenceCache:
                 del self._local_cache[k]
                 deleted_count += 1
 
-        logger.info(f"Invalidated {deleted_count} cache entries for faculty {faculty_id}")
+        logger.info(
+            f"Invalidated {deleted_count} cache entries for faculty {faculty_id}"
+        )
         return deleted_count
 
     def invalidate_all(self) -> int:
@@ -270,8 +276,7 @@ class FacultyPreferenceCache:
             if len(self._local_cache) > 1000:
                 # Remove oldest 20%
                 sorted_keys = sorted(
-                    self._local_cache.keys(),
-                    key=lambda k: self._local_cache[k][1]
+                    self._local_cache.keys(), key=lambda k: self._local_cache[k][1]
                 )
                 for k in sorted_keys[:200]:
                     del self._local_cache[k]
@@ -310,6 +315,7 @@ class CachedFacultyPreferenceService:
             cache: Optional cache instance (uses global if not provided)
         """
         from sqlalchemy.orm import Session
+
         self.db: Session = db
         self.cache = cache or get_faculty_pref_cache()
 
@@ -330,9 +336,11 @@ class CachedFacultyPreferenceService:
             return self._dict_to_preference(cached)
 
         # Query database
-        preferences = self.db.query(FacultyPreference).filter(
-            FacultyPreference.faculty_id == faculty_id
-        ).first()
+        preferences = (
+            self.db.query(FacultyPreference)
+            .filter(FacultyPreference.faculty_id == faculty_id)
+            .first()
+        )
 
         # Cache result if found
         if preferences:
@@ -447,6 +455,7 @@ class FacultyConstraintService:
             db: Database session
         """
         from sqlalchemy.orm import Session
+
         self.db: Session = db
         self.pref_service = CachedFacultyPreferenceService(db)
 
@@ -467,10 +476,14 @@ class FacultyConstraintService:
             - Prevents IDOR by deriving faculty_id from authenticated user
             - Returns None if user is not a faculty member
         """
-        faculty = self.db.query(Person).filter(
-            Person.email == user.email,
-            Person.type == "faculty",
-        ).first()
+        faculty = (
+            self.db.query(Person)
+            .filter(
+                Person.email == user.email,
+                Person.type == "faculty",
+            )
+            .first()
+        )
 
         return faculty.id if faculty else None
 
@@ -581,4 +594,6 @@ class FacultyConstraintService:
             faculty_id: UUID of the faculty member whose preferences changed
         """
         self.pref_service.invalidate_cache(faculty_id)
-        logger.info(f"Cache invalidated for faculty {faculty_id} after preference update")
+        logger.info(
+            f"Cache invalidated for faculty {faculty_id} after preference update"
+        )

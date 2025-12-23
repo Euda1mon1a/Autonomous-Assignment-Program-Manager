@@ -1,4 +1,5 @@
 """Enhanced auto-matching service for FMIT swap requests."""
+
 from datetime import date, datetime, timedelta
 from uuid import UUID, uuid4
 
@@ -33,11 +34,7 @@ class SwapAutoMatcher:
     workload balance, past swap history, and faculty availability.
     """
 
-    def __init__(
-        self,
-        db: Session,
-        criteria: MatchingCriteria | None = None
-    ):
+    def __init__(self, db: Session, criteria: MatchingCriteria | None = None):
         """
         Initialize the auto-matcher.
 
@@ -64,9 +61,7 @@ class SwapAutoMatcher:
             ValueError: If request not found
         """
         # Get the source request
-        request = self.db.query(SwapRecord).filter(
-            SwapRecord.id == request_id
-        ).first()
+        request = self.db.query(SwapRecord).filter(SwapRecord.id == request_id).first()
 
         if not request:
             raise ValueError(f"Swap request {request_id} not found")
@@ -75,10 +70,14 @@ class SwapAutoMatcher:
             return []  # Only match pending requests
 
         # Find all other pending requests
-        candidates = self.db.query(SwapRecord).filter(
-            SwapRecord.id != request_id,
-            SwapRecord.status == SwapStatus.PENDING,
-        ).all()
+        candidates = (
+            self.db.query(SwapRecord)
+            .filter(
+                SwapRecord.id != request_id,
+                SwapRecord.status == SwapStatus.PENDING,
+            )
+            .all()
+        )
 
         matches = []
 
@@ -91,9 +90,7 @@ class SwapAutoMatcher:
         return matches
 
     def score_swap_compatibility(
-        self,
-        request: SwapRecord,
-        candidate: SwapRecord
+        self, request: SwapRecord, candidate: SwapRecord
     ) -> float:
         """
         Calculate compatibility score between two swap requests.
@@ -124,11 +121,11 @@ class SwapAutoMatcher:
 
         # Calculate weighted total
         total_score = (
-            (date_score * self.criteria.date_proximity_weight) +
-            (preference_score * self.criteria.preference_alignment_weight) +
-            (workload_score * self.criteria.workload_balance_weight) +
-            (history_score * self.criteria.history_weight) +
-            (availability_score * self.criteria.availability_weight)
+            (date_score * self.criteria.date_proximity_weight)
+            + (preference_score * self.criteria.preference_alignment_weight)
+            + (workload_score * self.criteria.workload_balance_weight)
+            + (history_score * self.criteria.history_weight)
+            + (availability_score * self.criteria.availability_weight)
         ) * blocking_penalty
 
         # Normalize by total weight
@@ -138,9 +135,7 @@ class SwapAutoMatcher:
         return min(max(total_score, 0.0), 1.0)
 
     def suggest_optimal_matches(
-        self,
-        request_id: UUID,
-        top_k: int = 5
+        self, request_id: UUID, top_k: int = 5
     ) -> list[RankedMatch]:
         """
         Suggest optimal matches for a swap request, ranked by compatibility.
@@ -156,9 +151,7 @@ class SwapAutoMatcher:
             ValueError: If request not found
         """
         # Get the source request
-        request = self.db.query(SwapRecord).filter(
-            SwapRecord.id == request_id
-        ).first()
+        request = self.db.query(SwapRecord).filter(SwapRecord.id == request_id).first()
 
         if not request:
             raise ValueError(f"Swap request {request_id} not found")
@@ -171,9 +164,11 @@ class SwapAutoMatcher:
 
         for match in compatible_matches:
             # Get the candidate request
-            candidate = self.db.query(SwapRecord).filter(
-                SwapRecord.id == match.request_b_id
-            ).first()
+            candidate = (
+                self.db.query(SwapRecord)
+                .filter(SwapRecord.id == match.request_b_id)
+                .first()
+            )
 
             if not candidate:
                 continue
@@ -239,10 +234,7 @@ class SwapAutoMatcher:
             ranked_matches.append(ranked_match)
 
         # Sort by compatibility score (highest first)
-        ranked_matches.sort(
-            key=lambda x: x.compatibility_score,
-            reverse=True
-        )
+        ranked_matches.sort(key=lambda x: x.compatibility_score, reverse=True)
 
         # Return top K matches
         limit = min(top_k, self.criteria.max_matches_per_request)
@@ -261,9 +253,11 @@ class SwapAutoMatcher:
         start_time = datetime.utcnow()
 
         # Get all pending requests
-        pending_requests = self.db.query(SwapRecord).filter(
-            SwapRecord.status == SwapStatus.PENDING
-        ).all()
+        pending_requests = (
+            self.db.query(SwapRecord)
+            .filter(SwapRecord.status == SwapStatus.PENDING)
+            .all()
+        )
 
         total_requests = len(pending_requests)
         successful_matches = []
@@ -275,8 +269,7 @@ class SwapAutoMatcher:
             try:
                 # Find matches for this request
                 matches = self.suggest_optimal_matches(
-                    request.id,
-                    top_k=self.criteria.max_matches_per_request
+                    request.id, top_k=self.criteria.max_matches_per_request
                 )
 
                 best_match = matches[0] if matches else None
@@ -305,13 +298,13 @@ class SwapAutoMatcher:
                     # Check if any are high priority
                     if best_match and best_match.priority in [
                         MatchPriority.CRITICAL,
-                        MatchPriority.HIGH
+                        MatchPriority.HIGH,
                     ]:
                         high_priority_matches.append(result)
                 else:
                     no_matches.append(request.id)
 
-            except Exception as e:
+            except Exception:
                 # Log error but continue processing
                 no_matches.append(request.id)
                 continue
@@ -329,9 +322,7 @@ class SwapAutoMatcher:
         )
 
     def suggest_proactive_swaps(
-        self,
-        faculty_id: UUID,
-        limit: int = 5
+        self, faculty_id: UUID, limit: int = 5
     ) -> list[MatchingSuggestion]:
         """
         Proactively suggest beneficial swaps for a faculty member.
@@ -350,12 +341,15 @@ class SwapAutoMatcher:
         preferences = self.preference_service.get_or_create_preferences(faculty_id)
 
         # Get faculty's current future assignments
-        current_assignments = self.db.query(Assignment, Block).join(
-            Block, Assignment.block_id == Block.id
-        ).filter(
-            Assignment.person_id == faculty_id,
-            Block.start_date >= datetime.utcnow().date(),
-        ).all()
+        current_assignments = (
+            self.db.query(Assignment, Block)
+            .join(Block, Assignment.block_id == Block.id)
+            .filter(
+                Assignment.person_id == faculty_id,
+                Block.start_date >= datetime.utcnow().date(),
+            )
+            .all()
+        )
 
         suggestions = []
 
@@ -369,9 +363,10 @@ class SwapAutoMatcher:
 
             if is_blocked:
                 # Find faculty who prefer this week
-                interested_faculty = self.preference_service.get_faculty_with_preference_for_week(
-                    current_week,
-                    exclude_faculty_ids=[faculty_id]
+                interested_faculty = (
+                    self.preference_service.get_faculty_with_preference_for_week(
+                        current_week, exclude_faculty_ids=[faculty_id]
+                    )
                 )
 
                 for partner_id in interested_faculty:
@@ -380,12 +375,15 @@ class SwapAutoMatcher:
                         continue
 
                     # Find their assignments on weeks this faculty prefers
-                    partner_assignments = self.db.query(Assignment, Block).join(
-                        Block, Assignment.block_id == Block.id
-                    ).filter(
-                        Assignment.person_id == partner_id,
-                        Block.start_date >= datetime.utcnow().date(),
-                    ).all()
+                    partner_assignments = (
+                        self.db.query(Assignment, Block)
+                        .join(Block, Assignment.block_id == Block.id)
+                        .filter(
+                            Assignment.person_id == partner_id,
+                            Block.start_date >= datetime.utcnow().date(),
+                        )
+                        .all()
+                    )
 
                     for partner_assignment, partner_block in partner_assignments:
                         partner_week = partner_block.start_date
@@ -400,8 +398,11 @@ class SwapAutoMatcher:
 
                         if we_prefer and they_dont_block:
                             benefit_score = self._calculate_suggestion_benefit(
-                                faculty_id, current_week, partner_week,
-                                is_blocked=True, is_preferred=True
+                                faculty_id,
+                                current_week,
+                                partner_week,
+                                is_blocked=True,
+                                is_preferred=True,
                             )
 
                             faculty = self._get_faculty(faculty_id)
@@ -482,9 +483,7 @@ class SwapAutoMatcher:
         return True
 
     def _create_swap_match(
-        self,
-        request_a: SwapRecord,
-        request_b: SwapRecord
+        self, request_a: SwapRecord, request_b: SwapRecord
     ) -> SwapMatch:
         """Create a SwapMatch object from two requests."""
         faculty_a = self._get_faculty(request_a.source_faculty_id)
@@ -492,14 +491,21 @@ class SwapAutoMatcher:
 
         # Check if it's a mutual match
         is_mutual = (
-            request_a.target_week == request_b.source_week and
-            request_b.target_week == request_a.source_week
-        ) if request_a.target_week and request_b.target_week else False
+            (
+                request_a.target_week == request_b.source_week
+                and request_b.target_week == request_a.source_week
+            )
+            if request_a.target_week and request_b.target_week
+            else False
+        )
 
         # Determine match type
         if is_mutual:
             match_type = MatchType.MUTUAL
-        elif request_a.swap_type == SwapType.ABSORB or request_b.swap_type == SwapType.ABSORB:
+        elif (
+            request_a.swap_type == SwapType.ABSORB
+            or request_b.swap_type == SwapType.ABSORB
+        ):
             match_type = MatchType.ABSORB
         else:
             match_type = MatchType.ONE_WAY
@@ -519,9 +525,7 @@ class SwapAutoMatcher:
         )
 
     def _score_date_proximity(
-        self,
-        request_a: SwapRecord,
-        request_b: SwapRecord
+        self, request_a: SwapRecord, request_b: SwapRecord
     ) -> float:
         """
         Score based on date proximity (closer dates = higher score).
@@ -542,9 +546,7 @@ class SwapAutoMatcher:
             return 0.0
 
     def _score_preference_alignment(
-        self,
-        request_a: SwapRecord,
-        request_b: SwapRecord
+        self, request_a: SwapRecord, request_b: SwapRecord
     ) -> float:
         """
         Score based on preference alignment.
@@ -553,14 +555,10 @@ class SwapAutoMatcher:
             Score between 0.0 and 1.0
         """
         # Use the existing preference service logic
-        return self.preference_service._score_preference_alignment(
-            request_a, request_b
-        )
+        return self.preference_service._score_preference_alignment(request_a, request_b)
 
     def _score_workload_balance(
-        self,
-        request_a: SwapRecord,
-        request_b: SwapRecord
+        self, request_a: SwapRecord, request_b: SwapRecord
     ) -> float:
         """
         Score based on workload balance considerations.
@@ -569,14 +567,10 @@ class SwapAutoMatcher:
             Score between 0.0 and 1.0
         """
         # Use the existing preference service logic
-        return self.preference_service._score_workload_balance(
-            request_a, request_b
-        )
+        return self.preference_service._score_workload_balance(request_a, request_b)
 
     def _score_swap_history(
-        self,
-        request_a: SwapRecord,
-        request_b: SwapRecord
+        self, request_a: SwapRecord, request_b: SwapRecord
     ) -> float:
         """
         Score based on past swap history.
@@ -591,23 +585,27 @@ class SwapAutoMatcher:
         """
         if self.criteria.consider_past_rejections:
             # Check for past rejections between these two faculty
-            past_rejections = self.db.query(SwapRecord).filter(
-                or_(
-                    and_(
-                        SwapRecord.source_faculty_id == request_a.source_faculty_id,
-                        SwapRecord.target_faculty_id == request_b.source_faculty_id,
-                        SwapRecord.status == SwapStatus.REJECTED,
+            past_rejections = (
+                self.db.query(SwapRecord)
+                .filter(
+                    or_(
+                        and_(
+                            SwapRecord.source_faculty_id == request_a.source_faculty_id,
+                            SwapRecord.target_faculty_id == request_b.source_faculty_id,
+                            SwapRecord.status == SwapStatus.REJECTED,
+                        ),
+                        and_(
+                            SwapRecord.source_faculty_id == request_b.source_faculty_id,
+                            SwapRecord.target_faculty_id == request_a.source_faculty_id,
+                            SwapRecord.status == SwapStatus.REJECTED,
+                        ),
                     ),
-                    and_(
-                        SwapRecord.source_faculty_id == request_b.source_faculty_id,
-                        SwapRecord.target_faculty_id == request_a.source_faculty_id,
-                        SwapRecord.status == SwapStatus.REJECTED,
-                    ),
-                ),
-                SwapRecord.requested_at >= datetime.utcnow() - timedelta(
-                    days=self.criteria.history_lookback_days
-                ),
-            ).count()
+                    SwapRecord.requested_at
+                    >= datetime.utcnow()
+                    - timedelta(days=self.criteria.history_lookback_days),
+                )
+                .count()
+            )
 
             if past_rejections > 0:
                 # Penalize repeated rejections
@@ -617,23 +615,27 @@ class SwapAutoMatcher:
                 base_score = 1.0
 
             # Check for successful past swaps (bonus)
-            past_successes = self.db.query(SwapRecord).filter(
-                or_(
-                    and_(
-                        SwapRecord.source_faculty_id == request_a.source_faculty_id,
-                        SwapRecord.target_faculty_id == request_b.source_faculty_id,
-                        SwapRecord.status == SwapStatus.EXECUTED,
+            past_successes = (
+                self.db.query(SwapRecord)
+                .filter(
+                    or_(
+                        and_(
+                            SwapRecord.source_faculty_id == request_a.source_faculty_id,
+                            SwapRecord.target_faculty_id == request_b.source_faculty_id,
+                            SwapRecord.status == SwapStatus.EXECUTED,
+                        ),
+                        and_(
+                            SwapRecord.source_faculty_id == request_b.source_faculty_id,
+                            SwapRecord.target_faculty_id == request_a.source_faculty_id,
+                            SwapRecord.status == SwapStatus.EXECUTED,
+                        ),
                     ),
-                    and_(
-                        SwapRecord.source_faculty_id == request_b.source_faculty_id,
-                        SwapRecord.target_faculty_id == request_a.source_faculty_id,
-                        SwapRecord.status == SwapStatus.EXECUTED,
-                    ),
-                ),
-                SwapRecord.requested_at >= datetime.utcnow() - timedelta(
-                    days=self.criteria.history_lookback_days
-                ),
-            ).count()
+                    SwapRecord.requested_at
+                    >= datetime.utcnow()
+                    - timedelta(days=self.criteria.history_lookback_days),
+                )
+                .count()
+            )
 
             if past_successes > 0:
                 bonus = min(past_successes * 0.1, 0.3)
@@ -647,9 +649,7 @@ class SwapAutoMatcher:
             )
 
     def _score_availability(
-        self,
-        request_a: SwapRecord,
-        request_b: SwapRecord
+        self, request_a: SwapRecord, request_b: SwapRecord
     ) -> float:
         """
         Score based on faculty availability verification.
@@ -661,14 +661,12 @@ class SwapAutoMatcher:
 
         # Check if faculty A is available for faculty B's week
         a_available_for_b = not self.preference_service.is_week_blocked(
-            request_a.source_faculty_id,
-            request_b.source_week
+            request_a.source_faculty_id, request_b.source_week
         )
 
         # Check if faculty B is available for faculty A's week
         b_available_for_a = not self.preference_service.is_week_blocked(
-            request_b.source_faculty_id,
-            request_a.source_week
+            request_b.source_faculty_id, request_a.source_week
         )
 
         if a_available_for_b and b_available_for_a:
@@ -680,12 +678,10 @@ class SwapAutoMatcher:
 
         # Bonus if weeks are preferred
         a_prefers_b = self.preference_service.is_week_preferred(
-            request_a.source_faculty_id,
-            request_b.source_week
+            request_a.source_faculty_id, request_b.source_week
         )
         b_prefers_a = self.preference_service.is_week_preferred(
-            request_b.source_faculty_id,
-            request_a.source_week
+            request_b.source_faculty_id, request_a.source_week
         )
 
         if a_prefers_b and b_prefers_a:
@@ -696,9 +692,7 @@ class SwapAutoMatcher:
         return score
 
     def _check_blocking_constraints(
-        self,
-        request_a: SwapRecord,
-        request_b: SwapRecord
+        self, request_a: SwapRecord, request_b: SwapRecord
     ) -> float:
         """
         Check for blocking constraints and return a penalty multiplier.
@@ -708,12 +702,10 @@ class SwapAutoMatcher:
         """
         # Check if either party has blocked the week they would receive
         a_blocks_b = self.preference_service.is_week_blocked(
-            request_a.source_faculty_id,
-            request_b.source_week
+            request_a.source_faculty_id, request_b.source_week
         )
         b_blocks_a = self.preference_service.is_week_blocked(
-            request_b.source_faculty_id,
-            request_a.source_week
+            request_b.source_faculty_id, request_a.source_week
         )
 
         if a_blocks_b or b_blocks_a:
@@ -722,20 +714,15 @@ class SwapAutoMatcher:
             return 1.0  # No penalty
 
     def _determine_priority(
-        self,
-        score: float,
-        request_a: SwapRecord,
-        request_b: SwapRecord
+        self, score: float, request_a: SwapRecord, request_b: SwapRecord
     ) -> MatchPriority:
         """Determine priority level for a match."""
         # Check for urgent situations (blocked weeks)
         a_blocked = self.preference_service.is_week_blocked(
-            request_a.source_faculty_id,
-            request_a.source_week
+            request_a.source_faculty_id, request_a.source_week
         )
         b_blocked = self.preference_service.is_week_blocked(
-            request_b.source_faculty_id,
-            request_b.source_week
+            request_b.source_faculty_id, request_b.source_week
         )
 
         if (a_blocked or b_blocked) and score >= 0.7:
@@ -753,13 +740,15 @@ class SwapAutoMatcher:
         request_a: SwapRecord,
         request_b: SwapRecord,
         scoring: ScoringBreakdown,
-        is_mutual: bool
+        is_mutual: bool,
     ) -> str:
         """Generate human-readable explanation for the match."""
         reasons = []
 
         if is_mutual:
-            reasons.append("Perfect mutual match - both parties want each other's weeks")
+            reasons.append(
+                "Perfect mutual match - both parties want each other's weeks"
+            )
 
         if scoring.preference_alignment_score >= 0.8:
             reasons.append("Strong preference alignment")
@@ -781,10 +770,7 @@ class SwapAutoMatcher:
         return "; ".join(reasons)
 
     def _estimate_acceptance_probability(
-        self,
-        request_a: SwapRecord,
-        request_b: SwapRecord,
-        compatibility_score: float
+        self, request_a: SwapRecord, request_b: SwapRecord, compatibility_score: float
     ) -> float:
         """
         Estimate probability both parties will accept the swap.
@@ -815,9 +801,7 @@ class SwapAutoMatcher:
         return min(max(estimated_prob, 0.0), 1.0)
 
     def _determine_recommended_action(
-        self,
-        priority: MatchPriority,
-        acceptance_prob: float
+        self, priority: MatchPriority, acceptance_prob: float
     ) -> str:
         """Determine the recommended action for a match."""
         if priority == MatchPriority.CRITICAL:
@@ -832,9 +816,7 @@ class SwapAutoMatcher:
             return "Present as one of several options"
 
     def _check_match_warnings(
-        self,
-        request_a: SwapRecord,
-        request_b: SwapRecord
+        self, request_a: SwapRecord, request_b: SwapRecord
     ) -> list[str]:
         """Check for any warnings about the match."""
         warnings = []
@@ -842,9 +824,7 @@ class SwapAutoMatcher:
         # Check date separation
         days_apart = abs((request_a.source_week - request_b.source_week).days)
         if days_apart > 60:
-            warnings.append(
-                f"Dates are {days_apart} days apart - may not be ideal"
-            )
+            warnings.append(f"Dates are {days_apart} days apart - may not be ideal")
 
         # Check if weeks are very soon
         days_until_a = (request_a.source_week - datetime.utcnow().date()).days
@@ -854,12 +834,16 @@ class SwapAutoMatcher:
             warnings.append("One or both weeks are coming up soon - act quickly")
 
         # Check workload
-        a_count = self.db.query(Assignment).filter(
-            Assignment.person_id == request_a.source_faculty_id
-        ).count()
-        b_count = self.db.query(Assignment).filter(
-            Assignment.person_id == request_b.source_faculty_id
-        ).count()
+        a_count = (
+            self.db.query(Assignment)
+            .filter(Assignment.person_id == request_a.source_faculty_id)
+            .count()
+        )
+        b_count = (
+            self.db.query(Assignment)
+            .filter(Assignment.person_id == request_b.source_faculty_id)
+            .count()
+        )
 
         if abs(a_count - b_count) > 3:
             warnings.append("Significant workload imbalance between parties")
@@ -872,7 +856,7 @@ class SwapAutoMatcher:
         current_week: date,
         proposed_week: date,
         is_blocked: bool = False,
-        is_preferred: bool = False
+        is_preferred: bool = False,
     ) -> float:
         """Calculate benefit score for a proactive suggestion."""
         score = 0.0
@@ -894,7 +878,8 @@ class SwapAutoMatcher:
 
     def _get_faculty(self, faculty_id: UUID) -> Person | None:
         """Get a faculty member by ID."""
-        return self.db.query(Person).filter(
-            Person.id == faculty_id,
-            Person.type == "faculty"
-        ).first()
+        return (
+            self.db.query(Person)
+            .filter(Person.id == faculty_id, Person.type == "faculty")
+            .first()
+        )

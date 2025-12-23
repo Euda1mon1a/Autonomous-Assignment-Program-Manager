@@ -14,7 +14,8 @@ import asyncio
 import functools
 import logging
 import time
-from typing import Any, Callable, Optional, Type, Union
+from collections.abc import Callable
+from typing import Any
 
 from app.resilience.retry.context import RetryContext
 from app.resilience.retry.exceptions import (
@@ -37,15 +38,15 @@ class RetryConfig:
         max_attempts: int = 3,
         backoff_strategy: BackoffStrategy = BackoffStrategy.EXPONENTIAL,
         base_delay: float = 1.0,
-        max_delay: Optional[float] = 60.0,
+        max_delay: float | None = 60.0,
         multiplier: float = 2.0,
         jitter: JitterType = JitterType.FULL,
-        retryable_exceptions: tuple[Type[Exception], ...] = (Exception,),
-        non_retryable_exceptions: tuple[Type[Exception], ...] = (),
-        timeout: Optional[float] = None,
-        on_retry: Optional[Callable[[RetryContext, Exception, float], None]] = None,
-        on_success: Optional[Callable[[RetryContext, Any], None]] = None,
-        on_failure: Optional[Callable[[RetryContext, Exception], None]] = None,
+        retryable_exceptions: tuple[type[Exception], ...] = (Exception,),
+        non_retryable_exceptions: tuple[type[Exception], ...] = (),
+        timeout: float | None = None,
+        on_retry: Callable[[RetryContext, Exception, float], None] | None = None,
+        on_success: Callable[[RetryContext, Any], None] | None = None,
+        on_failure: Callable[[RetryContext, Exception], None] | None = None,
     ):
         """
         Initialize retry configuration.
@@ -217,7 +218,9 @@ class RetryExecutor:
                 duration = time.time() - start_time
 
                 # Success!
-                context.record_attempt(success=True, delay_before=delay, duration=duration)
+                context.record_attempt(
+                    success=True, delay_before=delay, duration=duration
+                )
                 context.trigger_success_callback(result)
                 return result
 
@@ -332,7 +335,9 @@ class RetryExecutor:
                 duration = time.time() - start_time
 
                 # Success!
-                context.record_attempt(success=True, delay_before=delay, duration=duration)
+                context.record_attempt(
+                    success=True, delay_before=delay, duration=duration
+                )
                 context.trigger_success_callback(result)
                 return result
 
@@ -382,15 +387,15 @@ def retry(
     max_attempts: int = 3,
     backoff_strategy: BackoffStrategy = BackoffStrategy.EXPONENTIAL,
     base_delay: float = 1.0,
-    max_delay: Optional[float] = 60.0,
+    max_delay: float | None = 60.0,
     multiplier: float = 2.0,
     jitter: JitterType = JitterType.FULL,
-    retryable_exceptions: tuple[Type[Exception], ...] = (Exception,),
-    non_retryable_exceptions: tuple[Type[Exception], ...] = (),
-    timeout: Optional[float] = None,
-    on_retry: Optional[Callable[[RetryContext, Exception, float], None]] = None,
-    on_success: Optional[Callable[[RetryContext, Any], None]] = None,
-    on_failure: Optional[Callable[[RetryContext, Exception], None]] = None,
+    retryable_exceptions: tuple[type[Exception], ...] = (Exception,),
+    non_retryable_exceptions: tuple[type[Exception], ...] = (),
+    timeout: float | None = None,
+    on_retry: Callable[[RetryContext, Exception, float], None] | None = None,
+    on_success: Callable[[RetryContext, Any], None] | None = None,
+    on_failure: Callable[[RetryContext, Exception], None] | None = None,
 ):
     """
     Decorator for automatic retry with exponential backoff.

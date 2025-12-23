@@ -1,4 +1,5 @@
 """Tests for assignment API routes with authentication and ACGME validation."""
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -161,7 +162,9 @@ class TestAssignmentAuthenticationEnforcement:
         assert response.status_code == 401
         assert "Not authenticated" in response.json()["detail"]
 
-    def test_get_assignment_requires_auth(self, client, sample_data, admin_user, admin_token):
+    def test_get_assignment_requires_auth(
+        self, client, sample_data, admin_user, admin_token
+    ):
         """Test that getting an assignment requires authentication."""
         # Create an assignment as admin
         assignment = Assignment(
@@ -195,7 +198,9 @@ class TestAssignmentAuthenticationEnforcement:
         )
         assert response.status_code == 401
 
-    def test_update_assignment_requires_auth(self, client, sample_data, admin_user, admin_token):
+    def test_update_assignment_requires_auth(
+        self, client, sample_data, admin_user, admin_token
+    ):
         """Test that updating an assignment requires authentication."""
         # Create an assignment as admin
         assignment = Assignment(
@@ -259,7 +264,9 @@ class TestAssignmentRoleBasedAccessControl:
         assert response.status_code == 403
         assert "Schedule management access required" in response.json()["detail"]
 
-    def test_coordinator_can_create_assignment(self, client, sample_data, coordinator_token):
+    def test_coordinator_can_create_assignment(
+        self, client, sample_data, coordinator_token
+    ):
         """Test that coordinator users can create assignments."""
         response = client.post(
             "/api/assignments",
@@ -291,7 +298,9 @@ class TestAssignmentRoleBasedAccessControl:
         )
         assert response.status_code == 201
 
-    def test_faculty_can_list_assignments(self, client, sample_data, faculty_token, admin_token):
+    def test_faculty_can_list_assignments(
+        self, client, sample_data, faculty_token, admin_token
+    ):
         """Test that faculty users can list assignments (read-only access)."""
         # Create an assignment first
         client.post(
@@ -317,7 +326,9 @@ class TestAssignmentRoleBasedAccessControl:
 class TestACGMEValidationAtWriteTime:
     """Test ACGME validation during assignment create/update."""
 
-    def test_create_assignment_returns_warnings(self, client, sample_data, admin_token, db):
+    def test_create_assignment_returns_warnings(
+        self, client, sample_data, admin_token, db
+    ):
         """Test that creating assignments returns ACGME warnings."""
         # Create multiple assignments for the same resident to trigger 80-hour rule
         blocks = sample_data["blocks"][:28]  # 4 weeks
@@ -347,7 +358,9 @@ class TestACGMEValidationAtWriteTime:
                 if not data["is_compliant"]:
                     assert len(data["acgme_warnings"]) > 0
 
-    def test_create_assignment_with_override_reason(self, client, sample_data, admin_token, db):
+    def test_create_assignment_with_override_reason(
+        self, client, sample_data, admin_token, db
+    ):
         """Test that override_reason is stored in notes."""
         # Create an assignment
         blocks = sample_data["blocks"][:28]
@@ -509,8 +522,14 @@ class TestAssignmentFiltering:
         resident_id = str(sample_data["resident"].id)
 
         # Create 2 on_call, 2 clinic, 2 inpatient assignments
-        templates = [on_call_template, on_call_template, clinic_template,
-                    clinic_template, inpatient_template, inpatient_template]
+        templates = [
+            on_call_template,
+            on_call_template,
+            clinic_template,
+            clinic_template,
+            inpatient_template,
+            inpatient_template,
+        ]
 
         for block, template in zip(blocks, templates):
             client.post(
@@ -570,7 +589,9 @@ class TestAssignmentFiltering:
         # Should have at least 6 assignments (could have more from sample_data)
         assert len(data["items"]) >= 6
 
-    def test_filter_by_activity_type_with_date_range(self, client, sample_data, admin_token, db):
+    def test_filter_by_activity_type_with_date_range(
+        self, client, sample_data, admin_token, db
+    ):
         """Test combining activity_type filter with date range."""
         # Create an on_call template
         on_call_template = RotationTemplate(

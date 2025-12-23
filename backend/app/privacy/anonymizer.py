@@ -38,10 +38,9 @@ from sqlalchemy.orm import Session
 
 from app.db.base import Base
 from app.db.types import GUID
-from app.privacy.detectors import PIIDetector, PIIScanner, PIIType
-from app.privacy.maskers import BaseMasker, MaskerFactory
+from app.privacy.detectors import PIIDetector, PIIScanner
+from app.privacy.maskers import MaskerFactory
 from app.privacy.strategies import (
-    AnonymizationStrategy,
     GeneralizationStrategy,
     KAnonymityStrategy,
     LDiversityStrategy,
@@ -66,14 +65,24 @@ class AnonymizationConfig(BaseModel):
     """Configuration for anonymization."""
 
     method: AnonymizationMethod = AnonymizationMethod.MASK
-    fields: list[str] | None = Field(default=None, description="Specific fields to anonymize")
+    fields: list[str] | None = Field(
+        default=None, description="Specific fields to anonymize"
+    )
     detect_pii: bool = Field(default=True, description="Auto-detect PII in fields")
     k_value: int = Field(default=5, description="K value for k-anonymity", ge=2)
     l_value: int = Field(default=3, description="L value for l-diversity", ge=2)
-    quasi_identifiers: list[str] | None = Field(default=None, description="Quasi-identifier fields for k-anonymity")
-    sensitive_attributes: list[str] | None = Field(default=None, description="Sensitive attributes to protect")
-    encryption_key: str | None = Field(default=None, description="Encryption key for reversible pseudonymization")
-    preserve_format: bool = Field(default=False, description="Preserve data format when masking")
+    quasi_identifiers: list[str] | None = Field(
+        default=None, description="Quasi-identifier fields for k-anonymity"
+    )
+    sensitive_attributes: list[str] | None = Field(
+        default=None, description="Sensitive attributes to protect"
+    )
+    encryption_key: str | None = Field(
+        default=None, description="Encryption key for reversible pseudonymization"
+    )
+    preserve_format: bool = Field(
+        default=False, description="Preserve data format when masking"
+    )
     audit_trail: bool = Field(default=True, description="Create audit trail entry")
     batch_size: int = Field(default=100, description="Batch size for bulk operations")
 
@@ -91,8 +100,7 @@ class AnonymizationResult(BaseModel):
     audit_id: str | None = None
     errors: list[str] = Field(default_factory=list)
     pii_detected: dict[str, list[str]] = Field(
-        default_factory=dict,
-        description="Detected PII by field"
+        default_factory=dict, description="Detected PII by field"
     )
 
 
@@ -130,7 +138,7 @@ class DataAnonymizer:
         self,
         db: Session | None = None,
         pii_detector: PIIDetector | None = None,
-        masker_factory: MaskerFactory | None = None
+        masker_factory: MaskerFactory | None = None,
     ):
         """
         Initialize data anonymizer.
@@ -149,7 +157,7 @@ class DataAnonymizer:
         self,
         record: dict[str, Any],
         config: AnonymizationConfig | None = None,
-        **kwargs
+        **kwargs,
     ) -> AnonymizationResult:
         """
         Anonymize a single record.
@@ -178,9 +186,13 @@ class DataAnonymizer:
 
             # Apply anonymization
             if config.method == AnonymizationMethod.MASK:
-                anonymized = self._mask_record(record, fields_to_anonymize, pii_detected)
+                anonymized = self._mask_record(
+                    record, fields_to_anonymize, pii_detected
+                )
             elif config.method == AnonymizationMethod.PSEUDONYMIZE:
-                anonymized = self._pseudonymize_record(record, fields_to_anonymize, config)
+                anonymized = self._pseudonymize_record(
+                    record, fields_to_anonymize, config
+                )
             elif config.method == AnonymizationMethod.GENERALIZE:
                 anonymized = self._generalize_record(record, config)
             else:
@@ -189,7 +201,7 @@ class DataAnonymizer:
                     anonymized_data=record,
                     original_count=1,
                     anonymized_count=0,
-                    errors=[f"Method {config.method} requires batch processing"]
+                    errors=[f"Method {config.method} requires batch processing"],
                 )
 
             # Create audit trail
@@ -199,7 +211,7 @@ class DataAnonymizer:
                     method=config.method.value,
                     record_count=1,
                     fields=fields_to_anonymize,
-                    reversible=config.method == AnonymizationMethod.PSEUDONYMIZE
+                    reversible=config.method == AnonymizationMethod.PSEUDONYMIZE,
                 )
 
             return AnonymizationResult(
@@ -208,7 +220,9 @@ class DataAnonymizer:
                 original_count=1,
                 anonymized_count=1,
                 audit_id=str(audit_id) if audit_id else None,
-                pii_detected={k: [m.type.value for m in v] for k, v in pii_detected.items()}
+                pii_detected={
+                    k: [m.type.value for m in v] for k, v in pii_detected.items()
+                },
             )
 
         except Exception as e:
@@ -218,14 +232,14 @@ class DataAnonymizer:
                 anonymized_data=record,
                 original_count=1,
                 anonymized_count=0,
-                errors=[str(e)]
+                errors=[str(e)],
             )
 
     def anonymize_batch(
         self,
         records: list[dict[str, Any]],
         config: AnonymizationConfig | None = None,
-        **kwargs
+        **kwargs,
     ) -> AnonymizationResult:
         """
         Anonymize multiple records.
@@ -242,15 +256,16 @@ class DataAnonymizer:
 
         if not records:
             return AnonymizationResult(
-                success=True,
-                anonymized_data=[],
-                original_count=0,
-                anonymized_count=0
+                success=True, anonymized_data=[], original_count=0, anonymized_count=0
             )
 
         try:
             # Apply strategy based on method
-            if config.method in (AnonymizationMethod.MASK, AnonymizationMethod.PSEUDONYMIZE, AnonymizationMethod.GENERALIZE):
+            if config.method in (
+                AnonymizationMethod.MASK,
+                AnonymizationMethod.PSEUDONYMIZE,
+                AnonymizationMethod.GENERALIZE,
+            ):
                 # Process each record individually
                 anonymized_records = []
                 for record in records:
@@ -269,20 +284,22 @@ class DataAnonymizer:
                 anonymized_data = strategy.apply(
                     records,
                     quasi_identifiers=config.quasi_identifiers or [],
-                    sensitive_attributes=config.sensitive_attributes or []
+                    sensitive_attributes=config.sensitive_attributes or [],
                 )
                 success = True
 
             elif config.method == AnonymizationMethod.L_DIVERSITY:
                 # Apply l-diversity strategy
                 if not config.sensitive_attributes:
-                    raise ValueError("L-diversity requires sensitive_attributes to be specified")
+                    raise ValueError(
+                        "L-diversity requires sensitive_attributes to be specified"
+                    )
 
                 strategy = LDiversityStrategy(l=config.l_value)
                 anonymized_data = strategy.apply(
                     records,
                     quasi_identifiers=config.quasi_identifiers or [],
-                    sensitive_attribute=config.sensitive_attributes[0]
+                    sensitive_attribute=config.sensitive_attributes[0],
                 )
                 success = True
 
@@ -292,7 +309,7 @@ class DataAnonymizer:
                     anonymized_data=records,
                     original_count=len(records),
                     anonymized_count=0,
-                    errors=[f"Unknown method: {config.method}"]
+                    errors=[f"Unknown method: {config.method}"],
                 )
 
             # Create audit trail
@@ -302,7 +319,7 @@ class DataAnonymizer:
                     method=config.method.value,
                     record_count=len(records),
                     fields=config.fields or config.quasi_identifiers or [],
-                    reversible=config.method == AnonymizationMethod.PSEUDONYMIZE
+                    reversible=config.method == AnonymizationMethod.PSEUDONYMIZE,
                 )
 
             return AnonymizationResult(
@@ -310,7 +327,7 @@ class DataAnonymizer:
                 anonymized_data=anonymized_data,
                 original_count=len(records),
                 anonymized_count=len(anonymized_data),
-                audit_id=str(audit_id) if audit_id else None
+                audit_id=str(audit_id) if audit_id else None,
             )
 
         except Exception as e:
@@ -320,14 +337,11 @@ class DataAnonymizer:
                 anonymized_data=records,
                 original_count=len(records),
                 anonymized_count=0,
-                errors=[str(e)]
+                errors=[str(e)],
             )
 
     def _mask_record(
-        self,
-        record: dict[str, Any],
-        fields: list[str],
-        pii_detected: dict[str, Any]
+        self, record: dict[str, Any], fields: list[str], pii_detected: dict[str, Any]
     ) -> dict[str, Any]:
         """Mask PII in record using appropriate maskers."""
         result = record.copy()
@@ -352,10 +366,7 @@ class DataAnonymizer:
         return result
 
     def _pseudonymize_record(
-        self,
-        record: dict[str, Any],
-        fields: list[str],
-        config: AnonymizationConfig
+        self, record: dict[str, Any], fields: list[str], config: AnonymizationConfig
     ) -> dict[str, Any]:
         """Pseudonymize record using reversible encryption."""
         # Get or generate encryption key
@@ -364,16 +375,13 @@ class DataAnonymizer:
             encryption_key = config.encryption_key.encode()
 
         strategy = PseudonymizationStrategy(
-            encryption_key=encryption_key,
-            use_encryption=True
+            encryption_key=encryption_key, use_encryption=True
         )
 
         return strategy.apply(record, fields=fields)
 
     def _generalize_record(
-        self,
-        record: dict[str, Any],
-        config: AnonymizationConfig
+        self, record: dict[str, Any], config: AnonymizationConfig
     ) -> dict[str, Any]:
         """Generalize record data."""
         # Build generalization rules from config
@@ -393,11 +401,7 @@ class DataAnonymizer:
         return strategy.apply(record)
 
     def _create_audit_entry(
-        self,
-        method: str,
-        record_count: int,
-        fields: list[str],
-        reversible: bool
+        self, method: str, record_count: int, fields: list[str], reversible: bool
     ) -> UUID | None:
         """Create audit trail entry."""
         if not self.db:
@@ -412,7 +416,7 @@ class DataAnonymizer:
                 record_count=str(record_count),
                 fields_anonymized=json.dumps(fields),
                 reversible="true" if reversible else "false",
-                timestamp=datetime.utcnow()
+                timestamp=datetime.utcnow(),
             )
 
             self.db.add(audit)
@@ -426,9 +430,7 @@ class DataAnonymizer:
             return None
 
     def get_audit_history(
-        self,
-        limit: int = 100,
-        method: str | None = None
+        self, limit: int = 100, method: str | None = None
     ) -> list[AnonymizationAudit]:
         """
         Get audit history of anonymization operations.
@@ -460,11 +462,7 @@ class BatchAnonymizer:
     Useful for anonymizing large datasets with memory efficiency.
     """
 
-    def __init__(
-        self,
-        anonymizer: DataAnonymizer,
-        batch_size: int = 100
-    ):
+    def __init__(self, anonymizer: DataAnonymizer, batch_size: int = 100):
         """
         Initialize batch anonymizer.
 
@@ -479,7 +477,7 @@ class BatchAnonymizer:
         self,
         records: list[dict[str, Any]],
         config: AnonymizationConfig,
-        progress_callback: Any = None
+        progress_callback: Any = None,
     ) -> AnonymizationResult:
         """
         Process records in batches.
@@ -497,7 +495,7 @@ class BatchAnonymizer:
         all_errors = []
 
         for i in range(0, total_records, self.batch_size):
-            batch = records[i:i + self.batch_size]
+            batch = records[i : i + self.batch_size]
 
             result = self.anonymizer.anonymize_batch(batch, config)
 
@@ -515,5 +513,5 @@ class BatchAnonymizer:
             anonymized_data=all_anonymized,
             original_count=total_records,
             anonymized_count=len(all_anonymized),
-            errors=all_errors
+            errors=all_errors,
         )

@@ -21,7 +21,6 @@ Usage:
 
 import gzip
 import hashlib
-import json
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -427,9 +426,7 @@ class IncrementalBackupStrategy(BackupStrategy):
             result = db.execute(query, {"since": since})
         else:
             # No timestamp column - include all rows as a safety measure
-            logger.warning(
-                f"Table {table} has no timestamp column, including all rows"
-            )
+            logger.warning(f"Table {table} has no timestamp column, including all rows")
             query = text(f"SELECT * FROM {table}")
             result = db.execute(query)
 

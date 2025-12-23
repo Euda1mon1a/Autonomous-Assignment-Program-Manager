@@ -10,6 +10,7 @@ Options:
     --json                                    Output as JSON
     --verbose                                 Show detailed slot-level output
 """
+
 import argparse
 import json
 import sys
@@ -27,31 +28,20 @@ def main():
     parser = argparse.ArgumentParser(
         description="Analyze schedule Excel files for conflicts"
     )
+    parser.add_argument("fmit_file", help="FMIT rotation schedule Excel file")
     parser.add_argument(
-        "fmit_file",
-        help="FMIT rotation schedule Excel file"
-    )
-    parser.add_argument(
-        "clinic_file",
-        nargs="?",
-        help="Clinic schedule Excel file (optional)"
+        "clinic_file", nargs="?", help="Clinic schedule Excel file (optional)"
     )
     parser.add_argument(
         "--specialty",
         nargs=2,
         action="append",
         metavar=("PROVIDER", "SPECIALTY"),
-        help="Mark a provider as specialty (can be used multiple times)"
+        help="Mark a provider as specialty (can be used multiple times)",
     )
+    parser.add_argument("--json", action="store_true", help="Output as JSON")
     parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Output as JSON"
-    )
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Show detailed output"
+        "--verbose", "-v", action="store_true", help="Show detailed output"
     )
 
     args = parser.parse_args()

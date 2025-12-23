@@ -3,14 +3,12 @@
 Provides Sentry-style error reporting with integration to the
 application's notification system and external monitoring services.
 """
+
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
-from datetime import datetime
+from typing import Any
 
-from app.core.error_codes import ErrorCode
 from app.middleware.errors.context import ErrorContext
-
 
 logger = logging.getLogger(__name__)
 
@@ -150,9 +148,9 @@ class NotificationReporter(ErrorReporter):
             True if notification sent, False otherwise
         """
         try:
+            from app.db.session import get_db
             from app.notifications import get_notification_service
             from app.notifications.templates import NotificationType
-            from app.db.session import get_db
 
             # Only notify for critical errors or recurring errors
             if severity != "critical":
@@ -164,6 +162,7 @@ class NotificationReporter(ErrorReporter):
 
             # Get recipients from settings
             from app.core.config import get_settings
+
             settings = get_settings()
             recipients = settings.RESILIENCE_ALERT_RECIPIENTS
 
@@ -265,7 +264,7 @@ class SentryReporter(ErrorReporter):
     Note: Requires sentry-sdk to be installed.
     """
 
-    def __init__(self, dsn: Optional[str] = None):
+    def __init__(self, dsn: str | None = None):
         """
         Initialize Sentry reporter.
 
@@ -278,6 +277,7 @@ class SentryReporter(ErrorReporter):
         if dsn:
             try:
                 import sentry_sdk
+
                 sentry_sdk.init(dsn=dsn)
                 self.enabled = True
                 logger.info("Sentry error reporting enabled")
@@ -347,7 +347,7 @@ class CompositeReporter(ErrorReporter):
     Allows reporting errors to multiple destinations (logs, metrics, Sentry, etc.).
     """
 
-    def __init__(self, reporters: Optional[List[ErrorReporter]] = None):
+    def __init__(self, reporters: list[ErrorReporter] | None = None):
         """
         Initialize composite reporter.
 
@@ -448,7 +448,7 @@ class ErrorSeverityClassifier:
 
 
 # Global reporter instance
-_reporter: Optional[ErrorReporter] = None
+_reporter: ErrorReporter | None = None
 
 
 def get_reporter() -> ErrorReporter:
@@ -475,6 +475,7 @@ def get_reporter() -> ErrorReporter:
         # Add Sentry reporter if configured
         # (DSN would come from environment variable)
         import os
+
         sentry_dsn = os.getenv("SENTRY_DSN")
         if sentry_dsn:
             composite.add_reporter(SentryReporter(dsn=sentry_dsn))

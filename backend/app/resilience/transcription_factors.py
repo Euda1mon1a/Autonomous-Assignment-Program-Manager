@@ -56,10 +56,11 @@ This provides:
 import logging
 import math
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 from uuid import UUID, uuid4
 
 logger = logging.getLogger(__name__)
@@ -72,17 +73,19 @@ logger = logging.getLogger(__name__)
 
 class TFType(str, Enum):
     """Types of transcription factors."""
-    ACTIVATOR = "activator"      # Increases constraint weight/priority
-    REPRESSOR = "repressor"      # Decreases constraint weight or disables
-    DUAL = "dual"                # Can act as either based on context
-    PIONEER = "pioneer"          # Can open "closed chromatin" (enable disabled constraints)
-    MASTER = "master"            # Controls entire regulatory programs
+
+    ACTIVATOR = "activator"  # Increases constraint weight/priority
+    REPRESSOR = "repressor"  # Decreases constraint weight or disables
+    DUAL = "dual"  # Can act as either based on context
+    PIONEER = "pioneer"  # Can open "closed chromatin" (enable disabled constraints)
+    MASTER = "master"  # Controls entire regulatory programs
 
 
 class BindingLogic(str, Enum):
     """Logic for combining multiple TF bindings."""
-    AND = "and"          # All TFs must bind
-    OR = "or"            # Any TF can activate
+
+    AND = "and"  # All TFs must bind
+    OR = "or"  # Any TF can activate
     MAJORITY = "majority"  # >50% of TFs must bind
     THRESHOLD = "threshold"  # Sum of binding strengths must exceed threshold
     SEQUENTIAL = "sequential"  # TFs must bind in order
@@ -90,27 +93,30 @@ class BindingLogic(str, Enum):
 
 class ChromatinState(str, Enum):
     """Accessibility state of a constraint (epigenetic metaphor)."""
-    OPEN = "open"              # Fully accessible, can be regulated
-    POISED = "poised"          # Partially accessible, quick to activate
-    CLOSED = "closed"          # Inaccessible, requires pioneer TF
-    SILENCED = "silenced"      # Permanently off (e.g., during crisis)
+
+    OPEN = "open"  # Fully accessible, can be regulated
+    POISED = "poised"  # Partially accessible, quick to activate
+    CLOSED = "closed"  # Inaccessible, requires pioneer TF
+    SILENCED = "silenced"  # Permanently off (e.g., during crisis)
 
 
 class SignalStrength(str, Enum):
     """Strength of an incoming signal."""
-    WEAK = "weak"          # 0.0 - 0.3
+
+    WEAK = "weak"  # 0.0 - 0.3
     MODERATE = "moderate"  # 0.3 - 0.6
-    STRONG = "strong"      # 0.6 - 0.8
-    MAXIMAL = "maximal"    # 0.8 - 1.0
+    STRONG = "strong"  # 0.6 - 0.8
+    MAXIMAL = "maximal"  # 0.8 - 1.0
 
 
 class LoopType(str, Enum):
     """Types of regulatory loops."""
-    POSITIVE_FEEDBACK = "positive_feedback"    # Amplifies signal
-    NEGATIVE_FEEDBACK = "negative_feedback"    # Stabilizes
+
+    POSITIVE_FEEDBACK = "positive_feedback"  # Amplifies signal
+    NEGATIVE_FEEDBACK = "negative_feedback"  # Stabilizes
     FEED_FORWARD_COHERENT = "feed_forward_coherent"  # Amplifies with delay
     FEED_FORWARD_INCOHERENT = "feed_forward_incoherent"  # Pulse generator
-    BISTABLE_SWITCH = "bistable_switch"        # Two stable states
+    BISTABLE_SWITCH = "bistable_switch"  # Two stable states
 
 
 # =============================================================================
@@ -126,6 +132,7 @@ class BindingSite:
     Analogous to promoter/enhancer regions in DNA. Each constraint
     has binding sites that determine which TFs can regulate it.
     """
+
     id: UUID
     name: str
     tf_types_accepted: list[TFType]  # Which TF types can bind here
@@ -155,6 +162,7 @@ class TranscriptionFactor:
     activate (increase weight) or repress (decrease/disable) them.
     They can work alone or combinatorially with other TFs.
     """
+
     id: UUID
     name: str
     description: str
@@ -196,7 +204,10 @@ class TranscriptionFactor:
         """
         # Sigmoid response to signal
         response = 1.0 / (1.0 + math.exp(-5 * (signal_strength - 0.5)))
-        new_level = self.basal_expression + (self.max_expression - self.basal_expression) * response
+        new_level = (
+            self.basal_expression
+            + (self.max_expression - self.basal_expression) * response
+        )
 
         old_level = self.expression_level
         self.expression_level = min(self.max_expression, new_level)
@@ -261,6 +272,7 @@ class PromoterArchitecture:
     - What logic combines multiple TF bindings
     - Threshold for activation
     """
+
     id: UUID
     constraint_id: UUID
     constraint_name: str
@@ -282,7 +294,7 @@ class PromoterArchitecture:
 
     # Output properties
     base_weight: float = 1.0  # Default constraint weight
-    min_weight: float = 0.0   # Can't go below this
+    min_weight: float = 0.0  # Can't go below this
     max_weight: float = 10.0  # Can't exceed this
 
     def calculate_activation(
@@ -320,7 +332,9 @@ class PromoterArchitecture:
             activator_contribution = 0.0
         elif self.activator_logic == BindingLogic.AND:
             # All required must be present
-            if len([s for s in activator_signals if s > 0.2]) < len(self.required_activators):
+            if len([s for s in activator_signals if s > 0.2]) < len(
+                self.required_activators
+            ):
                 return 0.0, "AND logic: missing required activators"
             activator_contribution = min(activator_signals)
         elif self.activator_logic == BindingLogic.OR:
@@ -337,9 +351,14 @@ class PromoterArchitecture:
             if total_strength >= self.activation_threshold:
                 activator_contribution = total_strength / len(activator_signals)
             else:
-                return 0.0, f"THRESHOLD logic: {total_strength:.2f} < {self.activation_threshold:.2f}"
+                return (
+                    0.0,
+                    f"THRESHOLD logic: {total_strength:.2f} < {self.activation_threshold:.2f}",
+                )
         else:
-            activator_contribution = sum(activator_signals) / max(1, len(activator_signals))
+            activator_contribution = sum(activator_signals) / max(
+                1, len(activator_signals)
+            )
 
         # Calculate repressor contribution
         repressor_signals = []
@@ -376,6 +395,7 @@ class RegulatoryEdge:
 
     Represents one TF regulating one target (constraint or another TF).
     """
+
     id: UUID
     source_tf_id: UUID
     target_id: UUID  # Either constraint ID or TF ID
@@ -395,6 +415,7 @@ class RegulatoryLoop:
     """
     A detected regulatory loop (motif) in the network.
     """
+
     id: UUID
     loop_type: LoopType
     description: str
@@ -415,6 +436,7 @@ class SignalEvent:
     """
     An external event that triggers TF induction.
     """
+
     id: UUID
     event_type: str
     description: str
@@ -434,6 +456,7 @@ class GRNState:
     """
     Snapshot of the gene regulatory network state.
     """
+
     timestamp: datetime
 
     # TF expression levels
@@ -482,7 +505,9 @@ class TranscriptionFactorScheduler:
 
     def __init__(self):
         self.transcription_factors: dict[UUID, TranscriptionFactor] = {}
-        self.promoters: dict[UUID, PromoterArchitecture] = {}  # constraint_id -> promoter
+        self.promoters: dict[
+            UUID, PromoterArchitecture
+        ] = {}  # constraint_id -> promoter
         self.edges: dict[UUID, RegulatoryEdge] = {}
         self.detected_loops: list[RegulatoryLoop] = []
 
@@ -533,7 +558,9 @@ class TranscriptionFactorScheduler:
             basal_expression=0.0,  # Only active when induced
             activation_strength=2.0,  # Strong activation
             half_life_hours=168,  # 1 week
-            activation_conditions={"event_types": ["deployment", "mobilization", "tdy"]},
+            activation_conditions={
+                "event_types": ["deployment", "mobilization", "tdy"]
+            },
         )
 
         # Activator: Holiday Coverage
@@ -557,7 +584,9 @@ class TranscriptionFactorScheduler:
             basal_expression=0.0,
             repression_strength=0.8,
             half_life_hours=72,
-            activation_conditions={"event_types": ["crisis", "pandemic", "mass_casualty"]},
+            activation_conditions={
+                "event_types": ["crisis", "pandemic", "mass_casualty"]
+            },
         )
 
         # Repressor: Low Staffing
@@ -606,7 +635,9 @@ class TranscriptionFactorScheduler:
             activation_conditions={"adaptive": True},
         )
 
-        logger.info(f"Initialized {len(self.transcription_factors)} default transcription factors")
+        logger.info(
+            f"Initialized {len(self.transcription_factors)} default transcription factors"
+        )
 
     # -------------------------------------------------------------------------
     # TF Management
@@ -684,7 +715,9 @@ class TranscriptionFactorScheduler:
             # Propagate to downstream TFs (cascade)
             self._propagate_cascade(tf_id, signal_strength * 0.8)
 
-    def _propagate_cascade(self, source_tf_id: UUID, signal_strength: float, depth: int = 0):
+    def _propagate_cascade(
+        self, source_tf_id: UUID, signal_strength: float, depth: int = 0
+    ):
         """Propagate TF induction through cascade."""
         if depth > 5 or signal_strength < 0.1:  # Prevent infinite loops
             return
@@ -879,7 +912,9 @@ class TranscriptionFactorScheduler:
         Args:
             signal: The signal event to process
         """
-        logger.info(f"Processing signal: {signal.event_type} (strength={signal.signal_strength})")
+        logger.info(
+            f"Processing signal: {signal.event_type} (strength={signal.signal_strength})"
+        )
 
         self.signal_history.append(signal)
 
@@ -962,9 +997,9 @@ class TranscriptionFactorScheduler:
             # Calculate bound TF strengths
             bound_tfs = {}
             all_tf_ids = (
-                promoter.required_activators +
-                promoter.optional_activators +
-                promoter.repressors
+                promoter.required_activators
+                + promoter.optional_activators
+                + promoter.repressors
             )
 
             for tf_id in all_tf_ids:
@@ -1061,11 +1096,15 @@ class TranscriptionFactorScheduler:
                     edge_2 = self._get_edge(target_id, tf_id)
 
                     if edge_1 and edge_2:
-                        if (edge_1.edge_type == TFType.ACTIVATOR and
-                            edge_2.edge_type == TFType.ACTIVATOR):
+                        if (
+                            edge_1.edge_type == TFType.ACTIVATOR
+                            and edge_2.edge_type == TFType.ACTIVATOR
+                        ):
                             loop_type = LoopType.POSITIVE_FEEDBACK
-                        elif (edge_1.edge_type == TFType.REPRESSOR or
-                              edge_2.edge_type == TFType.REPRESSOR):
+                        elif (
+                            edge_1.edge_type == TFType.REPRESSOR
+                            or edge_2.edge_type == TFType.REPRESSOR
+                        ):
                             loop_type = LoopType.NEGATIVE_FEEDBACK
                         else:
                             loop_type = LoopType.BISTABLE_SWITCH
@@ -1080,7 +1119,9 @@ class TranscriptionFactorScheduler:
                             tf_ids=[tf_id, target_id],
                             constraint_ids=[],
                             edges=[edge_1, edge_2],
-                            stability="stable" if loop_type == LoopType.NEGATIVE_FEEDBACK else "potentially_unstable",
+                            stability="stable"
+                            if loop_type == LoopType.NEGATIVE_FEEDBACK
+                            else "potentially_unstable",
                         )
                         loops.append(loop)
 
@@ -1100,13 +1141,13 @@ class TranscriptionFactorScheduler:
 
                     if edge_ab and edge_ac and edge_bc:
                         # Determine if coherent or incoherent
-                        same_direction = (
-                            (edge_ac.edge_type == edge_bc.edge_type) ==
-                            (edge_ab.edge_type == TFType.ACTIVATOR)
+                        same_direction = (edge_ac.edge_type == edge_bc.edge_type) == (
+                            edge_ab.edge_type == TFType.ACTIVATOR
                         )
 
                         loop_type = (
-                            LoopType.FEED_FORWARD_COHERENT if same_direction
+                            LoopType.FEED_FORWARD_COHERENT
+                            if same_direction
                             else LoopType.FEED_FORWARD_INCOHERENT
                         )
 
@@ -1117,8 +1158,12 @@ class TranscriptionFactorScheduler:
                             id=uuid4(),
                             loop_type=loop_type,
                             description=f"Feed-forward: {tfa.name} -> {tfb.name if tfb else tf_b} -> {target_c}",
-                            tf_ids=[tf_a, tf_b] if tf_b in self.transcription_factors else [tf_a],
-                            constraint_ids=[target_c] if target_c in self.promoters else [],
+                            tf_ids=[tf_a, tf_b]
+                            if tf_b in self.transcription_factors
+                            else [tf_a],
+                            constraint_ids=[target_c]
+                            if target_c in self.promoters
+                            else [],
                             edges=[edge_ab, edge_ac, edge_bc],
                         )
                         loops.append(loop)
@@ -1170,7 +1215,9 @@ class TranscriptionFactorScheduler:
         if expressions:
             mean_exp = sum(expressions) / len(expressions)
             if mean_exp > 0:
-                variance = sum((e - mean_exp) ** 2 for e in expressions) / len(expressions)
+                variance = sum((e - mean_exp) ** 2 for e in expressions) / len(
+                    expressions
+                )
                 entropy = math.log(1 + variance)
             else:
                 entropy = 0.0
@@ -1202,24 +1249,15 @@ class TranscriptionFactorScheduler:
         Returns:
             Dict with status information
         """
-        active_tfs = [
-            tf for tf in self.transcription_factors.values()
-            if tf.is_active
-        ]
+        active_tfs = [tf for tf in self.transcription_factors.values() if tf.is_active]
 
-        master_tfs = [
-            tf for tf in active_tfs
-            if tf.tf_type == TFType.MASTER
-        ]
+        master_tfs = [tf for tf in active_tfs if tf.tf_type == TFType.MASTER]
 
         # Take snapshot
         state = self.snapshot_state()
 
         # Count regulated constraints
-        regulated = len([
-            w for w in state.constraint_weights.values()
-            if w != 1.0
-        ])
+        regulated = len([w for w in state.constraint_weights.values() if w != 1.0])
 
         return {
             "timestamp": datetime.now().isoformat(),
@@ -1249,7 +1287,6 @@ class TranscriptionFactorScheduler:
                 "targets": len(tf.target_constraint_ids) + len(tf.target_tf_ids),
             }
             for tf in sorted(
-                self.transcription_factors.values(),
-                key=lambda t: -t.expression_level
+                self.transcription_factors.values(), key=lambda t: -t.expression_level
             )
         ]

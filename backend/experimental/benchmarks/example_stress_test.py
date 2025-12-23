@@ -5,8 +5,6 @@ This script demonstrates how to use the StressTester class to validate
 scheduler behavior under various stress conditions.
 """
 
-from datetime import date, timedelta
-
 from stress_testing import StressLevel, StressTester
 
 

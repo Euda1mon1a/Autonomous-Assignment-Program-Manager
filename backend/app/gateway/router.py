@@ -3,11 +3,13 @@ Dynamic routing for API gateway.
 
 Provides dynamic route registration and request routing based on configurable rules.
 """
+
 import logging
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 from fastapi import Request
 from pydantic import BaseModel, Field
@@ -130,9 +132,9 @@ class DynamicRouter:
         matcher = self._create_matcher(config)
 
         # Initialize connection tracking
-        connection_counts = {service: 0 for service in config.target_services}
-        failure_counts = {service: 0 for service in config.target_services}
-        circuit_open = {service: False for service in config.target_services}
+        connection_counts = dict.fromkeys(config.target_services, 0)
+        failure_counts = dict.fromkeys(config.target_services, 0)
+        circuit_open = dict.fromkeys(config.target_services, False)
 
         # Create route rule
         rule = RouteRule(
@@ -177,7 +179,7 @@ class DynamicRouter:
 
         return removed
 
-    def get_route(self, name: str) -> Optional[RouteConfig]:
+    def get_route(self, name: str) -> RouteConfig | None:
         """
         Get route configuration by name.
 
@@ -201,7 +203,7 @@ class DynamicRouter:
         """
         return [rule.config for rule in self._routes]
 
-    async def route_request(self, request: Request) -> Optional[str]:
+    async def route_request(self, request: Request) -> str | None:
         """
         Route a request to appropriate service based on registered rules.
 
@@ -297,8 +299,7 @@ class DynamicRouter:
 
         elif config.strategy == RoutingStrategy.HEADER:
             return lambda req: all(
-                req.headers.get(key) == value
-                for key, value in config.headers.items()
+                req.headers.get(key) == value for key, value in config.headers.items()
             )
 
         elif config.strategy == RoutingStrategy.METHOD:
@@ -332,7 +333,7 @@ class DynamicRouter:
         else:
             raise ValueError(f"Unsupported routing strategy: {config.strategy}")
 
-    def _select_service(self, rule: RouteRule, request: Request) -> Optional[str]:
+    def _select_service(self, rule: RouteRule, request: Request) -> str | None:
         """
         Select target service based on load balancing strategy.
 
@@ -394,7 +395,7 @@ class DynamicRouter:
             rule.current_index += 1
             return service
 
-    def _find_rule(self, route_name: str) -> Optional[RouteRule]:
+    def _find_rule(self, route_name: str) -> RouteRule | None:
         """
         Find route rule by name.
 

@@ -99,8 +99,7 @@ class ConflictVisualizer:
             severity_score = 0.0
             if date_conflicts:
                 severity_score = max(
-                    self.SEVERITY_SCORES.get(c.severity, 0.0)
-                    for c in date_conflicts
+                    self.SEVERITY_SCORES.get(c.severity, 0.0) for c in date_conflicts
                 )
 
             # Create timeline entry
@@ -177,7 +176,8 @@ class ConflictVisualizer:
 
             # Find conflicts in this week
             week_conflicts = [
-                c for c in conflicts
+                c
+                for c in conflicts
                 if not (c.end_date < current_week_start or c.start_date > week_end)
             ]
 
@@ -382,7 +382,11 @@ class ConflictVisualizer:
             "by_type": dict(by_type),
             "total": len(conflicts),
             "severity_chart": [
-                {"label": severity, "count": count, "color": self._get_severity_color(ConflictSeverity(severity))}
+                {
+                    "label": severity,
+                    "count": count,
+                    "color": self._get_severity_color(ConflictSeverity(severity)),
+                }
                 for severity, count in by_severity.items()
             ],
             "category_chart": [
@@ -421,17 +425,20 @@ class ConflictVisualizer:
         impact_data = []
         for person_id_str, conflict_count in person_conflict_count.items():
             avg_severity = (
-                sum(person_severity_scores[person_id_str]) / len(person_severity_scores[person_id_str])
+                sum(person_severity_scores[person_id_str])
+                / len(person_severity_scores[person_id_str])
                 if person_severity_scores[person_id_str]
                 else 0.0
             )
 
-            impact_data.append({
-                "person_id": person_id_str,
-                "conflict_count": conflict_count,
-                "average_severity": round(avg_severity, 2),
-                "max_severity": max(person_severity_scores[person_id_str]),
-            })
+            impact_data.append(
+                {
+                    "person_id": person_id_str,
+                    "conflict_count": conflict_count,
+                    "average_severity": round(avg_severity, 2),
+                    "max_severity": max(person_severity_scores[person_id_str]),
+                }
+            )
 
         # Sort by conflict count (descending)
         impact_data.sort(key=lambda x: x["conflict_count"], reverse=True)

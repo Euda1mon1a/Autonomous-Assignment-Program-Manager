@@ -37,14 +37,13 @@ Examples:
         >>> result = qb.filter_in("id", subquery).all()
 """
 
-from datetime import date, datetime
+from datetime import date
 from enum import Enum
 from typing import Any, Generic, TypeVar
-from uuid import UUID
 
-from sqlalchemy import and_, asc, desc, distinct, func, or_, select
+from sqlalchemy import and_, asc, desc, func, or_
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import Query, RelationshipProperty, Session, joinedload, selectinload
+from sqlalchemy.orm import Query, Session, joinedload, selectinload
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import BinaryExpression
 
@@ -55,25 +54,27 @@ ModelType = TypeVar("ModelType", bound=Base)
 
 class SortOrder(str, Enum):
     """Sort order enumeration."""
+
     ASC = "asc"
     DESC = "desc"
 
 
 class FilterOperator(str, Enum):
     """Filter operators for type-safe filtering."""
-    EQ = "eq"           # Equal
-    NE = "ne"           # Not equal
-    GT = "gt"           # Greater than
-    GTE = "gte"         # Greater than or equal
-    LT = "lt"           # Less than
-    LTE = "lte"         # Less than or equal
-    LIKE = "like"       # SQL LIKE (case-sensitive)
-    ILIKE = "ilike"     # SQL ILIKE (case-insensitive)
-    IN = "in"           # IN list
-    NOT_IN = "not_in"   # NOT IN list
-    IS_NULL = "is_null" # IS NULL
+
+    EQ = "eq"  # Equal
+    NE = "ne"  # Not equal
+    GT = "gt"  # Greater than
+    GTE = "gte"  # Greater than or equal
+    LT = "lt"  # Less than
+    LTE = "lte"  # Less than or equal
+    LIKE = "like"  # SQL LIKE (case-sensitive)
+    ILIKE = "ilike"  # SQL ILIKE (case-insensitive)
+    IN = "in"  # IN list
+    NOT_IN = "not_in"  # NOT IN list
+    IS_NULL = "is_null"  # IS NULL
     IS_NOT_NULL = "is_not_null"  # IS NOT NULL
-    BETWEEN = "between" # BETWEEN two values
+    BETWEEN = "between"  # BETWEEN two values
     CONTAINS = "contains"  # Array contains (PostgreSQL)
 
 
@@ -187,7 +188,9 @@ class QueryBuilder(Generic[ModelType]):
         self._filters.append(getattr(self.model, field) <= value)
         return self
 
-    def filter_like(self, field: str, pattern: str, case_sensitive: bool = True) -> "QueryBuilder[ModelType]":
+    def filter_like(
+        self, field: str, pattern: str, case_sensitive: bool = True
+    ) -> "QueryBuilder[ModelType]":
         """
         Add LIKE pattern filter.
 
@@ -210,7 +213,9 @@ class QueryBuilder(Generic[ModelType]):
             self._filters.append(col.ilike(pattern))
         return self
 
-    def filter_in(self, field: str, values: list[Any] | Select) -> "QueryBuilder[ModelType]":
+    def filter_in(
+        self, field: str, values: list[Any] | Select
+    ) -> "QueryBuilder[ModelType]":
         """
         Add IN filter.
 
@@ -246,7 +251,9 @@ class QueryBuilder(Generic[ModelType]):
         self._filters.append(getattr(self.model, field).isnot(None))
         return self
 
-    def filter_between(self, field: str, start: Any, end: Any) -> "QueryBuilder[ModelType]":
+    def filter_between(
+        self, field: str, start: Any, end: Any
+    ) -> "QueryBuilder[ModelType]":
         """
         Add BETWEEN filter.
 
@@ -341,9 +348,13 @@ class QueryBuilder(Generic[ModelType]):
             self._joins.add(relationship)
             if eager:
                 if strategy == "selectinload":
-                    self._eager_loads.append(selectinload(getattr(self.model, relationship)))
+                    self._eager_loads.append(
+                        selectinload(getattr(self.model, relationship))
+                    )
                 elif strategy == "joinedload":
-                    self._eager_loads.append(joinedload(getattr(self.model, relationship)))
+                    self._eager_loads.append(
+                        joinedload(getattr(self.model, relationship))
+                    )
                 else:
                     raise ValueError(f"Invalid eager loading strategy: {strategy}")
 
@@ -389,7 +400,9 @@ class QueryBuilder(Generic[ModelType]):
 
         return self
 
-    def order_by(self, *fields: str, direction: SortOrder = SortOrder.ASC) -> "QueryBuilder[ModelType]":
+    def order_by(
+        self, *fields: str, direction: SortOrder = SortOrder.ASC
+    ) -> "QueryBuilder[ModelType]":
         """
         Add ordering to the query.
 
@@ -730,7 +743,7 @@ class QueryBuilder(Generic[ModelType]):
             >>> qb.filter_by(type="resident").update({"pgy_level": 2})
         """
         # Validate all columns
-        for field in values.keys():
+        for field in values:
             self._validate_column(field)
 
         self._apply_filters()
@@ -800,7 +813,9 @@ class QueryBuilder(Generic[ModelType]):
         return new_qb
 
 
-def create_query_builder(model: type[ModelType], db: Session) -> QueryBuilder[ModelType]:
+def create_query_builder(
+    model: type[ModelType], db: Session
+) -> QueryBuilder[ModelType]:
     """
     Factory function to create a QueryBuilder instance.
 

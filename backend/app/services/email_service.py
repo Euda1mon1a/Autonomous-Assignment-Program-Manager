@@ -53,6 +53,7 @@ class EmailConfig:
     def from_env(cls) -> "EmailConfig":
         """Load configuration from environment variables."""
         import os
+
         return cls(
             host=os.getenv("SMTP_HOST", "localhost"),
             port=int(os.getenv("SMTP_PORT", "587")),
@@ -221,7 +222,9 @@ This is an automated message from the Residency Scheduling System.
         expired_certs: list[PersonCertification],
     ) -> bool:
         """Send a compliance summary email to administrators."""
-        subject = f"Certification Compliance Summary - {date.today().strftime('%B %d, %Y')}"
+        subject = (
+            f"Certification Compliance Summary - {date.today().strftime('%B %d, %Y')}"
+        )
 
         # Build expiring list HTML
         expiring_rows = ""
@@ -230,7 +233,7 @@ This is an automated message from the Residency Scheduling System.
             <tr>
                 <td>{cert.person.name}</td>
                 <td>{cert.certification_type.name}</td>
-                <td>{cert.expiration_date.strftime('%Y-%m-%d')}</td>
+                <td>{cert.expiration_date.strftime("%Y-%m-%d")}</td>
                 <td>{cert.days_until_expiration} days</td>
             </tr>
             """
@@ -242,7 +245,7 @@ This is an automated message from the Residency Scheduling System.
             <tr style="background-color: #ffe6e6;">
                 <td>{cert.person.name}</td>
                 <td>{cert.certification_type.name}</td>
-                <td>{cert.expiration_date.strftime('%Y-%m-%d')}</td>
+                <td>{cert.expiration_date.strftime("%Y-%m-%d")}</td>
                 <td style="color: red;">EXPIRED</td>
             </tr>
             """
@@ -270,14 +273,27 @@ This is an automated message from the Residency Scheduling System.
             <div class="container">
                 <div class="header">
                     <h1>Certification Compliance Summary</h1>
-                    <p>{date.today().strftime('%B %d, %Y')}</p>
+                    <p>{date.today().strftime("%B %d, %Y")}</p>
                 </div>
                 <div class="content">
-                    {"<div class='alert alert-danger'><strong>" + str(len(expired_certs)) + " certifications have EXPIRED and require immediate attention.</strong></div>" if expired_certs else ""}
+                    {
+            "<div class='alert alert-danger'><strong>"
+            + str(len(expired_certs))
+            + " certifications have EXPIRED and require immediate attention.</strong></div>"
+            if expired_certs
+            else ""
+        }
 
-                    {"<div class='alert alert-warning'><strong>" + str(len(expiring_certs)) + " certifications are expiring within the next 6 months.</strong></div>" if expiring_certs else ""}
+                    {
+            "<div class='alert alert-warning'><strong>"
+            + str(len(expiring_certs))
+            + " certifications are expiring within the next 6 months.</strong></div>"
+            if expiring_certs
+            else ""
+        }
 
-                    {f'''
+                    {
+            f'''
                     <div class="section">
                         <h2>Expired Certifications ({len(expired_certs)})</h2>
                         <table>
@@ -294,9 +310,13 @@ This is an automated message from the Residency Scheduling System.
                             </tbody>
                         </table>
                     </div>
-                    ''' if expired_certs else ''}
+                    '''
+            if expired_certs
+            else ""
+        }
 
-                    {f'''
+                    {
+            f'''
                     <div class="section">
                         <h2>Expiring Soon ({len(expiring_certs)})</h2>
                         <table>
@@ -313,9 +333,16 @@ This is an automated message from the Residency Scheduling System.
                             </tbody>
                         </table>
                     </div>
-                    ''' if expiring_certs else ''}
+                    '''
+            if expiring_certs
+            else ""
+        }
 
-                    {'''<p style="color: green;"><strong>All certifications are current!</strong></p>''' if not expired_certs and not expiring_certs else ''}
+                    {
+            '''<p style="color: green;"><strong>All certifications are current!</strong></p>'''
+            if not expired_certs and not expiring_certs
+            else ""
+        }
                 </div>
             </div>
         </body>

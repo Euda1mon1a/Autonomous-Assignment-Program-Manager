@@ -9,10 +9,8 @@ Tests cover:
 5. Burden equity analysis
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from uuid import uuid4
-
-import pytest
 
 from app.resilience.behavioral_network import (
     BehavioralNetworkAnalyzer,
@@ -23,7 +21,6 @@ from app.resilience.behavioral_network import (
     ProtectionLevel,
     ShadowOrgChartService,
 )
-
 
 # =============================================================================
 # Burden Calculation Tests
@@ -257,7 +254,7 @@ class TestSwapNetworkAnalysis:
                     target_name="Dr. Martyr",
                     initiated_by=other_id,
                     source_burden=25.0,  # High burden shifts
-                    target_burden=0.0,   # Absorb (no exchange)
+                    target_burden=0.0,  # Absorb (no exchange)
                     was_successful=True,
                 )
 
@@ -287,7 +284,7 @@ class TestSwapNetworkAnalysis:
                     target_name=f"Dr. Other{i}",
                     initiated_by=evader_id,
                     source_burden=30.0,  # Evader offloads high burden
-                    target_burden=5.0,   # Gives back low burden
+                    target_burden=5.0,  # Gives back low burden
                     was_successful=True,
                 )
 
@@ -309,14 +306,20 @@ class TestSwapNetworkAnalysis:
         other2 = uuid4()
 
         # Create isolate node but no swaps
-        analyzer.nodes[isolate_id] = analyzer.nodes.get(isolate_id) or \
-            type('obj', (object,), {
-                'faculty_id': isolate_id,
-                'faculty_name': 'Dr. Isolate',
-                'swap_count': 0,
-                'requests_made': 0,
-                'requests_received': 0,
-            })()
+        analyzer.nodes[isolate_id] = (
+            analyzer.nodes.get(isolate_id)
+            or type(
+                "obj",
+                (object,),
+                {
+                    "faculty_id": isolate_id,
+                    "faculty_name": "Dr. Isolate",
+                    "swap_count": 0,
+                    "requests_made": 0,
+                    "requests_received": 0,
+                },
+            )()
+        )
 
         # Others swap with each other
         analyzer.record_swap(
@@ -332,6 +335,7 @@ class TestSwapNetworkAnalysis:
 
         # Force add isolate to nodes for analysis
         from app.resilience.behavioral_network import SwapNetworkNode
+
         analyzer.nodes[isolate_id] = SwapNetworkNode(
             faculty_id=isolate_id,
             faculty_name="Dr. Isolate",
@@ -412,10 +416,7 @@ class TestMartyrProtection:
             )
 
         # Run analysis to classify
-        analyzer.analyze_network(
-            datetime(2024, 1, 1),
-            datetime(2024, 1, 31)
-        )
+        analyzer.analyze_network(datetime(2024, 1, 1), datetime(2024, 1, 31))
 
         # Check protection at high stress
         level, reason = analyzer.get_martyr_protection_level(

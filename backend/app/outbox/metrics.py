@@ -14,9 +14,10 @@ These metrics can be exported to:
 - Application logs
 - Custom monitoring dashboards
 """
+
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
@@ -107,8 +108,9 @@ class OutboxMetricsCollector:
         now = datetime.utcnow()
 
         result = self.db.execute(
-            select(func.avg(func.extract("epoch", now - OutboxMessage.created_at)))
-            .where(OutboxMessage.status == OutboxStatus.PENDING.value)
+            select(
+                func.avg(func.extract("epoch", now - OutboxMessage.created_at))
+            ).where(OutboxMessage.status == OutboxStatus.PENDING.value)
         )
 
         avg_age = result.scalar_one()
@@ -124,14 +126,15 @@ class OutboxMetricsCollector:
         now = datetime.utcnow()
 
         result = self.db.execute(
-            select(func.max(func.extract("epoch", now - OutboxMessage.created_at)))
-            .where(OutboxMessage.status == OutboxStatus.PENDING.value)
+            select(
+                func.max(func.extract("epoch", now - OutboxMessage.created_at))
+            ).where(OutboxMessage.status == OutboxStatus.PENDING.value)
         )
 
         max_age = result.scalar_one()
         return float(max_age) if max_age is not None else 0.0
 
-    def get_oldest_pending_message_id(self) -> Optional[str]:
+    def get_oldest_pending_message_id(self) -> str | None:
         """
         Get ID of oldest pending message (for debugging).
 
@@ -449,42 +452,50 @@ class OutboxMonitor:
 
         # Anomaly: High pending message age
         if metrics["max_pending_age_seconds"] > 600:  # 10 minutes
-            anomalies.append({
-                "type": "high_latency",
-                "severity": "warning",
-                "message": (
-                    f"High pending message age: "
-                    f"{metrics['max_pending_age_seconds']:.0f}s"
-                ),
-                "value": metrics["max_pending_age_seconds"],
-            })
+            anomalies.append(
+                {
+                    "type": "high_latency",
+                    "severity": "warning",
+                    "message": (
+                        f"High pending message age: "
+                        f"{metrics['max_pending_age_seconds']:.0f}s"
+                    ),
+                    "value": metrics["max_pending_age_seconds"],
+                }
+            )
 
         # Anomaly: Growing dead letter queue
         if metrics["dead_letter_count"] > 0:
-            anomalies.append({
-                "type": "dead_letters",
-                "severity": "error",
-                "message": f"Dead letter queue has {metrics['dead_letter_count']} messages",
-                "value": metrics["dead_letter_count"],
-            })
+            anomalies.append(
+                {
+                    "type": "dead_letters",
+                    "severity": "error",
+                    "message": f"Dead letter queue has {metrics['dead_letter_count']} messages",
+                    "value": metrics["dead_letter_count"],
+                }
+            )
 
         # Anomaly: Stuck processing messages
         if metrics["stuck_processing_count"] > 0:
-            anomalies.append({
-                "type": "stuck_processing",
-                "severity": "warning",
-                "message": f"{metrics['stuck_processing_count']} messages stuck processing",
-                "value": metrics["stuck_processing_count"],
-            })
+            anomalies.append(
+                {
+                    "type": "stuck_processing",
+                    "severity": "warning",
+                    "message": f"{metrics['stuck_processing_count']} messages stuck processing",
+                    "value": metrics["stuck_processing_count"],
+                }
+            )
 
         # Anomaly: Low throughput
         if metrics["published_last_hour"] == 0 and metrics["pending_count"] > 0:
-            anomalies.append({
-                "type": "low_throughput",
-                "severity": "error",
-                "message": "No messages published in last hour despite pending messages",
-                "pending_count": metrics["pending_count"],
-            })
+            anomalies.append(
+                {
+                    "type": "low_throughput",
+                    "severity": "error",
+                    "message": "No messages published in last hour despite pending messages",
+                    "pending_count": metrics["pending_count"],
+                }
+            )
 
         return anomalies
 

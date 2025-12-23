@@ -3,21 +3,23 @@ OpenTelemetry tracing decorators.
 
 Provides convenient decorators for adding tracing to functions and methods.
 """
+
 import functools
 import inspect
 import logging
-from typing import Callable, Optional, Any
+from collections.abc import Callable
+from typing import Any
 
 from opentelemetry import trace
-from opentelemetry.trace import Status, StatusCode, Span
+from opentelemetry.trace import Span, Status, StatusCode
 
 logger = logging.getLogger(__name__)
 
 
 def traced(
-    name: Optional[str] = None,
-    tracer_name: Optional[str] = None,
-    attributes: Optional[dict[str, Any]] = None,
+    name: str | None = None,
+    tracer_name: str | None = None,
+    attributes: dict[str, Any] | None = None,
     capture_args: bool = False,
     capture_result: bool = False,
     span_kind: trace.SpanKind = trace.SpanKind.INTERNAL,
@@ -135,8 +137,8 @@ def traced(
 
 
 def trace_class(
-    tracer_name: Optional[str] = None,
-    attributes: Optional[dict[str, Any]] = None,
+    tracer_name: str | None = None,
+    attributes: dict[str, Any] | None = None,
 ):
     """
     Class decorator for tracing all methods.
@@ -185,9 +187,9 @@ def trace_class(
 
 
 def trace_async_generator(
-    name: Optional[str] = None,
-    tracer_name: Optional[str] = None,
-    attributes: Optional[dict[str, Any]] = None,
+    name: str | None = None,
+    tracer_name: str | None = None,
+    attributes: dict[str, Any] | None = None,
 ):
     """
     Decorator for tracing async generators.
@@ -243,6 +245,7 @@ def trace_async_generator(
 
 
 # Helper functions
+
 
 def _capture_function_args(
     span: Span,
@@ -307,8 +310,9 @@ def _capture_result(span: Span, result: Any):
 
 # Specialized decorators for common use cases
 
+
 def trace_service_method(
-    name: Optional[str] = None,
+    name: str | None = None,
     capture_args: bool = True,
 ):
     """
@@ -336,7 +340,7 @@ def trace_service_method(
 
 
 def trace_repository_method(
-    name: Optional[str] = None,
+    name: str | None = None,
     capture_args: bool = False,
 ):
     """
@@ -364,7 +368,7 @@ def trace_repository_method(
 
 
 def trace_controller_method(
-    name: Optional[str] = None,
+    name: str | None = None,
 ):
     """
     Decorator for controller methods.
@@ -390,7 +394,7 @@ def trace_controller_method(
 
 
 def trace_background_task(
-    name: Optional[str] = None,
+    name: str | None = None,
     capture_args: bool = True,
 ):
     """

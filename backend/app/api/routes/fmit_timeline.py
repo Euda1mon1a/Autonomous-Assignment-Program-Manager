@@ -8,13 +8,14 @@ Provides endpoints for visualizing faculty assignment timelines:
 
 All endpoints include workload balance metrics and fairness indicators.
 """
+
+import statistics
 from datetime import date, datetime, timedelta
 from uuid import UUID
-import statistics
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import and_, func
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy import and_
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.security import get_current_active_user
 from app.db.session import get_db
@@ -91,10 +92,7 @@ def calculate_jains_fairness_index(values: list[float]) -> float:
 
 
 def get_faculty_weekly_assignments(
-    db: Session,
-    faculty_id: UUID,
-    start_date: date,
-    end_date: date
+    db: Session, faculty_id: UUID, start_date: date, end_date: date
 ) -> list[WeekAssignment]:
     """
     Get week-by-week assignment data for a faculty member.
@@ -107,13 +105,13 @@ def get_faculty_weekly_assignments(
         .options(
             joinedload(Assignment.block),
             joinedload(Assignment.person),
-            joinedload(Assignment.rotation_template)
+            joinedload(Assignment.rotation_template),
         )
         .filter(
             and_(
                 Assignment.person_id == faculty_id,
                 Block.date >= start_date,
-                Block.date <= end_date
+                Block.date <= end_date,
             )
         )
         .limit(100)
@@ -129,16 +127,16 @@ def get_faculty_weekly_assignments(
 
         if week_key not in weeks_map:
             weeks_map[week_key] = {
-                'week_start': week_start,
-                'week_end': week_end,
-                'assignment_count': 0,
-                'total_blocks': 0,
-                'dates': set()
+                "week_start": week_start,
+                "week_end": week_end,
+                "assignment_count": 0,
+                "total_blocks": 0,
+                "dates": set(),
             }
 
-        weeks_map[week_key]['assignment_count'] += 1
-        weeks_map[week_key]['total_blocks'] += 1
-        weeks_map[week_key]['dates'].add(block.date)
+        weeks_map[week_key]["assignment_count"] += 1
+        weeks_map[week_key]["total_blocks"] += 1
+        weeks_map[week_key]["dates"].add(block.date)
 
     # Convert to list of WeekAssignment objects
     today = date.today()
@@ -146,20 +144,22 @@ def get_faculty_weekly_assignments(
 
     for week_data in weeks_map.values():
         # Determine status based on date
-        if week_data['week_end'] < today:
+        if week_data["week_end"] < today:
             status = "completed"
-        elif week_data['week_start'] <= today <= week_data['week_end']:
+        elif week_data["week_start"] <= today <= week_data["week_end"]:
             status = "in_progress"
         else:
             status = "scheduled"
 
-        week_assignments.append(WeekAssignment(
-            week_start=week_data['week_start'],
-            week_end=week_data['week_end'],
-            status=status,
-            assignment_count=week_data['assignment_count'],
-            total_blocks=week_data['total_blocks']
-        ))
+        week_assignments.append(
+            WeekAssignment(
+                week_start=week_data["week_start"],
+                week_end=week_data["week_end"],
+                status=status,
+                assignment_count=week_data["assignment_count"],
+                total_blocks=week_data["total_blocks"],
+            )
+        )
 
     # Sort by week start date
     week_assignments.sort(key=lambda w: w.week_start)
@@ -167,8 +167,7 @@ def get_faculty_weekly_assignments(
 
 
 def calculate_workload_summary(
-    weekly_assignments: list[WeekAssignment],
-    target_weeks: float = 4.5
+    weekly_assignments: list[WeekAssignment], target_weeks: float = 4.5
 ) -> WorkloadSummary:
     """Calculate workload summary metrics for a faculty member."""
     total_weeks = len(weekly_assignments)
@@ -188,15 +187,12 @@ def calculate_workload_summary(
         target_weeks=target_weeks,
         utilization_percent=utilization_percent,
         is_balanced=is_balanced,
-        variance_from_target=variance
+        variance_from_target=variance,
     )
 
 
 def get_all_faculty_timelines(
-    db: Session,
-    start_date: date,
-    end_date: date,
-    faculty_filter: UUID | None = None
+    db: Session, start_date: date, end_date: date, faculty_filter: UUID | None = None
 ) -> list[FacultyTimeline]:
     """Get timeline data for all faculty members (or specific faculty)."""
     # Get all faculty with FMIT assignments in the date range
@@ -208,7 +204,7 @@ def get_all_faculty_timelines(
             and_(
                 Person.type == "faculty",
                 Block.date >= start_date,
-                Block.date <= end_date
+                Block.date <= end_date,
             )
         )
     )
@@ -227,28 +223,27 @@ def get_all_faculty_timelines(
         workload = calculate_workload_summary(weekly_assignments)
 
         # Get department/specialty from person model
-        department = getattr(faculty, 'primary_duty', None)
+        department = getattr(faculty, "primary_duty", None)
         specialty = None
-        if hasattr(faculty, 'specialties') and faculty.specialties:
+        if hasattr(faculty, "specialties") and faculty.specialties:
             specialty = faculty.specialties[0] if len(faculty.specialties) > 0 else None
 
-        timelines.append(FacultyTimeline(
-            faculty_id=faculty.id,
-            faculty_name=faculty.name,
-            weeks_assigned=weekly_assignments,
-            workload=workload,
-            department=department,
-            specialty=specialty
-        ))
+        timelines.append(
+            FacultyTimeline(
+                faculty_id=faculty.id,
+                faculty_name=faculty.name,
+                weeks_assigned=weekly_assignments,
+                workload=workload,
+                department=department,
+                specialty=specialty,
+            )
+        )
 
     return timelines
 
 
 def calculate_aggregate_metrics(
-    timelines: list[FacultyTimeline],
-    start_date: date,
-    end_date: date,
-    db: Session
+    timelines: list[FacultyTimeline], start_date: date, end_date: date, db: Session
 ) -> AggregateMetrics:
     """Calculate system-wide fairness and balance metrics."""
     if not timelines:
@@ -257,7 +252,7 @@ def calculate_aggregate_metrics(
             load_distribution=LoadDistribution(),
             total_faculty=0,
             total_weeks_scheduled=0,
-            coverage_percentage=0.0
+            coverage_percentage=0.0,
         )
 
     # Collect workload values
@@ -271,32 +266,35 @@ def calculate_aggregate_metrics(
     # Calculate distribution statistics
     load_dist = LoadDistribution(
         mean=round(statistics.mean(weeks_per_faculty), 2) if weeks_per_faculty else 0.0,
-        median=round(statistics.median(weeks_per_faculty), 2) if weeks_per_faculty else 0.0,
-        stdev=round(statistics.stdev(weeks_per_faculty), 2) if len(weeks_per_faculty) > 1 else 0.0,
+        median=round(statistics.median(weeks_per_faculty), 2)
+        if weeks_per_faculty
+        else 0.0,
+        stdev=round(statistics.stdev(weeks_per_faculty), 2)
+        if len(weeks_per_faculty) > 1
+        else 0.0,
         min=float(min(weeks_per_faculty)) if weeks_per_faculty else 0.0,
-        max=float(max(weeks_per_faculty)) if weeks_per_faculty else 0.0
+        max=float(max(weeks_per_faculty)) if weeks_per_faculty else 0.0,
     )
 
     # Calculate coverage percentage
     # Count total FMIT blocks that need coverage
-    total_blocks = db.query(Block).filter(
-        and_(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
-    ).count()
+    total_blocks = (
+        db.query(Block)
+        .filter(and_(Block.date >= start_date, Block.date <= end_date))
+        .count()
+    )
 
     # Count blocks with assignments
-    covered_blocks = db.query(Block).join(Assignment).filter(
-        and_(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
-    ).distinct().count()
+    covered_blocks = (
+        db.query(Block)
+        .join(Assignment)
+        .filter(and_(Block.date >= start_date, Block.date <= end_date))
+        .distinct()
+        .count()
+    )
 
     coverage_percentage = round(
-        (covered_blocks / total_blocks * 100.0) if total_blocks > 0 else 0.0,
-        1
+        (covered_blocks / total_blocks * 100.0) if total_blocks > 0 else 0.0, 1
     )
 
     return AggregateMetrics(
@@ -304,7 +302,7 @@ def calculate_aggregate_metrics(
         load_distribution=load_dist,
         total_faculty=len(timelines),
         total_weeks_scheduled=sum(weeks_per_faculty),
-        coverage_percentage=coverage_percentage
+        coverage_percentage=coverage_percentage,
     )
 
 
@@ -342,15 +340,19 @@ async def get_academic_year_timeline(
         aggregate_metrics=aggregate_metrics,
         start_date=start_date,
         end_date=end_date,
-        generated_at=datetime.utcnow()
+        generated_at=datetime.utcnow(),
     )
 
 
 @router.get("/faculty/{faculty_id}", response_model=TimelineResponse)
 async def get_faculty_timeline(
     faculty_id: UUID,
-    start_date: date | None = Query(None, description="Start date (default: academic year start)"),
-    end_date: date | None = Query(None, description="End date (default: academic year end)"),
+    start_date: date | None = Query(
+        None, description="Start date (default: academic year start)"
+    ),
+    end_date: date | None = Query(
+        None, description="End date (default: academic year end)"
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -374,7 +376,7 @@ async def get_faculty_timeline(
     if not faculty:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Faculty member with ID {faculty_id} not found"
+            detail=f"Faculty member with ID {faculty_id} not found",
         )
 
     # Default to academic year if dates not provided
@@ -384,18 +386,24 @@ async def get_faculty_timeline(
         end_date = end_date or ay_end
 
     # Get timeline for this faculty member
-    timelines = get_all_faculty_timelines(db, start_date, end_date, faculty_filter=faculty_id)
+    timelines = get_all_faculty_timelines(
+        db, start_date, end_date, faculty_filter=faculty_id
+    )
 
     # If no assignments found, create empty timeline
     if not timelines:
-        timelines = [FacultyTimeline(
-            faculty_id=faculty.id,
-            faculty_name=faculty.name,
-            weeks_assigned=[],
-            workload=WorkloadSummary(),
-            department=getattr(faculty, 'primary_duty', None),
-            specialty=faculty.specialties[0] if hasattr(faculty, 'specialties') and faculty.specialties else None
-        )]
+        timelines = [
+            FacultyTimeline(
+                faculty_id=faculty.id,
+                faculty_name=faculty.name,
+                weeks_assigned=[],
+                workload=WorkloadSummary(),
+                department=getattr(faculty, "primary_duty", None),
+                specialty=faculty.specialties[0]
+                if hasattr(faculty, "specialties") and faculty.specialties
+                else None,
+            )
+        ]
 
     # Calculate metrics (even for single faculty)
     aggregate_metrics = calculate_aggregate_metrics(timelines, start_date, end_date, db)
@@ -405,7 +413,7 @@ async def get_faculty_timeline(
         aggregate_metrics=aggregate_metrics,
         start_date=start_date,
         end_date=end_date,
-        generated_at=datetime.utcnow()
+        generated_at=datetime.utcnow(),
     )
 
 
@@ -439,13 +447,13 @@ async def get_weekly_view(
         .options(
             joinedload(Assignment.block),
             joinedload(Assignment.person),
-            joinedload(Assignment.rotation_template)
+            joinedload(Assignment.rotation_template),
         )
         .filter(
             and_(
                 Block.date >= week_start,
                 Block.date <= week_end,
-                Person.type == "faculty"
+                Person.type == "faculty",
             )
         )
         .limit(100)
@@ -460,60 +468,65 @@ async def get_weekly_view(
 
         if faculty_key not in faculty_assignments:
             faculty_assignments[faculty_key] = {
-                'faculty_id': str(faculty.id),
-                'faculty_name': faculty.name,
-                'assignments': []
+                "faculty_id": str(faculty.id),
+                "faculty_name": faculty.name,
+                "assignments": [],
             }
 
-        faculty_assignments[faculty_key]['assignments'].append({
-            'date': assignment.block.date.isoformat(),
-            'time_of_day': assignment.block.time_of_day,
-            'block_id': str(assignment.block.id),
-            'assignment_id': str(assignment.id),
-            'role': assignment.role
-        })
+        faculty_assignments[faculty_key]["assignments"].append(
+            {
+                "date": assignment.block.date.isoformat(),
+                "time_of_day": assignment.block.time_of_day,
+                "block_id": str(assignment.block.id),
+                "assignment_id": str(assignment.id),
+                "role": assignment.role,
+            }
+        )
 
     # Calculate coverage
-    total_blocks = db.query(Block).filter(
-        and_(
-            Block.date >= week_start,
-            Block.date <= week_end
-        )
-    ).count()
+    total_blocks = (
+        db.query(Block)
+        .filter(and_(Block.date >= week_start, Block.date <= week_end))
+        .count()
+    )
 
     filled_slots = len(assignments)
     coverage_percentage = round(
-        (filled_slots / total_blocks * 100.0) if total_blocks > 0 else 0.0,
-        1
+        (filled_slots / total_blocks * 100.0) if total_blocks > 0 else 0.0, 1
     )
 
     # Get adjacent week summaries
     prev_week_start = week_start - timedelta(days=7)
     next_week_start = week_start + timedelta(days=7)
 
-    prev_week_count = db.query(Assignment).join(Block).filter(
-        and_(
-            Block.date >= prev_week_start,
-            Block.date < week_start
-        )
-    ).count()
+    prev_week_count = (
+        db.query(Assignment)
+        .join(Block)
+        .filter(and_(Block.date >= prev_week_start, Block.date < week_start))
+        .count()
+    )
 
-    next_week_count = db.query(Assignment).join(Block).filter(
-        and_(
-            Block.date >= next_week_start,
-            Block.date < next_week_start + timedelta(days=7)
+    next_week_count = (
+        db.query(Assignment)
+        .join(Block)
+        .filter(
+            and_(
+                Block.date >= next_week_start,
+                Block.date < next_week_start + timedelta(days=7),
+            )
         )
-    ).count()
+        .count()
+    )
 
     adjacent_weeks = {
-        'previous_week': {
-            'week_start': prev_week_start.isoformat(),
-            'assignment_count': prev_week_count
+        "previous_week": {
+            "week_start": prev_week_start.isoformat(),
+            "assignment_count": prev_week_count,
         },
-        'next_week': {
-            'week_start': next_week_start.isoformat(),
-            'assignment_count': next_week_count
-        }
+        "next_week": {
+            "week_start": next_week_start.isoformat(),
+            "assignment_count": next_week_count,
+        },
     }
 
     week_data = WeeklyView(
@@ -522,21 +535,27 @@ async def get_weekly_view(
         faculty_assignments=list(faculty_assignments.values()),
         total_slots=total_blocks,
         filled_slots=filled_slots,
-        coverage_percentage=coverage_percentage
+        coverage_percentage=coverage_percentage,
     )
 
     return WeeklyViewResponse(
         week_data=week_data,
         adjacent_weeks=adjacent_weeks,
-        generated_at=datetime.utcnow()
+        generated_at=datetime.utcnow(),
     )
 
 
 @router.get("/gantt-data", response_model=GanttDataResponse)
 async def get_gantt_data(
-    start_date: date | None = Query(None, description="Start date (default: academic year start)"),
-    end_date: date | None = Query(None, description="End date (default: academic year end)"),
-    faculty_ids: list[UUID] | None = Query(None, description="Filter by specific faculty IDs"),
+    start_date: date | None = Query(
+        None, description="Start date (default: academic year start)"
+    ),
+    end_date: date | None = Query(
+        None, description="End date (default: academic year end)"
+    ),
+    faculty_ids: list[UUID] | None = Query(
+        None, description="Filter by specific faculty IDs"
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -571,7 +590,7 @@ async def get_gantt_data(
             and_(
                 Person.type == "faculty",
                 Block.date >= start_date,
-                Block.date <= end_date
+                Block.date <= end_date,
             )
         )
     )
@@ -600,25 +619,22 @@ async def get_gantt_data(
             task_id = f"task_{faculty.id}_{task_counter}"
 
             # Determine progress based on status
-            progress = 100.0 if week.status == "completed" else 50.0 if week.status == "in_progress" else 0.0
+            progress = (
+                100.0
+                if week.status == "completed"
+                else 50.0
+                if week.status == "in_progress"
+                else 0.0
+            )
 
             # Custom styling based on workload
             styles = {}
             if week.total_blocks > 8:  # Heavy week
-                styles = {
-                    "backgroundColor": "#ff6b6b",
-                    "color": "#ffffff"
-                }
+                styles = {"backgroundColor": "#ff6b6b", "color": "#ffffff"}
             elif week.total_blocks > 4:
-                styles = {
-                    "backgroundColor": "#ffd93d",
-                    "color": "#000000"
-                }
+                styles = {"backgroundColor": "#ffd93d", "color": "#000000"}
             else:
-                styles = {
-                    "backgroundColor": "#6bcf7f",
-                    "color": "#ffffff"
-                }
+                styles = {"backgroundColor": "#6bcf7f", "color": "#ffffff"}
 
             task = GanttTask(
                 id=task_id,
@@ -629,18 +645,14 @@ async def get_gantt_data(
                 dependencies=[],
                 resource=faculty.name,
                 type="task",
-                styles=styles
+                styles=styles,
             )
 
             tasks.append(task)
             all_tasks.append(task)
 
         # Create group for this faculty
-        group = GanttGroup(
-            id=str(faculty.id),
-            name=faculty.name,
-            tasks=tasks
-        )
+        group = GanttGroup(id=str(faculty.id), name=faculty.name, tasks=tasks)
         groups.append(group)
 
     # Metadata
@@ -648,16 +660,13 @@ async def get_gantt_data(
         "total_faculty": len(groups),
         "total_tasks": len(all_tasks),
         "date_range_days": (end_date - start_date).days,
-        "view_mode": "Week"
+        "view_mode": "Week",
     }
 
     return GanttDataResponse(
         groups=groups,
         all_tasks=all_tasks,
-        date_range={
-            "start": start_date.isoformat(),
-            "end": end_date.isoformat()
-        },
+        date_range={"start": start_date.isoformat(), "end": end_date.isoformat()},
         metadata=metadata,
-        generated_at=datetime.utcnow()
+        generated_at=datetime.utcnow(),
     )

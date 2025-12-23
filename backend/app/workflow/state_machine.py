@@ -33,15 +33,16 @@ Example:
     await machine.create_instance(db, context={"doc_id": "123"})
     result = await machine.trigger_event(db, instance_id, "submit")
 """
+
 import copy
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from app.models.state_machine import (
     StateMachineInstance,
@@ -60,6 +61,7 @@ class StateMachineContext:
     Contains the current state of the machine and provides access to
     the persistent instance data.
     """
+
     instance_id: UUID
     current_state: str
     data: dict[str, Any]
@@ -81,6 +83,7 @@ class StateMachineContext:
 @dataclass
 class TransitionEvent:
     """Event that triggers a state transition."""
+
     name: str
     data: dict[str, Any] = field(default_factory=dict)
     triggered_by_id: UUID | None = None
@@ -104,6 +107,7 @@ class State:
         exit_action: Name of action to execute when leaving this state
         metadata: Additional metadata for this state
     """
+
     name: str
     is_initial: bool = False
     is_final: bool = False
@@ -128,6 +132,7 @@ class Transition:
         action: Name of action to execute during transition
         priority: Priority when multiple transitions match (higher = higher priority)
     """
+
     from_state: str
     to_state: str
     event: str
@@ -153,6 +158,7 @@ class ParallelState:
         states: List of state names in this region
         initial_state: Starting state for this region
     """
+
     name: str
     states: list[str]
     initial_state: str
@@ -160,16 +166,19 @@ class ParallelState:
 
 class StateMachineError(Exception):
     """Base exception for state machine errors."""
+
     pass
 
 
 class InvalidTransitionError(StateMachineError):
     """Raised when an invalid transition is attempted."""
+
     pass
 
 
 class GuardFailedError(StateMachineError):
     """Raised when a guard condition fails."""
+
     pass
 
 
@@ -398,7 +407,8 @@ class StateMachine:
 
         # Find matching transitions (sorted by priority descending)
         matching_transitions = [
-            t for t in self.transitions
+            t
+            for t in self.transitions
             if t.matches(instance.current_state, event_obj.name)
         ]
         matching_transitions.sort(key=lambda t: t.priority, reverse=True)
@@ -704,7 +714,7 @@ class StateMachine:
 
         # Initial state marker
         initial_state = self.get_initial_state()
-        lines.append(f"  __start__ [shape=point];")
+        lines.append("  __start__ [shape=point];")
         lines.append(f"  __start__ -> {initial_state.name};")
         lines.append("")
 
@@ -723,8 +733,7 @@ class StateMachine:
                 label += "\\n" + " ".join(details)
 
             lines.append(
-                f'  {transition.from_state} -> {transition.to_state} '
-                f'[label="{label}"];'
+                f'  {transition.from_state} -> {transition.to_state} [label="{label}"];'
             )
 
         lines.append("}")

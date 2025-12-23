@@ -8,17 +8,21 @@ Provides:
 
 import asyncio
 import logging
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Optional
 
 from sqlalchemy.orm import Session
 
-from app.timeout.handler import TimeoutError, get_timeout_remaining, with_timeout_wrapper
+from app.timeout.handler import (
+    TimeoutError,
+    get_timeout_remaining,
+    with_timeout_wrapper,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def with_timeout(timeout: float, error_message: Optional[str] = None):
+def with_timeout(timeout: float, error_message: str | None = None):
     """
     Decorator to apply timeout to an async endpoint or function.
 
@@ -58,11 +62,12 @@ def with_timeout(timeout: float, error_message: Optional[str] = None):
                 effective_timeout = timeout
 
             # Execute with timeout
-            msg = error_message or f"{func.__name__} exceeded timeout of {effective_timeout}s"
+            msg = (
+                error_message
+                or f"{func.__name__} exceeded timeout of {effective_timeout}s"
+            )
             return await with_timeout_wrapper(
-                func(*args, **kwargs),
-                timeout=effective_timeout,
-                error_message=msg
+                func(*args, **kwargs), timeout=effective_timeout, error_message=msg
             )
 
         return wrapper
@@ -140,12 +145,10 @@ def db_timeout(timeout: float):
                 # Check if it's a timeout error
                 error_str = str(e).lower()
                 if "timeout" in error_str or "canceling statement" in error_str:
-                    logger.warning(
-                        f"Database query timeout in {func.__name__}: {e}"
-                    )
+                    logger.warning(f"Database query timeout in {func.__name__}: {e}")
                     raise TimeoutError(
                         f"Database query exceeded timeout of {timeout}s",
-                        timeout=timeout
+                        timeout=timeout,
                     ) from e
                 raise
 
@@ -193,12 +196,10 @@ def db_timeout(timeout: float):
                 # Check if it's a timeout error
                 error_str = str(e).lower()
                 if "timeout" in error_str or "canceling statement" in error_str:
-                    logger.warning(
-                        f"Database query timeout in {func.__name__}: {e}"
-                    )
+                    logger.warning(f"Database query timeout in {func.__name__}: {e}")
                     raise TimeoutError(
                         f"Database query exceeded timeout of {timeout}s",
-                        timeout=timeout
+                        timeout=timeout,
                     ) from e
                 raise
 
@@ -236,8 +237,7 @@ def timeout_remaining(func: Callable):
         remaining = get_timeout_remaining()
         if remaining is not None and remaining <= 0:
             raise TimeoutError(
-                f"{func.__name__} not executed: timeout already exceeded",
-                timeout=0
+                f"{func.__name__} not executed: timeout already exceeded", timeout=0
             )
 
         return await func(*args, **kwargs)

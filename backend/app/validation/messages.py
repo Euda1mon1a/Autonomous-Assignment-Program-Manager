@@ -4,12 +4,14 @@ Validation error messages with localization support.
 Provides centralized error messages for validation failures with support
 for multiple languages and formatted message templates.
 """
+
 from enum import Enum
 from typing import Any
 
 
 class Locale(str, Enum):
     """Supported locales for error messages."""
+
     EN_US = "en_US"
     ES_ES = "es_ES"
     FR_FR = "fr_FR"
@@ -17,6 +19,7 @@ class Locale(str, Enum):
 
 class ValidationMessageType(str, Enum):
     """Types of validation error messages."""
+
     REQUIRED = "required"
     INVALID_TYPE = "invalid_type"
     INVALID_FORMAT = "invalid_format"
@@ -105,9 +108,7 @@ ERROR_MESSAGES: dict[Locale, dict[ValidationMessageType, str]] = {
 
 
 def get_error_message(
-    message_type: ValidationMessageType,
-    locale: Locale = Locale.EN_US,
-    **params: Any
+    message_type: ValidationMessageType, locale: Locale = Locale.EN_US, **params: Any
 ) -> str:
     """
     Get formatted error message for a validation failure.
@@ -178,7 +179,7 @@ class ValidationMessage:
         message_type: ValidationMessageType,
         field: str,
         locale: Locale = Locale.EN_US,
-        **params: Any
+        **params: Any,
     ):
         """
         Initialize validation message.
@@ -203,10 +204,7 @@ class ValidationMessage:
             str: Human-readable error message
         """
         return get_error_message(
-            self.message_type,
-            self.locale,
-            field=self._formatted_field,
-            **self.params
+            self.message_type, self.locale, field=self._formatted_field, **self.params
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -231,24 +229,16 @@ def required_field(field: str, locale: Locale = Locale.EN_US) -> ValidationMessa
 
 
 def invalid_type(
-    field: str,
-    expected_type: str,
-    locale: Locale = Locale.EN_US
+    field: str, expected_type: str, locale: Locale = Locale.EN_US
 ) -> ValidationMessage:
     """Create 'invalid type' validation message."""
     return ValidationMessage(
-        ValidationMessageType.INVALID_TYPE,
-        field,
-        locale,
-        expected_type=expected_type
+        ValidationMessageType.INVALID_TYPE, field, locale, expected_type=expected_type
     )
 
 
 def out_of_range(
-    field: str,
-    min_value: Any,
-    max_value: Any,
-    locale: Locale = Locale.EN_US
+    field: str, min_value: Any, max_value: Any, locale: Locale = Locale.EN_US
 ) -> ValidationMessage:
     """Create 'out of range' validation message."""
     return ValidationMessage(
@@ -256,33 +246,26 @@ def out_of_range(
         field,
         locale,
         min_value=min_value,
-        max_value=max_value
+        max_value=max_value,
     )
 
 
 def invalid_enum(
-    field: str,
-    allowed_values: list[str],
-    locale: Locale = Locale.EN_US
+    field: str, allowed_values: list[str], locale: Locale = Locale.EN_US
 ) -> ValidationMessage:
     """Create 'invalid enum value' validation message."""
     return ValidationMessage(
         ValidationMessageType.INVALID_ENUM,
         field,
         locale,
-        allowed_values=", ".join(str(v) for v in allowed_values)
+        allowed_values=", ".join(str(v) for v in allowed_values),
     )
 
 
 def custom_message(
-    field: str,
-    message: str,
-    locale: Locale = Locale.EN_US
+    field: str, message: str, locale: Locale = Locale.EN_US
 ) -> ValidationMessage:
     """Create custom validation message."""
     return ValidationMessage(
-        ValidationMessageType.CUSTOM,
-        field,
-        locale,
-        message=message
+        ValidationMessageType.CUSTOM, field, locale, message=message
     )

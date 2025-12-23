@@ -74,11 +74,14 @@ class FileValidator:
 
     # Magic byte signatures for common file types
     MAGIC_SIGNATURES = {
-        "image/jpeg": [b"\xFF\xD8\xFF"],
+        "image/jpeg": [b"\xff\xd8\xff"],
         "image/png": [b"\x89PNG\r\n\x1a\n"],
         "image/gif": [b"GIF87a", b"GIF89a"],
         "application/pdf": [b"%PDF"],
-        "application/zip": [b"PK\x03\x04", b"PK\x05\x06"],  # DOCX, XLSX are ZIP archives
+        "application/zip": [
+            b"PK\x03\x04",
+            b"PK\x05\x06",
+        ],  # DOCX, XLSX are ZIP archives
     }
 
     def __init__(
@@ -282,9 +285,7 @@ class FileValidator:
 
         return safe_name
 
-    def _scan_for_viruses(
-        self, file_content: bytes, filename: str
-    ) -> dict[str, Any]:
+    def _scan_for_viruses(self, file_content: bytes, filename: str) -> dict[str, Any]:
         """
         Scan file for viruses using integrated scanner.
 
@@ -322,9 +323,7 @@ class FileValidator:
         """
         if mime_type.startswith("image/"):
             return "image"
-        elif mime_type == "application/pdf":
-            return "document"
-        elif mime_type in {
+        elif mime_type == "application/pdf" or mime_type in {
             "application/msword",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         }:

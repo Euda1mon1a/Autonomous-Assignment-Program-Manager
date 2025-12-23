@@ -6,6 +6,7 @@ Tests for:
 - Notification channels
 - Service methods
 """
+
 from datetime import date, timedelta
 
 import pytest
@@ -27,7 +28,10 @@ class TestEmailTemplates:
         )
 
         assert template is not None
-        assert "Dr. Jane Smith" in template["subject"] or "Dr. Jane Smith" in template["body"]
+        assert (
+            "Dr. Jane Smith" in template["subject"]
+            or "Dr. Jane Smith" in template["body"]
+        )
         assert "BLS" in template["body"]
 
     def test_schedule_notification_template(self):
@@ -61,7 +65,7 @@ class TestNotificationService:
 
     def test_validate_email_format(self):
         """Test email format validation using email-validator library."""
-        from email_validator import validate_email, EmailNotValidError
+        from email_validator import EmailNotValidError, validate_email
 
         valid_emails = [
             "user@example.com",
@@ -124,10 +128,7 @@ class TestReminderLogic:
         expiry_date = date.today() + timedelta(days=90)
         reminder_days = [30, 14, 7, 1]
 
-        reminder_dates = [
-            expiry_date - timedelta(days=d)
-            for d in reminder_days
-        ]
+        reminder_dates = [expiry_date - timedelta(days=d) for d in reminder_days]
 
         # All reminder dates should be before expiry
         for rd in reminder_dates:
@@ -191,7 +192,7 @@ class TestBatchNotifications:
 
         # Split into batches
         batches = [
-            recipients[i:i + max_batch_size]
+            recipients[i : i + max_batch_size]
             for i in range(0, len(recipients), max_batch_size)
         ]
 
@@ -208,7 +209,7 @@ class TestLeaveConflictDetectionTask:
         from app.notifications.tasks import detect_leave_conflicts
 
         assert detect_leave_conflicts is not None
-        assert hasattr(detect_leave_conflicts, 'delay')
+        assert hasattr(detect_leave_conflicts, "delay")
 
     def test_detect_leave_conflicts_with_valid_absence(
         self,
@@ -236,6 +237,7 @@ class TestLeaveConflictDetectionTask:
         """Test conflict detection when leave overlaps with FMIT."""
         from datetime import date, timedelta
         from uuid import uuid4
+
         from app.models.absence import Absence
         from app.models.assignment import Assignment
         from app.models.block import Block

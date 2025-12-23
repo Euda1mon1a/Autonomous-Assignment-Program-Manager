@@ -1,7 +1,7 @@
 """Calendar export API routes."""
+
 import logging
 from datetime import date, datetime, timedelta
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -13,8 +13,8 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.calendar import (
     CalendarSubscriptionCreate,
-    CalendarSubscriptionResponse,
     CalendarSubscriptionListResponse,
+    CalendarSubscriptionResponse,
 )
 from app.services.calendar_service import CalendarService
 
@@ -27,8 +27,12 @@ def export_all_calendars(
     start_date: date = Query(..., description="Start date for calendar export"),
     end_date: date = Query(..., description="End date for calendar export"),
     person_ids: list[UUID] | None = Query(None, description="Person UUIDs to filter"),
-    rotation_ids: list[UUID] | None = Query(None, description="Rotation UUIDs to filter"),
-    include_types: list[str] | None = Query(None, description="Activity types to include"),
+    rotation_ids: list[UUID] | None = Query(
+        None, description="Rotation UUIDs to filter"
+    ),
+    include_types: list[str] | None = Query(
+        None, description="Activity types to include"
+    ),
     db: Session = Depends(get_db),
 ) -> Response:
     """
@@ -69,7 +73,9 @@ def export_all_calendars(
         )
     except Exception as e:
         logger.error(f"Error generating calendar export: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="An error occurred generating the calendar")
+        raise HTTPException(
+            status_code=500, detail="An error occurred generating the calendar"
+        )
 
 
 @router.get("/export/ics/{person_id}")
@@ -77,7 +83,9 @@ def export_person_ics(
     person_id: UUID,
     start_date: date = Query(..., description="Start date for calendar export"),
     end_date: date = Query(..., description="End date for calendar export"),
-    include_types: list[str] | None = Query(None, description="Activity types to include"),
+    include_types: list[str] | None = Query(
+        None, description="Activity types to include"
+    ),
     db: Session = Depends(get_db),
 ) -> Response:
     """
@@ -118,7 +126,9 @@ def export_person_ics(
         raise HTTPException(status_code=404, detail="Resource not found")
     except Exception as e:
         logger.error(f"Error generating calendar export: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="An error occurred generating the calendar")
+        raise HTTPException(
+            status_code=500, detail="An error occurred generating the calendar"
+        )
 
 
 @router.get("/export/person/{person_id}")
@@ -126,7 +136,9 @@ def export_person_calendar(
     person_id: UUID,
     start_date: date = Query(..., description="Start date for calendar export"),
     end_date: date = Query(..., description="End date for calendar export"),
-    include_types: list[str] | None = Query(None, description="Activity types to include"),
+    include_types: list[str] | None = Query(
+        None, description="Activity types to include"
+    ),
     db: Session = Depends(get_db),
 ) -> Response:
     """
@@ -167,7 +179,9 @@ def export_person_calendar(
         raise HTTPException(status_code=404, detail="Resource not found")
     except Exception as e:
         logger.error(f"Error generating calendar export: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="An error occurred generating the calendar")
+        raise HTTPException(
+            status_code=500, detail="An error occurred generating the calendar"
+        )
 
 
 @router.get("/export/rotation/{rotation_id}")
@@ -213,7 +227,9 @@ def export_rotation_calendar(
         raise HTTPException(status_code=404, detail="Resource not found")
     except Exception as e:
         logger.error(f"Error generating calendar export: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="An error occurred generating the calendar")
+        raise HTTPException(
+            status_code=500, detail="An error occurred generating the calendar"
+        )
 
 
 # =============================================================================
@@ -267,7 +283,9 @@ def create_subscription(
 
         base_url = _get_base_url(request)
         http_url = f"{base_url}/subscribe/{subscription.token}"
-        webcal_url = CalendarService.generate_subscription_url(subscription.token, base_url)
+        webcal_url = CalendarService.generate_subscription_url(
+            subscription.token, base_url
+        )
 
         return CalendarSubscriptionResponse(
             token=subscription.token,
@@ -285,7 +303,9 @@ def create_subscription(
         raise HTTPException(status_code=404, detail="Resource not found")
     except Exception as e:
         logger.error(f"Error creating calendar subscription: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="An error occurred creating the subscription")
+        raise HTTPException(
+            status_code=500, detail="An error occurred creating the subscription"
+        )
 
 
 @router.get("/subscribe/{token}")
@@ -351,7 +371,9 @@ def get_subscription_feed(
         raise
     except Exception as e:
         logger.error(f"Error generating calendar feed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="An error occurred generating the calendar feed")
+        raise HTTPException(
+            status_code=500, detail="An error occurred generating the calendar feed"
+        )
 
 
 @router.get("/subscriptions", response_model=CalendarSubscriptionListResponse)
@@ -391,7 +413,9 @@ def list_subscriptions(
             CalendarSubscriptionResponse(
                 token=sub.token,
                 subscription_url=f"{base_url}/subscribe/{sub.token}",
-                webcal_url=CalendarService.generate_subscription_url(sub.token, base_url),
+                webcal_url=CalendarService.generate_subscription_url(
+                    sub.token, base_url
+                ),
                 person_id=sub.person_id,
                 label=sub.label,
                 created_at=sub.created_at,
@@ -431,7 +455,9 @@ def revoke_subscription(
         raise HTTPException(status_code=404, detail="Subscription not found")
 
     if subscription.created_by_user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to revoke this subscription")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to revoke this subscription"
+        )
 
     success = CalendarService.revoke_subscription(db, token)
     if not success:

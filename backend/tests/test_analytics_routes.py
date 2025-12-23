@@ -3,20 +3,17 @@
 Tests all analytics endpoints including metrics, trends, comparisons,
 what-if analysis, and research exports with various scenarios.
 """
+
 from datetime import date, datetime, timedelta
-from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
-from app.models.rotation_template import RotationTemplate
 from app.models.schedule_run import ScheduleRun
-
 
 # ============================================================================
 # Authentication Tests
@@ -50,16 +47,16 @@ class TestAnalyticsAuthentication:
 
     def test_compare_versions_requires_authentication(self, client: TestClient):
         """Test that GET /api/analytics/compare/{version_a}/{version_b} requires authentication."""
-        response = client.get(
-            f"/api/analytics/compare/{uuid4()}/{uuid4()}"
-        )
+        response = client.get(f"/api/analytics/compare/{uuid4()}/{uuid4()}")
         assert response.status_code == 401
 
     def test_what_if_requires_authentication(self, client: TestClient):
         """Test that POST /api/analytics/what-if requires authentication."""
         response = client.post(
             "/api/analytics/what-if",
-            json=[{"personId": str(uuid4()), "blockId": str(uuid4()), "changeType": "add"}],
+            json=[
+                {"personId": str(uuid4()), "blockId": str(uuid4()), "changeType": "add"}
+            ],
         )
         assert response.status_code == 401
 
@@ -87,9 +84,7 @@ class TestCurrentMetricsEndpoint:
         self, client: TestClient, auth_headers: dict, db: Session
     ):
         """Test getting current metrics when no schedule runs exist."""
-        response = client.get(
-            "/api/analytics/metrics/current", headers=auth_headers
-        )
+        response = client.get("/api/analytics/metrics/current", headers=auth_headers)
 
         assert response.status_code == 404
         assert "no successful schedule runs" in response.json()["detail"].lower()
@@ -157,9 +152,7 @@ class TestCurrentMetricsEndpoint:
 
         db.commit()
 
-        response = client.get(
-            "/api/analytics/metrics/current", headers=auth_headers
-        )
+        response = client.get("/api/analytics/metrics/current", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -209,9 +202,7 @@ class TestCurrentMetricsEndpoint:
         db.add(failed_run)
         db.commit()
 
-        response = client.get(
-            "/api/analytics/metrics/current", headers=auth_headers
-        )
+        response = client.get("/api/analytics/metrics/current", headers=auth_headers)
 
         # Should still return 404 since no successful runs
         assert response.status_code == 404
@@ -257,9 +248,7 @@ class TestCurrentMetricsEndpoint:
 
         db.commit()
 
-        response = client.get(
-            "/api/analytics/metrics/current", headers=auth_headers
-        )
+        response = client.get("/api/analytics/metrics/current", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -332,7 +321,9 @@ class TestMetricsHistoryEndpoint:
             "/api/analytics/metrics/history",
             params={
                 "metric_name": "fairness",
-                "start_date": datetime.combine(start_date, datetime.min.time()).isoformat(),
+                "start_date": datetime.combine(
+                    start_date, datetime.min.time()
+                ).isoformat(),
                 "end_date": datetime.combine(end_date, datetime.min.time()).isoformat(),
             },
             headers=auth_headers,
@@ -392,7 +383,9 @@ class TestMetricsHistoryEndpoint:
             "/api/analytics/metrics/history",
             params={
                 "metric_name": "coverage",
-                "start_date": datetime.combine(start_date, datetime.min.time()).isoformat(),
+                "start_date": datetime.combine(
+                    start_date, datetime.min.time()
+                ).isoformat(),
                 "end_date": datetime.combine(end_date, datetime.min.time()).isoformat(),
             },
             headers=auth_headers,
@@ -436,7 +429,9 @@ class TestMetricsHistoryEndpoint:
             "/api/analytics/metrics/history",
             params={
                 "metric_name": "compliance",
-                "start_date": datetime.combine(start_date, datetime.min.time()).isoformat(),
+                "start_date": datetime.combine(
+                    start_date, datetime.min.time()
+                ).isoformat(),
                 "end_date": datetime.combine(end_date, datetime.min.time()).isoformat(),
             },
             headers=auth_headers,
@@ -481,7 +476,9 @@ class TestMetricsHistoryEndpoint:
             "/api/analytics/metrics/history",
             params={
                 "metric_name": "violations",
-                "start_date": datetime.combine(start_date, datetime.min.time()).isoformat(),
+                "start_date": datetime.combine(
+                    start_date, datetime.min.time()
+                ).isoformat(),
                 "end_date": datetime.combine(end_date, datetime.min.time()).isoformat(),
             },
             headers=auth_headers,
@@ -524,7 +521,9 @@ class TestMetricsHistoryEndpoint:
             "/api/analytics/metrics/history",
             params={
                 "metric_name": "unknown_metric",
-                "start_date": datetime.combine(start_date, datetime.min.time()).isoformat(),
+                "start_date": datetime.combine(
+                    start_date, datetime.min.time()
+                ).isoformat(),
                 "end_date": datetime.combine(end_date, datetime.min.time()).isoformat(),
             },
             headers=auth_headers,
@@ -571,8 +570,12 @@ class TestMetricsHistoryEndpoint:
             "/api/analytics/metrics/history",
             params={
                 "metric_name": "fairness",
-                "start_date": datetime.combine(start_date, datetime.min.time()).isoformat(),
-                "end_date": datetime.combine(start_date + timedelta(days=28), datetime.min.time()).isoformat(),
+                "start_date": datetime.combine(
+                    start_date, datetime.min.time()
+                ).isoformat(),
+                "end_date": datetime.combine(
+                    start_date + timedelta(days=28), datetime.min.time()
+                ).isoformat(),
             },
             headers=auth_headers,
         )
@@ -1053,7 +1056,7 @@ class TestVersionComparisonEndpoint:
         # Find violations metric
         violations_metric = next(
             (m for m in data["metrics"] if "violations" in m["metricName"].lower()),
-            None
+            None,
         )
         if violations_metric:
             # Violations should have improved (decreased)
@@ -1472,7 +1475,9 @@ class TestResearchExportEndpoint:
         response = client.get(
             "/api/analytics/export/research",
             params={
-                "start_date": datetime.combine(start_date, datetime.min.time()).isoformat(),
+                "start_date": datetime.combine(
+                    start_date, datetime.min.time()
+                ).isoformat(),
                 "end_date": datetime.combine(end_date, datetime.min.time()).isoformat(),
                 "anonymize": True,
             },
@@ -1522,7 +1527,9 @@ class TestResearchExportEndpoint:
         response = client.get(
             "/api/analytics/export/research",
             params={
-                "start_date": datetime.combine(start_date, datetime.min.time()).isoformat(),
+                "start_date": datetime.combine(
+                    start_date, datetime.min.time()
+                ).isoformat(),
                 "end_date": datetime.combine(end_date, datetime.min.time()).isoformat(),
                 "anonymize": False,
             },
@@ -1574,7 +1581,9 @@ class TestResearchExportEndpoint:
         response = client.get(
             "/api/analytics/export/research",
             params={
-                "start_date": datetime.combine(start_date, datetime.min.time()).isoformat(),
+                "start_date": datetime.combine(
+                    start_date, datetime.min.time()
+                ).isoformat(),
                 "end_date": datetime.combine(end_date, datetime.min.time()).isoformat(),
             },
             headers=auth_headers,
@@ -1629,7 +1638,9 @@ class TestResearchExportEndpoint:
         response = client.get(
             "/api/analytics/export/research",
             params={
-                "start_date": datetime.combine(start_date, datetime.min.time()).isoformat(),
+                "start_date": datetime.combine(
+                    start_date, datetime.min.time()
+                ).isoformat(),
                 "end_date": datetime.combine(end_date, datetime.min.time()).isoformat(),
             },
             headers=auth_headers,
@@ -1666,7 +1677,9 @@ class TestResearchExportEndpoint:
         response = client.get(
             "/api/analytics/export/research",
             params={
-                "start_date": datetime.combine(start_date, datetime.min.time()).isoformat(),
+                "start_date": datetime.combine(
+                    start_date, datetime.min.time()
+                ).isoformat(),
                 "end_date": datetime.combine(end_date, datetime.min.time()).isoformat(),
             },
             headers=auth_headers,
@@ -1699,7 +1712,9 @@ class TestResearchExportEndpoint:
         response = client.get(
             "/api/analytics/export/research",
             params={
-                "start_date": datetime.combine(start_date, datetime.min.time()).isoformat(),
+                "start_date": datetime.combine(
+                    start_date, datetime.min.time()
+                ).isoformat(),
                 "end_date": datetime.combine(end_date, datetime.min.time()).isoformat(),
             },
             headers=auth_headers,
@@ -1753,7 +1768,9 @@ class TestResearchExportEndpoint:
         response = client.get(
             "/api/analytics/export/research",
             params={
-                "start_date": datetime.combine(start_date, datetime.min.time()).isoformat(),
+                "start_date": datetime.combine(
+                    start_date, datetime.min.time()
+                ).isoformat(),
                 "end_date": datetime.combine(end_date, datetime.min.time()).isoformat(),
                 "anonymize": True,
             },
@@ -1780,7 +1797,9 @@ class TestResearchExportEndpoint:
         response = client.get(
             "/api/analytics/export/research",
             params={
-                "start_date": datetime.combine(start_date, datetime.min.time()).isoformat(),
+                "start_date": datetime.combine(
+                    start_date, datetime.min.time()
+                ).isoformat(),
                 "end_date": datetime.combine(end_date, datetime.min.time()).isoformat(),
             },
             headers=auth_headers,

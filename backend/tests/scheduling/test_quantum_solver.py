@@ -5,18 +5,19 @@ These tests validate the QUBO formulation and quantum-inspired
 simulated annealing solvers for residency scheduling.
 """
 
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
 
+import pytest
+
 from app.scheduling.constraints import SchedulingContext
 from app.scheduling.quantum.qubo_solver import (
+    DWAVE_SAMPLERS_AVAILABLE,
+    PYQUBO_AVAILABLE,
+    QuantumInspiredSolver,
     QUBOFormulation,
     SimulatedQuantumAnnealingSolver,
-    QuantumInspiredSolver,
     get_quantum_library_status,
-    PYQUBO_AVAILABLE,
-    DWAVE_SAMPLERS_AVAILABLE,
 )
 
 
@@ -57,8 +58,7 @@ def create_test_context(
     """Create a test scheduling context."""
     residents = [MockPerson() for _ in range(n_residents)]
     blocks = [
-        MockBlock(block_date=date.today() + timedelta(days=i))
-        for i in range(n_blocks)
+        MockBlock(block_date=date.today() + timedelta(days=i)) for i in range(n_blocks)
     ]
     templates = [MockTemplate(name=f"Template_{i}") for i in range(n_templates)]
 
@@ -110,10 +110,7 @@ class TestQUBOFormulation:
         Q = formulation.build()
 
         # Diagonal terms should be negative (encourage x[i] = 1)
-        diagonal_sum = sum(
-            coef for (i, j), coef in Q.items()
-            if i == j
-        )
+        diagonal_sum = sum(coef for (i, j), coef in Q.items() if i == j)
         # Some diagonal terms are negative (coverage) but constraint penalties positive
         # Just verify Q is not empty
         assert len(Q) > 0
@@ -191,9 +188,7 @@ class TestSimulatedQuantumAnnealingSolver:
     def test_pure_python_fallback(self):
         """Test that pure Python solver works without dwave-samplers."""
         context = create_test_context(n_residents=2, n_blocks=4, n_templates=1)
-        solver = SimulatedQuantumAnnealingSolver(
-            num_reads=5, num_sweeps=100, seed=42
-        )
+        solver = SimulatedQuantumAnnealingSolver(num_reads=5, num_sweeps=100, seed=42)
 
         # Build QUBO and solve with pure Python
         formulation = QUBOFormulation(context)
@@ -207,9 +202,7 @@ class TestSimulatedQuantumAnnealingSolver:
     def test_statistics_included(self):
         """Test that solver statistics are included in result."""
         context = create_test_context(n_residents=2, n_blocks=3, n_templates=1)
-        solver = SimulatedQuantumAnnealingSolver(
-            num_reads=10, num_sweeps=100
-        )
+        solver = SimulatedQuantumAnnealingSolver(num_reads=10, num_sweeps=100)
 
         result = solver.solve(context)
 
@@ -277,10 +270,7 @@ class TestQUBOConstraints:
 
         # Should have quadratic penalty terms between variables for same block
         # These are off-diagonal terms with positive coefficients
-        quadratic_terms = [
-            (i, j, coef) for (i, j), coef in Q.items()
-            if i != j
-        ]
+        quadratic_terms = [(i, j, coef) for (i, j), coef in Q.items() if i != j]
         assert len(quadratic_terms) > 0
 
     def test_availability_constraint(self):
@@ -299,10 +289,7 @@ class TestQUBOConstraints:
         assert len(Q) > 0  # QUBO was built
 
 
-@pytest.mark.skipif(
-    not PYQUBO_AVAILABLE,
-    reason="PyQUBO not installed"
-)
+@pytest.mark.skipif(not PYQUBO_AVAILABLE, reason="PyQUBO not installed")
 class TestPyQUBOIntegration:
     """Tests requiring PyQUBO library."""
 
@@ -319,10 +306,7 @@ class TestPyQUBOIntegration:
         assert result.success or result.status == "error"
 
 
-@pytest.mark.skipif(
-    not DWAVE_SAMPLERS_AVAILABLE,
-    reason="dwave-samplers not installed"
-)
+@pytest.mark.skipif(not DWAVE_SAMPLERS_AVAILABLE, reason="dwave-samplers not installed")
 class TestDWaveSamplersIntegration:
     """Tests requiring dwave-samplers library."""
 
@@ -343,11 +327,14 @@ class TestDWaveSamplersIntegration:
 class TestScalability:
     """Tests for solver scalability."""
 
-    @pytest.mark.parametrize("n_residents,n_blocks", [
-        (5, 10),
-        (10, 20),
-        (20, 50),
-    ])
+    @pytest.mark.parametrize(
+        "n_residents,n_blocks",
+        [
+            (5, 10),
+            (10, 20),
+            (20, 50),
+        ],
+    )
     def test_scaling(self, n_residents: int, n_blocks: int):
         """Test solver on various problem sizes."""
         context = create_test_context(

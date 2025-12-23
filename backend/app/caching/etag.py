@@ -12,6 +12,7 @@ ETags are used for:
 - Optimistic concurrency control
 - Cache validation without full content transfer
 """
+
 import hashlib
 import json
 from datetime import datetime

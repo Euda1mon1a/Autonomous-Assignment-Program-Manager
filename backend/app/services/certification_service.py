@@ -56,7 +56,10 @@ class CertificationService:
         # Check for duplicate name
         existing = self.cert_type_repo.get_by_name(name)
         if existing:
-            return {"certification_type": None, "error": f"Certification type '{name}' already exists"}
+            return {
+                "certification_type": None,
+                "error": f"Certification type '{name}' already exists",
+            }
 
         data = {
             "name": name,
@@ -100,7 +103,9 @@ class CertificationService:
         include_expired: bool = True,
     ) -> dict:
         """List all certifications for a person."""
-        certs = self.person_cert_repo.list_by_person(person_id, include_expired=include_expired)
+        certs = self.person_cert_repo.list_by_person(
+            person_id, include_expired=include_expired
+        )
         return {"items": certs, "total": len(certs)}
 
     def create_person_certification(
@@ -125,18 +130,23 @@ class CertificationService:
             return {"certification": None, "error": "Certification type not found"}
 
         # Check for existing (update instead of duplicate)
-        existing = self.person_cert_repo.get_by_person_and_type(person_id, certification_type_id)
+        existing = self.person_cert_repo.get_by_person_and_type(
+            person_id, certification_type_id
+        )
         if existing:
-            return {"certification": None, "error": f"Person already has a {cert_type.name} certification. Update it instead."}
+            return {
+                "certification": None,
+                "error": f"Person already has a {cert_type.name} certification. Update it instead.",
+            }
 
         # Determine status
         today = date.today()
         if expiration_date < today:
-            status = 'expired'
+            status = "expired"
         elif expiration_date <= today + timedelta(days=180):
-            status = 'expiring_soon'
+            status = "expiring_soon"
         else:
-            status = 'current'
+            status = "current"
 
         data = {
             "person_id": person_id,
@@ -167,11 +177,11 @@ class CertificationService:
             today = date.today()
             exp_date = update_data["expiration_date"]
             if exp_date < today:
-                update_data["status"] = 'expired'
+                update_data["status"] = "expired"
             elif exp_date <= today + timedelta(days=180):
-                update_data["status"] = 'expiring_soon'
+                update_data["status"] = "expiring_soon"
             else:
-                update_data["status"] = 'current'
+                update_data["status"] = "current"
 
         cert = self.person_cert_repo.update(cert, update_data)
         self.person_cert_repo.commit()
@@ -252,7 +262,9 @@ class CertificationService:
         required_types = self.cert_type_repo.list_required_for_person_type(person.type)
 
         # Get missing certs
-        missing = self.person_cert_repo.get_missing_certifications_for_person(person_id, person.type)
+        missing = self.person_cert_repo.get_missing_certifications_for_person(
+            person_id, person.type
+        )
 
         # Count statuses
         current = sum(1 for c in certs if not c.is_expired)
@@ -270,7 +282,9 @@ class CertificationService:
             "error": None,
         }
 
-    def get_certifications_needing_reminder(self, days: int) -> list[PersonCertification]:
+    def get_certifications_needing_reminder(
+        self, days: int
+    ) -> list[PersonCertification]:
         """Get certifications that need a reminder for a specific threshold."""
         return self.person_cert_repo.list_needing_reminder(days)
 

@@ -210,12 +210,20 @@ class AssignmentService:
         """
         assignment = self.assignment_repo.get_by_id(assignment_id)
         if not assignment:
-            return {"assignment": None, "error": "Assignment not found", "freeze_status": None}
+            return {
+                "assignment": None,
+                "error": "Assignment not found",
+                "freeze_status": None,
+            }
 
         # Get block for freeze horizon check
         block = self.block_repo.get_by_id(assignment.block_id)
         if not block:
-            return {"assignment": None, "error": "Block not found", "freeze_status": None}
+            return {
+                "assignment": None,
+                "error": "Block not found",
+                "freeze_status": None,
+            }
 
         # Check freeze horizon
         freeze_override = None
@@ -292,7 +300,11 @@ class AssignmentService:
         """Delete an assignment with freeze horizon check."""
         assignment = self.assignment_repo.get_by_id(assignment_id)
         if not assignment:
-            return {"success": False, "error": "Assignment not found", "freeze_status": None}
+            return {
+                "success": False,
+                "error": "Assignment not found",
+                "freeze_status": None,
+            }
 
         # Get block for freeze horizon check
         block = self.block_repo.get_by_id(assignment.block_id)
@@ -333,7 +345,11 @@ class AssignmentService:
         except Exception as e:
             logger.warning(f"Failed to invalidate cache after assignment deletion: {e}")
 
-        return {"success": True, "error": None, "freeze_status": freeze_result.to_dict()}
+        return {
+            "success": True,
+            "error": None,
+            "freeze_status": freeze_result.to_dict(),
+        }
 
     def delete_assignments_bulk(
         self,
@@ -393,7 +409,9 @@ class AssignmentService:
         if deleted_count > 0:
             try:
                 invalidate_schedule_cache()
-                logger.debug(f"Cache invalidated after bulk deleting {deleted_count} assignments")
+                logger.debug(
+                    f"Cache invalidated after bulk deleting {deleted_count} assignments"
+                )
             except Exception as e:
                 logger.warning(f"Failed to invalidate cache after bulk deletion: {e}")
 

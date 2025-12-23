@@ -4,11 +4,11 @@ API Deprecation Management.
 Handles deprecation warnings, sunset dates, and version lifecycle management.
 Provides automatic warnings for deprecated endpoints and versions.
 """
+
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from starlette.requests import Request
 from starlette.responses import Response
@@ -22,6 +22,7 @@ class VersionStatus(str, Enum):
 
     Represents the current state of an API version in its lifecycle.
     """
+
     DEVELOPMENT = "development"  # Under active development, unstable
     BETA = "beta"  # Feature complete but not production-ready
     STABLE = "stable"  # Production-ready and actively maintained
@@ -37,13 +38,14 @@ class DeprecationWarning:
 
     Contains all metadata about a deprecated API endpoint or version.
     """
+
     endpoint: str
     version: str
     status: VersionStatus
-    sunset_date: Optional[datetime] = None
-    replacement: Optional[str] = None
-    message: Optional[str] = None
-    documentation_url: Optional[str] = None
+    sunset_date: datetime | None = None
+    replacement: str | None = None
+    message: str | None = None
+    documentation_url: str | None = None
 
     def to_header_value(self) -> str:
         """
@@ -65,7 +67,7 @@ class DeprecationWarning:
 
         return "; ".join(parts)
 
-    def days_until_sunset(self) -> Optional[int]:
+    def days_until_sunset(self) -> int | None:
         """
         Calculate days remaining until sunset.
 
@@ -137,10 +139,10 @@ class DeprecationManager:
         endpoint: str,
         version: str,
         status: VersionStatus,
-        sunset_date: Optional[datetime] = None,
-        replacement: Optional[str] = None,
-        message: Optional[str] = None,
-        documentation_url: Optional[str] = None,
+        sunset_date: datetime | None = None,
+        replacement: str | None = None,
+        message: str | None = None,
+        documentation_url: str | None = None,
     ):
         """
         Register a deprecated endpoint or version.
@@ -171,7 +173,7 @@ class DeprecationManager:
             f"status {status.value})"
         )
 
-    def get_deprecation(self, endpoint: str) -> Optional[DeprecationWarning]:
+    def get_deprecation(self, endpoint: str) -> DeprecationWarning | None:
         """
         Get deprecation warning for an endpoint.
 
@@ -218,9 +220,7 @@ class DeprecationManager:
         old_status = self._version_status.get(version)
         self._version_status[version] = status
 
-        logger.info(
-            f"Version {version} status changed: {old_status} -> {status.value}"
-        )
+        logger.info(f"Version {version} status changed: {old_status} -> {status.value}")
 
     def add_deprecation_headers(
         self,
@@ -255,9 +255,7 @@ class DeprecationManager:
         # Sunset header with date (RFC 8594)
         if deprecation.sunset_date:
             # HTTP date format: Sun, 06 Nov 1994 08:49:37 GMT
-            sunset_str = deprecation.sunset_date.strftime(
-                "%a, %d %b %Y %H:%M:%S GMT"
-            )
+            sunset_str = deprecation.sunset_date.strftime("%a, %d %b %Y %H:%M:%S GMT")
             response.headers["Sunset"] = sunset_str
 
             # Add days remaining in custom header
@@ -267,16 +265,13 @@ class DeprecationManager:
 
         # Warning header (RFC 7234)
         if deprecation.message:
-            warning_msg = (
-                f'299 - "Deprecated API" "{deprecation.message}"'
-            )
+            warning_msg = f'299 - "Deprecated API" "{deprecation.message}"'
             response.headers["Warning"] = warning_msg
 
         # Link to replacement (RFC 8288)
         if deprecation.replacement:
             response.headers["Link"] = (
-                f'<{deprecation.replacement}>; rel="alternate"; '
-                f'title="Replacement API"'
+                f'<{deprecation.replacement}>; rel="alternate"; title="Replacement API"'
             )
 
         # Documentation link
@@ -302,7 +297,7 @@ class DeprecationManager:
 
         return response
 
-    def check_sunset_enforcement(self, request: Request) -> Optional[dict]:
+    def check_sunset_enforcement(self, request: Request) -> dict | None:
         """
         Check if request should be blocked due to sunset.
 
@@ -349,25 +344,23 @@ class DeprecationManager:
         """
         result = []
         for endpoint, warning in self._deprecations.items():
-            result.append({
-                "endpoint": endpoint,
-                "version": warning.version,
-                "status": warning.status.value,
-                "sunset_date": (
-                    warning.sunset_date.isoformat()
-                    if warning.sunset_date
-                    else None
-                ),
-                "days_until_sunset": warning.days_until_sunset(),
-                "replacement": warning.replacement,
-                "message": warning.message,
-                "documentation_url": warning.documentation_url,
-            })
+            result.append(
+                {
+                    "endpoint": endpoint,
+                    "version": warning.version,
+                    "status": warning.status.value,
+                    "sunset_date": (
+                        warning.sunset_date.isoformat() if warning.sunset_date else None
+                    ),
+                    "days_until_sunset": warning.days_until_sunset(),
+                    "replacement": warning.replacement,
+                    "message": warning.message,
+                    "documentation_url": warning.documentation_url,
+                }
+            )
 
         # Sort by sunset date (soonest first)
-        result.sort(
-            key=lambda x: x["sunset_date"] if x["sunset_date"] else "9999"
-        )
+        result.sort(key=lambda x: x["sunset_date"] if x["sunset_date"] else "9999")
 
         return result
 
@@ -400,7 +393,7 @@ class DeprecationManager:
 
 
 # Global deprecation manager instance
-_deprecation_manager: Optional[DeprecationManager] = None
+_deprecation_manager: DeprecationManager | None = None
 
 
 def get_deprecation_manager() -> DeprecationManager:

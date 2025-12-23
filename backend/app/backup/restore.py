@@ -282,9 +282,7 @@ class RestoreService:
 
             # Skip if table has errors
             if "error" in table_data:
-                logger.warning(
-                    f"Skipping table {table_name}: {table_data['error']}"
-                )
+                logger.warning(f"Skipping table {table_name}: {table_data['error']}")
                 continue
 
             logger.debug(f"Restoring table: {table_name}")
@@ -379,9 +377,7 @@ class RestoreService:
                 rows_restored += 1
 
             except Exception as e:
-                logger.warning(
-                    f"Error restoring row in {table_name}: {e}. Row: {row}"
-                )
+                logger.warning(f"Error restoring row in {table_name}: {e}. Row: {row}")
                 # Continue with other rows
                 continue
 
@@ -414,15 +410,12 @@ class RestoreService:
         """
         # Convert string to datetime if needed
         if isinstance(target_datetime, str):
-            target_datetime = datetime.fromisoformat(
-                target_datetime.replace("Z", "")
-            )
+            target_datetime = datetime.fromisoformat(target_datetime.replace("Z", ""))
 
         target_str = target_datetime.isoformat() + "Z"
 
         logger.info(
-            f"{'[DRY RUN] ' if dry_run else ''}"
-            f"Restoring to point in time: {target_str}"
+            f"{'[DRY RUN] ' if dry_run else ''}Restoring to point in time: {target_str}"
         )
 
         try:
@@ -431,9 +424,7 @@ class RestoreService:
 
             # Find most recent backup before target time
             suitable_backups = [
-                b
-                for b in all_backups
-                if b.get("created_at", "") <= target_str
+                b for b in all_backups if b.get("created_at", "") <= target_str
             ]
 
             if not suitable_backups:

@@ -1,4 +1,5 @@
 """Heatmap service for schedule visualization using Plotly."""
+
 from datetime import date, timedelta
 from typing import Any
 from uuid import UUID
@@ -57,9 +58,13 @@ class HeatmapService:
             start_of_month = reference.replace(day=1)
             # Calculate last day of month
             if reference.month == 12:
-                end_of_month = reference.replace(year=reference.year + 1, month=1, day=1) - timedelta(days=1)
+                end_of_month = reference.replace(
+                    year=reference.year + 1, month=1, day=1
+                ) - timedelta(days=1)
             else:
-                end_of_month = reference.replace(month=reference.month + 1, day=1) - timedelta(days=1)
+                end_of_month = reference.replace(
+                    month=reference.month + 1, day=1
+                ) - timedelta(days=1)
             return start_of_month, end_of_month
 
         elif range_type == "quarter":
@@ -69,15 +74,23 @@ class HeatmapService:
 
             # Calculate end of quarter (3 months later, minus 1 day)
             if quarter_month >= 10:
-                end_month_start = start_of_quarter.replace(year=reference.year + 1, month=((quarter_month + 3) % 12) or 12, day=1)
+                end_month_start = start_of_quarter.replace(
+                    year=reference.year + 1,
+                    month=((quarter_month + 3) % 12) or 12,
+                    day=1,
+                )
             else:
-                end_month_start = start_of_quarter.replace(month=quarter_month + 3, day=1)
+                end_month_start = start_of_quarter.replace(
+                    month=quarter_month + 3, day=1
+                )
             end_of_quarter = end_month_start - timedelta(days=1)
 
             return start_of_quarter, end_of_quarter
 
         else:
-            raise ValueError(f"Invalid range_type: {range_type}. Must be 'week', 'month', 'quarter', or 'custom'")
+            raise ValueError(
+                f"Invalid range_type: {range_type}. Must be 'week', 'month', 'quarter', or 'custom'"
+            )
 
     @staticmethod
     def _get_date_range(start_date: date, end_date: date) -> list[date]:
@@ -187,9 +200,7 @@ class HeatmapService:
         # Get unique entities (people or rotations)
         if group_by == "person":
             if person_ids:
-                entities = (
-                    db.query(Person).filter(Person.id.in_(person_ids)).all()
-                )
+                entities = db.query(Person).filter(Person.id.in_(person_ids)).all()
             else:
                 # Get all people with assignments in range
                 entity_ids = {a.person_id for a in assignments}
@@ -401,9 +412,7 @@ class HeatmapService:
 
         # Calculate workload statistics
         total_blocks = sum(sum(row) for row in z_values)
-        avg_blocks_per_person = (
-            total_blocks / len(people) if people else 0
-        )
+        avg_blocks_per_person = total_blocks / len(people) if people else 0
 
         heatmap_data = HeatmapData(
             x_labels=x_labels,

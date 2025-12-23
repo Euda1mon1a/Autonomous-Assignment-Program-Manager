@@ -3,9 +3,9 @@ Configuration for request throttling middleware.
 
 Defines throttling limits, priorities, and endpoint-specific configurations.
 """
+
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 class ThrottlePriority(str, Enum):
@@ -183,7 +183,7 @@ DEGRADATION_THRESHOLDS = {
 }
 
 
-def get_endpoint_config(endpoint: str) -> Optional[EndpointThrottleConfig]:
+def get_endpoint_config(endpoint: str) -> EndpointThrottleConfig | None:
     """
     Get throttling configuration for a specific endpoint.
 
@@ -207,7 +207,7 @@ def get_endpoint_config(endpoint: str) -> Optional[EndpointThrottleConfig]:
     return None
 
 
-def get_role_config(role: Optional[str]) -> ThrottleConfig:
+def get_role_config(role: str | None) -> ThrottleConfig:
     """
     Get throttling configuration for a user role.
 

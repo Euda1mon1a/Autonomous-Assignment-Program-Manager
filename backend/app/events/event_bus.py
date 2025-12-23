@@ -14,8 +14,9 @@ The event bus enables loose coupling between components.
 import asyncio
 import logging
 from collections import defaultdict
+from collections.abc import Callable, Coroutine
 from datetime import datetime
-from typing import Any, Callable, Coroutine, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -85,7 +86,7 @@ class EventBus:
         self,
         event_type: str | EventType,
         handler: EventHandler,
-        subscriber_id: Optional[str] = None,
+        subscriber_id: str | None = None,
     ) -> str:
         """
         Subscribe to an event type.
@@ -131,7 +132,7 @@ class EventBus:
         self,
         event_types: list[str | EventType],
         handler: EventHandler,
-        subscriber_id: Optional[str] = None,
+        subscriber_id: str | None = None,
     ) -> str:
         """
         Subscribe to multiple event types with one handler.
@@ -149,7 +150,7 @@ class EventBus:
 
         return subscriber_id
 
-    def unsubscribe(self, subscriber_id: str, event_type: Optional[str] = None):
+    def unsubscribe(self, subscriber_id: str, event_type: str | None = None):
         """
         Unsubscribe from events.
 
@@ -159,7 +160,8 @@ class EventBus:
         """
         if event_type:
             self._subscriptions[event_type] = [
-                sub for sub in self._subscriptions[event_type]
+                sub
+                for sub in self._subscriptions[event_type]
                 if sub.subscriber_id != subscriber_id
             ]
             logger.info(f"Unsubscribed {subscriber_id} from {event_type}")
@@ -167,7 +169,8 @@ class EventBus:
             # Unsubscribe from all event types
             for evt_type in list(self._subscriptions.keys()):
                 self._subscriptions[evt_type] = [
-                    sub for sub in self._subscriptions[evt_type]
+                    sub
+                    for sub in self._subscriptions[evt_type]
                     if sub.subscriber_id != subscriber_id
                 ]
             logger.info(f"Unsubscribed {subscriber_id} from all events")
@@ -195,16 +198,11 @@ class EventBus:
             logger.debug(f"No subscribers for {event_type}")
             return
 
-        logger.info(
-            f"Publishing {event_type} to {len(subscribers)} subscriber(s)"
-        )
+        logger.info(f"Publishing {event_type} to {len(subscribers)} subscriber(s)")
 
         if async_mode:
             # Run all handlers concurrently
-            tasks = [
-                self._handle_event_with_retry(sub, event)
-                for sub in subscribers
-            ]
+            tasks = [self._handle_event_with_retry(sub, event) for sub in subscribers]
             await asyncio.gather(*tasks, return_exceptions=True)
         else:
             # Run handlers sequentially
@@ -256,7 +254,7 @@ class EventBus:
 
                 if retry_count <= self._max_retries and self._enable_retry:
                     # Exponential backoff
-                    await asyncio.sleep(2 ** retry_count)
+                    await asyncio.sleep(2**retry_count)
                 else:
                     break
 
@@ -278,7 +276,7 @@ class EventBus:
         )
         self._dead_letter_queue.append(dead_letter)
 
-    def get_subscriptions(self, event_type: Optional[str] = None) -> list[dict]:
+    def get_subscriptions(self, event_type: str | None = None) -> list[dict]:
         """
         Get list of current subscriptions.
 
@@ -303,11 +301,13 @@ class EventBus:
         all_subs = []
         for event_type, subs in self._subscriptions.items():
             for sub in subs:
-                all_subs.append({
-                    "subscriber_id": sub.subscriber_id,
-                    "event_type": sub.event_type,
-                    "created_at": sub.created_at,
-                })
+                all_subs.append(
+                    {
+                        "subscriber_id": sub.subscriber_id,
+                        "event_type": sub.event_type,
+                        "created_at": sub.created_at,
+                    }
+                )
         return all_subs
 
     def get_dead_letter_queue(self) -> list[DeadLetterEvent]:
@@ -367,7 +367,7 @@ class EventBus:
 # =============================================================================
 
 
-_event_bus_instance: Optional[EventBus] = None
+_event_bus_instance: EventBus | None = None
 
 
 def get_event_bus() -> EventBus:
@@ -397,10 +397,12 @@ def event_handler(event_type: str | EventType):
         async def on_schedule_created(event: ScheduleCreatedEvent):
             print(f"Schedule created: {event.schedule_id}")
     """
+
     def decorator(func: EventHandler):
         bus = get_event_bus()
         bus.subscribe(event_type, func, subscriber_id=func.__name__)
         return func
+
     return decorator
 
 
@@ -409,7 +411,7 @@ def event_handler(event_type: str | EventType):
 # =============================================================================
 
 
-def get_event_bus_stats(bus: Optional[EventBus] = None) -> dict[str, Any]:
+def get_event_bus_stats(bus: EventBus | None = None) -> dict[str, Any]:
     """
     Get statistics about the event bus.
 

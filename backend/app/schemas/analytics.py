@@ -4,12 +4,10 @@ Pydantic models for schedule analytics functionality, including metrics,
 comparisons, trend analysis, and research data exports.
 """
 
-from datetime import datetime
 from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-
 
 # ============================================================================
 # Core Metric Schemas
@@ -18,6 +16,7 @@ from pydantic import BaseModel, Field
 
 class MetricValue(BaseModel):
     """Single metric value with metadata."""
+
     name: str
     value: float
     unit: str | None = None
@@ -30,6 +29,7 @@ class MetricValue(BaseModel):
 
 class ScheduleVersionMetrics(BaseModel):
     """Comprehensive metrics for a schedule version."""
+
     version_id: str = Field(alias="versionId")
     schedule_run_id: UUID | None = Field(None, alias="scheduleRunId")
     timestamp: str
@@ -63,6 +63,7 @@ class ScheduleVersionMetrics(BaseModel):
 
 class MetricDataPoint(BaseModel):
     """Single data point in a time series."""
+
     timestamp: str
     value: float
     metadata: dict[str, Any] | None = None
@@ -70,12 +71,15 @@ class MetricDataPoint(BaseModel):
 
 class MetricTimeSeries(BaseModel):
     """Time series data for a metric."""
+
     metric_name: str = Field(alias="metricName")
     start_date: str = Field(alias="startDate")
     end_date: str = Field(alias="endDate")
     data_points: list[MetricDataPoint] = Field(alias="dataPoints")
     statistics: dict[str, float]  # mean, median, std_dev, min, max
-    trend_direction: str = Field(alias="trendDirection")  # "improving", "declining", "stable"
+    trend_direction: str = Field(
+        alias="trendDirection"
+    )  # "improving", "declining", "stable"
 
     class Config:
         populate_by_name = True
@@ -88,6 +92,7 @@ class MetricTimeSeries(BaseModel):
 
 class FairnessTrendDataPoint(BaseModel):
     """Fairness metric at a point in time."""
+
     date: str
     fairness_index: float = Field(alias="fairnessIndex")
     gini_coefficient: float = Field(alias="giniCoefficient")
@@ -99,6 +104,7 @@ class FairnessTrendDataPoint(BaseModel):
 
 class FairnessTrendReport(BaseModel):
     """Fairness metrics trend over time."""
+
     period_months: int = Field(alias="periodMonths")
     start_date: str = Field(alias="startDate")
     end_date: str = Field(alias="endDate")
@@ -124,6 +130,7 @@ class FairnessTrendReport(BaseModel):
 
 class VersionMetricComparison(BaseModel):
     """Comparison of a single metric between versions."""
+
     metric_name: str = Field(alias="metricName")
     version_a_value: float = Field(alias="versionAValue")
     version_b_value: float = Field(alias="versionBValue")
@@ -137,6 +144,7 @@ class VersionMetricComparison(BaseModel):
 
 class VersionComparison(BaseModel):
     """Detailed comparison between two schedule versions."""
+
     version_a: str = Field(alias="versionA")
     version_b: str = Field(alias="versionB")
     timestamp: str
@@ -167,6 +175,7 @@ class VersionComparison(BaseModel):
 
 class AssignmentChange(BaseModel):
     """Proposed change to an assignment."""
+
     assignment_id: UUID | None = Field(None, alias="assignmentId")
     person_id: UUID = Field(alias="personId")
     block_id: UUID = Field(alias="blockId")
@@ -179,11 +188,14 @@ class AssignmentChange(BaseModel):
 
 class WhatIfMetricImpact(BaseModel):
     """Predicted impact on a metric."""
+
     metric_name: str = Field(alias="metricName")
     current_value: float = Field(alias="currentValue")
     predicted_value: float = Field(alias="predictedValue")
     change: float
-    impact_severity: str = Field(alias="impactSeverity")  # "positive", "negative", "neutral"
+    impact_severity: str = Field(
+        alias="impactSeverity"
+    )  # "positive", "negative", "neutral"
     confidence: float  # 0-1
 
     class Config:
@@ -192,6 +204,7 @@ class WhatIfMetricImpact(BaseModel):
 
 class WhatIfViolation(BaseModel):
     """Potential violation from proposed changes."""
+
     type: str
     severity: str
     person_id: UUID | None = Field(None, alias="personId")
@@ -204,6 +217,7 @@ class WhatIfViolation(BaseModel):
 
 class WhatIfResult(BaseModel):
     """Results of what-if analysis."""
+
     timestamp: str
     changes_analyzed: int = Field(alias="changesAnalyzed")
 
@@ -215,7 +229,9 @@ class WhatIfResult(BaseModel):
     resolved_violations: list[str] = Field(alias="resolvedViolations")
 
     # Overall assessment
-    overall_impact: str = Field(alias="overallImpact")  # "positive", "negative", "mixed", "neutral"
+    overall_impact: str = Field(
+        alias="overallImpact"
+    )  # "positive", "negative", "mixed", "neutral"
     recommendation: str
     safe_to_apply: bool = Field(alias="safeToApply")
 
@@ -234,6 +250,7 @@ class WhatIfResult(BaseModel):
 
 class ResidentWorkloadData(BaseModel):
     """Anonymized resident workload data."""
+
     resident_id: str = Field(alias="residentId")  # Anonymized if requested
     pgy_level: int = Field(alias="pgyLevel")
     total_blocks: int = Field(alias="totalBlocks")
@@ -250,6 +267,7 @@ class ResidentWorkloadData(BaseModel):
 
 class RotationCoverageData(BaseModel):
     """Anonymized rotation coverage data."""
+
     rotation_id: str = Field(alias="rotationId")  # Anonymized if requested
     rotation_type: str = Field(alias="rotationType")
     activity_type: str = Field(alias="activityType")
@@ -263,6 +281,7 @@ class RotationCoverageData(BaseModel):
 
 class ComplianceData(BaseModel):
     """ACGME compliance statistics."""
+
     total_checks: int = Field(alias="totalChecks")
     total_violations: int = Field(alias="totalViolations")
     compliance_rate: float = Field(alias="complianceRate")
@@ -276,6 +295,7 @@ class ComplianceData(BaseModel):
 
 class ResearchDataExport(BaseModel):
     """Anonymized data export for research and publication."""
+
     export_id: str = Field(alias="exportId")
     timestamp: str
     anonymized: bool

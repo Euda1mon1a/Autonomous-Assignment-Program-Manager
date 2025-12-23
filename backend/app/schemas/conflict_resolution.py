@@ -1,4 +1,5 @@
 """Schemas for conflict auto-resolution."""
+
 from datetime import datetime
 from enum import Enum
 from uuid import UUID
@@ -8,6 +9,7 @@ from pydantic import BaseModel, Field
 
 class ResolutionStrategyEnum(str, Enum):
     """Resolution strategies for conflicts."""
+
     SWAP_ASSIGNMENTS = "swap_assignments"
     REASSIGN_JUNIOR = "reassign_junior"
     SPLIT_COVERAGE = "split_coverage"
@@ -17,6 +19,7 @@ class ResolutionStrategyEnum(str, Enum):
 
 class ResolutionStatusEnum(str, Enum):
     """Status of a resolution attempt."""
+
     PROPOSED = "proposed"
     ANALYZING = "analyzing"
     VALIDATED = "validated"
@@ -27,6 +30,7 @@ class ResolutionStatusEnum(str, Enum):
 
 class SafetyCheckType(str, Enum):
     """Types of safety checks performed before auto-resolution."""
+
     ACGME_COMPLIANCE = "acgme_compliance"
     COVERAGE_GAP = "coverage_gap"
     FACULTY_AVAILABILITY = "faculty_availability"
@@ -36,6 +40,7 @@ class SafetyCheckType(str, Enum):
 
 class SafetyCheckResult(BaseModel):
     """Result of a safety check."""
+
     check_type: SafetyCheckType
     passed: bool
     message: str
@@ -44,6 +49,7 @@ class SafetyCheckResult(BaseModel):
 
 class ConflictAnalysis(BaseModel):
     """Analysis of a conflict for resolution planning."""
+
     conflict_id: UUID
     conflict_type: str
     severity: str
@@ -65,7 +71,9 @@ class ConflictAnalysis(BaseModel):
 
     # Recommendations
     recommended_strategies: list[ResolutionStrategyEnum] = Field(default_factory=list)
-    estimated_resolution_time: int = Field(default=0, description="Estimated minutes to resolve")
+    estimated_resolution_time: int = Field(
+        default=0, description="Estimated minutes to resolve"
+    )
 
     # Metadata
     analyzed_at: datetime = Field(default_factory=datetime.utcnow)
@@ -73,6 +81,7 @@ class ConflictAnalysis(BaseModel):
 
 class ImpactAssessment(BaseModel):
     """Assessment of resolution impact."""
+
     affected_faculty_count: int = 0
     affected_weeks_count: int = 0
     affected_blocks_count: int = 0
@@ -83,21 +92,30 @@ class ImpactAssessment(BaseModel):
     cascading_changes_required: int = 0
 
     # Quality metrics
-    workload_balance_score: float = Field(ge=0.0, le=1.0, description="0=poor, 1=excellent")
+    workload_balance_score: float = Field(
+        ge=0.0, le=1.0, description="0=poor, 1=excellent"
+    )
     fairness_score: float = Field(ge=0.0, le=1.0, description="0=unfair, 1=fair")
     disruption_score: float = Field(ge=0.0, le=1.0, description="0=minimal, 1=severe")
 
     # Feasibility
-    feasibility_score: float = Field(ge=0.0, le=1.0, description="0=infeasible, 1=highly feasible")
-    confidence_level: float = Field(ge=0.0, le=1.0, description="Model confidence in assessment")
+    feasibility_score: float = Field(
+        ge=0.0, le=1.0, description="0=infeasible, 1=highly feasible"
+    )
+    confidence_level: float = Field(
+        ge=0.0, le=1.0, description="Model confidence in assessment"
+    )
 
     # Summary
-    overall_score: float = Field(ge=0.0, le=1.0, description="Overall resolution quality score")
+    overall_score: float = Field(
+        ge=0.0, le=1.0, description="Overall resolution quality score"
+    )
     recommendation: str
 
 
 class ResolutionOption(BaseModel):
     """A possible resolution for a conflict."""
+
     id: str
     conflict_id: UUID
     strategy: ResolutionStrategyEnum
@@ -129,6 +147,7 @@ class ResolutionOption(BaseModel):
 
 class ResolutionResult(BaseModel):
     """Result of applying a resolution."""
+
     resolution_option_id: str
     conflict_id: UUID
     strategy: ResolutionStrategyEnum
@@ -141,8 +160,7 @@ class ResolutionResult(BaseModel):
     # Changes made
     changes_applied: list[str] = Field(default_factory=list)
     entities_modified: dict = Field(
-        default_factory=dict,
-        description="Map of entity type to list of IDs modified"
+        default_factory=dict, description="Map of entity type to list of IDs modified"
     )
 
     # Post-resolution state
@@ -170,18 +188,24 @@ class ResolutionResult(BaseModel):
 
 class BatchResolutionRequest(BaseModel):
     """Request to auto-resolve multiple conflicts."""
+
     conflict_ids: list[UUID] = Field(min_length=1)
     strategy_preference: ResolutionStrategyEnum | None = None
     auto_apply_safe: bool = Field(
         default=False,
-        description="Automatically apply resolutions that pass all safety checks"
+        description="Automatically apply resolutions that pass all safety checks",
     )
-    max_risk_level: str = Field(default="medium", description="Maximum acceptable risk: low, medium, high")
-    require_approval: bool = Field(default=True, description="Require human approval before applying")
+    max_risk_level: str = Field(
+        default="medium", description="Maximum acceptable risk: low, medium, high"
+    )
+    require_approval: bool = Field(
+        default=True, description="Require human approval before applying"
+    )
 
 
 class BatchResolutionReport(BaseModel):
     """Report of batch auto-resolution results."""
+
     # Request info
     total_conflicts: int
     conflicts_analyzed: int
@@ -221,6 +245,7 @@ class BatchResolutionReport(BaseModel):
 
 class AutoResolutionConfig(BaseModel):
     """Configuration for auto-resolution behavior."""
+
     enabled: bool = True
 
     # Strategy preferences

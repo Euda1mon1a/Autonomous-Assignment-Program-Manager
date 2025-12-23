@@ -5,8 +5,8 @@ Admin endpoints for managing feature flags:
 - Evaluate flags
 - View statistics and audit logs
 """
+
 from typing import Any
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
@@ -32,7 +32,9 @@ from app.schemas.feature_flag import (
 router = APIRouter()
 
 
-@router.post("/", response_model=FeatureFlagResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=FeatureFlagResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_feature_flag(
     flag_in: FeatureFlagCreate,
     db: AsyncSession = Depends(get_db),
@@ -63,10 +65,7 @@ async def create_feature_flag(
         )
         return flag
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("/", response_model=FeatureFlagListResponse)
@@ -84,10 +83,7 @@ async def list_feature_flags(
     Requires admin privileges.
     """
     service = FeatureFlagService(db)
-    flags = await service.list_flags(
-        enabled_only=enabled_only,
-        environment=environment
-    )
+    flags = await service.list_flags(enabled_only=enabled_only, environment=environment)
 
     # Manual pagination
     total = len(flags)
@@ -102,7 +98,7 @@ async def list_feature_flags(
         total=total,
         page=page,
         page_size=page_size,
-        total_pages=total_pages
+        total_pages=total_pages,
     )
 
 
@@ -123,14 +119,14 @@ async def get_feature_flag_stats(
     flags_by_environment = await _get_flags_by_environment(db)
 
     return FeatureFlagStatsResponse(
-        total_flags=stats['total_flags'],
-        enabled_flags=stats['enabled_flags'],
-        disabled_flags=stats['disabled_flags'],
-        percentage_rollout_flags=stats['percentage_rollout_flags'],
-        variant_flags=stats['variant_flags'],
+        total_flags=stats["total_flags"],
+        enabled_flags=stats["enabled_flags"],
+        disabled_flags=stats["disabled_flags"],
+        percentage_rollout_flags=stats["percentage_rollout_flags"],
+        variant_flags=stats["variant_flags"],
         flags_by_environment=flags_by_environment,
-        recent_evaluations=stats['recent_evaluations'],
-        unique_users=stats['unique_users']
+        recent_evaluations=stats["recent_evaluations"],
+        unique_users=stats["unique_users"],
     )
 
 
@@ -151,7 +147,7 @@ async def get_feature_flag(
     if flag is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Feature flag '{key}' not found"
+            detail=f"Feature flag '{key}' not found",
         )
 
     return flag
@@ -177,23 +173,16 @@ async def update_feature_flag(
 
     if not updates:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No updates provided"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No updates provided"
         )
 
     try:
         flag = await service.update_flag(
-            key=key,
-            updates=updates,
-            updated_by=str(current_user.id),
-            reason=reason
+            key=key, updates=updates, updated_by=str(current_user.id), reason=reason
         )
         return flag
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @router.delete("/{key}", status_code=status.HTTP_204_NO_CONTENT)
@@ -211,15 +200,13 @@ async def delete_feature_flag(
     service = FeatureFlagService(db)
 
     deleted = await service.delete_flag(
-        key=key,
-        deleted_by=str(current_user.id),
-        reason=reason
+        key=key, deleted_by=str(current_user.id), reason=reason
     )
 
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Feature flag '{key}' not found"
+            detail=f"Feature flag '{key}' not found",
         )
 
 
@@ -245,18 +232,15 @@ async def evaluate_feature_flag(
         user_id=user_id,
         user_role=user_role,
         context=evaluation_request.context,
-        track_evaluation=True
+        track_evaluation=True,
     )
 
     # Get flag to determine type
     flag = await service.get_flag(evaluation_request.flag_key)
-    flag_type = flag.flag_type if flag else 'boolean'
+    flag_type = flag.flag_type if flag else "boolean"
 
     return FeatureFlagEvaluationResponse(
-        enabled=enabled,
-        variant=variant,
-        flag_type=flag_type,
-        reason=reason
+        enabled=enabled, variant=variant, flag_type=flag_type, reason=reason
     )
 
 
@@ -283,7 +267,7 @@ async def evaluate_feature_flags_bulk(
         user_id=user_id,
         user_role=user_role,
         context=evaluation_request.context,
-        track_evaluation=False  # Don't track bulk evaluations to reduce DB load
+        track_evaluation=False,  # Don't track bulk evaluations to reduce DB load
     )
 
     # Convert results to response format
@@ -291,13 +275,10 @@ async def evaluate_feature_flags_bulk(
     for flag_key, (enabled, variant, reason) in results.items():
         # Get flag to determine type
         flag = await service.get_flag(flag_key)
-        flag_type = flag.flag_type if flag else 'boolean'
+        flag_type = flag.flag_type if flag else "boolean"
 
         flag_responses[flag_key] = FeatureFlagEvaluationResponse(
-            enabled=enabled,
-            variant=variant,
-            flag_type=flag_type,
-            reason=reason
+            enabled=enabled, variant=variant, flag_type=flag_type, reason=reason
         )
 
     return FeatureFlagBulkEvaluationResponse(flags=flag_responses)
@@ -321,16 +302,13 @@ async def enable_feature_flag(
     try:
         flag = await service.update_flag(
             key=key,
-            updates={'enabled': True},
+            updates={"enabled": True},
             updated_by=str(current_user.id),
-            reason=reason or "Flag enabled via API"
+            reason=reason or "Flag enabled via API",
         )
         return flag
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @router.post("/{key}/disable", response_model=FeatureFlagResponse)
@@ -351,16 +329,13 @@ async def disable_feature_flag(
     try:
         flag = await service.update_flag(
             key=key,
-            updates={'enabled': False},
+            updates={"enabled": False},
             updated_by=str(current_user.id),
-            reason=reason or "Flag disabled via API"
+            reason=reason or "Flag disabled via API",
         )
         return flag
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 async def _get_flags_by_environment(db: AsyncSession) -> dict[str, Any]:

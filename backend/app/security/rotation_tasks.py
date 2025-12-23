@@ -40,7 +40,9 @@ async def _get_admin_user_ids() -> list[str]:
     try:
         from app.models.user import User
 
-        admin_users = db.query(User).filter(User.role == "admin", User.is_active == True).all()
+        admin_users = (
+            db.query(User).filter(User.role == "admin", User.is_active == True).all()
+        )
         return [str(user.id) for user in admin_users]
     except Exception as e:
         logger.error(f"Failed to fetch admin users: {e}", exc_info=True)
@@ -50,9 +52,7 @@ async def _get_admin_user_ids() -> list[str]:
 
 
 async def _notify_rotation_event(
-    event_type: str,
-    details: dict,
-    severity: str = "normal"
+    event_type: str, details: dict, severity: str = "normal"
 ) -> None:
     """
     Notify administrators about rotation events.
@@ -86,7 +86,7 @@ async def _notify_rotation_event(
                 "severity": severity,
                 "details": details,
                 "admin_recipients": len(admin_ids),
-            }
+            },
         )
 
         # NOTE: The NotificationService requires a NotificationType enum value,
@@ -123,6 +123,7 @@ async def _notify_rotation_event(
 def get_db_session() -> Session:
     """Get a database session for task execution."""
     from app.core.database import SessionLocal
+
     return SessionLocal()
 
 
@@ -157,6 +158,7 @@ def check_scheduled_rotations(self) -> dict:
 
         # Note: Celery tasks must be synchronous, so we use a sync wrapper
         import asyncio
+
         due_check = asyncio.run(service.check_rotation_due())
 
         for secret_type, config in service.DEFAULT_CONFIGS.items():
@@ -166,7 +168,9 @@ def check_scheduled_rotations(self) -> dict:
 
                 if status.get("due") and config.auto_rotate:
                     # Trigger rotation
-                    logger.info(f"Triggering automatic rotation for {secret_type.value}")
+                    logger.info(
+                        f"Triggering automatic rotation for {secret_type.value}"
+                    )
                     rotate_secret.delay(
                         secret_type=secret_type.value,
                         reason="Scheduled automatic rotation",
@@ -245,19 +249,24 @@ def rotate_secret(
 
         # Perform rotation (Celery tasks are synchronous, use asyncio.run)
         import asyncio
-        result = asyncio.run(service.rotate_secret(
-            secret_type=secret_type_enum,
-            initiated_by=initiated_by_uuid,
-            reason=reason,
-            force=force,
-        ))
+
+        result = asyncio.run(
+            service.rotate_secret(
+                secret_type=secret_type_enum,
+                initiated_by=initiated_by_uuid,
+                reason=reason,
+                force=force,
+            )
+        )
 
         return {
             "success": result.success,
             "rotation_id": str(result.rotation_id),
             "secret_type": secret_type,
             "started_at": result.started_at.isoformat(),
-            "completed_at": result.completed_at.isoformat() if result.completed_at else None,
+            "completed_at": result.completed_at.isoformat()
+            if result.completed_at
+            else None,
             "grace_period_ends": (
                 result.grace_period_ends.isoformat()
                 if result.grace_period_ends
@@ -316,7 +325,10 @@ def complete_grace_periods(self) -> dict:
 
                 service = SecretRotationService(db)
                 import asyncio
-                success = asyncio.run(service.complete_grace_period(rotation.secret_type))
+
+                success = asyncio.run(
+                    service.complete_grace_period(rotation.secret_type)
+                )
 
                 results[rotation.secret_type.value] = {
                     "rotation_id": str(rotation.id),
@@ -337,7 +349,9 @@ def complete_grace_periods(self) -> dict:
 
         return {
             "timestamp": datetime.utcnow().isoformat(),
-            "grace_periods_completed": len([r for r in results.values() if r.get("success")]),
+            "grace_periods_completed": len(
+                [r for r in results.values() if r.get("success")]
+            ),
             "failures": len([r for r in results.values() if not r.get("success")]),
             "results": results,
         }
@@ -369,15 +383,16 @@ def send_rotation_reminder(
         Dictionary with notification result
     """
     logger.info(
-        f"Sending rotation reminder for {secret_type} "
-        f"(due in {days_until_due} days)"
+        f"Sending rotation reminder for {secret_type} (due in {days_until_due} days)"
     )
 
     try:
         # In production, this would integrate with notification service
         # For now, just log the reminder
 
-        priority = RotationPriority.HIGH if days_until_due <= 3 else RotationPriority.MEDIUM
+        priority = (
+            RotationPriority.HIGH if days_until_due <= 3 else RotationPriority.MEDIUM
+        )
 
         logger.warning(
             f"ROTATION REMINDER: {secret_type} rotation due in {days_until_due} days",
@@ -391,15 +406,18 @@ def send_rotation_reminder(
         # Notify admins about upcoming rotation
         try:
             import asyncio
-            asyncio.run(_notify_rotation_event(
-                event_type="rotation_reminder",
-                details={
-                    "secret_type": secret_type,
-                    "days_until_due": days_until_due,
-                    "priority": priority.value,
-                },
-                severity=priority.value,
-            ))
+
+            asyncio.run(
+                _notify_rotation_event(
+                    event_type="rotation_reminder",
+                    details={
+                        "secret_type": secret_type,
+                        "days_until_due": days_until_due,
+                        "priority": priority.value,
+                    },
+                    severity=priority.value,
+                )
+            )
         except Exception as e:
             logger.error(f"Failed to send rotation notification: {e}", exc_info=True)
 
@@ -450,7 +468,8 @@ def monitor_rotation_health(self) -> dict:
             db.query(SecretRotationHistory)
             .filter(
                 SecretRotationHistory.status == RotationStatus.FAILED,
-                SecretRotationHistory.started_at >= datetime.utcnow() - timedelta(hours=24),
+                SecretRotationHistory.started_at
+                >= datetime.utcnow() - timedelta(hours=24),
             )
             .count()
         )
@@ -467,7 +486,8 @@ def monitor_rotation_health(self) -> dict:
             db.query(SecretRotationHistory)
             .filter(
                 SecretRotationHistory.status == RotationStatus.GRACE_PERIOD,
-                SecretRotationHistory.grace_period_ends <= datetime.utcnow() + timedelta(hours=6),
+                SecretRotationHistory.grace_period_ends
+                <= datetime.utcnow() + timedelta(hours=6),
             )
             .count()
         )
@@ -475,6 +495,7 @@ def monitor_rotation_health(self) -> dict:
         # Check for overdue rotations
         service = SecretRotationService(db)
         import asyncio
+
         rotation_status = asyncio.run(service.check_rotation_due())
         overdue_rotations = [
             secret_type.value
@@ -506,18 +527,25 @@ def monitor_rotation_health(self) -> dict:
             # Send alert via notification service
             try:
                 import asyncio
-                asyncio.run(_notify_rotation_event(
-                    event_type="rotation_health_alert",
-                    details={
-                        "health_status": health_status,
-                        "failed_rotations": failed_rotations,
-                        "overdue_rotations": overdue_rotations,
-                        "issues": issues,
-                    },
-                    severity="high" if failed_rotations > 0 or len(overdue_rotations) > 0 else "medium",
-                ))
+
+                asyncio.run(
+                    _notify_rotation_event(
+                        event_type="rotation_health_alert",
+                        details={
+                            "health_status": health_status,
+                            "failed_rotations": failed_rotations,
+                            "overdue_rotations": overdue_rotations,
+                            "issues": issues,
+                        },
+                        severity="high"
+                        if failed_rotations > 0 or len(overdue_rotations) > 0
+                        else "medium",
+                    )
+                )
             except Exception as e:
-                logger.error(f"Failed to send health alert notification: {e}", exc_info=True)
+                logger.error(
+                    f"Failed to send health alert notification: {e}", exc_info=True
+                )
 
         return {
             "timestamp": datetime.utcnow().isoformat(),
@@ -572,9 +600,7 @@ def emergency_rotate_all(
         for secret_type, config in service.DEFAULT_CONFIGS.items():
             if not config.auto_rotate:
                 # Skip secrets that can't be auto-rotated (e.g., database passwords)
-                logger.info(
-                    f"Skipping {secret_type.value} (requires manual rotation)"
-                )
+                logger.info(f"Skipping {secret_type.value} (requires manual rotation)")
                 results[secret_type.value] = {
                     "skipped": True,
                     "reason": "requires_manual_rotation",
@@ -587,12 +613,15 @@ def emergency_rotate_all(
                 initiated_by_uuid = UUID(initiated_by) if initiated_by else None
 
                 import asyncio
-                result = asyncio.run(service.rotate_secret(
-                    secret_type=secret_type,
-                    initiated_by=initiated_by_uuid,
-                    reason=f"EMERGENCY: {reason}",
-                    force=True,
-                ))
+
+                result = asyncio.run(
+                    service.rotate_secret(
+                        secret_type=secret_type,
+                        initiated_by=initiated_by_uuid,
+                        reason=f"EMERGENCY: {reason}",
+                        force=True,
+                    )
+                )
 
                 results[secret_type.value] = {
                     "success": result.success,

@@ -1,11 +1,15 @@
 """Tests for state machine engine."""
-import pytest
-from datetime import datetime
+
 from uuid import uuid4
 
+import pytest
+
+from app.core.security import get_password_hash
+from app.models.state_machine import (
+    StateMachineStatus,
+)
+from app.models.user import User
 from app.workflow.state_machine import (
-    Action,
-    Guard,
     GuardFailedError,
     InvalidTransitionError,
     ParallelState,
@@ -16,13 +20,6 @@ from app.workflow.state_machine import (
     Transition,
     TransitionEvent,
 )
-from app.models.state_machine import (
-    StateMachineInstance,
-    StateMachineStatus,
-    StateMachineTransition,
-)
-from app.models.user import User
-from app.core.security import get_password_hash
 
 
 @pytest.fixture
@@ -156,10 +153,7 @@ def machine_with_parallel_states():
     ]
 
     return StateMachine(
-        "parallel_workflow",
-        states,
-        transitions,
-        parallel_regions=parallel_regions
+        "parallel_workflow", states, transitions, parallel_regions=parallel_regions
     )
 
 
@@ -368,7 +362,9 @@ class TestGuardConditions:
 
         transitions = [
             Transition("start", "low_priority_path", "go", priority=1),
-            Transition("start", "high_priority_path", "go", priority=10, guard="always_true"),
+            Transition(
+                "start", "high_priority_path", "go", priority=10, guard="always_true"
+            ),
         ]
 
         machine = StateMachine("priority_test", states, transitions)
@@ -412,7 +408,10 @@ class TestActions:
 
         # Order: exit_action, transition_action, entry_action
         # idle has no exit action, so: transition, entry
-        assert machine_with_actions.action_log == ["activate_transition", "active_entry"]
+        assert machine_with_actions.action_log == [
+            "activate_transition",
+            "active_entry",
+        ]
 
         machine_with_actions.action_log.clear()
 

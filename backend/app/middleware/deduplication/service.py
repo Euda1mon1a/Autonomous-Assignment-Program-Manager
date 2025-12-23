@@ -4,11 +4,12 @@ Request deduplication service.
 Provides high-level API for request deduplication with idempotency
 key management, duplicate detection, and response caching.
 """
+
 import hashlib
 import json
 import logging
 import re
-from typing import Any, Optional
+from typing import Any
 
 import redis.asyncio as redis
 from fastapi import Request
@@ -104,9 +105,9 @@ class DeduplicationService:
 
     def __init__(
         self,
-        redis_client: Optional[redis.Redis] = None,
-        storage: Optional[DeduplicationStorage] = None,
-        config: Optional[DeduplicationConfig] = None,
+        redis_client: redis.Redis | None = None,
+        storage: DeduplicationStorage | None = None,
+        config: DeduplicationConfig | None = None,
     ):
         """
         Initialize deduplication service.
@@ -124,7 +125,7 @@ class DeduplicationService:
         else:
             self.storage = DeduplicationStorage(redis_client=redis_client)
 
-    def extract_idempotency_key(self, request: Request) -> Optional[str]:
+    def extract_idempotency_key(self, request: Request) -> str | None:
         """
         Extract idempotency key from request.
 
@@ -140,9 +141,7 @@ class DeduplicationService:
             Idempotency key or None if not applicable
         """
         # Check if endpoint supports deduplication
-        if not self.config.is_endpoint_supported(
-            request.url.path, request.method
-        ):
+        if not self.config.is_endpoint_supported(request.url.path, request.method):
             return None
 
         # 1. Try to get from header
@@ -232,7 +231,7 @@ class DeduplicationService:
     async def check_duplicate(
         self,
         idempotency_key: str,
-    ) -> tuple[bool, Optional[RequestRecord]]:
+    ) -> tuple[bool, RequestRecord | None]:
         """
         Check if request is a duplicate.
 
@@ -265,7 +264,7 @@ class DeduplicationService:
         self,
         idempotency_key: str,
         record: RequestRecord,
-    ) -> Optional[RequestRecord]:
+    ) -> RequestRecord | None:
         """
         Handle a duplicate request.
 
@@ -304,8 +303,8 @@ class DeduplicationService:
     async def start_processing(
         self,
         idempotency_key: str,
-        ttl: Optional[int] = None,
-    ) -> tuple[bool, Optional[str]]:
+        ttl: int | None = None,
+    ) -> tuple[bool, str | None]:
         """
         Start processing a new request.
 
@@ -344,7 +343,7 @@ class DeduplicationService:
     async def complete_processing(
         self,
         idempotency_key: str,
-        lock_id: Optional[str],
+        lock_id: str | None,
         response_status: int,
         response_headers: dict[str, str],
         response_body: bytes,
@@ -378,8 +377,7 @@ class DeduplicationService:
                 logger.warning(f"Failed to update record: {idempotency_key}")
 
             logger.debug(
-                f"Completed processing: {idempotency_key} "
-                f"(status={response_status})"
+                f"Completed processing: {idempotency_key} (status={response_status})"
             )
 
             return updated
@@ -391,7 +389,7 @@ class DeduplicationService:
     async def fail_processing(
         self,
         idempotency_key: str,
-        lock_id: Optional[str],
+        lock_id: str | None,
         error_message: str,
     ) -> bool:
         """
@@ -419,8 +417,7 @@ class DeduplicationService:
                 logger.warning(f"Failed to update record: {idempotency_key}")
 
             logger.debug(
-                f"Failed processing: {idempotency_key} "
-                f"(error={error_message})"
+                f"Failed processing: {idempotency_key} (error={error_message})"
             )
 
             return updated

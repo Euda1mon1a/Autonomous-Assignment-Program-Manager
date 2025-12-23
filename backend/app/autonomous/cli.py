@@ -25,11 +25,9 @@ import argparse
 import json
 import sys
 from datetime import date, timedelta
-from pathlib import Path
 
 from app.core.logging import get_logger
 from app.db.session import SessionLocal
-
 
 logger = get_logger(__name__)
 
@@ -178,20 +176,14 @@ def run_loop(args: argparse.Namespace) -> int:
 
     Returns exit code: 0 for success, 1 for failure/exhausted.
     """
-    from app.autonomous.loop import AutonomousLoop, LoopConfig
     from app.autonomous.generator import GeneratorConfig
+    from app.autonomous.loop import AutonomousLoop, LoopConfig
     from app.autonomous.state import GeneratorParams
 
     # Parse dates
-    start_date = (
-        date.fromisoformat(args.start)
-        if args.start
-        else date.today()
-    )
+    start_date = date.fromisoformat(args.start) if args.start else date.today()
     end_date = (
-        date.fromisoformat(args.end)
-        if args.end
-        else start_date + timedelta(days=90)
+        date.fromisoformat(args.end) if args.end else start_date + timedelta(days=90)
     )
 
     # Create database session
@@ -287,15 +279,9 @@ def run_harness(args: argparse.Namespace) -> int:
     from app.autonomous.harness import run_resilience_regression
 
     # Parse dates
-    start_date = (
-        date.fromisoformat(args.start)
-        if args.start
-        else date.today()
-    )
+    start_date = date.fromisoformat(args.start) if args.start else date.today()
     end_date = (
-        date.fromisoformat(args.end)
-        if args.end
-        else start_date + timedelta(days=90)
+        date.fromisoformat(args.end) if args.end else start_date + timedelta(days=90)
     )
 
     # Create database session
@@ -303,7 +289,7 @@ def run_harness(args: argparse.Namespace) -> int:
 
     try:
         if not args.quiet:
-            print(f"Running resilience test harness")
+            print("Running resilience test harness")
             print(f"Date range: {start_date} to {end_date}")
             print(f"Pass threshold: {args.threshold:.0%}")
             print()
@@ -351,6 +337,7 @@ def main() -> int:
 
     # Configure logging
     import logging
+
     log_level = logging.WARNING if args.quiet else logging.INFO
     logging.basicConfig(
         level=log_level,
@@ -371,6 +358,7 @@ def main() -> int:
         logger.error(f"Fatal error: {e}")
         if not args.quiet:
             import traceback
+
             traceback.print_exc()
         return 1
 

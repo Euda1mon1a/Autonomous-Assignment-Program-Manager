@@ -8,6 +8,7 @@ Provides sanitization functions for:
 - Unicode normalization
 - Command injection prevention
 """
+
 import html
 import re
 import unicodedata
@@ -17,6 +18,7 @@ from typing import Any
 
 class SanitizationError(Exception):
     """Exception raised when input cannot be safely sanitized."""
+
     pass
 
 
@@ -48,10 +50,10 @@ def sanitize_html(text: str, allow_safe_tags: bool = False) -> str:
 
     # If allowing safe tags, unescape only those
     if allow_safe_tags:
-        safe_tags = ['b', 'i', 'em', 'strong', 'u']
+        safe_tags = ["b", "i", "em", "strong", "u"]
         for tag in safe_tags:
-            sanitized = sanitized.replace(f'&lt;{tag}&gt;', f'<{tag}>')
-            sanitized = sanitized.replace(f'&lt;/{tag}&gt;', f'</{tag}>')
+            sanitized = sanitized.replace(f"&lt;{tag}&gt;", f"<{tag}>")
+            sanitized = sanitized.replace(f"&lt;/{tag}&gt;", f"</{tag}>")
 
     return sanitized
 
@@ -76,11 +78,11 @@ def sanitize_sql_like_pattern(pattern: str) -> str:
         return pattern
 
     # Escape SQL LIKE wildcards and special characters
-    sanitized = pattern.replace('\\', '\\\\')  # Escape backslash first
-    sanitized = sanitized.replace('%', '\\%')
-    sanitized = sanitized.replace('_', '\\_')
-    sanitized = sanitized.replace('[', '\\[')
-    sanitized = sanitized.replace(']', '\\]')
+    sanitized = pattern.replace("\\", "\\\\")  # Escape backslash first
+    sanitized = sanitized.replace("%", "\\%")
+    sanitized = sanitized.replace("_", "\\_")
+    sanitized = sanitized.replace("[", "\\[")
+    sanitized = sanitized.replace("]", "\\]")
 
     return sanitized
 
@@ -109,10 +111,10 @@ def sanitize_path(path_str: str, allow_absolute: bool = False) -> str:
         raise SanitizationError("Path cannot be empty")
 
     # Remove null bytes
-    sanitized = path_str.replace('\x00', '')
+    sanitized = path_str.replace("\x00", "")
 
     # Remove control characters
-    sanitized = ''.join(char for char in sanitized if ord(char) >= 32 or char in '\t\n')
+    sanitized = "".join(char for char in sanitized if ord(char) >= 32 or char in "\t\n")
 
     # Convert to Path for normalization
     try:
@@ -121,16 +123,12 @@ def sanitize_path(path_str: str, allow_absolute: bool = False) -> str:
         raise SanitizationError(f"Invalid path: {path_str}") from e
 
     # Check for path traversal
-    if '..' in path.parts:
-        raise SanitizationError(
-            f"Path traversal detected (..): {path_str}"
-        )
+    if ".." in path.parts:
+        raise SanitizationError(f"Path traversal detected (..): {path_str}")
 
     # Check for absolute path
     if path.is_absolute() and not allow_absolute:
-        raise SanitizationError(
-            f"Absolute paths not allowed: {path_str}"
-        )
+        raise SanitizationError(f"Absolute paths not allowed: {path_str}")
 
     return str(path)
 
@@ -162,26 +160,26 @@ def sanitize_filename(filename: str) -> str:
     sanitized = Path(filename).name
 
     # Remove null bytes
-    sanitized = sanitized.replace('\x00', '')
+    sanitized = sanitized.replace("\x00", "")
 
     # Remove control characters
-    sanitized = ''.join(char for char in sanitized if ord(char) >= 32 or char == '\t')
+    sanitized = "".join(char for char in sanitized if ord(char) >= 32 or char == "\t")
 
     # Remove path traversal patterns
-    sanitized = sanitized.replace('..', '')
+    sanitized = sanitized.replace("..", "")
 
     # Remove path separators
-    sanitized = sanitized.replace('/', '_').replace('\\', '_')
+    sanitized = sanitized.replace("/", "_").replace("\\", "_")
 
     # Remove leading dots (hidden files)
-    while sanitized.startswith('.'):
+    while sanitized.startswith("."):
         sanitized = sanitized[1:]
 
     # Remove leading/trailing spaces
     sanitized = sanitized.strip()
 
     # Only allow safe characters: alphanumeric, dots, underscores, hyphens, spaces
-    sanitized = re.sub(r'[^a-zA-Z0-9._\-\s]', '_', sanitized)
+    sanitized = re.sub(r"[^a-zA-Z0-9._\-\s]", "_", sanitized)
 
     # Limit length
     if len(sanitized) > 255:
@@ -191,14 +189,12 @@ def sanitize_filename(filename: str) -> str:
         sanitized = name + ext
 
     if not sanitized:
-        raise SanitizationError(
-            f"Filename is empty after sanitization: {filename}"
-        )
+        raise SanitizationError(f"Filename is empty after sanitization: {filename}")
 
     return sanitized
 
 
-def normalize_unicode(text: str, form: str = 'NFKC') -> str:
+def normalize_unicode(text: str, form: str = "NFKC") -> str:
     """
     Normalize Unicode text to prevent unicode-based attacks.
 
@@ -257,10 +253,10 @@ def sanitize_email_input(email: str) -> str:
     sanitized = email.strip()
 
     # Remove null bytes
-    sanitized = sanitized.replace('\x00', '')
+    sanitized = sanitized.replace("\x00", "")
 
     # Remove control characters
-    sanitized = ''.join(char for char in sanitized if ord(char) >= 32 or char == '\t')
+    sanitized = "".join(char for char in sanitized if ord(char) >= 32 or char == "\t")
 
     # Normalize Unicode
     sanitized = normalize_unicode(sanitized)
@@ -270,9 +266,7 @@ def sanitize_email_input(email: str) -> str:
     sanitized = sanitized.lower()
 
     if not sanitized:
-        raise SanitizationError(
-            f"Email is empty after sanitization: {email}"
-        )
+        raise SanitizationError(f"Email is empty after sanitization: {email}")
 
     return sanitized
 
@@ -308,37 +302,33 @@ def sanitize_search_query(query: str, max_length: int = 200) -> str:
         sanitized = sanitized[:max_length]
 
     # Remove null bytes
-    sanitized = sanitized.replace('\x00', '')
+    sanitized = sanitized.replace("\x00", "")
 
     # Normalize Unicode
     sanitized = normalize_unicode(sanitized)
 
     # Check for SQL injection patterns
     sql_patterns = [
-        r'(\bUNION\b.*\bSELECT\b)',
-        r'(\bDROP\b.*\bTABLE\b)',
-        r'(\bINSERT\b.*\bINTO\b)',
-        r'(;.*(-{2}|\/\*))',  # SQL comments after semicolon
+        r"(\bUNION\b.*\bSELECT\b)",
+        r"(\bDROP\b.*\bTABLE\b)",
+        r"(\bINSERT\b.*\bINTO\b)",
+        r"(;.*(-{2}|\/\*))",  # SQL comments after semicolon
     ]
 
     for pattern in sql_patterns:
         if re.search(pattern, sanitized, re.IGNORECASE):
-            raise SanitizationError(
-                "Search query contains suspicious SQL patterns"
-            )
+            raise SanitizationError("Search query contains suspicious SQL patterns")
 
     # Check for command injection patterns
     cmd_patterns = [
-        r'[;&|`$()]',  # Shell metacharacters
-        r'\$\{',  # Variable expansion
-        r'\$\(',  # Command substitution
+        r"[;&|`$()]",  # Shell metacharacters
+        r"\$\{",  # Variable expansion
+        r"\$\(",  # Command substitution
     ]
 
     for pattern in cmd_patterns:
         if re.search(pattern, sanitized):
-            raise SanitizationError(
-                "Search query contains suspicious command patterns"
-            )
+            raise SanitizationError("Search query contains suspicious command patterns")
 
     return sanitized
 
@@ -363,34 +353,31 @@ def strip_dangerous_characters(text: str) -> str:
         return text
 
     # Remove null bytes
-    cleaned = text.replace('\x00', '')
+    cleaned = text.replace("\x00", "")
 
     # Remove most control characters (keep \t, \n, \r)
-    cleaned = ''.join(
-        char for char in cleaned
-        if ord(char) >= 32 or char in '\t\n\r'
-    )
+    cleaned = "".join(char for char in cleaned if ord(char) >= 32 or char in "\t\n\r")
 
     # Remove zero-width characters
     zero_width = [
-        '\u200b',  # Zero-width space
-        '\u200c',  # Zero-width non-joiner
-        '\u200d',  # Zero-width joiner
-        '\ufeff',  # Zero-width no-break space
+        "\u200b",  # Zero-width space
+        "\u200c",  # Zero-width non-joiner
+        "\u200d",  # Zero-width joiner
+        "\ufeff",  # Zero-width no-break space
     ]
     for char in zero_width:
-        cleaned = cleaned.replace(char, '')
+        cleaned = cleaned.replace(char, "")
 
     # Remove RTL/LTR override characters (can be used for spoofing)
     direction_chars = [
-        '\u202a',  # Left-to-right embedding
-        '\u202b',  # Right-to-left embedding
-        '\u202c',  # Pop directional formatting
-        '\u202d',  # Left-to-right override
-        '\u202e',  # Right-to-left override
+        "\u202a",  # Left-to-right embedding
+        "\u202b",  # Right-to-left embedding
+        "\u202c",  # Pop directional formatting
+        "\u202d",  # Left-to-right override
+        "\u202e",  # Right-to-left override
     ]
     for char in direction_chars:
-        cleaned = cleaned.replace(char, '')
+        cleaned = cleaned.replace(char, "")
 
     return cleaned
 
@@ -442,23 +429,30 @@ def validate_no_script_tags(text: str) -> str:
         return text
 
     # Check for script tags (case-insensitive)
-    if re.search(r'<script[^>]*>.*?</script>', text, re.IGNORECASE | re.DOTALL):
+    if re.search(r"<script[^>]*>.*?</script>", text, re.IGNORECASE | re.DOTALL):
         raise SanitizationError("Script tags are not allowed")
 
     # Check for inline event handlers
     event_handlers = [
-        'onclick', 'onload', 'onerror', 'onmouseover', 'onmouseout',
-        'onkeydown', 'onkeyup', 'onfocus', 'onblur', 'onchange', 'onsubmit'
+        "onclick",
+        "onload",
+        "onerror",
+        "onmouseover",
+        "onmouseout",
+        "onkeydown",
+        "onkeyup",
+        "onfocus",
+        "onblur",
+        "onchange",
+        "onsubmit",
     ]
 
     for handler in event_handlers:
-        if re.search(rf'{handler}\s*=', text, re.IGNORECASE):
-            raise SanitizationError(
-                f"Inline event handler '{handler}' is not allowed"
-            )
+        if re.search(rf"{handler}\s*=", text, re.IGNORECASE):
+            raise SanitizationError(f"Inline event handler '{handler}' is not allowed")
 
     # Check for javascript: protocol
-    if re.search(r'javascript:', text, re.IGNORECASE):
+    if re.search(r"javascript:", text, re.IGNORECASE):
         raise SanitizationError("JavaScript protocol is not allowed")
 
     return text
@@ -496,13 +490,11 @@ def sanitize_identifier(identifier: str, max_length: int = 64) -> str:
         )
 
     # Must start with letter or underscore
-    if not re.match(r'^[a-zA-Z_]', sanitized):
-        raise SanitizationError(
-            "Identifier must start with letter or underscore"
-        )
+    if not re.match(r"^[a-zA-Z_]", sanitized):
+        raise SanitizationError("Identifier must start with letter or underscore")
 
     # Must contain only alphanumeric and underscore
-    if not re.match(r'^[a-zA-Z0-9_]+$', sanitized):
+    if not re.match(r"^[a-zA-Z0-9_]+$", sanitized):
         raise SanitizationError(
             "Identifier can only contain letters, numbers, and underscores"
         )

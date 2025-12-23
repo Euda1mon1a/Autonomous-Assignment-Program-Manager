@@ -10,8 +10,6 @@ Provides endpoints for managing scheduled data exports including:
 """
 
 import logging
-from typing import Any
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
@@ -22,7 +20,6 @@ from app.db.session import get_db
 from app.exports.jobs import execute_export_job
 from app.exports.scheduler import ExportSchedulerService
 from app.models.export_job import (
-    ExportDeliveryMethod,
     ExportFormat,
     ExportJob,
     ExportJobExecution,
@@ -69,7 +66,7 @@ async def create_export_job(
     try:
         job = await scheduler.create_job(
             job_data=job_data.model_dump(exclude_unset=True),
-            created_by=current_user.username
+            created_by=current_user.username,
         )
         return job
     except Exception as e:
@@ -94,9 +91,7 @@ async def list_export_jobs(
 
     try:
         jobs, total = await scheduler.list_jobs(
-            page=page,
-            page_size=page_size,
-            enabled_only=enabled_only
+            page=page, page_size=page_size, enabled_only=enabled_only
         )
 
         total_pages = (total + page_size - 1) // page_size
@@ -106,7 +101,7 @@ async def list_export_jobs(
             total=total,
             page=page,
             page_size=page_size,
-            total_pages=total_pages
+            total_pages=total_pages,
         )
     except Exception as e:
         logger.error(f"Failed to list export jobs: {e}", exc_info=True)
@@ -149,8 +144,7 @@ async def update_export_job(
 
     try:
         job = await scheduler.update_job(
-            job_id=job_id,
-            update_data=update_data.model_dump(exclude_unset=True)
+            job_id=job_id, update_data=update_data.model_dump(exclude_unset=True)
         )
 
         if not job:
@@ -211,18 +205,19 @@ async def run_export_job(
     try:
         # Queue job execution via Celery
         task = execute_export_job.delay(
-            job_id=job_id,
-            triggered_by=f"manual:{current_user.username}"
+            job_id=job_id, triggered_by=f"manual:{current_user.username}"
         )
 
-        logger.info(f"Queued export job {job.name} (ID: {job_id}) for execution via Celery task {task.id}")
+        logger.info(
+            f"Queued export job {job.name} (ID: {job_id}) for execution via Celery task {task.id}"
+        )
 
         return ExportJobRunResponse(
             execution_id=task.id,
             job_id=job_id,
             job_name=job.name,
             status="queued",
-            message="Export job queued for execution"
+            message="Export job queued for execution",
         )
 
     except Exception as e:
@@ -262,8 +257,10 @@ async def list_job_executions(
             query = query.where(ExportJobExecution.status == status.value)
 
         # Get total count
-        count_query = select(func.count()).select_from(ExportJobExecution).where(
-            ExportJobExecution.job_id == job_id
+        count_query = (
+            select(func.count())
+            .select_from(ExportJobExecution)
+            .where(ExportJobExecution.job_id == job_id)
         )
         if status:
             count_query = count_query.where(ExportJobExecution.status == status.value)
@@ -283,7 +280,7 @@ async def list_job_executions(
             total=total,
             page=page,
             page_size=page_size,
-            total_pages=total_pages
+            total_pages=total_pages,
         )
 
     except Exception as e:
@@ -334,7 +331,14 @@ async def list_export_templates(
             description="Complete schedule with all assignments",
             supported_formats=[ExportFormat.CSV, ExportFormat.JSON, ExportFormat.XLSX],
             default_filters={"start_date": None, "end_date": None},
-            available_columns=["date", "time_of_day", "person_name", "person_type", "role", "activity"]
+            available_columns=[
+                "date",
+                "time_of_day",
+                "person_name",
+                "person_type",
+                "role",
+                "activity",
+            ],
         ),
         ExportTemplateInfo(
             template=ExportTemplate.PERSONNEL,
@@ -342,15 +346,33 @@ async def list_export_templates(
             description="All personnel records",
             supported_formats=[ExportFormat.CSV, ExportFormat.JSON, ExportFormat.XLSX],
             default_filters={"type": None, "pgy_level": None},
-            available_columns=["id", "name", "type", "pgy_level", "email", "specialties", "performs_procedures"]
+            available_columns=[
+                "id",
+                "name",
+                "type",
+                "pgy_level",
+                "email",
+                "specialties",
+                "performs_procedures",
+            ],
         ),
         ExportTemplateInfo(
             template=ExportTemplate.ABSENCES,
             name="Absences",
             description="Absence and leave records",
             supported_formats=[ExportFormat.CSV, ExportFormat.JSON, ExportFormat.XLSX],
-            default_filters={"start_date": None, "end_date": None, "absence_type": None},
-            available_columns=["person_name", "absence_type", "start_date", "end_date", "notes"]
+            default_filters={
+                "start_date": None,
+                "end_date": None,
+                "absence_type": None,
+            },
+            available_columns=[
+                "person_name",
+                "absence_type",
+                "start_date",
+                "end_date",
+                "notes",
+            ],
         ),
         ExportTemplateInfo(
             template=ExportTemplate.CERTIFICATIONS,
@@ -358,7 +380,12 @@ async def list_export_templates(
             description="Personnel certifications and credentials",
             supported_formats=[ExportFormat.CSV, ExportFormat.JSON, ExportFormat.XLSX],
             default_filters={},
-            available_columns=["person_name", "certification_name", "expiration_date", "status"]
+            available_columns=[
+                "person_name",
+                "certification_name",
+                "expiration_date",
+                "status",
+            ],
         ),
         ExportTemplateInfo(
             template=ExportTemplate.ACGME_COMPLIANCE,
@@ -366,7 +393,12 @@ async def list_export_templates(
             description="ACGME compliance reports",
             supported_formats=[ExportFormat.CSV, ExportFormat.JSON, ExportFormat.XLSX],
             default_filters={"start_date": None, "end_date": None},
-            available_columns=["person_name", "hours_worked", "violations", "compliance_status"]
+            available_columns=[
+                "person_name",
+                "hours_worked",
+                "violations",
+                "compliance_status",
+            ],
         ),
         ExportTemplateInfo(
             template=ExportTemplate.SWAP_HISTORY,
@@ -374,7 +406,13 @@ async def list_export_templates(
             description="Schedule swap request history",
             supported_formats=[ExportFormat.CSV, ExportFormat.JSON, ExportFormat.XLSX],
             default_filters={},
-            available_columns=["swap_type", "status", "requested_date", "created_at", "executed_at"]
+            available_columns=[
+                "swap_type",
+                "status",
+                "requested_date",
+                "created_at",
+                "executed_at",
+            ],
         ),
     ]
 
@@ -398,7 +436,9 @@ async def get_export_stats(
     """
     try:
         # Count total jobs
-        total_jobs_result = await db.execute(select(func.count()).select_from(ExportJob))
+        total_jobs_result = await db.execute(
+            select(func.count()).select_from(ExportJob)
+        )
         total_jobs = total_jobs_result.scalar()
 
         # Count active jobs
@@ -409,10 +449,9 @@ async def get_export_stats(
 
         # Count scheduled jobs
         scheduled_jobs_result = await db.execute(
-            select(func.count()).select_from(ExportJob).where(
-                ExportJob.enabled == True,
-                ExportJob.schedule_enabled == True
-            )
+            select(func.count())
+            .select_from(ExportJob)
+            .where(ExportJob.enabled == True, ExportJob.schedule_enabled == True)
         )
         scheduled_jobs = scheduled_jobs_result.scalar()
 
@@ -424,17 +463,17 @@ async def get_export_stats(
 
         # Count successful executions
         successful_result = await db.execute(
-            select(func.count()).select_from(ExportJobExecution).where(
-                ExportJobExecution.status == ExportJobStatus.COMPLETED.value
-            )
+            select(func.count())
+            .select_from(ExportJobExecution)
+            .where(ExportJobExecution.status == ExportJobStatus.COMPLETED.value)
         )
         successful_executions = successful_result.scalar()
 
         # Count failed executions
         failed_result = await db.execute(
-            select(func.count()).select_from(ExportJobExecution).where(
-                ExportJobExecution.status == ExportJobStatus.FAILED.value
-            )
+            select(func.count())
+            .select_from(ExportJobExecution)
+            .where(ExportJobExecution.status == ExportJobStatus.FAILED.value)
         )
         failed_executions = failed_result.scalar()
 
@@ -470,7 +509,7 @@ async def get_export_stats(
             failedExecutions=failed_executions,
             averageRuntimeSeconds=float(avg_runtime) if avg_runtime else None,
             totalRowsExported=int(total_rows),
-            totalBytesExported=int(total_bytes)
+            totalBytesExported=int(total_bytes),
         )
 
     except Exception as e:

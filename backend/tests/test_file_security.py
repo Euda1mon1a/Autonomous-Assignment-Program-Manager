@@ -1,14 +1,16 @@
 """Tests for file security utilities."""
-import pytest
+
 from pathlib import Path
+
+import pytest
+
 from app.core.file_security import (
     FileSecurityError,
     FileValidationError,
-    validate_backup_id,
-    validate_file_path,
     sanitize_filename,
+    validate_backup_id,
     validate_excel_upload,
-    ALLOWED_EXCEL_MIMETYPES,
+    validate_file_path,
 )
 
 
@@ -191,7 +193,7 @@ class TestValidateExcelUpload:
     def test_valid_xlsx_file(self):
         """Test that valid XLSX file with correct magic bytes passes validation."""
         # XLSX files start with PK\x03\x04 (ZIP signature)
-        valid_xlsx = b'PK\x03\x04' + b'\x00' * 100
+        valid_xlsx = b"PK\x03\x04" + b"\x00" * 100
 
         # Should pass without content_type
         validate_excel_upload(valid_xlsx, "test.xlsx")
@@ -200,53 +202,49 @@ class TestValidateExcelUpload:
         validate_excel_upload(
             valid_xlsx,
             "test.xlsx",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
     def test_valid_xls_file(self):
         """Test that valid XLS file with correct magic bytes passes validation."""
         # XLS files start with D0 CF 11 E0 A1 B1 1A E1 (OLE2 signature)
-        valid_xls = b'\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1' + b'\x00' * 100
+        valid_xls = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1" + b"\x00" * 100
 
         # Should pass without content_type
         validate_excel_upload(valid_xls, "test.xls")
 
         # Should pass with correct content_type
-        validate_excel_upload(
-            valid_xls,
-            "test.xls",
-            "application/vnd.ms-excel"
-        )
+        validate_excel_upload(valid_xls, "test.xls", "application/vnd.ms-excel")
 
     def test_content_type_with_charset(self):
         """Test that content_type with charset parameter is normalized correctly."""
-        valid_xlsx = b'PK\x03\x04' + b'\x00' * 100
+        valid_xlsx = b"PK\x03\x04" + b"\x00" * 100
 
         # Content-Type with charset should be accepted
         validate_excel_upload(
             valid_xlsx,
             "test.xlsx",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8"
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8",
         )
 
     def test_file_too_large(self):
         """Test that files exceeding size limit are rejected."""
         # Create 11 MB file (exceeds 10 MB limit)
-        large_file = b'PK\x03\x04' + b'\x00' * (11 * 1024 * 1024)
+        large_file = b"PK\x03\x04" + b"\x00" * (11 * 1024 * 1024)
 
         with pytest.raises(FileValidationError, match="File too large"):
             validate_excel_upload(large_file, "test.xlsx")
 
     def test_file_too_small(self):
         """Test that suspiciously small files are rejected."""
-        tiny_file = b'PK\x03\x04'
+        tiny_file = b"PK\x03\x04"
 
         with pytest.raises(FileValidationError, match="too small"):
             validate_excel_upload(tiny_file, "test.xlsx")
 
     def test_invalid_extension(self):
         """Test that non-Excel extensions are rejected."""
-        file_content = b'PK\x03\x04' + b'\x00' * 100
+        file_content = b"PK\x03\x04" + b"\x00" * 100
 
         with pytest.raises(FileValidationError, match="Invalid file type"):
             validate_excel_upload(file_content, "test.pdf")
@@ -257,7 +255,7 @@ class TestValidateExcelUpload:
     def test_xlsx_wrong_magic_bytes(self):
         """Test that XLSX file with wrong magic bytes is rejected."""
         # XLSX with wrong signature
-        invalid_xlsx = b'NOT_ZIP_FILE' + b'\x00' * 100
+        invalid_xlsx = b"NOT_ZIP_FILE" + b"\x00" * 100
 
         with pytest.raises(FileValidationError, match="does not match XLSX signature"):
             validate_excel_upload(invalid_xlsx, "test.xlsx")
@@ -265,26 +263,26 @@ class TestValidateExcelUpload:
     def test_xls_wrong_magic_bytes(self):
         """Test that XLS file with wrong magic bytes is rejected."""
         # XLS with wrong signature
-        invalid_xls = b'NOT_OLE2_FILE' + b'\x00' * 100
+        invalid_xls = b"NOT_OLE2_FILE" + b"\x00" * 100
 
         with pytest.raises(FileValidationError, match="does not match XLS signature"):
             validate_excel_upload(invalid_xls, "test.xls")
 
     def test_content_type_mismatch_extension(self):
         """Test that Content-Type not matching extension is rejected."""
-        valid_xlsx = b'PK\x03\x04' + b'\x00' * 100
+        valid_xlsx = b"PK\x03\x04" + b"\x00" * 100
 
         # XLSX file but XLS content type
         with pytest.raises(FileValidationError, match="does not match file extension"):
             validate_excel_upload(
                 valid_xlsx,
                 "test.xlsx",
-                "application/vnd.ms-excel"  # XLS content type for XLSX file
+                "application/vnd.ms-excel",  # XLS content type for XLSX file
             )
 
     def test_invalid_content_type(self):
         """Test that invalid Content-Type header is rejected."""
-        valid_xlsx = b'PK\x03\x04' + b'\x00' * 100
+        valid_xlsx = b"PK\x03\x04" + b"\x00" * 100
 
         with pytest.raises(FileValidationError, match="Invalid Content-Type header"):
             validate_excel_upload(valid_xlsx, "test.xlsx", "application/pdf")
@@ -295,7 +293,7 @@ class TestValidateExcelUpload:
     def test_extension_spoofing_attack(self):
         """Test that files with spoofed extensions are rejected."""
         # PDF file masquerading as XLSX
-        pdf_file = b'%PDF-1.4' + b'\x00' * 100
+        pdf_file = b"%PDF-1.4" + b"\x00" * 100
 
         with pytest.raises(FileValidationError, match="does not match XLSX signature"):
             validate_excel_upload(pdf_file, "malicious.xlsx")
@@ -303,26 +301,26 @@ class TestValidateExcelUpload:
     def test_content_type_spoofing_attack(self):
         """Test that Content-Type spoofing is detected."""
         # Text file with Excel extension and content-type
-        text_file = b'This is a text file, not Excel' + b'\x00' * 100
+        text_file = b"This is a text file, not Excel" + b"\x00" * 100
 
         with pytest.raises(FileValidationError, match="does not match XLSX signature"):
             validate_excel_upload(
                 text_file,
                 "fake.xlsx",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
 
     def test_double_extension_attack(self):
         """Test that double extension attacks are handled."""
         # File with double extension
-        valid_xlsx = b'PK\x03\x04' + b'\x00' * 100
+        valid_xlsx = b"PK\x03\x04" + b"\x00" * 100
 
         # Should use the last extension (.xlsx)
         validate_excel_upload(valid_xlsx, "document.pdf.xlsx")
 
     def test_case_insensitive_extension(self):
         """Test that extension checking is case-insensitive."""
-        valid_xlsx = b'PK\x03\x04' + b'\x00' * 100
+        valid_xlsx = b"PK\x03\x04" + b"\x00" * 100
 
         # Uppercase extension should work
         validate_excel_upload(valid_xlsx, "test.XLSX")

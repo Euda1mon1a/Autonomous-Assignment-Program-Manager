@@ -1,4 +1,5 @@
 """Email log model for tracking email notifications."""
+
 import enum
 import uuid
 from datetime import datetime
@@ -12,6 +13,7 @@ from app.db.types import GUID
 
 class EmailStatus(str, enum.Enum):
     """Email delivery status."""
+
     QUEUED = "queued"
     SENT = "sent"
     FAILED = "failed"
@@ -25,6 +27,7 @@ class EmailLog(Base):
     This model maintains a complete audit trail of all emails sent,
     including delivery status, retry attempts, and error tracking.
     """
+
     __tablename__ = "email_logs"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -34,7 +37,7 @@ class EmailLog(Base):
         GUID(),
         ForeignKey("notifications.id", ondelete="SET NULL"),
         nullable=True,
-        index=True
+        index=True,
     )
 
     # Optional link to email template used
@@ -42,7 +45,7 @@ class EmailLog(Base):
         GUID(),
         ForeignKey("email_templates.id", ondelete="SET NULL"),
         nullable=True,
-        index=True
+        index=True,
     )
 
     # Email details
@@ -52,7 +55,9 @@ class EmailLog(Base):
     body_text = Column(Text, nullable=True)
 
     # Delivery tracking
-    status = Column(Enum(EmailStatus), default=EmailStatus.QUEUED, nullable=False, index=True)
+    status = Column(
+        Enum(EmailStatus), default=EmailStatus.QUEUED, nullable=False, index=True
+    )
     error_message = Column(Text, nullable=True)
     sent_at = Column(DateTime, nullable=True)
     retry_count = Column(Integer, default=0, nullable=False)

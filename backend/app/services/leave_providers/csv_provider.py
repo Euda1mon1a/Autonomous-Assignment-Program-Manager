@@ -1,9 +1,10 @@
 """CSV-based leave provider."""
+
 import csv
 from datetime import date, datetime
 from pathlib import Path
 
-from app.core.file_security import validate_file_path, FileSecurityError
+from app.core.file_security import FileSecurityError, validate_file_path
 from app.services.leave_providers.base import LeaveProvider, LeaveRecord
 
 # Default allowed directory for CSV files
@@ -44,7 +45,12 @@ class CSVLeaveProvider(LeaveProvider):
 
         self._records: list[LeaveRecord] = []
 
-    def get_conflicts(self, faculty_name: str | None = None, start_date: date | None = None, end_date: date | None = None) -> list[LeaveRecord]:
+    def get_conflicts(
+        self,
+        faculty_name: str | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> list[LeaveRecord]:
         records = self.get_all_leave(start_date, end_date)
         if faculty_name:
             records = [r for r in records if r.faculty_name == faculty_name]
@@ -54,7 +60,9 @@ class CSVLeaveProvider(LeaveProvider):
         self._records = self._load_csv()
         return len(self._records)
 
-    def get_all_leave(self, start_date: date | None = None, end_date: date | None = None) -> list[LeaveRecord]:
+    def get_all_leave(
+        self, start_date: date | None = None, end_date: date | None = None
+    ) -> list[LeaveRecord]:
         if not self._records:
             self._records = self._load_csv()
         records = self._records
@@ -71,13 +79,17 @@ class CSVLeaveProvider(LeaveProvider):
         with open(self.file_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                records.append(LeaveRecord(
-                    faculty_name=row['faculty_name'],
-                    faculty_id=row.get('faculty_id'),
-                    start_date=datetime.strptime(row['start_date'], '%Y-%m-%d').date(),
-                    end_date=datetime.strptime(row['end_date'], '%Y-%m-%d').date(),
-                    leave_type=row['leave_type'],
-                    description=row.get('description'),
-                    is_blocking=row.get('is_blocking', 'true').lower() == 'true',
-                ))
+                records.append(
+                    LeaveRecord(
+                        faculty_name=row["faculty_name"],
+                        faculty_id=row.get("faculty_id"),
+                        start_date=datetime.strptime(
+                            row["start_date"], "%Y-%m-%d"
+                        ).date(),
+                        end_date=datetime.strptime(row["end_date"], "%Y-%m-%d").date(),
+                        leave_type=row["leave_type"],
+                        description=row.get("description"),
+                        is_blocking=row.get("is_blocking", "true").lower() == "true",
+                    )
+                )
         return records

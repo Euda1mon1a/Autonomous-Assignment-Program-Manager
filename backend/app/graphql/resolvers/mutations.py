@@ -1,6 +1,6 @@
 """GraphQL mutation resolvers."""
+
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 import strawberry
@@ -70,7 +70,7 @@ class Mutation:
         info,
         id: strawberry.ID,
         input: PersonUpdateInput,
-    ) -> Optional[Person]:
+    ) -> Person | None:
         """
         Update an existing person.
 
@@ -166,7 +166,9 @@ class Mutation:
         db_assignment = DBAssignment(
             block_id=UUID(input.block_id),
             person_id=UUID(input.person_id),
-            rotation_template_id=UUID(input.rotation_template_id) if input.rotation_template_id else None,
+            rotation_template_id=UUID(input.rotation_template_id)
+            if input.rotation_template_id
+            else None,
             role=input.role.value,
             activity_override=input.activity_override,
             notes=input.notes,
@@ -186,7 +188,7 @@ class Mutation:
         info,
         id: strawberry.ID,
         input: AssignmentUpdateInput,
-    ) -> Optional[Assignment]:
+    ) -> Assignment | None:
         """
         Update an existing assignment.
 
@@ -200,7 +202,9 @@ class Mutation:
             raise Exception("Authentication required")
 
         # Find assignment
-        db_assignment = db.query(DBAssignment).filter(DBAssignment.id == UUID(id)).first()
+        db_assignment = (
+            db.query(DBAssignment).filter(DBAssignment.id == UUID(id)).first()
+        )
         if not db_assignment:
             return None
 
@@ -240,7 +244,9 @@ class Mutation:
             raise Exception("Authentication required")
 
         # Find and delete assignment
-        db_assignment = db.query(DBAssignment).filter(DBAssignment.id == UUID(id)).first()
+        db_assignment = (
+            db.query(DBAssignment).filter(DBAssignment.id == UUID(id)).first()
+        )
         if not db_assignment:
             return False
 
@@ -280,7 +286,9 @@ class Mutation:
                 db_assignment = DBAssignment(
                     block_id=UUID(input.block_id),
                     person_id=UUID(input.person_id),
-                    rotation_template_id=UUID(input.rotation_template_id) if input.rotation_template_id else None,
+                    rotation_template_id=UUID(input.rotation_template_id)
+                    if input.rotation_template_id
+                    else None,
                     role=input.role.value,
                     activity_override=input.activity_override,
                     notes=input.notes,

@@ -1,11 +1,10 @@
 """Tests for BlockService."""
 
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
 
-from app.services.block_service import BlockService
 from app.models.block import Block
+from app.services.block_service import BlockService
 
 
 class TestBlockService:
@@ -440,11 +439,15 @@ class TestBlockService:
         result = service.generate_blocks(start, end, base_block_number=1)
 
         # Get blocks from days 1-27 (should be block 1)
-        early_blocks = [b for b in result["items"] if b.date < start + timedelta(days=28)]
+        early_blocks = [
+            b for b in result["items"] if b.date < start + timedelta(days=28)
+        ]
         assert all(b.block_number == 1 for b in early_blocks)
 
         # Get blocks from day 28+ (should be block 2)
-        later_blocks = [b for b in result["items"] if b.date >= start + timedelta(days=28)]
+        later_blocks = [
+            b for b in result["items"] if b.date >= start + timedelta(days=28)
+        ]
         assert all(b.block_number == 2 for b in later_blocks)
 
     # ========================================================================

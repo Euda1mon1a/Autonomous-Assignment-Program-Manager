@@ -12,23 +12,23 @@ Tests cover:
 - Authorization checks
 """
 
-import pytest
 from datetime import datetime, timedelta
 from uuid import uuid4
 
+import pytest
+
+from app.models.absence import Absence
+from app.models.assignment import Assignment
+from app.models.user import User
 from app.rollback.manager import (
+    EntitySnapshot,
+    RollbackAuthorizationError,
     RollbackManager,
     RollbackPoint,
     RollbackResult,
-    RollbackStatus,
     RollbackScope,
-    RollbackAuthorizationError,
-    RollbackExpiredError,
-    EntitySnapshot,
+    RollbackStatus,
 )
-from app.models.user import User
-from app.models.assignment import Assignment
-from app.models.absence import Absence
 
 
 class TestRollbackManager:
@@ -379,8 +379,10 @@ class TestRollbackManager:
 # Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def db():
     """Mock database session for testing."""
     from unittest.mock import MagicMock
+
     return MagicMock()

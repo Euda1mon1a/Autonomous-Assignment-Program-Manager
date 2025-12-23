@@ -7,6 +7,7 @@ Provides detailed timing and resource usage tracking:
 - Memory usage tracking
 - Context manager support for automatic timing
 """
+
 import logging
 import time
 from contextlib import contextmanager
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PhaseMetrics:
     """Metrics for a single phase."""
+
     name: str
     start_time: float
     end_time: float | None = None
@@ -69,6 +71,7 @@ class SchedulingProfiler:
         if track_memory:
             try:
                 import psutil
+
                 self._psutil = psutil
             except ImportError:
                 logger.warning("psutil not installed, memory tracking disabled")
@@ -115,9 +118,7 @@ class SchedulingProfiler:
         if name in self._phase_stack:
             self._phase_stack.remove(name)
 
-        logger.debug(
-            f"Ended phase: {name} (duration: {phase.duration:.3f}s)"
-        )
+        logger.debug(f"Ended phase: {name} (duration: {phase.duration:.3f}s)")
 
     @contextmanager
     def phase(self, name: str):
@@ -195,25 +196,25 @@ class SchedulingProfiler:
         print(f"Total Time: {report['total_time']:.3f}s")
         print(f"Timestamp: {report['timestamp']}")
 
-        if report['phases']:
+        if report["phases"]:
             print("\nPhase Breakdown:")
             print("-" * 60)
             for name, data in sorted(
-                report['phases'].items(),
-                key=lambda x: x[1].get('start', 0),
+                report["phases"].items(),
+                key=lambda x: x[1].get("start", 0),
             ):
-                duration = data.get('duration')
+                duration = data.get("duration")
                 if duration:
-                    percent = (duration / report['total_time']) * 100
+                    percent = (duration / report["total_time"]) * 100
                     print(f"  {name:30s} {duration:8.3f}s ({percent:5.1f}%)")
 
-        if report['metrics']:
+        if report["metrics"]:
             print("\nCustom Metrics:")
             print("-" * 60)
-            for name, value in report['metrics'].items():
+            for name, value in report["metrics"].items():
                 print(f"  {name:30s} {value}")
 
-        if report['memory']:
+        if report["memory"]:
             print("\nMemory Usage:")
             print("-" * 60)
             print(f"  Current: {report['memory']['current_mb']:.2f} MB")
@@ -240,6 +241,7 @@ class SchedulingProfiler:
 
         try:
             import os
+
             process = self._psutil.Process(os.getpid())
             return process.memory_info().rss
         except Exception as e:

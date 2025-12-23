@@ -3,17 +3,17 @@ OpenTelemetry tracing middleware for FastAPI.
 
 Provides automatic span creation for HTTP requests with rich metadata.
 """
+
 import logging
 import time
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from fastapi import Request, Response
+from opentelemetry import baggage, trace
+from opentelemetry.semconv.trace import SpanAttributes
+from opentelemetry.trace import Span, Status, StatusCode
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
-
-from opentelemetry import trace, baggage
-from opentelemetry.trace import Status, StatusCode, Span
-from opentelemetry.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +35,11 @@ class TracingMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: ASGIApp,
-        tracer_provider: Optional[trace.TracerProvider] = None,
-        excluded_paths: Optional[list[str]] = None,
+        tracer_provider: trace.TracerProvider | None = None,
+        excluded_paths: list[str] | None = None,
         capture_headers: bool = True,
         capture_query_params: bool = True,
-        header_allowlist: Optional[list[str]] = None,
+        header_allowlist: list[str] | None = None,
     ):
         """
         Initialize tracing middleware.
@@ -117,12 +117,12 @@ class TracingMiddleware(BaseHTTPMiddleware):
                 response = await call_next(request)
 
                 # Set response attributes
-                span.set_attribute(SpanAttributes.HTTP_STATUS_CODE, response.status_code)
+                span.set_attribute(
+                    SpanAttributes.HTTP_STATUS_CODE, response.status_code
+                )
 
                 # Set span status based on HTTP status code
-                if response.status_code >= 500:
-                    span.set_status(Status(StatusCode.ERROR))
-                elif response.status_code >= 400:
+                if response.status_code >= 500 or response.status_code >= 400:
                     span.set_status(Status(StatusCode.ERROR))
                 else:
                     span.set_status(Status(StatusCode.OK))
@@ -175,7 +175,9 @@ class TracingMiddleware(BaseHTTPMiddleware):
             header_value = request.headers.get(header_name)
             if header_value:
                 # Use lowercase header name for consistency
-                attr_name = f"http.request.header.{header_name.lower().replace('-', '_')}"
+                attr_name = (
+                    f"http.request.header.{header_name.lower().replace('-', '_')}"
+                )
                 span.set_attribute(attr_name, header_value)
 
     def _set_query_attributes(self, span: Span, request: Request):
@@ -224,8 +226,8 @@ class DatabaseTracingMiddleware:
     def add_query_attributes(
         span: Span,
         query: str,
-        params: Optional[dict] = None,
-        table_name: Optional[str] = None,
+        params: dict | None = None,
+        table_name: str | None = None,
     ):
         """
         Add database query attributes to a span.
@@ -324,7 +326,7 @@ def add_custom_span_attributes(
 
 def add_span_event(
     name: str,
-    attributes: Optional[dict[str, str | int | float | bool]] = None,
+    attributes: dict[str, str | int | float | bool] | None = None,
 ):
     """
     Add an event to the current span.
@@ -364,7 +366,7 @@ def set_baggage(key: str, value: str):
     baggage.set_baggage(key, value)
 
 
-def get_baggage(key: str) -> Optional[str]:
+def get_baggage(key: str) -> str | None:
     """
     Get a baggage item.
 

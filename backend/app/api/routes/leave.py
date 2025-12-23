@@ -7,13 +7,22 @@ Provides endpoints for:
 - Bulk leave import
 - Webhook for external leave systems
 """
-import hmac
+
 import hashlib
+import hmac
 import logging
 from datetime import date, datetime
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    Header,
+    HTTPException,
+    Request,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from app.api.dependencies.role_filter import require_admin
@@ -96,9 +105,7 @@ async def verify_webhook_signature(
     # Format: HMAC-SHA256(webhook_secret, timestamp + "." + body)
     message = f"{x_webhook_timestamp}.{body.decode('utf-8')}"
     expected_signature = hmac.new(
-        settings.WEBHOOK_SECRET.encode('utf-8'),
-        message.encode('utf-8'),
-        hashlib.sha256
+        settings.WEBHOOK_SECRET.encode("utf-8"), message.encode("utf-8"), hashlib.sha256
     ).hexdigest()
 
     # Compare signatures using constant-time comparison to prevent timing attacks
@@ -136,18 +143,24 @@ def list_leave(
 
     items = []
     for absence in absences:
-        items.append(LeaveResponse(
-            id=absence.id,
-            faculty_id=absence.person_id,
-            faculty_name=absence.person.name if absence.person else "Unknown",
-            start_date=absence.start_date,
-            end_date=absence.end_date,
-            leave_type=absence.absence_type,
-            is_blocking=absence.should_block_assignment,
-            description=absence.notes,
-            created_at=absence.created_at if hasattr(absence, 'created_at') else None,
-            updated_at=absence.updated_at if hasattr(absence, 'updated_at') else None,
-        ))
+        items.append(
+            LeaveResponse(
+                id=absence.id,
+                faculty_id=absence.person_id,
+                faculty_name=absence.person.name if absence.person else "Unknown",
+                start_date=absence.start_date,
+                end_date=absence.end_date,
+                leave_type=absence.absence_type,
+                is_blocking=absence.should_block_assignment,
+                description=absence.notes,
+                created_at=absence.created_at
+                if hasattr(absence, "created_at")
+                else None,
+                updated_at=absence.updated_at
+                if hasattr(absence, "updated_at")
+                else None,
+            )
+        )
 
     return LeaveListResponse(
         items=items,
@@ -169,10 +182,14 @@ def get_leave_calendar(
 
     Shows all leave records with conflict indicators for FMIT overlap.
     """
-    absences = db.query(Absence).filter(
-        Absence.end_date >= start_date,
-        Absence.start_date <= end_date,
-    ).all()
+    absences = (
+        db.query(Absence)
+        .filter(
+            Absence.end_date >= start_date,
+            Absence.start_date <= end_date,
+        )
+        .all()
+    )
 
     entries = []
     conflict_count = 0
@@ -188,8 +205,7 @@ def get_leave_calendar(
         # Check if any conflicts are FMIT-related
         if conflicts:
             has_conflict = any(
-                c.conflict_type == "leave_fmit_overlap"
-                for c in conflicts
+                c.conflict_type == "leave_fmit_overlap" for c in conflicts
             )
 
         entry = LeaveCalendarEntry(
@@ -247,6 +263,7 @@ def create_leave(
 
     # Trigger conflict detection in background using Celery
     from app.notifications.tasks import detect_leave_conflicts
+
     background_tasks.add_task(detect_leave_conflicts.delay, str(absence.id))
 
     return LeaveResponse(
@@ -258,7 +275,7 @@ def create_leave(
         leave_type=absence.absence_type,
         is_blocking=absence.is_blocking or absence.absence_type == "deployment",
         description=absence.notes,
-        created_at=absence.created_at if hasattr(absence, 'created_at') else None,
+        created_at=absence.created_at if hasattr(absence, "created_at") else None,
         updated_at=None,
     )
 
@@ -301,8 +318,8 @@ def update_leave(
         leave_type=absence.absence_type,
         is_blocking=absence.is_blocking or absence.absence_type == "deployment",
         description=absence.notes,
-        created_at=absence.created_at if hasattr(absence, 'created_at') else None,
-        updated_at=absence.updated_at if hasattr(absence, 'updated_at') else None,
+        created_at=absence.created_at if hasattr(absence, "created_at") else None,
+        updated_at=absence.updated_at if hasattr(absence, "updated_at") else None,
     )
 
 
@@ -371,11 +388,15 @@ def bulk_import_leave(
         try:
             # Check for duplicates if skip_duplicates is enabled
             if request.skip_duplicates:
-                existing = db.query(Absence).filter(
-                    Absence.person_id == record.faculty_id,
-                    Absence.start_date == record.start_date,
-                    Absence.end_date == record.end_date,
-                ).first()
+                existing = (
+                    db.query(Absence)
+                    .filter(
+                        Absence.person_id == record.faculty_id,
+                        Absence.start_date == record.start_date,
+                        Absence.end_date == record.end_date,
+                    )
+                    .first()
+                )
                 if existing:
                     skipped += 1
                     continue

@@ -24,6 +24,7 @@ logger = get_logger(__name__)
 def get_db_session() -> Session:
     """Get a database session for task execution."""
     from app.core.database import SessionLocal
+
     return SessionLocal()
 
 
@@ -65,13 +66,21 @@ def periodic_health_check(self) -> dict:
 
             # Load data
             faculty = db.query(Person).filter(Person.type == "faculty").all()
-            blocks = db.query(Block).filter(
-                Block.date >= today,
-                Block.date <= end_date,
-            ).all()
-            assignments = db.query(Assignment).filter(
-                Assignment.block_id.in_([b.id for b in blocks])
-            ).all() if blocks else []
+            blocks = (
+                db.query(Block)
+                .filter(
+                    Block.date >= today,
+                    Block.date <= end_date,
+                )
+                .all()
+            )
+            assignments = (
+                db.query(Assignment)
+                .filter(Assignment.block_id.in_([b.id for b in blocks]))
+                .all()
+                if blocks
+                else []
+            )
 
             # Run health check
             service = ResilienceService(db)
@@ -165,13 +174,21 @@ def run_contingency_analysis(
 
             # Load data
             faculty = db.query(Person).filter(Person.type == "faculty").all()
-            blocks = db.query(Block).filter(
-                Block.date >= today,
-                Block.date <= end_date,
-            ).all()
-            assignments = db.query(Assignment).filter(
-                Assignment.block_id.in_([b.id for b in blocks])
-            ).all() if blocks else []
+            blocks = (
+                db.query(Block)
+                .filter(
+                    Block.date >= today,
+                    Block.date <= end_date,
+                )
+                .all()
+            )
+            assignments = (
+                db.query(Assignment)
+                .filter(Assignment.block_id.in_([b.id for b in blocks]))
+                .all()
+                if blocks
+                else []
+            )
 
             # Build coverage requirements (1 per block by default)
             coverage_requirements = {b.id: 1 for b in blocks}
@@ -208,7 +225,7 @@ def run_contingency_analysis(
                 send_resilience_alert.delay(
                     level="warning",
                     message=f"Contingency analysis found issues: N1={report.n1_pass}, "
-                            f"Phase risk={report.phase_transition_risk}",
+                    f"Phase risk={report.phase_transition_risk}",
                     details=result,
                 )
 
@@ -291,7 +308,9 @@ def precompute_fallback_schedules(
                 "start": today.isoformat(),
                 "end": end_date.isoformat(),
             },
-            "scenarios_computed": len([r for r in results.values() if "error" not in r]),
+            "scenarios_computed": len(
+                [r for r in results.values() if "error" not in r]
+            ),
             "scenarios_failed": len([r for r in results.values() if "error" in r]),
             "results": results,
         }
@@ -336,17 +355,22 @@ def generate_utilization_forecast(
         faculty = db.query(Person).filter(Person.type == "faculty").all()
 
         # Load absences
-        absences = db.query(Absence).filter(
-            Absence.start_date <= end_date,
-            Absence.end_date >= today,
-        ).all()
+        absences = (
+            db.query(Absence)
+            .filter(
+                Absence.start_date <= end_date,
+                Absence.end_date >= today,
+            )
+            .all()
+        )
 
         # Build absence map by date
         known_absences = {}
         for d in range(days_ahead):
             check_date = today + timedelta(days=d)
             absent_ids = [
-                a.person_id for a in absences
+                a.person_id
+                for a in absences
                 if a.start_date <= check_date <= a.end_date
             ]
             if absent_ids:
@@ -401,7 +425,9 @@ def generate_utilization_forecast(
                 details=result,
             )
 
-        logger.info(f"Forecast complete: {len(high_risk_periods)} high-risk days identified")
+        logger.info(
+            f"Forecast complete: {len(high_risk_periods)} high-risk days identified"
+        )
         return result
 
     except Exception as e:

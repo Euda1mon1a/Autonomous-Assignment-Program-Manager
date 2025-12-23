@@ -1,4 +1,5 @@
 """Template registry with versioning support."""
+
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -225,9 +226,7 @@ class TemplateRegistry:
         if active_only:
             templates = list(self._active_versions.values())
         else:
-            templates = [
-                v for versions in self._templates.values() for v in versions
-            ]
+            templates = [v for versions in self._templates.values() for v in versions]
 
         # Filter by locale
         if locale:
@@ -235,9 +234,7 @@ class TemplateRegistry:
 
         # Filter by tags
         if tags:
-            templates = [
-                t for t in templates if any(tag in t.tags for tag in tags)
-            ]
+            templates = [t for t in templates if any(tag in t.tags for tag in tags)]
 
         return templates
 

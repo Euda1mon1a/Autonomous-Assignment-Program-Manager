@@ -8,23 +8,20 @@ Provides a flexible mock server implementation that can:
 - Maintain stateful behavior
 - Generate responses from OpenAPI schemas
 """
+
 import asyncio
-import json
 import re
-import time
-from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Pattern, Union
-from uuid import UUID, uuid4
-
-from fastapi import Request, Response
-from pydantic import BaseModel
+from re import Pattern
+from typing import Any
+from uuid import uuid4
 
 
 class HTTPMethod(str, Enum):
     """HTTP methods supported by mock server."""
+
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
@@ -41,16 +38,18 @@ class MockRequest:
 
     Captures all details of a request for verification in tests.
     """
+
     id: str = field(default_factory=lambda: str(uuid4()))
     method: str = ""
     path: str = ""
-    query_params: Dict[str, Any] = field(default_factory=dict)
-    headers: Dict[str, str] = field(default_factory=dict)
-    body: Optional[Any] = None
+    query_params: dict[str, Any] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
+    body: Any | None = None
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
-    def matches(self, method: str = None, path: str = None,
-                path_pattern: Pattern = None) -> bool:
+    def matches(
+        self, method: str = None, path: str = None, path_pattern: Pattern = None
+    ) -> bool:
         """
         Check if this request matches given criteria.
 
@@ -78,13 +77,14 @@ class MockResponse:
 
     Defines what response to return for matched requests.
     """
+
     status_code: int = 200
     body: Any = None
-    headers: Dict[str, str] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
     delay_ms: int = 0
-    error: Optional[Exception] = None
+    error: Exception | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert response to dictionary format."""
         return {
             "status_code": self.status_code,
@@ -102,12 +102,12 @@ class RequestMatcher:
 
     def __init__(
         self,
-        method: Optional[str] = None,
-        path: Optional[str] = None,
-        path_pattern: Optional[str] = None,
-        headers: Optional[Dict[str, str]] = None,
-        query_params: Optional[Dict[str, Any]] = None,
-        body_contains: Optional[Dict[str, Any]] = None,
+        method: str | None = None,
+        path: str | None = None,
+        path_pattern: str | None = None,
+        headers: dict[str, str] | None = None,
+        query_params: dict[str, Any] | None = None,
+        body_contains: dict[str, Any] | None = None,
     ):
         """
         Initialize request matcher.
@@ -177,13 +177,14 @@ class MockEndpoint:
     Defines behavior for a specific endpoint including multiple responses
     based on conditions or sequence.
     """
+
     matcher: RequestMatcher
-    responses: List[MockResponse] = field(default_factory=list)
+    responses: list[MockResponse] = field(default_factory=list)
     current_index: int = 0
     stateful: bool = False
     call_count: int = 0
 
-    def get_response(self, request: MockRequest) -> Optional[MockResponse]:
+    def get_response(self, request: MockRequest) -> MockResponse | None:
         """
         Get response for this request.
 
@@ -243,13 +244,12 @@ class MockAPIServer:
 
     def __init__(self):
         """Initialize mock server."""
-        self.endpoints: List[MockEndpoint] = []
-        self.recorded_requests: List[MockRequest] = []
+        self.endpoints: list[MockEndpoint] = []
+        self.recorded_requests: list[MockRequest] = []
         self.default_response = MockResponse(
-            status_code=404,
-            body={"detail": "Mock endpoint not configured"}
+            status_code=404, body={"detail": "Mock endpoint not configured"}
         )
-        self.state: Dict[str, Any] = {}
+        self.state: dict[str, Any] = {}
         self.enabled = True
 
     def register_endpoint(
@@ -259,11 +259,11 @@ class MockAPIServer:
         path_pattern: str = None,
         response: Any = None,
         status_code: int = 200,
-        headers: Dict[str, str] = None,
+        headers: dict[str, str] = None,
         delay_ms: int = 0,
         error: Exception = None,
         stateful: bool = False,
-        responses: List[MockResponse] = None,
+        responses: list[MockResponse] = None,
     ) -> MockEndpoint:
         """
         Register a mock endpoint.
@@ -311,8 +311,8 @@ class MockAPIServer:
         self,
         method: str,
         path: str,
-        query_params: Dict[str, Any] = None,
-        headers: Dict[str, str] = None,
+        query_params: dict[str, Any] = None,
+        headers: dict[str, str] = None,
         body: Any = None,
     ) -> MockResponse:
         """
@@ -363,7 +363,7 @@ class MockAPIServer:
         method: str = None,
         path: str = None,
         path_pattern: str = None,
-    ) -> List[MockRequest]:
+    ) -> list[MockRequest]:
         """
         Get recorded requests matching criteria.
 
@@ -378,7 +378,8 @@ class MockAPIServer:
         pattern = re.compile(path_pattern) if path_pattern else None
 
         return [
-            req for req in self.recorded_requests
+            req
+            for req in self.recorded_requests
             if req.matches(method=method, path=path, path_pattern=pattern)
         ]
 
@@ -386,7 +387,7 @@ class MockAPIServer:
         self,
         method: str = None,
         path: str = None,
-    ) -> Optional[MockRequest]:
+    ) -> MockRequest | None:
         """
         Get most recent request matching criteria.
 
@@ -456,7 +457,7 @@ class MockAPIServer:
 
     def verify_request_order(
         self,
-        expected_paths: List[str],
+        expected_paths: list[str],
         method: str = None,
     ) -> bool:
         """
@@ -477,7 +478,7 @@ class MockAPIServer:
         self,
         path: str,
         method: str,
-        schema: Dict[str, Any],
+        schema: dict[str, Any],
     ) -> MockEndpoint:
         """
         Register endpoint with OpenAPI schema-based response.
@@ -499,7 +500,7 @@ class MockAPIServer:
             response=mock_response,
         )
 
-    def _generate_from_schema(self, schema: Dict[str, Any]) -> Any:
+    def _generate_from_schema(self, schema: dict[str, Any]) -> Any:
         """
         Generate mock data from OpenAPI schema.
 
@@ -574,7 +575,11 @@ class MockAPIServer:
         for endpoint in self.endpoints:
             if method and endpoint.matcher.method != method:
                 continue
-            if pattern and endpoint.matcher.path and not pattern.match(endpoint.matcher.path):
+            if (
+                pattern
+                and endpoint.matcher.path
+                and not pattern.match(endpoint.matcher.path)
+            ):
                 continue
 
             for response in endpoint.responses:

@@ -1,4 +1,5 @@
 """Unified heatmap API routes combining residency and FMIT schedules."""
+
 import io
 import logging
 from datetime import date
@@ -398,7 +399,9 @@ def post_export_heatmap(
     media_type = media_types.get(request.format, "application/octet-stream")
 
     # Generate filename
-    filename = f"unified_heatmap_{request.start_date}_{request.end_date}.{request.format}"
+    filename = (
+        f"unified_heatmap_{request.start_date}_{request.end_date}.{request.format}"
+    )
 
     # Return as streaming response
     return StreamingResponse(

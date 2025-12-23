@@ -8,12 +8,10 @@ Provides a solver implementation using Pyomo that captures rich optimization dat
 
 This solver enables "why" explanations for scheduling decisions.
 """
-import json
+
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Optional
-from uuid import UUID
 
 from app.models.assignment import Assignment
 from app.scheduling.constraints import ConstraintManager, SchedulingContext
@@ -132,9 +130,9 @@ class PyomoSolver(BaseSolver):
         self.solver_name = solver_name
         self.capture_duals = capture_duals
         self.capture_slacks = capture_slacks
-        self._solution_data: Optional[PyomoSolutionData] = None
+        self._solution_data: PyomoSolutionData | None = None
 
-    def get_solution_data(self) -> Optional[PyomoSolutionData]:
+    def get_solution_data(self) -> PyomoSolutionData | None:
         """Get the captured solution data from the last solve."""
         return self._solution_data
 
@@ -161,14 +159,14 @@ class PyomoSolver(BaseSolver):
         """
         try:
             from pyomo.environ import (
-                ConcreteModel,
-                Var,
-                Objective,
-                Constraint,
                 Binary,
-                maximize,
+                ConcreteModel,
+                Constraint,
+                Objective,
                 SolverFactory,
                 TerminationCondition,
+                Var,
+                maximize,
                 value,
             )
         except ImportError:
@@ -197,7 +195,9 @@ class PyomoSolver(BaseSolver):
         # Build index mappings
         residents = list(context.residents)
         blocks = list(workday_blocks)
-        templates = [t for t in context.templates if not t.requires_procedure_credential]
+        templates = [
+            t for t in context.templates if not t.requires_procedure_credential
+        ]
 
         R = range(len(residents))
         B = range(len(blocks))
@@ -248,9 +248,11 @@ class PyomoSolver(BaseSolver):
 
             def preserve_rule(m, idx):
                 a = existing_assignments[idx]
-                if (a.person_id in resident_idx and
-                    a.block_id in block_idx and
-                    a.rotation_template_id in template_idx):
+                if (
+                    a.person_id in resident_idx
+                    and a.block_id in block_idx
+                    and a.rotation_template_id in template_idx
+                ):
                     r = resident_idx[a.person_id]
                     b = block_idx[a.block_id]
                     t = template_idx[a.rotation_template_id]
@@ -258,8 +260,7 @@ class PyomoSolver(BaseSolver):
                 return Constraint.Skip
 
             model.preserve = Constraint(
-                range(len(existing_assignments)),
-                rule=preserve_rule
+                range(len(existing_assignments)), rule=preserve_rule
             )
 
         # ==================================================
@@ -295,7 +296,10 @@ class PyomoSolver(BaseSolver):
         self._solution_data.termination_condition = str(term_cond)
         self._solution_data.solve_time_seconds = runtime
 
-        if term_cond not in [TerminationCondition.optimal, TerminationCondition.feasible]:
+        if term_cond not in [
+            TerminationCondition.optimal,
+            TerminationCondition.feasible,
+        ]:
             logger.warning(f"Pyomo solver termination: {term_cond}")
             return SolverResult(
                 success=False,
@@ -305,13 +309,13 @@ class PyomoSolver(BaseSolver):
                 runtime_seconds=runtime,
             )
 
-        self._solution_data.is_optimal = (term_cond == TerminationCondition.optimal)
+        self._solution_data.is_optimal = term_cond == TerminationCondition.optimal
         self._solution_data.solver_status = str(term_cond)
 
         # ==================================================
         # CAPTURE CONSTRAINT INSIGHTS
         # ==================================================
-        if self.capture_duals and hasattr(model, 'dual'):
+        if self.capture_duals and hasattr(model, "dual"):
             self._capture_constraint_insights(model, residents, blocks, templates)
 
         # ==================================================
@@ -322,11 +326,13 @@ class PyomoSolver(BaseSolver):
             for b in B:
                 for t in T:
                     if value(model.x[r, b, t]) > 0.5:
-                        assignments.append((
-                            residents[r].id,
-                            blocks[b].id,
-                            templates[t].id,
-                        ))
+                        assignments.append(
+                            (
+                                residents[r].id,
+                                blocks[b].id,
+                                templates[t].id,
+                            )
+                        )
 
         self._solution_data.objective_value = value(model.objective)
 
@@ -360,21 +366,22 @@ class PyomoSolver(BaseSolver):
         templates: list,
     ) -> None:
         """Capture dual values and generate constraint insights."""
-        from pyomo.environ import value
 
         insights = []
         binding = []
 
         # Analyze one_rotation constraints
-        if hasattr(model, 'one_rotation'):
+        if hasattr(model, "one_rotation"):
             for (r, b), con in model.one_rotation.items():
                 try:
                     dual = model.dual.get(con, 0.0)
-                    slack = con.uslack() if hasattr(con, 'uslack') else 0.0
+                    slack = con.uslack() if hasattr(con, "uslack") else 0.0
                     is_binding = abs(slack) < 1e-6
 
                     if is_binding and abs(dual) > 1e-6:
-                        resident_name = residents[r].name if r < len(residents) else f"Resident {r}"
+                        resident_name = (
+                            residents[r].name if r < len(residents) else f"Resident {r}"
+                        )
                         block_date = blocks[b].date if b < len(blocks) else f"Block {b}"
 
                         interpretation = (
@@ -382,28 +389,34 @@ class PyomoSolver(BaseSolver):
                             f"Shadow price: {dual:.2f} (value of adding another slot)"
                         )
 
-                        insights.append(ConstraintInsight(
-                            name=f"one_rotation[{r},{b}]",
-                            dual_value=dual,
-                            slack=slack,
-                            is_binding=True,
-                            interpretation=interpretation,
-                        ))
+                        insights.append(
+                            ConstraintInsight(
+                                name=f"one_rotation[{r},{b}]",
+                                dual_value=dual,
+                                slack=slack,
+                                is_binding=True,
+                                interpretation=interpretation,
+                            )
+                        )
                         binding.append(f"Resident {resident_name} on {block_date}")
 
                 except Exception as e:
-                    logger.debug(f"Could not extract dual for one_rotation[{r},{b}]: {e}")
+                    logger.debug(
+                        f"Could not extract dual for one_rotation[{r},{b}]: {e}"
+                    )
 
         # Analyze template_capacity constraints
-        if hasattr(model, 'template_capacity'):
+        if hasattr(model, "template_capacity"):
             for (b, t), con in model.template_capacity.items():
                 try:
                     dual = model.dual.get(con, 0.0)
-                    slack = con.uslack() if hasattr(con, 'uslack') else 0.0
+                    slack = con.uslack() if hasattr(con, "uslack") else 0.0
                     is_binding = abs(slack) < 1e-6
 
                     if is_binding and abs(dual) > 1e-6:
-                        template_name = templates[t].name if t < len(templates) else f"Template {t}"
+                        template_name = (
+                            templates[t].name if t < len(templates) else f"Template {t}"
+                        )
                         block_date = blocks[b].date if b < len(blocks) else f"Block {b}"
 
                         interpretation = (
@@ -411,26 +424,30 @@ class PyomoSolver(BaseSolver):
                             f"Adding 1 more slot would improve objective by {dual:.2f}"
                         )
 
-                        insights.append(ConstraintInsight(
-                            name=f"template_capacity[{b},{t}]",
-                            dual_value=dual,
-                            slack=slack,
-                            is_binding=True,
-                            interpretation=interpretation,
-                        ))
+                        insights.append(
+                            ConstraintInsight(
+                                name=f"template_capacity[{b},{t}]",
+                                dual_value=dual,
+                                slack=slack,
+                                is_binding=True,
+                                interpretation=interpretation,
+                            )
+                        )
                         binding.append(f"{template_name} capacity on {block_date}")
 
                 except Exception as e:
-                    logger.debug(f"Could not extract dual for template_capacity[{b},{t}]: {e}")
+                    logger.debug(
+                        f"Could not extract dual for template_capacity[{b},{t}]: {e}"
+                    )
 
         self._solution_data.constraint_insights = insights
         self._solution_data.binding_constraints = binding
 
         # Identify bottleneck resources (constraints with highest dual values)
-        sorted_insights = sorted(insights, key=lambda x: abs(x.dual_value), reverse=True)
-        self._solution_data.bottleneck_resources = [
-            i.name for i in sorted_insights[:5]
-        ]
+        sorted_insights = sorted(
+            insights, key=lambda x: abs(x.dual_value), reverse=True
+        )
+        self._solution_data.bottleneck_resources = [i.name for i in sorted_insights[:5]]
 
     def get_sensitivity_report(self) -> dict:
         """
@@ -450,7 +467,9 @@ class PyomoSolver(BaseSolver):
                 "objective_value": self._solution_data.objective_value,
                 "is_optimal": self._solution_data.is_optimal,
                 "solve_time": self._solution_data.solve_time_seconds,
-                "binding_constraint_count": len(self._solution_data.binding_constraints),
+                "binding_constraint_count": len(
+                    self._solution_data.binding_constraints
+                ),
             },
             "bottlenecks": [],
             "recommendations": [],
@@ -459,11 +478,13 @@ class PyomoSolver(BaseSolver):
 
         for insight in self._solution_data.constraint_insights:
             if insight.is_binding:
-                report["bottlenecks"].append({
-                    "constraint": insight.name,
-                    "dual_value": insight.dual_value,
-                    "interpretation": insight.interpretation,
-                })
+                report["bottlenecks"].append(
+                    {
+                        "constraint": insight.name,
+                        "dual_value": insight.dual_value,
+                        "interpretation": insight.interpretation,
+                    }
+                )
 
                 # Generate recommendation
                 if "capacity" in insight.name.lower():
@@ -475,10 +496,12 @@ class PyomoSolver(BaseSolver):
                         "Resident is fully utilized - consider distributing load"
                     )
             else:
-                report["headroom"].append({
-                    "constraint": insight.name,
-                    "slack": insight.slack,
-                })
+                report["headroom"].append(
+                    {
+                        "constraint": insight.name,
+                        "slack": insight.slack,
+                    }
+                )
 
         return report
 
@@ -487,4 +510,5 @@ class PyomoSolver(BaseSolver):
 def register_pyomo_solver():
     """Register PyomoSolver with the SolverFactory."""
     from app.scheduling.solvers import SolverFactory
+
     SolverFactory.register("pyomo", PyomoSolver)

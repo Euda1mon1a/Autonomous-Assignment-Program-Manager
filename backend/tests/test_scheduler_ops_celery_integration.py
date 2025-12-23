@@ -3,9 +3,9 @@
 These tests verify that the scheduler_ops routes can properly
 query Celery task data from the backend.
 """
+
 import json
-import pytest
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 from app.api.routes.scheduler_ops import (
@@ -19,7 +19,9 @@ class TestCeleryTaskMetricsIntegration:
     """Test suite for Celery task metrics integration."""
 
     @patch("app.api.routes.scheduler_ops.celery_app")
-    def test_calculate_task_metrics_with_active_tasks(self, mock_celery_app, db_session):
+    def test_calculate_task_metrics_with_active_tasks(
+        self, mock_celery_app, db_session
+    ):
         """Test calculating metrics when there are active tasks."""
         # Mock inspect API
         mock_inspect = MagicMock()
@@ -29,7 +31,10 @@ class TestCeleryTaskMetricsIntegration:
         mock_inspect.active.return_value = {
             "worker1": [
                 {"id": "task-1", "name": "app.resilience.tasks.periodic_health_check"},
-                {"id": "task-2", "name": "app.resilience.tasks.run_contingency_analysis"},
+                {
+                    "id": "task-2",
+                    "name": "app.resilience.tasks.run_contingency_analysis",
+                },
             ],
             "worker2": [
                 {"id": "task-3", "name": "app.notifications.tasks.send_alert"},
@@ -39,7 +44,10 @@ class TestCeleryTaskMetricsIntegration:
         # Mock scheduled tasks
         mock_inspect.scheduled.return_value = {
             "worker1": [
-                {"id": "task-4", "name": "app.resilience.tasks.precompute_fallback_schedules"},
+                {
+                    "id": "task-4",
+                    "name": "app.resilience.tasks.precompute_fallback_schedules",
+                },
             ],
         }
 
@@ -93,9 +101,15 @@ class TestCeleryTaskMetricsIntegration:
         # Mock task results
         def mock_get(key):
             results = {
-                b"celery-task-meta-task-1": json.dumps({"status": "SUCCESS", "task_name": "test_task"}),
-                b"celery-task-meta-task-2": json.dumps({"status": "SUCCESS", "task_name": "test_task2"}),
-                b"celery-task-meta-task-3": json.dumps({"status": "FAILURE", "task_name": "test_task3"}),
+                b"celery-task-meta-task-1": json.dumps(
+                    {"status": "SUCCESS", "task_name": "test_task"}
+                ),
+                b"celery-task-meta-task-2": json.dumps(
+                    {"status": "SUCCESS", "task_name": "test_task2"}
+                ),
+                b"celery-task-meta-task-3": json.dumps(
+                    {"status": "FAILURE", "task_name": "test_task3"}
+                ),
             }
             return results.get(key)
 
@@ -130,7 +144,9 @@ class TestCeleryTaskMetricsIntegration:
         assert metrics.success_rate == 1.0
 
     @patch("app.api.routes.scheduler_ops.celery_app")
-    def test_calculate_task_metrics_exception_handling(self, mock_celery_app, db_session):
+    def test_calculate_task_metrics_exception_handling(
+        self, mock_celery_app, db_session
+    ):
         """Test that exceptions are handled gracefully."""
         mock_inspect = MagicMock()
         mock_celery_app.control.inspect.return_value = mock_inspect
@@ -174,17 +190,21 @@ class TestCeleryRecentTasksIntegration:
 
         def mock_get(key):
             results = {
-                b"celery-task-meta-task-1": json.dumps({
-                    "status": "SUCCESS",
-                    "task_name": "app.resilience.tasks.periodic_health_check",
-                    "date_done": completed_time,
-                }),
-                b"celery-task-meta-task-2": json.dumps({
-                    "status": "FAILURE",
-                    "task_name": "app.resilience.tasks.run_contingency_analysis",
-                    "date_done": completed_time,
-                    "result": {"exc_message": "Database connection failed"},
-                }),
+                b"celery-task-meta-task-1": json.dumps(
+                    {
+                        "status": "SUCCESS",
+                        "task_name": "app.resilience.tasks.periodic_health_check",
+                        "date_done": completed_time,
+                    }
+                ),
+                b"celery-task-meta-task-2": json.dumps(
+                    {
+                        "status": "FAILURE",
+                        "task_name": "app.resilience.tasks.run_contingency_analysis",
+                        "date_done": completed_time,
+                        "result": {"exc_message": "Database connection failed"},
+                    }
+                ),
             }
             return results.get(key)
 
@@ -264,11 +284,13 @@ class TestCeleryRecentTasksIntegration:
 
         # Mock get to return valid task data
         def mock_get(key):
-            return json.dumps({
-                "status": "SUCCESS",
-                "task_name": "test_task",
-                "date_done": datetime.utcnow().isoformat(),
-            })
+            return json.dumps(
+                {
+                    "status": "SUCCESS",
+                    "task_name": "test_task",
+                    "date_done": datetime.utcnow().isoformat(),
+                }
+            )
 
         mock_redis.get.side_effect = mock_get
 

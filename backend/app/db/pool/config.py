@@ -3,7 +3,6 @@
 This module provides configuration management for the database connection pool,
 including dynamic sizing, timeout settings, and health check parameters.
 """
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -37,7 +36,7 @@ class PoolConfig(BaseModel):
     pool_reset_on_return: str = Field(default="rollback")
 
     # Timeout settings
-    query_timeout: Optional[int] = Field(default=60, ge=1, le=600)
+    query_timeout: int | None = Field(default=60, ge=1, le=600)
     connect_timeout: int = Field(default=10, ge=1, le=60)
 
     # Monitoring settings

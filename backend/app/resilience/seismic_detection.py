@@ -23,7 +23,6 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional
 from uuid import UUID
 
 import numpy as np
@@ -38,6 +37,7 @@ class PrecursorSignal(str, Enum):
     Each signal represents a behavioral change that may indicate
     increasing stress or approaching burnout.
     """
+
     SWAP_REQUESTS = "swap_requests"  # Frequency of shift swap requests
     SICK_CALLS = "sick_calls"  # Unplanned absences
     PREFERENCE_DECLINE = "preference_decline"  # Declining preferred shifts
@@ -53,13 +53,14 @@ class SeismicAlert:
     Represents a detected precursor signal that may indicate
     impending burnout or system stress.
     """
+
     signal_type: PrecursorSignal
     sta_lta_ratio: float
     trigger_time: datetime
     severity: str  # "low", "medium", "high", "critical"
     predicted_magnitude: float  # 1-10 scale
-    time_to_event: Optional[timedelta] = None
-    resident_id: Optional[UUID] = None
+    time_to_event: timedelta | None = None
+    resident_id: UUID | None = None
     context: dict = None
 
     def __post_init__(self):
@@ -113,11 +114,7 @@ class BurnoutEarlyWarning:
         )
 
     @staticmethod
-    def classic_sta_lta(
-        data: np.ndarray,
-        nsta: int,
-        nlta: int
-    ) -> np.ndarray:
+    def classic_sta_lta(data: np.ndarray, nsta: int, nlta: int) -> np.ndarray:
         """
         Compute classic STA/LTA characteristic function.
 
@@ -137,8 +134,7 @@ class BurnoutEarlyWarning:
         """
         if len(data) < nlta:
             logger.warning(
-                f"Data length ({len(data)}) < LTA window ({nlta}), "
-                "returning zeros"
+                f"Data length ({len(data)}) < LTA window ({nlta}), returning zeros"
             )
             return np.zeros_like(data)
 
@@ -149,17 +145,17 @@ class BurnoutEarlyWarning:
         sta_lta = np.zeros(len(data), dtype=float)
 
         # Compute squared data for energy calculation
-        data_sq = data ** 2
+        data_sq = data**2
 
         # Compute STA/LTA for each valid position
         for i in range(nlta, len(data)):
             # Short-term average (recent window)
             sta_start = max(0, i - nsta + 1)
-            sta = np.mean(data_sq[sta_start:i + 1])
+            sta = np.mean(data_sq[sta_start : i + 1])
 
             # Long-term average (historical window)
             lta_start = max(0, i - nlta + 1)
-            lta = np.mean(data_sq[lta_start:i + 1])
+            lta = np.mean(data_sq[lta_start : i + 1])
 
             # Compute ratio (avoid division by zero)
             if lta > 1e-10:
@@ -170,11 +166,7 @@ class BurnoutEarlyWarning:
         return sta_lta
 
     @staticmethod
-    def recursive_sta_lta(
-        data: np.ndarray,
-        nsta: int,
-        nlta: int
-    ) -> np.ndarray:
+    def recursive_sta_lta(data: np.ndarray, nsta: int, nlta: int) -> np.ndarray:
         """
         Compute recursive STA/LTA (memory-efficient version).
 
@@ -226,9 +218,7 @@ class BurnoutEarlyWarning:
 
     @staticmethod
     def trigger_onset(
-        sta_lta: np.ndarray,
-        on_threshold: float = 2.5,
-        off_threshold: float = 1.0
+        sta_lta: np.ndarray, on_threshold: float = 2.5, off_threshold: float = 1.0
     ) -> list[tuple[int, int]]:
         """
         Detect trigger on/off times from STA/LTA characteristic function.
@@ -276,10 +266,7 @@ class BurnoutEarlyWarning:
         return triggers
 
     def detect_precursors(
-        self,
-        resident_id: UUID,
-        signal_type: PrecursorSignal,
-        time_series: list[float]
+        self, resident_id: UUID, signal_type: PrecursorSignal, time_series: list[float]
     ) -> list[SeismicAlert]:
         """
         Detect burnout precursor signals in time series data.
@@ -322,14 +309,16 @@ class BurnoutEarlyWarning:
         triggers = self.trigger_onset(sta_lta, on_threshold=2.5, off_threshold=1.0)
 
         if not triggers:
-            logger.debug(f"No triggers detected for {signal_type}, resident {resident_id}")
+            logger.debug(
+                f"No triggers detected for {signal_type}, resident {resident_id}"
+            )
             return []
 
         # Generate alerts for each trigger
         alerts = []
         for start_idx, end_idx in triggers:
             # Maximum STA/LTA ratio during this trigger
-            max_ratio = float(np.max(sta_lta[start_idx:end_idx + 1]))
+            max_ratio = float(np.max(sta_lta[start_idx : end_idx + 1]))
 
             # Determine severity based on ratio magnitude
             if max_ratio >= 10.0:
@@ -343,7 +332,9 @@ class BurnoutEarlyWarning:
 
             # Estimate signal growth rate (for time-to-event prediction)
             if end_idx > start_idx:
-                growth_rate = (sta_lta[end_idx] - sta_lta[start_idx]) / (end_idx - start_idx)
+                growth_rate = (sta_lta[end_idx] - sta_lta[start_idx]) / (
+                    end_idx - start_idx
+                )
             else:
                 growth_rate = 0.0
 
@@ -367,8 +358,8 @@ class BurnoutEarlyWarning:
                     "trigger_start_idx": start_idx,
                     "trigger_end_idx": end_idx,
                     "growth_rate": growth_rate,
-                    "window_data": time_series[start_idx:end_idx + 1],
-                }
+                    "window_data": time_series[start_idx : end_idx + 1],
+                },
             )
 
             alerts.append(alert)
@@ -381,8 +372,7 @@ class BurnoutEarlyWarning:
         return alerts
 
     def predict_burnout_magnitude(
-        self,
-        precursor_signals: dict[PrecursorSignal, list[float]]
+        self, precursor_signals: dict[PrecursorSignal, list[float]]
     ) -> float:
         """
         Predict burnout magnitude from multiple precursor signals.
@@ -452,9 +442,7 @@ class BurnoutEarlyWarning:
         return float(combined_magnitude)
 
     def estimate_time_to_event(
-        self,
-        sta_lta_ratio: float,
-        signal_growth_rate: float
+        self, sta_lta_ratio: float, signal_growth_rate: float
     ) -> timedelta:
         """
         Estimate time until burnout event occurs.
@@ -494,7 +482,9 @@ class BurnoutEarlyWarning:
         return timedelta(days=float(days_to_critical))
 
     @staticmethod
-    def _estimate_magnitude(sta_lta_ratio: float, signal_type: PrecursorSignal) -> float:
+    def _estimate_magnitude(
+        sta_lta_ratio: float, signal_type: PrecursorSignal
+    ) -> float:
         """
         Estimate burnout magnitude from STA/LTA ratio.
 

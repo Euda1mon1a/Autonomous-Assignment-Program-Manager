@@ -13,11 +13,11 @@ Flow:
 5. Client exchanges code + code_verifier for access token
 6. Server validates code_verifier matches code_challenge
 """
+
 import base64
 import hashlib
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -31,7 +31,6 @@ from app.models.user import User
 from app.schemas.oauth2 import (
     AuthorizationRequest,
     AuthorizationResponse,
-    OAuth2Error,
     TokenIntrospectionResponse,
     TokenRequest,
     TokenResponse,
@@ -66,11 +65,13 @@ def generate_code_verifier() -> str:
     """
     # Generate 32 random bytes, encode as base64url (43 chars)
     random_bytes = secrets.token_bytes(32)
-    code_verifier = base64.urlsafe_b64encode(random_bytes).decode('utf-8').rstrip('=')
+    code_verifier = base64.urlsafe_b64encode(random_bytes).decode("utf-8").rstrip("=")
     return code_verifier
 
 
-def generate_code_challenge(code_verifier: str, method: str = CODE_CHALLENGE_METHOD_S256) -> str:
+def generate_code_challenge(
+    code_verifier: str, method: str = CODE_CHALLENGE_METHOD_S256
+) -> str:
     """
     Generate a code challenge from a code verifier.
 
@@ -86,8 +87,8 @@ def generate_code_challenge(code_verifier: str, method: str = CODE_CHALLENGE_MET
     """
     if method == CODE_CHALLENGE_METHOD_S256:
         # SHA256 hash of the verifier, then base64url encode
-        digest = hashlib.sha256(code_verifier.encode('utf-8')).digest()
-        challenge = base64.urlsafe_b64encode(digest).decode('utf-8').rstrip('=')
+        digest = hashlib.sha256(code_verifier.encode("utf-8")).digest()
+        challenge = base64.urlsafe_b64encode(digest).decode("utf-8").rstrip("=")
         return challenge
     elif method == CODE_CHALLENGE_METHOD_PLAIN:
         # Plain method: challenge = verifier (not recommended)
@@ -124,7 +125,7 @@ def generate_authorization_code() -> str:
     """
     # Generate 24 random bytes, encode as base64url (32 chars)
     random_bytes = secrets.token_bytes(24)
-    auth_code = base64.urlsafe_b64encode(random_bytes).decode('utf-8').rstrip('=')
+    auth_code = base64.urlsafe_b64encode(random_bytes).decode("utf-8").rstrip("=")
     return auth_code
 
 
@@ -152,10 +153,14 @@ async def validate_client(db: Session, client_id: str) -> PKCEClient:
     Raises:
         HTTPException: If client is invalid or inactive
     """
-    client = db.query(PKCEClient).filter(
-        PKCEClient.client_id == client_id,
-        PKCEClient.is_active == True  # noqa: E712
-    ).first()
+    client = (
+        db.query(PKCEClient)
+        .filter(
+            PKCEClient.client_id == client_id,
+            PKCEClient.is_active == True,  # noqa: E712
+        )
+        .first()
+    )
 
     if not client:
         if obs_metrics:
@@ -215,7 +220,10 @@ async def create_authorization_code(
     await validate_redirect_uri(client, request.redirect_uri)
 
     # Validate code challenge method
-    if request.code_challenge_method not in [CODE_CHALLENGE_METHOD_S256, CODE_CHALLENGE_METHOD_PLAIN]:
+    if request.code_challenge_method not in [
+        CODE_CHALLENGE_METHOD_S256,
+        CODE_CHALLENGE_METHOD_PLAIN,
+    ]:
         if obs_metrics:
             obs_metrics.record_oauth2_error("invalid_request")
         raise HTTPException(
@@ -225,7 +233,9 @@ async def create_authorization_code(
 
     # Generate authorization code
     code = generate_authorization_code()
-    expires_at = datetime.utcnow() + timedelta(minutes=AUTHORIZATION_CODE_EXPIRE_MINUTES)
+    expires_at = datetime.utcnow() + timedelta(
+        minutes=AUTHORIZATION_CODE_EXPIRE_MINUTES
+    )
 
     # Store authorization code in database
     auth_code = OAuth2AuthorizationCode(
@@ -276,10 +286,14 @@ async def exchange_code_for_token(
     client = await validate_client(db, request.client_id)
 
     # Retrieve authorization code
-    auth_code = db.query(OAuth2AuthorizationCode).filter(
-        OAuth2AuthorizationCode.code == request.code,
-        OAuth2AuthorizationCode.client_id == request.client_id,
-    ).first()
+    auth_code = (
+        db.query(OAuth2AuthorizationCode)
+        .filter(
+            OAuth2AuthorizationCode.code == request.code,
+            OAuth2AuthorizationCode.client_id == request.client_id,
+        )
+        .first()
+    )
 
     if not auth_code:
         if obs_metrics:
@@ -318,9 +332,7 @@ async def exchange_code_for_token(
 
     # Verify PKCE code challenge
     if not verify_code_challenge(
-        request.code_verifier,
-        auth_code.code_challenge,
-        auth_code.code_challenge_method
+        request.code_verifier, auth_code.code_challenge, auth_code.code_challenge_method
     ):
         if obs_metrics:
             obs_metrics.record_oauth2_error("invalid_grant")
@@ -395,6 +407,7 @@ async def introspect_token(
 
     # Decode token to get claims (already verified above)
     from jose import jwt
+
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
 
@@ -425,8 +438,9 @@ async def revoke_token(db: Session, token: str, user_id: UUID) -> None:
     Raises:
         HTTPException: If token is invalid
     """
-    from app.core.security import blacklist_token
     from jose import jwt
+
+    from app.core.security import blacklist_token
 
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
@@ -440,7 +454,7 @@ async def revoke_token(db: Session, token: str, user_id: UUID) -> None:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Token does not have a JTI claim",
             )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid token",
@@ -448,8 +462,7 @@ async def revoke_token(db: Session, token: str, user_id: UUID) -> None:
 
 
 async def validate_state_parameter(
-    expected_state: Optional[str],
-    received_state: Optional[str]
+    expected_state: str | None, received_state: str | None
 ) -> None:
     """
     Validate the state parameter to prevent CSRF attacks.
@@ -478,8 +491,8 @@ async def register_client(
     db: Session,
     client_name: str,
     redirect_uris: list[str],
-    client_uri: Optional[str] = None,
-    scope: Optional[str] = None,
+    client_uri: str | None = None,
+    scope: str | None = None,
 ) -> PKCEClient:
     """
     Register a new OAuth2 PKCE public client.

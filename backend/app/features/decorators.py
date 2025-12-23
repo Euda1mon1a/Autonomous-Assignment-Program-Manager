@@ -5,13 +5,13 @@ Provides decorators to:
 - Conditionally execute code based on flags
 - A/B test different implementations
 """
+
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
-from fastapi import Depends, HTTPException, status
+from fastapi import HTTPException, status
 
-from app.core.security import get_current_active_user
-from app.db.session import get_db
 from app.features.flags import FeatureFlagService
 from app.models.user import User
 
@@ -20,7 +20,7 @@ def require_feature_flag(
     flag_key: str,
     enabled_value: bool = True,
     status_code: int = status.HTTP_404_NOT_FOUND,
-    detail: str | None = None
+    detail: str | None = None,
 ):
     """
     Decorator to require a feature flag for a route or function.
@@ -43,17 +43,18 @@ def require_feature_flag(
     Returns:
         Decorator function
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
             # Extract user and db from kwargs (FastAPI dependency injection)
-            current_user = kwargs.get('current_user')
-            db = kwargs.get('db')
+            current_user = kwargs.get("current_user")
+            db = kwargs.get("db")
 
             if db is None:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Database session not available"
+                    detail="Database session not available",
                 )
 
             # Evaluate feature flag
@@ -65,28 +66,23 @@ def require_feature_flag(
                 key=flag_key,
                 user_id=user_id,
                 user_role=user_role,
-                track_evaluation=True
+                track_evaluation=True,
             )
 
             # Check if flag matches required value
             if enabled != enabled_value:
                 error_detail = detail or "Feature not available"
-                raise HTTPException(
-                    status_code=status_code,
-                    detail=error_detail
-                )
+                raise HTTPException(status_code=status_code, detail=error_detail)
 
             # Flag check passed, execute function
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
-def feature_flag_gate(
-    flag_key: str,
-    default_value: Any = None
-):
+def feature_flag_gate(flag_key: str, default_value: Any = None):
     """
     Decorator to conditionally execute a function based on feature flag.
 
@@ -105,12 +101,13 @@ def feature_flag_gate(
     Returns:
         Decorator function
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
             # Try to get db and user from kwargs
-            db = kwargs.get('db')
-            current_user = kwargs.get('current_user')
+            db = kwargs.get("db")
+            current_user = kwargs.get("current_user")
 
             if db is None:
                 # No DB available, execute function normally
@@ -125,7 +122,7 @@ def feature_flag_gate(
                 key=flag_key,
                 user_id=user_id,
                 user_role=user_role,
-                track_evaluation=False  # Don't track for internal gates
+                track_evaluation=False,  # Don't track for internal gates
             )
 
             if enabled:
@@ -136,13 +133,11 @@ def feature_flag_gate(
                 return default_value
 
         return wrapper
+
     return decorator
 
 
-def ab_test_variant(
-    flag_key: str,
-    variants: dict[str, Callable]
-):
+def ab_test_variant(flag_key: str, variants: dict[str, Callable]):
     """
     Decorator for A/B testing different function implementations.
 
@@ -178,16 +173,17 @@ def ab_test_variant(
     Returns:
         Decorator function
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
-            db = kwargs.get('db')
-            current_user = kwargs.get('current_user')
+            db = kwargs.get("db")
+            current_user = kwargs.get("current_user")
 
             if db is None:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Database session not available for A/B test"
+                    detail="Database session not available for A/B test",
                 )
 
             # Evaluate feature flag to get variant
@@ -199,15 +195,15 @@ def ab_test_variant(
                 key=flag_key,
                 user_id=user_id,
                 user_role=user_role,
-                track_evaluation=True
+                track_evaluation=True,
             )
 
             # Get implementation for assigned variant
             if variant and variant in variants:
                 implementation = variants[variant]
-            elif 'control' in variants:
+            elif "control" in variants:
                 # Fallback to control if variant not found
-                implementation = variants['control']
+                implementation = variants["control"]
             else:
                 # No variant assigned and no control, use original function
                 return await func(*args, **kwargs)
@@ -216,6 +212,7 @@ def ab_test_variant(
             return await implementation(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
@@ -233,12 +230,7 @@ class FeatureFlagContext:
                 do_old_thing()
     """
 
-    def __init__(
-        self,
-        db: Any,
-        flag_key: str,
-        user: User | None = None
-    ):
+    def __init__(self, db: Any, flag_key: str, user: User | None = None):
         """
         Initialize feature flag context.
 
@@ -262,7 +254,7 @@ class FeatureFlagContext:
             key=self.flag_key,
             user_id=user_id,
             user_role=user_role,
-            track_evaluation=False
+            track_evaluation=False,
         )
 
         return self.enabled
@@ -272,11 +264,7 @@ class FeatureFlagContext:
         return False  # Don't suppress exceptions
 
 
-def feature_enabled(
-    db: Any,
-    flag_key: str,
-    user: User | None = None
-) -> bool:
+def feature_enabled(db: Any, flag_key: str, user: User | None = None) -> bool:
     """
     Synchronous helper to check if a feature flag is enabled.
 
@@ -300,12 +288,14 @@ def feature_enabled(
     user_role = user.role if user else None
 
     try:
-        enabled, _, _ = asyncio.run(service.evaluate_flag(
-            key=flag_key,
-            user_id=user_id,
-            user_role=user_role,
-            track_evaluation=False
-        ))
+        enabled, _, _ = asyncio.run(
+            service.evaluate_flag(
+                key=flag_key,
+                user_id=user_id,
+                user_role=user_role,
+                track_evaluation=False,
+            )
+        )
         return enabled
     except Exception:
         # Default to disabled on error

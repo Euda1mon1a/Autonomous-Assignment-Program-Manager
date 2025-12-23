@@ -14,22 +14,21 @@ This module provides:
 - MultiLevelCache: L1 (memory) + L2 (Redis) cache
 - get_cache(): Factory function for cache instances
 """
+
 import asyncio
 import logging
 import pickle
 import time
 from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
 from threading import RLock
-from typing import Any, Callable
+from typing import Any
 
 import redis.asyncio as redis
 
 from app.core.cache.keys import CacheKeyGenerator, generate_stats_key
 from app.core.cache.strategies import (
-    InvalidationStrategy,
-    InvalidationTrigger,
     PatternStrategy,
     TagBasedStrategy,
     TTLStrategy,
@@ -199,7 +198,7 @@ class MultiLevelCache:
         l2_enabled: bool = True,
         default_ttl: int = 300,
         key_prefix: str = "cache",
-        version: str = "v1"
+        version: str = "v1",
     ):
         """
         Initialize multi-level cache.
@@ -229,9 +228,7 @@ class MultiLevelCache:
 
         # Key generation
         self.key_generator = CacheKeyGenerator(
-            namespace=namespace,
-            version=version,
-            prefix=key_prefix
+            namespace=namespace, version=version, prefix=key_prefix
         )
 
         # Statistics
@@ -260,7 +257,9 @@ class MultiLevelCache:
 
         return self._redis
 
-    async def get(self, key: str, use_l1: bool = True, use_l2: bool = True) -> Any | None:
+    async def get(
+        self, key: str, use_l1: bool = True, use_l2: bool = True
+    ) -> Any | None:
         """
         Get value from cache (L1 then L2).
 
@@ -312,7 +311,7 @@ class MultiLevelCache:
         ttl: int | None = None,
         tags: list[str] | None = None,
         use_l1: bool = True,
-        use_l2: bool = True
+        use_l2: bool = True,
     ) -> bool:
         """
         Set value in cache (both L1 and L2).
@@ -357,7 +356,7 @@ class MultiLevelCache:
         ttl: int | None = None,
         tags: list[str] | None = None,
         *args,
-        **kwargs
+        **kwargs,
     ) -> Any:
         """
         Read-through cache pattern: get from cache or fetch and cache.
@@ -477,8 +476,7 @@ class MultiLevelCache:
         full_pattern = self.key_generator.generate_pattern() + pattern
 
         count = await self.pattern_strategy.invalidate_by_pattern(
-            redis_client,
-            full_pattern
+            redis_client, full_pattern
         )
 
         # Also clear L1
@@ -508,8 +506,7 @@ class MultiLevelCache:
             pattern = self.key_generator.generate_pattern()
             redis_client = await self._get_redis()
             count += await self.pattern_strategy.invalidate_by_pattern(
-                redis_client,
-                pattern
+                redis_client, pattern
             )
 
         logger.info(f"Cleared {count} entries from cache namespace '{self.namespace}'")
@@ -557,13 +554,15 @@ class MultiLevelCache:
         """
         with self._stats_lock:
             stats_dict = self.stats.to_dict()
-            stats_dict.update({
-                "namespace": self.namespace,
-                "l1_enabled": self.l1_enabled,
-                "l1_size": len(self._l1_cache),
-                "l1_max_size": self.l1_max_size,
-                "l2_enabled": self.l2_enabled,
-            })
+            stats_dict.update(
+                {
+                    "namespace": self.namespace,
+                    "l1_enabled": self.l1_enabled,
+                    "l1_size": len(self._l1_cache),
+                    "l1_max_size": self.l1_max_size,
+                    "l2_enabled": self.l2_enabled,
+                }
+            )
             return stats_dict
 
     async def persist_stats(self) -> bool:
@@ -692,13 +691,7 @@ class MultiLevelCache:
             logger.error(f"L2 cache get error for key {key}: {e}")
             return None
 
-    async def _set_in_l2(
-        self,
-        key: str,
-        value: Any,
-        ttl: int,
-        tags: list[str]
-    ) -> bool:
+    async def _set_in_l2(self, key: str, value: Any, ttl: int, tags: list[str]) -> bool:
         """
         Set value in L2 (Redis) cache.
 
@@ -806,10 +799,7 @@ _cache_instances: dict[str, MultiLevelCache] = {}
 _cache_lock = RLock()
 
 
-def get_cache(
-    namespace: str = "default",
-    **kwargs
-) -> MultiLevelCache:
+def get_cache(namespace: str = "default", **kwargs) -> MultiLevelCache:
     """
     Get or create a cache instance for a namespace.
 
@@ -831,9 +821,6 @@ def get_cache(
 
     with _cache_lock:
         if namespace not in _cache_instances:
-            _cache_instances[namespace] = MultiLevelCache(
-                namespace=namespace,
-                **kwargs
-            )
+            _cache_instances[namespace] = MultiLevelCache(namespace=namespace, **kwargs)
 
         return _cache_instances[namespace]

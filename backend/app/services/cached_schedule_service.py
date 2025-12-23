@@ -7,6 +7,7 @@ including heatmap generation, calendar exports, and schedule queries.
 These wrappers add caching on top of existing service implementations
 without modifying the original services.
 """
+
 import logging
 from datetime import date
 from typing import Any

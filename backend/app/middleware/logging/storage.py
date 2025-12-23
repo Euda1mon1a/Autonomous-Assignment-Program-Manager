@@ -9,12 +9,10 @@ Provides multiple storage options:
 """
 
 import logging
-import os
 from collections import deque
-from datetime import datetime
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from pathlib import Path
-from typing import Any, Deque, Dict, List, Optional
+from typing import Any
 
 from app.middleware.logging.formatters import (
     CompactJSONFormatter,
@@ -25,7 +23,7 @@ from app.middleware.logging.formatters import (
 class LogStorage:
     """Base class for log storage backends."""
 
-    def store(self, log_entry: Dict[str, Any]) -> None:
+    def store(self, log_entry: dict[str, Any]) -> None:
         """
         Store a log entry.
 
@@ -35,8 +33,8 @@ class LogStorage:
         raise NotImplementedError
 
     def retrieve(
-        self, limit: int = 100, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+        self, limit: int = 100, filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """
         Retrieve log entries.
 
@@ -74,15 +72,15 @@ class InMemoryLogStorage(LogStorage):
             max_entries: Maximum number of log entries to retain
         """
         self.max_entries = max_entries
-        self._logs: Deque[Dict[str, Any]] = deque(maxlen=max_entries)
+        self._logs: deque[dict[str, Any]] = deque(maxlen=max_entries)
 
-    def store(self, log_entry: Dict[str, Any]) -> None:
+    def store(self, log_entry: dict[str, Any]) -> None:
         """Store log entry in memory."""
         self._logs.append(log_entry)
 
     def retrieve(
-        self, limit: int = 100, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+        self, limit: int = 100, filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Retrieve log entries from memory."""
         logs = list(self._logs)
 
@@ -93,7 +91,7 @@ class InMemoryLogStorage(LogStorage):
         # Apply limit
         return logs[-limit:]
 
-    def _matches_filters(self, log: Dict[str, Any], filters: Dict[str, Any]) -> bool:
+    def _matches_filters(self, log: dict[str, Any], filters: dict[str, Any]) -> bool:
         """Check if log entry matches all filters."""
         for key, value in filters.items():
             if log.get(key) != value:
@@ -104,12 +102,14 @@ class InMemoryLogStorage(LogStorage):
         """Clear all logs from memory."""
         self._logs.clear()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get storage statistics."""
         return {
             "total_entries": len(self._logs),
             "max_entries": self.max_entries,
-            "utilization": len(self._logs) / self.max_entries if self.max_entries > 0 else 0,
+            "utilization": len(self._logs) / self.max_entries
+            if self.max_entries > 0
+            else 0,
         }
 
 
@@ -181,7 +181,7 @@ class FileLogStorage(LogStorage):
 
         self.logger.addHandler(handler)
 
-    def store(self, log_entry: Dict[str, Any]) -> None:
+    def store(self, log_entry: dict[str, Any]) -> None:
         """Store log entry to file."""
         # Log at appropriate level
         level = log_entry.get("level", "INFO")
@@ -200,8 +200,8 @@ class FileLogStorage(LogStorage):
             self.logger.info(message, extra=extra)
 
     def retrieve(
-        self, limit: int = 100, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+        self, limit: int = 100, filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """
         Retrieve log entries from file.
 
@@ -217,7 +217,7 @@ class FileLogStorage(LogStorage):
             return []
 
         try:
-            with open(log_path, "r") as f:
+            with open(log_path) as f:
                 # Read last N lines (inefficient for large files)
                 lines = f.readlines()
                 for line in lines[-limit * 2 :]:  # Read extra to account for filtering
@@ -233,7 +233,7 @@ class FileLogStorage(LogStorage):
             logging.error(f"Error reading log file: {e}")
             return []
 
-    def _matches_filters(self, log: Dict[str, Any], filters: Dict[str, Any]) -> bool:
+    def _matches_filters(self, log: dict[str, Any], filters: dict[str, Any]) -> bool:
         """Check if log entry matches filters."""
         for key, value in filters.items():
             # Support nested keys (e.g., "http.status_code")
@@ -282,7 +282,7 @@ class DatabaseLogStorage(LogStorage):
         """
         self.db_session_factory = db_session_factory
 
-    def store(self, log_entry: Dict[str, Any]) -> None:
+    def store(self, log_entry: dict[str, Any]) -> None:
         """
         Store log entry in database.
 
@@ -295,8 +295,8 @@ class DatabaseLogStorage(LogStorage):
         pass
 
     def retrieve(
-        self, limit: int = 100, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+        self, limit: int = 100, filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Retrieve log entries from database."""
         # Implementation would query RequestLog model
         pass
@@ -317,7 +317,7 @@ class MultiLogStorage(LogStorage):
     - Different retention policies per backend
     """
 
-    def __init__(self, backends: List[LogStorage]):
+    def __init__(self, backends: list[LogStorage]):
         """
         Initialize multi-backend storage.
 
@@ -326,7 +326,7 @@ class MultiLogStorage(LogStorage):
         """
         self.backends = backends
 
-    def store(self, log_entry: Dict[str, Any]) -> None:
+    def store(self, log_entry: dict[str, Any]) -> None:
         """Store log entry in all backends."""
         for backend in self.backends:
             try:
@@ -335,8 +335,8 @@ class MultiLogStorage(LogStorage):
                 logging.error(f"Error storing log in backend {backend}: {e}")
 
     def retrieve(
-        self, limit: int = 100, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+        self, limit: int = 100, filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Retrieve from first backend that supports retrieval."""
         for backend in self.backends:
             try:
@@ -369,9 +369,7 @@ def get_storage_backend(
         LogStorage: Storage backend instance
     """
     if storage_type == "memory":
-        return InMemoryLogStorage(
-            max_entries=kwargs.get("max_entries", 10000)
-        )
+        return InMemoryLogStorage(max_entries=kwargs.get("max_entries", 10000))
     elif storage_type == "file":
         return FileLogStorage(**kwargs)
     elif storage_type == "multi":

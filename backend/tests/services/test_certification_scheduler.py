@@ -1,6 +1,5 @@
 """Tests for CertificationScheduler background service."""
 
-from datetime import date, datetime, timedelta
 from unittest.mock import MagicMock, Mock, patch
 from uuid import uuid4
 
@@ -77,7 +76,9 @@ class TestCertificationSchedulerStart:
         mock_scheduler = MagicMock()
         mock_scheduler_class.return_value = mock_scheduler
 
-        with patch.dict("os.environ", {"CERT_CHECK_ENABLED": "true", "CERT_CHECK_HOUR": "6"}):
+        with patch.dict(
+            "os.environ", {"CERT_CHECK_ENABLED": "true", "CERT_CHECK_HOUR": "6"}
+        ):
             scheduler = CertificationScheduler()
             scheduler.start()
 
@@ -94,7 +95,9 @@ class TestCertificationSchedulerStart:
         mock_scheduler = MagicMock()
         mock_scheduler_class.return_value = mock_scheduler
 
-        with patch.dict("os.environ", {"CERT_CHECK_ENABLED": "true", "CERT_CHECK_HOUR": "7"}):
+        with patch.dict(
+            "os.environ", {"CERT_CHECK_ENABLED": "true", "CERT_CHECK_HOUR": "7"}
+        ):
             scheduler = CertificationScheduler()
             scheduler.start()
 
@@ -108,7 +111,10 @@ class TestCertificationSchedulerStart:
     def test_start_without_apscheduler(self, caplog):
         """Test scheduler handles missing APScheduler gracefully."""
         with patch.dict("os.environ", {"CERT_CHECK_ENABLED": "true"}):
-            with patch("app.services.certification_scheduler.BackgroundScheduler", side_effect=ImportError):
+            with patch(
+                "app.services.certification_scheduler.BackgroundScheduler",
+                side_effect=ImportError,
+            ):
                 scheduler = CertificationScheduler()
                 scheduler.start()
 
@@ -269,7 +275,11 @@ class TestCertificationSchedulerRunDailyCheck:
     @patch("app.services.certification_scheduler.CertificationService")
     @patch("app.services.certification_scheduler.EmailService")
     def test_run_daily_check_handles_exception(
-        self, mock_email_service_class, mock_cert_service_class, mock_session_local, caplog
+        self,
+        mock_email_service_class,
+        mock_cert_service_class,
+        mock_session_local,
+        caplog,
     ):
         """Test run_daily_check handles exceptions gracefully."""
         # Setup mocks to raise exception
@@ -448,8 +458,12 @@ class TestSendAdminSummary:
         expiring_certs = [Mock(spec=PersonCertification)]
         expired_certs = [Mock(spec=PersonCertification)]
 
-        mock_cert_service.get_expiring_certifications.return_value = {"items": expiring_certs}
-        mock_cert_service.get_expired_certifications.return_value = {"items": expired_certs}
+        mock_cert_service.get_expiring_certifications.return_value = {
+            "items": expiring_certs
+        }
+        mock_cert_service.get_expired_certifications.return_value = {
+            "items": expired_certs
+        }
 
         scheduler._send_admin_summary(mock_db, mock_cert_service, mock_email_service)
 
@@ -470,7 +484,9 @@ class TestSendAdminSummary:
         mock_cert_service = MagicMock()
         mock_email_service = MagicMock()
 
-        mock_cert_service.get_expiring_certifications.side_effect = Exception("Database error")
+        mock_cert_service.get_expiring_certifications.side_effect = Exception(
+            "Database error"
+        )
 
         scheduler._send_admin_summary(mock_db, mock_cert_service, mock_email_service)
 
@@ -513,7 +529,9 @@ class TestRunNow:
         mock_session_local.return_value = mock_db
 
         scheduler = CertificationScheduler()
-        with patch.object(scheduler, "run_daily_check", side_effect=Exception("Test error")):
+        with patch.object(
+            scheduler, "run_daily_check", side_effect=Exception("Test error")
+        ):
             with pytest.raises(Exception, match="Test error"):
                 scheduler.run_now()
 
@@ -564,7 +582,7 @@ class TestReminderThresholds:
 
     def test_reminder_thresholds_are_sorted_descending(self):
         """Test thresholds are in descending order."""
-        assert REMINDER_THRESHOLDS == sorted(REMINDER_THRESHOLDS, reverse=True)
+        assert sorted(REMINDER_THRESHOLDS, reverse=True) == REMINDER_THRESHOLDS
 
 
 class TestIntegrationScenarios:
@@ -574,7 +592,11 @@ class TestIntegrationScenarios:
     @patch("app.services.certification_scheduler.CertificationService")
     @patch("app.services.certification_scheduler.EmailService")
     def test_complete_daily_check_workflow(
-        self, mock_email_service_class, mock_cert_service_class, mock_session_local, caplog
+        self,
+        mock_email_service_class,
+        mock_cert_service_class,
+        mock_session_local,
+        caplog,
     ):
         """Test complete daily check workflow with status updates and reminders."""
         # Setup mocks
@@ -612,7 +634,9 @@ class TestIntegrationScenarios:
                 return [mock_cert_7]
             return []
 
-        mock_cert_service.get_certifications_needing_reminder.side_effect = get_certs_for_threshold
+        mock_cert_service.get_certifications_needing_reminder.side_effect = (
+            get_certs_for_threshold
+        )
         mock_cert_service.get_expiring_certifications.return_value = {
             "items": [mock_cert_30, mock_cert_7]
         }
@@ -648,7 +672,9 @@ class TestIntegrationScenarios:
         mock_scheduler = MagicMock()
         mock_scheduler_class.return_value = mock_scheduler
 
-        with patch.dict("os.environ", {"CERT_CHECK_ENABLED": "true", "CERT_CHECK_HOUR": "6"}):
+        with patch.dict(
+            "os.environ", {"CERT_CHECK_ENABLED": "true", "CERT_CHECK_HOUR": "6"}
+        ):
             scheduler = CertificationScheduler()
 
             # Start scheduler

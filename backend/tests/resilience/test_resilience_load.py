@@ -18,11 +18,12 @@ Markers:
 - @pytest.mark.resilience: Resilience framework tests
 - @pytest.mark.asyncio: Async tests
 """
+
 import asyncio
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 from sqlalchemy.orm import Session
@@ -38,7 +39,6 @@ from app.resilience.blast_radius import (
 from app.resilience.contingency import ContingencyAnalyzer
 from app.resilience.defense_in_depth import DefenseInDepth, DefenseLevel
 from app.resilience.homeostasis import (
-    AllostasisState,
     FeedbackType,
     HomeostasisMonitor,
     Setpoint,
@@ -55,7 +55,6 @@ from app.resilience.utilization import (
     UtilizationMonitor,
     UtilizationThreshold,
 )
-
 
 # ============================================================================
 # Fixtures
@@ -403,8 +402,7 @@ def test_utilization_calculation_response_time(
     avg_time_ms = ((end - start) / iterations) * 1000
 
     assert avg_time_ms < 100, (
-        f"Utilization calculation too slow: {avg_time_ms:.2f}ms "
-        f"(expected <100ms)"
+        f"Utilization calculation too slow: {avg_time_ms:.2f}ms (expected <100ms)"
     )
 
 
@@ -477,12 +475,12 @@ def test_n1_analysis_performance(
     end = time.perf_counter()
     duration = end - start
 
-    assert duration < 5.0, (
-        f"N-1 analysis too slow: {duration:.2f}s (expected <5s)"
-    )
+    assert duration < 5.0, f"N-1 analysis too slow: {duration:.2f}s (expected <5s)"
 
     # Should identify some vulnerabilities in high-load scenario
-    assert len(vulnerabilities) > 0, "Should identify vulnerabilities in high-load scenario"
+    assert len(vulnerabilities) > 0, (
+        "Should identify vulnerabilities in high-load scenario"
+    )
 
 
 @pytest.mark.resilience
@@ -514,9 +512,7 @@ def test_n2_analysis_performance(
     end = time.perf_counter()
     duration = end - start
 
-    assert duration < 30.0, (
-        f"N-2 analysis too slow: {duration:.2f}s (expected <30s)"
-    )
+    assert duration < 30.0, f"N-2 analysis too slow: {duration:.2f}s (expected <30s)"
 
 
 @pytest.mark.resilience
@@ -576,7 +572,7 @@ def test_centrality_calculation_performance(
         service_id = uuid4()
         # Each service can be covered by 5-15 faculty members
         services[service_id] = [
-            f.id for f in large_faculty_pool[i*6:(i+1)*6 + (i % 5)]
+            f.id for f in large_faculty_pool[i * 6 : (i + 1) * 6 + (i % 5)]
         ]
 
     start = time.perf_counter()
@@ -616,6 +612,7 @@ async def test_concurrent_utilization_checks(
 
     Simulates multiple concurrent requests checking utilization.
     """
+
     async def check_utilization(faculty_count: int, required: int) -> Any:
         """Async wrapper for utilization check."""
         return await asyncio.to_thread(
@@ -627,10 +624,7 @@ async def test_concurrent_utilization_checks(
         )
 
     # Run 20 concurrent checks with different parameters
-    tasks = [
-        check_utilization(40 + i, 60 + i*2)
-        for i in range(20)
-    ]
+    tasks = [check_utilization(40 + i, 60 + i * 2) for i in range(20)]
 
     start = time.perf_counter()
     results = await asyncio.gather(*tasks)
@@ -639,9 +633,7 @@ async def test_concurrent_utilization_checks(
     duration = end - start
 
     # Should complete faster than sequential (due to parallelism)
-    assert duration < 2.0, (
-        f"Concurrent checks too slow: {duration:.2f}s (expected <2s)"
-    )
+    assert duration < 2.0, f"Concurrent checks too slow: {duration:.2f}s (expected <2s)"
 
     # Verify all results are valid
     assert len(results) == 20
@@ -683,9 +675,7 @@ async def test_concurrent_contingency_analyses(
 
     duration = end - start
 
-    assert duration < 10.0, (
-        f"Concurrent analyses too slow: {duration:.2f}s"
-    )
+    assert duration < 10.0, f"Concurrent analyses too slow: {duration:.2f}s"
 
     # Verify results are consistent (same input should give same output)
     first_result = results[0]
@@ -846,10 +836,12 @@ def test_sacrifice_hierarchy_consistency(sacrifice_hierarchy: SacrificeHierarchy
             available_capacity=available_capacity,
             reason="Consistency test",
         )
-        results.append((
-            {a.name for a in kept},
-            {a.name for a in sacrificed},
-        ))
+        results.append(
+            (
+                {a.name for a in kept},
+                {a.name for a in sacrificed},
+            )
+        )
 
     # All results should be identical
     first_result = results[0]
@@ -1039,12 +1031,10 @@ def test_zone_failure_isolation(blast_radius_manager: BlastRadiusManager):
 
     # Other zones should remain healthy
     inpatient_report = next(
-        zr for zr in report.zone_reports
-        if zr.zone_type == ZoneType.INPATIENT
+        zr for zr in report.zone_reports if zr.zone_type == ZoneType.INPATIENT
     )
     outpatient_report = next(
-        zr for zr in report.zone_reports
-        if zr.zone_type == ZoneType.OUTPATIENT
+        zr for zr in report.zone_reports if zr.zone_type == ZoneType.OUTPATIENT
     )
 
     # These zones should not be affected by education zone failure
@@ -1093,9 +1083,7 @@ def test_zone_health_check_performance(blast_radius_manager: BlastRadiusManager)
     end = time.perf_counter()
     check_time_ms = (end - start) * 1000
 
-    assert check_time_ms < 200, (
-        f"Zone health check too slow: {check_time_ms:.2f}ms"
-    )
+    assert check_time_ms < 200, f"Zone health check too slow: {check_time_ms:.2f}ms"
 
     # Verify report structure
     assert report.total_zones == len(blast_radius_manager.zones)
@@ -1157,13 +1145,16 @@ def test_full_resilience_check_under_load(
     total_time = sum(timings.values())
 
     assert total_time < 45.0, (
-        f"Full resilience check too slow: {total_time:.2f}s. "
-        f"Breakdown: {timings}"
+        f"Full resilience check too slow: {total_time:.2f}s. Breakdown: {timings}"
     )
 
     # Verify reports are complete
     assert health_report.overall_status in [
-        "healthy", "warning", "degraded", "critical", "emergency"
+        "healthy",
+        "warning",
+        "degraded",
+        "critical",
+        "emergency",
     ]
     assert comprehensive["overall_status"] is not None
     assert "components" in comprehensive
@@ -1191,8 +1182,9 @@ def test_resilience_metrics_tracking():
 
     # Detection phase
     utilization_monitor = UtilizationMonitor()
-    faculty_pool = [Person(id=uuid4(), name=f"Dr. {i}", type="faculty")
-                    for i in range(50)]
+    faculty_pool = [
+        Person(id=uuid4(), name=f"Dr. {i}", type="faculty") for i in range(50)
+    ]
 
     metrics_result = utilization_monitor.calculate_utilization(
         available_faculty=faculty_pool,
@@ -1210,11 +1202,14 @@ def test_resilience_metrics_tracking():
 
     # Analysis phase
     analyzer = ContingencyAnalyzer()
-    blocks = [Block(id=uuid4(), date=date.today(), time_of_day="AM", block_number=1)
-              for _ in range(100)]
-    assignments = [Assignment(id=uuid4(), block_id=blocks[i].id,
-                             person_id=faculty_pool[i % 50].id)
-                   for i in range(90)]
+    blocks = [
+        Block(id=uuid4(), date=date.today(), time_of_day="AM", block_number=1)
+        for _ in range(100)
+    ]
+    assignments = [
+        Assignment(id=uuid4(), block_id=blocks[i].id, person_id=faculty_pool[i % 50].id)
+        for i in range(90)
+    ]
 
     analysis_start = time.perf_counter()
     vulnerabilities = analyzer.analyze_n1(
@@ -1245,7 +1240,7 @@ def test_resilience_metrics_tracking():
         f"Recovery too slow: {metrics['recovery_time']:.2f}s"
     )
 
-    print(f"\nResilience Performance Metrics:")
-    print(f"  Escalation time: {metrics['escalation_time']*1000:.2f}ms")
+    print("\nResilience Performance Metrics:")
+    print(f"  Escalation time: {metrics['escalation_time'] * 1000:.2f}ms")
     print(f"  Analysis duration: {metrics['analysis_duration']:.2f}s")
-    print(f"  Recovery time: {metrics['recovery_time']*1000:.2f}ms")
+    print(f"  Recovery time: {metrics['recovery_time'] * 1000:.2f}ms")
