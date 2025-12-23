@@ -32,7 +32,7 @@ This repository has a complete AI agent infrastructure:
 │  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐         │
 │  │   SKILLS     │   │  MCP TOOLS   │   │  ADK AGENTS  │         │
 │  │  (Knowledge) │ + │  (Actions)   │ + │  (Testing)   │         │
-│  │  6 skills    │   │  16+ tools   │   │  TypeScript  │         │
+│  │  11 skills   │   │  16+ tools   │   │  TypeScript  │         │
 │  └──────────────┘   └──────────────┘   └──────────────┘         │
 │         │                  │                  │                  │
 │         └──────────────────┼──────────────────┘                  │
@@ -464,12 +464,17 @@ The tools complement each other:
 
 | Skill | Purpose |
 |-------|---------|
+| `acgme-compliance` | ACGME regulatory expertise |
 | `automated-code-fixer` | Fix code issues with strict quality gates |
 | `code-quality-monitor` | Enforce quality standards before commits |
+| `code-review` | Review generated code for bugs, security, performance |
+| `database-migration` | Alembic migration expertise and safe schema evolution |
+| `pr-reviewer` | Pull request review with quality gates |
 | `production-incident-responder` | Crisis response using MCP resilience tools |
-| `acgme-compliance` | ACGME regulatory expertise |
-| `swap-management` | Shift swap workflow procedures |
 | `schedule-optimization` | Multi-objective optimization strategies |
+| `security-audit` | Security auditing for healthcare/military contexts |
+| `swap-management` | Shift swap workflow procedures |
+| `test-writer` | Test generation for pytest and Jest |
 
 **How They Work:**
 ```
@@ -602,6 +607,11 @@ Skills activate automatically based on your question:
 | "Tests are failing" | `automated-code-fixer` |
 | "The system is down" | `production-incident-responder` |
 | "Check code quality" | `code-quality-monitor` |
+| "Review this code" | `code-review` |
+| "Add a new database field" | `database-migration` |
+| "Review this PR" | `pr-reviewer` |
+| "Is this secure?" | `security-audit` |
+| "Write tests for this" | `test-writer` |
 
 ### Skill Files
 
