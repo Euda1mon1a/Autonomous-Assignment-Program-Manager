@@ -15,7 +15,31 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
+from app.api.routes.upload import get_upload_service
+from app.main import app
 from app.models.user import User
+
+
+@pytest.fixture
+def mock_upload_service():
+    """Create a mock upload service."""
+    service = MagicMock()
+    service.storage_backend = MagicMock()
+    return service
+
+
+@pytest.fixture
+def client_with_mock_upload(db, mock_upload_service):
+    """Create test client with mocked upload service."""
+    from app.db.session import get_db
+
+    app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_upload_service] = lambda: mock_upload_service
+
+    with TestClient(app) as test_client:
+        yield test_client
+
+    app.dependency_overrides.clear()
 
 
 class TestUploadRoutes:
@@ -62,17 +86,15 @@ class TestUploadRoutes:
     # Upload Tests
     # ========================================================================
 
-    @patch("app.api.routes.upload.get_upload_service")
     def test_upload_file_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_upload: TestClient,
+        mock_upload_service: MagicMock,
         auth_headers: dict,
         admin_user: User,
     ):
         """Test successful file upload."""
-        mock_service = MagicMock()
-        mock_service.upload_file.return_value = {
+        mock_upload_service.upload_file.return_value = {
             "file_id": str(uuid4()),
             "filename": "test.txt",
             "size": 12,
@@ -80,9 +102,8 @@ class TestUploadRoutes:
             "uploaded_by": str(admin_user.id),
             "uploaded_at": "2025-01-15T10:00:00",
         }
-        mock_get_service.return_value = mock_service
 
-        response = client.post(
+        response = client_with_mock_upload.post(
             "/api/upload",
             headers=auth_headers,
             files={"file": ("test.txt", b"test content", "text/plain")},
@@ -98,17 +119,15 @@ class TestUploadRoutes:
         assert "file_id" in data
         assert data["filename"] == "test.txt"
 
-    @patch("app.api.routes.upload.get_upload_service")
     def test_upload_file_with_metadata(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_upload: TestClient,
+        mock_upload_service: MagicMock,
         auth_headers: dict,
         admin_user: User,
     ):
         """Test file upload with metadata."""
-        mock_service = MagicMock()
-        mock_service.upload_file.return_value = {
+        mock_upload_service.upload_file.return_value = {
             "file_id": str(uuid4()),
             "filename": "document.pdf",
             "size": 1024,
@@ -116,9 +135,8 @@ class TestUploadRoutes:
             "uploaded_by": str(admin_user.id),
             "uploaded_at": "2025-01-15T10:00:00",
         }
-        mock_get_service.return_value = mock_service
 
-        response = client.post(
+        response = client_with_mock_upload.post(
             "/api/upload",
             headers=auth_headers,
             files={"file": ("document.pdf", b"pdf content", "application/pdf")},
@@ -132,21 +150,20 @@ class TestUploadRoutes:
         )
         assert response.status_code == 201
 
-    @patch("app.api.routes.upload.get_upload_service")
     def test_upload_validation_error(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_upload: TestClient,
+        mock_upload_service: MagicMock,
         auth_headers: dict,
     ):
         """Test upload validation failure."""
         from app.services.upload.validators import UploadValidationError
 
-        mock_service = MagicMock()
-        mock_service.upload_file.side_effect = UploadValidationError("File too large")
-        mock_get_service.return_value = mock_service
+        mock_upload_service.upload_file.side_effect = UploadValidationError(
+            "File too large"
+        )
 
-        response = client.post(
+        response = client_with_mock_upload.post(
             "/api/upload",
             headers=auth_headers,
             files={"file": ("large.bin", b"x" * 1000, "application/octet-stream")},
@@ -158,27 +175,24 @@ class TestUploadRoutes:
     # Progress Tests
     # ========================================================================
 
-    @patch("app.api.routes.upload.get_upload_service")
     def test_get_upload_progress_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_upload: TestClient,
+        mock_upload_service: MagicMock,
         auth_headers: dict,
     ):
         """Test getting upload progress."""
         upload_id = str(uuid4())
 
-        mock_service = MagicMock()
-        mock_service.get_upload_progress.return_value = {
+        mock_upload_service.get_upload_progress.return_value = {
             "upload_id": upload_id,
             "status": "processing",
             "progress": 75,
             "bytes_uploaded": 750000,
             "total_bytes": 1000000,
         }
-        mock_get_service.return_value = mock_service
 
-        response = client.get(
+        response = client_with_mock_upload.get(
             f"/api/upload/progress/{upload_id}",
             headers=auth_headers,
         )
@@ -187,19 +201,16 @@ class TestUploadRoutes:
         data = response.json()
         assert data["progress"] == 75
 
-    @patch("app.api.routes.upload.get_upload_service")
     def test_get_upload_progress_not_found(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_upload: TestClient,
+        mock_upload_service: MagicMock,
         auth_headers: dict,
     ):
         """Test progress for non-existent upload."""
-        mock_service = MagicMock()
-        mock_service.get_upload_progress.return_value = None
-        mock_get_service.return_value = mock_service
+        mock_upload_service.get_upload_progress.return_value = None
 
-        response = client.get(
+        response = client_with_mock_upload.get(
             f"/api/upload/progress/{uuid4()}",
             headers=auth_headers,
         )
@@ -209,22 +220,18 @@ class TestUploadRoutes:
     # File URL Tests
     # ========================================================================
 
-    @patch("app.api.routes.upload.get_upload_service")
     def test_get_file_url_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_upload: TestClient,
+        mock_upload_service: MagicMock,
         auth_headers: dict,
     ):
         """Test getting file URL."""
         file_id = str(uuid4())
 
-        mock_service = MagicMock()
-        mock_service.get_file_url.return_value = f"http://storage.local/{file_id}"
-        mock_service.storage_backend = MagicMock()
-        mock_get_service.return_value = mock_service
+        mock_upload_service.get_file_url.return_value = f"http://storage.local/{file_id}"
 
-        response = client.get(
+        response = client_with_mock_upload.get(
             f"/api/upload/{file_id}/url",
             headers=auth_headers,
         )
@@ -234,19 +241,16 @@ class TestUploadRoutes:
         assert "url" in data
         assert data["file_id"] == file_id
 
-    @patch("app.api.routes.upload.get_upload_service")
     def test_get_file_url_not_found(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_upload: TestClient,
+        mock_upload_service: MagicMock,
         auth_headers: dict,
     ):
         """Test URL for non-existent file."""
-        mock_service = MagicMock()
-        mock_service.get_file_url.side_effect = Exception("File not found")
-        mock_get_service.return_value = mock_service
+        mock_upload_service.get_file_url.side_effect = Exception("File not found")
 
-        response = client.get(
+        response = client_with_mock_upload.get(
             f"/api/upload/{uuid4()}/url",
             headers=auth_headers,
         )
@@ -256,41 +260,35 @@ class TestUploadRoutes:
     # Download Tests
     # ========================================================================
 
-    @patch("app.api.routes.upload.get_upload_service")
     def test_download_file_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_upload: TestClient,
+        mock_upload_service: MagicMock,
         auth_headers: dict,
     ):
         """Test file download."""
         file_id = str(uuid4())
         file_content = b"test file content"
 
-        mock_service = MagicMock()
-        mock_service.get_file.return_value = file_content
-        mock_get_service.return_value = mock_service
+        mock_upload_service.get_file.return_value = file_content
 
-        response = client.get(
+        response = client_with_mock_upload.get(
             f"/api/upload/{file_id}/download",
             headers=auth_headers,
         )
         assert response.status_code == 200
         assert response.content == file_content
 
-    @patch("app.api.routes.upload.get_upload_service")
     def test_download_file_not_found(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_upload: TestClient,
+        mock_upload_service: MagicMock,
         auth_headers: dict,
     ):
         """Test download of non-existent file."""
-        mock_service = MagicMock()
-        mock_service.get_file.side_effect = Exception("File not found")
-        mock_get_service.return_value = mock_service
+        mock_upload_service.get_file.side_effect = Exception("File not found")
 
-        response = client.get(
+        response = client_with_mock_upload.get(
             f"/api/upload/{uuid4()}/download",
             headers=auth_headers,
         )
@@ -300,21 +298,18 @@ class TestUploadRoutes:
     # Delete Tests
     # ========================================================================
 
-    @patch("app.api.routes.upload.get_upload_service")
     def test_delete_file_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_upload: TestClient,
+        mock_upload_service: MagicMock,
         auth_headers: dict,
     ):
         """Test file deletion."""
         file_id = str(uuid4())
 
-        mock_service = MagicMock()
-        mock_service.delete_file.return_value = True
-        mock_get_service.return_value = mock_service
+        mock_upload_service.delete_file.return_value = True
 
-        response = client.delete(
+        response = client_with_mock_upload.delete(
             f"/api/upload/{file_id}",
             headers=auth_headers,
         )
@@ -324,19 +319,16 @@ class TestUploadRoutes:
         assert data["success"] is True
         assert data["file_id"] == file_id
 
-    @patch("app.api.routes.upload.get_upload_service")
     def test_delete_file_not_found(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_upload: TestClient,
+        mock_upload_service: MagicMock,
         auth_headers: dict,
     ):
         """Test deletion of non-existent file."""
-        mock_service = MagicMock()
-        mock_service.delete_file.return_value = False
-        mock_get_service.return_value = mock_service
+        mock_upload_service.delete_file.return_value = False
 
-        response = client.delete(
+        response = client_with_mock_upload.delete(
             f"/api/upload/{uuid4()}",
             headers=auth_headers,
         )
@@ -346,21 +338,18 @@ class TestUploadRoutes:
     # Exists Check Tests
     # ========================================================================
 
-    @patch("app.api.routes.upload.get_upload_service")
     def test_check_file_exists_true(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_upload: TestClient,
+        mock_upload_service: MagicMock,
         auth_headers: dict,
     ):
         """Test check file exists returns true."""
         file_id = str(uuid4())
 
-        mock_service = MagicMock()
-        mock_service.storage_backend.exists.return_value = True
-        mock_get_service.return_value = mock_service
+        mock_upload_service.storage_backend.exists.return_value = True
 
-        response = client.get(
+        response = client_with_mock_upload.get(
             f"/api/upload/{file_id}/exists",
             headers=auth_headers,
         )
@@ -370,21 +359,18 @@ class TestUploadRoutes:
         assert data["exists"] is True
         assert data["file_id"] == file_id
 
-    @patch("app.api.routes.upload.get_upload_service")
     def test_check_file_exists_false(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_upload: TestClient,
+        mock_upload_service: MagicMock,
         auth_headers: dict,
     ):
         """Test check file exists returns false."""
         file_id = str(uuid4())
 
-        mock_service = MagicMock()
-        mock_service.storage_backend.exists.return_value = False
-        mock_get_service.return_value = mock_service
+        mock_upload_service.storage_backend.exists.return_value = False
 
-        response = client.get(
+        response = client_with_mock_upload.get(
             f"/api/upload/{file_id}/exists",
             headers=auth_headers,
         )
