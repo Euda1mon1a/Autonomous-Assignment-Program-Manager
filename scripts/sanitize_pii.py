@@ -261,18 +261,54 @@ def reverse_sanitize(mapping_path: Path, sanitized_data: dict) -> dict:
     reverse_emails = {v: k for k, v in mapping["emails"].items()}
     date_offset = -mapping["date_offset"]  # Reverse the offset
 
-    def reverse_recurse(data):
+    def is_date_key(key: str | None) -> bool:
+        if not key:
+            return False
+        key_lower = key.lower()
+        return key_lower.endswith("_date") or key_lower in {"date", "dob", "birth_date"}
+
+    def reverse_date(value: Any) -> Any:
+        if not value:
+            return value
+
+        try:
+            if isinstance(value, str):
+                for fmt in ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%m/%d/%Y"]:
+                    try:
+                        dt = datetime.strptime(value[:10], fmt[:10])
+                        restored = dt + timedelta(days=date_offset)
+                        return restored.strftime(fmt[:10])
+                    except ValueError:
+                        continue
+            elif isinstance(value, (date, datetime)):
+                return value + timedelta(days=date_offset)
+        except Exception:
+            pass
+
+        return value
+
+    def reverse_recurse(data, parent_key=None):
         if isinstance(data, dict):
-            return {k: reverse_recurse(v) for k, v in data.items()}
+            result = {}
+            for k, v in data.items():
+                if is_date_key(k):
+                    result[k] = reverse_date(v)
+                else:
+                    result[k] = reverse_recurse(v, k)
+            return result
         elif isinstance(data, list):
-            return [reverse_recurse(item) for item in data]
+            return [reverse_recurse(item, parent_key) for item in data]
         elif isinstance(data, str):
             # Check if it's a synthetic name or email
             if data in reverse_names:
                 return reverse_names[data]
             if data in reverse_emails:
                 return reverse_emails[data]
+            if is_date_key(parent_key):
+                return reverse_date(data)
             return data
+        elif isinstance(data, (date, datetime)) and is_date_key(parent_key):
+            return reverse_date(data)
         return data
 
     return reverse_recurse(sanitized_data)
