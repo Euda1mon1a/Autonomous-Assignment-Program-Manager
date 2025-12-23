@@ -96,9 +96,9 @@ Med students have different constraints than residents:
 
 ### Hard Constraints
 
-1. **ASM Wednesday AM**: All learners have Wednesday AM blocked for ASM
-2. **Wednesday PM Didactics**: Same afternoon didactics as residents
-3. **4th Wednesday Inverted**: On the 4th Wednesday of the block, schedule is inverted (TBD: AM/PM swap?)
+1. **Wednesday AM (1st/2nd/3rd)**: ASM for all learners
+2. **Wednesday PM (1st/2nd/3rd)**: Didactics with residents (Lecture, Clinic Meeting, Simulation)
+3. **4th Wednesday (Inverted)**: No ASM - Lecture AM with residents, Advising PM
 4. **Max 2 learners per physician**: Any attending or PGY-2/3 resident can supervise max 2 learners
 5. **FM Interns cannot supervise**: PGY-1 FM interns get 0 learners assigned to them
 6. **Procedures conflict**: Learner NOT in procedures if FM intern (PGY-1) is assigned there
@@ -385,7 +385,7 @@ def check_procedures_conflict(block_id: UUID, med_student_id: UUID) -> bool:
 
 1. ~~**Weekend coverage**: Do med students ever work weekends?~~ ✅ Only during FMIT week
 2. ~~**Night float**: Do med students participate in night float, or just FMIT overnight?~~ ✅ FMIT overnight only
-3. **4th Wednesday "inverted"**: What exactly is inverted? AM/PM swap? Different activities?
+3. ~~**4th Wednesday "inverted"**: What exactly is inverted?~~ ✅ No ASM, Lecture AM, Advising PM
 4. **Clinic locations**: Which specific clinics do med students rotate through? Same as residents?
 5. **Leave requests**: Can med students request time off during the 4-week block?
 
