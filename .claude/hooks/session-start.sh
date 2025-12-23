@@ -27,12 +27,29 @@ CRITICAL_FILES=(
     "CLAUDE.md"
     "backend/app/core/config.py"
     "backend/app/core/security.py"
+    "docs/development/AI_RULES_OF_ENGAGEMENT.md"
+    "docs/development/CLAUDE_GIT_SAFE_SYNC_CHECKLIST.md"
 )
 
 for file in "${CRITICAL_FILES[@]}"; do
     if [ ! -f "$PROJECT_ROOT/$file" ]; then
         log "ERROR: Critical file missing: $file"
         echo "Warning: Critical file missing: $file" >&2
+    fi
+done
+
+# Display AI rules at session start
+RULES_FILES=(
+    "CLAUDE.md"
+    "docs/development/AI_RULES_OF_ENGAGEMENT.md"
+    "docs/development/CLAUDE_GIT_SAFE_SYNC_CHECKLIST.md"
+)
+
+for file in "${RULES_FILES[@]}"; do
+    if [ -f "$PROJECT_ROOT/$file" ]; then
+        echo "----- BEGIN $file -----"
+        cat "$PROJECT_ROOT/$file"
+        echo "----- END $file -----"
     fi
 done
 
