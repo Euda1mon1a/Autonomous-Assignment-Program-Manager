@@ -118,6 +118,21 @@ Use these safeguards to avoid schedule loss and unexpected changes:
 
 ---
 
+## "main" and "origin" Explained (Clinician-Friendly)
+
+If you ever follow terminal steps, you may see "main" and "origin." They are just names:
+
+- **main**: the official, approved version of the system (the source of truth).
+- **origin**: the remote copy of that official version (the GitHub server).
+
+Think of it like this:
+- **main** = the published policy binder.
+- **origin** = the same binder stored in a central, shared cabinet.
+
+If the system says "main and origin are aligned," your local copy matches the official version.
+
+---
+
 ## Security Considerations
 
 !!! danger "Production Security"
