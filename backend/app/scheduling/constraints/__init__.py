@@ -90,6 +90,9 @@ from .sports_medicine import SMResidentFacultyAlignmentConstraint
 ***REMOVED*** Post-call assignment constraints
 from .post_call import PostCallAutoAssignmentConstraint
 
+***REMOVED*** Night Float post-call constraints
+from .night_float_post_call import NightFloatPostCallConstraint
+
 ***REMOVED*** Call equity and preference constraints
 from .call_equity import (
     DeptChiefWednesdayPreferenceConstraint,
@@ -156,6 +159,8 @@ __all__ = [
     "SMResidentFacultyAlignmentConstraint",
     ***REMOVED*** Post-call assignment constraints
     "PostCallAutoAssignmentConstraint",
+    ***REMOVED*** Night Float post-call constraints
+    "NightFloatPostCallConstraint",
     ***REMOVED*** Call equity and preference constraints
     "DeptChiefWednesdayPreferenceConstraint",
     "SundayCallEquityConstraint",
