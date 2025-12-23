@@ -316,6 +316,13 @@ residency-scheduler/
 | [Metrics & Monitoring](docs/operations/metrics.md) | Prometheus metrics reference |
 | [Deployment](docs/operations/DEPLOYMENT_PROMPT.md) | Production deployment |
 
+### AI-Assisted Development
+| Document | Description |
+|----------|-------------|
+| [AI Assistant Guardrails](docs/development/ai-assistant-guardrails.md) | Safe multi-AI workflow guide |
+| [AI Rules of Engagement](docs/development/AI_RULES_OF_ENGAGEMENT.md) | Core AI agent rules |
+| [AI Interface Guide](docs/admin-manual/ai-interface-guide.md) | Web vs CLI comparison |
+
 ### Planning & Status
 | Document | Description |
 |----------|-------------|
