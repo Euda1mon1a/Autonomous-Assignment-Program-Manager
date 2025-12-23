@@ -105,6 +105,19 @@ docker-compose logs --tail=100 backend
 
 ---
 
+## Operational Lessons Learned
+
+Use these safeguards to avoid schedule loss and unexpected changes:
+
+- Regenerate schedules only when necessary and confirm the date range.
+- Preserve manual overrides with a written reason and timestamp.
+- Treat emergency closures as manual decisions (do not auto-cancel clinics).
+- Prefer draft runs before overwriting a stable schedule.
+- Document any exception to coverage or supervision rules.
+- **Split terminal is not shared context**: an AI session cannot see another AI's terminal state; coordinate explicitly.
+
+---
+
 ## Security Considerations
 
 !!! danger "Production Security"
