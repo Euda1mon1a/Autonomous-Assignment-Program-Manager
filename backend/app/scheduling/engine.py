@@ -901,7 +901,7 @@ class SchedulingEngine:
                b. Calculate required faculty: ⌈PGY1/2⌉ + ⌈Others/4⌉
                c. Find available faculty (check availability matrix)
                d. Select least-loaded faculty to balance workload
-               e. Create "supervising" role assignments
+               e. Create "supervising" role assignments with rotation_template_id
 
         Load Balancing:
             Faculty are sorted by current assignment count and selected in order
@@ -958,15 +958,77 @@ class SchedulingEngine:
                 :required
             ]
 
+            # Determine primary rotation template from resident assignments in this block
+            # Faculty should be assigned the same rotation as the residents they supervise
+            primary_template_id = self._get_primary_template_for_block(block_assignments)
+
             for fac in selected:
                 assignment = Assignment(
                     block_id=block_id,
                     person_id=fac.id,
+                    rotation_template_id=primary_template_id,
                     role="supervising",
                     schedule_run_id=run_id,
                 )
                 self.assignments.append(assignment)
                 faculty_assignments[fac.id] += 1
+
+    def _get_primary_template_for_block(
+        self, block_assignments: list[Assignment]
+    ) -> UUID | None:
+        """
+        Determine the primary rotation template for a block based on resident assignments.
+
+        Faculty supervisors should be assigned the same rotation template as the
+        residents they're supervising. This ensures:
+        1. Faculty show up correctly in activity-type views (e.g., inpatient view)
+        2. Reporting and analytics count faculty correctly per rotation type
+        3. ACGME compliance reports accurately reflect supervision coverage
+
+        Priority logic (most common template wins):
+            - Count occurrences of each template in block's resident assignments
+            - Return the most frequently occurring template
+            - If tie, prefer inpatient > clinic > other (clinical priority)
+
+        Args:
+            block_assignments: List of resident Assignment objects for this block
+
+        Returns:
+            UUID of the primary rotation template, or None if no assignments
+        """
+        if not block_assignments:
+            return None
+
+        # Count template occurrences
+        template_counts: dict[UUID, int] = {}
+        for assignment in block_assignments:
+            if assignment.rotation_template_id:
+                tid = assignment.rotation_template_id
+                template_counts[tid] = template_counts.get(tid, 0) + 1
+
+        if not template_counts:
+            return None
+
+        # Find most common template
+        # If there's a tie, we'll prefer clinical templates (inpatient, etc.)
+        max_count = max(template_counts.values())
+        candidates = [tid for tid, count in template_counts.items() if count == max_count]
+
+        if len(candidates) == 1:
+            return candidates[0]
+
+        # Break ties by preferring inpatient templates
+        for tid in candidates:
+            template = (
+                self.db.query(RotationTemplate)
+                .filter(RotationTemplate.id == tid)
+                .first()
+            )
+            if template and template.activity_type == "inpatient":
+                return tid
+
+        # Default to first candidate
+        return candidates[0]
 
     def _is_available(self, person_id: UUID, block_id: UUID) -> bool:
         """Check if person is available for block."""
