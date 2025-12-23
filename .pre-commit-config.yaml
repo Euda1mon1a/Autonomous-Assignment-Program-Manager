@@ -1,4 +1,15 @@
 repos:
+  # PII/OPSEC/PERSEC scanning (first line of defense)
+  - repo: local
+    hooks:
+      - id: pii-scan
+        name: PII/OPSEC scanner
+        entry: scripts/pii-scan.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
   # Python linting and formatting (backend)
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.9
