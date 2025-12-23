@@ -126,7 +126,7 @@ class TestAccessControlMatrix:
         assert not acm.has_permission(UserRole.COORDINATOR, ResourceType.USER, PermissionAction.DELETE)
 
     # ========================================================================
-    # Faculty Permissions
+    ***REMOVED*** Permissions
     # ========================================================================
 
     def test_faculty_can_read_schedules(self, acm):

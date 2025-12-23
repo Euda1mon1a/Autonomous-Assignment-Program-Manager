@@ -1,4 +1,5 @@
 """Webhook database models."""
+
 import enum
 import uuid
 from datetime import datetime
@@ -82,6 +83,7 @@ class Webhook(Base):
     Stores webhook endpoints that subscribe to specific events.
     Each webhook can subscribe to multiple event types.
     """
+
     __tablename__ = "webhooks"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -96,10 +98,7 @@ class Webhook(Base):
 
     # Status
     status = Column(
-        String(20),
-        nullable=False,
-        default=WebhookStatus.ACTIVE.value,
-        index=True
+        String(20), nullable=False, default=WebhookStatus.ACTIVE.value, index=True
     )
 
     # Secret for signature verification (stored encrypted in production)
@@ -114,14 +113,11 @@ class Webhook(Base):
     custom_headers = Column(JSONType, default=dict)
 
     # Metadata
-    webhook_metadata = Column(JSONType, default=dict)
+    webhook_metadata = Column("metadata", JSONType, default=dict)
 
     # Owner (optional - for multi-tenant scenarios)
     owner_id = Column(
-        GUID(),
-        ForeignKey("people.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True
+        GUID(), ForeignKey("people.id", ondelete="SET NULL"), nullable=True, index=True
     )
 
     # Timestamps
@@ -131,28 +127,26 @@ class Webhook(Base):
 
     # Relationships
     deliveries = relationship(
-        "WebhookDelivery",
-        back_populates="webhook",
-        cascade="all, delete-orphan"
+        "WebhookDelivery", back_populates="webhook", cascade="all, delete-orphan"
     )
 
     __table_args__ = (
         CheckConstraint(
-            "status IN ('active', 'paused', 'disabled')",
-            name="check_webhook_status"
+            "status IN ('active', 'paused', 'disabled')", name="check_webhook_status"
         ),
         CheckConstraint(
             "timeout_seconds > 0 AND timeout_seconds <= 300",
-            name="check_webhook_timeout"
+            name="check_webhook_timeout",
         ),
         CheckConstraint(
-            "max_retries >= 0 AND max_retries <= 10",
-            name="check_webhook_max_retries"
+            "max_retries >= 0 AND max_retries <= 10", name="check_webhook_max_retries"
         ),
     )
 
     def __repr__(self):
-        return f"<Webhook(name='{self.name}', url='{self.url}', status='{self.status}')>"
+        return (
+            f"<Webhook(name='{self.name}', url='{self.url}', status='{self.status}')>"
+        )
 
     def is_subscribed_to(self, event_type: str) -> bool:
         """Check if webhook is subscribed to a specific event type."""
@@ -166,6 +160,7 @@ class WebhookDelivery(Base):
     Tracks all webhook delivery attempts including retries,
     response codes, and error messages.
     """
+
     __tablename__ = "webhook_deliveries"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -175,12 +170,14 @@ class WebhookDelivery(Base):
         GUID(),
         ForeignKey("webhooks.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Event details
     event_type = Column(String(100), nullable=False, index=True)
-    event_id = Column(String(255), nullable=True, index=True)  # Optional event identifier
+    event_id = Column(
+        String(255), nullable=True, index=True
+    )  # Optional event identifier
     payload = Column(JSONType, nullable=False)
 
     # Delivery tracking
@@ -188,7 +185,7 @@ class WebhookDelivery(Base):
         String(20),
         nullable=False,
         default=WebhookDeliveryStatus.PENDING.value,
-        index=True
+        index=True,
     )
 
     # Retry tracking
@@ -214,12 +211,9 @@ class WebhookDelivery(Base):
     __table_args__ = (
         CheckConstraint(
             "status IN ('pending', 'processing', 'success', 'failed', 'dead_letter')",
-            name="check_delivery_status"
+            name="check_delivery_status",
         ),
-        CheckConstraint(
-            "attempt_count >= 0",
-            name="check_attempt_count"
-        ),
+        CheckConstraint("attempt_count >= 0", name="check_attempt_count"),
     )
 
     def __repr__(self):
@@ -235,7 +229,8 @@ class WebhookDelivery(Base):
     def can_retry(self) -> bool:
         """Check if delivery can be retried."""
         return (
-            self.status in [WebhookDeliveryStatus.PENDING.value, WebhookDeliveryStatus.FAILED.value]
+            self.status
+            in [WebhookDeliveryStatus.PENDING.value, WebhookDeliveryStatus.FAILED.value]
             and self.attempt_count < self.max_attempts
         )
 
@@ -244,7 +239,7 @@ class WebhookDelivery(Base):
         """Check if delivery is in a final state (success or dead letter)."""
         return self.status in [
             WebhookDeliveryStatus.SUCCESS.value,
-            WebhookDeliveryStatus.DEAD_LETTER.value
+            WebhookDeliveryStatus.DEAD_LETTER.value,
         ]
 
 
@@ -255,6 +250,7 @@ class WebhookDeadLetter(Base):
     Stores webhook deliveries that have exceeded max retries
     for manual review and reprocessing.
     """
+
     __tablename__ = "webhook_dead_letters"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -265,7 +261,7 @@ class WebhookDeadLetter(Base):
         ForeignKey("webhook_deliveries.id", ondelete="CASCADE"),
         nullable=False,
         unique=True,
-        index=True
+        index=True,
     )
 
     # Webhook reference
@@ -273,7 +269,7 @@ class WebhookDeadLetter(Base):
         GUID(),
         ForeignKey("webhooks.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Event details (denormalized for quick access)
@@ -289,9 +285,7 @@ class WebhookDeadLetter(Base):
     resolved = Column(Boolean, default=False, index=True)
     resolved_at = Column(DateTime, nullable=True)
     resolved_by = Column(
-        GUID(),
-        ForeignKey("people.id", ondelete="SET NULL"),
-        nullable=True
+        GUID(), ForeignKey("people.id", ondelete="SET NULL"), nullable=True
     )
     resolution_notes = Column(Text, nullable=True)
 
@@ -299,10 +293,7 @@ class WebhookDeadLetter(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     __table_args__ = (
-        CheckConstraint(
-            "total_attempts > 0",
-            name="check_total_attempts"
-        ),
+        CheckConstraint("total_attempts > 0", name="check_total_attempts"),
     )
 
     def __repr__(self):

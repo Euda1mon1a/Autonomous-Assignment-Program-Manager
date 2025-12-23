@@ -50,11 +50,18 @@ export interface LocationManifest {
 
 export interface DailyManifestData {
   date: string;
+<<<<<<< HEAD
   time_of_day: 'AM' | 'PM' | 'ALL' | null;
   locations: LocationManifest[];
   generated_at: string;
   // Summary is computed client-side from locations, not returned by backend
   summary?: {
+=======
+  time_of_day: 'AM' | 'PM' | 'ALL';
+  locations: LocationManifest[];
+  generated_at: string;
+  summary: {
+>>>>>>> origin/docs/session-14-summary
     total_locations: number;
     total_staff: number;
     total_residents: number;

@@ -1,4 +1,5 @@
 """Schema version model for schema registry."""
+
 import uuid
 from datetime import datetime
 from enum import Enum
@@ -21,6 +22,7 @@ from app.db.types import GUID
 
 class SchemaCompatibilityType(str, Enum):
     """Schema compatibility types for evolution."""
+
     NONE = "none"  # No compatibility guarantees
     BACKWARD = "backward"  # New schema can read old data
     FORWARD = "forward"  # Old schema can read new data
@@ -30,6 +32,7 @@ class SchemaCompatibilityType(str, Enum):
 
 class SchemaStatus(str, Enum):
     """Schema version status."""
+
     ACTIVE = "active"  # Currently in use
     DEPRECATED = "deprecated"  # Marked for removal, still usable
     ARCHIVED = "archived"  # No longer usable, kept for history
@@ -62,6 +65,7 @@ class SchemaVersion(Base):
         created_at: When this version was created
         updated_at: When this version was last updated
     """
+
     __tablename__ = "schema_versions"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -69,15 +73,10 @@ class SchemaVersion(Base):
     version = Column(Integer, nullable=False)
     schema_definition = Column(JSON, nullable=False)
     compatibility_type = Column(
-        String(50),
-        nullable=False,
-        default=SchemaCompatibilityType.BACKWARD.value
+        String(50), nullable=False, default=SchemaCompatibilityType.BACKWARD.value
     )
     status = Column(
-        String(50),
-        nullable=False,
-        default=SchemaStatus.ACTIVE.value,
-        index=True
+        String(50), nullable=False, default=SchemaStatus.ACTIVE.value, index=True
     )
     is_default = Column(Boolean, default=False, nullable=False)
 
@@ -96,10 +95,7 @@ class SchemaVersion(Base):
     created_by = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
-        nullable=False
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 
     __table_args__ = (
@@ -110,14 +106,14 @@ class SchemaVersion(Base):
             f"'{SchemaCompatibilityType.FORWARD.value}', "
             f"'{SchemaCompatibilityType.FULL.value}', "
             f"'{SchemaCompatibilityType.TRANSITIVE.value}')",
-            name="check_schema_compatibility_type"
+            name="check_schema_compatibility_type",
         ),
         CheckConstraint(
             f"status IN ('{SchemaStatus.ACTIVE.value}', "
             f"'{SchemaStatus.DEPRECATED.value}', "
             f"'{SchemaStatus.ARCHIVED.value}', "
             f"'{SchemaStatus.DRAFT.value}')",
-            name="check_schema_status"
+            name="check_schema_status",
         ),
         CheckConstraint("version > 0", name="check_version_positive"),
     )
@@ -131,10 +127,7 @@ class SchemaVersion(Base):
     @property
     def is_usable(self) -> bool:
         """Check if this schema version can still be used."""
-        return self.status in (
-            SchemaStatus.ACTIVE.value,
-            SchemaStatus.DEPRECATED.value
-        )
+        return self.status in (SchemaStatus.ACTIVE.value, SchemaStatus.DEPRECATED.value)
 
     @property
     def is_active_or_draft(self) -> bool:
@@ -164,9 +157,10 @@ class SchemaChangeEvent(Base):
         change_description: Description of what changed
         notification_sent: Whether notifications were sent
         notified_at: When notifications were sent
-        event_metadata: Additional metadata about the change
+        metadata: Additional metadata about the change
         created_at: When the event occurred
     """
+
     __tablename__ = "schema_change_events"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -179,14 +173,14 @@ class SchemaChangeEvent(Base):
     change_description = Column(Text, nullable=True)
     notification_sent = Column(Boolean, default=False, nullable=False)
     notified_at = Column(DateTime, nullable=True)
-    event_metadata = Column(JSON, default=dict, nullable=False)
+    event_metadata = Column("metadata", JSON, default=dict, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     __table_args__ = (
         CheckConstraint(
             "event_type IN ('created', 'updated', 'deprecated', "
             "'archived', 'activated', 'made_default')",
-            name="check_event_type"
+            name="check_event_type",
         ),
     )
 

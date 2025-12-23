@@ -13,7 +13,11 @@ The API uses JWT (JSON Web Tokens) for authentication with a dual-token system:
 
 ### Security Features
 
+<<<<<<< HEAD
 - **httpOnly Cookies**: Access tokens are stored in httpOnly cookies (XSS-resistant)
+=======
+- **httpOnly PGY2-01ies**: Access tokens are stored in httpOnly cookies (XSS-resistant)
+>>>>>>> origin/docs/session-14-summary
 - **Token Type Validation**: Refresh tokens cannot be used as access tokens (prevents privilege escalation)
 - **Token Rotation**: Refresh tokens are rotated on use and old tokens are blacklisted
 - **Token Blacklisting**: Logged out and rotated tokens are permanently invalidated

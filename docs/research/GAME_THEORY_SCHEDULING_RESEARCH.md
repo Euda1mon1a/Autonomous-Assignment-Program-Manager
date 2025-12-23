@@ -269,7 +269,11 @@ class StrategyproofPreferenceElicitor:
         reported_ranking = self._ask_for_ranking(faculty_id, available_slots)
 
         # VCG payment rule ensures truthfulness
+<<<<<<< HEAD
         # Faculty pays the "externality" they impose on others
+=======
+        ***REMOVED*** pays the "externality" they impose on others
+>>>>>>> origin/docs/session-14-summary
         allocation = self._vcg_allocate(reported_ranking, available_slots)
 
         # Calculate VCG payment (difference in others' welfare)
@@ -360,7 +364,11 @@ class RandomSerialDictatorship:
         random_order = random.sample(faculty, len(faculty))
 
         for faculty_id in random_order:
+<<<<<<< HEAD
             # Faculty picks their most preferred available shift
+=======
+            ***REMOVED*** picks their most preferred available shift
+>>>>>>> origin/docs/session-14-summary
             pref_list = preferences[faculty_id]
 
             for shift in pref_list:
@@ -1663,7 +1671,11 @@ class IncentiveAlignmentMechanism:
         )
 
         # Step 2: Calculate VCG "payments" (opportunity costs)
+<<<<<<< HEAD
         # Faculty "pays" by accepting less preferred shifts
+=======
+        ***REMOVED*** "pays" by accepting less preferred shifts
+>>>>>>> origin/docs/session-14-summary
         payments = {}
         for fid in faculty:
             # Welfare of others with this faculty

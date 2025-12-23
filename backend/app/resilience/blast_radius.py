@@ -144,7 +144,7 @@ class SchedulingZone:
     # Services in this zone
     services: list[str] = field(default_factory=list)
 
-    # Faculty assignments
+    ***REMOVED*** assignments
     primary_faculty: list[ZoneFacultyAssignment] = field(default_factory=list)
     secondary_faculty: list[ZoneFacultyAssignment] = field(default_factory=list)
     backup_faculty: list[ZoneFacultyAssignment] = field(default_factory=list)

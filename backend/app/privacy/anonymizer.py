@@ -112,7 +112,7 @@ class AnonymizationAudit(Base):
     fields_anonymized = Column(Text)  # JSON string
     performed_by = Column(String(255))
     reversible = Column(String(10))  # "true" or "false"
-    audit_metadata = Column(Text)  # JSON string for additional info
+    metadata = Column(Text)  # JSON string for additional info
 
     def __repr__(self):
         return f"<AnonymizationAudit(id={self.id}, method={self.method}, timestamp={self.timestamp})>"

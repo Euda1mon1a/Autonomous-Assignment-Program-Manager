@@ -774,7 +774,7 @@ class RateLimitBypassDetector:
         if detection.threat_level in (ThreatLevel.HIGH, ThreatLevel.CRITICAL) and db:
             try:
                 from app.notifications.service import NotificationService
-                from app.notifications.notification_types import NotificationType
+                from app.notifications.templates import NotificationType
 
                 # Get admin users to notify (would need to query from DB)
                 # For now, just log - in production, would send to admins

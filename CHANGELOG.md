@@ -355,7 +355,11 @@ Fixes for bugs identified in Codex review of Session 13 PRs (#312):
 
 #### Comprehensive Security Hardening (Session 6 - 2025-12-17)
 - **Path Traversal Prevention**: New `file_security.py` module with path validation, backup ID sanitization
+<<<<<<< HEAD
 - **httpOnly Cookie Authentication**: Migrated JWT from localStorage to secure httpOnly cookies
+=======
+- **httpOnly PGY2-01ie Authentication**: Migrated JWT from localStorage to secure httpOnly cookies
+>>>>>>> origin/docs/session-14-summary
 - **File Upload Validation**: Size limits, extension checks, magic byte verification for Excel uploads
 - **Password Strength Enforcement**: 12+ chars, 3/4 complexity types, common password blacklist
 - **Admin Authorization**: Added `require_admin()` to 13 endpoints across 5 route files

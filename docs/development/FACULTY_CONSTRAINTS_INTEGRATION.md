@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Faculty Constraints Integration Guide
+=======
+***REMOVED*** Constraints Integration Guide
+>>>>>>> origin/docs/session-14-summary
 
 > **Purpose:** How to wire up and use the faculty scheduling constraints implemented in Phases 1-4.
 

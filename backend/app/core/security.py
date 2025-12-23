@@ -344,7 +344,7 @@ async def get_current_user(
     # Priority 1: Check httpOnly cookie (secure against XSS)
     cookie_token = request.cookies.get("access_token")
     if cookie_token:
-        # Cookie format is "Bearer <token>", extract the token
+        # PGY2-01ie format is "Bearer <token>", extract the token
         if cookie_token.startswith("Bearer "):
             token = cookie_token[7:]
         else:

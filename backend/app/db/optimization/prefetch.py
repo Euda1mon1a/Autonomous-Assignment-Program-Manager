@@ -15,12 +15,12 @@ from sqlalchemy.orm import Session, contains_eager, joinedload, selectinload
 
 from app.models.assignment import Assignment
 from app.models.block import Block
+from app.models.certification import Certification
+from app.models.leave_request import LeaveRequest
 from app.models.person import Person
+from app.models.procedure_log import ProcedureLog
 from app.models.rotation_template import RotationTemplate
-from app.models.absence import Absence
-from app.models.swap import SwapRecord
-# Note: Certification, LeaveRequest, ProcedureLog, SwapRequest models don't exist
-# Using Absence instead of LeaveRequest, SwapRecord instead of SwapRequest
+from app.models.swap_request import SwapRequest
 
 logger = logging.getLogger(__name__)
 
@@ -120,15 +120,15 @@ def prefetch_persons_with_assignments(
         selectinload(Person.assignments).selectinload(Assignment.rotation_template),
     ]
 
-    # Optional relations (using actual model relationships)
+    # Optional relations
     if include_leave:
-        options.append(selectinload(Person.absences))
+        options.append(selectinload(Person.leave_requests))
 
-    # Note: certifications and procedures relationships may not exist on Person model
-    # if include_certifications:
-    #     options.append(selectinload(Person.certifications))
-    # if include_procedures:
-    #     options.append(selectinload(Person.procedure_logs))
+    if include_certifications:
+        options.append(selectinload(Person.certifications))
+
+    if include_procedures:
+        options.append(selectinload(Person.procedure_logs))
 
     query = query.options(*options)
 
@@ -278,32 +278,32 @@ def prefetch_schedule_data(
         )
         rotations = list(db.execute(rotations_query).scalars().all())
 
-    # Load active absences (replaces leave_requests)
-    absences_query = (
-        select(Absence)
-        .options(selectinload(Absence.person))
+    # Load active leave requests
+    leave_requests_query = (
+        select(LeaveRequest)
+        .options(selectinload(LeaveRequest.person))
         .where(
             and_(
-                Absence.start_date <= end_date,
-                Absence.end_date >= start_date,
-                Absence.status.in_(["approved", "pending"]),
+                LeaveRequest.start_date <= end_date,
+                LeaveRequest.end_date >= start_date,
+                LeaveRequest.status.in_(["approved", "pending"]),
             )
         )
     )
 
     if person_ids:
-        absences_query = absences_query.where(
-            Absence.person_id.in_(person_ids)
+        leave_requests_query = leave_requests_query.where(
+            LeaveRequest.person_id.in_(person_ids)
         )
 
-    absences = list(db.execute(absences_query).scalars().all())
+    leave_requests = list(db.execute(leave_requests_query).scalars().all())
 
     return {
         "blocks": blocks,
         "assignments": assignments,
         "persons": persons,
         "rotations": rotations,
-        "absences": absences,  # renamed from leave_requests
+        "leave_requests": leave_requests,
     }
 
 
@@ -312,7 +312,7 @@ def prefetch_swap_requests_with_details(
     person_id: Optional[str] = None,
     status: Optional[str] = None,
     limit: int = 100,
-) -> list[SwapRecord]:
+) -> list[SwapRequest]:
     """
     Prefetch swap requests with all related data.
 
@@ -323,23 +323,31 @@ def prefetch_swap_requests_with_details(
         limit: Maximum results
 
     Returns:
-        List of SwapRecord objects with relations loaded
+        List of SwapRequest objects with relations loaded
     """
-    query = select(SwapRecord).options(
-        selectinload(SwapRecord.requester),
-        selectinload(SwapRecord.target),
+    query = select(SwapRequest).options(
+        selectinload(SwapRequest.requester),
+        selectinload(SwapRequest.target_person),
+        selectinload(SwapRequest.give_assignment)
+        .selectinload(Assignment.block),
+        selectinload(SwapRequest.give_assignment)
+        .selectinload(Assignment.rotation_template),
+        selectinload(SwapRequest.receive_assignment)
+        .selectinload(Assignment.block),
+        selectinload(SwapRequest.receive_assignment)
+        .selectinload(Assignment.rotation_template),
     )
 
     if person_id:
         query = query.where(
-            (SwapRecord.requester_id == person_id)
-            | (SwapRecord.target_id == person_id)
+            (SwapRequest.requester_id == person_id)
+            | (SwapRequest.target_person_id == person_id)
         )
 
     if status:
-        query = query.where(SwapRecord.status == status)
+        query = query.where(SwapRequest.status == status)
 
-    query = query.order_by(SwapRecord.created_at.desc()).limit(limit)
+    query = query.order_by(SwapRequest.created_at.desc()).limit(limit)
 
     result = db.execute(query)
     return list(result.scalars().all())
@@ -361,9 +369,9 @@ def prefetch_person_workload_data(
         end_date: End date
 
     Returns:
-        Dictionary with person, assignments, absences
+        Dictionary with person, assignments, leave, certifications, procedures
     """
-    # Load person with available relations
+    # Load person with all relations
     person_query = (
         select(Person)
         .where(Person.id == person_id)
@@ -372,7 +380,9 @@ def prefetch_person_workload_data(
             .selectinload(Assignment.block),
             selectinload(Person.assignments)
             .selectinload(Assignment.rotation_template),
-            selectinload(Person.absences),
+            selectinload(Person.leave_requests),
+            selectinload(Person.certifications),
+            selectinload(Person.procedure_logs),
         )
     )
 
@@ -389,17 +399,32 @@ def prefetch_person_workload_data(
         if a.block and start_date <= a.block.date <= end_date
     ]
 
-    # Filter absences by date
-    filtered_absences = [
-        ab
-        for ab in person.absences
-        if ab.start_date <= end_date and ab.end_date >= start_date
+    # Filter leave requests by date
+    filtered_leave = [
+        lr
+        for lr in person.leave_requests
+        if lr.start_date <= end_date and lr.end_date >= start_date
     ]
+
+    # Filter procedures by date (if procedure_log has date field)
+    filtered_procedures = []
+    if hasattr(ProcedureLog, "date"):
+        filtered_procedures = [
+            pl
+            for pl in person.procedure_logs
+            if hasattr(pl, "date")
+            and pl.date
+            and start_date <= pl.date <= end_date
+        ]
+    else:
+        filtered_procedures = person.procedure_logs
 
     return {
         "person": person,
         "assignments": filtered_assignments,
-        "absences": filtered_absences,
+        "leave_requests": filtered_leave,
+        "certifications": person.certifications,
+        "procedure_logs": filtered_procedures,
     }
 
 

@@ -1,7 +1,7 @@
 # Core Framework
-fastapi==0.127.0
-uvicorn[standard]==0.40.0
-python-multipart==0.0.21
+fastapi==0.124.4
+uvicorn[standard]==0.38.0
+python-multipart==0.0.20
 
 # Database
 sqlalchemy==2.0.45
@@ -24,15 +24,16 @@ bcrypt>=4.0.1,<5.0.0  # Pin bcrypt version for passlib 1.7.4 compatibility (prev
 python-magic>=0.4.27  # File type detection for upload validation
 
 # API Enhancements
-fastapi-pagination==0.15.4
+fastapi-pagination==0.15.3
 fastapi-cache2==0.2.2
 slowapi==0.1.9
-strawberry-graphql[fastapi]==0.287.3
+strawberry-graphql[fastapi]==0.219.2
 
 # Data Processing
 pandas==2.3.3
-numpy==1.26.4
-scipy==1.16.3  # Scientific computing (Sparse matrix & Erlang C)
+numpy==2.3.5
+scipy==1.15.3  # Sparse matrix operations for tensegrity solver
+scipy==1.15.3  # Scientific computing for Erlang C queuing calculations
 python-dateutil==2.9.0.post0
 
 # Machine Learning
@@ -72,26 +73,26 @@ pymoo>=0.6.0
 sentry-sdk[fastapi]==2.48.0
 prometheus-fastapi-instrumentator==7.1.0
 
-# OpenTelemetry - Distributed Tracing (pinned to 1.21.0/0.42b0 for compatibility)
-opentelemetry-api==1.39.1
-opentelemetry-sdk==1.39.1
-opentelemetry-instrumentation-fastapi==0.60b1
-opentelemetry-instrumentation-sqlalchemy==0.60b1
-opentelemetry-instrumentation-redis==0.60b1
-opentelemetry-instrumentation-requests==0.60b1
-opentelemetry-instrumentation-httpx==0.60b1
+# OpenTelemetry - Distributed Tracing
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-instrumentation-fastapi>=0.41b0
+opentelemetry-instrumentation-sqlalchemy>=0.41b0
+opentelemetry-instrumentation-redis>=0.41b0
+opentelemetry-instrumentation-requests>=0.41b0
+opentelemetry-instrumentation-httpx>=0.41b0
 
-# OpenTelemetry Exporters (pinned for compatibility)
-opentelemetry-exporter-otlp-proto-grpc==1.39.1  # OTLP gRPC exporter
-opentelemetry-exporter-otlp-proto-http==1.39.1  # OTLP HTTP exporter
-opentelemetry-exporter-jaeger==1.21.0  # Jaeger exporter (last version before deprecation)
-opentelemetry-exporter-zipkin-json==1.39.1  # Zipkin exporter
+# OpenTelemetry Exporters
+opentelemetry-exporter-otlp-proto-grpc>=1.20.0  # OTLP gRPC exporter
+opentelemetry-exporter-otlp-proto-http>=1.20.0  # OTLP HTTP exporter
+opentelemetry-exporter-jaeger>=1.20.0  # Jaeger exporter (legacy)
+opentelemetry-exporter-zipkin-json>=1.20.0  # Zipkin exporter
 
 # Reporting & Export
 openpyxl==3.1.5
-reportlab==4.4.7
+reportlab==4.4.6
 python-docx==1.2.0
-icalendar==6.3.2
+icalendar==6.1.0
 
 # Background Tasks & Scheduling
 celery==5.6.0
@@ -101,7 +102,7 @@ croniter>=2.0.0  # Cron expression parsing
 
 # Development Tools
 black==25.12.0
-ruff==0.14.10
+ruff==0.14.9
 mypy==1.19.1
 isort==6.0.1
 
@@ -113,7 +114,7 @@ httpx==0.28.1
 factory-boy==3.3.3
 faker==38.2.0
 freezegun==1.5.5
-hypothesis==6.148.7
+hypothesis==6.122.3
 
 # Logging
 loguru==0.7.3

@@ -209,7 +209,6 @@ def generate_schedule(
                     rotation_template_ids=request.rotation_template_ids,
                     algorithm=algorithm,
                     timeout_seconds=request.timeout_seconds,
-                    preserve_fmit=request.preserve_fmit_assignments,
                 )
         else:
             result = engine.generate(
@@ -217,7 +216,6 @@ def generate_schedule(
                 rotation_template_ids=request.rotation_template_ids,
                 algorithm=algorithm,
                 timeout_seconds=request.timeout_seconds,
-                preserve_fmit=request.preserve_fmit_assignments,
             )
 
         # Build solver statistics if available
@@ -297,7 +295,7 @@ def generate_schedule(
     except Exception as e:
         if obs_metrics:
             obs_metrics.record_schedule_failure(algorithm)
-        logger.opt(exception=True).error("Error generating schedule: {error}", error=str(e))
+        logger.error(f"Error generating schedule: {e}", exc_info=True)
         error_msg = "An error occurred generating the schedule"
         if idempotency_request:
             idempotency_service.mark_failed(
@@ -445,7 +443,7 @@ def analyze_imported_schedules(
     clinic_file: UploadFile | None = File(None, description="Clinic schedule Excel file (optional)"),
     specialty_providers: str | None = Form(
         None,
-        description="JSON mapping of specialty to providers, e.g., {\"Sports Medicine\": [\"Tagawa\"]}"
+        description="JSON mapping of specialty to providers, e.g., {\"Sports Medicine\": [\"FAC-SPORTS\"]}"
     ),
     db: Session = Depends(get_db),
 ):

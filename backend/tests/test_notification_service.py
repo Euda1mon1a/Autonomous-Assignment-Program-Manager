@@ -30,7 +30,7 @@ from app.notifications.service import (
     NotificationService,
     ScheduledNotification,
 )
-from app.notifications.notification_types import NotificationType
+from app.notifications.templates import NotificationType
 
 
 # ============================================================================

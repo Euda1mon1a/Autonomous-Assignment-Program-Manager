@@ -1025,7 +1025,11 @@ backend/app/
 │   │   ├── __init__.py
 │   │   ├── schedule_resources.py # Schedule data resources
 │   │   ├── acgme_resources.py    # ACGME regulation resources
+<<<<<<< HEAD
 │   │   └── faculty_resources.py  # Faculty/staff resources
+=======
+│   │   └── faculty_resources.py  ***REMOVED***/staff resources
+>>>>>>> origin/docs/session-14-summary
 │   └── testing/                  # MCP-specific tests
 │       ├── __init__.py
 │       ├── test_tools.py

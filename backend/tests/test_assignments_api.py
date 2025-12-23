@@ -305,7 +305,7 @@ class TestAssignmentRoleBasedAccessControl:
             },
         )
 
-        # Faculty can list
+        ***REMOVED*** can list
         response = client.get(
             "/api/assignments",
             headers={"Authorization": f"Bearer {faculty_token}"},

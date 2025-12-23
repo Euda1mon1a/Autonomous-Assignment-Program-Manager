@@ -129,7 +129,7 @@ def sample_schedule_data(db):
             role="primary",
             created_by="test",
         )
-        # Faculty supervising
+        ***REMOVED*** supervising
         assignment3 = Assignment(
             id=uuid4(),
             block_id=block.id,

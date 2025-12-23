@@ -690,8 +690,13 @@ class PCSSeasonConfig:
     pcs_season_end_day: int = 240    # ~August 31
 
     # Departure/arrival patterns
+<<<<<<< HEAD
     departures_during_pcs: int = 3   # Faculty leaving
     arrivals_during_pcs: int = 5     # Faculty arriving (eventually)
+=======
+    departures_during_pcs: int = 3   ***REMOVED*** leaving
+    arrivals_during_pcs: int = 5     ***REMOVED*** arriving (eventually)
+>>>>>>> origin/docs/session-14-summary
     arrival_lag_days: int = 45       # Average gap between departure and replacement
     onboarding_days: int = 21        # New faculty at 50% productivity
 

@@ -514,7 +514,7 @@ class ZoneBoundaryConstraint(SoftConstraint):
 
             faculty_zone = context.zone_assignments.get(faculty.id)
             if not faculty_zone:
-                continue  # Faculty not assigned to a zone
+                continue  ***REMOVED*** not assigned to a zone
 
             for block in context.blocks:
                 b_i = context.block_idx[block.id]

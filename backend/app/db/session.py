@@ -99,7 +99,3 @@ async def async_task_session_scope():
         raise
     finally:
         session.close()
-
-
-# Alias for backwards compatibility
-get_async_session_context = async_task_session_scope

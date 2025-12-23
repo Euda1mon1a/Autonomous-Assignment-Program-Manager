@@ -52,6 +52,7 @@ First deployment session from the new Antigravity IDE environment. Established a
 **Impact:** Cannot seed resident data via API
 **Workaround:** Faculty creation works; direct database seeding possible
 
+<<<<<<< HEAD
 ### Backend Crash Loop (Resolved)
 **Symptom:** Backend container restarts endlessly.
 **Root Cause:** `numpy==2.3.5` incompatible with legacy `pyspc` and `manufacturing` libraries.
@@ -85,6 +86,8 @@ First deployment session from the new Antigravity IDE environment. Established a
 **Root Cause:** Code references functions that either don't exist or aren't exported in `__init__.py`.
 **Fix:** Add missing exports or create stub implementations.
 
+=======
+>>>>>>> origin/docs/session-14-summary
 ---
 
 ## Files Changed

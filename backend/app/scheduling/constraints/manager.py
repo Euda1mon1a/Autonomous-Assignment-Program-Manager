@@ -52,7 +52,6 @@ from .temporal import (
     WednesdayAMInternOnlyConstraint,
     WednesdayPMSingleFacultyConstraint,
 )
-from .night_float_post_call import NightFloatPostCallConstraint
 
 logger = logging.getLogger(__name__)
 
@@ -284,9 +283,6 @@ class ConstraintManager:
         manager.add(WednesdayPMSingleFacultyConstraint())
         manager.add(InvertedWednesdayConstraint())
 
-        # Night Float post-call constraint (resident recovery)
-        manager.add(NightFloatPostCallConstraint())
-
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))
         manager.add(EquityConstraint(weight=10.0))
@@ -342,9 +338,6 @@ class ConstraintManager:
         manager.add(WednesdayAMInternOnlyConstraint())
         manager.add(WednesdayPMSingleFacultyConstraint())
         manager.add(InvertedWednesdayConstraint())
-
-        # Night Float post-call constraint (resident recovery)
-        manager.add(NightFloatPostCallConstraint())
 
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))

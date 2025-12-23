@@ -270,7 +270,7 @@ class TestContingencyAnalyzer:
             for i in range(3)
         ]
 
-        # Faculty 0 covers many more assignments
+        ***REMOVED*** 0 covers many more assignments
         assignments = []
         for i in range(10):
             assignments.append(type('obj', (object,), {
@@ -287,7 +287,7 @@ class TestContingencyAnalyzer:
 
         centrality = analyzer.calculate_centrality(faculty, assignments, services)
 
-        # Faculty 0 should have highest centrality
+        ***REMOVED*** 0 should have highest centrality
         assert len(centrality) > 0
         assert centrality[0].faculty_id == faculty[0].id
 

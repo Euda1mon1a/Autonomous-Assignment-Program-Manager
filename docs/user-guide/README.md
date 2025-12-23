@@ -2,6 +2,7 @@
 
 This section contains guides for end users of the Residency Scheduler system.
 
+<<<<<<< HEAD
 ## Core Features
 
 - [Dashboard](dashboard.md) - Overview and navigation
@@ -36,3 +37,12 @@ This section contains guides for end users of the Residency Scheduler system.
 2. Check **Daily Manifest** to see today's assignments
 3. Use **Call Roster** to find on-call contacts
 4. Review **Conflicts** for any scheduling issues
+=======
+## Topics
+
+- Getting started with the system
+- Managing your schedule
+- Requesting time off
+- Viewing assignments
+
+>>>>>>> origin/docs/session-14-summary

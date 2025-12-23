@@ -179,7 +179,7 @@ def mutual_information(dist_X: list[Any], dist_Y: list[Any]) -> float:
         - High MI: Strong coupling, changes cascade
 
     Example:
-        >>> # Faculty and rotation strongly coupled
+        >>> ***REMOVED*** and rotation strongly coupled
         >>> faculty = [1, 1, 2, 2, 3, 3]
         >>> rotations = ['A', 'A', 'B', 'B', 'C', 'C']
         >>> mutual_information(faculty, rotations)

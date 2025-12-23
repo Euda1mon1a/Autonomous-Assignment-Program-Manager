@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Faculty Scheduling Specification
+=======
+***REMOVED*** Scheduling Specification
+>>>>>>> origin/docs/session-14-summary
 
 > **Version:** 1.1
 > **Created:** 2025-12-19
@@ -31,7 +35,11 @@ This document defines the complete scheduling parameters for faculty roles, FMIT
 
 ---
 
+<<<<<<< HEAD
 ## Faculty Roles and Clinic Requirements
+=======
+#***REMOVED*** Roles and Clinic Requirements
+>>>>>>> origin/docs/session-14-summary
 
 ### Role Definitions
 
@@ -91,7 +99,11 @@ FMIT Week: Friday (start) → Thursday (end)
            Independent of 4-week block boundaries
 ```
 
+<<<<<<< HEAD
 ### Faculty FMIT Constraints
+=======
+##***REMOVED*** FMIT Constraints
+>>>>>>> origin/docs/session-14-summary
 
 | Constraint | Rule |
 |------------|------|

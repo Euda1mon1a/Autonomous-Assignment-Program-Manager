@@ -198,7 +198,7 @@ class MigrationLock(Base):
     heartbeat_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Metadata
-    lock_metadata = Column(JSONType)
+    metadata = Column(JSONType)
 
     def __repr__(self):
         return f"<MigrationLock(name='{self.lock_name}', holder='{self.lock_holder}')>"

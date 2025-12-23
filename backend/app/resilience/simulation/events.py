@@ -23,7 +23,7 @@ class EventSeverity(str, Enum):
 class EventType(str, Enum):
     """Types of events that can occur during simulation."""
 
-    # Faculty events
+    ***REMOVED*** events
     FACULTY_SICK_CALL = "FACULTY_SICK_CALL"
     FACULTY_RETURN = "FACULTY_RETURN"
     FACULTY_RESIGNATION = "FACULTY_RESIGNATION"
@@ -179,7 +179,7 @@ def create_event(event_type: EventType, **kwargs: Any) -> SimulationEvent:
     """
     # Map event types to their corresponding event classes
     event_class_map: dict[EventType, type[SimulationEvent]] = {
-        # Faculty events
+        ***REMOVED*** events
         EventType.FACULTY_SICK_CALL: FacultyEvent,
         EventType.FACULTY_RETURN: FacultyEvent,
         EventType.FACULTY_RESIGNATION: FacultyEvent,
@@ -223,7 +223,7 @@ def _get_default_severity(event_type: EventType) -> EventSeverity:
         The default severity level for this event type
     """
     severity_map: dict[EventType, EventSeverity] = {
-        # Faculty events
+        ***REMOVED*** events
         EventType.FACULTY_SICK_CALL: EventSeverity.WARNING,
         EventType.FACULTY_RETURN: EventSeverity.INFO,
         EventType.FACULTY_RESIGNATION: EventSeverity.CRITICAL,

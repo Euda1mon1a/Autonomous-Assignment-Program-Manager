@@ -25,10 +25,9 @@ from app.schemas.daily_manifest import (
 )
 
 router = APIRouter()
-legacy_router = APIRouter()
 
 
-@router.get("", response_model=DailyManifestResponse)
+@router.get("/daily-manifest", response_model=DailyManifestResponse)
 def get_daily_manifest(
     date_param: date = Query(..., alias="date", description="Date for the manifest"),
     time_of_day: str | None = Query(None, description="AM or PM (optional, shows all if omitted)"),
@@ -45,7 +44,7 @@ def get_daily_manifest(
     - date: The date to query (required, format: YYYY-MM-DD)
     - time_of_day: AM or PM (optional, shows all if omitted)
 
-    Example: GET /api/daily-manifest?date=2025-01-15&time_of_day=AM
+    Example: GET /api/assignments/daily-manifest?date=2025-01-15&time_of_day=AM
     """
     # Validate time_of_day if provided
     if time_of_day and time_of_day not in ("AM", "PM"):
@@ -151,14 +150,3 @@ def get_daily_manifest(
         locations=locations,
         generated_at=datetime.utcnow(),
     )
-
-
-@legacy_router.get("/daily-manifest", response_model=DailyManifestResponse, include_in_schema=False)
-def get_daily_manifest_legacy(
-    date_param: date = Query(..., alias="date", description="Date for the manifest"),
-    time_of_day: str | None = Query(None, description="AM or PM (optional, shows all if omitted)"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-):
-    """Legacy endpoint kept for backward compatibility at /assignments/daily-manifest."""
-    return get_daily_manifest(date_param, time_of_day, db, current_user)

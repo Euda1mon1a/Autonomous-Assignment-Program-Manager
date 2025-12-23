@@ -122,7 +122,7 @@ class Tenant(Base):
         JSON, nullable=False, default=dict,
         doc="Resource quotas (max users, schedules, storage)"
     )
-    tenant_metadata = Column(
+    metadata = Column(
         JSON, nullable=False, default=dict,
         doc="Additional tenant information (address, phone, etc.)"
     )

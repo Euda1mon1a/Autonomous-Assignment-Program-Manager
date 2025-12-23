@@ -13,11 +13,10 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.assignment import Assignment
 from app.models.block import Block
-from app.models.absence import Absence
+from app.models.leave_request import LeaveRequest
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
-from app.models.swap import SwapRecord
-# Note: Using Absence instead of LeaveRequest, SwapRecord instead of SwapRequest
+from app.models.swap_request import SwapRequest
 
 logger = logging.getLogger(__name__)
 
@@ -194,7 +193,7 @@ class OptimizedQueryBuilder:
 
     def get_active_swap_requests(
         self, person_id: Optional[str] = None, include_relations: bool = True
-    ) -> list[SwapRecord]:
+    ) -> list[SwapRequest]:
         """
         Get active swap requests with relations loaded.
 
@@ -203,42 +202,48 @@ class OptimizedQueryBuilder:
             include_relations: Whether to load related objects
 
         Returns:
-            List of active SwapRecord objects
+            List of active SwapRequest objects
         """
-        query = select(SwapRecord).where(
-            SwapRecord.status.in_(["pending", "matched", "approved"])
+        query = select(SwapRequest).where(
+            SwapRequest.status.in_(["pending", "matched", "approved"])
         )
 
         if include_relations:
             query = query.options(
-                selectinload(SwapRecord.requester),
-                selectinload(SwapRecord.target),
+                selectinload(SwapRequest.requester),
+                selectinload(SwapRequest.target_person),
+                selectinload(SwapRequest.give_assignment).selectinload(
+                    Assignment.block
+                ),
+                selectinload(SwapRequest.receive_assignment).selectinload(
+                    Assignment.block
+                ),
             )
 
         if person_id:
             query = query.where(
                 or_(
-                    SwapRecord.requester_id == person_id,
-                    SwapRecord.target_id == person_id,
+                    SwapRequest.requester_id == person_id,
+                    SwapRequest.target_person_id == person_id,
                 )
             )
 
-        query = query.order_by(SwapRecord.created_at.desc())
+        query = query.order_by(SwapRequest.created_at.desc())
 
         result = self.db.execute(query)
         return list(result.scalars().all())
 
-    def get_absences_in_range(
+    def get_leave_requests_in_range(
         self,
         start_date: date,
         end_date: date,
         person_id: Optional[str] = None,
         status: Optional[str] = None,
-    ) -> list[Absence]:
+    ) -> list[LeaveRequest]:
         """
-        Get absences that overlap with date range.
+        Get leave requests that overlap with date range.
 
-        Optimized query for finding absence conflicts.
+        Optimized query for finding leave request conflicts.
 
         Args:
             start_date: Range start date
@@ -247,27 +252,27 @@ class OptimizedQueryBuilder:
             status: Filter by status
 
         Returns:
-            List of Absence objects
+            List of LeaveRequest objects
         """
-        # Overlap condition: absence.start <= range.end AND absence.end >= range.start
+        # Overlap condition: leave.start <= range.end AND leave.end >= range.start
         query = (
-            select(Absence)
-            .options(selectinload(Absence.person))
+            select(LeaveRequest)
+            .options(selectinload(LeaveRequest.person))
             .where(
                 and_(
-                    Absence.start_date <= end_date,
-                    Absence.end_date >= start_date,
+                    LeaveRequest.start_date <= end_date,
+                    LeaveRequest.end_date >= start_date,
                 )
             )
         )
 
         if person_id:
-            query = query.where(Absence.person_id == person_id)
+            query = query.where(LeaveRequest.person_id == person_id)
 
         if status:
-            query = query.where(Absence.status == status)
+            query = query.where(LeaveRequest.status == status)
 
-        query = query.order_by(Absence.start_date)
+        query = query.order_by(LeaveRequest.start_date)
 
         result = self.db.execute(query)
         return list(result.scalars().all())

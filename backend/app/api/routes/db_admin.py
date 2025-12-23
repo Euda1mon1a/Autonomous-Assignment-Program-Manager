@@ -11,8 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_active_user
-from app.auth.permissions.decorators import require_role
+from app.core.security import get_current_active_user, require_role
 from app.db.optimization import IndexAdvisor, QueryAnalyzer
 from app.db.optimization.query_builder import OptimizedQueryBuilder
 from app.db.session import get_db

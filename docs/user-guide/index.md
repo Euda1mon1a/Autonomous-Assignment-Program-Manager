@@ -62,6 +62,7 @@ Export to Excel, PDF, and calendar formats.
 </div>
 
 <div class="feature-card" markdown>
+<<<<<<< HEAD
 ### :material-alert: [Conflict Resolution](conflicts.md)
 Detect, review, and resolve scheduling conflicts.
 </div>
@@ -82,6 +83,8 @@ On-call schedule with contact information.
 </div>
 
 <div class="feature-card" markdown>
+=======
+>>>>>>> origin/docs/session-14-summary
 ### :material-gamepad-variant: [Game Theory Analysis](game-theory.md)
 Test configurations using Axelrod's tournament framework.
 </div>

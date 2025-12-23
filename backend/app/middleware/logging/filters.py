@@ -210,7 +210,7 @@ class SensitiveDataFilter:
 
         Common sensitive headers:
         - Authorization
-        - Cookie
+        - PGY2-01ie
         - X-API-Key
         - X-Auth-Token
         """

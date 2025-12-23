@@ -3,18 +3,13 @@
 Exposes the ConflictAutoResolver service for analyzing and resolving
 schedule conflicts with safety checks and impact assessment.
 """
-from datetime import date
-from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel
-from sqlalchemy import or_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 from app.core.security import get_current_active_user
 from app.db.session import get_db
-from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus, ConflictSeverity, ConflictType
 from app.models.user import User
 from app.schemas.conflict_resolution import (
     ConflictAnalysis,
@@ -25,164 +20,6 @@ from app.schemas.conflict_resolution import (
 from app.services.conflict_auto_resolver import ConflictAutoResolver
 
 router = APIRouter()
-
-
-# ============================================================================
-# Schemas for list endpoint
-# ============================================================================
-
-class ConflictItem(BaseModel):
-    """Schema for a conflict item in the list."""
-    id: UUID
-    conflict_type: str
-    severity: str
-    status: str
-    description: str
-    fmit_week: date
-    faculty_id: UUID
-    faculty_name: Optional[str] = None
-    created_at: str
-    acknowledged_at: Optional[str] = None
-    resolved_at: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
-class ConflictListResponse(BaseModel):
-    """Schema for conflict list response."""
-    items: List[ConflictItem]
-    total: int
-    page: int
-    page_size: int
-    pages: int
-
-
-# ============================================================================
-# List Endpoint
-# ============================================================================
-
-@router.get("", response_model=ConflictListResponse)
-def list_conflicts(
-    types: Optional[str] = Query(None, description="Comma-separated conflict types"),
-    severities: Optional[str] = Query(None, description="Comma-separated severities"),
-    statuses: Optional[str] = Query(None, description="Comma-separated statuses"),
-    person_ids: Optional[str] = Query(None, description="Comma-separated person IDs"),
-    start_date: Optional[date] = Query(None, description="Filter conflicts from this date"),
-    end_date: Optional[date] = Query(None, description="Filter conflicts until this date"),
-    search: Optional[str] = Query(None, description="Search in description"),
-    sort_by: str = Query("created_at", description="Sort field"),
-    sort_dir: str = Query("desc", description="Sort direction (asc/desc)"),
-    page: int = Query(1, ge=1, description="Page number"),
-    page_size: int = Query(20, ge=1, le=100, description="Page size"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-):
-    """
-    List conflict alerts with filtering, sorting, and pagination.
-
-    Returns conflict alerts from the database, supporting various filters
-    for status, type, severity, date range, and affected person.
-    """
-    query = db.query(ConflictAlert).options(joinedload(ConflictAlert.faculty))
-
-    # Apply filters with validation
-    if types:
-        try:
-            type_list = [ConflictType(t.strip()) for t in types.split(",")]
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid conflict type value",
-            )
-        query = query.filter(ConflictAlert.conflict_type.in_(type_list))
-
-    if severities:
-        try:
-            severity_list = [ConflictSeverity(s.strip()) for s in severities.split(",")]
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid severity value",
-            )
-        query = query.filter(ConflictAlert.severity.in_(severity_list))
-
-    if statuses:
-        try:
-            status_list = [ConflictAlertStatus(s.strip()) for s in statuses.split(",")]
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid status value",
-            )
-        query = query.filter(ConflictAlert.status.in_(status_list))
-
-    if person_ids:
-        try:
-            person_id_list = [UUID(p.strip()) for p in person_ids.split(",")]
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid person_ids UUID value",
-            )
-        query = query.filter(ConflictAlert.faculty_id.in_(person_id_list))
-
-    if start_date:
-        query = query.filter(ConflictAlert.fmit_week >= start_date)
-
-    if end_date:
-        query = query.filter(ConflictAlert.fmit_week <= end_date)
-
-    if search:
-        query = query.filter(ConflictAlert.description.ilike(f"%{search}%"))
-
-    # Get total count
-    total = query.count()
-
-    # Apply sorting (whitelist allowed fields)
-    sortable_fields = {
-        "created_at": ConflictAlert.created_at,
-        "fmit_week": ConflictAlert.fmit_week,
-        "severity": ConflictAlert.severity,
-        "status": ConflictAlert.status,
-    }
-    sort_column = sortable_fields.get(sort_by, ConflictAlert.created_at)
-    if sort_dir.lower() == "desc":
-        query = query.order_by(sort_column.desc())
-    else:
-        query = query.order_by(sort_column.asc())
-
-    # Apply pagination
-    offset = (page - 1) * page_size
-    conflicts = query.offset(offset).limit(page_size).all()
-
-    # Convert to response items
-    items = []
-    for conflict in conflicts:
-        items.append(ConflictItem(
-            id=conflict.id,
-            conflict_type=conflict.conflict_type.value if conflict.conflict_type else "unknown",
-            severity=conflict.severity.value if conflict.severity else "warning",
-            status=conflict.status.value if conflict.status else "new",
-            description=conflict.description or "",
-            fmit_week=conflict.fmit_week,
-            faculty_id=conflict.faculty_id,
-            faculty_name=conflict.faculty.name if conflict.faculty else None,
-            created_at=conflict.created_at.isoformat() if conflict.created_at else "",
-            acknowledged_at=conflict.acknowledged_at.isoformat() if conflict.acknowledged_at else None,
-            resolved_at=conflict.resolved_at.isoformat() if conflict.resolved_at else None,
-        ))
-
-    # Calculate pages
-    pages = (total + page_size - 1) // page_size if total > 0 else 0
-
-    return ConflictListResponse(
-        items=items,
-        total=total,
-        page=page,
-        page_size=page_size,
-        pages=pages,
-    )
 
 
 @router.get("/{conflict_id}/analyze", response_model=ConflictAnalysis)

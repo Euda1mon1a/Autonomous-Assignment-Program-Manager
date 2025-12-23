@@ -108,7 +108,7 @@ class WorkloadOptimizer:
         features["is_resident"] = 1 if person_data.get("type") == "resident" else 0
         features["pgy_level"] = person_data.get("pgy_level", 0) or 0
 
-        # Faculty role encoding
+        ***REMOVED*** role encoding
         faculty_role = person_data.get("faculty_role", "")
         for role in ["pd", "apd", "oic", "dept_chief", "sports_med", "core"]:
             features[f"role_{role}"] = 1 if faculty_role == role else 0

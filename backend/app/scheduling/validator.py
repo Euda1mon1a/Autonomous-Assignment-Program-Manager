@@ -65,12 +65,7 @@ class ACGMEValidator:
         """
         self.db = db
 
-    def validate_all(
-        self,
-        start_date: date,
-        end_date: date,
-        assignments: list[Assignment] | None = None,
-    ) -> ValidationResult:
+    def validate_all(self, start_date: date, end_date: date) -> ValidationResult:
         """
         Run all ACGME validation checks for a schedule period.
 
@@ -80,7 +75,6 @@ class ACGMEValidator:
         Args:
             start_date: Start date of validation period
             end_date: End date of validation period (inclusive)
-            assignments: Optional candidate assignments; if omitted, queries DB
 
         Returns:
             ValidationResult with:
@@ -124,9 +118,12 @@ class ACGMEValidator:
         # Get all residents
         residents = self.db.query(Person).filter(Person.type == "resident").all()
 
-        # Get assignments in range (prefer provided candidate assignments)
-        assignments = self._select_assignments_in_range(
-            assignments, start_date, end_date
+        # Get all assignments in range
+        assignments = (
+            self.db.query(Assignment)
+            .join(Block)
+            .filter(Block.date >= start_date, Block.date <= end_date)
+            .all()
         )
 
         # Check each resident
@@ -247,7 +244,7 @@ class ACGMEValidator:
         # Get unique dates with assignments
         dates_with_assignments = set()
         for assignment in assignments:
-            block = self._get_block_for_assignment(assignment)
+            block = self.db.query(Block).filter(Block.id == assignment.block_id).first()
             if block:
                 dates_with_assignments.add(block.date)
 
@@ -350,46 +347,11 @@ class ACGMEValidator:
         hours_by_date = defaultdict(int)
 
         for assignment in assignments:
-            block = self._get_block_for_assignment(assignment)
+            block = self.db.query(Block).filter(Block.id == assignment.block_id).first()
             if block:
                 hours_by_date[block.date] += self.HOURS_PER_HALF_DAY
 
         return dict(hours_by_date)
-
-    def _select_assignments_in_range(
-        self,
-        assignments: list[Assignment] | None,
-        start_date: date,
-        end_date: date,
-    ) -> list[Assignment]:
-        """
-        Prefer candidate assignments if provided, otherwise query database.
-        Ensures all returned assignments fall within the requested window.
-        """
-        if assignments is None:
-            return (
-                self.db.query(Assignment)
-                .join(Block)
-                .filter(Block.date >= start_date, Block.date <= end_date)
-                .all()
-            )
-
-        in_range = []
-        for assignment in assignments:
-            block = self._get_block_for_assignment(assignment)
-            if block and start_date <= block.date <= end_date:
-                in_range.append(assignment)
-        return in_range
-
-    def _get_block_for_assignment(self, assignment: Assignment) -> Block | None:
-        """Retrieve the block for an assignment, preferring already-loaded relations."""
-        if hasattr(assignment, "block") and assignment.block is not None:
-            return assignment.block
-        return (
-            self.db.query(Block)
-            .filter(Block.id == assignment.block_id)
-            .first()
-        )
 
     def _is_resident(self, person_id) -> bool:
         """Check if person is a resident."""

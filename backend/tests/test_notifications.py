@@ -17,7 +17,7 @@ class TestEmailTemplates:
 
     def test_certification_reminder_template(self):
         """Test certification reminder template exists."""
-        from app.notifications.notification_types import get_certification_reminder_template
+        from app.notifications.templates import get_certification_reminder_template
 
         template = get_certification_reminder_template(
             person_name="Dr. Jane Smith",
@@ -32,7 +32,7 @@ class TestEmailTemplates:
 
     def test_schedule_notification_template(self):
         """Test schedule notification template."""
-        from app.notifications.notification_types import get_schedule_notification_template
+        from app.notifications.templates import get_schedule_notification_template
 
         template = get_schedule_notification_template(
             person_name="Dr. John Doe",

@@ -60,7 +60,11 @@ This directory contains drag-and-drop schedule components for annual scheduling 
 - `academicYear?: number` - Year (e.g., 2024 for AY 2024-2025)
 - `startMonth?: number` - Start month (default: 6 = July)
 
+<<<<<<< HEAD
 ### FacultyInpatientWeeksView.tsx
+=======
+##***REMOVED***InpatientWeeksView.tsx
+>>>>>>> origin/docs/session-14-summary
 
 **Purpose**: Faculty-focused view for inpatient service week management.
 

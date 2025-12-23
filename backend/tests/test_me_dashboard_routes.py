@@ -1359,7 +1359,7 @@ class TestDashboardErrors:
 
 
 # ============================================================================
-# Faculty User Tests
+***REMOVED*** User Tests
 # ============================================================================
 
 class TestDashboardFaculty:
@@ -1393,7 +1393,7 @@ class TestDashboardFaculty:
 
         assert data["user"]["id"] == str(person.id)
         assert data["user"]["role"] == "faculty"
-        assert data["user"]["pgy_level"] is None  # Faculty don't have PGY level
+        assert data["user"]["pgy_level"] is None  ***REMOVED*** don't have PGY level
 
 
 # ============================================================================

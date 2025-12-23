@@ -37,7 +37,7 @@ class SagaExecution(Base):
     # Input and context
     input_data = Column(JSONType(), nullable=False)
     context_data = Column(JSONType(), nullable=True)
-    saga_metadata = Column(JSONType(), nullable=True)
+    metadata = Column(JSONType(), nullable=True)
 
     # Timing
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

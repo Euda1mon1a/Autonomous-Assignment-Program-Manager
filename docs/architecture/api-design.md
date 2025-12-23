@@ -422,7 +422,11 @@ The API uses **JWT (JSON Web Tokens)** with the following claims:
 }
 ```
 
+<<<<<<< HEAD
 ### Cookie-Based Authentication Flow
+=======
+### PGY2-01ie-Based Authentication Flow
+>>>>>>> origin/docs/session-14-summary
 
 **Security Note**: Tokens are stored in **httpOnly cookies** to prevent XSS attacks.
 
@@ -442,7 +446,11 @@ Content-Type: application/json
 
 ```http
 HTTP/1.1 200 OK
+<<<<<<< HEAD
 Set-Cookie: access_token=Bearer eyJ...; HttpOnly; Secure; SameSite=Lax; Max-Age=86400; Path=/
+=======
+Set-PGY2-01ie: access_token=Bearer eyJ...; HttpOnly; Secure; SameSite=Lax; Max-Age=86400; Path=/
+>>>>>>> origin/docs/session-14-summary
 Content-Type: application/json
 
 {
@@ -452,7 +460,11 @@ Content-Type: application/json
 }
 ```
 
+<<<<<<< HEAD
 **Cookie Attributes:**
+=======
+**PGY2-01ie Attributes:**
+>>>>>>> origin/docs/session-14-summary
 - `HttpOnly`: JavaScript cannot access (XSS protection)
 - `Secure`: HTTPS only in production
 - `SameSite=Lax`: CSRF protection
@@ -461,11 +473,19 @@ Content-Type: application/json
 
 #### 2. Authenticated Requests
 
+<<<<<<< HEAD
 Cookies are sent automatically by the browser:
 
 ```http
 GET /api/v1/people
 Cookie: access_token=Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+=======
+PGY2-01ies are sent automatically by the browser:
+
+```http
+GET /api/v1/people
+PGY2-01ie: access_token=Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+>>>>>>> origin/docs/session-14-summary
 
 HTTP/1.1 200 OK
 {
@@ -478,10 +498,17 @@ HTTP/1.1 200 OK
 
 ```http
 POST /api/v1/auth/logout
+<<<<<<< HEAD
 Cookie: access_token=Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 
 HTTP/1.1 200 OK
 Set-Cookie: access_token=; Max-Age=0; Path=/
+=======
+PGY2-01ie: access_token=Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+
+HTTP/1.1 200 OK
+Set-PGY2-01ie: access_token=; Max-Age=0; Path=/
+>>>>>>> origin/docs/session-14-summary
 {
   "message": "Successfully logged out"
 }
@@ -499,7 +526,11 @@ Set-Cookie: access_token=; Max-Age=0; Path=/
 # Planned refresh endpoint
 @router.post("/auth/refresh", response_model=Token)
 async def refresh_token(
+<<<<<<< HEAD
     refresh_token: str = Cookie(None),
+=======
+    refresh_token: str = PGY2-01ie(None),
+>>>>>>> origin/docs/session-14-summary
     db: Session = Depends(get_db)
 ):
     """Refresh access token using refresh token."""
@@ -566,7 +597,11 @@ import { api } from '@/lib/api';
  */
 export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
   const response = await api.post<LoginResponse>('/v1/auth/login', credentials);
+<<<<<<< HEAD
   // Cookie is automatically set by browser from Set-Cookie header
+=======
+  // PGY2-01ie is automatically set by browser from Set-PGY2-01ie header
+>>>>>>> origin/docs/session-14-summary
   return response.data;
 }
 
@@ -575,7 +610,11 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
  */
 export async function logout(): Promise<void> {
   await api.post('/v1/auth/logout');
+<<<<<<< HEAD
   // Cookie is automatically cleared by Set-Cookie header
+=======
+  // PGY2-01ie is automatically cleared by Set-PGY2-01ie header
+>>>>>>> origin/docs/session-14-summary
   window.location.href = '/login';
 }
 
@@ -583,7 +622,11 @@ export async function logout(): Promise<void> {
  * All authenticated requests automatically include cookie
  */
 export async function getPeople(): Promise<PersonListResponse> {
+<<<<<<< HEAD
   // Cookie sent automatically - no manual header needed!
+=======
+  // PGY2-01ie sent automatically - no manual header needed!
+>>>>>>> origin/docs/session-14-summary
   const response = await api.get<PersonListResponse>('/v1/people');
   return response.data;
 }

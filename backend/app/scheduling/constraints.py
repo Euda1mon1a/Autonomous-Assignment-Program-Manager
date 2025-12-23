@@ -208,7 +208,7 @@ class SchedulingContext:
     # Target: <0.80 to maintain 20% buffer per queuing theory
     current_utilization: float = 0.0
 
-    # Faculty whose loss creates N-1 vulnerability (single point of failure)
+    ***REMOVED*** whose loss creates N-1 vulnerability (single point of failure)
     n1_vulnerable_faculty: set[UUID] = field(default_factory=set)
 
     # Preference trails from stigmergy: {faculty_id: {slot_type: strength}}
@@ -1147,7 +1147,7 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
                             if (r_i, b_i, t_i) in template_vars:
                                 clinic_vars.append(template_vars[r_i, b_i, t_i])
 
-            # Faculty assignments are typically handled post-hoc,
+            ***REMOVED*** assignments are typically handled post-hoc,
             # but if faculty variables exist, include them
             faculty_vars = variables.get("faculty_assignments", {})
             if faculty_vars:
@@ -2193,7 +2193,7 @@ class ZoneBoundaryConstraint(SoftConstraint):
 
             faculty_zone = context.zone_assignments.get(faculty.id)
             if not faculty_zone:
-                continue  # Faculty not assigned to a zone
+                continue  ***REMOVED*** not assigned to a zone
 
             for block in context.blocks:
                 b_i = context.block_idx[block.id]

@@ -288,7 +288,7 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
                             if (r_i, b_i, t_i) in template_vars:
                                 clinic_vars.append(template_vars[r_i, b_i, t_i])
 
-            # Faculty assignments are typically handled post-hoc,
+            ***REMOVED*** assignments are typically handled post-hoc,
             # but if faculty variables exist, include them
             faculty_vars = variables.get("faculty_assignments", {})
             if faculty_vars:

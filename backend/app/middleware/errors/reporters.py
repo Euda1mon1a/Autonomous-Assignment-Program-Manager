@@ -151,7 +151,7 @@ class NotificationReporter(ErrorReporter):
         """
         try:
             from app.notifications import get_notification_service
-            from app.notifications.notification_types import NotificationType
+            from app.notifications.templates import NotificationType
             from app.db.session import get_db
 
             # Only notify for critical errors or recurring errors

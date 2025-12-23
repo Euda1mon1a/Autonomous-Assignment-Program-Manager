@@ -51,18 +51,6 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
 
-    # Academic Year Configuration
-    # Residency academic year starts July 1
-    ACADEMIC_YEAR_START_MONTH: int = 7  # July
-    ACADEMIC_YEAR_START_DAY: int = 1
-    BLOCK_LENGTH_DAYS: int = 28  # 4-week blocks
-
-    @property
-    def ACADEMIC_YEAR_START(self) -> "date":
-        """Get academic year start as a date object (July 1 of current year)."""
-        from datetime import date
-        return date(date.today().year, self.ACADEMIC_YEAR_START_MONTH, self.ACADEMIC_YEAR_START_DAY)
-
     # Logging
     LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
     LOG_FORMAT: str = "text"  # json for production, text for development
@@ -103,10 +91,6 @@ class Settings(BaseSettings):
             str: Redis URL with password embedded if password is configured,
                  otherwise returns the base REDIS_URL.
         """
-        # Check if password is already in the URL (format: redis://:password@host)
-        if "@" in self.REDIS_URL and self.REDIS_URL.startswith("redis://:"):
-            # Password already embedded in URL, use it as-is
-            return self.REDIS_URL
         if self.REDIS_PASSWORD:
             # Insert password into URL (format: redis://:password@host:port/db)
             return self.REDIS_URL.replace("redis://", f"redis://:{self.REDIS_PASSWORD}@")

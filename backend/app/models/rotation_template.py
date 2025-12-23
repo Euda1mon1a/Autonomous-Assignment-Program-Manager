@@ -47,11 +47,6 @@ class RotationTemplate(Base):
     supervision_required = Column(Boolean, default=True)
     max_supervision_ratio = Column(Integer, default=4)  # 1 faculty : N residents
 
-    # Block-half rotation support (for split rotations like Night Float)
-    # True = rotation applies to only half a block (2 weeks), paired with another rotation
-    # Used for Night Float where residents swap mid-block to ensure continuous coverage
-    is_block_half_rotation = Column(Boolean, default=False, nullable=False)
-
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
 

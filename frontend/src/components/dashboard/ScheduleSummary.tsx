@@ -110,7 +110,11 @@ export function ScheduleSummary() {
 
       <div className="mt-4 pt-4 border-t">
         <Link
+<<<<<<< HEAD
           href="/schedule"
+=======
+          href="/"
+>>>>>>> origin/docs/session-14-summary
           className="text-sm text-blue-600 hover:text-blue-800 font-medium"
         >
           View Full Schedule &rarr;

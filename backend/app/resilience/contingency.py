@@ -108,7 +108,7 @@ class CentralityScore:
 @dataclass
 class CascadeSimulation:
     """Results of simulating a cascade failure."""
-    initial_failures: list[UUID]  # Faculty who initially failed
+    initial_failures: list[UUID]  ***REMOVED*** who initially failed
     cascade_steps: list[dict]  # Each step: {step, failed_faculty, reason, remaining}
     total_failures: int
     final_coverage: float

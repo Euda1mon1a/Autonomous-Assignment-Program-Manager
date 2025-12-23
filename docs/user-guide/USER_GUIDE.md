@@ -75,7 +75,11 @@ Schedule management access:
 - Export data
 - **Cannot access** Settings
 
+<<<<<<< HEAD
 ### Faculty
+=======
+##***REMOVED***
+>>>>>>> origin/docs/session-14-summary
 View-only access:
 - View schedules and their assignments
 - View compliance status
@@ -151,7 +155,11 @@ Click the **Res.** button (graduation cap icon) to access:
 3. Release to move the assignment
 4. A toast notification confirms the change
 
+<<<<<<< HEAD
 #### Faculty Inpatient Weeks View (Fac.)
+=======
+###***REMOVED*** Inpatient Weeks View (Fac.)
+>>>>>>> origin/docs/session-14-summary
 
 Click the **Fac.** button (users icon) to access:
 - Faculty-focused view for managing inpatient service weeks

@@ -98,6 +98,7 @@ Validates system state before deployment.
 
 Fixes npm audit issues in the frontend.
 
+<<<<<<< HEAD
 ## Excel Tools
 
 ### excel/CSVAutoExport.bas
@@ -135,6 +136,8 @@ python scripts/import_excel.py absences.xlsx --verbose
 
 See docstring in script for supported formats and abbreviations.
 
+=======
+>>>>>>> origin/docs/session-14-summary
 ## Running Scripts
 
 Most Python scripts require the backend environment:

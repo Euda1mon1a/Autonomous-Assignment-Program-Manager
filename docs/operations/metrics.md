@@ -224,7 +224,11 @@ resilience_n2_compliant == 0
 # Total available faculty
 resilience_faculty_available{type="total"}
 
+<<<<<<< HEAD
 # Faculty on duty
+=======
+***REMOVED*** on duty
+>>>>>>> origin/docs/session-14-summary
 resilience_faculty_available{type="on_duty"}
 
 # Alert when faculty count drops
@@ -686,7 +690,11 @@ sum(pgy1_unsupervised_procedures_total) by (procedure_type)
 
 **Example:**
 ```promql
+<<<<<<< HEAD
 # Faculty coverage gaps
+=======
+***REMOVED*** coverage gaps
+>>>>>>> origin/docs/session-14-summary
 scheduled_blocks_without_faculty_gauge > 0
 ```
 
@@ -769,7 +777,11 @@ rate(resilience_crisis_activations_total[1h])
 # Load shedding active
 resilience_load_shedding_level > 0
 
+<<<<<<< HEAD
 # Faculty shortage
+=======
+***REMOVED*** shortage
+>>>>>>> origin/docs/session-14-summary
 resilience_faculty_available{type="total"} < 15
 ```
 

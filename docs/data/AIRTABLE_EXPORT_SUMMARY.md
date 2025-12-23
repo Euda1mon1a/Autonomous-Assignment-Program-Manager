@@ -35,7 +35,11 @@
 - Must have night float coverage in every block
 - Cannot merge rotations with different sequences
 
+<<<<<<< HEAD
 ### Faculty Assignment Rules
+=======
+##***REMOVED*** Assignment Rules
+>>>>>>> origin/docs/session-14-summary
 - **FAC-CORE-04:** EXCLUDED from assignments (example)
 - **FAC-CORE-06:** NOW ASSIGNABLE (exclusions removed)
 - **FAC-ADJUNCT-01:** Has specific exclusions
@@ -88,6 +92,7 @@ Tracking implemented for:
 ## Sample Data
 
 ### Residents
+<<<<<<< HEAD
 - Cook (PGY-2)
 - You (PGY-3)
 - Monsivais (PGY-1)
@@ -96,6 +101,16 @@ Tracking implemented for:
 - ... (17 total)
 
 ### Faculty
+=======
+- PGY2-01
+- PGY3-01
+- PGY1-01
+- PGY1-02
+- PGY3-02
+- ... (17 total)
+
+##***REMOVED***
+>>>>>>> origin/docs/session-14-summary
 - FAC-PD
 - FAC-APD
 - FAC-OIC
@@ -103,6 +118,11 @@ Tracking implemented for:
 - FAC-CORE-02
 - ... (12 total)
 
+<<<<<<< HEAD
+=======
+> **Note:** Real names removed per DATA_SECURITY_POLICY.md
+
+>>>>>>> origin/docs/session-14-summary
 ---
 
 ## Implementation Opportunities
@@ -110,7 +130,11 @@ Tracking implemented for:
 1. **Import residents/faculty** from Airtable to local DB
 2. **Apply rotation sequence logic** to scheduling constraints
 3. **Implement procedure supervision counters**
+<<<<<<< HEAD
 4. **Add faculty exclusion rules** (Colgan exclusions, etc.)
+=======
+4. **Add faculty exclusion rules** (exclusion rules for specific faculty, etc.)
+>>>>>>> origin/docs/session-14-summary
 5. **Use 25 primary duties** for role-based scheduling
 
 ---

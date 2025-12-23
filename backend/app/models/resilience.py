@@ -124,8 +124,8 @@ class ResilienceEvent(Base):
     # Related entities
     related_health_check_id = Column(GUID(), ForeignKey("resilience_health_checks.id"))
 
-    # Additional context (maps to DB column 'metadata' - reserved name workaround)
-    event_metadata = Column('metadata', JSONType())
+    # Additional context
+    event_metadata = Column(JSONType())
 
     # Relationships
     health_check = relationship("ResilienceHealthCheck", backref="events")
@@ -270,7 +270,7 @@ class VulnerabilityRecord(Base):
     # Vulnerability details
     n1_vulnerabilities = Column(JSONType())  # List of single-loss vulnerabilities
     n2_fatal_pairs = Column(JSONType())  # List of fatal faculty pairs
-    most_critical_faculty = Column(JSONType())  # Faculty IDs with highest centrality
+    most_critical_faculty = Column(JSONType())  ***REMOVED*** IDs with highest centrality
 
     # Recommendations generated
     recommended_actions = Column(StringArrayType())
@@ -373,7 +373,7 @@ class AllostasisRecord(Base):
     __tablename__ = "allostasis_records"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    entity_id = Column(GUID(), nullable=False)  # Faculty ID or system UUID
+    entity_id = Column(GUID(), nullable=False)  ***REMOVED*** ID or system UUID
     entity_type = Column(String(20), nullable=False)  # "faculty" or "system"
     calculated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
@@ -727,8 +727,8 @@ class DecisionOutcome(str, enum.Enum):
 
 class TrailType(str, enum.Enum):
     """Types of preference trails."""
-    PREFERENCE = "preference"       # Faculty prefers this slot
-    AVOIDANCE = "avoidance"         # Faculty avoids this slot
+    PREFERENCE = "preference"       ***REMOVED*** prefers this slot
+    AVOIDANCE = "avoidance"         ***REMOVED*** avoids this slot
     SWAP_AFFINITY = "swap_affinity"  # Willing to swap with specific person
     WORKLOAD = "workload"           # Preferred workload pattern
     SEQUENCE = "sequence"           # Preferred assignment sequences

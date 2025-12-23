@@ -41,7 +41,11 @@ flowchart TD
 - Smart Association Engine (code node)
 - Batch updates with rate limiting
 
+<<<<<<< HEAD
 ### Faculty Master Assignment Generator
+=======
+##***REMOVED*** Master Assignment Generator
+>>>>>>> origin/docs/session-14-summary
 **Multiple versions** - handles:
 - PCAT (Procedure Clinic Attending Time)
 - Call/leave conflict detection

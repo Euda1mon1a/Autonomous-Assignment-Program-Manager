@@ -812,7 +812,11 @@ class NetworkEpidemiologyAnalyzer:
     def identify_transmission_chains(
         self,
         network: nx.Graph,
+<<<<<<< HEAD
         outbreak_source: UUID,  # Faculty who became burned out
+=======
+        outbreak_source: UUID,  ***REMOVED*** who became burned out
+>>>>>>> origin/docs/session-14-summary
         allostatic_loads: dict[UUID, float],
     ) -> list[TransmissionChain]:
         """

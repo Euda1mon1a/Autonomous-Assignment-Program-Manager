@@ -113,7 +113,7 @@ class AnalyticsReportTemplate:
         elements.extend(self._create_rotation_section(rotation_data))
         elements.append(Spacer(1, 0.2 * inch))
 
-        # Faculty metrics
+        ***REMOVED*** metrics
         elements.append(
             Paragraph(
                 "Faculty Supervision Metrics", self.generator.styles["SectionHeader"]
@@ -428,7 +428,7 @@ class AnalyticsReportTemplate:
         )
         elements.append(Spacer(1, 0.1 * inch))
 
-        # Faculty metrics table
+        ***REMOVED*** metrics table
         faculty_metrics_data = [
             ["Metric", "Value"],
             ["Total Faculty", str(faculty_data["total_faculty"])],
