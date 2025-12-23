@@ -171,14 +171,14 @@ def get_swap_history(
             SwapRecordResponse(
                 id=swap.id,
                 source_faculty_id=swap.source_faculty_id,
-                source_faculty_name=swap.source_faculty.name
-                if swap.source_faculty
-                else "Unknown",
+                source_faculty_name=(
+                    swap.source_faculty.name if swap.source_faculty else "Unknown"
+                ),
                 source_week=swap.source_week,
                 target_faculty_id=swap.target_faculty_id,
-                target_faculty_name=swap.target_faculty.name
-                if swap.target_faculty
-                else "Unknown",
+                target_faculty_name=(
+                    swap.target_faculty.name if swap.target_faculty else "Unknown"
+                ),
                 target_week=swap.target_week,
                 swap_type=swap.swap_type,
                 status=swap.status,
@@ -226,14 +226,14 @@ def get_swap(
     return SwapRecordResponse(
         id=swap.id,
         source_faculty_id=swap.source_faculty_id,
-        source_faculty_name=swap.source_faculty.name
-        if swap.source_faculty
-        else "Unknown",
+        source_faculty_name=(
+            swap.source_faculty.name if swap.source_faculty else "Unknown"
+        ),
         source_week=swap.source_week,
         target_faculty_id=swap.target_faculty_id,
-        target_faculty_name=swap.target_faculty.name
-        if swap.target_faculty
-        else "Unknown",
+        target_faculty_name=(
+            swap.target_faculty.name if swap.target_faculty else "Unknown"
+        ),
         target_week=swap.target_week,
         swap_type=swap.swap_type,
         status=swap.status,

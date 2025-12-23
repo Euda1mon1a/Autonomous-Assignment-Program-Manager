@@ -197,9 +197,9 @@ class TestSwapFinderPerformance:
         elapsed_time = time.time() - start_time
 
         ***REMOVED*** Performance assertion: Must complete in < 1 second
-        assert elapsed_time < 1.0, (
-            f"find_swap_candidates took {elapsed_time:.3f}s (> 1.0s)"
-        )
+        assert (
+            elapsed_time < 1.0
+        ), f"find_swap_candidates took {elapsed_time:.3f}s (> 1.0s)"
 
         ***REMOVED*** Verify results
         assert isinstance(candidates, list)

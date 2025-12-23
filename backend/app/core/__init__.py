@@ -1,45 +1,34 @@
 ***REMOVED*** Core module
 
 ***REMOVED*** Export TypedDict definitions for type safety
-from app.core.types import (
-    ***REMOVED*** ACGME Compliance
+from app.core.types import (  ***REMOVED*** ACGME Compliance; Audit; Coverage and Analytics; ACGME Duty Hours; Fatigue Tracking; Notifications; Person and Assignment; Resilience and API; Schedule and Metrics; Swap Management; Swap Matching
     ACGMEViolation,
     AnalyticsReport,
     APIResponse,
     AssignmentInfo,
-    ***REMOVED*** Audit
     AuditStatistics,
     BlockInfo,
     ComplianceResult,
     CoverageReport,
-    ***REMOVED*** Coverage and Analytics
     CoverageReportItem,
     DutyHoursBreakdown,
     DutyHoursDays,
     DutyHoursDetails,
-    ***REMOVED*** ACGME Duty Hours
     DutyHoursPeriod,
-    ***REMOVED*** Fatigue Tracking
     FatigueFactors,
     FatiguePredictionDay,
     FatigueScore,
     FatigueTrend,
     HighRiskResident,
-    ***REMOVED*** Notifications
     NotificationPayload,
-    ***REMOVED*** Person and Assignment
     PersonInfo,
     RecoveryNeeds,
     ResilienceAnalysisResult,
-    ***REMOVED*** Resilience and API
     ResilienceMetrics,
     ScheduleGenerationMetrics,
-    ***REMOVED*** Schedule and Metrics
     ScheduleMetrics,
-    ***REMOVED*** Swap Management
     SwapDetails,
     SwapInfo,
-    ***REMOVED*** Swap Matching
     SwapMatchResult,
     ValidationContext,
     ValidationResultDict,

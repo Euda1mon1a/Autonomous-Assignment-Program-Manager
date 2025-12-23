@@ -97,9 +97,9 @@ def sample_heatmap_data(db: Session, sample_blocks: list[Block]) -> dict:
             id=uuid4(),
             block_id=block.id,
             person_id=resident1.id if i % 2 == 0 else resident2.id,
-            rotation_template_id=clinic_template.id
-            if i % 3 == 0
-            else procedures_template.id,
+            rotation_template_id=(
+                clinic_template.id if i % 3 == 0 else procedures_template.id
+            ),
             role="primary",
         )
         assignments.append(assignment)

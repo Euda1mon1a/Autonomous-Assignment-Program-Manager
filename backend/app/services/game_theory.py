@@ -782,11 +782,11 @@ class GameTheoryService:
             results[opponent.name] = {
                 "score": match.final_score()[0],
                 "cooperation_rate": match.cooperation()[0],
-                "outcome": "win"
-                if match.winner() == config_player
-                else "loss"
-                if match.winner()
-                else "tie",
+                "outcome": (
+                    "win"
+                    if match.winner() == config_player
+                    else "loss" if match.winner() else "tie"
+                ),
             }
 
             total_score += match.final_score()[0]

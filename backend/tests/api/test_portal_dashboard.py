@@ -208,9 +208,9 @@ async def get_pending_swaps(db: Session, faculty_id: str) -> list[dict]:
             "id": str(swap.id),
             "source_week": swap.source_week,
             "requested_at": swap.requested_at,
-            "requester_name": swap.source_faculty.name
-            if swap.source_faculty
-            else "Unknown",
+            "requester_name": (
+                swap.source_faculty.name if swap.source_faculty else "Unknown"
+            ),
         }
         for swap in swaps
     ]

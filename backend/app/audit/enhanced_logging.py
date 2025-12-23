@@ -839,9 +839,9 @@ class EnhancedAuditLogger:
             changes.append(
                 FieldChangeDetail(
                     field_name=field_name,
-                    field_type=type(new_value).__name__
-                    if new_value is not None
-                    else None,
+                    field_type=(
+                        type(new_value).__name__ if new_value is not None else None
+                    ),
                     old_value=old_value,
                     new_value=new_value,
                     display_name=self._format_field_name(field_name),

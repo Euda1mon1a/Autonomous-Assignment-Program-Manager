@@ -89,9 +89,9 @@ class ConflictAutoDetector:
                 conflicts.append(
                     ConflictInfo(
                         faculty_id=absence.person_id,
-                        faculty_name=absence.person.name
-                        if absence.person
-                        else "Unknown",
+                        faculty_name=(
+                            absence.person.name if absence.person else "Unknown"
+                        ),
                         conflict_type="leave_fmit_overlap",
                         fmit_week=fmit_week,
                         leave_id=absence_id,
@@ -156,9 +156,9 @@ class ConflictAutoDetector:
                     conflicts.append(
                         ConflictInfo(
                             faculty_id=absence.person_id,
-                            faculty_name=absence.person.name
-                            if absence.person
-                            else "Unknown",
+                            faculty_name=(
+                                absence.person.name if absence.person else "Unknown"
+                            ),
                             conflict_type="leave_fmit_overlap",
                             fmit_week=fmit_week,
                             leave_id=absence.id,

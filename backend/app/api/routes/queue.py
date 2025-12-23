@@ -735,7 +735,7 @@ async def add_periodic_task(
     try:
         scheduler = TaskScheduler()
 
-        success = scheduler.add_periodic_task(
+        scheduler.add_periodic_task(
             name=request.name,
             task_name=request.task_name,
             schedule_config=request.schedule_config,

@@ -444,9 +444,11 @@ class KeyManagementService:
             status=KeyStatus.ACTIVE.value,
             version=1,
             encrypted_key_material=base64.b64encode(encrypted_key).decode(),
-            encrypted_private_key=base64.b64encode(encrypted_private_key).decode()
-            if encrypted_private_key
-            else None,
+            encrypted_private_key=(
+                base64.b64encode(encrypted_private_key).decode()
+                if encrypted_private_key
+                else None
+            ),
             public_key=public_key_pem,
             encryption_salt=base64.b64encode(salt).decode(),
             encryption_nonce=base64.b64encode(nonce).decode(),

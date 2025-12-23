@@ -151,9 +151,11 @@ class UtilizationMonitor:
                 current_assignments=0,
                 utilization_rate=1.0 if required_blocks > 0 else 0.0,
                 effective_utilization=1.0 if required_blocks > 0 else 0.0,
-                level=UtilizationLevel.BLACK
-                if required_blocks > 0
-                else UtilizationLevel.GREEN,
+                level=(
+                    UtilizationLevel.BLACK
+                    if required_blocks > 0
+                    else UtilizationLevel.GREEN
+                ),
                 buffer_remaining=0.0,
             )
 

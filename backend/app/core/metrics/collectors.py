@@ -84,7 +84,6 @@ class SystemResourceCollector(Collector):
             ***REMOVED*** ================================================================
             ***REMOVED*** CPU METRICS
             ***REMOVED*** ================================================================
-
             ***REMOVED*** Overall CPU usage
             cpu_percent = self._process.cpu_percent(interval=0.1)
             yield GaugeMetricFamily(

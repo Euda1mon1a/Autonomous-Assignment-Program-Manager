@@ -120,9 +120,9 @@ def person_from_db(db_person) -> Person:
         performs_procedures=db_person.performs_procedures or False,
         specialties=db_person.specialties,
         primary_duty=db_person.primary_duty,
-        faculty_role=FacultyRoleType(db_person.faculty_role)
-        if db_person.faculty_role
-        else None,
+        faculty_role=(
+            FacultyRoleType(db_person.faculty_role) if db_person.faculty_role else None
+        ),
         sunday_call_count=db_person.sunday_call_count or 0,
         weekday_call_count=db_person.weekday_call_count or 0,
         fmit_weeks_count=db_person.fmit_weeks_count or 0,

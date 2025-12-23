@@ -267,7 +267,8 @@ def main():
     print("\n" + "=" * 70)
     print("SUMMARY")
     print("=" * 70)
-    print("""
+    print(
+        """
 The StabilityMetrics module provides comprehensive schedule stability analysis:
 
 Key Features:
@@ -288,7 +289,8 @@ For more information, see:
   - backend/app/analytics/STABILITY_METRICS_USAGE.md
   - backend/tests/test_stability_metrics.py
   - PROJECT_STATUS_ASSESSMENT.md (line 980+)
-""")
+"""
+    )
     print("=" * 70)
     print()
 

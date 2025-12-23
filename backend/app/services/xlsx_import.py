@@ -486,9 +486,11 @@ class ClinicScheduleImporter:
             "header_row": date_row or 1,
             "data_start_row": (date_row or 1) + 1,
             "provider_col": provider_col,
-            "date_cols": expanded_date_cols
-            if expanded_date_cols
-            else [(c, d, "AM") for c, d in date_cols],
+            "date_cols": (
+                expanded_date_cols
+                if expanded_date_cols
+                else [(c, d, "AM") for c, d in date_cols]
+            ),
         }
 
     def import_worksheet(
@@ -1020,9 +1022,9 @@ class SwapFinder:
                     can_take_week=target_week,
                     gives_week=give_weeks[0] if give_weeks else None,
                     back_to_back_ok=can_take,
-                    external_conflict=ext_conflict.conflict_type
-                    if ext_conflict
-                    else None,
+                    external_conflict=(
+                        ext_conflict.conflict_type if ext_conflict else None
+                    ),
                     flexibility=get_schedule_flexibility(target_week),
                     reason=reason if not can_take else "",
                 )
@@ -1244,31 +1246,43 @@ def analyze_schedule_conflicts(
         "fmit_schedule": {
             "providers": list(fmit_result.providers.keys()),
             "date_range": [
-                fmit_result.date_range[0].isoformat()
-                if fmit_result.date_range[0]
-                else None,
-                fmit_result.date_range[1].isoformat()
-                if fmit_result.date_range[1]
-                else None,
+                (
+                    fmit_result.date_range[0].isoformat()
+                    if fmit_result.date_range[0]
+                    else None
+                ),
+                (
+                    fmit_result.date_range[1].isoformat()
+                    if fmit_result.date_range[1]
+                    else None
+                ),
             ],
             "total_slots": fmit_result.total_slots,
             "fmit_slots": fmit_result.fmit_slots,
         },
-        "clinic_schedule": {
-            "providers": list(clinic_result.providers.keys()) if clinic_result else [],
-            "date_range": [
-                clinic_result.date_range[0].isoformat()
-                if clinic_result and clinic_result.date_range[0]
-                else None,
-                clinic_result.date_range[1].isoformat()
-                if clinic_result and clinic_result.date_range[1]
-                else None,
-            ],
-            "total_slots": clinic_result.total_slots if clinic_result else 0,
-            "clinic_slots": clinic_result.clinic_slots if clinic_result else 0,
-        }
-        if clinic_result
-        else None,
+        "clinic_schedule": (
+            {
+                "providers": (
+                    list(clinic_result.providers.keys()) if clinic_result else []
+                ),
+                "date_range": [
+                    (
+                        clinic_result.date_range[0].isoformat()
+                        if clinic_result and clinic_result.date_range[0]
+                        else None
+                    ),
+                    (
+                        clinic_result.date_range[1].isoformat()
+                        if clinic_result and clinic_result.date_range[1]
+                        else None
+                    ),
+                ],
+                "total_slots": clinic_result.total_slots if clinic_result else 0,
+                "clinic_slots": clinic_result.clinic_slots if clinic_result else 0,
+            }
+            if clinic_result
+            else None
+        ),
         "conflicts": [
             {
                 "provider": c.provider_name,

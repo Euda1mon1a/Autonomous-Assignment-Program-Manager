@@ -120,9 +120,11 @@ def assignment_from_db(db_assignment) -> Assignment:
         id=strawberry.ID(str(db_assignment.id)),
         block_id=strawberry.ID(str(db_assignment.block_id)),
         person_id=strawberry.ID(str(db_assignment.person_id)),
-        rotation_template_id=strawberry.ID(str(db_assignment.rotation_template_id))
-        if db_assignment.rotation_template_id
-        else None,
+        rotation_template_id=(
+            strawberry.ID(str(db_assignment.rotation_template_id))
+            if db_assignment.rotation_template_id
+            else None
+        ),
         role=AssignmentRole(db_assignment.role),
         activity_override=db_assignment.activity_override,
         notes=db_assignment.notes,

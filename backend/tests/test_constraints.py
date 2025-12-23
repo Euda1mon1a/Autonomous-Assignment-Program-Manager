@@ -12,8 +12,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.scheduling.constraints import (
-    ***REMOVED*** Hard constraints
+from app.scheduling.constraints import (  ***REMOVED*** Hard constraints; Soft constraints
     AvailabilityConstraint,
     ConstraintManager,
     ConstraintPriority,
@@ -21,7 +20,6 @@ from app.scheduling.constraints import (
     ConstraintType,
     CoverageConstraint,
     EightyHourRuleConstraint,
-    ***REMOVED*** Soft constraints
     EquityConstraint,
     MaxPhysiciansInClinicConstraint,
     OneInSevenRuleConstraint,

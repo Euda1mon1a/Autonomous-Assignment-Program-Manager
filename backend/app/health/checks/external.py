@@ -193,9 +193,11 @@ class ExternalServiceHealthCheck:
                 )
 
                 return {
-                    "status": "healthy"
-                    if response.status_code == self.expected_status
-                    else "degraded",
+                    "status": (
+                        "healthy"
+                        if response.status_code == self.expected_status
+                        else "degraded"
+                    ),
                     "url": self.url,
                     "status_code": response.status_code,
                     "method": "POST",

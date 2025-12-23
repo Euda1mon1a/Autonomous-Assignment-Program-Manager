@@ -437,9 +437,11 @@ class JobStatsService:
                 "active_workers": active_workers,
                 "idle_workers": idle_workers,
                 "average_utilization_percentage": round(utilization, 2),
-                "tasks_per_worker": round(len(active_tasks) / total_workers, 2)
-                if total_workers > 0
-                else 0.0,
+                "tasks_per_worker": (
+                    round(len(active_tasks) / total_workers, 2)
+                    if total_workers > 0
+                    else 0.0
+                ),
                 "timestamp": datetime.utcnow().isoformat(),
             }
 

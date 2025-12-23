@@ -422,9 +422,11 @@ def persist_hub_protection_plan(
         reason=plan.reason,
         workload_reduction=plan.workload_reduction,
         backup_assigned=plan.backup_assigned,
-        backup_faculty_ids=[str(f) for f in plan.backup_faculty_ids]
-        if plan.backup_faculty_ids
-        else None,
+        backup_faculty_ids=(
+            [str(f) for f in plan.backup_faculty_ids]
+            if plan.backup_faculty_ids
+            else None
+        ),
         critical_only=plan.critical_only,
         status=plan.status,
         created_by=created_by,
@@ -486,12 +488,16 @@ def persist_cross_training_recommendation(
     record = CrossTrainingRecommendationRecord(
         id=recommendation.id,
         skill=recommendation.skill,
-        current_holders=[str(h) for h in recommendation.current_holders]
-        if recommendation.current_holders
-        else None,
-        recommended_trainees=[str(t) for t in recommendation.recommended_trainees]
-        if recommendation.recommended_trainees
-        else None,
+        current_holders=(
+            [str(h) for h in recommendation.current_holders]
+            if recommendation.current_holders
+            else None
+        ),
+        recommended_trainees=(
+            [str(t) for t in recommendation.recommended_trainees]
+            if recommendation.recommended_trainees
+            else None
+        ),
         priority=recommendation.priority.value,
         reason=recommendation.reason,
         estimated_training_hours=recommendation.estimated_training_hours,

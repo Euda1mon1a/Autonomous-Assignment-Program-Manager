@@ -1034,9 +1034,11 @@ class ReadModelSyncService:
                         "projector": name,
                         "issue": "sync_failed",
                         "last_error": metrics.last_error,
-                        "error_timestamp": metrics.last_error_timestamp.isoformat()
-                        if metrics.last_error_timestamp
-                        else None,
+                        "error_timestamp": (
+                            metrics.last_error_timestamp.isoformat()
+                            if metrics.last_error_timestamp
+                            else None
+                        ),
                     }
                 )
 

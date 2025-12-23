@@ -366,12 +366,14 @@ class RestoreService:
                     [f"{col} = EXCLUDED.{col}" for col in update_cols]
                 )
 
-                query = text(f"""
+                query = text(
+                    f"""
                     INSERT INTO {table_name} ({column_names})
                     VALUES ({placeholders})
                     ON CONFLICT (id)
                     DO UPDATE SET {update_clause}
-                """)
+                """
+                )
 
                 db.execute(query, row)
                 rows_restored += 1

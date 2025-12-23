@@ -73,15 +73,21 @@ def _pathway_result_to_response(result: PathwayResult) -> PathwayResultResponse:
     pathway = None
     if result.pathway:
         pathway = ReactionPathwayResponse(
-            pathway_id=str(result.pathway.pathway_id)
-            if hasattr(result.pathway, "pathway_id")
-            else "default",
-            total_energy=result.pathway.total_energy
-            if hasattr(result.pathway, "total_energy")
-            else 0.0,
-            catalyzed_energy=result.pathway.catalyzed_energy
-            if hasattr(result.pathway, "catalyzed_energy")
-            else 0.0,
+            pathway_id=(
+                str(result.pathway.pathway_id)
+                if hasattr(result.pathway, "pathway_id")
+                else "default"
+            ),
+            total_energy=(
+                result.pathway.total_energy
+                if hasattr(result.pathway, "total_energy")
+                else 0.0
+            ),
+            catalyzed_energy=(
+                result.pathway.catalyzed_energy
+                if hasattr(result.pathway, "catalyzed_energy")
+                else 0.0
+            ),
             transition_states=[
                 TransitionStateResponse(
                     state_id=str(ts.state_id) if hasattr(ts, "state_id") else "state",
@@ -98,15 +104,19 @@ def _pathway_result_to_response(result: PathwayResult) -> PathwayResultResponse:
                     else []
                 )
             ],
-            catalysts_used=result.pathway.catalysts_used
-            if hasattr(result.pathway, "catalysts_used")
-            else [],
+            catalysts_used=(
+                result.pathway.catalysts_used
+                if hasattr(result.pathway, "catalysts_used")
+                else []
+            ),
             estimated_duration_hours=getattr(
                 result.pathway, "estimated_duration_hours", None
             ),
-            success_probability=result.pathway.success_probability
-            if hasattr(result.pathway, "success_probability")
-            else 0.8,
+            success_probability=(
+                result.pathway.success_probability
+                if hasattr(result.pathway, "success_probability")
+                else 0.8
+            ),
         )
 
     return PathwayResultResponse(

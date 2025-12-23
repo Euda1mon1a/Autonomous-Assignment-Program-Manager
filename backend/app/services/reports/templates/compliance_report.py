@@ -276,9 +276,11 @@ class ComplianceReportTemplate:
                     [
                         violation.type,
                         violation.severity,
-                        violation.message[:80] + "..."
-                        if len(violation.message) > 80
-                        else violation.message,
+                        (
+                            violation.message[:80] + "..."
+                            if len(violation.message) > 80
+                            else violation.message
+                        ),
                     ]
                 )
 
@@ -305,9 +307,11 @@ class ComplianceReportTemplate:
                     [
                         violation.type,
                         violation.severity,
-                        violation.message[:80] + "..."
-                        if len(violation.message) > 80
-                        else violation.message,
+                        (
+                            violation.message[:80] + "..."
+                            if len(violation.message) > 80
+                            else violation.message
+                        ),
                     ]
                 )
 

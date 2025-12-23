@@ -289,10 +289,18 @@ class TestBurnoutEarlyWarning:
 
         ***REMOVED*** Create realistic swap request pattern
         ***REMOVED*** Baseline: 0-1 per week, then increasing stress
-        time_series = (
-            [0, 1, 0, 1, 0, 0, 1, 0, 1, 0] * 3  ***REMOVED*** 30 days baseline
-            + [1, 2, 2, 3, 3, 4, 5, 6, 7, 8]  ***REMOVED*** 10 days increasing
-        )
+        time_series = [0, 1, 0, 1, 0, 0, 1, 0, 1, 0] * 3 + [  ***REMOVED*** 30 days baseline
+            1,
+            2,
+            2,
+            3,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+        ]  ***REMOVED*** 10 days increasing
 
         alerts = detector.detect_precursors(
             resident_id=resident_id,
