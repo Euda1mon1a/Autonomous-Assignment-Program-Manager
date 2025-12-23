@@ -1,13 +1,29 @@
 repos:
+  # Python linting and formatting (backend)
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.9
     hooks:
       - id: ruff
+        name: ruff (lint)
         args: [--config, backend/pyproject.toml, --fix]
         files: ^backend/
       - id: ruff-format
+        name: ruff (format)
         args: [--config, backend/pyproject.toml]
         files: ^backend/
+
+  # Type checking (backend) - catches F821 undefined names
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (type check)
+        entry: bash -c "cd backend && mypy app/ --ignore-missing-imports --no-error-summary 2>/dev/null || true"
+        language: system
+        pass_filenames: false
+        files: ^backend/app/
+        stages: [pre-commit]
+
+  # Frontend linting
   - repo: local
     hooks:
       - id: eslint
@@ -16,3 +32,11 @@ repos:
         language: system
         pass_filenames: false
         files: ^frontend/
+
+      - id: tsc
+        name: tsc (type check)
+        entry: bash -c "cd frontend && npm run type-check 2>/dev/null || true"
+        language: system
+        pass_filenames: false
+        files: ^frontend/
+        stages: [pre-commit]

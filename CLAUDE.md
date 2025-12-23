@@ -652,6 +652,7 @@ These rules apply to Claude Code, Codex, and any AI agent working in this repo.
 > **Full Documentation:**
 > - [AI Rules of Engagement](docs/development/AI_RULES_OF_ENGAGEMENT.md) - Complete rules with environment detection
 > - [AI Interface Guide](docs/admin-manual/ai-interface-guide.md) - Web vs CLI comparison for clinicians
+> - [CI/CD Troubleshooting](docs/development/CI_CD_TROUBLESHOOTING.md) - Error codes, fixes, and LLM-specific patterns
 
 ### Core Policy
 
@@ -869,6 +870,7 @@ When making changes, update relevant documentation:
 
 - **[AI Interface Guide](docs/admin-manual/ai-interface-guide.md)**: Web vs CLI comparison for clinician administrators
 - **[AI Rules of Engagement](docs/development/AI_RULES_OF_ENGAGEMENT.md)**: Complete rules with environment detection
+- **[CI/CD Troubleshooting](docs/development/CI_CD_TROUBLESHOOTING.md)**: Error codes, auto-fixes, and LLM failure patterns
 - **[Git Safe Sync Checklist](docs/development/CLAUDE_GIT_SAFE_SYNC_CHECKLIST.md)**: Daily sync procedures
 
 ### Code References
