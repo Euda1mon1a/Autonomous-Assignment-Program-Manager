@@ -16,8 +16,9 @@
 7. [Common Commands](***REMOVED***common-commands)
 8. [Files and Patterns to Never Modify](***REMOVED***files-and-patterns-to-never-modify)
 9. [Development Workflow](***REMOVED***development-workflow)
-10. [Key Concepts](***REMOVED***key-concepts)
+10. [Debugging & Troubleshooting](***REMOVED***debugging--troubleshooting)
 11. [AI Rules of Engagement](***REMOVED***ai-rules-of-engagement)
+12. [Key Concepts](***REMOVED***key-concepts)
 
 ---
 
@@ -645,6 +646,158 @@ GET some_key
 
 ---
 
+***REMOVED******REMOVED*** Debugging & Troubleshooting
+
+***REMOVED******REMOVED******REMOVED*** Systematic Debugging Workflow
+
+Follow this four-phase approach for complex issues:
+
+**Phase 1: Exploration (DO NOT FIX YET)**
+```
+"Read the scheduling conflict resolution logic in scheduler.py and examine
+the error logs. Don't fix anything yet, just understand the system."
+```
+
+**Phase 2: Planning with Extended Thinking**
+Use these phrases to trigger deeper reasoning (in order of computational budget):
+- `"think"` < `"think hard"` < `"think harder"` < `"ultrathink"`
+
+```
+"Think hard about what could cause residents to be double-booked in
+overlapping rotations. Create a hypothesis list with root cause analysis."
+```
+
+**Phase 3: Implementation**
+After approving the plan:
+```
+"Implement your solution for the rotation overlap bug. After each major
+change, verify the logic handles edge cases like overnight shifts."
+```
+
+**Phase 4: Commit and Document**
+```
+"Commit these changes and update CHANGELOG.md with what was fixed and why."
+```
+
+***REMOVED******REMOVED******REMOVED*** Test-Driven Debugging (TDD)
+
+For reproducible bugs, use TDD workflow:
+
+1. **Write failing test first**:
+   ```
+   "Write test cases that reproduce the scheduling conflict bug reported in
+   issue ***REMOVED***247. Be explicit that we're doing TDD—don't create mock
+   implementations. The tests should fail with the same error."
+   ```
+
+2. **Confirm failure**:
+   ```
+   "Run the tests and confirm they fail. Don't write any implementation code yet."
+   ```
+
+3. **Fix until green**:
+   ```
+   "Now fix the code to make all tests pass. Don't modify the tests.
+   Keep iterating until everything passes."
+   ```
+
+4. **Verify independently** (optional but recommended):
+   ```
+   "Use a subagent to verify this implementation isn't overfitting to the
+   tests and handles real-world scheduling scenarios."
+   ```
+
+***REMOVED******REMOVED******REMOVED*** Debugging Slash Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/project:debug-scheduling [issue]` | Debug scheduling conflicts and assignment issues |
+| `/project:debug-tdd [bug]` | Test-driven debugging workflow |
+| `/project:debug-explore [symptom]` | Exploration-first debugging for unclear issues |
+
+***REMOVED******REMOVED******REMOVED*** Context Management for Long Sessions
+
+When debugging spans multiple interactions:
+
+1. **Document & Clear Pattern**:
+   ```bash
+   ***REMOVED*** When context gets large (check with /context)
+   ***REMOVED*** 1. Create debug session notes
+   cat > debug-session-notes.md << 'EOF'
+   ***REMOVED*** Debug Session: [Issue]
+   ***REMOVED******REMOVED*** Bug: [description]
+   ***REMOVED******REMOVED*** Hypothesis: [current theory]
+   ***REMOVED******REMOVED*** Tried: [what we've done]
+   ***REMOVED******REMOVED*** Findings: [what we learned]
+   ***REMOVED******REMOVED*** Next Steps: [what to do next]
+   EOF
+
+   ***REMOVED*** 2. Use /clear to reset context
+   ***REMOVED*** 3. Resume: "Read debug-session-notes.md and continue debugging"
+   ```
+
+2. **Avoid `/compact`** - Manual "Document & Clear" is more reliable
+
+***REMOVED******REMOVED******REMOVED*** Strategic Logging Injection
+
+Add diagnostic instrumentation before fixing:
+
+```python
+***REMOVED*** Add to relevant function temporarily
+import logging
+logger = logging.getLogger(__name__)
+
+logger.info(f"DEBUG: Input parameters: {locals()}")
+logger.info(f"DEBUG: Validation check result: {result}")
+logger.info(f"DEBUG: Assignment decision: {decision}")
+```
+
+Run and collect:
+```bash
+LOG_LEVEL=DEBUG pytest tests/scheduling/test_debug_*.py -v -s 2>&1 | tee debug_output.log
+```
+
+***REMOVED******REMOVED******REMOVED*** Known Gotchas (Common Debugging Traps)
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| **Timezone mismatch** | Scheduler runs UTC, displays local (HST) | Always convert times explicitly |
+| **Work hour reset** | Limits reset at midnight LOCAL, not UTC | Check `backend/app/services/constraints/acgme.py` |
+| **Race conditions** | Missing `with_for_update()` on DB queries | Add row locking for concurrent operations |
+| **Double-booking** | Missing overlap check | Check `backend/app/scheduling/conflicts/` |
+| **Test isolation** | Tests not using fresh fixtures | Verify `conftest.py` setup |
+
+***REMOVED******REMOVED******REMOVED*** Multi-Claude Parallel Debugging
+
+For complex multi-faceted bugs:
+
+**Terminal 1**: "Investigate why residents are being double-booked"
+**Terminal 2**: "Analyze work hour calculation for off-by-one errors"
+**Terminal 3**: "Review recent scheduler commits for regressions"
+
+Cycle through terminals to approve permissions and synthesize findings.
+
+***REMOVED******REMOVED******REMOVED*** Checkpoint Commits
+
+Before risky changes:
+```bash
+git stash push -m "WIP: before debugging [issue]"
+```
+
+Restore if needed:
+```bash
+git stash pop
+```
+
+***REMOVED******REMOVED******REMOVED*** Course Correction Tools
+
+- **Escape** - Interrupt mid-execution to redirect
+- **Double-tap Escape** - Jump back, edit previous prompt, try different approach
+- **"Undo changes"** - Revert and try alternative fix
+- **"Make a plan first"** - Stop coding, think through approach
+
+---
+
 ***REMOVED******REMOVED*** AI Rules of Engagement
 
 These rules apply to Claude Code, Codex, and any AI agent working in this repo.
@@ -653,6 +806,7 @@ These rules apply to Claude Code, Codex, and any AI agent working in this repo.
 > - [AI Rules of Engagement](docs/development/AI_RULES_OF_ENGAGEMENT.md) - Complete rules with environment detection
 > - [AI Interface Guide](docs/admin-manual/ai-interface-guide.md) - Web vs CLI comparison for clinicians
 > - [CI/CD Troubleshooting](docs/development/CI_CD_TROUBLESHOOTING.md) - Error codes, fixes, and LLM-specific patterns
+> - [Debugging Workflow Guide](docs/development/DEBUGGING_WORKFLOW.md) - Comprehensive debugging methodology
 
 ***REMOVED******REMOVED******REMOVED*** Core Policy
 
