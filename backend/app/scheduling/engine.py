@@ -96,6 +96,7 @@ class SchedulingEngine:
         algorithm: str = "greedy",
         timeout_seconds: float = 60.0,
         check_resilience: bool = True,
+        preserve_fmit: bool = True,
     ) -> dict:
         """
         Generate a complete schedule.
@@ -106,6 +107,7 @@ class SchedulingEngine:
             algorithm: Solver algorithm ('greedy', 'cp_sat', 'pulp', 'hybrid')
             timeout_seconds: Maximum solver runtime
             check_resilience: Run resilience health check before/after generation
+            preserve_fmit: Preserve existing FMIT faculty assignments (default True)
 
         Returns:
             Dictionary with status, assignments, validation results, and resilience info
@@ -131,8 +133,19 @@ class SchedulingEngine:
             # Step 1: Ensure blocks exist (but don't commit yet)
             blocks = self._ensure_blocks_exist(commit=False)
 
+            # Step 1.5: Load FMIT assignments if preserving them
+            fmit_assignments = []
+            preserve_ids: set[UUID] = set()
+            if preserve_fmit:
+                fmit_assignments = self._load_fmit_assignments()
+                preserve_ids = {a.id for a in fmit_assignments}
+                if fmit_assignments:
+                    logger.info(
+                        f"Preserving {len(fmit_assignments)} FMIT faculty assignments"
+                    )
+
             # Issue #2: Delete existing assignments for this date range to avoid duplicates
-            self._delete_existing_assignments()
+            self._delete_existing_assignments(preserve_ids=preserve_ids)
 
             # Step 2: Load absences and build availability matrix
             self._build_availability_matrix()
@@ -687,6 +700,36 @@ class SchedulingEngine:
         """Get all faculty members."""
         return self.db.query(Person).filter(Person.type == "faculty").all()
 
+    def _load_fmit_assignments(self) -> list[Assignment]:
+        """
+        Load FMIT assignments (faculty on inpatient) for the date range.
+
+        FMIT (Faculty Managing Inpatient Teaching) assignments are pre-selected
+        by faculty at the beginning of the academic year. These assignments
+        should be preserved during schedule generation rather than deleted
+        and regenerated.
+
+        Detection logic:
+            - person.type == 'faculty'
+            - template.activity_type == 'inpatient'
+
+        Returns:
+            List of Assignment objects for faculty on FMIT rotations
+        """
+        return (
+            self.db.query(Assignment)
+            .join(Block, Assignment.block_id == Block.id)
+            .join(Person, Assignment.person_id == Person.id)
+            .join(RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id)
+            .filter(
+                Block.date >= self.start_date,
+                Block.date <= self.end_date,
+                Person.type == "faculty",
+                RotationTemplate.activity_type == "inpatient",
+            )
+            .all()
+        )
+
     def _get_rotation_templates(
         self, template_ids: list[UUID] | None = None
     ) -> list[RotationTemplate]:
@@ -809,14 +852,19 @@ class SchedulingEngine:
         self.db.refresh(run)
         return run
 
-    def _delete_existing_assignments(self):
+    def _delete_existing_assignments(self, preserve_ids: set[UUID] | None = None):
         """
         Delete existing assignments for the date range to avoid duplicates.
 
         Uses row-level locking (SELECT FOR UPDATE) to prevent concurrent
         schedule generations from racing. This ensures that only one
         generation can modify assignments for a given date range at a time.
+
+        Args:
+            preserve_ids: Set of assignment IDs to preserve (e.g., FMIT assignments)
         """
+        preserve_ids = preserve_ids or set()
+
         # Get all block IDs in the date range with row-level lock
         # The FOR UPDATE lock ensures exclusive access to these blocks
         # during the transaction, preventing concurrent generations from
@@ -841,14 +889,19 @@ class SchedulingEngine:
                 .with_for_update(nowait=False)
                 .all()
             )
-            deleted_count = len(existing_assignments)
 
+            deleted_count = 0
+            preserved_count = 0
             for assignment in existing_assignments:
+                if assignment.id in preserve_ids:
+                    preserved_count += 1
+                    continue  # Skip preserved assignments (e.g., FMIT)
                 self.db.delete(assignment)
+                deleted_count += 1
 
             logger.info(
                 f"Deleted {deleted_count} existing assignments for date range "
-                f"({self.start_date} to {self.end_date}) with row-level locking"
+                f"({self.start_date} to {self.end_date}), preserved {preserved_count}"
             )
 
     def _update_run_status(self, run: ScheduleRun, status: str, total_assigned: int, violations: int, runtime: float):
