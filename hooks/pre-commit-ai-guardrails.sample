@@ -1,0 +1,33 @@
+***REMOVED***!/bin/bash
+***REMOVED***
+***REMOVED*** Pre-commit hook: AI Assistant Guardrails
+***REMOVED***
+***REMOVED*** This hook warns (but does not block) when mixed AI assistant commits
+***REMOVED*** are detected on the current branch.
+***REMOVED***
+***REMOVED*** Installation:
+***REMOVED***   cp hooks/pre-commit-ai-guardrails.sample .git/hooks/pre-commit
+***REMOVED***   chmod +x .git/hooks/pre-commit
+***REMOVED***
+***REMOVED*** To combine with other pre-commit hooks, add this to your existing hook:
+***REMOVED***   python scripts/check-ai-assistant-usage.py --quiet || true
+***REMOVED***
+***REMOVED*** To make this a blocking check (not recommended for daily use):
+***REMOVED***   Change the last line to: python scripts/check-ai-assistant-usage.py --strict --quiet
+
+***REMOVED*** Find the repo root
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+***REMOVED*** Check if the script exists
+if [ ! -f "$REPO_ROOT/scripts/check-ai-assistant-usage.py" ]; then
+    echo "Warning: AI guardrails script not found at scripts/check-ai-assistant-usage.py"
+    exit 0
+fi
+
+***REMOVED*** Run the check (non-blocking)
+***REMOVED*** The "|| true" ensures the commit proceeds even if issues are found
+python "$REPO_ROOT/scripts/check-ai-assistant-usage.py" --quiet || true
+
+***REMOVED*** Always allow the commit to proceed
+***REMOVED*** This is a warning system, not a blocker
+exit 0
