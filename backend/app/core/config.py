@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     )
 
     # Database Connection Pool Settings
-    # See docs/ARCHITECTURE.md for connection pooling strategy
+    # See ARCHITECTURE.md for connection pooling strategy
     DB_POOL_SIZE: int = 10  # Number of connections to keep open
     DB_POOL_MAX_OVERFLOW: int = 20  # Additional connections beyond pool_size
     DB_POOL_TIMEOUT: int = 30  # Seconds to wait for available connection

@@ -30,9 +30,12 @@ Related Schemas:
     - app.schemas.portal: Request/response models for all portal endpoints
 """
 
+import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
 from uuid import UUID
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
@@ -679,16 +682,26 @@ def get_my_preferences(
         for week_str in preferences.preferred_weeks:
             try:
                 preferred_weeks.append(datetime.fromisoformat(week_str).date())
-            except (ValueError, TypeError):
-                pass  # Skip invalid dates
+            except (ValueError, TypeError) as e:
+                logger.warning(
+                    "Invalid date format in preferred_weeks for faculty %s: %s (%s)",
+                    faculty.id,
+                    week_str,
+                    e,
+                )
 
     blocked_weeks = []
     if preferences.blocked_weeks:
         for week_str in preferences.blocked_weeks:
             try:
                 blocked_weeks.append(datetime.fromisoformat(week_str).date())
-            except (ValueError, TypeError):
-                pass  # Skip invalid dates
+            except (ValueError, TypeError) as e:
+                logger.warning(
+                    "Invalid date format in blocked_weeks for faculty %s: %s (%s)",
+                    faculty.id,
+                    week_str,
+                    e,
+                )
 
     return PreferencesResponse(
         faculty_id=faculty.id,
@@ -829,16 +842,26 @@ def update_my_preferences(
         for week_str in preferences.preferred_weeks:
             try:
                 preferred_weeks.append(datetime.fromisoformat(week_str).date())
-            except (ValueError, TypeError):
-                pass
+            except (ValueError, TypeError) as e:
+                logger.warning(
+                    "Invalid date format in preferred_weeks for faculty %s: %s (%s)",
+                    faculty.id,
+                    week_str,
+                    e,
+                )
 
     blocked_weeks = []
     if preferences.blocked_weeks:
         for week_str in preferences.blocked_weeks:
             try:
                 blocked_weeks.append(datetime.fromisoformat(week_str).date())
-            except (ValueError, TypeError):
-                pass
+            except (ValueError, TypeError) as e:
+                logger.warning(
+                    "Invalid date format in blocked_weeks for faculty %s: %s (%s)",
+                    faculty.id,
+                    week_str,
+                    e,
+                )
 
     return PreferencesResponse(
         faculty_id=faculty.id,

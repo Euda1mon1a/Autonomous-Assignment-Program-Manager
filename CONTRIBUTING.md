@@ -509,9 +509,9 @@ describe('UserCard', () => {
 | `README.md` | Project overview and quick start |
 | `CONTRIBUTING.md` | This file - contribution guidelines |
 | `CHANGELOG.md` | Version history |
-| `docs/SETUP.md` | Detailed setup instructions |
-| `docs/API_REFERENCE.md` | API endpoint documentation |
-| `docs/ARCHITECTURE.md` | System design documentation |
+| `docs/getting-started/installation.md` | Detailed setup instructions |
+| `docs/api/index.md` | API endpoint documentation |
+| `ARCHITECTURE.md` | System design documentation |
 
 ### API Documentation
 

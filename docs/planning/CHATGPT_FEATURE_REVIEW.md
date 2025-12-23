@@ -35,7 +35,7 @@ Codex "iteratively runs tests until passing":
 
 #### 5. Codebase Understanding
 - How well does it understand existing architecture patterns?
-- Can it reference and follow patterns from `docs/ARCHITECTURE.md`?
+- Can it reference and follow patterns from `ARCHITECTURE.md`?
 - How does it handle domain-specific concepts (ACGME rules, medical scheduling)?
 
 ---
