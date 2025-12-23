@@ -136,6 +136,8 @@ Track 7  ──→  [Block assignments for Track 7]  ──→  (unassigned)
 4. **Add/remove flexibility**:
    - Can add new block assignments to a track
    - Can remove block assignments (with warning: "This will affect assigned learners")
+   - Can manually toggle individual half-days as unavailable (leave/absence)
+   - No formal leave approval workflow - learners clear leave with their command
 
 ### Frontend GUI Workflow
 
@@ -387,7 +389,7 @@ def check_procedures_conflict(block_id: UUID, med_student_id: UUID) -> bool:
 2. ~~**Night float**: Do med students participate in night float, or just FMIT overnight?~~ ✅ FMIT overnight only
 3. ~~**4th Wednesday "inverted"**: What exactly is inverted?~~ ✅ No ASM, Lecture AM, Advising PM
 4. ~~**Clinic locations**: Which specific clinics do med students rotate through?~~ ✅ Single clinic only
-5. ~~**Leave requests**: Can med students request time off?~~ ✅ N/A - not tracked
+5. ~~**Leave requests**: Can med students request time off?~~ ✅ N/A - no formal tracking; coordinators can manually remove half-days from schedule (learners clear leave with their command)
 
 ---
 
