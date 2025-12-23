@@ -420,7 +420,7 @@ class AllostasisMetrics:
     cost accumulates until sudden failure.
     """
     id: UUID
-    entity_id: UUID  ***REMOVED*** ID or system UUID
+    entity_id: UUID  # Faculty ID or system UUID
     entity_type: str  # "faculty" or "system"
     calculated_at: datetime
 

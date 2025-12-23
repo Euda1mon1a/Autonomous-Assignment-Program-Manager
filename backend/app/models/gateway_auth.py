@@ -40,7 +40,7 @@ class APIKey(Base):
 
     # Ownership and permissions
     owner_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
-    owner = relationship("User", backref="api_keys")
+    owner = relationship("User", foreign_keys=[owner_id], backref="api_keys")
 
     scopes = Column(Text, nullable=True, comment="Comma-separated list of allowed scopes")
     allowed_ips = Column(Text, nullable=True,

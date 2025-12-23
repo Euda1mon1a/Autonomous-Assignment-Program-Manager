@@ -1,5 +1,6 @@
 """Block model - half-day scheduling blocks."""
 import uuid
+from datetime import date, timedelta
 
 from sqlalchemy import (
     Boolean,
@@ -53,3 +54,20 @@ class Block(Base):
     def is_workday(self) -> bool:
         """Check if this is a regular workday (not weekend or holiday)."""
         return not self.is_weekend and not self.is_holiday
+
+    @property
+    def block_half(self) -> int:
+        """
+        Return which half of the 28-day block this date falls in.
+
+        Returns:
+            1 for days 1-14 (first half)
+            2 for days 15-28 (second half)
+        """
+        # Academic year starts July 1
+        academic_year_start = date(
+            self.date.year if self.date.month >= 7 else self.date.year - 1, 7, 1
+        )
+        block_start = academic_year_start + timedelta(days=(self.block_number - 1) * 28)
+        day_in_block = (self.date - block_start).days + 1
+        return 1 if day_in_block <= 14 else 2

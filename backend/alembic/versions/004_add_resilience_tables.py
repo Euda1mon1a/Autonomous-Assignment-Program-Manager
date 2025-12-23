@@ -226,7 +226,7 @@ def upgrade() -> None:
         # Vulnerability details
         sa.Column('n1_vulnerabilities', postgresql.JSONB()),  # List of single-loss vulnerabilities
         sa.Column('n2_fatal_pairs', postgresql.JSONB()),  # List of fatal faculty pairs
-        sa.Column('most_critical_faculty', postgresql.JSONB()),  ***REMOVED*** IDs with highest centrality
+        sa.Column('most_critical_faculty', postgresql.JSONB()),  # Faculty IDs with highest centrality
 
         # Recommendations generated
         sa.Column('recommended_actions', postgresql.ARRAY(sa.String())),

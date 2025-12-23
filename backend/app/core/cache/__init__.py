@@ -82,6 +82,44 @@ from app.core.cache.decorators import (
     write_through,
 )
 
+# Utility functions
+from app.core.cache.utils import invalidate_schedule_cache
+
+
+# Compatibility exports for cache.py classes
+# These mirror the classes from the standalone cache.py file
+from enum import Enum
+
+
+class CachePrefix(str, Enum):
+    """Cache key prefixes for different data types."""
+    HEATMAP = "heatmap"
+    CALENDAR = "calendar"
+    ASSIGNMENTS = "assignments"
+    PERSONS = "persons"
+    ROTATIONS = "rotations"
+    BLOCKS = "blocks"
+    COVERAGE = "coverage"
+    WORKLOAD = "workload"
+    SCHEDULE = "schedule"
+    GENERAL = "service"
+
+
+class CacheTTL:
+    """Standard TTL values for different cache types."""
+    SHORT = 300  # 5 minutes
+    MEDIUM = 1800  # 30 minutes
+    LONG = 3600  # 1 hour
+    EXTENDED = 14400  # 4 hours
+    DAY = 86400  # 24 hours
+    WEEK = 604800  # 7 days
+
+
+def get_service_cache():
+    """Get service-level cache instance."""
+    return get_cache("service")
+
+
 __all__ = [
     # Core cache
     "CacheEntry",
@@ -108,6 +146,12 @@ __all__ = [
     "cached_property_async",
     "read_through",
     "write_through",
+    # Utility functions
+    "invalidate_schedule_cache",
+    # Compatibility exports from cache.py
+    "CachePrefix",
+    "CacheTTL",
+    "get_service_cache",
 ]
 
 # Version

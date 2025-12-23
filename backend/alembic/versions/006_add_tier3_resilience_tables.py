@@ -117,7 +117,7 @@ def upgrade() -> None:
     # Hub Analysis Tables
     # =========================================================================
 
-    ***REMOVED*** centrality scores table
+    # Faculty centrality scores table
     op.create_table(
         'faculty_centrality',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text('gen_random_uuid()')),

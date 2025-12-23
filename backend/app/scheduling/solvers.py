@@ -232,8 +232,8 @@ class PuLPSolver(BaseSolver):
         variables = {
             "assignments": x_2d,  # For legacy constraints (residents)
             "template_assignments": x,  # For rotation-specific constraints (residents)
-            "faculty_assignments": f_2d,  ***REMOVED*** 2D view
-            "faculty_template_assignments": f,  ***REMOVED*** 3D view
+            "faculty_assignments": f_2d,  # Faculty 2D view
+            "faculty_template_assignments": f,  # Faculty 3D view
         }
 
         # ==================================================
@@ -661,8 +661,8 @@ class CPSATSolver(BaseSolver):
         variables = {
             "assignments": x_2d,  # For legacy constraints (residents)
             "template_assignments": x,  # For rotation-specific constraints (residents)
-            "faculty_assignments": f_2d,  ***REMOVED*** 2D view
-            "faculty_template_assignments": f,  ***REMOVED*** 3D view
+            "faculty_assignments": f_2d,  # Faculty 2D view
+            "faculty_template_assignments": f,  # Faculty 3D view
         }
 
         # ==================================================

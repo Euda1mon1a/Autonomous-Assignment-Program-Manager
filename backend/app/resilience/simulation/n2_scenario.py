@@ -36,7 +36,7 @@ class N2ScenarioConfig:
 class N2IterationResult:
     """Result from a single N-2 iteration (testing one faculty pair loss)."""
     iteration: int
-    faculty_pair_lost: tuple[int, int]  ***REMOVED*** indices
+    faculty_pair_lost: tuple[int, int]  # Faculty indices
     passed: bool
     zones_failed: int
     zones_degraded: int  # Below minimum but not failed

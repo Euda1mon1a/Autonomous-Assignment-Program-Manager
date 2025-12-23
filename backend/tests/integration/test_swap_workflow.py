@@ -51,7 +51,7 @@ class TestSwapWorkflow:
         week1_start = setup["start_date"]
         week2_start = setup["start_date"] + timedelta(days=7)
 
-        ***REMOVED*** 1 assigned to week 1
+        # Faculty 1 assigned to week 1
         block_week1 = setup["blocks"][0]
         assignment1 = Assignment(
             id=uuid4(),
@@ -62,7 +62,7 @@ class TestSwapWorkflow:
         )
         integration_db.add(assignment1)
 
-        ***REMOVED*** 2 assigned to week 2
+        # Faculty 2 assigned to week 2
         block_week2 = setup["blocks"][14]  # 7 days * 2 blocks/day
         assignment2 = Assignment(
             id=uuid4(),
@@ -765,7 +765,7 @@ class TestSwapValidation:
         week2 = setup["start_date"] + timedelta(days=7)
         week3 = setup["start_date"] + timedelta(days=14)
 
-        ***REMOVED***1 already has week3
+        # Faculty1 already has week3
         block_week3 = setup["blocks"][28]  # 14 days * 2 blocks/day
         assignment = Assignment(
             id=uuid4(),

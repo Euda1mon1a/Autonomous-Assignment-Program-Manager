@@ -119,7 +119,7 @@ class TestSwapExecutor:
             .all()
         )
         for assignment in week1_assignments:
-            ***REMOVED***1's assignments should now belong to faculty2
+            # Faculty1's assignments should now belong to faculty2
             assert assignment.person_id == faculty2.id
 
         week2_assignments = (
@@ -130,7 +130,7 @@ class TestSwapExecutor:
             .all()
         )
         for assignment in week2_assignments:
-            ***REMOVED***2's assignments should now belong to faculty1
+            # Faculty2's assignments should now belong to faculty1
             assert assignment.person_id == faculty1.id
 
     def test_execute_swap_absorb_success(self, db, sample_faculty):

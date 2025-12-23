@@ -583,8 +583,8 @@ class MetricsRegistry:
             self.acgme_compliance_score.labels(rule=rule).set(score)
 
 
-# Global metrics instance
-metrics: MetricsRegistry = MetricsRegistry()
+# Global metrics instance - use singleton pattern to avoid re-registration on reload
+_metrics_instance: MetricsRegistry | None = None
 
 
 def get_metrics() -> MetricsRegistry:
@@ -594,4 +594,17 @@ def get_metrics() -> MetricsRegistry:
     Returns:
         MetricsRegistry: Global metrics instance
     """
-    return metrics
+    global _metrics_instance
+    if _metrics_instance is None:
+        _metrics_instance = MetricsRegistry()
+    return _metrics_instance
+
+
+# Backwards compatibility - lazy initialization
+class _MetricsProxy:
+    """Proxy to support lazy initialization while keeping 'metrics' as module-level."""
+    def __getattr__(self, name):
+        return getattr(get_metrics(), name)
+
+
+metrics = _MetricsProxy()

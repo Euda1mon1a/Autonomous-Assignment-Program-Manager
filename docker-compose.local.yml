@@ -111,12 +111,9 @@ services:
 
       # Logging
       LOG_LEVEL: DEBUG
-<<<<<<< HEAD
 
       # Disable rate limiting for local development
       RATE_LIMIT_ENABLED: "false"
-=======
->>>>>>> origin/docs/session-14-summary
     ports:
       - "8000:8000"  # FastAPI server
       - "5678:5678"  # Optional: debugpy remote debugging (if configured)
@@ -221,13 +218,8 @@ services:
     depends_on:
       - backend
     environment:
-<<<<<<< HEAD
       # Backend API URL - use /api/v1 directly to avoid 307 redirect CORS issues
       NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
-=======
-      # Backend API URL
-      NEXT_PUBLIC_API_URL: http://localhost:8000
->>>>>>> origin/docs/session-14-summary
 
       # Development settings
       NODE_ENV: development

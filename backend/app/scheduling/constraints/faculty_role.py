@@ -96,7 +96,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
 
             f_i = context.resident_idx.get(faculty.id)
             if f_i is None:
-                ***REMOVED*** might be in a different index
+                # Faculty might be in a different index
                 continue
 
             weekly_limit = faculty.weekly_clinic_limit

@@ -646,7 +646,7 @@ class TestFMITCoverageEndpoint:
         weeks_with_faculty = [w for w in data["weeks"] if len(w["faculty_assigned"]) > 0]
         assert len(weeks_with_faculty) > 0
 
-        ***REMOVED*** names should be sorted
+        # Faculty names should be sorted
         for week in weeks_with_faculty:
             faculty_list = week["faculty_assigned"]
             assert faculty_list == sorted(faculty_list)

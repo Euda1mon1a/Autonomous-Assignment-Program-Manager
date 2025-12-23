@@ -216,11 +216,11 @@ def validate_faculty_data(data: dict[str, Any], ctx: ValidationContext) -> None:
     Ensures faculty members have required credentials.
     """
     if data.get("type") == "faculty":
-        ***REMOVED*** must have specialties
+        # Faculty must have specialties
         if not data.get("specialties") or len(data.get("specialties", [])) == 0:
             ctx.add_field_error("specialties", "Faculty must have at least one specialty")
 
-        ***REMOVED*** with certain roles must perform procedures
+        # Faculty with certain roles must perform procedures
         supervisory_roles = ["pd", "apd", "oic"]
         if data.get("faculty_role") in supervisory_roles:
             if not data.get("performs_procedures"):

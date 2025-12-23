@@ -131,6 +131,41 @@ def validate_date_in_range(
     return check
 
 
+def validate_academic_year_date(value: date, field_name: str = "Date") -> date:
+    """
+    Validate a single date is within a reasonable academic year range.
+
+    Academic year runs July 1 to June 30.
+
+    Args:
+        value: Date to validate
+        field_name: Name of field for error messages
+
+    Returns:
+        date: Validated date
+
+    Raises:
+        ValidationError: If date is unreasonable
+    """
+    validated = validate_date_not_null(value, field_name)
+
+    today = date.today()
+    five_years_ago = today - timedelta(days=365 * 5)
+    five_years_ahead = today + timedelta(days=365 * 5)
+
+    if validated < five_years_ago:
+        raise ValidationError(
+            f"{field_name} ({validated}) is more than 5 years in the past"
+        )
+
+    if validated > five_years_ahead:
+        raise ValidationError(
+            f"{field_name} ({validated}) is more than 5 years in the future"
+        )
+
+    return validated
+
+
 def validate_academic_year_dates(start_date: date, end_date: date) -> tuple[date, date]:
     """
     Validate academic year date range.

@@ -24,7 +24,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Insert PC rotation template
+    # Insert PC rotation template (idempotent - skip if already exists)
     op.execute(
         sa.text("""
             INSERT INTO rotation_templates (
@@ -38,6 +38,7 @@ def upgrade() -> None:
                 false, NULL,
                 NOW()
             )
+            ON CONFLICT (abbreviation) DO NOTHING
         """).bindparams(id=str(uuid.uuid4()))
     )
 

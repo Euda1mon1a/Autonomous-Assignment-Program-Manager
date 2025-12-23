@@ -96,27 +96,27 @@ def mock_assignments(mock_faculty, mock_blocks):
     assignments = []
 
     # Create diverse assignment patterns
-    ***REMOVED*** 0 covers blocks 0-3 (heavy load)
+    # Faculty 0 covers blocks 0-3 (heavy load)
     for i in range(4):
         assignments.append(MockAssignment(
             person_id=mock_faculty[0].id,
             block_id=mock_blocks[i].id,
         ))
 
-    ***REMOVED*** 1 covers blocks 2-5 (overlaps with faculty 0)
+    # Faculty 1 covers blocks 2-5 (overlaps with faculty 0)
     for i in range(2, 6):
         assignments.append(MockAssignment(
             person_id=mock_faculty[1].id,
             block_id=mock_blocks[i].id,
         ))
 
-    ***REMOVED*** 2 is sole provider for block 6 (critical)
+    # Faculty 2 is sole provider for block 6 (critical)
     assignments.append(MockAssignment(
         person_id=mock_faculty[2].id,
         block_id=mock_blocks[6].id,
     ))
 
-    ***REMOVED*** 3 covers blocks 0, 6 (light load)
+    # Faculty 3 covers blocks 0, 6 (light load)
     assignments.append(MockAssignment(
         person_id=mock_faculty[3].id,
         block_id=mock_blocks[0].id,
@@ -126,7 +126,7 @@ def mock_assignments(mock_faculty, mock_blocks):
         block_id=mock_blocks[6].id,
     ))
 
-    ***REMOVED*** 4 has no assignments (available backup)
+    # Faculty 4 has no assignments (available backup)
     # No assignments for faculty 4
 
     return assignments
@@ -256,10 +256,10 @@ class TestLookupTables:
 
         lookups = service._build_lookup_tables(mock_faculty, mock_blocks, mock_assignments)
 
-        ***REMOVED*** 0 should have 4 assignments
+        # Faculty 0 should have 4 assignments
         assert lookups["faculty_assignment_count"].get(mock_faculty[0].id, 0) == 4
 
-        ***REMOVED*** 4 should have 0 assignments
+        # Faculty 4 should have 0 assignments
         assert lookups["faculty_assignment_count"].get(mock_faculty[4].id, 0) == 0
 
 
@@ -316,7 +316,7 @@ class TestN1Simulation:
         # Should have simulation for each faculty
         assert len(simulations) == len(mock_faculty)
 
-        ***REMOVED*** 4 (no assignments) should have 0 blocks affected
+        # Faculty 4 (no assignments) should have 0 blocks affected
         fac4_sim = next(s for s in simulations if s.faculty_id == mock_faculty[4].id)
         assert fac4_sim.blocks_affected == 0
 
@@ -460,7 +460,7 @@ class TestCentralityCalculation:
                 mock_faculty, mock_assignments, services, lookups
             )
 
-        ***REMOVED*** 2 should have high centrality (sole provider)
+        # Faculty 2 should have high centrality (sole provider)
         fac2_score = next(s for s in scores if s.faculty_id == mock_faculty[2].id)
         assert fac2_score.unique_coverage_slots == 1
 

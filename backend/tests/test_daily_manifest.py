@@ -877,7 +877,7 @@ class TestDailyManifestStaffingSummary:
             name="Dr. Faculty Test",
             type="faculty",
             email="faculty.test@test.com",
-            pgy_level=None,  ***REMOVED*** should not have pgy_level
+            pgy_level=None,  # Faculty should not have pgy_level
         )
         db.add_all([resident, faculty])
         db.commit()

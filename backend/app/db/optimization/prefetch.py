@@ -13,14 +13,13 @@ from typing import Any, Optional
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session, contains_eager, joinedload, selectinload
 
+from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.block import Block
-from app.models.certification import Certification
-from app.models.leave_request import LeaveRequest
 from app.models.person import Person
-from app.models.procedure_log import ProcedureLog
+from app.models.procedure_credential import ProcedureCredential
 from app.models.rotation_template import RotationTemplate
-from app.models.swap_request import SwapRequest
+from app.models.swap import SwapRecord
 
 logger = logging.getLogger(__name__)
 
@@ -122,13 +121,13 @@ def prefetch_persons_with_assignments(
 
     # Optional relations
     if include_leave:
-        options.append(selectinload(Person.leave_requests))
+        options.append(selectinload(Person.absences))
 
     if include_certifications:
         options.append(selectinload(Person.certifications))
 
     if include_procedures:
-        options.append(selectinload(Person.procedure_logs))
+        options.append(selectinload(Person.procedure_credentials))
 
     query = query.options(*options)
 
@@ -278,76 +277,67 @@ def prefetch_schedule_data(
         )
         rotations = list(db.execute(rotations_query).scalars().all())
 
-    # Load active leave requests
-    leave_requests_query = (
-        select(LeaveRequest)
-        .options(selectinload(LeaveRequest.person))
+    # Load absences (leave, deployments, etc.)
+    absences_query = (
+        select(Absence)
+        .options(selectinload(Absence.person))
         .where(
             and_(
-                LeaveRequest.start_date <= end_date,
-                LeaveRequest.end_date >= start_date,
-                LeaveRequest.status.in_(["approved", "pending"]),
+                Absence.start_date <= end_date,
+                Absence.end_date >= start_date,
             )
         )
     )
 
     if person_ids:
-        leave_requests_query = leave_requests_query.where(
-            LeaveRequest.person_id.in_(person_ids)
+        absences_query = absences_query.where(
+            Absence.person_id.in_(person_ids)
         )
 
-    leave_requests = list(db.execute(leave_requests_query).scalars().all())
+    absences = list(db.execute(absences_query).scalars().all())
 
     return {
         "blocks": blocks,
         "assignments": assignments,
         "persons": persons,
         "rotations": rotations,
-        "leave_requests": leave_requests,
+        "absences": absences,
     }
 
 
-def prefetch_swap_requests_with_details(
+def prefetch_swap_records_with_details(
     db: Session,
     person_id: Optional[str] = None,
     status: Optional[str] = None,
     limit: int = 100,
-) -> list[SwapRequest]:
+) -> list[SwapRecord]:
     """
-    Prefetch swap requests with all related data.
+    Prefetch swap records with all related data.
 
     Args:
         db: Database session
-        person_id: Optional person ID filter
+        person_id: Optional person ID filter (matches source or target faculty)
         status: Optional status filter
         limit: Maximum results
 
     Returns:
-        List of SwapRequest objects with relations loaded
+        List of SwapRecord objects with relations loaded
     """
-    query = select(SwapRequest).options(
-        selectinload(SwapRequest.requester),
-        selectinload(SwapRequest.target_person),
-        selectinload(SwapRequest.give_assignment)
-        .selectinload(Assignment.block),
-        selectinload(SwapRequest.give_assignment)
-        .selectinload(Assignment.rotation_template),
-        selectinload(SwapRequest.receive_assignment)
-        .selectinload(Assignment.block),
-        selectinload(SwapRequest.receive_assignment)
-        .selectinload(Assignment.rotation_template),
+    query = select(SwapRecord).options(
+        selectinload(SwapRecord.source_faculty),
+        selectinload(SwapRecord.target_faculty),
     )
 
     if person_id:
         query = query.where(
-            (SwapRequest.requester_id == person_id)
-            | (SwapRequest.target_person_id == person_id)
+            (SwapRecord.source_faculty_id == person_id)
+            | (SwapRecord.target_faculty_id == person_id)
         )
 
     if status:
-        query = query.where(SwapRequest.status == status)
+        query = query.where(SwapRecord.status == status)
 
-    query = query.order_by(SwapRequest.created_at.desc()).limit(limit)
+    query = query.order_by(SwapRecord.requested_at.desc()).limit(limit)
 
     result = db.execute(query)
     return list(result.scalars().all())
@@ -380,9 +370,9 @@ def prefetch_person_workload_data(
             .selectinload(Assignment.block),
             selectinload(Person.assignments)
             .selectinload(Assignment.rotation_template),
-            selectinload(Person.leave_requests),
+            selectinload(Person.absences),
             selectinload(Person.certifications),
-            selectinload(Person.procedure_logs),
+            selectinload(Person.procedure_credentials),
         )
     )
 
@@ -399,32 +389,22 @@ def prefetch_person_workload_data(
         if a.block and start_date <= a.block.date <= end_date
     ]
 
-    # Filter leave requests by date
-    filtered_leave = [
-        lr
-        for lr in person.leave_requests
-        if lr.start_date <= end_date and lr.end_date >= start_date
+    # Filter absences by date
+    filtered_absences = [
+        absence
+        for absence in person.absences
+        if absence.start_date <= end_date and absence.end_date >= start_date
     ]
 
-    # Filter procedures by date (if procedure_log has date field)
-    filtered_procedures = []
-    if hasattr(ProcedureLog, "date"):
-        filtered_procedures = [
-            pl
-            for pl in person.procedure_logs
-            if hasattr(pl, "date")
-            and pl.date
-            and start_date <= pl.date <= end_date
-        ]
-    else:
-        filtered_procedures = person.procedure_logs
+    # Procedure credentials don't have dates, return all
+    procedure_credentials = person.procedure_credentials
 
     return {
         "person": person,
         "assignments": filtered_assignments,
-        "leave_requests": filtered_leave,
+        "absences": filtered_absences,
         "certifications": person.certifications,
-        "procedure_logs": filtered_procedures,
+        "procedure_credentials": procedure_credentials,
     }
 
 

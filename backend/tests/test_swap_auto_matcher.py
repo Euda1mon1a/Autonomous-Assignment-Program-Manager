@@ -95,7 +95,7 @@ def faculty_preferences(db: Session, faculty_members: list[Person]) -> list[Facu
     preferences = []
     base_date = date.today() + timedelta(days=14)
 
-    ***REMOVED*** 0: prefers week 2, blocks week 0
+    # Faculty 0: prefers week 2, blocks week 0
     pref0 = FacultyPreference(
         id=uuid4(),
         faculty_id=faculty_members[0].id,
@@ -104,7 +104,7 @@ def faculty_preferences(db: Session, faculty_members: list[Person]) -> list[Facu
         max_weeks_per_month=2,
     )
 
-    ***REMOVED*** 1: prefers week 0, blocks week 2
+    # Faculty 1: prefers week 0, blocks week 2
     pref1 = FacultyPreference(
         id=uuid4(),
         faculty_id=faculty_members[1].id,
@@ -113,7 +113,7 @@ def faculty_preferences(db: Session, faculty_members: list[Person]) -> list[Facu
         max_weeks_per_month=2,
     )
 
-    ***REMOVED*** 2: no specific preferences
+    # Faculty 2: no specific preferences
     pref2 = FacultyPreference(
         id=uuid4(),
         faculty_id=faculty_members[2].id,
@@ -383,7 +383,7 @@ class TestCompatibilityScoring:
         """Test scoring for a perfect mutual match with preference alignment."""
         base_date = date.today() + timedelta(days=14)
 
-        ***REMOVED*** 0 wants week 2, Faculty 1 wants week 0
+        # Faculty 0 wants week 2, Faculty 1 wants week 0
         # These preferences already exist in faculty_preferences fixture
         swap_a = SwapRecord(
             id=uuid4(),
@@ -418,7 +418,7 @@ class TestCompatibilityScoring:
         """Test scoring when one party has blocked the week they would receive."""
         base_date = date.today() + timedelta(days=14)
 
-        ***REMOVED*** 0 blocks week 0, so they can't accept it from Faculty 2
+        # Faculty 0 blocks week 0, so they can't accept it from Faculty 2
         swap_a = SwapRecord(
             id=uuid4(),
             source_faculty_id=faculty_members[2].id,
@@ -507,7 +507,7 @@ class TestCompatibilityScoring:
         """Test availability scoring when both parties are available."""
         base_date = date.today() + timedelta(days=14)
 
-        ***REMOVED*** 2 has no blocks
+        # Faculty 2 has no blocks
         swap_a = SwapRecord(
             source_faculty_id=faculty_members[2].id,
             source_week=base_date + timedelta(weeks=1),
@@ -535,7 +535,7 @@ class TestCompatibilityScoring:
         """Test availability scoring when one party has blocked week."""
         base_date = date.today() + timedelta(days=14)
 
-        ***REMOVED*** 0 blocks week 0
+        # Faculty 0 blocks week 0
         swap_a = SwapRecord(
             source_faculty_id=faculty_members[0].id,
             source_week=base_date,
@@ -878,7 +878,7 @@ class TestPriorityDetermination:
         """Test that blocked weeks with high score result in critical priority."""
         base_date = date.today() + timedelta(days=14)
 
-        ***REMOVED*** 0 has week 0 blocked
+        # Faculty 0 has week 0 blocked
         swap_a = SwapRecord(
             source_faculty_id=faculty_members[0].id,
             source_week=base_date,
@@ -1119,7 +1119,7 @@ class TestSuggestProactiveSwaps:
         faculty_members: list[Person],
     ):
         """Test proactive suggestions when no conflicts exist."""
-        ***REMOVED*** 5 has no preferences or assignments
+        # Faculty 5 has no preferences or assignments
         suggestions = swap_auto_matcher.suggest_proactive_swaps(
             faculty_members[5].id,
             limit=5

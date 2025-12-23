@@ -20,7 +20,8 @@ from app.models.conflict_alert import ConflictAlert
 from app.models.faculty_preference import FacultyPreference
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
-from app.models.swap import SwapRequest
+# SwapRecord model doesn't track assignment-level swaps
+# from app.models.swap import SwapRecord
 
 logger = logging.getLogger(__name__)
 
@@ -382,7 +383,7 @@ class TrainingDataPipeline:
         features["is_resident"] = 1 if person_data.get("type") == "resident" else 0
         features["pgy_level"] = person_data.get("pgy_level", 0) or 0
 
-        ***REMOVED*** role encoding
+        # Faculty role encoding
         faculty_role = person_data.get("faculty_role", "")
         for role in ["pd", "apd", "oic", "dept_chief", "sports_med", "core"]:
             features[f"role_{role}"] = 1 if faculty_role == role else 0
@@ -438,7 +439,7 @@ class TrainingDataPipeline:
         features["is_resident"] = 1 if person_data.get("type") == "resident" else 0
         features["pgy_level"] = person_data.get("pgy_level", 0) or 0
 
-        ***REMOVED*** role
+        # Faculty role
         faculty_role = person_data.get("faculty_role", "")
         for role in ["pd", "apd", "oic", "dept_chief", "sports_med", "core"]:
             features[f"role_{role}"] = 1 if faculty_role == role else 0
@@ -575,16 +576,14 @@ class TrainingDataPipeline:
         return features
 
     async def _was_assignment_swapped(self, assignment_id: str) -> bool:
-        """Check if an assignment was involved in a swap."""
-        # Query swap requests related to this assignment
-        query = select(func.count(SwapRequest.id)).where(
-            SwapRequest.status == "completed",
-            (SwapRequest.assignment_from_id == assignment_id)
-            | (SwapRequest.assignment_to_id == assignment_id),
-        )
-        result = await self._execute(query)
-        count = result.scalar()
-        return count > 0
+        """Check if an assignment was involved in a swap.
+
+        Note: SwapRecord model tracks faculty-week swaps, not assignment-level swaps.
+        This would need to be implemented with a different data model.
+        """
+        # SwapRecord doesn't track assignment-level swaps
+        # Return False as we can't determine this from current data
+        return False
 
     async def _person_had_conflicts(
         self,

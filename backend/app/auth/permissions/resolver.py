@@ -249,7 +249,7 @@ class PermissionResolver:
                 return str(user.id) == resource_id
 
         if resource_type == ResourceType.ASSIGNMENT.value:
-            ***REMOVED*** and residents can view their own assignments
+            # Faculty and residents can view their own assignments
             # but only coordinators can modify them
             if action == "read":
                 return True  # Already have read permission

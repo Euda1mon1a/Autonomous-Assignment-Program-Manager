@@ -330,7 +330,7 @@ class TestNotifySwapRequestReceived:
         self, mock_db, faculty_id, swap_id, sample_week, sample_preferences
     ):
         """Test notification for faculty without email (generates default)."""
-        ***REMOVED*** without email
+        # Faculty without email
         faculty = Mock(spec=Person)
         faculty.id = faculty_id
         faculty.name = "Dr. Jane Smith"

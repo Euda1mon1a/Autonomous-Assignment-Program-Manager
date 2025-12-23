@@ -93,7 +93,7 @@ class TestQueryBuilderBasicFilters:
         qb = QueryBuilder(Person, db)
         result = qb.filter_is_null("pgy_level").all()
 
-        ***REMOVED*** should have NULL pgy_level
+        # Faculty should have NULL pgy_level
         assert len(result) >= 1
         assert all(p.pgy_level is None for p in result)
 

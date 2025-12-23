@@ -209,7 +209,7 @@ class SchedulingContext:
     # Target: <0.80 to maintain 20% buffer per queuing theory
     current_utilization: float = 0.0
 
-    ***REMOVED*** whose loss creates N-1 vulnerability (single point of failure)
+    # Faculty whose loss creates N-1 vulnerability (single point of failure)
     n1_vulnerable_faculty: set[UUID] = field(default_factory=set)
 
     # Preference trails from stigmergy: {faculty_id: {slot_type: strength}}

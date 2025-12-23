@@ -95,7 +95,7 @@ def validate_pgy_level(pgy_level: int | None, person_type: str) -> int | None:
     """
     person_type_lower = person_type.lower()
 
-    ***REMOVED*** should not have PGY level
+    # Faculty should not have PGY level
     if person_type_lower == "faculty":
         if pgy_level is not None:
             raise ValidationError("Faculty cannot have a PGY level")
@@ -140,7 +140,7 @@ def validate_faculty_role(faculty_role: str | None, person_type: str) -> str | N
             raise ValidationError("Residents cannot have a faculty role")
         return None
 
-    ***REMOVED*** role is optional for faculty
+    # Faculty role is optional for faculty
     if faculty_role is None:
         return None
 

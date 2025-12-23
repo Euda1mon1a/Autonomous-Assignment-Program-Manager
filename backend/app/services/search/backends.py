@@ -17,7 +17,7 @@ from app.models.assignment import Assignment
 from app.models.person import Person
 from app.models.procedure import Procedure
 from app.models.rotation_template import RotationTemplate
-from app.models.swap import SwapRequest
+from app.models.swap import SwapRecord
 from app.services.search.analyzers import SearchAnalyzer, StandardAnalyzer
 
 
@@ -387,16 +387,16 @@ class PostgreSQLSearchBackend(SearchBackend):
         limit: int,
         offset: int,
     ) -> Dict[str, Any]:
-        """Search swap requests."""
-        stmt = select(SwapRequest)
+        """Search swap records."""
+        stmt = select(SwapRecord)
 
         conditions = []
 
         if 'status' in filters:
-            conditions.append(SwapRequest.status == filters['status'])
+            conditions.append(SwapRecord.status == filters['status'])
 
         if 'swap_type' in filters:
-            conditions.append(SwapRequest.swap_type == filters['swap_type'])
+            conditions.append(SwapRecord.swap_type == filters['swap_type'])
 
         if conditions:
             stmt = stmt.where(and_(*conditions))
@@ -407,7 +407,7 @@ class PostgreSQLSearchBackend(SearchBackend):
         total = total_result.scalar() or 0
 
         # Apply ordering (most recent first)
-        stmt = stmt.order_by(SwapRequest.created_at.desc())
+        stmt = stmt.order_by(SwapRecord.requested_at.desc())
         stmt = stmt.limit(limit).offset(offset)
 
         result = await self.db.execute(stmt)

@@ -132,7 +132,7 @@ class PermissionCheckResult(BaseModel):
 ROLE_HIERARCHY = {
     UserRole.ADMIN: [],  # Admin has no parent roles (top of hierarchy)
     UserRole.COORDINATOR: [UserRole.ADMIN],  # Coordinator inherits from admin
-    UserRole.FACULTY: [UserRole.COORDINATOR],  ***REMOVED*** inherits from coordinator
+    UserRole.FACULTY: [UserRole.COORDINATOR],  # Faculty inherits from coordinator
     UserRole.RESIDENT: [],  # Resident is independent
     UserRole.CLINICAL_STAFF: [],  # Clinical staff is independent
     UserRole.RN: [UserRole.CLINICAL_STAFF],  # RN inherits from clinical_staff
