@@ -56,5 +56,41 @@ for pattern in "${WARNING_PATTERNS[@]}"; do
     fi
 done
 
+# Special check: git push without remote tracking
+if echo "$COMMAND" | grep -qE "^git push|git push "; then
+    CURRENT_BRANCH=$(git -C "$PROJECT_ROOT" branch --show-current 2>/dev/null || echo "")
+    if [ -n "$CURRENT_BRANCH" ]; then
+        UPSTREAM=$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo "")
+        if [ -z "$UPSTREAM" ]; then
+            # Check if -u flag is present (setting up tracking)
+            if ! echo "$COMMAND" | grep -qE "\-u |--set-upstream"; then
+                echo "" >&2
+                echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&2
+                echo "  WARNING: Branch '$CURRENT_BRANCH' has no remote!" >&2
+                echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&2
+                echo "" >&2
+                echo "  Use: git push -u origin $CURRENT_BRANCH" >&2
+                echo "" >&2
+                log "WARNING: git push on untracked branch $CURRENT_BRANCH"
+            fi
+        fi
+    fi
+fi
+
+# Special check: git commit on main/master
+if echo "$COMMAND" | grep -qE "^git commit|git commit "; then
+    CURRENT_BRANCH=$(git -C "$PROJECT_ROOT" branch --show-current 2>/dev/null || echo "")
+    if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
+        echo "" >&2
+        echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&2
+        echo "  WARNING: Committing directly to $CURRENT_BRANCH!" >&2
+        echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&2
+        echo "" >&2
+        echo "  Consider creating a feature branch first." >&2
+        echo "" >&2
+        log "WARNING: git commit on $CURRENT_BRANCH"
+    fi
+fi
+
 # Command approved
 exit 0
