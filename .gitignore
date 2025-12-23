@@ -17,10 +17,7 @@ parts/
 sdist/
 var/
 wheels/
-<<<<<<< HEAD
 !backend/vendor/wheels/
-=======
->>>>>>> origin/docs/session-14-summary
 *.egg-info/
 .installed.cfg
 *.egg
@@ -71,13 +68,10 @@ htmlcov/
 *.log
 logs/
 
-<<<<<<< HEAD
 ***REMOVED*** Antigravity IDE logs (keep directory structure)
 .antigravity/logs/*
 !.antigravity/logs/.gitkeep
 
-=======
->>>>>>> origin/docs/session-14-summary
 ***REMOVED*** Database
 *.db
 *.sqlite3
@@ -113,7 +107,6 @@ docs/data/*.json
 *.sql
 !backend/alembic/**/*.sql
 
-<<<<<<< HEAD
 ***REMOVED*** Celery runtime files
 celerybeat-schedule
 backend/celerybeat-schedule
@@ -126,8 +119,8 @@ celerybeat.pid
 scripts/seed_people_local.py
 docs/data/*.csv
 scripts/airtable_sync.py
-=======
-***REMOVED*** Local seed script with real PII
-scripts/seed_people_local.py
 docs/data/people.json
->>>>>>> origin/docs/session-14-summary
+
+***REMOVED*** PII sanitization mappings (NEVER COMMIT - contains real→synthetic mapping)
+.sanitize/
+*.mapping.json
