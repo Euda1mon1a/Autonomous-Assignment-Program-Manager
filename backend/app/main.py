@@ -210,8 +210,10 @@ async def app_exception_handler(request: Request, exc: AppException):
 async def global_exception_handler(request: Request, exc: Exception):
     """Handle all unhandled exceptions without leaking internal details."""
     ***REMOVED*** Log the full error for debugging
+    ***REMOVED*** Use repr(exc) to avoid loguru format string issues with curly braces in exception messages
     logger.error(
-        f"Unhandled exception on {request.method} {request.url.path}: {exc}",
+        "Unhandled exception on {} {}: {}",
+        request.method, request.url.path, repr(exc),
         exc_info=True
     )
 

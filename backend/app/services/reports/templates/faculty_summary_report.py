@@ -90,7 +90,7 @@ class FacultySummaryReportTemplate:
             if not faculty_data:
                 continue
 
-            ***REMOVED*** header
+            ***REMOVED*** Faculty header
             elements.append(
                 Paragraph(
                     f"Faculty: {faculty_data['name']}",

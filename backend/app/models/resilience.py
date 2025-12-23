@@ -270,7 +270,7 @@ class VulnerabilityRecord(Base):
     ***REMOVED*** Vulnerability details
     n1_vulnerabilities = Column(JSONType())  ***REMOVED*** List of single-loss vulnerabilities
     n2_fatal_pairs = Column(JSONType())  ***REMOVED*** List of fatal faculty pairs
-    most_critical_faculty = Column(JSONType())  ***REMOVED*** IDs with highest centrality
+    most_critical_faculty = Column(JSONType())  ***REMOVED*** Faculty IDs with highest centrality
 
     ***REMOVED*** Recommendations generated
     recommended_actions = Column(StringArrayType())
@@ -373,7 +373,7 @@ class AllostasisRecord(Base):
     __tablename__ = "allostasis_records"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    entity_id = Column(GUID(), nullable=False)  ***REMOVED*** ID or system UUID
+    entity_id = Column(GUID(), nullable=False)  ***REMOVED*** Faculty ID or system UUID
     entity_type = Column(String(20), nullable=False)  ***REMOVED*** "faculty" or "system"
     calculated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
@@ -727,8 +727,8 @@ class DecisionOutcome(str, enum.Enum):
 
 class TrailType(str, enum.Enum):
     """Types of preference trails."""
-    PREFERENCE = "preference"       ***REMOVED*** prefers this slot
-    AVOIDANCE = "avoidance"         ***REMOVED*** avoids this slot
+    PREFERENCE = "preference"       ***REMOVED*** Faculty prefers this slot
+    AVOIDANCE = "avoidance"         ***REMOVED*** Faculty avoids this slot
     SWAP_AFFINITY = "swap_affinity"  ***REMOVED*** Willing to swap with specific person
     WORKLOAD = "workload"           ***REMOVED*** Preferred workload pattern
     SEQUENCE = "sequence"           ***REMOVED*** Preferred assignment sequences

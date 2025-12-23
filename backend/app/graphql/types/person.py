@@ -1,5 +1,6 @@
 """GraphQL types for Person entity."""
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 from uuid import UUID
 
@@ -8,7 +9,7 @@ from strawberry.scalars import JSON
 
 
 @strawberry.enum
-class FacultyRoleType(str):
+class FacultyRoleType(str, Enum):
     """Faculty role types."""
     PD = "pd"
     APD = "apd"

@@ -131,7 +131,7 @@ class TestBurdenCalculation:
 
 
 ***REMOVED*** =============================================================================
-***REMOVED*** Burden Profile Tests
+***REMOVED*** Faculty Burden Profile Tests
 ***REMOVED*** =============================================================================
 
 

@@ -61,11 +61,11 @@ class Person(Base):
     ***REMOVED*** - Chief resident: 24 blocks (6 clinical + 6 admin)
     ***REMOVED*** - Research track: 8 blocks (2 clinical weeks)
 
-    ***REMOVED***-specific fields
+    ***REMOVED*** Faculty-specific fields
     performs_procedures = Column(Boolean, default=False)
     specialties = Column(StringArrayType())  ***REMOVED*** e.g., ['Sports Medicine', 'Dermatology']
     primary_duty = Column(String(255))
-    faculty_role = Column(String(50))  ***REMOVED***Role enum value (pd, apd, oic, dept_chief, sports_med, core)
+    faculty_role = Column(String(50))  ***REMOVED*** FacultyRole enum value (pd, apd, oic, dept_chief, sports_med, core)
 
     ***REMOVED*** Screener-specific fields
     screener_role = Column(String(50))  ***REMOVED*** ScreenerRole enum value (dedicated, rn, emt, resident)

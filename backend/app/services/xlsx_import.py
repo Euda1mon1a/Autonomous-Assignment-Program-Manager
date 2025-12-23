@@ -254,7 +254,7 @@ class ClinicScheduleImporter:
         "sim": SlotType.CONFERENCE,  ***REMOVED*** Simulation
         "usafp": SlotType.CONFERENCE,
         "hafp": SlotType.CONFERENCE,
-        "facdev": SlotType.CONFERENCE,  ***REMOVED*** Development
+        "facdev": SlotType.CONFERENCE,  ***REMOVED*** Faculty Development
 
         ***REMOVED*** --- ADMIN (Administrative time) ---
         "admin": SlotType.ADMIN,
@@ -265,7 +265,7 @@ class ClinicScheduleImporter:
         "pi": SlotType.ADMIN,        ***REMOVED*** Process Improvement
         "at": SlotType.ADMIN,        ***REMOVED*** Admin Time
         "pcat": SlotType.ADMIN,      ***REMOVED*** Patient Care Admin Team
-        "fac": SlotType.ADMIN,       ***REMOVED*** (administrative)
+        "fac": SlotType.ADMIN,       ***REMOVED*** Faculty (administrative)
         "dm": SlotType.ADMIN,        ***REMOVED*** Department Meeting
         "dfm": SlotType.ADMIN,       ***REMOVED*** DFM administrative
     }
