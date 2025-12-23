@@ -65,6 +65,24 @@ RULES_FILES=(
     "docs/development/CLAUDE_GIT_SAFE_SYNC_CHECKLIST.md"
 )
 
+# Check for debug session notes from previous sessions
+DEBUG_NOTES=$(find "$PROJECT_ROOT" -maxdepth 1 -name "debug-session*.md" -type f 2>/dev/null)
+if [ -n "$DEBUG_NOTES" ]; then
+    log "Found debug session notes from previous session"
+    echo ""
+    echo "=================================================="
+    echo "PREVIOUS DEBUG SESSION NOTES FOUND:"
+    echo "=================================================="
+    for note in $DEBUG_NOTES; do
+        echo "  - $(basename "$note")"
+    done
+    echo ""
+    echo "Consider reading these to resume debugging work."
+    echo "Use: 'Read [filename] and continue debugging'"
+    echo "=================================================="
+    echo ""
+fi
+
 for file in "${RULES_FILES[@]}"; do
     if [ -f "$PROJECT_ROOT/$file" ]; then
         echo "----- BEGIN $file -----"
