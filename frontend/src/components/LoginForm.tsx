@@ -42,9 +42,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const formErrors = useMemo(() => validateForm(), [validateForm]);
 
   const isFormValid = useMemo(() => {
-    const valid = Object.keys(formErrors).length === 0 && username.trim() !== '' && password !== '';
-    console.log('[LoginForm] isFormValid:', valid, { errorCount: Object.keys(formErrors).length, username: !!username, password: !!password })
-    return valid;
+    return Object.keys(formErrors).length === 0 && username.trim() !== '' && password !== '';
   }, [formErrors, username, password]);
 
   const handleBlur = (field: string) => {

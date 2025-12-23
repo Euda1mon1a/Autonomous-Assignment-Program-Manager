@@ -56,11 +56,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('[AuthContext] initAuth() - checking for existing session...')
       try {
         const validatedUser = await validateToken()
-        console.log('[AuthContext] initAuth() - session found:', { userId: validatedUser?.id })
         setUser(validatedUser)
-      } catch (error) {
+      } catch {
         // Token validation failed, user remains null
-        console.log('[AuthContext] initAuth() - no valid session (this is normal for login page)')
       }
       setIsLoading(false)
       console.log('[AuthContext] initAuth() - complete, isLoading=false')
@@ -75,10 +73,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsLoading(true)
     try {
       const response = await authLogin(credentials)
-      console.log('[AuthContext] login() - SUCCESS, user:', response.user?.username)
       setUser(response.user)
     } catch (err) {
-      console.error('[AuthContext] login() - FAILED:', err)
       throw err  // Re-throw so LoginForm can catch it
     } finally {
       setIsLoading(false)
