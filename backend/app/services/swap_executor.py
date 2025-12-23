@@ -1,5 +1,6 @@
 """Swap execution service."""
 
+import logging
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from uuid import UUID, uuid4
@@ -10,6 +11,8 @@ from sqlalchemy.orm import Session, selectinload
 from app.models.block import Block
 from app.models.call_assignment import CallAssignment
 from app.models.swap import SwapRecord, SwapStatus, SwapType
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -109,6 +112,8 @@ class SwapExecutor:
         rolled_back_by_id: UUID | None = None,
     ) -> RollbackResult:
         """Rollback an executed swap within the allowed window."""
+        logger.info("Rollback requested for swap %s, reason: %s", swap_id, reason)
+
         try:
             # Retrieve the swap record
             swap_record = (
@@ -116,6 +121,7 @@ class SwapExecutor:
             )
 
             if not swap_record:
+                logger.warning("Rollback failed: swap %s not found", swap_id)
                 return RollbackResult(
                     success=False,
                     message="Swap record not found",
@@ -124,6 +130,11 @@ class SwapExecutor:
 
             # Check if swap is in a state that can be rolled back
             if swap_record.status != SwapStatus.EXECUTED:
+                logger.warning(
+                    "Rollback failed: swap %s has invalid status %s",
+                    swap_id,
+                    swap_record.status,
+                )
                 return RollbackResult(
                     success=False,
                     message=f"Cannot rollback swap with status: {swap_record.status}",
@@ -132,6 +143,16 @@ class SwapExecutor:
 
             # Check if rollback is within the allowed time window
             if not self.can_rollback(swap_id):
+                time_since = (
+                    datetime.utcnow() - swap_record.executed_at
+                    if swap_record.executed_at
+                    else None
+                )
+                logger.warning(
+                    "Rollback failed: swap %s window expired (executed %s ago)",
+                    swap_id,
+                    time_since,
+                )
                 return RollbackResult(
                     success=False,
                     message=f"Rollback window of {self.ROLLBACK_WINDOW_HOURS} hours has expired",
@@ -163,6 +184,13 @@ class SwapExecutor:
 
             self.db.commit()
 
+            logger.info(
+                "Swap %s successfully rolled back (source: %s, target: %s)",
+                swap_id,
+                swap_record.source_faculty_id,
+                swap_record.target_faculty_id,
+            )
+
             return RollbackResult(
                 success=True,
                 message="Swap successfully rolled back",
@@ -170,6 +198,7 @@ class SwapExecutor:
 
         except Exception as e:
             self.db.rollback()
+            logger.exception("Rollback failed for swap %s: %s", swap_id, e)
             return RollbackResult(
                 success=False,
                 message=f"Rollback failed: {str(e)}",
@@ -181,19 +210,32 @@ class SwapExecutor:
         swap_record = self.db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
 
         if not swap_record:
+            logger.debug("can_rollback(%s): swap not found", swap_id)
             return False
 
         if swap_record.status != SwapStatus.EXECUTED:
+            logger.debug(
+                "can_rollback(%s): invalid status %s", swap_id, swap_record.status
+            )
             return False
 
         if not swap_record.executed_at:
+            logger.debug("can_rollback(%s): no executed_at timestamp", swap_id)
             return False
 
         # Check if within rollback window
         time_since_execution = datetime.utcnow() - swap_record.executed_at
         rollback_window = timedelta(hours=self.ROLLBACK_WINDOW_HOURS)
 
-        return time_since_execution <= rollback_window
+        can_rb = time_since_execution <= rollback_window
+        logger.debug(
+            "can_rollback(%s): %s (executed %s ago, window=%sh)",
+            swap_id,
+            can_rb,
+            time_since_execution,
+            self.ROLLBACK_WINDOW_HOURS,
+        )
+        return can_rb
 
     def _update_schedule_assignments(
         self,
