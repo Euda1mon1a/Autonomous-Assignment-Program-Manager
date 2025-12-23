@@ -68,6 +68,10 @@ htmlcov/
 *.log
 logs/
 
+***REMOVED*** Antigravity IDE logs (keep directory structure)
+.antigravity/logs/*
+!.antigravity/logs/.gitkeep
+
 ***REMOVED*** Database
 *.db
 *.sqlite3

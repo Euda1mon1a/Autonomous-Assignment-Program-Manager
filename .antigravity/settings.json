@@ -1,0 +1,87 @@
+{
+  "$schema": "https://antigravityai.org/schemas/settings.json",
+  "version": "1.0.0",
+  "lastUpdated": "2025-12-22",
+
+  "autopilot": {
+    "enabled": true,
+    "mode": "A",
+    "description": "Single agent, autonomous with guardrails",
+
+    "guardrails": {
+      "level": "strict",
+      "customRulesFile": "./guardrails.md"
+    },
+
+    "timeouts": {
+      "singleTaskMaxMinutes": 15,
+      "sessionMaxMinutes": 120,
+      "idleBeforePauseMinutes": 5
+    },
+
+    "retries": {
+      "maxRetries": 2,
+      "backoffMultiplier": 2
+    },
+
+    "logging": {
+      "enabled": true,
+      "level": "info",
+      "directory": "./logs"
+    }
+  },
+
+  "managerView": {
+    "enabled": false,
+    "status": "FUTURE_B",
+    "configFile": "./FUTURE_B_MANAGER_VIEW.md",
+    "note": "Parallel agent orchestration - not yet activated"
+  },
+
+  "autoTriggers": {
+    "enabled": false,
+    "status": "FUTURE_C",
+    "configFile": "./FUTURE_C_AUTO_TRIGGERS.md",
+    "note": "Webhook and scheduled triggers - not yet activated"
+  },
+
+  "models": {
+    "default": "claude-sonnet-4-5",
+    "thinking": "claude-sonnet-4-5-thinking",
+    "complex": "claude-opus-4-5-thinking",
+    "quick": "gemini-3-flash"
+  },
+
+  "skills": {
+    "autoLoad": true,
+    "directory": "../.claude/skills"
+  },
+
+  "commands": {
+    "autoLoad": true,
+    "directory": "../.claude/commands"
+  },
+
+  "mcp": {
+    "autoConnect": true,
+    "serverPath": "../mcp-server",
+    "healthCheckInterval": 60
+  },
+
+  "projectContext": {
+    "instructionsFile": "../CLAUDE.md",
+    "architectureFile": "../ARCHITECTURE.md"
+  },
+
+  "recovery": {
+    "autoRecovery": true,
+    "proceduresFile": "./recovery.md",
+    "checkpointBeforeMajorChanges": true
+  },
+
+  "notifications": {
+    "onEscalation": true,
+    "onRecovery": true,
+    "onSessionComplete": true
+  }
+}
