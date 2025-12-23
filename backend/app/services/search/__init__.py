@@ -15,14 +15,14 @@ for the residency scheduling domain.
 """
 
 from app.services.search.analyzers import (
+    MedicalTermAnalyzer,
+    PersonNameAnalyzer,
     SearchAnalyzer,
     StandardAnalyzer,
-    PersonNameAnalyzer,
-    MedicalTermAnalyzer,
 )
 from app.services.search.backends import (
-    SearchBackend,
     PostgreSQLSearchBackend,
+    SearchBackend,
 )
 from app.services.search.indexer import SearchIndexer
 from app.services.search.query import QueryBuilder, SearchQuery

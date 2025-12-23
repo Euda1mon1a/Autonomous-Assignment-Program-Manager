@@ -66,10 +66,7 @@ interface ImportState {
   file: File | null;
   format: ImportFileFormat;
   dataType: ImportDataType;
-<<<<<<< HEAD
   dataTypeSource: 'auto' | 'manual';
-=======
->>>>>>> origin/docs/session-14-summary
   preview: ImportPreviewResult | null;
   progress: ImportProgress;
   options: ImportOptions;
@@ -87,10 +84,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
     file: null,
     format: 'csv',
     dataType: hookOptions.dataType || 'schedules',
-<<<<<<< HEAD
     dataTypeSource: hookOptions.dataType ? 'manual' : 'auto',
-=======
->>>>>>> origin/docs/session-14-summary
     preview: null,
     progress: {
       status: 'idle',
@@ -169,14 +163,9 @@ export function useImport(hookOptions: UseImportOptions = {}) {
       const normalizedData = normalizeColumns(rawData);
       const columns = Object.keys(normalizedData[0] || {});
 
-<<<<<<< HEAD
       // Use manual selection if user explicitly chose, otherwise auto-detect
       const detectedType =
         state.dataTypeSource === 'manual' ? state.dataType : detectDataType(columns);
-=======
-      // Detect data type from columns
-      const detectedType = hookOptions.dataType || detectDataType(columns);
->>>>>>> origin/docs/session-14-summary
 
       updateProgress({
         status: 'validating',
@@ -238,11 +227,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
       });
       throw error;
     }
-<<<<<<< HEAD
   }, [state.dataType, state.dataTypeSource, parseFile, updateProgress]);
-=======
-  }, [hookOptions.dataType, parseFile, updateProgress]);
->>>>>>> origin/docs/session-14-summary
 
   // ============================================================================
   // Execute Import Mutation
@@ -399,10 +384,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
       file: null,
       format: 'csv',
       dataType: hookOptions.dataType || 'schedules',
-<<<<<<< HEAD
       dataTypeSource: hookOptions.dataType ? 'manual' : 'auto',
-=======
->>>>>>> origin/docs/session-14-summary
       preview: null,
       progress: {
         status: 'idle',
@@ -435,11 +417,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
   // ============================================================================
 
   const setDataType = useCallback((dataType: ImportDataType) => {
-<<<<<<< HEAD
     setState(prev => ({ ...prev, dataType, dataTypeSource: 'manual' }));
-=======
-    setState(prev => ({ ...prev, dataType }));
->>>>>>> origin/docs/session-14-summary
   }, []);
 
   // ============================================================================

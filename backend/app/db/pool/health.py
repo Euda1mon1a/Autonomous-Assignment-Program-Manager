@@ -3,11 +3,10 @@
 This module provides health check functionality for the connection pool,
 including connection validation, performance checks, and automatic recovery.
 """
-import asyncio
+
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
 
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
@@ -39,8 +38,8 @@ class HealthCheckResult:
     successful_pings: int
     failed_pings: int
     avg_ping_time: float
-    errors: List[str]
-    warnings: List[str]
+    errors: list[str]
+    warnings: list[str]
 
 
 class PoolHealthChecker:
@@ -59,7 +58,7 @@ class PoolHealthChecker:
         """
         self._session_factory = session_factory
         self._config = config
-        self._last_check: Optional[HealthCheckResult] = None
+        self._last_check: HealthCheckResult | None = None
 
     def check_connection_health(
         self, connection, connection_record, connection_proxy
@@ -151,7 +150,7 @@ class PoolHealthChecker:
         self._last_check = result
         return result
 
-    def get_last_check_result(self) -> Optional[HealthCheckResult]:
+    def get_last_check_result(self) -> HealthCheckResult | None:
         """Get result of last health check.
 
         Returns:
@@ -159,7 +158,7 @@ class PoolHealthChecker:
         """
         return self._last_check
 
-    def validate_pool_configuration(self) -> List[str]:
+    def validate_pool_configuration(self) -> list[str]:
         """Validate pool configuration and return warnings.
 
         Returns:
@@ -271,7 +270,7 @@ class ConnectionValidator:
                 pass
 
     @staticmethod
-    def check_connection_age(connection_record) -> Optional[float]:
+    def check_connection_age(connection_record) -> float | None:
         """Check how long a connection has been alive.
 
         Args:
@@ -280,7 +279,10 @@ class ConnectionValidator:
         Returns:
             float: Connection age in seconds, or None if unavailable
         """
-        if hasattr(connection_record, "info") and "connect_time" in connection_record.info:
+        if (
+            hasattr(connection_record, "info")
+            and "connect_time" in connection_record.info
+        ):
             import time
 
             return time.time() - connection_record.info["connect_time"]

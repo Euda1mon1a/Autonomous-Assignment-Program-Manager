@@ -47,9 +47,11 @@ from app.deployment.blue_green import (
     DeploymentStatus,
     HealthCheck,
     HealthCheckResult,
-    RollbackReason as BlueGreenRollbackReason,
     SessionDrainStatus,
     TrafficSplitStrategy,
+)
+from app.deployment.blue_green import (
+    RollbackReason as BlueGreenRollbackReason,
 )
 from app.deployment.canary import (
     CanaryConfig,

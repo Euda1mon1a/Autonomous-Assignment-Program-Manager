@@ -15,6 +15,7 @@ Usage:
 
     app.add_middleware(VersioningMiddleware)
 """
+
 from app.middleware.versioning.deprecation import (
     DeprecationManager,
     DeprecationWarning,

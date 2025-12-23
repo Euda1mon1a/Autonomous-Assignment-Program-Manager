@@ -151,7 +151,9 @@ class BlockService:
                     continue
 
                 days_from_start = (current_date - start_date).days
-                current_block = base_block_number + (days_from_start // block_duration_days)
+                current_block = base_block_number + (
+                    days_from_start // block_duration_days
+                )
 
                 block_data = {
                     "date": current_date,

@@ -4,13 +4,13 @@ Quota manager - main service for quota management.
 This module provides the main QuotaManager service that orchestrates
 quota enforcement, tracking, alerts, and reporting.
 """
+
 import logging
 from datetime import datetime
-from typing import Optional
 
 import redis
 
-from app.quota.policies import QuotaPolicy, get_policy_for_role, create_custom_policy
+from app.quota.policies import QuotaPolicy, create_custom_policy, get_policy_for_role
 from app.quota.tracking import QuotaTracker
 
 logger = logging.getLogger(__name__)
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class QuotaExceededError(Exception):
     """Raised when quota is exceeded."""
+
     def __init__(self, message: str, daily_limit: int, monthly_limit: int):
         self.message = message
         self.daily_limit = daily_limit
@@ -100,7 +101,7 @@ class QuotaManager:
         self,
         user_id: str,
         policy: QuotaPolicy,
-        ttl_seconds: Optional[int] = None,
+        ttl_seconds: int | None = None,
     ) -> bool:
         """
         Set custom quota policy for a user (admin operation).
@@ -199,7 +200,9 @@ class QuotaManager:
                 daily_limit = policy.daily_limit
                 monthly_limit = policy.monthly_limit
 
-            raise QuotaExceededError(reason or "Quota exceeded", daily_limit, monthly_limit)
+            raise QuotaExceededError(
+                reason or "Quota exceeded", daily_limit, monthly_limit
+            )
 
     def record_usage(
         self,
@@ -348,7 +351,7 @@ class QuotaManager:
     def reset_user_quota(
         self,
         user_id: str,
-        resource_type: Optional[str] = None,
+        resource_type: str | None = None,
         reset_daily: bool = True,
         reset_monthly: bool = False,
     ) -> bool:
@@ -394,16 +397,18 @@ class QuotaManager:
             alert_data = self.redis.hgetall(alert_key)
 
             if alert_data:
-                alerts.append({
-                    "resource_type": resource_type,
-                    "timestamp": alert_data.get(b"timestamp", b"").decode(),
-                    "alert_level": alert_data.get(b"alert_level", b"").decode(),
-                    "daily_percentage": float(
-                        alert_data.get(b"daily_percentage", b"0")
-                    ),
-                    "monthly_percentage": float(
-                        alert_data.get(b"monthly_percentage", b"0")
-                    ),
-                })
+                alerts.append(
+                    {
+                        "resource_type": resource_type,
+                        "timestamp": alert_data.get(b"timestamp", b"").decode(),
+                        "alert_level": alert_data.get(b"alert_level", b"").decode(),
+                        "daily_percentage": float(
+                            alert_data.get(b"daily_percentage", b"0")
+                        ),
+                        "monthly_percentage": float(
+                            alert_data.get(b"monthly_percentage", b"0")
+                        ),
+                    }
+                )
 
         return alerts

@@ -9,11 +9,21 @@ Models for tracking:
 Based on Robert Axelrod's Prisoner's Dilemma tournaments for
 empirically testing scheduling and resilience configurations.
 """
+
 import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -22,27 +32,30 @@ from app.db.types import GUID, JSONType, StringArrayType
 
 class StrategyType(str, enum.Enum):
     """Types of configuration strategies."""
-    COOPERATIVE = "cooperative"           ***REMOVED*** Always cooperate (conservative config)
-    AGGRESSIVE = "aggressive"             ***REMOVED*** Always defect (aggressive config)
-    TIT_FOR_TAT = "tit_for_tat"          ***REMOVED*** Mirror opponent behavior
-    GRUDGER = "grudger"                   ***REMOVED*** Cooperate until betrayed, then always defect
-    PAVLOV = "pavlov"                     ***REMOVED*** Win-stay, lose-shift
-    RANDOM = "random"                     ***REMOVED*** Chaos monkey
-    SUSPICIOUS_TFT = "suspicious_tft"     ***REMOVED*** Defect first, then TFT
-    FORGIVING_TFT = "forgiving_tft"       ***REMOVED*** TFT but forgives occasional defection
-    CUSTOM = "custom"                     ***REMOVED*** User-defined strategy
+
+    COOPERATIVE = "cooperative"  ***REMOVED*** Always cooperate (conservative config)
+    AGGRESSIVE = "aggressive"  ***REMOVED*** Always defect (aggressive config)
+    TIT_FOR_TAT = "tit_for_tat"  ***REMOVED*** Mirror opponent behavior
+    GRUDGER = "grudger"  ***REMOVED*** Cooperate until betrayed, then always defect
+    PAVLOV = "pavlov"  ***REMOVED*** Win-stay, lose-shift
+    RANDOM = "random"  ***REMOVED*** Chaos monkey
+    SUSPICIOUS_TFT = "suspicious_tft"  ***REMOVED*** Defect first, then TFT
+    FORGIVING_TFT = "forgiving_tft"  ***REMOVED*** TFT but forgives occasional defection
+    CUSTOM = "custom"  ***REMOVED*** User-defined strategy
 
 
 class SimulationType(str, enum.Enum):
     """Types of game theory simulations."""
-    TOURNAMENT = "tournament"             ***REMOVED*** Round-robin tournament
-    EVOLUTION = "evolution"               ***REMOVED*** Moran process evolutionary simulation
-    SINGLE_MATCH = "single_match"         ***REMOVED*** Single head-to-head match
-    VALIDATION = "validation"             ***REMOVED*** TFT validation test
+
+    TOURNAMENT = "tournament"  ***REMOVED*** Round-robin tournament
+    EVOLUTION = "evolution"  ***REMOVED*** Moran process evolutionary simulation
+    SINGLE_MATCH = "single_match"  ***REMOVED*** Single head-to-head match
+    VALIDATION = "validation"  ***REMOVED*** TFT validation test
 
 
 class SimulationStatus(str, enum.Enum):
     """Status of a simulation."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -56,6 +69,7 @@ class ConfigStrategy(Base):
 
     Maps resilience configurations to Prisoner's Dilemma strategies.
     """
+
     __tablename__ = "game_theory_strategies"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -69,13 +83,13 @@ class ConfigStrategy(Base):
     utilization_target = Column(Float, default=0.80)
     cross_zone_borrowing = Column(Boolean, default=True)
     sacrifice_willingness = Column(String(20), default="medium")  ***REMOVED*** low, medium, high
-    defense_activation_threshold = Column(Integer, default=3)     ***REMOVED*** Defense level 1-5
+    defense_activation_threshold = Column(Integer, default=3)  ***REMOVED*** Defense level 1-5
     response_timeout_ms = Column(Integer, default=5000)
 
     ***REMOVED*** Strategy behavior parameters
     initial_action = Column(String(10), default="cooperate")  ***REMOVED*** cooperate or defect
-    forgiveness_probability = Column(Float, default=0.0)      ***REMOVED*** Chance to forgive defection
-    retaliation_memory = Column(Integer, default=1)           ***REMOVED*** Rounds to remember defection
+    forgiveness_probability = Column(Float, default=0.0)  ***REMOVED*** Chance to forgive defection
+    retaliation_memory = Column(Integer, default=1)  ***REMOVED*** Rounds to remember defection
     is_stochastic = Column(Boolean, default=False)
 
     ***REMOVED*** Custom strategy logic (for CUSTOM type)
@@ -102,6 +116,7 @@ class GameTheoryTournament(Base):
     Implements Axelrod's tournament format where each strategy plays
     against every other strategy (including itself) multiple times.
     """
+
     __tablename__ = "game_theory_tournaments"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -158,6 +173,7 @@ class EvolutionSimulation(Base):
     Tests which configuration strategy is evolutionarily stable -
     meaning it cannot be invaded by mutant strategies.
     """
+
     __tablename__ = "game_theory_evolution"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -208,15 +224,22 @@ class TournamentMatch(Base):
 
     Provides detailed record of each strategy pairing.
     """
+
     __tablename__ = "game_theory_matches"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    tournament_id = Column(GUID(), ForeignKey("game_theory_tournaments.id"), nullable=False)
+    tournament_id = Column(
+        GUID(), ForeignKey("game_theory_tournaments.id"), nullable=False
+    )
 
     ***REMOVED*** Participants
-    strategy1_id = Column(GUID(), ForeignKey("game_theory_strategies.id"), nullable=False)
+    strategy1_id = Column(
+        GUID(), ForeignKey("game_theory_strategies.id"), nullable=False
+    )
     strategy1_name = Column(String(100))
-    strategy2_id = Column(GUID(), ForeignKey("game_theory_strategies.id"), nullable=False)
+    strategy2_id = Column(
+        GUID(), ForeignKey("game_theory_strategies.id"), nullable=False
+    )
     strategy2_name = Column(String(100))
 
     ***REMOVED*** Results
@@ -255,10 +278,13 @@ class ValidationResult(Base):
     Tests whether a configuration can coexist with a Tit for Tat
     validator - a benchmark for production-ready behavior.
     """
+
     __tablename__ = "game_theory_validations"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    strategy_id = Column(GUID(), ForeignKey("game_theory_strategies.id"), nullable=False)
+    strategy_id = Column(
+        GUID(), ForeignKey("game_theory_strategies.id"), nullable=False
+    )
     strategy_name = Column(String(100))
     validated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
@@ -282,4 +308,6 @@ class ValidationResult(Base):
     strategy = relationship("ConfigStrategy", backref="validations")
 
     def __repr__(self):
-        return f"<ValidationResult(strategy='{self.strategy_name}', passed={self.passed})>"
+        return (
+            f"<ValidationResult(strategy='{self.strategy_name}', passed={self.passed})>"
+        )

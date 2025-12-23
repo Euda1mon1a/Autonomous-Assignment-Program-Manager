@@ -3,6 +3,7 @@
 This module demonstrates how to use the saga orchestrator for complex
 multi-step transactions with automatic compensation on failure.
 """
+
 import asyncio
 import logging
 from typing import Any
@@ -429,6 +430,7 @@ async def monitor_saga_execution(db: Session, saga_id: str) -> None:
     orchestrator = SagaOrchestrator(db)
 
     from uuid import UUID
+
     result = await orchestrator.get_saga_status(UUID(saga_id))
 
     if not result:
@@ -445,11 +447,10 @@ async def monitor_saga_execution(db: Session, saga_id: str) -> None:
     if result.error_message:
         logger.info(f"  Error: {result.error_message}")
 
-    logger.info(f"  Steps:")
+    logger.info("  Steps:")
     for step in result.step_results:
         logger.info(
-            f"    - {step.step_name}: {step.status} "
-            f"(retries: {step.retry_count})"
+            f"    - {step.step_name}: {step.status} (retries: {step.retry_count})"
         )
         if step.error_message:
             logger.info(f"      Error: {step.error_message}")

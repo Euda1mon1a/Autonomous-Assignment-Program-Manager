@@ -10,19 +10,9 @@ export default function LoginPage() {
   const router = useRouter()
   const { isAuthenticated, isLoading } = useAuth()
 
-<<<<<<< HEAD
-  console.log('[LoginPage] render:', { isAuthenticated, isLoading })
-
-  // Redirect to home if already authenticated
-  useEffect(() => {
-    console.log('[LoginPage] useEffect check:', { isAuthenticated, isLoading })
-    if (!isLoading && isAuthenticated) {
-      console.log('[LoginPage] User authenticated, redirecting to /')
-=======
   // Redirect to home if already authenticated
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
->>>>>>> origin/docs/session-14-summary
       router.push('/')
     }
   }, [isAuthenticated, isLoading, router])

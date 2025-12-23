@@ -82,11 +82,7 @@ export class LoginPage extends BasePage {
    * Clear storage (logout without UI)
    */
   async clearStorage(): Promise<void> {
-<<<<<<< HEAD
     await this.page.context().clearCookies();
-=======
-    await this.page.context().clearPGY2-01ies();
->>>>>>> origin/docs/session-14-summary
     await this.page.evaluate(() => {
       localStorage.clear();
       sessionStorage.clear();

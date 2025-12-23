@@ -387,7 +387,9 @@ def verify_all_backups(
                     logger.debug(f"Verified backup: {backup_id}")
                 else:
                     error_count += 1
-                    error_msg = f"Backup {backup_id} ({backup_type}): Verification failed"
+                    error_msg = (
+                        f"Backup {backup_id} ({backup_type}): Verification failed"
+                    )
                     errors.append(error_msg)
                     logger.error(error_msg)
 

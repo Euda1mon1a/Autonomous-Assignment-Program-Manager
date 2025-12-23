@@ -1,4 +1,5 @@
 """Tests for notification template engine."""
+
 import pytest
 
 from app.notifications.templates.engine import (

@@ -1,4 +1,5 @@
 """Notification templates for schedule alerts and updates."""
+
 from dataclasses import dataclass
 from enum import Enum
 from string import Template
@@ -6,6 +7,7 @@ from string import Template
 
 class NotificationType(str, Enum):
     """Available notification types."""
+
     SCHEDULE_PUBLISHED = "schedule_published"
     ASSIGNMENT_CHANGED = "assignment_changed"
     SHIFT_REMINDER_24H = "shift_reminder_24h"
@@ -27,6 +29,7 @@ class NotificationTemplate:
         channels: List of delivery channels to use
         priority: Priority level (high, normal, low)
     """
+
     type: NotificationType
     subject_template: str
     body_template: str
@@ -76,9 +79,8 @@ Please review your assignments at your earliest convenience.
 Published by: $publisher_name
 Published at: $published_at""",
         channels=["in_app", "email"],
-        priority="high"
+        priority="high",
     ),
-
     NotificationType.ASSIGNMENT_CHANGED: NotificationTemplate(
         type=NotificationType.ASSIGNMENT_CHANGED,
         subject_template="Assignment Change: $rotation_name",
@@ -96,9 +98,8 @@ Reason: $change_reason
 Changed by: $changed_by
 Changed at: $changed_at""",
         channels=["in_app", "email"],
-        priority="high"
+        priority="high",
     ),
-
     NotificationType.SHIFT_REMINDER_24H: NotificationTemplate(
         type=NotificationType.SHIFT_REMINDER_24H,
         subject_template="Reminder: Shift Tomorrow - $rotation_name",
@@ -113,9 +114,8 @@ Please ensure you are prepared and review any relevant materials.
 
 Questions? Contact $contact_person at $contact_email""",
         channels=["in_app", "email"],
-        priority="normal"
+        priority="normal",
     ),
-
     NotificationType.SHIFT_REMINDER_1H: NotificationTemplate(
         type=NotificationType.SHIFT_REMINDER_1H,
         subject_template="Starting Soon: $rotation_name",
@@ -127,9 +127,8 @@ Start Time: $start_time
 
 Good luck!""",
         channels=["in_app"],
-        priority="high"
+        priority="high",
     ),
-
     NotificationType.ACGME_WARNING: NotificationTemplate(
         type=NotificationType.ACGME_WARNING,
         subject_template="ACGME Compliance Alert: $violation_type",
@@ -147,9 +146,8 @@ This requires immediate attention. Please contact your program coordinator.
 
 Detected at: $detected_at""",
         channels=["in_app", "email", "webhook"],
-        priority="high"
+        priority="high",
     ),
-
     NotificationType.ABSENCE_APPROVED: NotificationTemplate(
         type=NotificationType.ABSENCE_APPROVED,
         subject_template="Absence Request Approved",
@@ -166,9 +164,8 @@ Approved at: $approved_at
 
 This time has been blocked from scheduling.""",
         channels=["in_app", "email"],
-        priority="normal"
+        priority="normal",
     ),
-
     NotificationType.ABSENCE_REJECTED: NotificationTemplate(
         type=NotificationType.ABSENCE_REJECTED,
         subject_template="Absence Request Not Approved",
@@ -185,7 +182,7 @@ Reviewed at: $reviewed_at
 
 If you have questions or would like to discuss this, please contact your coordinator.""",
         channels=["in_app", "email"],
-        priority="normal"
+        priority="normal",
     ),
 }
 
@@ -204,8 +201,7 @@ def get_template(notification_type: NotificationType) -> NotificationTemplate | 
 
 
 def render_notification(
-    notification_type: NotificationType,
-    data: dict
+    notification_type: NotificationType, data: dict
 ) -> dict[str, str] | None:
     """
     Render a notification with provided data.

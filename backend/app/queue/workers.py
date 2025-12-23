@@ -10,9 +10,7 @@ Manages Celery workers including:
 
 import logging
 from datetime import datetime
-from typing import Any, Optional
-
-from celery import current_app
+from typing import Any
 
 from app.core.celery_app import celery_app
 
@@ -304,8 +302,7 @@ class WorkerManager:
             self.app.control.cancel_consumer("default", destination=destination)
 
         logger.warning(
-            f"Shutdown command sent to worker {worker_name} "
-            f"(immediate={immediate})"
+            f"Shutdown command sent to worker {worker_name} (immediate={immediate})"
         )
         return True
 

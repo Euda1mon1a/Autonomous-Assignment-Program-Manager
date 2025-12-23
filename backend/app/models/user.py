@@ -1,4 +1,5 @@
 """User model for authentication."""
+
 import uuid
 from datetime import datetime
 
@@ -22,6 +23,7 @@ class User(Base):
     - msa: Medical Support Assistant
     - resident: Resident physician
     """
+
     __tablename__ = "users"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -39,7 +41,7 @@ class User(Base):
     __table_args__ = (
         CheckConstraint(
             "role IN ('admin', 'coordinator', 'faculty', 'clinical_staff', 'rn', 'lpn', 'msa', 'resident')",
-            name="check_user_role"
+            name="check_user_role",
         ),
     )
 

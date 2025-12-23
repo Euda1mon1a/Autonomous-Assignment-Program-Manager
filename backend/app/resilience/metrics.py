@@ -38,6 +38,7 @@ try:
         Histogram,
         Info,
     )
+
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
@@ -215,11 +216,13 @@ class ResilienceMetrics:
             "Resilience framework information",
             registry=self._registry,
         )
-        self.info.info({
-            "version": "1.0.0",
-            "framework": "tier1_critical",
-            "components": "utilization,defense,contingency,fallback,sacrifice",
-        })
+        self.info.info(
+            {
+                "version": "1.0.0",
+                "framework": "tier1_critical",
+                "components": "utilization,defense,contingency,fallback,sacrifice",
+            }
+        )
 
         logger.info("Resilience Prometheus metrics initialized")
 
@@ -234,9 +237,7 @@ class ResilienceMetrics:
         if not self._enabled:
             return
 
-        level_map = {
-            "green": 0, "yellow": 1, "orange": 2, "red": 3, "black": 4
-        }
+        level_map = {"green": 0, "yellow": 1, "orange": 2, "red": 3, "black": 4}
 
         self.utilization_rate.labels(component=component).set(rate)
         self.utilization_level.set(level_map.get(level.lower(), 0))
@@ -344,6 +345,7 @@ class ResilienceMetrics:
         """
         if not self._enabled:
             from contextlib import nullcontext
+
             return nullcontext()
         return self.health_check_duration.time()
 
@@ -351,6 +353,7 @@ class ResilienceMetrics:
         """Context manager to time contingency analysis."""
         if not self._enabled:
             from contextlib import nullcontext
+
             return nullcontext()
         return self.contingency_analysis_duration.time()
 

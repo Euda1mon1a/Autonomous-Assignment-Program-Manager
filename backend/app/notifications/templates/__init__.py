@@ -10,6 +10,7 @@ This package provides a comprehensive template system with:
 - Preview functionality
 - Localization support
 """
+
 from app.notifications.templates.engine import TemplateEngine, TemplateRenderError
 from app.notifications.templates.registry import (
     TemplateRegistry,

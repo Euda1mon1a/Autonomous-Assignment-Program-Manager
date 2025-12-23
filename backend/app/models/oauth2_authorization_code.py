@@ -1,4 +1,5 @@
 """OAuth2 authorization code model for PKCE flow."""
+
 import uuid
 from datetime import datetime
 
@@ -16,6 +17,7 @@ class OAuth2AuthorizationCode(Base):
     for access tokens. With PKCE, they include a code challenge that
     must be verified during token exchange.
     """
+
     __tablename__ = "oauth2_authorization_codes"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -60,8 +62,8 @@ class OAuth2AuthorizationCode(Base):
     used_at = Column(DateTime, nullable=True)
 
     __table_args__ = (
-        Index('idx_authz_code_client_user', 'client_id', 'user_id'),
-        Index('idx_authz_code_expires', 'expires_at', 'is_used'),
+        Index("idx_authz_code_client_user", "client_id", "user_id"),
+        Index("idx_authz_code_expires", "expires_at", "is_used"),
     )
 
     def __repr__(self):

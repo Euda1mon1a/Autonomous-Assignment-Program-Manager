@@ -5,8 +5,9 @@ Implements security headers based on OWASP recommendations to protect
 against common web vulnerabilities including XSS, clickjacking, and
 content-type sniffing attacks.
 """
+
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -60,9 +61,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         self.content_security_policy = content_security_policy
         self.permissions_policy = permissions_policy
 
-    async def dispatch(
-        self, request: Request, call_next: Callable
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """
         Process request and add security headers to response.
 

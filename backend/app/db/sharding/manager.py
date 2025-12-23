@@ -6,11 +6,11 @@ managing shard connections, and orchestrating cross-shard operations.
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import NullPool
 
 from app.db.sharding.router import (
     CrossShardQuery,
@@ -91,7 +91,9 @@ class ShardConnection:
                 await session.execute("SELECT 1")
             return True
         except Exception as e:
-            logger.error(f"Health check failed for shard {self.shard_info.shard_id}: {e}")
+            logger.error(
+                f"Health check failed for shard {self.shard_info.shard_id}: {e}"
+            )
             return False
 
     async def close(self) -> None:
@@ -124,14 +126,14 @@ class ShardManager:
 
     def __init__(self) -> None:
         """Initialize shard manager."""
-        self.connections: Dict[int, ShardConnection] = {}
-        self.routers: Dict[str, ShardRouter] = {}
-        self.strategies: Dict[str, ShardingStrategy] = {}
-        self._session_cache: Dict[int, AsyncSession] = {}
+        self.connections: dict[int, ShardConnection] = {}
+        self.routers: dict[str, ShardRouter] = {}
+        self.strategies: dict[str, ShardingStrategy] = {}
+        self._session_cache: dict[int, AsyncSession] = {}
 
     def register_shards(
         self,
-        shards: List[ShardInfo],
+        shards: list[ShardInfo],
         pool_size: int = 5,
         max_overflow: int = 10,
     ) -> None:
@@ -194,9 +196,7 @@ class ShardManager:
 
         return self.routers[table_name].route(obj)
 
-    def route_batch(
-        self, table_name: str, objects: List[Any]
-    ) -> Dict[int, List[Any]]:
+    def route_batch(self, table_name: str, objects: list[Any]) -> dict[int, list[Any]]:
         """
         Route multiple objects to their target shards.
 
@@ -251,8 +251,8 @@ class ShardManager:
         return shard_id, session
 
     async def get_all_sessions(
-        self, shard_ids: Optional[List[int]] = None
-    ) -> Dict[int, AsyncSession]:
+        self, shard_ids: list[int] | None = None
+    ) -> dict[int, AsyncSession]:
         """
         Get sessions for multiple shards.
 
@@ -295,8 +295,8 @@ class ShardManager:
         self,
         table_name: str,
         query_func: Callable[[AsyncSession], Any],
-        shard_ids: Optional[List[int]] = None,
-    ) -> Dict[int, Any]:
+        shard_ids: list[int] | None = None,
+    ) -> dict[int, Any]:
         """
         Execute a query on all shards for a table.
 
@@ -322,8 +322,8 @@ class ShardManager:
         self,
         table_name: str,
         query_func: Callable[[AsyncSession], Any],
-        aggregator: Callable[[List[Any]], Any],
-        shard_ids: Optional[List[int]] = None,
+        aggregator: Callable[[list[Any]], Any],
+        shard_ids: list[int] | None = None,
     ) -> Any:
         """
         Execute queries on multiple shards and aggregate results.
@@ -366,7 +366,7 @@ class ShardManager:
 
         return ShardDistribution(self.routers[table_name])
 
-    async def health_check_all(self) -> Dict[int, bool]:
+    async def health_check_all(self) -> dict[int, bool]:
         """
         Check health of all registered shards.
 
@@ -380,14 +380,13 @@ class ShardManager:
             return shard_id, healthy
 
         tasks = [
-            check_one(shard_id, conn)
-            for shard_id, conn in self.connections.items()
+            check_one(shard_id, conn) for shard_id, conn in self.connections.items()
         ]
         results = await asyncio.gather(*tasks)
 
         return {shard_id: healthy for shard_id, healthy in results}
 
-    async def get_shard_stats(self, shard_id: int) -> Dict[str, Any]:
+    async def get_shard_stats(self, shard_id: int) -> dict[str, Any]:
         """
         Get statistics for a specific shard.
 
@@ -413,7 +412,7 @@ class ShardManager:
             "max_overflow": conn.max_overflow,
         }
 
-    async def get_all_shard_stats(self) -> List[Dict[str, Any]]:
+    async def get_all_shard_stats(self) -> list[dict[str, Any]]:
         """
         Get statistics for all shards.
 
@@ -422,13 +421,10 @@ class ShardManager:
         """
         import asyncio
 
-        tasks = [
-            self.get_shard_stats(shard_id)
-            for shard_id in self.connections.keys()
-        ]
+        tasks = [self.get_shard_stats(shard_id) for shard_id in self.connections.keys()]
         return await asyncio.gather(*tasks)
 
-    def get_table_info(self, table_name: str) -> Dict[str, Any]:
+    def get_table_info(self, table_name: str) -> dict[str, Any]:
         """
         Get information about a sharded table.
 
@@ -456,7 +452,7 @@ class ShardManager:
             "active_shard_ids": router.get_active_shard_ids(),
         }
 
-    def list_tables(self) -> List[str]:
+    def list_tables(self) -> list[str]:
         """
         List all registered sharded tables.
 
@@ -484,8 +480,7 @@ class ShardManager:
     def __repr__(self) -> str:
         """String representation."""
         return (
-            f"ShardManager(shards={len(self.connections)}, "
-            f"tables={len(self.routers)})"
+            f"ShardManager(shards={len(self.connections)}, tables={len(self.routers)})"
         )
 
 
@@ -510,7 +505,7 @@ class ShardContext:
         """
         self.manager = manager
         self.shard_id = shard_id
-        self.session: Optional[AsyncSession] = None
+        self.session: AsyncSession | None = None
 
     async def __aenter__(self) -> AsyncSession:
         """Enter context and get session."""

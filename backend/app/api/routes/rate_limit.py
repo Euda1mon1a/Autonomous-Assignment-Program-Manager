@@ -7,12 +7,12 @@ Provides endpoints for:
 - Setting custom per-user limits (admin only)
 - Viewing endpoint-specific limits
 """
+
 import logging
 import time
 
 import redis
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.rate_limit_tiers import (
@@ -20,7 +20,6 @@ from app.core.rate_limit_tiers import (
     TIER_CONFIGS,
     RateLimitConfig,
     RateLimitTier,
-    SlidingWindowCounter,
     TokenBucket,
     get_custom_limit,
     get_tier_config,
@@ -28,7 +27,6 @@ from app.core.rate_limit_tiers import (
     set_custom_limit,
 )
 from app.core.security import get_admin_user, get_current_user
-from app.db.session import get_db
 from app.models.user import User
 from app.schemas.rate_limit import (
     AllTiersResponse,
@@ -317,15 +315,9 @@ async def get_endpoint_limits(
 
     for endpoint_path, limit in ENDPOINT_LIMITS.items():
         config = None
-        if (
-            limit.requests_per_minute
-            or limit.requests_per_hour
-            or limit.burst_size
-        ):
+        if limit.requests_per_minute or limit.requests_per_hour or limit.burst_size:
             refill_rate = (
-                limit.requests_per_minute / 60.0
-                if limit.requests_per_minute
-                else 0.0
+                limit.requests_per_minute / 60.0 if limit.requests_per_minute else 0.0
             )
             config = RateLimitConfig(
                 requests_per_minute=limit.requests_per_minute or 0,

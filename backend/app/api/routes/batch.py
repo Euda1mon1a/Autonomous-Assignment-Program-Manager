@@ -6,7 +6,7 @@ Provides endpoints for bulk assignment operations:
 - Batch delete (up to 1000 assignments)
 - Status tracking for long-running operations
 """
-import asyncio
+
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -27,7 +27,9 @@ from app.services.batch import BatchService
 router = APIRouter()
 
 
-@router.post("/create", response_model=BatchResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/create", response_model=BatchResponse, status_code=status.HTTP_201_CREATED
+)
 async def batch_create_assignments(
     request: BatchCreateRequest,
     db: Session = Depends(get_db),

@@ -1,4 +1,5 @@
 """Models for faculty scheduling preferences."""
+
 from datetime import datetime
 from uuid import uuid4
 
@@ -16,16 +17,19 @@ class FacultyPreference(Base):
     Stores preferred/blocked weeks, limits, and notification preferences
     for the faculty self-service portal.
     """
+
     __tablename__ = "faculty_preferences"
 
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
 
     ***REMOVED*** Link to faculty member (one-to-one)
-    faculty_id = Column(PGUUID(as_uuid=True), ForeignKey("people.id"), unique=True, nullable=False)
+    faculty_id = Column(
+        PGUUID(as_uuid=True), ForeignKey("people.id"), unique=True, nullable=False
+    )
 
     ***REMOVED*** Week preferences (JSON arrays of ISO date strings)
     preferred_weeks = Column(JSON, default=list)  ***REMOVED*** Weeks they prefer to work
-    blocked_weeks = Column(JSON, default=list)    ***REMOVED*** Weeks they cannot work
+    blocked_weeks = Column(JSON, default=list)  ***REMOVED*** Weeks they cannot work
 
     ***REMOVED*** Scheduling limits
     max_weeks_per_month = Column(Integer, default=2)
@@ -47,7 +51,9 @@ class FacultyPreference(Base):
 
     ***REMOVED*** Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     ***REMOVED*** Relationships
     faculty = relationship("Person", backref="fmit_preferences")

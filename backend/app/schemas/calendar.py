@@ -1,8 +1,9 @@
 """Calendar export schemas."""
+
 from datetime import date, datetime
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class CalendarExportRequest(BaseModel):
@@ -35,8 +36,12 @@ class CalendarSubscriptionCreate(BaseModel):
     """Schema for creating a calendar subscription."""
 
     person_id: UUID
-    label: str | None = Field(None, max_length=255, description="Optional label for the subscription")
-    expires_days: int | None = Field(None, ge=1, le=365, description="Days until expiration (1-365, None = never)")
+    label: str | None = Field(
+        None, max_length=255, description="Optional label for the subscription"
+    )
+    expires_days: int | None = Field(
+        None, ge=1, le=365, description="Days until expiration (1-365, None = never)"
+    )
 
 
 class CalendarSubscriptionResponse(BaseModel):

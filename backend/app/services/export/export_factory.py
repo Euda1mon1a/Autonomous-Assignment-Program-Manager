@@ -4,9 +4,11 @@ Export factory for format selection.
 Provides a unified interface for creating exporters based on format type
 and managing export operations with consistent configuration.
 """
+
+from collections.abc import AsyncIterator
 from datetime import date
 from enum import Enum
-from typing import Any, AsyncIterator
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -80,10 +82,7 @@ class ExportFactory:
         return self._exporters[format]
 
     async def export(
-        self,
-        export_type: ExportType | str,
-        format: ExportFormat | str,
-        **kwargs
+        self, export_type: ExportType | str, format: ExportFormat | str, **kwargs
     ) -> bytes:
         """
         Export data in specified format.
@@ -127,10 +126,7 @@ class ExportFactory:
             raise ValueError(f"Unknown export type: {export_type}")
 
     async def stream_export(
-        self,
-        export_type: ExportType | str,
-        format: ExportFormat | str,
-        **kwargs
+        self, export_type: ExportType | str, format: ExportFormat | str, **kwargs
     ) -> AsyncIterator[bytes]:
         """
         Stream export data in chunks.
@@ -163,7 +159,9 @@ class ExportFactory:
         async for chunk in exporter.stream_export(export_type.value, **kwargs):
             yield chunk
 
-    def get_content_type(self, format: ExportFormat | str, compress: bool = False) -> str:
+    def get_content_type(
+        self, format: ExportFormat | str, compress: bool = False
+    ) -> str:
         """
         Get content type for export format.
 
@@ -182,7 +180,7 @@ class ExportFactory:
         export_type: ExportType | str,
         format: ExportFormat | str,
         compress: bool = False,
-        timestamp: bool = True
+        timestamp: bool = True,
     ) -> str:
         """
         Generate filename for export.
@@ -205,9 +203,7 @@ class ExportFactory:
 
         exporter = self.get_exporter(format)
         return exporter.get_filename(
-            base_name=export_type.value,
-            compress=compress,
-            timestamp=timestamp
+            base_name=export_type.value, compress=compress, timestamp=timestamp
         )
 
     @staticmethod
@@ -245,7 +241,7 @@ class ScheduledExportConfig:
         destination: str,
         schedule: str,
         compress: bool = True,
-        **export_kwargs
+        **export_kwargs,
     ):
         """
         Initialize scheduled export configuration.

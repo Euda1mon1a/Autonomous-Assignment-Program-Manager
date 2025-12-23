@@ -3,6 +3,7 @@
 This model stores request hashes to ensure identical schedule generation requests
 return cached results instead of creating duplicate schedules.
 """
+
 import uuid
 from datetime import datetime
 from enum import Enum
@@ -15,9 +16,10 @@ from app.db.types import GUID, JSONType
 
 class IdempotencyStatus(str, Enum):
     """Status of an idempotent request."""
-    PENDING = "pending"      ***REMOVED*** Request received, processing
+
+    PENDING = "pending"  ***REMOVED*** Request received, processing
     COMPLETED = "completed"  ***REMOVED*** Request completed successfully
-    FAILED = "failed"        ***REMOVED*** Request failed
+    FAILED = "failed"  ***REMOVED*** Request failed
 
 
 class IdempotencyRequest(Base):
@@ -38,6 +40,7 @@ class IdempotencyRequest(Base):
 
     Keys expire after 24 hours to prevent unbounded table growth.
     """
+
     __tablename__ = "idempotency_requests"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -52,11 +55,7 @@ class IdempotencyRequest(Base):
     request_params = Column(JSONType())
 
     ***REMOVED*** Processing status
-    status = Column(
-        String(20),
-        nullable=False,
-        default=IdempotencyStatus.PENDING.value
-    )
+    status = Column(String(20), nullable=False, default=IdempotencyStatus.PENDING.value)
 
     ***REMOVED*** Reference to the result (schedule_run_id if successful)
     result_ref = Column(GUID(), nullable=True)
@@ -75,12 +74,7 @@ class IdempotencyRequest(Base):
 
     __table_args__ = (
         ***REMOVED*** Composite unique constraint - same key must have same body hash
-        Index(
-            "idx_idempotency_key_hash",
-            "idempotency_key",
-            "body_hash",
-            unique=True
-        ),
+        Index("idx_idempotency_key_hash", "idempotency_key", "body_hash", unique=True),
         ***REMOVED*** Index for cleanup of expired entries
         Index("idx_idempotency_expires", "expires_at"),
         ***REMOVED*** Index for status lookups

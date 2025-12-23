@@ -1,4 +1,5 @@
 """Tests for karma-based swap allocation mechanism."""
+
 import pytest
 
 from app.services.karma_mechanism import KarmaAccount, KarmaMechanism

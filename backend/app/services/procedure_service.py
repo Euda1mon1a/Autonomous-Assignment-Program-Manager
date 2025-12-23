@@ -65,7 +65,7 @@ class ProcedureService:
         specialty: str | None = None,
         supervision_ratio: int = 1,
         requires_certification: bool = True,
-        complexity_level: str = 'standard',
+        complexity_level: str = "standard",
         min_pgy_level: int = 1,
         is_active: bool = True,
     ) -> dict:

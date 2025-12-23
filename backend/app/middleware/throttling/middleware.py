@@ -10,15 +10,15 @@ Implements comprehensive request throttling with:
 - Graceful degradation
 - Backpressure handling
 """
+
 import asyncio
 import logging
 import time
 import uuid
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import redis.asyncio as redis
-from fastapi import Request, status
-from fastapi.responses import JSONResponse
+from fastapi import Request
 from jose import JWTError, jwt
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -26,7 +26,6 @@ from app.core.config import get_settings
 from app.core.security import ALGORITHM
 from app.middleware.throttling.config import (
     DEFAULT_THROTTLE_CONFIG,
-    ThrottlePriority,
     get_endpoint_config,
     get_priority_for_endpoint,
     get_role_config,
@@ -66,7 +65,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app,
-        redis_client: Optional[redis.Redis] = None,
+        redis_client: redis.Redis | None = None,
         strategy: str = "adaptive",
     ):
         """
@@ -125,7 +124,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
         strategy_class = strategies.get(strategy_name, AdaptiveThrottleStrategy)
         return strategy_class(self.storage)
 
-    def _extract_user_info(self, request: Request) -> tuple[Optional[str], Optional[str]]:
+    def _extract_user_info(self, request: Request) -> tuple[str | None, str | None]:
         """
         Extract user ID and role from JWT token.
 
@@ -187,7 +186,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
 
         return False
 
-    def _get_client_identifier(self, request: Request, user_id: Optional[str]) -> str:
+    def _get_client_identifier(self, request: Request, user_id: str | None) -> str:
         """
         Get unique identifier for client.
 
@@ -332,8 +331,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
 
             if not slot_acquired:
                 logger.warning(
-                    f"Throttle TIMEOUT: {request.method} {endpoint} "
-                    f"(waited {timeout}s)"
+                    f"Throttle TIMEOUT: {request.method} {endpoint} (waited {timeout}s)"
                 )
                 decision.reason = "Request timed out in queue"
                 decision.retry_after = 10
@@ -381,8 +379,12 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
             processing_time = time.time() - start_time
             response.headers["X-Throttle-Request-ID"] = request_id
             response.headers["X-Throttle-Priority"] = priority.value
-            response.headers["X-Throttle-Active-Requests"] = str(metrics.active_requests)
-            response.headers["X-Throttle-Queued-Requests"] = str(metrics.queued_requests)
+            response.headers["X-Throttle-Active-Requests"] = str(
+                metrics.active_requests
+            )
+            response.headers["X-Throttle-Queued-Requests"] = str(
+                metrics.queued_requests
+            )
             response.headers["X-Throttle-Utilization"] = f"{metrics.utilization:.2f}"
             response.headers["X-Throttle-Processing-Time"] = f"{processing_time:.3f}"
 

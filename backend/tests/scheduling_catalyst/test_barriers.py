@@ -1,9 +1,10 @@
 """Tests for scheduling_catalyst barrier detection."""
 
-import pytest
 from datetime import date, timedelta
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from uuid import uuid4
+
+import pytest
 
 from app.scheduling_catalyst.barriers import (
     BarrierClassifier,
@@ -63,7 +64,9 @@ class TestBarrierDetector:
             reference_date=today,
         )
 
-        kinetic_barriers = [b for b in barriers if b.barrier_type == BarrierType.KINETIC]
+        kinetic_barriers = [
+            b for b in barriers if b.barrier_type == BarrierType.KINETIC
+        ]
         assert len(kinetic_barriers) >= 1
 
         freeze_barrier = next(
@@ -101,7 +104,8 @@ class TestBarrierDetector:
         )
 
         auth_barriers = [
-            b for b in barriers
+            b
+            for b in barriers
             if b.barrier_type == BarrierType.ELECTRONIC
             and b.source == "role_authorization"
         ]
@@ -118,10 +122,7 @@ class TestBarrierDetector:
             },
         )
 
-        consent_barriers = [
-            b for b in barriers
-            if b.source == "consent_check"
-        ]
+        consent_barriers = [b for b in barriers if b.source == "consent_check"]
         assert len(consent_barriers) == 1
         assert consent_barriers[0].is_absolute is True
 

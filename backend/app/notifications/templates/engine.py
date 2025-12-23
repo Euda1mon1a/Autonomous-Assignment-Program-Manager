@@ -1,4 +1,5 @@
 """Template rendering engine using Jinja2."""
+
 import json
 import logging
 import os
@@ -8,7 +9,6 @@ from jinja2 import (
     Environment,
     FileSystemLoader,
     StrictUndefined,
-    Template,
     TemplateSyntaxError,
     UndefinedError,
 )
@@ -427,13 +427,11 @@ class TemplateEngine:
             return self._translation_cache[cache_key]
 
         try:
-            translations_dir = os.path.join(
-                os.path.dirname(__file__), "translations"
-            )
+            translations_dir = os.path.join(os.path.dirname(__file__), "translations")
             filepath = os.path.join(translations_dir, f"{locale}.json")
 
             if os.path.exists(filepath):
-                with open(filepath, 'r') as f:
+                with open(filepath) as f:
                     translations = json.load(f)
             else:
                 translations = {}

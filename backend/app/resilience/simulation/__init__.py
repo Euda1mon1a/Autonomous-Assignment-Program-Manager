@@ -37,6 +37,7 @@ __version__ = "0.1.0"
 ***REMOVED*** Check for SimPy availability (optional, handled gracefully in modules)
 try:
     import simpy
+
     HAS_SIMPY = True
 except ImportError:
     simpy = None  ***REMOVED*** type: ignore
@@ -47,12 +48,10 @@ except ImportError:
 __all__ = [
     ***REMOVED*** SimPy availability flag
     "HAS_SIMPY",
-
     ***REMOVED*** Base simulation infrastructure
     "SimulationConfig",
     "SimulationResult",
     "SimulationEnvironment",
-
     ***REMOVED*** Event types and definitions
     "EventType",
     "EventSeverity",
@@ -60,17 +59,14 @@ __all__ = [
     "FacultyEvent",
     "ZoneEvent",
     "CascadeEvent",
-
     ***REMOVED*** Metrics collection and analysis
     "MetricsCollector",
     "MetricsSummary",
     "TimeSeriesPoint",
-
     ***REMOVED*** N-2 contingency scenario
     "N2ScenarioConfig",
     "N2ScenarioResult",
     "N2ContingencyScenario",
-
     ***REMOVED*** Burnout cascade scenario
     "CascadeConfig",
     "CascadeResult",
@@ -81,18 +77,25 @@ __all__ = [
 ***REMOVED*** Base simulation infrastructure
 from app.resilience.simulation.base import (
     SimulationConfig,
-    SimulationResult,
     SimulationEnvironment,
+    SimulationResult,
+)
+
+***REMOVED*** Burnout cascade scenario
+from app.resilience.simulation.cascade_scenario import (
+    BurnoutCascadeScenario,
+    CascadeConfig,
+    CascadeResult,
 )
 
 ***REMOVED*** Event types and definitions
 from app.resilience.simulation.events import (
-    EventType,
-    EventSeverity,
-    SimulationEvent,
-    FacultyEvent,
-    ZoneEvent,
     CascadeEvent,
+    EventSeverity,
+    EventType,
+    FacultyEvent,
+    SimulationEvent,
+    ZoneEvent,
 )
 
 ***REMOVED*** Metrics collection and analysis
@@ -104,14 +107,7 @@ from app.resilience.simulation.metrics import (
 
 ***REMOVED*** N-2 contingency scenario
 from app.resilience.simulation.n2_scenario import (
+    N2ContingencyScenario,
     N2ScenarioConfig,
     N2ScenarioResult,
-    N2ContingencyScenario,
-)
-
-***REMOVED*** Burnout cascade scenario
-from app.resilience.simulation.cascade_scenario import (
-    CascadeConfig,
-    CascadeResult,
-    BurnoutCascadeScenario,
 )

@@ -32,41 +32,45 @@ logger = logging.getLogger(__name__)
 
 class DecisionComplexity(str, Enum):
     """Complexity level of a decision."""
-    TRIVIAL = "trivial"        ***REMOVED*** Yes/no, approve/reject
-    SIMPLE = "simple"          ***REMOVED*** Choose from 2-3 options
-    MODERATE = "moderate"      ***REMOVED*** Choose from 4-7 options, some analysis
-    COMPLEX = "complex"        ***REMOVED*** Multiple factors, tradeoffs
-    STRATEGIC = "strategic"    ***REMOVED*** High stakes, long-term impact
+
+    TRIVIAL = "trivial"  ***REMOVED*** Yes/no, approve/reject
+    SIMPLE = "simple"  ***REMOVED*** Choose from 2-3 options
+    MODERATE = "moderate"  ***REMOVED*** Choose from 4-7 options, some analysis
+    COMPLEX = "complex"  ***REMOVED*** Multiple factors, tradeoffs
+    STRATEGIC = "strategic"  ***REMOVED*** High stakes, long-term impact
 
 
 class DecisionCategory(str, Enum):
     """Category of scheduling decision."""
-    ASSIGNMENT = "assignment"      ***REMOVED*** Who covers what
-    SWAP = "swap"                  ***REMOVED*** Trade shifts between faculty
-    COVERAGE = "coverage"          ***REMOVED*** Fill gaps
-    LEAVE = "leave"                ***REMOVED*** Approve time off
-    CONFLICT = "conflict"          ***REMOVED*** Resolve scheduling conflicts
-    OVERRIDE = "override"          ***REMOVED*** Override constraints
-    POLICY = "policy"              ***REMOVED*** Policy changes
-    EMERGENCY = "emergency"        ***REMOVED*** Crisis decisions
+
+    ASSIGNMENT = "assignment"  ***REMOVED*** Who covers what
+    SWAP = "swap"  ***REMOVED*** Trade shifts between faculty
+    COVERAGE = "coverage"  ***REMOVED*** Fill gaps
+    LEAVE = "leave"  ***REMOVED*** Approve time off
+    CONFLICT = "conflict"  ***REMOVED*** Resolve scheduling conflicts
+    OVERRIDE = "override"  ***REMOVED*** Override constraints
+    POLICY = "policy"  ***REMOVED*** Policy changes
+    EMERGENCY = "emergency"  ***REMOVED*** Crisis decisions
 
 
 class CognitiveState(str, Enum):
     """Current cognitive load state."""
-    FRESH = "fresh"              ***REMOVED*** Start of session, full capacity
-    ENGAGED = "engaged"          ***REMOVED*** Working well, some load
-    LOADED = "loaded"            ***REMOVED*** Approaching capacity
-    FATIGUED = "fatigued"        ***REMOVED*** Significantly reduced capacity
-    DEPLETED = "depleted"        ***REMOVED*** Needs rest, quality compromised
+
+    FRESH = "fresh"  ***REMOVED*** Start of session, full capacity
+    ENGAGED = "engaged"  ***REMOVED*** Working well, some load
+    LOADED = "loaded"  ***REMOVED*** Approaching capacity
+    FATIGUED = "fatigued"  ***REMOVED*** Significantly reduced capacity
+    DEPLETED = "depleted"  ***REMOVED*** Needs rest, quality compromised
 
 
 class DecisionOutcome(str, Enum):
     """Outcome of a decision request."""
-    DECIDED = "decided"          ***REMOVED*** User made decision
-    DEFERRED = "deferred"        ***REMOVED*** Postponed for later
+
+    DECIDED = "decided"  ***REMOVED*** User made decision
+    DEFERRED = "deferred"  ***REMOVED*** Postponed for later
     AUTO_DEFAULT = "auto_default"  ***REMOVED*** System used default
-    DELEGATED = "delegated"      ***REMOVED*** Sent to someone else
-    CANCELLED = "cancelled"      ***REMOVED*** No longer needed
+    DELEGATED = "delegated"  ***REMOVED*** Sent to someone else
+    CANCELLED = "cancelled"  ***REMOVED*** No longer needed
 
 
 @dataclass
@@ -76,6 +80,7 @@ class Decision:
 
     Represents a choice that requires cognitive effort from the user.
     """
+
     id: UUID
     category: DecisionCategory
     complexity: DecisionComplexity
@@ -119,7 +124,9 @@ class Decision:
         base_cost = complexity_costs.get(self.complexity, 1.0)
 
         ***REMOVED*** Increase cost for more options
-        option_multiplier = 1.0 + (len(self.options) - 2) * 0.1 if len(self.options) > 2 else 1.0
+        option_multiplier = (
+            1.0 + (len(self.options) - 2) * 0.1 if len(self.options) > 2 else 1.0
+        )
 
         ***REMOVED*** Decrease cost if there's a recommended option
         recommend_discount = 0.8 if self.recommended_option else 1.0
@@ -134,6 +141,7 @@ class CognitiveSession:
 
     Tracks decisions made and cognitive state throughout a session.
     """
+
     id: UUID
     user_id: UUID
     started_at: datetime
@@ -205,6 +213,7 @@ class CognitiveSession:
 @dataclass
 class CognitiveLoadReport:
     """Report on cognitive load status for a user."""
+
     user_id: UUID
     generated_at: datetime
 
@@ -231,6 +240,7 @@ class CognitiveLoadReport:
 @dataclass
 class DecisionQueueStatus:
     """Status of the decision queue."""
+
     total_pending: int
     by_complexity: dict[str, int]
     by_category: dict[str, int]
@@ -421,7 +431,9 @@ class CognitiveLoadManager:
             actual_time_seconds: How long it took
         """
         session = self.sessions.get(session_id)
-        decision = next((d for d in self.pending_decisions if d.id == decision_id), None)
+        decision = next(
+            (d for d in self.pending_decisions if d.id == decision_id), None
+        )
 
         if decision:
             decision.outcome = DecisionOutcome.DECIDED
@@ -508,12 +520,18 @@ class CognitiveLoadManager:
         recommendations = []
 
         if session.current_state == CognitiveState.DEPLETED:
-            recommendations.append("CRITICAL: Take a break immediately to restore decision quality")
+            recommendations.append(
+                "CRITICAL: Take a break immediately to restore decision quality"
+            )
         elif session.current_state == CognitiveState.FATIGUED:
-            recommendations.append("Warning: Decision quality may be degraded - consider a short break")
+            recommendations.append(
+                "Warning: Decision quality may be degraded - consider a short break"
+            )
 
         if session.should_take_break:
-            recommendations.append(f"Break recommended after {len(session.decisions_made)} decisions")
+            recommendations.append(
+                f"Break recommended after {len(session.decisions_made)} decisions"
+            )
 
         if not recommendations:
             recommendations.append("Cognitive state is good - continue working")
@@ -528,7 +546,9 @@ class CognitiveLoadManager:
             remaining_capacity=remaining,
             decisions_until_break=session.decisions_until_break,
             should_take_break=session.should_take_break,
-            decisions_today=len(session.decisions_made),  ***REMOVED*** Would aggregate across sessions
+            decisions_today=len(
+                session.decisions_made
+            ),  ***REMOVED*** Would aggregate across sessions
             total_sessions_today=1,  ***REMOVED*** Would count actual sessions
             average_decision_time=avg_time,
             recommendations=recommendations,
@@ -574,12 +594,16 @@ class CognitiveLoadManager:
             recommendations.append(f"ALERT: {urgent_count} urgent decisions pending")
 
         if can_auto > 0 and total_cost > 6:
-            recommendations.append(f"Consider auto-deciding {can_auto} low-risk decisions")
+            recommendations.append(
+                f"Consider auto-deciding {can_auto} low-risk decisions"
+            )
 
         if len(self.pending_decisions) > 10:
             recommendations.append("Large decision backlog - prioritize or batch")
 
-        complex_count = by_complexity.get("complex", 0) + by_complexity.get("strategic", 0)
+        complex_count = by_complexity.get("complex", 0) + by_complexity.get(
+            "strategic", 0
+        )
         if complex_count > 2:
             recommendations.append("Multiple complex decisions - schedule focused time")
 
@@ -631,8 +655,7 @@ class CognitiveLoadManager:
             urgent = 0 if d.is_urgent else 1
             past_deadline = 0 if d.deadline and d.deadline < now else 1
             deadline_hours = (
-                (d.deadline - now).total_seconds() / 3600
-                if d.deadline else 999
+                (d.deadline - now).total_seconds() / 3600 if d.deadline else 999
             )
             complexity = {
                 DecisionComplexity.TRIVIAL: 1,
@@ -683,10 +706,7 @@ class CognitiveLoadManager:
         ***REMOVED*** Calculate load score
         base_score = len(schedule_changes) * 0.5
         complexity_score = (
-            exceptions * 1.0 +
-            conflicts * 2.0 +
-            overrides * 1.5 +
-            cross_coverage * 1.0
+            exceptions * 1.0 + conflicts * 2.0 + overrides * 1.5 + cross_coverage * 1.0
         )
 
         total_score = base_score + complexity_score
@@ -715,7 +735,9 @@ class CognitiveLoadManager:
         if conflicts > 3:
             recommendations.append("Multiple conflicts - review constraint rules")
         if overrides > 3:
-            recommendations.append("Excessive overrides - constraints may be too strict")
+            recommendations.append(
+                "Excessive overrides - constraints may be too strict"
+            )
 
         return {
             "total_score": total_score,

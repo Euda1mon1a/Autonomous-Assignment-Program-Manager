@@ -1,4 +1,5 @@
 """Application configuration."""
+
 import logging
 import secrets
 from functools import lru_cache
@@ -57,7 +58,9 @@ class Settings(BaseSettings):
     LOG_FILE: str = ""  ***REMOVED*** Optional file path for log output
 
     ***REMOVED*** Database
-    DATABASE_URL: str = "postgresql://scheduler:scheduler@localhost:5432/residency_scheduler"
+    DATABASE_URL: str = (
+        "postgresql://scheduler:scheduler@localhost:5432/residency_scheduler"
+    )
 
     ***REMOVED*** Database Connection Pool Settings
     ***REMOVED*** See docs/ARCHITECTURE.md for connection pooling strategy
@@ -93,12 +96,16 @@ class Settings(BaseSettings):
         """
         if self.REDIS_PASSWORD:
             ***REMOVED*** Insert password into URL (format: redis://:password@host:port/db)
-            return self.REDIS_URL.replace("redis://", f"redis://:{self.REDIS_PASSWORD}@")
+            return self.REDIS_URL.replace(
+                "redis://", f"redis://:{self.REDIS_PASSWORD}@"
+            )
         return self.REDIS_URL
 
     ***REMOVED*** Security
     SECRET_KEY: str = Field(default_factory=lambda: secrets.token_urlsafe(64))
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  ***REMOVED*** 15 minutes (security: reduced from 24 hours)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = (
+        15  ***REMOVED*** 15 minutes (security: reduced from 24 hours)
+    )
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7  ***REMOVED*** 7 days
     REFRESH_TOKEN_ROTATE: bool = True  ***REMOVED*** Issue new refresh token on each use
     WEBHOOK_SECRET: str = Field(default_factory=lambda: secrets.token_urlsafe(64))
@@ -149,18 +156,28 @@ class Settings(BaseSettings):
     ***REMOVED*** At 90% utilization: wait = 9x baseline
     ***REMOVED*** Reference: docs/RESILIENCE_FRAMEWORK.md
     RESILIENCE_WARNING_THRESHOLD: float = 0.70  ***REMOVED*** Yellow - start monitoring closely
-    RESILIENCE_MAX_UTILIZATION: float = 0.80  ***REMOVED*** Orange - 80% utilization cliff (load shedding begins)
-    RESILIENCE_CRITICAL_THRESHOLD: float = 0.90  ***REMOVED*** Red - crisis mode, aggressive intervention
+    RESILIENCE_MAX_UTILIZATION: float = (
+        0.80  ***REMOVED*** Orange - 80% utilization cliff (load shedding begins)
+    )
+    RESILIENCE_CRITICAL_THRESHOLD: float = (
+        0.90  ***REMOVED*** Red - crisis mode, aggressive intervention
+    )
     RESILIENCE_EMERGENCY_THRESHOLD: float = 0.95  ***REMOVED*** Black - cascade failure imminent
 
     ***REMOVED*** Auto-activation settings
     RESILIENCE_AUTO_ACTIVATE_DEFENSE: bool = True  ***REMOVED*** Auto-activate defense levels
-    RESILIENCE_AUTO_ACTIVATE_FALLBACK: bool = False  ***REMOVED*** Require manual fallback activation (safety)
-    RESILIENCE_AUTO_SHED_LOAD: bool = True  ***REMOVED*** Auto load shedding when thresholds exceeded
+    RESILIENCE_AUTO_ACTIVATE_FALLBACK: bool = (
+        False  ***REMOVED*** Require manual fallback activation (safety)
+    )
+    RESILIENCE_AUTO_SHED_LOAD: bool = (
+        True  ***REMOVED*** Auto load shedding when thresholds exceeded
+    )
 
     ***REMOVED*** Monitoring intervals
     RESILIENCE_HEALTH_CHECK_INTERVAL_MINUTES: int = 15  ***REMOVED*** How often to run health checks
-    RESILIENCE_CONTINGENCY_ANALYSIS_INTERVAL_HOURS: int = 24  ***REMOVED*** N-1/N-2 analysis frequency
+    RESILIENCE_CONTINGENCY_ANALYSIS_INTERVAL_HOURS: int = (
+        24  ***REMOVED*** N-1/N-2 analysis frequency
+    )
 
     ***REMOVED*** Alert settings
     RESILIENCE_ALERT_RECIPIENTS: list[str] = []  ***REMOVED*** Email addresses for alerts
@@ -216,14 +233,16 @@ class Settings(BaseSettings):
     SHADOW_MAX_CONCURRENT: int = 10  ***REMOVED*** Maximum concurrent shadow requests
     SHADOW_VERIFY_SSL: bool = True  ***REMOVED*** Verify SSL certificates for shadow service
     SHADOW_ALERT_ON_DIFF: bool = True  ***REMOVED*** Alert on response differences
-    SHADOW_DIFF_THRESHOLD: str = "medium"  ***REMOVED*** Threshold for alerting: low, medium, high, critical
+    SHADOW_DIFF_THRESHOLD: str = (
+        "medium"  ***REMOVED*** Threshold for alerting: low, medium, high, critical
+    )
     SHADOW_RETRY_ON_FAILURE: bool = False  ***REMOVED*** Retry failed shadow requests
     SHADOW_MAX_RETRIES: int = 2  ***REMOVED*** Maximum retry attempts
     SHADOW_INCLUDE_HEADERS: bool = True  ***REMOVED*** Include original headers in shadow requests
     SHADOW_HEALTH_CHECK_INTERVAL: int = 60  ***REMOVED*** Health check interval in seconds
     SHADOW_METRICS_RETENTION_HOURS: int = 24  ***REMOVED*** Metrics retention period
 
-    @field_validator('SECRET_KEY', 'WEBHOOK_SECRET')
+    @field_validator("SECRET_KEY", "WEBHOOK_SECRET")
     @classmethod
     def validate_secrets(cls, v: str, info) -> str:
         """
@@ -233,7 +252,7 @@ class Settings(BaseSettings):
         In development (DEBUG=True): Logs warnings but allows weak secrets.
         """
         field_name = info.field_name
-        debug_mode = info.data.get('DEBUG', False)
+        debug_mode = info.data.get("DEBUG", False)
 
         ***REMOVED*** Check against known weak passwords
         if v.lower() in WEAK_PASSWORDS or v in WEAK_PASSWORDS:
@@ -267,7 +286,7 @@ class Settings(BaseSettings):
 
         return v
 
-    @field_validator('REDIS_PASSWORD')
+    @field_validator("REDIS_PASSWORD")
     @classmethod
     def validate_redis_password(cls, v: str, info) -> str:
         """
@@ -276,7 +295,7 @@ class Settings(BaseSettings):
         In production (DEBUG=False): Requires strong password.
         In development (DEBUG=True): Allows empty/weak passwords with warning.
         """
-        debug_mode = info.data.get('DEBUG', False)
+        debug_mode = info.data.get("DEBUG", False)
 
         ***REMOVED*** Allow empty in development (Redis running without auth)
         if not v:
@@ -295,9 +314,9 @@ class Settings(BaseSettings):
         ***REMOVED*** Check against known weak passwords
         if v.lower() in WEAK_PASSWORDS or v in WEAK_PASSWORDS:
             error_msg = (
-                f"REDIS_PASSWORD is using a known weak/default value. "
-                f"Use a strong random value. "
-                f"Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+                "REDIS_PASSWORD is using a known weak/default value. "
+                "Use a strong random value. "
+                "Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
             )
             if debug_mode:
                 logger.warning(
@@ -324,7 +343,7 @@ class Settings(BaseSettings):
 
         return v
 
-    @field_validator('DATABASE_URL')
+    @field_validator("DATABASE_URL")
     @classmethod
     def validate_database_url(cls, v: str, info) -> str:
         """
@@ -333,7 +352,7 @@ class Settings(BaseSettings):
         In production (DEBUG=False): Rejects weak database passwords.
         In development (DEBUG=True): Allows weak passwords with warning.
         """
-        debug_mode = info.data.get('DEBUG', False)
+        debug_mode = info.data.get("DEBUG", False)
 
         try:
             parsed = urlparse(v)
@@ -376,13 +395,17 @@ class Settings(BaseSettings):
 
         except Exception as e:
             ***REMOVED*** If we can't parse the URL, let it through but warn
-            if "DATABASE_URL must include a password" in str(e) or "weak/default password" in str(e) or "must be at least" in str(e):
+            if (
+                "DATABASE_URL must include a password" in str(e)
+                or "weak/default password" in str(e)
+                or "must be at least" in str(e)
+            ):
                 raise  ***REMOVED*** Re-raise our validation errors
             logger.warning(f"Unable to parse DATABASE_URL for validation: {e}")
 
         return v
 
-    @field_validator('CORS_ORIGINS')
+    @field_validator("CORS_ORIGINS")
     @classmethod
     def validate_cors_origins(cls, v: list[str], info) -> list[str]:
         """
@@ -395,7 +418,7 @@ class Settings(BaseSettings):
         """
         ***REMOVED*** Get DEBUG value from field values being validated
         ***REMOVED*** Note: field_validator runs during model initialization, so we can access other fields
-        debug_mode = info.data.get('DEBUG', False)
+        debug_mode = info.data.get("DEBUG", False)
 
         ***REMOVED*** Check for wildcard "*" - forbidden in production
         if "*" in v:
@@ -408,6 +431,7 @@ class Settings(BaseSettings):
             else:
                 ***REMOVED*** Development mode: warn but allow
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.warning(
                     "CORS wildcard '*' detected in DEBUG mode. "
@@ -417,6 +441,7 @@ class Settings(BaseSettings):
         ***REMOVED*** Warn about multiple overly broad origins in production
         if not debug_mode and len(v) > 10:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(
                 f"CORS_ORIGINS contains {len(v)} origins. "

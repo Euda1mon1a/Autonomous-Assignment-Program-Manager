@@ -88,10 +88,14 @@ class PersonService:
         eagerly fetch assignments, preventing N+1 queries when accessing resident.assignments.
         """
         if include_assignments:
-            query = self.db.query(Person).options(
-                selectinload(Person.assignments).selectinload("block"),
-                selectinload(Person.assignments).selectinload("rotation_template"),
-            ).filter(Person.type == "resident")
+            query = (
+                self.db.query(Person)
+                .options(
+                    selectinload(Person.assignments).selectinload("block"),
+                    selectinload(Person.assignments).selectinload("rotation_template"),
+                )
+                .filter(Person.type == "resident")
+            )
 
             if pgy_level is not None:
                 query = query.filter(Person.pgy_level == pgy_level)
@@ -114,10 +118,14 @@ class PersonService:
         eagerly fetch assignments, preventing N+1 queries when accessing faculty.assignments.
         """
         if include_assignments:
-            query = self.db.query(Person).options(
-                selectinload(Person.assignments).selectinload("block"),
-                selectinload(Person.assignments).selectinload("rotation_template"),
-            ).filter(Person.type == "faculty")
+            query = (
+                self.db.query(Person)
+                .options(
+                    selectinload(Person.assignments).selectinload("block"),
+                    selectinload(Person.assignments).selectinload("rotation_template"),
+                )
+                .filter(Person.type == "faculty")
+            )
 
             if specialty:
                 query = query.filter(Person.specialties.contains([specialty]))

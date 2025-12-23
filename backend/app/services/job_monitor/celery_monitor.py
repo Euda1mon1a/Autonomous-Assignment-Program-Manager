@@ -59,7 +59,9 @@ class CeleryMonitorService:
                         "task_id": task.get("id"),
                         "task_name": task.get("name"),
                         "worker": worker,
-                        "queue": task.get("delivery_info", {}).get("routing_key", "default"),
+                        "queue": task.get("delivery_info", {}).get(
+                            "routing_key", "default"
+                        ),
                         "args": task.get("args", []),
                         "kwargs": task.get("kwargs", {}),
                         "time_start": task.get("time_start"),
@@ -139,7 +141,9 @@ class CeleryMonitorService:
                         "task_id": task.get("id"),
                         "task_name": task.get("name"),
                         "worker": worker,
-                        "queue": task.get("delivery_info", {}).get("routing_key", "default"),
+                        "queue": task.get("delivery_info", {}).get(
+                            "routing_key", "default"
+                        ),
                         "priority": task.get("priority", 0),
                         "args": task.get("args", []),
                         "kwargs": task.get("kwargs", {}),
@@ -185,8 +189,12 @@ class CeleryMonitorService:
                 worker_info = {
                     "name": worker_name,
                     "status": "online",
-                    "pool": worker_stats.get("pool", {}).get("implementation", "unknown"),
-                    "max_concurrency": worker_stats.get("pool", {}).get("max-concurrency", 0),
+                    "pool": worker_stats.get("pool", {}).get(
+                        "implementation", "unknown"
+                    ),
+                    "max_concurrency": worker_stats.get("pool", {}).get(
+                        "max-concurrency", 0
+                    ),
                     "processes": worker_stats.get("pool", {}).get("processes", []),
                 }
                 workers.append(worker_info)

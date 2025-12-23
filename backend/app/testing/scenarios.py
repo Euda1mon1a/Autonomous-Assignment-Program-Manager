@@ -8,17 +8,16 @@ Provides ready-to-use test scenarios for:
 - Emergency coverage scenarios
 - Resilience testing
 """
+
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from app.testing.factories import (
     create_acgme_validation_response,
     create_assignment_response,
-    create_block_response,
-    create_person_response,
     create_resilience_health_response,
     create_schedule_generation_response,
     create_swap_request_response,
@@ -33,9 +32,10 @@ class TestScenario(ABC):
 
     Scenarios encapsulate common test setups and workflows.
     """
+
     name: str
     description: str
-    mock_server: Optional[MockAPIServer] = None
+    mock_server: MockAPIServer | None = None
 
     @abstractmethod
     def setup(self, server: MockAPIServer) -> None:
@@ -48,7 +48,7 @@ class TestScenario(ABC):
         pass
 
     @abstractmethod
-    def get_expected_data(self) -> Dict[str, Any]:
+    def get_expected_data(self) -> dict[str, Any]:
         """
         Get expected test data for this scenario.
 
@@ -137,7 +137,7 @@ class ScheduleGenerationScenario(TestScenario):
             response=create_acgme_validation_response(is_compliant=True),
         )
 
-    def get_expected_data(self) -> Dict[str, Any]:
+    def get_expected_data(self) -> dict[str, Any]:
         """Get expected data for this scenario."""
         return {
             "job_id": self.job_id,
@@ -145,7 +145,7 @@ class ScheduleGenerationScenario(TestScenario):
             "expected_status_sequence": ["pending", "running", "completed"],
         }
 
-    def _generate_sample_assignments(self) -> List[Dict[str, Any]]:
+    def _generate_sample_assignments(self) -> list[dict[str, Any]]:
         """Generate sample assignments for testing."""
         assignments = []
         start_date = date.today()
@@ -154,15 +154,17 @@ class ScheduleGenerationScenario(TestScenario):
         for day in range(7):
             current_date = start_date + timedelta(days=day)
             for time_of_day in ["AM", "PM"]:
-                assignments.append({
-                    "id": str(uuid4()),
-                    "person_id": str(uuid4()),
-                    "block_id": str(uuid4()),
-                    "rotation_template_id": str(uuid4()),
-                    "role": "primary",
-                    "date": current_date.isoformat(),
-                    "time_of_day": time_of_day,
-                })
+                assignments.append(
+                    {
+                        "id": str(uuid4()),
+                        "person_id": str(uuid4()),
+                        "block_id": str(uuid4()),
+                        "rotation_template_id": str(uuid4()),
+                        "role": "primary",
+                        "date": current_date.isoformat(),
+                        "time_of_day": time_of_day,
+                    }
+                )
 
         return assignments
 
@@ -264,13 +266,18 @@ class SwapWorkflowScenario(TestScenario):
             },
         )
 
-    def get_expected_data(self) -> Dict[str, Any]:
+    def get_expected_data(self) -> dict[str, Any]:
         """Get expected data for this scenario."""
         return {
             "swap_id": self.swap_id,
             "requester_id": self.requester_id,
             "target_id": self.target_id,
-            "expected_status_sequence": ["pending", "approved", "executing", "completed"],
+            "expected_status_sequence": [
+                "pending",
+                "approved",
+                "executing",
+                "completed",
+            ],
         }
 
 
@@ -285,7 +292,7 @@ class ACGMEComplianceScenario(TestScenario):
     4. Supervision ratio violation
     """
 
-    def __init__(self, violation_type: Optional[str] = None):
+    def __init__(self, violation_type: str | None = None):
         """
         Initialize ACGME compliance scenario.
 
@@ -349,7 +356,7 @@ class ACGMEComplianceScenario(TestScenario):
             response=response,
         )
 
-    def get_expected_data(self) -> Dict[str, Any]:
+    def get_expected_data(self) -> dict[str, Any]:
         """Get expected data for this scenario."""
         return {
             "violation_type": self.violation_type,
@@ -442,7 +449,7 @@ class EmergencyCoverageScenario(TestScenario):
             ),
         )
 
-    def get_expected_data(self) -> Dict[str, Any]:
+    def get_expected_data(self) -> dict[str, Any]:
         """Get expected data for this scenario."""
         return {
             "absence_id": self.absence_id,
@@ -509,7 +516,7 @@ class ResilienceLoadScenario(TestScenario):
             ],
         )
 
-    def get_expected_data(self) -> Dict[str, Any]:
+    def get_expected_data(self) -> dict[str, Any]:
         """Get expected data for this scenario."""
         return {
             "defense_level_sequence": ["GREEN", "YELLOW", "ORANGE", "RED"],
@@ -561,7 +568,7 @@ def create_scenario(
 def load_scenario(
     scenario: TestScenario,
     server: MockAPIServer,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Load a scenario into a mock server.
 

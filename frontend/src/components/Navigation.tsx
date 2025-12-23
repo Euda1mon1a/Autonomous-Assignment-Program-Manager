@@ -13,14 +13,11 @@ import {
   Settings,
   LogIn,
   HelpCircle,
-<<<<<<< HEAD
   ArrowLeftRight,
   Phone,
   BarChart3,
   FileUp,
   ClipboardList,
-=======
->>>>>>> origin/docs/session-14-summary
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { MobileNav } from './MobileNav'
@@ -38,7 +35,6 @@ const navItems: NavItem[] = [
   { href: '/my-schedule', label: 'My Schedule', icon: CalendarCheck },
   { href: '/schedule', label: 'Schedule', icon: CalendarDays },
   { href: '/people', label: 'People', icon: Users },
-<<<<<<< HEAD
   { href: '/swaps', label: 'Swaps', icon: ArrowLeftRight },
   { href: '/call-roster', label: 'Call Roster', icon: Phone },
   { href: '/daily-manifest', label: 'Manifest', icon: ClipboardList },
@@ -47,11 +43,6 @@ const navItems: NavItem[] = [
   { href: '/templates', label: 'Templates', icon: FileText },
   { href: '/absences', label: 'Absences', icon: CalendarOff },
   { href: '/import-export', label: 'Import/Export', icon: FileUp },
-=======
-  { href: '/templates', label: 'Templates', icon: FileText },
-  { href: '/absences', label: 'Absences', icon: CalendarOff },
-  { href: '/compliance', label: 'Compliance', icon: AlertTriangle },
->>>>>>> origin/docs/session-14-summary
   { href: '/help', label: 'Help', icon: HelpCircle },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ]

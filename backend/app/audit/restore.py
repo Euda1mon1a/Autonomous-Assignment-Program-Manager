@@ -117,8 +117,12 @@ class AuditRestorer:
             backend_config["region"] = getattr(
                 settings, "AUDIT_ARCHIVE_S3_REGION", "us-east-1"
             )
-            backend_config["access_key"] = getattr(settings, "UPLOAD_S3_ACCESS_KEY", None)
-            backend_config["secret_key"] = getattr(settings, "UPLOAD_S3_SECRET_KEY", None)
+            backend_config["access_key"] = getattr(
+                settings, "UPLOAD_S3_ACCESS_KEY", None
+            )
+            backend_config["secret_key"] = getattr(
+                settings, "UPLOAD_S3_SECRET_KEY", None
+            )
             backend_config["endpoint_url"] = getattr(
                 settings, "UPLOAD_S3_ENDPOINT_URL", None
             )
@@ -161,9 +165,7 @@ class AuditRestorer:
         if limit:
             records = records[:limit]
 
-        logger.info(
-            f"Found {len(records)} matching records in archive {archive_id}"
-        )
+        logger.info(f"Found {len(records)} matching records in archive {archive_id}")
 
         return records
 
@@ -342,8 +344,7 @@ class AuditRestorer:
         all_results = all_results[:limit]
 
         logger.info(
-            f"Found {len(all_results)} matching records across "
-            f"{len(archives)} archives"
+            f"Found {len(all_results)} matching records across {len(archives)} archives"
         )
 
         return all_results

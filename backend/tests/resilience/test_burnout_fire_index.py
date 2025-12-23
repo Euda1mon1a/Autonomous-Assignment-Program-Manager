@@ -6,8 +6,9 @@ ensuring all components calculate correctly and danger classification
 matches expected thresholds.
 """
 
-import pytest
 from uuid import uuid4
+
+import pytest
 
 from app.resilience.burnout_fire_index import (
     BurnoutCodeReport,
@@ -615,10 +616,10 @@ class TestCalculateBurnoutDanger:
 
         report = rating.calculate_burnout_danger(
             resident_id=resident_id,
-            recent_hours=50.0,        ***REMOVED*** Under target
-            monthly_load=220.0,       ***REMOVED*** Under target
+            recent_hours=50.0,  ***REMOVED*** Under target
+            monthly_load=220.0,  ***REMOVED*** Under target
             yearly_satisfaction=0.85,  ***REMOVED*** High satisfaction
-            workload_velocity=0.0,     ***REMOVED*** Stable
+            workload_velocity=0.0,  ***REMOVED*** Stable
         )
 
         assert report.resident_id == resident_id
@@ -636,10 +637,10 @@ class TestCalculateBurnoutDanger:
 
         report = rating.calculate_burnout_danger(
             resident_id=resident_id,
-            recent_hours=71.0,        ***REMOVED*** Moderately over target
-            monthly_load=264.0,       ***REMOVED*** Moderately over target
+            recent_hours=71.0,  ***REMOVED*** Moderately over target
+            monthly_load=264.0,  ***REMOVED*** Moderately over target
             yearly_satisfaction=0.56,  ***REMOVED*** Moderate dissatisfaction
-            workload_velocity=4.5,     ***REMOVED*** Moderate increase
+            workload_velocity=4.5,  ***REMOVED*** Moderate increase
         )
 
         assert report.danger_class == DangerClass.MODERATE
@@ -654,10 +655,10 @@ class TestCalculateBurnoutDanger:
 
         report = rating.calculate_burnout_danger(
             resident_id=resident_id,
-            recent_hours=77.0,        ***REMOVED*** Significantly over
-            monthly_load=280.0,       ***REMOVED*** Significantly over
+            recent_hours=77.0,  ***REMOVED*** Significantly over
+            monthly_load=280.0,  ***REMOVED*** Significantly over
             yearly_satisfaction=0.42,  ***REMOVED*** Significant dissatisfaction
-            workload_velocity=6.0,     ***REMOVED*** Increasing
+            workload_velocity=6.0,  ***REMOVED*** Increasing
         )
 
         assert report.danger_class == DangerClass.HIGH
@@ -672,10 +673,10 @@ class TestCalculateBurnoutDanger:
 
         report = rating.calculate_burnout_danger(
             resident_id=resident_id,
-            recent_hours=82.0,        ***REMOVED*** Well over target
-            monthly_load=292.0,       ***REMOVED*** Well over target
+            recent_hours=82.0,  ***REMOVED*** Well over target
+            monthly_load=292.0,  ***REMOVED*** Well over target
             yearly_satisfaction=0.28,  ***REMOVED*** Low satisfaction
-            workload_velocity=9.0,     ***REMOVED*** Rapidly increasing
+            workload_velocity=9.0,  ***REMOVED*** Rapidly increasing
         )
 
         assert report.danger_class == DangerClass.VERY_HIGH
@@ -690,10 +691,10 @@ class TestCalculateBurnoutDanger:
 
         report = rating.calculate_burnout_danger(
             resident_id=resident_id,
-            recent_hours=88.0,        ***REMOVED*** Severely over target
-            monthly_load=305.0,       ***REMOVED*** Severely over target
+            recent_hours=88.0,  ***REMOVED*** Severely over target
+            monthly_load=305.0,  ***REMOVED*** Severely over target
             yearly_satisfaction=0.18,  ***REMOVED*** Very low satisfaction
-            workload_velocity=13.0,    ***REMOVED*** Extremely increasing
+            workload_velocity=13.0,  ***REMOVED*** Extremely increasing
         )
 
         assert report.danger_class == DangerClass.EXTREME
@@ -800,19 +801,19 @@ class TestCalculateBatchDanger:
         residents = [
             {
                 "resident_id": uuid4(),
-                "recent_hours": 50.0,   ***REMOVED*** Low danger
+                "recent_hours": 50.0,  ***REMOVED*** Low danger
                 "monthly_load": 220.0,
                 "yearly_satisfaction": 0.85,
             },
             {
                 "resident_id": uuid4(),
-                "recent_hours": 90.0,   ***REMOVED*** High danger
+                "recent_hours": 90.0,  ***REMOVED*** High danger
                 "monthly_load": 300.0,
                 "yearly_satisfaction": 0.2,
             },
             {
                 "resident_id": uuid4(),
-                "recent_hours": 70.0,   ***REMOVED*** Medium danger
+                "recent_hours": 70.0,  ***REMOVED*** Medium danger
                 "monthly_load": 260.0,
                 "yearly_satisfaction": 0.6,
             },
@@ -883,9 +884,9 @@ class TestTemporalIntegration:
 
         report = rating.calculate_burnout_danger(
             resident_id=uuid4(),
-            recent_hours=50.0,        ***REMOVED*** Low recent
-            monthly_load=220.0,       ***REMOVED*** Low monthly
-            yearly_satisfaction=0.9,   ***REMOVED*** High satisfaction
+            recent_hours=50.0,  ***REMOVED*** Low recent
+            monthly_load=220.0,  ***REMOVED*** Low monthly
+            yearly_satisfaction=0.9,  ***REMOVED*** High satisfaction
             workload_velocity=0.0,
         )
 
@@ -897,9 +898,9 @@ class TestTemporalIntegration:
 
         report = rating.calculate_burnout_danger(
             resident_id=uuid4(),
-            recent_hours=75.0,        ***REMOVED*** High recent
-            monthly_load=220.0,       ***REMOVED*** Low monthly
-            yearly_satisfaction=0.9,   ***REMOVED*** High satisfaction
+            recent_hours=75.0,  ***REMOVED*** High recent
+            monthly_load=220.0,  ***REMOVED*** Low monthly
+            yearly_satisfaction=0.9,  ***REMOVED*** High satisfaction
             workload_velocity=0.0,
         )
 
@@ -913,10 +914,10 @@ class TestTemporalIntegration:
 
         report = rating.calculate_burnout_danger(
             resident_id=uuid4(),
-            recent_hours=90.0,        ***REMOVED*** High recent
-            monthly_load=300.0,       ***REMOVED*** High monthly
-            yearly_satisfaction=0.1,   ***REMOVED*** Very low satisfaction
-            workload_velocity=15.0,    ***REMOVED*** Rapidly increasing
+            recent_hours=90.0,  ***REMOVED*** High recent
+            monthly_load=300.0,  ***REMOVED*** High monthly
+            yearly_satisfaction=0.1,  ***REMOVED*** Very low satisfaction
+            workload_velocity=15.0,  ***REMOVED*** Rapidly increasing
         )
 
         ***REMOVED*** All scales aligned = extreme danger
@@ -971,10 +972,10 @@ class TestEdgeCases:
 
         report = rating.calculate_burnout_danger(
             resident_id=uuid4(),
-            recent_hours=200.0,       ***REMOVED*** Extreme
-            monthly_load=500.0,       ***REMOVED*** Extreme
-            yearly_satisfaction=0.0,   ***REMOVED*** Minimum
-            workload_velocity=50.0,    ***REMOVED*** Extreme increase
+            recent_hours=200.0,  ***REMOVED*** Extreme
+            monthly_load=500.0,  ***REMOVED*** Extreme
+            yearly_satisfaction=0.0,  ***REMOVED*** Minimum
+            workload_velocity=50.0,  ***REMOVED*** Extreme increase
         )
 
         assert report.danger_class == DangerClass.EXTREME
@@ -983,13 +984,13 @@ class TestEdgeCases:
     def test_custom_targets(self):
         """Test with custom FFMC/DMC targets."""
         rating = BurnoutDangerRating(
-            ffmc_target=80.0,   ***REMOVED*** Higher target
-            dmc_target=320.0,   ***REMOVED*** Higher target
+            ffmc_target=80.0,  ***REMOVED*** Higher target
+            dmc_target=320.0,  ***REMOVED*** Higher target
         )
 
         report = rating.calculate_burnout_danger(
             resident_id=uuid4(),
-            recent_hours=80.0,   ***REMOVED*** At higher target
+            recent_hours=80.0,  ***REMOVED*** At higher target
             monthly_load=320.0,  ***REMOVED*** At higher target
             yearly_satisfaction=0.8,
         )

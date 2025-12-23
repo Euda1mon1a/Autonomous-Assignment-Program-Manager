@@ -12,9 +12,8 @@ Minimal structure: a folder per run with:
 """
 
 import json
-import os
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, date
+from dataclasses import asdict, dataclass, field
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
@@ -199,7 +198,9 @@ class RunState:
             status=data["status"],
             best_score=data["best_score"],
             best_iteration=data["best_iteration"],
-            best_params=GeneratorParams.from_dict(data["best_params"]) if data.get("best_params") else None,
+            best_params=GeneratorParams.from_dict(data["best_params"])
+            if data.get("best_params")
+            else None,
             target_score=data["target_score"],
             stagnation_limit=data["stagnation_limit"],
             iterations_since_improvement=data["iterations_since_improvement"],
@@ -294,7 +295,9 @@ class StateStore:
         Returns:
             Initialized RunState
         """
-        run_id = f"{scenario}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid4().hex[:8]}"
+        run_id = (
+            f"{scenario}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid4().hex[:8]}"
+        )
         now = datetime.now()
 
         state = RunState(
@@ -336,7 +339,7 @@ class StateStore:
         if not state_path.exists():
             return None
 
-        with open(state_path, "r") as f:
+        with open(state_path) as f:
             data = json.load(f)
 
         return RunState.from_dict(data)
@@ -388,7 +391,7 @@ class StateStore:
             return []
 
         records = []
-        with open(history_path, "r") as f:
+        with open(history_path) as f:
             for line in f:
                 line = line.strip()
                 if line:

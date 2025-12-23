@@ -1,4 +1,5 @@
 """Tests for portal Pydantic schemas."""
+
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 

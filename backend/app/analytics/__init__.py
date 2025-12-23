@@ -1,4 +1,5 @@
 """Analytics module for schedule analysis and reporting."""
+
 from sqlalchemy.orm import Session
 
 from app.analytics.api import (

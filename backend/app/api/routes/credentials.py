@@ -65,7 +65,9 @@ def list_credentials_for_procedure(
     )
 
 
-@router.get("/qualified-faculty/{procedure_id}", response_model=QualifiedFacultyResponse)
+@router.get(
+    "/qualified-faculty/{procedure_id}", response_model=QualifiedFacultyResponse
+)
 def get_qualified_faculty(
     procedure_id: UUID,
     db=Depends(get_db),

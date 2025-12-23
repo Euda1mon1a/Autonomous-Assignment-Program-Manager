@@ -5,16 +5,17 @@ This module defines quota policies for different user roles and resource types.
 Quotas are enforced on a daily and monthly basis to prevent abuse and ensure
 fair resource allocation.
 """
+
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
 class QuotaPolicyType(str, Enum):
     """Types of quota policies."""
+
     FREE = "free"
     STANDARD = "standard"
     PREMIUM = "premium"
@@ -29,6 +30,7 @@ class QuotaPolicy:
 
     Defines limits for API usage on daily and monthly basis.
     """
+
     policy_type: QuotaPolicyType
     daily_limit: int
     monthly_limit: int
@@ -155,12 +157,12 @@ def get_policy_for_role(role: str) -> QuotaPolicy:
 def create_custom_policy(
     daily_limit: int,
     monthly_limit: int,
-    schedule_generation_daily: Optional[int] = None,
-    schedule_generation_monthly: Optional[int] = None,
-    export_daily: Optional[int] = None,
-    export_monthly: Optional[int] = None,
-    report_daily: Optional[int] = None,
-    report_monthly: Optional[int] = None,
+    schedule_generation_daily: int | None = None,
+    schedule_generation_monthly: int | None = None,
+    export_daily: int | None = None,
+    export_monthly: int | None = None,
+    report_daily: int | None = None,
+    report_monthly: int | None = None,
     allow_overage: bool = False,
     overage_percentage: float = 0.0,
 ) -> QuotaPolicy:

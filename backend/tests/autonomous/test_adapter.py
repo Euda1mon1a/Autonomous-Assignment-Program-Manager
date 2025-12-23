@@ -2,13 +2,12 @@
 Tests for the automated parameter adaptation.
 """
 
-import pytest
 from datetime import datetime
 
 from app.autonomous.adapter import (
-    ParameterAdapter,
-    AdaptationRule,
     AdaptationAction,
+    AdaptationRule,
+    ParameterAdapter,
 )
 from app.autonomous.evaluator import (
     EvaluationResult,
@@ -32,8 +31,7 @@ def make_result(
         coverage_rate=0.8,
         total_violations=len(violations) if violations else 0,
         critical_violations=sum(
-            1 for v in (violations or [])
-            if v.severity == ViolationSeverity.CRITICAL
+            1 for v in (violations or []) if v.severity == ViolationSeverity.CRITICAL
         ),
         violations=violations or [],
     )

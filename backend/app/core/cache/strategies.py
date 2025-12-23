@@ -11,9 +11,9 @@ This module provides:
 - PatternStrategy: Pattern-based invalidation
 - WriteThrough: Write-through cache invalidation
 """
+
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
 
@@ -55,10 +55,7 @@ class InvalidationStrategy(ABC):
 
     @abstractmethod
     async def should_invalidate(
-        self,
-        key: str,
-        trigger: InvalidationTrigger,
-        **kwargs
+        self, key: str, trigger: InvalidationTrigger, **kwargs
     ) -> bool:
         """
         Determine if a cache entry should be invalidated.
@@ -75,10 +72,7 @@ class InvalidationStrategy(ABC):
 
     @abstractmethod
     async def invalidate(
-        self,
-        cache_client: Any,
-        key: str | None = None,
-        **kwargs
+        self, cache_client: Any, key: str | None = None, **kwargs
     ) -> int:
         """
         Execute invalidation for matching entries.
@@ -132,10 +126,7 @@ class TTLStrategy(InvalidationStrategy):
         self.default_ttl = default_ttl
 
     async def should_invalidate(
-        self,
-        key: str,
-        trigger: InvalidationTrigger,
-        **kwargs
+        self, key: str, trigger: InvalidationTrigger, **kwargs
     ) -> bool:
         """
         Check if entry should be invalidated based on TTL.
@@ -156,10 +147,7 @@ class TTLStrategy(InvalidationStrategy):
         return ttl_remaining <= 0
 
     async def invalidate(
-        self,
-        cache_client: Any,
-        key: str | None = None,
-        **kwargs
+        self, cache_client: Any, key: str | None = None, **kwargs
     ) -> int:
         """
         Invalidate expired entries (Redis handles automatically).
@@ -182,10 +170,7 @@ class TTLStrategy(InvalidationStrategy):
         return 0
 
     async def set_ttl(
-        self,
-        cache_client: Any,
-        key: str,
-        ttl: int | None = None
+        self, cache_client: Any, key: str, ttl: int | None = None
     ) -> bool:
         """
         Set or update TTL for a cache entry.
@@ -228,10 +213,7 @@ class TagBasedStrategy(InvalidationStrategy):
         self.tag_prefix = f"cache:tag:{namespace}"
 
     async def should_invalidate(
-        self,
-        key: str,
-        trigger: InvalidationTrigger,
-        **kwargs
+        self, key: str, trigger: InvalidationTrigger, **kwargs
     ) -> bool:
         """
         Check if entry should be invalidated based on tags.
@@ -249,10 +231,7 @@ class TagBasedStrategy(InvalidationStrategy):
         return False
 
     async def invalidate(
-        self,
-        cache_client: Any,
-        key: str | None = None,
-        **kwargs
+        self, cache_client: Any, key: str | None = None, **kwargs
     ) -> int:
         """
         Invalidate entries by tag or specific key.
@@ -277,11 +256,7 @@ class TagBasedStrategy(InvalidationStrategy):
 
         return 0
 
-    async def invalidate_by_tag(
-        self,
-        cache_client: Any,
-        tag: str
-    ) -> int:
+    async def invalidate_by_tag(self, cache_client: Any, tag: str) -> int:
         """
         Invalidate all cache entries associated with a tag.
 
@@ -307,12 +282,7 @@ class TagBasedStrategy(InvalidationStrategy):
         logger.info(f"Invalidated {count} entries for tag '{tag}'")
         return count
 
-    async def add_tags(
-        self,
-        cache_client: Any,
-        key: str,
-        tags: list[str]
-    ) -> int:
+    async def add_tags(self, cache_client: Any, key: str, tags: list[str]) -> int:
         """
         Associate tags with a cache entry.
 
@@ -355,10 +325,7 @@ class PatternStrategy(InvalidationStrategy):
         super().__init__(namespace)
 
     async def should_invalidate(
-        self,
-        key: str,
-        trigger: InvalidationTrigger,
-        **kwargs
+        self, key: str, trigger: InvalidationTrigger, **kwargs
     ) -> bool:
         """
         Check if entry should be invalidated based on pattern.
@@ -376,10 +343,7 @@ class PatternStrategy(InvalidationStrategy):
         return False
 
     async def invalidate(
-        self,
-        cache_client: Any,
-        key: str | None = None,
-        **kwargs
+        self, cache_client: Any, key: str | None = None, **kwargs
     ) -> int:
         """
         Invalidate entries by pattern.
@@ -404,10 +368,7 @@ class PatternStrategy(InvalidationStrategy):
         return 0
 
     async def invalidate_by_pattern(
-        self,
-        cache_client: Any,
-        pattern: str,
-        batch_size: int = 100
+        self, cache_client: Any, pattern: str, batch_size: int = 100
     ) -> int:
         """
         Invalidate all cache entries matching a pattern.
@@ -425,9 +386,7 @@ class PatternStrategy(InvalidationStrategy):
 
         while True:
             cursor, keys = await cache_client.scan(
-                cursor,
-                match=pattern,
-                count=batch_size
+                cursor, match=pattern, count=batch_size
             )
 
             if keys:
@@ -469,10 +428,7 @@ class WriteThroughStrategy(InvalidationStrategy):
         self.invalidate_before_write = invalidate_before_write
 
     async def should_invalidate(
-        self,
-        key: str,
-        trigger: InvalidationTrigger,
-        **kwargs
+        self, key: str, trigger: InvalidationTrigger, **kwargs
     ) -> bool:
         """
         Check if entry should be invalidated on write.
@@ -488,10 +444,7 @@ class WriteThroughStrategy(InvalidationStrategy):
         return trigger == InvalidationTrigger.WRITE_OPERATION
 
     async def invalidate(
-        self,
-        cache_client: Any,
-        key: str | None = None,
-        **kwargs
+        self, cache_client: Any, key: str | None = None, **kwargs
     ) -> int:
         """
         Invalidate cache entries on write operation.
@@ -516,11 +469,7 @@ class WriteThroughStrategy(InvalidationStrategy):
         self._record_invalidation(count)
         return count
 
-    async def invalidate_on_write(
-        self,
-        cache_client: Any,
-        keys: list[str]
-    ) -> int:
+    async def invalidate_on_write(self, cache_client: Any, keys: list[str]) -> int:
         """
         Invalidate cache entries for a write operation.
 

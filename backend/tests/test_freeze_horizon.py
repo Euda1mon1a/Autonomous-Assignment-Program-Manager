@@ -4,10 +4,11 @@ Tests for Freeze Horizon enforcement.
 Tests the FreezeHorizonService and its integration with AssignmentService.
 """
 
-import pytest
 from datetime import date, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from uuid import uuid4
+
+import pytest
 
 from app.models.settings import (
     ApplicationSettings,
@@ -353,7 +354,7 @@ class TestEmergencyReasonCodes:
             OverrideReasonCode.CRISIS_MODE,
         }
 
-        assert FreezeHorizonService.EMERGENCY_REASON_CODES == expected_emergency
+        assert expected_emergency == FreezeHorizonService.EMERGENCY_REASON_CODES
 
     def test_non_emergency_codes(self):
         """Verify non-emergency codes are not in emergency set."""
@@ -373,13 +374,19 @@ class TestFreezeScopeEnum:
         """Test FreezeScope enum has expected values."""
         assert FreezeScope.NONE.value == "none"
         assert FreezeScope.NON_EMERGENCY_ONLY.value == "non_emergency_only"
-        assert FreezeScope.ALL_CHANGES_REQUIRE_OVERRIDE.value == "all_changes_require_override"
+        assert (
+            FreezeScope.ALL_CHANGES_REQUIRE_OVERRIDE.value
+            == "all_changes_require_override"
+        )
 
     def test_freeze_scope_from_string(self):
         """Test creating FreezeScope from string value."""
         assert FreezeScope("none") == FreezeScope.NONE
         assert FreezeScope("non_emergency_only") == FreezeScope.NON_EMERGENCY_ONLY
-        assert FreezeScope("all_changes_require_override") == FreezeScope.ALL_CHANGES_REQUIRE_OVERRIDE
+        assert (
+            FreezeScope("all_changes_require_override")
+            == FreezeScope.ALL_CHANGES_REQUIRE_OVERRIDE
+        )
 
 
 class TestOverrideReasonCodeEnum:

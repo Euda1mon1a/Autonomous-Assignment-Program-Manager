@@ -10,6 +10,7 @@ system that supports:
 - Step timeout handling
 - Workflow cancellation
 """
+
 import uuid
 from datetime import datetime
 from enum import Enum
@@ -20,10 +21,10 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
-    Index,
 )
 from sqlalchemy.orm import relationship
 
@@ -33,31 +34,34 @@ from app.db.types import GUID, JSONType
 
 class WorkflowStatus(str, Enum):
     """Status of a workflow instance."""
-    PENDING = "pending"          ***REMOVED*** Workflow created, not yet started
-    RUNNING = "running"          ***REMOVED*** Workflow is executing
-    PAUSED = "paused"           ***REMOVED*** Workflow execution paused
-    COMPLETED = "completed"      ***REMOVED*** Workflow completed successfully
-    FAILED = "failed"           ***REMOVED*** Workflow failed
-    CANCELLED = "cancelled"      ***REMOVED*** Workflow was cancelled
-    TIMED_OUT = "timed_out"     ***REMOVED*** Workflow exceeded timeout
+
+    PENDING = "pending"  ***REMOVED*** Workflow created, not yet started
+    RUNNING = "running"  ***REMOVED*** Workflow is executing
+    PAUSED = "paused"  ***REMOVED*** Workflow execution paused
+    COMPLETED = "completed"  ***REMOVED*** Workflow completed successfully
+    FAILED = "failed"  ***REMOVED*** Workflow failed
+    CANCELLED = "cancelled"  ***REMOVED*** Workflow was cancelled
+    TIMED_OUT = "timed_out"  ***REMOVED*** Workflow exceeded timeout
 
 
 class StepStatus(str, Enum):
     """Status of a workflow step execution."""
-    PENDING = "pending"          ***REMOVED*** Step not yet started
-    RUNNING = "running"          ***REMOVED*** Step is executing
-    COMPLETED = "completed"      ***REMOVED*** Step completed successfully
-    FAILED = "failed"           ***REMOVED*** Step failed
-    SKIPPED = "skipped"         ***REMOVED*** Step skipped due to conditions
-    RETRYING = "retrying"       ***REMOVED*** Step is retrying after failure
-    TIMED_OUT = "timed_out"     ***REMOVED*** Step exceeded timeout
-    CANCELLED = "cancelled"      ***REMOVED*** Step was cancelled
+
+    PENDING = "pending"  ***REMOVED*** Step not yet started
+    RUNNING = "running"  ***REMOVED*** Step is executing
+    COMPLETED = "completed"  ***REMOVED*** Step completed successfully
+    FAILED = "failed"  ***REMOVED*** Step failed
+    SKIPPED = "skipped"  ***REMOVED*** Step skipped due to conditions
+    RETRYING = "retrying"  ***REMOVED*** Step is retrying after failure
+    TIMED_OUT = "timed_out"  ***REMOVED*** Step exceeded timeout
+    CANCELLED = "cancelled"  ***REMOVED*** Step was cancelled
 
 
 class StepExecutionMode(str, Enum):
     """Execution mode for workflow steps."""
-    SEQUENTIAL = "sequential"    ***REMOVED*** Execute steps one after another
-    PARALLEL = "parallel"        ***REMOVED*** Execute steps concurrently
+
+    SEQUENTIAL = "sequential"  ***REMOVED*** Execute steps one after another
+    PARALLEL = "parallel"  ***REMOVED*** Execute steps concurrently
 
 
 class WorkflowTemplate(Base):
@@ -68,6 +72,7 @@ class WorkflowTemplate(Base):
     retry policies, and conditional logic. Templates are versioned to allow
     evolution while maintaining backward compatibility.
     """
+
     __tablename__ = "workflow_templates"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -107,13 +112,17 @@ class WorkflowTemplate(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     created_by_id = Column(GUID(), ForeignKey("users.id"), nullable=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     ***REMOVED*** Tags for categorization
     tags = Column(JSONType(), nullable=True)  ***REMOVED*** ["schedule", "acgme", "critical"]
 
     ***REMOVED*** Relationships
-    instances = relationship("WorkflowInstance", back_populates="template", cascade="all, delete-orphan")
+    instances = relationship(
+        "WorkflowInstance", back_populates="template", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         Index("idx_workflow_template_name_version", "name", "version", unique=True),
@@ -131,6 +140,7 @@ class WorkflowInstance(Base):
     Represents a specific execution of a workflow template with its own
     state, inputs, and execution history.
     """
+
     __tablename__ = "workflow_instances"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -144,7 +154,9 @@ class WorkflowInstance(Base):
     description = Column(Text, nullable=True)
 
     ***REMOVED*** Status tracking
-    status = Column(String(20), nullable=False, default=WorkflowStatus.PENDING.value, index=True)
+    status = Column(
+        String(20), nullable=False, default=WorkflowStatus.PENDING.value, index=True
+    )
 
     ***REMOVED*** Execution context
     ***REMOVED*** Input parameters provided when starting the workflow
@@ -185,7 +197,9 @@ class WorkflowInstance(Base):
     priority = Column(Integer, default=0, nullable=False, index=True)
 
     ***REMOVED*** Parent workflow (for sub-workflows)
-    parent_instance_id = Column(GUID(), ForeignKey("workflow_instances.id"), nullable=True)
+    parent_instance_id = Column(
+        GUID(), ForeignKey("workflow_instances.id"), nullable=True
+    )
 
     ***REMOVED*** Relationships
     template = relationship("WorkflowTemplate", back_populates="instances")
@@ -193,12 +207,10 @@ class WorkflowInstance(Base):
         "WorkflowStepExecution",
         back_populates="workflow_instance",
         cascade="all, delete-orphan",
-        order_by="WorkflowStepExecution.started_at"
+        order_by="WorkflowStepExecution.started_at",
     )
     child_workflows = relationship(
-        "WorkflowInstance",
-        foreign_keys=[parent_instance_id],
-        remote_side=[id]
+        "WorkflowInstance", foreign_keys=[parent_instance_id], remote_side=[id]
     )
 
     __table_args__ = (
@@ -242,20 +254,27 @@ class WorkflowStepExecution(Base):
     Tracks the execution history, retries, and results for each step
     in a workflow instance.
     """
+
     __tablename__ = "workflow_step_executions"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
 
     ***REMOVED*** Workflow reference
-    workflow_instance_id = Column(GUID(), ForeignKey("workflow_instances.id"), nullable=False)
+    workflow_instance_id = Column(
+        GUID(), ForeignKey("workflow_instances.id"), nullable=False
+    )
 
     ***REMOVED*** Step identification
     step_id = Column(String(255), nullable=False)  ***REMOVED*** ID from template definition
     step_name = Column(String(255), nullable=False)
-    step_handler = Column(String(500), nullable=False)  ***REMOVED*** e.g., "app.services.email_service.send_email"
+    step_handler = Column(
+        String(500), nullable=False
+    )  ***REMOVED*** e.g., "app.services.email_service.send_email"
 
     ***REMOVED*** Execution status
-    status = Column(String(20), nullable=False, default=StepStatus.PENDING.value, index=True)
+    status = Column(
+        String(20), nullable=False, default=StepStatus.PENDING.value, index=True
+    )
 
     ***REMOVED*** Retry tracking
     attempt_number = Column(Integer, default=1, nullable=False)
@@ -290,7 +309,9 @@ class WorkflowStepExecution(Base):
     condition_expression = Column(Text, nullable=True)
 
     ***REMOVED*** Relationships
-    workflow_instance = relationship("WorkflowInstance", back_populates="step_executions")
+    workflow_instance = relationship(
+        "WorkflowInstance", back_populates="step_executions"
+    )
 
     __table_args__ = (
         Index("idx_step_execution_workflow_step", "workflow_instance_id", "step_id"),

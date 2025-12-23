@@ -191,28 +191,19 @@ const DATA_TYPE_COLUMNS: Record<ImportDataType, string[]> = {
 
 /**
  * Detect import data type from column headers
-<<<<<<< HEAD
  *
  * IMPORTANT: Check order matters! 'people' must be checked before 'schedules'
  * because the loose matching in hasRequiredColumns causes 'personname'.includes('name')
  * to incorrectly match a 'name' column.
-=======
->>>>>>> origin/docs/session-14-summary
  */
 export function detectDataType(columns: string[]): ImportDataType {
   const normalizedColumns = columns.map(c => c.toLowerCase().replace(/[_\s-]/g, ''));
 
-<<<<<<< HEAD
   // Check for people columns FIRST (before schedules)
   // This prevents 'name' from matching 'personname' via loose includes()
   if (hasRequiredColumns(normalizedColumns, ['name', 'type']) &&
       !normalizedColumns.some(c => c === 'date' || c === 'timeofday')) {
     return 'people';
-=======
-  // Check for schedule-specific columns (most specific first)
-  if (hasRequiredColumns(normalizedColumns, ['date', 'timeofday', 'personname', 'role'])) {
-    return 'schedules';
->>>>>>> origin/docs/session-14-summary
   }
 
   // Check for absence columns
@@ -220,31 +211,18 @@ export function detectDataType(columns: string[]): ImportDataType {
     return 'absences';
   }
 
-<<<<<<< HEAD
   // Check for schedule-specific columns
   if (hasRequiredColumns(normalizedColumns, ['date', 'timeofday', 'personname', 'role'])) {
     return 'schedules';
   }
 
-=======
->>>>>>> origin/docs/session-14-summary
   // Check for assignment columns
   if (hasRequiredColumns(normalizedColumns, ['date', 'timeofday', 'role'])) {
     return 'assignments';
   }
 
-<<<<<<< HEAD
   // Default to people (safer default - user can change if wrong)
   return 'people';
-=======
-  // Check for people columns
-  if (hasRequiredColumns(normalizedColumns, ['name', 'type'])) {
-    return 'people';
-  }
-
-  // Default to schedules
-  return 'schedules';
->>>>>>> origin/docs/session-14-summary
 }
 
 /**

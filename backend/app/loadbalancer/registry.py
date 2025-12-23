@@ -83,9 +83,7 @@ class ServiceInstance:
             "healthy": self.healthy,
             "registered_at": self.registered_at.isoformat(),
             "last_health_check": (
-                self.last_health_check.isoformat()
-                if self.last_health_check
-                else None
+                self.last_health_check.isoformat() if self.last_health_check else None
             ),
             "consecutive_failures": self.consecutive_failures,
         }
@@ -419,9 +417,7 @@ class ServiceRegistry:
         Returns:
             Dictionary with registry statistics
         """
-        total_instances = sum(
-            len(instances) for instances in self._instances.values()
-        )
+        total_instances = sum(len(instances) for instances in self._instances.values())
         healthy_instances = sum(
             sum(1 for i in instances.values() if i.healthy)
             for instances in self._instances.values()

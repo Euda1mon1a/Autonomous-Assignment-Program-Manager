@@ -7,15 +7,9 @@ It analyzes conflicts and proposes resolution strategies with impact assessments
 
 import logging
 from typing import Any
-from uuid import UUID
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from app.models.assignment import Assignment
-from app.models.block import Block
-from app.models.person import Person
 from app.scheduling.conflicts.types import (
     ACGMEViolationConflict,
     Conflict,

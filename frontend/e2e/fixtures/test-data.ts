@@ -137,11 +137,7 @@ export async function logout(page: Page): Promise<void> {
  * Clear all browser storage
  */
 export async function clearStorage(page: Page): Promise<void> {
-<<<<<<< HEAD
   await page.context().clearCookies();
-=======
-  await page.context().clearPGY2-01ies();
->>>>>>> origin/docs/session-14-summary
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();

@@ -1,4 +1,5 @@
 """SQLAlchemy Base class for all models."""
+
 from sqlalchemy.orm import DeclarativeBase
 
 ***REMOVED*** Import audit configuration FIRST to initialize versioning
@@ -8,4 +9,5 @@ from app.db.audit import make_versioned  ***REMOVED*** noqa: F401 - imported for
 
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models."""
+
     pass

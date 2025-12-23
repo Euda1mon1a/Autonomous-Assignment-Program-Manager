@@ -8,7 +8,8 @@ Provides reusable fixtures for:
 - Error injection
 - State management
 """
-from typing import Generator, List
+
+from collections.abc import Generator
 
 import pytest
 
@@ -42,7 +43,9 @@ def mock_server() -> Generator[MockAPIServer, None, None]:
 
 
 @pytest.fixture
-def recorded_requests(mock_server: MockAPIServer) -> Generator[List[MockRequest], None, None]:
+def recorded_requests(
+    mock_server: MockAPIServer,
+) -> Generator[list[MockRequest], None, None]:
     """
     Access recorded requests from mock server.
 
@@ -100,6 +103,7 @@ def with_delay(mock_server: MockAPIServer):
             assert duration >= 2.0
         ```
     """
+
     def configure_delay(delay_ms: int = 100):
         """Configure delay for all endpoints."""
         mock_server.simulate_timeout(delay_ms)
@@ -125,7 +129,10 @@ def with_errors(mock_server: MockAPIServer):
                 await mock_server.handle_request("POST", "/api/error")
         ```
     """
-    def configure_errors(error: Exception, method: str = None, path_pattern: str = None):
+
+    def configure_errors(
+        error: Exception, method: str = None, path_pattern: str = None
+    ):
         """Configure error injection."""
         mock_server.simulate_errors(error, method=method, path_pattern=path_pattern)
 

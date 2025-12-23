@@ -4,11 +4,10 @@ Metric collectors for profiling.
 Provides collectors for SQL queries, HTTP requests, and distributed traces.
 """
 
-import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from sqlalchemy import event
@@ -21,15 +20,15 @@ class SQLQuery:
 
     query_id: str
     sql: str
-    parameters: Optional[Dict[str, Any]]
+    parameters: dict[str, Any] | None
     start_time: datetime
-    end_time: Optional[datetime]
-    duration_ms: Optional[float]
-    row_count: Optional[int]
-    error: Optional[str]
-    stack_trace: Optional[str]
+    end_time: datetime | None
+    duration_ms: float | None
+    row_count: int | None
+    error: str | None
+    stack_trace: str | None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "query_id": self.query_id,
@@ -50,16 +49,16 @@ class RequestMetrics:
     request_id: str
     method: str
     path: str
-    status_code: Optional[int]
+    status_code: int | None
     start_time: datetime
-    end_time: Optional[datetime]
-    duration_ms: Optional[float]
+    end_time: datetime | None
+    duration_ms: float | None
     request_size_bytes: int
-    response_size_bytes: Optional[int]
-    user_id: Optional[str]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    response_size_bytes: int | None
+    user_id: str | None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "request_id": self.request_id,
@@ -82,15 +81,15 @@ class Trace:
 
     trace_id: str
     span_id: str
-    parent_span_id: Optional[str]
+    parent_span_id: str | None
     operation_name: str
     start_time: datetime
-    end_time: Optional[datetime]
-    duration_ms: Optional[float]
-    tags: Dict[str, Any] = field(default_factory=dict)
-    logs: List[Dict[str, Any]] = field(default_factory=list)
+    end_time: datetime | None
+    duration_ms: float | None
+    tags: dict[str, Any] = field(default_factory=dict)
+    logs: list[dict[str, Any]] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "trace_id": self.trace_id,
@@ -122,7 +121,7 @@ class MetricCollector:
         """
         self.enabled = enabled
         self.max_items = max_items
-        self.items: List[Any] = []
+        self.items: list[Any] = []
 
     def add_item(self, item: Any):
         """
@@ -140,7 +139,7 @@ class MetricCollector:
         if len(self.items) > self.max_items:
             self.items = self.items[-self.max_items :]
 
-    def get_items(self, limit: Optional[int] = None) -> List[Any]:
+    def get_items(self, limit: int | None = None) -> list[Any]:
         """
         Get collected items.
 
@@ -179,7 +178,7 @@ class SQLQueryCollector(MetricCollector):
             max_queries: Maximum number of queries to store
         """
         super().__init__(enabled=enabled, max_items=max_queries)
-        self.active_queries: Dict[str, SQLQuery] = {}
+        self.active_queries: dict[str, SQLQuery] = {}
         self._listeners_registered = False
 
     def register_listeners(self, engine: Engine):
@@ -229,8 +228,8 @@ class SQLQueryCollector(MetricCollector):
             query = self.active_queries[query_id]
             query.end_time = datetime.utcnow()
             query.duration_ms = (
-                (query.end_time - query.start_time).total_seconds() * 1000
-            )
+                query.end_time - query.start_time
+            ).total_seconds() * 1000
             query.row_count = cursor.rowcount if cursor.rowcount >= 0 else None
 
             self.add_item(query)
@@ -248,8 +247,8 @@ class SQLQueryCollector(MetricCollector):
             query = self.active_queries[query_id]
             query.end_time = datetime.utcnow()
             query.duration_ms = (
-                (query.end_time - query.start_time).total_seconds() * 1000
-            )
+                query.end_time - query.start_time
+            ).total_seconds() * 1000
             query.error = str(context.original_exception)
 
             self.add_item(query)
@@ -257,7 +256,7 @@ class SQLQueryCollector(MetricCollector):
 
         self._listeners_registered = True
 
-    def get_slow_queries(self, threshold_ms: float = 100) -> List[SQLQuery]:
+    def get_slow_queries(self, threshold_ms: float = 100) -> list[SQLQuery]:
         """
         Get queries slower than threshold.
 
@@ -267,13 +266,9 @@ class SQLQueryCollector(MetricCollector):
         Returns:
             List of slow queries
         """
-        return [
-            q
-            for q in self.items
-            if q.duration_ms and q.duration_ms > threshold_ms
-        ]
+        return [q for q in self.items if q.duration_ms and q.duration_ms > threshold_ms]
 
-    def get_failed_queries(self) -> List[SQLQuery]:
+    def get_failed_queries(self) -> list[SQLQuery]:
         """
         Get failed queries.
 
@@ -282,7 +277,7 @@ class SQLQueryCollector(MetricCollector):
         """
         return [q for q in self.items if q.error]
 
-    def get_query_stats(self) -> Dict[str, Any]:
+    def get_query_stats(self) -> dict[str, Any]:
         """
         Get query statistics.
 
@@ -324,7 +319,7 @@ class RequestCollector(MetricCollector):
             max_requests: Maximum number of requests to store
         """
         super().__init__(enabled=enabled, max_items=max_requests)
-        self.active_requests: Dict[str, RequestMetrics] = {}
+        self.active_requests: dict[str, RequestMetrics] = {}
 
     def start_request(
         self,
@@ -332,8 +327,8 @@ class RequestCollector(MetricCollector):
         method: str,
         path: str,
         request_size_bytes: int = 0,
-        user_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        user_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """
         Start tracking a request.
@@ -388,15 +383,15 @@ class RequestCollector(MetricCollector):
         metrics = self.active_requests[request_id]
         metrics.end_time = datetime.utcnow()
         metrics.duration_ms = (
-            (metrics.end_time - metrics.start_time).total_seconds() * 1000
-        )
+            metrics.end_time - metrics.start_time
+        ).total_seconds() * 1000
         metrics.status_code = status_code
         metrics.response_size_bytes = response_size_bytes
 
         self.add_item(metrics)
         del self.active_requests[request_id]
 
-    def get_slow_requests(self, threshold_ms: float = 1000) -> List[RequestMetrics]:
+    def get_slow_requests(self, threshold_ms: float = 1000) -> list[RequestMetrics]:
         """
         Get requests slower than threshold.
 
@@ -406,24 +401,18 @@ class RequestCollector(MetricCollector):
         Returns:
             List of slow requests
         """
-        return [
-            r
-            for r in self.items
-            if r.duration_ms and r.duration_ms > threshold_ms
-        ]
+        return [r for r in self.items if r.duration_ms and r.duration_ms > threshold_ms]
 
-    def get_failed_requests(self) -> List[RequestMetrics]:
+    def get_failed_requests(self) -> list[RequestMetrics]:
         """
         Get failed requests (4xx, 5xx status codes).
 
         Returns:
             List of failed requests
         """
-        return [
-            r for r in self.items if r.status_code and r.status_code >= 400
-        ]
+        return [r for r in self.items if r.status_code and r.status_code >= 400]
 
-    def get_request_stats(self) -> Dict[str, Any]:
+    def get_request_stats(self) -> dict[str, Any]:
         """
         Get request statistics.
 
@@ -472,14 +461,14 @@ class TraceCollector(MetricCollector):
             max_traces: Maximum number of traces to store
         """
         super().__init__(enabled=enabled, max_items=max_traces)
-        self.active_traces: Dict[str, Trace] = {}
+        self.active_traces: dict[str, Trace] = {}
 
     def start_span(
         self,
         operation_name: str,
-        trace_id: Optional[str] = None,
-        parent_span_id: Optional[str] = None,
-        tags: Optional[Dict[str, Any]] = None,
+        trace_id: str | None = None,
+        parent_span_id: str | None = None,
+        tags: dict[str, Any] | None = None,
     ) -> str:
         """
         Start a new trace span.
@@ -525,14 +514,12 @@ class TraceCollector(MetricCollector):
 
         trace = self.active_traces[span_id]
         trace.end_time = datetime.utcnow()
-        trace.duration_ms = (
-            (trace.end_time - trace.start_time).total_seconds() * 1000
-        )
+        trace.duration_ms = (trace.end_time - trace.start_time).total_seconds() * 1000
 
         self.add_item(trace)
         del self.active_traces[span_id]
 
-    def add_log(self, span_id: str, message: str, fields: Optional[Dict[str, Any]] = None):
+    def add_log(self, span_id: str, message: str, fields: dict[str, Any] | None = None):
         """
         Add a log entry to a span.
 
@@ -553,7 +540,7 @@ class TraceCollector(MetricCollector):
             }
         )
 
-    def get_trace_by_id(self, trace_id: str) -> List[Trace]:
+    def get_trace_by_id(self, trace_id: str) -> list[Trace]:
         """
         Get all spans for a trace.
 
@@ -565,7 +552,7 @@ class TraceCollector(MetricCollector):
         """
         return [t for t in self.items if t.trace_id == trace_id]
 
-    def get_slow_traces(self, threshold_ms: float = 1000) -> List[Trace]:
+    def get_slow_traces(self, threshold_ms: float = 1000) -> list[Trace]:
         """
         Get traces slower than threshold.
 
@@ -575,8 +562,4 @@ class TraceCollector(MetricCollector):
         Returns:
             List of slow traces
         """
-        return [
-            t
-            for t in self.items
-            if t.duration_ms and t.duration_ms > threshold_ms
-        ]
+        return [t for t in self.items if t.duration_ms and t.duration_ms > threshold_ms]

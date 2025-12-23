@@ -242,7 +242,6 @@ def cleanup_old_archives(
     Raises:
         Exception: If cleanup fails (will retry)
     """
-    from app.audit.retention import get_policy_manager
     from app.audit.storage import get_storage_backend
     from app.core.config import get_settings
 
@@ -351,8 +350,7 @@ def archive_by_entity_type(
         )
 
         logger.info(
-            f"Archived {result.record_count} {entity_type} logs "
-            f"to {result.archive_id}"
+            f"Archived {result.record_count} {entity_type} logs to {result.archive_id}"
         )
 
         return {

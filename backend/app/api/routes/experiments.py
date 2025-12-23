@@ -7,7 +7,6 @@ Admin endpoints for managing experiments:
 - Track metrics
 - View results and lifecycle events
 """
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -70,7 +69,9 @@ def _experiment_to_response(exp: Experiment) -> ExperimentResponse:
     )
 
 
-@router.post("/", response_model=ExperimentResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=ExperimentResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_experiment(
     experiment_in: ExperimentCreateRequest,
     db: AsyncSession = Depends(get_db),
@@ -109,7 +110,9 @@ async def create_experiment(
 
 @router.get("/", response_model=ExperimentListResponse)
 async def list_experiments(
-    status_filter: ExperimentStatus | None = Query(None, alias="status", description="Filter by status"),
+    status_filter: ExperimentStatus | None = Query(
+        None, alias="status", description="Filter by status"
+    ),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(50, ge=1, le=100, description="Items per page"),
     db: AsyncSession = Depends(get_db),
@@ -301,7 +304,9 @@ async def start_experiment(
     service = ExperimentService()
 
     try:
-        experiment = await service.start_experiment(key, started_by=str(current_user.id))
+        experiment = await service.start_experiment(
+            key, started_by=str(current_user.id)
+        )
         return _experiment_to_response(experiment)
     except ValueError as e:
         raise HTTPException(
@@ -437,7 +442,11 @@ async def get_user_assignment(
         await service.close()
 
 
-@router.post("/{key}/metrics", response_model=MetricDataResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{key}/metrics",
+    response_model=MetricDataResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def track_metric(
     key: str,
     metric_in: MetricTrackRequest,
@@ -494,7 +503,9 @@ async def get_variant_metrics(
     service = ExperimentService()
 
     try:
-        metrics = await service.get_variant_metrics(experiment_key=key, variant_key=variant_key)
+        metrics = await service.get_variant_metrics(
+            experiment_key=key, variant_key=variant_key
+        )
         return VariantMetricsResponse(
             variant_key=metrics.variant_key,
             user_count=metrics.user_count,

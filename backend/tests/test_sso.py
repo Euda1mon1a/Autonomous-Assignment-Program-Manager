@@ -10,18 +10,15 @@ Tests cover:
 """
 
 import base64
-import uuid
-from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
-from app.auth.sso.config import SAMLConfig, OAuth2Config, SSOConfig, load_sso_config
+from app.auth.sso.config import OAuth2Config, SAMLConfig, SSOConfig, load_sso_config
 from app.auth.sso.oauth2_provider import OAuth2Provider
 from app.auth.sso.saml_provider import SAMLProvider
 from app.main import app
-from app.models.user import User
 
 
 class TestSAMLConfig:
@@ -178,7 +175,9 @@ class TestSAMLProvider:
     def test_parse_saml_response_invalid_base64(self, saml_provider):
         """Test parsing invalid SAML response."""
         with pytest.raises(ValueError, match="Failed to decode"):
-            saml_provider.parse_saml_response("invalid_base64", validate_signature=False)
+            saml_provider.parse_saml_response(
+                "invalid_base64", validate_signature=False
+            )
 
     def test_parse_saml_response_invalid_xml(self, saml_provider):
         """Test parsing SAML response with invalid XML."""
