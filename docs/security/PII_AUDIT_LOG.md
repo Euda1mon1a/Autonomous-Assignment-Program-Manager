@@ -134,3 +134,88 @@ If PII is discovered in the repository:
 5. **Determine scope** using this audit log to identify the exposure window
 
 The commit hash from the last clean audit tells you the boundary for investigation.
+
+---
+
+***REMOVED******REMOVED*** Automated Scanning
+
+***REMOVED******REMOVED******REMOVED*** GitHub Actions (Active)
+
+**Workflow:** `.github/workflows/pii-scan.yml`
+
+| Trigger | Frequency | What It Does |
+|---------|-----------|--------------|
+| PR to main | Every PR | Scans for PII patterns, blocks merge if SSNs found |
+| Push to main | Every push | Same scan, results in workflow summary |
+| Scheduled | Weekly (Sundays) | Proactive scan even without commits |
+| Manual | On-demand | `workflow_dispatch` trigger in Actions tab |
+
+**Scans performed:**
+- Email patterns (excluding known mock domains)
+- Phone numbers
+- SSN patterns (fails build if found!)
+- Military .mil domains
+- Tracked data files (csv, dump, sql, xlsx)
+- Gitignore effectiveness
+
+***REMOVED******REMOVED******REMOVED*** Future Options (Production)
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Option 1: n8n Workflow
+```
+Trigger: Webhook on push / Scheduled
+  → Checkout repo (or use GitHub API)
+  → Run scan script
+  → Send Slack alert if issues found
+  → Update audit log via PR
+```
+
+n8n templates exist in `/n8n/workflows/` - create a `pii_scan.json` workflow.
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Option 2: Claude Code API / Anthropic API
+```python
+***REMOVED*** Periodic deep audit using Claude
+import anthropic
+
+client = anthropic.Anthropic()
+response = client.messages.create(
+    model="claude-sonnet-4-20250514",
+    messages=[{
+        "role": "user",
+        "content": f"Scan this codebase for PII leakage: {repo_contents}"
+    }]
+)
+```
+
+Benefits:
+- Understands context (mock vs real data)
+- Can identify subtle patterns regex misses
+- Natural language audit reports
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Option 3: Pre-commit Hook
+```yaml
+***REMOVED*** .pre-commit-config.yaml
+repos:
+  - repo: local
+    hooks:
+      - id: pii-scan
+        name: PII Scanner
+        entry: scripts/pii-scan.sh
+        language: script
+        pass_filenames: false
+```
+
+Blocks commits locally before they even reach GitHub.
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Option 4: GitHub Secret Scanning
+Enable GitHub's built-in secret scanning:
+- Settings → Security → Secret scanning
+- Automatically detects API keys, tokens, passwords
+
+***REMOVED******REMOVED******REMOVED*** Recommended Production Setup
+
+1. **Pre-commit hook** - First line of defense (local)
+2. **GitHub Actions** - Second line (PR/push)
+3. **Weekly n8n/Claude audit** - Deep periodic review
+4. **GitHub Secret Scanning** - API key detection
+
+This layered approach catches issues at multiple stages.
