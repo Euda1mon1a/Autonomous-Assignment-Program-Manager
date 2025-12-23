@@ -7,6 +7,7 @@ Provides utilities to reduce solver complexity through:
 - Block clustering for batch processing
 - Complexity estimation for solver selection
 """
+
 import logging
 from collections import defaultdict
 from functools import lru_cache
@@ -153,7 +154,9 @@ class SchedulingOptimizer:
                 # Default: one cluster per day
                 clusters[block.date.isoformat()].append(block)
 
-        logger.debug(f"Created {len(clusters)} block clusters using '{cluster_by}' strategy")
+        logger.debug(
+            f"Created {len(clusters)} block clusters using '{cluster_by}' strategy"
+        )
         return dict(clusters)
 
     @lru_cache(maxsize=128)
@@ -235,13 +238,17 @@ class SchedulingOptimizer:
         # - One per block: blocks
         # - 80-hour rule: residents × date_windows
         # - 1-in-7 rule: residents × date_windows
-        date_range = (context.end_date - context.start_date).days if context.end_date and context.start_date else 28
+        date_range = (
+            (context.end_date - context.start_date).days
+            if context.end_date and context.start_date
+            else 28
+        )
         date_windows = max(1, date_range // 7)
 
         constraints = (
-            num_residents * num_blocks +  # Availability
-            num_blocks +  # One per block
-            num_residents * date_windows * 2  # 80-hour + 1-in-7
+            num_residents * num_blocks  # Availability
+            + num_blocks  # One per block
+            + num_residents * date_windows * 2  # 80-hour + 1-in-7
         )
 
         # Calculate sparsity (unavailable slots)
@@ -251,7 +258,9 @@ class SchedulingOptimizer:
             if resident.id in context.availability:
                 for block in context.blocks:
                     if block.id in context.availability[resident.id]:
-                        if not context.availability[resident.id][block.id].get("available", True):
+                        if not context.availability[resident.id][block.id].get(
+                            "available", True
+                        ):
                             unavailable += 1
 
         sparsity = unavailable / total_slots if total_slots > 0 else 0
@@ -259,7 +268,9 @@ class SchedulingOptimizer:
         # Calculate complexity score (0-100)
         # Higher score = more complex problem
         base_score = min(100, (variables / 10000) * 50)
-        constraint_factor = min(50, (constraints / variables) * 100) if variables > 0 else 0
+        constraint_factor = (
+            min(50, (constraints / variables) * 100) if variables > 0 else 0
+        )
         sparsity_penalty = sparsity * 20
 
         score = base_score + constraint_factor - sparsity_penalty
@@ -298,6 +309,7 @@ class SchedulingOptimizer:
         # Check for quantum-inspired solvers
         try:
             from app.scheduling.quantum import get_quantum_library_status
+
             status = get_quantum_library_status()
             if status.get("dwave_samplers") or status.get("pyqubo"):
                 solvers.append("quantum_inspired")
@@ -322,7 +334,9 @@ class SchedulingOptimizer:
 
                 if resident.id in context.availability:
                     if block.id in context.availability[resident.id]:
-                        if context.availability[resident.id][block.id].get("available", True):
+                        if context.availability[resident.id][block.id].get(
+                            "available", True
+                        ):
                             has_availability = True
                             break
                     else:
@@ -337,7 +351,9 @@ class SchedulingOptimizer:
 
         return active
 
-    def _filter_assignable_blocks(self, context: SchedulingContext, residents: list) -> list:
+    def _filter_assignable_blocks(
+        self, context: SchedulingContext, residents: list
+    ) -> list:
         """Filter blocks that have at least one available resident."""
         assignable = []
 
@@ -348,7 +364,9 @@ class SchedulingOptimizer:
             for resident in residents:
                 if resident.id in context.availability:
                     if block.id in context.availability[resident.id]:
-                        if context.availability[resident.id][block.id].get("available", True):
+                        if context.availability[resident.id][block.id].get(
+                            "available", True
+                        ):
                             has_eligible = True
                             break
                     else:

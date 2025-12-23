@@ -10,11 +10,10 @@ hinder schedule changes. It integrates with the existing codebase:
 """
 
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
-from typing import Any, Optional, Protocol
+from datetime import date
+from typing import Any, Protocol
 from uuid import UUID
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.scheduling_catalyst.models import (
@@ -30,7 +29,7 @@ class ScheduleContext(Protocol):
     assignment_id: UUID
     person_id: UUID
     target_date: date
-    rotation_id: Optional[UUID]
+    rotation_id: UUID | None
 
 
 @dataclass
@@ -70,7 +69,7 @@ class BarrierDetector:
     def __init__(
         self,
         db: AsyncSession,
-        weights: Optional[BarrierWeights] = None,
+        weights: BarrierWeights | None = None,
     ) -> None:
         """
         Initialize the barrier detector.
@@ -87,7 +86,7 @@ class BarrierDetector:
         self,
         assignment_id: UUID,
         proposed_change: dict[str, Any],
-        reference_date: Optional[date] = None,
+        reference_date: date | None = None,
     ) -> list[EnergyBarrier]:
         """
         Detect all barriers for a proposed schedule change.
@@ -265,7 +264,9 @@ class BarrierDetector:
 
         # Consent barrier for swaps
         if change_type == "swap":
-            other_person_consented = proposed_change.get("other_person_consented", False)
+            other_person_consented = proposed_change.get(
+                "other_person_consented", False
+            )
             if not other_person_consented:
                 self._barriers.append(
                     EnergyBarrier(
@@ -314,7 +315,9 @@ class BarrierDetector:
             )
 
         # Check 1-in-7 day off rule
-        would_violate_day_off = await self._check_day_off_rule(new_person_id, target_date)
+        would_violate_day_off = await self._check_day_off_rule(
+            new_person_id, target_date
+        )
         if would_violate_day_off:
             self._barriers.append(
                 EnergyBarrier(
@@ -366,7 +369,9 @@ class BarrierDetector:
             )
 
         # Check preference conflicts
-        violates_preference = await self._check_preferences(new_person_id, proposed_change)
+        violates_preference = await self._check_preferences(
+            new_person_id, proposed_change
+        )
         if violates_preference:
             self._barriers.append(
                 EnergyBarrier(
@@ -381,42 +386,36 @@ class BarrierDetector:
             )
 
     # Helper methods - would integrate with actual services in production
-    async def _check_credentials(
-        self, person_id: UUID, rotation_id: UUID
-    ) -> bool:
+    async def _check_credentials(self, person_id: UUID, rotation_id: UUID) -> bool:
         """Check if person has required credentials for rotation."""
         # Placeholder - would query procedure_credential table
         return True
 
     async def _get_competency_level(
         self, person_id: UUID, rotation_id: UUID
-    ) -> Optional[int]:
+    ) -> int | None:
         """Get person's competency level for a rotation."""
         # Placeholder - would query procedure_credential table
         return 3  # "qualified"
 
-    async def _check_acgme_hours(
-        self, person_id: UUID, target_date: Any
-    ) -> bool:
+    async def _check_acgme_hours(self, person_id: UUID, target_date: Any) -> bool:
         """Check if adding this assignment would violate ACGME hours."""
         # Placeholder - would use acgme_validator
         return False
 
-    async def _check_day_off_rule(
-        self, person_id: UUID, target_date: Any
-    ) -> bool:
+    async def _check_day_off_rule(self, person_id: UUID, target_date: Any) -> bool:
         """Check 1-in-7 day off rule."""
         # Placeholder - would use acgme_validator
         return False
 
-    async def _get_workload(self, person_id: UUID) -> Optional[float]:
+    async def _get_workload(self, person_id: UUID) -> float | None:
         """Get current workload utilization for person."""
         # Placeholder - would calculate from assignments
         return 0.6
 
     async def _check_preferences(
         self, person_id: UUID, proposed_change: dict[str, Any]
-    ) -> Optional[str]:
+    ) -> str | None:
         """Check if change violates person's preferences."""
         # Placeholder - would query faculty_preference
         return None

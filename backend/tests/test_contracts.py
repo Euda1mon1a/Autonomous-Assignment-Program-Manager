@@ -10,23 +10,17 @@ Tests the consumer-driven contract testing framework including:
 - Breaking change detection
 """
 
-import json
 import tempfile
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-from uuid import uuid4
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from fastapi import FastAPI
-from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
 from app.contracts import (
-    BreakingChange,
     BreakingChangeType,
     Contract,
     ContractCompatibilityChecker,
-    ContractFormat,
     ContractInteraction,
     ContractPublisher,
     ContractRequest,
@@ -106,9 +100,7 @@ class TestContractResponse:
 
     def test_response_with_schema(self):
         """Test response with Pydantic schema."""
-        response = ContractResponse(
-            status=200, headers={}, body_schema=PersonResponse
-        )
+        response = ContractResponse(status=200, headers={}, body_schema=PersonResponse)
 
         assert response.body_schema == PersonResponse
 
@@ -171,15 +163,11 @@ class TestContract:
             )
 
         with pytest.raises(ValueError, match="Invalid version format"):
-            Contract(
-                consumer="app1", provider="app2", version="invalid"
-            )
+            Contract(consumer="app1", provider="app2", version="invalid")
 
     def test_valid_version_with_prerelease(self):
         """Test version with prerelease suffix."""
-        contract = Contract(
-            consumer="app1", provider="app2", version="1.0.0-alpha.1"
-        )
+        contract = Contract(consumer="app1", provider="app2", version="1.0.0-alpha.1")
         assert contract.version == "1.0.0-alpha.1"
 
     def test_add_interaction(self):
@@ -266,9 +254,7 @@ class TestContractTester:
         tester = ContractTester(consumer="app1", provider="api", version="1.0.0")
 
         request = ContractRequest(method="GET", path="/api/persons/123")
-        response = ContractResponse(
-            status=200, body={"id": "123", "name": "John Doe"}
-        )
+        response = ContractResponse(status=200, body={"id": "123", "name": "John Doe"})
 
         tester.add_interaction(
             description="Get person by ID",
@@ -396,7 +382,8 @@ class TestContractVerifier:
         contract = Contract(consumer="app", provider="api", version="1.0.0")
         request = ContractRequest(method="GET", path="/api/test")
         response = ContractResponse(
-            status=201, body={"result": "success"}  # Expects 201
+            status=201,
+            body={"result": "success"},  # Expects 201
         )
         interaction = ContractInteraction(
             description="Test", request=request, response=response
@@ -408,7 +395,11 @@ class TestContractVerifier:
 
         assert result.passed is False
         assert result.failed_interactions == 1
-        assert any("Status code mismatch" in error for r in result.interaction_results for error in r.errors)
+        assert any(
+            "Status code mismatch" in error
+            for r in result.interaction_results
+            for error in r.errors
+        )
 
     @pytest.mark.asyncio
     async def test_verify_contract_with_provider_state(self):
@@ -667,7 +658,8 @@ class TestContractCompatibilityChecker:
 
         new_contract = Contract(consumer="app", provider="api", version="2.0.0")
         new_response = ContractResponse(
-            status=200, body={"id": "123", "name": "John"}  # email removed
+            status=200,
+            body={"id": "123", "name": "John"},  # email removed
         )
         new_interaction = ContractInteraction(
             description="Get person", request=request, response=new_response
@@ -726,7 +718,11 @@ class TestContractCompatibilityChecker:
         new_contract = Contract(consumer="app", provider="api", version="1.1.0")
         new_response = ContractResponse(
             status=200,
-            body={"id": "123", "name": "John", "email": "john@example.com"},  # Added field
+            body={
+                "id": "123",
+                "name": "John",
+                "email": "john@example.com",
+            },  # Added field
         )
         new_interaction = ContractInteraction(
             description="Get person", request=request, response=new_response
@@ -748,7 +744,10 @@ class TestContractCompatibilityChecker:
         request = ContractRequest(method="GET", path="/api/user")
         old_response = ContractResponse(
             status=200,
-            body={"id": "123", "profile": {"name": "John", "email": "john@example.com"}},
+            body={
+                "id": "123",
+                "profile": {"name": "John", "email": "john@example.com"},
+            },
         )
         old_interaction = ContractInteraction(
             description="Get user", request=request, response=old_response
@@ -772,7 +771,8 @@ class TestContractCompatibilityChecker:
 
         assert is_compatible is False
         assert any(
-            "email" in change.path and change.type == BreakingChangeType.REMOVED_REQUIRED_FIELD
+            "email" in change.path
+            and change.type == BreakingChangeType.REMOVED_REQUIRED_FIELD
             for change in breaking_changes
         )
 
@@ -831,9 +831,7 @@ class TestContractIntegration:
         # Version 1.0.0
         v1_contract = Contract(consumer="app", provider="api", version="1.0.0")
         request = ContractRequest(method="GET", path="/api/data")
-        response_v1 = ContractResponse(
-            status=200, body={"id": "123", "value": "test"}
-        )
+        response_v1 = ContractResponse(status=200, body={"id": "123", "value": "test"})
         interaction_v1 = ContractInteraction(
             description="Get data", request=request, response=response_v1
         )

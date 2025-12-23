@@ -1,4 +1,5 @@
 """Repository for conflict alert data access."""
+
 from datetime import date, timedelta
 from uuid import UUID
 
@@ -58,15 +59,9 @@ class ConflictRepository:
 
     def get_by_id(self, alert_id: UUID) -> ConflictAlert | None:
         """Get an alert by ID."""
-        return self.db.query(ConflictAlert).filter(
-            ConflictAlert.id == alert_id
-        ).first()
+        return self.db.query(ConflictAlert).filter(ConflictAlert.id == alert_id).first()
 
-    def update(
-        self,
-        alert_id: UUID,
-        **kwargs
-    ) -> ConflictAlert | None:
+    def update(self, alert_id: UUID, **kwargs) -> ConflictAlert | None:
         """Update an alert with arbitrary fields."""
         alert = self.get_by_id(alert_id)
         if not alert:
@@ -92,9 +87,11 @@ class ConflictRepository:
 
     def bulk_delete(self, alert_ids: list[UUID]) -> int:
         """Delete multiple alerts."""
-        count = self.db.query(ConflictAlert).filter(
-            ConflictAlert.id.in_(alert_ids)
-        ).delete(synchronize_session=False)
+        count = (
+            self.db.query(ConflictAlert)
+            .filter(ConflictAlert.id.in_(alert_ids))
+            .delete(synchronize_session=False)
+        )
         self.db.commit()
         return count
 
@@ -114,10 +111,9 @@ class ConflictRepository:
 
         if not include_resolved:
             query = query.filter(
-                ConflictAlert.status.in_([
-                    ConflictAlertStatus.NEW,
-                    ConflictAlertStatus.ACKNOWLEDGED
-                ])
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                )
             )
 
         return query.order_by(ConflictAlert.created_at.desc()).all()
@@ -128,9 +124,7 @@ class ConflictRepository:
         faculty_id: UUID | None = None,
     ) -> list[ConflictAlert]:
         """Find alerts by status."""
-        query = self.db.query(ConflictAlert).filter(
-            ConflictAlert.status == status
-        )
+        query = self.db.query(ConflictAlert).filter(ConflictAlert.status == status)
 
         if faculty_id:
             query = query.filter(ConflictAlert.faculty_id == faculty_id)
@@ -143,16 +137,13 @@ class ConflictRepository:
         unresolved_only: bool = True,
     ) -> list[ConflictAlert]:
         """Find alerts by severity."""
-        query = self.db.query(ConflictAlert).filter(
-            ConflictAlert.severity == severity
-        )
+        query = self.db.query(ConflictAlert).filter(ConflictAlert.severity == severity)
 
         if unresolved_only:
             query = query.filter(
-                ConflictAlert.status.in_([
-                    ConflictAlertStatus.NEW,
-                    ConflictAlertStatus.ACKNOWLEDGED
-                ])
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                )
             )
 
         return query.order_by(ConflictAlert.fmit_week).all()
@@ -174,9 +165,11 @@ class ConflictRepository:
 
     def find_by_leave(self, leave_id: UUID) -> list[ConflictAlert]:
         """Find alerts related to a leave record."""
-        return self.db.query(ConflictAlert).filter(
-            ConflictAlert.leave_id == leave_id
-        ).all()
+        return (
+            self.db.query(ConflictAlert)
+            .filter(ConflictAlert.leave_id == leave_id)
+            .all()
+        )
 
     def find_by_type(
         self,
@@ -190,10 +183,9 @@ class ConflictRepository:
 
         if unresolved_only:
             query = query.filter(
-                ConflictAlert.status.in_([
-                    ConflictAlertStatus.NEW,
-                    ConflictAlertStatus.ACKNOWLEDGED
-                ])
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                )
             )
 
         return query.all()
@@ -209,10 +201,9 @@ class ConflictRepository:
         query = self.db.query(ConflictAlert).filter(
             ConflictAlert.fmit_week >= date.today(),
             ConflictAlert.fmit_week <= cutoff,
-            ConflictAlert.status.in_([
-                ConflictAlertStatus.NEW,
-                ConflictAlertStatus.ACKNOWLEDGED
-            ]),
+            ConflictAlert.status.in_(
+                [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+            ),
         )
 
         if faculty_id:
@@ -249,10 +240,15 @@ class ConflictRepository:
 
         total = query.count()
 
-        records = query.order_by(
-            ConflictAlert.fmit_week,
-            ConflictAlert.severity.desc(),
-        ).offset((page - 1) * page_size).limit(page_size).all()
+        records = (
+            query.order_by(
+                ConflictAlert.fmit_week,
+                ConflictAlert.severity.desc(),
+            )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
 
         return records, total
 
@@ -267,15 +263,18 @@ class ConflictRepository:
         fmit_week: date,
     ) -> ConflictAlert | None:
         """Check if a similar unresolved alert exists."""
-        return self.db.query(ConflictAlert).filter(
-            ConflictAlert.faculty_id == faculty_id,
-            ConflictAlert.conflict_type == conflict_type,
-            ConflictAlert.fmit_week == fmit_week,
-            ConflictAlert.status.in_([
-                ConflictAlertStatus.NEW,
-                ConflictAlertStatus.ACKNOWLEDGED
-            ]),
-        ).first()
+        return (
+            self.db.query(ConflictAlert)
+            .filter(
+                ConflictAlert.faculty_id == faculty_id,
+                ConflictAlert.conflict_type == conflict_type,
+                ConflictAlert.fmit_week == fmit_week,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
+            .first()
+        )
 
     # ==========================================================================
     # Statistics
@@ -286,10 +285,7 @@ class ConflictRepository:
         faculty_id: UUID | None = None,
     ) -> dict[str, int]:
         """Count alerts by status."""
-        query = self.db.query(
-            ConflictAlert.status,
-            func.count(ConflictAlert.id)
-        )
+        query = self.db.query(ConflictAlert.status, func.count(ConflictAlert.id))
 
         if faculty_id:
             query = query.filter(ConflictAlert.faculty_id == faculty_id)
@@ -303,17 +299,13 @@ class ConflictRepository:
         faculty_id: UUID | None = None,
     ) -> dict[str, int]:
         """Count alerts by severity."""
-        query = self.db.query(
-            ConflictAlert.severity,
-            func.count(ConflictAlert.id)
-        )
+        query = self.db.query(ConflictAlert.severity, func.count(ConflictAlert.id))
 
         if unresolved_only:
             query = query.filter(
-                ConflictAlert.status.in_([
-                    ConflictAlertStatus.NEW,
-                    ConflictAlertStatus.ACKNOWLEDGED
-                ])
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                )
             )
 
         if faculty_id:
@@ -325,10 +317,9 @@ class ConflictRepository:
     def count_unresolved(self, faculty_id: UUID | None = None) -> int:
         """Count unresolved alerts."""
         query = self.db.query(ConflictAlert).filter(
-            ConflictAlert.status.in_([
-                ConflictAlertStatus.NEW,
-                ConflictAlertStatus.ACKNOWLEDGED
-            ])
+            ConflictAlert.status.in_(
+                [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+            )
         )
 
         if faculty_id:
@@ -338,10 +329,13 @@ class ConflictRepository:
 
     def count_critical_unresolved(self) -> int:
         """Count critical unresolved alerts."""
-        return self.db.query(ConflictAlert).filter(
-            ConflictAlert.severity == ConflictSeverity.CRITICAL,
-            ConflictAlert.status.in_([
-                ConflictAlertStatus.NEW,
-                ConflictAlertStatus.ACKNOWLEDGED
-            ]),
-        ).count()
+        return (
+            self.db.query(ConflictAlert)
+            .filter(
+                ConflictAlert.severity == ConflictSeverity.CRITICAL,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
+            .count()
+        )

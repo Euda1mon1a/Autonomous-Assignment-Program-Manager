@@ -1,4 +1,5 @@
 """Notification service for FMIT swap events."""
+
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class SwapNotificationType(str, Enum):
     """Types of swap notifications."""
+
     SWAP_REQUEST_RECEIVED = "swap_request_received"
     SWAP_REQUEST_ACCEPTED = "swap_request_accepted"
     SWAP_REQUEST_REJECTED = "swap_request_rejected"
@@ -26,6 +28,7 @@ class SwapNotificationType(str, Enum):
 @dataclass
 class SwapNotification:
     """A swap notification to be sent."""
+
     recipient_id: UUID
     recipient_email: str
     notification_type: SwapNotificationType
@@ -303,7 +306,7 @@ View the marketplace in the portal to respond.
             except Exception as e:
                 logger.error(
                     f"Failed to send notification to {notification.recipient_email}: {e}",
-                    exc_info=True
+                    exc_info=True,
                 )
 
         self._pending_notifications.clear()
@@ -318,9 +321,11 @@ View the marketplace in the portal to respond.
         """Check if faculty wants this type of notification."""
         from app.models.faculty_preference import FacultyPreference
 
-        prefs = self.db.query(FacultyPreference).filter(
-            FacultyPreference.faculty_id == faculty_id
-        ).first()
+        prefs = (
+            self.db.query(FacultyPreference)
+            .filter(FacultyPreference.faculty_id == faculty_id)
+            .first()
+        )
 
         if not prefs:
             return True  # Default to notify
@@ -337,9 +342,7 @@ View the marketplace in the portal to respond.
         """Get faculty name and email."""
         from app.models.person import Person
 
-        faculty = self.db.query(Person).filter(
-            Person.id == faculty_id
-        ).first()
+        faculty = self.db.query(Person).filter(Person.id == faculty_id).first()
 
         if not faculty:
             return None
@@ -347,7 +350,8 @@ View the marketplace in the portal to respond.
         return {
             "id": faculty.id,
             "name": faculty.name,
-            "email": faculty.email or f"{faculty.name.lower().replace(' ', '.')}@example.com",
+            "email": faculty.email
+            or f"{faculty.name.lower().replace(' ', '.')}@example.com",
         }
 
     def _build_swap_request_body(
@@ -402,12 +406,18 @@ Please log in to the faculty portal to accept or decline this request.
             )
 
             if success:
-                logger.debug(f"Notification sent to {notification.recipient_email}: {notification.subject}")
+                logger.debug(
+                    f"Notification sent to {notification.recipient_email}: {notification.subject}"
+                )
             else:
-                logger.warning(f"Failed to send notification to {notification.recipient_email}")
+                logger.warning(
+                    f"Failed to send notification to {notification.recipient_email}"
+                )
 
             return success
 
         except Exception as e:
-            logger.error(f"Error sending notification to {notification.recipient_email}: {e}")
+            logger.error(
+                f"Error sending notification to {notification.recipient_email}: {e}"
+            )
             return False

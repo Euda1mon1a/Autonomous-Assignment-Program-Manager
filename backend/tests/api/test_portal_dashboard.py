@@ -1,21 +1,19 @@
 """Tests for portal dashboard API."""
-import pytest
-from datetime import date, timedelta, datetime
+
+from datetime import date, datetime, timedelta
 from uuid import uuid4
-from unittest.mock import AsyncMock, patch, MagicMock
 
-from sqlalchemy.orm import Session
+import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
-from app.models.person import Person
 from app.models.assignment import Assignment
 from app.models.block import Block
-from app.models.rotation_template import RotationTemplate
 from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus
+from app.models.person import Person
+from app.models.rotation_template import RotationTemplate
 from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.models.user import User
-from app.core.security import get_password_hash
-
 
 # =============================================================================
 # Helper Functions for Dashboard Queries
@@ -23,9 +21,7 @@ from app.core.security import get_password_hash
 
 
 async def get_faculty_week_counts(
-    db: Session,
-    faculty_id: str,
-    academic_year_start: date
+    db: Session, faculty_id: str, academic_year_start: date
 ) -> dict:
     """
     Calculate week counts for faculty member.
@@ -41,36 +37,41 @@ async def get_faculty_week_counts(
     from sqlalchemy import func
 
     # Get FMIT rotation template
-    fmit_template = db.query(RotationTemplate).filter(
-        RotationTemplate.name == "FMIT"
-    ).first()
+    fmit_template = (
+        db.query(RotationTemplate).filter(RotationTemplate.name == "FMIT").first()
+    )
 
     if not fmit_template:
-        return {
-            "weeks_assigned": 0,
-            "weeks_completed": 0,
-            "weeks_remaining": 0
-        }
+        return {"weeks_assigned": 0, "weeks_completed": 0, "weeks_remaining": 0}
 
     # Count total weeks assigned (grouped by week)
     # This is a simplified count - in reality would group by week_start
-    total_weeks = db.query(func.count(Assignment.id)).filter(
-        Assignment.person_id == faculty_id,
-        Assignment.rotation_template_id == fmit_template.id
-    ).scalar() or 0
+    total_weeks = (
+        db.query(func.count(Assignment.id))
+        .filter(
+            Assignment.person_id == faculty_id,
+            Assignment.rotation_template_id == fmit_template.id,
+        )
+        .scalar()
+        or 0
+    )
 
     # For simplicity, count weeks by dividing by sessions per week (14 = 7 days * 2 sessions)
     weeks_assigned = total_weeks // 14 if total_weeks > 0 else 0
 
     # Count completed weeks (before today)
     today = date.today()
-    completed_count = db.query(func.count(Assignment.id)).join(
-        Block, Assignment.block_id == Block.id
-    ).filter(
-        Assignment.person_id == faculty_id,
-        Assignment.rotation_template_id == fmit_template.id,
-        Block.date < today
-    ).scalar() or 0
+    completed_count = (
+        db.query(func.count(Assignment.id))
+        .join(Block, Assignment.block_id == Block.id)
+        .filter(
+            Assignment.person_id == faculty_id,
+            Assignment.rotation_template_id == fmit_template.id,
+            Block.date < today,
+        )
+        .scalar()
+        or 0
+    )
 
     weeks_completed = completed_count // 14 if completed_count > 0 else 0
     weeks_remaining = max(0, weeks_assigned - weeks_completed)
@@ -78,14 +79,12 @@ async def get_faculty_week_counts(
     return {
         "weeks_assigned": weeks_assigned,
         "weeks_completed": weeks_completed,
-        "weeks_remaining": weeks_remaining
+        "weeks_remaining": weeks_remaining,
     }
 
 
 async def get_upcoming_weeks(
-    db: Session,
-    faculty_id: str,
-    limit: int = 4
+    db: Session, faculty_id: str, limit: int = 4
 ) -> list[dict]:
     """
     Get upcoming FMIT weeks for faculty member.
@@ -101,22 +100,27 @@ async def get_upcoming_weeks(
     from collections import defaultdict
 
     # Get FMIT rotation template
-    fmit_template = db.query(RotationTemplate).filter(
-        RotationTemplate.name == "FMIT"
-    ).first()
+    fmit_template = (
+        db.query(RotationTemplate).filter(RotationTemplate.name == "FMIT").first()
+    )
 
     if not fmit_template:
         return []
 
     # Get future assignments
     today = date.today()
-    assignments = db.query(Assignment).join(
-        Block, Assignment.block_id == Block.id
-    ).filter(
-        Assignment.person_id == faculty_id,
-        Assignment.rotation_template_id == fmit_template.id,
-        Block.date >= today
-    ).order_by(Block.date).limit(limit * 14).all()  # Rough limit
+    assignments = (
+        db.query(Assignment)
+        .join(Block, Assignment.block_id == Block.id)
+        .filter(
+            Assignment.person_id == faculty_id,
+            Assignment.rotation_template_id == fmit_template.id,
+            Block.date >= today,
+        )
+        .order_by(Block.date)
+        .limit(limit * 14)
+        .all()
+    )  # Rough limit
 
     # Group by week
     week_map = defaultdict(list)
@@ -130,20 +134,18 @@ async def get_upcoming_weeks(
     upcoming = []
     for week_start in sorted(week_map.keys())[:limit]:
         week_end = week_start + timedelta(days=6)
-        upcoming.append({
-            "week_start": week_start,
-            "week_end": week_end,
-            "session_count": len(week_map[week_start])
-        })
+        upcoming.append(
+            {
+                "week_start": week_start,
+                "week_end": week_end,
+                "session_count": len(week_map[week_start]),
+            }
+        )
 
     return upcoming
 
 
-async def get_recent_alerts(
-    db: Session,
-    faculty_id: str,
-    days: int = 30
-) -> list[dict]:
+async def get_recent_alerts(db: Session, faculty_id: str, days: int = 30) -> list[dict]:
     """
     Get recent conflict alerts for faculty member.
 
@@ -157,10 +159,16 @@ async def get_recent_alerts(
     """
     cutoff_date = datetime.utcnow() - timedelta(days=days)
 
-    alerts = db.query(ConflictAlert).filter(
-        ConflictAlert.faculty_id == faculty_id,
-        ConflictAlert.created_at >= cutoff_date
-    ).order_by(ConflictAlert.created_at.desc()).limit(10).all()
+    alerts = (
+        db.query(ConflictAlert)
+        .filter(
+            ConflictAlert.faculty_id == faculty_id,
+            ConflictAlert.created_at >= cutoff_date,
+        )
+        .order_by(ConflictAlert.created_at.desc())
+        .limit(10)
+        .all()
+    )
 
     return [
         {
@@ -168,16 +176,13 @@ async def get_recent_alerts(
             "description": alert.description,
             "status": alert.status.value,
             "created_at": alert.created_at,
-            "fmit_week": alert.fmit_week
+            "fmit_week": alert.fmit_week,
         }
         for alert in alerts
     ]
 
 
-async def get_pending_swaps(
-    db: Session,
-    faculty_id: str
-) -> list[dict]:
+async def get_pending_swaps(db: Session, faculty_id: str) -> list[dict]:
     """
     Get pending swap requests requiring response.
 
@@ -188,17 +193,24 @@ async def get_pending_swaps(
     Returns:
         list: List of pending swap info dicts
     """
-    swaps = db.query(SwapRecord).filter(
-        SwapRecord.target_faculty_id == faculty_id,
-        SwapRecord.status == SwapStatus.PENDING
-    ).order_by(SwapRecord.requested_at.desc()).all()
+    swaps = (
+        db.query(SwapRecord)
+        .filter(
+            SwapRecord.target_faculty_id == faculty_id,
+            SwapRecord.status == SwapStatus.PENDING,
+        )
+        .order_by(SwapRecord.requested_at.desc())
+        .all()
+    )
 
     return [
         {
             "id": str(swap.id),
             "source_week": swap.source_week,
             "requested_at": swap.requested_at,
-            "requester_name": swap.source_faculty.name if swap.source_faculty else "Unknown"
+            "requester_name": swap.source_faculty.name
+            if swap.source_faculty
+            else "Unknown",
         }
         for swap in swaps
     ]
@@ -218,9 +230,7 @@ class TestDashboardQueries:
         faculty_id = str(uuid4())
 
         result = await get_faculty_week_counts(
-            db=db,
-            faculty_id=faculty_id,
-            academic_year_start=date(2025, 7, 1)
+            db=db, faculty_id=faculty_id, academic_year_start=date(2025, 7, 1)
         )
 
         assert result["weeks_assigned"] == 0
@@ -232,10 +242,7 @@ class TestDashboardQueries:
         """Test week count calculation with assignments."""
         # Create FMIT template
         fmit_template = RotationTemplate(
-            id=uuid4(),
-            name="FMIT",
-            activity_type="clinic",
-            abbreviation="FMIT"
+            id=uuid4(), name="FMIT", activity_type="clinic", abbreviation="FMIT"
         )
         db.add(fmit_template)
         db.commit()
@@ -249,7 +256,7 @@ class TestDashboardQueries:
                     id=uuid4(),
                     date=start_date + timedelta(days=i),
                     time_of_day=time_of_day,
-                    block_number=1
+                    block_number=1,
                 )
                 db.add(block)
                 blocks.append(block)
@@ -262,7 +269,7 @@ class TestDashboardQueries:
                 person_id=sample_faculty.id,
                 block_id=block.id,
                 rotation_template_id=fmit_template.id,
-                role="primary"
+                role="primary",
             )
             db.add(assignment)
         db.commit()
@@ -270,7 +277,7 @@ class TestDashboardQueries:
         result = await get_faculty_week_counts(
             db=db,
             faculty_id=str(sample_faculty.id),
-            academic_year_start=date(2025, 7, 1)
+            academic_year_start=date(2025, 7, 1),
         )
 
         assert result["weeks_assigned"] == 2  # 28 blocks / 14 = 2 weeks
@@ -280,10 +287,7 @@ class TestDashboardQueries:
     @pytest.mark.asyncio
     async def test_get_upcoming_weeks_empty(self, db, sample_faculty):
         """Test upcoming weeks with no data."""
-        result = await get_upcoming_weeks(
-            db=db,
-            faculty_id=str(sample_faculty.id)
-        )
+        result = await get_upcoming_weeks(db=db, faculty_id=str(sample_faculty.id))
 
         assert result == []
 
@@ -292,10 +296,7 @@ class TestDashboardQueries:
         """Test upcoming weeks with future assignments."""
         # Create FMIT template
         fmit_template = RotationTemplate(
-            id=uuid4(),
-            name="FMIT",
-            activity_type="clinic",
-            abbreviation="FMIT"
+            id=uuid4(), name="FMIT", activity_type="clinic", abbreviation="FMIT"
         )
         db.add(fmit_template)
         db.commit()
@@ -309,7 +310,7 @@ class TestDashboardQueries:
                     id=uuid4(),
                     date=start_date + timedelta(days=i),
                     time_of_day=time_of_day,
-                    block_number=1
+                    block_number=1,
                 )
                 db.add(block)
                 blocks.append(block)
@@ -322,15 +323,13 @@ class TestDashboardQueries:
                 person_id=sample_faculty.id,
                 block_id=block.id,
                 rotation_template_id=fmit_template.id,
-                role="primary"
+                role="primary",
             )
             db.add(assignment)
         db.commit()
 
         result = await get_upcoming_weeks(
-            db=db,
-            faculty_id=str(sample_faculty.id),
-            limit=4
+            db=db, faculty_id=str(sample_faculty.id), limit=4
         )
 
         assert len(result) > 0
@@ -341,10 +340,7 @@ class TestDashboardQueries:
     @pytest.mark.asyncio
     async def test_get_recent_alerts_empty(self, db, sample_faculty):
         """Test recent alerts query with no alerts."""
-        result = await get_recent_alerts(
-            db=db,
-            faculty_id=str(sample_faculty.id)
-        )
+        result = await get_recent_alerts(db=db, faculty_id=str(sample_faculty.id))
 
         assert isinstance(result, list)
         assert len(result) == 0
@@ -360,15 +356,13 @@ class TestDashboardQueries:
                 fmit_week=date.today() + timedelta(days=7 * i),
                 description=f"Test conflict {i}",
                 status=ConflictAlertStatus.NEW,
-                created_at=datetime.utcnow() - timedelta(days=i)
+                created_at=datetime.utcnow() - timedelta(days=i),
             )
             db.add(alert)
         db.commit()
 
         result = await get_recent_alerts(
-            db=db,
-            faculty_id=str(sample_faculty.id),
-            days=30
+            db=db, faculty_id=str(sample_faculty.id), days=30
         )
 
         assert isinstance(result, list)
@@ -380,16 +374,15 @@ class TestDashboardQueries:
     @pytest.mark.asyncio
     async def test_get_pending_swaps_empty(self, db, sample_faculty):
         """Test pending swaps query with no swaps."""
-        result = await get_pending_swaps(
-            db=db,
-            faculty_id=str(sample_faculty.id)
-        )
+        result = await get_pending_swaps(db=db, faculty_id=str(sample_faculty.id))
 
         assert isinstance(result, list)
         assert len(result) == 0
 
     @pytest.mark.asyncio
-    async def test_get_pending_swaps_with_data(self, db, sample_faculty, sample_faculty_members):
+    async def test_get_pending_swaps_with_data(
+        self, db, sample_faculty, sample_faculty_members
+    ):
         """Test pending swaps query with pending swaps."""
         # Create swap requests targeting this faculty
         for i, other_faculty in enumerate(sample_faculty_members[:2]):
@@ -402,15 +395,12 @@ class TestDashboardQueries:
                 swap_type=SwapType.ABSORB,
                 status=SwapStatus.PENDING,
                 requested_at=datetime.utcnow() - timedelta(hours=i),
-                reason=f"Need coverage {i}"
+                reason=f"Need coverage {i}",
             )
             db.add(swap)
         db.commit()
 
-        result = await get_pending_swaps(
-            db=db,
-            faculty_id=str(sample_faculty.id)
-        )
+        result = await get_pending_swaps(db=db, faculty_id=str(sample_faculty.id))
 
         assert isinstance(result, list)
         assert len(result) == 2
@@ -433,18 +423,19 @@ class TestDashboardEndpoint:
 
         assert response.status_code == 401
 
-    def test_get_dashboard_requires_faculty_profile(self, client: TestClient, admin_user: User, auth_headers: dict):
+    def test_get_dashboard_requires_faculty_profile(
+        self, client: TestClient, admin_user: User, auth_headers: dict
+    ):
         """Test dashboard requires linked faculty profile."""
-        response = client.get(
-            "/api/portal/my/dashboard",
-            headers=auth_headers
-        )
+        response = client.get("/api/portal/my/dashboard", headers=auth_headers)
 
         # Should return 403 if no faculty profile linked
         assert response.status_code == 403
         assert "No faculty profile" in response.json()["detail"]
 
-    def test_get_dashboard_success(self, client: TestClient, db: Session, auth_headers: dict, admin_user: User):
+    def test_get_dashboard_success(
+        self, client: TestClient, db: Session, auth_headers: dict, admin_user: User
+    ):
         """Test successful dashboard retrieval."""
         # Create faculty profile linked to admin user
         faculty = Person(
@@ -452,15 +443,12 @@ class TestDashboardEndpoint:
             name="Dr. Test Faculty",
             type="faculty",
             email=admin_user.email,  # Link by email
-            performs_procedures=True
+            performs_procedures=True,
         )
         db.add(faculty)
         db.commit()
 
-        response = client.get(
-            "/api/portal/my/dashboard",
-            headers=auth_headers
-        )
+        response = client.get("/api/portal/my/dashboard", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -482,7 +470,9 @@ class TestDashboardEndpoint:
         assert "pending_swap_requests" in stats
         assert "unread_alerts" in stats
 
-    def test_get_dashboard_with_data(self, client: TestClient, db: Session, auth_headers: dict, admin_user: User):
+    def test_get_dashboard_with_data(
+        self, client: TestClient, db: Session, auth_headers: dict, admin_user: User
+    ):
         """Test dashboard with actual data."""
         # Create faculty profile
         faculty = Person(
@@ -490,17 +480,14 @@ class TestDashboardEndpoint:
             name="Dr. Test Faculty",
             type="faculty",
             email=admin_user.email,
-            performs_procedures=True
+            performs_procedures=True,
         )
         db.add(faculty)
         db.commit()
 
         # Create FMIT template
         fmit_template = RotationTemplate(
-            id=uuid4(),
-            name="FMIT",
-            activity_type="clinic",
-            abbreviation="FMIT"
+            id=uuid4(), name="FMIT", activity_type="clinic", abbreviation="FMIT"
         )
         db.add(fmit_template)
         db.commit()
@@ -513,7 +500,7 @@ class TestDashboardEndpoint:
                     id=uuid4(),
                     date=start_date + timedelta(days=i),
                     time_of_day=time_of_day,
-                    block_number=1
+                    block_number=1,
                 )
                 db.add(block)
                 db.flush()
@@ -523,15 +510,12 @@ class TestDashboardEndpoint:
                     person_id=faculty.id,
                     block_id=block.id,
                     rotation_template_id=fmit_template.id,
-                    role="primary"
+                    role="primary",
                 )
                 db.add(assignment)
         db.commit()
 
-        response = client.get(
-            "/api/portal/my/dashboard",
-            headers=auth_headers
-        )
+        response = client.get("/api/portal/my/dashboard", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -548,7 +532,9 @@ class TestDashboardEndpoint:
 class TestDashboardIntegration:
     """Integration tests for dashboard functionality."""
 
-    def test_full_dashboard_workflow(self, client: TestClient, db: Session, auth_headers: dict, admin_user: User):
+    def test_full_dashboard_workflow(
+        self, client: TestClient, db: Session, auth_headers: dict, admin_user: User
+    ):
         """Test complete dashboard workflow with all components."""
         # Setup: Create faculty profile
         faculty = Person(
@@ -556,17 +542,14 @@ class TestDashboardIntegration:
             name="Dr. Integration Test",
             type="faculty",
             email=admin_user.email,
-            performs_procedures=True
+            performs_procedures=True,
         )
         db.add(faculty)
         db.commit()
 
         # Create FMIT template
         fmit_template = RotationTemplate(
-            id=uuid4(),
-            name="FMIT",
-            activity_type="clinic",
-            abbreviation="FMIT"
+            id=uuid4(), name="FMIT", activity_type="clinic", abbreviation="FMIT"
         )
         db.add(fmit_template)
         db.commit()
@@ -579,7 +562,7 @@ class TestDashboardIntegration:
                     id=uuid4(),
                     date=start_date + timedelta(days=i),
                     time_of_day=time_of_day,
-                    block_number=1
+                    block_number=1,
                 )
                 db.add(block)
                 db.flush()
@@ -589,7 +572,7 @@ class TestDashboardIntegration:
                     person_id=faculty.id,
                     block_id=block.id,
                     rotation_template_id=fmit_template.id,
-                    role="primary"
+                    role="primary",
                 )
                 db.add(assignment)
         db.commit()
@@ -601,16 +584,13 @@ class TestDashboardIntegration:
             fmit_week=start_date,
             description="Test conflict",
             status=ConflictAlertStatus.NEW,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
         db.add(alert)
         db.commit()
 
         # Get dashboard
-        response = client.get(
-            "/api/portal/my/dashboard",
-            headers=auth_headers
-        )
+        response = client.get("/api/portal/my/dashboard", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()

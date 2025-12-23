@@ -1,19 +1,21 @@
 """Role-based view API."""
+
 import logging
-from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
+
 from app.core.security import get_current_active_user
 from app.models.user import User
-from app.schemas.role_views import StaffRole, RoleViewConfig, ViewPermissions
+from app.schemas.role_views import RoleViewConfig, StaffRole, ViewPermissions
 from app.services.role_view_service import RoleViewService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 @router.get("/views/permissions/{role}", response_model=ViewPermissions)
 def get_role_permissions(
-    role: StaffRole,
-    current_user: User = Depends(get_current_active_user)
+    role: StaffRole, current_user: User = Depends(get_current_active_user)
 ):
     """
     Get view permissions for a specific role.
@@ -27,16 +29,16 @@ def get_role_permissions(
     try:
         permissions = RoleViewService.get_permissions(role)
         return permissions
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred retrieving permissions"
+            detail="An error occurred retrieving permissions",
         )
+
 
 @router.get("/views/config/{role}", response_model=RoleViewConfig)
 def get_role_config(
-    role: StaffRole,
-    current_user: User = Depends(get_current_active_user)
+    role: StaffRole, current_user: User = Depends(get_current_active_user)
 ):
     """
     Get complete view configuration for a specific role.
@@ -50,16 +52,15 @@ def get_role_config(
     try:
         config = RoleViewService.get_role_config(role)
         return config
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred retrieving role configuration"
+            detail="An error occurred retrieving role configuration",
         )
 
+
 @router.get("/views/config")
-def get_current_user_view_config(
-    current_user: User = Depends(get_current_active_user)
-):
+def get_current_user_view_config(current_user: User = Depends(get_current_active_user)):
     """
     Get view configuration for current user.
 
@@ -69,17 +70,18 @@ def get_current_user_view_config(
     try:
         config = RoleViewService.get_role_config(current_user.role)
         return config
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred retrieving role configuration"
+            detail="An error occurred retrieving role configuration",
         )
+
 
 @router.post("/views/check-access")
 def check_endpoint_access(
     role: StaffRole,
     endpoint_category: str,
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Check if a role can access a specific endpoint category.
@@ -97,18 +99,17 @@ def check_endpoint_access(
             "role": role,
             "endpoint_category": endpoint_category,
             "can_access": can_access,
-            "permissions": RoleViewService.get_permissions(role)
+            "permissions": RoleViewService.get_permissions(role),
         }
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred checking access"
+            detail="An error occurred checking access",
         )
 
+
 @router.get("/views/roles", response_model=list)
-def list_all_roles(
-    current_user: User = Depends(get_current_active_user)
-):
+def list_all_roles(current_user: User = Depends(get_current_active_user)):
     """
     List all available staff roles.
 
@@ -117,10 +118,9 @@ def list_all_roles(
     """
     return [role.value for role in StaffRole]
 
+
 @router.get("/views/permissions", response_model=dict)
-def get_all_role_permissions(
-    current_user: User = Depends(get_current_active_user)
-):
+def get_all_role_permissions(current_user: User = Depends(get_current_active_user)):
     """
     Get permissions for all roles.
 
@@ -128,6 +128,5 @@ def get_all_role_permissions(
         Dictionary mapping role names to their permissions
     """
     return {
-        role.value: RoleViewService.get_permissions(role).dict()
-        for role in StaffRole
+        role.value: RoleViewService.get_permissions(role).dict() for role in StaffRole
     }

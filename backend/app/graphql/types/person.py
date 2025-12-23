@@ -1,16 +1,15 @@
 """GraphQL types for Person entity."""
+
 from datetime import datetime
 from enum import Enum
-from typing import Optional
-from uuid import UUID
 
 import strawberry
-from strawberry.scalars import JSON
 
 
 @strawberry.enum
 class FacultyRoleType(str, Enum):
     """Faculty role types."""
+
     PD = "pd"
     APD = "apd"
     OIC = "oic"
@@ -22,16 +21,17 @@ class FacultyRoleType(str, Enum):
 @strawberry.type
 class Person:
     """Person GraphQL type (Resident or Faculty)."""
+
     id: strawberry.ID
     name: str
     type: str
-    email: Optional[str] = None
-    pgy_level: Optional[int] = None
-    target_clinical_blocks: Optional[int] = None
+    email: str | None = None
+    pgy_level: int | None = None
+    target_clinical_blocks: int | None = None
     performs_procedures: bool = False
-    specialties: Optional[list[str]] = None
-    primary_duty: Optional[str] = None
-    faculty_role: Optional[FacultyRoleType] = None
+    specialties: list[str] | None = None
+    primary_duty: str | None = None
+    faculty_role: FacultyRoleType | None = None
     sunday_call_count: int = 0
     weekday_call_count: int = 0
     fmit_weeks_count: int = 0
@@ -62,42 +62,46 @@ class Person:
 @strawberry.input
 class PersonCreateInput:
     """Input type for creating a person."""
+
     name: str
     type: str
-    email: Optional[str] = None
-    pgy_level: Optional[int] = None
-    target_clinical_blocks: Optional[int] = None
+    email: str | None = None
+    pgy_level: int | None = None
+    target_clinical_blocks: int | None = None
     performs_procedures: bool = False
-    specialties: Optional[list[str]] = None
-    primary_duty: Optional[str] = None
-    faculty_role: Optional[FacultyRoleType] = None
+    specialties: list[str] | None = None
+    primary_duty: str | None = None
+    faculty_role: FacultyRoleType | None = None
 
 
 @strawberry.input
 class PersonUpdateInput:
     """Input type for updating a person."""
-    name: Optional[str] = None
-    email: Optional[str] = None
-    pgy_level: Optional[int] = None
-    target_clinical_blocks: Optional[int] = None
-    performs_procedures: Optional[bool] = None
-    specialties: Optional[list[str]] = None
-    primary_duty: Optional[str] = None
-    faculty_role: Optional[FacultyRoleType] = None
+
+    name: str | None = None
+    email: str | None = None
+    pgy_level: int | None = None
+    target_clinical_blocks: int | None = None
+    performs_procedures: bool | None = None
+    specialties: list[str] | None = None
+    primary_duty: str | None = None
+    faculty_role: FacultyRoleType | None = None
 
 
 @strawberry.input
 class PersonFilterInput:
     """Filter input for querying persons."""
-    type: Optional[str] = None
-    pgy_level: Optional[int] = None
-    faculty_role: Optional[FacultyRoleType] = None
-    performs_procedures: Optional[bool] = None
+
+    type: str | None = None
+    pgy_level: int | None = None
+    faculty_role: FacultyRoleType | None = None
+    performs_procedures: bool | None = None
 
 
 @strawberry.type
 class PersonConnection:
     """Paginated person results."""
+
     items: list[Person]
     total: int
     has_next_page: bool
@@ -116,7 +120,9 @@ def person_from_db(db_person) -> Person:
         performs_procedures=db_person.performs_procedures or False,
         specialties=db_person.specialties,
         primary_duty=db_person.primary_duty,
-        faculty_role=FacultyRoleType(db_person.faculty_role) if db_person.faculty_role else None,
+        faculty_role=FacultyRoleType(db_person.faculty_role)
+        if db_person.faculty_role
+        else None,
         sunday_call_count=db_person.sunday_call_count or 0,
         weekday_call_count=db_person.weekday_call_count or 0,
         fmit_weeks_count=db_person.fmit_weeks_count or 0,

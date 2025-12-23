@@ -16,7 +16,7 @@ import logging
 from collections.abc import Callable
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
-from typing import Any, Optional, TypeVar
+from typing import Any, TypeVar
 
 from app.resilience.circuit_breaker.states import CircuitState, StateMachine
 
@@ -27,30 +27,34 @@ T = TypeVar("T")
 
 class CircuitBreakerError(Exception):
     """Base exception for circuit breaker errors."""
+
     pass
 
 
 class CircuitOpenError(CircuitBreakerError):
     """Raised when circuit is open and request is rejected."""
+
     pass
 
 
 class CircuitBreakerTimeoutError(CircuitBreakerError):
     """Raised when a call times out."""
+
     pass
 
 
 @dataclass
 class CircuitBreakerConfig:
     """Configuration for a circuit breaker."""
+
     name: str
     failure_threshold: int = 5
     success_threshold: int = 2
     timeout_seconds: float = 60.0
-    call_timeout_seconds: Optional[float] = None
+    call_timeout_seconds: float | None = None
     half_open_max_calls: int = 3
     excluded_exceptions: tuple[type[Exception], ...] = ()
-    fallback_function: Optional[Callable] = None
+    fallback_function: Callable | None = None
 
 
 class CircuitBreaker:
@@ -134,8 +138,7 @@ class CircuitBreaker:
                 return self.config.fallback_function(*args, **kwargs)
 
             raise CircuitOpenError(
-                f"Circuit breaker '{self.name}' is OPEN. "
-                f"Service is unavailable."
+                f"Circuit breaker '{self.name}' is OPEN. Service is unavailable."
             )
 
         # If half-open, track in-flight calls
@@ -228,8 +231,7 @@ class CircuitBreaker:
                 return self.config.fallback_function(*args, **kwargs)
 
             raise CircuitOpenError(
-                f"Circuit breaker '{self.name}' is OPEN. "
-                f"Service is unavailable."
+                f"Circuit breaker '{self.name}' is OPEN. Service is unavailable."
             )
 
         # If half-open, track in-flight calls
@@ -244,7 +246,7 @@ class CircuitBreaker:
                         func(*args, **kwargs),
                         timeout=self.config.call_timeout_seconds,
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     raise CircuitBreakerTimeoutError(
                         f"Call timed out after {self.config.call_timeout_seconds}s"
                     )
@@ -301,9 +303,7 @@ class CircuitBreaker:
         """
         if not self.state_machine.should_allow_request():
             self.state_machine.record_rejection()
-            raise CircuitOpenError(
-                f"Circuit breaker '{self.name}' is OPEN"
-            )
+            raise CircuitOpenError(f"Circuit breaker '{self.name}' is OPEN")
 
         if self.state == CircuitState.HALF_OPEN:
             self.state_machine.half_open_calls_in_flight += 1
@@ -333,9 +333,7 @@ class CircuitBreaker:
 
         if not should_allow:
             self.state_machine.record_rejection()
-            raise CircuitOpenError(
-                f"Circuit breaker '{self.name}' is OPEN"
-            )
+            raise CircuitOpenError(f"Circuit breaker '{self.name}' is OPEN")
 
         if self.state == CircuitState.HALF_OPEN:
             self.state_machine.half_open_calls_in_flight += 1

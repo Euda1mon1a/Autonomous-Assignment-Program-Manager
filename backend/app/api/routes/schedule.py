@@ -1,13 +1,11 @@
 """Schedule generation and validation API routes."""
-import uuid
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
-
-from app.core.logging import get_logger
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.core.file_security import FileValidationError, validate_excel_upload
+from app.core.logging import get_logger
 from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
@@ -62,8 +60,8 @@ def generate_schedule(
         None,
         alias="Idempotency-Key",
         description="Unique key to prevent duplicate schedule generations. "
-                    "If the same key is sent with identical parameters, "
-                    "the cached result will be returned."
+        "If the same key is sent with identical parameters, "
+        "the cached result will be returned.",
     ),
 ):
     """
@@ -99,7 +97,9 @@ def generate_schedule(
         "end_date": request.end_date.isoformat(),
         "algorithm": request.algorithm.value,
         "pgy_levels": request.pgy_levels,
-        "rotation_template_ids": [str(x) for x in request.rotation_template_ids] if request.rotation_template_ids else None,
+        "rotation_template_ids": [str(x) for x in request.rotation_template_ids]
+        if request.rotation_template_ids
+        else None,
         "timeout_seconds": request.timeout_seconds,
     }
 
@@ -117,7 +117,7 @@ def generate_schedule(
             raise HTTPException(
                 status_code=422,
                 detail="Idempotency key was already used with different request parameters. "
-                       "Use a new key for different requests.",
+                "Use a new key for different requests.",
             )
 
         # Check for existing request with same key and body
@@ -130,13 +130,15 @@ def generate_schedule(
                 raise HTTPException(
                     status_code=409,
                     detail="A request with this idempotency key is currently being processed. "
-                           "Please wait for it to complete.",
+                    "Please wait for it to complete.",
                 )
             elif existing.is_completed and existing.response_body:
                 # Return cached response
                 if obs_metrics:
                     obs_metrics.record_idempotency_hit()
-                logger.info(f"Returning cached response for idempotency key: {idempotency_key[:8]}...")
+                logger.info(
+                    f"Returning cached response for idempotency key: {idempotency_key[:8]}..."
+                )
                 status_code = int(existing.response_status_code or 200)
                 return JSONResponse(
                     status_code=status_code,
@@ -147,7 +149,9 @@ def generate_schedule(
                 # Return cached error response
                 if obs_metrics:
                     obs_metrics.record_idempotency_hit()
-                logger.info(f"Returning cached error for idempotency key: {idempotency_key[:8]}...")
+                logger.info(
+                    f"Returning cached error for idempotency key: {idempotency_key[:8]}..."
+                )
                 status_code = int(existing.response_status_code or 500)
                 raise HTTPException(
                     status_code=status_code,
@@ -259,7 +263,9 @@ def generate_schedule(
         elif result["status"] == "partial":
             # Use 207 Multi-Status for partial success
             if obs_metrics:
-                obs_metrics.record_schedule_success(algorithm, result.get("total_assigned", 0))
+                obs_metrics.record_schedule_success(
+                    algorithm, result.get("total_assigned", 0)
+                )
             response_body = response.model_dump(mode="json")
             if idempotency_request:
                 idempotency_service.mark_completed(
@@ -276,7 +282,9 @@ def generate_schedule(
 
         # Success - record metrics and cache the response
         if obs_metrics:
-            obs_metrics.record_schedule_success(algorithm, result.get("total_assigned", 0))
+            obs_metrics.record_schedule_success(
+                algorithm, result.get("total_assigned", 0)
+            )
         response_body = response.model_dump(mode="json")
         if idempotency_request:
             idempotency_service.mark_completed(
@@ -331,7 +339,9 @@ def validate_schedule(
         start = datetime.strptime(start_date, "%Y-%m-%d").date()
         end = datetime.strptime(end_date, "%Y-%m-%d").date()
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+        raise HTTPException(
+            status_code=400, detail="Invalid date format. Use YYYY-MM-DD"
+        )
 
     validator = ACGMEValidator(db)
     result = validator.validate_all(start, end)
@@ -394,7 +404,9 @@ def get_schedule(start_date: str, end_date: str, db: Session = Depends(get_db)):
         start = datetime.strptime(start_date, "%Y-%m-%d").date()
         end = datetime.strptime(end_date, "%Y-%m-%d").date()
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+        raise HTTPException(
+            status_code=400, detail="Invalid date format. Use YYYY-MM-DD"
+        )
 
     assignments = (
         db.query(Assignment)
@@ -416,18 +428,20 @@ def get_schedule(start_date: str, end_date: str, db: Session = Depends(get_db)):
         if date_str not in schedule_by_date:
             schedule_by_date[date_str] = {"AM": [], "PM": []}
 
-        schedule_by_date[date_str][assignment.block.time_of_day].append({
-            "id": str(assignment.id),
-            "person": {
-                "id": str(assignment.person.id),
-                "name": assignment.person.name,
-                "type": assignment.person.type,
-                "pgy_level": assignment.person.pgy_level,
-            },
-            "role": assignment.role,
-            "activity": assignment.activity_name,
-            "abbreviation": assignment.abbreviation,
-        })
+        schedule_by_date[date_str][assignment.block.time_of_day].append(
+            {
+                "id": str(assignment.id),
+                "person": {
+                    "id": str(assignment.person.id),
+                    "name": assignment.person.name,
+                    "type": assignment.person.type,
+                    "pgy_level": assignment.person.pgy_level,
+                },
+                "role": assignment.role,
+                "activity": assignment.activity_name,
+                "abbreviation": assignment.abbreviation,
+            }
+        )
 
     return {
         "start_date": start_date,
@@ -440,10 +454,12 @@ def get_schedule(start_date: str, end_date: str, db: Session = Depends(get_db)):
 @router.post("/import/analyze", response_model=ImportAnalysisResponse)
 def analyze_imported_schedules(
     fmit_file: UploadFile = File(..., description="FMIT rotation schedule Excel file"),
-    clinic_file: UploadFile | None = File(None, description="Clinic schedule Excel file (optional)"),
+    clinic_file: UploadFile | None = File(
+        None, description="Clinic schedule Excel file (optional)"
+    ),
     specialty_providers: str | None = Form(
         None,
-        description="JSON mapping of specialty to providers, e.g., {\"Sports Medicine\": [\"FAC-SPORTS\"]}"
+        description='JSON mapping of specialty to providers, e.g., {"Sports Medicine": ["FAC-SPORTS"]}',
     ),
     db: Session = Depends(get_db),
 ):
@@ -476,46 +492,35 @@ def analyze_imported_schedules(
             specialty_map = json.loads(specialty_providers)
         except json.JSONDecodeError:
             raise HTTPException(
-                status_code=400,
-                detail="Invalid specialty_providers JSON format"
+                status_code=400, detail="Invalid specialty_providers JSON format"
             )
 
     # Read file contents
     try:
         fmit_bytes = fmit_file.file.read()
-    except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail="Failed to read uploaded file"
-        )
+    except Exception:
+        raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     # Validate FMIT file
     try:
         validate_excel_upload(fmit_bytes, fmit_file.filename, fmit_file.content_type)
-    except FileValidationError as e:
-        raise HTTPException(
-            status_code=400,
-            detail="File validation failed"
-        )
+    except FileValidationError:
+        raise HTTPException(status_code=400, detail="File validation failed")
 
     clinic_bytes = None
     if clinic_file:
         try:
             clinic_bytes = clinic_file.file.read()
-        except Exception as e:
-            raise HTTPException(
-                status_code=400,
-                detail="Failed to read uploaded file"
-            )
+        except Exception:
+            raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
         # Validate clinic file
         try:
-            validate_excel_upload(clinic_bytes, clinic_file.filename, clinic_file.content_type)
-        except FileValidationError as e:
-            raise HTTPException(
-                status_code=400,
-                detail="File validation failed"
+            validate_excel_upload(
+                clinic_bytes, clinic_file.filename, clinic_file.content_type
             )
+        except FileValidationError:
+            raise HTTPException(status_code=400, detail="File validation failed")
 
     # Run analysis
     result = analyze_schedule_conflicts(
@@ -526,17 +531,22 @@ def analyze_imported_schedules(
 
     if not result["success"]:
         raise HTTPException(
-            status_code=422,
-            detail=result.get("error", "Analysis failed")
+            status_code=422, detail=result.get("error", "Analysis failed")
         )
 
     # Build response
     return ImportAnalysisResponse(
         success=True,
-        fmit_schedule=ScheduleSummary(**result["fmit_schedule"]) if result.get("fmit_schedule") else None,
-        clinic_schedule=ScheduleSummary(**result["clinic_schedule"]) if result.get("clinic_schedule") else None,
+        fmit_schedule=ScheduleSummary(**result["fmit_schedule"])
+        if result.get("fmit_schedule")
+        else None,
+        clinic_schedule=ScheduleSummary(**result["clinic_schedule"])
+        if result.get("clinic_schedule")
+        else None,
         conflicts=[ConflictItem(**c) for c in result.get("conflicts", [])],
-        recommendations=[Recommendation(**r) for r in result.get("recommendations", [])],
+        recommendations=[
+            Recommendation(**r) for r in result.get("recommendations", [])
+        ],
         summary=ConflictSummary(**result["summary"]) if result.get("summary") else None,
     )
 
@@ -544,10 +554,11 @@ def analyze_imported_schedules(
 @router.post("/import/analyze-file")
 def analyze_single_file(
     file: UploadFile = File(..., description="Schedule Excel file to analyze"),
-    file_type: str = Form("auto", description="File type: 'fmit', 'clinic', or 'auto' to detect"),
+    file_type: str = Form(
+        "auto", description="File type: 'fmit', 'clinic', or 'auto' to detect"
+    ),
     specialty_providers: str | None = Form(
-        None,
-        description="JSON mapping of specialty to providers"
+        None, description="JSON mapping of specialty to providers"
     ),
     db: Session = Depends(get_db),
 ):
@@ -568,20 +579,14 @@ def analyze_single_file(
     # Read file
     try:
         file_bytes = file.file.read()
-    except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail="Failed to read uploaded file"
-        )
+    except Exception:
+        raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     # Validate uploaded file
     try:
         validate_excel_upload(file_bytes, file.filename, file.content_type)
-    except FileValidationError as e:
-        raise HTTPException(
-            status_code=400,
-            detail="File validation failed"
-        )
+    except FileValidationError:
+        raise HTTPException(status_code=400, detail="File validation failed")
 
     # Parse specialty providers
     specialty_map = None
@@ -590,8 +595,7 @@ def analyze_single_file(
             specialty_map = json.loads(specialty_providers)
         except json.JSONDecodeError:
             raise HTTPException(
-                status_code=400,
-                detail="Invalid specialty_providers JSON format"
+                status_code=400, detail="Invalid specialty_providers JSON format"
             )
 
     # Import the file
@@ -600,8 +604,7 @@ def analyze_single_file(
 
     if not result.success:
         raise HTTPException(
-            status_code=422,
-            detail=f"Failed to parse file: {result.errors}"
+            status_code=422, detail=f"Failed to parse file: {result.errors}"
         )
 
     # Check for alternating patterns
@@ -609,21 +612,27 @@ def analyze_single_file(
     for provider_name, schedule in result.providers.items():
         if schedule.has_alternating_pattern():
             weeks = schedule.get_fmit_weeks()
-            alternating_providers.append({
-                "name": provider_name,
-                "fmit_weeks": [
-                    {"start": w[0].isoformat(), "end": w[1].isoformat()}
-                    for w in weeks
-                ],
-                "pattern": "alternating",
-                "recommendation": "Consider consolidating FMIT weeks"
-            })
+            alternating_providers.append(
+                {
+                    "name": provider_name,
+                    "fmit_weeks": [
+                        {"start": w[0].isoformat(), "end": w[1].isoformat()}
+                        for w in weeks
+                    ],
+                    "pattern": "alternating",
+                    "recommendation": "Consider consolidating FMIT weeks",
+                }
+            )
 
     # Build provider summary
     provider_summary = []
     for provider_name, schedule in result.providers.items():
-        fmit_slots = sum(1 for s in schedule.slots.values() if s.slot_type.value == "fmit")
-        clinic_slots = sum(1 for s in schedule.slots.values() if s.slot_type.value == "clinic")
+        fmit_slots = sum(
+            1 for s in schedule.slots.values() if s.slot_type.value == "fmit"
+        )
+        clinic_slots = sum(
+            1 for s in schedule.slots.values() if s.slot_type.value == "clinic"
+        )
 
         # Check if specialty provider
         specialties = []
@@ -632,17 +641,19 @@ def analyze_single_file(
                 if provider_name in providers:
                     specialties.append(specialty)
 
-        provider_summary.append({
-            "name": provider_name,
-            "total_slots": len(schedule.slots),
-            "fmit_slots": fmit_slots,
-            "clinic_slots": clinic_slots,
-            "specialties": specialties,
-            "fmit_weeks": [
-                {"start": w[0].isoformat(), "end": w[1].isoformat()}
-                for w in schedule.get_fmit_weeks()
-            ],
-        })
+        provider_summary.append(
+            {
+                "name": provider_name,
+                "total_slots": len(schedule.slots),
+                "fmit_slots": fmit_slots,
+                "clinic_slots": clinic_slots,
+                "specialties": specialties,
+                "fmit_weeks": [
+                    {"start": w[0].isoformat(), "end": w[1].isoformat()}
+                    for w in schedule.get_fmit_weeks()
+                ],
+            }
+        )
 
     return {
         "success": True,
@@ -698,29 +709,20 @@ def find_swap_candidates(
     try:
         request_data = json.loads(request_json)
         request = SwapFinderRequest(**request_data)
-    except (json.JSONDecodeError, ValueError) as e:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid request JSON format"
-        )
+    except (json.JSONDecodeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid request JSON format")
 
     # Read FMIT file
     try:
         fmit_bytes = fmit_file.file.read()
-    except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail="Failed to read uploaded file"
-        )
+    except Exception:
+        raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     # Validate FMIT file
     try:
         validate_excel_upload(fmit_bytes, fmit_file.filename, fmit_file.content_type)
-    except FileValidationError as e:
-        raise HTTPException(
-            status_code=400,
-            detail="File validation failed"
-        )
+    except FileValidationError:
+        raise HTTPException(status_code=400, detail="File validation failed")
 
     # Build faculty targets dict
     faculty_targets = {
@@ -766,10 +768,7 @@ def find_swap_candidates(
         )
     except ValueError as e:
         logger.error(f"Invalid swap finder request: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=422,
-            detail="Invalid request parameters"
-        )
+        raise HTTPException(status_code=422, detail="Invalid request parameters")
 
     # Validate target faculty exists in schedule
     if request.target_faculty not in swap_finder.faculty_weeks:
@@ -777,7 +776,7 @@ def find_swap_candidates(
         raise HTTPException(
             status_code=404,
             detail=f"Faculty '{request.target_faculty}' not found in schedule. "
-                   f"Available: {', '.join(available[:10])}{'...' if len(available) > 10 else ''}"
+            f"Available: {', '.join(available[:10])}{'...' if len(available) > 10 else ''}",
         )
 
     # Find swap candidates
@@ -796,7 +795,9 @@ def find_swap_candidates(
             SwapCandidateResponse(
                 faculty=candidate.faculty,
                 can_take_week=candidate.can_take_week.isoformat(),
-                gives_week=candidate.gives_week.isoformat() if candidate.gives_week else None,
+                gives_week=candidate.gives_week.isoformat()
+                if candidate.gives_week
+                else None,
                 back_to_back_ok=candidate.back_to_back_ok,
                 external_conflict=candidate.external_conflict,
                 flexibility=candidate.flexibility,
@@ -817,7 +818,9 @@ def find_swap_candidates(
             )
         )
 
-    viable_count = sum(1 for c in candidates if c.back_to_back_ok and not c.external_conflict)
+    viable_count = sum(
+        1 for c in candidates if c.back_to_back_ok and not c.external_conflict
+    )
 
     return SwapFinderResponse(
         success=True,

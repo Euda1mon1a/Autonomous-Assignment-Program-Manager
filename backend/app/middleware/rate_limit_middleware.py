@@ -10,9 +10,9 @@ Implements comprehensive rate limiting with:
 - Graceful degradation
 - Bypass for internal services
 """
+
 import logging
 import time
-from typing import Optional
 
 import redis
 from fastapi import Request, status
@@ -22,7 +22,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import get_settings
 from app.core.rate_limit_tiers import (
-    EndpointLimit,
     RateLimitTier,
     SlidingWindowCounter,
     TokenBucket,
@@ -55,7 +54,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     - Graceful degradation on Redis failure
     """
 
-    def __init__(self, app, redis_client: Optional[redis.Redis] = None):
+    def __init__(self, app, redis_client: redis.Redis | None = None):
         """
         Initialize rate limiting middleware.
 
@@ -82,7 +81,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         else:
             self.redis = redis_client
 
-    def _extract_user_info(self, request: Request) -> tuple[Optional[str], Optional[str]]:
+    def _extract_user_info(self, request: Request) -> tuple[str | None, str | None]:
         """
         Extract user ID and role from JWT token.
 
@@ -115,7 +114,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         except JWTError:
             return None, None
 
-    def _get_client_identifier(self, request: Request, user_id: Optional[str]) -> str:
+    def _get_client_identifier(self, request: Request, user_id: str | None) -> str:
         """
         Get unique identifier for rate limiting.
 
@@ -156,7 +155,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if internal_key:
             # In production, validate against stored key
             # For now, just check if header exists
-            expected_key = settings.SECRET_KEY[:32]  # Use part of secret as internal key
+            expected_key = settings.SECRET_KEY[
+                :32
+            ]  # Use part of secret as internal key
             return internal_key == expected_key
 
         # Check if request is from localhost/internal network
@@ -291,7 +292,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     f"Rate limit (burst) exceeded for {client_id} "
                     f"on {request.method} {request.url.path}"
                 )
-                return self._rate_limit_response(rate_limit_info, "Burst limit exceeded")
+                return self._rate_limit_response(
+                    rate_limit_info, "Burst limit exceeded"
+                )
 
             rate_limit_info["burst_remaining"] = int(burst_info.get("tokens", 0))
 
@@ -344,7 +347,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # Add rate limit headers to response
         response.headers["X-RateLimit-Tier"] = rate_limit_info["tier"]
-        response.headers["X-RateLimit-Limit-Minute"] = str(rate_limit_info["limit_minute"])
+        response.headers["X-RateLimit-Limit-Minute"] = str(
+            rate_limit_info["limit_minute"]
+        )
         response.headers["X-RateLimit-Limit-Hour"] = str(rate_limit_info["limit_hour"])
         response.headers["X-RateLimit-Remaining-Minute"] = str(
             rate_limit_info["remaining_minute"]
@@ -352,7 +357,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         response.headers["X-RateLimit-Remaining-Hour"] = str(
             rate_limit_info["remaining_hour"]
         )
-        response.headers["X-RateLimit-Reset-Minute"] = str(rate_limit_info["reset_minute"])
+        response.headers["X-RateLimit-Reset-Minute"] = str(
+            rate_limit_info["reset_minute"]
+        )
         response.headers["X-RateLimit-Reset-Hour"] = str(rate_limit_info["reset_hour"])
         response.headers["X-RateLimit-Burst-Remaining"] = str(
             rate_limit_info["burst_remaining"]

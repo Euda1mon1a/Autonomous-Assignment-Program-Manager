@@ -6,10 +6,9 @@ Includes user provisioning (JIT) and session creation.
 """
 
 from datetime import timedelta
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -32,19 +31,17 @@ class SSOSessionState(BaseModel):
     """Temporary SSO session state stored in cache/session."""
 
     provider: str
-    state: Optional[str] = None
-    relay_state: Optional[str] = None
-    code_verifier: Optional[str] = None
-    request_id: Optional[str] = None
+    state: str | None = None
+    relay_state: str | None = None
+    code_verifier: str | None = None
+    request_id: str | None = None
 
 
 # In-memory session store (use Redis in production)
 _sso_sessions: dict[str, SSOSessionState] = {}
 
 
-def get_or_create_user(
-    db: Session, attributes: dict[str, str], provider: str
-) -> User:
+def get_or_create_user(db: Session, attributes: dict[str, str], provider: str) -> User:
     """
     Get existing user or create new user (JIT provisioning).
 
@@ -102,7 +99,16 @@ def get_or_create_user(
     role = attributes.get("role", sso_config.default_role)
 
     # Validate role
-    valid_roles = {"admin", "coordinator", "faculty", "clinical_staff", "rn", "lpn", "msa", "resident"}
+    valid_roles = {
+        "admin",
+        "coordinator",
+        "faculty",
+        "clinical_staff",
+        "rn",
+        "lpn",
+        "msa",
+        "resident",
+    }
     if role not in valid_roles:
         role = sso_config.default_role
 
@@ -193,7 +199,7 @@ async def saml_metadata():
 
 
 @router.get("/saml/login")
-async def saml_login(relay_state: Optional[str] = None):
+async def saml_login(relay_state: str | None = None):
     """
     Initiate SAML login flow.
 
@@ -292,7 +298,7 @@ async def saml_acs(
 
 
 @router.get("/saml/logout")
-async def saml_logout(name_id: str, session_index: Optional[str] = None):
+async def saml_logout(name_id: str, session_index: str | None = None):
     """
     Initiate SAML logout flow.
 
@@ -314,7 +320,7 @@ async def saml_logout(name_id: str, session_index: Optional[str] = None):
 
 
 @router.get("/oauth2/login")
-async def oauth2_login(redirect_uri: Optional[str] = None):
+async def oauth2_login(redirect_uri: str | None = None):
     """
     Initiate OAuth2/OIDC login flow.
 
@@ -402,7 +408,7 @@ async def oauth2_callback(
     if access_token and sso_config.oauth2.userinfo_endpoint:
         try:
             userinfo = await provider.get_userinfo(access_token)
-        except ValueError as e:
+        except ValueError:
             # Fall back to ID token claims
             userinfo = id_token_claims
     else:
@@ -421,7 +427,9 @@ async def oauth2_callback(
     del _sso_sessions[state]
 
     # Redirect to relay state or default dashboard
-    redirect_url = session_state.relay_state if session_state.relay_state else "/dashboard"
+    redirect_url = (
+        session_state.relay_state if session_state.relay_state else "/dashboard"
+    )
 
     return RedirectResponse(url=redirect_url)
 

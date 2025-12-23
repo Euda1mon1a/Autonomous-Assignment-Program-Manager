@@ -9,7 +9,11 @@ from typing import Any, BinaryIO
 from uuid import UUID, uuid4
 
 from app.services.upload.processors import FileProcessorFactory, ImageProcessor
-from app.services.upload.storage import LocalStorageBackend, S3StorageBackend, StorageBackend
+from app.services.upload.storage import (
+    LocalStorageBackend,
+    S3StorageBackend,
+    StorageBackend,
+)
 from app.services.upload.validators import FileValidator, UploadValidationError
 
 logger = logging.getLogger(__name__)
@@ -63,7 +67,9 @@ class UploadProgress:
             "progress_percent": self.progress_percent,
             "status": self.status,
             "started_at": self.started_at.isoformat(),
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
         }
 
 
@@ -194,7 +200,9 @@ class UploadService:
             # Store processed versions (if any)
             version_results = {}
             if processed_versions:
-                for version_name, version_data in processed_versions["versions"].items():
+                for version_name, version_data in processed_versions[
+                    "versions"
+                ].items():
                     if version_name != "original":  # Original is already stored
                         version_filename = (
                             f"{Path(validation_result['sanitized_filename']).stem}"

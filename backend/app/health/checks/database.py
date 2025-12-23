@@ -65,10 +65,7 @@ class DatabaseHealthCheck:
 
         try:
             # Run check with timeout
-            result = await asyncio.wait_for(
-                self._perform_check(),
-                timeout=self.timeout
-            )
+            result = await asyncio.wait_for(self._perform_check(), timeout=self.timeout)
 
             response_time_ms = (time.time() - start_time) * 1000
             result["response_time_ms"] = round(response_time_ms, 2)
@@ -80,7 +77,7 @@ class DatabaseHealthCheck:
 
             return result
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             response_time_ms = (time.time() - start_time) * 1000
             logger.error(f"Database health check timed out after {self.timeout}s")
             return {
@@ -127,7 +124,9 @@ class DatabaseHealthCheck:
             # All checks passed
             return {
                 "status": "healthy",
-                "database_version": db_version.split(",")[0] if db_version else "unknown",
+                "database_version": db_version.split(",")[0]
+                if db_version
+                else "unknown",
                 "connection_pool": pool_status,
                 "tables_accessible": table_check["accessible"],
                 "tables_checked": table_check["checked"],
@@ -222,33 +221,33 @@ class DatabaseHealthCheck:
             db = SessionLocal()
 
             # Create a temporary table for health checks
-            db.execute(text("""
+            db.execute(
+                text("""
                 CREATE TABLE IF NOT EXISTS health_check_temp (
                     id SERIAL PRIMARY KEY,
                     checked_at TIMESTAMP DEFAULT NOW()
                 )
-            """))
+            """)
+            )
 
             # Insert test record
-            db.execute(text(
-                "INSERT INTO health_check_temp DEFAULT VALUES"
-            ))
+            db.execute(text("INSERT INTO health_check_temp DEFAULT VALUES"))
 
             # Read back
-            result = db.execute(text(
-                "SELECT COUNT(*) FROM health_check_temp"
-            ))
+            result = db.execute(text("SELECT COUNT(*) FROM health_check_temp"))
             count = result.scalar()
 
             # Cleanup old records (keep only last 10)
-            db.execute(text("""
+            db.execute(
+                text("""
                 DELETE FROM health_check_temp
                 WHERE id NOT IN (
                     SELECT id FROM health_check_temp
                     ORDER BY checked_at DESC
                     LIMIT 10
                 )
-            """))
+            """)
+            )
 
             db.commit()
 

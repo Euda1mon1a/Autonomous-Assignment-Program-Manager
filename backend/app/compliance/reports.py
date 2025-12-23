@@ -16,11 +16,9 @@ from datetime import date, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-import pandas as pd
 import plotly.graph_objects as go
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font, PatternFill
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -33,7 +31,6 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.absence import Absence
@@ -242,9 +239,7 @@ class ComplianceReportGenerator:
         ]
 
         # Filter absences for this resident
-        resident_absences = [
-            a for a in all_absences if a.person_id == resident.id
-        ]
+        resident_absences = [a for a in all_absences if a.person_id == resident.id]
 
         # Calculate work hours by week
         hours_by_week = self._calculate_hours_by_week(
@@ -486,9 +481,7 @@ class ComplianceReportGenerator:
 
             if len(faculty) < required:
                 blocks_with_violations += 1
-                block = (
-                    self.db.query(Block).filter(Block.id == block_id).first()
-                )
+                block = self.db.query(Block).filter(Block.id == block_id).first()
                 supervision_violations.append(
                     {
                         "block_id": str(block_id),
@@ -549,9 +542,7 @@ class ComplianceReportGenerator:
                 absence_by_person[str(absence.person_id)] += days
 
         # Calculate average per resident
-        avg_absence_days = (
-            total_absence_days / len(residents) if residents else 0
-        )
+        avg_absence_days = total_absence_days / len(residents) if residents else 0
 
         # Period length in days
         period_days = (end_date - start_date).days + 1
@@ -853,10 +844,10 @@ class ComplianceReportGenerator:
         story.append(Paragraph("Work Hour Analysis", heading_style))
 
         wh_text = f"""
-        The work hour analysis covers {report_data.work_hour_summary.get('total_residents', 0)} residents
+        The work hour analysis covers {report_data.work_hour_summary.get("total_residents", 0)} residents
         over the reporting period. The average weekly hours worked was
-        {report_data.work_hour_summary.get('avg_weekly_hours', 0)} hours, with a maximum of
-        {report_data.work_hour_summary.get('max_weekly_hours', 0)} hours in any given week.
+        {report_data.work_hour_summary.get("avg_weekly_hours", 0)} hours, with a maximum of
+        {report_data.work_hour_summary.get("max_weekly_hours", 0)} hours in any given week.
         """
         story.append(Paragraph(wh_text, styles["Normal"]))
         story.append(Spacer(1, 0.2 * inch))
@@ -865,9 +856,9 @@ class ComplianceReportGenerator:
         story.append(Paragraph("Supervision Ratio Analysis", heading_style))
 
         sup_text = f"""
-        Analyzed {report_data.supervision_summary.get('total_blocks', 0)} clinical blocks.
-        Supervision compliance rate: {report_data.supervision_summary.get('compliance_rate', 100)}%.
-        Violations found in {report_data.supervision_summary.get('blocks_with_violations', 0)} blocks.
+        Analyzed {report_data.supervision_summary.get("total_blocks", 0)} clinical blocks.
+        Supervision compliance rate: {report_data.supervision_summary.get("compliance_rate", 100)}%.
+        Violations found in {report_data.supervision_summary.get("blocks_with_violations", 0)} blocks.
         """
         story.append(Paragraph(sup_text, styles["Normal"]))
         story.append(Spacer(1, 0.2 * inch))
@@ -876,9 +867,9 @@ class ComplianceReportGenerator:
         story.append(Paragraph("Leave Utilization", heading_style))
 
         leave_text = f"""
-        Total absence days: {report_data.leave_utilization.get('total_absence_days', 0)}.
-        Average per resident: {report_data.leave_utilization.get('avg_absence_days_per_resident', 0)} days.
-        Absence rate: {report_data.leave_utilization.get('absence_rate_percent', 0)}%.
+        Total absence days: {report_data.leave_utilization.get("total_absence_days", 0)}.
+        Average per resident: {report_data.leave_utilization.get("avg_absence_days_per_resident", 0)} days.
+        Absence rate: {report_data.leave_utilization.get("absence_rate_percent", 0)}%.
         """
         story.append(Paragraph(leave_text, styles["Normal"]))
         story.append(Spacer(1, 0.2 * inch))
@@ -887,9 +878,9 @@ class ComplianceReportGenerator:
         story.append(Paragraph("Schedule Coverage", heading_style))
 
         cov_text = f"""
-        Total workday blocks: {report_data.coverage_metrics.get('total_workday_blocks', 0)}.
-        Assigned blocks: {report_data.coverage_metrics.get('assigned_blocks', 0)}.
-        Coverage rate: {report_data.coverage_metrics.get('coverage_rate_percent', 0)}%.
+        Total workday blocks: {report_data.coverage_metrics.get("total_workday_blocks", 0)}.
+        Assigned blocks: {report_data.coverage_metrics.get("assigned_blocks", 0)}.
+        Coverage rate: {report_data.coverage_metrics.get("coverage_rate_percent", 0)}%.
         """
         story.append(Paragraph(cov_text, styles["Normal"]))
 
@@ -900,10 +891,10 @@ class ComplianceReportGenerator:
 
             for resident in report_data.resident_summaries[:10]:  # Limit to 10
                 res_text = f"""
-                <b>{resident['resident_name']}</b> (PGY-{resident['pgy_level']})<br/>
-                Total Hours: {resident['total_hours']} | Avg Weekly: {resident['avg_weekly_hours']:.1f}<br/>
-                Violations: {resident['violation_count']}<br/>
-                Absence Days: {resident['total_absence_days']}
+                <b>{resident["resident_name"]}</b> (PGY-{resident["pgy_level"]})<br/>
+                Total Hours: {resident["total_hours"]} | Avg Weekly: {resident["avg_weekly_hours"]:.1f}<br/>
+                Violations: {resident["violation_count"]}<br/>
+                Absence Days: {resident["total_absence_days"]}
                 """
                 story.append(Paragraph(res_text, styles["Normal"]))
                 story.append(Spacer(1, 0.15 * inch))
@@ -1117,7 +1108,9 @@ class ComplianceReportGenerator:
 
         # Trends Sheet
         ws_trends = wb.create_sheet("Trends")
-        ws_trends.append(["Week Start", "Week End", "Total Hours", "Coverage %", "Absence Days"])
+        ws_trends.append(
+            ["Week Start", "Week End", "Total Hours", "Coverage %", "Absence Days"]
+        )
 
         for cell in ["A1", "B1", "C1", "D1", "E1"]:
             ws_trends[cell].font = header_font_white
@@ -1134,7 +1127,9 @@ class ComplianceReportGenerator:
                     hours_trends[i]["week_start"],
                     hours_trends[i]["week_end"],
                     hours_trends[i]["total_hours"],
-                    coverage_trends[i]["coverage_rate"] if i < len(coverage_trends) else 0,
+                    coverage_trends[i]["coverage_rate"]
+                    if i < len(coverage_trends)
+                    else 0,
                     absence_trends[i]["absence_days"] if i < len(absence_trends) else 0,
                 ]
             )

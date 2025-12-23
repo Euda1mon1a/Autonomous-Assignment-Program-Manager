@@ -1,4 +1,5 @@
 """Tests for PDF report generation service."""
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -10,7 +11,6 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
-from app.models.user import User
 from app.schemas.reports import (
     AnalyticsReportRequest,
     ComplianceReportRequest,
@@ -29,10 +29,10 @@ def sample_residents(db: Session) -> list[Person]:
     for i in range(3):
         resident = Person(
             id=uuid4(),
-            name=f"Resident {i+1}",
+            name=f"Resident {i + 1}",
             type="resident",
             pgy_level=i + 1,
-            email=f"resident{i+1}@test.org",
+            email=f"resident{i + 1}@test.org",
         )
         db.add(resident)
         residents.append(resident)
@@ -47,9 +47,9 @@ def sample_faculty(db: Session) -> list[Person]:
     for i in range(2):
         fac = Person(
             id=uuid4(),
-            name=f"Faculty {i+1}",
+            name=f"Faculty {i + 1}",
             type="faculty",
-            email=f"faculty{i+1}@test.org",
+            email=f"faculty{i + 1}@test.org",
             performs_procedures=True,
         )
         db.add(fac)
@@ -222,7 +222,10 @@ class TestScheduleReportTemplate:
         assert pdf_bytes[:4] == b"%PDF"
 
     def test_generate_schedule_report_with_filters(
-        self, db: Session, sample_assignments: list[Assignment], sample_residents: list[Person]
+        self,
+        db: Session,
+        sample_assignments: list[Assignment],
+        sample_residents: list[Person],
     ):
         """Test schedule report with person filters."""
         template = ScheduleReportTemplate(db)
@@ -268,7 +271,10 @@ class TestComplianceReportTemplate:
         assert pdf_bytes[:4] == b"%PDF"
 
     def test_generate_compliance_report_with_filters(
-        self, db: Session, sample_assignments: list[Assignment], sample_residents: list[Person]
+        self,
+        db: Session,
+        sample_assignments: list[Assignment],
+        sample_residents: list[Person],
     ):
         """Test compliance report with resident filters."""
         template = ComplianceReportTemplate(db)

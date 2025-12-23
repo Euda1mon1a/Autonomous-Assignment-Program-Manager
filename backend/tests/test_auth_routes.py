@@ -6,8 +6,8 @@ Tests all auth endpoints with various scenarios including:
 - Authentication failures
 - Edge cases and error handling
 """
+
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -176,7 +176,9 @@ class TestLoginEndpoint:
 
         assert response.status_code == 422  # Validation error
 
-    def test_login_updates_last_login(self, client: TestClient, admin_user: User, db: Session):
+    def test_login_updates_last_login(
+        self, client: TestClient, admin_user: User, db: Session
+    ):
         """Test that successful login updates last_login timestamp."""
         # Record original last_login
         original_last_login = admin_user.last_login
@@ -212,7 +214,7 @@ class TestLoginEndpoint:
             token,
             settings.SECRET_KEY,
             algorithms=[ALGORITHM],
-            options={"verify_signature": True}
+            options={"verify_signature": True},
         )
 
         assert "sub" in decoded  # User ID
@@ -251,7 +253,9 @@ class TestLoginJsonEndpoint:
 
         assert response.status_code == 401
 
-    def test_login_json_case_sensitive_username(self, client: TestClient, admin_user: User):
+    def test_login_json_case_sensitive_username(
+        self, client: TestClient, admin_user: User
+    ):
         """Test that username is case-sensitive."""
         response = client.post(
             "/api/auth/login/json",
@@ -268,7 +272,7 @@ class TestLoginJsonEndpoint:
             json={
                 "username": "testadmin",
                 "password": "testpass123",
-                "extra_field": "should_be_ignored"
+                "extra_field": "should_be_ignored",
             },
         )
 
@@ -280,7 +284,7 @@ class TestLoginJsonEndpoint:
         response = client.post(
             "/api/auth/login/json",
             data="invalid json",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         assert response.status_code == 422
@@ -312,17 +316,11 @@ class TestLogoutEndpoint:
 
         # Verify token was added to blacklist
         token = auth_headers["Authorization"].replace("Bearer ", "")
-        decoded = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[ALGORITHM]
-        )
+        decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         jti = decoded.get("jti")
 
         # Check blacklist
-        blacklisted = db.query(TokenBlacklist).filter(
-            TokenBlacklist.jti == jti
-        ).first()
+        blacklisted = db.query(TokenBlacklist).filter(TokenBlacklist.jti == jti).first()
         assert blacklisted is not None
         assert blacklisted.reason == "logout"
 
@@ -335,8 +333,7 @@ class TestLogoutEndpoint:
     def test_logout_with_invalid_token(self, client: TestClient):
         """Test logout with invalid token."""
         response = client.post(
-            "/api/auth/logout",
-            headers={"Authorization": "Bearer invalid_token"}
+            "/api/auth/logout", headers={"Authorization": "Bearer invalid_token"}
         )
 
         assert response.status_code == 401
@@ -356,8 +353,7 @@ class TestLogoutEndpoint:
     def test_logout_without_bearer_prefix(self, client: TestClient):
         """Test logout fails without Bearer prefix in Authorization header."""
         response = client.post(
-            "/api/auth/logout",
-            headers={"Authorization": "some_token"}
+            "/api/auth/logout", headers={"Authorization": "some_token"}
         )
 
         assert response.status_code == 401
@@ -372,8 +368,7 @@ class TestLogoutEndpoint:
         )
 
         response = client.post(
-            "/api/auth/logout",
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/auth/logout", headers={"Authorization": f"Bearer {token}"}
         )
 
         # Should fail because user is inactive
@@ -388,7 +383,9 @@ class TestLogoutEndpoint:
 class TestGetCurrentUserEndpoint:
     """Tests for GET /api/auth/me endpoint."""
 
-    def test_get_me_success(self, client: TestClient, auth_headers: dict, admin_user: User):
+    def test_get_me_success(
+        self, client: TestClient, auth_headers: dict, admin_user: User
+    ):
         """Test getting current user information."""
         response = client.get("/api/auth/me", headers=auth_headers)
 
@@ -412,23 +409,23 @@ class TestGetCurrentUserEndpoint:
     def test_get_me_with_invalid_token(self, client: TestClient):
         """Test /me with invalid token."""
         response = client.get(
-            "/api/auth/me",
-            headers={"Authorization": "Bearer invalid_token"}
+            "/api/auth/me", headers={"Authorization": "Bearer invalid_token"}
         )
 
         assert response.status_code == 401
 
-    def test_get_me_with_expired_token(self, client: TestClient, admin_user: User, db: Session):
+    def test_get_me_with_expired_token(
+        self, client: TestClient, admin_user: User, db: Session
+    ):
         """Test /me with expired token."""
         # Create an expired token
         expired_token, _, _ = create_access_token(
             data={"sub": str(admin_user.id), "username": admin_user.username},
-            expires_delta=timedelta(seconds=-1)  # Already expired
+            expires_delta=timedelta(seconds=-1),  # Already expired
         )
 
         response = client.get(
-            "/api/auth/me",
-            headers={"Authorization": f"Bearer {expired_token}"}
+            "/api/auth/me", headers={"Authorization": f"Bearer {expired_token}"}
         )
 
         assert response.status_code == 401
@@ -458,8 +455,7 @@ class TestGetCurrentUserEndpoint:
 
         # Get user info
         response = client.get(
-            "/api/auth/me",
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/auth/me", headers={"Authorization": f"Bearer {token}"}
         )
 
         assert response.status_code == 200
@@ -488,7 +484,7 @@ class TestRegisterUserEndpoint:
                 "username": "firstuser",
                 "email": "first@test.org",
                 "password": "password123",
-                "role": "coordinator"  # Should be overridden to admin
+                "role": "coordinator",  # Should be overridden to admin
             },
         )
 
@@ -508,9 +504,9 @@ class TestRegisterUserEndpoint:
                 "username": "newuser",
                 "email": "newuser@test.org",
                 "password": "password123",
-                "role": "coordinator"
+                "role": "coordinator",
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 201
@@ -528,7 +524,7 @@ class TestRegisterUserEndpoint:
                 "username": "newuser",
                 "email": "newuser@test.org",
                 "password": "password123",
-                "role": "coordinator"
+                "role": "coordinator",
             },
         )
 
@@ -545,9 +541,9 @@ class TestRegisterUserEndpoint:
                 "username": "anotheruser",
                 "email": "another@test.org",
                 "password": "password123",
-                "role": "coordinator"
+                "role": "coordinator",
             },
-            headers=regular_user_headers
+            headers=regular_user_headers,
         )
 
         assert response.status_code == 403
@@ -562,9 +558,9 @@ class TestRegisterUserEndpoint:
                 "username": "testadmin",  # Already exists
                 "email": "different@test.org",
                 "password": "password123",
-                "role": "coordinator"
+                "role": "coordinator",
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 400
@@ -580,17 +576,15 @@ class TestRegisterUserEndpoint:
                 "username": "differentuser",
                 "email": "testadmin@test.org",  # Already exists
                 "password": "password123",
-                "role": "coordinator"
+                "role": "coordinator",
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 400
         assert "email" in response.json()["detail"].lower()
 
-    def test_register_invalid_email(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_register_invalid_email(self, client: TestClient, auth_headers: dict):
         """Test registration fails with invalid email format."""
         response = client.post(
             "/api/auth/register",
@@ -598,16 +592,14 @@ class TestRegisterUserEndpoint:
                 "username": "newuser",
                 "email": "invalid-email",
                 "password": "password123",
-                "role": "coordinator"
+                "role": "coordinator",
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 422  # Validation error
 
-    def test_register_invalid_role(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_register_invalid_role(self, client: TestClient, auth_headers: dict):
         """Test registration with invalid role."""
         response = client.post(
             "/api/auth/register",
@@ -615,9 +607,9 @@ class TestRegisterUserEndpoint:
                 "username": "newuser",
                 "email": "newuser@test.org",
                 "password": "password123",
-                "role": "invalid_role"
+                "role": "invalid_role",
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         # Should create user but may fail database constraint
@@ -633,7 +625,7 @@ class TestRegisterUserEndpoint:
                 "username": "newuser",
                 # Missing email and password
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 422
@@ -651,9 +643,9 @@ class TestRegisterUserEndpoint:
                     "username": f"user_{role}_{i}",
                     "email": f"{role}{i}@test.org",
                     "password": "password123",
-                    "role": role
+                    "role": role,
                 },
-                headers=auth_headers
+                headers=auth_headers,
             )
 
             assert response.status_code == 201
@@ -671,9 +663,9 @@ class TestRegisterUserEndpoint:
                 "username": "hasheduser",
                 "email": "hashed@test.org",
                 "password": plain_password,
-                "role": "coordinator"
+                "role": "coordinator",
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 201
@@ -784,11 +776,7 @@ class TestTokenSecurity:
         )
 
         token = response.json()["access_token"]
-        decoded = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[ALGORITHM]
-        )
+        decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
 
         assert "jti" in decoded
         assert isinstance(decoded["jti"], str)
@@ -823,11 +811,7 @@ class TestTokenSecurity:
         )
 
         token = response.json()["access_token"]
-        decoded = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[ALGORITHM]
-        )
+        decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
 
         assert "exp" in decoded
         assert "iat" in decoded  # Issued at
@@ -850,8 +834,7 @@ class TestTokenSecurity:
         tampered_token = token[:-5] + "XXXXX"
 
         response = client.get(
-            "/api/auth/me",
-            headers={"Authorization": f"Bearer {tampered_token}"}
+            "/api/auth/me", headers={"Authorization": f"Bearer {tampered_token}"}
         )
 
         assert response.status_code == 401
@@ -865,15 +848,14 @@ class TestTokenSecurity:
             {
                 "sub": str(admin_user.id),
                 "username": admin_user.username,
-                "exp": datetime.utcnow() + timedelta(minutes=30)
+                "exp": datetime.utcnow() + timedelta(minutes=30),
             },
             "wrong_secret_key",
-            algorithm=ALGORITHM
+            algorithm=ALGORITHM,
         )
 
         response = client.get(
-            "/api/auth/me",
-            headers={"Authorization": f"Bearer {fake_token}"}
+            "/api/auth/me", headers={"Authorization": f"Bearer {fake_token}"}
         )
 
         assert response.status_code == 401
@@ -904,11 +886,7 @@ class TestTokenSecurity:
         refresh_token = login_response.json()["refresh_token"]
 
         # Verify it's actually a refresh token
-        decoded = jwt.decode(
-            refresh_token,
-            settings.SECRET_KEY,
-            algorithms=[ALGORITHM]
-        )
+        decoded = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         assert decoded.get("type") == "refresh"
         assert decoded.get("sub") == str(admin_user.id)
 
@@ -919,8 +897,7 @@ class TestTokenSecurity:
         # Try to use refresh token to access a protected endpoint
         # This MUST fail - refresh tokens should only work at /refresh
         response = client.get(
-            "/api/auth/me",
-            headers={"Authorization": f"Bearer {refresh_token}"}
+            "/api/auth/me", headers={"Authorization": f"Bearer {refresh_token}"}
         )
 
         # Must be rejected - refresh tokens cannot substitute for access tokens
@@ -980,9 +957,7 @@ class TestAuthEdgeCases:
 
         assert response.status_code == 200
 
-    def test_login_with_unicode_characters(
-        self, client: TestClient, db: Session
-    ):
+    def test_login_with_unicode_characters(self, client: TestClient, db: Session):
         """Test login with unicode characters in username."""
         # Create user with unicode username
         user = User(
@@ -1015,9 +990,9 @@ class TestAuthEdgeCases:
                 "username": long_username,
                 "email": "longuser@test.org",
                 "password": "password123",
-                "role": "coordinator"
+                "role": "coordinator",
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         # Should fail validation or database constraint
@@ -1034,9 +1009,9 @@ class TestAuthEdgeCases:
                 "username": "concurrent",
                 "email": "concurrent1@test.org",
                 "password": "password123",
-                "role": "coordinator"
+                "role": "coordinator",
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         # Second registration with same username
@@ -1046,9 +1021,9 @@ class TestAuthEdgeCases:
                 "username": "concurrent",
                 "email": "concurrent2@test.org",
                 "password": "password123",
-                "role": "coordinator"
+                "role": "coordinator",
             },
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         # One should succeed, one should fail
@@ -1090,18 +1065,14 @@ class TestAuthEdgeCases:
 
     def test_empty_authorization_header(self, client: TestClient):
         """Test request with empty Authorization header."""
-        response = client.get(
-            "/api/auth/me",
-            headers={"Authorization": ""}
-        )
+        response = client.get("/api/auth/me", headers={"Authorization": ""})
 
         assert response.status_code == 401
 
     def test_malformed_authorization_header(self, client: TestClient):
         """Test request with malformed Authorization header."""
         response = client.get(
-            "/api/auth/me",
-            headers={"Authorization": "NotBearer token123"}
+            "/api/auth/me", headers={"Authorization": "NotBearer token123"}
         )
 
         assert response.status_code == 401
@@ -1162,7 +1133,7 @@ class TestRefreshTokenEndpoint:
         # Create an expired refresh token
         expired_token, _, _ = create_refresh_token(
             data={"sub": str(admin_user.id), "username": admin_user.username},
-            expires_delta=timedelta(seconds=-1)  # Already expired
+            expires_delta=timedelta(seconds=-1),  # Already expired
         )
 
         response = client.post(
@@ -1172,7 +1143,9 @@ class TestRefreshTokenEndpoint:
 
         assert response.status_code == 401
 
-    def test_refresh_with_access_token_fails(self, client: TestClient, admin_user: User):
+    def test_refresh_with_access_token_fails(
+        self, client: TestClient, admin_user: User
+    ):
         """Test that refresh fails when given an access token instead of refresh token."""
         # Create an access token (wrong type)
         access_token, _, _ = create_access_token(
@@ -1206,9 +1179,7 @@ class TestRefreshTokenEndpoint:
 
         # Decode to get the JTI
         decoded = jwt.decode(
-            original_refresh_token,
-            settings.SECRET_KEY,
-            algorithms=[ALGORITHM]
+            original_refresh_token, settings.SECRET_KEY, algorithms=[ALGORITHM]
         )
         original_jti = decoded["jti"]
 
@@ -1220,9 +1191,9 @@ class TestRefreshTokenEndpoint:
         assert response.status_code == 200
 
         # Verify the original token's JTI is now blacklisted
-        blacklisted = db.query(TokenBlacklist).filter(
-            TokenBlacklist.jti == original_jti
-        ).first()
+        blacklisted = (
+            db.query(TokenBlacklist).filter(TokenBlacklist.jti == original_jti).first()
+        )
         assert blacklisted is not None
         assert blacklisted.reason == "refresh_rotation"
 
@@ -1335,15 +1306,13 @@ class TestRefreshTokenEndpoint:
         refresh_token = response.json()["refresh_token"]
 
         # Decode and verify type
-        decoded = jwt.decode(
-            refresh_token,
-            settings.SECRET_KEY,
-            algorithms=[ALGORITHM]
-        )
+        decoded = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[ALGORITHM])
 
         assert decoded.get("type") == "refresh"
 
-    def test_refresh_sets_access_token_cookie(self, client: TestClient, admin_user: User):
+    def test_refresh_sets_access_token_cookie(
+        self, client: TestClient, admin_user: User
+    ):
         """Test that refresh endpoint sets httpOnly cookie with new access token."""
         # Login to get refresh token
         response = client.post(
@@ -1431,14 +1400,22 @@ class TestRefreshTokenEndpoint:
         # All previous tokens (except the latest) should be blacklisted
         for token in tokens_used[:-1]:
             decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
-            blacklisted = db.query(TokenBlacklist).filter(
-                TokenBlacklist.jti == decoded["jti"]
-            ).first()
-            assert blacklisted is not None, f"Token with JTI {decoded['jti']} should be blacklisted"
+            blacklisted = (
+                db.query(TokenBlacklist)
+                .filter(TokenBlacklist.jti == decoded["jti"])
+                .first()
+            )
+            assert blacklisted is not None, (
+                f"Token with JTI {decoded['jti']} should be blacklisted"
+            )
 
         # Latest token should not be blacklisted yet
-        latest_decoded = jwt.decode(tokens_used[-1], settings.SECRET_KEY, algorithms=[ALGORITHM])
-        latest_blacklisted = db.query(TokenBlacklist).filter(
-            TokenBlacklist.jti == latest_decoded["jti"]
-        ).first()
+        latest_decoded = jwt.decode(
+            tokens_used[-1], settings.SECRET_KEY, algorithms=[ALGORITHM]
+        )
+        latest_blacklisted = (
+            db.query(TokenBlacklist)
+            .filter(TokenBlacklist.jti == latest_decoded["jti"])
+            .first()
+        )
         assert latest_blacklisted is None, "Latest token should not be blacklisted"

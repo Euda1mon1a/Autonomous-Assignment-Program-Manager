@@ -20,7 +20,6 @@ References:
       and Structures, 30(21), 3025-3035.
 """
 
-from typing import Dict, List, Tuple, Optional
 import numpy as np
 from scipy import sparse
 from scipy.sparse import linalg as sp_linalg
@@ -59,14 +58,11 @@ class TensegritySolver:
 
     def __init__(self):
         """Initialize an empty tensegrity solver."""
-        self.nodes: Dict[str, dict] = {}
-        self.edges: List[Tuple[str, str, float, str]] = []
+        self.nodes: dict[str, dict] = {}
+        self.edges: list[tuple[str, str, float, str]] = []
 
     def add_node(
-        self,
-        node_id: str,
-        initial_position: float = 0.0,
-        is_anchor: bool = False
+        self, node_id: str, initial_position: float = 0.0, is_anchor: bool = False
     ) -> None:
         """
         Add a node (task/event) to the structure.
@@ -88,16 +84,11 @@ class TensegritySolver:
             raise ValueError(f"Node '{node_id}' already exists")
 
         self.nodes[node_id] = {
-            'position': float(initial_position),
-            'is_anchor': bool(is_anchor),
+            "position": float(initial_position),
+            "is_anchor": bool(is_anchor),
         }
 
-    def add_tension_element(
-        self,
-        node1: str,
-        node2: str,
-        force_density: float
-    ) -> None:
+    def add_tension_element(self, node1: str, node2: str, force_density: float) -> None:
         """
         Add a tension element (cable) between two nodes.
 
@@ -124,13 +115,10 @@ class TensegritySolver:
         if force_density < 0:
             raise ValueError("Tension force density must be non-negative")
 
-        self.edges.append((node1, node2, float(force_density), 'tension'))
+        self.edges.append((node1, node2, float(force_density), "tension"))
 
     def add_compression_element(
-        self,
-        node1: str,
-        node2: str,
-        force_density: float
+        self, node1: str, node2: str, force_density: float
     ) -> None:
         """
         Add a compression element (strut) between two nodes.
@@ -162,7 +150,7 @@ class TensegritySolver:
         if force_density < 0:
             raise ValueError("Compression force density must be non-negative")
 
-        self.edges.append((node1, node2, float(force_density), 'compression'))
+        self.edges.append((node1, node2, float(force_density), "compression"))
 
     def build_force_density_matrix(self) -> sparse.csr_matrix:
         """
@@ -199,7 +187,7 @@ class TensegritySolver:
 
             # For compression elements, we negate the force density
             # This creates repulsive forces that push nodes apart
-            q_effective = -q if edge_type == 'compression' else q
+            q_effective = -q if edge_type == "compression" else q
 
             # Off-diagonal: -q_ij
             F[i, j] -= q_effective
@@ -229,7 +217,7 @@ class TensegritySolver:
         n = len(self.nodes)
         return np.zeros(n, dtype=float)
 
-    def solve(self) -> Dict[str, float]:
+    def solve(self) -> dict[str, float]:
         """
         Solve for equilibrium positions using Force Density Method.
 
@@ -268,12 +256,16 @@ class TensegritySolver:
 
         # Separate free and anchor nodes
         node_ids = list(self.nodes.keys())
-        free_indices = [i for i, nid in enumerate(node_ids) if not self.nodes[nid]['is_anchor']]
-        anchor_indices = [i for i, nid in enumerate(node_ids) if self.nodes[nid]['is_anchor']]
+        free_indices = [
+            i for i, nid in enumerate(node_ids) if not self.nodes[nid]["is_anchor"]
+        ]
+        anchor_indices = [
+            i for i, nid in enumerate(node_ids) if self.nodes[nid]["is_anchor"]
+        ]
 
         # If no free nodes, return anchor positions
         if not free_indices:
-            return {nid: self.nodes[nid]['position'] for nid in node_ids}
+            return {nid: self.nodes[nid]["position"] for nid in node_ids}
 
         # Extract submatrices
         # F_ff: free-to-free coupling
@@ -285,7 +277,9 @@ class TensegritySolver:
             F_fa = F[np.ix_(free_indices, anchor_indices)]
 
             # x_a: anchor positions
-            x_a = np.array([self.nodes[node_ids[i]]['position'] for i in anchor_indices])
+            x_a = np.array(
+                [self.nodes[node_ids[i]]["position"] for i in anchor_indices]
+            )
 
             # p_f = -F_fa · x_a
             p_f = -F_fa.dot(x_a)
@@ -303,15 +297,15 @@ class TensegritySolver:
         # Combine free and anchor solutions
         solution = {}
         for i, node_id in enumerate(node_ids):
-            if self.nodes[node_id]['is_anchor']:
-                solution[node_id] = self.nodes[node_id]['position']
+            if self.nodes[node_id]["is_anchor"]:
+                solution[node_id] = self.nodes[node_id]["position"]
             else:
                 free_idx = free_indices.index(i)
                 solution[node_id] = float(x_f[free_idx])
 
         return solution
 
-    def is_stable(self, solution: Optional[Dict[str, float]] = None) -> bool:
+    def is_stable(self, solution: dict[str, float] | None = None) -> bool:
         """
         Check if the solution represents a valid stable configuration.
 
@@ -349,7 +343,7 @@ class TensegritySolver:
         # Check causality for tension elements (dependencies)
         # Tension should maintain order constraints
         for node1, node2, q, edge_type in self.edges:
-            if edge_type == 'tension' and q > 0:
+            if edge_type == "tension" and q > 0:
                 # For high tension, expect nodes to be close
                 # This is a soft check - just verify positions are reasonable
                 pos1 = solution[node1]
@@ -361,9 +355,8 @@ class TensegritySolver:
         return True
 
     def get_internal_forces(
-        self,
-        solution: Optional[Dict[str, float]] = None
-    ) -> Dict[Tuple[str, str], float]:
+        self, solution: dict[str, float] | None = None
+    ) -> dict[tuple[str, str], float]:
         """
         Calculate internal member forces for the equilibrium configuration.
 
@@ -395,14 +388,14 @@ class TensegritySolver:
 
             # F = q · (x2 - x1)
             # For compression elements, q was already negated in the matrix
-            q_effective = -q if edge_type == 'compression' else q
+            q_effective = -q if edge_type == "compression" else q
             force = q_effective * (x2 - x1)
 
             forces[(node1, node2)] = force
 
         return forces
 
-    def to_schedule(self, solution: Dict[str, float]) -> List[Dict]:
+    def to_schedule(self, solution: dict[str, float]) -> list[dict]:
         """
         Convert equilibrium positions to schedule format.
 
@@ -420,24 +413,28 @@ class TensegritySolver:
         """
         schedule = []
         for node_id, position in solution.items():
-            if not self.nodes[node_id]['is_anchor']:
-                schedule.append({
-                    'task_id': node_id,
-                    'scheduled_time': position,
-                    'is_fixed': False,
-                })
+            if not self.nodes[node_id]["is_anchor"]:
+                schedule.append(
+                    {
+                        "task_id": node_id,
+                        "scheduled_time": position,
+                        "is_fixed": False,
+                    }
+                )
             else:
-                schedule.append({
-                    'task_id': node_id,
-                    'scheduled_time': position,
-                    'is_fixed': True,
-                })
+                schedule.append(
+                    {
+                        "task_id": node_id,
+                        "scheduled_time": position,
+                        "is_fixed": True,
+                    }
+                )
 
         # Sort by time
-        schedule.sort(key=lambda x: x['scheduled_time'])
+        schedule.sort(key=lambda x: x["scheduled_time"])
         return schedule
 
-    def visualize(self, solution: Dict[str, float]) -> str:
+    def visualize(self, solution: dict[str, float]) -> str:
         """
         Create an ASCII visualization of the structure.
 
@@ -466,7 +463,7 @@ class TensegritySolver:
         # Node listing
         lines.append("Nodes (sorted by time):")
         for node_id, position in sorted_nodes:
-            anchor_mark = "[ANCHOR]" if self.nodes[node_id]['is_anchor'] else ""
+            anchor_mark = "[ANCHOR]" if self.nodes[node_id]["is_anchor"] else ""
             lines.append(f"  {position:6.2f}h  {node_id:20s} {anchor_mark}")
 
         lines.append("")
@@ -476,11 +473,11 @@ class TensegritySolver:
         for node1, node2, q, edge_type in self.edges:
             pos1 = solution[node1]
             pos2 = solution[node2]
-            symbol = "(T)" if edge_type == 'tension' else "(C)"
+            symbol = "(T)" if edge_type == "tension" else "(C)"
             force = q * (pos2 - pos1)
             lines.append(
                 f"  {node1:15s} {symbol} {node2:15s} | "
-                f"q={q:.2f}, Δt={abs(pos2-pos1):.2f}h, F={force:.2f}"
+                f"q={q:.2f}, Δt={abs(pos2 - pos1):.2f}h, F={force:.2f}"
             )
 
         lines.append("")
@@ -499,13 +496,12 @@ class TensegritySolver:
                 pos_on_line = int(normalized * (width - 1))
 
                 # Build timeline string
-                timeline = ['-'] * width
-                timeline[pos_on_line] = '*'
+                timeline = ["-"] * width
+                timeline[pos_on_line] = "*"
 
-                anchor_mark = 'A' if self.nodes[node_id]['is_anchor'] else ' '
+                anchor_mark = "A" if self.nodes[node_id]["is_anchor"] else " "
                 lines.append(
-                    f"  {position:6.2f}h [{anchor_mark}] "
-                    f"{''.join(timeline)} {node_id}"
+                    f"  {position:6.2f}h [{anchor_mark}] {''.join(timeline)} {node_id}"
                 )
 
-        return '\n'.join(lines)
+        return "\n".join(lines)

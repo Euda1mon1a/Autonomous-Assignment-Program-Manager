@@ -12,15 +12,16 @@ Features:
 - Statistics tracking for cache performance
 - Graceful degradation when Redis is unavailable
 """
+
 import functools
 import hashlib
-import json
 import logging
 import pickle
-from datetime import date, datetime, timedelta
+from collections.abc import Callable
+from datetime import date, datetime
 from enum import Enum
 from threading import RLock
-from typing import Any, Callable, TypeVar, ParamSpec
+from typing import Any, ParamSpec, TypeVar
 from uuid import UUID
 
 import redis
@@ -255,7 +256,9 @@ class ServiceCache:
                 if cursor == 0:
                     break
 
-            logger.info(f"Invalidated {deleted_count} cache entries matching '{pattern}'")
+            logger.info(
+                f"Invalidated {deleted_count} cache entries matching '{pattern}'"
+            )
             return deleted_count
 
         except RedisError as e:
@@ -348,6 +351,7 @@ class ServiceCache:
             def get_heatmap(db, start_date: date, end_date: date) -> dict:
                 return {...}
         """
+
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @functools.wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
@@ -399,7 +403,7 @@ class ServiceCache:
         # Process positional arguments (skip 'self' and db session)
         for i, arg in enumerate(args):
             # Skip SQLAlchemy Session and 'self' reference
-            if hasattr(arg, 'execute') or hasattr(arg, '__self__'):
+            if hasattr(arg, "execute") or hasattr(arg, "__self__"):
                 continue
             key_parts.append(self._serialize_arg(arg))
 
@@ -407,7 +411,7 @@ class ServiceCache:
         for k in sorted(kwargs.keys()):
             v = kwargs[k]
             # Skip db session
-            if k == 'db' or hasattr(v, 'execute'):
+            if k == "db" or hasattr(v, "execute"):
                 continue
             key_parts.append(f"{k}={self._serialize_arg(v)}")
 

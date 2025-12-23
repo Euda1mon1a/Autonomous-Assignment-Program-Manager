@@ -6,6 +6,7 @@ Tests cover:
 - ConstraintManager composition
 - Solver integration
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -34,9 +35,13 @@ from app.scheduling.constraints import (
 # Test Fixtures
 # ============================================================================
 
+
 class MockPerson:
     """Mock person for testing."""
-    def __init__(self, id=None, name="Test Person", person_type="resident", pgy_level=1):
+
+    def __init__(
+        self, id=None, name="Test Person", person_type="resident", pgy_level=1
+    ):
         self.id = id or uuid4()
         self.name = name
         self.type = person_type
@@ -45,6 +50,7 @@ class MockPerson:
 
 class MockBlock:
     """Mock block for testing."""
+
     def __init__(self, id=None, block_date=None, time_of_day="AM", is_weekend=False):
         self.id = id or uuid4()
         self.date = block_date or date.today()
@@ -54,6 +60,7 @@ class MockBlock:
 
 class MockAssignment:
     """Mock assignment for testing."""
+
     def __init__(self, person_id, block_id, role="primary", rotation_template_id=None):
         self.id = uuid4()
         self.person_id = person_id
@@ -64,7 +71,15 @@ class MockAssignment:
 
 class MockTemplate:
     """Mock rotation template for testing."""
-    def __init__(self, id=None, name="Test Rotation", max_residents=None, requires_procedure_credential=False, activity_type=None):
+
+    def __init__(
+        self,
+        id=None,
+        name="Test Rotation",
+        max_residents=None,
+        requires_procedure_credential=False,
+        activity_type=None,
+    ):
         self.id = id or uuid4()
         self.name = name
         self.max_residents = max_residents
@@ -92,11 +107,13 @@ def sample_context():
         block_date = start_date + timedelta(days=day_offset)
         is_weekend = block_date.weekday() >= 5
         for tod in ["AM", "PM"]:
-            blocks.append(MockBlock(
-                block_date=block_date,
-                time_of_day=tod,
-                is_weekend=is_weekend,
-            ))
+            blocks.append(
+                MockBlock(
+                    block_date=block_date,
+                    time_of_day=tod,
+                    is_weekend=is_weekend,
+                )
+            )
 
     templates = [MockTemplate(name="Clinic")]
 
@@ -126,6 +143,7 @@ def sample_context():
 # ============================================================================
 # Availability Constraint Tests
 # ============================================================================
+
 
 class TestAvailabilityConstraint:
     """Tests for AvailabilityConstraint."""
@@ -160,9 +178,7 @@ class TestAvailabilityConstraint:
         }
 
         # Create invalid assignment
-        assignments = [
-            MockAssignment(person_id=resident.id, block_id=block.id)
-        ]
+        assignments = [MockAssignment(person_id=resident.id, block_id=block.id)]
 
         result = constraint.validate(assignments, sample_context)
 
@@ -174,6 +190,7 @@ class TestAvailabilityConstraint:
 # ============================================================================
 # One Person Per Block Constraint Tests
 # ============================================================================
+
 
 class TestOnePersonPerBlockConstraint:
     """Tests for OnePersonPerBlockConstraint."""
@@ -222,6 +239,7 @@ class TestOnePersonPerBlockConstraint:
 # 80-Hour Rule Constraint Tests
 # ============================================================================
 
+
 class TestEightyHourRuleConstraint:
     """Tests for EightyHourRuleConstraint."""
 
@@ -247,6 +265,7 @@ class TestEightyHourRuleConstraint:
 # ============================================================================
 # 1-in-7 Rule Constraint Tests
 # ============================================================================
+
 
 class TestOneInSevenRuleConstraint:
     """Tests for OneInSevenRuleConstraint."""
@@ -277,6 +296,7 @@ class TestOneInSevenRuleConstraint:
 # ============================================================================
 # Supervision Ratio Constraint Tests
 # ============================================================================
+
 
 class TestSupervisionRatioConstraint:
     """Tests for SupervisionRatioConstraint."""
@@ -336,6 +356,7 @@ class TestSupervisionRatioConstraint:
 # Equity Constraint Tests
 # ============================================================================
 
+
 class TestEquityConstraint:
     """Tests for EquityConstraint (soft constraint)."""
 
@@ -347,10 +368,12 @@ class TestEquityConstraint:
         assignments = []
         for i, block in enumerate(sample_context.blocks[:6]):
             resident_idx = i % len(sample_context.residents)
-            assignments.append(MockAssignment(
-                person_id=sample_context.residents[resident_idx].id,
-                block_id=block.id,
-            ))
+            assignments.append(
+                MockAssignment(
+                    person_id=sample_context.residents[resident_idx].id,
+                    block_id=block.id,
+                )
+            )
 
         result = constraint.validate(assignments, sample_context)
 
@@ -379,6 +402,7 @@ class TestEquityConstraint:
 # Coverage Constraint Tests
 # ============================================================================
 
+
 class TestCoverageConstraint:
     """Tests for CoverageConstraint (soft constraint)."""
 
@@ -389,7 +413,9 @@ class TestCoverageConstraint:
         workday_blocks = [b for b in sample_context.blocks if not b.is_weekend]
         assignments = [
             MockAssignment(
-                person_id=sample_context.residents[i % len(sample_context.residents)].id,
+                person_id=sample_context.residents[
+                    i % len(sample_context.residents)
+                ].id,
                 block_id=block.id,
             )
             for i, block in enumerate(workday_blocks)
@@ -426,6 +452,7 @@ class TestCoverageConstraint:
 # ConstraintManager Tests
 # ============================================================================
 
+
 class TestConstraintManager:
     """Tests for ConstraintManager composition."""
 
@@ -443,7 +470,9 @@ class TestConstraintManager:
         manager = ConstraintManager.create_minimal()
 
         # Should have fewer constraints
-        assert len(manager.constraints) < len(ConstraintManager.create_default().constraints)
+        assert len(manager.constraints) < len(
+            ConstraintManager.create_default().constraints
+        )
 
     def test_add_and_remove_constraints(self):
         """Test adding and removing constraints."""
@@ -509,6 +538,7 @@ class TestConstraintManager:
 # Priority and Type Tests
 # ============================================================================
 
+
 class TestConstraintPriorityAndType:
     """Tests for constraint priority and type enums."""
 
@@ -537,6 +567,7 @@ class TestConstraintPriorityAndType:
 # Integration Tests
 # ============================================================================
 
+
 class TestConstraintIntegration:
     """Integration tests for constraint system."""
 
@@ -551,19 +582,23 @@ class TestConstraintIntegration:
         for i, block in enumerate(workday_blocks):
             # Rotate through residents
             resident = sample_context.residents[i % len(sample_context.residents)]
-            assignments.append(MockAssignment(
-                person_id=resident.id,
-                block_id=block.id,
-                role="primary",
-            ))
+            assignments.append(
+                MockAssignment(
+                    person_id=resident.id,
+                    block_id=block.id,
+                    role="primary",
+                )
+            )
 
             # Add faculty supervision
             faculty = sample_context.faculty[i % len(sample_context.faculty)]
-            assignments.append(MockAssignment(
-                person_id=faculty.id,
-                block_id=block.id,
-                role="supervising",
-            ))
+            assignments.append(
+                MockAssignment(
+                    person_id=faculty.id,
+                    block_id=block.id,
+                    role="supervising",
+                )
+            )
 
         result = manager.validate_all(assignments, sample_context)
 
@@ -576,6 +611,7 @@ class TestConstraintIntegration:
 # Max Physicians In Clinic Constraint Tests
 # ============================================================================
 
+
 class TestMaxPhysiciansInClinicConstraint:
     """Tests for MaxPhysiciansInClinicConstraint."""
 
@@ -583,8 +619,7 @@ class TestMaxPhysiciansInClinicConstraint:
     def clinic_context(self):
         """Create a context with clinic templates for testing."""
         residents = [
-            MockPerson(name=f"Resident {i}", pgy_level=(i % 3) + 1)
-            for i in range(8)
+            MockPerson(name=f"Resident {i}", pgy_level=(i % 3) + 1) for i in range(8)
         ]
         faculty = [
             MockPerson(name=f"Faculty {i}", person_type="faculty", pgy_level=None)
@@ -615,7 +650,10 @@ class TestMaxPhysiciansInClinicConstraint:
         for person in residents + faculty:
             context.availability[person.id] = {}
             for b in blocks:
-                context.availability[person.id][b.id] = {"available": True, "replacement": None}
+                context.availability[person.id][b.id] = {
+                    "available": True,
+                    "replacement": None,
+                }
 
         return context, clinic_template
 
@@ -781,6 +819,7 @@ class TestMaxPhysiciansInClinicConstraint:
 # Wednesday AM Intern Only Constraint Tests
 # ============================================================================
 
+
 class TestWednesdayAMInternOnlyConstraint:
     """Tests for WednesdayAMInternOnlyConstraint."""
 
@@ -827,7 +866,10 @@ class TestWednesdayAMInternOnlyConstraint:
         for person in residents + faculty:
             context.availability[person.id] = {}
             for b in blocks:
-                context.availability[person.id][b.id] = {"available": True, "replacement": None}
+                context.availability[person.id][b.id] = {
+                    "available": True,
+                    "replacement": None,
+                }
 
         return context, clinic_template
 
@@ -837,7 +879,9 @@ class TestWednesdayAMInternOnlyConstraint:
         constraint = WednesdayAMInternOnlyConstraint()
 
         # Find Wednesday AM block
-        wed_am_block = [b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"][0]
+        wed_am_block = [
+            b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"
+        ][0]
 
         # Assign intern to Wednesday AM clinic
         intern = [r for r in context.residents if r.pgy_level == 1][0]
@@ -860,7 +904,9 @@ class TestWednesdayAMInternOnlyConstraint:
         constraint = WednesdayAMInternOnlyConstraint()
 
         # Find Wednesday AM block
-        wed_am_block = [b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"][0]
+        wed_am_block = [
+            b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"
+        ][0]
 
         # Assign PGY-2 to Wednesday AM clinic
         pgy2 = [r for r in context.residents if r.pgy_level == 2][0]
@@ -885,7 +931,9 @@ class TestWednesdayAMInternOnlyConstraint:
         constraint = WednesdayAMInternOnlyConstraint()
 
         # Find Wednesday AM block
-        wed_am_block = [b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"][0]
+        wed_am_block = [
+            b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"
+        ][0]
 
         # Assign PGY-3 to Wednesday AM clinic
         pgy3 = [r for r in context.residents if r.pgy_level == 3][0]
@@ -909,7 +957,9 @@ class TestWednesdayAMInternOnlyConstraint:
         constraint = WednesdayAMInternOnlyConstraint()
 
         # Find Wednesday PM block
-        wed_pm_block = [b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "PM"][0]
+        wed_pm_block = [
+            b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "PM"
+        ][0]
 
         # Assign PGY-2 to Wednesday PM clinic (should be allowed)
         pgy2 = [r for r in context.residents if r.pgy_level == 2][0]
@@ -932,7 +982,9 @@ class TestWednesdayAMInternOnlyConstraint:
         constraint = WednesdayAMInternOnlyConstraint()
 
         # Find Monday AM block
-        mon_am_block = [b for b in context.blocks if b.date.weekday() == 0 and b.time_of_day == "AM"][0]
+        mon_am_block = [
+            b for b in context.blocks if b.date.weekday() == 0 and b.time_of_day == "AM"
+        ][0]
 
         # Assign PGY-2 to Monday AM clinic (should be allowed)
         pgy2 = [r for r in context.residents if r.pgy_level == 2][0]
@@ -955,7 +1007,9 @@ class TestWednesdayAMInternOnlyConstraint:
         constraint = WednesdayAMInternOnlyConstraint()
 
         # Find Wednesday AM block
-        wed_am_block = [b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"][0]
+        wed_am_block = [
+            b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"
+        ][0]
 
         # Assign faculty to Wednesday AM clinic
         faculty = context.faculty[0]
@@ -984,7 +1038,9 @@ class TestWednesdayAMInternOnlyConstraint:
         context.template_idx[research_template.id] = len(context.templates) - 1
 
         # Find Wednesday AM block
-        wed_am_block = [b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"][0]
+        wed_am_block = [
+            b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"
+        ][0]
 
         # Assign PGY-2 to Wednesday AM research (not clinic - should be allowed)
         pgy2 = [r for r in context.residents if r.pgy_level == 2][0]
@@ -1007,7 +1063,9 @@ class TestWednesdayAMInternOnlyConstraint:
         constraint = WednesdayAMInternOnlyConstraint()
 
         # Find Wednesday AM block
-        wed_am_block = [b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"][0]
+        wed_am_block = [
+            b for b in context.blocks if b.date.weekday() == 2 and b.time_of_day == "AM"
+        ][0]
 
         # Assign both PGY-2 and PGY-3 to Wednesday AM clinic
         pgy2 = [r for r in context.residents if r.pgy_level == 2][0]

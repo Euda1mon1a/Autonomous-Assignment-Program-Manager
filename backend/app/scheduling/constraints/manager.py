@@ -18,20 +18,19 @@ Classes:
 import logging
 from typing import Any
 
-from .base import (
-    Constraint,
-    ConstraintResult,
-    HardConstraint,
-    SchedulingContext,
-    SoftConstraint,
-)
-
 # Import all constraint classes
 from .acgme import (
     AvailabilityConstraint,
     EightyHourRuleConstraint,
     OneInSevenRuleConstraint,
     SupervisionRatioConstraint,
+)
+from .base import (
+    Constraint,
+    ConstraintResult,
+    HardConstraint,
+    SchedulingContext,
+    SoftConstraint,
 )
 from .capacity import (
     ClinicCapacityConstraint,
@@ -40,6 +39,7 @@ from .capacity import (
     OnePersonPerBlockConstraint,
 )
 from .equity import ContinuityConstraint, EquityConstraint
+from .night_float_post_call import NightFloatPostCallConstraint
 from .resilience import (
     HubProtectionConstraint,
     N1VulnerabilityConstraint,
@@ -52,7 +52,6 @@ from .temporal import (
     WednesdayAMInternOnlyConstraint,
     WednesdayPMSingleFacultyConstraint,
 )
-from .night_float_post_call import NightFloatPostCallConstraint
 
 logger = logging.getLogger(__name__)
 

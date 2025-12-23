@@ -1,4 +1,5 @@
 """Tests for faculty portal API routes."""
+
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
@@ -9,7 +10,9 @@ from fastapi.testclient import TestClient
 class TestMyScheduleEndpoint:
     """Tests for GET /api/portal/my/schedule endpoint."""
 
-    def test_get_my_schedule_success(self, client: TestClient, faculty_auth_headers: dict):
+    def test_get_my_schedule_success(
+        self, client: TestClient, faculty_auth_headers: dict
+    ):
         """Test getting current user's schedule."""
         response = client.get(
             "/api/portal/my/schedule",
@@ -23,7 +26,9 @@ class TestMyScheduleEndpoint:
         assert "fmit_weeks" in data
         assert "total_weeks_assigned" in data
 
-    def test_get_my_schedule_no_faculty_profile(self, client: TestClient, auth_headers: dict):
+    def test_get_my_schedule_no_faculty_profile(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test schedule when user has no faculty profile."""
         response = client.get(
             "/api/portal/my/schedule",
@@ -41,7 +46,12 @@ class TestMyScheduleEndpoint:
             response = client.get("/api/portal/my/schedule")
 
     def test_get_my_schedule_with_conflicts(
-        self, client: TestClient, faculty_auth_headers: dict, db, sample_faculty, fmit_week_with_conflict
+        self,
+        client: TestClient,
+        faculty_auth_headers: dict,
+        db,
+        sample_faculty,
+        fmit_week_with_conflict,
     ):
         """Test schedule shows conflict information from conflict_alerts table."""
         response = client.get(
@@ -56,9 +66,7 @@ class TestMyScheduleEndpoint:
         fmit_weeks = data.get("fmit_weeks", [])
         if fmit_weeks:
             # At least one week should have conflict information available
-            has_conflict_info = any(
-                "has_conflict" in week for week in fmit_weeks
-            )
+            has_conflict_info = any("has_conflict" in week for week in fmit_weeks)
             assert has_conflict_info
 
 
@@ -95,7 +103,9 @@ class TestMySwapsEndpoint:
         assert "success" in data
         assert "message" in data
 
-    def test_create_swap_request_with_target(self, client: TestClient, faculty_auth_headers: dict, sample_faculty):
+    def test_create_swap_request_with_target(
+        self, client: TestClient, faculty_auth_headers: dict, sample_faculty
+    ):
         """Test creating swap request with specific target."""
         response = client.post(
             "/api/portal/my/swaps",
@@ -110,7 +120,11 @@ class TestMySwapsEndpoint:
         assert response.status_code == 200
 
     def test_create_swap_request_notifies_candidates(
-        self, client: TestClient, faculty_auth_headers: dict, db, candidate_faculty_with_prefs
+        self,
+        client: TestClient,
+        faculty_auth_headers: dict,
+        db,
+        candidate_faculty_with_prefs,
     ):
         """Test that creating swap request with auto_find_candidates sends notifications."""
         response = client.post(
@@ -133,7 +147,9 @@ class TestMySwapsEndpoint:
 class TestSwapRespondEndpoint:
     """Tests for POST /api/portal/my/swaps/{swap_id}/respond endpoint."""
 
-    def test_respond_to_swap_not_found(self, client: TestClient, faculty_auth_headers: dict):
+    def test_respond_to_swap_not_found(
+        self, client: TestClient, faculty_auth_headers: dict
+    ):
         """Test responding to non-existent swap."""
         response = client.post(
             f"/api/portal/my/swaps/{uuid4()}/respond",
@@ -144,7 +160,9 @@ class TestSwapRespondEndpoint:
         # Should indicate swap not implemented or not found
         assert response.status_code == 200
 
-    def test_respond_with_counter_offer(self, client: TestClient, faculty_auth_headers: dict):
+    def test_respond_with_counter_offer(
+        self, client: TestClient, faculty_auth_headers: dict
+    ):
         """Test responding with counter offer."""
         response = client.post(
             f"/api/portal/my/swaps/{uuid4()}/respond",
@@ -193,7 +211,9 @@ class TestMyPreferencesEndpoint:
         assert data["max_weeks_per_month"] == 1
         assert data["notify_swap_requests"] is False
 
-    def test_update_preferences_partial(self, client: TestClient, faculty_auth_headers: dict):
+    def test_update_preferences_partial(
+        self, client: TestClient, faculty_auth_headers: dict
+    ):
         """Test partial preference update."""
         response = client.put(
             "/api/portal/my/preferences",
@@ -303,21 +323,24 @@ def faculty_auth_headers(client: TestClient, faculty_user) -> dict:
 @pytest.fixture
 def fmit_week_with_conflict(db, sample_faculty):
     """Create a conflict alert for testing."""
-    from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus, ConflictSeverity, ConflictType
-    from app.models.block import Block
-    from app.models.rotation_template import RotationTemplate
     from app.models.assignment import Assignment
+    from app.models.block import Block
+    from app.models.conflict_alert import (
+        ConflictAlert,
+        ConflictAlertStatus,
+        ConflictSeverity,
+        ConflictType,
+    )
+    from app.models.rotation_template import RotationTemplate
 
     # Create FMIT rotation template
-    fmit_template = db.query(RotationTemplate).filter(
-        RotationTemplate.name == "FMIT"
-    ).first()
+    fmit_template = (
+        db.query(RotationTemplate).filter(RotationTemplate.name == "FMIT").first()
+    )
 
     if not fmit_template:
         fmit_template = RotationTemplate(
-            id=uuid4(),
-            name="FMIT",
-            description="Faculty Member In Training"
+            id=uuid4(), name="FMIT", description="Faculty Member In Training"
         )
         db.add(fmit_template)
         db.commit()
@@ -326,11 +349,7 @@ def fmit_week_with_conflict(db, sample_faculty):
     next_week = date.today() + timedelta(days=7)
     next_week_start = next_week - timedelta(days=next_week.weekday())  # Get Monday
 
-    block = Block(
-        id=uuid4(),
-        date=next_week_start,
-        year=next_week_start.year
-    )
+    block = Block(id=uuid4(), date=next_week_start, year=next_week_start.year)
     db.add(block)
     db.commit()
 
@@ -339,7 +358,7 @@ def fmit_week_with_conflict(db, sample_faculty):
         id=uuid4(),
         person_id=sample_faculty.id,
         block_id=block.id,
-        rotation_template_id=fmit_template.id
+        rotation_template_id=fmit_template.id,
     )
     db.add(assignment)
     db.commit()
@@ -353,7 +372,7 @@ def fmit_week_with_conflict(db, sample_faculty):
         fmit_week=next_week_start,
         status=ConflictAlertStatus.NEW,
         description="Leave request overlaps with FMIT week",
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
     )
     db.add(conflict)
     db.commit()
@@ -364,15 +383,12 @@ def fmit_week_with_conflict(db, sample_faculty):
 @pytest.fixture
 def candidate_faculty_with_prefs(db):
     """Create a candidate faculty with notification preferences enabled."""
-    from app.models.person import Person
     from app.models.faculty_preference import FacultyPreference
+    from app.models.person import Person
 
     # Create a candidate faculty member
     candidate = Person(
-        id=uuid4(),
-        name="Candidate Faculty",
-        email="candidate@test.org",
-        type="faculty"
+        id=uuid4(), name="Candidate Faculty", email="candidate@test.org", type="faculty"
     )
     db.add(candidate)
     db.commit()
@@ -385,7 +401,7 @@ def candidate_faculty_with_prefs(db):
         notify_schedule_changes=True,
         notify_conflict_alerts=True,
         target_weeks_per_year=6,
-        updated_at=datetime.utcnow()
+        updated_at=datetime.utcnow(),
     )
     db.add(prefs)
     db.commit()

@@ -14,13 +14,14 @@ Classes:
     - SoftConstraint: Base class for soft constraints (optimization objectives)
     - SchedulingContext: Context object containing all scheduling data
 """
+
 import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -28,14 +29,16 @@ logger = logging.getLogger(__name__)
 
 class ConstraintPriority(Enum):
     """Priority levels for constraints."""
+
     CRITICAL = 100  # ACGME compliance, must satisfy
-    HIGH = 75       # Important operational constraints
-    MEDIUM = 50     # Preferences and soft requirements
-    LOW = 25        # Nice-to-have optimizations
+    HIGH = 75  # Important operational constraints
+    MEDIUM = 50  # Preferences and soft requirements
+    LOW = 25  # Nice-to-have optimizations
 
 
 class ConstraintType(Enum):
     """Types of constraints for categorization."""
+
     AVAILABILITY = "availability"
     DUTY_HOURS = "duty_hours"
     CONSECUTIVE_DAYS = "consecutive_days"
@@ -60,6 +63,7 @@ class ConstraintType(Enum):
 @dataclass
 class ConstraintViolation:
     """Represents a constraint violation."""
+
     constraint_name: str
     constraint_type: ConstraintType
     severity: str  # CRITICAL, HIGH, MEDIUM, LOW
@@ -72,6 +76,7 @@ class ConstraintViolation:
 @dataclass
 class ConstraintResult:
     """Result of applying a constraint."""
+
     satisfied: bool
     violations: list[ConstraintViolation] = field(default_factory=list)
     penalty: float = 0.0  # For soft constraints
@@ -137,7 +142,7 @@ class HardConstraint(Constraint):
 
     def get_penalty(self: "HardConstraint") -> float:
         """Hard constraints have infinite penalty when violated."""
-        return float('inf')
+        return float("inf")
 
 
 class SoftConstraint(Constraint):
@@ -175,9 +180,10 @@ class SchedulingContext:
     - preference_trails: Stigmergy preference data for soft optimization
     - zone_assignments: Faculty zone assignments for blast radius isolation
     """
+
     residents: list  # List of Person objects
-    faculty: list    # List of Person objects
-    blocks: list     # List of Block objects
+    faculty: list  # List of Person objects
+    blocks: list  # List of Block objects
     templates: list  # List of RotationTemplate objects
 
     # Lookup dictionaries for fast access
@@ -311,7 +317,9 @@ class SchedulingContext:
         """
         return faculty_id in self.n1_vulnerable_faculty
 
-    def get_preference_strength(self: "SchedulingContext", faculty_id: UUID, slot_type: str) -> float:
+    def get_preference_strength(
+        self: "SchedulingContext", faculty_id: UUID, slot_type: str
+    ) -> float:
         """
         Get preference trail strength for a faculty member and slot type.
 

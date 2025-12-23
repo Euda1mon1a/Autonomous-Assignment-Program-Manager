@@ -31,11 +31,12 @@ Components:
     - SecurityHeadersConfig: Configuration helper
     - SecretRotationService: Service for rotating sensitive secrets
 """
-from app.security.headers import SecurityHeaders
+
 from app.security.csp import ContentSecurityPolicy
+from app.security.headers import SecurityHeaders
 from app.security.middleware import (
-    SecurityHeadersMiddleware,
     SecurityHeadersConfig,
+    SecurityHeadersMiddleware,
     create_security_headers_middleware,
 )
 from app.security.secret_rotation import (

@@ -10,8 +10,7 @@ with the existing resilience framework components:
 """
 
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Optional, Protocol
+from typing import Any, Protocol
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,9 +21,7 @@ from app.scheduling_catalyst.models import (
     CatalystMechanism,
     CatalystPerson,
     CatalystType,
-    EnergyBarrier,
 )
-from app.scheduling_catalyst.catalysts import CatalystAnalyzer
 
 
 class DefenseLevelProtocol(Protocol):
@@ -140,7 +137,7 @@ class DefenseIntegration:
         catalyst_id: str,
         level: int,
         bonus: float,
-    ) -> Optional[CatalystMechanism]:
+    ) -> CatalystMechanism | None:
         """Create a catalyst mechanism for a specific defense level."""
         mechanism_configs = {
             "cross_training": {
@@ -206,7 +203,7 @@ class DefenseIntegration:
             "crisis_mode": {
                 "name": "Crisis Mode",
                 "barriers": list(BarrierType),
-                "reductions": {bt: 0.9 for bt in BarrierType},
+                "reductions": dict.fromkeys(BarrierType, 0.9),
             },
         }
 
@@ -301,11 +298,15 @@ class HubIntegration:
         """
         # Calculate catalyst score from hub metrics
         # Higher centrality = better catalyst
-        catalyst_score = min(1.0, (
-            hub_metrics.composite_score * 0.5 +
-            hub_metrics.degree_centrality * 0.3 +
-            (1 - hub_metrics.betweenness_centrality) * 0.2  # Lower bottleneck = better
-        ))
+        catalyst_score = min(
+            1.0,
+            (
+                hub_metrics.composite_score * 0.5
+                + hub_metrics.degree_centrality * 0.3
+                + (1 - hub_metrics.betweenness_centrality)
+                * 0.2  # Lower bottleneck = better
+            ),
+        )
 
         # Determine barriers addressed based on unique services
         barriers = [BarrierType.THERMODYNAMIC]  # All hubs help with workload
@@ -314,7 +315,7 @@ class HubIntegration:
 
         # Calculate reduction factors
         base_reduction = hub_metrics.composite_score * 0.8
-        reduction_factors = {bt: base_reduction for bt in barriers}
+        reduction_factors = dict.fromkeys(barriers, base_reduction)
 
         # Capacity based on current load (inverse of centrality)
         capacity = max(0.1, 1.0 - hub_metrics.betweenness_centrality)
@@ -376,7 +377,11 @@ class HubIntegration:
 
         catalysts = self.identify_catalyst_hubs(hub_metrics_list)
         total_capacity = sum(c.capacity_remaining for c in catalysts)
-        avg_score = sum(c.catalyst_score for c in catalysts) / len(catalysts) if catalysts else 0
+        avg_score = (
+            sum(c.catalyst_score for c in catalysts) / len(catalysts)
+            if catalysts
+            else 0
+        )
 
         # Bottleneck risk based on unique service concentration
         unique_services = [m.unique_services for m in hub_metrics_list]
@@ -431,7 +436,7 @@ class SacrificeIntegration:
         aggressiveness = max(0.0, (utilization_rate - 0.8) / 0.2)
 
         # Determine which activities can be sacrificed
-        sacrificeable = self.ACTIVITY_PRIORITY[-(int(aggressiveness * 4) + 1):]
+        sacrificeable = self.ACTIVITY_PRIORITY[-(int(aggressiveness * 4) + 1) :]
 
         reduction = 0.5 + aggressiveness * 0.4  # 0.5 to 0.9
 
@@ -598,7 +603,7 @@ class ResilienceFrameworkIntegration:
         self,
         current_defense_level: int = 1,
         coverage_rate: float = 0.95,
-        hub_metrics: Optional[list[HubMetricsProtocol]] = None,
+        hub_metrics: list[HubMetricsProtocol] | None = None,
     ) -> dict[str, list[CatalystPerson | CatalystMechanism]]:
         """
         Get all available catalysts from all framework components.
@@ -643,7 +648,7 @@ class ResilienceFrameworkIntegration:
 
     async def calculate_system_catalyst_capacity(
         self,
-        hub_metrics: Optional[list[HubMetricsProtocol]] = None,
+        hub_metrics: list[HubMetricsProtocol] | None = None,
     ) -> dict[str, Any]:
         """
         Calculate overall system catalyst capacity.
@@ -652,9 +657,7 @@ class ResilienceFrameworkIntegration:
             Dictionary with capacity metrics
         """
         # Hub capacity
-        hub_capacity = self.hub.calculate_network_catalyst_capacity(
-            hub_metrics or []
-        )
+        hub_capacity = self.hub.calculate_network_catalyst_capacity(hub_metrics or [])
 
         # Defense level capacity
         defense_levels = list(DEFENSE_CATALYST_MAPPING.values())

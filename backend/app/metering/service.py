@@ -19,7 +19,6 @@ from enum import Enum
 from typing import Any, Optional
 
 import redis
-from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
@@ -107,9 +106,9 @@ class UsageEvent:
     quantity: int
     timestamp: datetime
     metadata: dict[str, Any] = field(default_factory=dict)
-    cost: Optional[Decimal] = None
+    cost: Decimal | None = None
     billed: bool = False
-    event_id: Optional[str] = None
+    event_id: str | None = None
 
 
 @dataclass
@@ -309,7 +308,7 @@ class MeteringService:
         user_id: str,
         resource: MeteredResource,
         quantity: int = 1,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
         tier: UsageTier = UsageTier.BASIC,
     ) -> UsageEvent:
         """
@@ -414,10 +413,10 @@ class MeteringService:
     async def aggregate_usage(
         self,
         user_id: str,
-        resource: Optional[MeteredResource] = None,
+        resource: MeteredResource | None = None,
         period: AggregationPeriod = AggregationPeriod.DAILY,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> list[UsageAggregation]:
         """
         Aggregate usage data for a time period.
@@ -463,7 +462,7 @@ class MeteringService:
         period: AggregationPeriod,
         start_date: datetime,
         end_date: datetime,
-    ) -> Optional[UsageAggregation]:
+    ) -> UsageAggregation | None:
         """
         Aggregate usage for a specific resource.
 
@@ -521,7 +520,7 @@ class MeteringService:
         quantity: int,
         quota_limit: int,
         period: AggregationPeriod = AggregationPeriod.DAILY,
-    ) -> tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """
         Check if usage would exceed quota.
 
@@ -574,7 +573,9 @@ class MeteringService:
         if period == AggregationPeriod.HOURLY:
             key = f"metering:hourly:{user_id}:{resource.value}:{now.strftime('%Y-%m-%d-%H')}"
         elif period == AggregationPeriod.DAILY:
-            key = f"metering:daily:{user_id}:{resource.value}:{now.strftime('%Y-%m-%d')}"
+            key = (
+                f"metering:daily:{user_id}:{resource.value}:{now.strftime('%Y-%m-%d')}"
+            )
         elif period == AggregationPeriod.MONTHLY:
             key = f"metering:monthly:{user_id}:{resource.value}:{now.strftime('%Y-%m')}"
         else:
@@ -634,7 +635,7 @@ class MeteringService:
         quota_limit: int,
         actual_usage: int,
         period: AggregationPeriod = AggregationPeriod.DAILY,
-    ) -> Optional[OverageAlert]:
+    ) -> OverageAlert | None:
         """
         Track and alert on quota overage.
 
@@ -709,7 +710,7 @@ class MeteringService:
     async def get_overage_alerts(
         self,
         user_id: str,
-        resource: Optional[MeteredResource] = None,
+        resource: MeteredResource | None = None,
     ) -> list[OverageAlert]:
         """
         Get overage alerts for a user.
@@ -753,8 +754,8 @@ class MeteringService:
     async def generate_usage_report(
         self,
         user_id: str,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         include_forecast: bool = False,
     ) -> UsageReport:
         """
@@ -981,9 +982,7 @@ class MeteringService:
             return {
                 "customer": user_id,
                 "currency": billing_record.currency.lower(),
-                "amount": int(
-                    billing_record.total * 100
-                ),  # Stripe uses cents
+                "amount": int(billing_record.total * 100),  # Stripe uses cents
                 "description": f"Usage from {start_date.date()} to {end_date.date()}",
                 "metadata": {
                     "billing_period_start": billing_period_start.isoformat(),
@@ -1062,9 +1061,9 @@ class MeteringService:
             predicted_usage = int(sum(historical_usage) / len(historical_usage))
 
             # Calculate standard deviation
-            variance = sum(
-                (x - predicted_usage) ** 2 for x in historical_usage
-            ) / len(historical_usage)
+            variance = sum((x - predicted_usage) ** 2 for x in historical_usage) / len(
+                historical_usage
+            )
             std_dev = int(variance**0.5)
 
         # Calculate confidence interval (using normal distribution approximation)
@@ -1162,7 +1161,9 @@ class MeteringService:
             sum_x2 = sum(i**2 for i in range(n))
 
             slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x**2)
-            trend = "increasing" if slope > 0 else "decreasing" if slope < 0 else "stable"
+            trend = (
+                "increasing" if slope > 0 else "decreasing" if slope < 0 else "stable"
+            )
         else:
             avg_usage = 0
             max_usage = 0

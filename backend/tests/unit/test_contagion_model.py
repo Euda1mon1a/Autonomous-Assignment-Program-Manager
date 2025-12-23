@@ -11,22 +11,23 @@ Tests coverage:
 7. Report generation
 8. Edge cases and error handling
 """
-import pytest
+
 import networkx as nx
+import pytest
 
 from app.resilience.contagion_model import (
     BurnoutContagionModel,
-    BurnoutState,
+    ContagionReport,
     ContagionRisk,
     InterventionType,
-    SuperspreaderProfile,
     NetworkIntervention,
-    ContagionReport,
+    SuperspreaderProfile,
 )
 
 # Check if ndlib is available
 try:
     import ndlib
+
     HAS_NDLIB = True
 except ImportError:
     HAS_NDLIB = False
@@ -93,10 +94,7 @@ def hub_network():
 @pytest.fixture
 def initial_burnout_low():
     """Low initial burnout scores (healthy)."""
-    return {
-        f"provider_{i}": 0.1 + (i * 0.02)
-        for i in range(10)
-    }
+    return {f"provider_{i}": 0.1 + (i * 0.02) for i in range(10)}
 
 
 @pytest.fixture
@@ -119,10 +117,7 @@ def initial_burnout_mixed():
 @pytest.fixture
 def initial_burnout_high():
     """High burnout across network (crisis scenario)."""
-    return {
-        f"provider_{i}": 0.6 + (i * 0.03)
-        for i in range(10)
-    }
+    return {f"provider_{i}": 0.6 + (i * 0.03) for i in range(10)}
 
 
 # =============================================================================
@@ -230,10 +225,7 @@ def test_set_initial_burnout(simple_network, initial_burnout_mixed):
 
     # Check that high-burnout providers are marked as infected
     # (burnout >= 0.5 should be infected)
-    infected = [
-        pid for pid, score in initial_burnout_mixed.items()
-        if score >= 0.5
-    ]
+    infected = [pid for pid, score in initial_burnout_mixed.items() if score >= 0.5]
     assert len(infected) > 0
 
 
@@ -269,9 +261,9 @@ def test_simulate_basic(simple_network, initial_burnout_mixed):
 
     # Verify each result has expected structure
     for result in results:
-        assert 'iteration' in result
-        assert 'status' in result
-        assert 'node_count' in result
+        assert "iteration" in result
+        assert "status" in result
+        assert "node_count" in result
 
 
 @pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")

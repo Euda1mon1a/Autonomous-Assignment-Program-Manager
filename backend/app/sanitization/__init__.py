@@ -16,11 +16,13 @@ Main exports:
     - normalize_unicode: Normalize Unicode strings
     - SanitizationMiddleware: FastAPI middleware for automatic sanitization
 """
+
 from app.sanitization.html import (
     sanitize_html,
-    strip_all_tags,
     sanitize_rich_text,
+    strip_all_tags,
 )
+from app.sanitization.middleware import SanitizationMiddleware
 from app.sanitization.sql import (
     detect_sql_injection,
     sanitize_sql_input,
@@ -28,11 +30,10 @@ from app.sanitization.sql import (
 )
 from app.sanitization.xss import (
     detect_xss,
-    sanitize_input,
     normalize_unicode,
+    sanitize_input,
     sanitize_url,
 )
-from app.sanitization.middleware import SanitizationMiddleware
 
 __all__ = [
     # HTML sanitization

@@ -1,7 +1,7 @@
 """Distributed locking for schedule generation using Redis."""
+
 import time
 from contextlib import contextmanager
-from typing import Optional
 from uuid import uuid4
 
 import redis
@@ -38,7 +38,7 @@ class ScheduleGenerationLock:
     end
     """
 
-    def __init__(self, redis_client: Optional[redis.Redis] = None):
+    def __init__(self, redis_client: redis.Redis | None = None):
         """Initialize the distributed lock.
 
         Args:
@@ -186,7 +186,7 @@ class ScheduleGenerationLock:
             # This allows operations to proceed in degraded mode
             return False
 
-    def get_lock_ttl(self, year_id: str) -> Optional[int]:
+    def get_lock_ttl(self, year_id: str) -> int | None:
         """Get remaining time-to-live for a lock in seconds.
 
         Useful for showing users how long until the current generation finishes

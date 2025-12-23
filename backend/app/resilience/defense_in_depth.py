@@ -25,16 +25,18 @@ logger = logging.getLogger(__name__)
 
 class DefenseLevel(IntEnum):
     """The five levels of defense in depth."""
-    PREVENTION = 1      # Design to prevent problems
-    CONTROL = 2         # Detect and respond to problems
+
+    PREVENTION = 1  # Design to prevent problems
+    CONTROL = 2  # Detect and respond to problems
     SAFETY_SYSTEMS = 3  # Automated safety systems
-    CONTAINMENT = 4     # Limit damage spread
-    EMERGENCY = 5       # Crisis response
+    CONTAINMENT = 4  # Limit damage spread
+    EMERGENCY = 5  # Crisis response
 
 
 @dataclass
 class DefenseAction:
     """A specific action within a defense level."""
+
     name: str
     description: str
     level: DefenseLevel
@@ -48,6 +50,7 @@ class DefenseAction:
 @dataclass
 class DefenseStatus:
     """Status of a defense level."""
+
     level: DefenseLevel
     name: str
     status: str  # "ready", "active", "degraded", "failed"
@@ -58,6 +61,7 @@ class DefenseStatus:
 @dataclass
 class RedundancyStatus:
     """Status of redundancy for a critical function."""
+
     function_name: str
     required_minimum: int
     current_available: int
@@ -376,14 +380,16 @@ class DefenseInDepth:
         for name, config in services.items():
             status = self.check_redundancy(
                 function_name=name,
-                available_providers=config.get('available_providers', []),
-                minimum_required=config.get('minimum_required', 1),
+                available_providers=config.get("available_providers", []),
+                minimum_required=config.get("minimum_required", 1),
             )
             results.append(status)
 
             # Log warnings for degraded redundancy
             if status.status == "N+1":
-                logger.warning(f"Reduced redundancy for {name}: only 1 backup available")
+                logger.warning(
+                    f"Reduced redundancy for {name}: only 1 backup available"
+                )
             elif status.status == "N+0":
                 logger.warning(f"No redundancy for {name}: at minimum staffing")
             elif status.status == "BELOW":
@@ -442,7 +448,9 @@ class DefenseInDepth:
                             "automated": a.is_automated,
                             "activations": a.activation_count,
                             "last_activated": (
-                                a.last_activated.isoformat() if a.last_activated else None
+                                a.last_activated.isoformat()
+                                if a.last_activated
+                                else None
                             ),
                         }
                         for a in status.actions
@@ -455,9 +463,7 @@ class DefenseInDepth:
                 "all_levels_ready": all(
                     s.status == "ready" for s in self.levels.values()
                 ),
-                "active_alerts": sum(
-                    len(s.alerts) for s in self.levels.values()
-                ),
+                "active_alerts": sum(len(s.alerts) for s in self.levels.values()),
             },
         }
 
@@ -476,4 +482,6 @@ class DefenseInDepth:
                     logger.info(f"Handler registered for {level.name}/{action_name}")
                     return
 
-        logger.warning(f"Could not register handler: {level.name}/{action_name} not found")
+        logger.warning(
+            f"Could not register handler: {level.name}/{action_name} not found"
+        )

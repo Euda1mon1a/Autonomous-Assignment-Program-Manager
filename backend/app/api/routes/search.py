@@ -7,8 +7,6 @@ Provides endpoints for:
 - Quick search
 """
 
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.security import get_current_active_user
@@ -17,7 +15,6 @@ from app.models.user import User
 from app.schemas.search import (
     PeopleSearchRequest,
     ProcedureSearchRequest,
-    QuickSearchRequest,
     QuickSearchResponse,
     RotationSearchRequest,
     SearchRequest,
@@ -62,24 +59,24 @@ async def search(
         )
 
         return SearchResponse(
-            items=[SearchResultItem(**item) for item in results['items']],
-            total=results['total'],
-            page=results['page'],
-            page_size=results['page_size'],
-            total_pages=results['total_pages'],
-            facets=results.get('facets', {}),
-            query=results['query'],
+            items=[SearchResultItem(**item) for item in results["items"]],
+            total=results["total"],
+            page=results["page"],
+            page_size=results["page_size"],
+            total_pages=results["total_pages"],
+            facets=results.get("facets", {}),
+            query=results["query"],
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Search failed")
 
 
 @router.get("/quick", response_model=QuickSearchResponse)
 async def quick_search(
     query: str = Query(..., min_length=1, max_length=200, description="Search query"),
-    entity_type: str = Query(default='person', description="Entity type to search"),
+    entity_type: str = Query(default="person", description="Entity type to search"),
     limit: int = Query(default=10, ge=1, le=50, description="Maximum results"),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -106,7 +103,7 @@ async def quick_search(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Quick search failed")
 
 
@@ -137,17 +134,17 @@ async def search_people(
         )
 
         return SearchResponse(
-            items=[SearchResultItem(**item) for item in results['items']],
-            total=results['total'],
-            page=results['page'],
-            page_size=results['page_size'],
-            total_pages=results['total_pages'],
-            facets=results.get('facets', {}),
-            query=results['query'],
+            items=[SearchResultItem(**item) for item in results["items"]],
+            total=results["total"],
+            page=results["page"],
+            page_size=results["page_size"],
+            total_pages=results["total_pages"],
+            facets=results.get("facets", {}),
+            query=results["query"],
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="People search failed")
 
 
@@ -174,17 +171,17 @@ async def search_rotations(
         )
 
         return SearchResponse(
-            items=[SearchResultItem(**item) for item in results['items']],
-            total=results['total'],
-            page=results['page'],
-            page_size=results['page_size'],
-            total_pages=results['total_pages'],
-            facets=results.get('facets', {}),
-            query=results['query'],
+            items=[SearchResultItem(**item) for item in results["items"]],
+            total=results["total"],
+            page=results["page"],
+            page_size=results["page_size"],
+            total_pages=results["total_pages"],
+            facets=results.get("facets", {}),
+            query=results["query"],
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Rotation search failed")
 
 
@@ -210,17 +207,17 @@ async def search_procedures(
         )
 
         return SearchResponse(
-            items=[SearchResultItem(**item) for item in results['items']],
-            total=results['total'],
-            page=results['page'],
-            page_size=results['page_size'],
-            total_pages=results['total_pages'],
-            facets=results.get('facets', {}),
-            query=results['query'],
+            items=[SearchResultItem(**item) for item in results["items"]],
+            total=results["total"],
+            page=results["page"],
+            page_size=results["page_size"],
+            total_pages=results["total_pages"],
+            facets=results.get("facets", {}),
+            query=results["query"],
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Procedure search failed")
 
 
@@ -248,17 +245,17 @@ async def global_search(
         )
 
         return SearchResponse(
-            items=[SearchResultItem(**item) for item in results['items']],
-            total=results['total'],
-            page=results['page'],
-            page_size=results['page_size'],
-            total_pages=results['total_pages'],
-            facets=results.get('facets', {}),
-            query=results['query'],
+            items=[SearchResultItem(**item) for item in results["items"]],
+            total=results["total"],
+            page=results["page"],
+            page_size=results["page_size"],
+            total_pages=results["total_pages"],
+            facets=results.get("facets", {}),
+            query=results["query"],
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Global search failed")
 
 
@@ -289,14 +286,18 @@ async def get_suggestions(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Suggestion request failed")
 
 
 @router.get("/suggest", response_model=SuggestionResponse)
 async def get_suggestions_get(
-    query: str = Query(..., min_length=1, max_length=200, description="Partial search query"),
-    entity_type: str = Query(default='person', description="Entity type for suggestions"),
+    query: str = Query(
+        ..., min_length=1, max_length=200, description="Partial search query"
+    ),
+    entity_type: str = Query(
+        default="person", description="Entity type for suggestions"
+    ),
     limit: int = Query(default=10, ge=1, le=50, description="Maximum suggestions"),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -322,5 +323,5 @@ async def get_suggestions_get(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Suggestion request failed")

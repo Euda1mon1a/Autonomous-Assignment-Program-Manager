@@ -11,12 +11,12 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.events import (
     EVENT_JOB_ERROR,
     EVENT_JOB_EXECUTED,
     EVENT_JOB_MISSED,
 )
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from app.db.session import SessionLocal
 from app.scheduler.jobs import get_job_function
@@ -50,22 +50,13 @@ class JobScheduler:
                 "coalesce": True,
                 "max_instances": 1,
                 "misfire_grace_time": 300,  # 5 minutes
-            }
+            },
         )
 
         # Add event listeners
-        self.scheduler.add_listener(
-            self._job_executed_listener,
-            EVENT_JOB_EXECUTED
-        )
-        self.scheduler.add_listener(
-            self._job_error_listener,
-            EVENT_JOB_ERROR
-        )
-        self.scheduler.add_listener(
-            self._job_missed_listener,
-            EVENT_JOB_MISSED
-        )
+        self.scheduler.add_listener(self._job_executed_listener, EVENT_JOB_EXECUTED)
+        self.scheduler.add_listener(self._job_error_listener, EVENT_JOB_ERROR)
+        self.scheduler.add_listener(self._job_missed_listener, EVENT_JOB_MISSED)
 
         self._started = False
 
@@ -173,7 +164,9 @@ class JobScheduler:
                     except Exception as e:
                         logger.error(f"Failed to remove job '{job_id}': {e}")
 
-            logger.info(f"Scheduler sync: {added} added, {removed} removed, {updated} updated")
+            logger.info(
+                f"Scheduler sync: {added} added, {removed} removed, {updated} updated"
+            )
 
             return {
                 "added": added,
@@ -347,7 +340,9 @@ class JobScheduler:
         return {
             "id": job.id,
             "name": job.name,
-            "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None,
+            "next_run_time": job.next_run_time.isoformat()
+            if job.next_run_time
+            else None,
             "trigger": str(job.trigger),
         }
 
@@ -360,12 +355,16 @@ class JobScheduler:
         """
         jobs = []
         for job in self.scheduler.get_jobs():
-            jobs.append({
-                "id": job.id,
-                "name": job.name,
-                "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None,
-                "trigger": str(job.trigger),
-            })
+            jobs.append(
+                {
+                    "id": job.id,
+                    "name": job.name,
+                    "next_run_time": job.next_run_time.isoformat()
+                    if job.next_run_time
+                    else None,
+                    "trigger": str(job.trigger),
+                }
+            )
         return jobs
 
     def _add_job_to_scheduler(self, job: Any) -> None:
@@ -382,11 +381,7 @@ class JobScheduler:
         trigger = create_trigger(job.trigger_type, job.trigger_config)
 
         # Wrap function to track execution
-        wrapped_func = self._create_wrapped_function(
-            job.id,
-            job.name,
-            func
-        )
+        wrapped_func = self._create_wrapped_function(job.id, job.name, func)
 
         # Add to scheduler
         self.scheduler.add_job(
@@ -418,6 +413,7 @@ class JobScheduler:
         Returns:
             Wrapped function
         """
+
         def wrapper(*args, **kwargs):
             db = SessionLocal()
             execution_id = None
@@ -448,9 +444,7 @@ class JobScheduler:
                 # Record failure
                 if execution_id:
                     persistence.record_execution_failure(
-                        execution_id,
-                        str(e),
-                        traceback.format_exc()
+                        execution_id, str(e), traceback.format_exc()
                     )
 
                 logger.error(f"Job '{job_name}' failed: {e}", exc_info=True)

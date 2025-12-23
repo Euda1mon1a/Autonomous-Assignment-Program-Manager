@@ -123,7 +123,9 @@ class CredentialController:
 
         if result["error"]:
             # Determine appropriate status code using structured error codes
-            error_code = result.get("error_code") or get_error_code_from_message(result["error"])
+            error_code = result.get("error_code") or get_error_code_from_message(
+                result["error"]
+            )
 
             if error_code == ErrorCode.NOT_FOUND:
                 raise HTTPException(

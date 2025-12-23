@@ -31,7 +31,7 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
-from typing import Any, BinaryIO
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -477,10 +477,7 @@ class S3ArchiveStorage(ArchiveStorageBackend):
             if compress:
                 filename += ".gz"
             s3_key = (
-                f"{self.prefix}/"
-                f"{created_at.year}/"
-                f"{created_at.month:02d}/"
-                f"{filename}"
+                f"{self.prefix}/{created_at.year}/{created_at.month:02d}/{filename}"
             )
 
             # Prepare data
@@ -632,9 +629,13 @@ class S3ArchiveStorage(ArchiveStorageBackend):
                     created_at = obj["LastModified"]
 
                     # Apply date filters
-                    if start_date and created_at < start_date.replace(tzinfo=created_at.tzinfo):
+                    if start_date and created_at < start_date.replace(
+                        tzinfo=created_at.tzinfo
+                    ):
                         continue
-                    if end_date and created_at > end_date.replace(tzinfo=created_at.tzinfo):
+                    if end_date and created_at > end_date.replace(
+                        tzinfo=created_at.tzinfo
+                    ):
                         continue
 
                     archives.append(

@@ -7,13 +7,11 @@ tasks with advanced features like priority, dependencies, and progress tracking.
 
 import logging
 import time
-import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import IntEnum
-from typing import Any, Callable, Optional
+from typing import Any
 
-from celery import Task, group, chain
-from celery.exceptions import Retry
+from celery import Task, chain, group
 from celery.result import AsyncResult
 
 from app.core.celery_app import celery_app
@@ -70,7 +68,9 @@ class BaseQueueTask(Task):
 
     # Task timing
     track_started = True
-    acks_late = True  # Acknowledge after task completes (ensures no loss on worker crash)
+    acks_late = (
+        True  # Acknowledge after task completes (ensures no loss on worker crash)
+    )
     reject_on_worker_lost = True
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
@@ -103,7 +103,9 @@ class BaseQueueTask(Task):
             )
             raise
 
-    def on_retry(self, exc: Exception, task_id: str, args: tuple, kwargs: dict, einfo: Any) -> None:
+    def on_retry(
+        self, exc: Exception, task_id: str, args: tuple, kwargs: dict, einfo: Any
+    ) -> None:
         """
         Handler called when task is retried.
 

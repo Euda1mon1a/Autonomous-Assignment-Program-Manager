@@ -22,12 +22,10 @@ import logging
 import math
 import random
 import time
-from abc import abstractmethod
 from typing import Any
 from uuid import UUID
 
 from app.models.assignment import Assignment
-from app.models.person import Person
 from app.scheduling.constraints import ConstraintManager, SchedulingContext
 from app.scheduling.solvers import BaseSolver, SolverResult
 
@@ -42,24 +40,28 @@ QUBOVERT_AVAILABLE = False
 
 try:
     import pyqubo
+
     PYQUBO_AVAILABLE = True
 except ImportError:
     pass
 
 try:
     from dwave.samplers import SimulatedAnnealingSampler, TabuSampler
+
     DWAVE_SAMPLERS_AVAILABLE = True
 except ImportError:
     pass
 
 try:
     from dwave.system import DWaveSampler, EmbeddingComposite
+
     DWAVE_SYSTEM_AVAILABLE = True
 except ImportError:
     pass
 
 try:
     import qubovert as qv
+
     QUBOVERT_AVAILABLE = True
 except ImportError:
     pass
@@ -178,7 +180,7 @@ class QUBOFormulation:
 
             # Penalty for multiple assignments: sum over pairs
             for i, idx1 in enumerate(indices):
-                for idx2 in indices[i + 1:]:
+                for idx2 in indices[i + 1 :]:
                     self._add_quadratic(idx1, idx2, self.HARD_CONSTRAINT_PENALTY)
 
     def _add_availability_constraints(self):
@@ -237,7 +239,7 @@ class QUBOFormulation:
                 if len(week_vars) > MAX_BLOCKS_PER_WEEK:
                     penalty_factor = self.ACGME_PENALTY / (len(week_vars) ** 2)
                     for i, idx1 in enumerate(week_vars):
-                        for idx2 in week_vars[i + 1:]:
+                        for idx2 in week_vars[i + 1 :]:
                             self._add_quadratic(idx1, idx2, penalty_factor)
 
     def _add_equity_objective(self):
@@ -262,7 +264,7 @@ class QUBOFormulation:
             # Small penalty for having many assignments to same resident
             penalty = self.SOFT_CONSTRAINT_PENALTY / (len(indices) + 1)
             for i, idx1 in enumerate(indices):
-                for idx2 in indices[i + 1:]:
+                for idx2 in indices[i + 1 :]:
                     self._add_quadratic(idx1, idx2, penalty * 0.01)
 
     def _add_linear(self, i: int, value: float):
@@ -299,7 +301,9 @@ class QUBOFormulation:
                 r_i, b_i, t_i = self.index_to_var[idx]
                 person_id = idx_to_resident.get(r_i)
                 block_id = idx_to_block.get(b_i)
-                template_id = template_list[t_i].id if t_i < len(template_list) else None
+                template_id = (
+                    template_list[t_i].id if t_i < len(template_list) else None
+                )
 
                 if person_id and block_id:
                     assignments.append((person_id, block_id, template_id))
@@ -409,7 +413,9 @@ class SimulatedQuantumAnnealingSolver(BaseSolver):
                 "num_reads": self.num_reads,
                 "num_sweeps": self.num_sweeps,
                 "final_energy": energy,
-                "library": "dwave-samplers" if DWAVE_SAMPLERS_AVAILABLE else "pure_python",
+                "library": "dwave-samplers"
+                if DWAVE_SAMPLERS_AVAILABLE
+                else "pure_python",
             },
         )
 
@@ -442,7 +448,7 @@ class SimulatedQuantumAnnealingSolver(BaseSolver):
         random.seed(self.seed)
         n = formulation.num_variables
 
-        best_sample = {i: 0 for i in range(n)}
+        best_sample = dict.fromkeys(range(n), 0)
         best_energy = self._compute_energy(best_sample, Q)
 
         for read in range(self.num_reads):
@@ -477,7 +483,9 @@ class SimulatedQuantumAnnealingSolver(BaseSolver):
                             -barrier_width * math.sqrt(abs(delta_e))
                         )
 
-                        accept = random.random() < max(classical_prob, tunneling_prob * 0.1)
+                        accept = random.random() < max(
+                            classical_prob, tunneling_prob * 0.1
+                        )
 
                     if accept:
                         sample[i] = 1 - sample[i]
@@ -556,9 +564,7 @@ class QUBOSolver(BaseSolver):
         self.use_tabu = use_tabu
 
         if not PYQUBO_AVAILABLE:
-            logger.warning(
-                "PyQUBO not installed. Install with: pip install pyqubo"
-            )
+            logger.warning("PyQUBO not installed. Install with: pip install pyqubo")
 
     def solve(
         self,
@@ -601,10 +607,12 @@ class QUBOSolver(BaseSolver):
         if DWAVE_SAMPLERS_AVAILABLE:
             if self.use_tabu:
                 from dwave.samplers import TabuSampler
+
                 sampler = TabuSampler()
                 response = sampler.sample(bqm, num_reads=self.num_reads)
             else:
                 from dwave.samplers import SimulatedAnnealingSampler
+
                 sampler = SimulatedAnnealingSampler()
                 response = sampler.sample(bqm, num_reads=self.num_reads)
 
@@ -651,35 +659,39 @@ class QUBOSolver(BaseSolver):
             },
         )
 
-    def _build_pyqubo_model(
-        self, context: SchedulingContext
-    ) -> tuple[Any, dict]:
+    def _build_pyqubo_model(self, context: SchedulingContext) -> tuple[Any, dict]:
         """Build PyQUBO model from scheduling context."""
         from pyqubo import Array, Constraint, Placeholder
 
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
         n_residents = len(context.residents)
         n_blocks = len(workday_blocks)
-        n_templates = len([t for t in context.templates if not t.requires_procedure_credential])
+        n_templates = len(
+            [t for t in context.templates if not t.requires_procedure_credential]
+        )
 
         if n_residents == 0 or n_blocks == 0 or n_templates == 0:
             return None, {}
 
         # Create binary variables: x[resident, block, template]
-        x = Array.create("x", shape=(n_residents, n_blocks, n_templates), vartype="BINARY")
+        x = Array.create(
+            "x", shape=(n_residents, n_blocks, n_templates), vartype="BINARY"
+        )
 
         # Build index mappings
         var_map = {
             "resident_idx": {r.id: i for i, r in enumerate(context.residents)},
             "block_idx": {b.id: i for i, b in enumerate(workday_blocks)},
             "template_idx": {
-                t.id: i for i, t in enumerate(context.templates)
+                t.id: i
+                for i, t in enumerate(context.templates)
                 if not t.requires_procedure_credential
             },
             "idx_to_resident": {i: r.id for i, r in enumerate(context.residents)},
             "idx_to_block": {i: b.id for i, b in enumerate(workday_blocks)},
             "idx_to_template": {
-                i: t.id for i, t in enumerate(context.templates)
+                i: t.id
+                for i, t in enumerate(context.templates)
                 if not t.requires_procedure_credential
             },
         }
@@ -696,7 +708,7 @@ class QUBOSolver(BaseSolver):
         H_one_per_block = sum(
             Constraint(
                 (sum(x[r, b, t] for t in range(n_templates)) - 1) ** 2,
-                label=f"one_per_block_{r}_{b}"
+                label=f"one_per_block_{r}_{b}",
             )
             for r in range(n_residents)
             for b in range(n_blocks)
@@ -705,9 +717,18 @@ class QUBOSolver(BaseSolver):
         # Constraint: At most one resident per block (simplified)
         H_one_resident = sum(
             Constraint(
-                (sum(x[r, b, t] for r in range(n_residents) for t in range(n_templates))) ** 2
-                - sum(x[r, b, t] for r in range(n_residents) for t in range(n_templates)),
-                label=f"one_resident_{b}"
+                (
+                    sum(
+                        x[r, b, t]
+                        for r in range(n_residents)
+                        for t in range(n_templates)
+                    )
+                )
+                ** 2
+                - sum(
+                    x[r, b, t] for r in range(n_residents) for t in range(n_templates)
+                ),
+                label=f"one_resident_{b}",
             )
             for b in range(n_blocks)
         )

@@ -8,8 +8,8 @@ Provides configuration settings for compression middleware including:
 - Quality levels
 - Statistics tracking
 """
+
 from dataclasses import dataclass, field
-from typing import Set
 
 
 @dataclass
@@ -30,46 +30,51 @@ class CompressionConfig:
         exclude_paths: URL paths to exclude from compression
         track_stats: Enable compression statistics tracking
     """
+
     enabled: bool = True
     min_size: int = 1024  # 1KB minimum
     gzip_enabled: bool = True
     gzip_level: int = 6  # Balance speed/compression (1-9)
     brotli_enabled: bool = True
     brotli_quality: int = 4  # Balance speed/compression (0-11)
-    compressible_types: Set[str] = field(default_factory=lambda: {
-        # Text formats
-        "text/html",
-        "text/plain",
-        "text/css",
-        "text/javascript",
-        "text/xml",
-        "text/csv",
-        # Application formats
-        "application/json",
-        "application/javascript",
-        "application/xml",
-        "application/x-javascript",
-        "application/xhtml+xml",
-        "application/rss+xml",
-        "application/atom+xml",
-        "application/vnd.api+json",
-        "application/ld+json",
-        "application/graphql+json",
-        # Other compressible formats
-        "image/svg+xml",
-        "font/ttf",
-        "font/otf",
-        "font/woff",
-        "font/woff2",
-        "font/eot",
-    })
-    exclude_paths: Set[str] = field(default_factory=lambda: {
-        "/metrics",  # Prometheus metrics - often scraped frequently
-        "/health",   # Health checks - minimal overhead
-        "/docs",     # API docs - static files
-        "/redoc",    # ReDoc - static files
-        "/openapi.json",  # OpenAPI spec
-    })
+    compressible_types: set[str] = field(
+        default_factory=lambda: {
+            # Text formats
+            "text/html",
+            "text/plain",
+            "text/css",
+            "text/javascript",
+            "text/xml",
+            "text/csv",
+            # Application formats
+            "application/json",
+            "application/javascript",
+            "application/xml",
+            "application/x-javascript",
+            "application/xhtml+xml",
+            "application/rss+xml",
+            "application/atom+xml",
+            "application/vnd.api+json",
+            "application/ld+json",
+            "application/graphql+json",
+            # Other compressible formats
+            "image/svg+xml",
+            "font/ttf",
+            "font/otf",
+            "font/woff",
+            "font/woff2",
+            "font/eot",
+        }
+    )
+    exclude_paths: set[str] = field(
+        default_factory=lambda: {
+            "/metrics",  # Prometheus metrics - often scraped frequently
+            "/health",  # Health checks - minimal overhead
+            "/docs",  # API docs - static files
+            "/redoc",  # ReDoc - static files
+            "/openapi.json",  # OpenAPI spec
+        }
+    )
     track_stats: bool = True
 
 
@@ -94,9 +99,7 @@ DEVELOPMENT_CONFIG = CompressionConfig(
 )
 
 
-def get_compression_config(
-    environment: str = "default"
-) -> CompressionConfig:
+def get_compression_config(environment: str = "default") -> CompressionConfig:
     """
     Get compression configuration for environment.
 

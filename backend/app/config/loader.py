@@ -7,7 +7,7 @@ with support for hot reload and environment merging.
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from dotenv import dotenv_values
 
@@ -27,7 +27,7 @@ class ConfigLoader:
 
     def __init__(
         self,
-        env_file: Optional[Path] = None,
+        env_file: Path | None = None,
         env_file_encoding: str = "utf-8",
     ):
         """
@@ -39,7 +39,7 @@ class ConfigLoader:
         """
         self.env_file = env_file or self._find_env_file()
         self.env_file_encoding = env_file_encoding
-        self._last_modified: Optional[float] = None
+        self._last_modified: float | None = None
 
     def _find_env_file(self) -> Path:
         """
@@ -63,9 +63,7 @@ class ConfigLoader:
         # Default to backend/.env
         backend_root = Path(__file__).resolve().parent.parent.parent
         default_path = backend_root / ".env"
-        logger.warning(
-            f".env file not found, using default path: {default_path}"
-        )
+        logger.warning(f".env file not found, using default path: {default_path}")
         return default_path
 
     def load(self) -> Settings:
@@ -101,7 +99,7 @@ class ConfigLoader:
             logger.error(f"Failed to load configuration: {e}")
             raise ConfigLoadError(f"Configuration load failed: {e}")
 
-    def _load_env_file(self) -> Dict[str, Any]:
+    def _load_env_file(self) -> dict[str, Any]:
         """
         Load configuration from .env file.
 
@@ -122,9 +120,7 @@ class ConfigLoader:
             # Convert to proper types
             config = self._convert_types(env_values)
 
-            logger.debug(
-                f"Loaded {len(config)} values from .env file: {self.env_file}"
-            )
+            logger.debug(f"Loaded {len(config)} values from .env file: {self.env_file}")
             return config
 
         except Exception as e:
@@ -133,8 +129,8 @@ class ConfigLoader:
 
     def _merge_with_environment(
         self,
-        file_config: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        file_config: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Merge .env file config with environment variables.
 
@@ -159,7 +155,7 @@ class ConfigLoader:
 
         return merged
 
-    def _convert_types(self, env_values: Dict[str, Optional[str]]) -> Dict[str, Any]:
+    def _convert_types(self, env_values: dict[str, str | None]) -> dict[str, Any]:
         """
         Convert environment variable strings to appropriate types.
 
@@ -245,7 +241,7 @@ class ConfigLoader:
         logger.info("Reloading configuration...")
         return self.load()
 
-    def load_partial(self, updates: Dict[str, Any]) -> Dict[str, Any]:
+    def load_partial(self, updates: dict[str, Any]) -> dict[str, Any]:
         """
         Load partial configuration updates.
 
@@ -266,7 +262,7 @@ class ConfigLoader:
         """
         return self.env_file
 
-    def get_config_dict(self) -> Dict[str, Any]:
+    def get_config_dict(self) -> dict[str, Any]:
         """
         Load configuration as dictionary.
 

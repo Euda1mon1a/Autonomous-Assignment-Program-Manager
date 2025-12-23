@@ -1,12 +1,13 @@
 """Tests for RoleFilterService."""
 
-import pytest
 from datetime import date
 
+import pytest
+
 from app.services.role_filter_service import (
+    ResourceType,
     RoleFilterService,
     UserRole,
-    ResourceType,
 )
 
 
@@ -16,7 +17,10 @@ class TestRoleFilterService:
     def test_get_role_from_string(self):
         """Test converting string to UserRole enum."""
         assert RoleFilterService.get_role_from_string("admin") == UserRole.ADMIN
-        assert RoleFilterService.get_role_from_string("coordinator") == UserRole.COORDINATOR
+        assert (
+            RoleFilterService.get_role_from_string("coordinator")
+            == UserRole.COORDINATOR
+        )
         assert RoleFilterService.get_role_from_string("faculty") == UserRole.FACULTY
         assert RoleFilterService.get_role_from_string("rn") == UserRole.RN
         assert RoleFilterService.get_role_from_string("lpn") == UserRole.LPN
@@ -27,11 +31,26 @@ class TestRoleFilterService:
 
     def test_normalize_clinical_staff_role(self):
         """Test normalizing clinical staff roles."""
-        assert RoleFilterService.normalize_clinical_staff_role(UserRole.RN) == UserRole.CLINICAL_STAFF
-        assert RoleFilterService.normalize_clinical_staff_role(UserRole.LPN) == UserRole.CLINICAL_STAFF
-        assert RoleFilterService.normalize_clinical_staff_role(UserRole.MSA) == UserRole.CLINICAL_STAFF
-        assert RoleFilterService.normalize_clinical_staff_role(UserRole.ADMIN) == UserRole.ADMIN
-        assert RoleFilterService.normalize_clinical_staff_role(UserRole.FACULTY) == UserRole.FACULTY
+        assert (
+            RoleFilterService.normalize_clinical_staff_role(UserRole.RN)
+            == UserRole.CLINICAL_STAFF
+        )
+        assert (
+            RoleFilterService.normalize_clinical_staff_role(UserRole.LPN)
+            == UserRole.CLINICAL_STAFF
+        )
+        assert (
+            RoleFilterService.normalize_clinical_staff_role(UserRole.MSA)
+            == UserRole.CLINICAL_STAFF
+        )
+        assert (
+            RoleFilterService.normalize_clinical_staff_role(UserRole.ADMIN)
+            == UserRole.ADMIN
+        )
+        assert (
+            RoleFilterService.normalize_clinical_staff_role(UserRole.FACULTY)
+            == UserRole.FACULTY
+        )
 
     def test_admin_permissions(self):
         """Test admin has access to everything."""
@@ -41,24 +60,40 @@ class TestRoleFilterService:
         assert RoleFilterService.can_access(ResourceType.USERS, UserRole.ADMIN)
         assert RoleFilterService.can_access(ResourceType.COMPLIANCE, UserRole.ADMIN)
         assert RoleFilterService.can_access(ResourceType.AUDIT, UserRole.ADMIN)
-        assert RoleFilterService.can_access(ResourceType.ACADEMIC_BLOCKS, UserRole.ADMIN)
+        assert RoleFilterService.can_access(
+            ResourceType.ACADEMIC_BLOCKS, UserRole.ADMIN
+        )
 
     def test_coordinator_permissions(self):
         """Test coordinator permissions."""
-        assert RoleFilterService.can_access(ResourceType.SCHEDULES, UserRole.COORDINATOR)
+        assert RoleFilterService.can_access(
+            ResourceType.SCHEDULES, UserRole.COORDINATOR
+        )
         assert RoleFilterService.can_access(ResourceType.PEOPLE, UserRole.COORDINATOR)
-        assert RoleFilterService.can_access(ResourceType.CONFLICTS, UserRole.COORDINATOR)
-        assert not RoleFilterService.can_access(ResourceType.USERS, UserRole.COORDINATOR)
-        assert not RoleFilterService.can_access(ResourceType.COMPLIANCE, UserRole.COORDINATOR)
-        assert not RoleFilterService.can_access(ResourceType.AUDIT, UserRole.COORDINATOR)
+        assert RoleFilterService.can_access(
+            ResourceType.CONFLICTS, UserRole.COORDINATOR
+        )
+        assert not RoleFilterService.can_access(
+            ResourceType.USERS, UserRole.COORDINATOR
+        )
+        assert not RoleFilterService.can_access(
+            ResourceType.COMPLIANCE, UserRole.COORDINATOR
+        )
+        assert not RoleFilterService.can_access(
+            ResourceType.AUDIT, UserRole.COORDINATOR
+        )
 
     def test_faculty_permissions(self):
         """Test faculty permissions."""
-        assert not RoleFilterService.can_access(ResourceType.SCHEDULES, UserRole.FACULTY)
+        assert not RoleFilterService.can_access(
+            ResourceType.SCHEDULES, UserRole.FACULTY
+        )
         assert RoleFilterService.can_access(ResourceType.OWN_SCHEDULE, UserRole.FACULTY)
         assert RoleFilterService.can_access(ResourceType.SWAPS, UserRole.FACULTY)
         assert not RoleFilterService.can_access(ResourceType.PEOPLE, UserRole.FACULTY)
-        assert not RoleFilterService.can_access(ResourceType.COMPLIANCE, UserRole.FACULTY)
+        assert not RoleFilterService.can_access(
+            ResourceType.COMPLIANCE, UserRole.FACULTY
+        )
 
     def test_clinical_staff_permissions(self):
         """Test clinical staff permissions (rn, lpn, msa)."""
@@ -150,7 +185,9 @@ class TestRoleFilterService:
             {"id": 3, "person_id": "user-1", "date": "2025-01-16"},
         ]
 
-        filtered = RoleFilterService.filter_schedule_list(schedules, UserRole.FACULTY, "user-1")
+        filtered = RoleFilterService.filter_schedule_list(
+            schedules, UserRole.FACULTY, "user-1"
+        )
         assert len(filtered) == 2  # Only schedules for user-1
         assert all(s["person_id"] == "user-1" for s in filtered)
 
@@ -172,7 +209,9 @@ class TestRoleFilterService:
         assert RoleFilterService.can_access_endpoint(UserRole.ADMIN, "schedules")
         assert RoleFilterService.can_access_endpoint(UserRole.ADMIN, "compliance")
         assert RoleFilterService.can_access_endpoint(UserRole.COORDINATOR, "schedules")
-        assert not RoleFilterService.can_access_endpoint(UserRole.COORDINATOR, "compliance")
+        assert not RoleFilterService.can_access_endpoint(
+            UserRole.COORDINATOR, "compliance"
+        )
         assert not RoleFilterService.can_access_endpoint(UserRole.FACULTY, "schedules")
         assert RoleFilterService.can_access_endpoint(UserRole.RN, "manifest")
         assert not RoleFilterService.can_access_endpoint(UserRole.RN, "compliance")

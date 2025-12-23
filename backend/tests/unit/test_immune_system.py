@@ -13,15 +13,15 @@ import numpy as np
 import pytest
 
 from app.resilience.immune_system import (
-    Antibody,
     AnomalyReport,
+    Antibody,
     Detector,
     RepairResult,
     ScheduleImmuneSystem,
 )
 
-
 # Test Fixtures
+
 
 @pytest.fixture
 def valid_schedule_state():
@@ -73,7 +73,9 @@ def invalid_schedule_state():
 @pytest.fixture
 def immune_system():
     """Create a basic immune system instance."""
-    return ScheduleImmuneSystem(feature_dims=12, detector_count=50, detection_radius=0.15)
+    return ScheduleImmuneSystem(
+        feature_dims=12, detector_count=50, detection_radius=0.15
+    )
 
 
 @pytest.fixture
@@ -94,6 +96,7 @@ def trained_immune_system(immune_system, valid_schedule_state):
 
 
 # Test Feature Extraction
+
 
 def test_feature_extraction_dimensions(immune_system, valid_schedule_state):
     """Test that feature extraction produces correct dimensions."""
@@ -157,6 +160,7 @@ def test_feature_extraction_violations(immune_system):
 
 # Test Detector Class
 
+
 def test_detector_matches():
     """Test detector matching logic."""
     from datetime import datetime
@@ -201,6 +205,7 @@ def test_detector_distance():
 
 # Test Training (Negative Selection)
 
+
 def test_training_generates_detectors(immune_system, valid_schedule_state):
     """Test that training generates detectors."""
     training_schedules = [valid_schedule_state] * 5
@@ -238,16 +243,24 @@ def test_training_with_empty_schedules(immune_system):
 
 # Test Anomaly Detection
 
-def test_anomaly_detection_on_valid_schedule(trained_immune_system, valid_schedule_state):
+
+def test_anomaly_detection_on_valid_schedule(
+    trained_immune_system, valid_schedule_state
+):
     """Test that valid schedules are not flagged as anomalies."""
     is_anomaly = trained_immune_system.is_anomaly(valid_schedule_state)
 
     # Valid schedule should not be anomalous
     # (some detectors might trigger due to randomness, but generally should be False)
-    assert not is_anomaly or trained_immune_system.get_anomaly_score(valid_schedule_state) < 0.5
+    assert (
+        not is_anomaly
+        or trained_immune_system.get_anomaly_score(valid_schedule_state) < 0.5
+    )
 
 
-def test_anomaly_detection_on_invalid_schedule(trained_immune_system, invalid_schedule_state):
+def test_anomaly_detection_on_invalid_schedule(
+    trained_immune_system, invalid_schedule_state
+):
     """Test that invalid schedules are flagged as anomalies."""
     is_anomaly = trained_immune_system.is_anomaly(invalid_schedule_state)
 
@@ -278,7 +291,9 @@ def test_detect_anomaly_returns_report(trained_immune_system, invalid_schedule_s
         assert len(report.description) > 0
 
 
-def test_untrained_immune_system_returns_no_anomaly(immune_system, invalid_schedule_state):
+def test_untrained_immune_system_returns_no_anomaly(
+    immune_system, invalid_schedule_state
+):
     """Test that untrained system doesn't detect anomalies."""
     is_anomaly = immune_system.is_anomaly(invalid_schedule_state)
 
@@ -287,9 +302,9 @@ def test_untrained_immune_system_returns_no_anomaly(immune_system, invalid_sched
 
 # Test Antibody Class
 
+
 def test_antibody_affinity_calculation():
     """Test antibody affinity calculation."""
-    from datetime import datetime
     from uuid import uuid4
 
     center = np.array([0.5, 0.5, 0.5], dtype=np.float32)
@@ -324,7 +339,6 @@ def test_antibody_affinity_calculation():
 
 def test_antibody_success_rate():
     """Test antibody success rate calculation."""
-    from datetime import datetime
     from uuid import uuid4
 
     def dummy_repair(state):
@@ -345,6 +359,7 @@ def test_antibody_success_rate():
 
 
 # Test Antibody Registration and Selection
+
 
 def test_register_antibody(immune_system):
     """Test antibody registration."""
@@ -404,6 +419,7 @@ def test_select_antibody_no_antibodies(immune_system, invalid_schedule_state):
 
 
 # Test Repair Application
+
 
 def test_apply_repair_success(trained_immune_system, invalid_schedule_state):
     """Test successful repair application."""
@@ -481,7 +497,9 @@ def test_apply_repair_updates_statistics(trained_immune_system, invalid_schedule
         affinity_radius=3.0,
     )
 
-    initial_applications = trained_immune_system.antibodies["test_repair"].applications_count
+    initial_applications = trained_immune_system.antibodies[
+        "test_repair"
+    ].applications_count
 
     trained_immune_system.apply_repair(invalid_schedule_state)
 
@@ -514,6 +532,7 @@ def test_repair_exception_handling(trained_immune_system, invalid_schedule_state
 
 # Test Statistics
 
+
 def test_get_statistics(trained_immune_system):
     """Test statistics retrieval."""
     stats = trained_immune_system.get_statistics()
@@ -542,6 +561,7 @@ def test_reset_statistics(trained_immune_system, invalid_schedule_state):
 
 
 # Integration Tests
+
 
 def test_full_workflow(immune_system, valid_schedule_state, invalid_schedule_state):
     """Test complete workflow: train -> detect -> repair."""
@@ -620,7 +640,9 @@ def test_multiple_repairs_improve_success_rate(
 
 def test_detector_match_counting(trained_immune_system, invalid_schedule_state):
     """Test that detector match counts are updated."""
-    initial_total_matches = sum(d.matches_count for d in trained_immune_system.detectors)
+    initial_total_matches = sum(
+        d.matches_count for d in trained_immune_system.detectors
+    )
 
     # Detect anomaly several times
     for _ in range(3):

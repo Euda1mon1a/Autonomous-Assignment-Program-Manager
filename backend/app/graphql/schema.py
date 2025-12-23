@@ -1,17 +1,16 @@
 """Main GraphQL schema definition."""
-from typing import Any, AsyncGenerator, Optional
+
+from typing import Any
 
 import strawberry
 from fastapi import Depends, Request
 from sqlalchemy.orm import Session
 from strawberry.fastapi import GraphQLRouter
-from strawberry.types import Info
 
-from app.core.security import oauth2_scheme, verify_token
+from app.core.security import verify_token
 from app.db.session import get_db
 from app.graphql.resolvers import Mutation, Query
 from app.graphql.subscriptions import Subscription
-
 
 # Build the schema
 schema = strawberry.Schema(

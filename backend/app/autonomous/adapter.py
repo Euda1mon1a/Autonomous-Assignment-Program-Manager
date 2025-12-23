@@ -9,12 +9,13 @@ Start simple and deterministic:
 You can later add bandits/Bayesian optimization, but don't start there.
 """
 
+import random
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
-import random
+from typing import Any
 
-from app.autonomous.evaluator import EvaluationResult, ViolationSeverity
+from app.autonomous.evaluator import EvaluationResult
 from app.autonomous.state import GeneratorParams, IterationRecord
 
 
@@ -194,65 +195,79 @@ class ParameterAdapter:
         rules = []
 
         # Rule 1: If score stagnating, increase diversification
-        rules.append(AdaptationRule(
-            name="stagnation_diversification",
-            condition=self._is_stagnating,
-            action=AdaptationAction.INCREASE_DIVERSIFICATION,
-            params={"factor": 1.5},
-            priority=100,
-        ))
+        rules.append(
+            AdaptationRule(
+                name="stagnation_diversification",
+                condition=self._is_stagnating,
+                action=AdaptationAction.INCREASE_DIVERSIFICATION,
+                params={"factor": 1.5},
+                priority=100,
+            )
+        )
 
         # Rule 2: If solver times out, increase timeout
-        rules.append(AdaptationRule(
-            name="timeout_increase",
-            condition=self._is_timing_out,
-            action=AdaptationAction.INCREASE_TIMEOUT,
-            params={"factor": 1.5, "max_timeout": 300.0},
-            priority=90,
-        ))
+        rules.append(
+            AdaptationRule(
+                name="timeout_increase",
+                condition=self._is_timing_out,
+                action=AdaptationAction.INCREASE_TIMEOUT,
+                params={"factor": 1.5, "max_timeout": 300.0},
+                priority=90,
+            )
+        )
 
         # Rule 3: If too many ACGME violations, switch algorithm
-        rules.append(AdaptationRule(
-            name="acgme_algorithm_switch",
-            condition=self._has_acgme_violations,
-            action=AdaptationAction.SWITCH_ALGORITHM,
-            priority=80,
-        ))
+        rules.append(
+            AdaptationRule(
+                name="acgme_algorithm_switch",
+                condition=self._has_acgme_violations,
+                action=AdaptationAction.SWITCH_ALGORITHM,
+                priority=80,
+            )
+        )
 
         # Rule 4: If N-1 vulnerable, increase resilience weight
-        rules.append(AdaptationRule(
-            name="n1_weight_increase",
-            condition=self._is_n1_vulnerable,
-            action=AdaptationAction.ADJUST_WEIGHT,
-            params={"constraint": "resilience", "delta": 0.2},
-            priority=70,
-        ))
+        rules.append(
+            AdaptationRule(
+                name="n1_weight_increase",
+                condition=self._is_n1_vulnerable,
+                action=AdaptationAction.ADJUST_WEIGHT,
+                params={"constraint": "resilience", "delta": 0.2},
+                priority=70,
+            )
+        )
 
         # Rule 5: If close to feasible (score > 0.8), narrow search
-        rules.append(AdaptationRule(
-            name="near_feasible_narrow",
-            condition=self._is_near_feasible,
-            action=AdaptationAction.NARROW_SEARCH,
-            priority=60,
-        ))
+        rules.append(
+            AdaptationRule(
+                name="near_feasible_narrow",
+                condition=self._is_near_feasible,
+                action=AdaptationAction.NARROW_SEARCH,
+                priority=60,
+            )
+        )
 
         # Rule 6: If utilization too high, adjust coverage weight
-        rules.append(AdaptationRule(
-            name="utilization_weight_decrease",
-            condition=self._is_over_utilized,
-            action=AdaptationAction.ADJUST_WEIGHT,
-            params={"constraint": "coverage", "delta": -0.1},
-            priority=50,
-        ))
+        rules.append(
+            AdaptationRule(
+                name="utilization_weight_decrease",
+                condition=self._is_over_utilized,
+                action=AdaptationAction.ADJUST_WEIGHT,
+                params={"constraint": "coverage", "delta": -0.1},
+                priority=50,
+            )
+        )
 
         # Rule 7: Random restart every N iterations without improvement
-        rules.append(AdaptationRule(
-            name="periodic_restart",
-            condition=self._needs_restart,
-            action=AdaptationAction.RANDOM_RESTART,
-            params={"restarts": 3},
-            priority=40,
-        ))
+        rules.append(
+            AdaptationRule(
+                name="periodic_restart",
+                condition=self._needs_restart,
+                action=AdaptationAction.RANDOM_RESTART,
+                params={"restarts": 3},
+                priority=40,
+            )
+        )
 
         return rules
 
@@ -292,7 +307,11 @@ class ParameterAdapter:
     ) -> bool:
         """Check if there are ACGME violations."""
         # Check for 80_HOUR or SUPERVISION violations
-        acgme_types = {"80_HOUR_VIOLATION", "1_IN_7_VIOLATION", "SUPERVISION_RATIO_VIOLATION"}
+        acgme_types = {
+            "80_HOUR_VIOLATION",
+            "1_IN_7_VIOLATION",
+            "SUPERVISION_RATIO_VIOLATION",
+        }
         for v in evaluation.violations:
             if v.type in acgme_types:
                 return True
@@ -374,10 +393,12 @@ class BayesianAdapter(ParameterAdapter):
         Falls back to deterministic rules if not enough observations.
         """
         # Record observation
-        self._observations.append((
-            current_params.to_dict(),
-            evaluation.score,
-        ))
+        self._observations.append(
+            (
+                current_params.to_dict(),
+                evaluation.score,
+            )
+        )
 
         # Need at least 10 observations for Bayesian optimization
         if len(self._observations) < 10:
@@ -402,7 +423,9 @@ class BayesianAdapter(ParameterAdapter):
             random_seed=random.randint(0, 2**32 - 1),
             solver_params=current.solver_params.copy(),
             constraint_weights=current.constraint_weights.copy(),
-            diversification_factor=min(1.0, current.diversification_factor + 0.05 * random.random()),
+            diversification_factor=min(
+                1.0, current.diversification_factor + 0.05 * random.random()
+            ),
         )
 
         return new_params

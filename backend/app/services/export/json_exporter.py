@@ -4,11 +4,13 @@ JSON export service.
 Provides JSON export functionality for schedules, assignments, people,
 and analytics data with streaming support for large datasets.
 """
+
 import gzip
 import io
 import json
+from collections.abc import AsyncIterator
 from datetime import date, datetime
-from typing import Any, AsyncIterator
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -110,7 +112,9 @@ class JSONExporter:
 
             # Format assignments
             for a in assignments:
-                formatted = format_assignment(a, fields=fields, include_relations=include_relations)
+                formatted = format_assignment(
+                    a, fields=fields, include_relations=include_relations
+                )
                 all_assignments.append(formatted)
 
             offset += batch_size
@@ -126,7 +130,7 @@ class JSONExporter:
                     "end_date": end_date.isoformat() if end_date else None,
                 },
                 "exported_at": datetime.utcnow().isoformat(),
-            }
+            },
         }
 
         # Serialize to JSON
@@ -139,7 +143,7 @@ class JSONExporter:
         if compress:
             return self._compress(json_content)
 
-        return json_content.encode('utf-8')
+        return json_content.encode("utf-8")
 
     async def export_schedule(
         self,
@@ -204,7 +208,9 @@ class JSONExporter:
             # Format rows
             for a in assignments:
                 if nested:
-                    formatted = format_assignment(a, fields=fields, include_relations=True)
+                    formatted = format_assignment(
+                        a, fields=fields, include_relations=True
+                    )
                 else:
                     formatted = format_schedule_row(a, flat=True)
                     if fields:
@@ -226,7 +232,7 @@ class JSONExporter:
                 },
                 "format": "nested" if nested else "flat",
                 "exported_at": datetime.utcnow().isoformat(),
-            }
+            },
         }
 
         # Serialize to JSON
@@ -239,7 +245,7 @@ class JSONExporter:
         if compress:
             return self._compress(json_content)
 
-        return json_content.encode('utf-8')
+        return json_content.encode("utf-8")
 
     async def export_people(
         self,
@@ -300,7 +306,7 @@ class JSONExporter:
                     "person_type": person_type,
                 },
                 "exported_at": datetime.utcnow().isoformat(),
-            }
+            },
         }
 
         # Serialize to JSON
@@ -313,7 +319,7 @@ class JSONExporter:
         if compress:
             return self._compress(json_content)
 
-        return json_content.encode('utf-8')
+        return json_content.encode("utf-8")
 
     async def export_blocks(
         self,
@@ -379,7 +385,7 @@ class JSONExporter:
                     "end_date": end_date.isoformat() if end_date else None,
                 },
                 "exported_at": datetime.utcnow().isoformat(),
-            }
+            },
         }
 
         # Serialize to JSON
@@ -392,7 +398,7 @@ class JSONExporter:
         if compress:
             return self._compress(json_content)
 
-        return json_content.encode('utf-8')
+        return json_content.encode("utf-8")
 
     async def export_analytics(
         self,
@@ -418,7 +424,7 @@ class JSONExporter:
                 "export_type": "analytics",
                 "total_count": len(metrics_data),
                 "exported_at": datetime.utcnow().isoformat(),
-            }
+            },
         }
 
         # Serialize to JSON
@@ -431,13 +437,9 @@ class JSONExporter:
         if compress:
             return self._compress(json_content)
 
-        return json_content.encode('utf-8')
+        return json_content.encode("utf-8")
 
-    async def stream_export(
-        self,
-        export_type: str,
-        **kwargs
-    ) -> AsyncIterator[bytes]:
+    async def stream_export(self, export_type: str, **kwargs) -> AsyncIterator[bytes]:
         """
         Stream export data in chunks (for large datasets).
 
@@ -463,7 +465,7 @@ class JSONExporter:
         # Yield in chunks
         chunk_size = 8192  # 8KB chunks
         for i in range(0, len(data), chunk_size):
-            yield data[i:i + chunk_size]
+            yield data[i : i + chunk_size]
 
     def _compress(self, content: str) -> bytes:
         """
@@ -476,8 +478,8 @@ class JSONExporter:
             Compressed bytes
         """
         output = io.BytesIO()
-        with gzip.GzipFile(fileobj=output, mode='wb') as gz:
-            gz.write(content.encode('utf-8'))
+        with gzip.GzipFile(fileobj=output, mode="wb") as gz:
+            gz.write(content.encode("utf-8"))
         return output.getvalue()
 
     @staticmethod
@@ -497,9 +499,7 @@ class JSONExporter:
 
     @staticmethod
     def get_filename(
-        base_name: str,
-        compress: bool = False,
-        timestamp: bool = True
+        base_name: str, compress: bool = False, timestamp: bool = True
     ) -> str:
         """
         Generate filename for JSON export.

@@ -10,6 +10,7 @@ Covers:
 - Rate limit headers
 - IP-based limiting
 """
+
 import time
 from unittest.mock import MagicMock, patch
 
@@ -21,7 +22,6 @@ from fastapi.testclient import TestClient
 from app.core.config import get_settings
 from app.core.rate_limit import (
     RateLimiter,
-    create_rate_limit_dependency,
     get_client_ip,
     get_rate_limiter,
 )
@@ -40,7 +40,12 @@ def mock_redis():
     mock = MagicMock(spec=redis.Redis)
     # Mock pipeline
     mock_pipe = MagicMock()
-    mock_pipe.execute.return_value = [None, 0, None, None]  # [del_result, count, zadd_result, expire_result]
+    mock_pipe.execute.return_value = [
+        None,
+        0,
+        None,
+        None,
+    ]  # [del_result, count, zadd_result, expire_result]
     mock.pipeline.return_value = mock_pipe
     return mock
 
@@ -84,7 +89,9 @@ class TestRateLimiter:
 
     def test_rate_limiter_initialization_without_redis(self):
         """Test rate limiter handles Redis connection failure gracefully."""
-        with patch("redis.from_url", side_effect=redis.ConnectionError("Connection failed")):
+        with patch(
+            "redis.from_url", side_effect=redis.ConnectionError("Connection failed")
+        ):
             limiter = RateLimiter()
             assert limiter.redis is None
 
@@ -233,8 +240,12 @@ class TestRateLimiterWithRealRedis:
         for _ in range(max_requests):
             real_redis_limiter.is_rate_limited(key1, max_requests, window_seconds)
 
-        is_limited_1, _ = real_redis_limiter.is_rate_limited(key1, max_requests, window_seconds)
-        is_limited_2, _ = real_redis_limiter.is_rate_limited(key2, max_requests, window_seconds)
+        is_limited_1, _ = real_redis_limiter.is_rate_limited(
+            key1, max_requests, window_seconds
+        )
+        is_limited_2, _ = real_redis_limiter.is_rate_limited(
+            key2, max_requests, window_seconds
+        )
 
         # key1 should be limited, key2 should not
         assert is_limited_1, "key1 should be limited"
@@ -250,14 +261,18 @@ class TestRateLimiterWithRealRedis:
         for _ in range(max_requests):
             real_redis_limiter.is_rate_limited(key, max_requests, window_seconds)
 
-        is_limited, _ = real_redis_limiter.is_rate_limited(key, max_requests, window_seconds)
+        is_limited, _ = real_redis_limiter.is_rate_limited(
+            key, max_requests, window_seconds
+        )
         assert is_limited, "Should be limited before reset"
 
         # Reset
         real_redis_limiter.reset(key)
 
         # Should be allowed again
-        is_limited, _ = real_redis_limiter.is_rate_limited(key, max_requests, window_seconds)
+        is_limited, _ = real_redis_limiter.is_rate_limited(
+            key, max_requests, window_seconds
+        )
         assert not is_limited, "Should not be limited after reset"
 
 
@@ -340,7 +355,9 @@ class TestRateLimitingOnAuthEndpoints:
             assert "X-RateLimit-Remaining" in response.headers
             assert "Retry-After" in response.headers
 
-    def test_register_rate_limit_blocks_after_limit(self, client: TestClient, admin_user):
+    def test_register_rate_limit_blocks_after_limit(
+        self, client: TestClient, admin_user
+    ):
         """Test that register endpoint blocks after rate limit is exceeded."""
         # Get auth headers
         response = client.post(
@@ -365,7 +382,9 @@ class TestRateLimitingOnAuthEndpoints:
             )
             # Should get 201 (created) or 400 (validation error) not 429
             if response.status_code != 429:
-                assert response.status_code in [201, 400], f"Attempt {i + 1} should return 201 or 400"
+                assert response.status_code in [201, 400], (
+                    f"Attempt {i + 1} should return 201 or 400"
+                )
 
         # Next request might be rate limited
         response = client.post(
@@ -423,7 +442,9 @@ class TestRateLimitingEdgeCases:
 
     def test_rate_limiting_with_redis_unavailable(self):
         """Test that API works when Redis is unavailable."""
-        with patch("redis.from_url", side_effect=redis.ConnectionError("Connection failed")):
+        with patch(
+            "redis.from_url", side_effect=redis.ConnectionError("Connection failed")
+        ):
             limiter = RateLimiter()
 
             # Should fail open (allow requests)
@@ -456,8 +477,12 @@ class TestRateLimitingEdgeCases:
         window_seconds = 60
 
         # Both IPs make requests
-        is_limited_1a, _ = real_redis_limiter.is_rate_limited(key1, max_requests, window_seconds)
-        is_limited_2a, _ = real_redis_limiter.is_rate_limited(key2, max_requests, window_seconds)
+        is_limited_1a, _ = real_redis_limiter.is_rate_limited(
+            key1, max_requests, window_seconds
+        )
+        is_limited_2a, _ = real_redis_limiter.is_rate_limited(
+            key2, max_requests, window_seconds
+        )
 
         assert not is_limited_1a
         assert not is_limited_2a
@@ -466,8 +491,12 @@ class TestRateLimitingEdgeCases:
         for _ in range(max_requests):
             real_redis_limiter.is_rate_limited(key1, max_requests, window_seconds)
 
-        is_limited_1b, _ = real_redis_limiter.is_rate_limited(key1, max_requests, window_seconds)
-        is_limited_2b, _ = real_redis_limiter.is_rate_limited(key2, max_requests, window_seconds)
+        is_limited_1b, _ = real_redis_limiter.is_rate_limited(
+            key1, max_requests, window_seconds
+        )
+        is_limited_2b, _ = real_redis_limiter.is_rate_limited(
+            key2, max_requests, window_seconds
+        )
 
         # IP1 should be limited, IP2 should not
         assert is_limited_1b

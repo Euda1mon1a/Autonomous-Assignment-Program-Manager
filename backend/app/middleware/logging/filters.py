@@ -6,7 +6,7 @@ to prevent leakage of passwords, tokens, PII, and other confidential data.
 """
 
 import re
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any
 
 
 class SensitiveDataFilter:
@@ -20,7 +20,7 @@ class SensitiveDataFilter:
     """
 
     # Default sensitive field names (case-insensitive)
-    DEFAULT_SENSITIVE_FIELDS: Set[str] = {
+    DEFAULT_SENSITIVE_FIELDS: set[str] = {
         "password",
         "passwd",
         "pwd",
@@ -51,26 +51,32 @@ class SensitiveDataFilter:
     }
 
     # Patterns for sensitive data (compiled regex)
-    SENSITIVE_PATTERNS: List[tuple[re.Pattern, str]] = [
+    SENSITIVE_PATTERNS: list[tuple[re.Pattern, str]] = [
         # Credit card numbers (basic pattern)
         (re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b"), "[REDACTED-CARD]"),
         # SSN format (XXX-XX-XXXX)
         (re.compile(r"\b\d{3}-\d{2}-\d{4}\b"), "[REDACTED-SSN]"),
         # Email addresses
-        (re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"), "[REDACTED-EMAIL]"),
+        (
+            re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"),
+            "[REDACTED-EMAIL]",
+        ),
         # Bearer tokens (Authorization header pattern)
-        (re.compile(r"Bearer\s+[A-Za-z0-9\-._~+/]+=*", re.IGNORECASE), "Bearer [REDACTED]"),
+        (
+            re.compile(r"Bearer\s+[A-Za-z0-9\-._~+/]+=*", re.IGNORECASE),
+            "Bearer [REDACTED]",
+        ),
         # API keys (common formats: 32+ hex/alphanumeric chars)
         (re.compile(r"\b[a-f0-9]{32,}\b", re.IGNORECASE), "[REDACTED-KEY]"),
     ]
 
     def __init__(
         self,
-        sensitive_fields: Optional[Set[str]] = None,
+        sensitive_fields: set[str] | None = None,
         mask_char: str = "*",
         show_prefix_chars: int = 0,
         show_suffix_chars: int = 0,
-        custom_patterns: Optional[List[tuple[str, str]]] = None,
+        custom_patterns: list[tuple[str, str]] | None = None,
     ):
         """
         Initialize sensitive data filter.
@@ -96,7 +102,7 @@ class SensitiveDataFilter:
             for pattern, replacement in custom_patterns:
                 self.custom_patterns.append((re.compile(pattern), replacement))
 
-    def mask_value(self, value: str, field_name: Optional[str] = None) -> str:
+    def mask_value(self, value: str, field_name: str | None = None) -> str:
         """
         Mask a single value.
 
@@ -148,8 +154,8 @@ class SensitiveDataFilter:
         return f"{prefix}{mask}{suffix}"
 
     def filter_dict(
-        self, data: Dict[str, Any], recursive: bool = True
-    ) -> Dict[str, Any]:
+        self, data: dict[str, Any], recursive: bool = True
+    ) -> dict[str, Any]:
         """
         Filter sensitive fields from a dictionary.
 
@@ -190,7 +196,7 @@ class SensitiveDataFilter:
 
         return filtered
 
-    def _filter_list(self, data: List[Any]) -> List[Any]:
+    def _filter_list(self, data: list[Any]) -> list[Any]:
         """Filter sensitive data from list items."""
         filtered = []
         for item in data:
@@ -204,7 +210,7 @@ class SensitiveDataFilter:
                 filtered.append(item)
         return filtered
 
-    def filter_headers(self, headers: Dict[str, str]) -> Dict[str, str]:
+    def filter_headers(self, headers: dict[str, str]) -> dict[str, str]:
         """
         Filter sensitive headers.
 
@@ -267,9 +273,9 @@ default_filter = SensitiveDataFilter(
 
 
 def mask_sensitive_data(
-    data: Union[Dict[str, Any], List[Any], str],
-    filter_instance: Optional[SensitiveDataFilter] = None,
-) -> Union[Dict[str, Any], List[Any], str]:
+    data: dict[str, Any] | list[Any] | str,
+    filter_instance: SensitiveDataFilter | None = None,
+) -> dict[str, Any] | list[Any] | str:
     """
     Convenience function to mask sensitive data.
 

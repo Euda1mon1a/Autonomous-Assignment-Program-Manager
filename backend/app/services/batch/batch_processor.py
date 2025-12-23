@@ -1,4 +1,5 @@
 """Async batch processor for assignment operations."""
+
 import asyncio
 import logging
 from datetime import datetime
@@ -63,9 +64,13 @@ class BatchProcessor:
                     }
 
                     if assignment_data.rotation_template_id:
-                        assignment_dict["rotation_template_id"] = assignment_data.rotation_template_id
+                        assignment_dict["rotation_template_id"] = (
+                            assignment_data.rotation_template_id
+                        )
                     if assignment_data.activity_override:
-                        assignment_dict["activity_override"] = assignment_data.activity_override
+                        assignment_dict["activity_override"] = (
+                            assignment_data.activity_override
+                        )
                     if assignment_data.notes:
                         assignment_dict["notes"] = assignment_data.notes
 
@@ -142,7 +147,9 @@ class BatchProcessor:
             for idx, assignment_data in enumerate(assignments):
                 try:
                     # Get existing assignment
-                    existing = self.assignment_repo.get_by_id(assignment_data.assignment_id)
+                    existing = self.assignment_repo.get_by_id(
+                        assignment_data.assignment_id
+                    )
                     if not existing:
                         results.append(
                             BatchOperationResult(
@@ -174,7 +181,7 @@ class BatchProcessor:
                                 success=False,
                                 assignment_id=assignment_data.assignment_id,
                                 error=f"Assignment has been modified. Expected: {assignment_data.updated_at}, "
-                                      f"Current: {existing.updated_at}",
+                                f"Current: {existing.updated_at}",
                             )
                         )
                         if rollback_on_error:
@@ -194,11 +201,15 @@ class BatchProcessor:
                     # Build update dict
                     update_dict = {}
                     if assignment_data.rotation_template_id is not None:
-                        update_dict["rotation_template_id"] = assignment_data.rotation_template_id
+                        update_dict["rotation_template_id"] = (
+                            assignment_data.rotation_template_id
+                        )
                     if assignment_data.role is not None:
                         update_dict["role"] = assignment_data.role
                     if assignment_data.activity_override is not None:
-                        update_dict["activity_override"] = assignment_data.activity_override
+                        update_dict["activity_override"] = (
+                            assignment_data.activity_override
+                        )
                     if assignment_data.notes is not None:
                         update_dict["notes"] = assignment_data.notes
 
@@ -275,7 +286,9 @@ class BatchProcessor:
             for idx, assignment_data in enumerate(assignments):
                 try:
                     # Get existing assignment
-                    existing = self.assignment_repo.get_by_id(assignment_data.assignment_id)
+                    existing = self.assignment_repo.get_by_id(
+                        assignment_data.assignment_id
+                    )
                     if not existing:
                         results.append(
                             BatchOperationResult(

@@ -25,7 +25,6 @@ import gzip
 import hashlib
 import json
 import logging
-import os
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
@@ -279,7 +278,9 @@ class LocalStorage(BackupStorage):
             metadata = {
                 "backup_id": backup_id,
                 "backup_type": backup_type,
-                "created_at": backup_data.get("created_at", datetime.utcnow().isoformat()),
+                "created_at": backup_data.get(
+                    "created_at", datetime.utcnow().isoformat()
+                ),
                 "size_bytes": len(compressed_data),
                 "checksum": checksum,
                 "strategy": backup_data.get("strategy", backup_type),
@@ -391,7 +392,9 @@ class LocalStorage(BackupStorage):
         backups = []
 
         # Search in specified type or all types
-        types_to_search = [backup_type] if backup_type else ["full", "incremental", "differential"]
+        types_to_search = (
+            [backup_type] if backup_type else ["full", "incremental", "differential"]
+        )
 
         for btype in types_to_search:
             type_dir = self.backup_dir / btype
@@ -604,7 +607,9 @@ class S3Storage(BackupStorage):
             metadata = {
                 "backup_id": backup_id,
                 "backup_type": backup_type,
-                "created_at": backup_data.get("created_at", datetime.utcnow().isoformat()),
+                "created_at": backup_data.get(
+                    "created_at", datetime.utcnow().isoformat()
+                ),
                 "size_bytes": len(compressed_data),
                 "checksum": checksum,
                 "strategy": backup_data.get("strategy", backup_type),
@@ -663,7 +668,9 @@ class S3Storage(BackupStorage):
                     # Decompress
                     backup_data = self._decompress_backup(compressed_data)
 
-                    logger.info(f"Retrieved backup {backup_id} from S3 {self.bucket}/{s3_key}")
+                    logger.info(
+                        f"Retrieved backup {backup_id} from S3 {self.bucket}/{s3_key}"
+                    )
                     return backup_data
 
                 except self.s3_client.exceptions.NoSuchKey:
@@ -737,7 +744,9 @@ class S3Storage(BackupStorage):
         backups = []
 
         # Search in specified type or all types
-        types_to_search = [backup_type] if backup_type else ["full", "incremental", "differential"]
+        types_to_search = (
+            [backup_type] if backup_type else ["full", "incremental", "differential"]
+        )
 
         for btype in types_to_search:
             prefix = f"backups/{btype}/"
@@ -913,6 +922,5 @@ def get_storage_backend() -> BackupStorage:
 
     else:
         raise ValueError(
-            f"Invalid storage backend: {storage_backend}. "
-            f"Must be 'local' or 's3'"
+            f"Invalid storage backend: {storage_backend}. Must be 'local' or 's3'"
         )

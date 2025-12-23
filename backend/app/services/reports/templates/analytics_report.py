@@ -1,4 +1,5 @@
 """Workload analytics report template."""
+
 import logging
 import statistics
 from collections import Counter, defaultdict
@@ -81,16 +82,12 @@ class AnalyticsReportTemplate:
         elements.append(
             Paragraph("Executive Summary", self.generator.styles["SectionHeader"])
         )
-        elements.extend(
-            self._create_summary_section(workload_data, fairness_metrics)
-        )
+        elements.extend(self._create_summary_section(workload_data, fairness_metrics))
         elements.append(Spacer(1, 0.2 * inch))
 
         # Workload distribution
         elements.append(
-            Paragraph(
-                "Workload Distribution", self.generator.styles["SectionHeader"]
-            )
+            Paragraph("Workload Distribution", self.generator.styles["SectionHeader"])
         )
         elements.extend(self._create_workload_section(workload_data))
         elements.append(Spacer(1, 0.2 * inch))
@@ -106,9 +103,7 @@ class AnalyticsReportTemplate:
         # Rotation distribution
         elements.append(PageBreak())
         elements.append(
-            Paragraph(
-                "Rotation Distribution", self.generator.styles["SectionHeader"]
-            )
+            Paragraph("Rotation Distribution", self.generator.styles["SectionHeader"])
         )
         elements.extend(self._create_rotation_section(rotation_data))
         elements.append(Spacer(1, 0.2 * inch))
@@ -294,7 +289,9 @@ class AnalyticsReportTemplate:
 
         return elements
 
-    def _create_workload_section(self, workload_data: dict[str, dict[str, Any]]) -> list:
+    def _create_workload_section(
+        self, workload_data: dict[str, dict[str, Any]]
+    ) -> list:
         """Create workload distribution section."""
         elements = []
 
@@ -318,11 +315,13 @@ class AnalyticsReportTemplate:
         workload_table_data = [["Name", "Type", "Assignments"]]
 
         for person_id, data in sorted_workload:
-            workload_table_data.append([
-                data["name"],
-                data["type"].upper(),
-                str(data["assignments"]),
-            ])
+            workload_table_data.append(
+                [
+                    data["name"],
+                    data["type"].upper(),
+                    str(data["assignments"]),
+                ]
+            )
 
         workload_table = self.generator._create_table(
             workload_table_data,
@@ -400,12 +399,16 @@ class AnalyticsReportTemplate:
         total_assignments = sum(rotation_data.values())
 
         for rotation_name, count in sorted_rotations:
-            percentage = (count / total_assignments * 100) if total_assignments > 0 else 0
-            rotation_table_data.append([
-                rotation_name,
-                str(count),
-                f"{percentage:.1f}%",
-            ])
+            percentage = (
+                (count / total_assignments * 100) if total_assignments > 0 else 0
+            )
+            rotation_table_data.append(
+                [
+                    rotation_name,
+                    str(count),
+                    f"{percentage:.1f}%",
+                ]
+            )
 
         rotation_table = self.generator._create_table(
             rotation_table_data,

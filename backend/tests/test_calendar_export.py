@@ -7,11 +7,11 @@ Tests the /export.ics endpoint for ICS calendar exports including:
 - Filter parameters (person_id, start_date, end_date)
 - Error handling for invalid requests
 """
+
 import re
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -24,9 +24,7 @@ from app.models.rotation_template import RotationTemplate
 class TestCalendarExportICSEndpoint:
     """Test the /api/calendar/export.ics endpoint."""
 
-    def test_export_ics_basic_success(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_export_ics_basic_success(self, client: TestClient, db: Session) -> None:
         """Test basic ICS export for a person with assignments."""
         # Create test data
         person = Person(
@@ -81,7 +79,10 @@ class TestCalendarExportICSEndpoint:
         assert response.status_code == 200
         assert response.headers["content-type"] == "text/calendar; charset=utf-8"
         assert "attachment" in response.headers["content-disposition"]
-        assert f"schedule_{person.id}_{test_date}_{test_date}.ics" in response.headers["content-disposition"]
+        assert (
+            f"schedule_{person.id}_{test_date}_{test_date}.ics"
+            in response.headers["content-disposition"]
+        )
 
         # Verify ICS content exists
         content = response.text
@@ -291,8 +292,14 @@ class TestCalendarExportICSEndpoint:
         content = response.text
 
         # Verify role labels in summary
-        assert "Clinic Rotation (Backup)" in content or "SUMMARY:Clinic Rotation (Backup)" in content
-        assert "Clinic Rotation (Supervising)" in content or "SUMMARY:Clinic Rotation (Supervising)" in content
+        assert (
+            "Clinic Rotation (Backup)" in content
+            or "SUMMARY:Clinic Rotation (Backup)" in content
+        )
+        assert (
+            "Clinic Rotation (Supervising)" in content
+            or "SUMMARY:Clinic Rotation (Supervising)" in content
+        )
 
 
 class TestRFC5545Compliance:
@@ -327,9 +334,7 @@ class TestRFC5545Compliance:
         assert "METHOD:PUBLISH" in content
         assert "END:VCALENDAR" in content
 
-    def test_ics_vcalendar_structure(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_ics_vcalendar_structure(self, client: TestClient, db: Session) -> None:
         """Test proper VCALENDAR begin/end structure."""
         person = Person(id=uuid.uuid4(), name="Dr. Structure Test", type="resident")
         db.add(person)
@@ -357,9 +362,7 @@ class TestRFC5545Compliance:
         last_line = lines[-1].strip() if lines[-1].strip() else lines[-2].strip()
         assert last_line == "END:VCALENDAR"
 
-    def test_ics_vevent_properties(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_ics_vevent_properties(self, client: TestClient, db: Session) -> None:
         """Test that VEVENT components have required properties."""
         person = Person(id=uuid.uuid4(), name="Dr. Event Test", type="resident")
         db.add(person)
@@ -410,9 +413,7 @@ class TestRFC5545Compliance:
         assert "DTSTAMP:" in content
         assert "END:VEVENT" in content
 
-    def test_ics_uid_format(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_ics_uid_format(self, client: TestClient, db: Session) -> None:
         """Test that UIDs are properly formatted and unique."""
         person = Person(id=uuid.uuid4(), name="Dr. UID Test", type="resident")
         db.add(person)
@@ -469,9 +470,7 @@ class TestRFC5545Compliance:
         for uid in uids:
             assert "@residency-scheduler" in uid
 
-    def test_ics_datetime_format(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_ics_datetime_format(self, client: TestClient, db: Session) -> None:
         """Test that datetime values are properly formatted."""
         person = Person(id=uuid.uuid4(), name="Dr. DateTime Test", type="resident")
         db.add(person)
@@ -522,9 +521,7 @@ class TestRFC5545Compliance:
 class TestTimezoneHandling:
     """Test timezone handling in ICS exports."""
 
-    def test_vtimezone_component_present(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_vtimezone_component_present(self, client: TestClient, db: Session) -> None:
         """Test that VTIMEZONE component is included in ICS export."""
         person = Person(id=uuid.uuid4(), name="Dr. TZ Test", type="resident")
         db.add(person)
@@ -547,9 +544,7 @@ class TestTimezoneHandling:
         assert "BEGIN:VTIMEZONE" in content
         assert "END:VTIMEZONE" in content
 
-    def test_vtimezone_america_new_york(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_vtimezone_america_new_york(self, client: TestClient, db: Session) -> None:
         """Test that timezone is set to America/New_York."""
         person = Person(id=uuid.uuid4(), name="Dr. NY Test", type="resident")
         db.add(person)
@@ -599,9 +594,7 @@ class TestTimezoneHandling:
         assert "BEGIN:DAYLIGHT" in content
         assert "END:DAYLIGHT" in content
 
-    def test_vtimezone_est_edt_names(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_vtimezone_est_edt_names(self, client: TestClient, db: Session) -> None:
         """Test that timezone names are EST and EDT."""
         person = Person(id=uuid.uuid4(), name="Dr. EST Test", type="resident")
         db.add(person)
@@ -624,9 +617,7 @@ class TestTimezoneHandling:
         assert "TZNAME:EST" in content
         assert "TZNAME:EDT" in content
 
-    def test_am_block_time_correct(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_am_block_time_correct(self, client: TestClient, db: Session) -> None:
         """Test that AM blocks have correct times (8:00 AM - 12:00 PM)."""
         person = Person(id=uuid.uuid4(), name="Dr. AM Test", type="resident")
         db.add(person)
@@ -672,9 +663,7 @@ class TestTimezoneHandling:
         assert "20240515T080000" in content  # 8:00 AM start
         assert "20240515T120000" in content  # 12:00 PM end
 
-    def test_pm_block_time_correct(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_pm_block_time_correct(self, client: TestClient, db: Session) -> None:
         """Test that PM blocks have correct times (1:00 PM - 5:00 PM)."""
         person = Person(id=uuid.uuid4(), name="Dr. PM Test", type="resident")
         db.add(person)
@@ -724,9 +713,7 @@ class TestTimezoneHandling:
 class TestFilterParameters:
     """Test filter parameter handling."""
 
-    def test_person_id_filter_required(
-        self, client: TestClient
-    ) -> None:
+    def test_person_id_filter_required(self, client: TestClient) -> None:
         """Test that person_id parameter is required."""
         test_date = date.today()
 
@@ -741,9 +728,7 @@ class TestFilterParameters:
         # Should return 422 Unprocessable Entity for missing required parameter
         assert response.status_code == 422
 
-    def test_start_date_filter_required(
-        self, client: TestClient
-    ) -> None:
+    def test_start_date_filter_required(self, client: TestClient) -> None:
         """Test that start_date parameter is required."""
         person_id = uuid.uuid4()
         test_date = date.today()
@@ -758,9 +743,7 @@ class TestFilterParameters:
 
         assert response.status_code == 422
 
-    def test_end_date_filter_required(
-        self, client: TestClient
-    ) -> None:
+    def test_end_date_filter_required(self, client: TestClient) -> None:
         """Test that end_date parameter is required."""
         person_id = uuid.uuid4()
         test_date = date.today()
@@ -775,9 +758,7 @@ class TestFilterParameters:
 
         assert response.status_code == 422
 
-    def test_invalid_person_id_format(
-        self, client: TestClient
-    ) -> None:
+    def test_invalid_person_id_format(self, client: TestClient) -> None:
         """Test handling of invalid UUID format for person_id."""
         test_date = date.today()
 
@@ -792,9 +773,7 @@ class TestFilterParameters:
 
         assert response.status_code == 422
 
-    def test_invalid_date_format(
-        self, client: TestClient
-    ) -> None:
+    def test_invalid_date_format(self, client: TestClient) -> None:
         """Test handling of invalid date format."""
         person_id = uuid.uuid4()
 
@@ -809,9 +788,7 @@ class TestFilterParameters:
 
         assert response.status_code == 422
 
-    def test_filters_by_exact_person_id(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_filters_by_exact_person_id(self, client: TestClient, db: Session) -> None:
         """Test that only assignments for specified person are included."""
         # Create two different people
         person1 = Person(
@@ -882,9 +859,7 @@ class TestFilterParameters:
 class TestErrorHandling:
     """Test error handling for invalid requests."""
 
-    def test_person_not_found(
-        self, client: TestClient
-    ) -> None:
+    def test_person_not_found(self, client: TestClient) -> None:
         """Test error when person_id doesn't exist."""
         non_existent_id = uuid.uuid4()
         test_date = date.today()
@@ -901,9 +876,7 @@ class TestErrorHandling:
         assert response.status_code == 404
         assert "Person not found" in response.json()["detail"]
 
-    def test_empty_assignment_set(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_empty_assignment_set(self, client: TestClient, db: Session) -> None:
         """Test handling when person exists but has no assignments."""
         person = Person(
             id=uuid.uuid4(),
@@ -957,9 +930,7 @@ class TestErrorHandling:
         # Should not error on valid request
         assert response.status_code in [200, 404, 500]
 
-    def test_malformed_query_parameters(
-        self, client: TestClient
-    ) -> None:
+    def test_malformed_query_parameters(self, client: TestClient) -> None:
         """Test handling of malformed query parameters."""
         response = client.get(
             "/api/calendar/export.ics",
@@ -976,9 +947,7 @@ class TestErrorHandling:
 class TestICSFileContent:
     """Test ICS file content and metadata."""
 
-    def test_ics_contains_person_name(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_ics_contains_person_name(self, client: TestClient, db: Session) -> None:
         """Test that calendar name includes person's name."""
         person = Person(
             id=uuid.uuid4(),
@@ -1094,9 +1063,7 @@ class TestICSFileContent:
         content = response.text
         assert "Bring stethoscope and laptop" in content
 
-    def test_ics_includes_activity_type(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_ics_includes_activity_type(self, client: TestClient, db: Session) -> None:
         """Test that activity type is included in event descriptions."""
         person = Person(id=uuid.uuid4(), name="Dr. Activity Test", type="resident")
         db.add(person)
@@ -1139,9 +1106,7 @@ class TestICSFileContent:
         content = response.text
         assert "Type: inpatient" in content or "inpatient" in content.lower()
 
-    def test_filename_format(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_filename_format(self, client: TestClient, db: Session) -> None:
         """Test that downloaded filename has correct format."""
         person = Person(id=uuid.uuid4(), name="Dr. Filename Test", type="resident")
         db.add(person)

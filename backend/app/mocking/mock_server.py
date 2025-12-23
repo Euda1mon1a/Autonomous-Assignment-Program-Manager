@@ -1,4 +1,4 @@
-"""
+r"""
 API mocking server for comprehensive testing support.
 
 This module provides a sophisticated mocking framework for testing API
@@ -57,16 +57,17 @@ Example:
     assert len(requests) == 1
     ```
 """
+
 import asyncio
 import json
 import logging
 import re
 import time
-from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Pattern, Union
+from typing import Any
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -85,7 +86,7 @@ class HTTPMethod(str, Enum):
 
 
 # Type alias for dynamic response functions
-DynamicResponseFn = Callable[["MockRequest"], Union[Dict[str, Any], Any]]
+DynamicResponseFn = Callable[["MockRequest"], dict[str, Any] | Any]
 
 
 # Type alias for request predicates
@@ -115,14 +116,14 @@ class MockRequest:
     id: str = field(default_factory=lambda: str(uuid4()))
     method: str = ""
     path: str = ""
-    path_params: Dict[str, str] = field(default_factory=dict)
-    query_params: Dict[str, Any] = field(default_factory=dict)
-    headers: Dict[str, str] = field(default_factory=dict)
-    body: Optional[Any] = None
+    path_params: dict[str, str] = field(default_factory=dict)
+    query_params: dict[str, Any] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
+    body: Any | None = None
     timestamp: datetime = field(default_factory=datetime.utcnow)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def get_header(self, name: str, default: str = None) -> Optional[str]:
+    def get_header(self, name: str, default: str = None) -> str | None:
         """
         Get header value (case-insensitive).
 
@@ -139,7 +140,7 @@ class MockRequest:
                 return value
         return default
 
-    def get_json(self) -> Optional[Dict[str, Any]]:
+    def get_json(self) -> dict[str, Any] | None:
         """
         Get request body as JSON.
 
@@ -191,12 +192,12 @@ class MockResponse:
 
     status_code: int = 200
     body: Any = None
-    headers: Dict[str, str] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
     delay_ms: int = 0
-    error: Optional[Exception] = None
+    error: Exception | None = None
     is_dynamic: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert response to dictionary format.
 
@@ -238,7 +239,7 @@ class MockResponse:
 
 
 class RequestMatcher:
-    """
+    r"""
     Flexible request matching with support for patterns and predicates.
 
     Matches requests based on method, path (exact or pattern), headers,
@@ -279,13 +280,13 @@ class RequestMatcher:
 
     def __init__(
         self,
-        method: Optional[str] = None,
-        path: Optional[str] = None,
-        path_pattern: Optional[str] = None,
-        headers: Optional[Dict[str, str]] = None,
-        query_params: Optional[Dict[str, Any]] = None,
-        body_contains: Optional[Dict[str, Any]] = None,
-        predicate: Optional[RequestPredicate] = None,
+        method: str | None = None,
+        path: str | None = None,
+        path_pattern: str | None = None,
+        headers: dict[str, str] | None = None,
+        query_params: dict[str, Any] | None = None,
+        body_contains: dict[str, Any] | None = None,
+        predicate: RequestPredicate | None = None,
     ):
         """
         Initialize request matcher.
@@ -355,7 +356,7 @@ class RequestMatcher:
 
         return True
 
-    def extract_path_params(self, request: MockRequest) -> Dict[str, str]:
+    def extract_path_params(self, request: MockRequest) -> dict[str, str]:
         """
         Extract path parameters from pattern match.
 
@@ -401,7 +402,7 @@ class ResponseTemplate:
         self,
         status_code: int = 200,
         body_template: Any = None,
-        headers: Dict[str, str] = None,
+        headers: dict[str, str] = None,
         delay_ms: int = 0,
     ):
         """
@@ -421,7 +422,7 @@ class ResponseTemplate:
     def generate(
         self,
         request: MockRequest,
-        context: Dict[str, Any] = None,
+        context: dict[str, Any] = None,
     ) -> MockResponse:
         """
         Generate response from template.
@@ -457,15 +458,16 @@ class ResponseTemplate:
             is_dynamic=True,
         )
 
-    def _substitute(self, obj: Any, context: Dict[str, Any]) -> Any:
+    def _substitute(self, obj: Any, context: dict[str, Any]) -> Any:
         """Recursively substitute variables in object."""
         if isinstance(obj, str):
             # Replace ${var} and ${path.to.var}
             import re
-            pattern = re.compile(r'\$\{([^}]+)\}')
+
+            pattern = re.compile(r"\$\{([^}]+)\}")
 
             def replacer(match):
-                path = match.group(1).split('.')
+                path = match.group(1).split(".")
                 value = context
                 try:
                     for key in path:
@@ -506,15 +508,15 @@ class MockEndpoint:
     """
 
     matcher: RequestMatcher
-    responses: List[MockResponse] = field(default_factory=list)
-    response_fn: Optional[DynamicResponseFn] = None
-    template: Optional[ResponseTemplate] = None
+    responses: list[MockResponse] = field(default_factory=list)
+    response_fn: DynamicResponseFn | None = None
+    template: ResponseTemplate | None = None
     stateful: bool = False
     current_index: int = 0
     call_count: int = 0
     enabled: bool = True
 
-    def get_response(self, request: MockRequest) -> Optional[MockResponse]:
+    def get_response(self, request: MockRequest) -> MockResponse | None:
         """
         Get response for this request.
 
@@ -584,9 +586,9 @@ class ScenarioState:
     """
 
     name: str
-    state: Dict[str, Any] = field(default_factory=dict)
+    state: dict[str, Any] = field(default_factory=dict)
     step: int = 0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get state value."""
@@ -639,8 +641,8 @@ class MockScenario:
     def __init__(
         self,
         name: str,
-        endpoints: List[Dict[str, Any]] = None,
-        initial_state: Dict[str, Any] = None,
+        endpoints: list[dict[str, Any]] = None,
+        initial_state: dict[str, Any] = None,
     ):
         """
         Initialize scenario.
@@ -655,7 +657,7 @@ class MockScenario:
         self.state = ScenarioState(name=name, state=initial_state or {})
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MockScenario":
+    def from_dict(cls, data: dict[str, Any]) -> "MockScenario":
         """
         Create scenario from dictionary.
 
@@ -682,7 +684,7 @@ class MockScenario:
         Returns:
             MockScenario instance
         """
-        with open(filepath, 'r') as f:
+        with open(filepath) as f:
             data = json.load(f)
         return cls.from_dict(data)
 
@@ -710,7 +712,7 @@ class ErrorInjector:
 
     def __init__(self):
         """Initialize error injector."""
-        self.error_rules: List[Dict[str, Any]] = []
+        self.error_rules: list[dict[str, Any]] = []
 
     def add_error(
         self,
@@ -730,15 +732,17 @@ class ErrorInjector:
             probability: Probability of error (0.0 to 1.0)
             predicate: Custom predicate for conditional errors
         """
-        self.error_rules.append({
-            "error": error,
-            "method": method,
-            "path_pattern": re.compile(path_pattern) if path_pattern else None,
-            "probability": probability,
-            "predicate": predicate,
-        })
+        self.error_rules.append(
+            {
+                "error": error,
+                "method": method,
+                "path_pattern": re.compile(path_pattern) if path_pattern else None,
+                "probability": probability,
+                "predicate": predicate,
+            }
+        )
 
-    def should_inject_error(self, request: MockRequest) -> Optional[Exception]:
+    def should_inject_error(self, request: MockRequest) -> Exception | None:
         """
         Check if error should be injected for request.
 
@@ -792,7 +796,7 @@ class ResponseDelaySimulator:
 
     def __init__(self):
         """Initialize delay simulator."""
-        self.delay_rules: List[Dict[str, Any]] = []
+        self.delay_rules: list[dict[str, Any]] = []
 
     def add_delay(
         self,
@@ -810,12 +814,14 @@ class ResponseDelaySimulator:
             path_pattern: Only apply to matching paths
             predicate: Custom predicate for conditional delays
         """
-        self.delay_rules.append({
-            "delay_ms": delay_ms,
-            "method": method,
-            "path_pattern": re.compile(path_pattern) if path_pattern else None,
-            "predicate": predicate,
-        })
+        self.delay_rules.append(
+            {
+                "delay_ms": delay_ms,
+                "method": method,
+                "path_pattern": re.compile(path_pattern) if path_pattern else None,
+                "predicate": predicate,
+            }
+        )
 
     def get_delay(self, request: MockRequest) -> int:
         """
@@ -906,18 +912,22 @@ class MockVerifier:
             assert actual == times, f"Expected {times} calls to {path}, got {actual}"
 
         if at_least is not None:
-            assert actual >= at_least, f"Expected at least {at_least} calls to {path}, got {actual}"
+            assert actual >= at_least, (
+                f"Expected at least {at_least} calls to {path}, got {actual}"
+            )
 
         if at_most is not None:
-            assert actual <= at_most, f"Expected at most {at_most} calls to {path}, got {actual}"
+            assert actual <= at_most, (
+                f"Expected at most {at_most} calls to {path}, got {actual}"
+            )
 
     def assert_called_with(
         self,
         path: str,
         method: str = None,
-        headers: Dict[str, str] = None,
-        query_params: Dict[str, Any] = None,
-        body_contains: Dict[str, Any] = None,
+        headers: dict[str, str] = None,
+        query_params: dict[str, Any] = None,
+        body_contains: dict[str, Any] = None,
     ) -> None:
         """
         Assert endpoint was called with specific parameters.
@@ -946,8 +956,7 @@ class MockVerifier:
             # Check query params
             if query_params:
                 params_match = all(
-                    request.query_params.get(k) == v
-                    for k, v in query_params.items()
+                    request.query_params.get(k) == v for k, v in query_params.items()
                 )
                 if not params_match:
                     continue
@@ -984,7 +993,7 @@ class MockVerifier:
 
 
 class MockServer:
-    """
+    r"""
     Comprehensive mock API server for testing.
 
     The MockServer provides a complete mocking solution for testing API
@@ -1030,16 +1039,15 @@ class MockServer:
 
     def __init__(self):
         """Initialize mock server."""
-        self.endpoints: List[MockEndpoint] = []
-        self.recorded_requests: List[MockRequest] = []
-        self.scenarios: Dict[str, MockScenario] = {}
+        self.endpoints: list[MockEndpoint] = []
+        self.recorded_requests: list[MockRequest] = []
+        self.scenarios: dict[str, MockScenario] = {}
         self.error_injector = ErrorInjector()
         self.delay_simulator = ResponseDelaySimulator()
         self.verifier = MockVerifier(self)
         self.enabled = True
         self.default_response = MockResponse(
-            status_code=404,
-            body={"detail": "Mock endpoint not configured"}
+            status_code=404, body={"detail": "Mock endpoint not configured"}
         )
 
     def register(
@@ -1051,11 +1059,11 @@ class MockServer:
         response_fn: DynamicResponseFn = None,
         template: ResponseTemplate = None,
         status_code: int = 200,
-        headers: Dict[str, str] = None,
+        headers: dict[str, str] = None,
         delay_ms: int = 0,
         error: Exception = None,
         stateful: bool = False,
-        responses: List[MockResponse] = None,
+        responses: list[MockResponse] = None,
         predicate: RequestPredicate = None,
     ) -> MockEndpoint:
         """
@@ -1117,8 +1125,8 @@ class MockServer:
         self,
         method: str,
         path: str,
-        query_params: Dict[str, Any] = None,
-        headers: Dict[str, str] = None,
+        query_params: dict[str, Any] = None,
+        headers: dict[str, str] = None,
         body: Any = None,
     ) -> MockResponse:
         """
@@ -1183,7 +1191,7 @@ class MockServer:
         method: str = None,
         path: str = None,
         path_pattern: str = None,
-    ) -> List[MockRequest]:
+    ) -> list[MockRequest]:
         """
         Get recorded requests matching criteria.
 
@@ -1213,7 +1221,7 @@ class MockServer:
         self,
         method: str = None,
         path: str = None,
-    ) -> Optional[MockRequest]:
+    ) -> MockRequest | None:
         """
         Get most recent request matching criteria.
 
@@ -1273,7 +1281,7 @@ class MockServer:
         for endpoint_config in scenario.endpoint_configs:
             self.register(**endpoint_config)
 
-    def get_scenario(self, name: str) -> Optional[MockScenario]:
+    def get_scenario(self, name: str) -> MockScenario | None:
         """
         Get loaded scenario by name.
 

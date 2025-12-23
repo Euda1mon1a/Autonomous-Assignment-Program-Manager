@@ -1,4 +1,5 @@
 """Absence schemas."""
+
 from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
@@ -22,6 +23,7 @@ class AbsenceType(str, Enum):
     Non-blocking (tracked but doesn't prevent assignment):
     - vacation, conference
     """
+
     VACATION = "vacation"
     DEPLOYMENT = "deployment"
     TDY = "tdy"
@@ -42,6 +44,7 @@ VALID_ABSENCE_TYPES = tuple(t.value for t in AbsenceType)
 
 class AbsenceBase(BaseModel):
     """Base absence schema."""
+
     person_id: UUID
     start_date: date
     end_date: date
@@ -80,6 +83,7 @@ class AbsenceCreate(AbsenceBase):
     - created_by_id tracks which admin entered the absence
     - end_date defaults should be start_date + 10 days for Hawaii (UI handles this)
     """
+
     is_blocking: bool | None = None  # Auto-determined if not set
     return_date_tentative: bool = False
     created_by_id: UUID | None = None
@@ -87,6 +91,7 @@ class AbsenceCreate(AbsenceBase):
 
 class AbsenceUpdate(BaseModel):
     """Schema for updating an absence."""
+
     start_date: date | None = None
     end_date: date | None = None
     absence_type: str | None = None
@@ -115,6 +120,7 @@ class AbsenceUpdate(BaseModel):
 
 class AbsenceResponse(AbsenceBase):
     """Schema for absence response."""
+
     id: UUID
     is_blocking: bool | None
     return_date_tentative: bool

@@ -4,9 +4,10 @@ Training Data Pipeline - Prepares data for ML model training.
 Extracts historical scheduling data from the database and prepares
 feature matrices and labels for training ML models.
 """
+
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -17,9 +18,9 @@ from sqlalchemy.orm import Session
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.conflict_alert import ConflictAlert
-from app.models.faculty_preference import FacultyPreference
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
+
 # SwapRecord model doesn't track assignment-level swaps
 # from app.models.swap import SwapRecord
 
@@ -55,8 +56,8 @@ class TrainingDataPipeline:
 
     async def extract_preference_training_data(
         self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         min_samples: int = 100,
     ) -> tuple[pd.DataFrame, np.ndarray]:
         """
@@ -83,7 +84,9 @@ class TrainingDataPipeline:
             select(Assignment, Person, Block, RotationTemplate)
             .join(Person, Assignment.person_id == Person.id)
             .join(Block, Assignment.block_id == Block.id)
-            .outerjoin(RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id)
+            .outerjoin(
+                RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
+            )
             .where(Block.date >= start_date.date())
             .where(Block.date <= end_date.date())
         )
@@ -150,14 +153,16 @@ class TrainingDataPipeline:
         X = pd.DataFrame(features_list)
         y = np.array(labels_list)
 
-        logger.info(f"Extracted {len(X)} training samples with {len(X.columns)} features")
+        logger.info(
+            f"Extracted {len(X)} training samples with {len(X.columns)} features"
+        )
 
         return X, y
 
     async def extract_workload_training_data(
         self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         min_samples: int = 50,
     ) -> tuple[pd.DataFrame, np.ndarray]:
         """
@@ -217,11 +222,13 @@ class TrainingDataPipeline:
             # Current assignments
             current_assignments = []
             for assignment, block in assignment_rows:
-                current_assignments.append({
-                    "rotation_name": assignment.activity_name,
-                    "is_weekend": block.is_weekend,
-                    "date": block.date,
-                })
+                current_assignments.append(
+                    {
+                        "rotation_name": assignment.activity_name,
+                        "is_weekend": block.is_weekend,
+                        "date": block.date,
+                    }
+                )
 
             # Historical data (placeholder)
             historical_data = {
@@ -243,7 +250,9 @@ class TrainingDataPipeline:
             utilization = actual / target if target > 0 else 0
 
             # Check if they had conflicts (would indicate overload)
-            had_conflicts = await self._person_had_conflicts(person.id, start_date, end_date)
+            had_conflicts = await self._person_had_conflicts(
+                person.id, start_date, end_date
+            )
 
             if had_conflicts:
                 optimal = max(0.0, utilization - 0.1)  # Reduce by 10% if had conflicts
@@ -265,8 +274,8 @@ class TrainingDataPipeline:
 
     async def extract_conflict_training_data(
         self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         min_samples: int = 100,
     ) -> tuple[pd.DataFrame, np.ndarray]:
         """
@@ -391,7 +400,9 @@ class TrainingDataPipeline:
         # Rotation features
         rotation_name = rotation_data.get("name", "")
         for rot_type in ["clinic", "inpatient", "procedures", "conference", "admin"]:
-            features[f"rotation_{rot_type}"] = 1 if rot_type in rotation_name.lower() else 0
+            features[f"rotation_{rot_type}"] = (
+                1 if rot_type in rotation_name.lower() else 0
+            )
 
         # Temporal features
         block_date = block_data.get("date")
@@ -418,7 +429,9 @@ class TrainingDataPipeline:
         features["is_holiday"] = 1 if block_data.get("is_holiday", False) else 0
 
         # Historical stats
-        features["historical_preference_score"] = historical_stats.get("avg_preference_score", 0.5)
+        features["historical_preference_score"] = historical_stats.get(
+            "avg_preference_score", 0.5
+        )
         features["num_similar_assignments"] = historical_stats.get("similar_count", 0)
         features["swap_rate"] = historical_stats.get("swap_rate", 0.0)
         features["workload_current"] = historical_stats.get("current_workload", 0.0)
@@ -445,11 +458,19 @@ class TrainingDataPipeline:
             features[f"role_{role}"] = 1 if faculty_role == role else 0
 
         # Workload metrics
-        features["target_clinical_blocks"] = person_data.get("target_clinical_blocks", 48)
+        features["target_clinical_blocks"] = person_data.get(
+            "target_clinical_blocks", 48
+        )
         features["current_assignment_count"] = len(current_assignments)
 
         # Rotation type counts
-        rotation_counts = {"clinic": 0, "inpatient": 0, "procedures": 0, "admin": 0, "other": 0}
+        rotation_counts = {
+            "clinic": 0,
+            "inpatient": 0,
+            "procedures": 0,
+            "admin": 0,
+            "other": 0,
+        }
         for assignment in current_assignments:
             rotation_name = assignment.get("rotation_name", "").lower()
             if "clinic" in rotation_name:
@@ -476,7 +497,9 @@ class TrainingDataPipeline:
             features["workload_concentration"] = 0.0
 
         # Weekend burden
-        weekend_count = sum(1 for a in current_assignments if a.get("is_weekend", False))
+        weekend_count = sum(
+            1 for a in current_assignments if a.get("is_weekend", False)
+        )
         features["weekend_assignment_count"] = weekend_count
 
         # Call counts
@@ -517,8 +540,12 @@ class TrainingDataPipeline:
         # Current workload
         features["current_assignment_count"] = len(existing_assignments)
         features["hours_this_week"] = len(existing_assignments) * 4
-        features["approaching_80_hour_limit"] = 1 if features["hours_this_week"] >= 70 else 0
-        features["exceeds_80_hour_limit"] = 1 if features["hours_this_week"] >= 80 else 0
+        features["approaching_80_hour_limit"] = (
+            1 if features["hours_this_week"] >= 70 else 0
+        )
+        features["exceeds_80_hour_limit"] = (
+            1 if features["hours_this_week"] >= 80 else 0
+        )
 
         # Days worked
         unique_dates = set(a.get("date") for a in existing_assignments if "date" in a)
@@ -527,8 +554,12 @@ class TrainingDataPipeline:
         features["max_consecutive_days"] = min(len(existing_assignments), 7)
 
         # Proposed assignment
-        features["proposed_is_weekend"] = 1 if proposed_assignment.get("is_weekend", False) else 0
-        features["proposed_is_holiday"] = 1 if proposed_assignment.get("is_holiday", False) else 0
+        features["proposed_is_weekend"] = (
+            1 if proposed_assignment.get("is_weekend", False) else 0
+        )
+        features["proposed_is_holiday"] = (
+            1 if proposed_assignment.get("is_holiday", False) else 0
+        )
         features["proposed_day_of_week"] = 0  # Simplified
 
         # Rotation type
@@ -547,8 +578,12 @@ class TrainingDataPipeline:
         if features["is_resident"]:
             supervision_ratio = 2 if features["pgy_level"] == 1 else 4
             features["supervision_ratio"] = supervision_ratio
-            features["actual_supervision_ratio"] = context_data.get("resident_count_on_date", 1) / max(context_data.get("faculty_count_on_date", 1), 1)
-            features["violates_supervision"] = 1 if features["actual_supervision_ratio"] > supervision_ratio else 0
+            features["actual_supervision_ratio"] = context_data.get(
+                "resident_count_on_date", 1
+            ) / max(context_data.get("faculty_count_on_date", 1), 1)
+            features["violates_supervision"] = (
+                1 if features["actual_supervision_ratio"] > supervision_ratio else 0
+            )
         else:
             features["supervision_ratio"] = 0
             features["actual_supervision_ratio"] = 0
@@ -559,17 +594,23 @@ class TrainingDataPipeline:
         features["sunday_call_count"] = person_data.get("sunday_call_count", 0)
 
         # Context
-        features["historical_conflict_rate"] = context_data.get("historical_conflict_rate", 0.0)
+        features["historical_conflict_rate"] = context_data.get(
+            "historical_conflict_rate", 0.0
+        )
         features["recent_swap_count"] = context_data.get("recent_swap_count", 0)
         features["coverage_level"] = context_data.get("coverage_level", 1.0)
-        features["understaffed"] = 1 if context_data.get("coverage_level", 1.0) < 0.8 else 0
+        features["understaffed"] = (
+            1 if context_data.get("coverage_level", 1.0) < 0.8 else 0
+        )
 
         # Workload diversity
         rotation_types = [a.get("rotation_name", "") for a in existing_assignments]
         if rotation_types:
             unique_rotations = len(set(rotation_types))
             total_rotations = len(rotation_types)
-            features["workload_diversity"] = unique_rotations / total_rotations if total_rotations > 0 else 0
+            features["workload_diversity"] = (
+                unique_rotations / total_rotations if total_rotations > 0 else 0
+            )
         else:
             features["workload_diversity"] = 0
 

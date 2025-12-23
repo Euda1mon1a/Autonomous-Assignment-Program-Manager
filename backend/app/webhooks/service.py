@@ -6,13 +6,14 @@ Provides high-level service methods for:
 - Delivery status monitoring
 - Dead letter queue management
 """
+
 import logging
 import secrets
 from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.webhooks.delivery import WebhookDeliveryManager
@@ -60,7 +61,7 @@ class WebhookService:
         timeout_seconds: int = 30,
         max_retries: int = 5,
         owner_id: UUID | None = None,
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
     ) -> Webhook:
         """
         Create a new webhook endpoint.
@@ -109,7 +110,7 @@ class WebhookService:
             max_retries=max_retries,
             owner_id=owner_id,
             metadata=metadata or {},
-            status=WebhookStatus.ACTIVE.value
+            status=WebhookStatus.ACTIVE.value,
         )
 
         db.add(webhook)
@@ -123,15 +124,9 @@ class WebhookService:
 
         return webhook
 
-    async def get_webhook(
-        self,
-        db: AsyncSession,
-        webhook_id: UUID
-    ) -> Webhook | None:
+    async def get_webhook(self, db: AsyncSession, webhook_id: UUID) -> Webhook | None:
         """Get a webhook by ID."""
-        result = await db.execute(
-            select(Webhook).where(Webhook.id == webhook_id)
-        )
+        result = await db.execute(select(Webhook).where(Webhook.id == webhook_id))
         return result.scalar_one_or_none()
 
     async def list_webhooks(
@@ -141,7 +136,7 @@ class WebhookService:
         event_type: str | None = None,
         owner_id: UUID | None = None,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
     ) -> list[Webhook]:
         """
         List webhooks with optional filtering.
@@ -174,10 +169,7 @@ class WebhookService:
         return list(result.scalars().all())
 
     async def update_webhook(
-        self,
-        db: AsyncSession,
-        webhook_id: UUID,
-        **updates
+        self, db: AsyncSession, webhook_id: UUID, **updates
     ) -> Webhook | None:
         """
         Update a webhook.
@@ -206,11 +198,7 @@ class WebhookService:
         logger.info(f"Updated webhook {webhook_id}")
         return webhook
 
-    async def delete_webhook(
-        self,
-        db: AsyncSession,
-        webhook_id: UUID
-    ) -> bool:
+    async def delete_webhook(self, db: AsyncSession, webhook_id: UUID) -> bool:
         """
         Delete a webhook and all associated deliveries.
 
@@ -221,9 +209,7 @@ class WebhookService:
         Returns:
             True if deleted, False if not found
         """
-        result = await db.execute(
-            delete(Webhook).where(Webhook.id == webhook_id)
-        )
+        result = await db.execute(delete(Webhook).where(Webhook.id == webhook_id))
 
         if result.rowcount > 0:
             await db.commit()
@@ -232,28 +218,18 @@ class WebhookService:
 
         return False
 
-    async def pause_webhook(
-        self,
-        db: AsyncSession,
-        webhook_id: UUID
-    ) -> Webhook | None:
+    async def pause_webhook(self, db: AsyncSession, webhook_id: UUID) -> Webhook | None:
         """Pause a webhook (stops delivery without deleting)."""
         return await self.update_webhook(
-            db,
-            webhook_id,
-            status=WebhookStatus.PAUSED.value
+            db, webhook_id, status=WebhookStatus.PAUSED.value
         )
 
     async def resume_webhook(
-        self,
-        db: AsyncSession,
-        webhook_id: UUID
+        self, db: AsyncSession, webhook_id: UUID
     ) -> Webhook | None:
         """Resume a paused webhook."""
         return await self.update_webhook(
-            db,
-            webhook_id,
-            status=WebhookStatus.ACTIVE.value
+            db, webhook_id, status=WebhookStatus.ACTIVE.value
         )
 
     # =========================================================================
@@ -266,7 +242,7 @@ class WebhookService:
         event_type: str,
         payload: dict[str, Any],
         event_id: str | None = None,
-        immediate: bool = False
+        immediate: bool = False,
     ) -> int:
         """
         Trigger a webhook event.
@@ -294,15 +270,13 @@ class WebhookService:
         """
         # Find active webhooks subscribed to this event
         result = await db.execute(
-            select(Webhook)
-            .where(Webhook.status == WebhookStatus.ACTIVE.value)
+            select(Webhook).where(Webhook.status == WebhookStatus.ACTIVE.value)
         )
         webhooks = result.scalars().all()
 
         # Filter webhooks subscribed to this event type
         subscribed_webhooks = [
-            webhook for webhook in webhooks
-            if webhook.is_subscribed_to(event_type)
+            webhook for webhook in webhooks if webhook.is_subscribed_to(event_type)
         ]
 
         if not subscribed_webhooks:
@@ -319,7 +293,7 @@ class WebhookService:
                 event_id=event_id,
                 payload=payload,
                 max_attempts=webhook.max_retries,
-                status=WebhookDeliveryStatus.PENDING.value
+                status=WebhookDeliveryStatus.PENDING.value,
             )
 
             db.add(delivery)
@@ -327,9 +301,7 @@ class WebhookService:
 
         await db.commit()
 
-        logger.info(
-            f"Triggered event '{event_type}' for {deliveries_created} webhooks"
-        )
+        logger.info(f"Triggered event '{event_type}' for {deliveries_created} webhooks")
 
         # If immediate delivery requested, process now
         if immediate:
@@ -339,7 +311,9 @@ class WebhookService:
                     select(WebhookDelivery)
                     .where(WebhookDelivery.webhook_id == webhook.id)
                     .where(WebhookDelivery.event_type == event_type)
-                    .where(WebhookDelivery.status == WebhookDeliveryStatus.PENDING.value)
+                    .where(
+                        WebhookDelivery.status == WebhookDeliveryStatus.PENDING.value
+                    )
                     .order_by(WebhookDelivery.created_at.desc())
                     .limit(1)
                 )
@@ -355,9 +329,7 @@ class WebhookService:
     # =========================================================================
 
     async def get_delivery_status(
-        self,
-        db: AsyncSession,
-        delivery_id: UUID
+        self, db: AsyncSession, delivery_id: UUID
     ) -> WebhookDelivery | None:
         """Get delivery status by ID."""
         result = await db.execute(
@@ -372,7 +344,7 @@ class WebhookService:
         status: WebhookDeliveryStatus | None = None,
         event_type: str | None = None,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
     ) -> list[WebhookDelivery]:
         """
         List webhook deliveries with filtering.
@@ -399,16 +371,14 @@ class WebhookService:
         if event_type:
             query = query.where(WebhookDelivery.event_type == event_type)
 
-        query = query.offset(skip).limit(limit).order_by(WebhookDelivery.created_at.desc())
+        query = (
+            query.offset(skip).limit(limit).order_by(WebhookDelivery.created_at.desc())
+        )
 
         result = await db.execute(query)
         return list(result.scalars().all())
 
-    async def retry_delivery(
-        self,
-        db: AsyncSession,
-        delivery_id: UUID
-    ) -> bool:
+    async def retry_delivery(self, db: AsyncSession, delivery_id: UUID) -> bool:
         """
         Manually retry a failed delivery.
 
@@ -426,7 +396,9 @@ class WebhookService:
             return False
 
         if delivery.is_final:
-            logger.warning(f"Delivery {delivery_id} is in final state: {delivery.status}")
+            logger.warning(
+                f"Delivery {delivery_id} is in final state: {delivery.status}"
+            )
             return False
 
         return await self.delivery_manager.deliver(db, str(delivery_id))
@@ -441,7 +413,7 @@ class WebhookService:
         webhook_id: UUID | None = None,
         resolved: bool | None = None,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
     ) -> list[WebhookDeadLetter]:
         """
         List dead letter queue entries.
@@ -464,7 +436,11 @@ class WebhookService:
         if resolved is not None:
             query = query.where(WebhookDeadLetter.resolved == resolved)
 
-        query = query.offset(skip).limit(limit).order_by(WebhookDeadLetter.created_at.desc())
+        query = (
+            query.offset(skip)
+            .limit(limit)
+            .order_by(WebhookDeadLetter.created_at.desc())
+        )
 
         result = await db.execute(query)
         return list(result.scalars().all())
@@ -475,7 +451,7 @@ class WebhookService:
         dead_letter_id: UUID,
         resolved_by: UUID,
         notes: str | None = None,
-        retry: bool = False
+        retry: bool = False,
     ) -> bool:
         """
         Resolve a dead letter entry.
@@ -515,13 +491,15 @@ class WebhookService:
                 webhook_id=dead_letter.webhook_id,
                 event_type=dead_letter.event_type,
                 payload=dead_letter.payload,
-                status=WebhookDeliveryStatus.PENDING.value
+                status=WebhookDeliveryStatus.PENDING.value,
             )
             db.add(delivery)
             await db.commit()
             await db.refresh(delivery)
 
-            logger.info(f"Created retry delivery {delivery.id} for dead letter {dead_letter_id}")
+            logger.info(
+                f"Created retry delivery {delivery.id} for dead letter {dead_letter_id}"
+            )
             return await self.delivery_manager.deliver(db, str(delivery.id))
 
         return True

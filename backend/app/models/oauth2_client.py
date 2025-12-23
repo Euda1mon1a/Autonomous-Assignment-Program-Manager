@@ -1,4 +1,5 @@
 """OAuth2 PKCE client model for public client registration."""
+
 import uuid
 from datetime import datetime
 
@@ -17,6 +18,7 @@ class PKCEClient(Base):
     the OAuth2Client model which is for confidential clients
     using client_credentials flow.
     """
+
     __tablename__ = "pkce_clients"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -32,7 +34,9 @@ class PKCEClient(Base):
     redirect_uris = Column(StringArrayType, nullable=False, default=list)
 
     # Grant types allowed for this client
-    grant_types = Column(StringArrayType, nullable=False, default=["authorization_code"])
+    grant_types = Column(
+        StringArrayType, nullable=False, default=["authorization_code"]
+    )
 
     # Response types (code, token, etc.)
     response_types = Column(StringArrayType, nullable=False, default=["code"])
@@ -51,9 +55,7 @@ class PKCEClient(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    __table_args__ = (
-        Index('idx_oauth2_client_id_active', 'client_id', 'is_active'),
-    )
+    __table_args__ = (Index("idx_oauth2_client_id_active", "client_id", "is_active"),)
 
     def __repr__(self):
         return f"<PKCEClient(client_id='{self.client_id}', name='{self.client_name}')>"

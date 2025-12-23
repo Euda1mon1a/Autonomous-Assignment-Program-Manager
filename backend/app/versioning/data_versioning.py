@@ -41,15 +41,14 @@ import json
 import logging
 from datetime import datetime
 from typing import Any, TypedDict
-from uuid import UUID, uuid4
+from uuid import UUID
 
-from sqlalchemy import and_, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy_continuum import version_class
 
-from app.models.assignment import Assignment
 from app.models.absence import Absence
+from app.models.assignment import Assignment
 from app.models.schedule_run import ScheduleRun
 from app.models.swap import SwapRecord
 
@@ -60,8 +59,10 @@ logger = logging.getLogger(__name__)
 # Type Definitions
 # =============================================================================
 
+
 class VersionMetadata(TypedDict, total=False):
     """Metadata associated with a version."""
+
     version_id: int
     transaction_id: int
     timestamp: datetime
@@ -79,6 +80,7 @@ class VersionMetadata(TypedDict, total=False):
 
 class VersionDiff(TypedDict):
     """Difference between two versions."""
+
     entity_type: str
     entity_id: str
     from_version: int
@@ -94,6 +96,7 @@ class VersionDiff(TypedDict):
 
 class VersionBranch(TypedDict):
     """Information about a version branch."""
+
     branch_name: str
     created_at: datetime
     created_by: str
@@ -107,6 +110,7 @@ class VersionBranch(TypedDict):
 
 class MergeConflict(TypedDict):
     """Detected merge conflict between branches."""
+
     entity_type: str
     entity_id: str
     field_name: str
@@ -119,6 +123,7 @@ class MergeConflict(TypedDict):
 
 class BranchInfo(TypedDict):
     """Detailed information about a branch."""
+
     branch: VersionBranch
     version_count: int
     entity_count: int
@@ -129,6 +134,7 @@ class BranchInfo(TypedDict):
 
 class PointInTimeQuery(TypedDict):
     """Result of a point-in-time query."""
+
     entity_type: str
     entity_id: str
     timestamp: datetime
@@ -152,6 +158,7 @@ ENTITY_MODEL_MAP = {
 # =============================================================================
 # Data Versioning Service
 # =============================================================================
+
 
 class DataVersioningService:
     """
@@ -205,24 +212,21 @@ class DataVersioningService:
         VersionClass = version_class(model_class)
 
         # Query versions
-        query = text("""
+        query = text(f"""
             SELECT
                 v.transaction_id,
                 v.operation_type,
                 t.issued_at,
                 t.user_id,
                 t.remote_addr
-            FROM {table}_version v
+            FROM {model_class.__tablename__}_version v
             LEFT JOIN transaction t ON v.transaction_id = t.id
             WHERE v.id = :entity_id
             ORDER BY v.transaction_id DESC
             LIMIT :limit
-        """.format(table=model_class.__tablename__))
+        """)
 
-        result = self.db.execute(
-            query,
-            {"entity_id": str(entity_id), "limit": limit}
-        )
+        result = self.db.execute(query, {"entity_id": str(entity_id), "limit": limit})
         rows = result.fetchall()
 
         # Build version metadata
@@ -235,9 +239,7 @@ class DataVersioningService:
 
             # Get version data
             version_data = self._get_version_data(
-                entity_type,
-                entity_id,
-                transaction_id
+                entity_type, entity_id, transaction_id
             )
 
             # Calculate checksum
@@ -321,22 +323,21 @@ class DataVersioningService:
         model_class = ENTITY_MODEL_MAP[entity_type]
 
         # Find the most recent version before or at the timestamp
-        query = text("""
+        query = text(f"""
             SELECT
                 v.transaction_id,
                 v.operation_type,
                 t.issued_at
-            FROM {table}_version v
+            FROM {model_class.__tablename__}_version v
             LEFT JOIN transaction t ON v.transaction_id = t.id
             WHERE v.id = :entity_id
                 AND t.issued_at <= :timestamp
             ORDER BY v.transaction_id DESC
             LIMIT 1
-        """.format(table=model_class.__tablename__))
+        """)
 
         result = self.db.execute(
-            query,
-            {"entity_id": str(entity_id), "timestamp": timestamp}
+            query, {"entity_id": str(entity_id), "timestamp": timestamp}
         )
         row = result.fetchone()
 
@@ -396,12 +397,12 @@ class DataVersioningService:
         model_class = ENTITY_MODEL_MAP[entity_type]
 
         # Get all unique entity IDs that existed at or before the timestamp
-        query = text("""
+        query = text(f"""
             SELECT DISTINCT v.id
-            FROM {table}_version v
+            FROM {model_class.__tablename__}_version v
             LEFT JOIN transaction t ON v.transaction_id = t.id
             WHERE t.issued_at <= :timestamp
-        """.format(table=model_class.__tablename__))
+        """)
 
         result = self.db.execute(query, {"timestamp": timestamp})
         entity_ids = [row[0] for row in result.fetchall()]
@@ -452,8 +453,12 @@ class DataVersioningService:
             raise ValueError("One or both versions not found")
 
         # Get timestamps
-        from_timestamp = await self._get_version_timestamp(entity_type, entity_id, from_version)
-        to_timestamp = await self._get_version_timestamp(entity_type, entity_id, to_version)
+        from_timestamp = await self._get_version_timestamp(
+            entity_type, entity_id, from_version
+        )
+        to_timestamp = await self._get_version_timestamp(
+            entity_type, entity_id, to_version
+        )
 
         # Calculate differences
         changes = []
@@ -473,28 +478,34 @@ class DataVersioningService:
 
             if field not in from_data:
                 added_fields.append(field)
-                changes.append({
-                    "field": field,
-                    "type": "added",
-                    "old_value": None,
-                    "new_value": to_value,
-                })
+                changes.append(
+                    {
+                        "field": field,
+                        "type": "added",
+                        "old_value": None,
+                        "new_value": to_value,
+                    }
+                )
             elif field not in to_data:
                 removed_fields.append(field)
-                changes.append({
-                    "field": field,
-                    "type": "removed",
-                    "old_value": from_value,
-                    "new_value": None,
-                })
+                changes.append(
+                    {
+                        "field": field,
+                        "type": "removed",
+                        "old_value": from_value,
+                        "new_value": None,
+                    }
+                )
             elif from_value != to_value:
                 modified_fields.append(field)
-                changes.append({
-                    "field": field,
-                    "type": "modified",
-                    "old_value": from_value,
-                    "new_value": to_value,
-                })
+                changes.append(
+                    {
+                        "field": field,
+                        "type": "modified",
+                        "old_value": from_value,
+                        "new_value": to_value,
+                    }
+                )
 
         # Generate summary
         summary_parts = []
@@ -562,9 +573,7 @@ class DataVersioningService:
 
         # Get current entity
         model_class = ENTITY_MODEL_MAP[entity_type]
-        entity = self.db.query(model_class).filter(
-            model_class.id == entity_id
-        ).first()
+        entity = self.db.query(model_class).filter(model_class.id == entity_id).first()
 
         if not entity:
             raise ValueError(f"Entity {entity_id} not found")
@@ -572,7 +581,12 @@ class DataVersioningService:
         # Apply target version data to entity
         for field, value in target_data.items():
             # Skip internal fields
-            if field in ("id", "transaction_id", "operation_type", "end_transaction_id"):
+            if field in (
+                "id",
+                "transaction_id",
+                "operation_type",
+                "end_transaction_id",
+            ):
                 continue
 
             if hasattr(entity, field):
@@ -584,7 +598,7 @@ class DataVersioningService:
             if reason:
                 rollback_note += f" Reason: {reason}"
             current_notes = getattr(entity, "notes", "") or ""
-            setattr(entity, "notes", f"{current_notes}\n{rollback_note}".strip())
+            entity.notes = f"{current_notes}\n{rollback_note}".strip()
 
         # Commit the rollback
         self.db.commit()
@@ -905,10 +919,14 @@ class DataVersioningService:
         model_class = ENTITY_MODEL_MAP[entity_type]
         VersionClass = version_class(model_class)
 
-        version = self.db.query(VersionClass).filter(
-            VersionClass.id == str(entity_id),
-            VersionClass.transaction_id == transaction_id,
-        ).first()
+        version = (
+            self.db.query(VersionClass)
+            .filter(
+                VersionClass.id == str(entity_id),
+                VersionClass.transaction_id == transaction_id,
+            )
+            .first()
+        )
 
         if not version:
             return None

@@ -7,10 +7,9 @@ Provides storage implementations for session data:
 
 All storage backends implement the SessionStorage protocol.
 """
-import json
+
 import logging
-from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Protocol
 
 import redis.asyncio as redis
@@ -28,7 +27,9 @@ class SessionStorage(Protocol):
     All storage implementations must implement these methods.
     """
 
-    async def create(self, session: SessionData, ttl_seconds: int | None = None) -> bool:
+    async def create(
+        self, session: SessionData, ttl_seconds: int | None = None
+    ) -> bool:
         """
         Create a new session in storage.
 
@@ -53,7 +54,9 @@ class SessionStorage(Protocol):
         """
         ...
 
-    async def update(self, session: SessionData, ttl_seconds: int | None = None) -> bool:
+    async def update(
+        self, session: SessionData, ttl_seconds: int | None = None
+    ) -> bool:
         """
         Update an existing session.
 
@@ -90,7 +93,9 @@ class SessionStorage(Protocol):
         """
         ...
 
-    async def delete_user_sessions(self, user_id: str, except_session_id: str | None = None) -> int:
+    async def delete_user_sessions(
+        self, user_id: str, except_session_id: str | None = None
+    ) -> int:
         """
         Delete all sessions for a user.
 
@@ -125,9 +130,7 @@ class RedisSessionStorage:
     """
 
     def __init__(
-        self,
-        key_prefix: str = "session",
-        user_index_prefix: str = "user_sessions"
+        self, key_prefix: str = "session", user_index_prefix: str = "user_sessions"
     ):
         """
         Initialize Redis session storage.
@@ -165,7 +168,9 @@ class RedisSessionStorage:
         """Generate Redis key for user session index."""
         return f"{self.user_index_prefix}:{user_id}"
 
-    async def create(self, session: SessionData, ttl_seconds: int | None = None) -> bool:
+    async def create(
+        self, session: SessionData, ttl_seconds: int | None = None
+    ) -> bool:
         """
         Create a new session in Redis.
 
@@ -183,7 +188,9 @@ class RedisSessionStorage:
 
             # Calculate TTL
             if ttl_seconds is None and session.expires_at:
-                ttl_seconds = int((session.expires_at - datetime.utcnow()).total_seconds())
+                ttl_seconds = int(
+                    (session.expires_at - datetime.utcnow()).total_seconds()
+                )
             ttl_seconds = ttl_seconds or 86400  # Default 24 hours
 
             # Serialize session data
@@ -202,7 +209,9 @@ class RedisSessionStorage:
 
                 await pipe.execute()
 
-            logger.info(f"Created session {session.session_id} for user {session.user_id}")
+            logger.info(
+                f"Created session {session.session_id} for user {session.user_id}"
+            )
             return True
 
         except redis.RedisError as e:
@@ -247,7 +256,9 @@ class RedisSessionStorage:
             logger.error(f"Error getting session: {e}")
             return None
 
-    async def update(self, session: SessionData, ttl_seconds: int | None = None) -> bool:
+    async def update(
+        self, session: SessionData, ttl_seconds: int | None = None
+    ) -> bool:
         """
         Update an existing session in Redis.
 
@@ -265,12 +276,16 @@ class RedisSessionStorage:
             # Check if session exists
             exists = await redis_client.exists(session_key)
             if not exists:
-                logger.warning(f"Attempted to update non-existent session {session.session_id}")
+                logger.warning(
+                    f"Attempted to update non-existent session {session.session_id}"
+                )
                 return False
 
             # Calculate TTL
             if ttl_seconds is None and session.expires_at:
-                ttl_seconds = int((session.expires_at - datetime.utcnow()).total_seconds())
+                ttl_seconds = int(
+                    (session.expires_at - datetime.utcnow()).total_seconds()
+                )
 
             # Serialize session data
             session_json = session.model_dump_json()
@@ -363,9 +378,7 @@ class RedisSessionStorage:
             return []
 
     async def delete_user_sessions(
-        self,
-        user_id: str,
-        except_session_id: str | None = None
+        self, user_id: str, except_session_id: str | None = None
     ) -> int:
         """
         Delete all sessions for a user.
@@ -453,7 +466,9 @@ class InMemorySessionStorage:
         self._sessions: dict[str, SessionData] = {}
         self._user_index: dict[str, set[str]] = {}
 
-    async def create(self, session: SessionData, ttl_seconds: int | None = None) -> bool:
+    async def create(
+        self, session: SessionData, ttl_seconds: int | None = None
+    ) -> bool:
         """Create a new session in memory."""
         self._sessions[session.session_id] = session
 
@@ -474,7 +489,9 @@ class InMemorySessionStorage:
 
         return session
 
-    async def update(self, session: SessionData, ttl_seconds: int | None = None) -> bool:
+    async def update(
+        self, session: SessionData, ttl_seconds: int | None = None
+    ) -> bool:
         """Update an existing session in memory."""
         if session.session_id not in self._sessions:
             return False
@@ -507,9 +524,7 @@ class InMemorySessionStorage:
         return sessions
 
     async def delete_user_sessions(
-        self,
-        user_id: str,
-        except_session_id: str | None = None
+        self, user_id: str, except_session_id: str | None = None
     ) -> int:
         """Delete all sessions for a user."""
         sessions = await self.get_user_sessions(user_id)

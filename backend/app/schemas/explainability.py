@@ -7,6 +7,7 @@ Provides transparency into scheduling decisions:
 - What alternatives were rejected
 - Confidence in the decision
 """
+
 from datetime import datetime
 from enum import Enum
 from uuid import UUID
@@ -16,19 +17,22 @@ from pydantic import BaseModel, Field
 
 class ConfidenceLevel(str, Enum):
     """Confidence level for a scheduling decision."""
-    HIGH = "high"       # Clear winner, large margin
-    MEDIUM = "medium"   # Good choice, some alternatives close
-    LOW = "low"         # Many viable alternatives, marginal decision
+
+    HIGH = "high"  # Clear winner, large margin
+    MEDIUM = "medium"  # Good choice, some alternatives close
+    LOW = "low"  # Many viable alternatives, marginal decision
 
 
 class ConstraintType(str, Enum):
     """Type of constraint."""
-    HARD = "hard"   # Must not violate
-    SOFT = "soft"   # Prefer to satisfy
+
+    HARD = "hard"  # Must not violate
+    SOFT = "soft"  # Prefer to satisfy
 
 
 class ConstraintStatus(str, Enum):
     """Whether a constraint was satisfied."""
+
     SATISFIED = "satisfied"
     VIOLATED = "violated"
     NOT_APPLICABLE = "not_applicable"
@@ -36,6 +40,7 @@ class ConstraintStatus(str, Enum):
 
 class ConstraintEvaluation(BaseModel):
     """Evaluation of a single constraint for an assignment."""
+
     constraint_name: str
     constraint_type: ConstraintType
     status: ConstraintStatus
@@ -46,6 +51,7 @@ class ConstraintEvaluation(BaseModel):
 
 class AlternativeCandidate(BaseModel):
     """An alternative that was considered but not selected."""
+
     person_id: UUID
     person_name: str
     score: float
@@ -55,6 +61,7 @@ class AlternativeCandidate(BaseModel):
 
 class DecisionInputs(BaseModel):
     """Inputs that went into a scheduling decision."""
+
     block_id: UUID
     block_date: datetime
     block_time_of_day: str  # "AM" or "PM"
@@ -72,6 +79,7 @@ class DecisionExplanation(BaseModel):
     This provides full transparency into why an assignment was made,
     supporting ACGME accountability and fairness audits.
     """
+
     # Assignment identification
     assignment_id: UUID | None = None
     person_id: UUID
@@ -116,6 +124,7 @@ class DecisionExplanation(BaseModel):
 
 class AssignmentWithExplanation(BaseModel):
     """Assignment response that includes the decision explanation."""
+
     id: UUID
     block_id: UUID
     person_id: UUID
@@ -141,6 +150,7 @@ class ExplainabilityReport(BaseModel):
 
     Useful for APE/PEC review and fairness audits.
     """
+
     start_date: datetime
     end_date: datetime
     total_assignments: int

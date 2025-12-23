@@ -4,6 +4,7 @@ Integration test fixtures.
 Provides fixtures specifically for integration testing that exercise
 the full API stack with realistic data scenarios.
 """
+
 from collections.abc import Generator
 from datetime import date, timedelta
 from uuid import uuid4

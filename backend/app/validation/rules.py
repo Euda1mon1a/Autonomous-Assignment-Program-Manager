@@ -4,22 +4,22 @@ Validation rules for request validation.
 Provides reusable validation rules that can be composed and applied
 to request data. Rules can be combined and customized for specific use cases.
 """
+
 import re
+from collections.abc import Callable
 from datetime import date, datetime
-from typing import Any, Callable, Optional
+from typing import Any
 from uuid import UUID
 
 from .context import ValidationContext
 from .messages import (
-    Locale,
-    ValidationMessageType,
     ValidationMessage,
+    ValidationMessageType,
     invalid_enum,
     invalid_type,
     out_of_range,
     required_field,
 )
-
 
 # Type alias for validation rule functions
 ValidationRule = Callable[[str, Any, ValidationContext], bool]
@@ -44,8 +44,7 @@ def required(field: str, value: Any, ctx: ValidationContext) -> bool:
 
 
 def string_length(
-    min_length: Optional[int] = None,
-    max_length: Optional[int] = None
+    min_length: int | None = None, max_length: int | None = None
 ) -> ValidationRule:
     """
     Create a validation rule for string length.
@@ -57,6 +56,7 @@ def string_length(
     Returns:
         ValidationRule: Validation rule function
     """
+
     def validate(field: str, value: Any, ctx: ValidationContext) -> bool:
         if value is None:
             return True  # Use 'required' rule for None checks
@@ -67,21 +67,25 @@ def string_length(
 
         valid = True
         if min_length is not None and len(value) < min_length:
-            ctx.add_error(ValidationMessage(
-                ValidationMessageType.TOO_SHORT,
-                field,
-                ctx.locale,
-                min_length=min_length
-            ))
+            ctx.add_error(
+                ValidationMessage(
+                    ValidationMessageType.TOO_SHORT,
+                    field,
+                    ctx.locale,
+                    min_length=min_length,
+                )
+            )
             valid = False
 
         if max_length is not None and len(value) > max_length:
-            ctx.add_error(ValidationMessage(
-                ValidationMessageType.TOO_LONG,
-                field,
-                ctx.locale,
-                max_length=max_length
-            ))
+            ctx.add_error(
+                ValidationMessage(
+                    ValidationMessageType.TOO_LONG,
+                    field,
+                    ctx.locale,
+                    max_length=max_length,
+                )
+            )
             valid = False
 
         return valid
@@ -90,8 +94,7 @@ def string_length(
 
 
 def numeric_range(
-    min_value: Optional[float] = None,
-    max_value: Optional[float] = None
+    min_value: float | None = None, max_value: float | None = None
 ) -> ValidationRule:
     """
     Create a validation rule for numeric ranges.
@@ -103,6 +106,7 @@ def numeric_range(
     Returns:
         ValidationRule: Validation rule function
     """
+
     def validate(field: str, value: Any, ctx: ValidationContext) -> bool:
         if value is None:
             return True  # Use 'required' rule for None checks
@@ -134,16 +138,15 @@ def enum_values(allowed_values: list[Any]) -> ValidationRule:
     Returns:
         ValidationRule: Validation rule function
     """
+
     def validate(field: str, value: Any, ctx: ValidationContext) -> bool:
         if value is None:
             return True  # Use 'required' rule for None checks
 
         if value not in allowed_values:
-            ctx.add_error(invalid_enum(
-                field,
-                [str(v) for v in allowed_values],
-                ctx.locale
-            ))
+            ctx.add_error(
+                invalid_enum(field, [str(v) for v in allowed_values], ctx.locale)
+            )
             return False
 
         return True
@@ -151,7 +154,7 @@ def enum_values(allowed_values: list[Any]) -> ValidationRule:
     return validate
 
 
-def regex_pattern(pattern: str, error_message: Optional[str] = None) -> ValidationRule:
+def regex_pattern(pattern: str, error_message: str | None = None) -> ValidationRule:
     """
     Create a validation rule for regex pattern matching.
 
@@ -176,11 +179,11 @@ def regex_pattern(pattern: str, error_message: Optional[str] = None) -> Validati
             if error_message:
                 ctx.add_field_error(field, error_message)
             else:
-                ctx.add_error(ValidationMessage(
-                    ValidationMessageType.PATTERN_MISMATCH,
-                    field,
-                    ctx.locale
-                ))
+                ctx.add_error(
+                    ValidationMessage(
+                        ValidationMessageType.PATTERN_MISMATCH, field, ctx.locale
+                    )
+                )
             return False
 
         return True
@@ -196,7 +199,7 @@ def email_format() -> ValidationRule:
         ValidationRule: Validation rule function
     """
     # Simple email regex (basic validation)
-    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     return regex_pattern(email_pattern, "Invalid email format")
 
 
@@ -207,6 +210,7 @@ def uuid_format() -> ValidationRule:
     Returns:
         ValidationRule: Validation rule function
     """
+
     def validate(field: str, value: Any, ctx: ValidationContext) -> bool:
         if value is None:
             return True  # Use 'required' rule for None checks
@@ -226,8 +230,7 @@ def uuid_format() -> ValidationRule:
 
 
 def date_range(
-    min_date: Optional[date] = None,
-    max_date: Optional[date] = None
+    min_date: date | None = None, max_date: date | None = None
 ) -> ValidationRule:
     """
     Create a validation rule for date ranges.
@@ -239,6 +242,7 @@ def date_range(
     Returns:
         ValidationRule: Validation rule function
     """
+
     def validate(field: str, value: Any, ctx: ValidationContext) -> bool:
         if value is None:
             return True  # Use 'required' rule for None checks
@@ -257,21 +261,25 @@ def date_range(
             return False
 
         if min_date is not None and value < min_date:
-            ctx.add_error(out_of_range(
-                field,
-                min_date.isoformat(),
-                max_date.isoformat() if max_date else "present",
-                ctx.locale
-            ))
+            ctx.add_error(
+                out_of_range(
+                    field,
+                    min_date.isoformat(),
+                    max_date.isoformat() if max_date else "present",
+                    ctx.locale,
+                )
+            )
             return False
 
         if max_date is not None and value > max_date:
-            ctx.add_error(out_of_range(
-                field,
-                min_date.isoformat() if min_date else "past",
-                max_date.isoformat(),
-                ctx.locale
-            ))
+            ctx.add_error(
+                out_of_range(
+                    field,
+                    min_date.isoformat() if min_date else "past",
+                    max_date.isoformat(),
+                    ctx.locale,
+                )
+            )
             return False
 
         return True
@@ -281,8 +289,8 @@ def date_range(
 
 def list_items(
     item_rule: ValidationRule,
-    min_items: Optional[int] = None,
-    max_items: Optional[int] = None
+    min_items: int | None = None,
+    max_items: int | None = None,
 ) -> ValidationRule:
     """
     Create a validation rule for list items.
@@ -295,6 +303,7 @@ def list_items(
     Returns:
         ValidationRule: Validation rule function
     """
+
     def validate(field: str, value: Any, ctx: ValidationContext) -> bool:
         if value is None:
             return True  # Use 'required' rule for None checks
@@ -305,17 +314,11 @@ def list_items(
 
         # Check list size
         if min_items is not None and len(value) < min_items:
-            ctx.add_field_error(
-                field,
-                f"Must contain at least {min_items} items"
-            )
+            ctx.add_field_error(field, f"Must contain at least {min_items} items")
             return False
 
         if max_items is not None and len(value) > max_items:
-            ctx.add_field_error(
-                field,
-                f"Must not contain more than {max_items} items"
-            )
+            ctx.add_field_error(field, f"Must not contain more than {max_items} items")
             return False
 
         # Validate each item
@@ -330,8 +333,7 @@ def list_items(
 
 
 def conditional(
-    condition: Callable[[dict[str, Any]], bool],
-    rule: ValidationRule
+    condition: Callable[[dict[str, Any]], bool], rule: ValidationRule
 ) -> ValidationRule:
     """
     Create a conditional validation rule.
@@ -345,6 +347,7 @@ def conditional(
     Returns:
         ValidationRule: Validation rule function
     """
+
     def validate(field: str, value: Any, ctx: ValidationContext) -> bool:
         # Get request data from context
         request_data = ctx.get_data("request_data", {})
@@ -356,10 +359,7 @@ def conditional(
     return validate
 
 
-def custom(
-    validator: Callable[[Any], bool],
-    error_message: str
-) -> ValidationRule:
+def custom(validator: Callable[[Any], bool], error_message: str) -> ValidationRule:
     """
     Create a custom validation rule.
 
@@ -370,6 +370,7 @@ def custom(
     Returns:
         ValidationRule: Validation rule function
     """
+
     def validate(field: str, value: Any, ctx: ValidationContext) -> bool:
         if value is None:
             return True  # Use 'required' rule for None checks
@@ -393,6 +394,7 @@ def all_of(*rules: ValidationRule) -> ValidationRule:
     Returns:
         ValidationRule: Combined validation rule
     """
+
     def validate(field: str, value: Any, ctx: ValidationContext) -> bool:
         return all(rule(field, value, ctx) for rule in rules)
 
@@ -409,6 +411,7 @@ def any_of(*rules: ValidationRule) -> ValidationRule:
     Returns:
         ValidationRule: Combined validation rule
     """
+
     def validate(field: str, value: Any, ctx: ValidationContext) -> bool:
         # Try each rule with a temporary context
         for rule in rules:
@@ -428,7 +431,7 @@ def pgy_level_rule() -> ValidationRule:
     """PGY level validation (1-3)."""
     return all_of(
         numeric_range(min_value=1, max_value=3),
-        custom(lambda v: isinstance(v, int), "PGY level must be an integer")
+        custom(lambda v: isinstance(v, int), "PGY level must be an integer"),
     )
 
 
@@ -445,7 +448,7 @@ def faculty_role_rule() -> ValidationRule:
 def phone_number_rule() -> ValidationRule:
     """Phone number validation (US format)."""
     # Matches: (123) 456-7890, 123-456-7890, 1234567890
-    pattern = r'^\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$'
+    pattern = r"^\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$"
     return regex_pattern(pattern, "Invalid phone number format")
 
 

@@ -159,7 +159,9 @@ class ConstraintService:
                               Uses default ACGME constraints if not provided.
         """
         self.db = db
-        self.constraint_manager = constraint_manager or ConstraintManager.create_default()
+        self.constraint_manager = (
+            constraint_manager or ConstraintManager.create_default()
+        )
 
     @classmethod
     def validate_schedule_id(cls, schedule_id: str) -> str:
@@ -196,7 +198,9 @@ class ConstraintService:
         schedule_id = schedule_id.strip()
 
         if len(schedule_id) == 0:
-            raise ScheduleIdValidationError("schedule_id cannot be empty after stripping")
+            raise ScheduleIdValidationError(
+                "schedule_id cannot be empty after stripping"
+            )
 
         if len(schedule_id) > 64:
             raise ScheduleIdValidationError(
@@ -518,8 +522,12 @@ class ConstraintService:
         # Step 6: Sanitize and transform results
         issues = [self._sanitize_violation(v) for v in result.violations]
 
-        critical_count = sum(1 for i in issues if i.severity == ValidationSeverity.CRITICAL)
-        warning_count = sum(1 for i in issues if i.severity == ValidationSeverity.WARNING)
+        critical_count = sum(
+            1 for i in issues if i.severity == ValidationSeverity.CRITICAL
+        )
+        warning_count = sum(
+            1 for i in issues if i.severity == ValidationSeverity.WARNING
+        )
         info_count = sum(1 for i in issues if i.severity == ValidationSeverity.INFO)
 
         # Calculate compliance rate

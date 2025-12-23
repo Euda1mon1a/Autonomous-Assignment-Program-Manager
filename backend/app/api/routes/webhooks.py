@@ -6,6 +6,7 @@ Provides endpoints for:
 - Delivery monitoring
 - Dead letter queue management
 """
+
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -49,7 +50,7 @@ async def create_webhook(
     webhook_data: WebhookCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    service: WebhookService = Depends(get_webhook_service)
+    service: WebhookService = Depends(get_webhook_service),
 ):
     """
     Create a new webhook endpoint.
@@ -70,15 +71,12 @@ async def create_webhook(
             custom_headers=webhook_data.custom_headers,
             timeout_seconds=webhook_data.timeout_seconds,
             max_retries=webhook_data.max_retries,
-            owner_id=current_user.id if hasattr(current_user, 'id') else None,
-            metadata=webhook_data.metadata
+            owner_id=current_user.id if hasattr(current_user, "id") else None,
+            metadata=webhook_data.metadata,
         )
         return webhook
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("", response_model=WebhookListResponse)
@@ -88,7 +86,7 @@ async def list_webhooks(
     limit: int = Query(100, ge=1, le=1000),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    service: WebhookService = Depends(get_webhook_service)
+    service: WebhookService = Depends(get_webhook_service),
 ):
     """
     List all webhooks.
@@ -101,17 +99,14 @@ async def list_webhooks(
     **Required permissions:** Authenticated user
     """
     webhooks = await service.list_webhooks(
-        db=db,
-        status=status_filter,
-        skip=skip,
-        limit=limit
+        db=db, status=status_filter, skip=skip, limit=limit
     )
 
     return WebhookListResponse(
         webhooks=webhooks,
         total=len(webhooks),  # Note: This is limited by the query
         skip=skip,
-        limit=limit
+        limit=limit,
     )
 
 
@@ -120,7 +115,7 @@ async def get_webhook(
     webhook_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    service: WebhookService = Depends(get_webhook_service)
+    service: WebhookService = Depends(get_webhook_service),
 ):
     """
     Get webhook details by ID.
@@ -132,7 +127,7 @@ async def get_webhook(
     if not webhook:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Webhook {webhook_id} not found"
+            detail=f"Webhook {webhook_id} not found",
         )
 
     return webhook
@@ -144,7 +139,7 @@ async def update_webhook(
     webhook_data: WebhookUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    service: WebhookService = Depends(get_webhook_service)
+    service: WebhookService = Depends(get_webhook_service),
 ):
     """
     Update a webhook.
@@ -163,7 +158,7 @@ async def update_webhook(
     if not webhook:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Webhook {webhook_id} not found"
+            detail=f"Webhook {webhook_id} not found",
         )
 
     return webhook
@@ -174,7 +169,7 @@ async def delete_webhook(
     webhook_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    service: WebhookService = Depends(get_webhook_service)
+    service: WebhookService = Depends(get_webhook_service),
 ):
     """
     Delete a webhook and all associated deliveries.
@@ -186,7 +181,7 @@ async def delete_webhook(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Webhook {webhook_id} not found"
+            detail=f"Webhook {webhook_id} not found",
         )
 
 
@@ -195,7 +190,7 @@ async def pause_webhook(
     webhook_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    service: WebhookService = Depends(get_webhook_service)
+    service: WebhookService = Depends(get_webhook_service),
 ):
     """
     Pause a webhook.
@@ -210,7 +205,7 @@ async def pause_webhook(
     if not webhook:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Webhook {webhook_id} not found"
+            detail=f"Webhook {webhook_id} not found",
         )
 
     return webhook
@@ -221,7 +216,7 @@ async def resume_webhook(
     webhook_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    service: WebhookService = Depends(get_webhook_service)
+    service: WebhookService = Depends(get_webhook_service),
 ):
     """
     Resume a paused webhook.
@@ -233,7 +228,7 @@ async def resume_webhook(
     if not webhook:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Webhook {webhook_id} not found"
+            detail=f"Webhook {webhook_id} not found",
         )
 
     return webhook
@@ -249,7 +244,7 @@ async def trigger_event(
     event_data: WebhookEventTrigger,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    service: WebhookService = Depends(get_webhook_service)
+    service: WebhookService = Depends(get_webhook_service),
 ):
     """
     Manually trigger a webhook event.
@@ -263,13 +258,13 @@ async def trigger_event(
         event_type=event_data.event_type,
         payload=event_data.payload,
         event_id=event_data.event_id,
-        immediate=event_data.immediate
+        immediate=event_data.immediate,
     )
 
     return WebhookEventTriggerResponse(
         event_type=event_data.event_type,
         webhooks_triggered=count,
-        message=f"Event '{event_data.event_type}' triggered for {count} webhook(s)"
+        message=f"Event '{event_data.event_type}' triggered for {count} webhook(s)",
     )
 
 
@@ -287,7 +282,7 @@ async def list_deliveries(
     limit: int = Query(100, ge=1, le=1000),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    service: WebhookService = Depends(get_webhook_service)
+    service: WebhookService = Depends(get_webhook_service),
 ):
     """
     List webhook deliveries with optional filtering.
@@ -307,14 +302,14 @@ async def list_deliveries(
         status=status_filter,
         event_type=event_type,
         skip=skip,
-        limit=limit
+        limit=limit,
     )
 
     return WebhookDeliveryListResponse(
         deliveries=deliveries,
         total=len(deliveries),  # Note: This is limited by the query
         skip=skip,
-        limit=limit
+        limit=limit,
     )
 
 
@@ -323,7 +318,7 @@ async def get_delivery(
     delivery_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    service: WebhookService = Depends(get_webhook_service)
+    service: WebhookService = Depends(get_webhook_service),
 ):
     """
     Get delivery details by ID.
@@ -335,7 +330,7 @@ async def get_delivery(
     if not delivery:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Delivery {delivery_id} not found"
+            detail=f"Delivery {delivery_id} not found",
         )
 
     return delivery
@@ -346,7 +341,7 @@ async def retry_delivery(
     retry_data: WebhookDeliveryRetryRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    service: WebhookService = Depends(get_webhook_service)
+    service: WebhookService = Depends(get_webhook_service),
 ):
     """
     Manually retry a failed delivery.
@@ -358,7 +353,7 @@ async def retry_delivery(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unable to retry delivery (not found or in final state)"
+            detail="Unable to retry delivery (not found or in final state)",
         )
 
     # Return updated delivery status
@@ -379,7 +374,7 @@ async def list_dead_letters(
     limit: int = Query(100, ge=1, le=1000),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    service: WebhookService = Depends(get_webhook_service)
+    service: WebhookService = Depends(get_webhook_service),
 ):
     """
     List dead letter queue entries.
@@ -396,28 +391,26 @@ async def list_dead_letters(
     **Required permissions:** Authenticated user
     """
     dead_letters = await service.list_dead_letters(
-        db=db,
-        webhook_id=webhook_id,
-        resolved=resolved,
-        skip=skip,
-        limit=limit
+        db=db, webhook_id=webhook_id, resolved=resolved, skip=skip, limit=limit
     )
 
     return WebhookDeadLetterListResponse(
         dead_letters=dead_letters,
         total=len(dead_letters),  # Note: This is limited by the query
         skip=skip,
-        limit=limit
+        limit=limit,
     )
 
 
-@router.post("/dead-letters/{dead_letter_id}/resolve", response_model=WebhookDeadLetterResponse)
+@router.post(
+    "/dead-letters/{dead_letter_id}/resolve", response_model=WebhookDeadLetterResponse
+)
 async def resolve_dead_letter(
     dead_letter_id: UUID,
     resolve_data: WebhookDeadLetterResolveRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    service: WebhookService = Depends(get_webhook_service)
+    service: WebhookService = Depends(get_webhook_service),
 ):
     """
     Resolve a dead letter entry.
@@ -427,20 +420,20 @@ async def resolve_dead_letter(
     **Required permissions:** Authenticated user
     """
     # Get current user ID
-    user_id = current_user.id if hasattr(current_user, 'id') else None
+    user_id = current_user.id if hasattr(current_user, "id") else None
 
     success = await service.resolve_dead_letter(
         db=db,
         dead_letter_id=dead_letter_id,
         resolved_by=user_id,
         notes=resolve_data.notes,
-        retry=resolve_data.retry
+        retry=resolve_data.retry,
     )
 
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Dead letter {dead_letter_id} not found"
+            detail=f"Dead letter {dead_letter_id} not found",
         )
 
     # Return updated dead letter
@@ -450,5 +443,5 @@ async def resolve_dead_letter(
 
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Dead letter {dead_letter_id} not found after resolution"
+        detail=f"Dead letter {dead_letter_id} not found after resolution",
     )

@@ -2,6 +2,7 @@
 
 These types work with both PostgreSQL (production) and SQLite (testing).
 """
+
 import json
 import uuid
 
@@ -19,17 +20,18 @@ class GUID(TypeDecorator):
     Uses PostgreSQL's UUID type when available, otherwise uses CHAR(36)
     for SQLite or other databases.
     """
+
     impl = CHAR
     cache_ok = True
 
     def load_dialect_impl(self, dialect):
-        if dialect.name == 'postgresql':
+        if dialect.name == "postgresql":
             return dialect.type_descriptor(PG_UUID(as_uuid=True))
         else:
             return dialect.type_descriptor(CHAR(36))
 
     def process_bind_param(self, value, dialect):
-        if value is None or dialect.name == 'postgresql':
+        if value is None or dialect.name == "postgresql":
             return value
         else:
             if isinstance(value, uuid.UUID):
@@ -37,7 +39,7 @@ class GUID(TypeDecorator):
             return value
 
     def process_result_value(self, value, dialect):
-        if value is None or dialect.name == 'postgresql':
+        if value is None or dialect.name == "postgresql":
             return value
         else:
             if not isinstance(value, uuid.UUID):
@@ -52,23 +54,24 @@ class JSONType(TypeDecorator):
     Uses PostgreSQL's JSONB type when available, otherwise uses TEXT
     with JSON serialization for SQLite.
     """
+
     impl = Text
     cache_ok = True
 
     def load_dialect_impl(self, dialect):
-        if dialect.name == 'postgresql':
+        if dialect.name == "postgresql":
             return dialect.type_descriptor(PG_JSONB())
         else:
             return dialect.type_descriptor(Text())
 
     def process_bind_param(self, value, dialect):
-        if value is None or dialect.name == 'postgresql':
+        if value is None or dialect.name == "postgresql":
             return value
         else:
             return json.dumps(value)
 
     def process_result_value(self, value, dialect):
-        if value is None or dialect.name == 'postgresql':
+        if value is None or dialect.name == "postgresql":
             return value
         else:
             if isinstance(value, str):
@@ -83,23 +86,24 @@ class StringArrayType(TypeDecorator):
     Uses PostgreSQL's ARRAY type when available, otherwise uses TEXT
     with JSON serialization for SQLite.
     """
+
     impl = Text
     cache_ok = True
 
     def load_dialect_impl(self, dialect):
-        if dialect.name == 'postgresql':
+        if dialect.name == "postgresql":
             return dialect.type_descriptor(PG_ARRAY(String))
         else:
             return dialect.type_descriptor(Text())
 
     def process_bind_param(self, value, dialect):
-        if value is None or dialect.name == 'postgresql':
+        if value is None or dialect.name == "postgresql":
             return value
         else:
             return json.dumps(value)
 
     def process_result_value(self, value, dialect):
-        if value is None or dialect.name == 'postgresql':
+        if value is None or dialect.name == "postgresql":
             return value
         else:
             if isinstance(value, str):

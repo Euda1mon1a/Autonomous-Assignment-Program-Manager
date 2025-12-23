@@ -9,6 +9,7 @@ Evaluates feature flags based on:
 - A/B testing variants
 - Flag dependencies (prerequisite flags)
 """
+
 import hashlib
 from typing import Any
 
@@ -52,7 +53,7 @@ class FeatureFlagEvaluator:
         context = context or {}
 
         # Check if flag is globally disabled
-        if not flag_data.get('enabled', False):
+        if not flag_data.get("enabled", False):
             return False, None, "Flag is globally disabled"
 
         # Check environment targeting
@@ -72,20 +73,22 @@ class FeatureFlagEvaluator:
             return False, None, "User role not in target list"
 
         # Evaluate based on flag type
-        flag_type = flag_data.get('flag_type', 'boolean')
+        flag_type = flag_data.get("flag_type", "boolean")
 
-        if flag_type == 'boolean':
+        if flag_type == "boolean":
             return True, None, "Flag is enabled"
 
-        elif flag_type == 'percentage':
-            rollout_percentage = flag_data.get('rollout_percentage', 0.0)
-            if self._is_in_rollout(user_id, flag_data['key'], rollout_percentage):
-                return True, None, f"User in {rollout_percentage*100}% rollout"
+        elif flag_type == "percentage":
+            rollout_percentage = flag_data.get("rollout_percentage", 0.0)
+            if self._is_in_rollout(user_id, flag_data["key"], rollout_percentage):
+                return True, None, f"User in {rollout_percentage * 100}% rollout"
             else:
-                return False, None, f"User not in {rollout_percentage*100}% rollout"
+                return False, None, f"User not in {rollout_percentage * 100}% rollout"
 
-        elif flag_type == 'variant':
-            variant = self._get_variant(user_id, flag_data['key'], flag_data.get('variants', {}))
+        elif flag_type == "variant":
+            variant = self._get_variant(
+                user_id, flag_data["key"], flag_data.get("variants", {})
+            )
             if variant:
                 return True, variant, f"Assigned to variant: {variant}"
             else:
@@ -103,16 +106,14 @@ class FeatureFlagEvaluator:
         Returns:
             True if environment matches or no targeting specified
         """
-        target_envs = flag_data.get('environments')
+        target_envs = flag_data.get("environments")
         if target_envs is None:
             return True  # No targeting = all environments
 
         return self.environment in target_envs
 
     def _check_user_targeting(
-        self,
-        flag_data: dict[str, Any],
-        user_id: str | None
+        self, flag_data: dict[str, Any], user_id: str | None
     ) -> bool:
         """
         Check if user is in target list.
@@ -124,7 +125,7 @@ class FeatureFlagEvaluator:
         Returns:
             True if user matches or no targeting specified
         """
-        target_user_ids = flag_data.get('target_user_ids')
+        target_user_ids = flag_data.get("target_user_ids")
         if target_user_ids is None:
             return True  # No targeting = all users
 
@@ -134,9 +135,7 @@ class FeatureFlagEvaluator:
         return user_id in target_user_ids
 
     def _check_role_targeting(
-        self,
-        flag_data: dict[str, Any],
-        user_role: str | None
+        self, flag_data: dict[str, Any], user_role: str | None
     ) -> bool:
         """
         Check if user role is in target list.
@@ -148,7 +147,7 @@ class FeatureFlagEvaluator:
         Returns:
             True if role matches or no targeting specified
         """
-        target_roles = flag_data.get('target_roles')
+        target_roles = flag_data.get("target_roles")
         if target_roles is None:
             return True  # No targeting = all roles
 
@@ -158,10 +157,7 @@ class FeatureFlagEvaluator:
         return user_role in target_roles
 
     def _is_in_rollout(
-        self,
-        user_id: str | None,
-        flag_key: str,
-        rollout_percentage: float
+        self, user_id: str | None, flag_key: str, rollout_percentage: float
     ) -> bool:
         """
         Determine if user is in percentage rollout using consistent hashing.
@@ -198,10 +194,7 @@ class FeatureFlagEvaluator:
         return hash_normalized < rollout_percentage
 
     def _get_variant(
-        self,
-        user_id: str | None,
-        flag_key: str,
-        variants: dict[str, float]
+        self, user_id: str | None, flag_key: str, variants: dict[str, float]
     ) -> str | None:
         """
         Assign user to an A/B test variant using consistent hashing.
@@ -268,7 +261,7 @@ class FeatureFlagEvaluator:
             Tuple of (enabled: bool, variant: str | None, reason: str)
         """
         # Check dependencies first
-        dependencies = flag_data.get('dependencies', [])
+        dependencies = flag_data.get("dependencies", [])
         if dependencies:
             for dep_key in dependencies:
                 dep_flag = all_flags.get(dep_key)
@@ -281,7 +274,11 @@ class FeatureFlagEvaluator:
                 )
 
                 if not dep_enabled:
-                    return False, None, f"Dependency '{dep_key}' not enabled: {dep_reason}"
+                    return (
+                        False,
+                        None,
+                        f"Dependency '{dep_key}' not enabled: {dep_reason}",
+                    )
 
         # All dependencies satisfied, evaluate this flag
         return self.evaluate(flag_data, user_id, user_role, context)

@@ -16,8 +16,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
 from app.core.security import get_current_active_user
+from app.db.session import get_db
 from app.models.scheduled_job import JobExecution
 from app.models.user import User
 from app.scheduler import get_scheduler
@@ -69,8 +69,7 @@ async def create_job(
     # Check permissions
     if not current_user.can_manage_schedules:
         raise HTTPException(
-            status_code=403,
-            detail="Insufficient permissions to create scheduled jobs"
+            status_code=403, detail="Insufficient permissions to create scheduled jobs"
         )
 
     try:
@@ -96,7 +95,9 @@ async def create_job(
         job = persistence.get_job_by_id(job_id)
 
         if not job:
-            raise HTTPException(status_code=500, detail="Failed to retrieve created job")
+            raise HTTPException(
+                status_code=500, detail="Failed to retrieve created job"
+            )
 
         return JobResponseSchema.model_validate(job)
 
@@ -131,7 +132,7 @@ async def list_jobs(
 
         return JobListResponseSchema(
             total=len(jobs),
-            jobs=[JobResponseSchema.model_validate(job) for job in jobs]
+            jobs=[JobResponseSchema.model_validate(job) for job in jobs],
         )
 
     except Exception as e:
@@ -191,8 +192,7 @@ async def update_job(
     # Check permissions
     if not current_user.can_manage_schedules:
         raise HTTPException(
-            status_code=403,
-            detail="Insufficient permissions to update scheduled jobs"
+            status_code=403, detail="Insufficient permissions to update scheduled jobs"
         )
 
     try:
@@ -246,8 +246,7 @@ async def delete_job(
     # Check permissions
     if not current_user.can_manage_schedules:
         raise HTTPException(
-            status_code=403,
-            detail="Insufficient permissions to delete scheduled jobs"
+            status_code=403, detail="Insufficient permissions to delete scheduled jobs"
         )
 
     try:
@@ -291,8 +290,7 @@ async def pause_job(
     # Check permissions
     if not current_user.can_manage_schedules:
         raise HTTPException(
-            status_code=403,
-            detail="Insufficient permissions to pause scheduled jobs"
+            status_code=403, detail="Insufficient permissions to pause scheduled jobs"
         )
 
     try:
@@ -331,8 +329,7 @@ async def resume_job(
     # Check permissions
     if not current_user.can_manage_schedules:
         raise HTTPException(
-            status_code=403,
-            detail="Insufficient permissions to resume scheduled jobs"
+            status_code=403, detail="Insufficient permissions to resume scheduled jobs"
         )
 
     try:
@@ -392,15 +389,18 @@ async def get_job_executions(
         )
 
         # Count total executions
-        total = db.query(func.count(JobExecution.id)).filter(
-            JobExecution.job_id == job_id
-        ).scalar() or 0
+        total = (
+            db.query(func.count(JobExecution.id))
+            .filter(JobExecution.job_id == job_id)
+            .scalar()
+            or 0
+        )
 
         return JobExecutionListSchema(
             total=total,
             limit=limit,
             offset=offset,
-            executions=[JobExecutionSchema.model_validate(e) for e in executions]
+            executions=[JobExecutionSchema.model_validate(e) for e in executions],
         )
 
     except HTTPException:
@@ -441,7 +441,7 @@ async def get_all_executions(
             total=total,
             limit=limit,
             offset=offset,
-            executions=[JobExecutionSchema.model_validate(e) for e in executions]
+            executions=[JobExecutionSchema.model_validate(e) for e in executions],
         )
 
     except Exception as e:
@@ -508,8 +508,7 @@ async def sync_scheduler(
     # Check permissions
     if not current_user.can_manage_schedules:
         raise HTTPException(
-            status_code=403,
-            detail="Insufficient permissions to sync scheduler"
+            status_code=403, detail="Insufficient permissions to sync scheduler"
         )
 
     try:

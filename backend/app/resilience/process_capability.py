@@ -29,7 +29,6 @@ Application to Scheduling:
 import logging
 import statistics
 from dataclasses import dataclass
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +53,7 @@ class ProcessCapabilityReport:
         usl: Upper specification limit
         target: Target value (if applicable)
     """
+
     cp: float
     cpk: float
     pp: float
@@ -66,7 +66,7 @@ class ProcessCapabilityReport:
     std_dev: float
     lsl: float
     usl: float
-    target: Optional[float] = None
+    target: float | None = None
 
 
 class ScheduleCapabilityAnalyzer:
@@ -136,8 +136,10 @@ class ScheduleCapabilityAnalyzer:
         std_dev = statistics.stdev(data)
 
         if std_dev == 0:
-            logger.warning("Zero standard deviation - process may be static or simulated")
-            return float('inf')
+            logger.warning(
+                "Zero standard deviation - process may be static or simulated"
+            )
+            return float("inf")
 
         cp = (usl - lsl) / (6 * std_dev)
 
@@ -183,11 +185,13 @@ class ScheduleCapabilityAnalyzer:
         std_dev = statistics.stdev(data)
 
         if std_dev == 0:
-            logger.warning("Zero standard deviation - Cpk calculation may be unreliable")
+            logger.warning(
+                "Zero standard deviation - Cpk calculation may be unreliable"
+            )
             # If process is perfectly centered at target, it's infinitely capable
             # If outside specs, it's completely incapable
             if lsl <= mean <= usl:
-                return float('inf')
+                return float("inf")
             else:
                 return 0.0
 
@@ -306,9 +310,9 @@ class ScheduleCapabilityAnalyzer:
 
         if adjusted_variance == 0:
             logger.warning("Zero adjusted variance in Cpm calculation")
-            return float('inf')
+            return float("inf")
 
-        cpm = (usl - lsl) / (6 * (adjusted_variance ** 0.5))
+        cpm = (usl - lsl) / (6 * (adjusted_variance**0.5))
 
         logger.debug(
             f"Cpm calculation: mean={mean:.2f}, target={target:.2f}, "
@@ -375,7 +379,7 @@ class ScheduleCapabilityAnalyzer:
         weekly_hours: list[float],
         min_hours: float = 40.0,
         max_hours: float = 80.0,
-        target_hours: Optional[float] = None,
+        target_hours: float | None = None,
     ) -> ProcessCapabilityReport:
         """
         Analyze workload distribution capability for ACGME compliance.
@@ -516,35 +520,45 @@ class ScheduleCapabilityAnalyzer:
         else:
             return "POOR - Process significantly off-center"
 
-    def _get_capability_recommendations(self, report: ProcessCapabilityReport) -> list[str]:
+    def _get_capability_recommendations(
+        self, report: ProcessCapabilityReport
+    ) -> list[str]:
         """Generate recommendations based on capability analysis."""
         recommendations = []
 
         if report.capability_status == "INCAPABLE":
-            recommendations.extend([
-                "URGENT: Process cannot reliably meet specifications",
-                "Review schedule generation constraints",
-                "Consider tightening ACGME compliance validation",
-                "Investigate root causes of variation",
-            ])
+            recommendations.extend(
+                [
+                    "URGENT: Process cannot reliably meet specifications",
+                    "Review schedule generation constraints",
+                    "Consider tightening ACGME compliance validation",
+                    "Investigate root causes of variation",
+                ]
+            )
         elif report.capability_status == "MARGINAL":
-            recommendations.extend([
-                "Process barely meets specifications - improvement needed",
-                "Reduce process variation through better load balancing",
-                "Monitor closely for ACGME violations",
-            ])
+            recommendations.extend(
+                [
+                    "Process barely meets specifications - improvement needed",
+                    "Reduce process variation through better load balancing",
+                    "Monitor closely for ACGME violations",
+                ]
+            )
         elif report.capability_status == "CAPABLE":
-            recommendations.extend([
-                "Process meets industry standards",
-                "Aim for 5σ quality by reducing variation",
-                "Continue monitoring for regression",
-            ])
+            recommendations.extend(
+                [
+                    "Process meets industry standards",
+                    "Aim for 5σ quality by reducing variation",
+                    "Continue monitoring for regression",
+                ]
+            )
         else:  # EXCELLENT
-            recommendations.extend([
-                "World-class process capability",
-                "Maintain current practices",
-                "Document best practices for replication",
-            ])
+            recommendations.extend(
+                [
+                    "World-class process capability",
+                    "Maintain current practices",
+                    "Document best practices for replication",
+                ]
+            )
 
         # Centering recommendations
         if report.cp > 0:

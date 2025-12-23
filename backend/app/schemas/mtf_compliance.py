@@ -12,11 +12,10 @@ or hiring - you solve them with Rank, Regulations, and Paper Trails.
 """
 
 from datetime import datetime
-from enum import IntEnum, Enum
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-
 
 # =============================================================================
 # DRRS (Defense Readiness Reporting System) Translation Layer
@@ -30,6 +29,7 @@ class DRRSCategory(str, Enum):
     Standard military readiness categories that commanders understand.
     Maps to LoadSheddingLevel for universal military comprehension.
     """
+
     C1 = "C-1"  # Fully mission capable - all resources available
     C2 = "C-2"  # Substantially mission capable - minor deficiencies
     C3 = "C-3"  # Marginally mission capable - significant deficiencies
@@ -39,6 +39,7 @@ class DRRSCategory(str, Enum):
 
 class PersonnelReadinessLevel(str, Enum):
     """Personnel (P) readiness sub-rating."""
+
     P1 = "P-1"  # 100% of required personnel
     P2 = "P-2"  # 90-99% of required personnel
     P3 = "P-3"  # 80-89% of required personnel (partially mission capable)
@@ -47,6 +48,7 @@ class PersonnelReadinessLevel(str, Enum):
 
 class EquipmentReadinessLevel(str, Enum):
     """Equipment/capability (S) readiness sub-rating."""
+
     S1 = "S-1"  # All equipment/capabilities operational
     S2 = "S-2"  # Minor capability gaps
     S3 = "S-3"  # Significant capability gaps
@@ -55,6 +57,7 @@ class EquipmentReadinessLevel(str, Enum):
 
 class MissionType(str, Enum):
     """Types of medical missions for readiness assessment."""
+
     LEVEL_1_TRAUMA = "level_1_trauma"
     LEVEL_2_TRAUMA = "level_2_trauma"
     INPATIENT_MEDICINE = "inpatient_medicine"
@@ -67,9 +70,10 @@ class MissionType(str, Enum):
 
 class MissionCapabilityStatus(str, Enum):
     """Mission capability assessment."""
-    FMC = "FMC"    # Fully Mission Capable
-    PMC = "PMC"    # Partially Mission Capable
-    NMC = "NMC"    # Non-Mission Capable
+
+    FMC = "FMC"  # Fully Mission Capable
+    PMC = "PMC"  # Partially Mission Capable
+    NMC = "NMC"  # Non-Mission Capable
 
 
 # =============================================================================
@@ -79,15 +83,17 @@ class MissionCapabilityStatus(str, Enum):
 
 class MFRType(str, Enum):
     """Types of Memoranda for Record."""
-    RISK_ACCEPTANCE = "risk_acceptance"      # Commander accepted known risk
-    SAFETY_CONCERN = "safety_concern"        # Patient/staff safety at risk
+
+    RISK_ACCEPTANCE = "risk_acceptance"  # Commander accepted known risk
+    SAFETY_CONCERN = "safety_concern"  # Patient/staff safety at risk
     COMPLIANCE_VIOLATION = "compliance_violation"  # ACGME/DHA violation
-    RESOURCE_REQUEST = "resource_request"    # Request for forces/resources
-    STAND_DOWN = "stand_down"                # Safety stand-down initiated
+    RESOURCE_REQUEST = "resource_request"  # Request for forces/resources
+    STAND_DOWN = "stand_down"  # Safety stand-down initiated
 
 
 class MFRPriority(str, Enum):
     """Priority/urgency of the MFR."""
+
     ROUTINE = "routine"
     PRIORITY = "priority"
     IMMEDIATE = "immediate"
@@ -96,6 +102,7 @@ class MFRPriority(str, Enum):
 
 class RiskLevel(str, Enum):
     """Risk levels for documentation."""
+
     LOW = "low"
     MODERATE = "moderate"
     HIGH = "high"
@@ -110,13 +117,15 @@ class RiskLevel(str, Enum):
 
 class CircuitBreakerState(str, Enum):
     """State of the scheduling circuit breaker."""
-    CLOSED = "closed"       # Normal operations
+
+    CLOSED = "closed"  # Normal operations
     HALF_OPEN = "half_open"  # Limited operations, testing recovery
-    OPEN = "open"           # Scheduling locked, requires override
+    OPEN = "open"  # Scheduling locked, requires override
 
 
 class CircuitBreakerTrigger(str, Enum):
     """What triggered the circuit breaker."""
+
     N1_VIOLATION = "n1_violation"
     N2_VIOLATION = "n2_violation"
     ALLOSTATIC_OVERLOAD = "allostatic_overload"
@@ -129,11 +138,12 @@ class CircuitBreakerTrigger(str, Enum):
 
 class OverrideAuthority(str, Enum):
     """Who can override the circuit breaker."""
-    SCHEDULER = "scheduler"            # Limited override
+
+    SCHEDULER = "scheduler"  # Limited override
     CHIEF_RESIDENT = "chief_resident"  # Extended override
     PROGRAM_DIRECTOR = "program_director"  # Full override
-    DIO = "dio"                        # Designated Institutional Official
-    COMMANDER = "commander"            # MTF Commander
+    DIO = "dio"  # Designated Institutional Official
+    COMMANDER = "commander"  # MTF Commander
     RISK_MANAGEMENT = "risk_management"
 
 
@@ -144,18 +154,18 @@ class OverrideAuthority(str, Enum):
 
 class DRRSReadinessRequest(BaseModel):
     """Request for DRRS readiness assessment."""
+
     include_all_missions: bool = Field(
-        default=True,
-        description="Include all mission types in assessment"
+        default=True, description="Include all mission types in assessment"
     )
     specific_missions: list[MissionType] | None = Field(
-        default=None,
-        description="Specific missions to assess"
+        default=None, description="Specific missions to assess"
     )
 
 
 class MissionReadiness(BaseModel):
     """Readiness assessment for a specific mission type."""
+
     mission_type: MissionType
     mission_name: str
     capability_status: MissionCapabilityStatus
@@ -164,14 +174,14 @@ class MissionReadiness(BaseModel):
     combined_rating: DRRSCategory
     deficiencies: list[str]
     degradation_percentage: float = Field(
-        ge=0.0, le=100.0,
-        description="Percentage capability degraded from baseline"
+        ge=0.0, le=100.0, description="Percentage capability degraded from baseline"
     )
     recovery_actions: list[str]
 
 
 class DRRSReadinessResponse(BaseModel):
     """Full DRRS readiness report - the "SITREP"."""
+
     assessed_at: datetime
     overall_rating: DRRSCategory
     overall_capability: MissionCapabilityStatus
@@ -200,6 +210,7 @@ class DRRSReadinessResponse(BaseModel):
 
 class MFRRequest(BaseModel):
     """Request to generate a Memorandum for Record."""
+
     mfr_type: MFRType
     priority: MFRPriority = MFRPriority.ROUTINE
     subject: str = Field(..., min_length=10, max_length=200)
@@ -208,13 +219,13 @@ class MFRRequest(BaseModel):
     include_recommendations: bool = True
     scheduler_name: str = Field(..., min_length=2, max_length=100)
     scheduler_objection: str | None = Field(
-        default=None,
-        description="Scheduler's documented objection to the situation"
+        default=None, description="Scheduler's documented objection to the situation"
     )
 
 
 class MFRResponse(BaseModel):
     """Generated Memorandum for Record."""
+
     id: UUID
     generated_at: datetime
     mfr_type: MFRType
@@ -240,11 +251,9 @@ class MFRResponse(BaseModel):
 
 class RFFRequest(BaseModel):
     """Request for Forces (RFF) generation request."""
+
     requesting_unit: str = Field(..., min_length=2, max_length=100)
-    uic: str | None = Field(
-        default=None,
-        description="Unit Identification Code"
-    )
+    uic: str | None = Field(default=None, description="Unit Identification Code")
     mission_affected: list[MissionType]
     mos_required: list[str] = Field(
         description="Military Occupational Specialty codes needed (e.g., 60H, 66H)"
@@ -256,6 +265,7 @@ class RFFRequest(BaseModel):
 
 class RFFResponse(BaseModel):
     """Generated Request for Forces document."""
+
     id: UUID
     generated_at: datetime
 
@@ -283,6 +293,7 @@ class RFFResponse(BaseModel):
 
 class CircuitBreakerStatusResponse(BaseModel):
     """Current circuit breaker status."""
+
     state: CircuitBreakerState
     triggered_at: datetime | None
     trigger: CircuitBreakerTrigger | None
@@ -310,21 +321,21 @@ class CircuitBreakerStatusResponse(BaseModel):
 
 class CircuitBreakerOverrideRequest(BaseModel):
     """Request to override circuit breaker."""
+
     authority: OverrideAuthority
     reason: str = Field(..., min_length=20, max_length=500)
     duration_hours: int = Field(default=8, ge=1, le=72)
     acknowledge_risks: bool = Field(
-        ...,
-        description="Explicitly acknowledge the documented risks"
+        ..., description="Explicitly acknowledge the documented risks"
     )
     generate_mfr: bool = Field(
-        default=True,
-        description="Generate MFR documenting the override"
+        default=True, description="Generate MFR documenting the override"
     )
 
 
 class CircuitBreakerOverrideResponse(BaseModel):
     """Response from circuit breaker override."""
+
     success: bool
     override_id: UUID | None
     expires_at: datetime | None
@@ -336,6 +347,7 @@ class CircuitBreakerOverrideResponse(BaseModel):
 
 class SafetyStandDownRequest(BaseModel):
     """Request to initiate a safety stand-down."""
+
     reason: str = Field(..., min_length=20, max_length=500)
     initiator: str
     notify_dio: bool = True
@@ -345,6 +357,7 @@ class SafetyStandDownRequest(BaseModel):
 
 class SafetyStandDownResponse(BaseModel):
     """Response from safety stand-down initiation."""
+
     stand_down_active: bool
     initiated_at: datetime
     initiated_by: str
@@ -371,6 +384,7 @@ class SafetyStandDownResponse(BaseModel):
 
 class MFRHistoryItem(BaseModel):
     """Historical MFR record."""
+
     id: UUID
     generated_at: datetime
     mfr_type: MFRType
@@ -382,6 +396,7 @@ class MFRHistoryItem(BaseModel):
 
 class MFRHistoryResponse(BaseModel):
     """List of historical MFRs."""
+
     items: list[MFRHistoryItem]
     total: int
     page: int
@@ -390,6 +405,7 @@ class MFRHistoryResponse(BaseModel):
 
 class CircuitBreakerEventHistoryItem(BaseModel):
     """Historical circuit breaker event."""
+
     id: UUID
     timestamp: datetime
     event_type: str  # triggered, reset, overridden
@@ -402,6 +418,7 @@ class CircuitBreakerEventHistoryItem(BaseModel):
 
 class CircuitBreakerHistoryResponse(BaseModel):
     """Circuit breaker event history."""
+
     items: list[CircuitBreakerEventHistoryItem]
     total: int
     page: int
@@ -415,6 +432,7 @@ class CircuitBreakerHistoryResponse(BaseModel):
 
 class IronDomeStatusResponse(BaseModel):
     """Overall Iron Dome (MTF Compliance) status."""
+
     timestamp: datetime
 
     # DRRS Readiness

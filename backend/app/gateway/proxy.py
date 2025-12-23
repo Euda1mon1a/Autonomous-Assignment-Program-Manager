@@ -4,13 +4,13 @@ Service proxy for API gateway.
 Provides service proxy functionality with load balancing, circuit breaking,
 and service discovery integration.
 """
+
 import asyncio
 import logging
-import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from fastapi import Request
@@ -125,7 +125,7 @@ class CircuitBreaker:
     state: CircuitState = CircuitState.CLOSED
     failure_count: int = 0
     success_count: int = 0
-    last_failure_time: Optional[datetime] = None
+    last_failure_time: datetime | None = None
     half_open_attempts: int = 0
 
     def record_success(self) -> None:
@@ -279,7 +279,7 @@ class ServiceProxy:
         )
 
         # Circuit breaker
-        self.circuit_breaker: Optional[CircuitBreaker] = None
+        self.circuit_breaker: CircuitBreaker | None = None
         if config.circuit_breaker_enabled:
             self.circuit_breaker = CircuitBreaker(
                 threshold=config.circuit_breaker_threshold,
@@ -291,20 +291,22 @@ class ServiceProxy:
         self.cache: dict[str, CacheEntry] = {}
 
         # Rate limiter
-        self.rate_limiter: Optional[RateLimiter] = None
+        self.rate_limiter: RateLimiter | None = None
         if config.rate_limit_enabled:
             self.rate_limiter = RateLimiter(
                 max_requests=config.rate_limit_requests,
                 window_seconds=config.rate_limit_window_seconds,
             )
 
-        logger.info(f"Service proxy '{config.name}' initialized for {config.target_url}")
+        logger.info(
+            f"Service proxy '{config.name}' initialized for {config.target_url}"
+        )
 
     async def proxy_request(
         self,
         request: Request,
         path: str,
-        body: Optional[bytes] = None,
+        body: bytes | None = None,
     ) -> httpx.Response:
         """
         Proxy request to target service.
@@ -386,7 +388,7 @@ class ServiceProxy:
                     # Exponential backoff
                     delay = (
                         self.config.retry_delay_ms
-                        * (self.config.retry_backoff_multiplier ** attempt)
+                        * (self.config.retry_backoff_multiplier**attempt)
                     ) / 1000
                     await asyncio.sleep(delay)
 
@@ -397,7 +399,7 @@ class ServiceProxy:
         self,
         request: Request,
         path: str,
-        body: Optional[bytes],
+        body: bytes | None,
     ) -> httpx.Response:
         """
         Execute single request to target service.

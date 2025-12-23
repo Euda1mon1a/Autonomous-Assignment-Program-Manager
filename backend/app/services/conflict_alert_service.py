@@ -1,4 +1,5 @@
 """Service for managing FMIT conflict alerts."""
+
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from enum import Enum
@@ -21,6 +22,7 @@ from app.models.swap import SwapRecord, SwapStatus, SwapType
 
 class ResolutionStrategy(str, Enum):
     """Types of resolution strategies."""
+
     SWAP_ASSIGNMENT = "swap_assignment"
     ADJUST_TIME_BOUNDARIES = "adjust_time_boundaries"
     REASSIGN_TO_BACKUP = "reassign_to_backup"
@@ -29,6 +31,7 @@ class ResolutionStrategy(str, Enum):
 
 class ResolutionStatus(str, Enum):
     """Status of a resolution option."""
+
     PROPOSED = "proposed"
     VALIDATED = "validated"
     APPLIED = "applied"
@@ -39,6 +42,7 @@ class ResolutionStatus(str, Enum):
 @dataclass
 class ImpactEstimate:
     """Estimated impact of applying a resolution."""
+
     affected_faculty_count: int
     affected_weeks_count: int
     new_conflicts_created: int
@@ -50,6 +54,7 @@ class ImpactEstimate:
 @dataclass
 class ResolutionOption:
     """A possible resolution for a conflict."""
+
     id: str
     strategy: ResolutionStrategy
     description: str
@@ -69,6 +74,7 @@ class ResolutionOption:
 @dataclass
 class ResolutionHistory:
     """Track resolution attempts for a conflict."""
+
     conflict_id: UUID
     options_generated: list[ResolutionOption]
     options_attempted: list[str]  # option IDs
@@ -114,12 +120,18 @@ class ConflictAlertService:
             The created ConflictAlert
         """
         # Check for existing similar alert
-        existing = self.db.query(ConflictAlert).filter(
-            ConflictAlert.faculty_id == faculty_id,
-            ConflictAlert.conflict_type == conflict_type,
-            ConflictAlert.fmit_week == fmit_week,
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]),
-        ).first()
+        existing = (
+            self.db.query(ConflictAlert)
+            .filter(
+                ConflictAlert.faculty_id == faculty_id,
+                ConflictAlert.conflict_type == conflict_type,
+                ConflictAlert.fmit_week == fmit_week,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
+            .first()
+        )
 
         if existing:
             # Update existing alert instead of creating duplicate
@@ -147,9 +159,7 @@ class ConflictAlertService:
 
     def get_alert(self, alert_id: UUID) -> ConflictAlert | None:
         """Get an alert by ID."""
-        return self.db.query(ConflictAlert).filter(
-            ConflictAlert.id == alert_id
-        ).first()
+        return self.db.query(ConflictAlert).filter(ConflictAlert.id == alert_id).first()
 
     def get_alerts_for_faculty(
         self,
@@ -173,7 +183,9 @@ class ConflictAlertService:
             query = query.filter(ConflictAlert.status == status)
         elif not include_resolved:
             query = query.filter(
-                ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                )
             )
 
         return query.order_by(ConflictAlert.created_at.desc()).all()
@@ -210,7 +222,9 @@ class ConflictAlertService:
             end_date: Filter FMIT weeks <= end_date
         """
         query = self.db.query(ConflictAlert).filter(
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED])
+            ConflictAlert.status.in_(
+                [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+            )
         )
 
         if faculty_id:
@@ -335,17 +349,30 @@ class ConflictAlertService:
 
     def count_unresolved_by_faculty(self, faculty_id: UUID) -> int:
         """Count unresolved alerts for a faculty member."""
-        return self.db.query(ConflictAlert).filter(
-            ConflictAlert.faculty_id == faculty_id,
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]),
-        ).count()
+        return (
+            self.db.query(ConflictAlert)
+            .filter(
+                ConflictAlert.faculty_id == faculty_id,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
+            .count()
+        )
 
     def get_critical_alerts(self) -> list[ConflictAlert]:
         """Get all unresolved critical alerts."""
-        return self.db.query(ConflictAlert).filter(
-            ConflictAlert.severity == ConflictSeverity.CRITICAL,
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]),
-        ).order_by(ConflictAlert.fmit_week).all()
+        return (
+            self.db.query(ConflictAlert)
+            .filter(
+                ConflictAlert.severity == ConflictSeverity.CRITICAL,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
+            .order_by(ConflictAlert.fmit_week)
+            .all()
+        )
 
     def auto_resolve_for_leave_deletion(self, leave_id: UUID) -> int:
         """
@@ -357,10 +384,16 @@ class ConflictAlertService:
         Returns:
             Number of alerts auto-resolved
         """
-        alerts = self.db.query(ConflictAlert).filter(
-            ConflictAlert.leave_id == leave_id,
-            ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]),
-        ).all()
+        alerts = (
+            self.db.query(ConflictAlert)
+            .filter(
+                ConflictAlert.leave_id == leave_id,
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
+            )
+            .all()
+        )
 
         count = 0
         for alert in alerts:
@@ -402,7 +435,10 @@ class ConflictAlertService:
             options.extend(self._generate_leave_overlap_options(alert))
         elif alert.conflict_type == ConflictType.BACK_TO_BACK:
             options.extend(self._generate_back_to_back_options(alert))
-        elif alert.conflict_type in [ConflictType.CALL_CASCADE, ConflictType.EXCESSIVE_ALTERNATING]:
+        elif alert.conflict_type in [
+            ConflictType.CALL_CASCADE,
+            ConflictType.EXCESSIVE_ALTERNATING,
+        ]:
             options.extend(self._generate_workload_balance_options(alert))
         elif alert.conflict_type == ConflictType.EXTERNAL_COMMITMENT:
             options.extend(self._generate_external_commitment_options(alert))
@@ -412,7 +448,9 @@ class ConflictAlertService:
             option.impact = self.estimate_resolution_impact(option)
 
         # Sort by feasibility (highest first)
-        options.sort(key=lambda o: o.impact.feasibility_score if o.impact else 0, reverse=True)
+        options.sort(
+            key=lambda o: o.impact.feasibility_score if o.impact else 0, reverse=True
+        )
 
         return options[:max_options]
 
@@ -437,7 +475,10 @@ class ConflictAlertService:
         if not alert:
             return False, "Conflict alert not found"
 
-        if alert.status not in [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]:
+        if alert.status not in [
+            ConflictAlertStatus.NEW,
+            ConflictAlertStatus.ACKNOWLEDGED,
+        ]:
             return False, f"Alert already has status: {alert.status}"
 
         # Generate options to find the requested one
@@ -470,7 +511,9 @@ class ConflictAlertService:
                 alert.status = ConflictAlertStatus.RESOLVED
                 alert.resolved_at = datetime.utcnow()
                 alert.resolved_by_id = user_id
-                alert.resolution_notes = f"Auto-resolved via {option.strategy.value}: {msg}"
+                alert.resolution_notes = (
+                    f"Auto-resolved via {option.strategy.value}: {msg}"
+                )
                 self.db.commit()
                 return True, msg
             else:
@@ -500,7 +543,10 @@ class ConflictAlertService:
             return False, "Conflict alert not found"
 
         # Check alert is still unresolved
-        if alert.status not in [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]:
+        if alert.status not in [
+            ConflictAlertStatus.NEW,
+            ConflictAlertStatus.ACKNOWLEDGED,
+        ]:
             return False, f"Alert already {alert.status}"
 
         # Validate based on strategy
@@ -578,45 +624,55 @@ class ConflictAlertService:
         options = []
 
         # Option 1: Swap with another faculty for this week
-        available_faculty = self._find_available_faculty_for_week(alert.fmit_week, alert.faculty_id)
+        available_faculty = self._find_available_faculty_for_week(
+            alert.fmit_week, alert.faculty_id
+        )
         for faculty in available_faculty[:3]:  # Top 3 candidates
-            options.append(ResolutionOption(
-                id=f"swap_{alert.id}_{faculty.id}",
-                strategy=ResolutionStrategy.SWAP_ASSIGNMENT,
-                description=f"Swap FMIT week with {faculty.name}",
-                details={
-                    "source_faculty_id": str(alert.faculty_id),
-                    "target_faculty_id": str(faculty.id),
-                    "source_week": alert.fmit_week.isoformat(),
-                    "swap_type": "one_to_one",
-                },
-            ))
+            options.append(
+                ResolutionOption(
+                    id=f"swap_{alert.id}_{faculty.id}",
+                    strategy=ResolutionStrategy.SWAP_ASSIGNMENT,
+                    description=f"Swap FMIT week with {faculty.name}",
+                    details={
+                        "source_faculty_id": str(alert.faculty_id),
+                        "target_faculty_id": str(faculty.id),
+                        "source_week": alert.fmit_week.isoformat(),
+                        "swap_type": "one_to_one",
+                    },
+                )
+            )
 
         # Option 2: Find backup coverage from pool
         backup_available = self._check_backup_pool_availability(alert.fmit_week)
         if backup_available:
-            options.append(ResolutionOption(
-                id=f"backup_{alert.id}",
-                strategy=ResolutionStrategy.REASSIGN_TO_BACKUP,
-                description="Reassign to backup personnel pool",
+            options.append(
+                ResolutionOption(
+                    id=f"backup_{alert.id}",
+                    strategy=ResolutionStrategy.REASSIGN_TO_BACKUP,
+                    description="Reassign to backup personnel pool",
+                    details={
+                        "faculty_id": str(alert.faculty_id),
+                        "fmit_week": alert.fmit_week.isoformat(),
+                        "use_backup_pool": True,
+                    },
+                )
+            )
+
+        # Option 3: Request coverage from volunteer pool
+        options.append(
+            ResolutionOption(
+                id=f"coverage_{alert.id}",
+                strategy=ResolutionStrategy.REQUEST_COVERAGE_POOL,
+                description="Request coverage from faculty volunteer pool",
                 details={
                     "faculty_id": str(alert.faculty_id),
                     "fmit_week": alert.fmit_week.isoformat(),
-                    "use_backup_pool": True,
+                    "urgency": "high"
+                    if alert.severity == ConflictSeverity.CRITICAL
+                    else "normal",
                 },
-            ))
-
-        # Option 3: Request coverage from volunteer pool
-        options.append(ResolutionOption(
-            id=f"coverage_{alert.id}",
-            strategy=ResolutionStrategy.REQUEST_COVERAGE_POOL,
-            description="Request coverage from faculty volunteer pool",
-            details={
-                "faculty_id": str(alert.faculty_id),
-                "fmit_week": alert.fmit_week.isoformat(),
-                "urgency": "high" if alert.severity == ConflictSeverity.CRITICAL else "normal",
-            },
-        ))
+            )
+        )
 
         return options
 
@@ -628,28 +684,32 @@ class ConflictAlertService:
         options = []
 
         # Option 1: Swap one of the weeks with another faculty
-        options.append(ResolutionOption(
-            id=f"swap_b2b_{alert.id}",
-            strategy=ResolutionStrategy.SWAP_ASSIGNMENT,
-            description="Swap one FMIT week to create spacing",
-            details={
-                "faculty_id": str(alert.faculty_id),
-                "fmit_week": alert.fmit_week.isoformat(),
-                "reason": "resolve_back_to_back",
-            },
-        ))
+        options.append(
+            ResolutionOption(
+                id=f"swap_b2b_{alert.id}",
+                strategy=ResolutionStrategy.SWAP_ASSIGNMENT,
+                description="Swap one FMIT week to create spacing",
+                details={
+                    "faculty_id": str(alert.faculty_id),
+                    "fmit_week": alert.fmit_week.isoformat(),
+                    "reason": "resolve_back_to_back",
+                },
+            )
+        )
 
         # Option 2: Adjust time boundaries if possible
-        options.append(ResolutionOption(
-            id=f"adjust_{alert.id}",
-            strategy=ResolutionStrategy.ADJUST_TIME_BOUNDARIES,
-            description="Adjust FMIT week boundaries to reduce overlap",
-            details={
-                "faculty_id": str(alert.faculty_id),
-                "fmit_week": alert.fmit_week.isoformat(),
-                "adjustment_type": "boundary_shift",
-            },
-        ))
+        options.append(
+            ResolutionOption(
+                id=f"adjust_{alert.id}",
+                strategy=ResolutionStrategy.ADJUST_TIME_BOUNDARIES,
+                description="Adjust FMIT week boundaries to reduce overlap",
+                details={
+                    "faculty_id": str(alert.faculty_id),
+                    "fmit_week": alert.fmit_week.isoformat(),
+                    "adjustment_type": "boundary_shift",
+                },
+            )
+        )
 
         return options
 
@@ -661,16 +721,18 @@ class ConflictAlertService:
         options = []
 
         # Option: Redistribute assignments
-        options.append(ResolutionOption(
-            id=f"redistribute_{alert.id}",
-            strategy=ResolutionStrategy.SWAP_ASSIGNMENT,
-            description="Redistribute FMIT assignments for better balance",
-            details={
-                "faculty_id": str(alert.faculty_id),
-                "fmit_week": alert.fmit_week.isoformat(),
-                "reason": "workload_balance",
-            },
-        ))
+        options.append(
+            ResolutionOption(
+                id=f"redistribute_{alert.id}",
+                strategy=ResolutionStrategy.SWAP_ASSIGNMENT,
+                description="Redistribute FMIT assignments for better balance",
+                details={
+                    "faculty_id": str(alert.faculty_id),
+                    "fmit_week": alert.fmit_week.isoformat(),
+                    "reason": "workload_balance",
+                },
+            )
+        )
 
         return options
 
@@ -682,16 +744,18 @@ class ConflictAlertService:
         options = []
 
         # Primary option: Find coverage
-        options.append(ResolutionOption(
-            id=f"coverage_ext_{alert.id}",
-            strategy=ResolutionStrategy.REQUEST_COVERAGE_POOL,
-            description="Request coverage due to external commitment",
-            details={
-                "faculty_id": str(alert.faculty_id),
-                "fmit_week": alert.fmit_week.isoformat(),
-                "reason": "external_commitment",
-            },
-        ))
+        options.append(
+            ResolutionOption(
+                id=f"coverage_ext_{alert.id}",
+                strategy=ResolutionStrategy.REQUEST_COVERAGE_POOL,
+                description="Request coverage due to external commitment",
+                details={
+                    "faculty_id": str(alert.faculty_id),
+                    "fmit_week": alert.fmit_week.isoformat(),
+                    "reason": "external_commitment",
+                },
+            )
+        )
 
         return options
 
@@ -708,7 +772,9 @@ class ConflictAlertService:
             return True, "Swap request valid - will search for available faculty"
 
         # Check target faculty exists
-        target = self.db.query(Person).filter(Person.id == UUID(target_faculty_id)).first()
+        target = (
+            self.db.query(Person).filter(Person.id == UUID(target_faculty_id)).first()
+        )
         if not target:
             return False, "Target faculty not found"
 
@@ -762,7 +828,9 @@ class ConflictAlertService:
 
         if not target_faculty_id:
             # Auto-find best candidate
-            candidates = self._find_available_faculty_for_week(alert.fmit_week, source_faculty_id)
+            candidates = self._find_available_faculty_for_week(
+                alert.fmit_week, source_faculty_id
+            )
             if not candidates:
                 return False, "No available faculty found for swap"
             target_faculty_id = str(candidates[0].id)
@@ -892,28 +960,36 @@ class ConflictAlertService:
         week_end = fmit_week + timedelta(days=6)
 
         # OPTIMIZATION: Get all faculty members
-        all_faculty = self.db.query(Person).filter(
-            Person.type == "faculty",
-            Person.id != exclude_faculty_id,
-        ).all()
+        all_faculty = (
+            self.db.query(Person)
+            .filter(
+                Person.type == "faculty",
+                Person.id != exclude_faculty_id,
+            )
+            .all()
+        )
 
         # OPTIMIZATION: Batch query for conflicts and assignments to avoid N+1
         faculty_ids = [f.id for f in all_faculty]
 
         # Get all conflict alerts for these faculty for this week
         conflicted_faculty_ids = set(
-            row[0] for row in self.db.query(ConflictAlert.faculty_id)
+            row[0]
+            for row in self.db.query(ConflictAlert.faculty_id)
             .filter(
                 ConflictAlert.faculty_id.in_(faculty_ids),
                 ConflictAlert.fmit_week == fmit_week,
-                ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]),
+                ConflictAlert.status.in_(
+                    [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                ),
             )
             .distinct()
         )
 
         # Get all faculty with assignments in this week
         assigned_faculty_ids = set(
-            row[0] for row in self.db.query(Assignment.person_id)
+            row[0]
+            for row in self.db.query(Assignment.person_id)
             .join(Block)
             .filter(
                 Assignment.person_id.in_(faculty_ids),
@@ -925,7 +1001,8 @@ class ConflictAlertService:
 
         # Filter to available faculty
         available = [
-            faculty for faculty in all_faculty
+            faculty
+            for faculty in all_faculty
             if faculty.id not in conflicted_faculty_ids
             and faculty.id not in assigned_faculty_ids
         ]

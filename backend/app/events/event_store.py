@@ -12,22 +12,20 @@ Provides persistent storage for events with:
 The event store is the single source of truth for all state changes.
 """
 
-import json
 import logging
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import (
     Column,
     DateTime,
+    Index,
     Integer,
     String,
     Text,
-    Index,
-    desc,
     and_,
-    or_,
+    desc,
 )
 from sqlalchemy.orm import Session
 
@@ -153,7 +151,7 @@ class EventStore:
     async def append_event(
         self,
         event: BaseEvent,
-        expected_version: Optional[int] = None,
+        expected_version: int | None = None,
     ) -> int:
         """
         Append an event to the store.
@@ -170,8 +168,7 @@ class EventStore:
         """
         # Get current version
         current_version = self._get_aggregate_version(
-            event.aggregate_id,
-            event.aggregate_type
+            event.aggregate_id, event.aggregate_type
         )
 
         # Check optimistic concurrency
@@ -215,7 +212,7 @@ class EventStore:
     async def append_events(
         self,
         events: list[BaseEvent],
-        expected_version: Optional[int] = None,
+        expected_version: int | None = None,
     ) -> list[int]:
         """
         Append multiple events atomically.
@@ -247,22 +244,21 @@ class EventStore:
             seq = await self.append_event(event, expected_version=current_expected)
             sequence_numbers.append(seq)
             current_expected = self._get_aggregate_version(
-                event.aggregate_id,
-                event.aggregate_type
+                event.aggregate_id, event.aggregate_type
             )
 
         return sequence_numbers
 
     async def get_events(
         self,
-        aggregate_id: Optional[str] = None,
-        aggregate_type: Optional[str] = None,
-        event_type: Optional[str] = None,
-        from_version: Optional[int] = None,
-        to_version: Optional[int] = None,
-        from_timestamp: Optional[datetime] = None,
-        to_timestamp: Optional[datetime] = None,
-        limit: Optional[int] = None,
+        aggregate_id: str | None = None,
+        aggregate_type: str | None = None,
+        event_type: str | None = None,
+        from_version: int | None = None,
+        to_version: int | None = None,
+        from_timestamp: datetime | None = None,
+        to_timestamp: datetime | None = None,
+        limit: int | None = None,
     ) -> list[BaseEvent]:
         """
         Retrieve events from the store.
@@ -321,7 +317,7 @@ class EventStore:
     async def get_aggregate_events(
         self,
         aggregate_id: str,
-        from_version: Optional[int] = None,
+        from_version: int | None = None,
     ) -> list[BaseEvent]:
         """
         Get all events for a specific aggregate.
@@ -341,8 +337,8 @@ class EventStore:
     async def replay_events(
         self,
         aggregate_id: str,
-        up_to_timestamp: Optional[datetime] = None,
-        up_to_version: Optional[int] = None,
+        up_to_timestamp: datetime | None = None,
+        up_to_version: int | None = None,
     ) -> list[BaseEvent]:
         """
         Replay events to reconstruct state at a point in time.
@@ -366,7 +362,7 @@ class EventStore:
         aggregate_id: str,
         aggregate_type: str,
         snapshot_data: dict[str, Any],
-        created_by: Optional[str] = None,
+        created_by: str | None = None,
     ) -> str:
         """
         Create a snapshot of aggregate state.
@@ -406,7 +402,7 @@ class EventStore:
     async def get_latest_snapshot(
         self,
         aggregate_id: str,
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Get the latest snapshot for an aggregate.
 
@@ -432,7 +428,7 @@ class EventStore:
 
         return None
 
-    async def get_event_by_id(self, event_id: str) -> Optional[BaseEvent]:
+    async def get_event_by_id(self, event_id: str) -> BaseEvent | None:
         """
         Get a specific event by ID.
 
@@ -443,9 +439,7 @@ class EventStore:
             Event or None if not found
         """
         stored = (
-            self.db.query(StoredEvent)
-            .filter(StoredEvent.event_id == event_id)
-            .first()
+            self.db.query(StoredEvent).filter(StoredEvent.event_id == event_id).first()
         )
 
         if stored:
@@ -547,6 +541,7 @@ class EventStore:
 
 class ConcurrencyError(Exception):
     """Raised when optimistic concurrency check fails."""
+
     pass
 
 
@@ -555,7 +550,7 @@ class ConcurrencyError(Exception):
 # =============================================================================
 
 
-_event_store_instance: Optional[EventStore] = None
+_event_store_instance: EventStore | None = None
 
 
 def get_event_store(db: Session) -> EventStore:
@@ -601,10 +596,7 @@ async def get_event_statistics(db: Session) -> dict[str, Any]:
 
     # Recent events
     recent_events = (
-        db.query(StoredEvent)
-        .order_by(desc(StoredEvent.timestamp))
-        .limit(10)
-        .all()
+        db.query(StoredEvent).order_by(desc(StoredEvent.timestamp)).limit(10).all()
     )
 
     return {

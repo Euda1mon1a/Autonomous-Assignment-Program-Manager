@@ -1,4 +1,5 @@
 """Tests for notification template validators."""
+
 import pytest
 
 from app.notifications.templates.validators import (
@@ -80,7 +81,9 @@ class TestTemplateValidator:
         template = "Hello {{ name }}, your order {{ order_id }} is ready."
         required_variables = ["name", "order_id"]
 
-        assert validator.validate_required_variables(template, required_variables) is True
+        assert (
+            validator.validate_required_variables(template, required_variables) is True
+        )
 
     def test_validate_required_variables_missing(self):
         """Test validation when required variables are missing."""
@@ -159,9 +162,10 @@ class TestTemplateValidator:
         text = "Hello {{ user_name }}, welcome!"
         required_vars = ["user_name"]
 
-        assert validator.validate_complete_template(
-            subject, html, text, required_vars
-        ) is True
+        assert (
+            validator.validate_complete_template(subject, html, text, required_vars)
+            is True
+        )
 
     def test_validate_complete_template_invalid_subject(self):
         """Test complete validation fails with invalid subject."""
@@ -184,9 +188,7 @@ class TestTemplateValidator:
         required_vars = ["user_name", "order_id"]  # Not present in templates
 
         with pytest.raises(ValidationError) as exc_info:
-            validator.validate_complete_template(
-                subject, html, text, required_vars
-            )
+            validator.validate_complete_template(subject, html, text, required_vars)
 
         assert "missing required variables" in str(exc_info.value).lower()
 
@@ -249,9 +251,7 @@ class TestTemplateValidator:
     def test_validation_error_attributes(self):
         """Test ValidationError includes all expected attributes."""
         error = ValidationError(
-            message="Test error",
-            field="test_field",
-            details={"key": "value"}
+            message="Test error", field="test_field", details={"key": "value"}
         )
 
         assert error.message == "Test error"

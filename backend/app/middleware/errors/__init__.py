@@ -74,10 +74,10 @@ from app.middleware.errors.handler import (
     set_config,
 )
 from app.middleware.errors.mappings import (
+    EXCEPTION_MAPPINGS,
     ExceptionMapping,
     get_exception_mapping,
     get_status_code_title,
-    EXCEPTION_MAPPINGS,
 )
 from app.middleware.errors.reporters import (
     CompositeReporter,

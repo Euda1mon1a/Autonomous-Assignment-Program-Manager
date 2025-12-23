@@ -39,8 +39,9 @@ logger = logging.getLogger(__name__)
 
 # Try to import ndlib for diffusion modeling
 try:
-    import ndlib.models.ModelConfig as mc
     import ndlib.models.epidemics as ep
+    import ndlib.models.ModelConfig as mc
+
     HAS_NDLIB = True
 except ImportError:
     HAS_NDLIB = False
@@ -54,25 +55,28 @@ except ImportError:
 
 class BurnoutState(str, Enum):
     """Burnout state for a provider."""
+
     SUSCEPTIBLE = "susceptible"  # Low burnout, can be infected
-    INFECTED = "infected"        # High burnout, can infect others
-    RECOVERED = "recovered"      # Was infected but recovered (if using SIR)
+    INFECTED = "infected"  # High burnout, can infect others
+    RECOVERED = "recovered"  # Was infected but recovered (if using SIR)
 
 
 class InterventionType(str, Enum):
     """Type of network intervention."""
-    EDGE_REMOVAL = "edge_removal"           # Reduce collaboration frequency
-    BUFFER_INSERTION = "buffer_insertion"   # Add low-burnout intermediary
+
+    EDGE_REMOVAL = "edge_removal"  # Reduce collaboration frequency
+    BUFFER_INSERTION = "buffer_insertion"  # Add low-burnout intermediary
     WORKLOAD_REDUCTION = "workload_reduction"  # Reduce superspreader load
-    QUARANTINE = "quarantine"               # Temporarily isolate from network
-    PEER_SUPPORT = "peer_support"           # Add supportive connections
+    QUARANTINE = "quarantine"  # Temporarily isolate from network
+    PEER_SUPPORT = "peer_support"  # Add supportive connections
 
 
 class ContagionRisk(str, Enum):
     """Overall contagion risk level."""
-    LOW = "low"           # <10% of network infected
+
+    LOW = "low"  # <10% of network infected
     MODERATE = "moderate"  # 10-25% infected
-    HIGH = "high"         # 25-50% infected
+    HIGH = "high"  # 25-50% infected
     CRITICAL = "critical"  # >50% infected, cascade likely
 
 
@@ -84,6 +88,7 @@ class ContagionRisk(str, Enum):
 @dataclass
 class BurnoutSnapshot:
     """Snapshot of network burnout state at a point in time."""
+
     iteration: int
     timestamp: datetime
     susceptible_count: int
@@ -101,12 +106,13 @@ class BurnoutSnapshot:
 @dataclass
 class SuperspreaderProfile:
     """Profile of a potential superspreader."""
+
     provider_id: str
     provider_name: str
 
     # Burnout metrics
     burnout_score: float  # 0.0-1.0
-    burnout_trend: str    # "increasing", "stable", "decreasing"
+    burnout_trend: str  # "increasing", "stable", "decreasing"
 
     # Network metrics
     degree_centrality: float
@@ -126,6 +132,7 @@ class SuperspreaderProfile:
 @dataclass
 class NetworkIntervention:
     """Recommended network intervention to reduce contagion."""
+
     id: UUID
     intervention_type: InterventionType
     priority: int  # 1 = highest
@@ -149,6 +156,7 @@ class NetworkIntervention:
 @dataclass
 class ContagionReport:
     """Comprehensive burnout contagion analysis report."""
+
     generated_at: datetime
     network_size: int
 
@@ -216,7 +224,7 @@ class BurnoutContagionModel:
 
         # Model parameters
         self.infection_rate = 0.05  # Beta: probability of infection per contact
-        self.recovery_rate = 0.01   # Gamma: probability of recovery per iteration
+        self.recovery_rate = 0.01  # Gamma: probability of recovery per iteration
 
         # Simulation state
         self.snapshots: list[BurnoutSnapshot] = []
@@ -255,8 +263,8 @@ class BurnoutContagionModel:
 
         # Configure model
         self.config = mc.Configuration()
-        self.config.add_model_parameter('beta', infection_rate)
-        self.config.add_model_parameter('lambda', recovery_rate)
+        self.config.add_model_parameter("beta", infection_rate)
+        self.config.add_model_parameter("lambda", recovery_rate)
         self.model.set_initial_status(self.config)
 
         logger.info(
@@ -287,8 +295,7 @@ class BurnoutContagionModel:
 
         # Count infected nodes
         infected_count = sum(
-            1 for score in burnout_scores.values()
-            if score >= burnout_threshold
+            1 for score in burnout_scores.values() if score >= burnout_threshold
         )
 
         # Set status for all nodes explicitly
@@ -305,7 +312,9 @@ class BurnoutContagionModel:
         # If no nodes are infected, seed at least one to enable simulation
         if infected_count == 0 and len(provider_ids) > 0:
             # Find node with highest burnout (even if below threshold)
-            max_burnout_id = max(provider_ids, key=lambda pid: burnout_scores.get(pid, 0.0))
+            max_burnout_id = max(
+                provider_ids, key=lambda pid: burnout_scores.get(pid, 0.0)
+            )
             # Override to infected
             self.config.add_node_configuration("status", max_burnout_id, 1)
             logger.info(
@@ -339,7 +348,9 @@ class BurnoutContagionModel:
         self.snapshots.clear()
         results = []
 
-        logger.info(f"Starting burnout contagion simulation for {iterations} iterations")
+        logger.info(
+            f"Starting burnout contagion simulation for {iterations} iterations"
+        )
 
         for i in range(iterations):
             # Execute iteration
@@ -347,8 +358,8 @@ class BurnoutContagionModel:
             results.append(iteration_result)
 
             # Extract state
-            node_status = iteration_result['status']
-            node_count = iteration_result['node_count']
+            node_status = iteration_result["status"]
+            node_count = iteration_result["node_count"]
 
             susceptible = node_count.get(0, 0)
             infected = node_count.get(1, 0)
@@ -360,7 +371,9 @@ class BurnoutContagionModel:
                 burnout_values = list(self.burnout_scores.values())
                 mean_burnout = statistics.mean(burnout_values)
                 max_burnout = max(burnout_values)
-                std_burnout = statistics.stdev(burnout_values) if len(burnout_values) > 1 else 0.0
+                std_burnout = (
+                    statistics.stdev(burnout_values) if len(burnout_values) > 1 else 0.0
+                )
             else:
                 mean_burnout = max_burnout = std_burnout = 0.0
 
@@ -378,7 +391,7 @@ class BurnoutContagionModel:
 
             # Track newly infected/recovered
             if i > 0:
-                prev_status = results[i-1]['status']
+                prev_status = results[i - 1]["status"]
                 for node_id, current in node_status.items():
                     previous = prev_status.get(node_id, 0)
                     if previous == 0 and current == 1:
@@ -446,9 +459,9 @@ class BurnoutContagionModel:
 
             # Calculate composite centrality
             composite_cent = (
-                degree_cent * weights["degree"] +
-                between_cent * weights["betweenness"] +
-                eigen_cent * weights["eigenvector"]
+                degree_cent * weights["degree"]
+                + between_cent * weights["betweenness"]
+                + eigen_cent * weights["eigenvector"]
             )
 
             # Superspreader criteria:
@@ -626,9 +639,7 @@ class BurnoutContagionModel:
                 interventions.append(intervention)
 
         # Sort by priority, then by estimated impact
-        interventions.sort(
-            key=lambda x: (x.priority, -x.estimated_infection_reduction)
-        )
+        interventions.sort(key=lambda x: (x.priority, -x.estimated_infection_reduction))
 
         return interventions[:max_interventions]
 

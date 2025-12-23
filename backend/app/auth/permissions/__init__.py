@@ -159,7 +159,7 @@ async def warm_permission_cache() -> int:
 async def invalidate_permission_cache(
     user_id: str | None = None,
     role: UserRole | str | None = None,
-    invalidate_all: bool = False
+    invalidate_all: bool = False,
 ) -> bool:
     """
     Invalidate permission cache.

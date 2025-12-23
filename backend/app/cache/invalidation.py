@@ -32,11 +32,12 @@ import asyncio
 import logging
 import time
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from threading import RLock
-from typing import Any, Callable
+from typing import Any
 
 import redis.asyncio as redis
 
@@ -196,7 +197,7 @@ class CacheInvalidationService:
         namespace: str = "cache",
         key_prefix: str = "cache",
         enable_event_publishing: bool = True,
-        enable_metrics: bool = True
+        enable_metrics: bool = True,
     ):
         """
         Initialize cache invalidation service.
@@ -253,10 +254,7 @@ class CacheInvalidationService:
     # Tag-based invalidation
 
     async def invalidate_by_tag(
-        self,
-        tag: str,
-        cascade: bool = True,
-        publish_event: bool = True
+        self, tag: str, cascade: bool = True, publish_event: bool = True
     ) -> int:
         """
         Invalidate all cache entries associated with a tag.
@@ -299,8 +297,7 @@ class CacheInvalidationService:
             if cascade:
                 for key in key_strings:
                     cascaded_count += await self._invalidate_dependencies(
-                        key,
-                        publish_event=False
+                        key, publish_event=False
                     )
 
             total_count = count + cascaded_count
@@ -309,9 +306,7 @@ class CacheInvalidationService:
             if self.enable_metrics:
                 duration_ms = (time.time() - start_time) * 1000
                 self._record_invalidation(
-                    InvalidationEventType.TAG_INVALIDATION,
-                    total_count,
-                    duration_ms
+                    InvalidationEventType.TAG_INVALIDATION, total_count, duration_ms
                 )
 
             # Publish event
@@ -321,7 +316,7 @@ class CacheInvalidationService:
                     keys_invalidated=total_count,
                     tag=tag,
                     duration_ms=(time.time() - start_time) * 1000,
-                    metadata={"cascaded": cascade, "cascaded_count": cascaded_count}
+                    metadata={"cascaded": cascade, "cascaded_count": cascaded_count},
                 )
                 await self._publish_event(event)
 
@@ -335,10 +330,7 @@ class CacheInvalidationService:
             return 0
 
     async def invalidate_by_tags(
-        self,
-        tags: list[str],
-        cascade: bool = True,
-        publish_event: bool = True
+        self, tags: list[str], cascade: bool = True, publish_event: bool = True
     ) -> int:
         """
         Invalidate cache entries for multiple tags.
@@ -359,9 +351,7 @@ class CacheInvalidationService:
 
         for tag in tags:
             count = await self.invalidate_by_tag(
-                tag,
-                cascade=cascade,
-                publish_event=False
+                tag, cascade=cascade, publish_event=False
             )
             total_count += count
 
@@ -371,7 +361,7 @@ class CacheInvalidationService:
                 event_type=InvalidationEventType.BATCH_INVALIDATION,
                 keys_invalidated=total_count,
                 duration_ms=0.0,
-                metadata={"tags": tags, "cascaded": cascade}
+                metadata={"tags": tags, "cascaded": cascade},
             )
             await self._publish_event(event)
 
@@ -384,7 +374,7 @@ class CacheInvalidationService:
         pattern: str,
         batch_size: int = 100,
         cascade: bool = True,
-        publish_event: bool = True
+        publish_event: bool = True,
     ) -> int:
         """
         Invalidate all cache entries matching a pattern.
@@ -412,9 +402,7 @@ class CacheInvalidationService:
 
             while True:
                 cursor, keys = await redis_client.scan(
-                    cursor,
-                    match=pattern,
-                    count=batch_size
+                    cursor, match=pattern, count=batch_size
                 )
 
                 if keys:
@@ -424,8 +412,7 @@ class CacheInvalidationService:
                     # Track keys for dependency invalidation
                     if cascade:
                         invalidated_keys.extend(
-                            k.decode() if isinstance(k, bytes) else k
-                            for k in keys
+                            k.decode() if isinstance(k, bytes) else k for k in keys
                         )
 
                 if cursor == 0:
@@ -438,8 +425,7 @@ class CacheInvalidationService:
             if cascade:
                 for key in invalidated_keys:
                     cascaded_count += await self._invalidate_dependencies(
-                        key,
-                        publish_event=False
+                        key, publish_event=False
                     )
 
             total_count = count + cascaded_count
@@ -448,9 +434,7 @@ class CacheInvalidationService:
             if self.enable_metrics:
                 duration_ms = (time.time() - start_time) * 1000
                 self._record_invalidation(
-                    InvalidationEventType.PATTERN_INVALIDATION,
-                    total_count,
-                    duration_ms
+                    InvalidationEventType.PATTERN_INVALIDATION, total_count, duration_ms
                 )
 
             # Publish event
@@ -460,7 +444,7 @@ class CacheInvalidationService:
                     keys_invalidated=total_count,
                     pattern=pattern,
                     duration_ms=(time.time() - start_time) * 1000,
-                    metadata={"cascaded": cascade, "cascaded_count": cascaded_count}
+                    metadata={"cascaded": cascade, "cascaded_count": cascaded_count},
                 )
                 await self._publish_event(event)
 
@@ -470,10 +454,7 @@ class CacheInvalidationService:
             logger.warning(f"Redis connection error during pattern invalidation: {e}")
             return 0
         except Exception as e:
-            logger.error(
-                f"Error invalidating pattern '{pattern}': {e}",
-                exc_info=True
-            )
+            logger.error(f"Error invalidating pattern '{pattern}': {e}", exc_info=True)
             return 0
 
     # Dependency-aware invalidation
@@ -512,11 +493,7 @@ class CacheInvalidationService:
 
         logger.debug(f"Unregistered dependency: {key} -> {dependent_key}")
 
-    def register_dependencies(
-        self,
-        key: str,
-        dependent_keys: list[str]
-    ) -> None:
+    def register_dependencies(self, key: str, dependent_keys: list[str]) -> None:
         """
         Register multiple dependencies for a cache entry.
 
@@ -564,10 +541,7 @@ class CacheInvalidationService:
         logger.debug(f"Cleared dependencies for key: {key}")
 
     async def invalidate_with_dependencies(
-        self,
-        key: str,
-        max_depth: int = 10,
-        publish_event: bool = True
+        self, key: str, max_depth: int = 10, publish_event: bool = True
     ) -> int:
         """
         Invalidate a cache entry and all its dependencies.
@@ -630,9 +604,7 @@ class CacheInvalidationService:
             if self.enable_metrics:
                 duration_ms = (time.time() - start_time) * 1000
                 self._record_invalidation(
-                    InvalidationEventType.DEPENDENCY_INVALIDATION,
-                    count,
-                    duration_ms
+                    InvalidationEventType.DEPENDENCY_INVALIDATION, count, duration_ms
                 )
 
             # Publish event
@@ -642,26 +614,25 @@ class CacheInvalidationService:
                     keys_invalidated=count,
                     dependencies=list(invalidated),
                     duration_ms=(time.time() - start_time) * 1000,
-                    metadata={"max_depth": max_depth, "depth_reached": depth}
+                    metadata={"max_depth": max_depth, "depth_reached": depth},
                 )
                 await self._publish_event(event)
 
             return count
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis connection error during dependency invalidation: {e}")
+            logger.warning(
+                f"Redis connection error during dependency invalidation: {e}"
+            )
             return 0
         except Exception as e:
             logger.error(
-                f"Error invalidating key with dependencies '{key}': {e}",
-                exc_info=True
+                f"Error invalidating key with dependencies '{key}': {e}", exc_info=True
             )
             return 0
 
     async def _invalidate_dependencies(
-        self,
-        key: str,
-        publish_event: bool = False
+        self, key: str, publish_event: bool = False
     ) -> int:
         """
         Internal method to invalidate dependencies for a key.
@@ -683,9 +654,7 @@ class CacheInvalidationService:
             count = await redis_client.delete(*dependencies)
 
             if count > 0:
-                logger.debug(
-                    f"Invalidated {count} dependencies for key '{key}'"
-                )
+                logger.debug(f"Invalidated {count} dependencies for key '{key}'")
 
             return count
 
@@ -703,7 +672,7 @@ class CacheInvalidationService:
         keys: list[str],
         cascade: bool = True,
         batch_size: int = 100,
-        publish_event: bool = True
+        publish_event: bool = True,
     ) -> int:
         """
         Efficiently invalidate multiple cache entries in batches.
@@ -732,7 +701,7 @@ class CacheInvalidationService:
 
             # Process in batches
             for i in range(0, len(keys), batch_size):
-                batch = keys[i:i + batch_size]
+                batch = keys[i : i + batch_size]
                 deleted = await redis_client.delete(*batch)
                 total_count += deleted
 
@@ -740,8 +709,7 @@ class CacheInvalidationService:
                 if cascade:
                     for key in batch:
                         cascaded = await self._invalidate_dependencies(
-                            key,
-                            publish_event=False
+                            key, publish_event=False
                         )
                         total_count += cascaded
 
@@ -751,9 +719,7 @@ class CacheInvalidationService:
             if self.enable_metrics:
                 duration_ms = (time.time() - start_time) * 1000
                 self._record_invalidation(
-                    InvalidationEventType.BATCH_INVALIDATION,
-                    total_count,
-                    duration_ms
+                    InvalidationEventType.BATCH_INVALIDATION, total_count, duration_ms
                 )
 
             # Publish event
@@ -765,8 +731,8 @@ class CacheInvalidationService:
                     metadata={
                         "keys_requested": len(keys),
                         "batch_size": batch_size,
-                        "cascaded": cascade
-                    }
+                        "cascaded": cascade,
+                    },
                 )
                 await self._publish_event(event)
 
@@ -782,10 +748,7 @@ class CacheInvalidationService:
     # Cascading invalidation
 
     async def cascade_invalidate(
-        self,
-        key: str,
-        related_patterns: list[str],
-        publish_event: bool = True
+        self, key: str, related_patterns: list[str], publish_event: bool = True
     ) -> int:
         """
         Invalidate a key and all related cache entries matching patterns.
@@ -819,9 +782,7 @@ class CacheInvalidationService:
             # Invalidate related patterns
             for pattern in related_patterns:
                 pattern_count = await self.invalidate_by_pattern(
-                    pattern,
-                    cascade=False,
-                    publish_event=False
+                    pattern, cascade=False, publish_event=False
                 )
                 count += pattern_count
 
@@ -834,9 +795,7 @@ class CacheInvalidationService:
             if self.enable_metrics:
                 duration_ms = (time.time() - start_time) * 1000
                 self._record_invalidation(
-                    InvalidationEventType.CASCADING_INVALIDATION,
-                    count,
-                    duration_ms
+                    InvalidationEventType.CASCADING_INVALIDATION, count, duration_ms
                 )
 
             # Publish event
@@ -845,10 +804,7 @@ class CacheInvalidationService:
                     event_type=InvalidationEventType.CASCADING_INVALIDATION,
                     keys_invalidated=count,
                     duration_ms=(time.time() - start_time) * 1000,
-                    metadata={
-                        "primary_key": key,
-                        "related_patterns": related_patterns
-                    }
+                    metadata={"primary_key": key, "related_patterns": related_patterns},
                 )
                 await self._publish_event(event)
 
@@ -863,10 +819,7 @@ class CacheInvalidationService:
 
     # Event publishing
 
-    def subscribe(
-        self,
-        callback: Callable[[InvalidationEvent], None]
-    ) -> None:
+    def subscribe(self, callback: Callable[[InvalidationEvent], None]) -> None:
         """
         Subscribe to invalidation events.
 
@@ -886,10 +839,7 @@ class CacheInvalidationService:
 
         logger.debug(f"Added invalidation event subscriber: {callback.__name__}")
 
-    def unsubscribe(
-        self,
-        callback: Callable[[InvalidationEvent], None]
-    ) -> None:
+    def unsubscribe(self, callback: Callable[[InvalidationEvent], None]) -> None:
         """
         Unsubscribe from invalidation events.
 
@@ -929,7 +879,7 @@ class CacheInvalidationService:
                 logger.error(
                     f"Error in invalidation event subscriber "
                     f"{subscriber.__name__}: {e}",
-                    exc_info=True
+                    exc_info=True,
                 )
 
         logger.debug(
@@ -937,10 +887,7 @@ class CacheInvalidationService:
             f"({event.keys_invalidated} keys)"
         )
 
-    def get_event_history(
-        self,
-        limit: int | None = None
-    ) -> list[InvalidationEvent]:
+    def get_event_history(self, limit: int | None = None) -> list[InvalidationEvent]:
         """
         Get recent invalidation event history.
 
@@ -965,10 +912,7 @@ class CacheInvalidationService:
     # Metrics
 
     def _record_invalidation(
-        self,
-        event_type: InvalidationEventType,
-        count: int,
-        duration_ms: float
+        self, event_type: InvalidationEventType, count: int, duration_ms: float
     ) -> None:
         """
         Record invalidation metrics.
@@ -1022,8 +966,7 @@ _service_lock = RLock()
 
 
 def get_invalidation_service(
-    namespace: str = "cache",
-    **kwargs
+    namespace: str = "cache", **kwargs
 ) -> CacheInvalidationService:
     """
     Get or create the global cache invalidation service instance.
@@ -1044,8 +987,7 @@ def get_invalidation_service(
     with _service_lock:
         if _invalidation_service is None:
             _invalidation_service = CacheInvalidationService(
-                namespace=namespace,
-                **kwargs
+                namespace=namespace, **kwargs
             )
 
         return _invalidation_service

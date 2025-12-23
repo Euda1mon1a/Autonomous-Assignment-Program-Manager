@@ -1,4 +1,5 @@
 """Person schemas."""
+
 from datetime import datetime
 from enum import Enum
 from uuid import UUID
@@ -8,6 +9,7 @@ from pydantic import BaseModel, EmailStr, field_validator
 
 class FacultyRoleSchema(str, Enum):
     """Faculty role types for API schema validation."""
+
     PD = "pd"
     APD = "apd"
     OIC = "oic"
@@ -18,6 +20,7 @@ class FacultyRoleSchema(str, Enum):
 
 class PersonBase(BaseModel):
     """Base person schema."""
+
     name: str
     type: str  # 'resident' or 'faculty'
     email: EmailStr | None = None
@@ -44,11 +47,13 @@ class PersonBase(BaseModel):
 
 class PersonCreate(PersonBase):
     """Schema for creating a person."""
+
     pass
 
 
 class PersonUpdate(BaseModel):
     """Schema for updating a person."""
+
     name: str | None = None
     email: EmailStr | None = None
     pgy_level: int | None = None
@@ -60,6 +65,7 @@ class PersonUpdate(BaseModel):
 
 class PersonResponse(PersonBase):
     """Schema for person response."""
+
     id: UUID
     created_at: datetime
     updated_at: datetime
@@ -75,5 +81,6 @@ class PersonResponse(PersonBase):
 
 class PersonListResponse(BaseModel):
     """Schema for list of persons."""
+
     items: list[PersonResponse]
     total: int

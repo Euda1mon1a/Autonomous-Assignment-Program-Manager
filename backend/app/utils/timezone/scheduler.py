@@ -1,6 +1,6 @@
 """Timezone-aware scheduling utilities for business hours and date calculations."""
-from datetime import date, datetime, time, timedelta, timezone
-from typing import Optional
+
+from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from app.utils.timezone.converter import TimezoneConverter
@@ -31,9 +31,9 @@ class TimezoneAwareScheduler:
     def is_business_hours(
         cls,
         dt: datetime,
-        tz_name: Optional[str] = None,
-        start_time: Optional[time] = None,
-        end_time: Optional[time] = None,
+        tz_name: str | None = None,
+        start_time: time | None = None,
+        end_time: time | None = None,
         include_weekends: bool = False,
     ) -> bool:
         """
@@ -81,7 +81,7 @@ class TimezoneAwareScheduler:
     def get_next_business_day(
         cls,
         reference_date: date,
-        tz_name: Optional[str] = None,
+        tz_name: str | None = None,
         include_weekends: bool = False,
     ) -> date:
         """
@@ -193,7 +193,7 @@ class TimezoneAwareScheduler:
         return dates
 
     @classmethod
-    def is_clinic_am_block(cls, dt: datetime, tz_name: Optional[str] = None) -> bool:
+    def is_clinic_am_block(cls, dt: datetime, tz_name: str | None = None) -> bool:
         """
         Check if datetime falls in AM clinic block (8 AM - 12 PM).
 
@@ -223,7 +223,7 @@ class TimezoneAwareScheduler:
         return cls.CLINIC_HOURS_AM_START <= current_time < cls.CLINIC_HOURS_AM_END
 
     @classmethod
-    def is_clinic_pm_block(cls, dt: datetime, tz_name: Optional[str] = None) -> bool:
+    def is_clinic_pm_block(cls, dt: datetime, tz_name: str | None = None) -> bool:
         """
         Check if datetime falls in PM clinic block (1 PM - 5 PM).
 
@@ -257,7 +257,7 @@ class TimezoneAwareScheduler:
         cls,
         block_date: date,
         time_of_day: str,
-        tz_name: Optional[str] = None,
+        tz_name: str | None = None,
     ) -> tuple[datetime, datetime]:
         """
         Get start and end datetime for a clinic block.
@@ -295,7 +295,7 @@ class TimezoneAwareScheduler:
     def normalize_to_business_hours(
         cls,
         dt: datetime,
-        tz_name: Optional[str] = None,
+        tz_name: str | None = None,
         direction: str = "next",
     ) -> datetime:
         """
@@ -386,11 +386,11 @@ class TimezoneAwareScheduler:
         cls,
         tz1: str,
         tz2: str,
-        start_time1: Optional[time] = None,
-        end_time1: Optional[time] = None,
-        start_time2: Optional[time] = None,
-        end_time2: Optional[time] = None,
-    ) -> Optional[tuple[time, time]]:
+        start_time1: time | None = None,
+        end_time1: time | None = None,
+        start_time2: time | None = None,
+        end_time2: time | None = None,
+    ) -> tuple[time, time] | None:
         """
         Find overlapping business hours between two timezones.
 
@@ -447,7 +447,7 @@ class TimezoneAwareScheduler:
         cls,
         start: datetime,
         end: datetime,
-        tz_name: Optional[str] = None,
+        tz_name: str | None = None,
         business_hours_only: bool = False,
     ) -> float:
         """
@@ -487,9 +487,7 @@ class TimezoneAwareScheduler:
             while current < end_utc:
                 if cls.is_business_hours(current, tz_name):
                     # Add the fraction of this hour that's in range
-                    hour_end = min(
-                        current + timedelta(hours=1), end_utc
-                    )
+                    hour_end = min(current + timedelta(hours=1), end_utc)
                     hours_in_segment = (hour_end - current).total_seconds() / 3600
                     total_hours += hours_in_segment
 

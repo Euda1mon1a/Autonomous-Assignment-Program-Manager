@@ -1,4 +1,5 @@
 """Tests for leave provider package."""
+
 from datetime import date, timedelta
 from pathlib import Path
 from uuid import uuid4
@@ -150,7 +151,9 @@ class TestDatabaseLeaveProvider:
     def test_sync_clears_cache(self, db):
         """Test sync method clears cache."""
         provider = DatabaseLeaveProvider(db)
-        provider._cache = [LeaveRecord("Test", None, date.today(), date.today(), "vacation")]
+        provider._cache = [
+            LeaveRecord("Test", None, date.today(), date.today(), "vacation")
+        ]
 
         count = provider.sync()
 

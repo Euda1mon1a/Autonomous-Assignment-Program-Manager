@@ -10,9 +10,8 @@ Manages scheduled and recurring tasks:
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
-from celery import Celery
 from celery.schedules import crontab, schedule
 
 from app.core.celery_app import celery_app

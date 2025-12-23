@@ -1,9 +1,7 @@
 """CLI commands for privacy and data anonymization operations."""
 
 import json
-from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 import typer
 
@@ -13,7 +11,9 @@ app = typer.Typer(help="Privacy and data anonymization commands")
 @app.command()
 def detect_pii(
     text: str = typer.Argument(..., help="Text to scan for PII"),
-    enable_names: bool = typer.Option(False, "--names", "-n", help="Enable name detection"),
+    enable_names: bool = typer.Option(
+        False, "--names", "-n", help="Enable name detection"
+    ),
 ):
     """
     Detect PII in provided text.
@@ -53,7 +53,9 @@ def detect_pii(
 @app.command()
 def scan_file(
     file_path: str = typer.Argument(..., help="Path to file to scan"),
-    output: str = typer.Option("table", "--output", "-o", help="Output format: table, json"),
+    output: str = typer.Option(
+        "table", "--output", "-o", help="Output format: table, json"
+    ),
 ):
     """
     Scan a file for PII.
@@ -71,7 +73,7 @@ def scan_file(
     detector = PIIDetector()
 
     # Read file
-    with open(path, 'r') as f:
+    with open(path) as f:
         content = f.read()
 
     # Try to parse as JSON
@@ -81,7 +83,9 @@ def scan_file(
             pii_detected = detector.detect_in_dict(data)
 
             if not pii_detected:
-                typer.echo(typer.style("No PII detected in file!", fg=typer.colors.GREEN))
+                typer.echo(
+                    typer.style("No PII detected in file!", fg=typer.colors.GREEN)
+                )
                 return
 
             typer.echo(f"\nPII detected in {len(pii_detected)} field(s):\n")
@@ -113,8 +117,12 @@ def scan_file(
 @app.command()
 def mask_text(
     text: str = typer.Argument(..., help="Text to mask"),
-    pii_type: str = typer.Option("email", "--type", "-t", help="PII type: email, phone, ssn, name"),
-    strategy: str = typer.Option("partial", "--strategy", "-s", help="Masking strategy"),
+    pii_type: str = typer.Option(
+        "email", "--type", "-t", help="PII type: email, phone, ssn, name"
+    ),
+    strategy: str = typer.Option(
+        "partial", "--strategy", "-s", help="Masking strategy"
+    ),
 ):
     """
     Mask PII in text.
@@ -138,10 +146,16 @@ def mask_text(
 def anonymize_json(
     input_file: str = typer.Argument(..., help="Input JSON file"),
     output_file: str = typer.Argument(..., help="Output JSON file"),
-    fields: str = typer.Option(None, "--fields", "-f", help="Comma-separated fields to anonymize"),
-    method: str = typer.Option("mask", "--method", "-m", help="Method: mask, pseudonymize, generalize"),
+    fields: str = typer.Option(
+        None, "--fields", "-f", help="Comma-separated fields to anonymize"
+    ),
+    method: str = typer.Option(
+        "mask", "--method", "-m", help="Method: mask, pseudonymize, generalize"
+    ),
     k_value: int = typer.Option(5, "--k", help="K value for k-anonymity"),
-    detect_auto: bool = typer.Option(True, "--auto-detect/--no-auto-detect", help="Auto-detect PII"),
+    detect_auto: bool = typer.Option(
+        True, "--auto-detect/--no-auto-detect", help="Auto-detect PII"
+    ),
 ):
     """
     Anonymize data in JSON file.
@@ -156,11 +170,11 @@ def anonymize_json(
         typer.echo(f"Error: Input file not found: {input_file}", err=True)
         raise typer.Exit(1)
 
-    with open(input_path, 'r') as f:
+    with open(input_path) as f:
         data = json.load(f)
 
     # Prepare config
-    field_list = fields.split(',') if fields else None
+    field_list = fields.split(",") if fields else None
 
     try:
         method_enum = AnonymizationMethod(method)
@@ -189,7 +203,7 @@ def anonymize_json(
 
     # Write output
     output_path = Path(output_file)
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(result.anonymized_data, f, indent=2, default=str)
 
     typer.echo(
@@ -206,17 +220,20 @@ def anonymize_json(
 @app.command()
 def test_k_anonymity(
     k_value: int = typer.Option(5, "--k", help="K value"),
-    sample_size: int = typer.Option(100, "--size", "-s", help="Number of sample records"),
+    sample_size: int = typer.Option(
+        100, "--size", "-s", help="Number of sample records"
+    ),
 ):
     """
     Test k-anonymity with sample data.
 
     Generates sample records and applies k-anonymity transformation.
     """
-    from app.privacy import AnonymizationConfig, AnonymizationMethod, DataAnonymizer
-
     # Generate sample data
     import random
+
+    from app.privacy import AnonymizationConfig, AnonymizationMethod, DataAnonymizer
+
     ages = [random.randint(20, 70) for _ in range(sample_size)]
     zipcodes = [f"{random.randint(10000, 99999)}" for _ in range(sample_size)]
 
@@ -248,8 +265,7 @@ def test_k_anonymity(
         raise typer.Exit(1)
 
     typer.echo(
-        f"{typer.style('K-anonymity applied!', fg=typer.colors.GREEN)} "
-        f"(k={k_value})\n"
+        f"{typer.style('K-anonymity applied!', fg=typer.colors.GREEN)} (k={k_value})\n"
     )
     typer.echo(f"Original records: {result.original_count}")
     typer.echo(f"Anonymized records: {result.anonymized_count}")
@@ -300,7 +316,9 @@ def audit_history(
 
 @app.command()
 def benchmark(
-    record_count: int = typer.Option(1000, "--count", "-c", help="Number of records to benchmark"),
+    record_count: int = typer.Option(
+        1000, "--count", "-c", help="Number of records to benchmark"
+    ),
     method: str = typer.Option("mask", "--method", "-m", help="Anonymization method"),
 ):
     """
@@ -308,8 +326,9 @@ def benchmark(
 
     Tests anonymization speed with specified number of records.
     """
-    from app.privacy import AnonymizationConfig, AnonymizationMethod, DataAnonymizer
     import time
+
+    from app.privacy import AnonymizationConfig, AnonymizationMethod, DataAnonymizer
 
     # Generate test data
     records = [

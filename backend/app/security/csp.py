@@ -6,7 +6,6 @@ including Cross-Site Scripting (XSS) and data injection attacks.
 
 Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
 """
-from typing import Dict, List
 
 
 class ContentSecurityPolicy:
@@ -43,7 +42,7 @@ class ContentSecurityPolicy:
     HTTPS = "https:"
 
     @classmethod
-    def get_production_policy(cls) -> Dict[str, List[str]]:
+    def get_production_policy(cls) -> dict[str, list[str]]:
         """
         Get strict CSP policy for production.
 
@@ -74,7 +73,7 @@ class ContentSecurityPolicy:
         }
 
     @classmethod
-    def get_development_policy(cls) -> Dict[str, List[str]]:
+    def get_development_policy(cls) -> dict[str, list[str]]:
         """
         Get permissive CSP policy for development.
 
@@ -89,7 +88,12 @@ class ContentSecurityPolicy:
         """
         return {
             cls.DEFAULT_SRC: [cls.SELF],
-            cls.SCRIPT_SRC: [cls.SELF, cls.UNSAFE_INLINE, cls.UNSAFE_EVAL, "http://localhost:*"],
+            cls.SCRIPT_SRC: [
+                cls.SELF,
+                cls.UNSAFE_INLINE,
+                cls.UNSAFE_EVAL,
+                "http://localhost:*",
+            ],
             cls.STYLE_SRC: [cls.SELF, cls.UNSAFE_INLINE, "http://localhost:*"],
             cls.IMG_SRC: [cls.SELF, cls.DATA, cls.BLOB, "http://localhost:*"],
             cls.FONT_SRC: [cls.SELF, cls.DATA, "http://localhost:*"],
@@ -104,7 +108,7 @@ class ContentSecurityPolicy:
         }
 
     @classmethod
-    def get_api_policy(cls) -> Dict[str, List[str]]:
+    def get_api_policy(cls) -> dict[str, list[str]]:
         """
         Get strict CSP policy specifically for API endpoints.
 
@@ -133,7 +137,7 @@ class ContentSecurityPolicy:
         }
 
     @classmethod
-    def build_header_value(cls, policy: Dict[str, List[str]]) -> str:
+    def build_header_value(cls, policy: dict[str, list[str]]) -> str:
         """
         Build CSP header value from policy dictionary.
 
@@ -204,7 +208,9 @@ class ContentSecurityPolicy:
         return ("Content-Security-Policy-Report-Only", header_value)
 
     @classmethod
-    def add_source(cls, policy: Dict[str, List[str]], directive: str, source: str) -> None:
+    def add_source(
+        cls, policy: dict[str, list[str]], directive: str, source: str
+    ) -> None:
         """
         Add a source to a CSP directive in-place.
 
@@ -219,7 +225,9 @@ class ContentSecurityPolicy:
             policy[directive].append(source)
 
     @classmethod
-    def remove_source(cls, policy: Dict[str, List[str]], directive: str, source: str) -> None:
+    def remove_source(
+        cls, policy: dict[str, list[str]], directive: str, source: str
+    ) -> None:
         """
         Remove a source from a CSP directive in-place.
 

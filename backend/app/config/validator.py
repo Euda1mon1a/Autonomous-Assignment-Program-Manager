@@ -5,7 +5,7 @@ system integrity and prevent invalid configurations.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from pydantic import ValidationError
 
@@ -24,14 +24,14 @@ class ConfigValidator:
     """Validates configuration data against defined schemas and rules."""
 
     # Fields that cannot be changed at runtime (require restart)
-    IMMUTABLE_FIELDS: Set[str] = {
+    IMMUTABLE_FIELDS: set[str] = {
         "DATABASE_URL",
         "CELERY_BROKER_URL",
         "CELERY_RESULT_BACKEND",
     }
 
     # Fields that require special validation
-    CRITICAL_FIELDS: Set[str] = {
+    CRITICAL_FIELDS: set[str] = {
         "SECRET_KEY",
         "WEBHOOK_SECRET",
         "RESILIENCE_MAX_UTILIZATION",
@@ -40,12 +40,12 @@ class ConfigValidator:
 
     def __init__(self):
         """Initialize the configuration validator."""
-        self.validation_errors: List[str] = []
+        self.validation_errors: list[str] = []
 
     def validate(
         self,
-        new_config: Dict[str, Any],
-        current_config: Optional[Settings] = None,
+        new_config: dict[str, Any],
+        current_config: Settings | None = None,
     ) -> bool:
         """
         Validate configuration data.
@@ -95,7 +95,7 @@ class ConfigValidator:
             logger.error(f"Pydantic validation error: {e}")
             raise ConfigValidationError(f"Schema validation failed: {e}")
 
-    def _validate_schema(self, config: Dict[str, Any]) -> None:
+    def _validate_schema(self, config: dict[str, Any]) -> None:
         """
         Validate configuration against Pydantic schema.
 
@@ -114,7 +114,7 @@ class ConfigValidator:
 
     def _validate_immutable_fields(
         self,
-        new_config: Dict[str, Any],
+        new_config: dict[str, Any],
         current_config: Settings,
     ) -> None:
         """
@@ -134,7 +134,7 @@ class ConfigValidator:
                     f"Restart required for this change."
                 )
 
-    def _validate_critical_fields(self, config: Dict[str, Any]) -> None:
+    def _validate_critical_fields(self, config: dict[str, Any]) -> None:
         """
         Validate critical security and operational fields.
 
@@ -155,7 +155,7 @@ class ConfigValidator:
                 "WEBHOOK_SECRET must be at least 32 characters long"
             )
 
-    def _validate_resilience_thresholds(self, config: Dict[str, Any]) -> None:
+    def _validate_resilience_thresholds(self, config: dict[str, Any]) -> None:
         """
         Validate resilience framework thresholds.
 
@@ -198,7 +198,7 @@ class ConfigValidator:
                 f"maximum of 0.85. System may experience performance degradation."
             )
 
-    def _validate_rate_limiting(self, config: Dict[str, Any]) -> None:
+    def _validate_rate_limiting(self, config: dict[str, Any]) -> None:
         """
         Validate rate limiting configuration.
 
@@ -225,7 +225,7 @@ class ConfigValidator:
                 f"Consider lowering to improve security."
             )
 
-    def _validate_file_upload_settings(self, config: Dict[str, Any]) -> None:
+    def _validate_file_upload_settings(self, config: dict[str, Any]) -> None:
         """
         Validate file upload configuration.
 
@@ -236,9 +236,7 @@ class ConfigValidator:
         backend = config.get("UPLOAD_STORAGE_BACKEND", "local")
 
         if max_size < 1:
-            self.validation_errors.append(
-                "UPLOAD_MAX_SIZE_MB must be at least 1"
-            )
+            self.validation_errors.append("UPLOAD_MAX_SIZE_MB must be at least 1")
 
         if max_size > 500:
             logger.warning(
@@ -260,7 +258,7 @@ class ConfigValidator:
                         f"{field} is required when UPLOAD_STORAGE_BACKEND='s3'"
                     )
 
-    def get_validation_errors(self) -> List[str]:
+    def get_validation_errors(self) -> list[str]:
         """
         Get list of validation errors from last validation.
 
@@ -271,9 +269,9 @@ class ConfigValidator:
 
     def validate_partial(
         self,
-        partial_config: Dict[str, Any],
+        partial_config: dict[str, Any],
         current_config: Settings,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Validate partial configuration update.
 

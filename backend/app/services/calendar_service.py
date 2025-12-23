@@ -1,4 +1,5 @@
 """Calendar service for ICS export and subscription."""
+
 from datetime import date, datetime, timedelta
 from uuid import UUID
 
@@ -46,11 +47,19 @@ class CalendarService:
         """
         block_date = block.date
         if block.time_of_day == "AM":
-            start_time = datetime.combine(block_date, datetime.min.time().replace(hour=8))
-            end_time = datetime.combine(block_date, datetime.min.time().replace(hour=12))
+            start_time = datetime.combine(
+                block_date, datetime.min.time().replace(hour=8)
+            )
+            end_time = datetime.combine(
+                block_date, datetime.min.time().replace(hour=12)
+            )
         else:  # PM
-            start_time = datetime.combine(block_date, datetime.min.time().replace(hour=13))
-            end_time = datetime.combine(block_date, datetime.min.time().replace(hour=17))
+            start_time = datetime.combine(
+                block_date, datetime.min.time().replace(hour=13)
+            )
+            end_time = datetime.combine(
+                block_date, datetime.min.time().replace(hour=17)
+            )
         return start_time, end_time
 
     @staticmethod
@@ -97,7 +106,9 @@ class CalendarService:
 
         # Filter by activity types if specified
         if include_types:
-            query = query.filter(Assignment.rotation_template.has(activity_type=include_types))
+            query = query.filter(
+                Assignment.rotation_template.has(activity_type=include_types)
+            )
 
         assignments = query.all()
 
@@ -142,9 +153,13 @@ class CalendarService:
             ]
 
             if assignment.rotation_template:
-                description_parts.append(f"Type: {assignment.rotation_template.activity_type}")
+                description_parts.append(
+                    f"Type: {assignment.rotation_template.activity_type}"
+                )
                 if assignment.rotation_template.clinic_location:
-                    description_parts.append(f"Location: {assignment.rotation_template.clinic_location}")
+                    description_parts.append(
+                        f"Location: {assignment.rotation_template.clinic_location}"
+                    )
 
             if assignment.notes:
                 description_parts.append(f"Notes: {assignment.notes}")
@@ -152,7 +167,10 @@ class CalendarService:
             event.add("description", "\n".join(description_parts))
 
             # Add location if available
-            if assignment.rotation_template and assignment.rotation_template.clinic_location:
+            if (
+                assignment.rotation_template
+                and assignment.rotation_template.clinic_location
+            ):
                 event.add("location", assignment.rotation_template.clinic_location)
 
             # Add last modified timestamp
@@ -203,7 +221,11 @@ class CalendarService:
             raise ValueError(f"No assignments found for rotation: {rotation_id}")
 
         # Get rotation template name
-        rotation_name = assignments[0].rotation_template.name if assignments[0].rotation_template else "Unknown"
+        rotation_name = (
+            assignments[0].rotation_template.name
+            if assignments[0].rotation_template
+            else "Unknown"
+        )
 
         # Create calendar
         cal = Calendar()
@@ -245,7 +267,11 @@ class CalendarService:
                 f"Block: {assignment.block.display_name}",
             ]
 
-            if assignment.person and assignment.person.is_resident and assignment.person.pgy_level:
+            if (
+                assignment.person
+                and assignment.person.is_resident
+                and assignment.person.pgy_level
+            ):
                 description_parts.append(f"PGY Level: {assignment.person.pgy_level}")
 
             if assignment.notes:
@@ -254,7 +280,10 @@ class CalendarService:
             event.add("description", "\n".join(description_parts))
 
             # Add location if available
-            if assignment.rotation_template and assignment.rotation_template.clinic_location:
+            if (
+                assignment.rotation_template
+                and assignment.rotation_template.clinic_location
+            ):
                 event.add("location", assignment.rotation_template.clinic_location)
 
             # Add timestamps
@@ -313,7 +342,9 @@ class CalendarService:
 
         # Filter by activity types if specified
         if include_types:
-            query = query.filter(Assignment.rotation_template.has(activity_type=include_types))
+            query = query.filter(
+                Assignment.rotation_template.has(activity_type=include_types)
+            )
 
         assignments = query.all()
 
@@ -363,11 +394,19 @@ class CalendarService:
             ]
 
             if assignment.rotation_template:
-                description_parts.append(f"Type: {assignment.rotation_template.activity_type}")
+                description_parts.append(
+                    f"Type: {assignment.rotation_template.activity_type}"
+                )
                 if assignment.rotation_template.clinic_location:
-                    description_parts.append(f"Location: {assignment.rotation_template.clinic_location}")
+                    description_parts.append(
+                        f"Location: {assignment.rotation_template.clinic_location}"
+                    )
 
-            if assignment.person and assignment.person.is_resident and assignment.person.pgy_level:
+            if (
+                assignment.person
+                and assignment.person.is_resident
+                and assignment.person.pgy_level
+            ):
                 description_parts.append(f"PGY Level: {assignment.person.pgy_level}")
 
             if assignment.notes:
@@ -376,7 +415,10 @@ class CalendarService:
             event.add("description", "\n".join(description_parts))
 
             # Add location if available
-            if assignment.rotation_template and assignment.rotation_template.clinic_location:
+            if (
+                assignment.rotation_template
+                and assignment.rotation_template.clinic_location
+            ):
                 event.add("location", assignment.rotation_template.clinic_location)
 
             # Add last modified timestamp
@@ -496,7 +538,9 @@ class CalendarService:
         if person_id:
             query = query.filter(CalendarSubscription.person_id == person_id)
         if created_by_user_id:
-            query = query.filter(CalendarSubscription.created_by_user_id == created_by_user_id)
+            query = query.filter(
+                CalendarSubscription.created_by_user_id == created_by_user_id
+            )
         if active_only:
             query = query.filter(CalendarSubscription.is_active == True)
 
@@ -544,7 +588,9 @@ class CalendarService:
             base_url = "http://localhost:8000/api/calendar"
 
         # Convert http:// to webcal:// for calendar app compatibility
-        webcal_base = base_url.replace("https://", "webcal://").replace("http://", "webcal://")
+        webcal_base = base_url.replace("https://", "webcal://").replace(
+            "http://", "webcal://"
+        )
 
         return f"{webcal_base}/subscribe/{token}"
 

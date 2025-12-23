@@ -4,6 +4,7 @@ Performance tests for SwapFinder and FMIT scheduling system.
 Tests large-scale schedule generation and ensures find_swap_candidates
 completes within acceptable time limits.
 """
+
 import sys
 import time
 from datetime import date, timedelta
@@ -11,7 +12,7 @@ from datetime import date, timedelta
 import pytest
 
 # Add parent directory to path for imports
-sys.path.insert(0, '/home/user/Autonomous-Assignment-Program-Manager/backend')
+sys.path.insert(0, "/home/user/Autonomous-Assignment-Program-Manager/backend")
 
 from app.services.xlsx_import import (
     ExternalConflict,
@@ -25,9 +26,7 @@ from app.services.xlsx_import import (
 
 
 def generate_fmit_schedule(
-    num_faculty: int,
-    num_weeks: int = 52,
-    start_date: date = None
+    num_faculty: int, num_weeks: int = 52, start_date: date = None
 ) -> ImportResult:
     """
     Generate a synthetic FMIT schedule for performance testing.
@@ -126,9 +125,7 @@ def generate_faculty_targets(num_faculty: int) -> dict[str, FacultyTarget]:
 
 
 def generate_external_conflicts(
-    num_faculty: int,
-    num_conflicts: int,
-    start_date: date
+    num_faculty: int, num_conflicts: int, start_date: date
 ) -> list[ExternalConflict]:
     """Generate random external conflicts for testing."""
     conflicts = []
@@ -141,13 +138,15 @@ def generate_external_conflicts(
         conflict_types = ["leave", "conference", "tdy", "training"]
         conflict_type = conflict_types[i % len(conflict_types)]
 
-        conflicts.append(ExternalConflict(
-            faculty=f"Faculty_{faculty_idx:03d}",
-            start_date=conflict_start,
-            end_date=conflict_end,
-            conflict_type=conflict_type,
-            description=f"Test {conflict_type} {i}",
-        ))
+        conflicts.append(
+            ExternalConflict(
+                faculty=f"Faculty_{faculty_idx:03d}",
+                start_date=conflict_start,
+                end_date=conflict_end,
+                conflict_type=conflict_type,
+                description=f"Test {conflict_type} {i}",
+            )
+        )
 
     return conflicts
 
@@ -171,7 +170,7 @@ class TestSwapFinderPerformance:
         # Should complete very quickly (under 100ms)
         assert generation_time < 0.1, f"Generation took {generation_time:.3f}s"
 
-        print(f"\n✓ Generated 50 faculty, 52 weeks in {generation_time*1000:.1f}ms")
+        print(f"\n✓ Generated 50 faculty, 52 weeks in {generation_time * 1000:.1f}ms")
         print(f"  Total slots: {result.total_slots}")
         print(f"  FMIT slots: {result.fmit_slots}")
 
@@ -181,9 +180,7 @@ class TestSwapFinderPerformance:
         result = generate_fmit_schedule(num_faculty=50, num_weeks=52)
         faculty_targets = generate_faculty_targets(50)
         external_conflicts = generate_external_conflicts(
-            num_faculty=50,
-            num_conflicts=20,
-            start_date=date.today()
+            num_faculty=50, num_conflicts=20, start_date=date.today()
         )
 
         finder = SwapFinder(
@@ -200,13 +197,15 @@ class TestSwapFinderPerformance:
         elapsed_time = time.time() - start_time
 
         # Performance assertion: Must complete in < 1 second
-        assert elapsed_time < 1.0, f"find_swap_candidates took {elapsed_time:.3f}s (> 1.0s)"
+        assert elapsed_time < 1.0, (
+            f"find_swap_candidates took {elapsed_time:.3f}s (> 1.0s)"
+        )
 
         # Verify results
         assert isinstance(candidates, list)
         assert len(candidates) > 0  # Should find some candidates
 
-        print(f"\n✓ find_swap_candidates completed in {elapsed_time*1000:.1f}ms")
+        print(f"\n✓ find_swap_candidates completed in {elapsed_time * 1000:.1f}ms")
         print(f"  Found {len(candidates)} candidates")
         print(f"  Performance: {'PASS' if elapsed_time < 1.0 else 'FAIL'}")
 
@@ -223,7 +222,7 @@ class TestSwapFinderPerformance:
         external_conflicts = generate_external_conflicts(
             num_faculty=num_faculty,
             num_conflicts=num_conflicts,
-            start_date=date.today()
+            start_date=date.today(),
         )
 
         # Create SwapFinder
@@ -242,13 +241,15 @@ class TestSwapFinderPerformance:
         search_time = time.time() - search_start
 
         # Print scaling metrics
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Scaling Test: {num_faculty} faculty")
-        print(f"{'='*60}")
-        print(f"  Schedule generation: {gen_time*1000:6.1f}ms")
-        print(f"  SwapFinder setup:    {setup_time*1000:6.1f}ms")
-        print(f"  find_swap_candidates:{search_time*1000:6.1f}ms")
-        print(f"  Total time:          {(gen_time+setup_time+search_time)*1000:6.1f}ms")
+        print(f"{'=' * 60}")
+        print(f"  Schedule generation: {gen_time * 1000:6.1f}ms")
+        print(f"  SwapFinder setup:    {setup_time * 1000:6.1f}ms")
+        print(f"  find_swap_candidates:{search_time * 1000:6.1f}ms")
+        print(
+            f"  Total time:          {(gen_time + setup_time + search_time) * 1000:6.1f}ms"
+        )
         print(f"  Candidates found:    {len(candidates)}")
         print(f"  Total slots:         {result.total_slots}")
 
@@ -274,9 +275,7 @@ class TestSwapFinderPerformance:
         result = generate_fmit_schedule(num_faculty=100, num_weeks=52)
         faculty_targets = generate_faculty_targets(100)
         external_conflicts = generate_external_conflicts(
-            num_faculty=100,
-            num_conflicts=50,
-            start_date=date.today()
+            num_faculty=100, num_conflicts=50, start_date=date.today()
         )
 
         finder = SwapFinder(
@@ -290,9 +289,9 @@ class TestSwapFinderPerformance:
         result_size = sys.getsizeof(result)
         finder_size = sys.getsizeof(finder)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Memory Efficiency Test (100 faculty, 52 weeks)")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"  ImportResult size:   ~{result_size:,} bytes")
         print(f"  SwapFinder size:     ~{finder_size:,} bytes")
         print(f"  Total providers:     {len(result.providers)}")
@@ -304,7 +303,7 @@ class TestSwapFinderPerformance:
         assert len(finder.faculty_weeks) == 100
 
         # Test that multiple searches don't cause memory issues
-        target_weeks = [date.today() + timedelta(days=i*7) for i in range(10)]
+        target_weeks = [date.today() + timedelta(days=i * 7) for i in range(10)]
 
         for week in target_weeks:
             candidates = finder.find_swap_candidates("Faculty_000", week)
@@ -321,9 +320,7 @@ class TestSwapFinderPerformance:
 
         # Create many external conflicts (40% of faculty have conflicts)
         external_conflicts = generate_external_conflicts(
-            num_faculty=num_faculty,
-            num_conflicts=100,
-            start_date=date.today()
+            num_faculty=num_faculty, num_conflicts=100, start_date=date.today()
         )
 
         finder = SwapFinder(
@@ -334,7 +331,7 @@ class TestSwapFinderPerformance:
 
         # Test multiple searches
         search_times = []
-        target_weeks = [date.today() + timedelta(days=i*7) for i in range(20)]
+        target_weeks = [date.today() + timedelta(days=i * 7) for i in range(20)]
 
         for week in target_weeks:
             start_time = time.time()
@@ -346,13 +343,13 @@ class TestSwapFinderPerformance:
         max_time = max(search_times)
         min_time = min(search_times)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Worst-Case Scenario Test (50 faculty, 100 conflicts)")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"  Searches performed:  {len(search_times)}")
-        print(f"  Average time:        {avg_time*1000:.1f}ms")
-        print(f"  Min time:            {min_time*1000:.1f}ms")
-        print(f"  Max time:            {max_time*1000:.1f}ms")
+        print(f"  Average time:        {avg_time * 1000:.1f}ms")
+        print(f"  Min time:            {min_time * 1000:.1f}ms")
+        print(f"  Max time:            {max_time * 1000:.1f}ms")
         print(f"  External conflicts:  {len(external_conflicts)}")
 
         # All searches should complete in < 1 second
@@ -370,10 +367,10 @@ class TestSwapFinderPerformance:
         excessive = finder.find_excessive_alternating(threshold=3)
         elapsed_time = time.time() - start_time
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("find_excessive_alternating Performance")
-        print(f"{'='*60}")
-        print(f"  Execution time:      {elapsed_time*1000:.1f}ms")
+        print(f"{'=' * 60}")
+        print(f"  Execution time:      {elapsed_time * 1000:.1f}ms")
         print("  Faculty analyzed:    50")
         print(f"  Excessive patterns:  {len(excessive)}")
 
@@ -393,7 +390,7 @@ class TestSwapFinderPerformance:
 
         # Simulate multiple users searching at once
         faculty_list = [f"Faculty_{i:03d}" for i in range(10)]
-        target_weeks = [date.today() + timedelta(days=i*7) for i in range(10)]
+        target_weeks = [date.today() + timedelta(days=i * 7) for i in range(10)]
 
         start_time = time.time()
 
@@ -407,13 +404,13 @@ class TestSwapFinderPerformance:
         total_time = time.time() - start_time
         avg_time = total_time / len(all_candidates)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Concurrent Searches Test")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"  Total searches:      {len(all_candidates)}")
         print(f"  Total time:          {total_time:.3f}s")
-        print(f"  Average per search:  {avg_time*1000:.1f}ms")
-        print(f"  Searches/second:     {len(all_candidates)/total_time:.1f}")
+        print(f"  Average per search:  {avg_time * 1000:.1f}ms")
+        print(f"  Searches/second:     {len(all_candidates) / total_time:.1f}")
 
         # Average should be well under 1 second per search
         assert avg_time < 1.0, f"Average search took {avg_time:.3f}s (> 1.0s)"
@@ -436,7 +433,7 @@ class TestScheduleDataStructures:
         for week in range(52):
             for day in range(7):
                 for time_of_day in ["AM", "PM"]:
-                    slot_date = start_date + timedelta(days=week*7 + day)
+                    slot_date = start_date + timedelta(days=week * 7 + day)
                     slot = ScheduleSlot(
                         provider_name="Test_Faculty",
                         date=slot_date,
@@ -460,12 +457,12 @@ class TestScheduleDataStructures:
         fmit_weeks = schedule.get_fmit_weeks()
         weeks_time = time.time() - weeks_start
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("ProviderSchedule Performance")
-        print(f"{'='*60}")
-        print(f"  Add 728 slots:       {add_time*1000:.1f}ms")
-        print(f"  1000 lookups:        {lookup_time*1000:.1f}ms")
-        print(f"  get_fmit_weeks:      {weeks_time*1000:.1f}ms")
+        print(f"{'=' * 60}")
+        print(f"  Add 728 slots:       {add_time * 1000:.1f}ms")
+        print(f"  1000 lookups:        {lookup_time * 1000:.1f}ms")
+        print(f"  get_fmit_weeks:      {weeks_time * 1000:.1f}ms")
         print(f"  FMIT weeks found:    {len(fmit_weeks)}")
 
         assert add_time < 1.0, f"Adding slots took {add_time:.3f}s"
@@ -487,6 +484,7 @@ class TestScheduleDataStructures:
         conflict_start = time.time()
         for i in range(1000):
             from app.services.xlsx_import import ScheduleConflict
+
             conflict = ScheduleConflict(
                 provider_name=f"Faculty_{i % 100:03d}",
                 date=date.today(),
@@ -504,12 +502,12 @@ class TestScheduleDataStructures:
             type_conflicts = result.get_conflicts_by_type("double_book")
         query_time = time.time() - query_start
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("ImportResult Performance")
-        print(f"{'='*60}")
-        print(f"  Add 100 providers:   {add_time*1000:.1f}ms")
-        print(f"  Add 1000 conflicts:  {conflict_time*1000:.1f}ms")
-        print(f"  200 queries:         {query_time*1000:.1f}ms")
+        print(f"{'=' * 60}")
+        print(f"  Add 100 providers:   {add_time * 1000:.1f}ms")
+        print(f"  Add 1000 conflicts:  {conflict_time * 1000:.1f}ms")
+        print(f"  200 queries:         {query_time * 1000:.1f}ms")
         print(f"  Total conflicts:     {len(result.conflicts)}")
 
         assert add_time < 0.1, f"Adding providers took {add_time:.3f}s"
@@ -522,8 +520,9 @@ class TestCoverageGapAnalysis:
 
     def test_gap_detection_basic(self):
         """Test basic gap detection functionality."""
-        from datetime import date
-        from app.api.routes.fmit_health import classify_gap_severity, detect_coverage_gaps
+        from app.api.routes.fmit_health import (
+            classify_gap_severity,
+        )
 
         # Test severity classification
         assert classify_gap_severity(days_until=2, gap_size=1) == "critical"
@@ -555,14 +554,13 @@ class TestCoverageGapAnalysis:
         assert classify_gap_severity(30, 5) == "low"
 
         print("\n✓ Gap severity thresholds validated")
-        print(f"  Critical: 0-3 days")
-        print(f"  High: 4-7 days (gap > 1)")
-        print(f"  Medium: 4-14 days")
-        print(f"  Low: 15+ days")
+        print("  Critical: 0-3 days")
+        print("  High: 4-7 days (gap > 1)")
+        print("  Medium: 4-14 days")
+        print("  Low: 15+ days")
 
     def test_coverage_trend_analysis(self):
         """Test coverage trend analysis over time."""
-        from app.api.routes.fmit_health import analyze_coverage_trend
 
         # Note: This would require a test database with historical data
         # For now, test the function signature and basic logic
@@ -573,7 +571,6 @@ class TestCoverageGapAnalysis:
 
     def test_conflict_score_calculation(self):
         """Test conflict score calculation logic."""
-        from app.api.routes.fmit_health import calculate_conflict_score
 
         # Note: This requires database access with test data
         # Testing the logic exists and is callable
@@ -616,13 +613,13 @@ class TestCoverageGapAnalysis:
 
         elapsed = time.time() - start
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Gap Analysis Performance Test")
-        print(f"{'='*60}")
-        print(f"  Date range analyzed: 90 days")
+        print(f"{'=' * 60}")
+        print("  Date range analyzed: 90 days")
         print(f"  Slots analyzed:      {len(gaps_simulated)}")
-        print(f"  Processing time:     {elapsed*1000:.1f}ms")
-        print(f"  Rate:                {len(gaps_simulated)/elapsed:.0f} slots/sec")
+        print(f"  Processing time:     {elapsed * 1000:.1f}ms")
+        print(f"  Rate:                {len(gaps_simulated) / elapsed:.0f} slots/sec")
 
         # Should be very fast
         assert elapsed < 0.1, f"Gap analysis took {elapsed:.3f}s (> 0.1s)"
@@ -674,16 +671,16 @@ class TestCoverageGapAnalysis:
 
     def test_gap_grouping_by_period(self):
         """Test grouping gaps by time period."""
-        from datetime import date, timedelta
+        from datetime import date
 
         today = date.today()
 
         # Simulate gaps at different time ranges
         test_gaps = [
-            {"days_until": 0, "id": "1"},   # daily
-            {"days_until": 1, "id": "2"},   # daily
-            {"days_until": 5, "id": "3"},   # weekly
-            {"days_until": 7, "id": "4"},   # weekly
+            {"days_until": 0, "id": "1"},  # daily
+            {"days_until": 1, "id": "2"},  # daily
+            {"days_until": 5, "id": "3"},  # weekly
+            {"days_until": 7, "id": "4"},  # weekly
             {"days_until": 15, "id": "5"},  # monthly
             {"days_until": 40, "id": "6"},  # future
         ]
@@ -731,12 +728,19 @@ class TestCoverageGapAnalysis:
         assert sorted_suggestions[-1]["priority"] == 3
 
         print("\n✓ Suggestion priority sorting working")
-        print(f"  Priority 1 (highest): {sum(1 for s in suggestions if s['priority'] == 1)}")
-        print(f"  Priority 2:           {sum(1 for s in suggestions if s['priority'] == 2)}")
-        print(f"  Priority 3+:          {sum(1 for s in suggestions if s['priority'] >= 3)}")
+        print(
+            f"  Priority 1 (highest): {sum(1 for s in suggestions if s['priority'] == 1)}"
+        )
+        print(
+            f"  Priority 2:           {sum(1 for s in suggestions if s['priority'] == 2)}"
+        )
+        print(
+            f"  Priority 3+:          {sum(1 for s in suggestions if s['priority'] >= 3)}"
+        )
 
     def test_forecast_confidence_degradation(self):
         """Test that forecast confidence decreases over time."""
+
         # Simulate confidence calculation
         def calc_confidence(week_num):
             return max(0.9 - (week_num * 0.02), 0.5)
@@ -764,7 +768,9 @@ class TestCoverageGapAnalysis:
 
         holiday_blocks = 3
         if holiday_blocks > 0:
-            risk_factors.append(f"{holiday_blocks} holiday blocks may reduce availability")
+            risk_factors.append(
+                f"{holiday_blocks} holiday blocks may reduce availability"
+            )
 
         pending_swaps = 8
         if pending_swaps > 5:
@@ -784,7 +790,7 @@ class TestCoverageGapAnalysis:
 
         print("\n{'='*60}")
         print("Integration Test: Complete Coverage Gap Flow")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         # Simulate complete workflow
         today = date.today()

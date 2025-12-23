@@ -15,27 +15,25 @@ These handlers perform side effects in response to events:
 """
 
 import logging
-from datetime import datetime
-from typing import Optional
 
 from sqlalchemy.orm import Session
 
 from app.events.event_bus import EventBus
 from app.events.event_types import (
+    AbsenceApprovedEvent,
+    AbsenceCreatedEvent,
+    ACGMEOverrideAppliedEvent,
+    ACGMEViolationDetectedEvent,
+    AssignmentCreatedEvent,
+    AssignmentDeletedEvent,
+    AssignmentUpdatedEvent,
     EventType,
     ScheduleCreatedEvent,
-    ScheduleUpdatedEvent,
     SchedulePublishedEvent,
-    AssignmentCreatedEvent,
-    AssignmentUpdatedEvent,
-    AssignmentDeletedEvent,
-    SwapRequestedEvent,
+    ScheduleUpdatedEvent,
     SwapApprovedEvent,
     SwapExecutedEvent,
-    ACGMEViolationDetectedEvent,
-    ACGMEOverrideAppliedEvent,
-    AbsenceCreatedEvent,
-    AbsenceApprovedEvent,
+    SwapRequestedEvent,
 )
 
 logger = logging.getLogger(__name__)
@@ -65,7 +63,7 @@ async def on_schedule_created(event: ScheduleCreatedEvent):
     await send_notification(
         user_id="coordinators",
         message=f"New schedule created: {event.schedule_id} ({event.start_date} to {event.end_date})",
-        priority="normal"
+        priority="normal",
     )
 
     # Initialize cache for schedule
@@ -97,7 +95,7 @@ async def on_schedule_updated(event: ScheduleUpdatedEvent):
     await send_notification(
         user_id="affected_users",
         message=f"Schedule {event.schedule_id} has been updated with {len(event.changes)} changes",
-        priority="normal"
+        priority="normal",
     )
 
 
@@ -110,23 +108,22 @@ async def on_schedule_published(event: SchedulePublishedEvent):
     - Send notifications to all affected users
     - Generate reports
     """
-    logger.info(
-        f"Schedule published: {event.schedule_id} "
-        f"by {event.published_by}"
-    )
+    logger.info(f"Schedule published: {event.schedule_id} by {event.published_by}")
 
     # Send notifications to all assigned faculty/residents
     await send_notification(
         user_id="all_assigned",
         message=f"Schedule {event.schedule_id} has been published and is now active",
-        priority="high"
+        priority="high",
     )
 
     # Generate PDF/Excel exports
     logger.info(f"[EXPORT] Generating exports for schedule {event.schedule_id}")
 
     # Update calendar integrations
-    logger.info(f"[CALENDAR] Syncing schedule {event.schedule_id} to calendar integrations")
+    logger.info(
+        f"[CALENDAR] Syncing schedule {event.schedule_id} to calendar integrations"
+    )
 
 
 # =============================================================================
@@ -151,6 +148,7 @@ async def on_assignment_created(event: AssignmentCreatedEvent):
     # Validate ACGME compliance
     try:
         from app.scheduling.acgme_validator import ACGMEValidator
+
         validator = ACGMEValidator()
         logger.info(f"[ACGME] Validating assignment {event.assignment_id}")
     except ImportError:
@@ -173,10 +171,7 @@ async def on_assignment_updated(event: AssignmentUpdatedEvent):
     - Update caches
     - Log changes for audit
     """
-    logger.info(
-        f"Assignment updated: {event.assignment_id} "
-        f"by {event.updated_by}"
-    )
+    logger.info(f"Assignment updated: {event.assignment_id} by {event.updated_by}")
 
     if event.reason:
         logger.info(f"Update reason: {event.reason}")
@@ -184,6 +179,7 @@ async def on_assignment_updated(event: AssignmentUpdatedEvent):
     # Re-validate ACGME compliance if schedule changed
     try:
         from app.scheduling.acgme_validator import ACGMEValidator
+
         validator = ACGMEValidator()
         logger.info(f"[ACGME] Re-validating assignment {event.assignment_id}")
     except ImportError:
@@ -191,7 +187,9 @@ async def on_assignment_updated(event: AssignmentUpdatedEvent):
 
     # Invalidate caches
     await invalidate_cache(f"assignment:{event.assignment_id}")
-    logger.info(f"[AUDIT] Assignment updated: {event.assignment_id} by {event.updated_by}")
+    logger.info(
+        f"[AUDIT] Assignment updated: {event.assignment_id} by {event.updated_by}"
+    )
 
 
 async def on_assignment_deleted(event: AssignmentDeletedEvent):
@@ -203,22 +201,21 @@ async def on_assignment_deleted(event: AssignmentDeletedEvent):
     - Update person's schedule
     - Notify affected parties
     """
-    logger.info(
-        f"Assignment deleted: {event.assignment_id} "
-        f"by {event.deleted_by}"
-    )
+    logger.info(f"Assignment deleted: {event.assignment_id} by {event.deleted_by}")
 
     if event.reason:
         logger.info(f"Deletion reason: {event.reason}")
 
     # Check for coverage gaps
-    logger.info(f"[COVERAGE] Checking for gaps after deleting assignment {event.assignment_id}")
+    logger.info(
+        f"[COVERAGE] Checking for gaps after deleting assignment {event.assignment_id}"
+    )
 
     # Notify coordinators of gap
     await send_notification(
         user_id="coordinators",
         message=f"Assignment {event.assignment_id} deleted - coverage gap may exist",
-        priority="high"
+        priority="high",
     )
 
 
@@ -237,8 +234,7 @@ async def on_swap_requested(event: SwapRequestedEvent):
     - Log request
     """
     logger.info(
-        f"Swap requested: {event.swap_id} "
-        f"by {event.requester_id} ({event.swap_type})"
+        f"Swap requested: {event.swap_id} by {event.requester_id} ({event.swap_type})"
     )
 
     # Notify target person or find matches
@@ -246,14 +242,17 @@ async def on_swap_requested(event: SwapRequestedEvent):
         await send_notification(
             user_id="target_person",
             message=f"Swap request {event.swap_id} from user {event.requester_id}",
-            priority="normal"
+            priority="normal",
         )
     else:
-        logger.info(f"[SWAP] Finding compatible matches for absorb swap {event.swap_id}")
+        logger.info(
+            f"[SWAP] Finding compatible matches for absorb swap {event.swap_id}"
+        )
 
     # Check ACGME pre-validation
     try:
         from app.scheduling.acgme_validator import ACGMEValidator
+
         validator = ACGMEValidator()
         logger.info(f"[ACGME] Pre-validating swap {event.swap_id}")
     except ImportError:
@@ -268,21 +267,18 @@ async def on_swap_approved(event: SwapApprovedEvent):
     - Notify requester and target
     - Prepare for execution
     """
-    logger.info(
-        f"Swap approved: {event.swap_id} "
-        f"by {event.approved_by}"
-    )
+    logger.info(f"Swap approved: {event.swap_id} by {event.approved_by}")
 
     # Notify all parties
     await send_notification(
         user_id="swap_requester",
         message=f"Your swap request {event.swap_id} has been approved",
-        priority="high"
+        priority="high",
     )
     await send_notification(
         user_id="swap_target",
         message=f"Swap {event.swap_id} has been approved and will be executed",
-        priority="high"
+        priority="high",
     )
 
     # Schedule automatic execution
@@ -307,7 +303,7 @@ async def on_swap_executed(event: SwapExecutedEvent):
     await send_notification(
         user_id="swap_participants",
         message=f"Swap {event.swap_id} has been successfully executed with {len(event.assignment_changes)} changes",
-        priority="high"
+        priority="high",
     )
 
     # Update calendar integrations
@@ -340,13 +336,15 @@ async def on_absence_created(event: AbsenceCreatedEvent):
     )
 
     # Check for assignment conflicts
-    logger.info(f"[CONFLICT] Checking for assignment conflicts for absence {event.absence_id}")
+    logger.info(
+        f"[CONFLICT] Checking for assignment conflicts for absence {event.absence_id}"
+    )
 
     # Notify coordinator if coverage needed
     await send_notification(
         user_id="coordinators",
         message=f"Absence {event.absence_id} created for person {event.person_id} ({event.start_date} to {event.end_date}) - coverage may be needed",
-        priority="high"
+        priority="high",
     )
 
 
@@ -359,24 +357,23 @@ async def on_absence_approved(event: AbsenceApprovedEvent):
     - Update schedules
     - Notify affected parties
     """
-    logger.info(
-        f"Absence approved: {event.absence_id} "
-        f"by {event.approved_by}"
-    )
+    logger.info(f"Absence approved: {event.absence_id} by {event.approved_by}")
 
     # Trigger coverage assignment workflow
-    logger.info(f"[COVERAGE] Triggering coverage assignment workflow for absence {event.absence_id}")
+    logger.info(
+        f"[COVERAGE] Triggering coverage assignment workflow for absence {event.absence_id}"
+    )
 
     # Notify requester and affected staff
     await send_notification(
         user_id="absence_requester",
         message=f"Your absence request {event.absence_id} has been approved",
-        priority="normal"
+        priority="normal",
     )
     await send_notification(
         user_id="affected_staff",
         message=f"Absence {event.absence_id} approved - coverage assignments may be updated",
-        priority="normal"
+        priority="normal",
     )
 
 
@@ -403,14 +400,18 @@ async def on_acgme_violation_detected(event: ACGMEViolationDetectedEvent):
     await send_notification(
         user_id="program_director",
         message=f"URGENT: ACGME violation detected - {event.violation_type} ({event.severity}) for person {event.person_id}",
-        priority="urgent"
+        priority="urgent",
     )
 
     # Create compliance report entry
-    logger.warning(f"[COMPLIANCE] ACGME violation {event.violation_id}: {event.violation_type} ({event.severity})")
+    logger.warning(
+        f"[COMPLIANCE] ACGME violation {event.violation_id}: {event.violation_type} ({event.severity})"
+    )
 
     # Suggest automated fixes
-    logger.info(f"[COMPLIANCE] Analyzing automated fix options for violation {event.violation_id}")
+    logger.info(
+        f"[COMPLIANCE] Analyzing automated fix options for violation {event.violation_id}"
+    )
 
 
 async def on_acgme_override_applied(event: ACGMEOverrideAppliedEvent):
@@ -442,11 +443,13 @@ async def on_acgme_override_applied(event: ACGMEOverrideAppliedEvent):
         await send_notification(
             user_id="program_director",
             message=f"ACGME override {event.override_id} applied by {event.applied_by} for assignment {event.assignment_id}",
-            priority="urgent"
+            priority="urgent",
         )
 
     # Track for accreditation reporting
-    logger.warning(f"[ACCREDITATION] Tracking override {event.override_id} for accreditation reporting")
+    logger.warning(
+        f"[ACCREDITATION] Tracking override {event.override_id} for accreditation reporting"
+    )
 
 
 # =============================================================================
@@ -467,7 +470,9 @@ async def on_any_event(event):
     await update_metrics("event_counter", 1.0)
 
     # Feed to WebSocket for real-time updates
-    logger.debug(f"[WEBSOCKET] Broadcasting event {event.__class__.__name__} to connected clients")
+    logger.debug(
+        f"[WEBSOCKET] Broadcasting event {event.__class__.__name__} to connected clients"
+    )
 
 
 # =============================================================================
@@ -489,75 +494,71 @@ def register_schedule_handlers(event_bus: EventBus, db: Session):
     event_bus.subscribe(
         EventType.SCHEDULE_CREATED,
         on_schedule_created,
-        subscriber_id="schedule_created_handler"
+        subscriber_id="schedule_created_handler",
     )
     event_bus.subscribe(
         EventType.SCHEDULE_UPDATED,
         on_schedule_updated,
-        subscriber_id="schedule_updated_handler"
+        subscriber_id="schedule_updated_handler",
     )
     event_bus.subscribe(
         EventType.SCHEDULE_PUBLISHED,
         on_schedule_published,
-        subscriber_id="schedule_published_handler"
+        subscriber_id="schedule_published_handler",
     )
 
     # Assignment events
     event_bus.subscribe(
         EventType.ASSIGNMENT_CREATED,
         on_assignment_created,
-        subscriber_id="assignment_created_handler"
+        subscriber_id="assignment_created_handler",
     )
     event_bus.subscribe(
         EventType.ASSIGNMENT_UPDATED,
         on_assignment_updated,
-        subscriber_id="assignment_updated_handler"
+        subscriber_id="assignment_updated_handler",
     )
     event_bus.subscribe(
         EventType.ASSIGNMENT_DELETED,
         on_assignment_deleted,
-        subscriber_id="assignment_deleted_handler"
+        subscriber_id="assignment_deleted_handler",
     )
 
     # Swap events
     event_bus.subscribe(
         EventType.SWAP_REQUESTED,
         on_swap_requested,
-        subscriber_id="swap_requested_handler"
+        subscriber_id="swap_requested_handler",
     )
     event_bus.subscribe(
-        EventType.SWAP_APPROVED,
-        on_swap_approved,
-        subscriber_id="swap_approved_handler"
+        EventType.SWAP_APPROVED, on_swap_approved, subscriber_id="swap_approved_handler"
     )
     event_bus.subscribe(
-        EventType.SWAP_EXECUTED,
-        on_swap_executed,
-        subscriber_id="swap_executed_handler"
+        EventType.SWAP_EXECUTED, on_swap_executed, subscriber_id="swap_executed_handler"
     )
 
     # Absence events
     event_bus.subscribe(
         EventType.ABSENCE_CREATED,
         on_absence_created,
-        subscriber_id="absence_created_handler"
+        subscriber_id="absence_created_handler",
     )
     event_bus.subscribe(
         EventType.ABSENCE_APPROVED,
         on_absence_approved,
-        subscriber_id="absence_approved_handler"
+        subscriber_id="absence_approved_handler",
     )
 
     # ACGME compliance events
     event_bus.subscribe(
         EventType.ACGME_VIOLATION_DETECTED,
         on_acgme_violation_detected,
-        subscriber_id="acgme_violation_handler"
+        subscriber_id="acgme_violation_handler",
     )
     event_bus.subscribe(
         EventType.ACGME_OVERRIDE_APPLIED,
         on_acgme_override_applied,
-        subscriber_id="acgme_override_handler"
+        subscriber_id="acgme_override_handler",
     )
 
     logger.info("Schedule event handlers registered successfully")
@@ -579,12 +580,10 @@ async def send_notification(user_id: str, message: str, priority: str = "normal"
     """
     try:
         from app.notifications.service import NotificationService
+
         service = NotificationService()
         await service.send(
-            user_id=user_id,
-            message=message,
-            priority=priority,
-            channel="in_app"
+            user_id=user_id, message=message, priority=priority, channel="in_app"
         )
         logger.info(f"[NOTIFICATION] {priority.upper()}: {user_id} - {message}")
     except ImportError:
@@ -602,6 +601,7 @@ async def invalidate_cache(cache_key: str):
     """
     try:
         from app.core.cache import cache_manager
+
         await cache_manager.delete(cache_key)
         logger.debug(f"[CACHE] Invalidated: {cache_key}")
     except ImportError:
@@ -620,6 +620,7 @@ async def update_metrics(metric_name: str, value: float):
     """
     try:
         from prometheus_client import Counter, Gauge
+
         # Increment counter or update gauge based on metric name
         logger.debug(f"[METRICS] {metric_name} = {value}")
     except ImportError:

@@ -53,15 +53,12 @@ Example:
 """
 
 import hashlib
-import json
 import logging
 import math
-import time
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import Any
-from uuid import UUID
 
 import redis.asyncio as redis
 from pydantic import BaseModel, Field, field_validator
@@ -355,9 +352,7 @@ class ExperimentResults(BaseModel):
     is_significant: bool = Field(
         default=False, description="Whether results are statistically significant"
     )
-    confidence_level: float = Field(
-        default=0.95, description="Confidence level used"
-    )
+    confidence_level: float = Field(default=0.95, description="Confidence level used")
     p_value: float | None = Field(default=None, description="Statistical p-value")
     winning_variant: str | None = Field(
         default=None, description="Variant with best performance"
@@ -378,7 +373,9 @@ class ExperimentLifecycle(BaseModel):
     """
 
     experiment_key: str = Field(..., description="Experiment identifier")
-    event_type: str = Field(..., description="Event type (created, started, paused, etc.)")
+    event_type: str = Field(
+        ..., description="Event type (created, started, paused, etc.)"
+    )
     previous_status: ExperimentStatus | None = Field(
         default=None, description="Status before event"
     )
@@ -388,9 +385,7 @@ class ExperimentLifecycle(BaseModel):
         default_factory=datetime.utcnow, description="Event timestamp"
     )
     notes: str = Field(default="", description="Additional notes")
-    metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Event metadata"
-    )
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Event metadata")
 
 
 # =============================================================================
@@ -412,7 +407,7 @@ def consistent_hash(key: str, seed: str = "") -> int:
     Returns:
         Integer hash value in range [0, 2^32)
     """
-    combined = f"{seed}{key}".encode("utf-8")
+    combined = f"{seed}{key}".encode()
     hash_bytes = hashlib.sha256(combined).digest()
     # Take first 4 bytes and convert to int
     return int.from_bytes(hash_bytes[:4], byteorder="big")
@@ -542,7 +537,11 @@ def calculate_statistical_significance(
     is_significant = p_value < alpha
 
     # Create interpretation
-    diff_pct = ((treatment_mean - control_mean) / control_mean * 100) if control_mean != 0 else 0
+    diff_pct = (
+        ((treatment_mean - control_mean) / control_mean * 100)
+        if control_mean != 0
+        else 0
+    )
     direction = "increase" if treatment_mean > control_mean else "decrease"
 
     if is_significant:
@@ -648,7 +647,9 @@ class ExperimentService:
             triggered_by=experiment.created_by,
         )
 
-        logger.info(f"Created experiment '{experiment.key}' with {len(experiment.variants)} variants")
+        logger.info(
+            f"Created experiment '{experiment.key}' with {len(experiment.variants)} variants"
+        )
         return experiment
 
     async def get_experiment(self, experiment_key: str) -> Experiment:
@@ -1068,7 +1069,9 @@ class ExperimentService:
         elif rule.operator == TargetingOperator.IN:
             return attr_value in rule.value if isinstance(rule.value, list) else False
         elif rule.operator == TargetingOperator.NOT_IN:
-            return attr_value not in rule.value if isinstance(rule.value, list) else True
+            return (
+                attr_value not in rule.value if isinstance(rule.value, list) else True
+            )
         elif rule.operator == TargetingOperator.GREATER_THAN:
             try:
                 return float(attr_value) > float(rule.value)
@@ -1083,6 +1086,7 @@ class ExperimentService:
             return rule.value in str(attr_value)
         elif rule.operator == TargetingOperator.REGEX_MATCH:
             import re
+
             try:
                 return bool(re.match(rule.value, str(attr_value)))
             except re.error:
@@ -1280,14 +1284,15 @@ class ExperimentService:
 
             for treatment_variant in treatment_variants:
                 treatment_metrics = next(
-                    (vm for vm in variant_metrics if vm.variant_key == treatment_variant.key),
+                    (
+                        vm
+                        for vm in variant_metrics
+                        if vm.variant_key == treatment_variant.key
+                    ),
                     None,
                 )
 
-                if (
-                    treatment_metrics
-                    and treatment_metrics.user_count >= min_sample
-                ):
+                if treatment_metrics and treatment_metrics.user_count >= min_sample:
                     # Get metric data for comparison (using first common metric)
                     common_metrics = set(control_metrics.metrics.keys()) & set(
                         treatment_metrics.metrics.keys()
@@ -1420,9 +1425,7 @@ class ExperimentService:
         event_key = f"lifecycle:{experiment_key}:{int(event.timestamp.timestamp())}"
         await r.set(event_key, event.model_dump_json(), ex=86400 * 365)
 
-        logger.info(
-            f"Lifecycle event '{event_type}' for experiment '{experiment_key}'"
-        )
+        logger.info(f"Lifecycle event '{event_type}' for experiment '{experiment_key}'")
 
     async def get_lifecycle_events(
         self, experiment_key: str

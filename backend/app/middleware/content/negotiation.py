@@ -16,14 +16,18 @@ Features:
 - Response serialization
 - Quality-based format selection
 """
+
 import logging
-from typing import Any, Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from app.middleware.content.parsers import ParserRegistry, ParsingError, get_parser_registry
+from app.middleware.content.parsers import (
+    ParserRegistry,
+    ParsingError,
+    get_parser_registry,
+)
 from app.middleware.content.serializers import (
     SerializationError,
     SerializerRegistry,
@@ -168,7 +172,7 @@ class AcceptHeader:
 
         return False
 
-    def get_best_match(self, available_types: list[str]) -> Optional[str]:
+    def get_best_match(self, available_types: list[str]) -> str | None:
         """
         Get best matching media type from available types.
 
@@ -227,8 +231,8 @@ class ContentNegotiationMiddleware(BaseHTTPMiddleware):
         self,
         app: ASGIApp,
         default_content_type: str = "application/json",
-        parser_registry: Optional[ParserRegistry] = None,
-        serializer_registry: Optional[SerializerRegistry] = None,
+        parser_registry: ParserRegistry | None = None,
+        serializer_registry: SerializerRegistry | None = None,
     ):
         """
         Initialize content negotiation middleware.
@@ -380,6 +384,7 @@ class ContentNegotiationMiddleware(BaseHTTPMiddleware):
         try:
             # Parse current response body (assume JSON)
             import json
+
             data = json.loads(response.body.decode("utf-8"))
 
             # Serialize to negotiated format
@@ -457,7 +462,7 @@ class ContentNegotiationStats:
         self.parsing_errors = 0
         self.serialization_errors = 0
 
-    def record_request(self, content_type: Optional[str]):
+    def record_request(self, content_type: str | None):
         """
         Record incoming request.
 

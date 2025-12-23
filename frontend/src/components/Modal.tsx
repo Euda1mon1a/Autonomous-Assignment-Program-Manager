@@ -32,7 +32,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
 
-// Focus first input/select/textarea in modal content (skip header buttons)
+      // Focus first input/select/textarea in modal content (skip header buttons)
       // This provides better UX - user can immediately start typing
       const contentInputs = modalRef.current?.querySelectorAll<HTMLElement>(
         'input:not([type="hidden"]), select, textarea'

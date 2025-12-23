@@ -44,14 +44,13 @@ import json
 import logging
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 from sqlalchemy import and_, desc, func
 from sqlalchemy.orm import Session
 
-from app.db.base import Base
-from app.events.event_store import EventSnapshot, EventStore, StoredEvent
+from app.events.event_store import EventSnapshot, EventStore
 
 logger = logging.getLogger(__name__)
 
@@ -70,74 +69,51 @@ class SnapshotConfig(BaseModel):
 
     # Frequency settings
     snapshot_frequency_events: int = Field(
-        100,
-        ge=1,
-        description="Create snapshot every N events (default: 100)"
+        100, ge=1, description="Create snapshot every N events (default: 100)"
     )
     snapshot_frequency_time_hours: int = Field(
-        24,
-        ge=1,
-        description="Create snapshot every N hours (default: 24)"
+        24, ge=1, description="Create snapshot every N hours (default: 24)"
     )
     min_events_for_snapshot: int = Field(
-        10,
-        ge=1,
-        description="Minimum events before first snapshot (default: 10)"
+        10, ge=1, description="Minimum events before first snapshot (default: 10)"
     )
 
     # Compression settings
     enable_compression: bool = Field(
-        True,
-        description="Enable gzip compression for snapshots"
+        True, description="Enable gzip compression for snapshots"
     )
     compression_level: int = Field(
-        6,
-        ge=1,
-        le=9,
-        description="Gzip compression level (1-9, default: 6)"
+        6, ge=1, le=9, description="Gzip compression level (1-9, default: 6)"
     )
     compression_threshold_bytes: int = Field(
-        1024,
-        ge=0,
-        description="Only compress snapshots larger than this (bytes)"
+        1024, ge=0, description="Only compress snapshots larger than this (bytes)"
     )
 
     # Versioning settings
     snapshot_version: int = Field(
-        1,
-        ge=1,
-        description="Current snapshot schema version"
+        1, ge=1, description="Current snapshot schema version"
     )
     validate_on_restore: bool = Field(
-        True,
-        description="Validate snapshot data when restoring"
+        True, description="Validate snapshot data when restoring"
     )
 
     # Cleanup policies
     max_snapshots_per_aggregate: int = Field(
-        10,
-        ge=1,
-        description="Maximum snapshots to keep per aggregate"
+        10, ge=1, description="Maximum snapshots to keep per aggregate"
     )
     snapshot_retention_days: int = Field(
-        90,
-        ge=1,
-        description="Delete snapshots older than this (days)"
+        90, ge=1, description="Delete snapshots older than this (days)"
     )
     auto_cleanup_enabled: bool = Field(
-        True,
-        description="Automatically cleanup old snapshots"
+        True, description="Automatically cleanup old snapshots"
     )
 
     # Performance settings
     parallel_snapshot_creation: bool = Field(
-        False,
-        description="Allow parallel snapshot creation (requires locking)"
+        False, description="Allow parallel snapshot creation (requires locking)"
     )
     snapshot_creation_timeout_seconds: int = Field(
-        300,
-        ge=1,
-        description="Timeout for snapshot creation (seconds)"
+        300, ge=1, description="Timeout for snapshot creation (seconds)"
     )
 
     class Config:
@@ -167,7 +143,7 @@ class SnapshotMetadata(BaseModel):
     event_count: int
     snapshot_version: int = 1
     created_at: datetime
-    created_by: Optional[str] = None
+    created_by: str | None = None
 
     # Compression info
     is_compressed: bool = False
@@ -178,7 +154,7 @@ class SnapshotMetadata(BaseModel):
     # Validation info
     checksum: str
     is_validated: bool = False
-    validation_timestamp: Optional[datetime] = None
+    validation_timestamp: datetime | None = None
 
     class Config:
         from_attributes = True
@@ -213,11 +189,7 @@ class SnapshotStore:
     and managing snapshots for event-sourced aggregates.
     """
 
-    def __init__(
-        self,
-        db: Session,
-        config: Optional[SnapshotConfig] = None
-    ):
+    def __init__(self, db: Session, config: SnapshotConfig | None = None):
         """
         Initialize Snapshot Store.
 
@@ -234,7 +206,7 @@ class SnapshotStore:
         aggregate_id: str,
         aggregate_type: str,
         state_data: dict[str, Any],
-        created_by: Optional[str] = None,
+        created_by: str | None = None,
         force: bool = False,
     ) -> str:
         """
@@ -279,15 +251,15 @@ class SnapshotStore:
 
         # Serialize and optionally compress data
         serialized_data = json.dumps(state_data, default=str)
-        original_size = len(serialized_data.encode('utf-8'))
+        original_size = len(serialized_data.encode("utf-8"))
 
         snapshot_data = state_data
         is_compressed = False
         compressed_size = original_size
 
         if (
-            self.config.enable_compression and
-            original_size > self.config.compression_threshold_bytes
+            self.config.enable_compression
+            and original_size > self.config.compression_threshold_bytes
         ):
             try:
                 compressed_data = self._compress_data(serialized_data)
@@ -332,7 +304,9 @@ class SnapshotStore:
             "is_compressed": is_compressed,
             "original_size_bytes": original_size,
             "compressed_size_bytes": compressed_size,
-            "compression_ratio": compressed_size / original_size if original_size > 0 else 1.0,
+            "compression_ratio": compressed_size / original_size
+            if original_size > 0
+            else 1.0,
             "checksum": checksum,
         }
 
@@ -358,7 +332,7 @@ class SnapshotStore:
         self,
         aggregate_id: str,
         validate: bool = True,
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Get the latest snapshot for an aggregate.
 
@@ -408,8 +382,7 @@ class SnapshotStore:
         else:
             # Remove metadata keys from actual data
             actual_data = {
-                k: v for k, v in snapshot_data.items()
-                if not k.startswith("_")
+                k: v for k, v in snapshot_data.items() if not k.startswith("_")
             }
 
         return {
@@ -427,7 +400,7 @@ class SnapshotStore:
         self,
         aggregate_id: str,
         include_events_after_snapshot: bool = True,
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Restore aggregate state from latest snapshot with incremental replay.
 
@@ -446,9 +419,7 @@ class SnapshotStore:
             # With snapshot: Restore snapshot + replay 100 events (fast)
         """
         # Get latest snapshot
-        snapshot_result = await self.get_latest_snapshot(
-            aggregate_id, validate=True
-        )
+        snapshot_result = await self.get_latest_snapshot(aggregate_id, validate=True)
 
         if not snapshot_result:
             logger.debug(f"No snapshot found for aggregate {aggregate_id}")
@@ -487,13 +458,15 @@ class SnapshotStore:
             "restored_from_snapshot": snapshot_result["snapshot_id"],
             "snapshot_version": snapshot_version,
             "current_state": state,
-            "events_replayed": len(events_after_snapshot) if include_events_after_snapshot else 0,
+            "events_replayed": len(events_after_snapshot)
+            if include_events_after_snapshot
+            else 0,
         }
 
     async def get_snapshot_by_id(
         self,
         snapshot_id: str,
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Get a specific snapshot by ID.
 
@@ -504,9 +477,7 @@ class SnapshotStore:
             Snapshot data or None if not found
         """
         snapshot = (
-            self.db.query(EventSnapshot)
-            .filter(EventSnapshot.id == snapshot_id)
-            .first()
+            self.db.query(EventSnapshot).filter(EventSnapshot.id == snapshot_id).first()
         )
 
         if not snapshot:
@@ -517,7 +488,7 @@ class SnapshotStore:
     async def get_latest_snapshot_metadata(
         self,
         aggregate_id: str,
-    ) -> Optional[SnapshotMetadata]:
+    ) -> SnapshotMetadata | None:
         """
         Get metadata for the latest snapshot without loading data.
 
@@ -585,9 +556,7 @@ class SnapshotStore:
 
         # Get snapshot
         snapshot = (
-            self.db.query(EventSnapshot)
-            .filter(EventSnapshot.id == snapshot_id)
-            .first()
+            self.db.query(EventSnapshot).filter(EventSnapshot.id == snapshot_id).first()
         )
 
         if not snapshot:
@@ -641,8 +610,7 @@ class SnapshotStore:
                 else:
                     # Remove metadata for checksum calculation
                     actual_data = {
-                        k: v for k, v in snapshot_data.items()
-                        if not k.startswith("_")
+                        k: v for k, v in snapshot_data.items() if not k.startswith("_")
                     }
                     calculated_checksum = self._calculate_checksum(
                         json.dumps(actual_data, default=str)
@@ -691,9 +659,7 @@ class SnapshotStore:
             True if deleted, False if not found
         """
         snapshot = (
-            self.db.query(EventSnapshot)
-            .filter(EventSnapshot.id == snapshot_id)
-            .first()
+            self.db.query(EventSnapshot).filter(EventSnapshot.id == snapshot_id).first()
         )
 
         if not snapshot:
@@ -724,8 +690,8 @@ class SnapshotStore:
 
     async def get_snapshot_statistics(
         self,
-        aggregate_id: Optional[str] = None,
-        aggregate_type: Optional[str] = None,
+        aggregate_id: str | None = None,
+        aggregate_type: str | None = None,
     ) -> dict[str, Any]:
         """
         Get statistics about snapshots.
@@ -759,23 +725,29 @@ class SnapshotStore:
         oldest_snapshot = query.order_by(EventSnapshot.snapshot_timestamp).first()
         newest_snapshot = query.order_by(desc(EventSnapshot.snapshot_timestamp)).first()
 
-        avg_events = self.db.query(
-            func.avg(EventSnapshot.event_count)
-        ).filter(
-            query.whereclause if hasattr(query, 'whereclause') else True
-        ).scalar() or 0.0
+        avg_events = (
+            self.db.query(func.avg(EventSnapshot.event_count))
+            .filter(query.whereclause if hasattr(query, "whereclause") else True)
+            .scalar()
+            or 0.0
+        )
 
-        unique_aggregates = self.db.query(
-            func.count(func.distinct(EventSnapshot.aggregate_id))
-        ).filter(
-            query.whereclause if hasattr(query, 'whereclause') else True
-        ).scalar() or 0
+        unique_aggregates = (
+            self.db.query(func.count(func.distinct(EventSnapshot.aggregate_id)))
+            .filter(query.whereclause if hasattr(query, "whereclause") else True)
+            .scalar()
+            or 0
+        )
 
         return {
             "total_snapshots": total_snapshots,
             "aggregates_with_snapshots": unique_aggregates,
-            "oldest_snapshot": oldest_snapshot.snapshot_timestamp if oldest_snapshot else None,
-            "newest_snapshot": newest_snapshot.snapshot_timestamp if newest_snapshot else None,
+            "oldest_snapshot": oldest_snapshot.snapshot_timestamp
+            if oldest_snapshot
+            else None,
+            "newest_snapshot": newest_snapshot.snapshot_timestamp
+            if newest_snapshot
+            else None,
             "average_events_per_snapshot": float(avg_events),
         }
 
@@ -858,7 +830,9 @@ class SnapshotStore:
         )
 
         if len(all_snapshots) > self.config.max_snapshots_per_aggregate:
-            snapshots_to_delete = all_snapshots[self.config.max_snapshots_per_aggregate:]
+            snapshots_to_delete = all_snapshots[
+                self.config.max_snapshots_per_aggregate :
+            ]
             for snapshot in snapshots_to_delete:
                 self.db.delete(snapshot)
                 deleted_count += 1
@@ -880,15 +854,13 @@ class SnapshotStore:
 
         for snapshot in old_snapshots:
             # Don't delete if it's one of the most recent N snapshots
-            if snapshot not in all_snapshots[:self.config.max_snapshots_per_aggregate]:
+            if snapshot not in all_snapshots[: self.config.max_snapshots_per_aggregate]:
                 self.db.delete(snapshot)
                 deleted_count += 1
 
         if deleted_count > 0:
             self.db.commit()
-            logger.info(
-                f"Cleaned up {deleted_count} old snapshots for {aggregate_id}"
-            )
+            logger.info(f"Cleaned up {deleted_count} old snapshots for {aggregate_id}")
 
         return deleted_count
 
@@ -903,8 +875,7 @@ class SnapshotStore:
             Compressed bytes
         """
         return gzip.compress(
-            data.encode('utf-8'),
-            compresslevel=self.config.compression_level
+            data.encode("utf-8"), compresslevel=self.config.compression_level
         )
 
     def _decompress_data(self, data: bytes) -> str:
@@ -917,7 +888,7 @@ class SnapshotStore:
         Returns:
             Decompressed string
         """
-        return gzip.decompress(data).decode('utf-8')
+        return gzip.decompress(data).decode("utf-8")
 
     def _calculate_checksum(self, data: str) -> str:
         """
@@ -929,7 +900,7 @@ class SnapshotStore:
         Returns:
             Hex-encoded checksum
         """
-        return hashlib.sha256(data.encode('utf-8')).hexdigest()
+        return hashlib.sha256(data.encode("utf-8")).hexdigest()
 
     async def _deserialize_snapshot(
         self,
@@ -955,8 +926,7 @@ class SnapshotStore:
         else:
             # Remove metadata keys
             actual_data = {
-                k: v for k, v in snapshot_data.items()
-                if not k.startswith("_")
+                k: v for k, v in snapshot_data.items() if not k.startswith("_")
             }
 
         return {
@@ -976,8 +946,7 @@ class SnapshotStore:
 
 
 def get_snapshot_store(
-    db: Session,
-    config: Optional[SnapshotConfig] = None
+    db: Session, config: SnapshotConfig | None = None
 ) -> SnapshotStore:
     """
     Get SnapshotStore instance.
@@ -1002,8 +971,8 @@ async def auto_snapshot_aggregate(
     aggregate_id: str,
     aggregate_type: str,
     state_data: dict[str, Any],
-    created_by: Optional[str] = None,
-) -> Optional[str]:
+    created_by: str | None = None,
+) -> str | None:
     """
     Automatically create snapshot if needed based on frequency rules.
 
@@ -1038,7 +1007,7 @@ async def auto_snapshot_aggregate(
 
 async def cleanup_all_old_snapshots(
     db: Session,
-    config: Optional[SnapshotConfig] = None,
+    config: SnapshotConfig | None = None,
 ) -> dict[str, Any]:
     """
     Cleanup old snapshots for all aggregates.
@@ -1055,11 +1024,7 @@ async def cleanup_all_old_snapshots(
     snapshot_store = SnapshotStore(db, config)
 
     # Get all unique aggregate IDs
-    unique_aggregates = (
-        db.query(EventSnapshot.aggregate_id)
-        .distinct()
-        .all()
-    )
+    unique_aggregates = db.query(EventSnapshot.aggregate_id).distinct().all()
 
     total_deleted = 0
     aggregates_cleaned = 0

@@ -15,6 +15,7 @@ Usage:
 
     Version history will then include who made each change.
 """
+
 from collections.abc import Callable
 
 from starlette.middleware.base import BaseHTTPMiddleware

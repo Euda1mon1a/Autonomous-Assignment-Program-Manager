@@ -6,8 +6,9 @@ Provides decorators and utilities for defining scheduled jobs.
 
 import functools
 import logging
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -50,12 +51,14 @@ class JobChain:
         Returns:
             Self for method chaining
         """
-        self.jobs.append({
-            "name": name,
-            "func": func,
-            "args": args or [],
-            "kwargs": kwargs or {},
-        })
+        self.jobs.append(
+            {
+                "name": name,
+                "func": func,
+                "args": args or [],
+                "kwargs": kwargs or {},
+            }
+        )
         return self
 
     def execute(self) -> Any:
@@ -159,6 +162,7 @@ def get_job_function(func_path: str) -> Callable:
 
 # Example job functions that can be scheduled
 
+
 @scheduled_job(name="heartbeat", description="Scheduler heartbeat check")
 def heartbeat_job() -> dict[str, Any]:
     """
@@ -174,7 +178,9 @@ def heartbeat_job() -> dict[str, Any]:
     }
 
 
-@scheduled_job(name="cleanup_executions", description="Clean up old job execution records")
+@scheduled_job(
+    name="cleanup_executions", description="Clean up old job execution records"
+)
 def cleanup_old_executions(retention_days: int = 90) -> dict[str, Any]:
     """
     Clean up old job execution records.
@@ -196,9 +202,11 @@ def cleanup_old_executions(retention_days: int = 90) -> dict[str, Any]:
     db = SessionLocal()
     try:
         # Delete old execution records
-        result = db.query(JobExecution).filter(
-            JobExecution.started_at < cutoff_date
-        ).delete()
+        result = (
+            db.query(JobExecution)
+            .filter(JobExecution.started_at < cutoff_date)
+            .delete()
+        )
         db.commit()
         deleted_count = result
 

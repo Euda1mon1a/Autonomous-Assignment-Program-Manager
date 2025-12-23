@@ -13,7 +13,6 @@ Example output shows:
 """
 
 import statistics
-from typing import List
 
 
 def calculate_process_capability_manual_demo():
@@ -43,7 +42,7 @@ def calculate_process_capability_manual_demo():
     mean = statistics.mean(weekly_hours)
     std_dev = statistics.stdev(weekly_hours)
 
-    print(f"Basic Statistics:")
+    print("Basic Statistics:")
     print(f"  Mean (μ) = {mean:.2f} hours")
     print(f"  Standard Deviation (σ) = {std_dev:.2f} hours")
     print()
@@ -52,11 +51,11 @@ def calculate_process_capability_manual_demo():
     # Cp = (USL - LSL) / (6σ)
     cp = (USL - LSL) / (6 * std_dev)
 
-    print(f"Cp (Process Capability):")
-    print(f"  Formula: Cp = (USL - LSL) / (6σ)")
+    print("Cp (Process Capability):")
+    print("  Formula: Cp = (USL - LSL) / (6σ)")
     print(f"  Calculation: ({USL} - {LSL}) / (6 × {std_dev:.2f})")
     print(f"  Cp = {cp:.3f}")
-    print(f"  → This tells us the POTENTIAL capability (if process were centered)")
+    print("  → This tells us the POTENTIAL capability (if process were centered)")
     print()
 
     # Calculate Cpk (Process Capability accounting for centering)
@@ -65,11 +64,15 @@ def calculate_process_capability_manual_demo():
     cpl = (mean - LSL) / (3 * std_dev)  # Lower capability
     cpk = min(cpu, cpl)
 
-    print(f"Cpk (Process Capability with centering):")
-    print(f"  CPU = (USL - μ) / (3σ) = ({USL} - {mean:.2f}) / (3 × {std_dev:.2f}) = {cpu:.3f}")
-    print(f"  CPL = (μ - LSL) / (3σ) = ({mean:.2f} - {LSL}) / (3 × {std_dev:.2f}) = {cpl:.3f}")
+    print("Cpk (Process Capability with centering):")
+    print(
+        f"  CPU = (USL - μ) / (3σ) = ({USL} - {mean:.2f}) / (3 × {std_dev:.2f}) = {cpu:.3f}"
+    )
+    print(
+        f"  CPL = (μ - LSL) / (3σ) = ({mean:.2f} - {LSL}) / (3 × {std_dev:.2f}) = {cpl:.3f}"
+    )
     print(f"  Cpk = min(CPU, CPL) = {cpk:.3f}")
-    print(f"  → This tells us the ACTUAL capability")
+    print("  → This tells us the ACTUAL capability")
     print()
 
     # Interpret Cpk
@@ -86,7 +89,7 @@ def calculate_process_capability_manual_demo():
     else:
         classification = "INCAPABLE (defects expected)"
 
-    print(f"Interpretation:")
+    print("Interpretation:")
     print(f"  Sigma Level ≈ 3 × Cpk = {sigma_level:.2f}σ")
     print(f"  Classification: {classification}")
     print()
@@ -97,11 +100,15 @@ def calculate_process_capability_manual_demo():
     adjusted_std = (std_dev**2 + deviation_from_target**2) ** 0.5
     cpm = (USL - LSL) / (6 * adjusted_std)
 
-    print(f"Cpm (Taguchi Index - penalizes off-target):")
-    print(f"  Deviation from target = μ - T = {mean:.2f} - {TARGET:.2f} = {deviation_from_target:.2f}")
-    print(f"  Adjusted σ = √(σ² + (μ-T)²) = √({std_dev:.2f}² + {deviation_from_target:.2f}²) = {adjusted_std:.2f}")
+    print("Cpm (Taguchi Index - penalizes off-target):")
+    print(
+        f"  Deviation from target = μ - T = {mean:.2f} - {TARGET:.2f} = {deviation_from_target:.2f}"
+    )
+    print(
+        f"  Adjusted σ = √(σ² + (μ-T)²) = √({std_dev:.2f}² + {deviation_from_target:.2f}²) = {adjusted_std:.2f}"
+    )
     print(f"  Cpm = (USL - LSL) / (6 × adjusted σ) = {cpm:.3f}")
-    print(f"  → Cpm < Cp means process is off-target")
+    print("  → Cpm < Cp means process is off-target")
     print()
 
 
@@ -114,14 +121,50 @@ def demonstrate_good_vs_poor_scheduling():
 
     # Good scheduling: tight control, well-centered
     good_schedule = [
-        60, 62, 58, 61, 59, 63, 60, 61, 59, 62,
-        60, 61, 59, 62, 60, 61, 58, 63, 60, 61
+        60,
+        62,
+        58,
+        61,
+        59,
+        63,
+        60,
+        61,
+        59,
+        62,
+        60,
+        61,
+        59,
+        62,
+        60,
+        61,
+        58,
+        63,
+        60,
+        61,
     ]
 
     # Poor scheduling: high variation, off-center
     poor_schedule = [
-        45, 75, 50, 78, 48, 72, 55, 70, 50, 75,
-        48, 73, 52, 71, 49, 74, 51, 72, 50, 76
+        45,
+        75,
+        50,
+        78,
+        48,
+        72,
+        55,
+        70,
+        50,
+        75,
+        48,
+        73,
+        52,
+        71,
+        49,
+        74,
+        51,
+        72,
+        50,
+        76,
     ]
 
     LSL, USL = 40.0, 80.0
@@ -132,15 +175,14 @@ def demonstrate_good_vs_poor_scheduling():
     good_mean = statistics.mean(good_schedule)
     good_std = statistics.stdev(good_schedule)
     good_cpk = min(
-        (USL - good_mean) / (3 * good_std),
-        (good_mean - LSL) / (3 * good_std)
+        (USL - good_mean) / (3 * good_std), (good_mean - LSL) / (3 * good_std)
     )
     good_sigma = 3.0 * good_cpk
 
     print(f"  Mean: {good_mean:.1f}, Std Dev: {good_std:.1f}")
     print(f"  Cpk: {good_cpk:.3f}")
     print(f"  Sigma: {good_sigma:.1f}σ")
-    print(f"  Status: EXCELLENT - Consistently balanced workload")
+    print("  Status: EXCELLENT - Consistently balanced workload")
     print()
 
     # Analyze poor schedule
@@ -149,21 +191,22 @@ def demonstrate_good_vs_poor_scheduling():
     poor_mean = statistics.mean(poor_schedule)
     poor_std = statistics.stdev(poor_schedule)
     poor_cpk = min(
-        (USL - poor_mean) / (3 * poor_std),
-        (poor_mean - LSL) / (3 * poor_std)
+        (USL - poor_mean) / (3 * poor_std), (poor_mean - LSL) / (3 * poor_std)
     )
     poor_sigma = 3.0 * poor_cpk
 
     print(f"  Mean: {poor_mean:.1f}, Std Dev: {poor_std:.1f}")
     print(f"  Cpk: {poor_cpk:.3f}")
     print(f"  Sigma: {poor_sigma:.1f}σ")
-    print(f"  Status: INCAPABLE - Erratic workload, burnout risk")
+    print("  Status: INCAPABLE - Erratic workload, burnout risk")
     print()
 
-    print(f"IMPACT:")
-    print(f"  Good scheduling has {good_std/poor_std:.0%} the variation of poor scheduling")
-    print(f"  Good scheduling is {good_cpk/poor_cpk:.1f}x more capable")
-    print(f"  Poor scheduling has {(poor_std/good_std)**2:.1f}x more variance")
+    print("IMPACT:")
+    print(
+        f"  Good scheduling has {good_std / poor_std:.0%} the variation of poor scheduling"
+    )
+    print(f"  Good scheduling is {good_cpk / poor_cpk:.1f}x more capable")
+    print(f"  Poor scheduling has {(poor_std / good_std) ** 2:.1f}x more variance")
     print()
 
 
@@ -204,12 +247,9 @@ def demonstrate_acgme_monitoring():
     std_dev = statistics.stdev(hours_data)
 
     LSL, USL = 40.0, 80.0
-    cpk = min(
-        (USL - mean) / (3 * std_dev),
-        (mean - LSL) / (3 * std_dev)
-    )
+    cpk = min((USL - mean) / (3 * std_dev), (mean - LSL) / (3 * std_dev))
 
-    print(f"Process Capability Analysis:")
+    print("Process Capability Analysis:")
     print(f"  Mean: {mean:.1f} hours/week")
     print(f"  Std Dev: {std_dev:.1f} hours")
     print(f"  Cpk: {cpk:.3f}")
@@ -229,9 +269,11 @@ def demonstrate_acgme_monitoring():
         recommendation = "Marginal. Tighten schedule controls to reduce variation."
     else:
         risk = "HIGH (>0.27%)"
-        recommendation = "URGENT: High risk of ACGME violations. Review scheduling process."
+        recommendation = (
+            "URGENT: High risk of ACGME violations. Review scheduling process."
+        )
 
-    print(f"Risk Assessment:")
+    print("Risk Assessment:")
     print(f"  Risk of exceeding 80 hours: {risk}")
     print(f"  Recommendation: {recommendation}")
     print()
@@ -255,8 +297,10 @@ def demonstrate_practical_use_case():
 
     LSL, USL = 40.0, 80.0
 
-    for name, hours in [("Algorithm A (Round-Robin)", algo_a_hours),
-                         ("Algorithm B (Load-Balanced)", algo_b_hours)]:
+    for name, hours in [
+        ("Algorithm A (Round-Robin)", algo_a_hours),
+        ("Algorithm B (Load-Balanced)", algo_b_hours),
+    ]:
         print(f"{name}:")
         mean = statistics.mean(hours)
         std = statistics.stdev(hours)
@@ -283,10 +327,10 @@ def demonstrate_practical_use_case():
 
 def main():
     """Run all demonstrations."""
-    print("\n" + "="*80)
-    print(" "*20 + "SIX SIGMA PROCESS CAPABILITY ANALYSIS")
-    print(" "*25 + "Schedule Quality Metrics Demo")
-    print("="*80)
+    print("\n" + "=" * 80)
+    print(" " * 20 + "SIX SIGMA PROCESS CAPABILITY ANALYSIS")
+    print(" " * 25 + "Schedule Quality Metrics Demo")
+    print("=" * 80)
     print()
 
     calculate_process_capability_manual_demo()

@@ -46,30 +46,9 @@ Features:
 """
 
 # Core cache classes
-from app.core.cache.redis_cache import (
-    CacheEntry,
-    CacheStats,
-    MultiLevelCache,
-    get_cache,
-)
-
-# Cache key generators
-from app.core.cache.keys import (
-    CacheKeyGenerator,
-    generate_cache_key,
-    generate_stats_key,
-    generate_tag_key,
-)
-
-# Invalidation strategies
-from app.core.cache.strategies import (
-    InvalidationStrategy,
-    InvalidationTrigger,
-    PatternStrategy,
-    TagBasedStrategy,
-    TTLStrategy,
-    WriteThroughStrategy,
-)
+# Compatibility exports for cache.py classes
+# These mirror the classes from the standalone cache.py file
+from enum import Enum
 
 # Decorators
 from app.core.cache.decorators import (
@@ -82,17 +61,37 @@ from app.core.cache.decorators import (
     write_through,
 )
 
+# Cache key generators
+from app.core.cache.keys import (
+    CacheKeyGenerator,
+    generate_cache_key,
+    generate_stats_key,
+    generate_tag_key,
+)
+from app.core.cache.redis_cache import (
+    CacheEntry,
+    CacheStats,
+    MultiLevelCache,
+    get_cache,
+)
+
+# Invalidation strategies
+from app.core.cache.strategies import (
+    InvalidationStrategy,
+    InvalidationTrigger,
+    PatternStrategy,
+    TagBasedStrategy,
+    TTLStrategy,
+    WriteThroughStrategy,
+)
+
 # Utility functions
 from app.core.cache.utils import invalidate_schedule_cache
 
 
-# Compatibility exports for cache.py classes
-# These mirror the classes from the standalone cache.py file
-from enum import Enum
-
-
 class CachePrefix(str, Enum):
     """Cache key prefixes for different data types."""
+
     HEATMAP = "heatmap"
     CALENDAR = "calendar"
     ASSIGNMENTS = "assignments"
@@ -107,6 +106,7 @@ class CachePrefix(str, Enum):
 
 class CacheTTL:
     """Standard TTL values for different cache types."""
+
     SHORT = 300  # 5 minutes
     MEDIUM = 1800  # 30 minutes
     LONG = 3600  # 1 hour

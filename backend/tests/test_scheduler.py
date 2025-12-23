@@ -9,24 +9,21 @@ Tests the scheduler functionality including:
 - API endpoints
 """
 
-import pytest
 from datetime import datetime, timedelta
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.models.scheduled_job import JobExecution, ScheduledJob
-from app.models.user import User
-from app.scheduler.jobs import JobChain, scheduled_job, get_job_function
+from app.scheduler.jobs import JobChain, get_job_function, scheduled_job
 from app.scheduler.persistence import JobPersistence
 from app.scheduler.triggers import (
     CronTriggerConfig,
-    IntervalTriggerConfig,
     DateTriggerConfig,
+    IntervalTriggerConfig,
     create_trigger,
 )
-
 
 # ============================================================================
 # Trigger Tests
@@ -38,22 +35,14 @@ class TestTriggers:
 
     def test_cron_trigger_config(self):
         """Test cron trigger configuration."""
-        config = CronTriggerConfig(
-            hour=3,
-            minute=0,
-            timezone="UTC"
-        )
+        config = CronTriggerConfig(hour=3, minute=0, timezone="UTC")
 
         trigger = config.to_apscheduler_trigger()
         assert trigger is not None
 
     def test_interval_trigger_config(self):
         """Test interval trigger configuration."""
-        config = IntervalTriggerConfig(
-            hours=2,
-            minutes=30,
-            timezone="UTC"
-        )
+        config = IntervalTriggerConfig(hours=2, minutes=30, timezone="UTC")
 
         trigger = config.to_apscheduler_trigger()
         assert trigger is not None
@@ -66,37 +55,25 @@ class TestTriggers:
     def test_date_trigger_config(self):
         """Test date trigger configuration."""
         run_date = datetime.utcnow() + timedelta(hours=1)
-        config = DateTriggerConfig(
-            run_date=run_date,
-            timezone="UTC"
-        )
+        config = DateTriggerConfig(run_date=run_date, timezone="UTC")
 
         trigger = config.to_apscheduler_trigger()
         assert trigger is not None
 
     def test_create_trigger_cron(self):
         """Test creating cron trigger from dict."""
-        trigger = create_trigger(
-            "cron",
-            {"hour": 3, "minute": 0}
-        )
+        trigger = create_trigger("cron", {"hour": 3, "minute": 0})
         assert trigger is not None
 
     def test_create_trigger_interval(self):
         """Test creating interval trigger from dict."""
-        trigger = create_trigger(
-            "interval",
-            {"hours": 2}
-        )
+        trigger = create_trigger("interval", {"hours": 2})
         assert trigger is not None
 
     def test_create_trigger_date(self):
         """Test creating date trigger from dict."""
         run_date = datetime.utcnow() + timedelta(hours=1)
-        trigger = create_trigger(
-            "date",
-            {"run_date": run_date}
-        )
+        trigger = create_trigger("date", {"run_date": run_date})
         assert trigger is not None
 
     def test_create_trigger_invalid_type(self):
@@ -115,6 +92,7 @@ class TestJobDecorator:
 
     def test_scheduled_job_decorator(self):
         """Test scheduled job decorator adds metadata."""
+
         @scheduled_job(name="test_job", description="Test job", max_instances=2)
         def test_func():
             return "test"
@@ -127,6 +105,7 @@ class TestJobDecorator:
 
     def test_scheduled_job_default_name(self):
         """Test scheduled job decorator uses function name by default."""
+
         @scheduled_job()
         def my_custom_job():
             return "test"
@@ -154,6 +133,7 @@ class TestJobChain:
 
     def test_job_chain_add_job(self):
         """Test adding jobs to chain."""
+
         def job1():
             return 1
 
@@ -170,6 +150,7 @@ class TestJobChain:
 
     def test_job_chain_execution(self):
         """Test executing a job chain."""
+
         def add_one(x=0):
             return x + 1
 
@@ -185,6 +166,7 @@ class TestJobChain:
 
     def test_job_chain_failure(self):
         """Test job chain stops on failure."""
+
         def failing_job():
             raise ValueError("Job failed")
 
@@ -391,10 +373,7 @@ class TestJobPersistence:
             scheduled_run_time=datetime.utcnow(),
         )
 
-        persistence.record_execution_success(
-            execution.id,
-            result={"status": "ok"}
-        )
+        persistence.record_execution_success(execution.id, result={"status": "ok"})
 
         db.refresh(execution)
         assert execution.status == "success"
@@ -419,9 +398,7 @@ class TestJobPersistence:
         )
 
         persistence.record_execution_failure(
-            execution.id,
-            error="Test error",
-            traceback="Test traceback"
+            execution.id, error="Test error", traceback="Test traceback"
         )
 
         db.refresh(execution)
@@ -480,15 +457,12 @@ class TestSchedulerAPI:
                 "job_func": "app.scheduler.jobs.heartbeat_job",
                 "trigger_type": "cron",
                 "trigger_config": {"hour": 3},
-            }
+            },
         )
         assert response.status_code == 401
 
     def test_create_job_success(
-        self,
-        client: TestClient,
-        auth_headers: dict,
-        db: Session
+        self, client: TestClient, auth_headers: dict, db: Session
     ):
         """Test creating job with valid data."""
         response = client.post(
@@ -499,8 +473,8 @@ class TestSchedulerAPI:
                 "job_func": "app.scheduler.jobs.heartbeat_job",
                 "trigger_type": "cron",
                 "trigger_config": {"hour": 3, "minute": 0},
-                "description": "Test job"
-            }
+                "description": "Test job",
+            },
         )
 
         assert response.status_code == 201
@@ -509,11 +483,7 @@ class TestSchedulerAPI:
         assert data["trigger_type"] == "cron"
         assert data["enabled"] is True
 
-    def test_create_job_invalid_trigger(
-        self,
-        client: TestClient,
-        auth_headers: dict
-    ):
+    def test_create_job_invalid_trigger(self, client: TestClient, auth_headers: dict):
         """Test creating job with invalid trigger config."""
         response = client.post(
             "/api/v1/scheduler/jobs",
@@ -523,17 +493,12 @@ class TestSchedulerAPI:
                 "job_func": "app.scheduler.jobs.heartbeat_job",
                 "trigger_type": "invalid",
                 "trigger_config": {"hour": 3},
-            }
+            },
         )
 
         assert response.status_code == 422
 
-    def test_list_jobs(
-        self,
-        client: TestClient,
-        auth_headers: dict,
-        db: Session
-    ):
+    def test_list_jobs(self, client: TestClient, auth_headers: dict, db: Session):
         """Test listing all jobs."""
         # Create a job first
         persistence = JobPersistence(db)
@@ -544,21 +509,13 @@ class TestSchedulerAPI:
             trigger_config={"hour": 3},
         )
 
-        response = client.get(
-            "/api/v1/scheduler/jobs",
-            headers=auth_headers
-        )
+        response = client.get("/api/v1/scheduler/jobs", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
         assert data["total"] >= 1
 
-    def test_get_job(
-        self,
-        client: TestClient,
-        auth_headers: dict,
-        db: Session
-    ):
+    def test_get_job(self, client: TestClient, auth_headers: dict, db: Session):
         """Test getting a specific job."""
         persistence = JobPersistence(db)
         job = persistence.create_job(
@@ -568,34 +525,19 @@ class TestSchedulerAPI:
             trigger_config={"hour": 3},
         )
 
-        response = client.get(
-            f"/api/v1/scheduler/jobs/{job.id}",
-            headers=auth_headers
-        )
+        response = client.get(f"/api/v1/scheduler/jobs/{job.id}", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "test_job"
 
-    def test_get_nonexistent_job(
-        self,
-        client: TestClient,
-        auth_headers: dict
-    ):
+    def test_get_nonexistent_job(self, client: TestClient, auth_headers: dict):
         """Test getting a nonexistent job returns 404."""
-        response = client.get(
-            f"/api/v1/scheduler/jobs/{uuid4()}",
-            headers=auth_headers
-        )
+        response = client.get(f"/api/v1/scheduler/jobs/{uuid4()}", headers=auth_headers)
 
         assert response.status_code == 404
 
-    def test_update_job(
-        self,
-        client: TestClient,
-        auth_headers: dict,
-        db: Session
-    ):
+    def test_update_job(self, client: TestClient, auth_headers: dict, db: Session):
         """Test updating a job."""
         persistence = JobPersistence(db)
         job = persistence.create_job(
@@ -603,25 +545,20 @@ class TestSchedulerAPI:
             job_func="app.scheduler.jobs.heartbeat_job",
             trigger_type="cron",
             trigger_config={"hour": 3},
-            description="Original"
+            description="Original",
         )
 
         response = client.patch(
             f"/api/v1/scheduler/jobs/{job.id}",
             headers=auth_headers,
-            json={"description": "Updated"}
+            json={"description": "Updated"},
         )
 
         assert response.status_code == 200
         data = response.json()
         assert data["description"] == "Updated"
 
-    def test_delete_job(
-        self,
-        client: TestClient,
-        auth_headers: dict,
-        db: Session
-    ):
+    def test_delete_job(self, client: TestClient, auth_headers: dict, db: Session):
         """Test deleting a job."""
         persistence = JobPersistence(db)
         job = persistence.create_job(
@@ -632,8 +569,7 @@ class TestSchedulerAPI:
         )
 
         response = client.delete(
-            f"/api/v1/scheduler/jobs/{job.id}",
-            headers=auth_headers
+            f"/api/v1/scheduler/jobs/{job.id}", headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -641,10 +577,7 @@ class TestSchedulerAPI:
         assert data["success"] is True
 
     def test_get_job_statistics(
-        self,
-        client: TestClient,
-        auth_headers: dict,
-        db: Session
+        self, client: TestClient, auth_headers: dict, db: Session
     ):
         """Test getting job statistics."""
         persistence = JobPersistence(db)
@@ -656,8 +589,7 @@ class TestSchedulerAPI:
         )
 
         response = client.get(
-            f"/api/v1/scheduler/jobs/{job.id}/statistics",
-            headers=auth_headers
+            f"/api/v1/scheduler/jobs/{job.id}/statistics", headers=auth_headers
         )
 
         assert response.status_code == 200

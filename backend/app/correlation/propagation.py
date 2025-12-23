@@ -11,7 +11,8 @@ Provides tools to propagate correlation context to:
 
 import functools
 import logging
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from app.correlation.context import (
     CorrelationContext,
@@ -181,7 +182,7 @@ class HTTPClientPropagation:
                 return response
     """
 
-    def get_correlation_headers(self, base_headers: Optional[dict] = None) -> dict:
+    def get_correlation_headers(self, base_headers: dict | None = None) -> dict:
         """
         Get headers with correlation context merged.
 
@@ -216,7 +217,7 @@ class CorrelatedHTTPXClient:
         import httpx
 
         self.client_kwargs = client_kwargs
-        self.client: Optional[httpx.AsyncClient] = None
+        self.client: httpx.AsyncClient | None = None
 
     async def __aenter__(self):
         """Enter async context manager."""
@@ -243,7 +244,9 @@ class CorrelatedHTTPXClient:
             Response from httpx
         """
         if not self.client:
-            raise RuntimeError("Client not initialized. Use 'async with' context manager.")
+            raise RuntimeError(
+                "Client not initialized. Use 'async with' context manager."
+            )
 
         # Merge correlation headers
         headers = kwargs.pop("headers", {})

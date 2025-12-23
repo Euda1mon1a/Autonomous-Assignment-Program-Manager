@@ -16,23 +16,25 @@ Then rerun the loop and compare:
 This becomes your regression suite for autonomy.
 """
 
+import logging
+import random
+import time
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from enum import Enum
 from typing import Any
-import random
-import time
-import logging
 
 from sqlalchemy.orm import Session
 
-from app.models.absence import Absence
-from app.models.block import Block
-from app.models.person import Person
-from app.autonomous.evaluator import ScheduleEvaluator, EvaluationResult
-from app.autonomous.generator import CandidateGenerator, GeneratorConfig, ScheduleCandidate
+from app.autonomous.evaluator import EvaluationResult, ScheduleEvaluator
+from app.autonomous.generator import (
+    CandidateGenerator,
+    GeneratorConfig,
+    ScheduleCandidate,
+)
 from app.autonomous.state import GeneratorParams
-
+from app.models.absence import Absence
+from app.models.person import Person
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +157,9 @@ class HarnessResult:
             "failed_scenarios": self.failed_scenarios,
             "pass_rate": self.pass_rate(),
             "avg_score_degradation": self.avg_score_degradation,
-            "worst_scenario": self.worst_scenario.to_dict() if self.worst_scenario else None,
+            "worst_scenario": self.worst_scenario.to_dict()
+            if self.worst_scenario
+            else None,
             "scenario_results": [r.to_dict() for r in self.scenario_results],
             "total_time": self.total_time,
         }
@@ -215,11 +219,13 @@ class ResilienceHarness:
         scenarios = []
 
         # Baseline (no changes)
-        scenarios.append(AdversarialScenario(
-            type=ScenarioType.BASELINE,
-            name="Baseline",
-            description="No adversarial changes",
-        ))
+        scenarios.append(
+            AdversarialScenario(
+                type=ScenarioType.BASELINE,
+                name="Baseline",
+                description="No adversarial changes",
+            )
+        )
 
         # Get people for targeted scenarios
         faculty = self.db.query(Person).filter(Person.type == "faculty").all()
@@ -227,60 +233,70 @@ class ResilienceHarness:
 
         # N-1: Remove each faculty member
         for fac in faculty[:3]:  # Test first 3 to limit runtime
-            scenarios.append(AdversarialScenario(
-                type=ScenarioType.REMOVE_FACULTY,
-                name=f"Remove faculty: {fac.name[:20]}",
-                description=f"Test resilience to loss of {fac.name}",
-                params={"person_id": str(fac.id), "person_name": fac.name},
-            ))
+            scenarios.append(
+                AdversarialScenario(
+                    type=ScenarioType.REMOVE_FACULTY,
+                    name=f"Remove faculty: {fac.name[:20]}",
+                    description=f"Test resilience to loss of {fac.name}",
+                    params={"person_id": str(fac.id), "person_name": fac.name},
+                )
+            )
 
         # N-1: Remove each resident
         for res in residents[:3]:
-            scenarios.append(AdversarialScenario(
-                type=ScenarioType.REMOVE_RESIDENT,
-                name=f"Remove resident: {res.name[:20]}",
-                description=f"Test resilience to loss of {res.name}",
-                params={"person_id": str(res.id), "person_name": res.name},
-            ))
+            scenarios.append(
+                AdversarialScenario(
+                    type=ScenarioType.REMOVE_RESIDENT,
+                    name=f"Remove resident: {res.name[:20]}",
+                    description=f"Test resilience to loss of {res.name}",
+                    params={"person_id": str(res.id), "person_name": res.name},
+                )
+            )
 
         # Unexpected leave (random person, random week)
         if faculty:
             random_faculty = random.choice(faculty)
             leave_start = self.start_date + timedelta(days=random.randint(0, 14))
-            scenarios.append(AdversarialScenario(
-                type=ScenarioType.UNEXPECTED_LEAVE,
-                name="Unexpected 1-week leave",
-                description=f"Unexpected absence for {random_faculty.name}",
-                params={
-                    "person_id": str(random_faculty.id),
-                    "person_name": random_faculty.name,
-                    "leave_start": leave_start.isoformat(),
-                    "leave_days": 7,
-                },
-            ))
+            scenarios.append(
+                AdversarialScenario(
+                    type=ScenarioType.UNEXPECTED_LEAVE,
+                    name="Unexpected 1-week leave",
+                    description=f"Unexpected absence for {random_faculty.name}",
+                    params={
+                        "person_id": str(random_faculty.id),
+                        "person_name": random_faculty.name,
+                        "leave_start": leave_start.isoformat(),
+                        "leave_days": 7,
+                    },
+                )
+            )
 
         # Holiday staffing shock (reduced capacity for period)
-        scenarios.append(AdversarialScenario(
-            type=ScenarioType.HOLIDAY_SHOCK,
-            name="Holiday skeleton staff",
-            description="50% capacity reduction for 1 week",
-            params={
-                "reduction_percent": 50,
-                "duration_days": 7,
-            },
-        ))
+        scenarios.append(
+            AdversarialScenario(
+                type=ScenarioType.HOLIDAY_SHOCK,
+                name="Holiday skeleton staff",
+                description="50% capacity reduction for 1 week",
+                params={
+                    "reduction_percent": 50,
+                    "duration_days": 7,
+                },
+            )
+        )
 
         # Multiple simultaneous absences
         if len(faculty) >= 2:
-            scenarios.append(AdversarialScenario(
-                type=ScenarioType.MULTIPLE_ABSENCE,
-                name="Two faculty out",
-                description="Two faculty members unavailable simultaneously",
-                params={
-                    "person_ids": [str(f.id) for f in faculty[:2]],
-                    "person_names": [f.name for f in faculty[:2]],
-                },
-            ))
+            scenarios.append(
+                AdversarialScenario(
+                    type=ScenarioType.MULTIPLE_ABSENCE,
+                    name="Two faculty out",
+                    description="Two faculty members unavailable simultaneously",
+                    params={
+                        "person_ids": [str(f.id) for f in faculty[:2]],
+                        "person_names": [f.name for f in faculty[:2]],
+                    },
+                )
+            )
 
         return scenarios
 
@@ -335,7 +351,9 @@ class ResilienceHarness:
                 )
 
                 # Track best
-                if best_evaluation is None or evaluation.is_better_than(best_evaluation):
+                if best_evaluation is None or evaluation.is_better_than(
+                    best_evaluation
+                ):
                     best_candidate = candidate
                     best_evaluation = evaluation
 
@@ -442,8 +460,7 @@ class ResilienceHarness:
         passed = sum(1 for r in results if r.feasible)
         failed = len(results) - passed
         avg_degradation = (
-            sum(r.score_degradation for r in results) / len(results)
-            if results else 0.0
+            sum(r.score_degradation for r in results) / len(results) if results else 0.0
         )
 
         # Find worst scenario
@@ -505,7 +522,9 @@ class ResilienceHarness:
 
         elif scenario.type == ScenarioType.UNEXPECTED_LEAVE:
             person_id = scenario.params.get("person_id")
-            leave_start = date.fromisoformat(scenario.params.get("leave_start", self.start_date.isoformat()))
+            leave_start = date.fromisoformat(
+                scenario.params.get("leave_start", self.start_date.isoformat())
+            )
             leave_days = scenario.params.get("leave_days", 7)
             if person_id:
                 absence = Absence(
@@ -540,7 +559,7 @@ class ResilienceHarness:
 
         Rolls back to the savepoint created before applying the scenario.
         """
-        if hasattr(self, '_savepoint') and self._savepoint:
+        if hasattr(self, "_savepoint") and self._savepoint:
             self._savepoint.rollback()
             self._savepoint = None
 

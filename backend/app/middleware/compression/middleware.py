@@ -16,9 +16,9 @@ Features:
 - Compression statistics tracking
 - Graceful fallback on errors
 """
+
 import logging
 import time
-from typing import Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -160,7 +160,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: ASGIApp,
-        config: Optional[CompressionConfig] = None,
+        config: CompressionConfig | None = None,
     ):
         """
         Initialize compression middleware.
@@ -323,7 +323,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
         logger.debug(
             f"Compressed response: "
             f"{original_size}B -> {compressed_size}B "
-            f"({ratio:.2f}x) in {compression_time*1000:.2f}ms "
+            f"({ratio:.2f}x) in {compression_time * 1000:.2f}ms "
             f"using {encoder.encoding}"
         )
 
@@ -333,7 +333,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
 
         return response
 
-    def get_stats(self) -> Optional[dict]:
+    def get_stats(self) -> dict | None:
         """
         Get compression statistics.
 

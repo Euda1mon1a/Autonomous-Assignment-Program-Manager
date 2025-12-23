@@ -50,9 +50,7 @@ class TestAuditRepository:
         repo = AuditRepository(db)
 
         # The assignment creation should have created a version entry
-        entries, total = repo.get_audit_entries(
-            filters={"entity_type": "assignment"}
-        )
+        entries, total = repo.get_audit_entries(filters={"entity_type": "assignment"})
 
         # Note: This might be 0 if Continuum isn't fully configured in test env
         # The test validates the repository can query without errors

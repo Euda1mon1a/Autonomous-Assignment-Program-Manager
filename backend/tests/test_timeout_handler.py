@@ -1,7 +1,6 @@
 """Tests for timeout handler."""
 
 import asyncio
-import time
 
 import pytest
 
@@ -79,10 +78,9 @@ class TestTimeoutHandler:
 
     async def test_nested_timeout_uses_minimum(self):
         """Test nested timeouts use the minimum value."""
-        async with TimeoutHandler(2.0) as outer:
-            async with TimeoutHandler(0.5) as inner:
-                # Inner timeout should be 0.5s (minimum)
-                assert inner.timeout == 0.5
+        async with TimeoutHandler(2.0) as outer, TimeoutHandler(0.5) as inner:
+            # Inner timeout should be 0.5s (minimum)
+            assert inner.timeout == 0.5
 
     async def test_context_variables_set(self):
         """Test that context variables are set correctly."""
@@ -113,6 +111,7 @@ class TestTimeoutWrapper:
 
     async def test_wrapper_success(self):
         """Test successful wrapped operation."""
+
         async def quick_operation():
             await asyncio.sleep(0.1)
             return "success"
@@ -122,6 +121,7 @@ class TestTimeoutWrapper:
 
     async def test_wrapper_timeout(self):
         """Test wrapped operation timeout."""
+
         async def slow_operation():
             await asyncio.sleep(1.0)
             return "too late"
@@ -133,6 +133,7 @@ class TestTimeoutWrapper:
 
     async def test_wrapper_custom_message(self):
         """Test wrapper with custom error message."""
+
         async def slow_operation():
             await asyncio.sleep(1.0)
 
@@ -145,6 +146,7 @@ class TestTimeoutWrapper:
 
     async def test_wrapper_cancellation(self):
         """Test wrapper handles task cancellation."""
+
         async def cancellable_operation():
             try:
                 await asyncio.sleep(10.0)

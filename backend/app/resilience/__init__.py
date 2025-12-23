@@ -30,6 +30,32 @@ Tier 3+ Cross-Disciplinary Concepts:
 """
 
 # Circuit Breaker
+# Tier 1 imports
+from app.resilience.blast_radius import (
+    BlastRadiusManager,
+    BlastRadiusReport,
+    BorrowingPriority,
+    ContainmentLevel,
+    SchedulingZone,
+    ZoneHealthReport,
+    ZoneIncident,
+    ZoneStatus,
+    ZoneType,
+)
+
+# Tier 3+: Cross-Disciplinary imports
+from app.resilience.burnout_epidemiology import (
+    BurnoutEpidemiology,
+    BurnoutSIRModel,
+    BurnoutState,
+    EpiReport,
+)
+from app.resilience.burnout_fire_index import (
+    BurnoutCodeReport,
+    BurnoutDangerRating,
+    DangerClass,
+    FireDangerReport,
+)
 from app.resilience.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerConfig,
@@ -48,25 +74,16 @@ from app.resilience.circuit_breaker import (
     collect_metrics_for_all_breakers,
     get_breaker_from_function,
     get_breaker_name_from_function,
-    get_metrics as get_circuit_breaker_metrics,
     get_registry,
-    setup_metrics as setup_circuit_breaker_metrics,
     setup_registry,
     with_async_circuit_breaker,
     with_circuit_breaker,
 )
-
-# Tier 1 imports
-from app.resilience.blast_radius import (
-    BlastRadiusManager,
-    BlastRadiusReport,
-    BorrowingPriority,
-    ContainmentLevel,
-    SchedulingZone,
-    ZoneHealthReport,
-    ZoneIncident,
-    ZoneStatus,
-    ZoneType,
+from app.resilience.circuit_breaker import (
+    get_metrics as get_circuit_breaker_metrics,
+)
+from app.resilience.circuit_breaker import (
+    setup_metrics as setup_circuit_breaker_metrics,
 )
 
 # Tier 3 imports
@@ -81,19 +98,24 @@ from app.resilience.cognitive_load import (
     DecisionOutcome,
     DecisionQueueStatus,
 )
-from app.resilience.creep_fatigue import (
-    CreepAnalysis,
-    CreepFatigueModel,
-    CreepStage,
-    FatigueCurve,
-)
 from app.resilience.contingency import (
     CascadeSimulation,
     CentralityScore,
     ContingencyAnalyzer,
     VulnerabilityReport,
 )
+from app.resilience.creep_fatigue import (
+    CreepAnalysis,
+    CreepFatigueModel,
+    CreepStage,
+    FatigueCurve,
+)
 from app.resilience.defense_in_depth import DefenseInDepth, DefenseLevel
+from app.resilience.erlang_coverage import (
+    ErlangCCalculator,
+    ErlangMetrics,
+    SpecialistCoverage,
+)
 
 # Tier 2 imports
 from app.resilience.homeostasis import (
@@ -129,39 +151,14 @@ from app.resilience.le_chatelier import (
     StressType,
     SystemStress,
 )
+from app.resilience.process_capability import (
+    ProcessCapabilityReport,
+    ScheduleCapabilityAnalyzer,
+)
 from app.resilience.sacrifice_hierarchy import (
     ActivityCategory,
     LoadSheddingLevel,
     SacrificeHierarchy,
-)
-from app.resilience.spc_monitoring import (
-    SPCAlert,
-    WorkloadControlChart,
-    calculate_control_limits,
-    calculate_process_capability,
-)
-
-# Tier 3+: Cross-Disciplinary imports
-from app.resilience.burnout_epidemiology import (
-    BurnoutEpidemiology,
-    BurnoutSIRModel,
-    BurnoutState,
-    EpiReport,
-)
-from app.resilience.burnout_fire_index import (
-    BurnoutCodeReport,
-    BurnoutDangerRating,
-    DangerClass,
-    FireDangerReport,
-)
-from app.resilience.erlang_coverage import (
-    ErlangCCalculator,
-    ErlangMetrics,
-    SpecialistCoverage,
-)
-from app.resilience.process_capability import (
-    ProcessCapabilityReport,
-    ScheduleCapabilityAnalyzer,
 )
 from app.resilience.seismic_detection import (
     BurnoutEarlyWarning,
@@ -171,6 +168,12 @@ from app.resilience.seismic_detection import (
 
 # Main service
 from app.resilience.service import ResilienceConfig, ResilienceService
+from app.resilience.spc_monitoring import (
+    SPCAlert,
+    WorkloadControlChart,
+    calculate_control_limits,
+    calculate_process_capability,
+)
 from app.resilience.static_stability import FallbackScenario, FallbackScheduler
 from app.resilience.stigmergy import (
     CollectivePreference,

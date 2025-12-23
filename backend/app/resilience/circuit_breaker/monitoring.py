@@ -13,7 +13,6 @@ import logging
 from typing import Optional
 
 from app.resilience.circuit_breaker.registry import get_registry
-from app.resilience.circuit_breaker.states import CircuitState
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +25,7 @@ try:
         Gauge,
         Histogram,
     )
+
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
@@ -157,9 +157,7 @@ class CircuitBreakerMetrics:
             self.state_gauge.labels(breaker=breaker_name).set(state_value)
 
             # Update failure rate
-            self.failure_rate.labels(breaker=breaker_name).set(
-                status["failure_rate"]
-            )
+            self.failure_rate.labels(breaker=breaker_name).set(status["failure_rate"])
 
             # Update consecutive counters
             self.consecutive_failures.labels(breaker=breaker_name).set(
@@ -234,8 +232,7 @@ class CircuitBreakerMetrics:
         ).inc()
 
         logger.info(
-            f"Circuit breaker '{breaker_name}' transitioned: "
-            f"{from_state} -> {to_state}"
+            f"Circuit breaker '{breaker_name}' transitioned: {from_state} -> {to_state}"
         )
 
     def record_fallback_execution(
@@ -288,7 +285,7 @@ class CircuitBreakerMetrics:
 
 
 # Global metrics instance
-_metrics: Optional[CircuitBreakerMetrics] = None
+_metrics: CircuitBreakerMetrics | None = None
 
 
 def get_metrics() -> CircuitBreakerMetrics:
@@ -304,7 +301,9 @@ def get_metrics() -> CircuitBreakerMetrics:
     return _metrics
 
 
-def setup_metrics(registry: Optional["CollectorRegistry"] = None) -> CircuitBreakerMetrics:
+def setup_metrics(
+    registry: Optional["CollectorRegistry"] = None,
+) -> CircuitBreakerMetrics:
     """
     Set up metrics with optional custom registry.
 

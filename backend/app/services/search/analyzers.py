@@ -17,7 +17,7 @@ class SearchAnalyzer(ABC):
     """Abstract base class for text analyzers."""
 
     @abstractmethod
-    def analyze(self, text: str) -> List[str]:
+    def analyze(self, text: str) -> list[str]:
         """
         Analyze text and return list of tokens.
 
@@ -42,10 +42,10 @@ class SearchAnalyzer(ABC):
         # Convert to lowercase
         text = text.lower()
         # Remove extra whitespace
-        text = re.sub(r'\s+', ' ', text)
+        text = re.sub(r"\s+", " ", text)
         return text.strip()
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         """
         Tokenize text into words.
 
@@ -56,7 +56,7 @@ class SearchAnalyzer(ABC):
             List of word tokens
         """
         # Split on word boundaries, keeping alphanumeric and hyphens
-        tokens = re.findall(r'\b[\w-]+\b', text)
+        tokens = re.findall(r"\b[\w-]+\b", text)
         return [t for t in tokens if len(t) > 0]
 
 
@@ -72,10 +72,31 @@ class StandardAnalyzer(SearchAnalyzer):
     """
 
     # Common English stopwords
-    STOPWORDS: Set[str] = {
-        'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for',
-        'from', 'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on',
-        'that', 'the', 'to', 'was', 'will', 'with',
+    STOPWORDS: set[str] = {
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "at",
+        "be",
+        "by",
+        "for",
+        "from",
+        "has",
+        "he",
+        "in",
+        "is",
+        "it",
+        "its",
+        "of",
+        "on",
+        "that",
+        "the",
+        "to",
+        "was",
+        "will",
+        "with",
     }
 
     def __init__(self, min_token_length: int = 2, remove_stopwords: bool = True):
@@ -89,7 +110,7 @@ class StandardAnalyzer(SearchAnalyzer):
         self.min_token_length = min_token_length
         self.remove_stopwords = remove_stopwords
 
-    def analyze(self, text: str) -> List[str]:
+    def analyze(self, text: str) -> list[str]:
         """
         Analyze text with standard processing.
 
@@ -125,9 +146,20 @@ class PersonNameAnalyzer(SearchAnalyzer):
     """
 
     # Common name prefixes to preserve
-    PREFIXES: Set[str] = {
-        'dr', 'md', 'do', 'col', 'lt', 'maj', 'capt', 'cpt',
-        'ltc', 'cdr', 'lcdr', 'lt col', 'lt cdr',
+    PREFIXES: set[str] = {
+        "dr",
+        "md",
+        "do",
+        "col",
+        "lt",
+        "maj",
+        "capt",
+        "cpt",
+        "ltc",
+        "cdr",
+        "lcdr",
+        "lt col",
+        "lt cdr",
     }
 
     def __init__(self, generate_ngrams: bool = True):
@@ -139,7 +171,7 @@ class PersonNameAnalyzer(SearchAnalyzer):
         """
         self.generate_ngrams = generate_ngrams
 
-    def analyze(self, text: str) -> List[str]:
+    def analyze(self, text: str) -> list[str]:
         """
         Analyze person name.
 
@@ -169,7 +201,7 @@ class PersonNameAnalyzer(SearchAnalyzer):
 
         return result
 
-    def _generate_ngrams(self, text: str, n: int = 3) -> List[str]:
+    def _generate_ngrams(self, text: str, n: int = 3) -> list[str]:
         """
         Generate character n-grams from text.
 
@@ -185,7 +217,7 @@ class PersonNameAnalyzer(SearchAnalyzer):
 
         ngrams = []
         for i in range(len(text) - n + 1):
-            ngrams.append(text[i:i + n])
+            ngrams.append(text[i : i + n])
         return ngrams
 
 
@@ -201,27 +233,47 @@ class MedicalTermAnalyzer(SearchAnalyzer):
     """
 
     # Medical and scheduling abbreviations to preserve
-    MEDICAL_TERMS: Set[str] = {
-        'pgy', 'pgy1', 'pgy2', 'pgy3',
-        'fmit', 'fm', 'im', 'obgyn', 'peds', 'psych',
-        'er', 'icu', 'nicu', 'picu',
-        'acgme', 'rrc', 'cler',
-        'clinic', 'inpatient', 'procedure', 'conference',
-        'am', 'pm', 'call', 'tdy', 'leave',
+    MEDICAL_TERMS: set[str] = {
+        "pgy",
+        "pgy1",
+        "pgy2",
+        "pgy3",
+        "fmit",
+        "fm",
+        "im",
+        "obgyn",
+        "peds",
+        "psych",
+        "er",
+        "icu",
+        "nicu",
+        "picu",
+        "acgme",
+        "rrc",
+        "cler",
+        "clinic",
+        "inpatient",
+        "procedure",
+        "conference",
+        "am",
+        "pm",
+        "call",
+        "tdy",
+        "leave",
     }
 
     # Acronym expansions
     EXPANSIONS: dict = {
-        'pgy': 'post graduate year',
-        'fmit': 'family medicine inpatient training',
-        'fm': 'family medicine',
-        'im': 'internal medicine',
-        'obgyn': 'obstetrics gynecology',
-        'peds': 'pediatrics',
-        'psych': 'psychiatry',
-        'er': 'emergency room',
-        'icu': 'intensive care unit',
-        'acgme': 'accreditation council graduate medical education',
+        "pgy": "post graduate year",
+        "fmit": "family medicine inpatient training",
+        "fm": "family medicine",
+        "im": "internal medicine",
+        "obgyn": "obstetrics gynecology",
+        "peds": "pediatrics",
+        "psych": "psychiatry",
+        "er": "emergency room",
+        "icu": "intensive care unit",
+        "acgme": "accreditation council graduate medical education",
     }
 
     def __init__(self, expand_acronyms: bool = True):
@@ -233,7 +285,7 @@ class MedicalTermAnalyzer(SearchAnalyzer):
         """
         self.expand_acronyms = expand_acronyms
 
-    def analyze(self, text: str) -> List[str]:
+    def analyze(self, text: str) -> list[str]:
         """
         Analyze medical/scheduling text.
 
@@ -259,10 +311,10 @@ class MedicalTermAnalyzer(SearchAnalyzer):
                 result.extend(expansion_tokens)
 
             # Handle PGY levels specially
-            pgy_match = re.match(r'pgy-?(\d)', token)
+            pgy_match = re.match(r"pgy-?(\d)", token)
             if pgy_match:
                 level = pgy_match.group(1)
-                result.extend(['pgy', level, f'pgy{level}'])
+                result.extend(["pgy", level, f"pgy{level}"])
 
         return result
 
@@ -277,7 +329,7 @@ class FuzzyAnalyzer(SearchAnalyzer):
     - Typo correction suggestions
     """
 
-    def analyze(self, text: str) -> List[str]:
+    def analyze(self, text: str) -> list[str]:
         """
         Analyze text with fuzzy matching support.
 
@@ -322,12 +374,24 @@ class FuzzyAnalyzer(SearchAnalyzer):
 
         # Soundex mapping
         soundex_map = {
-            'B': '1', 'F': '1', 'P': '1', 'V': '1',
-            'C': '2', 'G': '2', 'J': '2', 'K': '2', 'Q': '2', 'S': '2', 'X': '2', 'Z': '2',
-            'D': '3', 'T': '3',
-            'L': '4',
-            'M': '5', 'N': '5',
-            'R': '6',
+            "B": "1",
+            "F": "1",
+            "P": "1",
+            "V": "1",
+            "C": "2",
+            "G": "2",
+            "J": "2",
+            "K": "2",
+            "Q": "2",
+            "S": "2",
+            "X": "2",
+            "Z": "2",
+            "D": "3",
+            "T": "3",
+            "L": "4",
+            "M": "5",
+            "N": "5",
+            "R": "6",
         }
 
         # Keep first letter
@@ -335,11 +399,11 @@ class FuzzyAnalyzer(SearchAnalyzer):
 
         # Convert remaining letters
         for char in word[1:]:
-            code = soundex_map.get(char, '0')
-            if code != '0' and code != soundex[-1]:
+            code = soundex_map.get(char, "0")
+            if code != "0" and code != soundex[-1]:
                 soundex += code
 
         # Pad with zeros to length 4
-        soundex = (soundex + '000')[:4]
+        soundex = (soundex + "000")[:4]
 
         return soundex

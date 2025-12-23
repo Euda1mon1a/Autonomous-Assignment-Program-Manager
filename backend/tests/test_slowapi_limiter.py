@@ -4,6 +4,7 @@ Tests for slowapi rate limiting integration.
 Tests the slowapi-based rate limiting middleware that provides
 global rate limits on all API endpoints.
 """
+
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -17,16 +18,15 @@ from slowapi.util import get_remote_address
 from app.core.slowapi_limiter import (
     get_client_identifier,
     get_limiter,
-    limiter,
     limit_auth,
     limit_expensive,
     limit_export,
     limit_read,
     limit_registration,
     limit_write,
+    limiter,
     rate_limit_exceeded_handler,
 )
-
 
 # ============================================================================
 # Test Fixtures
@@ -180,7 +180,7 @@ class TestRateLimitingBehavior:
         """Test that requests within limit succeed."""
         for i in range(3):
             response = rate_limited_client.get("/test")
-            assert response.status_code == 200, f"Request {i+1} should succeed"
+            assert response.status_code == 200, f"Request {i + 1} should succeed"
 
     def test_requests_over_limit_get_429(self, rate_limited_client):
         """Test that requests over limit get 429 response."""
@@ -188,7 +188,7 @@ class TestRateLimitingBehavior:
         for i in range(5):
             response = rate_limited_client.get("/test")
             if i < 3:
-                assert response.status_code == 200, f"Request {i+1} should succeed"
+                assert response.status_code == 200, f"Request {i + 1} should succeed"
             else:
                 # After limit, should get 429
                 if response.status_code == 429:
@@ -213,6 +213,7 @@ class TestRateLimitDecorators:
 
     def test_limit_auth_decorator(self):
         """Test that limit_auth decorator can be applied."""
+
         @limit_auth
         async def test_func():
             return "test"
@@ -222,6 +223,7 @@ class TestRateLimitDecorators:
 
     def test_limit_registration_decorator(self):
         """Test that limit_registration decorator can be applied."""
+
         @limit_registration
         async def test_func():
             return "test"
@@ -230,6 +232,7 @@ class TestRateLimitDecorators:
 
     def test_limit_read_decorator(self):
         """Test that limit_read decorator can be applied."""
+
         @limit_read
         async def test_func():
             return "test"
@@ -238,6 +241,7 @@ class TestRateLimitDecorators:
 
     def test_limit_write_decorator(self):
         """Test that limit_write decorator can be applied."""
+
         @limit_write
         async def test_func():
             return "test"
@@ -246,6 +250,7 @@ class TestRateLimitDecorators:
 
     def test_limit_expensive_decorator(self):
         """Test that limit_expensive decorator can be applied."""
+
         @limit_expensive
         async def test_func():
             return "test"
@@ -254,6 +259,7 @@ class TestRateLimitDecorators:
 
     def test_limit_export_decorator(self):
         """Test that limit_export decorator can be applied."""
+
         @limit_export
         async def test_func():
             return "test"

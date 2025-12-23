@@ -1,10 +1,11 @@
 """File upload security and validation module."""
+
 import re
 from pathlib import Path
-from typing import Optional
 
 try:
     import magic
+
     MAGIC_AVAILABLE = True
 except ImportError:
     MAGIC_AVAILABLE = False
@@ -12,22 +13,23 @@ except ImportError:
 
 class FileSecurityError(Exception):
     """Exception raised for file security violations."""
+
     pass
 
 
 # Allowed file extensions for Excel uploads
-ALLOWED_EXCEL_EXTENSIONS = {'.xlsx', '.xls'}
+ALLOWED_EXCEL_EXTENSIONS = {".xlsx", ".xls"}
 
 # MIME types for Excel files
 ALLOWED_EXCEL_MIMETYPES = {
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',  # .xlsx
-    'application/vnd.ms-excel'  # .xls
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",  # .xlsx
+    "application/vnd.ms-excel",  # .xls
 }
 
 # Extension to expected MIME type mapping
 EXTENSION_TO_MIMETYPE = {
-    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    '.xls': 'application/vnd.ms-excel',
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".xls": "application/vnd.ms-excel",
 }
 
 # Maximum upload size in MB
@@ -36,10 +38,11 @@ MAX_UPLOAD_SIZE_MB = 10
 
 class FileValidationError(Exception):
     """Exception raised when file validation fails."""
+
     pass
 
 
-def _detect_mime_type(file_content: bytes) -> Optional[str]:
+def _detect_mime_type(file_content: bytes) -> str | None:
     """
     Detect MIME type from file content using magic bytes.
 
@@ -62,9 +65,7 @@ def _detect_mime_type(file_content: bytes) -> Optional[str]:
 
 
 def validate_excel_upload(
-    file_content: bytes,
-    filename: str,
-    content_type: Optional[str] = None
+    file_content: bytes, filename: str, content_type: str | None = None
 ) -> None:
     """
     Validate uploaded Excel file for type, size, and content.
@@ -109,7 +110,7 @@ def validate_excel_upload(
     # Validate Content-Type header if provided
     if content_type:
         # Normalize content type (remove parameters like charset)
-        normalized_content_type = content_type.split(';')[0].strip().lower()
+        normalized_content_type = content_type.split(";")[0].strip().lower()
 
         # Check if Content-Type matches expected MIME type
         if normalized_content_type not in ALLOWED_EXCEL_MIMETYPES:
@@ -133,7 +134,7 @@ def validate_excel_upload(
 
         # For XLSX files, python-magic may return 'application/zip'
         # since XLSX is a ZIP archive format
-        if ext == '.xlsx' and detected_mime == 'application/zip':
+        if ext == ".xlsx" and detected_mime == "application/zip":
             # This is acceptable - XLSX files are ZIP archives
             # We'll verify the PK signature below
             pass
@@ -146,7 +147,7 @@ def validate_excel_upload(
         # Verify detected MIME type matches extension
         if expected_mime and detected_mime != expected_mime:
             # Special case: XLSX as ZIP is acceptable
-            if not (ext == '.xlsx' and detected_mime == 'application/zip'):
+            if not (ext == ".xlsx" and detected_mime == "application/zip"):
                 raise FileValidationError(
                     f"Detected MIME type '{detected_mime}' does not match "
                     f"file extension '{ext}' (expected '{expected_mime}')"
@@ -154,16 +155,16 @@ def validate_excel_upload(
 
     # Check magic bytes for XLSX (ZIP archive with PK header)
     # XLSX files are essentially ZIP archives, so they start with PK\x03\x04
-    if ext == '.xlsx':
-        if not file_content.startswith(b'PK\x03\x04'):
+    if ext == ".xlsx":
+        if not file_content.startswith(b"PK\x03\x04"):
             raise FileValidationError(
                 "Invalid Excel file format: file does not match XLSX signature"
             )
 
     # Check magic bytes for XLS (OLE2/CFB format)
     # XLS files start with D0 CF 11 E0 A1 B1 1A E1
-    elif ext == '.xls':
-        xls_signature = b'\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1'
+    elif ext == ".xls":
+        xls_signature = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"
         if not file_content.startswith(xls_signature):
             raise FileValidationError(
                 "Invalid Excel file format: file does not match XLS signature"
@@ -193,14 +194,14 @@ def sanitize_upload_filename(filename: str) -> str:
     safe_name = Path(filename).name
 
     # Remove dangerous characters - only allow alphanumeric, dots, underscores, and hyphens
-    safe_name = re.sub(r'[^a-zA-Z0-9._-]', '_', safe_name)
+    safe_name = re.sub(r"[^a-zA-Z0-9._-]", "_", safe_name)
 
     # Prevent hidden files (files starting with .)
-    if safe_name.startswith('.'):
-        safe_name = '_' + safe_name[1:]
+    if safe_name.startswith("."):
+        safe_name = "_" + safe_name[1:]
 
     # Ensure we still have a filename after sanitization
-    if not safe_name or safe_name in {'.', '..'}:
+    if not safe_name or safe_name in {".", ".."}:
         raise FileValidationError("Invalid filename after sanitization")
 
     # Limit filename length to prevent issues
@@ -214,9 +215,7 @@ def sanitize_upload_filename(filename: str) -> str:
 
 
 def validate_and_sanitize_upload(
-    file_content: bytes,
-    filename: str,
-    content_type: Optional[str] = None
+    file_content: bytes, filename: str, content_type: str | None = None
 ) -> tuple[bytes, str]:
     """
     Perform both validation and sanitization on an uploaded file.
@@ -245,6 +244,7 @@ def validate_and_sanitize_upload(
 
 # Path Traversal Prevention Functions
 
+
 def validate_backup_id(backup_id: str) -> str:
     """
     Validate backup ID to prevent path traversal attacks.
@@ -265,14 +265,14 @@ def validate_backup_id(backup_id: str) -> str:
         raise FileSecurityError("Backup ID cannot be empty")
 
     # Only allow alphanumeric, hyphens, and underscores
-    if not re.match(r'^[a-zA-Z0-9_-]+$', backup_id):
+    if not re.match(r"^[a-zA-Z0-9_-]+$", backup_id):
         raise FileSecurityError(
             f"Invalid backup ID '{backup_id}': only alphanumeric characters, "
             "hyphens, and underscores are allowed"
         )
 
     # Additional check for path traversal patterns
-    if '..' in backup_id or '/' in backup_id or '\\' in backup_id:
+    if ".." in backup_id or "/" in backup_id or "\\" in backup_id:
         raise FileSecurityError(
             f"Invalid backup ID '{backup_id}': path separators and '..' are not allowed"
         )
@@ -334,17 +334,15 @@ def sanitize_filename(filename: str) -> str:
         raise FileSecurityError("Filename cannot be empty")
 
     # Remove any path separators (both Unix and Windows)
-    sanitized = filename.replace('/', '').replace('\\', '')
+    sanitized = filename.replace("/", "").replace("\\", "")
 
     # Remove path traversal patterns
-    sanitized = sanitized.replace('..', '')
+    sanitized = sanitized.replace("..", "")
 
     # Remove null bytes
-    sanitized = sanitized.replace('\x00', '')
+    sanitized = sanitized.replace("\x00", "")
 
     if not sanitized:
-        raise FileSecurityError(
-            f"Filename '{filename}' is invalid after sanitization"
-        )
+        raise FileSecurityError(f"Filename '{filename}' is invalid after sanitization")
 
     return sanitized

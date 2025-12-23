@@ -9,9 +9,10 @@ Provides detailed information about retry execution, including:
 """
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Callable, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class RetryAttempt:
     attempt_number: int
     timestamp: datetime
     delay_before: float  # Delay before this attempt (seconds)
-    exception: Optional[Exception] = None
+    exception: Exception | None = None
     success: bool = False
     duration: float = 0.0  # How long the attempt took (seconds)
 
@@ -44,9 +45,9 @@ class RetryContext:
     last_delay: float = 0.0  # Track for decorrelated jitter
 
     # Callbacks
-    on_retry: Optional[Callable[["RetryContext", Exception, int], None]] = None
-    on_success: Optional[Callable[["RetryContext", Any], None]] = None
-    on_failure: Optional[Callable[["RetryContext", Exception], None]] = None
+    on_retry: Callable[["RetryContext", Exception, int], None] | None = None
+    on_success: Callable[["RetryContext", Any], None] | None = None
+    on_failure: Callable[["RetryContext", Exception], None] | None = None
 
     @property
     def attempt_count(self) -> int:
@@ -69,7 +70,7 @@ class RetryContext:
         return sum(attempt.delay_before for attempt in self.attempts)
 
     @property
-    def last_exception(self) -> Optional[Exception]:
+    def last_exception(self) -> Exception | None:
         """Get the most recent exception."""
         if not self.attempts:
             return None
@@ -80,7 +81,7 @@ class RetryContext:
 
     def record_attempt(
         self,
-        exception: Optional[Exception] = None,
+        exception: Exception | None = None,
         success: bool = False,
         delay_before: float = 0.0,
         duration: float = 0.0,

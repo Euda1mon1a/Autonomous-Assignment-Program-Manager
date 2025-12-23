@@ -1,5 +1,4 @@
 """Tests for built-in notification templates."""
-import pytest
 
 from app.notifications.templates.registry import get_template_registry
 
@@ -299,11 +298,10 @@ class TestBuiltInTemplates:
 
         # Check that declared variables are actually used
         combined = (
-            template.subject_template +
-            template.html_template +
-            template.text_template
+            template.subject_template + template.html_template + template.text_template
         )
 
         for var in template.variables:
-            assert f"{{{{ {var}" in combined or f"{{{{{var}" in combined, \
+            assert f"{{{{ {var}" in combined or f"{{{{{var}" in combined, (
                 f"Variable {var} not found in template"
+            )

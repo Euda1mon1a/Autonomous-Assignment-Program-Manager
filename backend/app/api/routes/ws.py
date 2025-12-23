@@ -1,7 +1,6 @@
 """WebSocket API routes for real-time updates."""
 
 import logging
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, status
@@ -10,7 +9,6 @@ from fastapi.exceptions import HTTPException
 from app.core.security import get_current_user, verify_token
 from app.db.session import get_db
 from app.models.user import User
-from app.websocket.events import EventType
 from app.websocket.manager import get_connection_manager
 
 logger = logging.getLogger(__name__)
@@ -18,8 +16,8 @@ router = APIRouter()
 
 
 async def get_websocket_user(
-    websocket: WebSocket, token: Optional[str] = Query(None), db=Depends(get_db)
-) -> Optional[User]:
+    websocket: WebSocket, token: str | None = Query(None), db=Depends(get_db)
+) -> User | None:
     """
     Authenticate WebSocket connection via token query parameter.
 
@@ -53,7 +51,7 @@ async def get_websocket_user(
 @router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
-    token: Optional[str] = Query(None),
+    token: str | None = Query(None),
     db=Depends(get_db),
 ):
     """
@@ -145,9 +143,7 @@ async def websocket_endpoint(
                 if schedule_id:
                     try:
                         schedule_uuid = UUID(schedule_id)
-                        await manager.unsubscribe_from_schedule(
-                            user.id, schedule_uuid
-                        )
+                        await manager.unsubscribe_from_schedule(user.id, schedule_uuid)
                         logger.info(
                             f"User {user.id} unsubscribed from schedule {schedule_uuid}"
                         )

@@ -10,6 +10,7 @@ Key Properties:
     - Efficient: High-urgency providers can outbid when needed
     - Budget-balanced: Total karma is conserved across the system
 """
+
 from dataclasses import dataclass, field
 from typing import ClassVar
 
@@ -210,7 +211,9 @@ class KarmaMechanism:
         all_bids = self.bids[swap_id]
 
         # Identify losers (everyone except winner)
-        losers = [provider_id for provider_id, _ in all_bids if provider_id != winner_id]
+        losers = [
+            provider_id for provider_id, _ in all_bids if provider_id != winner_id
+        ]
 
         # Debit winner's account
         winner_account = self.accounts[winner_id]

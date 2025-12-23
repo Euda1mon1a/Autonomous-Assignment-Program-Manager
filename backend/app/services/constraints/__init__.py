@@ -19,16 +19,17 @@ Example:
     ... )
 """
 
+from app.services.constraints.faculty import (
+    CachedFacultyPreferenceService,
+    FacultyConstraintService,
+)
+
 from .acgme import (
     ACGMEConstraintValidator,
     AvailabilityConstraint,
     EightyHourRuleConstraint,
     OneInSevenRuleConstraint,
     SupervisionRatioConstraint,
-)
-from app.services.constraints.faculty import (
-    CachedFacultyPreferenceService,
-    FacultyConstraintService,
 )
 
 __all__ = [

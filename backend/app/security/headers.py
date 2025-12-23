@@ -7,7 +7,6 @@ This module defines security headers to protect against common web vulnerabiliti
 - MIME type sniffing
 - Information leakage
 """
-from typing import Dict
 
 
 class SecurityHeaders:
@@ -62,7 +61,7 @@ class SecurityHeaders:
     )
 
     @classmethod
-    def get_headers(cls, debug: bool = False) -> Dict[str, str]:
+    def get_headers(cls, debug: bool = False) -> dict[str, str]:
         """
         Get all security headers as a dictionary.
 
@@ -74,7 +73,9 @@ class SecurityHeaders:
             Dict[str, str]: Dictionary of header names to values.
         """
         return {
-            cls.HSTS_HEADER: cls.HSTS_VALUE_DEVELOPMENT if debug else cls.HSTS_VALUE_PRODUCTION,
+            cls.HSTS_HEADER: cls.HSTS_VALUE_DEVELOPMENT
+            if debug
+            else cls.HSTS_VALUE_PRODUCTION,
             cls.FRAME_OPTIONS_HEADER: cls.FRAME_OPTIONS_VALUE,
             cls.CONTENT_TYPE_OPTIONS_HEADER: cls.CONTENT_TYPE_OPTIONS_VALUE,
             cls.XSS_PROTECTION_HEADER: cls.XSS_PROTECTION_VALUE,

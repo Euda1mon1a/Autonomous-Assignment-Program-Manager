@@ -4,6 +4,7 @@ Comprehensive coverage tests for xlsx_import.py module.
 Tests SlotType classification, ProviderSchedule, date parsing,
 and ClinicScheduleImporter functionality.
 """
+
 from datetime import date, datetime
 from io import BytesIO
 
@@ -22,6 +23,7 @@ from app.services.xlsx_import import (
 # SlotType Classification Tests
 # ============================================================================
 
+
 class TestSlotTypeClassification:
     """Tests for slot type classification logic."""
 
@@ -32,15 +34,37 @@ class TestSlotTypeClassification:
 
     def test_classify_fmit_variants(self, importer):
         """Should correctly classify FMIT slot type variants."""
-        fmit_values = ["fmit", "FMIT", "inpt", "inpatient", "ward", "wards", "Inpatient"]
+        fmit_values = [
+            "fmit",
+            "FMIT",
+            "inpt",
+            "inpatient",
+            "ward",
+            "wards",
+            "Inpatient",
+        ]
         for value in fmit_values:
-            assert importer.classify_slot(value) == SlotType.FMIT, f"Failed for: {value}"
+            assert importer.classify_slot(value) == SlotType.FMIT, (
+                f"Failed for: {value}"
+            )
 
     def test_classify_clinic_variants(self, importer):
         """Should correctly classify clinic slot type variants."""
-        clinic_values = ["c", "C", "clinic", "Clinic", "pts", "patient", "appt", "sm", "sports"]
+        clinic_values = [
+            "c",
+            "C",
+            "clinic",
+            "Clinic",
+            "pts",
+            "patient",
+            "appt",
+            "sm",
+            "sports",
+        ]
         for value in clinic_values:
-            assert importer.classify_slot(value) == SlotType.CLINIC, f"Failed for: {value}"
+            assert importer.classify_slot(value) == SlotType.CLINIC, (
+                f"Failed for: {value}"
+            )
 
     def test_classify_off_variants(self, importer):
         """Should correctly classify off/unavailable slot variants."""
@@ -56,19 +80,25 @@ class TestSlotTypeClassification:
         """Should correctly classify vacation/leave variants."""
         vacation_values = ["vac", "vacation", "lv", "leave", "al"]
         for value in vacation_values:
-            assert importer.classify_slot(value) == SlotType.VACATION, f"Failed for: {value}"
+            assert importer.classify_slot(value) == SlotType.VACATION, (
+                f"Failed for: {value}"
+            )
 
     def test_classify_conference_variants(self, importer):
         """Should correctly classify conference variants."""
         conference_values = ["conf", "conference", "cme", "mtg"]
         for value in conference_values:
-            assert importer.classify_slot(value) == SlotType.CONFERENCE, f"Failed for: {value}"
+            assert importer.classify_slot(value) == SlotType.CONFERENCE, (
+                f"Failed for: {value}"
+            )
 
     def test_classify_admin_variants(self, importer):
         """Should correctly classify admin variants."""
         admin_values = ["admin", "adm", "office"]
         for value in admin_values:
-            assert importer.classify_slot(value) == SlotType.ADMIN, f"Failed for: {value}"
+            assert importer.classify_slot(value) == SlotType.ADMIN, (
+                f"Failed for: {value}"
+            )
 
     def test_classify_unknown_value(self, importer):
         """Should return UNKNOWN for truly unrecognized values."""
@@ -117,21 +147,23 @@ class TestSlotTypeClassification:
         """Should correctly classify actual codes from real schedule files."""
         # These codes appeared in actual faculty schedule Excel files
         real_codes = {
-            "AT": SlotType.ADMIN,      # Admin Time
-            "CV": SlotType.CLINIC,     # Virtual Clinic
-            "DO": SlotType.OFF,        # Day Off
-            "GME": SlotType.ADMIN,     # GME Time
-            "HOL": SlotType.OFF,       # Holiday
+            "AT": SlotType.ADMIN,  # Admin Time
+            "CV": SlotType.CLINIC,  # Virtual Clinic
+            "DO": SlotType.OFF,  # Day Off
+            "GME": SlotType.ADMIN,  # GME Time
+            "HOL": SlotType.OFF,  # Holiday
             "LEC": SlotType.CONFERENCE,  # Lecture
-            "NF": SlotType.FMIT,       # Night Float
-            "OIC": SlotType.FMIT,      # Officer In Charge
-            "PC": SlotType.OFF,        # Post Call (NOT clinic!)
-            "PCAT": SlotType.ADMIN,    # Patient Care Admin Team
-            "W": SlotType.OFF,         # Weekend
+            "NF": SlotType.FMIT,  # Night Float
+            "OIC": SlotType.FMIT,  # Officer In Charge
+            "PC": SlotType.OFF,  # Post Call (NOT clinic!)
+            "PCAT": SlotType.ADMIN,  # Patient Care Admin Team
+            "W": SlotType.OFF,  # Weekend
         }
         for code, expected in real_codes.items():
             result = importer.classify_slot(code)
-            assert result == expected, f"Code '{code}' classified as {result}, expected {expected}"
+            assert result == expected, (
+                f"Code '{code}' classified as {result}, expected {expected}"
+            )
 
     def test_classify_case_insensitive(self, importer):
         """Should be case-insensitive in classification."""
@@ -144,6 +176,7 @@ class TestSlotTypeClassification:
 # ProviderSchedule Tests
 # ============================================================================
 
+
 class TestProviderSchedule:
     """Tests for ProviderSchedule class."""
 
@@ -155,7 +188,7 @@ class TestProviderSchedule:
             date=date(2025, 3, 10),
             time_of_day="AM",
             slot_type=SlotType.CLINIC,
-            raw_value="clinic"
+            raw_value="clinic",
         )
 
         schedule.add_slot(slot)
@@ -167,7 +200,9 @@ class TestProviderSchedule:
         schedule = ProviderSchedule(name="Dr. Jones")
 
         slots = [
-            ScheduleSlot("Dr. Jones", date(2025, 3, 10), "AM", SlotType.CLINIC, "clinic"),
+            ScheduleSlot(
+                "Dr. Jones", date(2025, 3, 10), "AM", SlotType.CLINIC, "clinic"
+            ),
             ScheduleSlot("Dr. Jones", date(2025, 3, 10), "PM", SlotType.FMIT, "fmit"),
             ScheduleSlot("Dr. Jones", date(2025, 3, 11), "AM", SlotType.OFF, "off"),
         ]
@@ -188,7 +223,11 @@ class TestProviderSchedule:
     def test_get_fmit_weeks_empty(self):
         """Should return empty list when no FMIT slots."""
         schedule = ProviderSchedule(name="Dr. Smith")
-        schedule.add_slot(ScheduleSlot("Dr. Smith", date(2025, 3, 10), "AM", SlotType.CLINIC, "clinic"))
+        schedule.add_slot(
+            ScheduleSlot(
+                "Dr. Smith", date(2025, 3, 10), "AM", SlotType.CLINIC, "clinic"
+            )
+        )
 
         assert schedule.get_fmit_weeks() == []
 
@@ -198,13 +237,11 @@ class TestProviderSchedule:
 
         # Add FMIT slots for Mon-Fri of a single week (March 3-7, 2025)
         for day in range(3, 8):  # Mon-Fri
-            schedule.add_slot(ScheduleSlot(
-                "Dr. Smith",
-                date(2025, 3, day),
-                "AM",
-                SlotType.FMIT,
-                "fmit"
-            ))
+            schedule.add_slot(
+                ScheduleSlot(
+                    "Dr. Smith", date(2025, 3, day), "AM", SlotType.FMIT, "fmit"
+                )
+            )
 
         weeks = schedule.get_fmit_weeks()
         assert len(weeks) == 1
@@ -217,23 +254,19 @@ class TestProviderSchedule:
 
         # Week 1: March 3-5, 2025 (Mon-Wed)
         for day in [3, 4, 5]:
-            schedule.add_slot(ScheduleSlot(
-                "Dr. Smith",
-                date(2025, 3, day),
-                "AM",
-                SlotType.FMIT,
-                "fmit"
-            ))
+            schedule.add_slot(
+                ScheduleSlot(
+                    "Dr. Smith", date(2025, 3, day), "AM", SlotType.FMIT, "fmit"
+                )
+            )
 
         # Week 2: March 17-19, 2025 (Mon-Wed)
         for day in [17, 18, 19]:
-            schedule.add_slot(ScheduleSlot(
-                "Dr. Smith",
-                date(2025, 3, day),
-                "AM",
-                SlotType.FMIT,
-                "fmit"
-            ))
+            schedule.add_slot(
+                ScheduleSlot(
+                    "Dr. Smith", date(2025, 3, day), "AM", SlotType.FMIT, "fmit"
+                )
+            )
 
         weeks = schedule.get_fmit_weeks()
         assert len(weeks) == 2
@@ -245,8 +278,12 @@ class TestProviderSchedule:
         schedule = ProviderSchedule(name="Dr. Smith")
 
         # Only 2 weeks
-        schedule.add_slot(ScheduleSlot("Dr. Smith", date(2025, 3, 3), "AM", SlotType.FMIT, "fmit"))
-        schedule.add_slot(ScheduleSlot("Dr. Smith", date(2025, 3, 17), "AM", SlotType.FMIT, "fmit"))
+        schedule.add_slot(
+            ScheduleSlot("Dr. Smith", date(2025, 3, 3), "AM", SlotType.FMIT, "fmit")
+        )
+        schedule.add_slot(
+            ScheduleSlot("Dr. Smith", date(2025, 3, 17), "AM", SlotType.FMIT, "fmit")
+        )
 
         assert not schedule.has_alternating_pattern()
 
@@ -256,9 +293,15 @@ class TestProviderSchedule:
 
         # Week on: Mar 3, Week off, Week on: Mar 17, Week off, Week on: Mar 31
         # This creates an alternating pattern with 1-week gaps
-        schedule.add_slot(ScheduleSlot("Dr. Smith", date(2025, 3, 3), "AM", SlotType.FMIT, "fmit"))
-        schedule.add_slot(ScheduleSlot("Dr. Smith", date(2025, 3, 17), "AM", SlotType.FMIT, "fmit"))
-        schedule.add_slot(ScheduleSlot("Dr. Smith", date(2025, 3, 31), "AM", SlotType.FMIT, "fmit"))
+        schedule.add_slot(
+            ScheduleSlot("Dr. Smith", date(2025, 3, 3), "AM", SlotType.FMIT, "fmit")
+        )
+        schedule.add_slot(
+            ScheduleSlot("Dr. Smith", date(2025, 3, 17), "AM", SlotType.FMIT, "fmit")
+        )
+        schedule.add_slot(
+            ScheduleSlot("Dr. Smith", date(2025, 3, 31), "AM", SlotType.FMIT, "fmit")
+        )
 
         assert schedule.has_alternating_pattern()
 
@@ -267,9 +310,15 @@ class TestProviderSchedule:
         schedule = ProviderSchedule(name="Dr. Smith")
 
         # 3 consecutive weeks (no gaps)
-        schedule.add_slot(ScheduleSlot("Dr. Smith", date(2025, 3, 3), "AM", SlotType.FMIT, "fmit"))
-        schedule.add_slot(ScheduleSlot("Dr. Smith", date(2025, 3, 10), "AM", SlotType.FMIT, "fmit"))
-        schedule.add_slot(ScheduleSlot("Dr. Smith", date(2025, 3, 17), "AM", SlotType.FMIT, "fmit"))
+        schedule.add_slot(
+            ScheduleSlot("Dr. Smith", date(2025, 3, 3), "AM", SlotType.FMIT, "fmit")
+        )
+        schedule.add_slot(
+            ScheduleSlot("Dr. Smith", date(2025, 3, 10), "AM", SlotType.FMIT, "fmit")
+        )
+        schedule.add_slot(
+            ScheduleSlot("Dr. Smith", date(2025, 3, 17), "AM", SlotType.FMIT, "fmit")
+        )
 
         # Gap calculation: 7 days between each week (consecutive)
         # has_alternating_pattern looks for gaps of 6-8 days but needs at least 2 such gaps
@@ -280,6 +329,7 @@ class TestProviderSchedule:
 # ============================================================================
 # Date Parsing Tests
 # ============================================================================
+
 
 class TestDateParsing:
     """Tests for date parsing from various formats."""
@@ -339,6 +389,7 @@ class TestDateParsing:
 # ClinicScheduleImporter Excel Parsing Tests
 # ============================================================================
 
+
 class TestClinicScheduleImporter:
     """Tests for Excel file import functionality."""
 
@@ -348,21 +399,21 @@ class TestClinicScheduleImporter:
         ws = wb.active
 
         # Header row with dates
-        ws['A1'] = "Provider"
-        ws['B1'] = date(2025, 3, 10)
-        ws['C1'] = date(2025, 3, 11)
-        ws['D1'] = date(2025, 3, 12)
+        ws["A1"] = "Provider"
+        ws["B1"] = date(2025, 3, 10)
+        ws["C1"] = date(2025, 3, 11)
+        ws["D1"] = date(2025, 3, 12)
 
         # Data rows
-        ws['A2'] = "Dr. Smith"
-        ws['B2'] = "clinic"
-        ws['C2'] = "fmit"
-        ws['D2'] = "off"
+        ws["A2"] = "Dr. Smith"
+        ws["B2"] = "clinic"
+        ws["C2"] = "fmit"
+        ws["D2"] = "off"
 
-        ws['A3'] = "Dr. Jones"
-        ws['B3'] = "fmit"
-        ws['C3'] = "clinic"
-        ws['D3'] = "vacation"
+        ws["A3"] = "Dr. Jones"
+        ws["B3"] = "fmit"
+        ws["C3"] = "clinic"
+        ws["D3"] = "vacation"
 
         # Save to BytesIO
         output = BytesIO()
@@ -376,12 +427,12 @@ class TestClinicScheduleImporter:
         ws = wb.active
 
         # No dates, just random text
-        ws['A1'] = "Random"
-        ws['B1'] = "Data"
-        ws['C1'] = "Here"
-        ws['A2'] = "No"
-        ws['B2'] = "Dates"
-        ws['C2'] = "Found"
+        ws["A1"] = "Random"
+        ws["B1"] = "Data"
+        ws["C1"] = "Here"
+        ws["A2"] = "No"
+        ws["B2"] = "Dates"
+        ws["C2"] = "Found"
 
         output = BytesIO()
         wb.save(output)
@@ -429,7 +480,9 @@ class TestClinicScheduleImporter:
         importer = ClinicScheduleImporter(db=None)
         excel_bytes = self.create_simple_excel()
 
-        result = importer.import_file(file_bytes=excel_bytes, sheet_name="NonExistentSheet")
+        result = importer.import_file(
+            file_bytes=excel_bytes, sheet_name="NonExistentSheet"
+        )
 
         assert not result.success
         assert len(result.errors) > 0
@@ -459,7 +512,7 @@ class TestClinicScheduleImporter:
         # Dr. Jones: fmit, clinic, vacation
         assert result.total_slots == 6
         assert result.clinic_slots == 2  # 2 clinic slots
-        assert result.fmit_slots == 2    # 2 fmit slots
+        assert result.fmit_slots == 2  # 2 fmit slots
 
     def test_provider_schedule_slot_retrieval(self):
         """Should allow retrieving specific slots from provider schedules."""
@@ -484,17 +537,26 @@ class TestClinicScheduleImporter:
 # Edge Cases and Integration Tests
 # ============================================================================
 
+
 class TestEdgeCases:
     """Tests for edge cases and boundary conditions."""
 
     def test_schedule_slot_key_property(self):
         """Should generate unique keys for slots."""
-        slot1 = ScheduleSlot("Dr. Smith", date(2025, 3, 10), "AM", SlotType.CLINIC, "clinic")
-        slot2 = ScheduleSlot("Dr. Smith", date(2025, 3, 10), "PM", SlotType.CLINIC, "clinic")
-        slot3 = ScheduleSlot("Dr. Jones", date(2025, 3, 10), "AM", SlotType.CLINIC, "clinic")
+        slot1 = ScheduleSlot(
+            "Dr. Smith", date(2025, 3, 10), "AM", SlotType.CLINIC, "clinic"
+        )
+        slot2 = ScheduleSlot(
+            "Dr. Smith", date(2025, 3, 10), "PM", SlotType.CLINIC, "clinic"
+        )
+        slot3 = ScheduleSlot(
+            "Dr. Jones", date(2025, 3, 10), "AM", SlotType.CLINIC, "clinic"
+        )
 
         # Same provider, date, time should have same key
-        slot1_dup = ScheduleSlot("Dr. Smith", date(2025, 3, 10), "AM", SlotType.FMIT, "fmit")
+        slot1_dup = ScheduleSlot(
+            "Dr. Smith", date(2025, 3, 10), "AM", SlotType.FMIT, "fmit"
+        )
         assert slot1.key == slot1_dup.key
 
         # Different times should have different keys
@@ -512,7 +574,7 @@ class TestEdgeCases:
             provider_name="Dr. Smith",
             date=date(2025, 3, 10),
             time_of_day="AM",
-            conflict_type="double_book"
+            conflict_type="double_book",
         )
 
         result.add_conflict(conflict)
@@ -528,13 +590,13 @@ class TestEdgeCases:
             provider_name="Dr. Smith",
             date=date(2025, 3, 10),
             time_of_day="AM",
-            conflict_type="double_book"
+            conflict_type="double_book",
         )
         conflict2 = ScheduleConflict(
             provider_name="Dr. Jones",
             date=date(2025, 3, 11),
             time_of_day="PM",
-            conflict_type="fmit_clinic_overlap"
+            conflict_type="fmit_clinic_overlap",
         )
 
         result.add_conflict(conflict1)

@@ -12,9 +12,9 @@ Available Libraries (install as needed):
 """
 
 from app.scheduling.quantum.qubo_solver import (
+    QuantumInspiredSolver,
     QUBOFormulation,
     QUBOSolver,
-    QuantumInspiredSolver,
     SimulatedQuantumAnnealingSolver,
     get_quantum_library_status,
 )

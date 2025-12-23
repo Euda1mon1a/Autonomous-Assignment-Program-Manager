@@ -1,6 +1,6 @@
 """Report generation API routes for PDF reports."""
+
 import logging
-from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -13,15 +13,14 @@ from app.schemas.reports import (
     AnalyticsReportRequest,
     ComplianceReportRequest,
     FacultySummaryReportRequest,
-    ReportFormat,
-    ReportMetadata,
     ReportResponse,
-    ReportType,
     ScheduleReportRequest,
 )
 from app.services.reports.templates.analytics_report import AnalyticsReportTemplate
 from app.services.reports.templates.compliance_report import ComplianceReportTemplate
-from app.services.reports.templates.faculty_summary_report import FacultySummaryReportTemplate
+from app.services.reports.templates.faculty_summary_report import (
+    FacultySummaryReportTemplate,
+)
 from app.services.reports.templates.schedule_report import ScheduleReportTemplate
 
 router = APIRouter()
@@ -72,9 +71,7 @@ async def generate_schedule_report(
         pdf_bytes = template.generate(request)
 
         # Create filename
-        filename = (
-            f"schedule_report_{request.start_date}_to_{request.end_date}.pdf"
-        )
+        filename = f"schedule_report_{request.start_date}_to_{request.end_date}.pdf"
 
         # Return PDF as streaming response
         return StreamingResponse(
@@ -140,9 +137,7 @@ async def generate_compliance_report(
         pdf_bytes = template.generate(request)
 
         # Create filename
-        filename = (
-            f"compliance_report_{request.start_date}_to_{request.end_date}.pdf"
-        )
+        filename = f"compliance_report_{request.start_date}_to_{request.end_date}.pdf"
 
         # Return PDF as streaming response
         return StreamingResponse(
@@ -208,9 +203,7 @@ async def generate_analytics_report(
         pdf_bytes = template.generate(request)
 
         # Create filename
-        filename = (
-            f"analytics_report_{request.start_date}_to_{request.end_date}.pdf"
-        )
+        filename = f"analytics_report_{request.start_date}_to_{request.end_date}.pdf"
 
         # Return PDF as streaming response
         return StreamingResponse(
@@ -280,9 +273,7 @@ async def generate_faculty_summary_report(
         pdf_bytes = template.generate(request)
 
         # Create filename
-        filename = (
-            f"faculty_summary_{request.start_date}_to_{request.end_date}.pdf"
-        )
+        filename = f"faculty_summary_{request.start_date}_to_{request.end_date}.pdf"
 
         # Return PDF as streaming response
         return StreamingResponse(

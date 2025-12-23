@@ -13,11 +13,10 @@ import base64
 import hashlib
 import secrets
 from datetime import datetime, timedelta
-from typing import Dict, Optional
 from urllib.parse import urlencode
 
 import httpx
-from jose import jwt, jwk, JWTError
+from jose import JWTError, jwk, jwt
 from jose.exceptions import JWKError
 
 from app.auth.sso.config import OAuth2Config
@@ -39,13 +38,13 @@ class OAuth2Provider:
             config: OAuth2 configuration
         """
         self.config = config
-        self._jwks_cache: Optional[Dict] = None
-        self._jwks_cache_time: Optional[datetime] = None
+        self._jwks_cache: dict | None = None
+        self._jwks_cache_time: datetime | None = None
         self._jwks_cache_ttl = timedelta(hours=24)  # Cache JWKS for 24 hours
 
     def generate_authorization_url(
-        self, state: Optional[str] = None, use_pkce: bool = True
-    ) -> Dict[str, str]:
+        self, state: str | None = None, use_pkce: bool = True
+    ) -> dict[str, str]:
         """
         Generate OAuth2 authorization URL.
 
@@ -87,8 +86,8 @@ class OAuth2Provider:
         return result
 
     async def exchange_code_for_token(
-        self, code: str, code_verifier: Optional[str] = None
-    ) -> Dict[str, any]:
+        self, code: str, code_verifier: str | None = None
+    ) -> dict[str, any]:
         """
         Exchange authorization code for access token.
 
@@ -135,7 +134,7 @@ class OAuth2Provider:
 
             return token_response
 
-    async def validate_id_token(self, id_token: str) -> Dict[str, any]:
+    async def validate_id_token(self, id_token: str) -> dict[str, any]:
         """
         Validate OpenID Connect ID token.
 
@@ -193,7 +192,7 @@ class OAuth2Provider:
 
         return claims
 
-    async def get_userinfo(self, access_token: str) -> Dict[str, any]:
+    async def get_userinfo(self, access_token: str) -> dict[str, any]:
         """
         Fetch user information from UserInfo endpoint.
 
@@ -225,7 +224,7 @@ class OAuth2Provider:
 
             return response.json()
 
-    def map_claims_to_user(self, claims: Dict[str, any]) -> Dict[str, str]:
+    def map_claims_to_user(self, claims: dict[str, any]) -> dict[str, str]:
         """
         Map OAuth2/OIDC claims to user attributes.
 
@@ -253,7 +252,7 @@ class OAuth2Provider:
 
         return mapped
 
-    async def refresh_token(self, refresh_token: str) -> Dict[str, any]:
+    async def refresh_token(self, refresh_token: str) -> dict[str, any]:
         """
         Refresh access token using refresh token.
 
@@ -315,9 +314,7 @@ class OAuth2Provider:
         # This is a best-effort implementation
 
         # Construct revocation endpoint URL (common pattern)
-        revocation_endpoint = self.config.token_endpoint.replace(
-            "/token", "/revoke"
-        )
+        revocation_endpoint = self.config.token_endpoint.replace("/token", "/revoke")
 
         data = {
             "token": token,
@@ -339,7 +336,7 @@ class OAuth2Provider:
             except httpx.HTTPError as e:
                 raise ValueError(f"Token revocation failed: {e}")
 
-    async def _get_signing_key(self, kid: Optional[str] = None) -> str:
+    async def _get_signing_key(self, kid: str | None = None) -> str:
         """
         Get signing key from JWKS endpoint.
 
@@ -384,7 +381,7 @@ class OAuth2Provider:
         except JWKError as e:
             raise ValueError(f"Failed to construct signing key: {e}")
 
-    async def _fetch_jwks(self) -> Dict:
+    async def _fetch_jwks(self) -> dict:
         """
         Fetch JSON Web Key Set from JWKS endpoint.
 
@@ -425,7 +422,7 @@ class OAuth2Provider:
         # Remove padding
         return challenge.rstrip("=")
 
-    async def discover_endpoints(self, discovery_url: str) -> Dict[str, str]:
+    async def discover_endpoints(self, discovery_url: str) -> dict[str, str]:
         """
         Discover OAuth2/OIDC endpoints from discovery document.
 

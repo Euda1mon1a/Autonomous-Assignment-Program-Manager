@@ -52,7 +52,6 @@ import os
 import signal
 import sys
 from concurrent import futures
-from typing import Optional
 
 from app.core.config import get_settings
 from app.grpc.interceptors import (
@@ -88,8 +87,12 @@ except ImportError:
 # Configuration from environment
 GRPC_PORT = int(os.getenv("GRPC_PORT", "50051"))
 GRPC_MAX_WORKERS = int(os.getenv("GRPC_MAX_WORKERS", "10"))
-GRPC_MAX_MESSAGE_LENGTH = int(os.getenv("GRPC_MAX_MESSAGE_LENGTH", str(100 * 1024 * 1024)))  # 100MB
-GRPC_ENABLE_REFLECTION = os.getenv("GRPC_ENABLE_REFLECTION", str(settings.DEBUG)).lower() == "true"
+GRPC_MAX_MESSAGE_LENGTH = int(
+    os.getenv("GRPC_MAX_MESSAGE_LENGTH", str(100 * 1024 * 1024))
+)  # 100MB
+GRPC_ENABLE_REFLECTION = (
+    os.getenv("GRPC_ENABLE_REFLECTION", str(settings.DEBUG)).lower() == "true"
+)
 GRPC_ENABLE_TLS = os.getenv("GRPC_ENABLE_TLS", "false").lower() == "true"
 GRPC_TLS_CERT_PATH = os.getenv("GRPC_TLS_CERT_PATH", "")
 GRPC_TLS_KEY_PATH = os.getenv("GRPC_TLS_KEY_PATH", "")
@@ -159,7 +162,9 @@ def _register_services(server) -> list[str]:
     # Note: In production, you would use generated add_*_to_server functions
     # For now, we'll just store references (actual registration requires .proto files)
 
-    logger.info("gRPC services registered (simplified mode - requires .proto files for full implementation)")
+    logger.info(
+        "gRPC services registered (simplified mode - requires .proto files for full implementation)"
+    )
 
     # Return service names for reflection
     return [
@@ -174,7 +179,7 @@ def start_grpc_server(
     port: int = GRPC_PORT,
     max_workers: int = GRPC_MAX_WORKERS,
     wait: bool = False,
-) -> Optional[object]:
+) -> object | None:
     """
     Start the gRPC server with all services and interceptors.
 
@@ -321,7 +326,7 @@ def run_server():
         python -m app.grpc.server
     """
     logger.info("Starting standalone gRPC server...")
-    logger.info(f"Configuration:")
+    logger.info("Configuration:")
     logger.info(f"  Port: {GRPC_PORT}")
     logger.info(f"  Max Workers: {GRPC_MAX_WORKERS}")
     logger.info(f"  Max Message Length: {GRPC_MAX_MESSAGE_LENGTH} bytes")

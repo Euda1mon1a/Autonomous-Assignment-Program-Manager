@@ -1,16 +1,14 @@
 """Tests for SwapExecutor service."""
 
-import pytest
 from datetime import date, datetime, timedelta
 from uuid import uuid4
-from unittest.mock import patch
 
-from app.services.swap_executor import SwapExecutor, ExecutionResult, RollbackResult
-from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.call_assignment import CallAssignment
 from app.models.person import Person
+from app.models.swap import SwapRecord, SwapStatus, SwapType
+from app.services.swap_executor import SwapExecutor
 
 
 class TestSwapExecutor:
@@ -103,7 +101,9 @@ class TestSwapExecutor:
         assert "transferred" in result.message.lower()
 
         # Verify swap record was created
-        swap_record = db.query(SwapRecord).filter(SwapRecord.id == result.swap_id).first()
+        swap_record = (
+            db.query(SwapRecord).filter(SwapRecord.id == result.swap_id).first()
+        )
         assert swap_record is not None
         assert swap_record.status == SwapStatus.EXECUTED
         assert swap_record.source_faculty_id == faculty1.id
@@ -261,10 +261,14 @@ class TestSwapExecutor:
         assert result.success is True
 
         # Verify call assignments were transferred
-        friday_call = db.query(CallAssignment).filter(CallAssignment.date == friday).first()
+        friday_call = (
+            db.query(CallAssignment).filter(CallAssignment.date == friday).first()
+        )
         assert friday_call.person_id == faculty2.id
 
-        saturday_call = db.query(CallAssignment).filter(CallAssignment.date == saturday).first()
+        saturday_call = (
+            db.query(CallAssignment).filter(CallAssignment.date == saturday).first()
+        )
         assert saturday_call.person_id == faculty2.id
 
     def test_execute_swap_failure_rolls_back(self, db, sample_faculty):
@@ -632,5 +636,7 @@ class TestSwapExecutor:
         assert result.success is True
 
         # Verify executed_by_id was saved
-        swap_record = db.query(SwapRecord).filter(SwapRecord.id == result.swap_id).first()
+        swap_record = (
+            db.query(SwapRecord).filter(SwapRecord.id == result.swap_id).first()
+        )
         assert swap_record.executed_by_id == admin_user.id

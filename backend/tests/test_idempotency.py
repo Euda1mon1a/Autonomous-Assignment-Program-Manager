@@ -8,10 +8,10 @@ Tests cover:
 - Cached response replay
 - Row-level locking in schedule generation
 """
+
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -365,9 +365,11 @@ class TestIdempotencyEndpoint:
         assert response.status_code in [200, 207]
 
         # Should have created idempotency record
-        record = db.query(IdempotencyRequest).filter(
-            IdempotencyRequest.idempotency_key == idempotency_key
-        ).first()
+        record = (
+            db.query(IdempotencyRequest)
+            .filter(IdempotencyRequest.idempotency_key == idempotency_key)
+            .first()
+        )
         assert record is not None
         assert record.is_completed
 
@@ -443,7 +445,9 @@ class TestIdempotencyEndpoint:
         # Second request with same key but different body
         payload2 = {
             "start_date": start_date.isoformat(),
-            "end_date": (end_date + timedelta(days=1)).isoformat(),  # Different end date
+            "end_date": (
+                end_date + timedelta(days=1)
+            ).isoformat(),  # Different end date
             "algorithm": "greedy",
         }
         response2 = client.post(
@@ -491,20 +495,30 @@ class TestRowLevelLocking:
         assert response1.status_code in [200, 207]
 
         # Count assignments
-        count1 = db.query(Assignment).join(Block).filter(
-            Block.date >= start_date,
-            Block.date <= end_date,
-        ).count()
+        count1 = (
+            db.query(Assignment)
+            .join(Block)
+            .filter(
+                Block.date >= start_date,
+                Block.date <= end_date,
+            )
+            .count()
+        )
 
         # Second generation (should delete old and create new)
         response2 = client.post("/api/schedule/generate", json=payload)
         assert response2.status_code in [200, 207]
 
         # Should still have similar count (old deleted, new created)
-        count2 = db.query(Assignment).join(Block).filter(
-            Block.date >= start_date,
-            Block.date <= end_date,
-        ).count()
+        count2 = (
+            db.query(Assignment)
+            .join(Block)
+            .filter(
+                Block.date >= start_date,
+                Block.date <= end_date,
+            )
+            .count()
+        )
 
         # Note: Count might differ slightly due to different random seed,
         # but there shouldn't be duplicates

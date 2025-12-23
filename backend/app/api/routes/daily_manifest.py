@@ -4,8 +4,8 @@ Answers "Where is everyone NOW" - critical for clinic staff.
 Shows current staffing at each location with real-time assignments.
 """
 
-from datetime import date, datetime
 from collections import defaultdict
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session, joinedload
@@ -30,7 +30,9 @@ router = APIRouter()
 @router.get("/daily-manifest", response_model=DailyManifestResponse)
 def get_daily_manifest(
     date_param: date = Query(..., alias="date", description="Date for the manifest"),
-    time_of_day: str | None = Query(None, description="AM or PM (optional, shows all if omitted)"),
+    time_of_day: str | None = Query(
+        None, description="AM or PM (optional, shows all if omitted)"
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -49,6 +51,7 @@ def get_daily_manifest(
     # Validate time_of_day if provided
     if time_of_day and time_of_day not in ("AM", "PM"):
         from fastapi import HTTPException, status
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="time_of_day must be 'AM' or 'PM' if provided",
@@ -82,7 +85,10 @@ def get_daily_manifest(
     for assignment in assignments:
         # Get clinic location from rotation template
         clinic_location = "Unassigned"
-        if assignment.rotation_template and assignment.rotation_template.clinic_location:
+        if (
+            assignment.rotation_template
+            and assignment.rotation_template.clinic_location
+        ):
             clinic_location = assignment.rotation_template.clinic_location
 
         # Get activity name
@@ -117,10 +123,7 @@ def get_daily_manifest(
             all_assignments.extend(slot_assignments)
 
         total = len(all_assignments)
-        residents = sum(
-            1 for a in all_assignments
-            if a.person.pgy_level is not None
-        )
+        residents = sum(1 for a in all_assignments if a.person.pgy_level is not None)
         faculty = total - residents
 
         staffing_summary = StaffingSummary(
@@ -138,10 +141,7 @@ def get_daily_manifest(
 
     # Sort locations by name for consistent display (Unassigned last)
     locations.sort(
-        key=lambda loc: (
-            loc.clinic_location == "Unassigned",
-            loc.clinic_location or ""
-        )
+        key=lambda loc: (loc.clinic_location == "Unassigned", loc.clinic_location or "")
     )
 
     return DailyManifestResponse(

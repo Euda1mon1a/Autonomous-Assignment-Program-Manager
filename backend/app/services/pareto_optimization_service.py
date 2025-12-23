@@ -7,12 +7,12 @@ from uuid import UUID
 import numpy as np
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.problem import Problem
-from pymoo.optimize import minimize
+from pymoo.indicators.hv import HV
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
 from pymoo.operators.sampling.rnd import FloatRandomSampling
+from pymoo.optimize import minimize
 from pymoo.termination import get_termination
-from pymoo.indicators.hv import HV
 from sqlalchemy.orm import Session
 
 from app.models.block import Block
@@ -21,12 +21,12 @@ from app.repositories.assignment import AssignmentRepository
 from app.repositories.block import BlockRepository
 from app.repositories.person import PersonRepository
 from app.schemas.pareto import (
+    ObjectiveDirection,
     ParetoConstraint,
     ParetoObjective,
     ParetoResult,
     ParetoSolution,
     RankedSolution,
-    ObjectiveDirection,
 )
 
 
@@ -139,7 +139,9 @@ class SchedulingProblem(Problem):
         # Return negative for minimization in pymoo
         return -coverage_rate
 
-    def _calculate_preference_satisfaction(self, assignment_matrix: np.ndarray) -> float:
+    def _calculate_preference_satisfaction(
+        self, assignment_matrix: np.ndarray
+    ) -> float:
         """
         Calculate preference satisfaction (maximize assignments to preferred blocks).
 
@@ -162,8 +164,10 @@ class SchedulingProblem(Problem):
                     block = self.block_data[block_idx]
 
                     # Example preference matching logic
-                    if person.get('preferred_activity_types') and block.get('activity_type'):
-                        if block['activity_type'] in person['preferred_activity_types']:
+                    if person.get("preferred_activity_types") and block.get(
+                        "activity_type"
+                    ):
+                        if block["activity_type"] in person["preferred_activity_types"]:
                             satisfaction_score += 1.0
 
         # Normalize by total assignments
@@ -235,7 +239,7 @@ class SchedulingProblem(Problem):
             for person_idx in range(self.n_persons):
                 if assignment_matrix[block_idx, person_idx] == 1:
                     block = self.block_data[block_idx]
-                    specialty = block.get('specialty', 'unknown')
+                    specialty = block.get("specialty", "unknown")
                     specialty_counts[specialty] = specialty_counts.get(specialty, 0) + 1
 
         if specialty_counts:
@@ -306,7 +310,9 @@ class SchedulingProblem(Problem):
                 elif constraint.constraint_type == "min_coverage":
                     min_coverage = constraint.parameters.get("min_rate", 0.8)
                     covered = (assignment_matrix.sum(axis=1) > 0).sum()
-                    coverage_rate = covered / self.n_blocks if self.n_blocks > 0 else 0.0
+                    coverage_rate = (
+                        covered / self.n_blocks if self.n_blocks > 0 else 0.0
+                    )
                     if coverage_rate < min_coverage:
                         violation = min_coverage - coverage_rate
 
@@ -376,7 +382,7 @@ class ParetoOptimizationService:
                 hypervolume=None,
                 total_solutions=0,
                 execution_time_seconds=time.time() - start_time,
-                termination_reason="No persons or blocks available"
+                termination_reason="No persons or blocks available",
             )
 
         # Prepare data
@@ -435,13 +441,19 @@ class ParetoOptimizationService:
             frontier_indices=frontier_indices,
             hypervolume=hypervolume,
             total_solutions=len(solutions),
-            convergence_metric=res.algorithm.n_gen / n_generations if hasattr(res.algorithm, 'n_gen') else None,
+            convergence_metric=res.algorithm.n_gen / n_generations
+            if hasattr(res.algorithm, "n_gen")
+            else None,
             execution_time_seconds=execution_time,
             algorithm="NSGA-II",
-            termination_reason="Max generations reached" if execution_time < timeout_seconds else "Timeout"
+            termination_reason="Max generations reached"
+            if execution_time < timeout_seconds
+            else "Timeout",
         )
 
-    def get_pareto_frontier(self, solutions: list[ParetoSolution]) -> list[ParetoSolution]:
+    def get_pareto_frontier(
+        self, solutions: list[ParetoSolution]
+    ) -> list[ParetoSolution]:
         """
         Extract solutions on the Pareto frontier.
 
@@ -458,7 +470,7 @@ class ParetoOptimizationService:
         self,
         solutions: list[ParetoSolution],
         weights: dict[str, float],
-        normalization: str = "minmax"
+        normalization: str = "minmax",
     ) -> list[RankedSolution]:
         """
         Rank solutions based on weighted objective values.
@@ -533,13 +545,21 @@ class ParetoOptimizationService:
     def _get_persons(self, person_ids: list[UUID] | None) -> list[Person]:
         """Fetch persons from database."""
         if person_ids:
-            return [self.person_repo.get_by_id(pid) for pid in person_ids if self.person_repo.get_by_id(pid)]
+            return [
+                self.person_repo.get_by_id(pid)
+                for pid in person_ids
+                if self.person_repo.get_by_id(pid)
+            ]
         return self.person_repo.list_all()[:50]  # Limit for performance
 
     def _get_blocks(self, block_ids: list[UUID] | None) -> list[Block]:
         """Fetch blocks from database."""
         if block_ids:
-            return [self.block_repo.get_by_id(bid) for bid in block_ids if self.block_repo.get_by_id(bid)]
+            return [
+                self.block_repo.get_by_id(bid)
+                for bid in block_ids
+                if self.block_repo.get_by_id(bid)
+            ]
         return self.block_repo.list_all()[:100]  # Limit for performance
 
     def _person_to_dict(self, person: Person) -> dict:
@@ -548,7 +568,7 @@ class ParetoOptimizationService:
             "id": str(person.id),
             "name": person.name,
             "pgy_level": person.pgy_level,
-            "preferred_activity_types": getattr(person, 'preferred_activity_types', []),
+            "preferred_activity_types": getattr(person, "preferred_activity_types", []),
         }
 
     def _block_to_dict(self, block: Block) -> dict:
@@ -557,7 +577,7 @@ class ParetoOptimizationService:
             "id": str(block.id),
             "name": block.name,
             "activity_type": block.activity_type,
-            "specialty": getattr(block, 'specialty', 'general'),
+            "specialty": getattr(block, "specialty", "general"),
             "start_date": str(block.start_date),
             "end_date": str(block.end_date),
         }
@@ -665,9 +685,7 @@ class ParetoOptimizationService:
         return [i for i in range(n_solutions) if not is_dominated[i]]
 
     def _calculate_hypervolume(
-        self,
-        solutions: list[ParetoSolution],
-        frontier_indices: list[int]
+        self, solutions: list[ParetoSolution], frontier_indices: list[int]
     ) -> float | None:
         """Calculate hypervolume indicator for Pareto frontier."""
         if not frontier_indices or not solutions:
@@ -679,12 +697,16 @@ class ParetoOptimizationService:
             frontier_points = []
 
             for idx in frontier_indices:
-                point = [solutions[idx].objective_values[obj] for obj in objective_names]
+                point = [
+                    solutions[idx].objective_values[obj] for obj in objective_names
+                ]
                 frontier_points.append(point)
 
             # Calculate hypervolume with reference point
             F = np.array(frontier_points)
-            ref_point = np.max(F, axis=0) + 1.0  # Reference point slightly worse than worst
+            ref_point = (
+                np.max(F, axis=0) + 1.0
+            )  # Reference point slightly worse than worst
 
             hv = HV(ref_point=ref_point)
             return float(hv(F))

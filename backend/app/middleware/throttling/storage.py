@@ -4,12 +4,12 @@ Storage layer for throttling state management.
 Provides Redis-based storage for tracking concurrent requests,
 queue state, and throttling metrics.
 """
+
 import asyncio
 import json
 import logging
 import time
 from dataclasses import asdict, dataclass
-from typing import Optional
 
 import redis.asyncio as redis
 
@@ -21,7 +21,7 @@ class RequestSlot:
     """Represents an active request slot."""
 
     request_id: str  # Unique request identifier
-    user_id: Optional[str]  # User making the request
+    user_id: str | None  # User making the request
     endpoint: str  # Endpoint being accessed
     priority: str  # Request priority level
     started_at: float  # Timestamp when request started
@@ -33,7 +33,7 @@ class QueuedRequest:
     """Represents a queued request awaiting processing."""
 
     request_id: str  # Unique request identifier
-    user_id: Optional[str]  # User making the request
+    user_id: str | None  # User making the request
     endpoint: str  # Endpoint being accessed
     priority: str  # Request priority level
     queued_at: float  # Timestamp when request was queued
@@ -59,7 +59,7 @@ class ThrottleStorage:
     and provides metrics for monitoring.
     """
 
-    def __init__(self, redis_client: Optional[redis.Redis] = None):
+    def __init__(self, redis_client: redis.Redis | None = None):
         """
         Initialize throttle storage.
 
@@ -78,12 +78,12 @@ class ThrottleStorage:
     async def acquire_slot(
         self,
         request_id: str,
-        user_id: Optional[str],
+        user_id: str | None,
         endpoint: str,
         priority: str,
         max_concurrent: int,
         timeout: float,
-    ) -> tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """
         Try to acquire a request slot.
 
@@ -190,7 +190,7 @@ class ThrottleStorage:
             # Find and remove matching members
             for member in members:
                 if isinstance(member, bytes):
-                    member = member.decode('utf-8')
+                    member = member.decode("utf-8")
                 if member.startswith(f"{request_id}:"):
                     await self.redis.zrem(key, member)
                     logger.debug(f"Released throttle slot for request {request_id}")
@@ -205,12 +205,12 @@ class ThrottleStorage:
     async def enqueue_request(
         self,
         request_id: str,
-        user_id: Optional[str],
+        user_id: str | None,
         endpoint: str,
         priority: str,
         max_queue_size: int,
         timeout: float,
-    ) -> tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """
         Add request to queue.
 
@@ -323,7 +323,7 @@ class ThrottleStorage:
 
             for member in members:
                 if isinstance(member, bytes):
-                    member = member.decode('utf-8')
+                    member = member.decode("utf-8")
                 if member.startswith(f"{request_id}:"):
                     await self.redis.zrem(key, member)
                     return True
@@ -362,8 +362,8 @@ class ThrottleStorage:
             now = time.time()
 
             # Clean up expired entries
-            await self.redis.zremrangebyscore("throttle:active", '-inf', now)
-            await self.redis.zremrangebyscore("throttle:queue", '-inf', now)
+            await self.redis.zremrangebyscore("throttle:active", "-inf", now)
+            await self.redis.zremrangebyscore("throttle:queue", "-inf", now)
 
             # Get counts
             active = await self.redis.zcard("throttle:active")
@@ -405,10 +405,10 @@ class ThrottleStorage:
             now = time.time()
 
             active_cleaned = await self.redis.zremrangebyscore(
-                "throttle:active", '-inf', now
+                "throttle:active", "-inf", now
             )
             queue_cleaned = await self.redis.zremrangebyscore(
-                "throttle:queue", '-inf', now
+                "throttle:queue", "-inf", now
             )
 
             return active_cleaned, queue_cleaned

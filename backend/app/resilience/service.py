@@ -38,7 +38,6 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
-
 from app.resilience.blast_radius import (
     BlastRadiusManager,
     BlastRadiusReport,
@@ -119,16 +118,6 @@ from app.resilience.stigmergy import (
     SwapNetwork,
     TrailType,
 )
-from app.resilience.transcription_factors import (
-    BindingLogic,
-    ChromatinState,
-    GRNState,
-    PromoterArchitecture,
-    SignalEvent,
-    TFType,
-    TranscriptionFactor,
-    TranscriptionFactorScheduler,
-)
 
 # Tier 3 persistence helpers
 from app.resilience.tier3_persistence import (
@@ -141,6 +130,15 @@ from app.resilience.tier3_persistence import (
     persist_trail_signal,
     update_cognitive_session,
     update_decision_resolution,
+)
+from app.resilience.transcription_factors import (
+    BindingLogic,
+    ChromatinState,
+    GRNState,
+    SignalEvent,
+    TFType,
+    TranscriptionFactor,
+    TranscriptionFactorScheduler,
 )
 
 # Tier 1 imports
@@ -157,6 +155,7 @@ logger = get_logger(__name__)
 @dataclass
 class SystemHealthReport:
     """Comprehensive system health report."""
+
     timestamp: datetime
     overall_status: str  # "healthy", "degraded", "critical", "emergency"
 
@@ -180,6 +179,7 @@ class SystemHealthReport:
 @dataclass
 class ResilienceConfig:
     """Configuration for resilience service."""
+
     # Tier 1: Utilization thresholds
     max_utilization: float = 0.80
     warning_threshold: float = 0.70
@@ -352,16 +352,21 @@ class ResilienceService:
         )
 
         # 2. Check redundancy for critical services
-        redundancy_status = self.defense.check_all_redundancy({
-            "clinical_coverage": {
-                "available_providers": faculty,
-                "minimum_required": max(1, len(blocks) // 10),  # Rough estimate
-            },
-        })
+        redundancy_status = self.defense.check_all_redundancy(
+            {
+                "clinical_coverage": {
+                    "available_providers": faculty,
+                    "minimum_required": max(1, len(blocks) // 10),  # Rough estimate
+                },
+            }
+        )
 
         # 3. Run contingency analysis (if due)
         vulnerability_report = self._maybe_run_contingency(
-            faculty, blocks, assignments, coverage_requirements,
+            faculty,
+            blocks,
+            assignments,
+            coverage_requirements,
             utilization_metrics.utilization_rate,
         )
 
@@ -395,11 +400,15 @@ class ResilienceService:
             defense_level=current_defense,
             redundancy_status=redundancy_status,
             load_shedding_level=self.sacrifice.current_level,
-            active_fallbacks=[f.scenario.value for f in self.fallback.get_active_fallbacks()],
+            active_fallbacks=[
+                f.scenario.value for f in self.fallback.get_active_fallbacks()
+            ],
             n1_pass=vulnerability_report.n1_pass if vulnerability_report else True,
             n2_pass=vulnerability_report.n2_pass if vulnerability_report else True,
             phase_transition_risk=(
-                vulnerability_report.phase_transition_risk if vulnerability_report else "low"
+                vulnerability_report.phase_transition_risk
+                if vulnerability_report
+                else "low"
             ),
             immediate_actions=immediate_actions,
             watch_items=watch_items,
@@ -438,7 +447,9 @@ class ResilienceService:
 
         elif severity == "moderate":
             # Orange level
-            self.defense.activate_action(DefenseLevel.SAFETY_SYSTEMS, "auto_reassignment")
+            self.defense.activate_action(
+                DefenseLevel.SAFETY_SYSTEMS, "auto_reassignment"
+            )
             self.sacrifice.activate_level(LoadSheddingLevel.ORANGE, reason)
             actions_taken.append("Activated automatic reassignment")
             actions_taken.append("Suspended admin, research, and optional education")
@@ -463,11 +474,14 @@ class ResilienceService:
             f"Actions: {actions_taken}"
         )
 
-        self._emit_event("crisis_activated", {
-            "severity": severity,
-            "reason": reason,
-            "actions": actions_taken,
-        })
+        self._emit_event(
+            "crisis_activated",
+            {
+                "severity": severity,
+                "reason": reason,
+                "actions": actions_taken,
+            },
+        )
 
         return {
             "crisis_mode": True,
@@ -545,11 +559,14 @@ class ResilienceService:
         fallback = self.fallback.activate_fallback(scenario)
 
         if fallback:
-            self._emit_event("fallback_activated", {
-                "scenario": scenario.value,
-                "approved_by": approved_by,
-                "assignments_count": len(fallback.assignments),
-            })
+            self._emit_event(
+                "fallback_activated",
+                {
+                    "scenario": scenario.value,
+                    "approved_by": approved_by,
+                    "assignments_count": len(fallback.assignments),
+                },
+            )
 
         return fallback
 
@@ -667,10 +684,10 @@ class ResilienceService:
     ) -> VulnerabilityReport | None:
         """Run contingency analysis if due or if utilization is high."""
         should_run = (
-            self._last_contingency_analysis is None or
-            (datetime.now() - self._last_contingency_analysis).total_seconds() >
-            self.config.contingency_analysis_interval_hours * 3600 or
-            current_utilization > 0.80  # Always run when stressed
+            self._last_contingency_analysis is None
+            or (datetime.now() - self._last_contingency_analysis).total_seconds()
+            > self.config.contingency_analysis_interval_hours * 3600
+            or current_utilization > 0.80  # Always run when stressed
         )
 
         if not should_run:
@@ -750,10 +767,14 @@ class ResilienceService:
 
         # Based on utilization
         if utilization.level == UtilizationLevel.YELLOW:
-            watch.append(f"Utilization at {utilization.utilization_rate:.0%} - approaching threshold")
+            watch.append(
+                f"Utilization at {utilization.utilization_rate:.0%} - approaching threshold"
+            )
 
         if utilization.buffer_remaining < 0.10:
-            immediate.append(f"Buffer critically low ({utilization.buffer_remaining:.0%})")
+            immediate.append(
+                f"Buffer critically low ({utilization.buffer_remaining:.0%})"
+            )
 
         # Based on vulnerability
         if vulnerability:
@@ -811,27 +832,38 @@ class ResilienceService:
 
         # Detect positive feedback risks
         system_metrics = {"coverage_rate": current_values.get("coverage_rate", 1.0)}
-        risks = self.homeostasis.detect_positive_feedback_risks(faculty_metrics, system_metrics)
+        risks = self.homeostasis.detect_positive_feedback_risks(
+            faculty_metrics, system_metrics
+        )
 
         # Get overall status
         status = self.homeostasis.get_status(faculty_metrics)
 
         # Emit event if corrections triggered
         if corrections:
-            self._emit_event("homeostasis_correction", {
-                "corrections_count": len(corrections),
-                "corrections": [
-                    {"type": c.action_type.value, "severity": c.deviation_severity.value}
-                    for c in corrections
-                ],
-            })
+            self._emit_event(
+                "homeostasis_correction",
+                {
+                    "corrections_count": len(corrections),
+                    "corrections": [
+                        {
+                            "type": c.action_type.value,
+                            "severity": c.deviation_severity.value,
+                        }
+                        for c in corrections
+                    ],
+                },
+            )
 
         # Emit event if positive feedback risks detected
         if risks:
-            self._emit_event("positive_feedback_detected", {
-                "risks_count": len(risks),
-                "urgent_count": sum(1 for r in risks if r.urgency == "immediate"),
-            })
+            self._emit_event(
+                "positive_feedback_detected",
+                {
+                    "risks_count": len(risks),
+                    "urgent_count": sum(1 for r in risks if r.urgency == "immediate"),
+                },
+            )
 
         return status
 
@@ -858,17 +890,23 @@ class ResilienceService:
 
         # Check thresholds and emit events
         if metrics.total_allostatic_load >= self.config.allostatic_critical_threshold:
-            self._emit_event("allostatic_critical", {
-                "entity_id": str(entity_id),
-                "entity_type": entity_type,
-                "load": metrics.total_allostatic_load,
-            })
+            self._emit_event(
+                "allostatic_critical",
+                {
+                    "entity_id": str(entity_id),
+                    "entity_type": entity_type,
+                    "load": metrics.total_allostatic_load,
+                },
+            )
         elif metrics.total_allostatic_load >= self.config.allostatic_warning_threshold:
-            self._emit_event("allostatic_warning", {
-                "entity_id": str(entity_id),
-                "entity_type": entity_type,
-                "load": metrics.total_allostatic_load,
-            })
+            self._emit_event(
+                "allostatic_warning",
+                {
+                    "entity_id": str(entity_id),
+                    "entity_type": entity_type,
+                    "load": metrics.total_allostatic_load,
+                },
+            )
 
         return metrics
 
@@ -903,13 +941,13 @@ class ResilienceService:
 
         # Auto-escalate containment if configured
         if (
-            self.config.auto_escalate_containment and
-            report.zones_critical > 0 and
-            self.blast_radius.global_containment == ContainmentLevel.NONE
+            self.config.auto_escalate_containment
+            and report.zones_critical > 0
+            and self.blast_radius.global_containment == ContainmentLevel.NONE
         ):
             self.set_containment_level(
                 ContainmentLevel.MODERATE,
-                f"Auto-escalated due to {report.zones_critical} critical zones"
+                f"Auto-escalated due to {report.zones_critical} critical zones",
             )
 
         return report
@@ -935,11 +973,14 @@ class ResilienceService:
             priority=priority,
         )
 
-        self._emit_event("zone_created", {
-            "zone_id": str(zone.id),
-            "zone_name": name,
-            "zone_type": zone_type.value,
-        })
+        self._emit_event(
+            "zone_created",
+            {
+                "zone_id": str(zone.id),
+                "zone_name": name,
+                "zone_type": zone_type.value,
+            },
+        )
 
         return zone
 
@@ -984,11 +1025,14 @@ class ResilienceService:
         )
 
         if request:
-            self._emit_event("zone_borrowing_requested", {
-                "request_id": str(request.id),
-                "priority": priority,
-                "status": request.status,
-            })
+            self._emit_event(
+                "zone_borrowing_requested",
+                {
+                    "request_id": str(request.id),
+                    "priority": priority,
+                    "status": request.status,
+                },
+            )
 
         return request
 
@@ -1012,11 +1056,14 @@ class ResilienceService:
         )
 
         if incident:
-            self._emit_event("zone_incident_recorded", {
-                "incident_id": str(incident.id),
-                "zone_id": str(zone_id),
-                "severity": severity,
-            })
+            self._emit_event(
+                "zone_incident_recorded",
+                {
+                    "incident_id": str(incident.id),
+                    "zone_id": str(zone_id),
+                    "severity": severity,
+                },
+            )
 
         return incident
 
@@ -1029,11 +1076,14 @@ class ResilienceService:
         previous = self.blast_radius.global_containment
         self.blast_radius.set_global_containment(level, reason)
 
-        self._emit_event("containment_changed", {
-            "previous_level": previous.value,
-            "new_level": level.value,
-            "reason": reason,
-        })
+        self._emit_event(
+            "containment_changed",
+            {
+                "previous_level": previous.value,
+                "new_level": level.value,
+                "reason": reason,
+            },
+        )
 
     # =========================================================================
     # Tier 2: Le Chatelier / Equilibrium Methods
@@ -1077,12 +1127,15 @@ class ResilienceService:
             is_reversible=is_reversible,
         )
 
-        self._emit_event("stress_applied", {
-            "stress_id": str(stress.id),
-            "stress_type": stress_type.value,
-            "magnitude": magnitude,
-            "capacity_impact": capacity_impact,
-        })
+        self._emit_event(
+            "stress_applied",
+            {
+                "stress_id": str(stress.id),
+                "stress_type": stress_type.value,
+                "magnitude": magnitude,
+                "capacity_impact": capacity_impact,
+            },
+        )
 
         return stress
 
@@ -1125,12 +1178,15 @@ class ResilienceService:
         )
 
         if compensation:
-            self._emit_event("compensation_initiated", {
-                "compensation_id": str(compensation.id),
-                "stress_id": str(stress_id),
-                "compensation_type": compensation_type.value,
-                "magnitude": magnitude,
-            })
+            self._emit_event(
+                "compensation_initiated",
+                {
+                    "compensation_id": str(compensation.id),
+                    "stress_id": str(stress_id),
+                    "compensation_type": compensation_type.value,
+                    "magnitude": magnitude,
+                },
+            )
 
         return compensation
 
@@ -1156,13 +1212,16 @@ class ResilienceService:
             original_capacity, original_demand
         )
 
-        self._emit_event("equilibrium_shift_calculated", {
-            "shift_id": str(shift.id),
-            "original_coverage": shift.original_coverage_rate,
-            "new_coverage": shift.new_coverage_rate,
-            "equilibrium_state": shift.equilibrium_state.value,
-            "is_sustainable": shift.is_sustainable,
-        })
+        self._emit_event(
+            "equilibrium_shift_calculated",
+            {
+                "shift_id": str(shift.id),
+                "original_coverage": shift.original_coverage_rate,
+                "new_coverage": shift.new_coverage_rate,
+                "equilibrium_state": shift.equilibrium_state.value,
+                "is_sustainable": shift.is_sustainable,
+            },
+        )
 
         return shift
 
@@ -1204,10 +1263,13 @@ class ResilienceService:
     def resolve_stress(self, stress_id: UUID, resolution_notes: str = ""):
         """Mark a stress as resolved."""
         self.equilibrium.resolve_stress(stress_id, resolution_notes)
-        self._emit_event("stress_resolved", {
-            "stress_id": str(stress_id),
-            "resolution_notes": resolution_notes,
-        })
+        self._emit_event(
+            "stress_resolved",
+            {
+                "stress_id": str(stress_id),
+                "resolution_notes": resolution_notes,
+            },
+        )
 
     # =========================================================================
     # Tier 2: Combined Status
@@ -1237,15 +1299,17 @@ class ResilienceService:
 
         # Determine overall Tier 2 status
         if (
-            homeostasis_status.overall_state == AllostasisState.ALLOSTATIC_OVERLOAD or
-            equilibrium_report.current_equilibrium_state == EquilibriumState.CRITICAL or
-            blast_radius_report.zones_critical > len(self.blast_radius.zones) * 0.3
+            homeostasis_status.overall_state == AllostasisState.ALLOSTATIC_OVERLOAD
+            or equilibrium_report.current_equilibrium_state == EquilibriumState.CRITICAL
+            or blast_radius_report.zones_critical > len(self.blast_radius.zones) * 0.3
         ):
             tier2_status = "critical"
         elif (
-            homeostasis_status.overall_state in (AllostasisState.ALLOSTASIS, AllostasisState.ALLOSTATIC_LOAD) or
-            equilibrium_report.current_equilibrium_state in (EquilibriumState.STRESSED, EquilibriumState.UNSUSTAINABLE) or
-            blast_radius_report.zones_degraded > len(self.blast_radius.zones) * 0.3
+            homeostasis_status.overall_state
+            in (AllostasisState.ALLOSTASIS, AllostasisState.ALLOSTATIC_LOAD)
+            or equilibrium_report.current_equilibrium_state
+            in (EquilibriumState.STRESSED, EquilibriumState.UNSUSTAINABLE)
+            or blast_radius_report.zones_degraded > len(self.blast_radius.zones) * 0.3
         ):
             tier2_status = "degraded"
         else:
@@ -1305,10 +1369,13 @@ class ResilienceService:
         if self.db:
             persist_cognitive_session(self.db, session)
 
-        self._emit_event("cognitive_session_started", {
-            "session_id": str(session.id),
-            "user_id": str(user_id),
-        })
+        self._emit_event(
+            "cognitive_session_started",
+            {
+                "session_id": str(session.id),
+                "user_id": str(user_id),
+            },
+        )
 
         return session
 
@@ -1322,9 +1389,12 @@ class ResilienceService:
             if session:
                 update_cognitive_session(self.db, session)
 
-        self._emit_event("cognitive_session_ended", {
-            "session_id": str(session_id),
-        })
+        self._emit_event(
+            "cognitive_session_ended",
+            {
+                "session_id": str(session_id),
+            },
+        )
 
     def create_decision(
         self,
@@ -1389,19 +1459,26 @@ class ResilienceService:
         # Update database record if available
         if self.db:
             update_decision_resolution(
-                self.db, decision_id, DecisionOutcome.DECIDED,
-                chosen_option, decided_by, actual_time_seconds
+                self.db,
+                decision_id,
+                DecisionOutcome.DECIDED,
+                chosen_option,
+                decided_by,
+                actual_time_seconds,
             )
             # Also update the session record
             session = self.cognitive_load.sessions.get(session_id)
             if session:
                 update_cognitive_session(self.db, session)
 
-        self._emit_event("decision_made", {
-            "session_id": str(session_id),
-            "decision_id": str(decision_id),
-            "chosen_option": chosen_option,
-        })
+        self._emit_event(
+            "decision_made",
+            {
+                "session_id": str(session_id),
+                "decision_id": str(decision_id),
+                "chosen_option": chosen_option,
+            },
+        )
 
     def get_cognitive_status(self, session_id: UUID) -> CognitiveLoadReport | None:
         """Get cognitive load status for a session."""
@@ -1480,11 +1557,14 @@ class ResilienceService:
         if self.db:
             persist_preference_trail(self.db, trail)
 
-        self._emit_event("preference_recorded", {
-            "trail_id": str(trail.id),
-            "faculty_id": str(faculty_id),
-            "trail_type": trail_type.value,
-        })
+        self._emit_event(
+            "preference_recorded",
+            {
+                "trail_id": str(trail.id),
+                "faculty_id": str(faculty_id),
+                "trail_type": trail_type.value,
+            },
+        )
 
         return trail
 
@@ -1509,7 +1589,9 @@ class ResilienceService:
             strength_change: Override default change amount
         """
         # Get trails before update to track changes
-        affected_trails = self.stigmergy.get_faculty_preferences(faculty_id, min_strength=0.0)
+        affected_trails = self.stigmergy.get_faculty_preferences(
+            faculty_id, min_strength=0.0
+        )
         old_strengths = {t.id: t.strength for t in affected_trails}
 
         self.stigmergy.record_signal(
@@ -1524,14 +1606,19 @@ class ResilienceService:
         # Persist changes if database available
         if self.db:
             # Get updated trails and persist them
-            updated_trails = self.stigmergy.get_faculty_preferences(faculty_id, min_strength=0.0)
+            updated_trails = self.stigmergy.get_faculty_preferences(
+                faculty_id, min_strength=0.0
+            )
             for trail in updated_trails:
                 persist_preference_trail(self.db, trail)
                 # Record signal if strength changed
                 old_strength = old_strengths.get(trail.id, 0.0)
                 if abs(trail.strength - old_strength) > 0.001:
                     persist_trail_signal(
-                        self.db, trail.id, signal_type.value, trail.strength - old_strength
+                        self.db,
+                        trail.id,
+                        signal_type.value,
+                        trail.strength - old_strength,
                     )
 
     def get_collective_preference(
@@ -1558,7 +1645,9 @@ class ResilienceService:
         min_strength: float = 0.1,
     ) -> list[PreferenceTrail]:
         """Get all preference trails for a faculty member."""
-        return self.stigmergy.get_faculty_preferences(faculty_id, trail_type, min_strength)
+        return self.stigmergy.get_faculty_preferences(
+            faculty_id, trail_type, min_strength
+        )
 
     def get_swap_network(self) -> SwapNetwork:
         """Get swap affinity network from trails."""
@@ -1622,10 +1711,13 @@ class ResilienceService:
         if self.db:
             persist_hub_analysis_results(self.db, results)
 
-        self._emit_event("hub_analysis_completed", {
-            "total_faculty": len(faculty),
-            "total_hubs": len(self.hub_analyzer.identify_hubs(results)),
-        })
+        self._emit_event(
+            "hub_analysis_completed",
+            {
+                "total_faculty": len(faculty),
+                "total_hubs": len(self.hub_analyzer.identify_hubs(results)),
+            },
+        )
 
         return results
 
@@ -1710,8 +1802,12 @@ class ResilienceService:
             HubProtectionPlan or None
         """
         plan = self.hub_analyzer.create_protection_plan(
-            hub_faculty_id, period_start, period_end,
-            reason, workload_reduction, assign_backup
+            hub_faculty_id,
+            period_start,
+            period_end,
+            reason,
+            workload_reduction,
+            assign_backup,
         )
 
         if plan:
@@ -1719,12 +1815,15 @@ class ResilienceService:
             if self.db:
                 persist_hub_protection_plan(self.db, plan, created_by)
 
-            self._emit_event("hub_protection_created", {
-                "plan_id": str(plan.id),
-                "hub_faculty_id": str(hub_faculty_id),
-                "period_start": period_start.isoformat(),
-                "period_end": period_end.isoformat(),
-            })
+            self._emit_event(
+                "hub_protection_created",
+                {
+                    "plan_id": str(plan.id),
+                    "hub_faculty_id": str(hub_faculty_id),
+                    "period_start": period_start.isoformat(),
+                    "period_end": period_end.isoformat(),
+                },
+            )
 
         return plan
 
@@ -1869,11 +1968,14 @@ class ResilienceService:
             activation_conditions=activation_conditions,
         )
 
-        self._emit_event("transcription_factor_created", {
-            "tf_id": str(tf.id),
-            "name": name,
-            "type": tf_type.value,
-        })
+        self._emit_event(
+            "transcription_factor_created",
+            {
+                "tf_id": str(tf.id),
+                "name": name,
+                "type": tf_type.value,
+            },
+        )
 
         return tf
 
@@ -1931,11 +2033,14 @@ class ResilienceService:
             edge_strength=edge_strength,
         )
 
-        self._emit_event("tf_constraint_linked", {
-            "tf_name": tf_name,
-            "constraint_id": str(constraint_id),
-            "as_activator": as_activator,
-        })
+        self._emit_event(
+            "tf_constraint_linked",
+            {
+                "tf_name": tf_name,
+                "constraint_id": str(constraint_id),
+                "as_activator": as_activator,
+            },
+        )
 
     def process_regulatory_signal(
         self,
@@ -1967,11 +2072,14 @@ class ResilienceService:
             signal_strength=signal_strength,
         )
 
-        self._emit_event("regulatory_signal_processed", {
-            "signal_id": str(signal.id),
-            "event_type": event_type,
-            "tfs_induced": len(signal.target_tf_ids),
-        })
+        self._emit_event(
+            "regulatory_signal_processed",
+            {
+                "signal_id": str(signal.id),
+                "event_type": event_type,
+                "tfs_induced": len(signal.target_tf_ids),
+            },
+        )
 
         return signal
 
@@ -2023,10 +2131,13 @@ class ResilienceService:
 
         self.tf_scheduler.set_chromatin_state(constraint_id, state)
 
-        self._emit_event("chromatin_state_changed", {
-            "constraint_id": str(constraint_id),
-            "new_state": state.value,
-        })
+        self._emit_event(
+            "chromatin_state_changed",
+            {
+                "constraint_id": str(constraint_id),
+                "new_state": state.value,
+            },
+        )
 
     def silence_constraints_for_crisis(self, constraint_ids: list[UUID]):
         """
@@ -2044,10 +2155,13 @@ class ResilienceService:
 
         self.tf_scheduler.silence_constraints(constraint_ids)
 
-        self._emit_event("constraints_silenced", {
-            "count": len(constraint_ids),
-            "reason": "crisis_mode",
-        })
+        self._emit_event(
+            "constraints_silenced",
+            {
+                "count": len(constraint_ids),
+                "reason": "crisis_mode",
+            },
+        )
 
     def restore_silenced_constraints(self, constraint_ids: list[UUID]):
         """
@@ -2061,9 +2175,12 @@ class ResilienceService:
 
         self.tf_scheduler.open_constraints(constraint_ids)
 
-        self._emit_event("constraints_restored", {
-            "count": len(constraint_ids),
-        })
+        self._emit_event(
+            "constraints_restored",
+            {
+                "count": len(constraint_ids),
+            },
+        )
 
     def detect_regulatory_loops(self):
         """
@@ -2083,10 +2200,13 @@ class ResilienceService:
 
         loops = self.tf_scheduler.detect_loops()
 
-        self._emit_event("regulatory_loops_detected", {
-            "count": len(loops),
-            "types": [loop.loop_type.value for loop in loops],
-        })
+        self._emit_event(
+            "regulatory_loops_detected",
+            {
+                "count": len(loops),
+                "types": [loop.loop_type.value for loop in loops],
+            },
+        )
 
         return loops
 
@@ -2167,9 +2287,13 @@ class ResilienceService:
         tier4_issues = []
 
         if status.get("total_activation", 0) > 5.0:
-            tier4_issues.append("High regulatory activation - many constraints modified")
+            tier4_issues.append(
+                "High regulatory activation - many constraints modified"
+            )
         if status.get("total_repression", 0) > 3.0:
-            tier4_issues.append("High repression activity - constraints being suppressed")
+            tier4_issues.append(
+                "High repression activity - constraints being suppressed"
+            )
         if status.get("network_entropy", 0) > 2.0:
             tier4_issues.append("High network entropy - regulatory state unstable")
 

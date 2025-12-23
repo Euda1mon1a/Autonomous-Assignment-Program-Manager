@@ -9,6 +9,7 @@ Provides reusable validators for common data types and patterns:
 - Numeric range validation
 - String length and pattern validation
 """
+
 import re
 import uuid
 from typing import Any
@@ -18,6 +19,7 @@ from pydantic import EmailStr, ValidationError, validate_email
 
 class ValidationError(Exception):
     """Base exception for validation errors."""
+
     pass
 
 
@@ -81,10 +83,17 @@ def validate_phone_number(phone: str, allow_international: bool = True) -> str:
         raise ValidationError("Phone number cannot be empty")
 
     # Remove common formatting characters
-    digits_only = re.sub(r'[\s\-\(\)\+\.]', '', phone)
+    digits_only = re.sub(r"[\s\-\(\)\+\.]", "", phone)
 
     # Check if contains only digits (and optionally leading +)
-    if not re.match(r'^\+?\d+$', phone.replace(' ', '').replace('-', '').replace('(', '').replace(')', '').replace('.', '')):
+    if not re.match(
+        r"^\+?\d+$",
+        phone.replace(" ", "")
+        .replace("-", "")
+        .replace("(", "")
+        .replace(")", "")
+        .replace(".", ""),
+    ):
         raise ValidationError(f"Phone number contains invalid characters: {phone}")
 
     # US phone number: 10 digits
@@ -92,7 +101,7 @@ def validate_phone_number(phone: str, allow_international: bool = True) -> str:
         return digits_only
 
     # US with country code: 11 digits (1 + 10)
-    if len(digits_only) == 11 and digits_only.startswith('1'):
+    if len(digits_only) == 11 and digits_only.startswith("1"):
         return digits_only
 
     # International numbers (allow if enabled)
@@ -143,15 +152,15 @@ def validate_name(name: str, min_length: int = 1, max_length: int = 255) -> str:
     # This supports names like "O'Brien", "Jean-Pierre", "Dr. Smith", "José María"
     if not re.match(r"^[\w\s\-'\.]+$", name, re.UNICODE):
         raise ValidationError(
-            f"Name contains invalid characters. Only letters, spaces, "
-            f"hyphens, apostrophes, and periods are allowed"
+            "Name contains invalid characters. Only letters, spaces, "
+            "hyphens, apostrophes, and periods are allowed"
         )
 
     # Check for suspicious SQL patterns (defense in depth)
     sql_patterns = [
-        r'(;|\-\-|\/\*|\*\/)',  # SQL comment markers
-        r'(union|select|insert|update|delete|drop|create|alter)\s',  # SQL keywords
-        r'(\bor\b|\band\b)\s*[\'\"0-9]',  # OR/AND with quotes or numbers
+        r"(;|\-\-|\/\*|\*\/)",  # SQL comment markers
+        r"(union|select|insert|update|delete|drop|create|alter)\s",  # SQL keywords
+        r"(\bor\b|\band\b)\s*[\'\"0-9]",  # OR/AND with quotes or numbers
     ]
 
     for pattern in sql_patterns:
@@ -192,7 +201,7 @@ def validate_integer_range(
     value: int,
     min_value: int | None = None,
     max_value: int | None = None,
-    field_name: str = "Value"
+    field_name: str = "Value",
 ) -> int:
     """
     Validate integer is within specified range.
@@ -210,7 +219,9 @@ def validate_integer_range(
         ValidationError: If value is out of range
     """
     if not isinstance(value, int):
-        raise ValidationError(f"{field_name} must be an integer, got {type(value).__name__}")
+        raise ValidationError(
+            f"{field_name} must be an integer, got {type(value).__name__}"
+        )
 
     if min_value is not None and value < min_value:
         raise ValidationError(f"{field_name} must be at least {min_value}, got {value}")
@@ -225,7 +236,7 @@ def validate_float_range(
     value: float,
     min_value: float | None = None,
     max_value: float | None = None,
-    field_name: str = "Value"
+    field_name: str = "Value",
 ) -> float:
     """
     Validate float is within specified range.
@@ -243,7 +254,9 @@ def validate_float_range(
         ValidationError: If value is out of range
     """
     if not isinstance(value, (int, float)):
-        raise ValidationError(f"{field_name} must be a number, got {type(value).__name__}")
+        raise ValidationError(
+            f"{field_name} must be a number, got {type(value).__name__}"
+        )
 
     value = float(value)
 
@@ -260,7 +273,7 @@ def validate_string_length(
     value: str,
     min_length: int | None = None,
     max_length: int | None = None,
-    field_name: str = "String"
+    field_name: str = "String",
 ) -> str:
     """
     Validate string length.
@@ -278,7 +291,9 @@ def validate_string_length(
         ValidationError: If string length is invalid
     """
     if not isinstance(value, str):
-        raise ValidationError(f"{field_name} must be a string, got {type(value).__name__}")
+        raise ValidationError(
+            f"{field_name} must be a string, got {type(value).__name__}"
+        )
 
     length = len(value)
 
@@ -295,7 +310,9 @@ def validate_string_length(
     return value
 
 
-def validate_enum_value(value: Any, allowed_values: list[Any], field_name: str = "Value") -> Any:
+def validate_enum_value(
+    value: Any, allowed_values: list[Any], field_name: str = "Value"
+) -> Any:
     """
     Validate value is in allowed set.
 
@@ -337,10 +354,10 @@ def validate_military_id(military_id: str) -> str:
         raise ValidationError("Military ID cannot be empty")
 
     # Remove spaces and hyphens
-    clean_id = military_id.replace(' ', '').replace('-', '')
+    clean_id = military_id.replace(" ", "").replace("-", "")
 
     # Must be exactly 10 digits
-    if not re.match(r'^\d{10}$', clean_id):
+    if not re.match(r"^\d{10}$", clean_id):
         raise ValidationError(
             f"Invalid military ID format. Expected 10 digits, got: {military_id}"
         )
@@ -363,7 +380,9 @@ def validate_non_empty_list(value: list[Any], field_name: str = "List") -> list[
         ValidationError: If list is empty or not a list
     """
     if not isinstance(value, list):
-        raise ValidationError(f"{field_name} must be a list, got {type(value).__name__}")
+        raise ValidationError(
+            f"{field_name} must be a list, got {type(value).__name__}"
+        )
 
     if len(value) == 0:
         raise ValidationError(f"{field_name} cannot be empty")

@@ -1,4 +1,5 @@
 """Application settings model for database persistence."""
+
 import uuid
 from datetime import datetime
 from enum import Enum
@@ -16,6 +17,7 @@ class FreezeScope(str, Enum):
     NON_EMERGENCY_ONLY: Allow emergency overrides without additional approval
     ALL_CHANGES_REQUIRE_OVERRIDE: All changes within freeze horizon require explicit override
     """
+
     NONE = "none"
     NON_EMERGENCY_ONLY = "non_emergency_only"
     ALL_CHANGES_REQUIRE_OVERRIDE = "all_changes_require_override"
@@ -26,14 +28,15 @@ class OverrideReasonCode(str, Enum):
 
     These map to operational realities in medical scheduling.
     """
-    SICK_CALL = "sick_call"           # Faculty/resident called in sick
-    DEPLOYMENT = "deployment"          # Military deployment order
-    SAFETY = "safety"                  # Patient or staff safety concern
-    COVERAGE_GAP = "coverage_gap"      # Critical coverage gap discovered
+
+    SICK_CALL = "sick_call"  # Faculty/resident called in sick
+    DEPLOYMENT = "deployment"  # Military deployment order
+    SAFETY = "safety"  # Patient or staff safety concern
+    COVERAGE_GAP = "coverage_gap"  # Critical coverage gap discovered
     EMERGENCY_LEAVE = "emergency_leave"  # Family emergency, bereavement
-    ADMINISTRATIVE = "administrative"   # Admin-directed change
-    CRISIS_MODE = "crisis_mode"        # System in crisis mode
-    OTHER = "other"                    # Requires free-text justification
+    ADMINISTRATIVE = "administrative"  # Admin-directed change
+    CRISIS_MODE = "crisis_mode"  # System in crisis mode
+    OTHER = "other"  # Requires free-text justification
 
 
 class ApplicationSettings(Base):
@@ -43,16 +46,13 @@ class ApplicationSettings(Base):
     This is a singleton table - only one row should exist.
     The row is created on first access with default values.
     """
+
     __tablename__ = "application_settings"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
 
     # Scheduling algorithm configuration
-    scheduling_algorithm = Column(
-        String(50),
-        nullable=False,
-        default="greedy"
-    )
+    scheduling_algorithm = Column(String(50), nullable=False, default="greedy")
 
     # Work hour limits (ACGME compliance)
     work_hours_per_week = Column(Integer, nullable=False, default=80)
@@ -74,9 +74,7 @@ class ApplicationSettings(Base):
     freeze_horizon_days = Column(Integer, nullable=False, default=7)
     # Policy for freeze enforcement
     freeze_scope = Column(
-        String(50),
-        nullable=False,
-        default=FreezeScope.NON_EMERGENCY_ONLY.value
+        String(50), nullable=False, default=FreezeScope.NON_EMERGENCY_ONLY.value
     )
 
     # Timestamps
@@ -86,31 +84,31 @@ class ApplicationSettings(Base):
     __table_args__ = (
         CheckConstraint(
             "scheduling_algorithm IN ('greedy', 'min_conflicts', 'cp_sat', 'pulp', 'hybrid')",
-            name="check_scheduling_algorithm"
+            name="check_scheduling_algorithm",
         ),
         CheckConstraint(
             "work_hours_per_week >= 40 AND work_hours_per_week <= 100",
-            name="check_work_hours"
+            name="check_work_hours",
         ),
         CheckConstraint(
             "max_consecutive_days >= 1 AND max_consecutive_days <= 7",
-            name="check_consecutive_days"
+            name="check_consecutive_days",
         ),
         CheckConstraint(
             "min_days_off_per_week >= 1 AND min_days_off_per_week <= 3",
-            name="check_days_off"
+            name="check_days_off",
         ),
         CheckConstraint(
             "default_block_duration_hours >= 1 AND default_block_duration_hours <= 12",
-            name="check_block_duration"
+            name="check_block_duration",
         ),
         CheckConstraint(
             "freeze_horizon_days >= 0 AND freeze_horizon_days <= 30",
-            name="check_freeze_horizon"
+            name="check_freeze_horizon",
         ),
         CheckConstraint(
             "freeze_scope IN ('none', 'non_emergency_only', 'all_changes_require_override')",
-            name="check_freeze_scope"
+            name="check_freeze_scope",
         ),
     )
 

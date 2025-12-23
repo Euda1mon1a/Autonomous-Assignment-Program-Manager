@@ -8,6 +8,7 @@ Tests the end-to-end flow of:
 4. Running schedule generation
 5. Validating ACGME compliance
 """
+
 from datetime import date, timedelta
 
 import pytest

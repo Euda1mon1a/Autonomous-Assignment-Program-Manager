@@ -4,16 +4,15 @@ Validation context for managing validation state and errors.
 Provides a context object that accumulates validation errors during request
 processing and maintains state across validation rules.
 """
-from typing import Any, Optional
+
 from contextvars import ContextVar
+from typing import Any, Optional
 
 from .messages import Locale, ValidationMessage
 
-
 # Context variable for storing current validation context
 _validation_context: ContextVar[Optional["ValidationContext"]] = ContextVar(
-    "validation_context",
-    default=None
+    "validation_context", default=None
 )
 
 
@@ -45,11 +44,7 @@ class ValidationContext:
         """
         self.errors.append(error)
 
-    def add_field_error(
-        self,
-        field: str,
-        message: str
-    ) -> None:
+    def add_field_error(self, field: str, message: str) -> None:
         """
         Add a custom field validation error.
 
@@ -58,6 +53,7 @@ class ValidationContext:
             message: Error message
         """
         from .messages import custom_message
+
         self.add_error(custom_message(field, message, self.locale))
 
     def has_errors(self) -> bool:
@@ -141,7 +137,7 @@ class ValidationContext:
         return key in self._data
 
 
-def get_validation_context() -> Optional[ValidationContext]:
+def get_validation_context() -> ValidationContext | None:
     """
     Get the current validation context.
 
@@ -203,7 +199,7 @@ class validation_scope:
             locale: Language/locale for error messages
         """
         self.locale = locale
-        self.context: Optional[ValidationContext] = None
+        self.context: ValidationContext | None = None
 
     def __enter__(self) -> ValidationContext:
         """

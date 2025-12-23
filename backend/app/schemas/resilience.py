@@ -11,6 +11,7 @@ Tier 2 (Strategic):
 - Blast radius zones
 - Equilibrium analysis (Le Chatelier)
 """
+
 from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
@@ -20,15 +21,17 @@ from pydantic import BaseModel, Field
 
 class UtilizationLevel(str, Enum):
     """Utilization severity levels (queuing theory)."""
-    GREEN = "GREEN"      # < 70% - healthy buffer
-    YELLOW = "YELLOW"    # 70-80% - approaching threshold
-    ORANGE = "ORANGE"    # 80-90% - degraded operations
-    RED = "RED"          # 90-95% - critical, cascade risk
-    BLACK = "BLACK"      # > 95% - imminent failure
+
+    GREEN = "GREEN"  # < 70% - healthy buffer
+    YELLOW = "YELLOW"  # 70-80% - approaching threshold
+    ORANGE = "ORANGE"  # 80-90% - degraded operations
+    RED = "RED"  # 90-95% - critical, cascade risk
+    BLACK = "BLACK"  # > 95% - imminent failure
 
 
 class DefenseLevel(str, Enum):
     """Defense in depth levels (nuclear safety paradigm)."""
+
     PREVENTION = "PREVENTION"
     CONTROL = "CONTROL"
     SAFETY_SYSTEMS = "SAFETY_SYSTEMS"
@@ -38,16 +41,18 @@ class DefenseLevel(str, Enum):
 
 class LoadSheddingLevel(str, Enum):
     """Load shedding levels (triage)."""
-    NORMAL = "NORMAL"      # All activities
-    YELLOW = "YELLOW"      # Suspend optional education
-    ORANGE = "ORANGE"      # Also suspend admin & research
-    RED = "RED"            # Also suspend core education
-    BLACK = "BLACK"        # Essentials only
+
+    NORMAL = "NORMAL"  # All activities
+    YELLOW = "YELLOW"  # Suspend optional education
+    ORANGE = "ORANGE"  # Also suspend admin & research
+    RED = "RED"  # Also suspend core education
+    BLACK = "BLACK"  # Essentials only
     CRITICAL = "CRITICAL"  # Patient safety only
 
 
 class OverallStatus(str, Enum):
     """Overall system health status."""
+
     HEALTHY = "healthy"
     WARNING = "warning"
     DEGRADED = "degraded"
@@ -57,6 +62,7 @@ class OverallStatus(str, Enum):
 
 class FallbackScenario(str, Enum):
     """Pre-computed fallback scenarios."""
+
     SINGLE_FACULTY_LOSS = "single_faculty_loss"
     DOUBLE_FACULTY_LOSS = "double_faculty_loss"
     PCS_SEASON_50_PERCENT = "pcs_season_50_percent"
@@ -68,6 +74,7 @@ class FallbackScenario(str, Enum):
 
 class CrisisSeverity(str, Enum):
     """Crisis severity levels."""
+
     MINOR = "minor"
     MODERATE = "moderate"
     SEVERE = "severe"
@@ -76,49 +83,57 @@ class CrisisSeverity(str, Enum):
 
 # Request Schemas
 
+
 class HealthCheckRequest(BaseModel):
     """Request for system health check."""
+
     start_date: date | None = None
     end_date: date | None = None
     include_contingency: bool = Field(
-        default=False,
-        description="Include N-1/N-2 contingency analysis (slower)"
+        default=False, description="Include N-1/N-2 contingency analysis (slower)"
     )
 
 
 class CrisisActivationRequest(BaseModel):
     """Request to activate crisis response."""
+
     severity: CrisisSeverity
     reason: str = Field(..., min_length=10, max_length=500)
 
 
 class CrisisDeactivationRequest(BaseModel):
     """Request to deactivate crisis response."""
+
     reason: str = Field(..., min_length=10, max_length=500)
 
 
 class FallbackActivationRequest(BaseModel):
     """Request to activate a fallback schedule."""
+
     scenario: FallbackScenario
     reason: str = Field(..., min_length=10, max_length=500)
 
 
 class FallbackDeactivationRequest(BaseModel):
     """Request to deactivate a fallback."""
+
     scenario: FallbackScenario
     reason: str = Field(..., min_length=10, max_length=500)
 
 
 class LoadSheddingRequest(BaseModel):
     """Request to change load shedding level."""
+
     level: LoadSheddingLevel
     reason: str = Field(..., min_length=10, max_length=500)
 
 
 # Response Schemas
 
+
 class UtilizationMetrics(BaseModel):
     """Utilization metrics from queuing theory analysis."""
+
     utilization_rate: float = Field(..., ge=0.0, le=1.0)
     level: UtilizationLevel
     buffer_remaining: float
@@ -130,6 +145,7 @@ class UtilizationMetrics(BaseModel):
 
 class RedundancyStatus(BaseModel):
     """N+2 redundancy status for a service."""
+
     service: str
     status: str  # N+2, N+1, N+0, BELOW
     available: int
@@ -139,6 +155,7 @@ class RedundancyStatus(BaseModel):
 
 class VulnerabilitySummary(BaseModel):
     """Summary of N-1/N-2 vulnerability analysis."""
+
     n1_pass: bool
     n2_pass: bool
     phase_transition_risk: str  # low, medium, high, critical
@@ -149,6 +166,7 @@ class VulnerabilitySummary(BaseModel):
 
 class HealthCheckResponse(BaseModel):
     """Response from system health check."""
+
     timestamp: datetime
     overall_status: OverallStatus
 
@@ -172,6 +190,7 @@ class HealthCheckResponse(BaseModel):
 
 class CrisisResponse(BaseModel):
     """Response from crisis activation/deactivation."""
+
     crisis_mode: bool
     severity: CrisisSeverity | None = None
     actions_taken: list[str]
@@ -181,6 +200,7 @@ class CrisisResponse(BaseModel):
 
 class FallbackInfo(BaseModel):
     """Information about a fallback schedule."""
+
     scenario: FallbackScenario
     description: str
     is_active: bool
@@ -194,12 +214,14 @@ class FallbackInfo(BaseModel):
 
 class FallbackListResponse(BaseModel):
     """List of available fallback schedules."""
+
     fallbacks: list[FallbackInfo]
     active_count: int
 
 
 class FallbackActivationResponse(BaseModel):
     """Response from fallback activation."""
+
     success: bool
     scenario: FallbackScenario
     assignments_count: int
@@ -210,6 +232,7 @@ class FallbackActivationResponse(BaseModel):
 
 class LoadSheddingStatus(BaseModel):
     """Current load shedding status."""
+
     level: LoadSheddingLevel
     activities_suspended: list[str]
     activities_protected: list[str]
@@ -219,6 +242,7 @@ class LoadSheddingStatus(BaseModel):
 
 class CentralityScore(BaseModel):
     """Faculty centrality score (hub vulnerability)."""
+
     faculty_id: UUID
     faculty_name: str
     centrality_score: float
@@ -230,6 +254,7 @@ class CentralityScore(BaseModel):
 
 class VulnerabilityReportResponse(BaseModel):
     """Full N-1/N-2 vulnerability report."""
+
     analyzed_at: datetime
     period_start: date
     period_end: date
@@ -250,6 +275,7 @@ class VulnerabilityReportResponse(BaseModel):
 
 class ComprehensiveReportResponse(BaseModel):
     """Comprehensive resilience report."""
+
     generated_at: datetime
     overall_status: OverallStatus
 
@@ -262,6 +288,7 @@ class ComprehensiveReportResponse(BaseModel):
 
 class HealthCheckHistoryItem(BaseModel):
     """Historical health check record."""
+
     id: UUID
     timestamp: datetime
     overall_status: OverallStatus
@@ -275,6 +302,7 @@ class HealthCheckHistoryItem(BaseModel):
 
 class HealthCheckHistoryResponse(BaseModel):
     """Historical health check records."""
+
     items: list[HealthCheckHistoryItem]
     total: int
     page: int
@@ -283,6 +311,7 @@ class HealthCheckHistoryResponse(BaseModel):
 
 class EventHistoryItem(BaseModel):
     """Historical resilience event."""
+
     id: UUID
     timestamp: datetime
     event_type: str
@@ -293,6 +322,7 @@ class EventHistoryItem(BaseModel):
 
 class EventHistoryResponse(BaseModel):
     """Historical resilience events."""
+
     items: list[EventHistoryItem]
     total: int
     page: int
@@ -306,8 +336,10 @@ class EventHistoryResponse(BaseModel):
 
 # Homeostasis Enums
 
+
 class AllostasisState(str, Enum):
     """Allostatic state of a faculty member or system."""
+
     HOMEOSTASIS = "homeostasis"
     ALLOSTASIS = "allostasis"
     ALLOSTATIC_LOAD = "allostatic_load"
@@ -316,6 +348,7 @@ class AllostasisState(str, Enum):
 
 class DeviationSeverity(str, Enum):
     """Severity of deviation from setpoint."""
+
     NONE = "none"
     MINOR = "minor"
     MODERATE = "moderate"
@@ -325,6 +358,7 @@ class DeviationSeverity(str, Enum):
 
 class CorrectiveActionType(str, Enum):
     """Types of corrective actions."""
+
     REDISTRIBUTE = "redistribute"
     RECRUIT_BACKUP = "recruit_backup"
     DEFER_ACTIVITY = "defer_activity"
@@ -335,8 +369,10 @@ class CorrectiveActionType(str, Enum):
 
 # Zone Enums
 
+
 class ZoneStatus(str, Enum):
     """Health status of a scheduling zone."""
+
     GREEN = "green"
     YELLOW = "yellow"
     ORANGE = "orange"
@@ -346,6 +382,7 @@ class ZoneStatus(str, Enum):
 
 class ZoneType(str, Enum):
     """Types of scheduling zones."""
+
     INPATIENT = "inpatient"
     OUTPATIENT = "outpatient"
     EDUCATION = "education"
@@ -356,6 +393,7 @@ class ZoneType(str, Enum):
 
 class ContainmentLevel(str, Enum):
     """Level of failure containment."""
+
     NONE = "none"
     SOFT = "soft"
     MODERATE = "moderate"
@@ -365,6 +403,7 @@ class ContainmentLevel(str, Enum):
 
 class BorrowingPriority(str, Enum):
     """Priority levels for cross-zone borrowing."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -373,8 +412,10 @@ class BorrowingPriority(str, Enum):
 
 # Equilibrium Enums
 
+
 class EquilibriumState(str, Enum):
     """State of system equilibrium."""
+
     STABLE = "stable"
     COMPENSATING = "compensating"
     STRESSED = "stressed"
@@ -384,6 +425,7 @@ class EquilibriumState(str, Enum):
 
 class StressType(str, Enum):
     """Types of system stress."""
+
     FACULTY_LOSS = "faculty_loss"
     DEMAND_SURGE = "demand_surge"
     QUALITY_PRESSURE = "quality_pressure"
@@ -394,6 +436,7 @@ class StressType(str, Enum):
 
 class CompensationType(str, Enum):
     """Types of compensation responses."""
+
     OVERTIME = "overtime"
     CROSS_COVERAGE = "cross_coverage"
     DEFERRED_LEAVE = "deferred_leave"
@@ -405,8 +448,10 @@ class CompensationType(str, Enum):
 
 # Homeostasis Schemas
 
+
 class SetpointInfo(BaseModel):
     """Information about a setpoint."""
+
     name: str
     description: str
     target_value: float
@@ -417,6 +462,7 @@ class SetpointInfo(BaseModel):
 
 class FeedbackLoopStatus(BaseModel):
     """Status of a feedback loop."""
+
     loop_name: str
     setpoint: SetpointInfo
     current_value: float | None
@@ -431,6 +477,7 @@ class FeedbackLoopStatus(BaseModel):
 
 class CorrectiveActionInfo(BaseModel):
     """Information about a corrective action."""
+
     id: UUID
     feedback_loop_name: str
     action_type: CorrectiveActionType
@@ -445,6 +492,7 @@ class CorrectiveActionInfo(BaseModel):
 
 class AllostasisMetricsResponse(BaseModel):
     """Allostatic load metrics for an entity."""
+
     entity_id: UUID
     entity_type: str
     calculated_at: datetime
@@ -464,6 +512,7 @@ class AllostasisMetricsResponse(BaseModel):
 
 class PositiveFeedbackRiskInfo(BaseModel):
     """Information about a detected positive feedback risk."""
+
     id: UUID
     name: str
     description: str
@@ -480,6 +529,7 @@ class PositiveFeedbackRiskInfo(BaseModel):
 
 class HomeostasisStatusResponse(BaseModel):
     """Overall homeostasis status."""
+
     timestamp: datetime
     overall_state: AllostasisState
     feedback_loops_healthy: int
@@ -494,6 +544,7 @@ class HomeostasisStatusResponse(BaseModel):
 
 class HomeostasisCheckRequest(BaseModel):
     """Request to check homeostasis with provided metrics."""
+
     metrics: dict[str, float] = Field(
         ...,
         description="Setpoint names and current values, e.g., {'coverage_rate': 0.92}",
@@ -509,6 +560,7 @@ class HomeostasisReport(BaseModel):
     check_homeostasis method. It provides a summary of feedback loop
     states and system health.
     """
+
     timestamp: datetime = Field(
         ...,
         description="When the homeostasis check was performed",
@@ -549,6 +601,7 @@ class HomeostasisReport(BaseModel):
 
     class Config:
         """Pydantic model configuration."""
+
         json_schema_extra = {
             "example": {
                 "timestamp": "2024-01-15T10:30:00",
@@ -558,15 +611,14 @@ class HomeostasisReport(BaseModel):
                 "active_corrections": 0,
                 "positive_feedback_risks": 0,
                 "average_allostatic_load": 25.5,
-                "recommendations": [
-                    "Monitor coverage rate - approaching threshold"
-                ],
+                "recommendations": ["Monitor coverage rate - approaching threshold"],
             }
         }
 
 
 class AllostasisCalculateRequest(BaseModel):
     """Request to calculate allostatic load."""
+
     entity_id: UUID
     entity_type: str = Field(default="faculty", pattern="^(faculty|system)$")
     consecutive_weekend_calls: int = 0
@@ -580,8 +632,10 @@ class AllostasisCalculateRequest(BaseModel):
 
 # Zone Schemas
 
+
 class ZoneFacultyAssignment(BaseModel):
     """Faculty assignment to a zone."""
+
     faculty_id: UUID
     faculty_name: str
     role: str
@@ -591,6 +645,7 @@ class ZoneFacultyAssignment(BaseModel):
 
 class ZoneHealthReport(BaseModel):
     """Health report for a scheduling zone."""
+
     zone_id: UUID
     zone_name: str
     zone_type: ZoneType
@@ -613,6 +668,7 @@ class ZoneHealthReport(BaseModel):
 
 class ZoneCreateRequest(BaseModel):
     """Request to create a scheduling zone."""
+
     name: str = Field(..., min_length=1, max_length=100)
     zone_type: ZoneType
     description: str = Field(default="", max_length=500)
@@ -624,6 +680,7 @@ class ZoneCreateRequest(BaseModel):
 
 class ZoneResponse(BaseModel):
     """Response for zone operations."""
+
     id: UUID
     name: str
     zone_type: ZoneType
@@ -641,6 +698,7 @@ class ZoneResponse(BaseModel):
 
 class BorrowingRequest(BaseModel):
     """Request to borrow faculty from another zone."""
+
     requesting_zone_id: UUID
     lending_zone_id: UUID
     faculty_id: UUID
@@ -651,6 +709,7 @@ class BorrowingRequest(BaseModel):
 
 class BorrowingResponse(BaseModel):
     """Response for borrowing operations."""
+
     id: UUID
     requesting_zone_id: UUID
     lending_zone_id: UUID
@@ -665,6 +724,7 @@ class BorrowingResponse(BaseModel):
 
 class ZoneIncidentRequest(BaseModel):
     """Request to record a zone incident."""
+
     zone_id: UUID
     incident_type: str = Field(..., min_length=1, max_length=50)
     description: str = Field(..., min_length=10, max_length=500)
@@ -675,6 +735,7 @@ class ZoneIncidentRequest(BaseModel):
 
 class ZoneIncidentResponse(BaseModel):
     """Response for zone incident."""
+
     id: UUID
     zone_id: UUID
     incident_type: str
@@ -690,6 +751,7 @@ class ZoneIncidentResponse(BaseModel):
 
 class BlastRadiusReportResponse(BaseModel):
     """Overall blast radius containment report."""
+
     generated_at: datetime
     total_zones: int
     zones_healthy: int
@@ -706,14 +768,17 @@ class BlastRadiusReportResponse(BaseModel):
 
 class ContainmentSetRequest(BaseModel):
     """Request to set containment level."""
+
     level: ContainmentLevel
     reason: str = Field(..., min_length=10, max_length=500)
 
 
 # Equilibrium Schemas
 
+
 class StressApplyRequest(BaseModel):
     """Request to apply a stress to the system."""
+
     stress_type: StressType
     description: str = Field(..., min_length=10, max_length=500)
     magnitude: float = Field(..., ge=0.0, le=1.0)
@@ -726,6 +791,7 @@ class StressApplyRequest(BaseModel):
 
 class StressResponse(BaseModel):
     """Response for stress operations."""
+
     id: UUID
     stress_type: StressType
     description: str
@@ -739,6 +805,7 @@ class StressResponse(BaseModel):
 
 class CompensationInitiateRequest(BaseModel):
     """Request to initiate a compensation response."""
+
     stress_id: UUID
     compensation_type: CompensationType
     description: str = Field(..., min_length=10, max_length=500)
@@ -751,6 +818,7 @@ class CompensationInitiateRequest(BaseModel):
 
 class CompensationResponse(BaseModel):
     """Response for compensation operations."""
+
     id: UUID
     stress_id: UUID
     compensation_type: CompensationType
@@ -763,6 +831,7 @@ class CompensationResponse(BaseModel):
 
 class EquilibriumShiftResponse(BaseModel):
     """Response for equilibrium shift calculation."""
+
     id: UUID
     calculated_at: datetime
     original_capacity: float
@@ -786,6 +855,7 @@ class EquilibriumShiftResponse(BaseModel):
 
 class StressPredictionRequest(BaseModel):
     """Request to predict stress response."""
+
     stress_type: StressType
     magnitude: float = Field(..., ge=0.0, le=1.0)
     duration_days: int = Field(..., ge=1, le=365)
@@ -795,6 +865,7 @@ class StressPredictionRequest(BaseModel):
 
 class StressPredictionResponse(BaseModel):
     """Prediction of stress response."""
+
     id: UUID
     predicted_at: datetime
     stress_type: StressType
@@ -813,6 +884,7 @@ class StressPredictionResponse(BaseModel):
 
 class EquilibriumReportResponse(BaseModel):
     """Comprehensive equilibrium analysis report."""
+
     generated_at: datetime
     current_equilibrium_state: EquilibriumState
     current_capacity: float
@@ -831,8 +903,10 @@ class EquilibriumReportResponse(BaseModel):
 
 # Combined Tier 2 Status
 
+
 class Tier2StatusResponse(BaseModel):
     """Combined status of all Tier 2 resilience components."""
+
     generated_at: datetime
 
     # Homeostasis summary
@@ -867,6 +941,7 @@ class Tier2StatusResponse(BaseModel):
 
 class DecisionComplexity(str, Enum):
     """Complexity level of a decision."""
+
     TRIVIAL = "trivial"
     SIMPLE = "simple"
     MODERATE = "moderate"
@@ -876,6 +951,7 @@ class DecisionComplexity(str, Enum):
 
 class DecisionCategory(str, Enum):
     """Category of scheduling decision."""
+
     ASSIGNMENT = "assignment"
     SWAP = "swap"
     COVERAGE = "coverage"
@@ -888,6 +964,7 @@ class DecisionCategory(str, Enum):
 
 class CognitiveState(str, Enum):
     """Current cognitive load state."""
+
     FRESH = "fresh"
     ENGAGED = "engaged"
     LOADED = "loaded"
@@ -897,6 +974,7 @@ class CognitiveState(str, Enum):
 
 class DecisionOutcome(str, Enum):
     """Outcome of a decision request."""
+
     DECIDED = "decided"
     DEFERRED = "deferred"
     AUTO_DEFAULT = "auto_default"
@@ -906,6 +984,7 @@ class DecisionOutcome(str, Enum):
 
 class TrailType(str, Enum):
     """Types of preference trails."""
+
     PREFERENCE = "preference"
     AVOIDANCE = "avoidance"
     SWAP_AFFINITY = "swap_affinity"
@@ -915,6 +994,7 @@ class TrailType(str, Enum):
 
 class TrailStrength(str, Enum):
     """Categorical strength of a trail."""
+
     VERY_WEAK = "very_weak"
     WEAK = "weak"
     MODERATE = "moderate"
@@ -924,6 +1004,7 @@ class TrailStrength(str, Enum):
 
 class SignalType(str, Enum):
     """Types of behavioral signals."""
+
     EXPLICIT_PREFERENCE = "explicit_preference"
     ACCEPTED_ASSIGNMENT = "accepted_assignment"
     REQUESTED_SWAP = "requested_swap"
@@ -936,6 +1017,7 @@ class SignalType(str, Enum):
 
 class HubRiskLevel(str, Enum):
     """Risk level if this hub is lost."""
+
     LOW = "low"
     MODERATE = "moderate"
     HIGH = "high"
@@ -945,6 +1027,7 @@ class HubRiskLevel(str, Enum):
 
 class HubProtectionStatus(str, Enum):
     """Current protection status of a hub."""
+
     UNPROTECTED = "unprotected"
     MONITORED = "monitored"
     PROTECTED = "protected"
@@ -953,6 +1036,7 @@ class HubProtectionStatus(str, Enum):
 
 class CrossTrainingPriority(str, Enum):
     """Priority for cross-training a skill."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -961,8 +1045,10 @@ class CrossTrainingPriority(str, Enum):
 
 # Cognitive Load Schemas
 
+
 class CognitiveSessionResponse(BaseModel):
     """Response for cognitive session."""
+
     session_id: UUID
     user_id: UUID
     started_at: datetime
@@ -976,6 +1062,7 @@ class CognitiveSessionResponse(BaseModel):
 
 class DecisionRequest(BaseModel):
     """Request to create a decision."""
+
     category: DecisionCategory
     complexity: DecisionComplexity
     description: str = Field(..., min_length=5, max_length=500)
@@ -987,6 +1074,7 @@ class DecisionRequest(BaseModel):
 
 class DecisionResponse(BaseModel):
     """Response for decision operations."""
+
     decision_id: UUID
     category: DecisionCategory
     complexity: DecisionComplexity
@@ -1000,6 +1088,7 @@ class DecisionResponse(BaseModel):
 
 class DecisionQueueResponse(BaseModel):
     """Status of pending decision queue."""
+
     total_pending: int
     by_complexity: dict
     by_category: dict
@@ -1012,6 +1101,7 @@ class DecisionQueueResponse(BaseModel):
 
 class CognitiveLoadAnalysis(BaseModel):
     """Analysis of cognitive load for a schedule."""
+
     total_score: float
     grade: str
     grade_description: str
@@ -1021,8 +1111,10 @@ class CognitiveLoadAnalysis(BaseModel):
 
 # Stigmergy Schemas
 
+
 class PreferenceTrailRequest(BaseModel):
     """Request to record a preference trail."""
+
     faculty_id: UUID
     trail_type: TrailType
     slot_type: str | None = None
@@ -1033,6 +1125,7 @@ class PreferenceTrailRequest(BaseModel):
 
 class PreferenceTrailResponse(BaseModel):
     """Response for preference trail operations."""
+
     trail_id: UUID
     faculty_id: UUID
     trail_type: TrailType
@@ -1045,6 +1138,7 @@ class PreferenceTrailResponse(BaseModel):
 
 class CollectivePreferenceResponse(BaseModel):
     """Aggregated preference for a slot or slot type."""
+
     found: bool
     slot_type: str | None
     total_preference_strength: float | None
@@ -1058,6 +1152,7 @@ class CollectivePreferenceResponse(BaseModel):
 
 class StigmergyStatusResponse(BaseModel):
     """Status of the stigmergy system."""
+
     timestamp: datetime
     total_trails: int
     active_trails: int
@@ -1073,8 +1168,10 @@ class StigmergyStatusResponse(BaseModel):
 
 # Hub Analysis Schemas
 
+
 class FacultyCentralityResponse(BaseModel):
     """Faculty centrality metrics."""
+
     faculty_id: UUID
     faculty_name: str
     composite_score: float
@@ -1089,6 +1186,7 @@ class FacultyCentralityResponse(BaseModel):
 
 class HubProfileResponse(BaseModel):
     """Detailed profile for a hub faculty member."""
+
     faculty_id: UUID
     faculty_name: str
     risk_level: HubRiskLevel
@@ -1103,6 +1201,7 @@ class HubProfileResponse(BaseModel):
 
 class HubProtectionPlanRequest(BaseModel):
     """Request to create hub protection plan."""
+
     hub_faculty_id: UUID
     period_start: date
     period_end: date
@@ -1113,6 +1212,7 @@ class HubProtectionPlanRequest(BaseModel):
 
 class HubProtectionPlanResponse(BaseModel):
     """Response for hub protection plan."""
+
     plan_id: UUID
     hub_faculty_id: UUID
     hub_faculty_name: str
@@ -1127,6 +1227,7 @@ class HubProtectionPlanResponse(BaseModel):
 
 class CrossTrainingRecommendationResponse(BaseModel):
     """Cross-training recommendation."""
+
     id: UUID
     skill: str
     priority: CrossTrainingPriority
@@ -1140,6 +1241,7 @@ class CrossTrainingRecommendationResponse(BaseModel):
 
 class HubDistributionResponse(BaseModel):
     """Hub distribution report."""
+
     generated_at: datetime
     total_faculty: int
     total_hubs: int
@@ -1157,8 +1259,10 @@ class HubDistributionResponse(BaseModel):
 
 # Combined Tier 3 Status
 
+
 class Tier3StatusResponse(BaseModel):
     """Combined status of all Tier 3 resilience components."""
+
     generated_at: datetime
 
     # Cognitive load summary

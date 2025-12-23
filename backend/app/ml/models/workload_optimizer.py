@@ -7,9 +7,10 @@ Uses clustering and optimization algorithms to:
 - Suggest workload redistribution
 - Ensure fairness in assignments
 """
+
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import joblib
 import numpy as np
@@ -35,7 +36,7 @@ class WorkloadOptimizer:
 
     def __init__(
         self,
-        model_path: Optional[Path] = None,
+        model_path: Path | None = None,
         n_estimators: int = 100,
         max_depth: int = 6,
         learning_rate: float = 0.1,
@@ -58,9 +59,9 @@ class WorkloadOptimizer:
         self.random_state = random_state
 
         # Models and preprocessors
-        self.workload_model: Optional[GradientBoostingRegressor] = None
-        self.scaler: Optional[StandardScaler] = None
-        self.clusterer: Optional[KMeans] = None
+        self.workload_model: GradientBoostingRegressor | None = None
+        self.scaler: StandardScaler | None = None
+        self.clusterer: KMeans | None = None
         self.feature_names: list[str] = []
 
         # Load pre-trained model if path provided
@@ -88,7 +89,7 @@ class WorkloadOptimizer:
         self,
         person_data: dict[str, Any],
         current_assignments: list[dict[str, Any]],
-        historical_data: Optional[dict[str, Any]] = None,
+        historical_data: dict[str, Any] | None = None,
     ) -> pd.DataFrame:
         """
         Extract features for workload prediction.
@@ -114,14 +115,22 @@ class WorkloadOptimizer:
             features[f"role_{role}"] = 1 if faculty_role == role else 0
 
         # Target workload capacity
-        features["target_clinical_blocks"] = person_data.get("target_clinical_blocks", 48) or 48
+        features["target_clinical_blocks"] = (
+            person_data.get("target_clinical_blocks", 48) or 48
+        )
 
         # Current workload metrics
         num_assignments = len(current_assignments)
         features["current_assignment_count"] = num_assignments
 
         # Count by rotation type
-        rotation_counts = {"clinic": 0, "inpatient": 0, "procedures": 0, "admin": 0, "other": 0}
+        rotation_counts = {
+            "clinic": 0,
+            "inpatient": 0,
+            "procedures": 0,
+            "admin": 0,
+            "other": 0,
+        }
         for assignment in current_assignments:
             rotation_name = assignment.get("rotation_name", "").lower()
             if "clinic" in rotation_name:
@@ -149,7 +158,9 @@ class WorkloadOptimizer:
             features["workload_concentration"] = 0.0
 
         # Weekend/holiday burden
-        weekend_count = sum(1 for a in current_assignments if a.get("is_weekend", False))
+        weekend_count = sum(
+            1 for a in current_assignments if a.get("is_weekend", False)
+        )
         features["weekend_assignment_count"] = weekend_count
 
         # Call/night shift burden (if tracked)
@@ -159,10 +170,16 @@ class WorkloadOptimizer:
 
         # Historical metrics (if available)
         if historical_data:
-            features["historical_avg_workload"] = historical_data.get("avg_workload", 0.0)
-            features["historical_max_workload"] = historical_data.get("max_workload", 0.0)
+            features["historical_avg_workload"] = historical_data.get(
+                "avg_workload", 0.0
+            )
+            features["historical_max_workload"] = historical_data.get(
+                "max_workload", 0.0
+            )
             features["historical_swap_rate"] = historical_data.get("swap_rate", 0.0)
-            features["historical_conflict_rate"] = historical_data.get("conflict_rate", 0.0)
+            features["historical_conflict_rate"] = historical_data.get(
+                "conflict_rate", 0.0
+            )
         else:
             features["historical_avg_workload"] = 0.0
             features["historical_max_workload"] = 0.0
@@ -220,10 +237,16 @@ class WorkloadOptimizer:
         val_score = self.workload_model.score(X_val_scaled, y_val)
 
         # Get feature importances
-        feature_importance = dict(zip(self.feature_names, self.workload_model.feature_importances_))
-        top_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)[:5]
+        feature_importance = dict(
+            zip(self.feature_names, self.workload_model.feature_importances_)
+        )
+        top_features = sorted(
+            feature_importance.items(), key=lambda x: x[1], reverse=True
+        )[:5]
 
-        logger.info(f"Training complete: R² train={train_score:.3f}, val={val_score:.3f}")
+        logger.info(
+            f"Training complete: R² train={train_score:.3f}, val={val_score:.3f}"
+        )
         logger.info(f"Top features: {top_features}")
 
         return {
@@ -239,7 +262,7 @@ class WorkloadOptimizer:
         self,
         person_data: dict[str, Any],
         current_assignments: list[dict[str, Any]],
-        historical_data: Optional[dict[str, Any]] = None,
+        historical_data: dict[str, Any] | None = None,
     ) -> float:
         """
         Predict optimal workload level for a person.
@@ -299,14 +322,16 @@ class WorkloadOptimizer:
             )
 
             if workload > threshold:
-                overloaded.append({
-                    "person_id": person.get("person", {}).get("id"),
-                    "person_name": person.get("person", {}).get("name"),
-                    "current_workload": workload,
-                    "threshold": threshold,
-                    "overload_amount": workload - threshold,
-                    "num_assignments": len(person.get("assignments", [])),
-                })
+                overloaded.append(
+                    {
+                        "person_id": person.get("person", {}).get("id"),
+                        "person_name": person.get("person", {}).get("name"),
+                        "current_workload": workload,
+                        "threshold": threshold,
+                        "overload_amount": workload - threshold,
+                        "num_assignments": len(person.get("assignments", [])),
+                    }
+                )
 
         # Sort by overload amount (most overloaded first)
         overloaded.sort(key=lambda x: x["overload_amount"], reverse=True)
@@ -338,18 +363,24 @@ class WorkloadOptimizer:
                 current_assignments=person.get("assignments", []),
                 historical_data=person.get("historical_data"),
             )
-            workloads.append({
-                "person": person,
-                "workload": workload,
-                "num_assignments": len(person.get("assignments", [])),
-            })
+            workloads.append(
+                {
+                    "person": person,
+                    "workload": workload,
+                    "num_assignments": len(person.get("assignments", [])),
+                }
+            )
 
         # Sort by workload
         workloads.sort(key=lambda x: x["workload"])
 
         # Find underutilized and overutilized
-        underutilized = [w for w in workloads if w["workload"] < target_utilization - 0.1]
-        overutilized = [w for w in workloads if w["workload"] > target_utilization + 0.1]
+        underutilized = [
+            w for w in workloads if w["workload"] < target_utilization - 0.1
+        ]
+        overutilized = [
+            w for w in workloads if w["workload"] > target_utilization + 0.1
+        ]
 
         # Suggest transfers
         for over in overutilized:
@@ -359,16 +390,19 @@ class WorkloadOptimizer:
                 under_person = under["person"].get("person", {})
 
                 if over_person.get("type") == under_person.get("type"):
-                    suggestions.append({
-                        "action": "transfer_assignment",
-                        "from_person_id": over_person.get("id"),
-                        "from_person_name": over_person.get("name"),
-                        "to_person_id": under_person.get("id"),
-                        "to_person_name": under_person.get("name"),
-                        "from_workload": over["workload"],
-                        "to_workload": under["workload"],
-                        "priority": abs(over["workload"] - target_utilization) + abs(under["workload"] - target_utilization),
-                    })
+                    suggestions.append(
+                        {
+                            "action": "transfer_assignment",
+                            "from_person_id": over_person.get("id"),
+                            "from_person_name": over_person.get("name"),
+                            "to_person_id": under_person.get("id"),
+                            "to_person_name": under_person.get("name"),
+                            "from_workload": over["workload"],
+                            "to_workload": under["workload"],
+                            "priority": abs(over["workload"] - target_utilization)
+                            + abs(under["workload"] - target_utilization),
+                        }
+                    )
 
         # Sort suggestions by priority
         suggestions.sort(key=lambda x: x["priority"], reverse=True)
@@ -379,7 +413,7 @@ class WorkloadOptimizer:
         self,
         person_data: dict[str, Any],
         current_assignments: list[dict[str, Any]],
-        historical_data: Optional[dict[str, Any]] = None,
+        historical_data: dict[str, Any] | None = None,
     ) -> int:
         """
         Get workload cluster for a person.
@@ -443,7 +477,9 @@ class WorkloadOptimizer:
         sorted_workloads = np.sort(workloads)
         n = len(workloads)
         cumsum = np.cumsum(sorted_workloads)
-        gini = (2 * np.sum((np.arange(1, n + 1)) * sorted_workloads)) / (n * np.sum(workloads)) - (n + 1) / n
+        gini = (2 * np.sum((np.arange(1, n + 1)) * sorted_workloads)) / (
+            n * np.sum(workloads)
+        ) - (n + 1) / n
 
         return {
             "gini_coefficient": float(gini),

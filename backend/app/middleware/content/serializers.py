@@ -10,10 +10,11 @@ Implements serializers for multiple formats:
 
 Each serializer handles conversion from Python objects to format-specific bytes.
 """
+
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,7 @@ class Serializer(ABC):
 
 class SerializationError(Exception):
     """Exception raised when serialization fails."""
+
     pass
 
 
@@ -67,7 +69,7 @@ class JSONSerializer(Serializer):
     Supports additional formatting options for development.
     """
 
-    def __init__(self, indent: Optional[int] = None, ensure_ascii: bool = False):
+    def __init__(self, indent: int | None = None, ensure_ascii: bool = False):
         """
         Initialize JSON serializer.
 
@@ -78,8 +80,7 @@ class JSONSerializer(Serializer):
         self.indent = indent
         self.ensure_ascii = ensure_ascii
         logger.debug(
-            f"JSONSerializer initialized: indent={indent}, "
-            f"ensure_ascii={ensure_ascii}"
+            f"JSONSerializer initialized: indent={indent}, ensure_ascii={ensure_ascii}"
         )
 
     @property
@@ -139,12 +140,14 @@ class XMLSerializer(Serializer):
         # Try to use lxml (more powerful)
         try:
             from lxml import etree
+
             self._etree = etree
             self._lxml_available = True
             logger.debug("XMLSerializer using lxml")
         except ImportError:
             # Fallback to standard library
             import xml.etree.ElementTree as etree
+
             self._etree = etree
             self._lxml_available = False
             logger.debug("XMLSerializer using xml.etree (fallback)")
@@ -193,6 +196,7 @@ class XMLSerializer(Serializer):
             else:
                 tree = self._etree.ElementTree(root)
                 import io
+
                 output = io.BytesIO()
                 tree.write(output, encoding="utf-8", xml_declaration=True)
                 xml_bytes = output.getvalue()
@@ -243,15 +247,15 @@ class YAMLSerializer(Serializer):
         # Try to import PyYAML
         try:
             import yaml
+
             self._yaml = yaml
             self._available = True
-            logger.debug(f"YAMLSerializer initialized")
+            logger.debug("YAMLSerializer initialized")
         except ImportError:
             self._yaml = None
             self._available = False
             logger.warning(
-                "YAML serialization not available. "
-                "Install with: pip install pyyaml"
+                "YAML serialization not available. Install with: pip install pyyaml"
             )
 
     @property
@@ -312,6 +316,7 @@ class MessagePackSerializer(Serializer):
         # Try to import msgpack
         try:
             import msgpack
+
             self._msgpack = msgpack
             self._available = True
             logger.debug("MessagePackSerializer initialized")
@@ -423,7 +428,7 @@ class SerializerRegistry:
             del self._serializers[content_type]
             logger.debug(f"Unregistered serializer: {content_type}")
 
-    def get_serializer(self, content_type: str) -> Optional[Serializer]:
+    def get_serializer(self, content_type: str) -> Serializer | None:
         """
         Get serializer for content type.
 

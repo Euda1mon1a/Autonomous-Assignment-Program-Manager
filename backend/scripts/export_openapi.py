@@ -7,6 +7,7 @@ Usage:
 
 Default output: ../frontend/openapi.json
 """
+
 import json
 import sys
 from pathlib import Path
@@ -20,7 +21,9 @@ from app.main import app
 def export_openapi(output_path: str | None = None) -> None:
     """Export the OpenAPI schema to a JSON file."""
     if output_path is None:
-        output_path = str(Path(__file__).parent.parent.parent / "frontend" / "openapi.json")
+        output_path = str(
+            Path(__file__).parent.parent.parent / "frontend" / "openapi.json"
+        )
 
     schema = app.openapi()
 

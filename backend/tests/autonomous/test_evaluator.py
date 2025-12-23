@@ -2,16 +2,14 @@
 Tests for the strict evaluator with numeric scoring.
 """
 
-import pytest
-from datetime import date
 from uuid import uuid4
 
 from app.autonomous.evaluator import (
-    ScheduleEvaluator,
     EvaluationResult,
+    ScheduleEvaluator,
+    ScoreComponent,
     ViolationDetail,
     ViolationSeverity,
-    ScoreComponent,
 )
 
 
@@ -232,7 +230,7 @@ class TestEvaluatorLoadBalance:
         counts = [10, 10, 10, 10]
         mean = sum(counts) / len(counts)
         variance = sum((x - mean) ** 2 for x in counts) / len(counts)
-        std_dev = variance ** 0.5
+        std_dev = variance**0.5
         cv = std_dev / mean if mean > 0 else 0.0
         score = max(0.0, 1.0 - cv)
 
@@ -244,7 +242,7 @@ class TestEvaluatorLoadBalance:
         counts = [1, 10, 10, 10]  # One person underloaded
         mean = sum(counts) / len(counts)
         variance = sum((x - mean) ** 2 for x in counts) / len(counts)
-        std_dev = variance ** 0.5
+        std_dev = variance**0.5
         cv = std_dev / mean if mean > 0 else 0.0
         score = max(0.0, 1.0 - cv)
 
@@ -256,7 +254,7 @@ class TestEvaluatorLoadBalance:
         counts = [1, 100]  # Extreme imbalance
         mean = sum(counts) / len(counts)
         variance = sum((x - mean) ** 2 for x in counts) / len(counts)
-        std_dev = variance ** 0.5
+        std_dev = variance**0.5
         cv = std_dev / mean if mean > 0 else 0.0
         score = max(0.0, 1.0 - cv)
 

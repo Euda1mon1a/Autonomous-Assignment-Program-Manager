@@ -7,9 +7,10 @@ Uses classification algorithms to predict:
 - Swap request likelihood
 - Coverage gaps
 """
+
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import joblib
 import numpy as np
@@ -34,7 +35,7 @@ class ConflictPredictor:
 
     def __init__(
         self,
-        model_path: Optional[Path] = None,
+        model_path: Path | None = None,
         n_estimators: int = 100,
         max_depth: int = 5,
         learning_rate: float = 0.1,
@@ -57,8 +58,8 @@ class ConflictPredictor:
         self.random_state = random_state
 
         # Models and preprocessors
-        self.model: Optional[GradientBoostingClassifier] = None
-        self.scaler: Optional[StandardScaler] = None
+        self.model: GradientBoostingClassifier | None = None
+        self.scaler: StandardScaler | None = None
         self.feature_names: list[str] = []
 
         # Load pre-trained model if path provided
@@ -86,7 +87,7 @@ class ConflictPredictor:
         person_data: dict[str, Any],
         proposed_assignment: dict[str, Any],
         existing_assignments: list[dict[str, Any]],
-        context_data: Optional[dict[str, Any]] = None,
+        context_data: dict[str, Any] | None = None,
     ) -> pd.DataFrame:
         """
         Extract features for conflict prediction.
@@ -129,12 +130,14 @@ class ConflictPredictor:
         # Consecutive days worked
         if existing_assignments:
             # Sort by date
-            sorted_assignments = sorted(existing_assignments, key=lambda x: x.get("date", ""))
+            sorted_assignments = sorted(
+                existing_assignments, key=lambda x: x.get("date", "")
+            )
             consecutive_days = 1
             max_consecutive = 1
 
             for i in range(1, len(sorted_assignments)):
-                prev_date = sorted_assignments[i-1].get("date", "")
+                prev_date = sorted_assignments[i - 1].get("date", "")
                 curr_date = sorted_assignments[i].get("date", "")
 
                 if prev_date and curr_date:
@@ -150,8 +153,12 @@ class ConflictPredictor:
 
         # Proposed assignment characteristics
         proposed_date = proposed_assignment.get("date")
-        features["proposed_is_weekend"] = 1 if proposed_assignment.get("is_weekend", False) else 0
-        features["proposed_is_holiday"] = 1 if proposed_assignment.get("is_holiday", False) else 0
+        features["proposed_is_weekend"] = (
+            1 if proposed_assignment.get("is_weekend", False) else 0
+        )
+        features["proposed_is_holiday"] = (
+            1 if proposed_assignment.get("is_holiday", False) else 0
+        )
 
         # Day of week for proposed assignment
         if proposed_date and isinstance(proposed_date, str):
@@ -166,13 +173,14 @@ class ConflictPredictor:
         # Rotation type conflicts
         proposed_rotation = proposed_assignment.get("rotation_name", "").lower()
         features["proposed_is_clinic"] = 1 if "clinic" in proposed_rotation else 0
-        features["proposed_is_inpatient"] = 1 if "inpatient" in proposed_rotation or "ward" in proposed_rotation else 0
+        features["proposed_is_inpatient"] = (
+            1 if "inpatient" in proposed_rotation or "ward" in proposed_rotation else 0
+        )
         features["proposed_is_procedure"] = 1 if "procedure" in proposed_rotation else 0
 
         # Check for same-day conflicts
         same_day_assignments = [
-            a for a in existing_assignments
-            if a.get("date") == proposed_date
+            a for a in existing_assignments if a.get("date") == proposed_date
         ]
         features["same_day_assignment_count"] = len(same_day_assignments)
         features["has_same_day_conflict"] = 1 if len(same_day_assignments) > 0 else 0
@@ -188,7 +196,9 @@ class ConflictPredictor:
                 resident_count = context_data.get("resident_count_on_date", 1)
                 actual_ratio = resident_count / max(faculty_count, 1)
                 features["actual_supervision_ratio"] = actual_ratio
-                features["violates_supervision"] = 1 if actual_ratio > supervision_ratio else 0
+                features["violates_supervision"] = (
+                    1 if actual_ratio > supervision_ratio else 0
+                )
             else:
                 features["actual_supervision_ratio"] = 0
                 features["violates_supervision"] = 0
@@ -203,7 +213,9 @@ class ConflictPredictor:
 
         # Historical conflict rate
         if context_data:
-            features["historical_conflict_rate"] = context_data.get("historical_conflict_rate", 0.0)
+            features["historical_conflict_rate"] = context_data.get(
+                "historical_conflict_rate", 0.0
+            )
             features["recent_swap_count"] = context_data.get("recent_swap_count", 0)
         else:
             features["historical_conflict_rate"] = 0.0
@@ -212,18 +224,24 @@ class ConflictPredictor:
         # Coverage level on proposed date
         if context_data:
             features["coverage_level"] = context_data.get("coverage_level", 1.0)
-            features["understaffed"] = 1 if context_data.get("coverage_level", 1.0) < 0.8 else 0
+            features["understaffed"] = (
+                1 if context_data.get("coverage_level", 1.0) < 0.8 else 0
+            )
         else:
             features["coverage_level"] = 1.0
             features["understaffed"] = 0
 
         # Workload concentration
-        rotation_types = [a.get("rotation_name", "").lower() for a in existing_assignments]
+        rotation_types = [
+            a.get("rotation_name", "").lower() for a in existing_assignments
+        ]
         if rotation_types:
             # Calculate diversity
             unique_rotations = len(set(rotation_types))
             total_rotations = len(rotation_types)
-            features["workload_diversity"] = unique_rotations / total_rotations if total_rotations > 0 else 0
+            features["workload_diversity"] = (
+                unique_rotations / total_rotations if total_rotations > 0 else 0
+            )
         else:
             features["workload_diversity"] = 0
 
@@ -278,13 +296,23 @@ class ConflictPredictor:
 
         precision = tp / (tp + fp) if (tp + fp) > 0 else 0
         recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-        f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+        f1 = (
+            2 * precision * recall / (precision + recall)
+            if (precision + recall) > 0
+            else 0
+        )
 
         # Get feature importances
-        feature_importance = dict(zip(self.feature_names, self.model.feature_importances_))
-        top_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)[:5]
+        feature_importance = dict(
+            zip(self.feature_names, self.model.feature_importances_)
+        )
+        top_features = sorted(
+            feature_importance.items(), key=lambda x: x[1], reverse=True
+        )[:5]
 
-        logger.info(f"Training complete: accuracy train={train_score:.3f}, val={val_score:.3f}")
+        logger.info(
+            f"Training complete: accuracy train={train_score:.3f}, val={val_score:.3f}"
+        )
         logger.info(f"Precision: {precision:.3f}, Recall: {recall:.3f}, F1: {f1:.3f}")
         logger.info(f"Top features: {top_features}")
 
@@ -304,7 +332,7 @@ class ConflictPredictor:
         person_data: dict[str, Any],
         proposed_assignment: dict[str, Any],
         existing_assignments: list[dict[str, Any]],
-        context_data: Optional[dict[str, Any]] = None,
+        context_data: dict[str, Any] | None = None,
     ) -> float:
         """
         Predict probability of conflict for a proposed assignment.
@@ -324,10 +352,7 @@ class ConflictPredictor:
 
         # Extract features
         X = self.extract_features(
-            person_data,
-            proposed_assignment,
-            existing_assignments,
-            context_data
+            person_data, proposed_assignment, existing_assignments, context_data
         )
 
         # Ensure all expected features are present
@@ -340,7 +365,9 @@ class ConflictPredictor:
 
         # Scale and predict probability
         X_scaled = self.scaler.transform(X)
-        prob = self.model.predict_proba(X_scaled)[0][1]  # Probability of class 1 (conflict)
+        prob = self.model.predict_proba(X_scaled)[0][
+            1
+        ]  # Probability of class 1 (conflict)
 
         return float(prob)
 
@@ -349,7 +376,7 @@ class ConflictPredictor:
         person_data: dict[str, Any],
         proposed_assignment: dict[str, Any],
         existing_assignments: list[dict[str, Any]],
-        context_data: Optional[dict[str, Any]] = None,
+        context_data: dict[str, Any] | None = None,
         threshold: float = 0.5,
     ) -> bool:
         """
@@ -366,10 +393,7 @@ class ConflictPredictor:
             True if conflict predicted, False otherwise
         """
         prob = self.predict_conflict_probability(
-            person_data,
-            proposed_assignment,
-            existing_assignments,
-            context_data
+            person_data, proposed_assignment, existing_assignments, context_data
         )
 
         return prob >= threshold
@@ -400,11 +424,13 @@ class ConflictPredictor:
             )
 
             if prob >= threshold:
-                high_risk.append({
-                    "assignment": assignment,
-                    "conflict_probability": prob,
-                    "risk_level": self._risk_level(prob),
-                })
+                high_risk.append(
+                    {
+                        "assignment": assignment,
+                        "conflict_probability": prob,
+                        "risk_level": self._risk_level(prob),
+                    }
+                )
 
         # Sort by probability (highest risk first)
         high_risk.sort(key=lambda x: x["conflict_probability"], reverse=True)
@@ -416,7 +442,7 @@ class ConflictPredictor:
         person_data: dict[str, Any],
         proposed_assignment: dict[str, Any],
         existing_assignments: list[dict[str, Any]],
-        context_data: Optional[dict[str, Any]] = None,
+        context_data: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Explain why a conflict is predicted.
@@ -431,18 +457,12 @@ class ConflictPredictor:
             Explanation dictionary with probability and risk factors
         """
         prob = self.predict_conflict_probability(
-            person_data,
-            proposed_assignment,
-            existing_assignments,
-            context_data
+            person_data, proposed_assignment, existing_assignments, context_data
         )
 
         # Extract features
         X = self.extract_features(
-            person_data,
-            proposed_assignment,
-            existing_assignments,
-            context_data
+            person_data, proposed_assignment, existing_assignments, context_data
         )
 
         # Get feature values
@@ -456,11 +476,13 @@ class ConflictPredictor:
         for feat, value in feature_values.items():
             importance = importances.get(feat, 0)
             if value > 0 and importance > 0.05:  # Significant features
-                risk_factors.append({
-                    "factor": feat,
-                    "value": float(value),
-                    "importance": float(importance),
-                })
+                risk_factors.append(
+                    {
+                        "factor": feat,
+                        "value": float(value),
+                        "importance": float(importance),
+                    }
+                )
 
         # Sort by importance
         risk_factors.sort(key=lambda x: x["importance"], reverse=True)

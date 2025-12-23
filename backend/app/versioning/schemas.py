@@ -10,22 +10,27 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-
 # =============================================================================
 # Version Metadata Schemas
 # =============================================================================
 
+
 class VersionMetadataSchema(BaseModel):
     """Schema for version metadata."""
+
     version_id: int = Field(..., description="Unique version identifier")
     transaction_id: int = Field(..., description="Database transaction ID")
     timestamp: datetime = Field(..., description="When the version was created")
     user_id: str | None = Field(None, description="User who created this version")
     operation: str = Field(..., description="Operation type: create, update, delete")
-    tags: list[str] = Field(default_factory=list, description="Tags applied to this version")
+    tags: list[str] = Field(
+        default_factory=list, description="Tags applied to this version"
+    )
     label: str | None = Field(None, description="Human-readable label")
     comment: str | None = Field(None, description="Version comment")
-    branch_name: str = Field(default="main", description="Branch this version belongs to")
+    branch_name: str = Field(
+        default="main", description="Branch this version belongs to"
+    )
     parent_version_id: int | None = Field(None, description="Parent version ID")
     is_merge: bool = Field(default=False, description="Whether this is a merge commit")
     merge_source_branch: str | None = Field(None, description="Source branch for merge")
@@ -37,6 +42,7 @@ class VersionMetadataSchema(BaseModel):
 
 class VersionHistoryResponse(BaseModel):
     """Response schema for version history queries."""
+
     entity_type: str
     entity_id: str
     total_versions: int
@@ -47,16 +53,21 @@ class VersionHistoryResponse(BaseModel):
 # Version Diff Schemas
 # =============================================================================
 
+
 class FieldChangeSchema(BaseModel):
     """Schema for a single field change."""
+
     field: str = Field(..., description="Field name")
-    type: Literal["added", "removed", "modified"] = Field(..., description="Change type")
+    type: Literal["added", "removed", "modified"] = Field(
+        ..., description="Change type"
+    )
     old_value: Any = Field(None, description="Old value")
     new_value: Any = Field(None, description="New value")
 
 
 class VersionDiffSchema(BaseModel):
     """Schema for version diff results."""
+
     entity_type: str
     entity_id: str
     from_version: int
@@ -72,6 +83,7 @@ class VersionDiffSchema(BaseModel):
 
 class CompareVersionsRequest(BaseModel):
     """Request schema for comparing versions."""
+
     entity_type: str = Field(..., description="Type of entity to compare")
     entity_id: UUID | str = Field(..., description="Entity ID")
     from_version: int = Field(..., description="Starting version")
@@ -82,8 +94,10 @@ class CompareVersionsRequest(BaseModel):
 # Point-in-Time Query Schemas
 # =============================================================================
 
+
 class PointInTimeQuerySchema(BaseModel):
     """Schema for point-in-time query results."""
+
     entity_type: str
     entity_id: str
     timestamp: datetime
@@ -94,6 +108,7 @@ class PointInTimeQuerySchema(BaseModel):
 
 class PointInTimeRequest(BaseModel):
     """Request schema for point-in-time queries."""
+
     entity_type: str = Field(..., description="Type of entity to query")
     entity_id: UUID | str = Field(..., description="Entity ID")
     timestamp: datetime = Field(..., description="Timestamp to query at")
@@ -101,17 +116,22 @@ class PointInTimeRequest(BaseModel):
 
 class PointInTimeBatchRequest(BaseModel):
     """Request schema for batch point-in-time queries."""
+
     entity_type: str = Field(..., description="Type of entity to query")
     timestamp: datetime = Field(..., description="Timestamp to query at")
-    filters: dict[str, Any] = Field(default_factory=dict, description="Optional filters")
+    filters: dict[str, Any] = Field(
+        default_factory=dict, description="Optional filters"
+    )
 
 
 # =============================================================================
 # Rollback Schemas
 # =============================================================================
 
+
 class RollbackRequest(BaseModel):
     """Request schema for version rollback."""
+
     entity_type: str = Field(..., description="Type of entity to rollback")
     entity_id: UUID | str = Field(..., description="Entity ID")
     target_version: int = Field(..., description="Version to rollback to")
@@ -120,6 +140,7 @@ class RollbackRequest(BaseModel):
 
 class RollbackResponse(BaseModel):
     """Response schema for rollback operations."""
+
     success: bool
     entity_type: str
     entity_id: str
@@ -133,8 +154,10 @@ class RollbackResponse(BaseModel):
 # Branch Schemas
 # =============================================================================
 
+
 class VersionBranchSchema(BaseModel):
     """Schema for version branch information."""
+
     branch_name: str
     created_at: datetime
     created_by: str
@@ -148,6 +171,7 @@ class VersionBranchSchema(BaseModel):
 
 class CreateBranchRequest(BaseModel):
     """Request schema for creating a branch."""
+
     parent_branch: str = Field(default="main", description="Parent branch name")
     new_branch_name: str = Field(..., description="New branch name")
     description: str | None = Field(None, description="Branch description")
@@ -155,6 +179,7 @@ class CreateBranchRequest(BaseModel):
 
 class BranchInfoSchema(BaseModel):
     """Schema for detailed branch information."""
+
     branch: VersionBranchSchema
     version_count: int
     entity_count: int
@@ -167,8 +192,10 @@ class BranchInfoSchema(BaseModel):
 # Merge Conflict Schemas
 # =============================================================================
 
+
 class MergeConflictSchema(BaseModel):
     """Schema for merge conflicts."""
+
     entity_type: str
     entity_id: str
     field_name: str
@@ -181,6 +208,7 @@ class MergeConflictSchema(BaseModel):
 
 class DetectConflictsRequest(BaseModel):
     """Request schema for conflict detection."""
+
     source_branch: str = Field(..., description="Source branch")
     target_branch: str = Field(..., description="Target branch")
     entity_types: list[str] | None = Field(None, description="Entity types to check")
@@ -188,6 +216,7 @@ class DetectConflictsRequest(BaseModel):
 
 class DetectConflictsResponse(BaseModel):
     """Response schema for conflict detection."""
+
     source_branch: str
     target_branch: str
     conflicts: list[MergeConflictSchema]
@@ -197,10 +226,11 @@ class DetectConflictsResponse(BaseModel):
 
 class ResolveConflictRequest(BaseModel):
     """Request schema for conflict resolution."""
+
     conflict: MergeConflictSchema
     resolution: str = Field(
         ...,
-        description="Resolution strategy: 'source', 'target', 'base', or custom value"
+        description="Resolution strategy: 'source', 'target', 'base', or custom value",
     )
 
 
@@ -208,8 +238,10 @@ class ResolveConflictRequest(BaseModel):
 # Tagging and Annotation Schemas
 # =============================================================================
 
+
 class TagVersionRequest(BaseModel):
     """Request schema for tagging a version."""
+
     entity_type: str = Field(..., description="Type of entity")
     entity_id: UUID | str = Field(..., description="Entity ID")
     version_id: int = Field(..., description="Version to tag")
@@ -218,6 +250,7 @@ class TagVersionRequest(BaseModel):
 
 class AddCommentRequest(BaseModel):
     """Request schema for adding version comments."""
+
     entity_type: str = Field(..., description="Type of entity")
     entity_id: UUID | str = Field(..., description="Entity ID")
     version_id: int = Field(..., description="Version to comment on")
@@ -228,8 +261,10 @@ class AddCommentRequest(BaseModel):
 # Lineage and Comparison Schemas
 # =============================================================================
 
+
 class EntityLineageSchema(BaseModel):
     """Schema for entity lineage information."""
+
     entity_type: str
     entity_id: str
     total_versions: int
@@ -241,6 +276,7 @@ class EntityLineageSchema(BaseModel):
 
 class BranchComparisonSchema(BaseModel):
     """Schema for branch comparison results."""
+
     branch1: str
     branch2: str
     entity_types: list[str]
@@ -253,6 +289,7 @@ class BranchComparisonSchema(BaseModel):
 
 class CompareBranchesRequest(BaseModel):
     """Request schema for comparing branches."""
+
     branch1: str = Field(..., description="First branch")
     branch2: str = Field(..., description="Second branch")
     entity_types: list[str] | None = Field(None, description="Entity types to compare")

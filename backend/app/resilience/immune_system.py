@@ -36,7 +36,7 @@ Biological Inspiration:
 
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 from uuid import UUID, uuid4
@@ -54,6 +54,7 @@ class Detector:
     Detectors are generated during training to NOT match valid schedules.
     If a detector matches a new schedule, it indicates an anomaly.
     """
+
     id: UUID
     center: np.ndarray  # Center point in feature space
     radius: float  # Detection radius
@@ -95,6 +96,7 @@ class Antibody:
     similarity. When an anomaly is detected, clonal selection chooses the
     antibody with highest affinity.
     """
+
     id: UUID
     name: str
     description: str
@@ -134,6 +136,7 @@ class Antibody:
 @dataclass
 class AnomalyReport:
     """Report of a detected anomaly."""
+
     id: UUID
     detected_at: datetime
     feature_vector: np.ndarray
@@ -157,6 +160,7 @@ class AnomalyReport:
 @dataclass
 class RepairResult:
     """Result of applying a repair strategy."""
+
     id: UUID
     antibody_id: UUID
     antibody_name: str
@@ -279,12 +283,13 @@ class ScheduleImmuneSystem:
         # ACGME compliance metrics (3 features)
         violations = schedule_state.get("acgme_violations", [])
         total_violations = len(violations)
-        critical_violations = sum(1 for v in violations if v.get("severity") == "CRITICAL")
+        critical_violations = sum(
+            1 for v in violations if v.get("severity") == "CRITICAL"
+        )
 
         # Normalize by number of people (avoid unbounded growth)
-        people_count = (
-            schedule_state.get("faculty_count", 1) +
-            schedule_state.get("resident_count", 1)
+        people_count = schedule_state.get("faculty_count", 1) + schedule_state.get(
+            "resident_count", 1
         )
         violation_rate = total_violations / max(1, people_count)
         critical_rate = critical_violations / max(1, people_count)
@@ -292,13 +297,17 @@ class ScheduleImmuneSystem:
 
         # Hours compliance (0-1, where 1 = compliant)
         avg_hours = schedule_state.get("avg_hours_per_week", 0)
-        hours_compliance = 1.0 - min(1.0, max(0, avg_hours - 80) / 20)  # Penalty above 80
+        hours_compliance = 1.0 - min(
+            1.0, max(0, avg_hours - 80) / 20
+        )  # Penalty above 80
         features.append(hours_compliance)
 
         # Supervision ratio (2 features)
         supervision_ratio = schedule_state.get("supervision_ratio", 1.0)
         # Normalize: 1:1 = 1.0, 1:2 = 0.5, etc.
-        supervision_score = min(1.0, 1.0 / supervision_ratio) if supervision_ratio > 0 else 0
+        supervision_score = (
+            min(1.0, 1.0 / supervision_ratio) if supervision_ratio > 0 else 0
+        )
         faculty_count = schedule_state.get("faculty_count", 0)
         faculty_availability = faculty_count / max(1, people_count)
         features.extend([supervision_score, faculty_availability])
@@ -323,11 +332,11 @@ class ScheduleImmuneSystem:
             features_array = np.pad(
                 features_array,
                 (0, self.feature_dims - len(features_array)),
-                mode='constant'
+                mode="constant",
             )
         elif len(features_array) > self.feature_dims:
             # Truncate
-            features_array = features_array[:self.feature_dims]
+            features_array = features_array[: self.feature_dims]
 
         return features_array
 
@@ -347,12 +356,13 @@ class ScheduleImmuneSystem:
             valid_schedules: List of valid schedule state dicts
             max_attempts: Maximum attempts to generate each detector
         """
-        logger.info(f"Training immune system on {len(valid_schedules)} valid schedules...")
+        logger.info(
+            f"Training immune system on {len(valid_schedules)} valid schedules..."
+        )
 
         # Extract features from valid schedules
         self.training_features = [
-            self.extract_features(schedule)
-            for schedule in valid_schedules
+            self.extract_features(schedule) for schedule in valid_schedules
         ]
 
         if not self.training_features:
@@ -393,7 +403,9 @@ class ScheduleImmuneSystem:
                 self.detectors.append(detector)
 
                 if len(self.detectors) % 10 == 0:
-                    logger.debug(f"Generated {len(self.detectors)}/{self.detector_count} detectors")
+                    logger.debug(
+                        f"Generated {len(self.detectors)}/{self.detector_count} detectors"
+                    )
 
         self.is_trained = True
         logger.info(
@@ -449,7 +461,7 @@ class ScheduleImmuneSystem:
         features = self.extract_features(schedule_state)
 
         # Find minimum distance to any detector center
-        min_distance = float('inf')
+        min_distance = float("inf")
         for detector in self.detectors:
             distance = detector.get_distance(features)
             min_distance = min(min_distance, distance)
@@ -491,7 +503,9 @@ class ScheduleImmuneSystem:
 
         # Generate description
         violations = schedule_state.get("acgme_violations", [])
-        coverage_rate = schedule_state.get("covered_blocks", 0) / max(1, schedule_state.get("total_blocks", 1))
+        coverage_rate = schedule_state.get("covered_blocks", 0) / max(
+            1, schedule_state.get("total_blocks", 1)
+        )
 
         description_parts = []
         if coverage_rate < 0.9:
@@ -501,7 +515,11 @@ class ScheduleImmuneSystem:
         if schedule_state.get("workload_std_dev", 0) > 0.3:
             description_parts.append("High workload imbalance")
 
-        description = "; ".join(description_parts) if description_parts else "Schedule state anomaly detected"
+        description = (
+            "; ".join(description_parts)
+            if description_parts
+            else "Schedule state anomaly detected"
+        )
 
         return AnomalyReport(
             id=uuid4(),
@@ -692,7 +710,8 @@ class ScheduleImmuneSystem:
             "successful_repairs": self.successful_repairs,
             "repair_success_rate": (
                 self.successful_repairs / self.repairs_applied
-                if self.repairs_applied > 0 else 0.0
+                if self.repairs_applied > 0
+                else 0.0
             ),
             "most_active_detectors": sorted(
                 [

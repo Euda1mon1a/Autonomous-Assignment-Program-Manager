@@ -6,16 +6,16 @@ of async operations.
 """
 
 import asyncio
+import builtins
 import logging
 import time
 from contextvars import ContextVar
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 # Context variable for tracking timeout state
-timeout_ctx: ContextVar[Optional[float]] = ContextVar("timeout_remaining", default=None)
-timeout_start_ctx: ContextVar[Optional[float]] = ContextVar("timeout_start", default=None)
+timeout_ctx: ContextVar[float | None] = ContextVar("timeout_remaining", default=None)
+timeout_start_ctx: ContextVar[float | None] = ContextVar("timeout_start", default=None)
 
 
 class TimeoutError(Exception):
@@ -55,7 +55,7 @@ class TimeoutHandler:
             remaining = handler.get_remaining_time()
     """
 
-    def __init__(self, timeout: float, error_message: Optional[str] = None):
+    def __init__(self, timeout: float, error_message: str | None = None):
         """
         Initialize timeout handler.
 
@@ -64,9 +64,11 @@ class TimeoutHandler:
             error_message: Custom error message for timeout exception
         """
         self.timeout = timeout
-        self.error_message = error_message or f"Operation exceeded timeout of {timeout}s"
-        self.start_time: Optional[float] = None
-        self._task: Optional[asyncio.Task] = None
+        self.error_message = (
+            error_message or f"Operation exceeded timeout of {timeout}s"
+        )
+        self.start_time: float | None = None
+        self._task: asyncio.Task | None = None
         self._token_remaining = None
         self._token_start = None
 
@@ -97,7 +99,9 @@ class TimeoutHandler:
 
         # Handle asyncio.CancelledError as timeout
         if exc_type is asyncio.CancelledError:
-            logger.warning(f"Operation cancelled (likely timeout): {self.error_message}")
+            logger.warning(
+                f"Operation cancelled (likely timeout): {self.error_message}"
+            )
             raise TimeoutError(self.error_message, self.timeout) from exc_val
 
         # Handle asyncio.TimeoutError
@@ -143,7 +147,7 @@ class TimeoutHandler:
             raise TimeoutError(self.error_message, self.timeout)
 
 
-def get_timeout_remaining() -> Optional[float]:
+def get_timeout_remaining() -> float | None:
     """
     Get remaining timeout from context.
 
@@ -161,7 +165,7 @@ def get_timeout_remaining() -> Optional[float]:
     return remaining
 
 
-def get_timeout_elapsed() -> Optional[float]:
+def get_timeout_elapsed() -> float | None:
     """
     Get elapsed time from timeout start.
 
@@ -175,7 +179,7 @@ def get_timeout_elapsed() -> Optional[float]:
     return time.monotonic() - start
 
 
-async def with_timeout_wrapper(coro, timeout: float, error_message: Optional[str] = None):
+async def with_timeout_wrapper(coro, timeout: float, error_message: str | None = None):
     """
     Wrap a coroutine with timeout handling.
 
@@ -192,7 +196,7 @@ async def with_timeout_wrapper(coro, timeout: float, error_message: Optional[str
     """
     try:
         return await asyncio.wait_for(coro, timeout=timeout)
-    except asyncio.TimeoutError as e:
+    except builtins.TimeoutError as e:
         msg = error_message or f"Operation exceeded timeout of {timeout}s"
         logger.warning(f"Timeout: {msg}")
         raise TimeoutError(msg, timeout) from e

@@ -3,30 +3,36 @@
 This service provides intelligent, safety-first auto-resolution of schedule conflicts
 with comprehensive impact analysis, validation, and batch processing capabilities.
 """
+
+import time
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from uuid import UUID, uuid4
-import time
 
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 from app.models.assignment import Assignment
 from app.models.block import Block
-from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus, ConflictSeverity, ConflictType
+from app.models.conflict_alert import (
+    ConflictAlert,
+    ConflictAlertStatus,
+    ConflictSeverity,
+    ConflictType,
+)
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.schemas.conflict_resolution import (
+    BatchResolutionReport,
     ConflictAnalysis,
+    ImpactAssessment,
     ResolutionOption,
     ResolutionResult,
-    BatchResolutionReport,
-    ImpactAssessment,
+    ResolutionStatusEnum,
+    ResolutionStrategyEnum,
     SafetyCheckResult,
     SafetyCheckType,
-    ResolutionStrategyEnum,
-    ResolutionStatusEnum,
 )
 
 
@@ -82,7 +88,9 @@ class ConflictAutoResolver:
         recommended_strategies = self._recommend_strategies(alert, safety_checks)
 
         # Estimate resolution time
-        estimated_time = self._estimate_resolution_time(complexity_score, len(recommended_strategies))
+        estimated_time = self._estimate_resolution_time(
+            complexity_score, len(recommended_strategies)
+        )
 
         return ConflictAnalysis(
             conflict_id=conflict_id,
@@ -138,7 +146,10 @@ class ConflictAutoResolver:
             options.extend(self._generate_leave_overlap_options(alert, analysis))
         elif alert.conflict_type == ConflictType.BACK_TO_BACK:
             options.extend(self._generate_back_to_back_options(alert, analysis))
-        elif alert.conflict_type in [ConflictType.CALL_CASCADE, ConflictType.EXCESSIVE_ALTERNATING]:
+        elif alert.conflict_type in [
+            ConflictType.CALL_CASCADE,
+            ConflictType.EXCESSIVE_ALTERNATING,
+        ]:
             options.extend(self._generate_workload_options(alert, analysis))
         elif alert.conflict_type == ConflictType.EXTERNAL_COMMITMENT:
             options.extend(self._generate_external_commitment_options(alert, analysis))
@@ -155,8 +166,7 @@ class ConflictAutoResolver:
 
         # Sort by overall score (highest first)
         options.sort(
-            key=lambda o: o.impact.overall_score if o.impact else 0,
-            reverse=True
+            key=lambda o: o.impact.overall_score if o.impact else 0, reverse=True
         )
 
         # Cache results
@@ -196,7 +206,10 @@ class ConflictAutoResolver:
             )
 
         # Check if already resolved
-        if alert.status not in [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]:
+        if alert.status not in [
+            ConflictAlertStatus.NEW,
+            ConflictAlertStatus.ACKNOWLEDGED,
+        ]:
             return ResolutionResult(
                 resolution_option_id="none",
                 conflict_id=conflict_id,
@@ -219,10 +232,17 @@ class ConflictAutoResolver:
                 success=False,
                 status=ResolutionStatusEnum.REJECTED,
                 message="Auto-resolution not safe - requires human review",
-                warnings=[check.message for check in analysis.safety_checks if not check.passed],
+                warnings=[
+                    check.message
+                    for check in analysis.safety_checks
+                    if not check.passed
+                ],
                 error_code="SAFETY_CHECK_FAILED",
                 follow_up_required=True,
-                follow_up_actions=["Review safety check failures", "Manual resolution required"],
+                follow_up_actions=[
+                    "Review safety check failures",
+                    "Manual resolution required",
+                ],
             )
 
         # Generate resolution options
@@ -242,14 +262,20 @@ class ConflictAutoResolver:
         # Select option (use specified strategy or best option)
         if strategy:
             selected_option = next(
-                (o for o in options if o.strategy.value == strategy and o.can_auto_apply),
-                None
+                (
+                    o
+                    for o in options
+                    if o.strategy.value == strategy and o.can_auto_apply
+                ),
+                None,
             )
             if not selected_option:
                 return ResolutionResult(
                     resolution_option_id="none",
                     conflict_id=conflict_id,
-                    strategy=ResolutionStrategyEnum(strategy) if strategy else ResolutionStrategyEnum.DEFER_TO_HUMAN,
+                    strategy=ResolutionStrategyEnum(strategy)
+                    if strategy
+                    else ResolutionStrategyEnum.DEFER_TO_HUMAN,
                     success=False,
                     status=ResolutionStatusEnum.REJECTED,
                     message=f"Requested strategy '{strategy}' not available or not safe for auto-apply",
@@ -268,7 +294,10 @@ class ConflictAutoResolver:
                     message="Best option requires manual approval",
                     error_code="APPROVAL_REQUIRED",
                     follow_up_required=True,
-                    follow_up_actions=["Review and approve resolution", f"Best option: {options[0].title}"],
+                    follow_up_actions=[
+                        "Review and approve resolution",
+                        f"Best option: {options[0].title}",
+                    ],
                 )
 
         # Apply the selected resolution
@@ -371,16 +400,18 @@ class ConflictAutoResolver:
             except Exception as e:
                 failed_conflicts.append(conflict_id)
                 report.resolutions_failed += 1
-                results.append(ResolutionResult(
-                    resolution_option_id="error",
-                    conflict_id=conflict_id,
-                    strategy=ResolutionStrategyEnum.DEFER_TO_HUMAN,
-                    success=False,
-                    status=ResolutionStatusEnum.FAILED,
-                    message=f"Error processing conflict: {str(e)}",
-                    error_code="PROCESSING_ERROR",
-                    error_details={"exception": str(e)},
-                ))
+                results.append(
+                    ResolutionResult(
+                        resolution_option_id="error",
+                        conflict_id=conflict_id,
+                        strategy=ResolutionStrategyEnum.DEFER_TO_HUMAN,
+                        success=False,
+                        status=ResolutionStatusEnum.FAILED,
+                        message=f"Error processing conflict: {str(e)}",
+                        error_code="PROCESSING_ERROR",
+                        error_details={"exception": str(e)},
+                    )
+                )
 
         # Calculate final metrics
         processing_time = time.time() - processing_start
@@ -437,7 +468,9 @@ class ConflictAutoResolver:
 
     def _get_alert(self, conflict_id: UUID) -> ConflictAlert | None:
         """Get conflict alert by ID."""
-        return self.db.query(ConflictAlert).filter(ConflictAlert.id == conflict_id).first()
+        return (
+            self.db.query(ConflictAlert).filter(ConflictAlert.id == conflict_id).first()
+        )
 
     def _determine_root_cause(self, alert: ConflictAlert) -> str:
         """Determine the root cause of a conflict."""
@@ -499,17 +532,25 @@ class ConflictAutoResolver:
     def _has_cascading_conflicts(self, alert: ConflictAlert) -> bool:
         """Check if resolving this conflict might create cascading issues."""
         # Check for related conflicts in the same time period
-        related_conflicts = self.db.query(ConflictAlert).filter(
-            and_(
-                ConflictAlert.id != alert.id,
-                ConflictAlert.fmit_week == alert.fmit_week,
-                ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]),
+        related_conflicts = (
+            self.db.query(ConflictAlert)
+            .filter(
+                and_(
+                    ConflictAlert.id != alert.id,
+                    ConflictAlert.fmit_week == alert.fmit_week,
+                    ConflictAlert.status.in_(
+                        [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                    ),
+                )
             )
-        ).count()
+            .count()
+        )
 
         return related_conflicts > 2
 
-    def _perform_all_safety_checks(self, alert: ConflictAlert) -> list[SafetyCheckResult]:
+    def _perform_all_safety_checks(
+        self, alert: ConflictAlert
+    ) -> list[SafetyCheckResult]:
         """Perform all safety checks for a conflict."""
         checks = []
 
@@ -547,13 +588,18 @@ class ConflictAutoResolver:
         week_start = alert.fmit_week - timedelta(days=alert.fmit_week.weekday())
         week_end = week_start + timedelta(days=6)
 
-        work_blocks = self.db.query(Assignment).join(Block).filter(
-            and_(
-                Assignment.person_id == alert.faculty_id,
-                Block.date >= week_start,
-                Block.date <= week_end,
+        work_blocks = (
+            self.db.query(Assignment)
+            .join(Block)
+            .filter(
+                and_(
+                    Assignment.person_id == alert.faculty_id,
+                    Block.date >= week_start,
+                    Block.date <= week_end,
+                )
             )
-        ).count()
+            .count()
+        )
 
         hours_worked = work_blocks * 4.0  # Assuming 4 hours per block
 
@@ -575,12 +621,17 @@ class ConflictAutoResolver:
     def _check_coverage_gaps(self, alert: ConflictAlert) -> SafetyCheckResult:
         """Check if resolution would create coverage gaps."""
         # Check if removing this faculty creates a gap
-        week_assignments = self.db.query(Assignment).join(Block).filter(
-            and_(
-                Block.date >= alert.fmit_week,
-                Block.date < alert.fmit_week + timedelta(days=7),
+        week_assignments = (
+            self.db.query(Assignment)
+            .join(Block)
+            .filter(
+                and_(
+                    Block.date >= alert.fmit_week,
+                    Block.date < alert.fmit_week + timedelta(days=7),
+                )
             )
-        ).count()
+            .count()
+        )
 
         if week_assignments <= 1:
             return SafetyCheckResult(
@@ -599,7 +650,9 @@ class ConflictAutoResolver:
 
     def _check_faculty_availability(self, alert: ConflictAlert) -> SafetyCheckResult:
         """Check if alternate faculty are available."""
-        available_faculty = self._find_available_faculty(alert.fmit_week, alert.faculty_id)
+        available_faculty = self._find_available_faculty(
+            alert.fmit_week, alert.faculty_id
+        )
 
         if not available_faculty:
             return SafetyCheckResult(
@@ -629,24 +682,36 @@ class ConflictAutoResolver:
             )
 
         # Check if this faculty is supervising residents during this period
-        supervised_residents = self.db.query(Assignment).join(Block).join(Person).filter(
-            and_(
-                Block.date >= alert.fmit_week,
-                Block.date < alert.fmit_week + timedelta(days=7),
-                Person.type == "resident",
-            )
-        ).count()
-
-        if supervised_residents > 0:
-            # Check if removing this faculty would violate ratios
-            other_faculty = self.db.query(Assignment).join(Block).join(Person).filter(
+        supervised_residents = (
+            self.db.query(Assignment)
+            .join(Block)
+            .join(Person)
+            .filter(
                 and_(
                     Block.date >= alert.fmit_week,
                     Block.date < alert.fmit_week + timedelta(days=7),
-                    Person.type == "faculty",
-                    Person.id != alert.faculty_id,
+                    Person.type == "resident",
                 )
-            ).count()
+            )
+            .count()
+        )
+
+        if supervised_residents > 0:
+            # Check if removing this faculty would violate ratios
+            other_faculty = (
+                self.db.query(Assignment)
+                .join(Block)
+                .join(Person)
+                .filter(
+                    and_(
+                        Block.date >= alert.fmit_week,
+                        Block.date < alert.fmit_week + timedelta(days=7),
+                        Person.type == "faculty",
+                        Person.id != alert.faculty_id,
+                    )
+                )
+                .count()
+            )
 
             if other_faculty == 0:
                 return SafetyCheckResult(
@@ -668,29 +733,43 @@ class ConflictAutoResolver:
     def _check_workload_balance(self, alert: ConflictAlert) -> SafetyCheckResult:
         """Check if workload remains balanced."""
         # Count current FMIT assignments for this faculty
-        current_assignments = self.db.query(Assignment).join(Block).join(RotationTemplate).filter(
-            and_(
-                Assignment.person_id == alert.faculty_id,
-                Block.date >= date.today(),
-                RotationTemplate.name.ilike("%FMIT%"),
+        current_assignments = (
+            self.db.query(Assignment)
+            .join(Block)
+            .join(RotationTemplate)
+            .filter(
+                and_(
+                    Assignment.person_id == alert.faculty_id,
+                    Block.date >= date.today(),
+                    RotationTemplate.name.ilike("%FMIT%"),
+                )
             )
-        ).count()
+            .count()
+        )
 
         # Compare to average
-        avg_assignments = self.db.query(func.count(Assignment.id)).join(Block).join(
-            Person
-        ).join(RotationTemplate).filter(
-            and_(
-                Person.type == "faculty",
-                Block.date >= date.today(),
-                RotationTemplate.name.ilike("%FMIT%"),
+        avg_assignments = (
+            self.db.query(func.count(Assignment.id))
+            .join(Block)
+            .join(Person)
+            .join(RotationTemplate)
+            .filter(
+                and_(
+                    Person.type == "faculty",
+                    Block.date >= date.today(),
+                    RotationTemplate.name.ilike("%FMIT%"),
+                )
             )
-        ).scalar() or 0
+            .scalar()
+            or 0
+        )
 
         total_faculty = self.db.query(Person).filter(Person.type == "faculty").count()
         avg_per_faculty = avg_assignments / max(total_faculty, 1)
 
-        balance_score = 1.0 - abs(current_assignments - avg_per_faculty) / max(avg_per_faculty, 1)
+        balance_score = 1.0 - abs(current_assignments - avg_per_faculty) / max(
+            avg_per_faculty, 1
+        )
 
         return SafetyCheckResult(
             check_type=SafetyCheckType.WORKLOAD_BALANCE,
@@ -713,7 +792,9 @@ class ConflictAutoResolver:
 
         # Check for back-to-back constraints
         if alert.conflict_type == ConflictType.BACK_TO_BACK:
-            constraints.append("Must maintain minimum 2-week gap between FMIT rotations")
+            constraints.append(
+                "Must maintain minimum 2-week gap between FMIT rotations"
+            )
 
         # Check for ACGME constraints
         faculty = self.db.query(Person).filter(Person.id == alert.faculty_id).first()
@@ -734,12 +815,18 @@ class ConflictAutoResolver:
                 blockers.append("Critical conflict with cascading impacts")
 
         # Check for multiple conflicts in same period
-        related_count = self.db.query(ConflictAlert).filter(
-            and_(
-                ConflictAlert.fmit_week == alert.fmit_week,
-                ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]),
+        related_count = (
+            self.db.query(ConflictAlert)
+            .filter(
+                and_(
+                    ConflictAlert.fmit_week == alert.fmit_week,
+                    ConflictAlert.status.in_(
+                        [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                    ),
+                )
             )
-        ).count()
+            .count()
+        )
 
         if related_count > 3:
             blockers.append(f"Multiple conflicts ({related_count}) in same time period")
@@ -756,15 +843,22 @@ class ConflictAutoResolver:
 
         # Check if faculty are available for swapping
         faculty_available = next(
-            (c for c in safety_checks if c.check_type == SafetyCheckType.FACULTY_AVAILABILITY),
-            None
+            (
+                c
+                for c in safety_checks
+                if c.check_type == SafetyCheckType.FACULTY_AVAILABILITY
+            ),
+            None,
         )
 
         if faculty_available and faculty_available.passed:
             strategies.append(ResolutionStrategyEnum.SWAP_ASSIGNMENTS)
 
         # Check if we can reassign to junior faculty
-        if alert.conflict_type in [ConflictType.LEAVE_FMIT_OVERLAP, ConflictType.BACK_TO_BACK]:
+        if alert.conflict_type in [
+            ConflictType.LEAVE_FMIT_OVERLAP,
+            ConflictType.BACK_TO_BACK,
+        ]:
             strategies.append(ResolutionStrategyEnum.REASSIGN_JUNIOR)
 
         # Check if we can use backup
@@ -781,11 +875,15 @@ class ConflictAutoResolver:
 
         return strategies
 
-    def _estimate_resolution_time(self, complexity_score: float, num_strategies: int) -> int:
+    def _estimate_resolution_time(
+        self, complexity_score: float, num_strategies: int
+    ) -> int:
         """Estimate time to resolve in minutes."""
         base_time = 10  # Base 10 minutes
         complexity_time = int(complexity_score * 20)  # Up to 20 extra minutes
-        strategy_time = max(num_strategies - 1, 0) * 5  # 5 minutes per additional strategy
+        strategy_time = (
+            max(num_strategies - 1, 0) * 5
+        )  # 5 minutes per additional strategy
 
         return base_time + complexity_time + strategy_time
 
@@ -798,70 +896,78 @@ class ConflictAutoResolver:
         options = []
 
         # Option 1: Swap with available faculty
-        available_faculty = self._find_available_faculty(alert.fmit_week, alert.faculty_id)
+        available_faculty = self._find_available_faculty(
+            alert.fmit_week, alert.faculty_id
+        )
         if available_faculty:
             for faculty in available_faculty[:2]:  # Top 2 candidates
-                options.append(ResolutionOption(
-                    id=f"swap_{alert.id}_{faculty.id}",
-                    conflict_id=alert.id,
-                    strategy=ResolutionStrategyEnum.SWAP_ASSIGNMENTS,
-                    title=f"Swap FMIT week with {faculty.name}",
-                    description=f"Transfer FMIT assignment to {faculty.name} who is available this week",
-                    detailed_steps=[
-                        f"Remove FMIT assignment from {alert.faculty.name}",
-                        f"Create FMIT assignment for {faculty.name}",
-                        "Update schedule and notify affected parties",
-                        "Verify no new conflicts created",
-                    ],
-                    changes={
-                        "remove_assignments": [str(alert.faculty_id)],
-                        "add_assignments": [str(faculty.id)],
-                        "affected_week": alert.fmit_week.isoformat(),
-                    },
-                    risk_level="low",
-                ))
+                options.append(
+                    ResolutionOption(
+                        id=f"swap_{alert.id}_{faculty.id}",
+                        conflict_id=alert.id,
+                        strategy=ResolutionStrategyEnum.SWAP_ASSIGNMENTS,
+                        title=f"Swap FMIT week with {faculty.name}",
+                        description=f"Transfer FMIT assignment to {faculty.name} who is available this week",
+                        detailed_steps=[
+                            f"Remove FMIT assignment from {alert.faculty.name}",
+                            f"Create FMIT assignment for {faculty.name}",
+                            "Update schedule and notify affected parties",
+                            "Verify no new conflicts created",
+                        ],
+                        changes={
+                            "remove_assignments": [str(alert.faculty_id)],
+                            "add_assignments": [str(faculty.id)],
+                            "affected_week": alert.fmit_week.isoformat(),
+                        },
+                        risk_level="low",
+                    )
+                )
 
         # Option 2: Reassign to junior faculty (if applicable)
         junior_faculty = self._find_junior_faculty_available(alert.fmit_week)
         if junior_faculty:
-            options.append(ResolutionOption(
-                id=f"reassign_junior_{alert.id}",
-                conflict_id=alert.id,
-                strategy=ResolutionStrategyEnum.REASSIGN_JUNIOR,
-                title="Reassign to junior faculty member",
-                description=f"Reassign FMIT duty to available junior faculty (PGY-2/3)",
-                detailed_steps=[
-                    "Identify qualified junior faculty",
-                    "Verify junior faculty availability and qualifications",
-                    "Transfer assignment with supervision plan",
-                    "Brief junior faculty on responsibilities",
-                ],
-                changes={
-                    "reassign_to_junior": True,
-                    "candidates": [str(f.id) for f in junior_faculty[:3]],
-                },
-                risk_level="medium",
-            ))
+            options.append(
+                ResolutionOption(
+                    id=f"reassign_junior_{alert.id}",
+                    conflict_id=alert.id,
+                    strategy=ResolutionStrategyEnum.REASSIGN_JUNIOR,
+                    title="Reassign to junior faculty member",
+                    description="Reassign FMIT duty to available junior faculty (PGY-2/3)",
+                    detailed_steps=[
+                        "Identify qualified junior faculty",
+                        "Verify junior faculty availability and qualifications",
+                        "Transfer assignment with supervision plan",
+                        "Brief junior faculty on responsibilities",
+                    ],
+                    changes={
+                        "reassign_to_junior": True,
+                        "candidates": [str(f.id) for f in junior_faculty[:3]],
+                    },
+                    risk_level="medium",
+                )
+            )
 
         # Option 3: Escalate to backup pool
-        options.append(ResolutionOption(
-            id=f"backup_{alert.id}",
-            conflict_id=alert.id,
-            strategy=ResolutionStrategyEnum.ESCALATE_TO_BACKUP,
-            title="Use backup coverage pool",
-            description="Request coverage from designated backup faculty pool",
-            detailed_steps=[
-                "Check backup pool availability",
-                "Select backup faculty member",
-                "Create backup assignment",
-                "Notify all parties of coverage arrangement",
-            ],
-            changes={
-                "use_backup_pool": True,
-                "original_faculty": str(alert.faculty_id),
-            },
-            risk_level="medium",
-        ))
+        options.append(
+            ResolutionOption(
+                id=f"backup_{alert.id}",
+                conflict_id=alert.id,
+                strategy=ResolutionStrategyEnum.ESCALATE_TO_BACKUP,
+                title="Use backup coverage pool",
+                description="Request coverage from designated backup faculty pool",
+                detailed_steps=[
+                    "Check backup pool availability",
+                    "Select backup faculty member",
+                    "Create backup assignment",
+                    "Notify all parties of coverage arrangement",
+                ],
+                changes={
+                    "use_backup_pool": True,
+                    "original_faculty": str(alert.faculty_id),
+                },
+                risk_level="medium",
+            )
+        )
 
         return options
 
@@ -874,46 +980,52 @@ class ConflictAutoResolver:
         options = []
 
         # Option 1: Split coverage
-        options.append(ResolutionOption(
-            id=f"split_{alert.id}",
-            conflict_id=alert.id,
-            strategy=ResolutionStrategyEnum.SPLIT_COVERAGE,
-            title="Split one FMIT week between two faculty",
-            description="Divide one FMIT week into partial coverage between faculty members",
-            detailed_steps=[
-                "Identify week to split",
-                "Find faculty to share coverage",
-                "Create split schedule (e.g., Mon-Wed, Thu-Sun)",
-                "Update assignments for both faculty",
-            ],
-            changes={
-                "split_week": alert.fmit_week.isoformat(),
-                "split_type": "partial_coverage",
-            },
-            risk_level="medium",
-        ))
-
-        # Option 2: Swap one week
-        available_faculty = self._find_available_faculty(alert.fmit_week, alert.faculty_id)
-        if available_faculty:
-            options.append(ResolutionOption(
-                id=f"swap_b2b_{alert.id}",
+        options.append(
+            ResolutionOption(
+                id=f"split_{alert.id}",
                 conflict_id=alert.id,
-                strategy=ResolutionStrategyEnum.SWAP_ASSIGNMENTS,
-                title="Swap one FMIT week to create spacing",
-                description="Exchange one of the back-to-back weeks with another faculty",
+                strategy=ResolutionStrategyEnum.SPLIT_COVERAGE,
+                title="Split one FMIT week between two faculty",
+                description="Divide one FMIT week into partial coverage between faculty members",
                 detailed_steps=[
-                    "Select which week to swap",
-                    f"Swap with {available_faculty[0].name}",
-                    "Verify 2+ week gap created",
-                    "Update all schedules",
+                    "Identify week to split",
+                    "Find faculty to share coverage",
+                    "Create split schedule (e.g., Mon-Wed, Thu-Sun)",
+                    "Update assignments for both faculty",
                 ],
                 changes={
-                    "swap_week": alert.fmit_week.isoformat(),
-                    "swap_with": str(available_faculty[0].id),
+                    "split_week": alert.fmit_week.isoformat(),
+                    "split_type": "partial_coverage",
                 },
-                risk_level="low",
-            ))
+                risk_level="medium",
+            )
+        )
+
+        # Option 2: Swap one week
+        available_faculty = self._find_available_faculty(
+            alert.fmit_week, alert.faculty_id
+        )
+        if available_faculty:
+            options.append(
+                ResolutionOption(
+                    id=f"swap_b2b_{alert.id}",
+                    conflict_id=alert.id,
+                    strategy=ResolutionStrategyEnum.SWAP_ASSIGNMENTS,
+                    title="Swap one FMIT week to create spacing",
+                    description="Exchange one of the back-to-back weeks with another faculty",
+                    detailed_steps=[
+                        "Select which week to swap",
+                        f"Swap with {available_faculty[0].name}",
+                        "Verify 2+ week gap created",
+                        "Update all schedules",
+                    ],
+                    changes={
+                        "swap_week": alert.fmit_week.isoformat(),
+                        "swap_with": str(available_faculty[0].id),
+                    },
+                    risk_level="low",
+                )
+            )
 
         return options
 
@@ -926,24 +1038,26 @@ class ConflictAutoResolver:
         options = []
 
         # Redistribute assignments
-        options.append(ResolutionOption(
-            id=f"redistribute_{alert.id}",
-            conflict_id=alert.id,
-            strategy=ResolutionStrategyEnum.SWAP_ASSIGNMENTS,
-            title="Redistribute FMIT assignments for better balance",
-            description="Rebalance FMIT schedule to distribute workload more evenly",
-            detailed_steps=[
-                "Analyze current workload distribution",
-                "Identify overloaded and underloaded faculty",
-                "Propose swap arrangements",
-                "Execute balanced redistribution",
-            ],
-            changes={
-                "redistribution": True,
-                "affected_faculty": str(alert.faculty_id),
-            },
-            risk_level="high",  # High risk due to multiple changes
-        ))
+        options.append(
+            ResolutionOption(
+                id=f"redistribute_{alert.id}",
+                conflict_id=alert.id,
+                strategy=ResolutionStrategyEnum.SWAP_ASSIGNMENTS,
+                title="Redistribute FMIT assignments for better balance",
+                description="Rebalance FMIT schedule to distribute workload more evenly",
+                detailed_steps=[
+                    "Analyze current workload distribution",
+                    "Identify overloaded and underloaded faculty",
+                    "Propose swap arrangements",
+                    "Execute balanced redistribution",
+                ],
+                changes={
+                    "redistribution": True,
+                    "affected_faculty": str(alert.faculty_id),
+                },
+                risk_level="high",  # High risk due to multiple changes
+            )
+        )
 
         return options
 
@@ -956,24 +1070,26 @@ class ConflictAutoResolver:
         options = []
 
         # Request coverage
-        options.append(ResolutionOption(
-            id=f"coverage_{alert.id}",
-            conflict_id=alert.id,
-            strategy=ResolutionStrategyEnum.ESCALATE_TO_BACKUP,
-            title="Request coverage for external commitment",
-            description="Find replacement coverage to accommodate external commitment",
-            detailed_steps=[
-                "Document external commitment details",
-                "Request volunteer coverage",
-                "Identify backup faculty if no volunteers",
-                "Finalize coverage arrangement",
-            ],
-            changes={
-                "external_commitment": True,
-                "needs_coverage": True,
-            },
-            risk_level="medium",
-        ))
+        options.append(
+            ResolutionOption(
+                id=f"coverage_{alert.id}",
+                conflict_id=alert.id,
+                strategy=ResolutionStrategyEnum.ESCALATE_TO_BACKUP,
+                title="Request coverage for external commitment",
+                description="Find replacement coverage to accommodate external commitment",
+                detailed_steps=[
+                    "Document external commitment details",
+                    "Request volunteer coverage",
+                    "Identify backup faculty if no volunteers",
+                    "Finalize coverage arrangement",
+                ],
+                changes={
+                    "external_commitment": True,
+                    "needs_coverage": True,
+                },
+                risk_level="medium",
+            )
+        )
 
         return options
 
@@ -1041,17 +1157,19 @@ class ConflictAutoResolver:
         # Calculate quality scores
         workload_balance = self._calculate_workload_balance_score(option, alert)
         fairness = self._calculate_fairness_score(option, alert)
-        disruption = self._calculate_disruption_score(affected_faculty, cascading_changes)
+        disruption = self._calculate_disruption_score(
+            affected_faculty, cascading_changes
+        )
         feasibility = self._calculate_feasibility_score(option, alert)
         confidence = self._calculate_confidence_score(option, alert)
 
         # Calculate overall score
         overall = (
-            feasibility * 0.3 +
-            workload_balance * 0.2 +
-            fairness * 0.2 +
-            (1 - disruption) * 0.15 +
-            confidence * 0.15
+            feasibility * 0.3
+            + workload_balance * 0.2
+            + fairness * 0.2
+            + (1 - disruption) * 0.15
+            + confidence * 0.15
         )
 
         # Generate recommendation
@@ -1080,19 +1198,29 @@ class ConflictAutoResolver:
             recommendation=recommendation,
         )
 
-    def _predict_new_conflicts(self, option: ResolutionOption, alert: ConflictAlert) -> int:
+    def _predict_new_conflicts(
+        self, option: ResolutionOption, alert: ConflictAlert
+    ) -> int:
         """Predict how many new conflicts might be created."""
         # Simple heuristic: check target faculty's existing conflicts
         if "swap_with" in option.changes:
             target_id = option.changes["swap_with"]
-            existing_conflicts = self.db.query(ConflictAlert).filter(
-                ConflictAlert.faculty_id == UUID(target_id),
-                ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]),
-            ).count()
+            existing_conflicts = (
+                self.db.query(ConflictAlert)
+                .filter(
+                    ConflictAlert.faculty_id == UUID(target_id),
+                    ConflictAlert.status.in_(
+                        [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                    ),
+                )
+                .count()
+            )
             return 1 if existing_conflicts > 2 else 0
         return 0
 
-    def _calculate_workload_balance_score(self, option: ResolutionOption, alert: ConflictAlert) -> float:
+    def _calculate_workload_balance_score(
+        self, option: ResolutionOption, alert: ConflictAlert
+    ) -> float:
         """Calculate workload balance score (0-1, higher is better)."""
         if option.strategy == ResolutionStrategyEnum.DEFER_TO_HUMAN:
             return 0.5  # Neutral
@@ -1103,7 +1231,9 @@ class ConflictAutoResolver:
 
         return 0.7  # Default good score
 
-    def _calculate_fairness_score(self, option: ResolutionOption, alert: ConflictAlert) -> float:
+    def _calculate_fairness_score(
+        self, option: ResolutionOption, alert: ConflictAlert
+    ) -> float:
         """Calculate fairness score (0-1, higher is more fair)."""
         if option.strategy == ResolutionStrategyEnum.REASSIGN_JUNIOR:
             # Check if junior faculty is being overloaded
@@ -1112,12 +1242,16 @@ class ConflictAutoResolver:
             return 0.9  # Very fair - mutual exchange
         return 0.7
 
-    def _calculate_disruption_score(self, affected_faculty: int, cascading_changes: int) -> float:
+    def _calculate_disruption_score(
+        self, affected_faculty: int, cascading_changes: int
+    ) -> float:
         """Calculate disruption score (0-1, higher is more disruptive)."""
         disruption = (affected_faculty * 0.1) + (cascading_changes * 0.2)
         return min(disruption, 1.0)
 
-    def _calculate_feasibility_score(self, option: ResolutionOption, alert: ConflictAlert) -> float:
+    def _calculate_feasibility_score(
+        self, option: ResolutionOption, alert: ConflictAlert
+    ) -> float:
         """Calculate feasibility score (0-1, higher is more feasible)."""
         if option.strategy == ResolutionStrategyEnum.DEFER_TO_HUMAN:
             return 1.0  # Always feasible to defer
@@ -1133,7 +1267,9 @@ class ConflictAutoResolver:
 
         return 0.75  # Default moderate feasibility
 
-    def _calculate_confidence_score(self, option: ResolutionOption, alert: ConflictAlert) -> float:
+    def _calculate_confidence_score(
+        self, option: ResolutionOption, alert: ConflictAlert
+    ) -> float:
         """Calculate confidence in resolution success (0-1, higher is more confident)."""
         if option.strategy == ResolutionStrategyEnum.DEFER_TO_HUMAN:
             return 0.5  # Neutral confidence
@@ -1141,7 +1277,10 @@ class ConflictAutoResolver:
         # Higher confidence for simpler strategies
         if option.strategy == ResolutionStrategyEnum.SWAP_ASSIGNMENTS:
             return 0.85
-        elif option.strategy in [ResolutionStrategyEnum.REASSIGN_JUNIOR, ResolutionStrategyEnum.ESCALATE_TO_BACKUP]:
+        elif option.strategy in [
+            ResolutionStrategyEnum.REASSIGN_JUNIOR,
+            ResolutionStrategyEnum.ESCALATE_TO_BACKUP,
+        ]:
             return 0.75
         else:
             return 0.65
@@ -1280,7 +1419,9 @@ class ConflictAutoResolver:
             alert.status = ConflictAlertStatus.RESOLVED
             alert.resolved_at = datetime.utcnow()
             alert.resolved_by_id = user_id
-            alert.resolution_notes = f"Auto-resolved via {option.strategy.value}: {option.title}"
+            alert.resolution_notes = (
+                f"Auto-resolved via {option.strategy.value}: {option.title}"
+            )
             self.db.commit()
 
             changes_applied.append("Conflict marked as resolved")
@@ -1377,29 +1518,46 @@ class ConflictAutoResolver:
         exclude_faculty_id: UUID,
     ) -> list[Person]:
         """Find faculty members available for a specific FMIT week."""
-        all_faculty = self.db.query(Person).filter(
-            Person.type == "faculty",
-            Person.id != exclude_faculty_id,
-        ).all()
+        all_faculty = (
+            self.db.query(Person)
+            .filter(
+                Person.type == "faculty",
+                Person.id != exclude_faculty_id,
+            )
+            .all()
+        )
 
         available = []
         week_end = fmit_week + timedelta(days=6)
 
         for faculty in all_faculty:
             # Check for conflicts
-            has_conflicts = self.db.query(ConflictAlert).filter(
-                ConflictAlert.faculty_id == faculty.id,
-                ConflictAlert.fmit_week == fmit_week,
-                ConflictAlert.status.in_([ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]),
-            ).count() > 0
+            has_conflicts = (
+                self.db.query(ConflictAlert)
+                .filter(
+                    ConflictAlert.faculty_id == faculty.id,
+                    ConflictAlert.fmit_week == fmit_week,
+                    ConflictAlert.status.in_(
+                        [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]
+                    ),
+                )
+                .count()
+                > 0
+            )
 
             if not has_conflicts:
                 # Check for existing assignments
-                has_assignment = self.db.query(Assignment).join(Block).filter(
-                    Assignment.person_id == faculty.id,
-                    Block.date >= fmit_week,
-                    Block.date <= week_end,
-                ).count() > 0
+                has_assignment = (
+                    self.db.query(Assignment)
+                    .join(Block)
+                    .filter(
+                        Assignment.person_id == faculty.id,
+                        Block.date >= fmit_week,
+                        Block.date <= week_end,
+                    )
+                    .count()
+                    > 0
+                )
 
                 if not has_assignment:
                     available.append(faculty)
@@ -1408,28 +1566,39 @@ class ConflictAutoResolver:
 
     def _find_junior_faculty_available(self, fmit_week: date) -> list[Person]:
         """Find junior faculty (residents PGY-2/3) available for assignment."""
-        junior = self.db.query(Person).filter(
-            Person.type == "resident",
-            Person.pgy_level.in_([2, 3]),
-        ).all()
+        junior = (
+            self.db.query(Person)
+            .filter(
+                Person.type == "resident",
+                Person.pgy_level.in_([2, 3]),
+            )
+            .all()
+        )
 
         available = []
         week_end = fmit_week + timedelta(days=6)
 
         for person in junior:
             # Check availability (simplified)
-            has_assignment = self.db.query(Assignment).join(Block).filter(
-                Assignment.person_id == person.id,
-                Block.date >= fmit_week,
-                Block.date <= week_end,
-            ).count()
+            has_assignment = (
+                self.db.query(Assignment)
+                .join(Block)
+                .filter(
+                    Assignment.person_id == person.id,
+                    Block.date >= fmit_week,
+                    Block.date <= week_end,
+                )
+                .count()
+            )
 
             if has_assignment == 0:
                 available.append(person)
 
         return available
 
-    def _is_acceptable_risk(self, option: ResolutionOption, max_risk_level: str) -> bool:
+    def _is_acceptable_risk(
+        self, option: ResolutionOption, max_risk_level: str
+    ) -> bool:
         """Check if an option's risk level is acceptable."""
         risk_levels = {"low": 1, "medium": 2, "high": 3}
         option_risk = risk_levels.get(option.risk_level, 2)

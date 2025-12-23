@@ -13,7 +13,7 @@ import json
 import logging
 import traceback
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class JSONFormatter(logging.Formatter):
@@ -47,7 +47,7 @@ class JSONFormatter(logging.Formatter):
         include_logger: bool = True,
         include_exception: bool = True,
         timestamp_format: str = "iso",
-        extra_fields: Optional[list[str]] = None,
+        extra_fields: list[str] | None = None,
     ):
         """
         Initialize JSON formatter.
@@ -104,7 +104,7 @@ class JSONFormatter(logging.Formatter):
         Returns:
             str: JSON-formatted log record
         """
-        log_data: Dict[str, Any] = {}
+        log_data: dict[str, Any] = {}
 
         # Timestamp
         if self.include_timestamp:
@@ -152,7 +152,7 @@ class JSONFormatter(logging.Formatter):
 
         return json.dumps(log_data, default=str, ensure_ascii=False)
 
-    def _extract_extra_fields(self, record: logging.LogRecord) -> Dict[str, Any]:
+    def _extract_extra_fields(self, record: logging.LogRecord) -> dict[str, Any]:
         """Extract custom fields from log record."""
         extra = {}
 
@@ -168,7 +168,7 @@ class JSONFormatter(logging.Formatter):
 
         return extra
 
-    def _format_traceback(self, exc_info) -> Optional[str]:
+    def _format_traceback(self, exc_info) -> str | None:
         """Format exception traceback."""
         if not exc_info or exc_info == (None, None, None):
             return None
@@ -191,7 +191,7 @@ class RequestResponseFormatter(JSONFormatter):
 
     def format(self, record: logging.LogRecord) -> str:
         """Format with HTTP-specific fields."""
-        log_data: Dict[str, Any] = {}
+        log_data: dict[str, Any] = {}
 
         # Timestamp
         if self.include_timestamp:
@@ -250,7 +250,14 @@ class RequestResponseFormatter(JSONFormatter):
         # Extra fields
         extra = self._extract_extra_fields(record)
         # Remove fields already included in http_data
-        for field in ["method", "path", "status_code", "duration_ms", "ip", "user_agent"]:
+        for field in [
+            "method",
+            "path",
+            "status_code",
+            "duration_ms",
+            "ip",
+            "user_agent",
+        ]:
             extra.pop(field, None)
         # Remove fields at top level
         for field in [

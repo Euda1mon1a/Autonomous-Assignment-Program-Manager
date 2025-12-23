@@ -1,4 +1,5 @@
 """Permission models and enums for role-based access control."""
+
 from enum import Enum
 from typing import Any
 
@@ -175,7 +176,6 @@ DEFAULT_ROLE_PERMISSIONS = {
         f"{ResourceType.RESILIENCE.value}:{PermissionAction.ACTIVATE_FALLBACK.value}",
         f"{ResourceType.TEMPLATE.value}:{PermissionAction.MANAGE_TEMPLATES.value}",
     },
-
     UserRole.COORDINATOR: {
         # Schedule and assignment management
         f"{ResourceType.SCHEDULE.value}:{PermissionAction.CREATE.value}",
@@ -199,7 +199,6 @@ DEFAULT_ROLE_PERMISSIONS = {
         f"{ResourceType.RESILIENCE.value}:{PermissionAction.VIEW_RESILIENCE.value}",
         f"{ResourceType.TEMPLATE.value}:{PermissionAction.READ.value}",
     },
-
     UserRole.FACULTY: {
         # View schedules, manage own assignments and swaps
         f"{ResourceType.SCHEDULE.value}:{PermissionAction.READ.value}",
@@ -213,7 +212,6 @@ DEFAULT_ROLE_PERMISSIONS = {
         f"{ResourceType.CERTIFICATION.value}:{PermissionAction.READ.value}",
         f"{ResourceType.NOTIFICATION.value}:{PermissionAction.READ.value}",
     },
-
     UserRole.RESIDENT: {
         # View own schedule and request changes
         f"{ResourceType.SCHEDULE.value}:{PermissionAction.READ.value}",
@@ -224,23 +222,19 @@ DEFAULT_ROLE_PERMISSIONS = {
         f"{ResourceType.ABSENCE.value}:{PermissionAction.REQUEST_LEAVE.value}",
         f"{ResourceType.NOTIFICATION.value}:{PermissionAction.READ.value}",
     },
-
     UserRole.CLINICAL_STAFF: {
         # Basic schedule viewing
         f"{ResourceType.SCHEDULE.value}:{PermissionAction.READ.value}",
         f"{ResourceType.ASSIGNMENT.value}:{PermissionAction.READ.value}",
         f"{ResourceType.NOTIFICATION.value}:{PermissionAction.READ.value}",
     },
-
     UserRole.RN: {
         # RN-specific permissions (inherits from CLINICAL_STAFF)
         f"{ResourceType.PROCEDURE.value}:{PermissionAction.READ.value}",
     },
-
     UserRole.LPN: {
         # LPN-specific permissions (inherits from CLINICAL_STAFF)
     },
-
     UserRole.MSA: {
         # MSA-specific permissions (inherits from CLINICAL_STAFF)
     },

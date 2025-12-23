@@ -111,12 +111,13 @@ class Conflict(BaseModel):
     # Severity scoring (0.0 - 1.0)
     impact_score: float = Field(ge=0.0, le=1.0, description="Overall impact score")
     urgency_score: float = Field(ge=0.0, le=1.0, description="How urgent to resolve")
-    complexity_score: float = Field(ge=0.0, le=1.0, description="Complexity of resolution")
+    complexity_score: float = Field(
+        ge=0.0, le=1.0, description="Complexity of resolution"
+    )
 
     # Context
     context: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Additional context specific to conflict type"
+        default_factory=dict, description="Additional context specific to conflict type"
     )
 
     # Resolution metadata
@@ -126,6 +127,7 @@ class Conflict(BaseModel):
 
     class Config:
         """Pydantic model configuration."""
+
         json_schema_extra = {
             "example": {
                 "conflict_id": "conf_123",
@@ -161,6 +163,7 @@ class TimeOverlapConflict(Conflict):
 
     class Config:
         """Pydantic model configuration."""
+
         json_schema_extra = {
             "example": {
                 "conflict_id": "conf_overlap_123",
@@ -188,13 +191,16 @@ class ResourceContentionConflict(Conflict):
     category: ConflictCategory = ConflictCategory.RESOURCE_CONTENTION
 
     # Resource information
-    resource_type: str = Field(description="Type of resource (faculty, space, equipment)")
+    resource_type: str = Field(
+        description="Type of resource (faculty, space, equipment)"
+    )
     required_count: int = Field(description="Number required")
     available_count: int = Field(description="Number available")
     deficit: int = Field(description="Shortfall amount")
 
     class Config:
         """Pydantic model configuration."""
+
         json_schema_extra = {
             "example": {
                 "conflict_id": "conf_resource_123",
@@ -242,6 +248,7 @@ class ACGMEViolationConflict(Conflict):
 
     class Config:
         """Pydantic model configuration."""
+
         json_schema_extra = {
             "example": {
                 "conflict_id": "conf_acgme_123",
@@ -284,6 +291,7 @@ class SupervisionConflict(Conflict):
 
     class Config:
         """Pydantic model configuration."""
+
         json_schema_extra = {
             "example": {
                 "conflict_id": "conf_supervision_123",
@@ -338,6 +346,7 @@ class ConflictSummary(BaseModel):
 
     class Config:
         """Pydantic model configuration."""
+
         json_schema_extra = {
             "example": {
                 "total_conflicts": 15,
@@ -367,7 +376,7 @@ class ConflictTimeline(BaseModel):
     # Timeline data points
     timeline_entries: list[dict[str, Any]] = Field(
         default_factory=list,
-        description="List of {date, conflicts[], severity_score} entries"
+        description="List of {date, conflicts[], severity_score} entries",
     )
 
     # Severity heatmap (date -> severity score 0-1)
@@ -381,12 +390,12 @@ class ConflictTimeline(BaseModel):
 
     # Category distribution over time
     category_timeline: list[dict[str, Any]] = Field(
-        default_factory=list,
-        description="Category distribution per week/day"
+        default_factory=list, description="Category distribution per week/day"
     )
 
     class Config:
         """Pydantic model configuration."""
+
         json_schema_extra = {
             "example": {
                 "start_date": "2024-01-01",

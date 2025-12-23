@@ -7,7 +7,7 @@ Provides tools for creating flame graphs, performance reports, and summaries.
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.profiling.analyzers import Bottleneck, PerformanceInsight
 from app.profiling.collectors import RequestMetrics, SQLQuery, Trace
@@ -20,16 +20,16 @@ class ProfileReport:
 
     report_id: str
     created_at: datetime
-    profile_results: List[ProfileResult]
-    sql_queries: List[SQLQuery]
-    requests: List[RequestMetrics]
-    traces: List[Trace]
-    bottlenecks: List[Bottleneck]
-    insights: List[PerformanceInsight]
-    summary: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    profile_results: list[ProfileResult]
+    sql_queries: list[SQLQuery]
+    requests: list[RequestMetrics]
+    traces: list[Trace]
+    bottlenecks: list[Bottleneck]
+    insights: list[PerformanceInsight]
+    summary: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "report_id": self.report_id,
@@ -61,13 +61,13 @@ class PerformanceReporter:
 
     def generate_report(
         self,
-        profile_results: Optional[List[ProfileResult]] = None,
-        sql_queries: Optional[List[SQLQuery]] = None,
-        requests: Optional[List[RequestMetrics]] = None,
-        traces: Optional[List[Trace]] = None,
-        bottlenecks: Optional[List[Bottleneck]] = None,
-        insights: Optional[List[PerformanceInsight]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        profile_results: list[ProfileResult] | None = None,
+        sql_queries: list[SQLQuery] | None = None,
+        requests: list[RequestMetrics] | None = None,
+        traces: list[Trace] | None = None,
+        bottlenecks: list[Bottleneck] | None = None,
+        insights: list[PerformanceInsight] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> ProfileReport:
         """
         Generate a comprehensive performance report.
@@ -112,11 +112,11 @@ class PerformanceReporter:
 
     def _build_summary(
         self,
-        profile_results: List[ProfileResult],
-        sql_queries: List[SQLQuery],
-        requests: List[RequestMetrics],
-        traces: List[Trace],
-    ) -> Dict[str, Any]:
+        profile_results: list[ProfileResult],
+        sql_queries: list[SQLQuery],
+        requests: list[RequestMetrics],
+        traces: list[Trace],
+    ) -> dict[str, Any]:
         """
         Build summary statistics from profiling data.
 
@@ -289,7 +289,7 @@ class PerformanceReporter:
     <div class="header">
         <h1>Performance Report</h1>
         <p>Report ID: {report.report_id}</p>
-        <p>Generated: {report.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
+        <p>Generated: {report.created_at.strftime("%Y-%m-%d %H:%M:%S UTC")}</p>
     </div>
 
     <div class="section">
@@ -306,7 +306,7 @@ class PerformanceReporter:
 """
         return html
 
-    def _render_summary_html(self, summary: Dict[str, Any]) -> str:
+    def _render_summary_html(self, summary: dict[str, Any]) -> str:
         """Render summary section as HTML."""
         html = ""
         for category, metrics in summary.items():
@@ -325,7 +325,7 @@ class PerformanceReporter:
                 """
         return html
 
-    def _render_bottlenecks_html(self, bottlenecks: List[Bottleneck]) -> str:
+    def _render_bottlenecks_html(self, bottlenecks: list[Bottleneck]) -> str:
         """Render bottlenecks section as HTML."""
         if not bottlenecks:
             return ""
@@ -347,7 +347,7 @@ class PerformanceReporter:
         html += "</div>"
         return html
 
-    def _render_insights_html(self, insights: List[PerformanceInsight]) -> str:
+    def _render_insights_html(self, insights: list[PerformanceInsight]) -> str:
         """Render insights section as HTML."""
         if not insights:
             return ""
@@ -378,7 +378,7 @@ class FlameGraphGenerator:
         """Initialize flame graph generator."""
         pass
 
-    def generate_from_profile(self, result: ProfileResult) -> Dict[str, Any]:
+    def generate_from_profile(self, result: ProfileResult) -> dict[str, Any]:
         """
         Generate flame graph data from profile result.
 
@@ -402,7 +402,7 @@ class FlameGraphGenerator:
         # This is a simplified version
         return flame_data
 
-    def generate_from_traces(self, traces: List[Trace]) -> Dict[str, Any]:
+    def generate_from_traces(self, traces: list[Trace]) -> dict[str, Any]:
         """
         Generate flame graph data from distributed traces.
 
@@ -433,7 +433,7 @@ class FlameGraphGenerator:
 
         root = root_spans[0]
 
-        def build_tree(span: Trace) -> Dict[str, Any]:
+        def build_tree(span: Trace) -> dict[str, Any]:
             """Build tree recursively."""
             children = [s for s in spans if s.parent_span_id == span.span_id]
 
@@ -445,7 +445,7 @@ class FlameGraphGenerator:
 
         return build_tree(root)
 
-    def export_to_speedscope(self, result: ProfileResult) -> Dict[str, Any]:
+    def export_to_speedscope(self, result: ProfileResult) -> dict[str, Any]:
         """
         Export profiling data in Speedscope format.
 
@@ -474,9 +474,7 @@ class FlameGraphGenerator:
 
         return speedscope_data
 
-    def export_to_d3_hierarchy(
-        self, flame_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def export_to_d3_hierarchy(self, flame_data: dict[str, Any]) -> dict[str, Any]:
         """
         Export flame graph data in D3 hierarchy format.
 

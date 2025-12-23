@@ -5,9 +5,9 @@ Implements multiple load balancing strategies:
 - Health-aware: Skips unhealthy replicas
 - Least-connections: Routes to least busy replica (future)
 """
+
 import logging
 import threading
-from typing import Optional
 
 from sqlalchemy.engine import Engine
 
@@ -29,8 +29,8 @@ class LoadBalancer:
     def __init__(
         self,
         replicas: dict[str, Engine],
-        health_checker: Optional[HealthChecker] = None,
-        enable_health_checks: bool = True
+        health_checker: HealthChecker | None = None,
+        enable_health_checks: bool = True,
     ):
         """Initialize load balancer.
 
@@ -55,7 +55,9 @@ class LoadBalancer:
             f"{', '.join(self._replica_names)}"
         )
 
-    def select_replica(self, session_id: Optional[str] = None) -> Optional[tuple[str, Engine]]:
+    def select_replica(
+        self, session_id: str | None = None
+    ) -> tuple[str, Engine] | None:
         """Select a healthy replica using round-robin.
 
         Args:
@@ -78,10 +80,7 @@ class LoadBalancer:
             # Check health if enabled
             if self.enable_health_checks:
                 if self.health_checker.is_replica_healthy(
-                    engine,
-                    replica_name,
-                    use_cache=True,
-                    cache_max_age=10.0
+                    engine, replica_name, use_cache=True, cache_max_age=10.0
                 ):
                     logger.debug(f"Selected replica: {replica_name}")
                     return replica_name, engine
@@ -172,10 +171,7 @@ class LoadBalancer:
 
         for name, engine in self.replicas.items():
             if self.health_checker.is_replica_healthy(
-                engine,
-                name,
-                use_cache=True,
-                cache_max_age=30.0
+                engine, name, use_cache=True, cache_max_age=30.0
             ):
                 healthy_count += 1
 
@@ -195,7 +191,9 @@ class LoadBalancer:
             stats[name] = {
                 "is_healthy": health.is_healthy if health else None,
                 "lag_seconds": health.lag_seconds if health else None,
-                "last_check": health.last_check.isoformat() if health and health.last_check else None,
+                "last_check": health.last_check.isoformat()
+                if health and health.last_check
+                else None,
                 "consecutive_failures": health.consecutive_failures if health else 0,
                 "pool_size": engine.pool.size(),
                 "checked_in_connections": engine.pool.checkedin(),
@@ -214,9 +212,9 @@ class StickySessionBalancer(LoadBalancer):
     def __init__(
         self,
         replicas: dict[str, Engine],
-        health_checker: Optional[HealthChecker] = None,
+        health_checker: HealthChecker | None = None,
         enable_health_checks: bool = True,
-        session_timeout_seconds: int = 300
+        session_timeout_seconds: int = 300,
     ):
         """Initialize sticky session balancer.
 
@@ -231,7 +229,9 @@ class StickySessionBalancer(LoadBalancer):
         self._session_lock = threading.Lock()
         self.session_timeout_seconds = session_timeout_seconds
 
-    def select_replica(self, session_id: Optional[str] = None) -> Optional[tuple[str, Engine]]:
+    def select_replica(
+        self, session_id: str | None = None
+    ) -> tuple[str, Engine] | None:
         """Select replica with session affinity.
 
         If session_id is provided, returns the same replica for that session
@@ -256,11 +256,11 @@ class StickySessionBalancer(LoadBalancer):
             if assigned_replica in self.replicas:
                 engine = self.replicas[assigned_replica]
 
-                if not self.enable_health_checks or self.health_checker.is_replica_healthy(
-                    engine,
-                    assigned_replica,
-                    use_cache=True,
-                    cache_max_age=10.0
+                if (
+                    not self.enable_health_checks
+                    or self.health_checker.is_replica_healthy(
+                        engine, assigned_replica, use_cache=True, cache_max_age=10.0
+                    )
                 ):
                     logger.debug(
                         f"Using sticky session assignment: "

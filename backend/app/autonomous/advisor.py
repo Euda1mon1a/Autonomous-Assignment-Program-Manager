@@ -13,14 +13,14 @@ The Python loop must be able to:
     - Continue without them
 """
 
+import json
+import re
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
-import json
-import re
 
 from app.autonomous.evaluator import EvaluationResult
-from app.autonomous.state import RunState, GeneratorParams, IterationRecord
+from app.autonomous.state import GeneratorParams, IterationRecord, RunState
 
 
 class SuggestionType(str, Enum):
@@ -110,9 +110,7 @@ class SuggestionSchema:
         if "timeout_seconds" in params:
             timeout = params["timeout_seconds"]
             if not cls.TIMEOUT_RANGE[0] <= timeout <= cls.TIMEOUT_RANGE[1]:
-                errors.append(
-                    f"Timeout {timeout} out of range {cls.TIMEOUT_RANGE}"
-                )
+                errors.append(f"Timeout {timeout} out of range {cls.TIMEOUT_RANGE}")
 
         # Validate diversification
         if "diversification_factor" in params:
@@ -216,6 +214,7 @@ class LLMAdvisor:
         except Exception as e:
             # Log but don't crash - the loop can continue without LLM
             import logging
+
             logging.getLogger(__name__).warning(f"LLM advisor error: {e}")
             return None
 
@@ -292,14 +291,16 @@ class LLMAdvisor:
         ]
 
         if last_evaluation:
-            prompt_parts.extend([
-                "",
-                "LAST EVALUATION:",
-                f"- Score: {last_evaluation.score:.4f}",
-                f"- Valid: {last_evaluation.valid}",
-                f"- Critical violations: {last_evaluation.critical_violations}",
-                f"- Total violations: {last_evaluation.total_violations}",
-            ])
+            prompt_parts.extend(
+                [
+                    "",
+                    "LAST EVALUATION:",
+                    f"- Score: {last_evaluation.score:.4f}",
+                    f"- Valid: {last_evaluation.valid}",
+                    f"- Critical violations: {last_evaluation.critical_violations}",
+                    f"- Total violations: {last_evaluation.total_violations}",
+                ]
+            )
 
             if last_evaluation.violations:
                 prompt_parts.append("- Violation types:")
@@ -307,33 +308,37 @@ class LLMAdvisor:
                     prompt_parts.append(f"  - {v.type}: {v.message}")
 
         if history:
-            prompt_parts.extend([
-                "",
-                "RECENT HISTORY (last 5 iterations):",
-            ])
+            prompt_parts.extend(
+                [
+                    "",
+                    "RECENT HISTORY (last 5 iterations):",
+                ]
+            )
             for record in history[-5:]:
                 prompt_parts.append(
                     f"- Iter {record.iteration}: score={record.score:.4f}, "
                     f"valid={record.valid}, algorithm={record.params.algorithm}"
                 )
 
-        prompt_parts.extend([
-            "",
-            "Based on this data, suggest ONE improvement. Respond in JSON format:",
-            '{',
-            '  "type": "parameter_change" | "algorithm_switch" | "constraint_weight" | "failure_analysis",',
-            '  "confidence": 0.0-1.0,',
-            '  "reasoning": "explanation of why this change should help",',
-            '  "params": {',
-            '    "algorithm": "greedy" | "cp_sat" | "pulp" | "hybrid",',
-            '    "timeout_seconds": 10-600,',
-            '    "diversification_factor": 0.0-1.0,',
-            '    "constraint_weights": {"constraint_name": 0.0-2.0}',
-            '  }',
-            '}',
-            "",
-            "Only include params fields you want to change. Keep suggestions conservative.",
-        ])
+        prompt_parts.extend(
+            [
+                "",
+                "Based on this data, suggest ONE improvement. Respond in JSON format:",
+                "{",
+                '  "type": "parameter_change" | "algorithm_switch" | "constraint_weight" | "failure_analysis",',
+                '  "confidence": 0.0-1.0,',
+                '  "reasoning": "explanation of why this change should help",',
+                '  "params": {',
+                '    "algorithm": "greedy" | "cp_sat" | "pulp" | "hybrid",',
+                '    "timeout_seconds": 10-600,',
+                '    "diversification_factor": 0.0-1.0,',
+                '    "constraint_weights": {"constraint_name": 0.0-2.0}',
+                "  }",
+                "}",
+                "",
+                "Only include params fields you want to change. Keep suggestions conservative.",
+            ]
+        )
 
         return "\n".join(prompt_parts)
 
@@ -355,20 +360,24 @@ class LLMAdvisor:
             )
 
         if evaluation.violations:
-            prompt_parts.extend([
-                "",
-                "Violations:",
-            ])
+            prompt_parts.extend(
+                [
+                    "",
+                    "Violations:",
+                ]
+            )
             for v in evaluation.violations:
                 prompt_parts.append(f"- {v.severity.value.upper()}: {v.message}")
 
-        prompt_parts.extend([
-            "",
-            "Provide a 2-3 sentence summary explaining:",
-            "1. The overall quality of this schedule",
-            "2. The most important issue to address (if any)",
-            "3. One specific actionable recommendation",
-        ])
+        prompt_parts.extend(
+            [
+                "",
+                "Provide a 2-3 sentence summary explaining:",
+                "1. The overall quality of this schedule",
+                "2. The most important issue to address (if any)",
+                "3. One specific actionable recommendation",
+            ]
+        )
 
         return "\n".join(prompt_parts)
 
@@ -389,7 +398,7 @@ class LLMAdvisor:
     def _parse_response(self, response: str) -> Suggestion:
         """Parse LLM response into a Suggestion."""
         # Extract JSON from response
-        json_match = re.search(r'\{[^{}]*\}', response, re.DOTALL)
+        json_match = re.search(r"\{[^{}]*\}", response, re.DOTALL)
         if not json_match:
             raise ValueError("No JSON found in response")
 
@@ -404,7 +413,9 @@ class LLMAdvisor:
             params = GeneratorParams(
                 algorithm=data["params"].get("algorithm", "greedy"),
                 timeout_seconds=data["params"].get("timeout_seconds", 60.0),
-                diversification_factor=data["params"].get("diversification_factor", 0.0),
+                diversification_factor=data["params"].get(
+                    "diversification_factor", 0.0
+                ),
                 constraint_weights=data["params"].get("constraint_weights", {}),
             )
 

@@ -19,8 +19,9 @@ Usage:
     stressed = analyzer.identify_stressed_regions()
     recommendations = analyzer.recommend_constraint_changes()
 """
-from collections import defaultdict, deque
-from typing import Any, Optional
+
+from collections import deque
+from typing import Any
 
 import networkx as nx
 
@@ -43,15 +44,15 @@ class ConstraintRigidityAnalyzer:
 
     def __init__(self) -> None:
         """Initialize the rigidity analyzer."""
-        self.graph: Optional[nx.Graph] = None
+        self.graph: nx.Graph | None = None
         self.pebbles: dict[str, list[str]] = {}  # node -> list of pebble ids
-        self.edge_status: dict[tuple[str, str], str] = {}  # edge -> "independent" or "redundant"
-        self.parent_map: dict[str, Optional[str]] = {}  # for pebble search
+        self.edge_status: dict[
+            tuple[str, str], str
+        ] = {}  # edge -> "independent" or "redundant"
+        self.parent_map: dict[str, str | None] = {}  # for pebble search
 
     def build_constraint_graph(
-        self,
-        tasks: list[dict[str, Any]],
-        constraints: list[dict[str, Any]]
+        self, tasks: list[dict[str, Any]], constraints: list[dict[str, Any]]
     ) -> nx.Graph:
         """
         Build a constraint graph from tasks and constraints.
@@ -76,13 +77,13 @@ class ConstraintRigidityAnalyzer:
 
         # Add nodes for each task
         for task in tasks:
-            task_id = task['id']
-            graph.add_node(task_id, **{k: v for k, v in task.items() if k != 'id'})
+            task_id = task["id"]
+            graph.add_node(task_id, **{k: v for k, v in task.items() if k != "id"})
 
         # Add edges for each constraint
         for i, constraint in enumerate(constraints):
-            constraint_tasks = constraint.get('tasks', [])
-            constraint_type = constraint.get('type', 'unknown')
+            constraint_tasks = constraint.get("tasks", [])
+            constraint_type = constraint.get("type", "unknown")
 
             # Most constraints are binary (between two tasks)
             if len(constraint_tasks) >= 2:
@@ -98,7 +99,7 @@ class ConstraintRigidityAnalyzer:
                                 task_a,
                                 task_b,
                                 constraint_id=i,
-                                constraint_type=constraint_type
+                                constraint_type=constraint_type,
                             )
 
         self.graph = graph
@@ -163,13 +164,13 @@ class ConstraintRigidityAnalyzer:
         total_pebbles = sum(len(pebbles) for pebbles in self.pebbles.values())
 
         return {
-            'total_nodes': self.graph.number_of_nodes(),
-            'total_edges': self.graph.number_of_edges(),
-            'independent_edges': independent_count,
-            'redundant_edges': redundant_count,
-            'degrees_of_freedom': total_pebbles,
-            'is_rigid': total_pebbles == 0,
-            'is_stressed': redundant_count > 0,
+            "total_nodes": self.graph.number_of_nodes(),
+            "total_edges": self.graph.number_of_edges(),
+            "independent_edges": independent_count,
+            "redundant_edges": redundant_count,
+            "degrees_of_freedom": total_pebbles,
+            "is_rigid": total_pebbles == 0,
+            "is_stressed": redundant_count > 0,
         }
 
     def _would_violate_sparsity(self, u: str, v: str) -> bool:
@@ -203,15 +204,21 @@ class ConstraintRigidityAnalyzer:
             # Explore neighbors through independent edges
             for neighbor in self.graph.neighbors(node):
                 edge_key = (min(node, neighbor), max(node, neighbor))
-                if edge_key in self.edge_status and self.edge_status[edge_key] == "independent":
+                if (
+                    edge_key in self.edge_status
+                    and self.edge_status[edge_key] == "independent"
+                ):
                     if neighbor not in connected_nodes:
                         to_explore.add(neighbor)
 
         # Count independent edges in this subgraph
         num_nodes = len(connected_nodes)
         num_edges = sum(
-            1 for edge_key, status in self.edge_status.items()
-            if status == "independent" and edge_key[0] in connected_nodes and edge_key[1] in connected_nodes
+            1
+            for edge_key, status in self.edge_status.items()
+            if status == "independent"
+            and edge_key[0] in connected_nodes
+            and edge_key[1] in connected_nodes
         )
 
         # Check if adding one more edge would violate sparsity
@@ -308,7 +315,10 @@ class ConstraintRigidityAnalyzer:
                     edge_key = (min(node, neighbor), max(node, neighbor))
 
                     # Can only traverse edges that are already covered (independent)
-                    if edge_key in self.edge_status and self.edge_status[edge_key] == "independent":
+                    if (
+                        edge_key in self.edge_status
+                        and self.edge_status[edge_key] == "independent"
+                    ):
                         visited.add(neighbor)
                         queue.append(neighbor)
 
@@ -375,7 +385,8 @@ class ConstraintRigidityAnalyzer:
 
             # Count independent edges in this component
             independent_edges = sum(
-                1 for edge in subgraph.edges()
+                1
+                for edge in subgraph.edges()
                 if self.edge_status.get((min(edge), max(edge)), "") == "independent"
             )
 
@@ -408,20 +419,24 @@ class ConstraintRigidityAnalyzer:
 
             # Count pebbles remaining in this component
             pebbles_in_component = sum(
-                len(self.pebbles.get(node, []))
-                for node in component
+                len(self.pebbles.get(node, [])) for node in component
             )
 
             # Count independent edges
             independent_edges = sum(
-                1 for edge in subgraph.edges()
+                1
+                for edge in subgraph.edges()
                 if self.edge_status.get((min(edge), max(edge)), "") == "independent"
             )
 
             # Flexible if has degrees of freedom remaining
             expected_for_rigid = 2 * num_nodes - 3
 
-            if num_nodes >= 2 and independent_edges < expected_for_rigid and pebbles_in_component > 0:
+            if (
+                num_nodes >= 2
+                and independent_edges < expected_for_rigid
+                and pebbles_in_component > 0
+            ):
                 flexible_regions.append(component)
 
         return flexible_regions
@@ -497,16 +512,18 @@ class ConstraintRigidityAnalyzer:
             for u, v in subgraph.edges():
                 edge_key = (min(u, v), max(u, v))
                 if self.edge_status.get(edge_key) == "redundant":
-                    constraint_type = self.graph[u][v].get('constraint_type', 'unknown')
+                    constraint_type = self.graph[u][v].get("constraint_type", "unknown")
 
-                    recommendations.append({
-                        'action': 'remove',
-                        'reason': f'Redundant constraint causing over-constraint in region',
-                        'region': region,
-                        'edge': (u, v),
-                        'constraint_type': constraint_type,
-                        'severity': 'high',
-                    })
+                    recommendations.append(
+                        {
+                            "action": "remove",
+                            "reason": "Redundant constraint causing over-constraint in region",
+                            "region": region,
+                            "edge": (u, v),
+                            "constraint_type": constraint_type,
+                            "severity": "high",
+                        }
+                    )
 
         # Analyze flexible regions (under-constrained)
         flexible_regions = self.identify_flexible_regions()
@@ -516,7 +533,8 @@ class ConstraintRigidityAnalyzer:
 
             # Count current independent edges
             independent_edges = sum(
-                1 for edge in subgraph.edges()
+                1
+                for edge in subgraph.edges()
                 if self.edge_status.get((min(edge), max(edge)), "") == "independent"
             )
 
@@ -525,13 +543,15 @@ class ConstraintRigidityAnalyzer:
             deficit = expected_for_rigid - independent_edges
 
             if deficit > 0:
-                recommendations.append({
-                    'action': 'add',
-                    'reason': f'Region is under-constrained by {deficit} constraint(s)',
-                    'region': region,
-                    'missing_constraints': deficit,
-                    'severity': 'medium' if deficit <= 2 else 'low',
-                })
+                recommendations.append(
+                    {
+                        "action": "add",
+                        "reason": f"Region is under-constrained by {deficit} constraint(s)",
+                        "region": region,
+                        "missing_constraints": deficit,
+                        "severity": "medium" if deficit <= 2 else "low",
+                    }
+                )
 
         return recommendations
 
@@ -544,7 +564,7 @@ class ConstraintRigidityAnalyzer:
         """
         if not self.graph:
             return {
-                'error': 'No graph has been analyzed. Run build_constraint_graph first.'
+                "error": "No graph has been analyzed. Run build_constraint_graph first."
             }
 
         rigid_regions = self.identify_rigid_regions()
@@ -553,18 +573,22 @@ class ConstraintRigidityAnalyzer:
         recommendations = self.recommend_constraint_changes()
 
         return {
-            'total_nodes': self.graph.number_of_nodes(),
-            'total_edges': self.graph.number_of_edges(),
-            'degrees_of_freedom': self.get_degrees_of_freedom(),
-            'num_rigid_regions': len(rigid_regions),
-            'num_flexible_regions': len(flexible_regions),
-            'num_stressed_regions': len(stressed_regions),
-            'rigid_regions': [list(region) for region in rigid_regions],
-            'flexible_regions': [list(region) for region in flexible_regions],
-            'stressed_regions': [list(region) for region in stressed_regions],
-            'recommendations': recommendations,
-            'edge_breakdown': {
-                'independent': sum(1 for status in self.edge_status.values() if status == "independent"),
-                'redundant': sum(1 for status in self.edge_status.values() if status == "redundant"),
+            "total_nodes": self.graph.number_of_nodes(),
+            "total_edges": self.graph.number_of_edges(),
+            "degrees_of_freedom": self.get_degrees_of_freedom(),
+            "num_rigid_regions": len(rigid_regions),
+            "num_flexible_regions": len(flexible_regions),
+            "num_stressed_regions": len(stressed_regions),
+            "rigid_regions": [list(region) for region in rigid_regions],
+            "flexible_regions": [list(region) for region in flexible_regions],
+            "stressed_regions": [list(region) for region in stressed_regions],
+            "recommendations": recommendations,
+            "edge_breakdown": {
+                "independent": sum(
+                    1 for status in self.edge_status.values() if status == "independent"
+                ),
+                "redundant": sum(
+                    1 for status in self.edge_status.values() if status == "redundant"
+                ),
             },
         }

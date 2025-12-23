@@ -1,4 +1,5 @@
 """Models for conflict alert tracking."""
+
 from datetime import datetime
 from enum import Enum
 from uuid import uuid4
@@ -13,6 +14,7 @@ from app.db.base import Base
 
 class ConflictAlertStatus(str, Enum):
     """Status of a conflict alert."""
+
     NEW = "new"
     ACKNOWLEDGED = "acknowledged"
     RESOLVED = "resolved"
@@ -21,6 +23,7 @@ class ConflictAlertStatus(str, Enum):
 
 class ConflictSeverity(str, Enum):
     """Severity level of a conflict."""
+
     CRITICAL = "critical"
     WARNING = "warning"
     INFO = "info"
@@ -28,6 +31,7 @@ class ConflictSeverity(str, Enum):
 
 class ConflictType(str, Enum):
     """Type of schedule conflict."""
+
     LEAVE_FMIT_OVERLAP = "leave_fmit_overlap"
     BACK_TO_BACK = "back_to_back"
     EXCESSIVE_ALTERNATING = "excessive_alternating"
@@ -42,6 +46,7 @@ class ConflictAlert(Base):
     Created when the conflict auto-detector finds issues
     between leave records and FMIT assignments.
     """
+
     __tablename__ = "conflict_alerts"
 
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -51,17 +56,23 @@ class ConflictAlert(Base):
 
     # What type of conflict
     conflict_type = Column(SQLEnum(ConflictType), nullable=False)
-    severity = Column(SQLEnum(ConflictSeverity), default=ConflictSeverity.WARNING, nullable=False)
+    severity = Column(
+        SQLEnum(ConflictSeverity), default=ConflictSeverity.WARNING, nullable=False
+    )
 
     # When is the conflict
     fmit_week = Column(Date, nullable=False)
 
     # Related records
     leave_id = Column(PGUUID(as_uuid=True), ForeignKey("absences.id"), nullable=True)
-    swap_id = Column(PGUUID(as_uuid=True), nullable=True)  # FK added when swap model wired
+    swap_id = Column(
+        PGUUID(as_uuid=True), nullable=True
+    )  # FK added when swap model wired
 
     # Status tracking
-    status = Column(SQLEnum(ConflictAlertStatus), default=ConflictAlertStatus.NEW, nullable=False)
+    status = Column(
+        SQLEnum(ConflictAlertStatus), default=ConflictAlertStatus.NEW, nullable=False
+    )
 
     # Description and notes
     description = Column(Text, nullable=False)
@@ -70,7 +81,9 @@ class ConflictAlert(Base):
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     acknowledged_at = Column(DateTime, nullable=True)
-    acknowledged_by_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    acknowledged_by_id = Column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
     resolved_at = Column(DateTime, nullable=True)
     resolved_by_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 

@@ -12,6 +12,7 @@ Pool settings are configurable via environment variables:
 - DB_POOL_RECYCLE: Connection lifetime (default: 1800s)
 - DB_POOL_PRE_PING: Verify connections (default: True)
 """
+
 from collections.abc import Generator
 from contextlib import asynccontextmanager, contextmanager
 

@@ -20,7 +20,6 @@ from app.models.export_job import (
     ExportTemplate,
 )
 
-
 # ============================================================================
 # Base Schemas
 # ============================================================================
@@ -28,39 +27,40 @@ from app.models.export_job import (
 
 class ExportJobBase(BaseModel):
     """Base schema for export job."""
+
     name: str = Field(..., min_length=1, max_length=255, description="Job name")
     description: str | None = Field(None, description="Job description")
     template: ExportTemplate = Field(..., description="Export template")
     format: ExportFormat = Field(default=ExportFormat.CSV, description="Export format")
     delivery_method: ExportDeliveryMethod = Field(
-        default=ExportDeliveryMethod.EMAIL,
-        description="Delivery method"
+        default=ExportDeliveryMethod.EMAIL, description="Delivery method"
     )
 
 
 class ExportJobCreate(ExportJobBase):
     """Schema for creating an export job."""
+
     # Email delivery settings
     email_recipients: list[str] | None = Field(None, description="Email recipients")
     email_subject_template: str | None = Field(
-        None,
-        max_length=500,
-        description="Email subject template"
+        None, max_length=500, description="Email subject template"
     )
     email_body_template: str | None = Field(None, description="Email body template")
 
     # S3 delivery settings
     s3_bucket: str | None = Field(None, max_length=255, description="S3 bucket name")
     s3_key_prefix: str | None = Field(None, max_length=500, description="S3 key prefix")
-    s3_region: str | None = Field(default="us-east-1", max_length=50, description="S3 region")
+    s3_region: str | None = Field(
+        default="us-east-1", max_length=50, description="S3 region"
+    )
 
     # Scheduling
     schedule_cron: str | None = Field(
-        None,
-        max_length=100,
-        description="Cron expression (e.g., '0 8 * * 1')"
+        None, max_length=100, description="Cron expression (e.g., '0 8 * * 1')"
     )
-    schedule_enabled: bool = Field(default=False, description="Enable scheduled execution")
+    schedule_enabled: bool = Field(
+        default=False, description="Enable scheduled execution"
+    )
 
     # Export configuration
     filters: dict[str, Any] | None = Field(default=None, description="Export filters")
@@ -76,7 +76,10 @@ class ExportJobCreate(ExportJobBase):
         """Validate email addresses."""
         if v is not None:
             import re
-            email_regex = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+
+            email_regex = re.compile(
+                r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+            )
             for email in v:
                 if not email_regex.match(email):
                     raise ValueError(f"Invalid email address: {email}")
@@ -98,6 +101,7 @@ class ExportJobCreate(ExportJobBase):
 
 class ExportJobUpdate(BaseModel):
     """Schema for updating an export job."""
+
     name: str | None = Field(None, min_length=1, max_length=255)
     description: str | None = None
     template: ExportTemplate | None = None
@@ -122,7 +126,10 @@ class ExportJobUpdate(BaseModel):
         """Validate email addresses."""
         if v is not None:
             import re
-            email_regex = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+
+            email_regex = re.compile(
+                r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+            )
             for email in v:
                 if not email_regex.match(email):
                     raise ValueError(f"Invalid email address: {email}")
@@ -131,6 +138,7 @@ class ExportJobUpdate(BaseModel):
 
 class ExportJobResponse(ExportJobBase):
     """Schema for export job response."""
+
     id: str
     email_recipients: list[str] | None = None
     email_subject_template: str | None = None
@@ -157,6 +165,7 @@ class ExportJobResponse(ExportJobBase):
 
 class ExportJobListResponse(BaseModel):
     """Schema for paginated export job list."""
+
     jobs: list[ExportJobResponse]
     total: int
     page: int
@@ -171,6 +180,7 @@ class ExportJobListResponse(BaseModel):
 
 class ExportJobExecutionCreate(BaseModel):
     """Schema for creating an export job execution."""
+
     job_id: str
     triggered_by: str = "manual"
     execution_metadata: dict[str, Any] | None = None
@@ -178,6 +188,7 @@ class ExportJobExecutionCreate(BaseModel):
 
 class ExportJobExecutionResponse(BaseModel):
     """Schema for export job execution response."""
+
     id: str
     job_id: str
     job_name: str
@@ -202,6 +213,7 @@ class ExportJobExecutionResponse(BaseModel):
 
 class ExportJobExecutionListResponse(BaseModel):
     """Schema for paginated export job execution list."""
+
     executions: list[ExportJobExecutionResponse]
     total: int
     page: int
@@ -216,6 +228,7 @@ class ExportJobExecutionListResponse(BaseModel):
 
 class ExportTemplateInfo(BaseModel):
     """Information about an export template."""
+
     template: ExportTemplate
     name: str
     description: str
@@ -226,6 +239,7 @@ class ExportTemplateInfo(BaseModel):
 
 class ExportTemplateListResponse(BaseModel):
     """Schema for list of available export templates."""
+
     templates: list[ExportTemplateInfo]
 
 
@@ -236,19 +250,19 @@ class ExportTemplateListResponse(BaseModel):
 
 class ExportJobRunRequest(BaseModel):
     """Request to run an export job immediately."""
+
     job_id: str
     override_filters: dict[str, Any] | None = Field(
-        None,
-        description="Temporary filter overrides for this execution"
+        None, description="Temporary filter overrides for this execution"
     )
     override_recipients: list[str] | None = Field(
-        None,
-        description="Temporary recipient overrides for this execution"
+        None, description="Temporary recipient overrides for this execution"
     )
 
 
 class ExportJobRunResponse(BaseModel):
     """Response for export job run request."""
+
     execution_id: str
     job_id: str
     job_name: str
@@ -258,6 +272,7 @@ class ExportJobRunResponse(BaseModel):
 
 class ExportJobStatsResponse(BaseModel):
     """Statistics for export jobs."""
+
     total_jobs: int = Field(alias="totalJobs")
     active_jobs: int = Field(alias="activeJobs")
     scheduled_jobs: int = Field(alias="scheduledJobs")

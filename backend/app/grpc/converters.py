@@ -106,10 +106,10 @@ def pydantic_to_dict(obj: Any, exclude_none: bool = True) -> dict:
     Returns:
         Dictionary representation suitable for Protobuf
     """
-    if hasattr(obj, 'model_dump'):
+    if hasattr(obj, "model_dump"):
         # Pydantic v2
         return obj.model_dump(exclude_none=exclude_none)
-    elif hasattr(obj, 'dict'):
+    elif hasattr(obj, "dict"):
         # Pydantic v1
         return obj.dict(exclude_none=exclude_none)
     else:
@@ -152,7 +152,9 @@ class AssignmentConverter:
             "created_by": assignment.created_by or "",
             "created_at": datetime_to_timestamp(assignment.created_at),
             "updated_at": datetime_to_timestamp(assignment.updated_at),
-            "override_acknowledged_at": datetime_to_timestamp(assignment.override_acknowledged_at),
+            "override_acknowledged_at": datetime_to_timestamp(
+                assignment.override_acknowledged_at
+            ),
             "confidence": assignment.confidence or 0.0,
             "score": assignment.score or 0.0,
         }
@@ -172,7 +174,9 @@ class AssignmentConverter:
             "id": string_to_uuid(proto_msg.get("id", "")),
             "block_id": string_to_uuid(proto_msg.get("block_id", "")),
             "person_id": string_to_uuid(proto_msg.get("person_id", "")),
-            "rotation_template_id": string_to_uuid(proto_msg.get("rotation_template_id")),
+            "rotation_template_id": string_to_uuid(
+                proto_msg.get("rotation_template_id")
+            ),
             "role": proto_msg.get("role", ""),
             "activity_override": proto_msg.get("activity_override") or None,
             "notes": proto_msg.get("notes") or None,
@@ -180,7 +184,9 @@ class AssignmentConverter:
             "created_by": proto_msg.get("created_by") or None,
             "created_at": timestamp_to_datetime(proto_msg.get("created_at")),
             "updated_at": timestamp_to_datetime(proto_msg.get("updated_at")),
-            "override_acknowledged_at": timestamp_to_datetime(proto_msg.get("override_acknowledged_at")),
+            "override_acknowledged_at": timestamp_to_datetime(
+                proto_msg.get("override_acknowledged_at")
+            ),
             "confidence": proto_msg.get("confidence"),
             "score": proto_msg.get("score"),
         }
@@ -214,9 +220,9 @@ class PersonConverter:
             "rank": person.rank or "",
             "pgy_year": person.pgy_year or 0,
             "specialty": person.specialty or "",
-            "is_active": person.is_active if hasattr(person, 'is_active') else True,
-            "created_at": datetime_to_timestamp(getattr(person, 'created_at', None)),
-            "updated_at": datetime_to_timestamp(getattr(person, 'updated_at', None)),
+            "is_active": person.is_active if hasattr(person, "is_active") else True,
+            "created_at": datetime_to_timestamp(getattr(person, "created_at", None)),
+            "updated_at": datetime_to_timestamp(getattr(person, "updated_at", None)),
         }
 
     @staticmethod
@@ -266,11 +272,13 @@ class BlockConverter:
         """
         return {
             "id": uuid_to_string(block.id),
-            "date": block.date.isoformat() if hasattr(block.date, 'isoformat') else str(block.date),
+            "date": block.date.isoformat()
+            if hasattr(block.date, "isoformat")
+            else str(block.date),
             "period": block.period,
-            "is_weekend": block.is_weekend if hasattr(block, 'is_weekend') else False,
-            "is_holiday": block.is_holiday if hasattr(block, 'is_holiday') else False,
-            "created_at": datetime_to_timestamp(getattr(block, 'created_at', None)),
+            "is_weekend": block.is_weekend if hasattr(block, "is_weekend") else False,
+            "is_holiday": block.is_holiday if hasattr(block, "is_holiday") else False,
+            "created_at": datetime_to_timestamp(getattr(block, "created_at", None)),
         }
 
     @staticmethod
@@ -318,13 +326,15 @@ class ScheduleConverter:
             Dict with Protobuf-compatible types
         """
         return {
-            "schedule_id": uuid_to_string(getattr(schedule_result, 'id', None)),
-            "status": getattr(schedule_result, 'status', 'unknown'),
-            "created_at": datetime_to_timestamp(getattr(schedule_result, 'created_at', None)),
-            "assignments_count": getattr(schedule_result, 'assignments_count', 0),
-            "is_compliant": getattr(schedule_result, 'is_compliant', False),
-            "violations_count": len(getattr(schedule_result, 'violations', [])),
-            "warnings": getattr(schedule_result, 'warnings', []),
+            "schedule_id": uuid_to_string(getattr(schedule_result, "id", None)),
+            "status": getattr(schedule_result, "status", "unknown"),
+            "created_at": datetime_to_timestamp(
+                getattr(schedule_result, "created_at", None)
+            ),
+            "assignments_count": getattr(schedule_result, "assignments_count", 0),
+            "is_compliant": getattr(schedule_result, "is_compliant", False),
+            "violations_count": len(getattr(schedule_result, "violations", [])),
+            "warnings": getattr(schedule_result, "warnings", []),
         }
 
     @staticmethod

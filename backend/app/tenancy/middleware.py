@@ -26,8 +26,9 @@ Security:
 - Prevents tenant enumeration attacks
 - Rate limits tenant lookup failures
 """
+
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
 from uuid import UUID
 
 from fastapi import Request, Response
@@ -36,9 +37,9 @@ from starlette.types import ASGIApp
 
 from app.db.session import SessionLocal
 from app.tenancy.context import (
-    set_current_tenant,
     clear_current_tenant,
     propagate_tenant_to_tracing,
+    set_current_tenant,
 )
 from app.tenancy.models import Tenant, TenantStatus
 
@@ -74,8 +75,8 @@ class TenantMiddleware(BaseHTTPMiddleware):
         app: ASGIApp,
         identification_method: str = TenantIdentificationMethod.HEADER,
         require_tenant: bool = False,
-        fallback_tenant_slug: Optional[str] = None,
-        excluded_paths: Optional[list[str]] = None,
+        fallback_tenant_slug: str | None = None,
+        excluded_paths: list[str] | None = None,
     ):
         """
         Initialize tenant middleware.
@@ -136,9 +137,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
             request.state.tenant_id = tenant.id
             request.state.tenant_slug = tenant.slug
 
-            logger.debug(
-                f"Request scoped to tenant: {tenant.slug} (ID: {tenant.id})"
-            )
+            logger.debug(f"Request scoped to tenant: {tenant.slug} (ID: {tenant.id})")
         elif self.require_tenant:
             # Tenant required but not found
             logger.warning(f"No tenant identified for request: {request.url.path}")
@@ -153,7 +152,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
             # Clear tenant context after request
             clear_current_tenant()
 
-    async def _identify_tenant(self, request: Request) -> Optional[Tenant]:
+    async def _identify_tenant(self, request: Request) -> Tenant | None:
         """
         Identify tenant from request using configured method.
 
@@ -186,7 +185,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
         return None
 
-    def _extract_from_headers(self, request: Request) -> tuple[Optional[UUID], Optional[str]]:
+    def _extract_from_headers(self, request: Request) -> tuple[UUID | None, str | None]:
         """
         Extract tenant from HTTP headers.
 
@@ -216,7 +215,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
         return tenant_id, tenant_slug
 
-    def _extract_from_subdomain(self, request: Request) -> Optional[str]:
+    def _extract_from_subdomain(self, request: Request) -> str | None:
         """
         Extract tenant from subdomain.
 
@@ -246,7 +245,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
         return None
 
-    def _extract_from_path(self, request: Request) -> Optional[str]:
+    def _extract_from_path(self, request: Request) -> str | None:
         """
         Extract tenant from URL path.
 
@@ -270,7 +269,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
         return None
 
-    def _extract_from_query(self, request: Request) -> Optional[str]:
+    def _extract_from_query(self, request: Request) -> str | None:
         """
         Extract tenant from query parameter.
 
@@ -287,9 +286,9 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
     async def _lookup_tenant(
         self,
-        tenant_id: Optional[UUID] = None,
-        tenant_slug: Optional[str] = None,
-    ) -> Optional[Tenant]:
+        tenant_id: UUID | None = None,
+        tenant_slug: str | None = None,
+    ) -> Tenant | None:
         """
         Look up tenant in database by ID or slug.
 

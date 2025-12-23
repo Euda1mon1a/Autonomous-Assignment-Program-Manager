@@ -1,4 +1,5 @@
 """Faculty summary report template."""
+
 import logging
 from datetime import date, datetime
 from typing import Any
@@ -76,9 +77,7 @@ class FacultySummaryReportTemplate:
         faculty_ids = request.faculty_ids
         if not faculty_ids:
             # Get all faculty members
-            all_faculty = (
-                self.db.query(Person).filter(Person.type == "faculty").all()
-            )
+            all_faculty = self.db.query(Person).filter(Person.type == "faculty").all()
             faculty_ids = [f.id for f in all_faculty]
 
         # Generate report for each faculty member
@@ -94,7 +93,7 @@ class FacultySummaryReportTemplate:
             elements.append(
                 Paragraph(
                     f"Faculty: {faculty_data['name']}",
-                    self.generator.styles["SectionHeader"]
+                    self.generator.styles["SectionHeader"],
                 )
             )
             elements.append(Spacer(1, 0.1 * inch))
@@ -253,7 +252,9 @@ class FacultySummaryReportTemplate:
 
         if not faculty_data["rotation_breakdown"]:
             elements.append(
-                Paragraph("No assignments in this period.", self.generator.styles["Normal"])
+                Paragraph(
+                    "No assignments in this period.", self.generator.styles["Normal"]
+                )
             )
             return elements
 
@@ -291,9 +292,7 @@ class FacultySummaryReportTemplate:
         """Create swap history section."""
         elements = []
 
-        elements.append(
-            Paragraph("Swap Activity", self.generator.styles["Subsection"])
-        )
+        elements.append(Paragraph("Swap Activity", self.generator.styles["Subsection"]))
 
         # Create swap summary table
         data = [

@@ -4,6 +4,7 @@ Tests for equity and fairness metrics.
 This module tests the Gini coefficient, Lorenz curve, and equity report
 functionality used for workload fairness analysis in medical scheduling.
 """
+
 import numpy as np
 import pytest
 
@@ -203,8 +204,8 @@ class TestLorenzCurve:
         x_coords, y_coords = lorenz_curve(values)
 
         # Check points are properly ordered
-        assert all(x_coords[i] <= x_coords[i+1] for i in range(len(x_coords)-1))
-        assert all(y_coords[i] <= y_coords[i+1] for i in range(len(y_coords)-1))
+        assert all(x_coords[i] <= x_coords[i + 1] for i in range(len(x_coords) - 1))
+        assert all(y_coords[i] <= y_coords[i + 1] for i in range(len(y_coords) - 1))
 
         # Lorenz curve should be below or on the equality line (except endpoints)
         for x, y in zip(x_coords, y_coords):

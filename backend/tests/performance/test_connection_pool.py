@@ -11,31 +11,25 @@ Tests database connection pool behavior under various stress scenarios:
 These tests verify that the application handles connection pool exhaustion
 gracefully and maintains proper connection lifecycle management.
 """
+
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from contextlib import contextmanager
-from datetime import date, timedelta
-from typing import Dict, List, Optional
-from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import create_engine, event, pool, text
-from sqlalchemy.exc import OperationalError, TimeoutError as SQLAlchemyTimeoutError
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import NullPool, QueuePool, StaticPool
+from sqlalchemy import create_engine, event, text
+from sqlalchemy.exc import TimeoutError as SQLAlchemyTimeoutError
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import QueuePool
 
-from app.core.config import get_settings
 from app.db.base import Base
-from app.db.session import SessionLocal, engine, task_session_scope
-from app.models.assignment import Assignment
-from app.models.block import Block
+from app.db.session import task_session_scope
 from app.models.person import Person
-
 
 # ============================================================================
 # Test Fixtures for Connection Pool Configuration
 # ============================================================================
+
 
 @pytest.fixture(scope="function")
 def small_pool_engine():
@@ -68,7 +62,9 @@ def small_pool_engine():
 @pytest.fixture(scope="function")
 def small_pool_session(small_pool_engine):
     """Create session factory bound to small pool engine."""
-    TestSession = sessionmaker(autocommit=False, autoflush=False, bind=small_pool_engine)
+    TestSession = sessionmaker(
+        autocommit=False, autoflush=False, bind=small_pool_engine
+    )
     return TestSession
 
 
@@ -141,12 +137,15 @@ def pool_metrics():
 # Test Class: Connection Pool Saturation
 # ============================================================================
 
+
 @pytest.mark.performance
 @pytest.mark.slow
 class TestConnectionPoolStress:
     """Test suite for connection pool stress scenarios."""
 
-    def test_pool_saturation_graceful_handling(self, small_pool_engine, small_pool_session, pool_metrics):
+    def test_pool_saturation_graceful_handling(
+        self, small_pool_engine, small_pool_session, pool_metrics
+    ):
         """
         Pool exhaustion should timeout gracefully, not crash.
 
@@ -175,7 +174,11 @@ class TestConnectionPoolStress:
                     pool_metrics["successful_operations"] += 1
                     pool_metrics["wait_time"] += wait_time
 
-                    return {"success": True, "request_id": request_id, "wait_time": wait_time}
+                    return {
+                        "success": True,
+                        "request_id": request_id,
+                        "wait_time": wait_time,
+                    }
                 finally:
                     session.close()
 
@@ -199,19 +202,25 @@ class TestConnectionPoolStress:
         # Analyze results
         successful = sum(1 for r in results if r.get("success"))
         timeouts = sum(1 for r in results if r.get("error") == "timeout")
-        errors = sum(1 for r in results if r.get("error") and r.get("error") != "timeout")
+        errors = sum(
+            1 for r in results if r.get("error") and r.get("error") != "timeout"
+        )
 
         # Assertions
         assert successful > 0, "At least some requests should succeed"
         assert timeouts > 0, "Some requests should timeout when pool is exhausted"
         assert errors == 0, "No unexpected errors should occur"
-        assert successful + timeouts == num_requests, "All requests should complete (success or timeout)"
+        assert successful + timeouts == num_requests, (
+            "All requests should complete (success or timeout)"
+        )
 
         # Pool should be healthy (no connections leaked)
         pool_status = small_pool_engine.pool.status()
         assert "Pool size: 5" in pool_status
 
-    def test_concurrent_celery_and_api_requests(self, small_pool_engine, small_pool_session):
+    def test_concurrent_celery_and_api_requests(
+        self, small_pool_engine, small_pool_session
+    ):
         """
         Simulate real-world mixed workload: Celery background tasks + API requests.
 
@@ -319,19 +328,30 @@ class TestConnectionPoolStress:
         celery_successful = sum(1 for r in results["celery"] if r.get("success"))
 
         # Most operations should succeed (some may timeout under high load)
-        assert api_successful >= 3, f"Most API requests should succeed, got {api_successful}/5"
-        assert celery_successful >= 2, f"Most Celery tasks should succeed, got {celery_successful}/3"
+        assert api_successful >= 3, (
+            f"Most API requests should succeed, got {api_successful}/5"
+        )
+        assert celery_successful >= 2, (
+            f"Most Celery tasks should succeed, got {celery_successful}/3"
+        )
 
         # API requests should be faster than Celery tasks
-        avg_api_time = sum(r["duration"] for r in results["api"] if r.get("success")) / max(api_successful, 1)
-        avg_celery_time = sum(r["duration"] for r in results["celery"] if r.get("success")) / max(celery_successful, 1)
+        avg_api_time = sum(
+            r["duration"] for r in results["api"] if r.get("success")
+        ) / max(api_successful, 1)
+        avg_celery_time = sum(
+            r["duration"] for r in results["celery"] if r.get("success")
+        ) / max(celery_successful, 1)
 
-        assert avg_api_time < avg_celery_time, "API requests should be faster than Celery tasks"
+        assert avg_api_time < avg_celery_time, (
+            "API requests should be faster than Celery tasks"
+        )
 
 
 # ============================================================================
 # Test Class: Connection Leak Detection
 # ============================================================================
+
 
 @pytest.mark.performance
 @pytest.mark.slow
@@ -347,7 +367,9 @@ class TestConnectionLeakDetection:
         - Pool size remains stable
         - No connections are leaked
         """
-        TestSession = sessionmaker(autocommit=False, autoflush=False, bind=monitored_pool_engine)
+        TestSession = sessionmaker(
+            autocommit=False, autoflush=False, bind=monitored_pool_engine
+        )
 
         num_requests = 1000
 
@@ -382,13 +404,17 @@ class TestConnectionLeakDetection:
 
         # All checked-out connections should be returned (within small margin)
         leak_count = checkout_count - checkin_count
-        assert leak_count <= 10, f"Connection leak detected: {leak_count} connections not returned"
+        assert leak_count <= 10, (
+            f"Connection leak detected: {leak_count} connections not returned"
+        )
 
         # Pool should be at or near baseline
         pool_status = monitored_pool_engine.pool.status()
         assert "Pool size: 10" in pool_status, "Pool size should be at configured value"
 
-    def test_long_running_transaction_timeout(self, small_pool_engine, small_pool_session):
+    def test_long_running_transaction_timeout(
+        self, small_pool_engine, small_pool_session
+    ):
         """
         Test that long-running transactions don't hold connections indefinitely.
 
@@ -434,7 +460,12 @@ class TestConnectionLeakDetection:
                 finally:
                     session.close()
             except (SQLAlchemyTimeoutError, TimeoutError):
-                return {"success": False, "type": "quick", "request_id": request_id, "error": "timeout"}
+                return {
+                    "success": False,
+                    "type": "quick",
+                    "request_id": request_id,
+                    "error": "timeout",
+                }
 
         # Execute mixed workload
         with ThreadPoolExecutor(max_workers=8) as executor:
@@ -446,8 +477,7 @@ class TestConnectionLeakDetection:
 
             # Submit multiple quick queries while long transaction is running
             quick_futures = [
-                executor.submit(quick_query, small_pool_session, i)
-                for i in range(7)
+                executor.submit(quick_query, small_pool_session, i) for i in range(7)
             ]
 
             # Collect results
@@ -460,11 +490,15 @@ class TestConnectionLeakDetection:
         quick_results = [r for r in results if r.get("type") == "quick"]
 
         # Long transaction should complete
-        assert long_tx_result.get("success"), "Long transaction should complete successfully"
+        assert long_tx_result.get("success"), (
+            "Long transaction should complete successfully"
+        )
 
         # Most quick queries should succeed (some may timeout)
         successful_quick = sum(1 for r in quick_results if r.get("success"))
-        assert successful_quick >= 4, f"Most quick queries should succeed, got {successful_quick}/7"
+        assert successful_quick >= 4, (
+            f"Most quick queries should succeed, got {successful_quick}/7"
+        )
 
     def test_rollback_releases_connection(self, monitored_pool_engine):
         """
@@ -472,7 +506,9 @@ class TestConnectionLeakDetection:
 
         Verifies that failed transactions release connections back to pool.
         """
-        TestSession = sessionmaker(autocommit=False, autoflush=False, bind=monitored_pool_engine)
+        TestSession = sessionmaker(
+            autocommit=False, autoflush=False, bind=monitored_pool_engine
+        )
 
         initial_checkin_count = monitored_pool_engine._connection_events["checked_in"]
 
@@ -522,20 +558,24 @@ class TestConnectionLeakDetection:
         connections_returned = final_checkin_count - initial_checkin_count
 
         # Should be close to num_failures (within small margin for concurrent timing)
-        assert connections_returned >= num_failures - 5, \
+        assert connections_returned >= num_failures - 5, (
             f"All connections should be returned: {connections_returned}/{num_failures}"
+        )
 
 
 # ============================================================================
 # Test Class: Pool Recovery
 # ============================================================================
 
+
 @pytest.mark.performance
 @pytest.mark.slow
 class TestPoolRecovery:
     """Test suite for database connection pool recovery scenarios."""
 
-    def test_pool_recovery_after_db_restart(self, small_pool_engine, small_pool_session):
+    def test_pool_recovery_after_db_restart(
+        self, small_pool_engine, small_pool_session
+    ):
         """
         Pool should recover after database becomes available.
 
@@ -599,7 +639,9 @@ class TestPoolRecovery:
         finally:
             test_engine.dispose()
 
-    def test_pool_invalidation_and_recovery(self, small_pool_engine, small_pool_session):
+    def test_pool_invalidation_and_recovery(
+        self, small_pool_engine, small_pool_session
+    ):
         """
         Test that pool can invalidate and recover from bad connections.
 
@@ -632,6 +674,7 @@ class TestPoolRecovery:
 # Test Class: Concurrent Transaction Isolation
 # ============================================================================
 
+
 @pytest.mark.performance
 @pytest.mark.slow
 class TestConcurrentTransactionIsolation:
@@ -646,7 +689,9 @@ class TestConcurrentTransactionIsolation:
         - No dirty reads
         - Proper commit ordering
         """
-        TestSession = sessionmaker(autocommit=False, autoflush=False, bind=small_pool_engine)
+        TestSession = sessionmaker(
+            autocommit=False, autoflush=False, bind=small_pool_engine
+        )
 
         # Create initial person
         session = TestSession()
@@ -708,7 +753,9 @@ class TestConcurrentTransactionIsolation:
         try:
             person = session.query(Person).filter(Person.id == person_id).first()
             assert person is not None, "Person should still exist"
-            assert person.name in ["Name A", "Name B", "Name C"], "Name should be one of the updates"
+            assert person.name in ["Name A", "Name B", "Name C"], (
+                "Name should be one of the updates"
+            )
         finally:
             session.close()
 
@@ -718,7 +765,9 @@ class TestConcurrentTransactionIsolation:
 
         Verifies that uncommitted changes are not visible to other transactions.
         """
-        TestSession = sessionmaker(autocommit=False, autoflush=False, bind=small_pool_engine)
+        TestSession = sessionmaker(
+            autocommit=False, autoflush=False, bind=small_pool_engine
+        )
 
         # Create initial data
         session = TestSession()
@@ -774,15 +823,29 @@ class TestConcurrentTransactionIsolation:
         Note: SQLite has limited deadlock scenarios due to database-level locking,
         but this test verifies timeout behavior.
         """
-        TestSession = sessionmaker(autocommit=False, autoflush=False, bind=small_pool_engine)
+        TestSession = sessionmaker(
+            autocommit=False, autoflush=False, bind=small_pool_engine
+        )
 
         # Create two people
         session = TestSession()
         person1_id = uuid4()
         person2_id = uuid4()
 
-        person1 = Person(id=person1_id, name="Person 1", type="resident", email="p1@test.org", pgy_level=1)
-        person2 = Person(id=person2_id, name="Person 2", type="resident", email="p2@test.org", pgy_level=2)
+        person1 = Person(
+            id=person1_id,
+            name="Person 1",
+            type="resident",
+            email="p1@test.org",
+            pgy_level=1,
+        )
+        person2 = Person(
+            id=person2_id,
+            name="Person 2",
+            type="resident",
+            email="p2@test.org",
+            pgy_level=2,
+        )
 
         session.add_all([person1, person2])
         session.commit()
@@ -845,12 +908,15 @@ class TestConcurrentTransactionIsolation:
         assert successful >= 1, "At least one transaction should succeed"
 
         # No unhandled exceptions - all should return result dict
-        assert all("success" in r for r in results), "All transactions should complete (success or failure)"
+        assert all("success" in r for r in results), (
+            "All transactions should complete (success or failure)"
+        )
 
 
 # ============================================================================
 # Test Class: Task Session Scope (Celery Pattern)
 # ============================================================================
+
 
 @pytest.mark.performance
 class TestTaskSessionScope:
@@ -871,7 +937,9 @@ class TestTaskSessionScope:
 
         # Verify person was created
         with task_session_scope() as session:
-            count = session.query(Person).filter(Person.email == "task@test.org").count()
+            count = (
+                session.query(Person).filter(Person.email == "task@test.org").count()
+            )
             assert count == 1, "Person should be committed"
 
     def test_task_session_scope_rollback_on_error(self):
@@ -924,10 +992,7 @@ class TestTaskSessionScope:
 
         # Execute 20 concurrent "tasks"
         with ThreadPoolExecutor(max_workers=5) as executor:
-            futures = [
-                executor.submit(celery_task_simulation, i)
-                for i in range(20)
-            ]
+            futures = [executor.submit(celery_task_simulation, i) for i in range(20)]
 
             for future in as_completed(futures):
                 results.append(future.result())
@@ -938,13 +1003,18 @@ class TestTaskSessionScope:
 
         # Verify all persons were created
         with task_session_scope() as session:
-            count = session.query(Person).filter(Person.email.like("celery%@test.org")).count()
+            count = (
+                session.query(Person)
+                .filter(Person.email.like("celery%@test.org"))
+                .count()
+            )
             assert count == 20, "All 20 persons should be in database"
 
 
 # ============================================================================
 # Performance Metrics Summary Test
 # ============================================================================
+
 
 @pytest.mark.performance
 class TestConnectionPoolMetrics:
@@ -959,7 +1029,9 @@ class TestConnectionPoolMetrics:
         - Pool utilization
         - Connection lifecycle efficiency
         """
-        TestSession = sessionmaker(autocommit=False, autoflush=False, bind=monitored_pool_engine)
+        TestSession = sessionmaker(
+            autocommit=False, autoflush=False, bind=monitored_pool_engine
+        )
 
         num_operations = 100
         start_time = time.time()
@@ -996,30 +1068,42 @@ class TestConnectionPoolMetrics:
         total_time = time.time() - start_time
 
         # Calculate metrics
-        avg_checkout_time = sum(r["checkout_duration"] for r in results) / num_operations
+        avg_checkout_time = (
+            sum(r["checkout_duration"] for r in results) / num_operations
+        )
         avg_work_time = sum(r["work_duration"] for r in results) / num_operations
         avg_total_time = sum(r["total_duration"] for r in results) / num_operations
 
         throughput = num_operations / total_time
 
         # Store metrics
-        pool_metrics["connections_used"] = monitored_pool_engine._connection_events["checkout"]
+        pool_metrics["connections_used"] = monitored_pool_engine._connection_events[
+            "checkout"
+        ]
         pool_metrics["successful_operations"] = num_operations
 
         # Performance assertions (reasonable thresholds)
-        assert avg_checkout_time < 0.1, f"Connection checkout should be fast: {avg_checkout_time:.3f}s"
-        assert throughput > 50, f"Should achieve reasonable throughput: {throughput:.1f} ops/sec"
+        assert avg_checkout_time < 0.1, (
+            f"Connection checkout should be fast: {avg_checkout_time:.3f}s"
+        )
+        assert throughput > 50, (
+            f"Should achieve reasonable throughput: {throughput:.1f} ops/sec"
+        )
 
         # Print metrics for analysis
-        print(f"\n{'='*60}")
-        print(f"Connection Pool Performance Metrics")
-        print(f"{'='*60}")
+        print(f"\n{'=' * 60}")
+        print("Connection Pool Performance Metrics")
+        print(f"{'=' * 60}")
         print(f"Total operations:          {num_operations}")
         print(f"Total time:                {total_time:.3f}s")
         print(f"Throughput:                {throughput:.1f} ops/sec")
-        print(f"Avg checkout time:         {avg_checkout_time*1000:.2f}ms")
-        print(f"Avg work time:             {avg_work_time*1000:.2f}ms")
-        print(f"Avg total time:            {avg_total_time*1000:.2f}ms")
-        print(f"Connections checked out:   {monitored_pool_engine._connection_events['checkout']}")
-        print(f"Connections checked in:    {monitored_pool_engine._connection_events['checked_in']}")
-        print(f"{'='*60}\n")
+        print(f"Avg checkout time:         {avg_checkout_time * 1000:.2f}ms")
+        print(f"Avg work time:             {avg_work_time * 1000:.2f}ms")
+        print(f"Avg total time:            {avg_total_time * 1000:.2f}ms")
+        print(
+            f"Connections checked out:   {monitored_pool_engine._connection_events['checkout']}"
+        )
+        print(
+            f"Connections checked in:    {monitored_pool_engine._connection_events['checked_in']}"
+        )
+        print(f"{'=' * 60}\n")

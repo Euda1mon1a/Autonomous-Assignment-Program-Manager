@@ -1,4 +1,5 @@
 """Database-backed leave provider."""
+
 from datetime import date, timedelta
 
 from sqlalchemy.orm import Session, joinedload
@@ -14,7 +15,12 @@ class DatabaseLeaveProvider(LeaveProvider):
         self.cache_ttl = cache_ttl_seconds
         self._cache: list[LeaveRecord] | None = None
 
-    def get_conflicts(self, faculty_name: str | None = None, start_date: date | None = None, end_date: date | None = None) -> list[LeaveRecord]:
+    def get_conflicts(
+        self,
+        faculty_name: str | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> list[LeaveRecord]:
         records = self.get_all_leave(start_date, end_date)
         if faculty_name:
             records = [r for r in records if r.faculty_name == faculty_name]
@@ -24,7 +30,9 @@ class DatabaseLeaveProvider(LeaveProvider):
         self._cache = None
         return len(self.get_all_leave())
 
-    def get_all_leave(self, start_date: date | None = None, end_date: date | None = None) -> list[LeaveRecord]:
+    def get_all_leave(
+        self, start_date: date | None = None, end_date: date | None = None
+    ) -> list[LeaveRecord]:
         from app.models.absence import Absence
         from app.models.person import Person
 
@@ -39,19 +47,19 @@ class DatabaseLeaveProvider(LeaveProvider):
             self.db.query(Absence)
             .join(Person)
             .options(joinedload(Absence.person))
-            .filter(
-                Absence.end_date >= start_date,
-                Absence.start_date <= end_date
-            )
+            .filter(Absence.end_date >= start_date, Absence.start_date <= end_date)
             .all()
         )
 
-        return [LeaveRecord(
-            faculty_name=a.person.name,
-            faculty_id=str(a.person_id),
-            start_date=a.start_date,
-            end_date=a.end_date,
-            leave_type=a.absence_type,
-            description=a.notes,
-            is_blocking=a.should_block_assignment,
-        ) for a in absences]
+        return [
+            LeaveRecord(
+                faculty_name=a.person.name,
+                faculty_id=str(a.person_id),
+                start_date=a.start_date,
+                end_date=a.end_date,
+                leave_type=a.absence_type,
+                description=a.notes,
+                is_blocking=a.should_block_assignment,
+            )
+            for a in absences
+        ]

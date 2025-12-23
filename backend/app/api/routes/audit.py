@@ -47,31 +47,31 @@ def _generate_mock_users() -> list[AuditUser]:
             id="user-001",
             name="Dr. Sarah Johnson",
             email="sarah.johnson@hospital.mil",
-            role="Chief Resident"
+            role="Chief Resident",
         ),
         AuditUser(
             id="user-002",
             name="Dr. Michael Chen",
             email="michael.chen@hospital.mil",
-            role="Program Director"
+            role="Program Director",
         ),
         AuditUser(
             id="user-003",
             name="Dr. Emily Rodriguez",
             email="emily.rodriguez@hospital.mil",
-            role="Scheduler"
+            role="Scheduler",
         ),
         AuditUser(
             id="user-004",
             name="Dr. James Wilson",
             email="james.wilson@hospital.mil",
-            role="Faculty"
+            role="Faculty",
         ),
         AuditUser(
             id="user-005",
             name="Admin User",
             email="admin@hospital.mil",
-            role="System Administrator"
+            role="System Administrator",
         ),
     ]
 
@@ -109,13 +109,13 @@ def _generate_mock_audit_entries(
                     field="person_id",
                     oldValue=None,
                     newValue="person-456",
-                    displayName="Assigned Person"
+                    displayName="Assigned Person",
                 ),
                 FieldChange(
                     field="block_id",
                     oldValue=None,
                     newValue="block-789",
-                    displayName="Block"
+                    displayName="Block",
                 ),
             ],
             metadata={"source": "manual_assignment"},
@@ -137,7 +137,7 @@ def _generate_mock_audit_entries(
                     field="max_consecutive_days",
                     oldValue=7,
                     newValue=10,
-                    displayName="Max Consecutive Days"
+                    displayName="Max Consecutive Days",
                 ),
             ],
             metadata={"override_type": "acgme_violation", "rule_id": "rule-001"},
@@ -160,13 +160,13 @@ def _generate_mock_audit_entries(
                     field="email",
                     oldValue="alex.t@old.mil",
                     newValue="alex.thompson@hospital.mil",
-                    displayName="Email"
+                    displayName="Email",
                 ),
                 FieldChange(
                     field="phone",
                     oldValue="555-0100",
                     newValue="555-0199",
-                    displayName="Phone"
+                    displayName="Phone",
                 ),
             ],
             metadata={"updated_fields": 2},
@@ -203,14 +203,15 @@ def _generate_mock_audit_entries(
                     field="status",
                     oldValue="approved",
                     newValue="deleted",
-                    displayName="Status"
+                    displayName="Status",
                 ),
             ],
             reason="Cancelled vacation request",
         ),
         AuditLogEntry(
             id="audit-006",
-            timestamp=(datetime.utcnow() - timedelta(days=1, hours=2)).isoformat() + "Z",
+            timestamp=(datetime.utcnow() - timedelta(days=1, hours=2)).isoformat()
+            + "Z",
             entityType="rotation_template",
             entityId="template-001",
             entityName="EM Residency Core",
@@ -222,14 +223,15 @@ def _generate_mock_audit_entries(
                     field="duration_weeks",
                     oldValue=4,
                     newValue=6,
-                    displayName="Duration"
+                    displayName="Duration",
                 ),
             ],
             reason="Updated rotation duration per ACGME requirements",
         ),
         AuditLogEntry(
             id="audit-007",
-            timestamp=(datetime.utcnow() - timedelta(days=1, hours=5)).isoformat() + "Z",
+            timestamp=(datetime.utcnow() - timedelta(days=1, hours=5)).isoformat()
+            + "Z",
             entityType="assignment",
             entityId="assign-125",
             entityName="Night Shift - Trauma",
@@ -241,7 +243,7 @@ def _generate_mock_audit_entries(
                     field="hours_per_week",
                     oldValue=80,
                     newValue=88,
-                    displayName="Hours Per Week"
+                    displayName="Hours Per Week",
                 ),
             ],
             acgmeOverride=True,
@@ -263,7 +265,8 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-009",
-            timestamp=(datetime.utcnow() - timedelta(days=2, hours=8)).isoformat() + "Z",
+            timestamp=(datetime.utcnow() - timedelta(days=2, hours=8)).isoformat()
+            + "Z",
             entityType="block",
             entityId="block-999",
             entityName="ICU Week 3",
@@ -287,7 +290,7 @@ def _generate_mock_audit_entries(
                     field="status",
                     oldValue="deleted",
                     newValue="active",
-                    displayName="Status"
+                    displayName="Status",
                 ),
             ],
             reason="Restored accidentally deleted assignment",
@@ -298,7 +301,9 @@ def _generate_mock_audit_entries(
     filtered_entries = all_entries.copy()
 
     if entity_types:
-        filtered_entries = [e for e in filtered_entries if e.entity_type in entity_types]
+        filtered_entries = [
+            e for e in filtered_entries if e.entity_type in entity_types
+        ]
 
     if actions:
         filtered_entries = [e for e in filtered_entries if e.action in actions]
@@ -312,7 +317,8 @@ def _generate_mock_audit_entries(
     if search:
         search_lower = search.lower()
         filtered_entries = [
-            e for e in filtered_entries
+            e
+            for e in filtered_entries
             if search_lower in (e.entity_name or "").lower()
             or search_lower in (e.reason or "").lower()
             or search_lower in e.action.lower()
@@ -326,8 +332,9 @@ def _generate_mock_audit_entries(
 
     # Apply date range filtering
     if start_date or end_date:
+
         def in_range(timestamp: str) -> bool:
-            entry_date = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            entry_date = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
             if start_date:
                 start = datetime.fromisoformat(start_date)
                 if entry_date < start:
@@ -387,10 +394,10 @@ async def get_audit_logs(
     - ACGME overrides only
     """
     # Parse comma-separated filters
-    entity_types_list = entity_types.split(',') if entity_types else None
-    actions_list = actions.split(',') if actions else None
-    user_ids_list = user_ids.split(',') if user_ids else None
-    severity_list = severity.split(',') if severity else None
+    entity_types_list = entity_types.split(",") if entity_types else None
+    actions_list = actions.split(",") if actions else None
+    user_ids_list = user_ids.split(",") if user_ids else None
+    severity_list = severity.split(",") if severity else None
 
     # Try to get real audit data from SQLAlchemy-Continuum
     try:
@@ -472,7 +479,9 @@ async def get_audit_log_by_id(
 
 @router.get("/statistics", response_model=AuditStatistics)
 async def get_audit_statistics(
-    start_date: str | None = Query(None, description="Statistics start date (ISO format)"),
+    start_date: str | None = Query(
+        None, description="Statistics start date (ISO format)"
+    ),
     end_date: str | None = Query(None, description="Statistics end date (ISO format)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -493,7 +502,9 @@ async def get_audit_statistics(
 
         # If we got real stats with data, use them
         if stats.get("totalEntries", 0) > 0:
-            logger.info(f"Retrieved real audit statistics: {stats['totalEntries']} entries")
+            logger.info(
+                f"Retrieved real audit statistics: {stats['totalEntries']} entries"
+            )
 
             # Determine date range
             now = datetime.utcnow()
@@ -510,7 +521,9 @@ async def get_audit_statistics(
                 dateRange=DateRange(start=actual_start, end=actual_end),
             )
     except Exception as e:
-        logger.warning(f"Error fetching real audit statistics, falling back to mock: {e}")
+        logger.warning(
+            f"Error fetching real audit statistics, falling back to mock: {e}"
+        )
 
     # Fall back to mock data
     logger.info("Using mock audit statistics as fallback")
@@ -530,12 +543,16 @@ async def get_audit_statistics(
     # Count by entity type
     entries_by_entity_type = {}
     for entry in entries:
-        entries_by_entity_type[entry.entity_type] = entries_by_entity_type.get(entry.entity_type, 0) + 1
+        entries_by_entity_type[entry.entity_type] = (
+            entries_by_entity_type.get(entry.entity_type, 0) + 1
+        )
 
     # Count by severity
     entries_by_severity = {}
     for entry in entries:
-        entries_by_severity[entry.severity] = entries_by_severity.get(entry.severity, 0) + 1
+        entries_by_severity[entry.severity] = (
+            entries_by_severity.get(entry.severity, 0) + 1
+        )
 
     # Count ACGME overrides
     acgme_override_count = sum(1 for entry in entries if entry.acgme_override)
@@ -545,7 +562,9 @@ async def get_audit_statistics(
 
     # Determine date range
     if entries:
-        timestamps = [datetime.fromisoformat(e.timestamp.replace('Z', '+00:00')) for e in entries]
+        timestamps = [
+            datetime.fromisoformat(e.timestamp.replace("Z", "+00:00")) for e in entries
+        ]
         actual_start = min(timestamps).isoformat()
         actual_end = max(timestamps).isoformat()
     else:
@@ -609,7 +628,11 @@ async def export_audit_logs(
     severity_list = filters.severity if filters and filters.severity else None
     search = filters.search_query if filters and filters.search_query else None
     entity_id = filters.entity_id if filters and filters.entity_id else None
-    acgme_only = filters.acgme_overrides_only if filters and filters.acgme_overrides_only else False
+    acgme_only = (
+        filters.acgme_overrides_only
+        if filters and filters.acgme_overrides_only
+        else False
+    )
 
     start_date = None
     end_date = None
@@ -637,7 +660,9 @@ async def export_audit_logs(
         if entries:
             logger.info(f"Exporting {len(entries)} real audit entries")
     except Exception as e:
-        logger.warning(f"Error fetching real audit data for export, falling back to mock: {e}")
+        logger.warning(
+            f"Error fetching real audit data for export, falling back to mock: {e}"
+        )
 
     # Fall back to mock data if needed
     if not entries:
@@ -666,7 +691,7 @@ async def export_audit_logs(
         return StreamingResponse(
             iter([output.getvalue()]),
             media_type="application/json",
-            headers={"Content-Disposition": "attachment; filename=audit_logs.json"}
+            headers={"Content-Disposition": "attachment; filename=audit_logs.json"},
         )
 
     elif config.format == "csv":
@@ -675,8 +700,18 @@ async def export_audit_logs(
         writer = csv.writer(output)
 
         # Header
-        header = ["ID", "Timestamp", "Entity Type", "Entity ID", "Entity Name", "Action",
-                  "Severity", "User", "User Email", "Reason"]
+        header = [
+            "ID",
+            "Timestamp",
+            "Entity Type",
+            "Entity ID",
+            "Entity Name",
+            "Action",
+            "Severity",
+            "User",
+            "User Email",
+            "Reason",
+        ]
 
         if config.include_changes:
             header.append("Changes")
@@ -707,10 +742,12 @@ async def export_audit_logs(
             if config.include_changes:
                 changes_str = ""
                 if entry.changes:
-                    changes_str = "; ".join([
-                        f"{c.field}: {c.old_value} -> {c.new_value}"
-                        for c in entry.changes
-                    ])
+                    changes_str = "; ".join(
+                        [
+                            f"{c.field}: {c.old_value} -> {c.new_value}"
+                            for c in entry.changes
+                        ]
+                    )
                 row.append(changes_str)
 
             if config.include_metadata:
@@ -718,10 +755,12 @@ async def export_audit_logs(
                 row.append(metadata_str)
 
             if acgme_only or any(e.acgme_override for e in entries):
-                row.extend([
-                    "Yes" if entry.acgme_override else "No",
-                    entry.acgme_justification or "",
-                ])
+                row.extend(
+                    [
+                        "Yes" if entry.acgme_override else "No",
+                        entry.acgme_justification or "",
+                    ]
+                )
 
             writer.writerow(row)
 
@@ -730,7 +769,7 @@ async def export_audit_logs(
         return StreamingResponse(
             iter([output.getvalue()]),
             media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=audit_logs.csv"}
+            headers={"Content-Disposition": "attachment; filename=audit_logs.csv"},
         )
 
     elif config.format == "pdf":
@@ -743,10 +782,14 @@ async def export_audit_logs(
         for entry in entries:
             output.write(f"ID: {entry.id}\n")
             output.write(f"Timestamp: {entry.timestamp}\n")
-            output.write(f"Entity: {entry.entity_type} - {entry.entity_name or entry.entity_id}\n")
+            output.write(
+                f"Entity: {entry.entity_type} - {entry.entity_name or entry.entity_id}\n"
+            )
             output.write(f"Action: {entry.action}\n")
             output.write(f"Severity: {entry.severity}\n")
-            output.write(f"User: {entry.user.name} ({entry.user.email or 'no email'})\n")
+            output.write(
+                f"User: {entry.user.name} ({entry.user.email or 'no email'})\n"
+            )
             output.write(f"Reason: {entry.reason or 'N/A'}\n")
 
             if entry.acgme_override:
@@ -756,7 +799,9 @@ async def export_audit_logs(
             if config.include_changes and entry.changes:
                 output.write("Changes:\n")
                 for change in entry.changes:
-                    output.write(f"  - {change.field}: {change.old_value} -> {change.new_value}\n")
+                    output.write(
+                        f"  - {change.field}: {change.old_value} -> {change.new_value}\n"
+                    )
 
             output.write("-" * 80 + "\n\n")
 
@@ -765,11 +810,13 @@ async def export_audit_logs(
         return StreamingResponse(
             iter([output.getvalue()]),
             media_type="application/pdf",
-            headers={"Content-Disposition": "attachment; filename=audit_logs.pdf"}
+            headers={"Content-Disposition": "attachment; filename=audit_logs.pdf"},
         )
 
     else:
-        raise HTTPException(status_code=400, detail=f"Unsupported export format: {config.format}")
+        raise HTTPException(
+            status_code=400, detail=f"Unsupported export format: {config.format}"
+        )
 
 
 @router.post("/mark-reviewed", status_code=204)

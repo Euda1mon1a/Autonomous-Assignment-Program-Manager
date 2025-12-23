@@ -298,8 +298,5 @@ class WebhookDeadLetter(Base):
 
     def __repr__(self):
         return (
-            f"<WebhookDeadLetter("
-            f"event='{self.event_type}', "
-            f"resolved={self.resolved}"
-            f")>"
+            f"<WebhookDeadLetter(event='{self.event_type}', resolved={self.resolved})>"
         )

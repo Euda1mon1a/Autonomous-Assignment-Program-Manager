@@ -19,11 +19,9 @@ from app.schemas.visualization import (
     CoverageHeatmapResponse,
     ExportRequest,
     HeatmapResponse,
-    TimeRangeType,
     UnifiedHeatmapRequest,
 )
 from app.services.cached_schedule_service import CachedHeatmapService
-from app.services.heatmap_service import HeatmapService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -209,7 +207,9 @@ def get_heatmap_image(
         )
     except Exception as e:
         logger.error(f"Error generating visualization image: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="An error occurred generating the image")
+        raise HTTPException(
+            status_code=500, detail="An error occurred generating the image"
+        )
 
     # Determine media type
     media_types = {
@@ -223,9 +223,7 @@ def get_heatmap_image(
     return StreamingResponse(
         io.BytesIO(image_bytes),
         media_type=media_type,
-        headers={
-            "Content-Disposition": f"attachment; filename=heatmap.{format}"
-        },
+        headers={"Content-Disposition": f"attachment; filename=heatmap.{format}"},
     )
 
 
@@ -364,9 +362,7 @@ def export_heatmap(
             )
     except Exception as e:
         logger.error(f"Invalid export request parameters: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=400, detail="Invalid request parameters"
-        )
+        raise HTTPException(status_code=400, detail="Invalid request parameters")
 
     # Export as image
     try:
@@ -379,7 +375,9 @@ def export_heatmap(
         )
     except Exception as e:
         logger.error(f"Error generating visualization image: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="An error occurred generating the image")
+        raise HTTPException(
+            status_code=500, detail="An error occurred generating the image"
+        )
 
     # Determine media type
     media_types = {

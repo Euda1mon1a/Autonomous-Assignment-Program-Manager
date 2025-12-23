@@ -3,7 +3,6 @@
 import asyncio
 import logging
 from collections import defaultdict
-from typing import Optional
 from uuid import UUID
 
 from fastapi import WebSocket, WebSocketDisconnect
@@ -13,7 +12,6 @@ from app.websocket.events import (
     AssignmentChangedEvent,
     ConflictDetectedEvent,
     ConnectionAckEvent,
-    EventType,
     PongEvent,
     ResilienceAlertEvent,
     ScheduleUpdatedEvent,
@@ -227,9 +225,7 @@ class ConnectionManager:
 
         return sent_count
 
-    async def broadcast_to_schedule(
-        self, schedule_id: UUID, event: BaseModel
-    ) -> int:
+    async def broadcast_to_schedule(self, schedule_id: UUID, event: BaseModel) -> int:
         """
         Broadcast an event to all users watching a schedule.
 
@@ -358,7 +354,7 @@ class ConnectionManager:
 
 
 # Global connection manager instance
-_manager: Optional[ConnectionManager] = None
+_manager: ConnectionManager | None = None
 
 
 def get_connection_manager() -> ConnectionManager:
@@ -378,9 +374,9 @@ def get_connection_manager() -> ConnectionManager:
 
 
 async def broadcast_schedule_updated(
-    schedule_id: Optional[UUID],
-    academic_year_id: Optional[UUID],
-    user_id: Optional[UUID],
+    schedule_id: UUID | None,
+    academic_year_id: UUID | None,
+    user_id: UUID | None,
     update_type: str,
     affected_blocks_count: int = 0,
     message: str = "",
@@ -416,9 +412,9 @@ async def broadcast_assignment_changed(
     assignment_id: UUID,
     person_id: UUID,
     block_id: UUID,
-    rotation_template_id: Optional[UUID],
+    rotation_template_id: UUID | None,
     change_type: str,
-    changed_by: Optional[UUID] = None,
+    changed_by: UUID | None = None,
     message: str = "",
 ):
     """
@@ -450,7 +446,7 @@ async def broadcast_assignment_changed(
 async def broadcast_swap_requested(
     swap_id: UUID,
     requester_id: UUID,
-    target_person_id: Optional[UUID],
+    target_person_id: UUID | None,
     swap_type: str,
     affected_assignments: list[UUID],
     message: str = "",
@@ -487,7 +483,7 @@ async def broadcast_swap_requested(
 async def broadcast_swap_approved(
     swap_id: UUID,
     requester_id: UUID,
-    target_person_id: Optional[UUID],
+    target_person_id: UUID | None,
     approved_by: UUID,
     affected_assignments: list[UUID],
     message: str = "",
@@ -526,7 +522,7 @@ async def broadcast_conflict_detected(
     conflict_type: str,
     severity: str,
     affected_blocks: list[UUID],
-    conflict_id: Optional[UUID] = None,
+    conflict_id: UUID | None = None,
     message: str = "",
 ):
     """
@@ -557,10 +553,10 @@ async def broadcast_resilience_alert(
     alert_type: str,
     severity: str,
     message: str = "",
-    current_utilization: Optional[float] = None,
-    defense_level: Optional[str] = None,
-    affected_persons: Optional[list[UUID]] = None,
-    recommendations: Optional[list[str]] = None,
+    current_utilization: float | None = None,
+    defense_level: str | None = None,
+    affected_persons: list[UUID] | None = None,
+    recommendations: list[str] | None = None,
 ):
     """
     Broadcast a resilience alert event.

@@ -28,7 +28,9 @@ class CertificationTypeRepository(BaseRepository[CertificationType]):
         if obj_in is None:
             raise ValueError("Input data cannot be None")
         if not isinstance(obj_in, dict):
-            raise TypeError(f"Input data must be a dictionary, got {type(obj_in).__name__}")
+            raise TypeError(
+                f"Input data must be a dictionary, got {type(obj_in).__name__}"
+            )
         if not obj_in:
             raise ValueError("Input data cannot be empty")
         return super().create(obj_in)
@@ -38,11 +40,15 @@ class CertificationTypeRepository(BaseRepository[CertificationType]):
         if db_obj is None:
             raise ValueError("Database object cannot be None")
         if not isinstance(db_obj, CertificationType):
-            raise TypeError(f"Database object must be a CertificationType, got {type(db_obj).__name__}")
+            raise TypeError(
+                f"Database object must be a CertificationType, got {type(db_obj).__name__}"
+            )
         if obj_in is None:
             raise ValueError("Input data cannot be None")
         if not isinstance(obj_in, dict):
-            raise TypeError(f"Input data must be a dictionary, got {type(obj_in).__name__}")
+            raise TypeError(
+                f"Input data must be a dictionary, got {type(obj_in).__name__}"
+            )
         if not obj_in:
             raise ValueError("Input data cannot be empty")
         return super().update(db_obj, obj_in)
@@ -52,7 +58,9 @@ class CertificationTypeRepository(BaseRepository[CertificationType]):
         if db_obj is None:
             raise ValueError("Database object cannot be None")
         if not isinstance(db_obj, CertificationType):
-            raise TypeError(f"Database object must be a CertificationType, got {type(db_obj).__name__}")
+            raise TypeError(
+                f"Database object must be a CertificationType, got {type(db_obj).__name__}"
+            )
         super().delete(db_obj)
 
     def get_by_name(self, name: str) -> CertificationType | None:
@@ -78,18 +86,24 @@ class CertificationTypeRepository(BaseRepository[CertificationType]):
             .all()
         )
 
-    def list_required_for_person_type(self, person_type: str) -> list[CertificationType]:
+    def list_required_for_person_type(
+        self, person_type: str
+    ) -> list[CertificationType]:
         """List certifications required for residents or faculty."""
         if person_type is None:
             raise ValueError("Person type cannot be None")
         if not isinstance(person_type, str):
-            raise TypeError(f"Person type must be a string, got {type(person_type).__name__}")
+            raise TypeError(
+                f"Person type must be a string, got {type(person_type).__name__}"
+            )
         if not person_type.strip():
             raise ValueError("Person type cannot be empty or whitespace")
 
         valid_person_types = ["resident", "faculty"]
         if person_type not in valid_person_types:
-            raise ValueError(f"Person type must be one of {valid_person_types}, got '{person_type}'")
+            raise ValueError(
+                f"Person type must be one of {valid_person_types}, got '{person_type}'"
+            )
 
         query = self.db.query(CertificationType).filter(CertificationType.is_active)
 
@@ -120,7 +134,9 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
         if obj_in is None:
             raise ValueError("Input data cannot be None")
         if not isinstance(obj_in, dict):
-            raise TypeError(f"Input data must be a dictionary, got {type(obj_in).__name__}")
+            raise TypeError(
+                f"Input data must be a dictionary, got {type(obj_in).__name__}"
+            )
         if not obj_in:
             raise ValueError("Input data cannot be empty")
         return super().create(obj_in)
@@ -130,11 +146,15 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
         if db_obj is None:
             raise ValueError("Database object cannot be None")
         if not isinstance(db_obj, PersonCertification):
-            raise TypeError(f"Database object must be a PersonCertification, got {type(db_obj).__name__}")
+            raise TypeError(
+                f"Database object must be a PersonCertification, got {type(db_obj).__name__}"
+            )
         if obj_in is None:
             raise ValueError("Input data cannot be None")
         if not isinstance(obj_in, dict):
-            raise TypeError(f"Input data must be a dictionary, got {type(obj_in).__name__}")
+            raise TypeError(
+                f"Input data must be a dictionary, got {type(obj_in).__name__}"
+            )
         if not obj_in:
             raise ValueError("Input data cannot be empty")
         return super().update(db_obj, obj_in)
@@ -144,7 +164,9 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
         if db_obj is None:
             raise ValueError("Database object cannot be None")
         if not isinstance(db_obj, PersonCertification):
-            raise TypeError(f"Database object must be a PersonCertification, got {type(db_obj).__name__}")
+            raise TypeError(
+                f"Database object must be a PersonCertification, got {type(db_obj).__name__}"
+            )
         super().delete(db_obj)
 
     def get_by_person_and_type(
@@ -160,7 +182,9 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
         if certification_type_id is None:
             raise ValueError("Certification type ID cannot be None")
         if not isinstance(certification_type_id, UUID):
-            raise TypeError(f"Certification type ID must be a UUID, got {type(certification_type_id).__name__}")
+            raise TypeError(
+                f"Certification type ID must be a UUID, got {type(certification_type_id).__name__}"
+            )
         return (
             self.db.query(PersonCertification)
             .filter(
@@ -181,7 +205,9 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
         if not isinstance(person_id, UUID):
             raise TypeError(f"Person ID must be a UUID, got {type(person_id).__name__}")
         if not isinstance(include_expired, bool):
-            raise TypeError(f"include_expired must be a boolean, got {type(include_expired).__name__}")
+            raise TypeError(
+                f"include_expired must be a boolean, got {type(include_expired).__name__}"
+            )
 
         query = (
             self.db.query(PersonCertification)
@@ -291,9 +317,13 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
         if certification_type_id is None:
             raise ValueError("Certification type ID cannot be None")
         if not isinstance(certification_type_id, UUID):
-            raise TypeError(f"Certification type ID must be a UUID, got {type(certification_type_id).__name__}")
+            raise TypeError(
+                f"Certification type ID must be a UUID, got {type(certification_type_id).__name__}"
+            )
         if status is not None and not isinstance(status, str):
-            raise TypeError(f"Status must be a string or None, got {type(status).__name__}")
+            raise TypeError(
+                f"Status must be a string or None, got {type(status).__name__}"
+            )
         if status is not None and not status.strip():
             raise ValueError("Status cannot be empty or whitespace")
 
@@ -354,13 +384,17 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
         if person_type is None:
             raise ValueError("Person type cannot be None")
         if not isinstance(person_type, str):
-            raise TypeError(f"Person type must be a string, got {type(person_type).__name__}")
+            raise TypeError(
+                f"Person type must be a string, got {type(person_type).__name__}"
+            )
         if not person_type.strip():
             raise ValueError("Person type cannot be empty or whitespace")
 
         valid_person_types = ["resident", "faculty"]
         if person_type not in valid_person_types:
-            raise ValueError(f"Person type must be one of {valid_person_types}, got '{person_type}'")
+            raise ValueError(
+                f"Person type must be one of {valid_person_types}, got '{person_type}'"
+            )
 
         # Get required cert types
         cert_type_repo = CertificationTypeRepository(self.db)
@@ -384,11 +418,11 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
         for cert in all_certs:
             old_status = cert.status
             if cert.expiration_date < today:
-                cert.status = 'expired'
+                cert.status = "expired"
             elif cert.expiration_date <= soon:
-                cert.status = 'expiring_soon'
+                cert.status = "expiring_soon"
             else:
-                cert.status = 'current'
+                cert.status = "current"
 
             if cert.status != old_status:
                 updated += 1

@@ -24,6 +24,7 @@ logger = get_logger(__name__)
 def get_db_session() -> Session:
     """Get a database session for task execution."""
     from app.core.database import SessionLocal
+
     return SessionLocal()
 
 
@@ -142,7 +143,9 @@ def timeout_stale_pending_requests(
     Returns:
         Dict with timeout results including count timed out
     """
-    logger.info(f"Starting stale pending request timeout (threshold: {timeout_minutes}m)")
+    logger.info(
+        f"Starting stale pending request timeout (threshold: {timeout_minutes}m)"
+    )
 
     db = get_db_session()
     try:
@@ -150,8 +153,7 @@ def timeout_stale_pending_requests(
 
         service = IdempotencyService(db)
         timed_out = service.timeout_stale_pending(
-            timeout_minutes=timeout_minutes,
-            batch_size=batch_size
+            timeout_minutes=timeout_minutes, batch_size=batch_size
         )
 
         result = {

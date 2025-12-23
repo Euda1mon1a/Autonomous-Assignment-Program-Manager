@@ -9,12 +9,10 @@ to lower energy barriers for schedule changes. It integrates with:
 - Credentials (qualification catalysts)
 """
 
-from dataclasses import dataclass, field
-from datetime import date, datetime
-from typing import Any, Optional
+from dataclasses import dataclass
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.scheduling_catalyst.models import (
@@ -82,7 +80,7 @@ class CatalystScorer:
     def score_person_catalyst(
         person: CatalystPerson,
         barrier: EnergyBarrier,
-        context: Optional[dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ) -> float:
         """
         Score a person's effectiveness as a catalyst for a barrier.
@@ -173,10 +171,14 @@ class CatalystScorer:
             else:
                 reduction = catalyst.reduction_factors.get(barrier.barrier_type, 0.0)
 
-            remaining *= (1 - reduction)
+            remaining *= 1 - reduction
 
         total_reduction = barrier.energy_contribution - remaining
-        return total_reduction / barrier.energy_contribution if barrier.energy_contribution > 0 else 0.0
+        return (
+            total_reduction / barrier.energy_contribution
+            if barrier.energy_contribution > 0
+            else 0.0
+        )
 
 
 class CatalystAnalyzer:
@@ -223,7 +225,10 @@ class CatalystAnalyzer:
             catalysts.extend(coordinators)
 
         # Find hub faculty (thermodynamic/steric catalysts)
-        if BarrierType.THERMODYNAMIC in barrier_types or BarrierType.STERIC in barrier_types:
+        if (
+            BarrierType.THERMODYNAMIC in barrier_types
+            or BarrierType.STERIC in barrier_types
+        ):
             hubs = await self._find_hub_faculty()
             catalysts.extend(hubs)
 
@@ -347,7 +352,7 @@ class CatalystAnalyzer:
             if not barrier.can_be_catalyzed:
                 continue
 
-            best_match: Optional[CatalystMatch] = None
+            best_match: CatalystMatch | None = None
             best_score = 0.0
 
             # Check person catalysts
@@ -368,7 +373,9 @@ class CatalystAnalyzer:
             for mechanism in mechanism_catalysts:
                 if mechanism.can_address_barrier(barrier):
                     score = self.scorer.score_mechanism_catalyst(mechanism, barrier)
-                    reduction = mechanism.reduction_factors.get(barrier.barrier_type, 0.0)
+                    reduction = mechanism.reduction_factors.get(
+                        barrier.barrier_type, 0.0
+                    )
                     if score > best_score:
                         best_score = score
                         best_match = CatalystMatch(
@@ -383,7 +390,9 @@ class CatalystAnalyzer:
 
         # Calculate totals
         total_barrier_energy = sum(b.energy_contribution for b in barriers)
-        total_reduction = sum(m.reduction * m.barrier.energy_contribution for m in matches)
+        total_reduction = sum(
+            m.reduction * m.barrier.energy_contribution for m in matches
+        )
         residual_energy = max(0.0, total_barrier_energy - total_reduction)
 
         # Check absolute barriers
@@ -506,7 +515,9 @@ class CatalystAnalyzer:
                 "by_barrier_type": mechanism_by_type,
             },
             "coverage": {
-                bt.value: (person_by_type.get(bt.value, 0) + mechanism_by_type.get(bt.value, 0))
+                bt.value: (
+                    person_by_type.get(bt.value, 0) + mechanism_by_type.get(bt.value, 0)
+                )
                 for bt in all_barrier_types
             },
         }

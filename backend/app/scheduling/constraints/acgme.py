@@ -33,6 +33,7 @@ Migration Note:
             SupervisionRatioConstraint,
         )
 """
+
 import logging
 from collections import defaultdict
 from datetime import timedelta
@@ -101,7 +102,9 @@ class AvailabilityConstraint(HardConstraint):
                             if (r_i, b_i) in x:
                                 model += x[r_i, b_i] == 0, f"avail_{r_i}_{b_i}"
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Validate that no assignments occur during absences."""
         violations = []
 
@@ -118,14 +121,16 @@ class AvailabilityConstraint(HardConstraint):
                                 person_name = r.name
                                 break
 
-                        violations.append(ConstraintViolation(
-                            constraint_name=self.name,
-                            constraint_type=self.constraint_type,
-                            severity="CRITICAL",
-                            message=f"{person_name} assigned during absence",
-                            person_id=person_id,
-                            block_id=block_id,
-                        ))
+                        violations.append(
+                            ConstraintViolation(
+                                constraint_name=self.name,
+                                constraint_type=self.constraint_type,
+                                severity="CRITICAL",
+                                message=f"{person_name} assigned during absence",
+                                person_id=person_id,
+                                block_id=block_id,
+                            )
+                        )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -187,9 +192,7 @@ class EightyHourRuleConstraint(HardConstraint):
             self.MAX_WEEKLY_HOURS * self.ROLLING_WEEKS
         ) // self.HOURS_PER_BLOCK
 
-    def _calculate_rolling_average(
-        self, hours_by_date: dict, window_start
-    ) -> float:
+    def _calculate_rolling_average(self, hours_by_date: dict, window_start) -> float:
         """
         Calculate the rolling 4-week average hours starting from window_start.
 
@@ -234,9 +237,7 @@ class EightyHourRuleConstraint(HardConstraint):
 
             # Get all blocks in this strict 28-day window
             window_blocks = [
-                b
-                for b in context.blocks
-                if window_start <= b.date <= window_end
+                b for b in context.blocks if window_start <= b.date <= window_end
             ]
 
             if not window_blocks:
@@ -268,9 +269,7 @@ class EightyHourRuleConstraint(HardConstraint):
             window_end = window_start + timedelta(days=self.ROLLING_DAYS - 1)
 
             window_blocks = [
-                b
-                for b in context.blocks
-                if window_start <= b.date <= window_end
+                b for b in context.blocks if window_start <= b.date <= window_end
             ]
 
             if not window_blocks:
@@ -290,7 +289,9 @@ class EightyHourRuleConstraint(HardConstraint):
                     )
             window_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """
         Check 80-hour rule compliance with strict 4-week rolling average.
 
@@ -463,7 +464,9 @@ class OneInSevenRuleConstraint(HardConstraint):
                     )
                     constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Check for consecutive days violations."""
         violations = []
 
@@ -566,7 +569,9 @@ class SupervisionRatioConstraint(HardConstraint):
         """Supervision ratio is typically handled post-hoc for residents."""
         pass
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Check supervision ratios per block."""
         violations = []
 
@@ -643,7 +648,9 @@ except ImportError:
                 SupervisionRatioConstraint(),
             ]
 
-        def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+        def validate(
+            self, assignments: list, context: SchedulingContext
+        ) -> ConstraintResult:
             """Validate all ACGME constraints."""
             return self.validate_all(assignments, context)
 

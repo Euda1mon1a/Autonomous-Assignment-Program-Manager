@@ -4,29 +4,27 @@ OpenTelemetry tracer configuration and initialization.
 This module provides the core tracer setup for distributed tracing across
 the Residency Scheduler application.
 """
+
 import logging
-from typing import Optional
 
 from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.sampling import (
-    ParentBasedTraceIdRatio,
-    TraceIdRatioBased,
-    ALWAYS_ON,
-    ALWAYS_OFF,
-)
-from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+from opentelemetry.baggage.propagation import W3CBaggagePropagator
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from opentelemetry.instrumentation.redis import RedisInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.propagate import set_global_textmap
 from opentelemetry.propagators.b3 import B3MultiFormat
 from opentelemetry.propagators.composite import CompositePropagator
+from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.sdk.trace.sampling import (
+    ALWAYS_OFF,
+    ALWAYS_ON,
+    ParentBasedTraceIdRatio,
+)
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-from opentelemetry.baggage.propagation import W3CBaggagePropagator
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +84,7 @@ class TracerManager:
             config: Tracer configuration
         """
         self.config = config
-        self._tracer_provider: Optional[TracerProvider] = None
+        self._tracer_provider: TracerProvider | None = None
         self._is_initialized = False
 
     def initialize(self) -> TracerProvider:
@@ -103,11 +101,13 @@ class TracerManager:
             raise RuntimeError("Tracer already initialized")
 
         # Create resource with service metadata
-        resource = Resource.create({
-            SERVICE_NAME: self.config.service_name,
-            SERVICE_VERSION: self.config.service_version,
-            "deployment.environment": self.config.environment,
-        })
+        resource = Resource.create(
+            {
+                SERVICE_NAME: self.config.service_name,
+                SERVICE_VERSION: self.config.service_version,
+                "deployment.environment": self.config.environment,
+            }
+        )
 
         # Create tracer provider with sampling
         sampler = self._create_sampler()
@@ -164,11 +164,13 @@ class TracerManager:
         - W3C Baggage (for custom attributes)
         """
         set_global_textmap(
-            CompositePropagator([
-                TraceContextTextMapPropagator(),  # W3C standard
-                B3MultiFormat(),  # Zipkin/B3 compatibility
-                W3CBaggagePropagator(),  # Baggage propagation
-            ])
+            CompositePropagator(
+                [
+                    TraceContextTextMapPropagator(),  # W3C standard
+                    B3MultiFormat(),  # Zipkin/B3 compatibility
+                    W3CBaggagePropagator(),  # Baggage propagation
+                ]
+            )
         )
         logger.info("Trace propagators configured: W3C TraceContext, B3, W3C Baggage")
 
@@ -217,7 +219,7 @@ class TracerManager:
 
         self._tracer_provider.add_span_processor(processor)
 
-    def get_tracer(self, name: str, version: Optional[str] = None) -> trace.Tracer:
+    def get_tracer(self, name: str, version: str | None = None) -> trace.Tracer:
         """
         Get a tracer instance.
 
@@ -250,7 +252,7 @@ class TracerManager:
 
 
 # Global tracer manager instance
-_tracer_manager: Optional[TracerManager] = None
+_tracer_manager: TracerManager | None = None
 
 
 def initialize_tracer(config: TracerConfig) -> TracerProvider:
@@ -291,7 +293,7 @@ def get_tracer_manager() -> TracerManager:
     return _tracer_manager
 
 
-def get_tracer(name: str, version: Optional[str] = None) -> trace.Tracer:
+def get_tracer(name: str, version: str | None = None) -> trace.Tracer:
     """
     Get a tracer instance from the global tracer manager.
 

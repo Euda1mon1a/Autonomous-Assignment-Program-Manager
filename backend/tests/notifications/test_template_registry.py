@@ -1,4 +1,5 @@
 """Tests for notification template registry."""
+
 import pytest
 
 from app.notifications.templates.registry import (
@@ -238,9 +239,7 @@ class TestTemplateRegistry:
         )
         registry.register_template(template)
 
-        result = registry.render_template(
-            "test_template", {"name": "Alice"}
-        )
+        result = registry.render_template("test_template", {"name": "Alice"})
 
         assert result is not None
         assert result["subject"] == "Hello Alice"

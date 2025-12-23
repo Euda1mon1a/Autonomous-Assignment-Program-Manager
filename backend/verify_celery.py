@@ -26,7 +26,8 @@ def verify_celery_config():
     # 1. Import Celery app
     print("1. Importing Celery app...")
     try:
-        from app.core.celery_app import celery_app, get_celery_app
+        from app.core.celery_app import celery_app
+
         print("   ✓ Celery app imported successfully")
     except Exception as e:
         print(f"   ✗ Failed to import Celery app: {e}")
@@ -68,8 +69,6 @@ def verify_celery_config():
     print("\n4. Checking registered tasks...")
     try:
         # Import task modules to register them
-        from app.resilience import tasks as resilience_tasks
-        from app.notifications import tasks as notification_tasks
 
         # Get registered tasks
         registered = celery_app.tasks.keys()
@@ -134,7 +133,7 @@ def verify_celery_config():
     print("\n7. Checking task routes...")
     task_routes = celery_app.conf.task_routes
     if task_routes:
-        print(f"   Task routing configured:")
+        print("   Task routing configured:")
         for pattern, route in task_routes.items():
             print(f"      {pattern} -> {route}")
     else:
@@ -175,6 +174,7 @@ def check_redis_connection():
 
     try:
         import redis
+
         from app.core.config import get_settings
 
         settings = get_settings()
@@ -186,7 +186,7 @@ def check_redis_connection():
 
         # Get Redis info
         info = r.info()
-        print(f"\nRedis Info:")
+        print("\nRedis Info:")
         print(f"   Version: {info.get('redis_version', 'unknown')}")
         print(f"   Connected clients: {info.get('connected_clients', 'unknown')}")
         print(f"   Used memory: {info.get('used_memory_human', 'unknown')}")

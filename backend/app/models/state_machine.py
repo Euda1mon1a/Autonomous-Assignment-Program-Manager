@@ -1,4 +1,5 @@
 """State machine persistence models."""
+
 from datetime import datetime
 from enum import Enum
 from uuid import uuid4
@@ -13,6 +14,7 @@ from app.db.types import GUID, JSONType
 
 class StateMachineStatus(str, Enum):
     """Status of a state machine instance."""
+
     ACTIVE = "active"
     COMPLETED = "completed"
     FAILED = "failed"
@@ -26,6 +28,7 @@ class StateMachineInstance(Base):
     Tracks the current state and context of a running state machine.
     Supports parallel state execution and complete transition history.
     """
+
     __tablename__ = "state_machine_instances"
 
     id = Column(GUID(), primary_key=True, default=uuid4)
@@ -41,10 +44,7 @@ class StateMachineInstance(Base):
 
     # Machine status
     status = Column(
-        String(20),
-        nullable=False,
-        default=StateMachineStatus.ACTIVE.value,
-        index=True
+        String(20), nullable=False, default=StateMachineStatus.ACTIVE.value, index=True
     )
 
     # Contextual data for the state machine
@@ -63,7 +63,9 @@ class StateMachineInstance(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     completed_at = Column(DateTime, nullable=True)
 
     # Relationships
@@ -71,7 +73,7 @@ class StateMachineInstance(Base):
         "StateMachineTransition",
         back_populates="instance",
         cascade="all, delete-orphan",
-        order_by="StateMachineTransition.created_at"
+        order_by="StateMachineTransition.created_at",
     )
     owner = relationship("User", foreign_keys=[owner_id])
 
@@ -94,6 +96,7 @@ class StateMachineTransition(Base):
     Provides complete audit trail of all state changes with timestamps,
     events, and context snapshots.
     """
+
     __tablename__ = "state_machine_transitions"
 
     id = Column(GUID(), primary_key=True, default=uuid4)
@@ -103,7 +106,7 @@ class StateMachineTransition(Base):
         GUID(),
         ForeignKey("state_machine_instances.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Transition details
@@ -125,7 +128,9 @@ class StateMachineTransition(Base):
     context_after = Column(JSONType(), nullable=True)
 
     # User who triggered the transition
-    triggered_by_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    triggered_by_id = Column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
 
     # Error information if transition failed
     error_message = Column(Text, nullable=True)

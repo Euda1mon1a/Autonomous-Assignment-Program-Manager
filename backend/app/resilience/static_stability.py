@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class FallbackScenario(Enum):
     """Pre-defined fallback scenarios."""
+
     SINGLE_FACULTY_LOSS = "1_faculty_loss"
     DOUBLE_FACULTY_LOSS = "2_faculty_loss"
     PCS_SEASON_50_PERCENT = "pcs_season_50_percent"
@@ -38,6 +39,7 @@ class FallbackScenario(Enum):
 @dataclass
 class FallbackSchedule:
     """A pre-computed fallback schedule for a specific scenario."""
+
     id: UUID
     scenario: FallbackScenario
     name: str
@@ -67,6 +69,7 @@ class SchedulingZone:
 
     Implements AWS availability zone pattern for blast radius isolation.
     """
+
     id: UUID
     name: str
     services: list[str]
@@ -76,9 +79,7 @@ class SchedulingZone:
 
     def is_self_sufficient(self, available_faculty: set[UUID]) -> bool:
         """Check if zone can operate without borrowing."""
-        available_dedicated = len(
-            set(self.dedicated_faculty) & available_faculty
-        )
+        available_dedicated = len(set(self.dedicated_faculty) & available_faculty)
         return available_dedicated >= self.minimum_coverage
 
 
@@ -182,7 +183,9 @@ class FallbackScheduler:
             assignments = self._schedule_generator(scenario, start_date, end_date)
         else:
             assignments = []
-            logger.warning(f"No schedule generator - fallback {scenario.value} has no assignments")
+            logger.warning(
+                f"No schedule generator - fallback {scenario.value} has no assignments"
+            )
 
         # Calculate coverage rate
         coverage_rate = self._calculate_coverage_rate(assignments, start_date, end_date)
@@ -326,9 +329,11 @@ class FallbackScheduler:
                 "minimum_required": zone.minimum_coverage,
                 "services": zone.services,
                 "status": (
-                    "GREEN" if is_healthy else
-                    "YELLOW" if dedicated_available + backup_available >= zone.minimum_coverage else
-                    "RED"
+                    "GREEN"
+                    if is_healthy
+                    else "YELLOW"
+                    if dedicated_available + backup_available >= zone.minimum_coverage
+                    else "RED"
                 ),
             }
 
@@ -378,19 +383,23 @@ class FallbackScheduler:
                     "available": scenario in self.fallback_schedules,
                     "active": (
                         self.fallback_schedules[scenario].is_active
-                        if scenario in self.fallback_schedules else False
+                        if scenario in self.fallback_schedules
+                        else False
                     ),
                     "coverage_rate": (
                         f"{self.fallback_schedules[scenario].coverage_rate:.0%}"
-                        if scenario in self.fallback_schedules else "N/A"
+                        if scenario in self.fallback_schedules
+                        else "N/A"
                     ),
                     "valid_until": (
                         self.fallback_schedules[scenario].valid_until.isoformat()
-                        if scenario in self.fallback_schedules else None
+                        if scenario in self.fallback_schedules
+                        else None
                     ),
                     "activation_count": (
                         self.fallback_schedules[scenario].activation_count
-                        if scenario in self.fallback_schedules else 0
+                        if scenario in self.fallback_schedules
+                        else 0
                     ),
                 }
                 for scenario in FallbackScenario
@@ -423,8 +432,7 @@ class FallbackScheduler:
         # Estimate number of blocks (2 per weekday)
         days = (end_date - start_date).days + 1
         weekdays = sum(
-            1 for d in range(days)
-            if (start_date + timedelta(days=d)).weekday() < 5
+            1 for d in range(days) if (start_date + timedelta(days=d)).weekday() < 5
         )
         expected_blocks = weekdays * 2
 
@@ -458,15 +466,11 @@ class FallbackScheduler:
             FallbackScenario.PCS_SEASON_50_PERCENT: (
                 "Summer PCS season with ~50% faculty unavailable"
             ),
-            FallbackScenario.HOLIDAY_SKELETON: (
-                "Minimal coverage for holiday periods"
-            ),
+            FallbackScenario.HOLIDAY_SKELETON: ("Minimal coverage for holiday periods"),
             FallbackScenario.PANDEMIC_ESSENTIAL: (
                 "Essential services only during pandemic"
             ),
-            FallbackScenario.MASS_CASUALTY: (
-                "All hands for mass casualty response"
-            ),
+            FallbackScenario.MASS_CASUALTY: ("All hands for mass casualty response"),
             FallbackScenario.WEATHER_EMERGENCY: (
                 "Reduced operations during weather emergency"
             ),

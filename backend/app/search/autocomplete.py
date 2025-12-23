@@ -22,22 +22,20 @@ Example:
         limit=10
     )
 """
+
 import logging
-import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
-from uuid import UUID
+from typing import Any
 
 import redis
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import CacheTTL, get_service_cache
 from app.core.config import get_settings
-from app.models.assignment import Assignment
 from app.models.person import Person
 from app.models.procedure import Procedure
 from app.models.rotation_template import RotationTemplate
@@ -82,10 +80,10 @@ class AutocompleteSuggestion:
     context: AutocompleteContext
     source: SuggestionSource
     score: float = 1.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    matched_field: Optional[str] = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    matched_field: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert suggestion to dictionary."""
         return {
             "text": self.text,
@@ -102,15 +100,15 @@ class AutocompleteAnalytics:
     """Analytics data for autocomplete performance."""
 
     query: str
-    user_id: Optional[str]
+    user_id: str | None
     context: AutocompleteContext
     suggestions_count: int
     cache_hit: bool
     response_time_ms: float
-    sources_used: List[str]
+    sources_used: list[str]
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert analytics to dictionary."""
         return {
             "query": self.query,
@@ -187,7 +185,7 @@ class AutocompleteService:
         self.db = db
         self.cache = get_service_cache()
         self.settings = get_settings()
-        self._redis: Optional[redis.Redis] = None
+        self._redis: redis.Redis | None = None
 
     def _get_redis(self) -> redis.Redis:
         """
@@ -204,11 +202,11 @@ class AutocompleteService:
     async def get_suggestions(
         self,
         query: str,
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
         context: AutocompleteContext = AutocompleteContext.GLOBAL,
         limit: int = 10,
         include_typo_tolerance: bool = True,
-    ) -> List[AutocompleteSuggestion]:
+    ) -> list[AutocompleteSuggestion]:
         """
         Get autocomplete suggestions for a query.
 
@@ -231,7 +229,7 @@ class AutocompleteService:
             )
         """
         start_time = datetime.utcnow()
-        sources_used: List[str] = []
+        sources_used: list[str] = []
 
         # Validate and normalize query
         query = self._normalize_query(query)
@@ -243,9 +241,7 @@ class AutocompleteService:
         cached = self.cache.get(cache_key)
         if cached:
             logger.debug(f"Cache hit for autocomplete query: {query}")
-            suggestions = [
-                AutocompleteSuggestion(**s) for s in cached
-            ]
+            suggestions = [AutocompleteSuggestion(**s) for s in cached]
             sources_used.append("cache")
             cache_hit = True
         else:
@@ -259,7 +255,9 @@ class AutocompleteService:
                 sources_used.append("database")
 
             # Add popular queries
-            popular_suggestions = await self._get_popular_suggestions(query, context, limit)
+            popular_suggestions = await self._get_popular_suggestions(
+                query, context, limit
+            )
             suggestions.extend(popular_suggestions)
             if popular_suggestions:
                 sources_used.append("popular")
@@ -315,7 +313,7 @@ class AutocompleteService:
         query: str,
         context: AutocompleteContext,
         limit: int,
-    ) -> List[AutocompleteSuggestion]:
+    ) -> list[AutocompleteSuggestion]:
         """
         Get suggestions from database based on context.
 
@@ -345,7 +343,7 @@ class AutocompleteService:
 
     async def _search_persons(
         self, query: str, limit: int
-    ) -> List[AutocompleteSuggestion]:
+    ) -> list[AutocompleteSuggestion]:
         """
         Search for persons matching query.
 
@@ -383,7 +381,9 @@ class AutocompleteService:
 
             # Check email match
             if person.email:
-                email_score = self._calculate_match_score(query_lower, person.email.lower())
+                email_score = self._calculate_match_score(
+                    query_lower, person.email.lower()
+                )
                 if email_score > score:
                     score = email_score
                     matched_field = "email"
@@ -397,7 +397,9 @@ class AutocompleteService:
                     "id": str(person.id),
                     "type": person.type,
                     "email": person.email,
-                    "pgy_level": person.pgy_level if person.type == "resident" else None,
+                    "pgy_level": person.pgy_level
+                    if person.type == "resident"
+                    else None,
                 },
                 matched_field=matched_field,
             )
@@ -407,7 +409,7 @@ class AutocompleteService:
 
     async def _search_rotations(
         self, query: str, limit: int
-    ) -> List[AutocompleteSuggestion]:
+    ) -> list[AutocompleteSuggestion]:
         """
         Search for rotations matching query.
 
@@ -467,7 +469,7 @@ class AutocompleteService:
 
     async def _search_procedures(
         self, query: str, limit: int
-    ) -> List[AutocompleteSuggestion]:
+    ) -> list[AutocompleteSuggestion]:
         """
         Search for procedures matching query.
 
@@ -573,7 +575,7 @@ class AutocompleteService:
         query: str,
         context: AutocompleteContext,
         limit: int,
-    ) -> List[AutocompleteSuggestion]:
+    ) -> list[AutocompleteSuggestion]:
         """
         Get popular query suggestions.
 
@@ -633,7 +635,7 @@ class AutocompleteService:
         user_id: str,
         context: AutocompleteContext,
         limit: int,
-    ) -> List[AutocompleteSuggestion]:
+    ) -> list[AutocompleteSuggestion]:
         """
         Get personalized suggestions based on user history.
 
@@ -692,7 +694,7 @@ class AutocompleteService:
         query: str,
         context: AutocompleteContext,
         limit: int,
-    ) -> List[AutocompleteSuggestion]:
+    ) -> list[AutocompleteSuggestion]:
         """
         Get suggestions with typo tolerance using Levenshtein distance.
 
@@ -727,7 +729,9 @@ class AutocompleteService:
 
                 if 0 < distance <= max_distance:
                     # Calculate score based on edit distance
-                    score = self.SCORE_TYPO_CORRECTED * (1 - distance / max_distance / 2)
+                    score = self.SCORE_TYPO_CORRECTED * (
+                        1 - distance / max_distance / 2
+                    )
 
                     suggestion = AutocompleteSuggestion(
                         text=candidate,
@@ -784,9 +788,9 @@ class AutocompleteService:
 
     def _rank_and_deduplicate(
         self,
-        suggestions: List[AutocompleteSuggestion],
+        suggestions: list[AutocompleteSuggestion],
         limit: int,
-    ) -> List[AutocompleteSuggestion]:
+    ) -> list[AutocompleteSuggestion]:
         """
         Rank suggestions by score and remove duplicates.
 
@@ -798,7 +802,7 @@ class AutocompleteService:
             Ranked and deduplicated suggestions
         """
         # Deduplicate by text while keeping highest score
-        seen: Dict[str, AutocompleteSuggestion] = {}
+        seen: dict[str, AutocompleteSuggestion] = {}
         for suggestion in suggestions:
             key = suggestion.text.lower()
             if key not in seen or suggestion.score > seen[key].score:
@@ -851,12 +855,12 @@ class AutocompleteService:
     async def _record_analytics(
         self,
         query: str,
-        user_id: Optional[str],
+        user_id: str | None,
         context: AutocompleteContext,
         suggestions_count: int,
         cache_hit: bool,
         response_time_ms: float,
-        sources_used: List[str],
+        sources_used: list[str],
     ) -> None:
         """
         Record analytics for autocomplete request.
@@ -903,9 +907,9 @@ class AutocompleteService:
 
     async def get_analytics(
         self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-    ) -> Dict[str, Any]:
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> dict[str, Any]:
         """
         Get autocomplete analytics for date range.
 
@@ -950,7 +954,8 @@ class AutocompleteService:
                 else 0
             )
             avg_suggestions = (
-                sum(a.get("suggestions_count", 0) for a in all_analytics) / total_queries
+                sum(a.get("suggestions_count", 0) for a in all_analytics)
+                / total_queries
                 if total_queries > 0
                 else 0
             )
@@ -968,7 +973,9 @@ class AutocompleteService:
 
             return {
                 "total_queries": total_queries,
-                "cache_hit_rate": cache_hits / total_queries if total_queries > 0 else 0,
+                "cache_hit_rate": cache_hits / total_queries
+                if total_queries > 0
+                else 0,
                 "avg_response_time_ms": round(avg_response_time, 2),
                 "avg_suggestions": round(avg_suggestions, 2),
                 "by_context": dict(context_counts),
@@ -984,7 +991,7 @@ class AutocompleteService:
                 "total_queries": 0,
             }
 
-    async def clear_cache(self, context: Optional[AutocompleteContext] = None) -> int:
+    async def clear_cache(self, context: AutocompleteContext | None = None) -> int:
         """
         Clear autocomplete cache.
 
@@ -1027,7 +1034,7 @@ class AutocompleteService:
         self,
         query: str,
         context: AutocompleteContext,
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
     ) -> str:
         """
         Build cache key for autocomplete request.
@@ -1045,7 +1052,7 @@ class AutocompleteService:
 
 
 # Global service instance
-_autocomplete_service: Optional[AutocompleteService] = None
+_autocomplete_service: AutocompleteService | None = None
 
 
 def get_autocomplete_service(db: AsyncSession) -> AutocompleteService:

@@ -8,9 +8,8 @@ Tests analytics functionality including:
 - Report generation (monthly, resident, compliance, workload)
 - Coverage and compliance metrics
 """
-from collections import defaultdict
+
 from datetime import date, datetime, timedelta
-from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import pytest
@@ -31,7 +30,6 @@ from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.schedule_run import ScheduleRun
 
-
 # ============================================================================
 # Fairness Metrics Tests
 # ============================================================================
@@ -46,7 +44,9 @@ class TestFairnessMetrics:
         assignments = []
         for person_idx in range(3):
             for _ in range(5):
-                assignments.append({"person_id": str(uuid4()) if person_idx == 0 else str(uuid4())})
+                assignments.append(
+                    {"person_id": str(uuid4()) if person_idx == 0 else str(uuid4())}
+                )
 
         # Use same person IDs for equal distribution
         person_ids = [str(uuid4()) for _ in range(3)]
@@ -68,9 +68,9 @@ class TestFairnessMetrics:
         person_c = str(uuid4())
 
         assignments = (
-            [{"person_id": person_a}] * 10 +  # Person A gets 10
-            [{"person_id": person_b}] * 2 +   # Person B gets 2
-            [{"person_id": person_c}] * 2     # Person C gets 2
+            [{"person_id": person_a}] * 10  # Person A gets 10
+            + [{"person_id": person_b}] * 2  # Person B gets 2
+            + [{"person_id": person_c}] * 2  # Person C gets 2
         )
 
         result = calculate_fairness_index(assignments)
@@ -94,10 +94,10 @@ class TestFairnessMetrics:
         # Create known distribution
         person_ids = [str(uuid4()) for _ in range(4)]
         assignments = (
-            [{"person_id": person_ids[0]}] * 1 +
-            [{"person_id": person_ids[1]}] * 2 +
-            [{"person_id": person_ids[2]}] * 3 +
-            [{"person_id": person_ids[3]}] * 4
+            [{"person_id": person_ids[0]}] * 1
+            + [{"person_id": person_ids[1]}] * 2
+            + [{"person_id": person_ids[2]}] * 3
+            + [{"person_id": person_ids[3]}] * 4
         )
 
         result = calculate_fairness_index(assignments)
@@ -168,7 +168,9 @@ class TestWorkloadAnalysis:
         result = engine.get_resident_workload_distribution()
 
         # Find the resident's data
-        resident_data = next(r for r in result["residents"] if r["person_id"] == str(sample_resident.id))
+        resident_data = next(
+            r for r in result["residents"] if r["person_id"] == str(sample_resident.id)
+        )
         assert resident_data["assignments"] == 8
         assert resident_data["target"] == 10
         assert resident_data["utilization_percent"] == 80.0
@@ -248,9 +250,14 @@ class TestWorkloadAnalysis:
         db.commit()
 
         # Calculate distribution
-        weekend_assignments = db.query(Assignment).join(Block).filter(
-            Block.is_weekend == True  # noqa: E712
-        ).all()
+        weekend_assignments = (
+            db.query(Assignment)
+            .join(Block)
+            .filter(
+                Block.is_weekend == True  # noqa: E712
+            )
+            .all()
+        )
 
         # All weekend assignments should go to one person
         weekend_person_ids = {str(a.person_id) for a in weekend_assignments}
@@ -339,13 +346,9 @@ class TestPreferenceSatisfaction:
         rotation_x = str(uuid4())
         rotation_y = str(uuid4())
 
-        preferences = [
-            {"person_id": person_a, "rotation_template_id": rotation_x}
-        ]
+        preferences = [{"person_id": person_a, "rotation_template_id": rotation_x}]
 
-        assignments = [
-            {"person_id": person_a, "rotation_template_id": rotation_x}
-        ]
+        assignments = [{"person_id": person_a, "rotation_template_id": rotation_x}]
 
         result = calculate_preference_satisfaction(assignments, preferences)
 
@@ -361,13 +364,16 @@ class TestPreferenceSatisfaction:
 
         preferences = [
             {"person_id": person_a, "rotation_template_id": rotation_x},
-            {"person_id": person_a, "rotation_template_id": rotation_y}
+            {"person_id": person_a, "rotation_template_id": rotation_y},
         ]
 
         assignments = [
             {"person_id": person_a, "rotation_template_id": rotation_x},
             {"person_id": person_a, "rotation_template_id": rotation_y},
-            {"person_id": person_a, "rotation_template_id": str(uuid4())}  # Not preferred
+            {
+                "person_id": person_a,
+                "rotation_template_id": str(uuid4()),
+            },  # Not preferred
         ]
 
         result = calculate_preference_satisfaction(assignments, preferences)
@@ -392,9 +398,7 @@ class TestPreferenceSatisfaction:
 class TestTrendAnalysis:
     """Test suite for trend calculation."""
 
-    def test_get_trend_analysis_violations(
-        self, db: Session
-    ):
+    def test_get_trend_analysis_violations(self, db: Session):
         """Test trend analysis for violations over time."""
         engine = AnalyticsEngine(db)
 
@@ -423,9 +427,7 @@ class TestTrendAnalysis:
         assert result["data_points"][0]["value"] == 0
         assert result["data_points"][4]["value"] == 8
 
-    def test_get_trend_analysis_coverage(
-        self, db: Session
-    ):
+    def test_get_trend_analysis_coverage(self, db: Session):
         """Test trend analysis for coverage over time."""
         engine = AnalyticsEngine(db)
 
@@ -451,9 +453,7 @@ class TestTrendAnalysis:
         assert result["total_runs"] == 3
         assert all("value" in dp for dp in result["data_points"])
 
-    def test_get_trend_analysis_runtime(
-        self, db: Session
-    ):
+    def test_get_trend_analysis_runtime(self, db: Session):
         """Test trend analysis for runtime performance."""
         engine = AnalyticsEngine(db)
 
@@ -545,9 +545,7 @@ class TestReportGeneration:
         end_date = start_date + timedelta(days=7)
 
         report = generator.generate_resident_report(
-            person_id=str(sample_resident.id),
-            start_date=start_date,
-            end_date=end_date
+            person_id=str(sample_resident.id), start_date=start_date, end_date=end_date
         )
 
         assert report["report_type"] == "resident"
@@ -557,9 +555,7 @@ class TestReportGeneration:
         assert "duty_patterns" in report
         assert "recommendations" in report
 
-    def test_generate_compliance_report(
-        self, db: Session
-    ):
+    def test_generate_compliance_report(self, db: Session):
         """Test ACGME compliance report generation."""
         generator = ReportGenerator(db)
 
@@ -583,8 +579,7 @@ class TestReportGeneration:
         db.commit()
 
         report = generator.generate_compliance_report(
-            start_date=start_date,
-            end_date=end_date
+            start_date=start_date, end_date=end_date
         )
 
         assert report["report_type"] == "compliance"
@@ -594,9 +589,7 @@ class TestReportGeneration:
         assert "recommendations" in report
         assert len(report["recommendations"]) > 0
 
-    def test_generate_workload_report(
-        self, db: Session, sample_blocks: list[Block]
-    ):
+    def test_generate_workload_report(self, db: Session, sample_blocks: list[Block]):
         """Test workload distribution report generation."""
         generator = ReportGenerator(db)
 
@@ -632,8 +625,7 @@ class TestReportGeneration:
         end_date = start_date + timedelta(days=7)
 
         report = generator.generate_workload_report(
-            start_date=start_date,
-            end_date=end_date
+            start_date=start_date, end_date=end_date
         )
 
         assert report["report_type"] == "workload"
@@ -652,9 +644,7 @@ class TestReportGeneration:
 class TestScheduleComparison:
     """Test suite for schedule version comparison."""
 
-    def test_compare_schedules_basic(
-        self, db: Session
-    ):
+    def test_compare_schedules_basic(self, db: Session):
         """Test comparing two schedule versions."""
         engine = AnalyticsEngine(db)
 
@@ -695,9 +685,7 @@ class TestScheduleComparison:
         assert comparison["differences"]["blocks_delta"] == 0  # Same
         assert comparison["differences"]["runtime_delta"] == 4.5  # Slower
 
-    def test_compare_schedules_not_found(
-        self, db: Session
-    ):
+    def test_compare_schedules_not_found(self, db: Session):
         """Test comparing schedules when one doesn't exist."""
         engine = AnalyticsEngine(db)
 
@@ -842,9 +830,7 @@ class TestAnalyticsEdgeCases:
         assert result["total_duty_days"] == 0
         assert result["status"] == "good"
 
-    def test_generate_resident_report_person_not_found(
-        self, db: Session
-    ):
+    def test_generate_resident_report_person_not_found(self, db: Session):
         """Test resident report for non-existent person."""
         generator = ReportGenerator(db)
 
@@ -857,9 +843,7 @@ class TestAnalyticsEdgeCases:
         assert "error" in report
         assert "not found" in report["error"].lower()
 
-    def test_workload_distribution_no_residents(
-        self, db: Session
-    ):
+    def test_workload_distribution_no_residents(self, db: Session):
         """Test workload distribution with no residents."""
         engine = AnalyticsEngine(db)
 
@@ -874,9 +858,9 @@ class TestAnalyticsEdgeCases:
         blocks = [{"id": str(uuid4())} for _ in range(5)]
         # Multiple assignments for same block
         assignments = (
-            [{"block_id": blocks[0]["id"]}] * 3 +
-            [{"block_id": blocks[1]["id"]}] * 2 +
-            [{"block_id": blocks[2]["id"]}]
+            [{"block_id": blocks[0]["id"]}] * 3
+            + [{"block_id": blocks[1]["id"]}] * 2
+            + [{"block_id": blocks[2]["id"]}]
         )
 
         result = calculate_coverage_rate(blocks, assignments)

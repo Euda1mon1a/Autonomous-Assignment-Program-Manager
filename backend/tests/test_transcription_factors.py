@@ -12,29 +12,24 @@ Tests cover:
 8. Constraint weight calculation
 9. Integration with ResilienceService
 """
-from datetime import datetime, timedelta
+
 from uuid import uuid4
 
-import pytest
-
+from app.resilience.service import (
+    ResilienceConfig,
+    ResilienceService,
+)
 from app.resilience.transcription_factors import (
     BindingLogic,
     BindingSite,
     ChromatinState,
     LoopType,
     PromoterArchitecture,
-    RegulatoryEdge,
-    SignalEvent,
     SignalStrength,
     TFType,
     TranscriptionFactor,
     TranscriptionFactorScheduler,
 )
-from app.resilience.service import (
-    ResilienceConfig,
-    ResilienceService,
-)
-
 
 # ============================================================================
 # TranscriptionFactor Tests
@@ -335,10 +330,12 @@ class TestPromoterArchitecture:
         activation_no_repressor, _ = promoter.calculate_activation({activator_id: 0.8})
 
         # Activator + repressor
-        activation_with_repressor, _ = promoter.calculate_activation({
-            activator_id: 0.8,
-            repressor_id: 0.5,
-        })
+        activation_with_repressor, _ = promoter.calculate_activation(
+            {
+                activator_id: 0.8,
+                repressor_id: 0.5,
+            }
+        )
 
         assert activation_with_repressor < activation_no_repressor
 
@@ -831,7 +828,9 @@ class TestScenarios:
         )
 
         # Get weight before deployment
-        weights_before = service.get_regulated_constraint_weights([emergency_constraint_id])
+        weights_before = service.get_regulated_constraint_weights(
+            [emergency_constraint_id]
+        )
         weight_before, _ = weights_before[emergency_constraint_id]
 
         # Process deployment signal
@@ -842,7 +841,9 @@ class TestScenarios:
         )
 
         # Get weight after deployment
-        weights_after = service.get_regulated_constraint_weights([emergency_constraint_id])
+        weights_after = service.get_regulated_constraint_weights(
+            [emergency_constraint_id]
+        )
         weight_after, _ = weights_after[emergency_constraint_id]
 
         # Emergency constraint should be more important now

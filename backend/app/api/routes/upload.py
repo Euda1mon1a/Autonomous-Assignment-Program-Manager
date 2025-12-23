@@ -16,8 +16,6 @@ from app.models.user import User
 from app.schemas.upload import (
     DeleteFileResponse,
     FileUrlResponse,
-    UploadErrorResponse,
-    UploadMetadata,
     UploadProgressResponse,
     UploadResponse,
 )

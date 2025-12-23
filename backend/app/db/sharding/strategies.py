@@ -9,8 +9,7 @@ This module provides various sharding strategies:
 
 import hashlib
 from abc import ABC, abstractmethod
-from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Protocol, Tuple, Union
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -21,10 +20,16 @@ class ShardInfo(BaseModel):
     shard_id: int = Field(..., description="Unique shard identifier")
     name: str = Field(..., description="Shard name")
     connection_string: str = Field(..., description="Database connection string")
-    weight: float = Field(default=1.0, ge=0.0, description="Shard weight for load balancing")
+    weight: float = Field(
+        default=1.0, ge=0.0, description="Shard weight for load balancing"
+    )
     is_active: bool = Field(default=True, description="Whether shard is active")
-    min_value: Optional[Any] = Field(default=None, description="Min value for range sharding")
-    max_value: Optional[Any] = Field(default=None, description="Max value for range sharding")
+    min_value: Any | None = Field(
+        default=None, description="Min value for range sharding"
+    )
+    max_value: Any | None = Field(
+        default=None, description="Max value for range sharding"
+    )
 
     class Config:
         """Pydantic config."""
@@ -40,7 +45,7 @@ class ShardingStrategy(ABC):
     which shard a given key should be routed to.
     """
 
-    def __init__(self, shards: List[ShardInfo]) -> None:
+    def __init__(self, shards: list[ShardInfo]) -> None:
         """
         Initialize sharding strategy.
 
@@ -80,7 +85,7 @@ class ShardingStrategy(ABC):
         """
         pass
 
-    def get_shard_info(self, shard_id: int) -> Optional[ShardInfo]:
+    def get_shard_info(self, shard_id: int) -> ShardInfo | None:
         """
         Get information about a specific shard.
 
@@ -95,7 +100,7 @@ class ShardingStrategy(ABC):
                 return shard
         return None
 
-    def get_active_shards(self) -> List[ShardInfo]:
+    def get_active_shards(self) -> list[ShardInfo]:
         """
         Get all active shards.
 
@@ -119,7 +124,7 @@ class HashShardingStrategy(ShardingStrategy):
 
     def __init__(
         self,
-        shards: List[ShardInfo],
+        shards: list[ShardInfo],
         num_virtual_nodes: int = 150,
         hash_function: str = "md5",
     ) -> None:
@@ -138,7 +143,7 @@ class HashShardingStrategy(ShardingStrategy):
 
     def _build_hash_ring(self) -> None:
         """Build consistent hash ring with virtual nodes."""
-        self.hash_ring: Dict[int, int] = {}
+        self.hash_ring: dict[int, int] = {}
 
         for shard in self.get_active_shards():
             # Create virtual nodes for better distribution
@@ -238,7 +243,7 @@ class RangeShardingStrategy(ShardingStrategy):
         shard_id = strategy.get_shard_id(date(2021, 6, 15))
     """
 
-    def __init__(self, shards: List[ShardInfo]) -> None:
+    def __init__(self, shards: list[ShardInfo]) -> None:
         """
         Initialize range-based sharding strategy.
 
@@ -309,9 +314,7 @@ class RangeShardingStrategy(ShardingStrategy):
 
         raise ValueError(f"Key {key} does not fall within any shard range")
 
-    def get_shard_ids_for_range(
-        self, min_key: Any, max_key: Any
-    ) -> List[int]:
+    def get_shard_ids_for_range(self, min_key: Any, max_key: Any) -> list[int]:
         """
         Get all shard IDs that overlap with a given range.
 
@@ -349,9 +352,9 @@ class DirectoryShardingStrategy(ShardingStrategy):
 
     def __init__(
         self,
-        shards: List[ShardInfo],
-        default_shard_id: Optional[int] = None,
-        directory: Optional[Dict[str, int]] = None,
+        shards: list[ShardInfo],
+        default_shard_id: int | None = None,
+        directory: dict[str, int] | None = None,
     ) -> None:
         """
         Initialize directory-based sharding strategy.
@@ -363,7 +366,7 @@ class DirectoryShardingStrategy(ShardingStrategy):
         """
         super().__init__(shards)
         self.default_shard_id = default_shard_id
-        self.directory: Dict[str, int] = directory or {}
+        self.directory: dict[str, int] = directory or {}
 
         if default_shard_id is not None:
             if not self.get_shard_info(default_shard_id):
@@ -394,7 +397,9 @@ class DirectoryShardingStrategy(ShardingStrategy):
         if self.default_shard_id is not None:
             return self.default_shard_id
 
-        raise ValueError(f"Key {key} not found in directory and no default shard configured")
+        raise ValueError(
+            f"Key {key} not found in directory and no default shard configured"
+        )
 
     def add_mapping(self, key: Any, shard_id: int) -> None:
         """
@@ -423,7 +428,7 @@ class DirectoryShardingStrategy(ShardingStrategy):
         key_str = str(key)
         self.directory.pop(key_str, None)
 
-    def bulk_add_mappings(self, mappings: Dict[Any, int]) -> None:
+    def bulk_add_mappings(self, mappings: dict[Any, int]) -> None:
         """
         Add multiple key-to-shard mappings.
 
@@ -442,7 +447,7 @@ class DirectoryShardingStrategy(ShardingStrategy):
         for key, shard_id in mappings.items():
             self.directory[str(key)] = shard_id
 
-    def get_mappings_for_shard(self, shard_id: int) -> List[str]:
+    def get_mappings_for_shard(self, shard_id: int) -> list[str]:
         """
         Get all keys mapped to a specific shard.
 

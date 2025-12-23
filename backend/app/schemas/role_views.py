@@ -1,7 +1,9 @@
 """Role-based view schemas."""
+
 from enum import Enum
-from typing import Optional
+
 from pydantic import BaseModel
+
 
 class StaffRole(str, Enum):
     ADMIN = "admin"
@@ -9,6 +11,7 @@ class StaffRole(str, Enum):
     FACULTY = "faculty"
     CLINICAL_STAFF = "clinical_staff"  # rn, lpn, msa
     RESIDENT = "resident"
+
 
 class ViewPermissions(BaseModel):
     can_view_all_schedules: bool = False
@@ -19,6 +22,7 @@ class ViewPermissions(BaseModel):
     can_view_compliance: bool = False
     can_view_conflicts: bool = False
     can_manage_swaps: bool = False
+
 
 class RoleViewConfig(BaseModel):
     role: StaffRole

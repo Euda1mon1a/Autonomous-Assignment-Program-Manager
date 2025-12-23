@@ -99,31 +99,57 @@ class TestAccessControlMatrix:
 
     def test_coordinator_can_manage_schedules(self, acm):
         """Coordinator can create, read, update schedules."""
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.SCHEDULE, PermissionAction.CREATE)
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.SCHEDULE, PermissionAction.READ)
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.SCHEDULE, PermissionAction.UPDATE)
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.SCHEDULE, PermissionAction.DELETE)
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.SCHEDULE, PermissionAction.CREATE
+        )
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.SCHEDULE, PermissionAction.READ
+        )
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.SCHEDULE, PermissionAction.UPDATE
+        )
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.SCHEDULE, PermissionAction.DELETE
+        )
 
     def test_coordinator_can_manage_assignments(self, acm):
         """Coordinator can manage assignments."""
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.CREATE)
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.UPDATE)
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.DELETE)
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.CREATE
+        )
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.UPDATE
+        )
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.DELETE
+        )
 
     def test_coordinator_can_approve_leave(self, acm):
         """Coordinator can approve and reject leave requests."""
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.LEAVE, PermissionAction.APPROVE)
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.LEAVE, PermissionAction.REJECT)
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.LEAVE, PermissionAction.APPROVE
+        )
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.LEAVE, PermissionAction.REJECT
+        )
 
     def test_coordinator_can_manage_swaps(self, acm):
         """Coordinator can approve and execute swaps."""
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.SWAP, PermissionAction.APPROVE)
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.SWAP, PermissionAction.EXECUTE)
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.SWAP, PermissionAction.APPROVE
+        )
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.SWAP, PermissionAction.EXECUTE
+        )
 
     def test_coordinator_cannot_manage_users(self, acm):
         """Coordinator cannot manage users (admin-only)."""
-        assert not acm.has_permission(UserRole.COORDINATOR, ResourceType.USER, PermissionAction.CREATE)
-        assert not acm.has_permission(UserRole.COORDINATOR, ResourceType.USER, PermissionAction.DELETE)
+        assert not acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.USER, PermissionAction.CREATE
+        )
+        assert not acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.USER, PermissionAction.DELETE
+        )
 
     # ========================================================================
     # Faculty Permissions
@@ -131,29 +157,51 @@ class TestAccessControlMatrix:
 
     def test_faculty_can_read_schedules(self, acm):
         """Faculty can read and list schedules."""
-        assert acm.has_permission(UserRole.FACULTY, ResourceType.SCHEDULE, PermissionAction.READ)
-        assert acm.has_permission(UserRole.FACULTY, ResourceType.SCHEDULE, PermissionAction.LIST)
+        assert acm.has_permission(
+            UserRole.FACULTY, ResourceType.SCHEDULE, PermissionAction.READ
+        )
+        assert acm.has_permission(
+            UserRole.FACULTY, ResourceType.SCHEDULE, PermissionAction.LIST
+        )
 
     def test_faculty_cannot_create_schedules(self, acm):
         """Faculty cannot create schedules."""
-        assert not acm.has_permission(UserRole.FACULTY, ResourceType.SCHEDULE, PermissionAction.CREATE)
-        assert not acm.has_permission(UserRole.FACULTY, ResourceType.SCHEDULE, PermissionAction.DELETE)
+        assert not acm.has_permission(
+            UserRole.FACULTY, ResourceType.SCHEDULE, PermissionAction.CREATE
+        )
+        assert not acm.has_permission(
+            UserRole.FACULTY, ResourceType.SCHEDULE, PermissionAction.DELETE
+        )
 
     def test_faculty_can_manage_own_leave(self, acm):
         """Faculty can create and update leave requests."""
-        assert acm.has_permission(UserRole.FACULTY, ResourceType.LEAVE, PermissionAction.CREATE)
-        assert acm.has_permission(UserRole.FACULTY, ResourceType.LEAVE, PermissionAction.UPDATE)
+        assert acm.has_permission(
+            UserRole.FACULTY, ResourceType.LEAVE, PermissionAction.CREATE
+        )
+        assert acm.has_permission(
+            UserRole.FACULTY, ResourceType.LEAVE, PermissionAction.UPDATE
+        )
 
     def test_faculty_can_manage_swaps(self, acm):
         """Faculty can create and manage swap requests."""
-        assert acm.has_permission(UserRole.FACULTY, ResourceType.SWAP, PermissionAction.CREATE)
-        assert acm.has_permission(UserRole.FACULTY, ResourceType.SWAP, PermissionAction.READ)
-        assert acm.has_permission(UserRole.FACULTY, ResourceType.SWAP_REQUEST, PermissionAction.APPROVE)
+        assert acm.has_permission(
+            UserRole.FACULTY, ResourceType.SWAP, PermissionAction.CREATE
+        )
+        assert acm.has_permission(
+            UserRole.FACULTY, ResourceType.SWAP, PermissionAction.READ
+        )
+        assert acm.has_permission(
+            UserRole.FACULTY, ResourceType.SWAP_REQUEST, PermissionAction.APPROVE
+        )
 
     def test_faculty_can_view_procedures(self, acm):
         """Faculty can view procedures and credentials."""
-        assert acm.has_permission(UserRole.FACULTY, ResourceType.PROCEDURE, PermissionAction.READ)
-        assert acm.has_permission(UserRole.FACULTY, ResourceType.CREDENTIAL, PermissionAction.READ)
+        assert acm.has_permission(
+            UserRole.FACULTY, ResourceType.PROCEDURE, PermissionAction.READ
+        )
+        assert acm.has_permission(
+            UserRole.FACULTY, ResourceType.CREDENTIAL, PermissionAction.READ
+        )
 
     # ========================================================================
     # Clinical Staff Permissions (RN, LPN, MSA)
@@ -162,21 +210,30 @@ class TestAccessControlMatrix:
     def test_clinical_staff_can_read_schedules(self, acm):
         """Clinical staff can read schedules."""
         for role in [UserRole.CLINICAL_STAFF, UserRole.RN, UserRole.LPN, UserRole.MSA]:
-            assert acm.has_permission(role, ResourceType.SCHEDULE, PermissionAction.READ)
-            assert acm.has_permission(role, ResourceType.ASSIGNMENT, PermissionAction.READ)
+            assert acm.has_permission(
+                role, ResourceType.SCHEDULE, PermissionAction.READ
+            )
+            assert acm.has_permission(
+                role, ResourceType.ASSIGNMENT, PermissionAction.READ
+            )
 
     def test_clinical_staff_cannot_modify_schedules(self, acm):
         """Clinical staff cannot modify schedules."""
         for role in [UserRole.CLINICAL_STAFF, UserRole.RN, UserRole.LPN, UserRole.MSA]:
-            assert not acm.has_permission(role, ResourceType.SCHEDULE, PermissionAction.CREATE)
-            assert not acm.has_permission(role, ResourceType.SCHEDULE, PermissionAction.UPDATE)
+            assert not acm.has_permission(
+                role, ResourceType.SCHEDULE, PermissionAction.CREATE
+            )
+            assert not acm.has_permission(
+                role, ResourceType.SCHEDULE, PermissionAction.UPDATE
+            )
 
     def test_rn_inherits_clinical_staff_permissions(self, acm):
         """RN inherits all clinical_staff permissions."""
         # Both should have same permissions on schedules
-        assert (
-            acm.has_permission(UserRole.RN, ResourceType.SCHEDULE, PermissionAction.READ) ==
-            acm.has_permission(UserRole.CLINICAL_STAFF, ResourceType.SCHEDULE, PermissionAction.READ)
+        assert acm.has_permission(
+            UserRole.RN, ResourceType.SCHEDULE, PermissionAction.READ
+        ) == acm.has_permission(
+            UserRole.CLINICAL_STAFF, ResourceType.SCHEDULE, PermissionAction.READ
         )
 
     # ========================================================================
@@ -185,31 +242,51 @@ class TestAccessControlMatrix:
 
     def test_resident_can_read_own_schedule(self, acm):
         """Resident can read schedules."""
-        assert acm.has_permission(UserRole.RESIDENT, ResourceType.SCHEDULE, PermissionAction.READ)
-        assert acm.has_permission(UserRole.RESIDENT, ResourceType.ASSIGNMENT, PermissionAction.READ)
+        assert acm.has_permission(
+            UserRole.RESIDENT, ResourceType.SCHEDULE, PermissionAction.READ
+        )
+        assert acm.has_permission(
+            UserRole.RESIDENT, ResourceType.ASSIGNMENT, PermissionAction.READ
+        )
 
     def test_resident_cannot_modify_schedules(self, acm):
         """Resident cannot modify schedules."""
-        assert not acm.has_permission(UserRole.RESIDENT, ResourceType.SCHEDULE, PermissionAction.CREATE)
-        assert not acm.has_permission(UserRole.RESIDENT, ResourceType.SCHEDULE, PermissionAction.UPDATE)
+        assert not acm.has_permission(
+            UserRole.RESIDENT, ResourceType.SCHEDULE, PermissionAction.CREATE
+        )
+        assert not acm.has_permission(
+            UserRole.RESIDENT, ResourceType.SCHEDULE, PermissionAction.UPDATE
+        )
 
     def test_resident_can_request_leave(self, acm):
         """Resident can create leave requests."""
-        assert acm.has_permission(UserRole.RESIDENT, ResourceType.LEAVE, PermissionAction.CREATE)
-        assert acm.has_permission(UserRole.RESIDENT, ResourceType.LEAVE, PermissionAction.READ)
+        assert acm.has_permission(
+            UserRole.RESIDENT, ResourceType.LEAVE, PermissionAction.CREATE
+        )
+        assert acm.has_permission(
+            UserRole.RESIDENT, ResourceType.LEAVE, PermissionAction.READ
+        )
 
     def test_resident_cannot_approve_leave(self, acm):
         """Resident cannot approve leave."""
-        assert not acm.has_permission(UserRole.RESIDENT, ResourceType.LEAVE, PermissionAction.APPROVE)
+        assert not acm.has_permission(
+            UserRole.RESIDENT, ResourceType.LEAVE, PermissionAction.APPROVE
+        )
 
     def test_resident_can_manage_swaps(self, acm):
         """Resident can create and manage swap requests."""
-        assert acm.has_permission(UserRole.RESIDENT, ResourceType.SWAP, PermissionAction.CREATE)
-        assert acm.has_permission(UserRole.RESIDENT, ResourceType.SWAP_REQUEST, PermissionAction.APPROVE)
+        assert acm.has_permission(
+            UserRole.RESIDENT, ResourceType.SWAP, PermissionAction.CREATE
+        )
+        assert acm.has_permission(
+            UserRole.RESIDENT, ResourceType.SWAP_REQUEST, PermissionAction.APPROVE
+        )
 
     def test_resident_can_view_conflicts(self, acm):
         """Resident can view conflicts."""
-        assert acm.has_permission(UserRole.RESIDENT, ResourceType.CONFLICT, PermissionAction.READ)
+        assert acm.has_permission(
+            UserRole.RESIDENT, ResourceType.CONFLICT, PermissionAction.READ
+        )
 
     # ========================================================================
     # String Role/Resource/Action Support
@@ -217,8 +294,12 @@ class TestAccessControlMatrix:
 
     def test_string_role_support(self, acm):
         """Permission checks work with string roles."""
-        assert acm.has_permission("admin", ResourceType.SCHEDULE, PermissionAction.CREATE)
-        assert acm.has_permission("coordinator", ResourceType.SCHEDULE, PermissionAction.CREATE)
+        assert acm.has_permission(
+            "admin", ResourceType.SCHEDULE, PermissionAction.CREATE
+        )
+        assert acm.has_permission(
+            "coordinator", ResourceType.SCHEDULE, PermissionAction.CREATE
+        )
 
     def test_string_resource_support(self, acm):
         """Permission checks work with string resources."""
@@ -230,7 +311,9 @@ class TestAccessControlMatrix:
 
     def test_invalid_string_role(self, acm):
         """Invalid string role returns False."""
-        assert not acm.has_permission("invalid_role", ResourceType.SCHEDULE, PermissionAction.READ)
+        assert not acm.has_permission(
+            "invalid_role", ResourceType.SCHEDULE, PermissionAction.READ
+        )
 
     # ========================================================================
     # Context-Aware Permissions
@@ -291,12 +374,22 @@ class TestAccessControlMatrix:
     def test_manage_permission_includes_crud(self, acm):
         """MANAGE permission includes all CRUD operations."""
         # Coordinator has MANAGE on assignments
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.MANAGE)
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.MANAGE
+        )
         # Should also have individual CRUD permissions
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.CREATE)
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.READ)
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.UPDATE)
-        assert acm.has_permission(UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.DELETE)
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.CREATE
+        )
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.READ
+        )
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.UPDATE
+        )
+        assert acm.has_permission(
+            UserRole.COORDINATOR, ResourceType.ASSIGNMENT, PermissionAction.DELETE
+        )
 
     # ========================================================================
     # Get Role Permissions
@@ -340,7 +433,9 @@ class TestAccessControlMatrix:
 
     def test_audit_log_enabled(self, acm):
         """Audit log records permission checks."""
-        acm.has_permission(UserRole.ADMIN, ResourceType.SCHEDULE, PermissionAction.CREATE)
+        acm.has_permission(
+            UserRole.ADMIN, ResourceType.SCHEDULE, PermissionAction.CREATE
+        )
         assert len(acm.audit_log) > 0
         entry = acm.audit_log[-1]
         assert entry.role == UserRole.ADMIN
@@ -350,22 +445,32 @@ class TestAccessControlMatrix:
 
     def test_audit_log_denied_permission(self, acm):
         """Audit log records denied permissions."""
-        acm.has_permission(UserRole.RESIDENT, ResourceType.USER, PermissionAction.CREATE)
+        acm.has_permission(
+            UserRole.RESIDENT, ResourceType.USER, PermissionAction.CREATE
+        )
         entry = acm.audit_log[-1]
         assert entry.result is False
 
     def test_get_audit_log_filtered_by_role(self, acm):
         """Get audit log filtered by role."""
-        acm.has_permission(UserRole.ADMIN, ResourceType.SCHEDULE, PermissionAction.CREATE)
-        acm.has_permission(UserRole.RESIDENT, ResourceType.SCHEDULE, PermissionAction.READ)
+        acm.has_permission(
+            UserRole.ADMIN, ResourceType.SCHEDULE, PermissionAction.CREATE
+        )
+        acm.has_permission(
+            UserRole.RESIDENT, ResourceType.SCHEDULE, PermissionAction.READ
+        )
 
         admin_logs = acm.get_audit_log(role=UserRole.ADMIN)
         assert all(entry.role == UserRole.ADMIN for entry in admin_logs)
 
     def test_get_audit_log_filtered_by_resource(self, acm):
         """Get audit log filtered by resource."""
-        acm.has_permission(UserRole.ADMIN, ResourceType.SCHEDULE, PermissionAction.CREATE)
-        acm.has_permission(UserRole.ADMIN, ResourceType.ASSIGNMENT, PermissionAction.CREATE)
+        acm.has_permission(
+            UserRole.ADMIN, ResourceType.SCHEDULE, PermissionAction.CREATE
+        )
+        acm.has_permission(
+            UserRole.ADMIN, ResourceType.ASSIGNMENT, PermissionAction.CREATE
+        )
 
         schedule_logs = acm.get_audit_log(resource=ResourceType.SCHEDULE)
         assert all(entry.resource == ResourceType.SCHEDULE for entry in schedule_logs)
@@ -373,14 +478,18 @@ class TestAccessControlMatrix:
     def test_get_audit_log_with_limit(self, acm):
         """Get audit log with limit."""
         for _ in range(10):
-            acm.has_permission(UserRole.ADMIN, ResourceType.SCHEDULE, PermissionAction.CREATE)
+            acm.has_permission(
+                UserRole.ADMIN, ResourceType.SCHEDULE, PermissionAction.CREATE
+            )
 
         logs = acm.get_audit_log(limit=5)
         assert len(logs) == 5
 
     def test_clear_audit_log(self, acm):
         """Clear audit log."""
-        acm.has_permission(UserRole.ADMIN, ResourceType.SCHEDULE, PermissionAction.CREATE)
+        acm.has_permission(
+            UserRole.ADMIN, ResourceType.SCHEDULE, PermissionAction.CREATE
+        )
         assert len(acm.audit_log) > 0
         acm.clear_audit_log()
         assert len(acm.audit_log) == 0
@@ -388,7 +497,9 @@ class TestAccessControlMatrix:
     def test_audit_disabled(self):
         """ACM with audit disabled doesn't record logs."""
         acm = AccessControlMatrix(enable_audit=False)
-        acm.has_permission(UserRole.ADMIN, ResourceType.SCHEDULE, PermissionAction.CREATE)
+        acm.has_permission(
+            UserRole.ADMIN, ResourceType.SCHEDULE, PermissionAction.CREATE
+        )
         assert len(acm.audit_log) == 0
 
     # ========================================================================
@@ -435,7 +546,9 @@ class TestGlobalACM:
 
     def test_has_permission_global(self):
         """Global has_permission function works."""
-        assert has_permission(UserRole.ADMIN, ResourceType.SCHEDULE, PermissionAction.CREATE)
+        assert has_permission(
+            UserRole.ADMIN, ResourceType.SCHEDULE, PermissionAction.CREATE
+        )
         assert has_permission("admin", "schedule", "create")
 
 
@@ -453,7 +566,7 @@ class TestPermissionDenied:
         exc = PermissionDenied(
             ResourceType.SCHEDULE,
             PermissionAction.CREATE,
-            detail="Custom error message"
+            detail="Custom error message",
         )
         assert exc.detail == "Custom error message"
 
@@ -468,8 +581,9 @@ class TestRequirePermissionDecorator:
 
     def test_decorator_with_permission(self):
         """Decorator allows access with permission."""
-        from app.models.user import User
         from uuid import uuid4
+
+        from app.models.user import User
 
         @require_permission(ResourceType.SCHEDULE, PermissionAction.READ)
         async def test_func(current_user: User):
@@ -486,13 +600,15 @@ class TestRequirePermissionDecorator:
 
         # Should work for admin
         import asyncio
+
         result = asyncio.run(test_func(current_user=user))
         assert result == "success"
 
     def test_decorator_without_permission(self):
         """Decorator denies access without permission."""
-        from app.models.user import User
         from uuid import uuid4
+
+        from app.models.user import User
 
         @require_permission(ResourceType.USER, PermissionAction.CREATE)
         async def test_func(current_user: User):
@@ -509,16 +625,19 @@ class TestRequirePermissionDecorator:
 
         # Should raise PermissionDenied
         import asyncio
+
         with pytest.raises(PermissionDenied):
             asyncio.run(test_func(current_user=user))
 
     def test_decorator_without_user(self):
         """Decorator requires authenticated user."""
+
         @require_permission(ResourceType.SCHEDULE, PermissionAction.READ)
         async def test_func():
             return "success"
 
         import asyncio
+
         with pytest.raises(PermissionDenied, match="Authentication required"):
             asyncio.run(test_func())
 

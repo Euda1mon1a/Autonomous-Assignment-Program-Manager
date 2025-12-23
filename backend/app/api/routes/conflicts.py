@@ -16,7 +16,6 @@ from app.db.session import get_db
 from app.models.user import User
 from app.scheduling.conflicts import (
     ConflictAnalyzer,
-    ConflictResolver,
     ConflictVisualizer,
 )
 from app.scheduling.conflicts.types import ConflictSummary
@@ -28,7 +27,9 @@ router = APIRouter()
 async def analyze_conflicts(
     start_date: date = Query(..., description="Start date for analysis"),
     end_date: date = Query(..., description="End date for analysis"),
-    person_id: UUID | None = Query(None, description="Optional: analyze for specific person"),
+    person_id: UUID | None = Query(
+        None, description="Optional: analyze for specific person"
+    ),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -91,7 +92,9 @@ async def analyze_conflicts(
 async def get_conflict_summary(
     start_date: date = Query(..., description="Start date for analysis"),
     end_date: date = Query(..., description="End date for analysis"),
-    person_id: UUID | None = Query(None, description="Optional: analyze for specific person"),
+    person_id: UUID | None = Query(
+        None, description="Optional: analyze for specific person"
+    ),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> ConflictSummary:
@@ -138,7 +141,9 @@ async def get_conflict_summary(
 async def get_conflict_timeline(
     start_date: date = Query(..., description="Start date for timeline"),
     end_date: date = Query(..., description="End date for timeline"),
-    person_id: UUID | None = Query(None, description="Optional: timeline for specific person"),
+    person_id: UUID | None = Query(
+        None, description="Optional: timeline for specific person"
+    ),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -191,7 +196,9 @@ async def get_conflict_timeline(
 async def get_conflict_heatmap(
     start_date: date = Query(..., description="Start date for analysis"),
     end_date: date = Query(..., description="End date for analysis"),
-    person_id: UUID | None = Query(None, description="Optional: analyze for specific person"),
+    person_id: UUID | None = Query(
+        None, description="Optional: analyze for specific person"
+    ),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -233,7 +240,9 @@ async def get_conflict_heatmap(
 async def get_conflict_gantt(
     start_date: date = Query(..., description="Start date for analysis"),
     end_date: date = Query(..., description="End date for analysis"),
-    person_id: UUID | None = Query(None, description="Optional: analyze for specific person"),
+    person_id: UUID | None = Query(
+        None, description="Optional: analyze for specific person"
+    ),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -274,7 +283,9 @@ async def get_conflict_gantt(
 async def get_conflict_distribution(
     start_date: date = Query(..., description="Start date for analysis"),
     end_date: date = Query(..., description="End date for analysis"),
-    person_id: UUID | None = Query(None, description="Optional: analyze for specific person"),
+    person_id: UUID | None = Query(
+        None, description="Optional: analyze for specific person"
+    ),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -354,7 +365,9 @@ async def get_person_impact(
 @router.post("/resolve/{conflict_id}/suggestions")
 async def get_resolution_suggestions(
     conflict_id: str,
-    max_suggestions: int = Query(5, ge=1, le=10, description="Maximum suggestions to return"),
+    max_suggestions: int = Query(
+        5, ge=1, le=10, description="Maximum suggestions to return"
+    ),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):

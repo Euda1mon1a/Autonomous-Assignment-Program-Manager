@@ -1,4 +1,5 @@
 """Service for managing FMIT swap requests (portal workflow)."""
+
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from uuid import UUID, uuid4
@@ -19,6 +20,7 @@ from app.services.swap_validation import SwapValidationService, ValidationError
 @dataclass
 class RequestResult:
     """Result of creating a swap request."""
+
     success: bool
     request_id: UUID | None = None
     message: str = ""
@@ -30,6 +32,7 @@ class RequestResult:
 @dataclass
 class RequestDetail:
     """Detailed information about a swap request."""
+
     id: UUID
     status: SwapStatus
     swap_type: SwapType
@@ -51,6 +54,7 @@ class RequestDetail:
 @dataclass
 class ResponseResult:
     """Result of responding to a swap request."""
+
     success: bool
     message: str = ""
     new_request_id: UUID | None = None  # For counter-offers
@@ -61,6 +65,7 @@ class ResponseResult:
 @dataclass
 class CancelResult:
     """Result of canceling a swap request."""
+
     success: bool
     message: str = ""
 
@@ -68,6 +73,7 @@ class CancelResult:
 @dataclass
 class MatchResult:
     """Result of auto-matching swap requests."""
+
     matches_found: int
     potential_matches: list[tuple[UUID, UUID]] = field(default_factory=list)
     message: str = ""
@@ -121,7 +127,7 @@ class SwapRequestService:
             return RequestResult(
                 success=False,
                 message="Requester is not a valid faculty member",
-                errors=[ValidationError("INVALID_REQUESTER", "Faculty not found")]
+                errors=[ValidationError("INVALID_REQUESTER", "Faculty not found")],
             )
 
         # Verify source week is assigned to requester
@@ -129,21 +135,27 @@ class SwapRequestService:
             return RequestResult(
                 success=False,
                 message=f"Week {source_week} is not assigned to you",
-                errors=[ValidationError("WEEK_NOT_ASSIGNED", "Cannot swap unassigned week")]
+                errors=[
+                    ValidationError("WEEK_NOT_ASSIGNED", "Cannot swap unassigned week")
+                ],
             )
 
         # Check if there's already a pending request for this week
-        existing = self.db.query(SwapRecord).filter(
-            SwapRecord.source_faculty_id == requester_id,
-            SwapRecord.source_week == source_week,
-            SwapRecord.status.in_([SwapStatus.PENDING, SwapStatus.APPROVED])
-        ).first()
+        existing = (
+            self.db.query(SwapRecord)
+            .filter(
+                SwapRecord.source_faculty_id == requester_id,
+                SwapRecord.source_week == source_week,
+                SwapRecord.status.in_([SwapStatus.PENDING, SwapStatus.APPROVED]),
+            )
+            .first()
+        )
 
         if existing:
             return RequestResult(
                 success=False,
                 message="You already have a pending swap request for this week",
-                errors=[ValidationError("DUPLICATE_REQUEST", "Pending request exists")]
+                errors=[ValidationError("DUPLICATE_REQUEST", "Pending request exists")],
             )
 
         # If target specified, validate the swap
@@ -169,11 +181,15 @@ class SwapRequestService:
         # If no target specified, this becomes a marketplace posting
         if not target_faculty_id:
             # Find potential candidates
-            candidates = self._find_compatible_candidates(
-                source_faculty_id=requester_id,
-                source_week=source_week,
-                desired_weeks=desired_weeks,
-            ) if auto_find_candidates else []
+            candidates = (
+                self._find_compatible_candidates(
+                    source_faculty_id=requester_id,
+                    source_week=source_week,
+                    desired_weeks=desired_weeks,
+                )
+                if auto_find_candidates
+                else []
+            )
 
             if not candidates:
                 # Create marketplace request without target
@@ -267,10 +283,14 @@ class SwapRequestService:
             status=swap.status,
             swap_type=swap.swap_type,
             source_faculty_id=swap.source_faculty_id,
-            source_faculty_name=swap.source_faculty.name if swap.source_faculty else "Unknown",
+            source_faculty_name=swap.source_faculty.name
+            if swap.source_faculty
+            else "Unknown",
             source_week=swap.source_week,
             target_faculty_id=swap.target_faculty_id,
-            target_faculty_name=swap.target_faculty.name if swap.target_faculty else "Unknown",
+            target_faculty_name=swap.target_faculty.name
+            if swap.target_faculty
+            else "Unknown",
             target_week=swap.target_week,
             reason=swap.reason,
             requested_at=swap.requested_at,
@@ -364,7 +384,7 @@ class SwapRequestService:
             return ResponseResult(
                 success=False,
                 message="Swap request not found",
-                errors=[ValidationError("NOT_FOUND", "Request does not exist")]
+                errors=[ValidationError("NOT_FOUND", "Request does not exist")],
             )
 
         # Verify faculty is the target
@@ -372,7 +392,9 @@ class SwapRequestService:
             return ResponseResult(
                 success=False,
                 message="You are not the target of this swap request",
-                errors=[ValidationError("UNAUTHORIZED", "Not your request to respond to")]
+                errors=[
+                    ValidationError("UNAUTHORIZED", "Not your request to respond to")
+                ],
             )
 
         # Verify request is still pending
@@ -380,7 +402,11 @@ class SwapRequestService:
             return ResponseResult(
                 success=False,
                 message=f"Request is already {swap.status.value}",
-                errors=[ValidationError("INVALID_STATUS", "Cannot respond to non-pending request")]
+                errors=[
+                    ValidationError(
+                        "INVALID_STATUS", "Cannot respond to non-pending request"
+                    )
+                ],
             )
 
         source_faculty = self._get_faculty(swap.source_faculty_id)
@@ -507,7 +533,7 @@ class SwapRequestService:
             return ResponseResult(
                 success=False,
                 message=f"Swap execution failed: {execution.message}",
-                errors=[ValidationError("EXECUTION_FAILED", execution.message)]
+                errors=[ValidationError("EXECUTION_FAILED", execution.message)],
             )
 
     def cancel_request(self, request_id: UUID, requester_id: UUID) -> CancelResult:
@@ -602,12 +628,14 @@ class SwapRequestService:
         matches = []
 
         for i, swap_a in enumerate(pending_swaps):
-            for swap_b in pending_swaps[i + 1:]:
+            for swap_b in pending_swaps[i + 1 :]:
                 # Check for mutual compatibility
-                if (swap_a.target_week and swap_b.target_week and
-                    swap_a.source_week == swap_b.target_week and
-                    swap_b.source_week == swap_a.target_week):
-
+                if (
+                    swap_a.target_week
+                    and swap_b.target_week
+                    and swap_a.source_week == swap_b.target_week
+                    and swap_b.source_week == swap_a.target_week
+                ):
                     # Validate both directions
                     valid_ab = self.validator.validate_swap(
                         source_faculty_id=swap_a.source_faculty_id,
@@ -647,14 +675,16 @@ class SwapRequestService:
             return ResponseResult(
                 success=False,
                 message="Swap request not found",
-                errors=[ValidationError("NOT_FOUND", "Request does not exist")]
+                errors=[ValidationError("NOT_FOUND", "Request does not exist")],
             )
 
         if swap.status != SwapStatus.APPROVED:
             return ResponseResult(
                 success=False,
                 message="Swap must be approved before execution",
-                errors=[ValidationError("NOT_APPROVED", "Request not in approved state")]
+                errors=[
+                    ValidationError("NOT_APPROVED", "Request not in approved state")
+                ],
             )
 
         # Execute the swap
@@ -690,17 +720,18 @@ class SwapRequestService:
             return ResponseResult(
                 success=False,
                 message=f"Execution failed: {execution.message}",
-                errors=[ValidationError("EXECUTION_FAILED", execution.message)]
+                errors=[ValidationError("EXECUTION_FAILED", execution.message)],
             )
 
     # Helper methods
 
     def _get_faculty(self, faculty_id: UUID) -> Person | None:
         """Get a faculty member by ID."""
-        return self.db.query(Person).filter(
-            Person.id == faculty_id,
-            Person.type == "faculty"
-        ).first()
+        return (
+            self.db.query(Person)
+            .filter(Person.id == faculty_id, Person.type == "faculty")
+            .first()
+        )
 
     def _is_week_assigned_to_faculty(self, faculty_id: UUID, week_start: date) -> bool:
         """
@@ -721,9 +752,11 @@ class SwapRequestService:
         week_end = week_start + timedelta(days=6)
 
         # Find FMIT rotation template
-        fmit_template = self.db.query(RotationTemplate).filter(
-            RotationTemplate.name == "FMIT"
-        ).first()
+        fmit_template = (
+            self.db.query(RotationTemplate)
+            .filter(RotationTemplate.name == "FMIT")
+            .first()
+        )
 
         if not fmit_template:
             # No FMIT template configured - cannot verify
@@ -763,15 +796,17 @@ class SwapRequestService:
         candidates = []
 
         # Find faculty who prefer this week
-        preferred_candidates = self.preference_service.get_faculty_with_preference_for_week(
-            week_date=source_week,
-            exclude_faculty_ids=[source_faculty_id]
+        preferred_candidates = (
+            self.preference_service.get_faculty_with_preference_for_week(
+                week_date=source_week, exclude_faculty_ids=[source_faculty_id]
+            )
         )
 
         # Find faculty without blocks for this week
-        available_candidates = self.preference_service.get_faculty_without_blocks_for_week(
-            week_date=source_week,
-            exclude_faculty_ids=[source_faculty_id]
+        available_candidates = (
+            self.preference_service.get_faculty_without_blocks_for_week(
+                week_date=source_week, exclude_faculty_ids=[source_faculty_id]
+            )
         )
 
         # Prioritize faculty who prefer the week
@@ -806,10 +841,14 @@ class SwapRequestService:
             status=swap.status,
             swap_type=swap.swap_type,
             source_faculty_id=swap.source_faculty_id,
-            source_faculty_name=swap.source_faculty.name if swap.source_faculty else "Unknown",
+            source_faculty_name=swap.source_faculty.name
+            if swap.source_faculty
+            else "Unknown",
             source_week=swap.source_week,
             target_faculty_id=swap.target_faculty_id,
-            target_faculty_name=swap.target_faculty.name if swap.target_faculty else "Unknown",
+            target_faculty_name=swap.target_faculty.name
+            if swap.target_faculty
+            else "Unknown",
             target_week=swap.target_week,
             reason=swap.reason,
             requested_at=swap.requested_at,

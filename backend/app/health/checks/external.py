@@ -36,7 +36,7 @@ class ExternalServiceHealthCheck:
         url: str,
         timeout: float = 10.0,
         expected_status: int = 200,
-        check_ssl: bool = True
+        check_ssl: bool = True,
     ):
         """
         Initialize external service health check.
@@ -73,10 +73,7 @@ class ExternalServiceHealthCheck:
 
         try:
             # Run check with timeout
-            result = await asyncio.wait_for(
-                self._perform_check(),
-                timeout=self.timeout
-            )
+            result = await asyncio.wait_for(self._perform_check(), timeout=self.timeout)
 
             response_time_ms = (time.time() - start_time) * 1000
             result["response_time_ms"] = round(response_time_ms, 2)
@@ -84,14 +81,16 @@ class ExternalServiceHealthCheck:
             # Determine status based on response
             if result.get("status_code") != self.expected_status:
                 result["status"] = "degraded"
-                result["warning"] = f"Unexpected status code: {result.get('status_code')}"
+                result["warning"] = (
+                    f"Unexpected status code: {result.get('status_code')}"
+                )
             elif response_time_ms > 5000:  # > 5 seconds is degraded
                 result["status"] = "degraded"
                 result["warning"] = "Response time is slow"
 
             return result
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             response_time_ms = (time.time() - start_time) * 1000
             logger.error(f"External service '{self.name}' health check timed out")
             return {
@@ -122,9 +121,7 @@ class ExternalServiceHealthCheck:
             async with httpx.AsyncClient(verify=self.check_ssl) as client:
                 # Make GET request to the URL
                 response = await client.get(
-                    self.url,
-                    timeout=self.timeout,
-                    follow_redirects=True
+                    self.url, timeout=self.timeout, follow_redirects=True
                 )
 
                 # Extract response details
@@ -192,14 +189,13 @@ class ExternalServiceHealthCheck:
         try:
             async with httpx.AsyncClient(verify=self.check_ssl) as client:
                 response = await client.post(
-                    self.url,
-                    json=payload,
-                    timeout=self.timeout,
-                    follow_redirects=True
+                    self.url, json=payload, timeout=self.timeout, follow_redirects=True
                 )
 
                 return {
-                    "status": "healthy" if response.status_code == self.expected_status else "degraded",
+                    "status": "healthy"
+                    if response.status_code == self.expected_status
+                    else "degraded",
                     "url": self.url,
                     "status_code": response.status_code,
                     "method": "POST",
@@ -247,8 +243,7 @@ class DNSHealthCheck:
             # Attempt DNS resolution
             loop = asyncio.get_event_loop()
             addresses = await asyncio.wait_for(
-                loop.getaddrinfo(self.hostname, None),
-                timeout=self.timeout
+                loop.getaddrinfo(self.hostname, None), timeout=self.timeout
             )
 
             response_time_ms = (time.time() - start_time) * 1000
@@ -264,7 +259,7 @@ class DNSHealthCheck:
                 "response_time_ms": round(response_time_ms, 2),
             }
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             response_time_ms = (time.time() - start_time) * 1000
             logger.error(f"DNS resolution timed out for {self.hostname}")
             return {

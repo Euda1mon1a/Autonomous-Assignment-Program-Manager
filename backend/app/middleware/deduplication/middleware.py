@@ -4,8 +4,9 @@ Request deduplication middleware for FastAPI.
 Implements idempotency for API endpoints by detecting duplicate
 requests and returning cached responses.
 """
+
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import redis.asyncio as redis
 from fastapi import Request, Response, status
@@ -51,7 +52,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app,
-        redis_client: Optional[redis.Redis] = None,
+        redis_client: redis.Redis | None = None,
         enabled: bool = True,
     ):
         """
@@ -132,9 +133,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
         if not started:
             # Failed to acquire lock - another request is processing
             # Wait for it to complete
-            logger.info(
-                f"Concurrent request detected, waiting: {idempotency_key}"
-            )
+            logger.info(f"Concurrent request detected, waiting: {idempotency_key}")
             existing_record = await self.storage.wait_for_completion(
                 idempotency_key,
                 timeout=self.service.config.MAX_WAIT_TIME,
@@ -289,7 +288,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
     async def _cache_response(
         self,
         idempotency_key: str,
-        lock_id: Optional[str],
+        lock_id: str | None,
         response: Response,
     ) -> None:
         """
@@ -358,6 +357,4 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
         if self.enabled:
             cleaned = await self.service.cleanup_expired()
             if cleaned > 0:
-                logger.info(
-                    f"Deduplication cleanup: removed {cleaned} expired records"
-                )
+                logger.info(f"Deduplication cleanup: removed {cleaned} expired records")

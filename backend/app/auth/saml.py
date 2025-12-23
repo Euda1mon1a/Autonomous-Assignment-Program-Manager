@@ -18,12 +18,11 @@ coordinating between SAML protocol handling, user provisioning, and session mana
 import logging
 import uuid
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.sso.config import SAMLConfig, load_sso_config
 from app.auth.sso.saml_provider import SAMLProvider
@@ -53,7 +52,7 @@ class SAMLIdentityProvider:
         config: SAMLConfig,
         enabled: bool = True,
         priority: int = 0,
-        domains: Optional[List[str]] = None,
+        domains: list[str] | None = None,
     ):
         """
         Initialize SAML Identity Provider configuration.
@@ -101,7 +100,7 @@ class SAMLIdentityProviderRegistry:
 
     def __init__(self):
         """Initialize empty IdP registry."""
-        self._idps: Dict[str, SAMLIdentityProvider] = {}
+        self._idps: dict[str, SAMLIdentityProvider] = {}
 
     def register(
         self,
@@ -110,7 +109,7 @@ class SAMLIdentityProviderRegistry:
         config: SAMLConfig,
         enabled: bool = True,
         priority: int = 0,
-        domains: Optional[List[str]] = None,
+        domains: list[str] | None = None,
     ) -> SAMLIdentityProvider:
         """
         Register a new Identity Provider.
@@ -149,7 +148,7 @@ class SAMLIdentityProviderRegistry:
 
         return idp
 
-    def get(self, idp_id: str) -> Optional[SAMLIdentityProvider]:
+    def get(self, idp_id: str) -> SAMLIdentityProvider | None:
         """
         Get Identity Provider by ID.
 
@@ -161,7 +160,7 @@ class SAMLIdentityProviderRegistry:
         """
         return self._idps.get(idp_id)
 
-    def get_all_enabled(self) -> List[SAMLIdentityProvider]:
+    def get_all_enabled(self) -> list[SAMLIdentityProvider]:
         """
         Get all enabled Identity Providers.
 
@@ -171,7 +170,7 @@ class SAMLIdentityProviderRegistry:
         enabled = [idp for idp in self._idps.values() if idp.enabled]
         return sorted(enabled, key=lambda x: x.priority, reverse=True)
 
-    def get_by_email(self, email: str) -> Optional[SAMLIdentityProvider]:
+    def get_by_email(self, email: str) -> SAMLIdentityProvider | None:
         """
         Get Identity Provider for an email address based on domain matching.
 
@@ -186,7 +185,7 @@ class SAMLIdentityProviderRegistry:
                 return idp
         return None
 
-    def get_default(self) -> Optional[SAMLIdentityProvider]:
+    def get_default(self) -> SAMLIdentityProvider | None:
         """
         Get default Identity Provider (highest priority enabled IdP).
 
@@ -241,10 +240,10 @@ class SAMLSession:
         user_id: UUID,
         idp_id: str,
         name_id: str,
-        session_index: Optional[str] = None,
-        created_at: Optional[datetime] = None,
-        expires_at: Optional[datetime] = None,
-        attributes: Optional[Dict[str, str]] = None,
+        session_index: str | None = None,
+        created_at: datetime | None = None,
+        expires_at: datetime | None = None,
+        attributes: dict[str, str] | None = None,
     ):
         """
         Initialize SAML session.
@@ -272,7 +271,7 @@ class SAMLSession:
         """Check if session is expired."""
         return datetime.utcnow() >= self.expires_at
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert session to dictionary."""
         return {
             "session_id": self.session_id,
@@ -296,16 +295,16 @@ class SAMLSessionManager:
 
     def __init__(self):
         """Initialize session manager."""
-        self._sessions: Dict[str, SAMLSession] = {}
-        self._user_sessions: Dict[UUID, List[str]] = {}
+        self._sessions: dict[str, SAMLSession] = {}
+        self._user_sessions: dict[UUID, list[str]] = {}
 
     def create_session(
         self,
         user_id: UUID,
         idp_id: str,
         name_id: str,
-        session_index: Optional[str] = None,
-        attributes: Optional[Dict[str, str]] = None,
+        session_index: str | None = None,
+        attributes: dict[str, str] | None = None,
         session_duration_hours: int = 8,
     ) -> SAMLSession:
         """
@@ -347,7 +346,7 @@ class SAMLSessionManager:
 
         return session
 
-    def get_session(self, session_id: str) -> Optional[SAMLSession]:
+    def get_session(self, session_id: str) -> SAMLSession | None:
         """
         Get session by ID.
 
@@ -363,7 +362,7 @@ class SAMLSessionManager:
             return None
         return session
 
-    def get_user_sessions(self, user_id: UUID) -> List[SAMLSession]:
+    def get_user_sessions(self, user_id: UUID) -> list[SAMLSession]:
         """
         Get all active sessions for a user.
 
@@ -433,9 +432,7 @@ class SAMLSessionManager:
         Returns:
             Number of sessions cleaned up
         """
-        expired_ids = [
-            sid for sid, sess in self._sessions.items() if sess.is_expired()
-        ]
+        expired_ids = [sid for sid, sess in self._sessions.items() if sess.is_expired()]
         for session_id in expired_ids:
             self.destroy_session(session_id)
         return len(expired_ids)
@@ -465,8 +462,8 @@ class SAMLAuthenticationService:
 
     def __init__(
         self,
-        idp_registry: Optional[SAMLIdentityProviderRegistry] = None,
-        session_manager: Optional[SAMLSessionManager] = None,
+        idp_registry: SAMLIdentityProviderRegistry | None = None,
+        session_manager: SAMLSessionManager | None = None,
     ):
         """
         Initialize SAML authentication service.
@@ -481,9 +478,9 @@ class SAMLAuthenticationService:
 
     async def initiate_login(
         self,
-        idp_id: Optional[str] = None,
-        email: Optional[str] = None,
-    ) -> Tuple[str, str, str]:
+        idp_id: str | None = None,
+        email: str | None = None,
+    ) -> tuple[str, str, str]:
         """
         Initiate SAML login flow.
 
@@ -539,7 +536,7 @@ class SAMLAuthenticationService:
         saml_response: str,
         idp_id: str,
         db: AsyncSession,
-    ) -> Tuple[User, str, str]:
+    ) -> tuple[User, str, str]:
         """
         Handle SAML login response.
 
@@ -621,8 +618,8 @@ class SAMLAuthenticationService:
     async def initiate_logout(
         self,
         user_id: UUID,
-        saml_session_id: Optional[str] = None,
-    ) -> Optional[Tuple[str, str]]:
+        saml_session_id: str | None = None,
+    ) -> tuple[str, str] | None:
         """
         Initiate SAML Single Logout (SLO).
 
@@ -681,7 +678,7 @@ class SAMLAuthenticationService:
     async def _get_or_create_user(
         self,
         db: AsyncSession,
-        attributes: Dict[str, str],
+        attributes: dict[str, str],
         idp_id: str,
     ) -> User:
         """
@@ -715,9 +712,7 @@ class SAMLAuthenticationService:
             )
 
         # Check if user exists
-        result = await db.execute(
-            select(User).where(User.email == email)
-        )
+        result = await db.execute(select(User).where(User.email == email))
         user = result.scalar_one_or_none()
 
         if user:
@@ -761,7 +756,7 @@ class SAMLAuthenticationService:
         self,
         db: AsyncSession,
         user: User,
-        attributes: Dict[str, str],
+        attributes: dict[str, str],
     ) -> None:
         """
         Update user attributes from SAML assertion.
@@ -786,9 +781,7 @@ class SAMLAuthenticationService:
             updates["role"] = attributes["role"]
 
         if updates:
-            await db.execute(
-                update(User).where(User.id == user.id).values(**updates)
-            )
+            await db.execute(update(User).where(User.id == user.id).values(**updates))
             await db.commit()
             await db.refresh(user)
 
@@ -803,9 +796,7 @@ class SAMLAuthenticationService:
             user_id: User ID
         """
         await db.execute(
-            update(User)
-            .where(User.id == user_id)
-            .values(last_login=datetime.utcnow())
+            update(User).where(User.id == user_id).values(last_login=datetime.utcnow())
         )
         await db.commit()
 
@@ -815,7 +806,7 @@ class SAMLAuthenticationService:
 # ============================================================================
 
 
-async def initialize_default_idp() -> Optional[SAMLIdentityProvider]:
+async def initialize_default_idp() -> SAMLIdentityProvider | None:
     """
     Initialize default SAML Identity Provider from configuration.
 

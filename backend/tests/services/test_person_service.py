@@ -1,10 +1,9 @@
 """Tests for PersonService."""
 
-import pytest
 from uuid import uuid4
 
-from app.services.person_service import PersonService
 from app.models.person import Person
+from app.services.person_service import PersonService
 
 
 class TestPersonService:
@@ -44,7 +43,9 @@ class TestPersonService:
         assert result["total"] == 6  # 3 residents + 3 faculty
         assert len(result["items"]) == 6
 
-    def test_list_people_filter_by_type_resident(self, db, sample_residents, sample_faculty_members):
+    def test_list_people_filter_by_type_resident(
+        self, db, sample_residents, sample_faculty_members
+    ):
         """Test filtering people by type (resident)."""
         service = PersonService(db)
         result = service.list_people(type="resident")
@@ -52,7 +53,9 @@ class TestPersonService:
         assert result["total"] == 3
         assert all(person.type == "resident" for person in result["items"])
 
-    def test_list_people_filter_by_type_faculty(self, db, sample_residents, sample_faculty_members):
+    def test_list_people_filter_by_type_faculty(
+        self, db, sample_residents, sample_faculty_members
+    ):
         """Test filtering people by type (faculty)."""
         service = PersonService(db)
         result = service.list_people(type="faculty")
@@ -133,7 +136,9 @@ class TestPersonService:
         assert result["total"] == 0
         assert len(result["items"]) == 0
 
-    def test_list_residents_excludes_faculty(self, db, sample_residents, sample_faculty_members):
+    def test_list_residents_excludes_faculty(
+        self, db, sample_residents, sample_faculty_members
+    ):
         """Test that list_residents only returns residents, not faculty."""
         service = PersonService(db)
         result = service.list_residents()
@@ -196,7 +201,9 @@ class TestPersonService:
         assert result["total"] == 0
         assert len(result["items"]) == 0
 
-    def test_list_faculty_excludes_residents(self, db, sample_residents, sample_faculty_members):
+    def test_list_faculty_excludes_residents(
+        self, db, sample_residents, sample_faculty_members
+    ):
         """Test that list_faculty only returns faculty, not residents."""
         service = PersonService(db)
         result = service.list_faculty()

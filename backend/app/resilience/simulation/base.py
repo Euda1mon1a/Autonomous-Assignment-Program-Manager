@@ -7,14 +7,16 @@ and defines core configuration and result structures.
 """
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from random import Random
-from typing import Callable, Any
+from typing import Any
 
 # Handle optional SimPy dependency
 try:
     import simpy
+
     HAS_SIMPY = True
 except ImportError:
     simpy = None  # type: ignore
@@ -225,6 +227,7 @@ class SimulationEnvironment:
             delay: Time delay in hours before event occurs
             callback: Function to call when event triggers
         """
+
         def _event_wrapper() -> Any:
             """Wrapper to execute callback after timeout."""
             yield self._env.timeout(delay)

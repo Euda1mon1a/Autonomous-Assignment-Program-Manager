@@ -10,9 +10,8 @@ Tests the RequestIDMiddleware for distributed tracing:
 - Security: Validation of incoming request IDs
 """
 
-import re
 import uuid
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from fastapi import FastAPI, Request
@@ -21,9 +20,7 @@ from fastapi.testclient import TestClient
 from app.core.observability import (
     RequestIDMiddleware,
     get_request_id,
-    request_id_ctx,
 )
-
 
 # ============================================================================
 # Test Fixtures
@@ -33,9 +30,7 @@ from app.core.observability import (
 @pytest.fixture
 def minimal_app():
     """Create a minimal FastAPI app with RequestIDMiddleware."""
-    from fastapi import HTTPException
     from fastapi.responses import JSONResponse
-    from starlette.middleware.errors import ServerErrorMiddleware
 
     app = FastAPI()
     app.add_middleware(RequestIDMiddleware)

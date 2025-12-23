@@ -4,6 +4,7 @@ Academic blocks / block matrix API.
 Provides program coordinator view of resident assignments grouped by rotation blocks.
 Thin routing layer that connects URL paths to service layer.
 """
+
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -22,7 +23,9 @@ logger = logging.getLogger(__name__)
 @router.get("/matrix/academic-blocks", response_model=BlockMatrixResponse)
 def get_academic_block_matrix(
     academic_year: str = Query(..., description="Academic year (e.g., '2024-2025')"),
-    pgy_level: int | None = Query(None, description="Filter by PGY level (1-3)", ge=1, le=3),
+    pgy_level: int | None = Query(
+        None, description="Filter by PGY level (1-3)", ge=1, le=3
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):

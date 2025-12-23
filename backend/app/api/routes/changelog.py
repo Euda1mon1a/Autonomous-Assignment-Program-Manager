@@ -13,7 +13,7 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Request
 
 from app.changelog.differ import ChangeType
 from app.changelog.formatter import OutputFormat
@@ -476,21 +476,29 @@ async def suggest_version(
     )
 
     breaking_count = len(diff.breaking_changes)
-    new_features_count = len([
-        c for c in diff.changes
-        if c.change_type in {
-            ChangeType.ENDPOINT_ADDED,
-            ChangeType.ENDPOINT_METHOD_ADDED,
-            ChangeType.OPTIONAL_PARAM_ADDED,
-        }
-    ])
-    patch_count = len([
-        c for c in diff.changes
-        if c.change_type in {
-            ChangeType.DESCRIPTION_CHANGED,
-            ChangeType.EXAMPLE_CHANGED,
-        }
-    ])
+    new_features_count = len(
+        [
+            c
+            for c in diff.changes
+            if c.change_type
+            in {
+                ChangeType.ENDPOINT_ADDED,
+                ChangeType.ENDPOINT_METHOD_ADDED,
+                ChangeType.OPTIONAL_PARAM_ADDED,
+            }
+        ]
+    )
+    patch_count = len(
+        [
+            c
+            for c in diff.changes
+            if c.change_type
+            in {
+                ChangeType.DESCRIPTION_CHANGED,
+                ChangeType.EXAMPLE_CHANGED,
+            }
+        ]
+    )
 
     # Determine reason
     if breaking_count > 0:

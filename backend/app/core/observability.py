@@ -25,19 +25,21 @@ Request Correlation:
 
 import time
 import uuid
+from collections.abc import Callable
 from contextvars import ContextVar
 from functools import wraps
-from typing import Callable, Optional
+from typing import Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.core.logging import get_logger, set_request_id as set_logging_request_id
+from app.core.logging import get_logger
+from app.core.logging import set_request_id as set_logging_request_id
 
 logger = get_logger(__name__)
 
 # Context variable for request correlation ID
-request_id_ctx: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
+request_id_ctx: ContextVar[str | None] = ContextVar("request_id", default=None)
 
 try:
     from prometheus_client import REGISTRY, Counter, Gauge, Histogram
@@ -48,7 +50,7 @@ except ImportError:
     logger.warning("prometheus_client not available - metrics disabled")
 
 
-def get_request_id() -> Optional[str]:
+def get_request_id() -> str | None:
     """Get the current request's correlation ID."""
     return request_id_ctx.get()
 
@@ -144,7 +146,10 @@ class ObservabilityMetrics:
         self.schedule_generations = Counter(
             "schedule_generation_total",
             "Total schedule generation attempts",
-            ["algorithm", "outcome"],  # algorithm: greedy/cp_sat/pulp/hybrid, outcome: success/failure
+            [
+                "algorithm",
+                "outcome",
+            ],  # algorithm: greedy/cp_sat/pulp/hybrid, outcome: success/failure
             registry=REGISTRY,
         )
 
@@ -223,14 +228,18 @@ class ObservabilityMetrics:
     def record_schedule_success(self, algorithm: str, assignments: int = 0):
         """Record successful schedule generation."""
         if self._enabled:
-            self.schedule_generations.labels(algorithm=algorithm, outcome="success").inc()
+            self.schedule_generations.labels(
+                algorithm=algorithm, outcome="success"
+            ).inc()
             if assignments > 0:
                 self.schedule_assignments.labels(algorithm=algorithm).inc(assignments)
 
     def record_schedule_failure(self, algorithm: str):
         """Record failed schedule generation."""
         if self._enabled:
-            self.schedule_generations.labels(algorithm=algorithm, outcome="failure").inc()
+            self.schedule_generations.labels(
+                algorithm=algorithm, outcome="failure"
+            ).inc()
 
     def record_violation(self, violation_type: str):
         """Record an ACGME violation."""
@@ -275,7 +284,9 @@ class ScheduleTimer:
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.metrics._enabled and self.start_time:
             duration = time.perf_counter() - self.start_time
-            self.metrics.schedule_duration.labels(algorithm=self.algorithm).observe(duration)
+            self.metrics.schedule_duration.labels(algorithm=self.algorithm).observe(
+                duration
+            )
         return False
 
 

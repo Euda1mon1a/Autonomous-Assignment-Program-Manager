@@ -23,21 +23,22 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
 class CircuitState(Enum):
     """The three states of a circuit breaker."""
-    CLOSED = "closed"          # Normal operation
-    OPEN = "open"              # Failing, reject requests
-    HALF_OPEN = "half_open"    # Testing recovery
+
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Failing, reject requests
+    HALF_OPEN = "half_open"  # Testing recovery
 
 
 @dataclass
 class StateTransition:
     """Record of a state transition."""
+
     from_state: CircuitState
     to_state: CircuitState
     timestamp: datetime
@@ -49,14 +50,15 @@ class StateTransition:
 @dataclass
 class CircuitMetrics:
     """Metrics for circuit breaker monitoring."""
+
     total_requests: int = 0
     successful_requests: int = 0
     failed_requests: int = 0
     rejected_requests: int = 0
     consecutive_failures: int = 0
     consecutive_successes: int = 0
-    last_failure_time: Optional[datetime] = None
-    last_success_time: Optional[datetime] = None
+    last_failure_time: datetime | None = None
+    last_success_time: datetime | None = None
     state_transitions: list[StateTransition] = field(default_factory=list)
 
     @property
@@ -109,7 +111,7 @@ class StateMachine:
 
         self.current_state = CircuitState.CLOSED
         self.metrics = CircuitMetrics()
-        self.opened_at: Optional[datetime] = None
+        self.opened_at: datetime | None = None
         self.half_open_calls_in_flight = 0
 
     def record_success(self) -> CircuitState:
@@ -297,11 +299,13 @@ class StateMachine:
             "opened_at": self.opened_at.isoformat() if self.opened_at else None,
             "last_failure_time": (
                 self.metrics.last_failure_time.isoformat()
-                if self.metrics.last_failure_time else None
+                if self.metrics.last_failure_time
+                else None
             ),
             "last_success_time": (
                 self.metrics.last_success_time.isoformat()
-                if self.metrics.last_success_time else None
+                if self.metrics.last_success_time
+                else None
             ),
             "recent_transitions": [
                 {

@@ -4,14 +4,14 @@ Storage layer for request deduplication.
 Provides Redis-based storage for tracking request state, caching responses,
 and managing concurrent request processing.
 """
+
 import asyncio
-import json
 import logging
 import pickle
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import redis.asyncio as redis
 
@@ -37,12 +37,12 @@ class RequestRecord:
     idempotency_key: str  # Unique idempotency key
     status: RequestStatus  # Current processing status
     created_at: float  # Timestamp when request started
-    completed_at: Optional[float] = None  # Timestamp when request completed
+    completed_at: float | None = None  # Timestamp when request completed
     ttl: int = 300  # Time-to-live in seconds
-    response_status: Optional[int] = None  # HTTP status code
-    response_headers: Optional[dict[str, str]] = None  # Response headers
-    response_body: Optional[bytes] = None  # Cached response body
-    error_message: Optional[str] = None  # Error message if failed
+    response_status: int | None = None  # HTTP status code
+    response_headers: dict[str, str] | None = None  # Response headers
+    response_body: bytes | None = None  # Cached response body
+    error_message: str | None = None  # Error message if failed
 
     def is_expired(self) -> bool:
         """
@@ -87,7 +87,7 @@ class DeduplicationStorage:
 
     def __init__(
         self,
-        redis_client: Optional[redis.Redis] = None,
+        redis_client: redis.Redis | None = None,
         default_ttl: int = DEFAULT_TTL,
     ):
         """
@@ -143,7 +143,7 @@ class DeduplicationStorage:
         self,
         idempotency_key: str,
         timeout: float = LOCK_TIMEOUT,
-    ) -> tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """
         Acquire a distributed lock for request processing.
 
@@ -182,7 +182,9 @@ class DeduplicationStorage:
                 logger.debug(f"Acquired lock for idempotency key: {idempotency_key}")
                 return True, lock_id
             else:
-                logger.debug(f"Lock already held for idempotency key: {idempotency_key}")
+                logger.debug(
+                    f"Lock already held for idempotency key: {idempotency_key}"
+                )
                 return False, None
 
         except Exception as e:
@@ -190,7 +192,7 @@ class DeduplicationStorage:
             # Fail open: allow request if Redis fails
             return True, None
 
-    async def release_lock(self, idempotency_key: str, lock_id: Optional[str]) -> bool:
+    async def release_lock(self, idempotency_key: str, lock_id: str | None) -> bool:
         """
         Release a distributed lock.
 
@@ -233,9 +235,7 @@ class DeduplicationStorage:
                 logger.debug(f"Released lock for idempotency key: {idempotency_key}")
                 return True
             else:
-                logger.warning(
-                    f"Failed to release lock (not owner): {idempotency_key}"
-                )
+                logger.warning(f"Failed to release lock (not owner): {idempotency_key}")
                 return False
 
         except Exception as e:
@@ -246,7 +246,7 @@ class DeduplicationStorage:
         self,
         idempotency_key: str,
         timeout: float = 30.0,
-    ) -> Optional[RequestRecord]:
+    ) -> RequestRecord | None:
         """
         Wait for a request to complete processing.
 
@@ -276,7 +276,7 @@ class DeduplicationStorage:
     async def create_record(
         self,
         idempotency_key: str,
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
     ) -> RequestRecord:
         """
         Create a new request record in PROCESSING state.
@@ -329,7 +329,7 @@ class DeduplicationStorage:
             logger.error(f"Error saving request record: {e}")
             return False
 
-    async def get_record(self, idempotency_key: str) -> Optional[RequestRecord]:
+    async def get_record(self, idempotency_key: str) -> RequestRecord | None:
         """
         Get request record from Redis.
 
@@ -368,10 +368,10 @@ class DeduplicationStorage:
         self,
         idempotency_key: str,
         status: RequestStatus,
-        response_status: Optional[int] = None,
-        response_headers: Optional[dict[str, str]] = None,
-        response_body: Optional[bytes] = None,
-        error_message: Optional[str] = None,
+        response_status: int | None = None,
+        response_headers: dict[str, str] | None = None,
+        response_body: bytes | None = None,
+        error_message: str | None = None,
     ) -> bool:
         """
         Update request record with completion data.

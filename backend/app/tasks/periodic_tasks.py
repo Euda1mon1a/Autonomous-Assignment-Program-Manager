@@ -343,19 +343,15 @@ SCHEDULE_METRICS_TASK_CONFIG = {
     # Task time limits
     "task_time_limit": 600,  # 10 minutes max per task
     "task_soft_time_limit": 540,  # Soft limit at 9 minutes
-
     # Task result settings
     "result_expires": 86400,  # Results expire after 24 hours (longer than default)
-
     # Task acknowledgment
     "task_acks_late": True,  # Acknowledge after completion (not before)
     "task_reject_on_worker_lost": True,  # Reject if worker crashes
-
     # Task serialization
     "task_serializer": "json",
     "result_serializer": "json",
     "accept_content": ["json"],
-
     # Task compression
     "task_compression": "gzip",  # Compress large result payloads
     "result_compression": "gzip",
@@ -381,17 +377,15 @@ def configure_celery_for_cleanup(celery_app):
         configure_celery_for_cleanup(celery_app)
     """
     # Update beat schedule
-    celery_app.conf.beat_schedule.update(
-        get_cleanup_beat_schedule()
-    )
+    celery_app.conf.beat_schedule.update(get_cleanup_beat_schedule())
 
     # Update task routes
-    if not hasattr(celery_app.conf, 'task_routes'):
+    if not hasattr(celery_app.conf, "task_routes"):
         celery_app.conf.task_routes = {}
     celery_app.conf.task_routes.update(CLEANUP_TASK_ROUTES)
 
     # Update task queues
-    if not hasattr(celery_app.conf, 'task_queues'):
+    if not hasattr(celery_app.conf, "task_queues"):
         celery_app.conf.task_queues = {}
     celery_app.conf.task_queues.update(CLEANUP_TASK_QUEUES)
 
@@ -413,17 +407,15 @@ def configure_celery_for_schedule_metrics(celery_app):
         configure_celery_for_schedule_metrics(celery_app)
     """
     # Update beat schedule
-    celery_app.conf.beat_schedule.update(
-        get_schedule_metrics_beat_schedule()
-    )
+    celery_app.conf.beat_schedule.update(get_schedule_metrics_beat_schedule())
 
     # Update task routes
-    if not hasattr(celery_app.conf, 'task_routes'):
+    if not hasattr(celery_app.conf, "task_routes"):
         celery_app.conf.task_routes = {}
     celery_app.conf.task_routes.update(SCHEDULE_METRICS_TASK_ROUTES)
 
     # Update task queues
-    if not hasattr(celery_app.conf, 'task_queues'):
+    if not hasattr(celery_app.conf, "task_queues"):
         celery_app.conf.task_queues = {}
     celery_app.conf.task_queues.update(SCHEDULE_METRICS_TASK_QUEUES)
 

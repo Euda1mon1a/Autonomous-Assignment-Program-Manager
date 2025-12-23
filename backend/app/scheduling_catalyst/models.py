@@ -13,9 +13,8 @@ concepts to scheduling:
 """
 
 from dataclasses import dataclass, field
-from datetime import date, datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 
@@ -85,7 +84,7 @@ class ActivationEnergy:
 
     value: float  # 0.0 to 1.0, normalized
     components: dict[BarrierType, float] = field(default_factory=dict)
-    catalyzed_value: Optional[float] = None
+    catalyzed_value: float | None = None
     catalyst_effect: float = 0.0
 
     def __post_init__(self) -> None:
@@ -100,7 +99,9 @@ class ActivationEnergy:
     @property
     def is_feasible(self) -> bool:
         """Check if the reaction is feasible (Ea < 1.0)."""
-        effective = self.catalyzed_value if self.catalyzed_value is not None else self.value
+        effective = (
+            self.catalyzed_value if self.catalyzed_value is not None else self.value
+        )
         return effective < 1.0
 
     @property
@@ -188,7 +189,9 @@ class CatalystPerson:
     def __post_init__(self) -> None:
         """Validate catalyst score."""
         if not 0.0 <= self.catalyst_score <= 1.0:
-            raise ValueError(f"Catalyst score must be 0.0-1.0, got {self.catalyst_score}")
+            raise ValueError(
+                f"Catalyst score must be 0.0-1.0, got {self.catalyst_score}"
+            )
 
     def can_address_barrier(self, barrier: EnergyBarrier) -> bool:
         """Check if this catalyst can address a specific barrier."""
@@ -231,7 +234,7 @@ class CatalystMechanism:
     catalyst_type: CatalystType
     barriers_addressed: list[BarrierType] = field(default_factory=list)
     reduction_factors: dict[BarrierType, float] = field(default_factory=dict)
-    requires_trigger: Optional[str] = None
+    requires_trigger: str | None = None
     is_active: bool = True
 
     def can_address_barrier(self, barrier: EnergyBarrier) -> bool:
@@ -264,7 +267,7 @@ class TransitionState:
     assignments: dict[str, Any]  # Assignment configuration
     energy_level: float  # Relative to initial state
     is_stable: bool = False  # Metastable intermediates
-    duration: Optional[int] = None  # Minutes this state persists
+    duration: int | None = None  # Minutes this state persists
 
     @property
     def is_transition(self) -> bool:
@@ -302,7 +305,7 @@ class ReactionPathway:
     )
     total_activation_energy: float = 0.0
     effective_activation_energy: float = 0.0
-    estimated_duration: Optional[int] = None  # Minutes
+    estimated_duration: int | None = None  # Minutes
 
     @property
     def is_feasible(self) -> bool:
@@ -317,9 +320,7 @@ class ReactionPathway:
         reduction = self.total_activation_energy - self.effective_activation_energy
         return reduction / self.total_activation_energy
 
-    def add_catalyst(
-        self, catalyst: CatalystPerson | CatalystMechanism
-    ) -> None:
+    def add_catalyst(self, catalyst: CatalystPerson | CatalystMechanism) -> None:
         """Add a catalyst and recalculate effective energy."""
         self.catalysts_applied.append(catalyst)
         self._recalculate_effective_energy()
@@ -372,7 +373,7 @@ class ScheduleReaction:
     products: list[dict[str, Any]]  # Final assignments
     pathway: ReactionPathway
     rate_constant: float = 1.0
-    half_life: Optional[int] = None
+    half_life: int | None = None
     is_reversible: bool = True
     reversal_window: int = 1440  # 24 hours in minutes
 

@@ -14,18 +14,18 @@ This service provides enterprise-grade cryptographic key management including:
 Security: All keys are encrypted at rest using a master key derived from settings.
 Audit: All key operations are logged for compliance and security auditing.
 """
+
 import base64
-import json
 import logging
 import secrets
 import uuid
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
 from pydantic import BaseModel, Field, field_validator
@@ -46,8 +46,10 @@ settings = get_settings()
 # Enums and Constants
 # =============================================================================
 
+
 class KeyType(str, Enum):
     """Types of cryptographic keys."""
+
     SYMMETRIC = "symmetric"
     RSA_2048 = "rsa_2048"
     RSA_4096 = "rsa_4096"
@@ -57,6 +59,7 @@ class KeyType(str, Enum):
 
 class KeyPurpose(str, Enum):
     """Purpose/usage of cryptographic keys."""
+
     ENCRYPTION = "encryption"
     SIGNING = "signing"
     JWT = "jwt"
@@ -68,6 +71,7 @@ class KeyPurpose(str, Enum):
 
 class KeyStatus(str, Enum):
     """Lifecycle status of keys."""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     ROTATING = "rotating"
@@ -78,6 +82,7 @@ class KeyStatus(str, Enum):
 
 class AccessPolicy(str, Enum):
     """Access control policies for keys."""
+
     ADMIN_ONLY = "admin_only"
     SERVICE_ACCOUNT = "service_account"
     APPLICATION = "application"
@@ -89,29 +94,32 @@ class AccessPolicy(str, Enum):
 # Pydantic Schemas
 # =============================================================================
 
+
 class KeyGenerationRequest(BaseModel):
     """Request schema for generating a new key."""
+
     key_type: KeyType
     purpose: KeyPurpose
     name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = Field(None, max_length=1000)
+    description: str | None = Field(None, max_length=1000)
     access_policy: AccessPolicy = AccessPolicy.ADMIN_ONLY
     allowed_users: list[str] = Field(default_factory=list)
-    expires_in_days: Optional[int] = Field(None, ge=1, le=3650)
+    expires_in_days: int | None = Field(None, ge=1, le=3650)
     auto_rotate: bool = False
-    rotation_interval_days: Optional[int] = Field(None, ge=30, le=365)
+    rotation_interval_days: int | None = Field(None, ge=30, le=365)
 
-    @field_validator('rotation_interval_days')
+    @field_validator("rotation_interval_days")
     @classmethod
-    def validate_rotation_interval(cls, v: Optional[int], info) -> Optional[int]:
+    def validate_rotation_interval(cls, v: int | None, info) -> int | None:
         """Validate rotation interval is set if auto_rotate is enabled."""
-        if info.data.get('auto_rotate') and v is None:
-            raise ValueError('rotation_interval_days required when auto_rotate is True')
+        if info.data.get("auto_rotate") and v is None:
+            raise ValueError("rotation_interval_days required when auto_rotate is True")
         return v
 
 
 class KeyMetadata(BaseModel):
     """Metadata about a cryptographic key."""
+
     id: str
     name: str
     key_type: KeyType
@@ -120,8 +128,8 @@ class KeyMetadata(BaseModel):
     version: int
     created_at: datetime
     created_by: str
-    expires_at: Optional[datetime]
-    last_used_at: Optional[datetime]
+    expires_at: datetime | None
+    last_used_at: datetime | None
     usage_count: int
     access_policy: AccessPolicy
     allowed_users: list[str]
@@ -131,6 +139,7 @@ class KeyMetadata(BaseModel):
 
 class KeyUsageRecord(BaseModel):
     """Record of key usage for auditing."""
+
     key_id: str
     used_at: datetime
     used_by: str
@@ -141,10 +150,11 @@ class KeyUsageRecord(BaseModel):
 
 class HSMConfig(BaseModel):
     """Configuration for Hardware Security Module integration."""
+
     enabled: bool = False
     provider: str = "pkcs11"  # pkcs11, aws_kms, azure_keyvault, google_kms
-    endpoint: Optional[str] = None
-    credentials: Optional[dict[str, str]] = None
+    endpoint: str | None = None
+    credentials: dict[str, str] | None = None
     key_wrapping_enabled: bool = True
     auto_backup_to_hsm: bool = False
 
@@ -152,6 +162,7 @@ class HSMConfig(BaseModel):
 # =============================================================================
 # Database Models
 # =============================================================================
+
 
 class CryptographicKey(Base):
     """
@@ -163,6 +174,7 @@ class CryptographicKey(Base):
     - Each key has a unique salt and nonce for encryption
     - Private keys are stored separately from public keys
     """
+
     __tablename__ = "cryptographic_keys"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -183,13 +195,17 @@ class CryptographicKey(Base):
     encryption_tag = Column(String(32), nullable=False)  # Authentication tag
 
     # Access control
-    access_policy = Column(String(50), nullable=False, default=AccessPolicy.ADMIN_ONLY.value)
+    access_policy = Column(
+        String(50), nullable=False, default=AccessPolicy.ADMIN_ONLY.value
+    )
     allowed_users = Column(JSONType, nullable=False, default=list)  # List of user IDs
 
     # Lifecycle management
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     created_by = Column(String(255), nullable=False)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
     expires_at = Column(DateTime, nullable=True)
     revoked_at = Column(DateTime, nullable=True)
     revocation_reason = Column(String(500), nullable=True)
@@ -229,6 +245,7 @@ class KeyUsageLog(Base):
 
     Records every use of a cryptographic key for security auditing and compliance.
     """
+
     __tablename__ = "key_usage_logs"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -258,6 +275,7 @@ class KeyUsageLog(Base):
 # Key Encryption/Decryption Functions
 # =============================================================================
 
+
 def _derive_encryption_key(salt: bytes) -> bytes:
     """
     Derive an encryption key from the master secret using PBKDF2.
@@ -273,7 +291,7 @@ def _derive_encryption_key(salt: bytes) -> bytes:
         length=32,
         salt=salt,
         iterations=100000,
-        backend=default_backend()
+        backend=default_backend(),
     )
     return kdf.derive(settings.SECRET_KEY.encode())
 
@@ -297,9 +315,7 @@ def _encrypt_key_material(key_material: bytes) -> tuple[bytes, bytes, bytes, byt
 
     # Encrypt using AES-256-GCM
     cipher = Cipher(
-        algorithms.AES(encryption_key),
-        modes.GCM(nonce),
-        backend=default_backend()
+        algorithms.AES(encryption_key), modes.GCM(nonce), backend=default_backend()
     )
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(key_material) + encryptor.finalize()
@@ -308,10 +324,7 @@ def _encrypt_key_material(key_material: bytes) -> tuple[bytes, bytes, bytes, byt
 
 
 def _decrypt_key_material(
-    encrypted_data: bytes,
-    salt: bytes,
-    nonce: bytes,
-    tag: bytes
+    encrypted_data: bytes, salt: bytes, nonce: bytes, tag: bytes
 ) -> bytes:
     """
     Decrypt key material using AES-256-GCM.
@@ -333,9 +346,7 @@ def _decrypt_key_material(
 
     # Decrypt using AES-256-GCM
     cipher = Cipher(
-        algorithms.AES(encryption_key),
-        modes.GCM(nonce, tag),
-        backend=default_backend()
+        algorithms.AES(encryption_key), modes.GCM(nonce, tag), backend=default_backend()
     )
     decryptor = cipher.decryptor()
     return decryptor.update(encrypted_data) + decryptor.finalize()
@@ -344,6 +355,7 @@ def _decrypt_key_material(
 # =============================================================================
 # Key Management Service
 # =============================================================================
+
 
 class KeyManagementService:
     """
@@ -360,7 +372,7 @@ class KeyManagementService:
     - Key revocation
     """
 
-    def __init__(self, hsm_config: Optional[HSMConfig] = None):
+    def __init__(self, hsm_config: HSMConfig | None = None):
         """
         Initialize key management service.
 
@@ -374,10 +386,7 @@ class KeyManagementService:
     # =========================================================================
 
     async def generate_key(
-        self,
-        db: AsyncSession,
-        request: KeyGenerationRequest,
-        created_by: str
+        self, db: AsyncSession, request: KeyGenerationRequest, created_by: str
     ) -> KeyMetadata:
         """
         Generate a new cryptographic key.
@@ -404,8 +413,8 @@ class KeyManagementService:
             private_key_material = None
             public_key_pem = None
         else:
-            key_material, private_key_material, public_key_pem = self._generate_asymmetric_key(
-                request.key_type
+            key_material, private_key_material, public_key_pem = (
+                self._generate_asymmetric_key(request.key_type)
             )
 
         # Encrypt key material
@@ -417,8 +426,9 @@ class KeyManagementService:
         private_nonce = None
         private_tag = None
         if private_key_material:
-            encrypted_private_key, private_salt, private_nonce, private_tag = \
+            encrypted_private_key, private_salt, private_nonce, private_tag = (
                 _encrypt_key_material(private_key_material)
+            )
 
         # Calculate expiration date
         expires_at = None
@@ -434,7 +444,9 @@ class KeyManagementService:
             status=KeyStatus.ACTIVE.value,
             version=1,
             encrypted_key_material=base64.b64encode(encrypted_key).decode(),
-            encrypted_private_key=base64.b64encode(encrypted_private_key).decode() if encrypted_private_key else None,
+            encrypted_private_key=base64.b64encode(encrypted_private_key).decode()
+            if encrypted_private_key
+            else None,
             public_key=public_key_pem,
             encryption_salt=base64.b64encode(salt).decode(),
             encryption_nonce=base64.b64encode(nonce).decode(),
@@ -450,16 +462,18 @@ class KeyManagementService:
             metadata={
                 "generated_at": datetime.utcnow().isoformat(),
                 "algorithm": request.key_type.value,
-            }
+            },
         )
 
         # Store encrypted private key metadata if asymmetric
         if private_key_material:
-            key_record.metadata.update({
-                "private_key_salt": base64.b64encode(private_salt).decode(),
-                "private_key_nonce": base64.b64encode(private_nonce).decode(),
-                "private_key_tag": base64.b64encode(private_tag).decode(),
-            })
+            key_record.metadata.update(
+                {
+                    "private_key_salt": base64.b64encode(private_salt).decode(),
+                    "private_key_nonce": base64.b64encode(private_nonce).decode(),
+                    "private_key_tag": base64.b64encode(private_tag).decode(),
+                }
+            )
 
         db.add(key_record)
         await db.commit()
@@ -481,10 +495,7 @@ class KeyManagementService:
         """
         return secrets.token_bytes(key_size)
 
-    def _generate_asymmetric_key(
-        self,
-        key_type: KeyType
-    ) -> tuple[bytes, bytes, str]:
+    def _generate_asymmetric_key(self, key_type: KeyType) -> tuple[bytes, bytes, str]:
         """
         Generate an asymmetric key pair.
 
@@ -506,23 +517,21 @@ class KeyManagementService:
 
         # Generate RSA key pair
         private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=key_size,
-            backend=default_backend()
+            public_exponent=65537, key_size=key_size, backend=default_backend()
         )
 
         # Serialize private key
         private_key_bytes = private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
+            encryption_algorithm=serialization.NoEncryption(),
         )
 
         # Serialize public key
         public_key = private_key.public_key()
         public_key_bytes = public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
         )
         public_key_pem = public_key_bytes.decode()
 
@@ -533,12 +542,8 @@ class KeyManagementService:
     # =========================================================================
 
     async def get_key(
-        self,
-        db: AsyncSession,
-        key_id: str,
-        user_id: str,
-        decrypt: bool = False
-    ) -> Optional[dict[str, Any]]:
+        self, db: AsyncSession, key_id: str, user_id: str, decrypt: bool = False
+    ) -> dict[str, Any] | None:
         """
         Retrieve a cryptographic key by ID.
 
@@ -569,9 +574,7 @@ class KeyManagementService:
             raise ForbiddenError(f"Access denied to key {key_record.name}")
 
         # Update usage tracking
-        await self._record_usage(
-            db, key_record, user_id, "read", True
-        )
+        await self._record_usage(db, key_record, user_id, "read", True)
 
         # Prepare response
         response = {
@@ -593,19 +596,15 @@ class KeyManagementService:
             except Exception as e:
                 logger.error(f"Failed to decrypt key {key_id}: {e}")
                 await self._record_usage(
-                    db, key_record, user_id, "decrypt", False,
-                    error=str(e)
+                    db, key_record, user_id, "decrypt", False, error=str(e)
                 )
                 raise ValidationError("Failed to decrypt key material")
 
         return response
 
     async def get_key_by_name(
-        self,
-        db: AsyncSession,
-        name: str,
-        user_id: str
-    ) -> Optional[KeyMetadata]:
+        self, db: AsyncSession, name: str, user_id: str
+    ) -> KeyMetadata | None:
         """
         Retrieve key metadata by name.
 
@@ -633,8 +632,8 @@ class KeyManagementService:
         self,
         db: AsyncSession,
         user_id: str,
-        status: Optional[KeyStatus] = None,
-        purpose: Optional[KeyPurpose] = None
+        status: KeyStatus | None = None,
+        purpose: KeyPurpose | None = None,
     ) -> list[KeyMetadata]:
         """
         List all keys accessible to the user.
@@ -672,10 +671,7 @@ class KeyManagementService:
     # =========================================================================
 
     async def rotate_key(
-        self,
-        db: AsyncSession,
-        key_id: str,
-        user_id: str
+        self, db: AsyncSession, key_id: str, user_id: str
     ) -> KeyMetadata:
         """
         Rotate a key by generating a new version.
@@ -721,7 +717,7 @@ class KeyManagementService:
             allowed_users=old_key.allowed_users,
             expires_in_days=None,
             auto_rotate=old_key.auto_rotate,
-            rotation_interval_days=old_key.rotation_interval_days
+            rotation_interval_days=old_key.rotation_interval_days,
         )
 
         # Delete old key to avoid name conflict
@@ -732,7 +728,9 @@ class KeyManagementService:
 
         # Re-fetch new key and update version info
         result = await db.execute(
-            select(CryptographicKey).where(CryptographicKey.id == uuid.UUID(new_key_metadata.id))
+            select(CryptographicKey).where(
+                CryptographicKey.id == uuid.UUID(new_key_metadata.id)
+            )
         )
         new_key = result.scalar_one()
 
@@ -743,16 +741,14 @@ class KeyManagementService:
         await db.commit()
         await db.refresh(new_key)
 
-        logger.info(f"Rotated key {old_key.name} from v{old_key.version} to v{new_key.version}")
+        logger.info(
+            f"Rotated key {old_key.name} from v{old_key.version} to v{new_key.version}"
+        )
 
         return self._key_to_metadata(new_key)
 
     async def revoke_key(
-        self,
-        db: AsyncSession,
-        key_id: str,
-        user_id: str,
-        reason: str
+        self, db: AsyncSession, key_id: str, user_id: str, reason: str
     ) -> KeyMetadata:
         """
         Revoke a key, preventing further use.
@@ -793,11 +789,7 @@ class KeyManagementService:
         return self._key_to_metadata(key_record)
 
     async def delete_key(
-        self,
-        db: AsyncSession,
-        key_id: str,
-        user_id: str,
-        force: bool = False
+        self, db: AsyncSession, key_id: str, user_id: str, force: bool = False
     ) -> None:
         """
         Delete a key permanently.
@@ -839,11 +831,7 @@ class KeyManagementService:
     # =========================================================================
 
     async def get_key_usage(
-        self,
-        db: AsyncSession,
-        key_id: str,
-        user_id: str,
-        limit: int = 100
+        self, db: AsyncSession, key_id: str, user_id: str, limit: int = 100
     ) -> list[KeyUsageRecord]:
         """
         Get usage history for a key.
@@ -889,7 +877,7 @@ class KeyManagementService:
                 used_by=log.used_by,
                 operation=log.operation,
                 success=log.success,
-                metadata=log.metadata or {}
+                metadata=log.metadata or {},
             )
             for log in logs
         ]
@@ -899,11 +887,7 @@ class KeyManagementService:
     # =========================================================================
 
     async def backup_key(
-        self,
-        db: AsyncSession,
-        key_id: str,
-        user_id: str,
-        backup_location: str
+        self, db: AsyncSession, key_id: str, user_id: str, backup_location: str
     ) -> KeyMetadata:
         """
         Mark a key as backed up to external storage.
@@ -948,11 +932,7 @@ class KeyManagementService:
     # =========================================================================
 
     async def integrate_with_hsm(
-        self,
-        db: AsyncSession,
-        key_id: str,
-        user_id: str,
-        hsm_key_id: str
+        self, db: AsyncSession, key_id: str, user_id: str, hsm_key_id: str
     ) -> KeyMetadata:
         """
         Link a key to an HSM-stored key.
@@ -1001,10 +981,8 @@ class KeyManagementService:
     # =========================================================================
 
     async def _get_key_by_name(
-        self,
-        db: AsyncSession,
-        name: str
-    ) -> Optional[CryptographicKey]:
+        self, db: AsyncSession, name: str
+    ) -> CryptographicKey | None:
         """Get key record by name."""
         result = await db.execute(
             select(CryptographicKey).where(CryptographicKey.name == name)
@@ -1045,7 +1023,7 @@ class KeyManagementService:
         user_id: str,
         operation: str,
         success: bool,
-        error: Optional[str] = None
+        error: str | None = None,
     ) -> None:
         """
         Record key usage in audit log.
@@ -1074,7 +1052,7 @@ class KeyManagementService:
             metadata={
                 "key_version": key.version,
                 "key_type": key.key_type,
-            }
+            },
         )
 
         db.add(log)
@@ -1097,7 +1075,7 @@ class KeyManagementService:
             access_policy=AccessPolicy(key.access_policy),
             allowed_users=key.allowed_users or [],
             is_backed_up=key.is_backed_up,
-            hsm_integrated=key.hsm_integrated
+            hsm_integrated=key.hsm_integrated,
         )
 
     def _decrypt_key(self, key: CryptographicKey) -> bytes:
@@ -1126,6 +1104,7 @@ class KeyManagementService:
 # Synchronous Wrapper for Backward Compatibility
 # =============================================================================
 
+
 class SyncKeyManagementService:
     """
     Synchronous wrapper for KeyManagementService.
@@ -1133,26 +1112,19 @@ class SyncKeyManagementService:
     Provides sync methods for use with non-async codebases.
     """
 
-    def __init__(self, hsm_config: Optional[HSMConfig] = None):
+    def __init__(self, hsm_config: HSMConfig | None = None):
         """Initialize with optional HSM configuration."""
         self.async_service = KeyManagementService(hsm_config)
 
     def generate_key_sync(
-        self,
-        db: Session,
-        request: KeyGenerationRequest,
-        created_by: str
+        self, db: Session, request: KeyGenerationRequest, created_by: str
     ) -> KeyMetadata:
         """Synchronous version of generate_key."""
         # In production, use asyncio.run() or sync session
         raise NotImplementedError("Sync version requires async-to-sync adapter")
 
     def get_key_sync(
-        self,
-        db: Session,
-        key_id: str,
-        user_id: str,
-        decrypt: bool = False
-    ) -> Optional[dict[str, Any]]:
+        self, db: Session, key_id: str, user_id: str, decrypt: bool = False
+    ) -> dict[str, Any] | None:
         """Synchronous version of get_key."""
         raise NotImplementedError("Sync version requires async-to-sync adapter")

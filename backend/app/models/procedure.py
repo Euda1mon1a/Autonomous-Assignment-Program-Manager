@@ -1,4 +1,5 @@
 """Procedure model - medical procedures that can be supervised."""
+
 import uuid
 from datetime import datetime
 
@@ -22,6 +23,7 @@ class Procedure(Base):
     - Colposcopy
     - Vasectomy
     """
+
     __tablename__ = "procedures"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -33,11 +35,17 @@ class Procedure(Base):
     specialty = Column(String(100))  # e.g., 'Sports Medicine', 'OB/GYN', 'Dermatology'
 
     # Supervision requirements
-    supervision_ratio = Column(Integer, default=1)  # Max residents per faculty (1 = 1:1)
-    requires_certification = Column(Boolean, default=True)  # Must have explicit credential
+    supervision_ratio = Column(
+        Integer, default=1
+    )  # Max residents per faculty (1 = 1:1)
+    requires_certification = Column(
+        Boolean, default=True
+    )  # Must have explicit credential
 
     # Complexity/training
-    complexity_level = Column(String(50), default='standard')  # 'basic', 'standard', 'advanced', 'complex'
+    complexity_level = Column(
+        String(50), default="standard"
+    )  # 'basic', 'standard', 'advanced', 'complex'
     min_pgy_level = Column(Integer, default=1)  # Minimum PGY level to perform
 
     # Status
@@ -48,7 +56,9 @@ class Procedure(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    credentials = relationship("ProcedureCredential", back_populates="procedure", cascade="all, delete-orphan")
+    credentials = relationship(
+        "ProcedureCredential", back_populates="procedure", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Procedure(name='{self.name}', specialty='{self.specialty}')>"

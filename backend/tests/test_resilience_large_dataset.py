@@ -6,10 +6,10 @@ and that resilience queries properly fetch all data without truncation.
 
 Issue: #277 - Resilience reports truncate data at 100 rows
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
-import pytest
 from sqlalchemy.orm import Session
 
 from app.models.assignment import Assignment
@@ -45,10 +45,7 @@ class TestLargeDatasetQueryBehavior:
 
         # Query using the same pattern as the resilience routes
         faculty = (
-            db.query(Person)
-            .filter(Person.type == "faculty")
-            .order_by(Person.id)
-            .all()
+            db.query(Person).filter(Person.type == "faculty").order_by(Person.id).all()
         )
 
         # Verify all 150 are returned (not truncated to 100)
@@ -77,10 +74,7 @@ class TestLargeDatasetQueryBehavior:
         # Query using the same pattern as the resilience routes
         blocks = (
             db.query(Block)
-            .filter(
-                Block.date >= start_date,
-                Block.date <= end_date
-            )
+            .filter(Block.date >= start_date, Block.date <= end_date)
             .order_by(Block.date, Block.id)
             .all()
         )
@@ -153,12 +147,9 @@ class TestLargeDatasetQueryBehavior:
             .options(
                 joinedload(Assignment.block),
                 joinedload(Assignment.person),
-                joinedload(Assignment.rotation_template)
+                joinedload(Assignment.rotation_template),
             )
-            .filter(
-                Block.date >= start_date,
-                Block.date <= end_date
-            )
+            .filter(Block.date >= start_date, Block.date <= end_date)
             .order_by(Block.date, Assignment.id)
             .all()
         )
@@ -235,18 +226,12 @@ class TestLargeDatasetScenarios:
 
         # Query all three types
         faculty_result = (
-            db.query(Person)
-            .filter(Person.type == "faculty")
-            .order_by(Person.id)
-            .all()
+            db.query(Person).filter(Person.type == "faculty").order_by(Person.id).all()
         )
 
         blocks_result = (
             db.query(Block)
-            .filter(
-                Block.date >= start_date,
-                Block.date <= end_date
-            )
+            .filter(Block.date >= start_date, Block.date <= end_date)
             .order_by(Block.date, Block.id)
             .all()
         )
@@ -259,20 +244,23 @@ class TestLargeDatasetScenarios:
             .options(
                 joinedload(Assignment.block),
                 joinedload(Assignment.person),
-                joinedload(Assignment.rotation_template)
+                joinedload(Assignment.rotation_template),
             )
-            .filter(
-                Block.date >= start_date,
-                Block.date <= end_date
-            )
+            .filter(Block.date >= start_date, Block.date <= end_date)
             .order_by(Block.date, Assignment.id)
             .all()
         )
 
         # Verify none are truncated
-        assert len(faculty_result) == 125, f"Expected 125 faculty, got {len(faculty_result)}"
-        assert len(blocks_result) == 120, f"Expected 120 blocks, got {len(blocks_result)}"
-        assert len(assignments_result) == 200, f"Expected 200 assignments, got {len(assignments_result)}"
+        assert len(faculty_result) == 125, (
+            f"Expected 125 faculty, got {len(faculty_result)}"
+        )
+        assert len(blocks_result) == 120, (
+            f"Expected 120 blocks, got {len(blocks_result)}"
+        )
+        assert len(assignments_result) == 200, (
+            f"Expected 200 assignments, got {len(assignments_result)}"
+        )
 
     def test_query_ordering_is_deterministic(self, db: Session):
         """
@@ -283,6 +271,7 @@ class TestLargeDatasetScenarios:
         """
         # Create faculty in random order
         import random
+
         faculty_ids = [uuid4() for _ in range(50)]
         random.shuffle(faculty_ids)
 
@@ -298,17 +287,11 @@ class TestLargeDatasetScenarios:
 
         # Query twice
         result1 = (
-            db.query(Person)
-            .filter(Person.type == "faculty")
-            .order_by(Person.id)
-            .all()
+            db.query(Person).filter(Person.type == "faculty").order_by(Person.id).all()
         )
 
         result2 = (
-            db.query(Person)
-            .filter(Person.type == "faculty")
-            .order_by(Person.id)
-            .all()
+            db.query(Person).filter(Person.type == "faculty").order_by(Person.id).all()
         )
 
         # Verify same order
@@ -332,10 +315,7 @@ class TestLargeDatasetScenarios:
         db.commit()
 
         faculty = (
-            db.query(Person)
-            .filter(Person.type == "faculty")
-            .order_by(Person.id)
-            .all()
+            db.query(Person).filter(Person.type == "faculty").order_by(Person.id).all()
         )
 
         assert len(faculty) == 100
@@ -357,10 +337,7 @@ class TestLargeDatasetScenarios:
         db.commit()
 
         faculty = (
-            db.query(Person)
-            .filter(Person.type == "faculty")
-            .order_by(Person.id)
-            .all()
+            db.query(Person).filter(Person.type == "faculty").order_by(Person.id).all()
         )
 
         # This would have been 100 before the fix

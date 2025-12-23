@@ -4,64 +4,61 @@ Example usage of request validation decorators.
 This file provides examples of how to use the validation decorators
 in FastAPI route handlers.
 """
+
 from datetime import date
 from typing import Any
 
 from fastapi import APIRouter, Request
 
 from app.validation import (
-    validate_request,
-    validate_query,
-    validate_body,
-    validate_pagination,
-    validate_date_range_params,
-    validate_conditional_field,
+    ValidationContext,
+    email_format,
+    enum_values,
+    faculty_role_rule,
+    numeric_range,
+    person_type_rule,
+    pgy_level_rule,
     required,
     string_length,
-    numeric_range,
-    enum_values,
-    email_format,
     uuid_format,
-    pgy_level_rule,
-    person_type_rule,
-    faculty_role_rule,
-    ValidationContext,
+    validate_body,
+    validate_conditional_field,
+    validate_date_range_params,
+    validate_pagination,
+    validate_query,
+    validate_request,
 )
-
 
 router = APIRouter()
 
 
 # Example 1: Query parameter validation
 @router.get("/people")
-@validate_query({
-    "type": [enum_values(["resident", "faculty"])],
-    "pgy_level": [numeric_range(min_value=1, max_value=3)]
-})
-async def list_people(
-    type: str | None = None,
-    pgy_level: int | None = None
-):
+@validate_query(
+    {
+        "type": [enum_values(["resident", "faculty"])],
+        "pgy_level": [numeric_range(min_value=1, max_value=3)],
+    }
+)
+async def list_people(type: str | None = None, pgy_level: int | None = None):
     """
     List people with validated query parameters.
 
     Query parameters are validated before the handler executes.
     """
-    return {
-        "type": type,
-        "pgy_level": pgy_level,
-        "message": "Query validation passed"
-    }
+    return {"type": type, "pgy_level": pgy_level, "message": "Query validation passed"}
 
 
 # Example 2: Request body validation
 @router.post("/people")
-@validate_body({
-    "name": [required, string_length(min_length=1, max_length=100)],
-    "type": [required, person_type_rule()],
-    "email": [email_format()],
-    "pgy_level": []  # Validated conditionally
-})
+@validate_body(
+    {
+        "name": [required, string_length(min_length=1, max_length=100)],
+        "type": [required, person_type_rule()],
+        "email": [email_format()],
+        "pgy_level": [],  # Validated conditionally
+    }
+)
 async def create_person(request: Request):
     """
     Create a person with validated request body.
@@ -69,22 +66,17 @@ async def create_person(request: Request):
     Body fields are validated before the handler executes.
     """
     body = await request.json()
-    return {
-        "message": "Person created successfully",
-        "data": body
-    }
+    return {"message": "Person created successfully", "data": body}
 
 
 # Example 3: Combined query and body validation
 @router.put("/assignments/{assignment_id}")
 @validate_request(
-    query_rules={
-        "assignment_id": [required, uuid_format()]
-    },
+    query_rules={"assignment_id": [required, uuid_format()]},
     body_rules={
         "rotation_name": [required, string_length(min_length=1)],
-        "score": [numeric_range(min_value=0, max_value=100)]
-    }
+        "score": [numeric_range(min_value=0, max_value=100)],
+    },
 )
 async def update_assignment(assignment_id: str, request: Request):
     """
@@ -96,7 +88,7 @@ async def update_assignment(assignment_id: str, request: Request):
     return {
         "assignment_id": assignment_id,
         "updates": body,
-        "message": "Assignment updated successfully"
+        "message": "Assignment updated successfully",
     }
 
 
@@ -125,9 +117,9 @@ def validate_schedule_dates(data: dict[str, Any], ctx: ValidationContext) -> Non
     body_rules={
         "name": [required, string_length(min_length=1, max_length=200)],
         "start_date": [required],
-        "end_date": [required]
+        "end_date": [required],
     },
-    cross_field_validator=validate_schedule_dates
+    cross_field_validator=validate_schedule_dates,
 )
 async def create_schedule(request: Request):
     """
@@ -136,10 +128,7 @@ async def create_schedule(request: Request):
     Validates that end_date comes after start_date.
     """
     body = await request.json()
-    return {
-        "message": "Schedule created successfully",
-        "data": body
-    }
+    return {"message": "Schedule created successfully", "data": body}
 
 
 # Example 5: Pagination validation
@@ -151,25 +140,23 @@ async def list_assignments(page: int = 1, limit: int = 20):
 
     Validates page >= 1 and 1 <= limit <= 100.
     """
-    return {
-        "page": page,
-        "limit": limit,
-        "message": "Pagination validation passed"
-    }
+    return {"page": page, "limit": limit, "message": "Pagination validation passed"}
 
 
 # Example 6: Conditional field validation
 @router.post("/staff")
-@validate_body({
-    "name": [required, string_length(min_length=1, max_length=100)],
-    "type": [required, person_type_rule()],
-    "email": [email_format()]
-})
+@validate_body(
+    {
+        "name": [required, string_length(min_length=1, max_length=100)],
+        "type": [required, person_type_rule()],
+        "email": [email_format()],
+    }
+)
 @validate_conditional_field(
     field="pgy_level",
     condition_field="type",
     condition_value="resident",
-    rules=[required, pgy_level_rule()]
+    rules=[required, pgy_level_rule()],
 )
 async def create_staff_member(request: Request):
     """
@@ -178,23 +165,13 @@ async def create_staff_member(request: Request):
     pgy_level is only required when type is 'resident'.
     """
     body = await request.json()
-    return {
-        "message": "Staff member created successfully",
-        "data": body
-    }
+    return {"message": "Staff member created successfully", "data": body}
 
 
 # Example 7: Date range validation
 @router.get("/reports")
-@validate_date_range_params(
-    start_param="start_date",
-    end_param="end_date"
-)
-async def generate_report(
-    start_date: date,
-    end_date: date,
-    format: str = "pdf"
-):
+@validate_date_range_params(start_param="start_date", end_param="end_date")
+async def generate_report(start_date: date, end_date: date, format: str = "pdf"):
     """
     Generate report with date range validation.
 
@@ -204,7 +181,7 @@ async def generate_report(
         "start_date": start_date.isoformat(),
         "end_date": end_date.isoformat(),
         "format": format,
-        "message": "Report generated successfully"
+        "message": "Report generated successfully",
     }
 
 
@@ -218,7 +195,9 @@ def validate_faculty_data(data: dict[str, Any], ctx: ValidationContext) -> None:
     if data.get("type") == "faculty":
         # Faculty must have specialties
         if not data.get("specialties") or len(data.get("specialties", [])) == 0:
-            ctx.add_field_error("specialties", "Faculty must have at least one specialty")
+            ctx.add_field_error(
+                "specialties", "Faculty must have at least one specialty"
+            )
 
         # Faculty with certain roles must perform procedures
         supervisory_roles = ["pd", "apd", "oic"]
@@ -226,7 +205,7 @@ def validate_faculty_data(data: dict[str, Any], ctx: ValidationContext) -> None:
             if not data.get("performs_procedures"):
                 ctx.add_field_error(
                     "performs_procedures",
-                    f"Faculty with role {data.get('faculty_role')} must perform procedures"
+                    f"Faculty with role {data.get('faculty_role')} must perform procedures",
                 )
 
 
@@ -238,9 +217,9 @@ def validate_faculty_data(data: dict[str, Any], ctx: ValidationContext) -> None:
         "email": [required, email_format()],
         "faculty_role": [faculty_role_rule()],
         "performs_procedures": [],
-        "specialties": []
+        "specialties": [],
     },
-    cross_field_validator=validate_faculty_data
+    cross_field_validator=validate_faculty_data,
 )
 async def create_faculty(request: Request):
     """
@@ -249,30 +228,30 @@ async def create_faculty(request: Request):
     Validates faculty-specific requirements using cross-field validation.
     """
     body = await request.json()
-    return {
-        "message": "Faculty created successfully",
-        "data": body
-    }
+    return {"message": "Faculty created successfully", "data": body}
 
 
 # Example 9: List validation
 from app.validation import list_items
 
+
 @router.post("/bulk-create")
-@validate_body({
-    "people": [
-        required,
-        list_items(
-            item_rule=lambda field, value, ctx: (
-                string_length(min_length=1)(field + ".name", value.get("name"), ctx)
-                if isinstance(value, dict)
-                else False
+@validate_body(
+    {
+        "people": [
+            required,
+            list_items(
+                item_rule=lambda field, value, ctx: (
+                    string_length(min_length=1)(field + ".name", value.get("name"), ctx)
+                    if isinstance(value, dict)
+                    else False
+                ),
+                min_items=1,
+                max_items=50,
             ),
-            min_items=1,
-            max_items=50
-        )
-    ]
-})
+        ]
+    }
+)
 async def bulk_create_people(request: Request):
     """
     Bulk create people with list validation.
@@ -282,26 +261,30 @@ async def bulk_create_people(request: Request):
     body = await request.json()
     return {
         "message": f"Created {len(body['people'])} people",
-        "count": len(body["people"])
+        "count": len(body["people"]),
     }
 
 
 # Example 10: Custom validation rule
 from app.validation import custom
 
+
 def is_valid_phone(value: str) -> bool:
     """Check if phone number is valid format."""
     import re
-    pattern = r'^\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$'
+
+    pattern = r"^\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$"
     return bool(re.match(pattern, value))
 
 
 @router.post("/contacts")
-@validate_body({
-    "name": [required, string_length(min_length=1)],
-    "phone": [custom(is_valid_phone, "Invalid phone number format")],
-    "email": [email_format()]
-})
+@validate_body(
+    {
+        "name": [required, string_length(min_length=1)],
+        "phone": [custom(is_valid_phone, "Invalid phone number format")],
+        "email": [email_format()],
+    }
+)
 async def create_contact(request: Request):
     """
     Create contact with custom validation rule.
@@ -309,7 +292,4 @@ async def create_contact(request: Request):
     Demonstrates using a custom validation function.
     """
     body = await request.json()
-    return {
-        "message": "Contact created successfully",
-        "data": body
-    }
+    return {"message": "Contact created successfully", "data": body}

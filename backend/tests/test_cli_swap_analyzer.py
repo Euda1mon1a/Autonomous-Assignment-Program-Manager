@@ -3,6 +3,7 @@ Tests for the swap_analyzer CLI tool.
 
 Tests command-line argument parsing, error handling, and output formatting.
 """
+
 import json
 import subprocess
 import sys
@@ -26,7 +27,7 @@ def sample_fmit_excel(tmp_path):
 
     # Header row with dates (weekly schedule)
     ws["A1"] = "Provider"
-    ws["B1"] = date(2025, 3, 3)   # Week 1
+    ws["B1"] = date(2025, 3, 3)  # Week 1
     ws["C1"] = date(2025, 3, 10)  # Week 2
     ws["D1"] = date(2025, 3, 17)  # Week 3
     ws["E1"] = date(2025, 3, 24)  # Week 4
@@ -71,7 +72,7 @@ def conflicts_json(tmp_path):
             "start_date": "2025-03-10",
             "end_date": "2025-03-16",
             "conflict_type": "conference",
-            "description": "AAFP Conference"
+            "description": "AAFP Conference",
         }
     ]
 
@@ -103,7 +104,7 @@ def run_cli(*args):
         cwd=str(Path(__file__).parent.parent),
         capture_output=True,
         text=True,
-        env={"PYTHONPATH": str(Path(__file__).parent.parent)}
+        env={"PYTHONPATH": str(Path(__file__).parent.parent)},
     )
     return result
 
@@ -111,6 +112,7 @@ def run_cli(*args):
 # ============================================================================
 # Help and Argument Parsing Tests
 # ============================================================================
+
 
 class TestHelpAndArguments:
     """Tests for --help output and argument parsing."""
@@ -140,13 +142,16 @@ class TestHelpAndArguments:
         result = run_cli("--file", sample_fmit_excel, "--faculty", "Dr. Smith")
 
         assert result.returncode == 1
-        assert "Specify --faculty and --week" in result.stdout or \
-               "Specify --faculty and --week" in result.stderr
+        assert (
+            "Specify --faculty and --week" in result.stdout
+            or "Specify --faculty and --week" in result.stderr
+        )
 
 
 # ============================================================================
 # File Error Handling Tests
 # ============================================================================
+
 
 class TestFileErrorHandling:
     """Tests for file-related error handling."""
@@ -169,9 +174,12 @@ class TestFileErrorHandling:
     def test_invalid_date_format(self, sample_fmit_excel):
         """Should report error for invalid date format."""
         result = run_cli(
-            "--file", sample_fmit_excel,
-            "--faculty", "Dr. Smith",
-            "--week", "invalid-date"
+            "--file",
+            sample_fmit_excel,
+            "--faculty",
+            "Dr. Smith",
+            "--week",
+            "invalid-date",
         )
 
         assert result.returncode == 1
@@ -180,9 +188,12 @@ class TestFileErrorHandling:
     def test_faculty_not_found(self, sample_fmit_excel):
         """Should report error when faculty not in schedule."""
         result = run_cli(
-            "--file", sample_fmit_excel,
-            "--faculty", "Dr. NonExistent",
-            "--week", "2025-03-03"
+            "--file",
+            sample_fmit_excel,
+            "--faculty",
+            "Dr. NonExistent",
+            "--week",
+            "2025-03-03",
         )
 
         assert result.returncode == 1
@@ -194,6 +205,7 @@ class TestFileErrorHandling:
 # ============================================================================
 # Successful Execution Tests
 # ============================================================================
+
 
 class TestSuccessfulExecution:
     """Tests for successful CLI execution modes."""
@@ -209,19 +221,27 @@ class TestSuccessfulExecution:
 
     def test_alternating_patterns_mode(self, sample_fmit_excel):
         """Should run alternating patterns analysis mode."""
-        result = run_cli("--file", sample_fmit_excel, "--alternating", "--threshold", "2")
+        result = run_cli(
+            "--file", sample_fmit_excel, "--alternating", "--threshold", "2"
+        )
 
         assert result.returncode == 0
         assert "Alternating FMIT Patterns" in result.stdout
         # The output should show either found patterns or indicate none were found
-        assert "alternating cycles" in result.stdout.lower() or "no faculty found" in result.stdout.lower()
+        assert (
+            "alternating cycles" in result.stdout.lower()
+            or "no faculty found" in result.stdout.lower()
+        )
 
     def test_swap_candidate_search(self, sample_fmit_excel):
         """Should find swap candidates for faculty/week."""
         result = run_cli(
-            "--file", sample_fmit_excel,
-            "--faculty", "Dr. Smith",
-            "--week", "2025-03-03"
+            "--file",
+            sample_fmit_excel,
+            "--faculty",
+            "Dr. Smith",
+            "--week",
+            "2025-03-03",
         )
 
         assert result.returncode == 0
@@ -231,11 +251,7 @@ class TestSuccessfulExecution:
 
     def test_verbose_output(self, sample_fmit_excel):
         """Should include additional details with --verbose."""
-        result = run_cli(
-            "--file", sample_fmit_excel,
-            "--analyze-all",
-            "--verbose"
-        )
+        result = run_cli("--file", sample_fmit_excel, "--analyze-all", "--verbose")
 
         assert result.returncode == 0
         assert "Loaded schedule" in result.stdout
@@ -243,9 +259,7 @@ class TestSuccessfulExecution:
     def test_custom_threshold(self, sample_fmit_excel):
         """Should accept custom threshold for alternating detection."""
         result = run_cli(
-            "--file", sample_fmit_excel,
-            "--alternating",
-            "--threshold", "2"
+            "--file", sample_fmit_excel, "--alternating", "--threshold", "2"
         )
 
         assert result.returncode == 0
@@ -255,10 +269,14 @@ class TestSuccessfulExecution:
     def test_external_conflicts_file(self, sample_fmit_excel, conflicts_json):
         """Should load and apply external conflicts from JSON file."""
         result = run_cli(
-            "--file", sample_fmit_excel,
-            "--faculty", "Dr. Smith",
-            "--week", "2025-03-03",
-            "--conflicts-file", conflicts_json
+            "--file",
+            sample_fmit_excel,
+            "--faculty",
+            "Dr. Smith",
+            "--week",
+            "2025-03-03",
+            "--conflicts-file",
+            conflicts_json,
         )
 
         assert result.returncode == 0
@@ -272,6 +290,7 @@ class TestSuccessfulExecution:
 # Short Option Tests
 # ============================================================================
 
+
 class TestShortOptions:
     """Tests for short option flags."""
 
@@ -284,22 +303,14 @@ class TestShortOptions:
 
     def test_short_faculty_option(self, sample_fmit_excel):
         """Should accept -F as shorthand for --faculty."""
-        result = run_cli(
-            "-f", sample_fmit_excel,
-            "-F", "Dr. Smith",
-            "-w", "2025-03-03"
-        )
+        result = run_cli("-f", sample_fmit_excel, "-F", "Dr. Smith", "-w", "2025-03-03")
 
         assert result.returncode == 0
         assert "Dr. Smith" in result.stdout
 
     def test_short_verbose_option(self, sample_fmit_excel):
         """Should accept -v as shorthand for --verbose."""
-        result = run_cli(
-            "-f", sample_fmit_excel,
-            "--analyze-all",
-            "-v"
-        )
+        result = run_cli("-f", sample_fmit_excel, "--analyze-all", "-v")
 
         assert result.returncode == 0
         assert "Loaded schedule" in result.stdout
@@ -309,36 +320,25 @@ class TestShortOptions:
 # Date Format Tests
 # ============================================================================
 
+
 class TestDateFormats:
     """Tests for various date format parsing."""
 
     def test_iso_date_format(self, sample_fmit_excel):
         """Should accept YYYY-MM-DD date format."""
-        result = run_cli(
-            "-f", sample_fmit_excel,
-            "-F", "Dr. Smith",
-            "-w", "2025-03-03"
-        )
+        result = run_cli("-f", sample_fmit_excel, "-F", "Dr. Smith", "-w", "2025-03-03")
 
         assert result.returncode == 0
 
     def test_us_date_format(self, sample_fmit_excel):
         """Should accept MM/DD/YYYY date format."""
-        result = run_cli(
-            "-f", sample_fmit_excel,
-            "-F", "Dr. Smith",
-            "-w", "03/03/2025"
-        )
+        result = run_cli("-f", sample_fmit_excel, "-F", "Dr. Smith", "-w", "03/03/2025")
 
         assert result.returncode == 0
 
     def test_alt_us_date_format(self, sample_fmit_excel):
         """Should accept MM-DD-YYYY date format."""
-        result = run_cli(
-            "-f", sample_fmit_excel,
-            "-F", "Dr. Smith",
-            "-w", "03-03-2025"
-        )
+        result = run_cli("-f", sample_fmit_excel, "-F", "Dr. Smith", "-w", "03-03-2025")
 
         assert result.returncode == 0
 
@@ -347,16 +347,13 @@ class TestDateFormats:
 # Output Format Tests
 # ============================================================================
 
+
 class TestOutputFormat:
     """Tests for output formatting and content."""
 
     def test_swap_candidates_format(self, sample_fmit_excel):
         """Should format swap candidates with status indicators."""
-        result = run_cli(
-            "-f", sample_fmit_excel,
-            "-F", "Dr. Smith",
-            "-w", "2025-03-03"
-        )
+        result = run_cli("-f", sample_fmit_excel, "-F", "Dr. Smith", "-w", "2025-03-03")
 
         assert result.returncode == 0
         # Should show viable vs total counts
@@ -366,11 +363,7 @@ class TestOutputFormat:
 
     def test_alternating_pattern_suggestions(self, sample_fmit_excel):
         """Should suggest swap weeks for alternating patterns."""
-        result = run_cli(
-            "-f", sample_fmit_excel,
-            "--alternating",
-            "--threshold", "2"
-        )
+        result = run_cli("-f", sample_fmit_excel, "--alternating", "--threshold", "2")
 
         assert result.returncode == 0
         # Should show FMIT weeks for faculty with alternating patterns

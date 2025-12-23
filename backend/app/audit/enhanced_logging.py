@@ -68,19 +68,18 @@ Security:
 import hashlib
 import json
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Optional
+from datetime import datetime
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, desc, func, or_, select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from app.audit.retention import RetentionPolicyManager, get_policy_manager
 from app.core.config import get_settings
 from app.models.user import User
-from app.schemas.audit import AuditLogEntry, FieldChange
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -105,7 +104,9 @@ class AuditContext(BaseModel):
     session_id: str | None = Field(None, description="Session identifier")
     user_agent: str | None = Field(None, description="User agent string")
     request_id: str | None = Field(None, description="Request correlation ID")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="When action occurred")
+    timestamp: datetime = Field(
+        default_factory=datetime.utcnow, description="When action occurred"
+    )
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
@@ -123,8 +124,12 @@ class FieldChangeDetail(BaseModel):
     old_value: Any = Field(None, description="Value before change")
     new_value: Any = Field(None, description="Value after change")
     display_name: str | None = Field(None, description="Human-readable field name")
-    is_sensitive: bool = Field(False, description="Whether field contains sensitive data")
-    change_magnitude: str | None = Field(None, description="Magnitude of change (small/medium/large)")
+    is_sensitive: bool = Field(
+        False, description="Whether field contains sensitive data"
+    )
+    change_magnitude: str | None = Field(
+        None, description="Magnitude of change (small/medium/large)"
+    )
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
@@ -162,35 +167,59 @@ class EnhancedAuditLog(BaseModel):
     """
 
     id: str = Field(default_factory=lambda: str(uuid4()), description="Unique log ID")
-    entity_type: str = Field(..., description="Type of entity (assignment, absence, etc.)")
+    entity_type: str = Field(
+        ..., description="Type of entity (assignment, absence, etc.)"
+    )
     entity_id: str = Field(..., description="ID of the entity")
     entity_name: str | None = Field(None, description="Human-readable entity name")
     action: str = Field(..., description="Action performed (create/update/delete)")
-    severity: str = Field(default="info", description="Severity level (info/warning/critical)")
+    severity: str = Field(
+        default="info", description="Severity level (info/warning/critical)"
+    )
 
     # Change details
-    changes: list[FieldChangeDetail] = Field(default_factory=list, description="List of field changes")
-    before_state: dict[str, Any] | None = Field(None, description="Complete state before change")
-    after_state: dict[str, Any] | None = Field(None, description="Complete state after change")
+    changes: list[FieldChangeDetail] = Field(
+        default_factory=list, description="List of field changes"
+    )
+    before_state: dict[str, Any] | None = Field(
+        None, description="Complete state before change"
+    )
+    after_state: dict[str, Any] | None = Field(
+        None, description="Complete state after change"
+    )
 
     # User context
-    context: AuditContext = Field(..., description="Audit context with user/session info")
+    context: AuditContext = Field(
+        ..., description="Audit context with user/session info"
+    )
 
     # Metadata
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
     reason: str | None = Field(None, description="Reason for change (if provided)")
     tags: list[str] = Field(default_factory=list, description="Tags for categorization")
 
     # Integrity
-    checksum: str | None = Field(None, description="SHA-256 checksum for integrity verification")
-    checksum_algorithm: str = Field(default="sha256", description="Checksum algorithm used")
+    checksum: str | None = Field(
+        None, description="SHA-256 checksum for integrity verification"
+    )
+    checksum_algorithm: str = Field(
+        default="sha256", description="Checksum algorithm used"
+    )
 
     # ACGME compliance
-    acgme_override: bool = Field(False, description="Whether this involves ACGME override")
-    acgme_justification: str | None = Field(None, description="Justification for ACGME override")
+    acgme_override: bool = Field(
+        False, description="Whether this involves ACGME override"
+    )
+    acgme_justification: str | None = Field(
+        None, description="Justification for ACGME override"
+    )
 
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="When log was created")
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow, description="When log was created"
+    )
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
@@ -217,10 +246,10 @@ class EnhancedAuditLog(BaseModel):
         }
 
         # Serialize to stable JSON format
-        json_str = json.dumps(data, sort_keys=True, separators=(',', ':'))
+        json_str = json.dumps(data, sort_keys=True, separators=(",", ":"))
 
         # Calculate SHA-256 hash
-        return hashlib.sha256(json_str.encode('utf-8')).hexdigest()
+        return hashlib.sha256(json_str.encode("utf-8")).hexdigest()
 
     def verify_checksum(self) -> bool:
         """
@@ -245,7 +274,9 @@ class AuditSearchFilter(BaseModel):
 
     # Entity filters
     entity_types: list[str] | None = Field(None, description="Filter by entity types")
-    entity_ids: list[str] | None = Field(None, description="Filter by specific entity IDs")
+    entity_ids: list[str] | None = Field(
+        None, description="Filter by specific entity IDs"
+    )
 
     # Action filters
     actions: list[str] | None = Field(None, description="Filter by actions")
@@ -284,8 +315,12 @@ class ComplianceReport(BaseModel):
     Summarizes audit activity for regulatory compliance purposes.
     """
 
-    report_id: str = Field(default_factory=lambda: str(uuid4()), description="Unique report ID")
-    generated_at: datetime = Field(default_factory=datetime.utcnow, description="When report was generated")
+    report_id: str = Field(
+        default_factory=lambda: str(uuid4()), description="Unique report ID"
+    )
+    generated_at: datetime = Field(
+        default_factory=datetime.utcnow, description="When report was generated"
+    )
     generated_by: str = Field(..., description="User who generated the report")
 
     # Report period
@@ -294,30 +329,48 @@ class ComplianceReport(BaseModel):
 
     # Summary statistics
     total_changes: int = Field(..., description="Total number of changes")
-    changes_by_entity_type: dict[str, int] = Field(default_factory=dict, description="Changes grouped by entity type")
-    changes_by_action: dict[str, int] = Field(default_factory=dict, description="Changes grouped by action")
-    changes_by_user: dict[str, int] = Field(default_factory=dict, description="Changes grouped by user")
-    changes_by_severity: dict[str, int] = Field(default_factory=dict, description="Changes grouped by severity")
+    changes_by_entity_type: dict[str, int] = Field(
+        default_factory=dict, description="Changes grouped by entity type"
+    )
+    changes_by_action: dict[str, int] = Field(
+        default_factory=dict, description="Changes grouped by action"
+    )
+    changes_by_user: dict[str, int] = Field(
+        default_factory=dict, description="Changes grouped by user"
+    )
+    changes_by_severity: dict[str, int] = Field(
+        default_factory=dict, description="Changes grouped by severity"
+    )
 
     # ACGME compliance
     acgme_overrides: int = Field(0, description="Number of ACGME overrides")
-    acgme_override_details: list[dict[str, Any]] = Field(default_factory=list, description="Details of overrides")
+    acgme_override_details: list[dict[str, Any]] = Field(
+        default_factory=list, description="Details of overrides"
+    )
 
     # High-risk activities
     critical_changes: int = Field(0, description="Number of critical changes")
     deletion_events: int = Field(0, description="Number of deletion events")
-    after_hours_changes: int = Field(0, description="Changes made outside business hours")
+    after_hours_changes: int = Field(
+        0, description="Changes made outside business hours"
+    )
 
     # User activity
     unique_users: int = Field(0, description="Number of unique users with activity")
-    most_active_users: list[dict[str, Any]] = Field(default_factory=list, description="Top active users")
+    most_active_users: list[dict[str, Any]] = Field(
+        default_factory=list, description="Top active users"
+    )
 
     # Integrity
-    integrity_verified: bool = Field(False, description="Whether integrity check was performed")
+    integrity_verified: bool = Field(
+        False, description="Whether integrity check was performed"
+    )
     integrity_failures: int = Field(0, description="Number of integrity check failures")
 
     # Additional metadata
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional report metadata")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional report metadata"
+    )
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
@@ -355,8 +408,16 @@ class EnhancedAuditLogger:
 
         # Sensitive field patterns (redact from logs)
         self.sensitive_fields = {
-            "password", "hashed_password", "secret", "token", "api_key",
-            "ssn", "social_security", "credit_card", "cvv", "pin",
+            "password",
+            "hashed_password",
+            "secret",
+            "token",
+            "api_key",
+            "ssn",
+            "social_security",
+            "credit_card",
+            "cvv",
+            "pin",
         }
 
     async def log_change(
@@ -507,7 +568,9 @@ class EnhancedAuditLogger:
             query_filters.append(("created_at", "<=", filters.end_date))
 
         # Execute search (simplified - would use proper database query)
-        results = await self._execute_search(query_filters, page, page_size, sort_by, sort_order)
+        results = await self._execute_search(
+            query_filters, page, page_size, sort_by, sort_order
+        )
 
         return results
 
@@ -557,29 +620,39 @@ class EnhancedAuditLogger:
 
         for log in logs:
             # Count by entity type
-            changes_by_entity_type[log.entity_type] = changes_by_entity_type.get(log.entity_type, 0) + 1
+            changes_by_entity_type[log.entity_type] = (
+                changes_by_entity_type.get(log.entity_type, 0) + 1
+            )
 
             # Count by action
             changes_by_action[log.action] = changes_by_action.get(log.action, 0) + 1
 
             # Count by user
-            changes_by_user[log.context.user_id] = changes_by_user.get(log.context.user_id, 0) + 1
-            user_activity[log.context.user_id] = user_activity.get(log.context.user_id, 0) + 1
+            changes_by_user[log.context.user_id] = (
+                changes_by_user.get(log.context.user_id, 0) + 1
+            )
+            user_activity[log.context.user_id] = (
+                user_activity.get(log.context.user_id, 0) + 1
+            )
 
             # Count by severity
-            changes_by_severity[log.severity] = changes_by_severity.get(log.severity, 0) + 1
+            changes_by_severity[log.severity] = (
+                changes_by_severity.get(log.severity, 0) + 1
+            )
 
             # ACGME overrides
             if log.acgme_override:
                 acgme_overrides += 1
-                acgme_override_details.append({
-                    "log_id": log.id,
-                    "entity_type": log.entity_type,
-                    "entity_id": log.entity_id,
-                    "user": log.context.user_name,
-                    "justification": log.acgme_justification,
-                    "timestamp": log.created_at.isoformat(),
-                })
+                acgme_override_details.append(
+                    {
+                        "log_id": log.id,
+                        "entity_type": log.entity_type,
+                        "entity_id": log.entity_id,
+                        "user": log.context.user_name,
+                        "justification": log.acgme_justification,
+                        "timestamp": log.created_at.isoformat(),
+                    }
+                )
 
             # Critical changes
             if log.severity == "critical":
@@ -701,7 +774,7 @@ class EnhancedAuditLogger:
         """
         try:
             # Handle async session
-            if hasattr(self.db, 'execute'):
+            if hasattr(self.db, "execute"):
                 result = await self.db.execute(
                     select(User).where(User.id == UUID(user_id))
                 )
@@ -752,8 +825,7 @@ class EnhancedAuditLogger:
 
             # Check if sensitive
             is_sensitive = any(
-                sensitive in field_name.lower()
-                for sensitive in self.sensitive_fields
+                sensitive in field_name.lower() for sensitive in self.sensitive_fields
             )
 
             # Redact sensitive values
@@ -764,15 +836,19 @@ class EnhancedAuditLogger:
             # Determine change magnitude
             magnitude = self._calculate_change_magnitude(old_value, new_value)
 
-            changes.append(FieldChangeDetail(
-                field_name=field_name,
-                field_type=type(new_value).__name__ if new_value is not None else None,
-                old_value=old_value,
-                new_value=new_value,
-                display_name=self._format_field_name(field_name),
-                is_sensitive=is_sensitive,
-                change_magnitude=magnitude,
-            ))
+            changes.append(
+                FieldChangeDetail(
+                    field_name=field_name,
+                    field_type=type(new_value).__name__
+                    if new_value is not None
+                    else None,
+                    old_value=old_value,
+                    new_value=new_value,
+                    display_name=self._format_field_name(field_name),
+                    is_sensitive=is_sensitive,
+                    change_magnitude=magnitude,
+                )
+            )
 
         return changes
 
@@ -793,8 +869,7 @@ class EnhancedAuditLogger:
         for key, value in state.items():
             # Check if sensitive field
             is_sensitive = any(
-                sensitive in key.lower()
-                for sensitive in self.sensitive_fields
+                sensitive in key.lower() for sensitive in self.sensitive_fields
             )
 
             sanitized[key] = "[REDACTED]" if is_sensitive else value
@@ -850,7 +925,9 @@ class EnhancedAuditLogger:
         """
         # For numeric values, calculate percentage change
         try:
-            if isinstance(old_value, (int, float)) and isinstance(new_value, (int, float)):
+            if isinstance(old_value, (int, float)) and isinstance(
+                new_value, (int, float)
+            ):
                 if old_value == 0:
                     return "large"
 

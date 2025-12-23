@@ -12,19 +12,17 @@ This lets the control loop swap strategies without rewriting the orchestrator.
 from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
-from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.autonomous.state import GeneratorParams
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
-from app.scheduling.engine import SchedulingEngine
-from app.scheduling.constraints import ConstraintManager
 from app.resilience.service import ResilienceConfig
-
-from app.autonomous.state import GeneratorParams
+from app.scheduling.constraints import ConstraintManager
+from app.scheduling.engine import SchedulingEngine
 
 
 @dataclass
@@ -76,7 +74,9 @@ class ScheduleCandidate:
             {
                 "block_id": str(a.block_id),
                 "person_id": str(a.person_id),
-                "rotation_template_id": str(a.rotation_template_id) if a.rotation_template_id else None,
+                "rotation_template_id": str(a.rotation_template_id)
+                if a.rotation_template_id
+                else None,
                 "role": a.role,
             }
             for a in self.assignments
@@ -129,7 +129,9 @@ class CandidateGenerator:
         self.start_date = start_date
         self.end_date = end_date
         self.config = config or GeneratorConfig()
-        self.constraint_manager = constraint_manager or ConstraintManager.create_default()
+        self.constraint_manager = (
+            constraint_manager or ConstraintManager.create_default()
+        )
         self.resilience_config = resilience_config or ResilienceConfig()
 
         # Cache loaded data
@@ -299,9 +301,8 @@ class CandidateGenerator:
             self.db.rollback()
             # Log error but don't crash - return None to indicate failure
             import logging
-            logging.getLogger(__name__).warning(
-                f"Candidate generation failed: {e}"
-            )
+
+            logging.getLogger(__name__).warning(f"Candidate generation failed: {e}")
             return None
 
     def _select_algorithms(self, k: int) -> list[str]:
@@ -329,11 +330,7 @@ class CandidateGenerator:
     def _get_faculty(self) -> list[Person]:
         """Get cached faculty list."""
         if self._faculty is None:
-            self._faculty = (
-                self.db.query(Person)
-                .filter(Person.type == "faculty")
-                .all()
-            )
+            self._faculty = self.db.query(Person).filter(Person.type == "faculty").all()
         return self._faculty
 
     def _get_blocks(self) -> list[Block]:

@@ -25,17 +25,17 @@ from sqlalchemy.orm import Session
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
+from app.resilience.service import ResilienceConfig, ResilienceService
 from app.scheduling.validator import ACGMEValidator
-from app.resilience.service import ResilienceService, ResilienceConfig
 
 
 class ViolationSeverity(str, Enum):
     """Severity levels for constraint violations."""
 
     CRITICAL = "critical"  # ACGME violations, must fix
-    HIGH = "high"          # Serious issues, should fix
-    MEDIUM = "medium"      # Minor issues, good to address
-    LOW = "low"            # Preferences not met
+    HIGH = "high"  # Serious issues, should fix
+    MEDIUM = "medium"  # Minor issues, good to address
+    LOW = "low"  # Preferences not met
 
 
 @dataclass
@@ -325,8 +325,7 @@ class ScheduleEvaluator:
 
         # Soft score (for comparing invalid schedules)
         soft_score = sum(
-            c.weighted_value for c in components
-            if c.name != "acgme_compliance"
+            c.weighted_value for c in components if c.name != "acgme_compliance"
         )
 
         # Coverage rate as percentage
@@ -374,15 +373,17 @@ class ScheduleEvaluator:
             severity = self._map_severity(v.severity)
             penalty = self.SEVERITY_PENALTIES[severity]
 
-            violations.append(ViolationDetail(
-                type=v.type,
-                severity=severity,
-                message=v.message,
-                person_id=getattr(v, "person_id", None),
-                block_id=getattr(v, "block_id", None),
-                details=v.details if hasattr(v, "details") else {},
-                penalty=penalty,
-            ))
+            violations.append(
+                ViolationDetail(
+                    type=v.type,
+                    severity=severity,
+                    message=v.message,
+                    person_id=getattr(v, "person_id", None),
+                    block_id=getattr(v, "block_id", None),
+                    details=v.details if hasattr(v, "details") else {},
+                    penalty=penalty,
+                )
+            )
 
         # Calculate score: start at 1.0, subtract penalties
         raw_score = 1.0
@@ -427,7 +428,9 @@ class ScheduleEvaluator:
         if total_blocks == 0:
             coverage = 1.0
         else:
-            coverage = len(assigned_blocks & {b.id for b in weekday_blocks}) / total_blocks
+            coverage = (
+                len(assigned_blocks & {b.id for b in weekday_blocks}) / total_blocks
+            )
 
         return ScoreComponent(
             name="coverage_rate",
@@ -460,53 +463,63 @@ class ScheduleEvaluator:
             # N-1 compliance (single faculty loss)
             if not health.n1_pass:
                 raw_score -= 0.25
-                violations.append(ViolationDetail(
-                    type="N1_VULNERABILITY",
-                    severity=ViolationSeverity.HIGH,
-                    message="Schedule vulnerable to single faculty loss",
-                    details={"critical_faculty": health.critical_faculty},
-                    penalty=0.25,
-                ))
+                violations.append(
+                    ViolationDetail(
+                        type="N1_VULNERABILITY",
+                        severity=ViolationSeverity.HIGH,
+                        message="Schedule vulnerable to single faculty loss",
+                        details={"critical_faculty": health.critical_faculty},
+                        penalty=0.25,
+                    )
+                )
 
             # N-2 compliance (pair faculty loss)
             if not health.n2_pass:
                 raw_score -= 0.15
-                violations.append(ViolationDetail(
-                    type="N2_VULNERABILITY",
-                    severity=ViolationSeverity.MEDIUM,
-                    message="Schedule vulnerable to pair faculty loss",
-                    penalty=0.15,
-                ))
+                violations.append(
+                    ViolationDetail(
+                        type="N2_VULNERABILITY",
+                        severity=ViolationSeverity.MEDIUM,
+                        message="Schedule vulnerable to pair faculty loss",
+                        penalty=0.15,
+                    )
+                )
 
             # Utilization level
             util_rate = health.utilization.utilization_rate
             if util_rate > 0.95:
                 raw_score -= 0.30
-                violations.append(ViolationDetail(
-                    type="UTILIZATION_BLACK",
-                    severity=ViolationSeverity.CRITICAL,
-                    message=f"Utilization at BLACK level ({util_rate:.0%})",
-                    details={"utilization_rate": util_rate},
-                    penalty=0.30,
-                ))
+                violations.append(
+                    ViolationDetail(
+                        type="UTILIZATION_BLACK",
+                        severity=ViolationSeverity.CRITICAL,
+                        message=f"Utilization at BLACK level ({util_rate:.0%})",
+                        details={"utilization_rate": util_rate},
+                        penalty=0.30,
+                    )
+                )
             elif util_rate > 0.90:
                 raw_score -= 0.20
-                violations.append(ViolationDetail(
-                    type="UTILIZATION_RED",
-                    severity=ViolationSeverity.HIGH,
-                    message=f"Utilization at RED level ({util_rate:.0%})",
-                    details={"utilization_rate": util_rate},
-                    penalty=0.20,
-                ))
+                violations.append(
+                    ViolationDetail(
+                        type="UTILIZATION_RED",
+                        severity=ViolationSeverity.HIGH,
+                        message=f"Utilization at RED level ({util_rate:.0%})",
+                        details={"utilization_rate": util_rate},
+                        penalty=0.20,
+                    )
+                )
             elif util_rate > 0.80:
                 raw_score -= 0.10
-                violations.append(ViolationDetail(
-                    type="UTILIZATION_ORANGE",
-                    severity=ViolationSeverity.MEDIUM,
-                    message=f"Utilization at ORANGE level ({util_rate:.0%})",
-                    details={"utilization_rate": util_rate},
-                    penalty=0.10,
-                ))
+                violations.append(
+                    ViolationDetail(
+                        type="UTILIZATION_ORANGE",
+                        severity=ViolationSeverity.MEDIUM,
+                        message=f"Utilization at ORANGE level ({util_rate:.0%})",
+                        details={"utilization_rate": util_rate},
+                        penalty=0.10,
+                    )
+                )
 
             raw_score = max(0.0, raw_score)
             details = f"N1: {'PASS' if health.n1_pass else 'FAIL'}, N2: {'PASS' if health.n2_pass else 'FAIL'}, Util: {util_rate:.0%}"
@@ -563,7 +576,7 @@ class ScheduleEvaluator:
             cv = 0.0
         else:
             variance = sum((x - mean) ** 2 for x in values) / len(values)
-            std_dev = variance ** 0.5
+            std_dev = variance**0.5
             cv = std_dev / mean
 
         # Convert CV to score: CV of 0 = perfect (1.0), CV of 1 = poor (0.0)

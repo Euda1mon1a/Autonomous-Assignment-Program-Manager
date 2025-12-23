@@ -1,4 +1,5 @@
 """Assignment model - the actual schedule."""
+
 import uuid
 from datetime import datetime
 
@@ -28,12 +29,17 @@ class Assignment(Base):
     Version history is tracked via SQLAlchemy-Continuum.
     Access history: assignment.versions
     """
+
     __tablename__ = "assignments"
     __versioned__ = {}  # Enable audit trail - tracks all changes with who/what/when
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    block_id = Column(GUID(), ForeignKey("blocks.id", ondelete="CASCADE"), nullable=False)
-    person_id = Column(GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False)
+    block_id = Column(
+        GUID(), ForeignKey("blocks.id", ondelete="CASCADE"), nullable=False
+    )
+    person_id = Column(
+        GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False
+    )
     rotation_template_id = Column(GUID(), ForeignKey("rotation_templates.id"))
 
     role = Column(String(50), nullable=False)  # 'primary', 'supervising', 'backup'
@@ -42,14 +48,20 @@ class Assignment(Base):
     activity_override = Column(String(255))  # If different from template
     notes = Column(Text)
     override_reason = Column(Text)  # Reason for acknowledging ACGME violations
-    override_acknowledged_at = Column(DateTime)  # When user acknowledged ACGME violation
+    override_acknowledged_at = Column(
+        DateTime
+    )  # When user acknowledged ACGME violation
 
     # Explainability fields - transparency into scheduling decisions
     explain_json = Column(JSONType())  # Full DecisionExplanation as JSON
     confidence = Column(Float)  # Confidence score 0-1
     score = Column(Float)  # Objective score for this assignment
-    alternatives_json = Column(JSONType())  # Top alternatives considered (AlternativeCandidate[])
-    audit_hash = Column(String(64))  # SHA-256 of inputs+outputs for integrity verification
+    alternatives_json = Column(
+        JSONType()
+    )  # Top alternatives considered (AlternativeCandidate[])
+    audit_hash = Column(
+        String(64)
+    )  # SHA-256 of inputs+outputs for integrity verification
 
     # Audit
     created_by = Column(String(255))
@@ -63,7 +75,9 @@ class Assignment(Base):
 
     __table_args__ = (
         UniqueConstraint("block_id", "person_id", name="unique_person_per_block"),
-        CheckConstraint("role IN ('primary', 'supervising', 'backup')", name="check_role"),
+        CheckConstraint(
+            "role IN ('primary', 'supervising', 'backup')", name="check_role"
+        ),
     )
 
     def __repr__(self):

@@ -26,7 +26,6 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.certification import PersonCertification
 from app.models.export_job import (
-    ExportDeliveryMethod,
     ExportFormat,
     ExportJob,
     ExportJobExecution,
@@ -35,7 +34,6 @@ from app.models.export_job import (
 )
 from app.models.person import Person
 from app.models.swap import SwapRecord
-from app.services.xlsx_export import generate_legacy_xlsx
 
 logger = logging.getLogger(__name__)
 
@@ -53,11 +51,7 @@ class ExportSchedulerService:
         self.db = db
         self.delivery_service = ExportDeliveryService()
 
-    async def create_job(
-        self,
-        job_data: dict[str, Any],
-        created_by: str
-    ) -> ExportJob:
+    async def create_job(self, job_data: dict[str, Any], created_by: str) -> ExportJob:
         """
         Create a new export job.
 
@@ -82,9 +76,7 @@ class ExportSchedulerService:
         return job
 
     async def update_job(
-        self,
-        job_id: str,
-        update_data: dict[str, Any]
+        self, job_id: str, update_data: dict[str, Any]
     ) -> ExportJob | None:
         """
         Update an existing export job.
@@ -96,9 +88,7 @@ class ExportSchedulerService:
         Returns:
             ExportJob | None: Updated job or None if not found
         """
-        result = await self.db.execute(
-            select(ExportJob).where(ExportJob.id == job_id)
-        )
+        result = await self.db.execute(select(ExportJob).where(ExportJob.id == job_id))
         job = result.scalar_one_or_none()
 
         if not job:
@@ -133,9 +123,7 @@ class ExportSchedulerService:
         Returns:
             bool: True if deleted, False if not found
         """
-        result = await self.db.execute(
-            select(ExportJob).where(ExportJob.id == job_id)
-        )
+        result = await self.db.execute(select(ExportJob).where(ExportJob.id == job_id))
         job = result.scalar_one_or_none()
 
         if not job:
@@ -157,16 +145,11 @@ class ExportSchedulerService:
         Returns:
             ExportJob | None: Job or None if not found
         """
-        result = await self.db.execute(
-            select(ExportJob).where(ExportJob.id == job_id)
-        )
+        result = await self.db.execute(select(ExportJob).where(ExportJob.id == job_id))
         return result.scalar_one_or_none()
 
     async def list_jobs(
-        self,
-        page: int = 1,
-        page_size: int = 20,
-        enabled_only: bool = False
+        self, page: int = 1, page_size: int = 20, enabled_only: bool = False
     ) -> tuple[list[ExportJob], int]:
         """
         List export jobs with pagination.
@@ -212,7 +195,7 @@ class ExportSchedulerService:
             .where(
                 ExportJob.enabled == True,
                 ExportJob.schedule_enabled == True,
-                ExportJob.next_run_at <= now
+                ExportJob.next_run_at <= now,
             )
             .order_by(ExportJob.next_run_at)
         )
@@ -223,7 +206,7 @@ class ExportSchedulerService:
         job_id: str,
         triggered_by: str = "scheduled",
         override_filters: dict[str, Any] | None = None,
-        override_recipients: list[str] | None = None
+        override_recipients: list[str] | None = None,
     ) -> ExportJobExecution:
         """
         Execute an export job.
@@ -260,11 +243,7 @@ class ExportSchedulerService:
             # Generate export data
             filters = override_filters or job.filters or {}
             file_data, row_count = await self._generate_export_data(
-                job.template,
-                job.format,
-                filters,
-                job.columns,
-                job.include_headers
+                job.template, job.format, filters, job.columns, job.include_headers
             )
 
             # Generate filename
@@ -297,7 +276,7 @@ class ExportSchedulerService:
                     "job_name": job.name,
                     "execution_id": str(execution.id),
                     "generated_at": datetime.utcnow().isoformat(),
-                }
+                },
             )
 
             # Update execution record
@@ -305,9 +284,15 @@ class ExportSchedulerService:
             execution.runtime_seconds = int(
                 (execution.finished_at - execution.started_at).total_seconds()
             )
-            execution.status = ExportJobStatus.COMPLETED if delivery_result.success else ExportJobStatus.FAILED
+            execution.status = (
+                ExportJobStatus.COMPLETED
+                if delivery_result.success
+                else ExportJobStatus.FAILED
+            )
             execution.row_count = row_count
-            execution.file_size_bytes = len(file_data) if isinstance(file_data, bytes) else None
+            execution.file_size_bytes = (
+                len(file_data) if isinstance(file_data, bytes) else None
+            )
             execution.email_sent = delivery_result.email_sent
             execution.s3_url = delivery_result.s3_url
 
@@ -337,7 +322,11 @@ class ExportSchedulerService:
             )
             execution.status = ExportJobStatus.FAILED
             execution.error_message = str(e)
-            execution.error_traceback = logging.traceback.format_exc() if hasattr(logging, "traceback") else None
+            execution.error_traceback = (
+                logging.traceback.format_exc()
+                if hasattr(logging, "traceback")
+                else None
+            )
 
             # Update job
             job.last_run_at = execution.started_at
@@ -346,7 +335,9 @@ class ExportSchedulerService:
             await self.db.commit()
             await self.db.refresh(execution)
 
-            logger.error(f"Export job failed: {job.name} (ID: {job.id}): {e}", exc_info=True)
+            logger.error(
+                f"Export job failed: {job.name} (ID: {job.id}): {e}", exc_info=True
+            )
             return execution
 
     async def _generate_export_data(
@@ -355,7 +346,7 @@ class ExportSchedulerService:
         format: ExportFormat,
         filters: dict[str, Any],
         columns: list[str] | None,
-        include_headers: bool
+        include_headers: bool,
     ) -> tuple[bytes, int]:
         """
         Generate export data based on template and format.
@@ -386,10 +377,7 @@ class ExportSchedulerService:
             raise ValueError(f"Unsupported export format: {format}")
 
     async def _get_template_data(
-        self,
-        template: str,
-        filters: dict[str, Any],
-        columns: list[str] | None
+        self, template: str, filters: dict[str, Any], columns: list[str] | None
     ) -> tuple[list[dict], list[str]]:
         """
         Get data for a specific template.
@@ -416,9 +404,7 @@ class ExportSchedulerService:
             raise ValueError(f"Unsupported template: {template}")
 
     async def _get_personnel_data(
-        self,
-        filters: dict[str, Any],
-        columns: list[str] | None
+        self, filters: dict[str, Any], columns: list[str] | None
     ) -> tuple[list[dict], list[str]]:
         """Get personnel data."""
         query = select(Person).order_by(Person.name)
@@ -432,7 +418,15 @@ class ExportSchedulerService:
         result = await self.db.execute(query)
         people = result.scalars().all()
 
-        headers = ["id", "name", "type", "pgy_level", "email", "specialties", "performs_procedures"]
+        headers = [
+            "id",
+            "name",
+            "type",
+            "pgy_level",
+            "email",
+            "specialties",
+            "performs_procedures",
+        ]
         if columns:
             headers = [h for h in headers if h in columns]
 
@@ -454,12 +448,14 @@ class ExportSchedulerService:
         return data, headers
 
     async def _get_absences_data(
-        self,
-        filters: dict[str, Any],
-        columns: list[str] | None
+        self, filters: dict[str, Any], columns: list[str] | None
     ) -> tuple[list[dict], list[str]]:
         """Get absences data."""
-        query = select(Absence).options(joinedload(Absence.person)).order_by(Absence.start_date)
+        query = (
+            select(Absence)
+            .options(joinedload(Absence.person))
+            .order_by(Absence.start_date)
+        )
 
         # Apply filters
         if filters.get("start_date"):
@@ -483,7 +479,9 @@ class ExportSchedulerService:
             row = {
                 "person_name": absence.person.name if absence.person else "Unknown",
                 "absence_type": absence.absence_type,
-                "start_date": absence.start_date.isoformat() if absence.start_date else None,
+                "start_date": absence.start_date.isoformat()
+                if absence.start_date
+                else None,
                 "end_date": absence.end_date.isoformat() if absence.end_date else None,
                 "notes": absence.notes,
             }
@@ -494,9 +492,7 @@ class ExportSchedulerService:
         return data, headers
 
     async def _get_schedule_data(
-        self,
-        filters: dict[str, Any],
-        columns: list[str] | None
+        self, filters: dict[str, Any], columns: list[str] | None
     ) -> tuple[list[dict], list[str]]:
         """Get schedule data."""
         query = (
@@ -504,7 +500,7 @@ class ExportSchedulerService:
             .options(
                 joinedload(Assignment.block),
                 joinedload(Assignment.person),
-                joinedload(Assignment.rotation_template)
+                joinedload(Assignment.rotation_template),
             )
             .join(Block)
             .order_by(Block.date, Block.time_of_day)
@@ -521,7 +517,14 @@ class ExportSchedulerService:
         result = await self.db.execute(query)
         assignments = result.scalars().all()
 
-        headers = ["date", "time_of_day", "person_name", "person_type", "role", "activity"]
+        headers = [
+            "date",
+            "time_of_day",
+            "person_name",
+            "person_type",
+            "role",
+            "activity",
+        ]
         if columns:
             headers = [h for h in headers if h in columns]
 
@@ -529,8 +532,12 @@ class ExportSchedulerService:
         for assignment in assignments:
             row = {
                 "date": assignment.block.date.isoformat() if assignment.block else None,
-                "time_of_day": assignment.block.time_of_day if assignment.block else None,
-                "person_name": assignment.person.name if assignment.person else "Unknown",
+                "time_of_day": assignment.block.time_of_day
+                if assignment.block
+                else None,
+                "person_name": assignment.person.name
+                if assignment.person
+                else "Unknown",
                 "person_type": assignment.person.type if assignment.person else None,
                 "role": assignment.role,
                 "activity": assignment.activity_name,
@@ -542,14 +549,12 @@ class ExportSchedulerService:
         return data, headers
 
     async def _get_certifications_data(
-        self,
-        filters: dict[str, Any],
-        columns: list[str] | None
+        self, filters: dict[str, Any], columns: list[str] | None
     ) -> tuple[list[dict], list[str]]:
         """Get certifications data."""
         query = select(PersonCertification).options(
             joinedload(PersonCertification.person),
-            joinedload(PersonCertification.certification_type)
+            joinedload(PersonCertification.certification_type),
         )
 
         result = await self.db.execute(query)
@@ -563,9 +568,15 @@ class ExportSchedulerService:
         for cert in certs:
             row = {
                 "person_name": cert.person.name if cert.person else "Unknown",
-                "certification_name": cert.certification_type.name if cert.certification_type else "Unknown",
-                "expiration_date": cert.expiration_date.isoformat() if cert.expiration_date else None,
-                "status": "Active" if cert.expiration_date and cert.expiration_date > date.today() else "Expired",
+                "certification_name": cert.certification_type.name
+                if cert.certification_type
+                else "Unknown",
+                "expiration_date": cert.expiration_date.isoformat()
+                if cert.expiration_date
+                else None,
+                "status": "Active"
+                if cert.expiration_date and cert.expiration_date > date.today()
+                else "Expired",
             }
             if columns:
                 row = {k: v for k, v in row.items() if k in columns}
@@ -574,9 +585,7 @@ class ExportSchedulerService:
         return data, headers
 
     async def _get_swap_history_data(
-        self,
-        filters: dict[str, Any],
-        columns: list[str] | None
+        self, filters: dict[str, Any], columns: list[str] | None
     ) -> tuple[list[dict], list[str]]:
         """Get swap history data."""
         query = select(SwapRecord).order_by(SwapRecord.created_at.desc())
@@ -593,9 +602,13 @@ class ExportSchedulerService:
             row = {
                 "swap_type": swap.swap_type,
                 "status": swap.status,
-                "requested_date": swap.requested_date.isoformat() if swap.requested_date else None,
+                "requested_date": swap.requested_date.isoformat()
+                if swap.requested_date
+                else None,
                 "created_at": swap.created_at.isoformat() if swap.created_at else None,
-                "executed_at": swap.executed_at.isoformat() if swap.executed_at else None,
+                "executed_at": swap.executed_at.isoformat()
+                if swap.executed_at
+                else None,
             }
             if columns:
                 row = {k: v for k, v in row.items() if k in columns}
@@ -604,10 +617,7 @@ class ExportSchedulerService:
         return data, headers
 
     def _format_as_csv(
-        self,
-        data: list[dict],
-        headers: list[str],
-        include_headers: bool
+        self, data: list[dict], headers: list[str], include_headers: bool
     ) -> bytes:
         """Format data as CSV."""
         output = io.StringIO()
@@ -626,10 +636,7 @@ class ExportSchedulerService:
         return json.dumps(data, indent=2, default=str).encode("utf-8")
 
     def _format_as_xlsx(
-        self,
-        data: list[dict],
-        headers: list[str],
-        include_headers: bool
+        self, data: list[dict], headers: list[str], include_headers: bool
     ) -> bytes:
         """Format data as XLSX."""
         from openpyxl import Workbook

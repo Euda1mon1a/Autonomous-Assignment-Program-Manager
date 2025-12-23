@@ -1,4 +1,5 @@
 """Rotation template schemas."""
+
 from datetime import datetime
 from uuid import UUID
 
@@ -7,6 +8,7 @@ from pydantic import BaseModel
 
 class RotationTemplateBase(BaseModel):
     """Base rotation template schema."""
+
     name: str
     activity_type: str  # 'clinic', 'inpatient', 'procedure', 'conference'
     abbreviation: str | None = None
@@ -20,11 +22,13 @@ class RotationTemplateBase(BaseModel):
 
 class RotationTemplateCreate(RotationTemplateBase):
     """Schema for creating a rotation template."""
+
     pass
 
 
 class RotationTemplateUpdate(BaseModel):
     """Schema for updating a rotation template."""
+
     name: str | None = None
     activity_type: str | None = None
     abbreviation: str | None = None
@@ -38,6 +42,7 @@ class RotationTemplateUpdate(BaseModel):
 
 class RotationTemplateResponse(RotationTemplateBase):
     """Schema for rotation template response."""
+
     id: UUID
     created_at: datetime
 
@@ -47,5 +52,6 @@ class RotationTemplateResponse(RotationTemplateBase):
 
 class RotationTemplateListResponse(BaseModel):
     """Schema for list of rotation templates."""
+
     items: list[RotationTemplateResponse]
     total: int

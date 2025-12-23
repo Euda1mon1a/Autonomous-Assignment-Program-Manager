@@ -86,15 +86,15 @@ class ImageProcessor:
             original_width, original_height = image.size
 
             # Convert RGBA to RGB if saving as JPEG
-            if format == "JPEG" or (
-                format is None and image.format in ["JPEG", "JPG"]
-            ):
+            if format == "JPEG" or (format is None and image.format in ["JPEG", "JPG"]):
                 if image.mode in ("RGBA", "LA", "P"):
                     # Create white background
                     background = self.Image.new("RGB", image.size, (255, 255, 255))
                     if image.mode == "P":
                         image = image.convert("RGBA")
-                    background.paste(image, mask=image.split()[-1] if image.mode == "RGBA" else None)
+                    background.paste(
+                        image, mask=image.split()[-1] if image.mode == "RGBA" else None
+                    )
                     image = background
                 elif image.mode != "RGB":
                     image = image.convert("RGB")
@@ -128,9 +128,7 @@ class ImageProcessor:
 
                     # Only resize if image is larger
                     if original_width > target_width or original_height > target_height:
-                        resized = self._resize_image(
-                            image, target_width, target_height
-                        )
+                        resized = self._resize_image(image, target_width, target_height)
                         result["versions"][size_name] = self._save_image(
                             resized, output_format, quality
                         )
@@ -172,7 +170,9 @@ class ImageProcessor:
                 background = self.Image.new("RGB", image.size, (255, 255, 255))
                 if image.mode == "P":
                     image = image.convert("RGBA")
-                background.paste(image, mask=image.split()[-1] if image.mode == "RGBA" else None)
+                background.paste(
+                    image, mask=image.split()[-1] if image.mode == "RGBA" else None
+                )
                 image = background
             elif image.mode != "RGB":
                 image = image.convert("RGB")
@@ -189,9 +189,7 @@ class ImageProcessor:
             logger.error(f"Thumbnail generation failed: {e}")
             raise ProcessorError(f"Thumbnail generation failed: {e}")
 
-    def _resize_image(
-        self, image: Any, max_width: int, max_height: int
-    ) -> Any:
+    def _resize_image(self, image: Any, max_width: int, max_height: int) -> Any:
         """
         Resize image while maintaining aspect ratio.
 
@@ -217,9 +215,7 @@ class ImageProcessor:
                 new_height = max_height
                 new_width = int(max_height * aspect)
 
-            return image.resize(
-                (new_width, new_height), self.Image.Resampling.LANCZOS
-            )
+            return image.resize((new_width, new_height), self.Image.Resampling.LANCZOS)
 
         return image
 
@@ -276,7 +272,11 @@ class ImageProcessor:
                 exif = image._getexif()
                 for tag_id, value in exif.items():
                     tag = TAGS.get(tag_id, tag_id)
-                    exif_data[tag] = str(value) if not isinstance(value, (str, int, float)) else value
+                    exif_data[tag] = (
+                        str(value)
+                        if not isinstance(value, (str, int, float))
+                        else value
+                    )
 
         except Exception as e:
             logger.debug(f"EXIF extraction failed: {e}")

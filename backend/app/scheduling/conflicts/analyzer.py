@@ -10,7 +10,6 @@ import hashlib
 import logging
 from collections import defaultdict
 from datetime import date, timedelta
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy import and_, select
@@ -23,7 +22,6 @@ from app.models.person import Person
 from app.scheduling.conflicts.types import (
     ACGMEViolationConflict,
     Conflict,
-    ConflictCategory,
     ConflictSeverity,
     ConflictSummary,
     ConflictType,
@@ -95,16 +93,22 @@ class ConflictAnalyzer:
         conflicts: list[Conflict] = []
 
         # Detect different types of conflicts
-        time_overlaps = await self._detect_time_overlaps(start_date, end_date, person_id)
+        time_overlaps = await self._detect_time_overlaps(
+            start_date, end_date, person_id
+        )
         conflicts.extend(time_overlaps)
 
         supervision_issues = await self._detect_supervision_issues(start_date, end_date)
         conflicts.extend(supervision_issues)
 
-        acgme_violations = await self._detect_acgme_violations(start_date, end_date, person_id)
+        acgme_violations = await self._detect_acgme_violations(
+            start_date, end_date, person_id
+        )
         conflicts.extend(acgme_violations)
 
-        resource_contentions = await self._detect_resource_contentions(start_date, end_date)
+        resource_contentions = await self._detect_resource_contentions(
+            start_date, end_date
+        )
         conflicts.extend(resource_contentions)
 
         # Sort by severity and urgency
@@ -154,7 +158,9 @@ class ConflictAnalyzer:
         assignments = result.scalars().all()
 
         # Group assignments by person and block
-        by_person_and_block: dict[tuple[UUID, UUID], list[Assignment]] = defaultdict(list)
+        by_person_and_block: dict[tuple[UUID, UUID], list[Assignment]] = defaultdict(
+            list
+        )
 
         for assignment in assignments:
             key = (assignment.person_id, assignment.block_id)
@@ -248,36 +254,35 @@ class ConflictAnalyzer:
 
             # Separate residents and faculty
             residents = [
-                a for a in block_assignments
-                if a.person and a.person.is_resident
+                a for a in block_assignments if a.person and a.person.is_resident
             ]
-            faculty = [
-                a for a in block_assignments
-                if a.person and a.person.is_faculty
-            ]
+            faculty = [a for a in block_assignments if a.person and a.person.is_faculty]
 
             if not residents:
                 continue
 
             # Count PGY levels
             pgy1_count = sum(
-                1 for a in residents
-                if a.person and a.person.pgy_level == 1
+                1 for a in residents if a.person and a.person.pgy_level == 1
             )
             pgy2_3_count = len(residents) - pgy1_count
 
             # Calculate required faculty
-            required_faculty = self._calculate_required_faculty(pgy1_count, pgy2_3_count)
+            required_faculty = self._calculate_required_faculty(
+                pgy1_count, pgy2_3_count
+            )
 
             if len(faculty) < required_faculty:
                 # Supervision violation
                 block = block_assignments[0].block
 
-                conflict_id = self._generate_conflict_id(
-                    "supervision", str(block_id)
-                )
+                conflict_id = self._generate_conflict_id("supervision", str(block_id))
 
-                severity = ConflictSeverity.CRITICAL if len(faculty) == 0 else ConflictSeverity.HIGH
+                severity = (
+                    ConflictSeverity.CRITICAL
+                    if len(faculty) == 0
+                    else ConflictSeverity.HIGH
+                )
 
                 conflict = SupervisionConflict(
                     conflict_id=conflict_id,
@@ -409,7 +414,8 @@ class ConflictAnalyzer:
             window_end = window_start + timedelta(days=27)  # 4 weeks = 28 days
 
             total_blocks = sum(
-                count for d, count in blocks_by_date.items()
+                count
+                for d, count in blocks_by_date.items()
                 if window_start <= d <= window_end
             )
 
@@ -669,7 +675,9 @@ class ConflictAnalyzer:
         # Count by category and type
         for conflict in conflicts:
             category_key = conflict.category.value
-            summary.by_category[category_key] = summary.by_category.get(category_key, 0) + 1
+            summary.by_category[category_key] = (
+                summary.by_category.get(category_key, 0) + 1
+            )
 
             type_key = conflict.conflict_type.value
             summary.by_type[type_key] = summary.by_type.get(type_key, 0) + 1
@@ -691,9 +699,15 @@ class ConflictAnalyzer:
         summary.requires_manual_count = len(conflicts) - summary.auto_resolvable_count
 
         # Average scores
-        summary.average_impact_score = sum(c.impact_score for c in conflicts) / len(conflicts)
-        summary.average_urgency_score = sum(c.urgency_score for c in conflicts) / len(conflicts)
-        summary.average_complexity_score = sum(c.complexity_score for c in conflicts) / len(conflicts)
+        summary.average_impact_score = sum(c.impact_score for c in conflicts) / len(
+            conflicts
+        )
+        summary.average_urgency_score = sum(c.urgency_score for c in conflicts) / len(
+            conflicts
+        )
+        summary.average_complexity_score = sum(
+            c.complexity_score for c in conflicts
+        ) / len(conflicts)
 
         # Timeline
         summary.earliest_date = min(c.start_date for c in conflicts)

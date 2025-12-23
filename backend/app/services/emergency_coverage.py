@@ -9,6 +9,7 @@ Handles last-minute changes to the schedule:
 
 Finds replacement coverage and protects critical services.
 """
+
 from datetime import date
 from uuid import UUID
 
@@ -73,40 +74,48 @@ class EmergencyCoverageService:
 
             if replacement:
                 # Update assignment with new person
-                old_person = self.db.query(Person).filter(
-                    Person.id == assignment.person_id
-                ).first()
+                old_person = (
+                    self.db.query(Person)
+                    .filter(Person.id == assignment.person_id)
+                    .first()
+                )
 
                 assignment.person_id = replacement.id
                 assignment.notes = f"Replaced {old_person.name if old_person else 'Unknown'} due to: {reason}"
 
                 replacements.append(assignment)
-                details.append({
-                    "block_id": str(assignment.block_id),
-                    "original_person": old_person.name if old_person else "Unknown",
-                    "replacement": replacement.name,
-                    "is_critical": is_critical,
-                    "status": "covered",
-                })
+                details.append(
+                    {
+                        "block_id": str(assignment.block_id),
+                        "original_person": old_person.name if old_person else "Unknown",
+                        "replacement": replacement.name,
+                        "is_critical": is_critical,
+                        "status": "covered",
+                    }
+                )
             else:
                 if is_critical:
                     # Critical gap - needs manual attention
                     gaps.append(assignment)
-                    details.append({
-                        "block_id": str(assignment.block_id),
-                        "is_critical": is_critical,
-                        "status": "UNCOVERED - REQUIRES ATTENTION",
-                        "recommended_action": "Manual assignment needed",
-                    })
+                    details.append(
+                        {
+                            "block_id": str(assignment.block_id),
+                            "is_critical": is_critical,
+                            "status": "UNCOVERED - REQUIRES ATTENTION",
+                            "recommended_action": "Manual assignment needed",
+                        }
+                    )
                 else:
                     # Non-critical - can be cancelled
                     self.db.delete(assignment)
-                    details.append({
-                        "block_id": str(assignment.block_id),
-                        "is_critical": is_critical,
-                        "status": "cancelled",
-                        "recommended_action": "Reschedule when possible",
-                    })
+                    details.append(
+                        {
+                            "block_id": str(assignment.block_id),
+                            "is_critical": is_critical,
+                            "status": "cancelled",
+                            "recommended_action": "Reschedule when possible",
+                        }
+                    )
 
         self.db.commit()
 
@@ -137,9 +146,7 @@ class EmergencyCoverageService:
         """Check if assignment is a critical service (24/7 coverage required)."""
         if assignment.rotation_template:
             activity_type = assignment.rotation_template.activity_type.lower()
-            return any(
-                keyword in activity_type for keyword in self.CRITICAL_ACTIVITIES
-            )
+            return any(keyword in activity_type for keyword in self.CRITICAL_ACTIVITIES)
         return False
 
     async def _find_replacement(self, assignment: Assignment) -> Person | None:

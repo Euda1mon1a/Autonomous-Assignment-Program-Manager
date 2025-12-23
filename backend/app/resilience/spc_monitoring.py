@@ -26,7 +26,6 @@ import logging
 import statistics
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -46,10 +45,11 @@ class SPCAlert:
         data_points: The specific data points that triggered the alert
         control_limits: Control chart limits at time of violation
     """
+
     rule: str
     severity: str
     message: str
-    resident_id: Optional[UUID] = None
+    resident_id: UUID | None = None
     timestamp: datetime = field(default_factory=datetime.utcnow)
     data_points: list[float] = field(default_factory=list)
     control_limits: dict = field(default_factory=dict)
@@ -152,7 +152,9 @@ class WorkloadControlChart:
         # Validate data
         for i, hours in enumerate(weekly_hours):
             if hours < 0:
-                raise ValueError(f"Invalid hours at index {i}: {hours} (cannot be negative)")
+                raise ValueError(
+                    f"Invalid hours at index {i}: {hours} (cannot be negative)"
+                )
             if hours > 168:
                 raise ValueError(
                     f"Invalid hours at index {i}: {hours} (exceeds 168 hours/week)"
@@ -195,43 +197,47 @@ class WorkloadControlChart:
 
         for i, hours in enumerate(weekly_hours):
             if hours > self.ucl_3sigma:
-                alerts.append(SPCAlert(
-                    rule="Rule 1",
-                    severity="CRITICAL",
-                    message=(
-                        f"Workload exceeded 3σ upper limit: {hours:.1f} hours "
-                        f"(limit: {self.ucl_3sigma:.1f}h, target: {self.target_hours:.1f}h). "
-                        f"Process out of control - immediate investigation required."
-                    ),
-                    resident_id=resident_id,
-                    data_points=[hours],
-                    control_limits={
-                        "ucl_3sigma": self.ucl_3sigma,
-                        "lcl_3sigma": self.lcl_3sigma,
-                        "centerline": self.target_hours,
-                    },
-                ))
+                alerts.append(
+                    SPCAlert(
+                        rule="Rule 1",
+                        severity="CRITICAL",
+                        message=(
+                            f"Workload exceeded 3σ upper limit: {hours:.1f} hours "
+                            f"(limit: {self.ucl_3sigma:.1f}h, target: {self.target_hours:.1f}h). "
+                            f"Process out of control - immediate investigation required."
+                        ),
+                        resident_id=resident_id,
+                        data_points=[hours],
+                        control_limits={
+                            "ucl_3sigma": self.ucl_3sigma,
+                            "lcl_3sigma": self.lcl_3sigma,
+                            "centerline": self.target_hours,
+                        },
+                    )
+                )
                 logger.warning(
                     f"Rule 1 violation (upper): resident={resident_id}, "
                     f"hours={hours:.1f}, week_index={i}"
                 )
             elif hours < self.lcl_3sigma:
-                alerts.append(SPCAlert(
-                    rule="Rule 1",
-                    severity="CRITICAL",
-                    message=(
-                        f"Workload below 3σ lower limit: {hours:.1f} hours "
-                        f"(limit: {self.lcl_3sigma:.1f}h, target: {self.target_hours:.1f}h). "
-                        f"Possible scheduling gap or data error."
-                    ),
-                    resident_id=resident_id,
-                    data_points=[hours],
-                    control_limits={
-                        "ucl_3sigma": self.ucl_3sigma,
-                        "lcl_3sigma": self.lcl_3sigma,
-                        "centerline": self.target_hours,
-                    },
-                ))
+                alerts.append(
+                    SPCAlert(
+                        rule="Rule 1",
+                        severity="CRITICAL",
+                        message=(
+                            f"Workload below 3σ lower limit: {hours:.1f} hours "
+                            f"(limit: {self.lcl_3sigma:.1f}h, target: {self.target_hours:.1f}h). "
+                            f"Possible scheduling gap or data error."
+                        ),
+                        resident_id=resident_id,
+                        data_points=[hours],
+                        control_limits={
+                            "ucl_3sigma": self.ucl_3sigma,
+                            "lcl_3sigma": self.lcl_3sigma,
+                            "centerline": self.target_hours,
+                        },
+                    )
+                )
                 logger.warning(
                     f"Rule 1 violation (lower): resident={resident_id}, "
                     f"hours={hours:.1f}, week_index={i}"
@@ -259,28 +265,30 @@ class WorkloadControlChart:
             return alerts  # Need at least 3 points
 
         for i in range(len(weekly_hours) - 2):
-            window = weekly_hours[i:i+3]
+            window = weekly_hours[i : i + 3]
 
             # Check upper 2σ
             upper_violations = [h for h in window if h > self.ucl_2sigma]
             if len(upper_violations) >= 2:
-                alerts.append(SPCAlert(
-                    rule="Rule 2",
-                    severity="WARNING",
-                    message=(
-                        f"Workload shift detected: {len(upper_violations)} of 3 weeks "
-                        f"exceeded 2σ upper limit ({self.ucl_2sigma:.1f}h). "
-                        f"Hours: {[f'{h:.1f}' for h in window]}. "
-                        f"Sustained overwork pattern detected."
-                    ),
-                    resident_id=resident_id,
-                    data_points=window,
-                    control_limits={
-                        "ucl_2sigma": self.ucl_2sigma,
-                        "lcl_2sigma": self.lcl_2sigma,
-                        "centerline": self.target_hours,
-                    },
-                ))
+                alerts.append(
+                    SPCAlert(
+                        rule="Rule 2",
+                        severity="WARNING",
+                        message=(
+                            f"Workload shift detected: {len(upper_violations)} of 3 weeks "
+                            f"exceeded 2σ upper limit ({self.ucl_2sigma:.1f}h). "
+                            f"Hours: {[f'{h:.1f}' for h in window]}. "
+                            f"Sustained overwork pattern detected."
+                        ),
+                        resident_id=resident_id,
+                        data_points=window,
+                        control_limits={
+                            "ucl_2sigma": self.ucl_2sigma,
+                            "lcl_2sigma": self.lcl_2sigma,
+                            "centerline": self.target_hours,
+                        },
+                    )
+                )
                 logger.warning(
                     f"Rule 2 violation (upper): resident={resident_id}, "
                     f"window_start={i}, hours={window}"
@@ -290,23 +298,25 @@ class WorkloadControlChart:
             # Check lower 2σ
             lower_violations = [h for h in window if h < self.lcl_2sigma]
             if len(lower_violations) >= 2:
-                alerts.append(SPCAlert(
-                    rule="Rule 2",
-                    severity="WARNING",
-                    message=(
-                        f"Workload shift detected: {len(lower_violations)} of 3 weeks "
-                        f"below 2σ lower limit ({self.lcl_2sigma:.1f}h). "
-                        f"Hours: {[f'{h:.1f}' for h in window]}. "
-                        f"Sustained underutilization pattern detected."
-                    ),
-                    resident_id=resident_id,
-                    data_points=window,
-                    control_limits={
-                        "ucl_2sigma": self.ucl_2sigma,
-                        "lcl_2sigma": self.lcl_2sigma,
-                        "centerline": self.target_hours,
-                    },
-                ))
+                alerts.append(
+                    SPCAlert(
+                        rule="Rule 2",
+                        severity="WARNING",
+                        message=(
+                            f"Workload shift detected: {len(lower_violations)} of 3 weeks "
+                            f"below 2σ lower limit ({self.lcl_2sigma:.1f}h). "
+                            f"Hours: {[f'{h:.1f}' for h in window]}. "
+                            f"Sustained underutilization pattern detected."
+                        ),
+                        resident_id=resident_id,
+                        data_points=window,
+                        control_limits={
+                            "ucl_2sigma": self.ucl_2sigma,
+                            "lcl_2sigma": self.lcl_2sigma,
+                            "centerline": self.target_hours,
+                        },
+                    )
+                )
                 logger.warning(
                     f"Rule 2 violation (lower): resident={resident_id}, "
                     f"window_start={i}, hours={window}"
@@ -335,28 +345,30 @@ class WorkloadControlChart:
             return alerts  # Need at least 5 points
 
         for i in range(len(weekly_hours) - 4):
-            window = weekly_hours[i:i+5]
+            window = weekly_hours[i : i + 5]
 
             # Check upper 1σ
             upper_violations = [h for h in window if h > self.ucl_1sigma]
             if len(upper_violations) >= 4:
-                alerts.append(SPCAlert(
-                    rule="Rule 3",
-                    severity="WARNING",
-                    message=(
-                        f"Workload trend detected: {len(upper_violations)} of 5 weeks "
-                        f"exceeded 1σ upper threshold ({self.ucl_1sigma:.1f}h). "
-                        f"Hours: {[f'{h:.1f}' for h in window]}. "
-                        f"Gradual increase in workload detected."
-                    ),
-                    resident_id=resident_id,
-                    data_points=window,
-                    control_limits={
-                        "ucl_1sigma": self.ucl_1sigma,
-                        "lcl_1sigma": self.lcl_1sigma,
-                        "centerline": self.target_hours,
-                    },
-                ))
+                alerts.append(
+                    SPCAlert(
+                        rule="Rule 3",
+                        severity="WARNING",
+                        message=(
+                            f"Workload trend detected: {len(upper_violations)} of 5 weeks "
+                            f"exceeded 1σ upper threshold ({self.ucl_1sigma:.1f}h). "
+                            f"Hours: {[f'{h:.1f}' for h in window]}. "
+                            f"Gradual increase in workload detected."
+                        ),
+                        resident_id=resident_id,
+                        data_points=window,
+                        control_limits={
+                            "ucl_1sigma": self.ucl_1sigma,
+                            "lcl_1sigma": self.lcl_1sigma,
+                            "centerline": self.target_hours,
+                        },
+                    )
+                )
                 logger.warning(
                     f"Rule 3 violation (upper): resident={resident_id}, "
                     f"window_start={i}, hours={window}"
@@ -366,23 +378,25 @@ class WorkloadControlChart:
             # Check lower 1σ
             lower_violations = [h for h in window if h < self.lcl_1sigma]
             if len(lower_violations) >= 4:
-                alerts.append(SPCAlert(
-                    rule="Rule 3",
-                    severity="WARNING",
-                    message=(
-                        f"Workload trend detected: {len(lower_violations)} of 5 weeks "
-                        f"below 1σ lower threshold ({self.lcl_1sigma:.1f}h). "
-                        f"Hours: {[f'{h:.1f}' for h in window]}. "
-                        f"Gradual decrease in workload detected."
-                    ),
-                    resident_id=resident_id,
-                    data_points=window,
-                    control_limits={
-                        "ucl_1sigma": self.ucl_1sigma,
-                        "lcl_1sigma": self.lcl_1sigma,
-                        "centerline": self.target_hours,
-                    },
-                ))
+                alerts.append(
+                    SPCAlert(
+                        rule="Rule 3",
+                        severity="WARNING",
+                        message=(
+                            f"Workload trend detected: {len(lower_violations)} of 5 weeks "
+                            f"below 1σ lower threshold ({self.lcl_1sigma:.1f}h). "
+                            f"Hours: {[f'{h:.1f}' for h in window]}. "
+                            f"Gradual decrease in workload detected."
+                        ),
+                        resident_id=resident_id,
+                        data_points=window,
+                        control_limits={
+                            "ucl_1sigma": self.ucl_1sigma,
+                            "lcl_1sigma": self.lcl_1sigma,
+                            "centerline": self.target_hours,
+                        },
+                    )
+                )
                 logger.warning(
                     f"Rule 3 violation (lower): resident={resident_id}, "
                     f"window_start={i}, hours={window}"
@@ -412,28 +426,30 @@ class WorkloadControlChart:
             return alerts  # Need at least 8 points
 
         for i in range(len(weekly_hours) - 7):
-            window = weekly_hours[i:i+8]
+            window = weekly_hours[i : i + 8]
 
             # Check if all points are above centerline
             above_center = [h for h in window if h > self.target_hours]
             if len(above_center) == 8:
                 mean_hours = statistics.mean(window)
-                alerts.append(SPCAlert(
-                    rule="Rule 4",
-                    severity="INFO",
-                    message=(
-                        f"Sustained workload shift detected: 8 consecutive weeks "
-                        f"above target ({self.target_hours:.1f}h). "
-                        f"Mean: {mean_hours:.1f}h. "
-                        f"Indicates systematic change in workload baseline."
-                    ),
-                    resident_id=resident_id,
-                    data_points=window,
-                    control_limits={
-                        "centerline": self.target_hours,
-                        "mean_actual": mean_hours,
-                    },
-                ))
+                alerts.append(
+                    SPCAlert(
+                        rule="Rule 4",
+                        severity="INFO",
+                        message=(
+                            f"Sustained workload shift detected: 8 consecutive weeks "
+                            f"above target ({self.target_hours:.1f}h). "
+                            f"Mean: {mean_hours:.1f}h. "
+                            f"Indicates systematic change in workload baseline."
+                        ),
+                        resident_id=resident_id,
+                        data_points=window,
+                        control_limits={
+                            "centerline": self.target_hours,
+                            "mean_actual": mean_hours,
+                        },
+                    )
+                )
                 logger.info(
                     f"Rule 4 violation (above): resident={resident_id}, "
                     f"window_start={i}, mean={mean_hours:.1f}h"
@@ -444,22 +460,24 @@ class WorkloadControlChart:
             below_center = [h for h in window if h < self.target_hours]
             if len(below_center) == 8:
                 mean_hours = statistics.mean(window)
-                alerts.append(SPCAlert(
-                    rule="Rule 4",
-                    severity="INFO",
-                    message=(
-                        f"Sustained workload shift detected: 8 consecutive weeks "
-                        f"below target ({self.target_hours:.1f}h). "
-                        f"Mean: {mean_hours:.1f}h. "
-                        f"Indicates systematic change in workload baseline."
-                    ),
-                    resident_id=resident_id,
-                    data_points=window,
-                    control_limits={
-                        "centerline": self.target_hours,
-                        "mean_actual": mean_hours,
-                    },
-                ))
+                alerts.append(
+                    SPCAlert(
+                        rule="Rule 4",
+                        severity="INFO",
+                        message=(
+                            f"Sustained workload shift detected: 8 consecutive weeks "
+                            f"below target ({self.target_hours:.1f}h). "
+                            f"Mean: {mean_hours:.1f}h. "
+                            f"Indicates systematic change in workload baseline."
+                        ),
+                        resident_id=resident_id,
+                        data_points=window,
+                        control_limits={
+                            "centerline": self.target_hours,
+                            "mean_actual": mean_hours,
+                        },
+                    )
+                )
                 logger.info(
                     f"Rule 4 violation (below): resident={resident_id}, "
                     f"window_start={i}, mean={mean_hours:.1f}h"
@@ -595,10 +613,10 @@ def calculate_process_capability(
         if lsl <= mean <= usl:
             # Within spec
             return {
-                "cp": float('inf'),
-                "cpk": float('inf'),
-                "pp": float('inf'),
-                "ppk": float('inf'),
+                "cp": float("inf"),
+                "cpk": float("inf"),
+                "pp": float("inf"),
+                "ppk": float("inf"),
                 "mean": mean,
                 "sigma": 0.0,
                 "interpretation": "Perfect process - no variation",
@@ -606,10 +624,10 @@ def calculate_process_capability(
         else:
             # Outside spec
             return {
-                "cp": float('inf'),
-                "cpk": float('-inf'),
-                "pp": float('inf'),
-                "ppk": float('-inf'),
+                "cp": float("inf"),
+                "cpk": float("-inf"),
+                "pp": float("inf"),
+                "ppk": float("-inf"),
                 "mean": mean,
                 "sigma": 0.0,
                 "interpretation": "Process outside specifications with no variation",

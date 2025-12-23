@@ -20,7 +20,6 @@ Usage:
     anonymized_data = k_anon.apply(records, quasi_identifiers=["age", "zipcode"])
 """
 
-import hashlib
 import secrets
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -65,7 +64,9 @@ class PseudonymizationStrategy(AnonymizationStrategy):
     Replaces identifiable data with pseudonyms while maintaining ability to reverse.
     """
 
-    def __init__(self, encryption_key: bytes | None = None, use_encryption: bool = True):
+    def __init__(
+        self, encryption_key: bytes | None = None, use_encryption: bool = True
+    ):
         """
         Initialize pseudonymization strategy.
 
@@ -213,7 +214,7 @@ class KAnonymityStrategy(AnonymizationStrategy):
         data: list[dict],
         quasi_identifiers: list[str],
         sensitive_attributes: list[str] | None = None,
-        **kwargs
+        **kwargs,
     ) -> list[dict]:
         """
         Apply k-anonymity to dataset.
@@ -243,9 +244,7 @@ class KAnonymityStrategy(AnonymizationStrategy):
             if len(group_records) >= self.k:
                 # Group is large enough, generalize if needed
                 anonymized_group = self._generalize_group(
-                    group_records,
-                    quasi_identifiers,
-                    sensitive_attributes
+                    group_records, quasi_identifiers, sensitive_attributes
                 )
                 anonymized_data.extend(anonymized_group)
             elif suppressed_count + len(group_records) <= max_suppressed:
@@ -254,19 +253,14 @@ class KAnonymityStrategy(AnonymizationStrategy):
             else:
                 # Try to merge with similar groups
                 merged = self._try_merge_groups(
-                    group_records,
-                    groups,
-                    quasi_identifiers,
-                    sensitive_attributes
+                    group_records, groups, quasi_identifiers, sensitive_attributes
                 )
                 anonymized_data.extend(merged)
 
         return anonymized_data
 
     def _group_by_quasi_identifiers(
-        self,
-        data: list[dict],
-        quasi_identifiers: list[str]
+        self, data: list[dict], quasi_identifiers: list[str]
     ) -> dict[tuple, list[dict]]:
         """Group records by quasi-identifier values."""
         groups = defaultdict(list)
@@ -281,7 +275,7 @@ class KAnonymityStrategy(AnonymizationStrategy):
         self,
         records: list[dict],
         quasi_identifiers: list[str],
-        sensitive_attributes: list[str]
+        sensitive_attributes: list[str],
     ) -> list[dict]:
         """
         Generalize quasi-identifiers within a group.
@@ -338,7 +332,9 @@ class KAnonymityStrategy(AnonymizationStrategy):
 
         elif isinstance(sample, (date, datetime)):
             # Date: return year or year-month
-            years = set(v.year if isinstance(v, (date, datetime)) else None for v in values)
+            years = set(
+                v.year if isinstance(v, (date, datetime)) else None for v in values
+            )
             if len(years) == 1:
                 return f"{list(years)[0]}"
             return f"{min(years)}-{max(years)}"
@@ -382,7 +378,7 @@ class KAnonymityStrategy(AnonymizationStrategy):
         small_group: list[dict],
         all_groups: dict[tuple, list[dict]],
         quasi_identifiers: list[str],
-        sensitive_attributes: list[str]
+        sensitive_attributes: list[str],
     ) -> list[dict]:
         """
         Try to merge small group with similar groups.
@@ -391,9 +387,7 @@ class KAnonymityStrategy(AnonymizationStrategy):
         """
         # For simplicity, just generalize more aggressively
         return self._generalize_group(
-            small_group,
-            quasi_identifiers,
-            sensitive_attributes
+            small_group, quasi_identifiers, sensitive_attributes
         )
 
 
@@ -426,7 +420,7 @@ class LDiversityStrategy(AnonymizationStrategy):
         data: list[dict],
         quasi_identifiers: list[str],
         sensitive_attribute: str,
-        **kwargs
+        **kwargs,
     ) -> list[dict]:
         """
         Apply l-diversity to dataset.
@@ -444,7 +438,7 @@ class LDiversityStrategy(AnonymizationStrategy):
         k_anonymized = k_anon.apply(
             data,
             quasi_identifiers=quasi_identifiers,
-            sensitive_attributes=[sensitive_attribute]
+            sensitive_attributes=[sensitive_attribute],
         )
 
         # Group by quasi-identifiers
@@ -526,7 +520,9 @@ class GeneralizationStrategy(AnonymizationStrategy):
             if rule_type == "range":
                 result[field] = self._generalize_range(value, rule.get("bin_size", 10))
             elif rule_type == "prefix":
-                result[field] = self._generalize_prefix(str(value), rule.get("length", 3))
+                result[field] = self._generalize_prefix(
+                    str(value), rule.get("length", 3)
+                )
             elif rule_type == "round":
                 result[field] = self._generalize_round(value, rule.get("precision", 0))
 
@@ -580,10 +576,7 @@ class DataSuppressionStrategy(AnonymizationStrategy):
         return False
 
     def apply(
-        self,
-        data: list[dict],
-        quasi_identifiers: list[str],
-        **kwargs
+        self, data: list[dict], quasi_identifiers: list[str], **kwargs
     ) -> list[dict]:
         """
         Apply suppression to remove outliers.

@@ -2,22 +2,21 @@
 Tests for the LLM advisor interface with schema validation.
 """
 
-import pytest
 from datetime import date, datetime
 
 from app.autonomous.advisor import (
     LLMAdvisor,
     MockLLMAdvisor,
     Suggestion,
-    SuggestionType,
     SuggestionSchema,
+    SuggestionType,
 )
 from app.autonomous.evaluator import (
     EvaluationResult,
     ViolationDetail,
     ViolationSeverity,
 )
-from app.autonomous.state import RunState, GeneratorParams, IterationRecord
+from app.autonomous.state import GeneratorParams, RunState
 
 
 class TestSuggestionSchema:

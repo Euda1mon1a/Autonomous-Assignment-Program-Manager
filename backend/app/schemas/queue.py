@@ -4,11 +4,9 @@ Queue system schemas.
 Pydantic models for queue management API requests and responses.
 """
 
-from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
-
 
 # ============================================================================
 # Task Submission Schemas
@@ -18,13 +16,23 @@ from pydantic import BaseModel, Field
 class TaskSubmitRequest(BaseModel):
     """Request to submit a task to the queue."""
 
-    task_name: str = Field(..., alias="taskName", description="Name of the task to execute")
+    task_name: str = Field(
+        ..., alias="taskName", description="Name of the task to execute"
+    )
     args: list[Any] = Field(default_factory=list, description="Positional arguments")
-    kwargs: dict[str, Any] = Field(default_factory=dict, description="Keyword arguments")
-    priority: int = Field(default=5, ge=0, le=9, description="Task priority (0-9, 9=highest)")
-    countdown: int | None = Field(None, ge=0, description="Delay in seconds before execution")
+    kwargs: dict[str, Any] = Field(
+        default_factory=dict, description="Keyword arguments"
+    )
+    priority: int = Field(
+        default=5, ge=0, le=9, description="Task priority (0-9, 9=highest)"
+    )
+    countdown: int | None = Field(
+        None, ge=0, description="Delay in seconds before execution"
+    )
     eta: str | None = Field(None, description="ISO timestamp when to execute")
-    queue: str | None = Field(None, description="Queue name (overrides priority-based routing)")
+    queue: str | None = Field(
+        None, description="Queue name (overrides priority-based routing)"
+    )
 
     class Config:
         populate_by_name = True
@@ -74,7 +82,9 @@ class TaskDependencyRequest(BaseModel):
     task_name: str = Field(..., alias="taskName")
     args: list[Any] = Field(default_factory=list)
     kwargs: dict[str, Any] = Field(default_factory=dict)
-    dependencies: list[str] = Field(..., description="List of task IDs that must complete first")
+    dependencies: list[str] = Field(
+        ..., description="List of task IDs that must complete first"
+    )
     priority: int = Field(default=5, ge=0, le=9)
 
     class Config:

@@ -49,15 +49,9 @@ test.describe('Authentication', () => {
 
       // Security: Verify httpOnly cookie is set (not accessible via JavaScript)
       const cookies = await page.context().cookies();
-<<<<<<< HEAD
       const authCookie = cookies.find(c => c.name === 'access_token');
       expect(authCookie).toBeTruthy();
       expect(authCookie?.httpOnly).toBe(true);
-=======
-      const authPGY2-01ie = cookies.find(c => c.name === 'access_token');
-      expect(authPGY2-01ie).toBeTruthy();
-      expect(authPGY2-01ie?.httpOnly).toBe(true);
->>>>>>> origin/docs/session-14-summary
     });
 
     test('should display error for invalid credentials', async ({ page }) => {
@@ -74,13 +68,8 @@ test.describe('Authentication', () => {
 
       // Security: Verify no auth cookie was set
       const cookies = await page.context().cookies();
-<<<<<<< HEAD
       const authCookie = cookies.find(c => c.name === 'access_token');
       expect(authCookie).toBeFalsy();
-=======
-      const authPGY2-01ie = cookies.find(c => c.name === 'access_token');
-      expect(authPGY2-01ie).toBeFalsy();
->>>>>>> origin/docs/session-14-summary
     });
 
     test('should display error for empty username', async ({ page }) => {
@@ -166,13 +155,8 @@ test.describe('Authentication', () => {
 
       // Security: Verify httpOnly cookie exists
       let cookies = await page.context().cookies();
-<<<<<<< HEAD
       let authCookie = cookies.find(c => c.name === 'access_token');
       expect(authCookie).toBeTruthy();
-=======
-      let authPGY2-01ie = cookies.find(c => c.name === 'access_token');
-      expect(authPGY2-01ie).toBeTruthy();
->>>>>>> origin/docs/session-14-summary
 
       // Click on user menu to open dropdown
       await page.getByRole('button', { name: /admin/i }).click();
@@ -188,13 +172,8 @@ test.describe('Authentication', () => {
 
       // Security: Verify auth cookie is cleared
       cookies = await page.context().cookies();
-<<<<<<< HEAD
       authCookie = cookies.find(c => c.name === 'access_token');
       expect(authCookie).toBeFalsy();
-=======
-      authPGY2-01ie = cookies.find(c => c.name === 'access_token');
-      expect(authPGY2-01ie).toBeFalsy();
->>>>>>> origin/docs/session-14-summary
     });
 
     test('should redirect to login page after logout', async ({ page }) => {
@@ -249,15 +228,9 @@ test.describe('Authentication', () => {
 
       // Security: Verify httpOnly cookie persists across refresh
       const cookies = await page.context().cookies();
-<<<<<<< HEAD
       const authCookie = cookies.find(c => c.name === 'access_token');
       expect(authCookie).toBeTruthy();
       expect(authCookie?.httpOnly).toBe(true);
-=======
-      const authPGY2-01ie = cookies.find(c => c.name === 'access_token');
-      expect(authPGY2-01ie).toBeTruthy();
-      expect(authPGY2-01ie?.httpOnly).toBe(true);
->>>>>>> origin/docs/session-14-summary
     });
 
     test('should maintain session across navigation', async ({ page }) => {
@@ -274,24 +247,14 @@ test.describe('Authentication', () => {
 
       // Security: Verify httpOnly cookie persists across navigation
       const cookies = await page.context().cookies();
-<<<<<<< HEAD
       const authCookie = cookies.find(c => c.name === 'access_token');
       expect(authCookie).toBeTruthy();
       expect(authCookie?.httpOnly).toBe(true);
-=======
-      const authPGY2-01ie = cookies.find(c => c.name === 'access_token');
-      expect(authPGY2-01ie).toBeTruthy();
-      expect(authPGY2-01ie?.httpOnly).toBe(true);
->>>>>>> origin/docs/session-14-summary
     });
 
     test('should handle invalid token gracefully', async ({ page }) => {
       // Security: Set an invalid httpOnly cookie
-<<<<<<< HEAD
       await page.context().addCookies([{
-=======
-      await page.context().addPGY2-01ies([{
->>>>>>> origin/docs/session-14-summary
         name: 'access_token',
         value: 'Bearer invalid-token-12345',
         domain: 'localhost',
@@ -573,15 +536,9 @@ test.describe('Authentication', () => {
 
       // But verify the cookie exists at the browser level
       const cookies = await page.context().cookies();
-<<<<<<< HEAD
       const authCookie = cookies.find(c => c.name === 'access_token');
       expect(authCookie).toBeTruthy();
       expect(authCookie?.httpOnly).toBe(true);
-=======
-      const authPGY2-01ie = cookies.find(c => c.name === 'access_token');
-      expect(authPGY2-01ie).toBeTruthy();
-      expect(authPGY2-01ie?.httpOnly).toBe(true);
->>>>>>> origin/docs/session-14-summary
     });
 
     test('should not expose sensitive data in URL parameters', async ({ page }) => {

@@ -6,9 +6,10 @@ error responses while protecting sensitive information.
 
 Reference: https://tools.ietf.org/html/rfc7807
 """
+
 import traceback
 from datetime import datetime
-from typing import Any, Dict, Optional, List
+from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -63,19 +64,19 @@ class ProblemDetail(BaseModel):
     )
 
     # Optional fields for additional context
-    errors: Optional[List[Dict[str, Any]]] = Field(
+    errors: list[dict[str, Any]] | None = Field(
         default=None,
         description="Detailed validation errors (for validation failures)",
     )
-    stack_trace: Optional[List[str]] = Field(
+    stack_trace: list[str] | None = Field(
         default=None,
         description="Stack trace (only in development mode)",
     )
-    request_id: Optional[str] = Field(
+    request_id: str | None = Field(
         default=None,
         description="Request ID for distributed tracing",
     )
-    fingerprint: Optional[str] = Field(
+    fingerprint: str | None = Field(
         default=None,
         description="Error fingerprint for grouping similar errors",
     )
@@ -125,9 +126,9 @@ class ErrorFormatter:
         request_path: str,
         include_details: bool = True,
         include_stack_trace: bool = False,
-        request_id: Optional[str] = None,
-        fingerprint: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        request_id: str | None = None,
+        fingerprint: str | None = None,
+    ) -> dict[str, Any]:
         """
         Format an exception into RFC 7807 Problem Details.
 
@@ -149,7 +150,9 @@ class ErrorFormatter:
         error_id = str(uuid4())
 
         # Build type URI
-        type_uri = f"{self.base_url}/errors/{error_code.value.lower().replace('_', '-')}"
+        type_uri = (
+            f"{self.base_url}/errors/{error_code.value.lower().replace('_', '-')}"
+        )
 
         # Get error detail message
         detail = self._get_error_detail(exc, include_details)
@@ -202,7 +205,7 @@ class ErrorFormatter:
 
     def _format_validation_errors(
         self, exc: PydanticValidationError
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Format Pydantic validation errors into structured list.
 
@@ -234,7 +237,7 @@ class ErrorFormatter:
 
         return errors
 
-    def _format_stack_trace(self, exc: Exception) -> List[str]:
+    def _format_stack_trace(self, exc: Exception) -> list[str]:
         """
         Format exception stack trace into list of strings.
 
@@ -248,9 +251,7 @@ class ErrorFormatter:
             return []
 
         # Format traceback
-        tb_lines = traceback.format_exception(
-            type(exc), exc, exc.__traceback__
-        )
+        tb_lines = traceback.format_exception(type(exc), exc, exc.__traceback__)
 
         # Clean up and return as list
         return [line.rstrip() for line in tb_lines]
@@ -268,9 +269,9 @@ class SimpleErrorFormatter:
     def format_simple_error(
         message: str,
         status_code: int,
-        error_code: Optional[ErrorCode] = None,
-        errors: Optional[List[Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
+        error_code: ErrorCode | None = None,
+        errors: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         """
         Format a simple error response.
 
@@ -298,7 +299,7 @@ class SimpleErrorFormatter:
 
 
 # Global formatter instance
-_formatter: Optional[ErrorFormatter] = None
+_formatter: ErrorFormatter | None = None
 
 
 def get_formatter() -> ErrorFormatter:

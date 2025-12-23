@@ -1,4 +1,5 @@
 """Backup service for schedule data."""
+
 import gzip
 import json
 import logging
@@ -13,8 +14,11 @@ from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.file_security import validate_backup_id, validate_file_path, FileSecurityError
-from app.models import Absence, Assignment, Block, Person, RotationTemplate, ScheduleRun
+from app.core.file_security import (
+    FileSecurityError,
+    validate_backup_id,
+    validate_file_path,
+)
 
 # Import custom exceptions
 from app.maintenance import (
@@ -26,6 +30,7 @@ from app.maintenance import (
     BackupValidationError,
     BackupWriteError,
 )
+from app.models import Absence, Assignment, Block, Person, RotationTemplate, ScheduleRun
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +59,9 @@ class BackupService:
             # Validate write permissions
             self._validate_directory_permissions()
         except PermissionError as e:
-            logger.error(f"Permission denied creating backup directory {backup_dir}: {e}")
+            logger.error(
+                f"Permission denied creating backup directory {backup_dir}: {e}"
+            )
             raise BackupPermissionError(
                 f"Cannot create or access backup directory '{backup_dir}': {e}"
             ) from e
@@ -64,7 +71,9 @@ class BackupService:
                 f"Failed to create backup directory '{backup_dir}': {e}"
             ) from e
 
-    def create_backup(self, backup_type: str = 'full', compress: bool = True) -> dict[str, Any]:
+    def create_backup(
+        self, backup_type: str = "full", compress: bool = True
+    ) -> dict[str, Any]:
         """
         Create a backup of schedule data.
 
@@ -82,7 +91,7 @@ class BackupService:
             SQLAlchemyError: If database query fails
         """
         # Validate backup type
-        if backup_type not in ('full', 'incremental'):
+        if backup_type not in ("full", "incremental"):
             logger.error(f"Invalid backup type: {backup_type}")
             raise BackupValidationError(
                 f"Invalid backup_type '{backup_type}'. Must be 'full' or 'incremental'."
@@ -135,7 +144,7 @@ class BackupService:
                     "assignments": len(backup_data["assignments"]),
                     "absences": len(backup_data["absences"]),
                     "schedule_runs": len(backup_data["schedule_runs"]),
-                }
+                },
             }
 
             # Save metadata
@@ -152,7 +161,7 @@ class BackupService:
             raise BackupCreationError(
                 f"Failed to read database during backup creation: {e}"
             ) from e
-        except (OSError, IOError) as e:
+        except OSError as e:
             logger.error(f"File I/O error during backup {backup_id}: {e}")
             raise BackupCreationError(
                 f"Failed to write backup file '{filename}': {e}"
@@ -163,7 +172,9 @@ class BackupService:
                 f"Unexpected error during backup creation: {e}"
             ) from e
 
-    def create_schedule_snapshot(self, start_date: date, end_date: date) -> dict[str, Any]:
+    def create_schedule_snapshot(
+        self, start_date: date, end_date: date
+    ) -> dict[str, Any]:
         """
         Create a backup of schedule data for a specific date range.
 
@@ -181,7 +192,9 @@ class BackupService:
         """
         # Validate date range
         if start_date > end_date:
-            logger.error(f"Invalid date range: start_date ({start_date}) > end_date ({end_date})")
+            logger.error(
+                f"Invalid date range: start_date ({start_date}) > end_date ({end_date})"
+            )
             raise BackupValidationError(
                 f"Invalid date range: start_date ({start_date}) must be <= end_date ({end_date})"
             )
@@ -199,36 +212,61 @@ class BackupService:
 
             # Get blocks in date range
             logger.debug(f"Querying blocks in date range {start_date} to {end_date}")
-            blocks = self.db.query(Block).filter(
-                and_(Block.start_date >= start_date, Block.start_date <= end_date)
-            ).all()
+            blocks = (
+                self.db.query(Block)
+                .filter(
+                    and_(Block.start_date >= start_date, Block.start_date <= end_date)
+                )
+                .all()
+            )
             block_ids = [b.id for b in blocks]
 
             # Get assignments for these blocks
-            assignments = self.db.query(Assignment).filter(
-                Assignment.block_id.in_(block_ids)
-            ).all() if block_ids else []
+            assignments = (
+                self.db.query(Assignment)
+                .filter(Assignment.block_id.in_(block_ids))
+                .all()
+                if block_ids
+                else []
+            )
 
             # Get people involved in these assignments
             person_ids = list({a.person_id for a in assignments})
-            people = self.db.query(Person).filter(Person.id.in_(person_ids)).all() if person_ids else []
+            people = (
+                self.db.query(Person).filter(Person.id.in_(person_ids)).all()
+                if person_ids
+                else []
+            )
 
             # Get absences in date range
-            absences = self.db.query(Absence).filter(
-                and_(Absence.start_date <= end_date, Absence.end_date >= start_date)
-            ).all()
+            absences = (
+                self.db.query(Absence)
+                .filter(
+                    and_(Absence.start_date <= end_date, Absence.end_date >= start_date)
+                )
+                .all()
+            )
 
             # Get rotation templates used in assignments
-            template_ids = list({a.rotation_template_id for a in assignments if a.rotation_template_id})
-            templates = self.db.query(RotationTemplate).filter(
-                RotationTemplate.id.in_(template_ids)
-            ).all() if template_ids else []
+            template_ids = list(
+                {a.rotation_template_id for a in assignments if a.rotation_template_id}
+            )
+            templates = (
+                self.db.query(RotationTemplate)
+                .filter(RotationTemplate.id.in_(template_ids))
+                .all()
+                if template_ids
+                else []
+            )
 
             backup_data = {
                 "backup_id": backup_id,
                 "backup_type": "snapshot",
                 "created_at": timestamp.isoformat(),
-                "date_range": {"start": start_date.isoformat(), "end": end_date.isoformat()},
+                "date_range": {
+                    "start": start_date.isoformat(),
+                    "end": end_date.isoformat(),
+                },
                 "people": [self._model_to_dict(p) for p in people],
                 "rotation_templates": [self._model_to_dict(t) for t in templates],
                 "blocks": [self._model_to_dict(b) for b in blocks],
@@ -246,7 +284,10 @@ class BackupService:
                 "filename": filename,
                 "timestamp": timestamp.isoformat(),
                 "type": "snapshot",
-                "date_range": {"start": start_date.isoformat(), "end": end_date.isoformat()},
+                "date_range": {
+                    "start": start_date.isoformat(),
+                    "end": end_date.isoformat(),
+                },
                 "size_bytes": filepath.stat().st_size,
                 "compressed": True,
                 "status": "completed",
@@ -264,11 +305,9 @@ class BackupService:
             raise BackupCreationError(
                 f"Failed to query database during snapshot creation: {e}"
             ) from e
-        except (OSError, IOError) as e:
+        except OSError as e:
             logger.error(f"File I/O error during snapshot {backup_id}: {e}")
-            raise BackupCreationError(
-                f"Failed to write snapshot file: {e}"
-            ) from e
+            raise BackupCreationError(f"Failed to write snapshot file: {e}") from e
         except Exception as e:
             logger.error(f"Unexpected error during snapshot {backup_id}: {e}")
             raise BackupCreationError(
@@ -312,10 +351,10 @@ class BackupService:
             # Read backup data
             logger.debug(f"Reading backup file: {source_path}")
             if metadata["compressed"]:
-                with gzip.open(source_path, 'rt', encoding='utf-8') as f:
+                with gzip.open(source_path, "rt", encoding="utf-8") as f:
                     data = json.load(f)
             else:
-                with open(source_path, encoding='utf-8') as f:
+                with open(source_path, encoding="utf-8") as f:
                     data = json.load(f)
 
             # Write uncompressed JSON
@@ -326,7 +365,7 @@ class BackupService:
             export_path = validate_file_path(export_path, self.backup_path)
 
             logger.debug(f"Writing export to: {export_path}")
-            with open(export_path, 'w', encoding='utf-8') as f:
+            with open(export_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
 
             logger.info(f"Successfully exported backup {backup_id} to {export_path}")
@@ -338,25 +377,17 @@ class BackupService:
             raise
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON in backup {backup_id}: {e}")
-            raise BackupReadError(
-                f"Backup file contains invalid JSON: {e}"
-            ) from e
-        except (OSError, IOError) as e:
+            raise BackupReadError(f"Backup file contains invalid JSON: {e}") from e
+        except OSError as e:
             if "read" in str(e).lower() or not Path(source_path).exists():
                 logger.error(f"Error reading backup {backup_id}: {e}")
-                raise BackupReadError(
-                    f"Failed to read backup file: {e}"
-                ) from e
+                raise BackupReadError(f"Failed to read backup file: {e}") from e
             else:
                 logger.error(f"Error writing export for backup {backup_id}: {e}")
-                raise BackupWriteError(
-                    f"Failed to write export file: {e}"
-                ) from e
+                raise BackupWriteError(f"Failed to write export file: {e}") from e
         except Exception as e:
             logger.error(f"Unexpected error exporting backup {backup_id}: {e}")
-            raise BackupReadError(
-                f"Unexpected error during export: {e}"
-            ) from e
+            raise BackupReadError(f"Unexpected error during export: {e}") from e
 
     def list_backups(self) -> list[dict[str, Any]]:
         """
@@ -376,9 +407,9 @@ class BackupService:
 
             for meta_file in metadata_files:
                 try:
-                    with open(meta_file, encoding='utf-8') as f:
+                    with open(meta_file, encoding="utf-8") as f:
                         backups.append(json.load(f))
-                except (OSError, IOError, json.JSONDecodeError) as e:
+                except (OSError, json.JSONDecodeError) as e:
                     logger.warning(
                         f"Skipping invalid metadata file {meta_file.name}: {e}"
                     )
@@ -389,9 +420,7 @@ class BackupService:
 
         except Exception as e:
             logger.error(f"Error listing backups: {e}")
-            raise BackupReadError(
-                f"Failed to list backups: {e}"
-            ) from e
+            raise BackupReadError(f"Failed to list backups: {e}") from e
 
     def delete_backup(self, backup_id: str) -> bool:
         """
@@ -455,9 +484,7 @@ class BackupService:
             ) from e
         except Exception as e:
             logger.error(f"Unexpected error deleting backup {backup_id}: {e}")
-            raise BackupPermissionError(
-                f"Unexpected error deleting backup: {e}"
-            ) from e
+            raise BackupPermissionError(f"Unexpected error deleting backup: {e}") from e
 
     # Private helper methods
 
@@ -514,26 +541,22 @@ class BackupService:
         """
         try:
             if compress:
-                with gzip.open(filepath, 'wt', encoding='utf-8') as f:
+                with gzip.open(filepath, "wt", encoding="utf-8") as f:
                     json.dump(data, f, indent=2)
             else:
-                with open(filepath, 'w', encoding='utf-8') as f:
+                with open(filepath, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=2)
         except PermissionError as e:
             logger.error(f"Permission denied writing backup file {filepath}: {e}")
             raise BackupPermissionError(
                 f"Permission denied writing backup file: {e}"
             ) from e
-        except (OSError, IOError) as e:
+        except OSError as e:
             logger.error(f"I/O error writing backup file {filepath}: {e}")
-            raise BackupWriteError(
-                f"Failed to write backup file: {e}"
-            ) from e
+            raise BackupWriteError(f"Failed to write backup file: {e}") from e
         except Exception as e:
             logger.error(f"Unexpected error writing backup file {filepath}: {e}")
-            raise BackupWriteError(
-                f"Unexpected error writing backup file: {e}"
-            ) from e
+            raise BackupWriteError(f"Unexpected error writing backup file: {e}") from e
 
     def _save_metadata(self, backup_id: str, metadata: dict[str, Any]):
         """
@@ -545,13 +568,11 @@ class BackupService:
         metadata_file = self.backup_path / f"metadata_{backup_id}.json"
 
         try:
-            with open(metadata_file, 'w', encoding='utf-8') as f:
+            with open(metadata_file, "w", encoding="utf-8") as f:
                 json.dump(metadata, f, indent=2)
-        except (OSError, IOError, PermissionError) as e:
+        except (OSError, PermissionError) as e:
             logger.error(f"Error writing metadata file {metadata_file}: {e}")
-            raise BackupWriteError(
-                f"Failed to write metadata file: {e}"
-            ) from e
+            raise BackupWriteError(f"Failed to write metadata file: {e}") from e
 
     def _load_metadata(self, backup_id: str) -> dict[str, Any]:
         """
@@ -577,18 +598,14 @@ class BackupService:
             )
 
         try:
-            with open(metadata_file, encoding='utf-8') as f:
+            with open(metadata_file, encoding="utf-8") as f:
                 return json.load(f)
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON in metadata file {metadata_file}: {e}")
-            raise BackupReadError(
-                f"Metadata file contains invalid JSON: {e}"
-            ) from e
-        except (OSError, IOError) as e:
+            raise BackupReadError(f"Metadata file contains invalid JSON: {e}") from e
+        except OSError as e:
             logger.error(f"Error reading metadata file {metadata_file}: {e}")
-            raise BackupReadError(
-                f"Failed to read metadata file: {e}"
-            ) from e
+            raise BackupReadError(f"Failed to read metadata file: {e}") from e
 
     def _validate_directory_permissions(self):
         """

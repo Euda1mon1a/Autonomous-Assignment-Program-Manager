@@ -14,15 +14,14 @@ import uuid
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 # Context variables for async-safe storage
-_correlation_id_var: ContextVar[Optional[str]] = ContextVar("correlation_id", default=None)
-_request_id_var: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
-_parent_id_var: ContextVar[Optional[str]] = ContextVar("parent_id", default=None)
-_user_id_var: ContextVar[Optional[str]] = ContextVar("user_id", default=None)
+_correlation_id_var: ContextVar[str | None] = ContextVar("correlation_id", default=None)
+_request_id_var: ContextVar[str | None] = ContextVar("request_id", default=None)
+_parent_id_var: ContextVar[str | None] = ContextVar("parent_id", default=None)
+_user_id_var: ContextVar[str | None] = ContextVar("user_id", default=None)
 _request_depth_var: ContextVar[int] = ContextVar("request_depth", default=0)
 _request_chain_var: ContextVar[list[str]] = ContextVar("request_chain", default=[])
 
@@ -44,8 +43,8 @@ class CorrelationContext:
 
     correlation_id: str
     request_id: str
-    parent_id: Optional[str] = None
-    user_id: Optional[str] = None
+    parent_id: str | None = None
+    user_id: str | None = None
     depth: int = 0
     chain: list[str] = field(default_factory=list)
     timestamp: datetime = field(default_factory=datetime.utcnow)
@@ -109,7 +108,7 @@ def generate_request_id() -> str:
     return str(uuid.uuid4())
 
 
-def get_correlation_id() -> Optional[str]:
+def get_correlation_id() -> str | None:
     """
     Get the current correlation ID from context.
 
@@ -119,7 +118,7 @@ def get_correlation_id() -> Optional[str]:
     return _correlation_id_var.get()
 
 
-def get_request_id() -> Optional[str]:
+def get_request_id() -> str | None:
     """
     Get the current request ID from context.
 
@@ -129,7 +128,7 @@ def get_request_id() -> Optional[str]:
     return _request_id_var.get()
 
 
-def get_parent_id() -> Optional[str]:
+def get_parent_id() -> str | None:
     """
     Get the parent request ID from context.
 
@@ -139,7 +138,7 @@ def get_parent_id() -> Optional[str]:
     return _parent_id_var.get()
 
 
-def get_user_id() -> Optional[str]:
+def get_user_id() -> str | None:
     """
     Get the current user ID from context.
 
@@ -169,7 +168,7 @@ def get_request_chain() -> list[str]:
     return _request_chain_var.get()
 
 
-def get_context() -> Optional[CorrelationContext]:
+def get_context() -> CorrelationContext | None:
     """
     Get the current correlation context.
 
@@ -212,7 +211,7 @@ def set_request_id(request_id: str) -> None:
     _request_id_var.set(request_id)
 
 
-def set_parent_id(parent_id: Optional[str]) -> None:
+def set_parent_id(parent_id: str | None) -> None:
     """
     Set the parent request ID in context.
 
@@ -222,7 +221,7 @@ def set_parent_id(parent_id: Optional[str]) -> None:
     _parent_id_var.set(parent_id)
 
 
-def set_user_id(user_id: Optional[str]) -> None:
+def set_user_id(user_id: str | None) -> None:
     """
     Set the user ID in context.
 
@@ -253,10 +252,10 @@ def set_request_chain(chain: list[str]) -> None:
 
 
 def initialize_context(
-    correlation_id: Optional[str] = None,
-    request_id: Optional[str] = None,
-    parent_id: Optional[str] = None,
-    user_id: Optional[str] = None,
+    correlation_id: str | None = None,
+    request_id: str | None = None,
+    parent_id: str | None = None,
+    user_id: str | None = None,
 ) -> CorrelationContext:
     """
     Initialize correlation context for a new request.
@@ -341,10 +340,10 @@ class CorrelationContextManager:
 
     def __init__(
         self,
-        correlation_id: Optional[str] = None,
-        request_id: Optional[str] = None,
-        parent_id: Optional[str] = None,
-        user_id: Optional[str] = None,
+        correlation_id: str | None = None,
+        request_id: str | None = None,
+        parent_id: str | None = None,
+        user_id: str | None = None,
     ):
         """
         Initialize context manager.
@@ -359,7 +358,7 @@ class CorrelationContextManager:
         self.request_id = request_id
         self.parent_id = parent_id
         self.user_id = user_id
-        self.context: Optional[CorrelationContext] = None
+        self.context: CorrelationContext | None = None
         self._tokens: list = []
 
     def __enter__(self) -> CorrelationContext:

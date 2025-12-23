@@ -11,6 +11,7 @@ Tests for:
 - Bulk notification sending
 - Edge cases (invalid inputs, missing users)
 """
+
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
@@ -32,10 +33,10 @@ from app.notifications.service import (
 )
 from app.notifications.templates import NotificationType
 
-
 # ============================================================================
 # Test Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def sample_user(db: Session) -> Person:
@@ -95,7 +96,9 @@ def sample_notification(db: Session, sample_user: Person) -> Notification:
 
 
 @pytest.fixture
-def sample_preferences(db: Session, sample_user: Person) -> NotificationPreferenceRecord:
+def sample_preferences(
+    db: Session, sample_user: Person
+) -> NotificationPreferenceRecord:
     """Create sample notification preferences."""
     prefs = NotificationPreferenceRecord(
         id=uuid4(),
@@ -119,6 +122,7 @@ def sample_preferences(db: Session, sample_user: Person) -> NotificationPreferen
 # Test send_notification
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestSendNotification:
     """Tests for send_notification method."""
@@ -131,14 +135,14 @@ class TestSendNotification:
         db: Session,
     ):
         """Test successfully sending a notification."""
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             # Mock channel delivery
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered successfully"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="in_app", message="Delivered successfully"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             results = await notification_service.send_notification(
@@ -152,7 +156,7 @@ class TestSendNotification:
                     "publisher_name": "Admin",
                     "published_at": "2025-01-01 10:00:00 UTC",
                 },
-                channels=["in_app"]
+                channels=["in_app"],
             )
 
             assert len(results) == 1
@@ -160,9 +164,11 @@ class TestSendNotification:
             assert results[0].channel == "in_app"
 
             # Verify notification was stored in database
-            notification = db.query(Notification).filter(
-                Notification.recipient_id == sample_user.id
-            ).first()
+            notification = (
+                db.query(Notification)
+                .filter(Notification.recipient_id == sample_user.id)
+                .first()
+            )
             assert notification is not None
             assert notification.notification_type == "schedule_published"
             assert notification.is_read is False
@@ -175,7 +181,7 @@ class TestSendNotification:
     ):
         """Test sending notification with invalid template."""
         # Create a mock NotificationType that doesn't have a template
-        with patch('app.notifications.service.render_notification', return_value=None):
+        with patch("app.notifications.service.render_notification", return_value=None):
             results = await notification_service.send_notification(
                 recipient_id=sample_user.id,
                 notification_type=NotificationType.SCHEDULE_PUBLISHED,
@@ -265,14 +271,14 @@ class TestSendNotification:
         db: Session,
     ):
         """Test sending notification through multiple channels."""
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             # Mock both in_app and email channels
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="test",
-                message="Delivered"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="test", message="Delivered"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             results = await notification_service.send_notification(
@@ -286,7 +292,7 @@ class TestSendNotification:
                     "recommended_action": "Adjust schedule",
                     "detected_at": "2025-01-01 10:00:00 UTC",
                 },
-                channels=["in_app", "email"]
+                channels=["in_app", "email"],
             )
 
             # Should have results from both channels
@@ -296,6 +302,7 @@ class TestSendNotification:
 # ============================================================================
 # Test send_bulk
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestSendBulk:
@@ -310,13 +317,13 @@ class TestSendBulk:
         db: Session,
     ):
         """Test sending bulk notifications to multiple recipients."""
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="in_app", message="Delivered"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             results = await notification_service.send_bulk(
@@ -330,7 +337,7 @@ class TestSendBulk:
                     "publisher_name": "Admin",
                     "published_at": "2025-01-01 10:00:00 UTC",
                 },
-                channels=["in_app"]
+                channels=["in_app"],
             )
 
             assert len(results) == 2
@@ -355,6 +362,7 @@ class TestSendBulk:
 # ============================================================================
 # Test schedule_notification
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestScheduleNotification:
@@ -390,9 +398,11 @@ class TestScheduleNotification:
         assert scheduled.send_at == send_at
 
         # Verify stored in database
-        record = db.query(ScheduledNotificationRecord).filter(
-            ScheduledNotificationRecord.id == scheduled.id
-        ).first()
+        record = (
+            db.query(ScheduledNotificationRecord)
+            .filter(ScheduledNotificationRecord.id == scheduled.id)
+            .first()
+        )
         assert record is not None
         assert record.status == "pending"
 
@@ -419,6 +429,7 @@ class TestScheduleNotification:
 # ============================================================================
 # Test process_scheduled_notifications
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestProcessScheduledNotifications:
@@ -451,13 +462,13 @@ class TestProcessScheduledNotifications:
         db.add(record)
         db.commit()
 
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="in_app", message="Delivered"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             sent_count = await notification_service.process_scheduled_notifications()
@@ -530,6 +541,7 @@ class TestProcessScheduledNotifications:
 # Test get_pending_notifications
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestGetPendingNotifications:
     """Tests for get_pending_notifications method."""
@@ -566,8 +578,7 @@ class TestGetPendingNotifications:
         db.commit()
 
         notifications = notification_service.get_pending_notifications(
-            user_id=sample_user.id,
-            unread_only=True
+            user_id=sample_user.id, unread_only=True
         )
 
         assert len(notifications) == 3
@@ -605,8 +616,7 @@ class TestGetPendingNotifications:
         db.commit()
 
         notifications = notification_service.get_pending_notifications(
-            user_id=sample_user.id,
-            unread_only=False
+            user_id=sample_user.id, unread_only=False
         )
 
         assert len(notifications) == 2
@@ -632,8 +642,7 @@ class TestGetPendingNotifications:
         db.commit()
 
         notifications = notification_service.get_pending_notifications(
-            user_id=sample_user.id,
-            limit=5
+            user_id=sample_user.id, limit=5
         )
 
         assert len(notifications) == 5
@@ -681,6 +690,7 @@ class TestGetPendingNotifications:
 # ============================================================================
 # Test mark_as_read
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestMarkAsRead:
@@ -732,9 +742,9 @@ class TestMarkAsRead:
 
         # Verify all are marked as read
         for notif_id in notification_ids:
-            notification = db.query(Notification).filter(
-                Notification.id == notif_id
-            ).first()
+            notification = (
+                db.query(Notification).filter(Notification.id == notif_id).first()
+            )
             assert notification.is_read is True
 
     def test_mark_as_read_invalid_ids(
@@ -759,6 +769,7 @@ class TestMarkAsRead:
 # ============================================================================
 # Test Notification Preferences
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestNotificationPreferences:
@@ -822,9 +833,11 @@ class TestNotificationPreferences:
         assert updated.quiet_hours_end == 7
 
         # Verify stored in database
-        record = db.query(NotificationPreferenceRecord).filter(
-            NotificationPreferenceRecord.user_id == sample_user.id
-        ).first()
+        record = (
+            db.query(NotificationPreferenceRecord)
+            .filter(NotificationPreferenceRecord.user_id == sample_user.id)
+            .first()
+        )
         assert record is not None
         assert record.enabled_channels == "in_app"
 
@@ -915,6 +928,7 @@ class TestNotificationPreferences:
 # Test Edge Cases
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestEdgeCases:
     """Tests for edge cases and error handling."""
@@ -980,7 +994,7 @@ class TestEdgeCases:
         sample_user: Person,
     ):
         """Test sending notification through non-existent channel."""
-        with patch('app.notifications.service.get_channel', return_value=None):
+        with patch("app.notifications.service.get_channel", return_value=None):
             results = await notification_service.send_notification(
                 recipient_id=sample_user.id,
                 notification_type=NotificationType.SCHEDULE_PUBLISHED,
@@ -992,7 +1006,7 @@ class TestEdgeCases:
                     "publisher_name": "Admin",
                     "published_at": "2025-01-01 10:00:00 UTC",
                 },
-                channels=["invalid_channel"]
+                channels=["invalid_channel"],
             )
 
             # Should have a failure result
@@ -1027,6 +1041,7 @@ class TestEdgeCases:
 # ============================================================================
 # Test NotificationPreferences Model
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestNotificationPreferencesModel:
@@ -1066,6 +1081,7 @@ class TestNotificationPreferencesModel:
 # Test ScheduledNotification Model
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestScheduledNotificationModel:
     """Tests for ScheduledNotification Pydantic model."""
@@ -1095,6 +1111,7 @@ class TestScheduledNotificationModel:
 # Integration Tests
 # ============================================================================
 
+
 @pytest.mark.integration
 class TestNotificationServiceIntegration:
     """Integration tests for notification service workflows."""
@@ -1107,13 +1124,13 @@ class TestNotificationServiceIntegration:
         db: Session,
     ):
         """Test complete notification workflow from send to read."""
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="in_app", message="Delivered"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             # Step 1: Send notification
@@ -1132,8 +1149,7 @@ class TestNotificationServiceIntegration:
 
             # Step 2: Get pending notifications
             notifications = notification_service.get_pending_notifications(
-                user_id=sample_user.id,
-                unread_only=True
+                user_id=sample_user.id, unread_only=True
             )
 
             assert len(notifications) == 1
@@ -1145,8 +1161,7 @@ class TestNotificationServiceIntegration:
 
             # Step 4: Verify no unread notifications
             unread = notification_service.get_pending_notifications(
-                user_id=sample_user.id,
-                unread_only=True
+                user_id=sample_user.id, unread_only=True
             )
             assert len(unread) == 0
 
@@ -1178,13 +1193,13 @@ class TestNotificationServiceIntegration:
         assert scheduled.status == "pending"
 
         # Step 2: Process scheduled notifications
-        with patch('app.notifications.service.get_channel') as mock_get_channel:
+        with patch("app.notifications.service.get_channel") as mock_get_channel:
             mock_channel = Mock()
-            mock_channel.deliver = AsyncMock(return_value=DeliveryResult(
-                success=True,
-                channel="in_app",
-                message="Delivered"
-            ))
+            mock_channel.deliver = AsyncMock(
+                return_value=DeliveryResult(
+                    success=True, channel="in_app", message="Delivered"
+                )
+            )
             mock_get_channel.return_value = mock_channel
 
             sent_count = await notification_service.process_scheduled_notifications()

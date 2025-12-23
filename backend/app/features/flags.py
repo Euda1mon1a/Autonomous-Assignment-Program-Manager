@@ -6,6 +6,7 @@ This service provides the main interface for:
 - Tracking evaluation history
 - Audit logging for compliance
 """
+
 import uuid
 from datetime import datetime
 from typing import Any
@@ -18,7 +19,6 @@ from app.features.evaluator import FeatureFlagEvaluator
 from app.features.storage import (
     DatabaseStorageBackend,
     FeatureFlagStorageBackend,
-    InMemoryStorageBackend,
 )
 from app.models.feature_flag import (
     FeatureFlag,
@@ -44,7 +44,7 @@ class FeatureFlagService:
         self,
         db: AsyncSession,
         storage_backend: FeatureFlagStorageBackend | None = None,
-        environment: str | None = None
+        environment: str | None = None,
     ):
         """
         Initialize feature flag service.
@@ -64,7 +64,7 @@ class FeatureFlagService:
         key: str,
         name: str,
         description: str | None = None,
-        flag_type: str = 'boolean',
+        flag_type: str = "boolean",
         enabled: bool = False,
         rollout_percentage: float | None = None,
         environments: list[str] | None = None,
@@ -132,9 +132,9 @@ class FeatureFlagService:
         await self._log_audit(
             flag_id=flag.id,
             user_id=created_by,
-            action='created',
-            changes={'key': key, 'name': name, 'enabled': enabled},
-            reason='Flag created'
+            action="created",
+            changes={"key": key, "name": name, "enabled": enabled},
+            reason="Flag created",
         )
 
         return flag
@@ -144,7 +144,7 @@ class FeatureFlagService:
         key: str,
         updates: dict[str, Any],
         updated_by: str | None = None,
-        reason: str | None = None
+        reason: str | None = None,
     ) -> FeatureFlag:
         """
         Update an existing feature flag.
@@ -175,7 +175,7 @@ class FeatureFlagService:
             if hasattr(flag, field):
                 old_value = getattr(flag, field)
                 if old_value != new_value:
-                    changes[field] = {'old': old_value, 'new': new_value}
+                    changes[field] = {"old": old_value, "new": new_value}
                     setattr(flag, field, new_value)
 
         if changes:
@@ -186,18 +186,15 @@ class FeatureFlagService:
             await self._log_audit(
                 flag_id=flag.id,
                 user_id=updated_by,
-                action='updated',
+                action="updated",
                 changes=changes,
-                reason=reason
+                reason=reason,
             )
 
         return flag
 
     async def delete_flag(
-        self,
-        key: str,
-        deleted_by: str | None = None,
-        reason: str | None = None
+        self, key: str, deleted_by: str | None = None, reason: str | None = None
     ) -> bool:
         """
         Delete a feature flag.
@@ -222,9 +219,9 @@ class FeatureFlagService:
         await self._log_audit(
             flag_id=flag.id,
             user_id=deleted_by,
-            action='deleted',
-            changes={'key': key},
-            reason=reason
+            action="deleted",
+            changes={"key": key},
+            reason=reason,
         )
 
         await self.db.delete(flag)
@@ -248,9 +245,7 @@ class FeatureFlagService:
         return result.scalar_one_or_none()
 
     async def list_flags(
-        self,
-        enabled_only: bool = False,
-        environment: str | None = None
+        self, enabled_only: bool = False, environment: str | None = None
     ) -> list[FeatureFlag]:
         """
         List all feature flags.
@@ -270,8 +265,8 @@ class FeatureFlagService:
         if environment:
             # Filter flags that target this environment or all environments (null)
             query = query.where(
-                (FeatureFlag.environments.is_(None)) |
-                (FeatureFlag.environments.contains([environment]))
+                (FeatureFlag.environments.is_(None))
+                | (FeatureFlag.environments.contains([environment]))
             )
 
         result = await self.db.execute(query)
@@ -283,7 +278,7 @@ class FeatureFlagService:
         user_id: str | None = None,
         user_role: str | None = None,
         context: dict[str, Any] | None = None,
-        track_evaluation: bool = True
+        track_evaluation: bool = True,
     ) -> tuple[bool, str | None, str]:
         """
         Evaluate a feature flag for a given context.
@@ -306,24 +301,21 @@ class FeatureFlagService:
 
         # Convert to dict for evaluator
         flag_data = {
-            'key': flag.key,
-            'enabled': flag.enabled,
-            'flag_type': flag.flag_type,
-            'rollout_percentage': flag.rollout_percentage,
-            'environments': flag.environments,
-            'target_user_ids': flag.target_user_ids,
-            'target_roles': flag.target_roles,
-            'variants': flag.variants,
-            'dependencies': flag.dependencies,
-            'custom_attributes': flag.custom_attributes,
+            "key": flag.key,
+            "enabled": flag.enabled,
+            "flag_type": flag.flag_type,
+            "rollout_percentage": flag.rollout_percentage,
+            "environments": flag.environments,
+            "target_user_ids": flag.target_user_ids,
+            "target_roles": flag.target_roles,
+            "variants": flag.variants,
+            "dependencies": flag.dependencies,
+            "custom_attributes": flag.custom_attributes,
         }
 
         # Evaluate flag
         enabled, variant, reason = self.evaluator.evaluate(
-            flag_data=flag_data,
-            user_id=user_id,
-            user_role=user_role,
-            context=context
+            flag_data=flag_data, user_id=user_id, user_role=user_role, context=context
         )
 
         # Track evaluation if requested
@@ -334,7 +326,7 @@ class FeatureFlagService:
                 user_role=user_role,
                 enabled=enabled,
                 variant=variant,
-                context=context
+                context=context,
             )
 
         return enabled, variant, reason
@@ -345,7 +337,7 @@ class FeatureFlagService:
         user_id: str | None = None,
         user_role: str | None = None,
         context: dict[str, Any] | None = None,
-        track_evaluation: bool = False
+        track_evaluation: bool = False,
     ) -> dict[str, tuple[bool, str | None, str]]:
         """
         Evaluate multiple feature flags at once.
@@ -368,7 +360,7 @@ class FeatureFlagService:
                 user_id=user_id,
                 user_role=user_role,
                 context=context,
-                track_evaluation=track_evaluation
+                track_evaluation=track_evaluation,
             )
 
         return results
@@ -392,17 +384,20 @@ class FeatureFlagService:
 
         # Count by type
         percentage_result = await self.db.execute(
-            select(func.count(FeatureFlag.id)).where(FeatureFlag.flag_type == 'percentage')
+            select(func.count(FeatureFlag.id)).where(
+                FeatureFlag.flag_type == "percentage"
+            )
         )
         percentage_flags = percentage_result.scalar()
 
         variant_result = await self.db.execute(
-            select(func.count(FeatureFlag.id)).where(FeatureFlag.flag_type == 'variant')
+            select(func.count(FeatureFlag.id)).where(FeatureFlag.flag_type == "variant")
         )
         variant_flags = variant_result.scalar()
 
         # Count recent evaluations (last 24 hours)
         from datetime import timedelta
+
         yesterday = datetime.utcnow() - timedelta(days=1)
         recent_eval_result = await self.db.execute(
             select(func.count(FeatureFlagEvaluation.id)).where(
@@ -415,19 +410,19 @@ class FeatureFlagService:
         unique_users_result = await self.db.execute(
             select(func.count(func.distinct(FeatureFlagEvaluation.user_id))).where(
                 FeatureFlagEvaluation.evaluated_at >= yesterday,
-                FeatureFlagEvaluation.user_id.isnot(None)
+                FeatureFlagEvaluation.user_id.isnot(None),
             )
         )
         unique_users = unique_users_result.scalar()
 
         return {
-            'total_flags': total_flags,
-            'enabled_flags': enabled_flags,
-            'disabled_flags': total_flags - enabled_flags,
-            'percentage_rollout_flags': percentage_flags,
-            'variant_flags': variant_flags,
-            'recent_evaluations': recent_evaluations,
-            'unique_users': unique_users,
+            "total_flags": total_flags,
+            "enabled_flags": enabled_flags,
+            "disabled_flags": total_flags - enabled_flags,
+            "percentage_rollout_flags": percentage_flags,
+            "variant_flags": variant_flags,
+            "recent_evaluations": recent_evaluations,
+            "unique_users": unique_users,
         }
 
     async def _log_audit(
@@ -436,7 +431,7 @@ class FeatureFlagService:
         user_id: str | None,
         action: str,
         changes: dict[str, Any] | None = None,
-        reason: str | None = None
+        reason: str | None = None,
     ) -> None:
         """
         Log an audit entry for a flag change.
@@ -467,7 +462,7 @@ class FeatureFlagService:
         user_role: str | None,
         enabled: bool,
         variant: str | None,
-        context: dict[str, Any] | None
+        context: dict[str, Any] | None,
     ) -> None:
         """
         Track a feature flag evaluation.

@@ -9,12 +9,14 @@ Run with:
     python examples/stability_metrics_demo.py
 """
 
-from datetime import date, datetime
+from datetime import datetime
 from uuid import uuid4
+
 
 # Mock database session for demonstration
 class MockDBSession:
     """Mock database session for demo purposes."""
+
     pass
 
 
@@ -38,7 +40,7 @@ def demo_basic_usage():
         computed_at=datetime.now(),
     )
 
-    print(f"\nSchedule Stability Analysis:")
+    print("\nSchedule Stability Analysis:")
     print(f"  Total Assignments: {metrics.total_assignments}")
     print(f"  Changes from Previous: {metrics.assignments_changed}")
     print(f"  Churn Rate: {metrics.churn_rate:.1%}")
@@ -47,7 +49,7 @@ def demo_basic_usage():
     print(f"  New Violations: {metrics.new_violations}")
     print(f"  Days Since Major Change: {metrics.days_since_major_change}")
 
-    print(f"\n✓ Overall Assessment:")
+    print("\n✓ Overall Assessment:")
     print(f"  Stability Grade: {metrics.stability_grade}")
     print(f"  Is Stable: {'Yes ✓' if metrics.is_stable else 'No ✗'}")
 
@@ -112,9 +114,13 @@ def demo_stability_scenarios():
     for scenario in scenarios:
         m = scenario["metrics"]
         print(f"\n{scenario['name']}:")
-        print(f"  Churn: {m.churn_rate:.1%} | Ripple: {m.ripple_factor:.2f} | "
-              f"Vuln: {m.n1_vulnerability_score:.2f} | Violations: {m.new_violations}")
-        print(f"  → Grade: {m.stability_grade} | Stable: {'Yes ✓' if m.is_stable else 'No ✗'}")
+        print(
+            f"  Churn: {m.churn_rate:.1%} | Ripple: {m.ripple_factor:.2f} | "
+            f"Vuln: {m.n1_vulnerability_score:.2f} | Violations: {m.new_violations}"
+        )
+        print(
+            f"  → Grade: {m.stability_grade} | Stable: {'Yes ✓' if m.is_stable else 'No ✗'}"
+        )
 
     print("\n" + "=" * 70)
 
@@ -138,20 +144,18 @@ def demo_churn_analysis():
             self.activity_override = None
 
     # Create old schedule
-    old_assignments = [
-        MockAssignment(uuid4(), uuid4(), uuid4()) for _ in range(10)
-    ]
+    old_assignments = [MockAssignment(uuid4(), uuid4(), uuid4()) for _ in range(10)]
 
     # Create new schedule (7 same, 3 removed, 5 added)
     new_assignments = old_assignments[:7].copy()
-    new_assignments.extend([
-        MockAssignment(uuid4(), uuid4(), uuid4()) for _ in range(5)
-    ])
+    new_assignments.extend(
+        [MockAssignment(uuid4(), uuid4(), uuid4()) for _ in range(5)]
+    )
 
     computer = StabilityMetricsComputer(None)
     churn_data = computer._calculate_churn_rate(old_assignments, new_assignments)
 
-    print(f"\nChurn Analysis:")
+    print("\nChurn Analysis:")
     print(f"  Previous Schedule: {len(old_assignments)} assignments")
     print(f"  Current Schedule: {len(new_assignments)} assignments")
     print(f"  Added: {len(churn_data['added'])}")
@@ -198,18 +202,18 @@ def demo_n1_vulnerability():
     computer = StabilityMetricsComputer(None)
     vulnerability = computer._calculate_n1_vulnerability(assignments)
 
-    print(f"\nN-1 Vulnerability Analysis:")
+    print("\nN-1 Vulnerability Analysis:")
     print(f"  Total Assignments: {len(assignments)}")
-    print(f"  People: 2 (one with unique coverage)")
-    print(f"  Rotations: 2 (one unique, one shared)")
+    print("  People: 2 (one with unique coverage)")
+    print("  Rotations: 2 (one unique, one shared)")
     print(f"  Vulnerability Score: {vulnerability:.2f}")
 
     if vulnerability > 0.5:
-        print(f"  ⚠️  HIGH RISK: Schedule is vulnerable to single-point-of-failure")
+        print("  ⚠️  HIGH RISK: Schedule is vulnerable to single-point-of-failure")
     elif vulnerability > 0.3:
-        print(f"  ⚠️  MODERATE RISK: Some single-point dependencies exist")
+        print("  ⚠️  MODERATE RISK: Some single-point dependencies exist")
     else:
-        print(f"  ✓ LOW RISK: Good redundancy")
+        print("  ✓ LOW RISK: Good redundancy")
 
     print("\n" + "=" * 70)
 
@@ -220,8 +224,9 @@ def demo_api_response():
     print("DEMO 5: API Response Format")
     print("=" * 70)
 
-    from app.analytics.stability_metrics import StabilityMetrics
     import json
+
+    from app.analytics.stability_metrics import StabilityMetrics
 
     metrics = StabilityMetrics(
         assignments_changed=18,

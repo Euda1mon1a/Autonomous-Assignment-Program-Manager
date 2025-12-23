@@ -9,16 +9,15 @@ Logs incoming HTTP requests with:
 - User ID (if authenticated)
 """
 
-import asyncio
 import json
 import logging
 import time
-from typing import Any, Callable, Dict, Optional, Set
+from collections.abc import Callable
+from typing import Any
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
-from starlette.datastructures import Headers
 
 from app.middleware.logging.filters import SensitiveDataFilter
 from app.middleware.logging.storage import LogStorage, get_storage_backend
@@ -37,11 +36,11 @@ class RequestLoggingConfig:
         max_body_size: int = 10 * 1024,  # 10 KB
         log_response: bool = True,
         max_response_size: int = 10 * 1024,  # 10 KB
-        excluded_paths: Optional[Set[str]] = None,
+        excluded_paths: set[str] | None = None,
         sample_rate: float = 1.0,  # 1.0 = log all, 0.5 = log 50%
-        log_levels: Optional[Dict[str, str]] = None,
-        storage_backend: Optional[LogStorage] = None,
-        sensitive_filter: Optional[SensitiveDataFilter] = None,
+        log_levels: dict[str, str] | None = None,
+        storage_backend: LogStorage | None = None,
+        sensitive_filter: SensitiveDataFilter | None = None,
     ):
         """
         Initialize request logging configuration.
@@ -65,7 +64,12 @@ class RequestLoggingConfig:
         self.max_body_size = max_body_size
         self.log_response = log_response
         self.max_response_size = max_response_size
-        self.excluded_paths = excluded_paths or {"/health", "/metrics", "/docs", "/openapi.json"}
+        self.excluded_paths = excluded_paths or {
+            "/health",
+            "/metrics",
+            "/docs",
+            "/openapi.json",
+        }
         self.sample_rate = sample_rate
         self.log_levels = log_levels or {}
         self.storage = storage_backend or get_storage_backend("memory")
@@ -85,7 +89,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     - Multiple storage backends
     """
 
-    def __init__(self, app, config: Optional[RequestLoggingConfig] = None):
+    def __init__(self, app, config: RequestLoggingConfig | None = None):
         """
         Initialize request logging middleware.
 
@@ -160,7 +164,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         self._request_counter += 1
         return (self._request_counter % int(1 / self.config.sample_rate)) == 0
 
-    def _extract_user_id(self, request: Request) -> Optional[str]:
+    def _extract_user_id(self, request: Request) -> str | None:
         """Extract user ID from request state."""
         if hasattr(request.state, "user") and request.state.user:
             user = request.state.user
@@ -171,8 +175,8 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         return None
 
     async def _log_request(
-        self, request: Request, request_id: str, user_id: Optional[str]
-    ) -> Dict[str, Any]:
+        self, request: Request, request_id: str, user_id: str | None
+    ) -> dict[str, Any]:
         """Log incoming request."""
         # Build log entry
         log_entry = {
@@ -218,7 +222,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
         return log_entry
 
-    async def _read_request_body(self, request: Request) -> Optional[Dict[str, Any]]:
+    async def _read_request_body(self, request: Request) -> dict[str, Any] | None:
         """
         Read and parse request body.
 
@@ -248,10 +252,16 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     filtered_body = self.config.filter.filter_dict(body_json)
                     return filtered_body
                 except json.JSONDecodeError:
-                    return {"_note": "Invalid JSON", "_raw": body_bytes[:200].decode("utf-8", errors="ignore")}
+                    return {
+                        "_note": "Invalid JSON",
+                        "_raw": body_bytes[:200].decode("utf-8", errors="ignore"),
+                    }
             else:
                 # For non-JSON, just indicate presence
-                return {"_note": f"Non-JSON body ({content_type})", "_size": len(body_bytes)}
+                return {
+                    "_note": f"Non-JSON body ({content_type})",
+                    "_size": len(body_bytes),
+                }
 
         except Exception as e:
             logger.error(f"Error reading request body: {e}")
@@ -262,9 +272,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         request: Request,
         response: Response,
         request_id: str,
-        user_id: Optional[str],
+        user_id: str | None,
         duration_ms: float,
-        request_data: Dict[str, Any],
+        request_data: dict[str, Any],
     ) -> None:
         """Log response."""
         log_entry = {
@@ -309,7 +319,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         self,
         request: Request,
         request_id: str,
-        user_id: Optional[str],
+        user_id: str | None,
         duration_ms: float,
         error: Exception,
     ) -> None:

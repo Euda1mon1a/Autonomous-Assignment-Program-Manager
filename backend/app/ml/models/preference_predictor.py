@@ -6,10 +6,10 @@ Uses historical assignment data and faculty feedback to predict:
 - Optimal assignment scores
 - Preference patterns over time
 """
+
 import logging
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import joblib
 import numpy as np
@@ -34,7 +34,7 @@ class PreferencePredictor:
 
     def __init__(
         self,
-        model_path: Optional[Path] = None,
+        model_path: Path | None = None,
         n_estimators: int = 100,
         max_depth: int = 10,
         random_state: int = 42,
@@ -54,8 +54,8 @@ class PreferencePredictor:
         self.random_state = random_state
 
         # Models and preprocessors
-        self.model: Optional[RandomForestRegressor] = None
-        self.scaler: Optional[StandardScaler] = None
+        self.model: RandomForestRegressor | None = None
+        self.scaler: StandardScaler | None = None
         self.feature_names: list[str] = []
 
         # Load pre-trained model if path provided
@@ -82,7 +82,7 @@ class PreferencePredictor:
         person_data: dict[str, Any],
         rotation_data: dict[str, Any],
         block_data: dict[str, Any],
-        historical_stats: Optional[dict[str, Any]] = None,
+        historical_stats: dict[str, Any] | None = None,
     ) -> pd.DataFrame:
         """
         Extract features from assignment components.
@@ -111,7 +111,9 @@ class PreferencePredictor:
         # Rotation features
         rotation_name = rotation_data.get("name", "")
         for rot_type in ["clinic", "inpatient", "procedures", "conference", "admin"]:
-            features[f"rotation_{rot_type}"] = 1 if rot_type in rotation_name.lower() else 0
+            features[f"rotation_{rot_type}"] = (
+                1 if rot_type in rotation_name.lower() else 0
+            )
 
         # Temporal features from block
         block_date = block_data.get("date")
@@ -149,8 +151,12 @@ class PreferencePredictor:
 
         # Historical statistics (if available)
         if historical_stats:
-            features["historical_preference_score"] = historical_stats.get("avg_preference_score", 0.5)
-            features["num_similar_assignments"] = historical_stats.get("similar_count", 0)
+            features["historical_preference_score"] = historical_stats.get(
+                "avg_preference_score", 0.5
+            )
+            features["num_similar_assignments"] = historical_stats.get(
+                "similar_count", 0
+            )
             features["swap_rate"] = historical_stats.get("swap_rate", 0.0)
             features["workload_current"] = historical_stats.get("current_workload", 0.0)
         else:
@@ -202,10 +208,16 @@ class PreferencePredictor:
         val_score = self.model.score(X_val_scaled, y_val)
 
         # Get feature importances
-        feature_importance = dict(zip(self.feature_names, self.model.feature_importances_))
-        top_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)[:5]
+        feature_importance = dict(
+            zip(self.feature_names, self.model.feature_importances_)
+        )
+        top_features = sorted(
+            feature_importance.items(), key=lambda x: x[1], reverse=True
+        )[:5]
 
-        logger.info(f"Training complete: R² train={train_score:.3f}, val={val_score:.3f}")
+        logger.info(
+            f"Training complete: R² train={train_score:.3f}, val={val_score:.3f}"
+        )
         logger.info(f"Top features: {top_features}")
 
         return {
@@ -221,7 +233,7 @@ class PreferencePredictor:
         person_data: dict[str, Any],
         rotation_data: dict[str, Any],
         block_data: dict[str, Any],
-        historical_stats: Optional[dict[str, Any]] = None,
+        historical_stats: dict[str, Any] | None = None,
     ) -> float:
         """
         Predict preference score for an assignment.
@@ -240,7 +252,9 @@ class PreferencePredictor:
             return 0.5
 
         # Extract features
-        X = self.extract_features(person_data, rotation_data, block_data, historical_stats)
+        X = self.extract_features(
+            person_data, rotation_data, block_data, historical_stats
+        )
 
         # Ensure all expected features are present
         for col in self.feature_names:
@@ -331,7 +345,7 @@ class PreferencePredictor:
         person_data: dict[str, Any],
         rotation_data: dict[str, Any],
         block_data: dict[str, Any],
-        historical_stats: Optional[dict[str, Any]] = None,
+        historical_stats: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Explain why a prediction was made.
@@ -348,7 +362,9 @@ class PreferencePredictor:
         score = self.predict(person_data, rotation_data, block_data, historical_stats)
 
         # Extract features
-        X = self.extract_features(person_data, rotation_data, block_data, historical_stats)
+        X = self.extract_features(
+            person_data, rotation_data, block_data, historical_stats
+        )
 
         # Get feature values
         feature_values = X.iloc[0].to_dict()
@@ -364,9 +380,7 @@ class PreferencePredictor:
 
         # Sort by absolute contribution
         top_contributors = sorted(
-            contributions.items(),
-            key=lambda x: abs(x[1]),
-            reverse=True
+            contributions.items(), key=lambda x: abs(x[1]), reverse=True
         )[:5]
 
         return {

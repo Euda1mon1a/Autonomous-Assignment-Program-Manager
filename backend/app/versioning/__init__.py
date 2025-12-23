@@ -6,13 +6,13 @@ enabling point-in-time queries, version comparison, rollback, and branch managem
 """
 
 from .data_versioning import (
-    DataVersioningService,
-    VersionMetadata,
-    VersionDiff,
-    VersionBranch,
-    MergeConflict,
     BranchInfo,
+    DataVersioningService,
+    MergeConflict,
     PointInTimeQuery,
+    VersionBranch,
+    VersionDiff,
+    VersionMetadata,
 )
 
 __all__ = [

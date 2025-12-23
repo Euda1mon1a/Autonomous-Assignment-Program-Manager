@@ -3,13 +3,13 @@ Residency Scheduler API.
 
 FastAPI application for managing residency program schedules.
 """
+
 from contextlib import asynccontextmanager
 from ipaddress import ip_address, ip_network
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
-from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -54,16 +54,22 @@ def _validate_security_config() -> None:
     if settings.SECRET_KEY in insecure_defaults:
         errors.append("SECRET_KEY is not set or uses an insecure default value")
     elif len(settings.SECRET_KEY) < 32:
-        errors.append(f"SECRET_KEY is too short ({len(settings.SECRET_KEY)} chars, minimum 32)")
+        errors.append(
+            f"SECRET_KEY is too short ({len(settings.SECRET_KEY)} chars, minimum 32)"
+        )
 
     # Check WEBHOOK_SECRET
     if settings.WEBHOOK_SECRET in insecure_defaults:
         errors.append("WEBHOOK_SECRET is not set or uses an insecure default value")
     elif len(settings.WEBHOOK_SECRET) < 32:
-        errors.append(f"WEBHOOK_SECRET is too short ({len(settings.WEBHOOK_SECRET)} chars, minimum 32)")
+        errors.append(
+            f"WEBHOOK_SECRET is too short ({len(settings.WEBHOOK_SECRET)} chars, minimum 32)"
+        )
 
     if errors:
-        error_msg = "Security configuration errors:\n" + "\n".join(f"  - {e}" for e in errors)
+        error_msg = "Security configuration errors:\n" + "\n".join(
+            f"  - {e}" for e in errors
+        )
         if not settings.DEBUG:
             # Production mode: fail fast
             raise ValueError(
@@ -74,11 +80,11 @@ def _validate_security_config() -> None:
         else:
             # Development mode: warn but allow
             logger.warning(
-                f"\n{'='*80}\n"
+                f"\n{'=' * 80}\n"
                 f"WARNING: Running in DEBUG mode with insecure configuration!\n"
                 f"{error_msg}\n"
                 f"This is only acceptable for local development.\n"
-                f"{'='*80}\n"
+                f"{'=' * 80}\n"
             )
 
 
@@ -118,6 +124,7 @@ async def lifespan(app: FastAPI):
     # Initialize resilience metrics
     try:
         from app.resilience.metrics import setup_metrics
+
         setup_metrics()
         logger.info("Resilience metrics initialized")
     except Exception as e:
@@ -126,6 +133,7 @@ async def lifespan(app: FastAPI):
     # Initialize service cache
     try:
         from app.core.cache import get_service_cache
+
         cache = get_service_cache()
         if cache.is_available:
             stats = cache.get_stats()
@@ -140,6 +148,7 @@ async def lifespan(app: FastAPI):
     # Start certification scheduler for expiration reminders
     try:
         from app.services.certification_scheduler import start_scheduler
+
         start_scheduler()
         logger.info("Certification scheduler started")
     except Exception as e:
@@ -156,6 +165,7 @@ async def lifespan(app: FastAPI):
     # Log final cache stats
     try:
         from app.core.cache import get_service_cache
+
         cache = get_service_cache()
         if cache.is_available:
             stats = cache.get_stats()
@@ -169,6 +179,7 @@ async def lifespan(app: FastAPI):
     # Stop certification scheduler
     try:
         from app.services.certification_scheduler import stop_scheduler
+
         stop_scheduler()
         logger.info("Certification scheduler stopped")
     except Exception as e:
@@ -200,10 +211,7 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 @app.exception_handler(AppException)
 async def app_exception_handler(request: Request, exc: AppException):
     """Handle custom application exceptions with user-friendly messages."""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message}
-    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
 @app.exception_handler(Exception)
@@ -213,25 +221,23 @@ async def global_exception_handler(request: Request, exc: Exception):
     # Use repr(exc) to avoid loguru format string issues with curly braces in exception messages
     logger.error(
         "Unhandled exception on {} {}: {}",
-        request.method, request.url.path, repr(exc),
-        exc_info=True
+        request.method,
+        request.url.path,
+        repr(exc),
+        exc_info=True,
     )
 
     # Return generic error to client
     if settings.DEBUG:
         # In debug mode, include more details for development
         return JSONResponse(
-            status_code=500,
-            content={
-                "detail": str(exc),
-                "type": type(exc).__name__
-            }
+            status_code=500, content={"detail": str(exc), "type": type(exc).__name__}
         )
     else:
         # In production, hide implementation details
         return JSONResponse(
             status_code=500,
-            content={"detail": "An internal error occurred. Please try again later."}
+            content={"detail": "An internal error occurred. Please try again later."},
         )
 
 
@@ -272,7 +278,9 @@ if settings.TRUSTED_HOSTS:
         allowed_hosts=settings.TRUSTED_HOSTS,
     )
     # Log count only, not actual values (security: avoid exposing infrastructure)
-    logger.info(f"Trusted hosts middleware enabled. {len(settings.TRUSTED_HOSTS)} host(s) configured.")
+    logger.info(
+        f"Trusted hosts middleware enabled. {len(settings.TRUSTED_HOSTS)} host(s) configured."
+    )
 
 # Audit context middleware - captures user for version history tracking
 app.add_middleware(AuditContextMiddleware)
@@ -280,6 +288,7 @@ app.add_middleware(AuditContextMiddleware)
 # Request ID middleware - adds X-Request-ID for distributed tracing
 try:
     from app.core.observability import RequestIDMiddleware
+
     app.add_middleware(RequestIDMiddleware)
     logger.info("Request ID middleware enabled for distributed tracing")
 except ImportError:
@@ -293,11 +302,14 @@ INTERNAL_NETWORKS = [
     ip_network("192.168.0.0/16"),
 ]
 
+
 # Backwards compatibility redirect - redirect /api/... to /api/v1/...
 @app.middleware("http")
 async def redirect_old_api(request: Request, call_next):
     """Redirect legacy /api routes to /api/v1 for backwards compatibility."""
-    if request.url.path.startswith("/api/") and not request.url.path.startswith("/api/v1/"):
+    if request.url.path.startswith("/api/") and not request.url.path.startswith(
+        "/api/v1/"
+    ):
         new_path = request.url.path.replace("/api/", "/api/v1/", 1)
         return RedirectResponse(url=new_path, status_code=307)
     return await call_next(request)
@@ -313,16 +325,13 @@ async def restrict_metrics_endpoint(request: Request, call_next):
             is_internal = any(client_ip in network for network in INTERNAL_NETWORKS)
             if not is_internal:
                 return JSONResponse(
-                    status_code=403,
-                    content={"detail": "Access denied"}
+                    status_code=403, content={"detail": "Access denied"}
                 )
         except (ValueError, TypeError):
             # Invalid IP address
-            return JSONResponse(
-                status_code=403,
-                content={"detail": "Access denied"}
-            )
+            return JSONResponse(status_code=403, content={"detail": "Access denied"})
     return await call_next(request)
+
 
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
@@ -330,6 +339,7 @@ app.include_router(api_router, prefix="/api/v1")
 # Include GraphQL endpoint
 try:
     from app.graphql import graphql_router
+
     app.include_router(graphql_router, prefix="/graphql", tags=["graphql"])
     logger.info("GraphQL endpoint enabled at /graphql")
 except ImportError as e:
@@ -372,7 +382,9 @@ async def resilience_health():
         metrics = get_metrics()
         return {
             "status": "operational",
-            "metrics_enabled": metrics._enabled if hasattr(metrics, '_enabled') else False,
+            "metrics_enabled": metrics._enabled
+            if hasattr(metrics, "_enabled")
+            else False,
             "components": [
                 "utilization_monitor",
                 "defense_in_depth",

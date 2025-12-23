@@ -12,15 +12,15 @@ multiple processes and servers with support for:
 
 Implementation based on Redis Redlock algorithm with single-node optimization.
 """
+
 import asyncio
 import logging
 import time
 import uuid
-from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from threading import RLock
-from typing import Any, Optional
+from typing import Any
 
 import redis.asyncio as redis
 
@@ -191,7 +191,9 @@ class LockMetrics:
                 "active_locks_count": len(self.active_locks),
                 "active_locks": list(self.active_locks.keys()),
                 "success_rate": (
-                    self.acquisitions_total / total_requests if total_requests > 0 else 0.0
+                    self.acquisitions_total / total_requests
+                    if total_requests > 0
+                    else 0.0
                 ),
                 "avg_acquisition_time": (
                     self.total_acquisition_time / self.acquisitions_total
@@ -209,7 +211,7 @@ class LockMetrics:
 
 
 # Global metrics instance
-_lock_metrics: Optional[LockMetrics] = None
+_lock_metrics: LockMetrics | None = None
 _metrics_lock = RLock()
 
 
@@ -259,7 +261,7 @@ class DistributedLock:
         self,
         name: str,
         timeout: float = DEFAULT_LOCK_TIMEOUT,
-        redis_client: Optional[redis.Redis] = None,
+        redis_client: redis.Redis | None = None,
     ):
         """
         Initialize distributed lock.
@@ -272,11 +274,11 @@ class DistributedLock:
         self.name = name
         self.timeout = timeout
         self._redis_client = redis_client
-        self._redis: Optional[redis.Redis] = None
+        self._redis: redis.Redis | None = None
         self._settings = get_settings()
-        self._token: Optional[str] = None
+        self._token: str | None = None
         self._acquired = False
-        self._renewal_task: Optional[asyncio.Task] = None
+        self._renewal_task: asyncio.Task | None = None
 
     @property
     def lock_key(self) -> str:
@@ -397,7 +399,7 @@ class DistributedLock:
         except redis.ConnectionError as e:
             logger.error(f"Redis connection error while acquiring lock: {e}")
             metrics.record_acquisition_failure(self.name, timed_out=False)
-            raise LockAcquisitionError(f"Failed to acquire lock: Redis unavailable")
+            raise LockAcquisitionError("Failed to acquire lock: Redis unavailable")
         except LockTimeoutError:
             raise
         except Exception as e:
@@ -457,7 +459,9 @@ class DistributedLock:
                 metrics = get_lock_metrics()
                 metrics.record_release(self.name)
 
-                logger.debug(f"Released lock '{self.name}' with token {self._token[:8]}...")
+                logger.debug(
+                    f"Released lock '{self.name}' with token {self._token[:8]}..."
+                )
 
                 return True
             else:
@@ -469,7 +473,7 @@ class DistributedLock:
 
         except redis.ConnectionError as e:
             logger.error(f"Redis connection error while releasing lock: {e}")
-            raise LockError(f"Failed to release lock: Redis unavailable")
+            raise LockError("Failed to release lock: Redis unavailable")
         except Exception as e:
             logger.error(f"Unexpected error releasing lock '{self.name}': {e}")
             raise LockError(f"Failed to release lock: {str(e)}")
@@ -539,7 +543,7 @@ class DistributedLock:
             logger.error(f"Redis connection error while extending lock: {e}")
             metrics = get_lock_metrics()
             metrics.record_renewal(success=False)
-            raise LockRenewalError(f"Failed to extend lock: Redis unavailable")
+            raise LockRenewalError("Failed to extend lock: Redis unavailable")
         except Exception as e:
             logger.error(f"Unexpected error extending lock '{self.name}': {e}")
             metrics = get_lock_metrics()
@@ -602,7 +606,7 @@ class DistributedLock:
             logger.error(f"Redis connection error while renewing lock: {e}")
             metrics = get_lock_metrics()
             metrics.record_renewal(success=False)
-            raise LockRenewalError(f"Failed to renew lock: Redis unavailable")
+            raise LockRenewalError("Failed to renew lock: Redis unavailable")
         except Exception as e:
             logger.error(f"Unexpected error renewing lock '{self.name}': {e}")
             metrics = get_lock_metrics()
@@ -699,7 +703,7 @@ class ReentrantLock(DistributedLock):
         name: str,
         owner_id: str,
         timeout: float = DEFAULT_LOCK_TIMEOUT,
-        redis_client: Optional[redis.Redis] = None,
+        redis_client: redis.Redis | None = None,
     ):
         """
         Initialize reentrant lock.
@@ -826,7 +830,7 @@ class FairLock(DistributedLock):
         self,
         name: str,
         timeout: float = DEFAULT_LOCK_TIMEOUT,
-        redis_client: Optional[redis.Redis] = None,
+        redis_client: redis.Redis | None = None,
     ):
         """
         Initialize fair lock.
@@ -837,7 +841,7 @@ class FairLock(DistributedLock):
             redis_client: Optional Redis client
         """
         super().__init__(name, timeout, redis_client)
-        self._queue_position: Optional[float] = None
+        self._queue_position: float | None = None
 
     @property
     def queue_key(self) -> str:
@@ -952,7 +956,7 @@ class DeadlockDetector:
                 logger.warning(f"Deadlock cycle: {cycle}")
     """
 
-    def __init__(self, redis_client: Optional[redis.Redis] = None):
+    def __init__(self, redis_client: redis.Redis | None = None):
         """
         Initialize deadlock detector.
 
@@ -960,7 +964,7 @@ class DeadlockDetector:
             redis_client: Optional Redis client
         """
         self._redis_client = redis_client
-        self._redis: Optional[redis.Redis] = None
+        self._redis: redis.Redis | None = None
         self._settings = get_settings()
 
     async def _get_redis(self) -> redis.Redis:
@@ -1010,7 +1014,9 @@ class DeadlockDetector:
 
             if owner_info:
                 try:
-                    acquired_at = datetime.fromisoformat(owner_info.get("acquired_at", ""))
+                    acquired_at = datetime.fromisoformat(
+                        owner_info.get("acquired_at", "")
+                    )
                     timeout = float(owner_info.get("timeout", 0))
                     owner = owner_info.get("token", "unknown")
 

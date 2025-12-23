@@ -12,6 +12,7 @@ This package provides ML-based tools for:
 The ML models use scikit-learn and can be trained on historical data
 to improve scheduling decisions over time.
 """
+
 from app.ml.inference.schedule_scorer import ScheduleScorer
 from app.ml.models.conflict_predictor import ConflictPredictor
 from app.ml.models.preference_predictor import PreferencePredictor

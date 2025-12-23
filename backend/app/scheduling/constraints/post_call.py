@@ -19,10 +19,11 @@ Activity Types:
     - PCAT: Post-Call Attending - supervising resident clinic while post-call
     - DO: Direct Observation - observing resident encounters for assessment
 """
+
 import logging
 from collections import defaultdict
 from datetime import date, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from .base import (
     ConstraintPriority,
@@ -59,7 +60,7 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
 
     # Activity type identifiers
     PCAT_ACTIVITY = "PCAT"  # Post-Call Attending
-    DO_ACTIVITY = "DO"       # Direct Observation
+    DO_ACTIVITY = "DO"  # Direct Observation
 
     def __init__(self) -> None:
         """Initialize post-call auto-assignment constraint."""
@@ -93,7 +94,9 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
         do_template_id = self._find_template_id(context, self.DO_ACTIVITY)
 
         if not pcat_template_id or not do_template_id:
-            logger.warning("PCAT or DO templates not found - post-call constraint inactive")
+            logger.warning(
+                "PCAT or DO templates not found - post-call constraint inactive"
+            )
             return
 
         pcat_t_i = context.template_idx.get(pcat_template_id)
@@ -134,14 +137,18 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
                     am_b_i = context.block_idx[am_block.id]
                     if (f_i, am_b_i, pcat_t_i) in template_vars:
                         # call_var == 1 => pcat_var == 1
-                        model.AddImplication(call_var, template_vars[f_i, am_b_i, pcat_t_i])
+                        model.AddImplication(
+                            call_var, template_vars[f_i, am_b_i, pcat_t_i]
+                        )
 
                 # If on call => next day PM must be DO
                 for pm_block in pm_blocks:
                     pm_b_i = context.block_idx[pm_block.id]
                     if (f_i, pm_b_i, do_t_i) in template_vars:
                         # call_var == 1 => do_var == 1
-                        model.AddImplication(call_var, template_vars[f_i, pm_b_i, do_t_i])
+                        model.AddImplication(
+                            call_var, template_vars[f_i, pm_b_i, do_t_i]
+                        )
 
     def add_to_pulp(
         self,
@@ -196,7 +203,7 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
                     if (f_i, am_b_i, pcat_t_i) in template_vars:
                         model += (
                             template_vars[f_i, am_b_i, pcat_t_i] >= call_var,
-                            f"post_call_pcat_{f_i}_{b_i}_{constraint_count}"
+                            f"post_call_pcat_{f_i}_{b_i}_{constraint_count}",
                         )
                         constraint_count += 1
 
@@ -205,7 +212,7 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
                     if (f_i, pm_b_i, do_t_i) in template_vars:
                         model += (
                             template_vars[f_i, pm_b_i, do_t_i] >= call_var,
-                            f"post_call_do_{f_i}_{b_i}_{constraint_count}"
+                            f"post_call_do_{f_i}_{b_i}_{constraint_count}",
                         )
                         constraint_count += 1
 
@@ -242,7 +249,7 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
         assignments_by_person_date_time = defaultdict(list)
         for a in assignments:
             block = block_by_id.get(a.block_id)
-            if block and hasattr(block, 'time_of_day'):
+            if block and hasattr(block, "time_of_day"):
                 key = (a.person_id, block.date, block.time_of_day)
                 assignments_by_person_date_time[key].append(a)
 
@@ -263,77 +270,89 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
             am_assignments = assignments_by_person_date_time.get(
                 (call_a.person_id, next_day, "AM"), []
             )
-            has_pcat = any(
-                a.rotation_template_id == pcat_template_id
-                for a in am_assignments
-            ) if pcat_template_id else False
+            has_pcat = (
+                any(a.rotation_template_id == pcat_template_id for a in am_assignments)
+                if pcat_template_id
+                else False
+            )
 
             if not has_pcat and pcat_template_id:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="HIGH",
-                    message=f"{faculty.name} on call {block.date} missing PCAT assignment for {next_day} AM",
-                    person_id=faculty.id,
-                    block_id=call_a.block_id,
-                    details={
-                        "call_date": str(block.date),
-                        "expected_pcat_date": str(next_day),
-                        "time_of_day": "AM",
-                    },
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="HIGH",
+                        message=f"{faculty.name} on call {block.date} missing PCAT assignment for {next_day} AM",
+                        person_id=faculty.id,
+                        block_id=call_a.block_id,
+                        details={
+                            "call_date": str(block.date),
+                            "expected_pcat_date": str(next_day),
+                            "time_of_day": "AM",
+                        },
+                    )
+                )
 
             # Check PM assignment
             pm_assignments = assignments_by_person_date_time.get(
                 (call_a.person_id, next_day, "PM"), []
             )
-            has_do = any(
-                a.rotation_template_id == do_template_id
-                for a in pm_assignments
-            ) if do_template_id else False
+            has_do = (
+                any(a.rotation_template_id == do_template_id for a in pm_assignments)
+                if do_template_id
+                else False
+            )
 
             if not has_do and do_template_id:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="HIGH",
-                    message=f"{faculty.name} on call {block.date} missing DO assignment for {next_day} PM",
-                    person_id=faculty.id,
-                    block_id=call_a.block_id,
-                    details={
-                        "call_date": str(block.date),
-                        "expected_do_date": str(next_day),
-                        "time_of_day": "PM",
-                    },
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="HIGH",
+                        message=f"{faculty.name} on call {block.date} missing DO assignment for {next_day} PM",
+                        person_id=faculty.id,
+                        block_id=call_a.block_id,
+                        details={
+                            "call_date": str(block.date),
+                            "expected_do_date": str(next_day),
+                            "time_of_day": "PM",
+                        },
+                    )
+                )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
             violations=violations,
         )
 
-    def _find_template_id(self, context: SchedulingContext, activity_name: str) -> Optional[Any]:
+    def _find_template_id(
+        self, context: SchedulingContext, activity_name: str
+    ) -> Any | None:
         """Find template ID by activity name or abbreviation."""
         for t in context.templates:
             # Check name
-            if hasattr(t, 'name') and t.name.upper() == activity_name.upper():
+            if hasattr(t, "name") and t.name.upper() == activity_name.upper():
                 return t.id
             # Check abbreviation
-            if hasattr(t, 'abbreviation') and t.abbreviation:
+            if hasattr(t, "abbreviation") and t.abbreviation:
                 if t.abbreviation.upper() == activity_name.upper():
                     return t.id
         return None
 
-    def _group_blocks_by_date_time(self, context: SchedulingContext) -> dict[tuple[date, str], list[Any]]:
+    def _group_blocks_by_date_time(
+        self, context: SchedulingContext
+    ) -> dict[tuple[date, str], list[Any]]:
         """Group blocks by (date, time_of_day) for quick lookup."""
         result: dict[tuple[date, str], list[Any]] = defaultdict(list)
         for block in context.blocks:
-            if hasattr(block, 'time_of_day'):
+            if hasattr(block, "time_of_day"):
                 key = (block.date, block.time_of_day)
                 result[key].append(block)
         return result
 
-    def _extract_call_assignments(self, assignments: list[Any], context: SchedulingContext) -> list[Any]:
+    def _extract_call_assignments(
+        self, assignments: list[Any], context: SchedulingContext
+    ) -> list[Any]:
         """
         Extract overnight call assignments from assignment list.
 
@@ -343,7 +362,7 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
         call_assignments: list[Any] = []
         for a in assignments:
             # Check if this is a call assignment type
-            if hasattr(a, 'call_type') and a.call_type == 'overnight':
+            if hasattr(a, "call_type") and a.call_type == "overnight":
                 call_assignments.append(a)
             # Check existing_assignments in context
         # Also check context.existing_assignments for call data

@@ -22,7 +22,9 @@ router = APIRouter()
 def list_blocks(
     start_date: date | None = Query(None, description="Filter blocks from this date"),
     end_date: date | None = Query(None, description="Filter blocks until this date"),
-    block_number: int | None = Query(None, description="Filter by academic block number"),
+    block_number: int | None = Query(
+        None, description="Filter by academic block number"
+    ),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):

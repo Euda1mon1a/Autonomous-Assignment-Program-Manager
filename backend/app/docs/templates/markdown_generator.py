@@ -3,15 +3,16 @@ Markdown documentation generator.
 
 Generates comprehensive Markdown documentation from OpenAPI schemas.
 """
+
 import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class MarkdownGenerator:
     """Generates Markdown documentation from OpenAPI schemas."""
 
-    def __init__(self, openapi_schema: Dict[str, Any]):
+    def __init__(self, openapi_schema: dict[str, Any]):
         """
         Initialize the Markdown generator.
 
@@ -40,7 +41,7 @@ class MarkdownGenerator:
             self._generate_schemas(),
             self._generate_error_codes(),
             self._generate_changelog(),
-            self._generate_footer()
+            self._generate_footer(),
         ]
 
         return "\n\n".join(sections)
@@ -90,9 +91,9 @@ class MarkdownGenerator:
             overview += f"- **Email:** {contact.get('email', 'N/A')}\n"
 
         if license_info:
-            overview += f"\n### License\n\n"
+            overview += "\n### License\n\n"
             overview += f"- **Name:** {license_info.get('name', 'N/A')}\n"
-            if license_info.get('url'):
+            if license_info.get("url"):
                 overview += f"- **URL:** {license_info['url']}\n"
 
         if servers:
@@ -205,7 +206,7 @@ When the rate limit is exceeded, the API returns a `429 Too Many Requests` statu
 
 """
         # Group endpoints by tag
-        endpoints_by_tag: Dict[str, List[tuple]] = {}
+        endpoints_by_tag: dict[str, list[tuple]] = {}
 
         for path, path_item in self.paths.items():
             for method in ["get", "post", "put", "patch", "delete"]:
@@ -232,10 +233,7 @@ When the rate limit is exceeded, the API returns a `429 Too Many Requests` statu
         return endpoints
 
     def _generate_endpoint_doc(
-        self,
-        path: str,
-        method: str,
-        operation: Dict[str, Any]
+        self, path: str, method: str, operation: dict[str, Any]
     ) -> str:
         """
         Generate documentation for a single endpoint.
@@ -334,11 +332,11 @@ When the rate limit is exceeded, the API returns a `429 Too Many Requests` statu
 
         # cURL example
         examples += "**cURL:**\n\n"
-        examples += f"```bash\n"
+        examples += "```bash\n"
         examples += f"curl -X {method.upper()} \\\n"
         examples += f"  'http://localhost:8000{path}' \\\n"
-        examples += f"  -H 'Authorization: Bearer YOUR_TOKEN_HERE' \\\n"
-        examples += f"  -H 'Content-Type: application/json'\n"
+        examples += "  -H 'Authorization: Bearer YOUR_TOKEN_HERE' \\\n"
+        examples += "  -H 'Content-Type: application/json'\n"
         examples += "```\n\n"
 
         # Python example
@@ -445,14 +443,16 @@ The API uses standard HTTP status codes to indicate success or failure:
 
 """
         if version_info:
-            changelog += f"- **Current Version:** {version_info.get('current', 'N/A')}\n"
+            changelog += (
+                f"- **Current Version:** {version_info.get('current', 'N/A')}\n"
+            )
             changelog += f"- **Supported Versions:** {', '.join(version_info.get('supported', []))}\n"
 
-            deprecated = version_info.get('deprecated', [])
+            deprecated = version_info.get("deprecated", [])
             if deprecated:
                 changelog += f"- **Deprecated Versions:** {', '.join(deprecated)}\n"
 
-            sunset = version_info.get('sunset', [])
+            sunset = version_info.get("sunset", [])
             if sunset:
                 changelog += f"- **Sunset Versions:** {', '.join(sunset)}\n"
 

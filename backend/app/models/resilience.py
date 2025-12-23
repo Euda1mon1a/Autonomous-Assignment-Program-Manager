@@ -18,6 +18,7 @@ Tier 2 (Strategic):
 These provide the audit trail and historical data needed for
 accountability and post-incident review.
 """
+
 import enum
 import uuid
 from datetime import datetime
@@ -31,6 +32,7 @@ from app.db.types import GUID, JSONType, StringArrayType
 
 class ResilienceEventType(str, enum.Enum):
     """Types of resilience events."""
+
     HEALTH_CHECK = "health_check"
     CRISIS_ACTIVATED = "crisis_activated"
     CRISIS_DEACTIVATED = "crisis_deactivated"
@@ -46,6 +48,7 @@ class ResilienceEventType(str, enum.Enum):
 
 class OverallStatus(str, enum.Enum):
     """Overall system status levels."""
+
     HEALTHY = "healthy"
     WARNING = "warning"
     DEGRADED = "degraded"
@@ -62,6 +65,7 @@ class ResilienceHealthCheck(Base):
     - Alerting on degradation
     - Post-incident review
     """
+
     __tablename__ = "resilience_health_checks"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -72,12 +76,18 @@ class ResilienceHealthCheck(Base):
 
     # Utilization metrics
     utilization_rate = Column(Float, nullable=False)
-    utilization_level = Column(String(20), nullable=False)  # GREEN, YELLOW, ORANGE, RED, BLACK
+    utilization_level = Column(
+        String(20), nullable=False
+    )  # GREEN, YELLOW, ORANGE, RED, BLACK
     buffer_remaining = Column(Float)
 
     # Defense status
-    defense_level = Column(String(30))  # PREVENTION, CONTROL, SAFETY_SYSTEMS, CONTAINMENT, EMERGENCY
-    load_shedding_level = Column(String(20))  # NORMAL, YELLOW, ORANGE, RED, BLACK, CRITICAL
+    defense_level = Column(
+        String(30)
+    )  # PREVENTION, CONTROL, SAFETY_SYSTEMS, CONTAINMENT, EMERGENCY
+    load_shedding_level = Column(
+        String(20)
+    )  # NORMAL, YELLOW, ORANGE, RED, BLACK, CRITICAL
 
     # Contingency compliance
     n1_pass = Column(Boolean, default=True)
@@ -106,6 +116,7 @@ class ResilienceEvent(Base):
     Captures all significant state changes for accountability
     and post-incident review.
     """
+
     __tablename__ = "resilience_events"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -131,7 +142,9 @@ class ResilienceEvent(Base):
     health_check = relationship("ResilienceHealthCheck", backref="events")
 
     def __repr__(self):
-        return f"<ResilienceEvent(type='{self.event_type}', severity='{self.severity}')>"
+        return (
+            f"<ResilienceEvent(type='{self.event_type}', severity='{self.severity}')>"
+        )
 
 
 class SacrificeDecision(Base):
@@ -143,6 +156,7 @@ class SacrificeDecision(Base):
     - Pattern analysis
     - Stakeholder communication
     """
+
     __tablename__ = "sacrifice_decisions"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -197,13 +211,16 @@ class FallbackActivation(Base):
     Records when pre-computed fallback schedules are activated,
     providing audit trail and effectiveness tracking.
     """
+
     __tablename__ = "fallback_activations"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     activated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Fallback details
-    scenario = Column(String(50), nullable=False)  # e.g., 'single_faculty_loss', 'pcs_season'
+    scenario = Column(
+        String(50), nullable=False
+    )  # e.g., 'single_faculty_loss', 'pcs_season'
     scenario_description = Column(String(500))
 
     # Authorization
@@ -228,7 +245,9 @@ class FallbackActivation(Base):
     event = relationship("ResilienceEvent", backref="fallback_activations")
 
     def __repr__(self):
-        return f"<FallbackActivation(scenario='{self.scenario}', active={self.is_active})>"
+        return (
+            f"<FallbackActivation(scenario='{self.scenario}', active={self.is_active})>"
+        )
 
     @property
     def is_active(self) -> bool:
@@ -251,6 +270,7 @@ class VulnerabilityRecord(Base):
     Captures point-in-time vulnerability assessments for
     trend tracking and risk monitoring.
     """
+
     __tablename__ = "vulnerability_records"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -279,7 +299,9 @@ class VulnerabilityRecord(Base):
     related_health_check_id = Column(GUID(), ForeignKey("resilience_health_checks.id"))
 
     # Relationships
-    health_check = relationship("ResilienceHealthCheck", backref="vulnerability_records")
+    health_check = relationship(
+        "ResilienceHealthCheck", backref="vulnerability_records"
+    )
 
     def __repr__(self):
         return f"<VulnerabilityRecord(n1={self.n1_pass}, n2={self.n2_pass})>"
@@ -292,37 +314,41 @@ class VulnerabilityRecord(Base):
 
 class AllostasisState(str, enum.Enum):
     """Allostatic state of a faculty member or system."""
+
     HOMEOSTASIS = "homeostasis"  # Stable, within normal operating range
-    ALLOSTASIS = "allostasis"    # Actively compensating for stress
+    ALLOSTASIS = "allostasis"  # Actively compensating for stress
     ALLOSTATIC_LOAD = "allostatic_load"  # Chronic compensation, accumulating wear
     ALLOSTATIC_OVERLOAD = "allostatic_overload"  # System failing to compensate
 
 
 class ZoneStatus(str, enum.Enum):
     """Health status of a scheduling zone."""
-    GREEN = "green"         # Fully operational
-    YELLOW = "yellow"       # Operational at minimum
-    ORANGE = "orange"       # Degraded, using backup
-    RED = "red"             # Critical, needs support
-    BLACK = "black"         # Failed, services suspended
+
+    GREEN = "green"  # Fully operational
+    YELLOW = "yellow"  # Operational at minimum
+    ORANGE = "orange"  # Degraded, using backup
+    RED = "red"  # Critical, needs support
+    BLACK = "black"  # Failed, services suspended
 
 
 class ContainmentLevel(str, enum.Enum):
     """Level of failure containment."""
-    NONE = "none"           # No containment active
-    SOFT = "soft"           # Advisory logging
-    MODERATE = "moderate"   # Require approval
-    STRICT = "strict"       # No cross-zone borrowing
-    LOCKDOWN = "lockdown"   # Zone completely isolated
+
+    NONE = "none"  # No containment active
+    SOFT = "soft"  # Advisory logging
+    MODERATE = "moderate"  # Require approval
+    STRICT = "strict"  # No cross-zone borrowing
+    LOCKDOWN = "lockdown"  # Zone completely isolated
 
 
 class EquilibriumState(str, enum.Enum):
     """State of system equilibrium."""
-    STABLE = "stable"           # At sustainable equilibrium
+
+    STABLE = "stable"  # At sustainable equilibrium
     COMPENSATING = "compensating"  # Shifting to new equilibrium
-    STRESSED = "stressed"       # Strained but holding
+    STRESSED = "stressed"  # Strained but holding
     UNSUSTAINABLE = "unsustainable"  # Cannot reach stable
-    CRITICAL = "critical"       # Failing to equilibrate
+    CRITICAL = "critical"  # Failing to equilibrate
 
 
 class FeedbackLoopState(Base):
@@ -332,6 +358,7 @@ class FeedbackLoopState(Base):
     Feedback loops monitor metrics and trigger corrections
     when deviation from setpoint exceeds tolerance.
     """
+
     __tablename__ = "feedback_loop_states"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -370,6 +397,7 @@ class AllostasisRecord(Base):
     Allostatic load is the cumulative cost of chronic stress adaptation.
     High load indicates burnout risk.
     """
+
     __tablename__ = "allostasis_records"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -406,6 +434,7 @@ class PositiveFeedbackAlert(Base):
     Positive feedback loops amplify problems and destabilize systems.
     These records track detection and intervention.
     """
+
     __tablename__ = "positive_feedback_alerts"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -443,11 +472,14 @@ class SchedulingZoneRecord(Base):
     Zones provide blast radius isolation - failures in one zone
     cannot propagate to affect others.
     """
+
     __tablename__ = "scheduling_zones"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(100), nullable=False)
-    zone_type = Column(String(50), nullable=False)  # inpatient, outpatient, education, etc.
+    zone_type = Column(
+        String(50), nullable=False
+    )  # inpatient, outpatient, education, etc.
     description = Column(String(500))
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
@@ -488,6 +520,7 @@ class ZoneFacultyAssignmentRecord(Base):
     """
     Records faculty assignments to zones.
     """
+
     __tablename__ = "zone_faculty_assignments"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -510,10 +543,13 @@ class ZoneBorrowingRecord(Base):
     """
     Records cross-zone faculty borrowing requests.
     """
+
     __tablename__ = "zone_borrowing_records"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    requesting_zone_id = Column(GUID(), ForeignKey("scheduling_zones.id"), nullable=False)
+    requesting_zone_id = Column(
+        GUID(), ForeignKey("scheduling_zones.id"), nullable=False
+    )
     lending_zone_id = Column(GUID(), ForeignKey("scheduling_zones.id"), nullable=False)
     faculty_id = Column(GUID(), nullable=False)
 
@@ -524,7 +560,9 @@ class ZoneBorrowingRecord(Base):
     requested_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Approval
-    status = Column(String(20), default="pending")  # pending, approved, denied, completed
+    status = Column(
+        String(20), default="pending"
+    )  # pending, approved, denied, completed
     approved_by = Column(String(100))
     approved_at = Column(DateTime)
     denial_reason = Column(String(500))
@@ -535,22 +573,29 @@ class ZoneBorrowingRecord(Base):
     was_effective = Column(Boolean)
 
     # Relationships
-    requesting_zone = relationship("SchedulingZoneRecord", foreign_keys=[requesting_zone_id])
+    requesting_zone = relationship(
+        "SchedulingZoneRecord", foreign_keys=[requesting_zone_id]
+    )
     lending_zone = relationship("SchedulingZoneRecord", foreign_keys=[lending_zone_id])
 
     def __repr__(self):
-        return f"<ZoneBorrowingRecord(status='{self.status}', priority='{self.priority}')>"
+        return (
+            f"<ZoneBorrowingRecord(status='{self.status}', priority='{self.priority}')>"
+        )
 
 
 class ZoneIncidentRecord(Base):
     """
     Records incidents affecting scheduling zones.
     """
+
     __tablename__ = "zone_incidents"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     zone_id = Column(GUID(), ForeignKey("scheduling_zones.id"), nullable=False)
-    incident_type = Column(String(50), nullable=False)  # faculty_loss, demand_surge, etc.
+    incident_type = Column(
+        String(50), nullable=False
+    )  # faculty_loss, demand_surge, etc.
     description = Column(String(500))
     started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     severity = Column(String(20), nullable=False)  # minor, moderate, severe, critical
@@ -578,6 +623,7 @@ class EquilibriumShiftRecord(Base):
 
     Tracks how the system responds to stress and compensates.
     """
+
     __tablename__ = "equilibrium_shifts"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -622,6 +668,7 @@ class SystemStressRecord(Base):
     """
     Records stresses applied to the system.
     """
+
     __tablename__ = "system_stress_records"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -645,13 +692,16 @@ class SystemStressRecord(Base):
     resolution_notes = Column(String(500))
 
     def __repr__(self):
-        return f"<SystemStressRecord(type='{self.stress_type}', active={self.is_active})>"
+        return (
+            f"<SystemStressRecord(type='{self.stress_type}', active={self.is_active})>"
+        )
 
 
 class CompensationRecord(Base):
     """
     Records compensation responses to system stress.
     """
+
     __tablename__ = "compensation_records"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -688,63 +738,70 @@ class CompensationRecord(Base):
 
 class CognitiveState(str, enum.Enum):
     """Current cognitive load state."""
-    FRESH = "fresh"              # Start of session, full capacity
-    ENGAGED = "engaged"          # Working well, some load
-    LOADED = "loaded"            # Approaching capacity
-    FATIGUED = "fatigued"        # Significantly reduced capacity
-    DEPLETED = "depleted"        # Needs rest, quality compromised
+
+    FRESH = "fresh"  # Start of session, full capacity
+    ENGAGED = "engaged"  # Working well, some load
+    LOADED = "loaded"  # Approaching capacity
+    FATIGUED = "fatigued"  # Significantly reduced capacity
+    DEPLETED = "depleted"  # Needs rest, quality compromised
 
 
 class DecisionComplexity(str, enum.Enum):
     """Complexity level of a decision."""
-    TRIVIAL = "trivial"        # Yes/no, approve/reject
-    SIMPLE = "simple"          # Choose from 2-3 options
-    MODERATE = "moderate"      # Choose from 4-7 options, some analysis
-    COMPLEX = "complex"        # Multiple factors, tradeoffs
-    STRATEGIC = "strategic"    # High stakes, long-term impact
+
+    TRIVIAL = "trivial"  # Yes/no, approve/reject
+    SIMPLE = "simple"  # Choose from 2-3 options
+    MODERATE = "moderate"  # Choose from 4-7 options, some analysis
+    COMPLEX = "complex"  # Multiple factors, tradeoffs
+    STRATEGIC = "strategic"  # High stakes, long-term impact
 
 
 class DecisionCategory(str, enum.Enum):
     """Category of scheduling decision."""
-    ASSIGNMENT = "assignment"      # Who covers what
-    SWAP = "swap"                  # Trade shifts between faculty
-    COVERAGE = "coverage"          # Fill gaps
-    LEAVE = "leave"                # Approve time off
-    CONFLICT = "conflict"          # Resolve scheduling conflicts
-    OVERRIDE = "override"          # Override constraints
-    POLICY = "policy"              # Policy changes
-    EMERGENCY = "emergency"        # Crisis decisions
+
+    ASSIGNMENT = "assignment"  # Who covers what
+    SWAP = "swap"  # Trade shifts between faculty
+    COVERAGE = "coverage"  # Fill gaps
+    LEAVE = "leave"  # Approve time off
+    CONFLICT = "conflict"  # Resolve scheduling conflicts
+    OVERRIDE = "override"  # Override constraints
+    POLICY = "policy"  # Policy changes
+    EMERGENCY = "emergency"  # Crisis decisions
 
 
 class DecisionOutcome(str, enum.Enum):
     """Outcome of a decision request."""
-    DECIDED = "decided"          # User made decision
-    DEFERRED = "deferred"        # Postponed for later
+
+    DECIDED = "decided"  # User made decision
+    DEFERRED = "deferred"  # Postponed for later
     AUTO_DEFAULT = "auto_default"  # System used default
-    DELEGATED = "delegated"      # Sent to someone else
-    CANCELLED = "cancelled"      # No longer needed
+    DELEGATED = "delegated"  # Sent to someone else
+    CANCELLED = "cancelled"  # No longer needed
 
 
 class TrailType(str, enum.Enum):
     """Types of preference trails."""
-    PREFERENCE = "preference"       # Faculty prefers this slot
-    AVOIDANCE = "avoidance"         # Faculty avoids this slot
+
+    PREFERENCE = "preference"  # Faculty prefers this slot
+    AVOIDANCE = "avoidance"  # Faculty avoids this slot
     SWAP_AFFINITY = "swap_affinity"  # Willing to swap with specific person
-    WORKLOAD = "workload"           # Preferred workload pattern
-    SEQUENCE = "sequence"           # Preferred assignment sequences
+    WORKLOAD = "workload"  # Preferred workload pattern
+    SEQUENCE = "sequence"  # Preferred assignment sequences
 
 
 class HubRiskLevel(str, enum.Enum):
     """Risk level if this hub is lost."""
-    LOW = "low"            # Easy to cover, multiple backups
+
+    LOW = "low"  # Easy to cover, multiple backups
     MODERATE = "moderate"  # Some impact, backups available
-    HIGH = "high"          # Significant impact, limited backups
+    HIGH = "high"  # Significant impact, limited backups
     CRITICAL = "critical"  # Major disruption, no viable backups
     CATASTROPHIC = "catastrophic"  # System failure possible
 
 
 class CrossTrainingPriority(str, enum.Enum):
     """Priority for cross-training a skill."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -758,6 +815,7 @@ class CognitiveSessionRecord(Base):
     Based on Miller's Law (~7 items) and decision fatigue research.
     Helps prevent decision fatigue in coordinators.
     """
+
     __tablename__ = "cognitive_sessions"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -794,10 +852,13 @@ class CognitiveDecisionRecord(Base):
     Tracks decision requests, outcomes, and time taken to
     understand cognitive load patterns.
     """
+
     __tablename__ = "cognitive_decisions"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    session_id = Column(GUID(), ForeignKey("cognitive_sessions.id", ondelete="SET NULL"))
+    session_id = Column(
+        GUID(), ForeignKey("cognitive_sessions.id", ondelete="SET NULL")
+    )
 
     # Decision definition
     category = Column(String(50), nullable=False)  # DecisionCategory enum
@@ -843,6 +904,7 @@ class PreferenceTrailRecord(Base):
     Pheromone-like trails that accumulate from faculty behavior
     and guide scheduling suggestions through indirect coordination.
     """
+
     __tablename__ = "preference_trails"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -881,10 +943,13 @@ class TrailSignalRecord(Base):
 
     Provides audit trail of how preference trails change over time.
     """
+
     __tablename__ = "trail_signals"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    trail_id = Column(GUID(), ForeignKey("preference_trails.id", ondelete="CASCADE"), nullable=False)
+    trail_id = Column(
+        GUID(), ForeignKey("preference_trails.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Signal details
     signal_type = Column(String(50), nullable=False)
@@ -907,6 +972,7 @@ class FacultyCentralityRecord(Base):
     Multiple centrality measures capture different aspects of importance
     in the scheduling network.
     """
+
     __tablename__ = "faculty_centrality"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -946,6 +1012,7 @@ class HubProtectionPlanRecord(Base):
     Plans to protect high-centrality faculty during vulnerable periods
     through workload reduction and backup assignment.
     """
+
     __tablename__ = "hub_protection_plans"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -964,7 +1031,9 @@ class HubProtectionPlanRecord(Base):
     critical_only = Column(Boolean, nullable=False, default=False)
 
     # Status tracking
-    status = Column(String(50), nullable=False, default="planned")  # planned, active, completed
+    status = Column(
+        String(50), nullable=False, default="planned"
+    )  # planned, active, completed
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     activated_at = Column(DateTime)
     deactivated_at = Column(DateTime)
@@ -986,6 +1055,7 @@ class CrossTrainingRecommendationRecord(Base):
     Cross-training distributes capabilities and reduces single points
     of failure in the scheduling network.
     """
+
     __tablename__ = "cross_training_recommendations"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -1004,7 +1074,9 @@ class CrossTrainingRecommendationRecord(Base):
     risk_reduction = Column(Float, nullable=False, default=0.0)
 
     # Status tracking
-    status = Column(String(50), nullable=False, default="pending")  # pending, approved, in_progress, completed
+    status = Column(
+        String(50), nullable=False, default="pending"
+    )  # pending, approved, in_progress, completed
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     started_at = Column(DateTime)
     completed_at = Column(DateTime)

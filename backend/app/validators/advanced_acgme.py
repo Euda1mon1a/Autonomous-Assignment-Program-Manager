@@ -8,6 +8,7 @@ Enhanced validation with detailed tracking:
 - PGY-specific requirements
 - Detailed duty hour breakdowns
 """
+
 from collections import defaultdict
 from datetime import date
 
@@ -67,7 +68,7 @@ class AdvancedACGMEValidator:
                 and_(
                     Assignment.person_id == person_id,
                     Block.date >= start_date,
-                    Block.date <= end_date
+                    Block.date <= end_date,
                 )
             )
             .all()
@@ -86,7 +87,7 @@ class AdvancedACGMEValidator:
 
             # Count continuous hours
             j = i
-            while j < len(dates) and (j == i or (dates[j] - dates[j-1]).days <= 1):
+            while j < len(dates) and (j == i or (dates[j] - dates[j - 1]).days <= 1):
                 continuous_hours += hours_by_date[dates[j]]
                 j += 1
 
@@ -140,7 +141,7 @@ class AdvancedACGMEValidator:
                 and_(
                     Assignment.person_id == person_id,
                     Block.date >= start_date,
-                    Block.date <= end_date
+                    Block.date <= end_date,
                 )
             )
             .order_by(Block.date)
@@ -164,7 +165,7 @@ class AdvancedACGMEValidator:
         start_sequence = sorted_nights[0]
 
         for i in range(1, len(sorted_nights)):
-            if (sorted_nights[i] - sorted_nights[i-1]).days == 1:
+            if (sorted_nights[i] - sorted_nights[i - 1]).days == 1:
                 consecutive += 1
                 if consecutive > self.MAX_NIGHT_FLOAT_CONSECUTIVE:
                     violations.append(
@@ -189,7 +190,11 @@ class AdvancedACGMEValidator:
         return violations
 
     def validate_moonlighting_hours(
-        self, person_id: str, start_date: date, end_date: date, external_hours: float = 0.0
+        self,
+        person_id: str,
+        start_date: date,
+        end_date: date,
+        external_hours: float = 0.0,
     ) -> list[Violation]:
         """
         Validate moonlighting hours (total internal + external must not exceed limits).
@@ -217,7 +222,7 @@ class AdvancedACGMEValidator:
                 and_(
                     Assignment.person_id == person_id,
                     Block.date >= start_date,
-                    Block.date <= end_date
+                    Block.date <= end_date,
                 )
             )
             .all()
@@ -280,7 +285,7 @@ class AdvancedACGMEValidator:
                 and_(
                     Assignment.person_id == person_id,
                     Block.date >= start_date,
-                    Block.date <= end_date
+                    Block.date <= end_date,
                 )
             )
             .all()
@@ -348,7 +353,7 @@ class AdvancedACGMEValidator:
                 and_(
                     Assignment.person_id == person_id,
                     Block.date >= start_date,
-                    Block.date <= end_date
+                    Block.date <= end_date,
                 )
             )
             .all()

@@ -1,4 +1,5 @@
 """Pydantic schemas for notification templates."""
+
 from datetime import datetime
 from typing import Any
 from uuid import UUID

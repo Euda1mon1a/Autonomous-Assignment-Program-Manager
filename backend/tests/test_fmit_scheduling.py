@@ -3,6 +3,7 @@ Tests for FMIT scheduling domain model.
 
 Tests SwapFinder, ExternalConflict integration, and the swap finder API.
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -30,22 +31,23 @@ from app.services.xlsx_import import (
 # Unit Tests for Constraint Detection
 # ============================================================================
 
+
 class TestBackToBackDetection:
     """Tests for back-to-back week conflict detection."""
 
     def test_no_conflict_with_gap(self):
         """Should not detect conflict with sufficient gap between weeks."""
         weeks = [
-            date(2025, 3, 3),   # Week 1
+            date(2025, 3, 3),  # Week 1
             date(2025, 3, 17),  # Week 3 (2 week gap)
-            date(2025, 4, 7),   # Week 6 (3 week gap)
+            date(2025, 4, 7),  # Week 6 (3 week gap)
         ]
         assert not has_back_to_back_conflict(weeks)
 
     def test_conflict_consecutive_weeks(self):
         """Should detect conflict for consecutive weeks."""
         weeks = [
-            date(2025, 3, 3),   # Week 1
+            date(2025, 3, 3),  # Week 1
             date(2025, 3, 10),  # Week 2 (consecutive!)
         ]
         assert has_back_to_back_conflict(weeks)
@@ -53,8 +55,8 @@ class TestBackToBackDetection:
     def test_conflict_near_consecutive(self):
         """Should detect conflict when gap is 7 days or less."""
         weeks = [
-            date(2025, 3, 3),   # Monday
-            date(2025, 3, 9),   # Sunday (6 days later)
+            date(2025, 3, 3),  # Monday
+            date(2025, 3, 9),  # Sunday (6 days later)
         ]
         assert has_back_to_back_conflict(weeks)
 
@@ -84,7 +86,7 @@ class TestAlternatingPatternDetection:
         """Should not detect alternating with sparse weeks."""
         weeks = [
             date(2025, 3, 3),
-            date(2025, 4, 7),   # 5 week gap
+            date(2025, 4, 7),  # 5 week gap
             date(2025, 5, 12),  # 5 week gap
         ]
         assert count_alternating_cycles(weeks) == 0
@@ -92,7 +94,7 @@ class TestAlternatingPatternDetection:
     def test_alternating_pattern_detected(self):
         """Should detect week-on/week-off pattern."""
         weeks = [
-            date(2025, 3, 3),   # Week 1
+            date(2025, 3, 3),  # Week 1
             date(2025, 3, 17),  # Week 3 (1 week gap = alternating)
             date(2025, 3, 31),  # Week 5 (1 week gap = alternating)
         ]
@@ -101,10 +103,10 @@ class TestAlternatingPatternDetection:
     def test_mixed_pattern(self):
         """Should count only alternating portions."""
         weeks = [
-            date(2025, 3, 3),   # Week 1
+            date(2025, 3, 3),  # Week 1
             date(2025, 3, 17),  # Week 3 (alternating)
             date(2025, 4, 21),  # Week 8 (not alternating - 5 week gap)
-            date(2025, 5, 5),   # Week 10 (alternating)
+            date(2025, 5, 5),  # Week 10 (alternating)
         ]
         assert count_alternating_cycles(weeks) == 2
 
@@ -140,6 +142,7 @@ class TestScheduleFlexibility:
 # ============================================================================
 # SwapFinder Unit Tests
 # ============================================================================
+
 
 class TestSwapFinder:
     """Tests for SwapFinder class."""
@@ -277,6 +280,7 @@ class TestSwapFinder:
 # Absence Integration Tests
 # ============================================================================
 
+
 class TestAbsenceIntegration:
     """Tests for ExternalConflict integration with Absence model."""
 
@@ -317,8 +321,7 @@ class TestAbsenceIntegration:
 
         assert len(conflicts) >= 1
         tdy_conflict = next(
-            (c for c in conflicts if c.faculty == "Dr. Test Faculty"),
-            None
+            (c for c in conflicts if c.faculty == "Dr. Test Faculty"), None
         )
         assert tdy_conflict is not None
         assert tdy_conflict.conflict_type == "tdy"
@@ -346,8 +349,12 @@ class TestAbsenceIntegration:
 
         # Should not include short vacation
         vacation_conflict = next(
-            (c for c in conflicts if c.faculty == "Dr. Test Faculty" and c.conflict_type == "leave"),
-            None
+            (
+                c
+                for c in conflicts
+                if c.faculty == "Dr. Test Faculty" and c.conflict_type == "leave"
+            ),
+            None,
         )
         assert vacation_conflict is None
 
@@ -373,8 +380,7 @@ class TestAbsenceIntegration:
         conflicts = load_external_conflicts_from_absences(db)
 
         deploy_conflict = next(
-            (c for c in conflicts if c.faculty == "Dr. Test Faculty"),
-            None
+            (c for c in conflicts if c.faculty == "Dr. Test Faculty"), None
         )
         assert deploy_conflict is not None
         assert deploy_conflict.conflict_type == "deployment"
@@ -411,6 +417,7 @@ class TestAbsenceIntegration:
 # ============================================================================
 # API Endpoint Tests
 # ============================================================================
+
 
 class TestSwapFinderAPI:
     """Tests for POST /api/schedule/swaps/find endpoint."""
@@ -522,8 +529,7 @@ class TestSwapFinderAPI:
 
         # Dr. Jones should have external conflict flagged
         jones_candidate = next(
-            (c for c in data["candidates"] if c["faculty"] == "Dr. Jones"),
-            None
+            (c for c in data["candidates"] if c["faculty"] == "Dr. Jones"), None
         )
         if jones_candidate:
             assert jones_candidate["external_conflict"] == "leave"
@@ -600,6 +606,7 @@ class TestSwapFinderAPI:
 # ============================================================================
 # Schema Validation Tests
 # ============================================================================
+
 
 class TestSwapFinderSchemas:
     """Tests for SwapFinder API schema validation."""

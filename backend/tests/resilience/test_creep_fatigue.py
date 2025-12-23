@@ -13,8 +13,6 @@ import math
 from datetime import timedelta
 from uuid import uuid4
 
-import pytest
-
 from app.resilience.creep_fatigue import (
     CreepAnalysis,
     CreepFatigueModel,
@@ -281,11 +279,7 @@ class TestPredictTimeToBurnout:
         resident_id = uuid4()
 
         # 60% workload for 30 days - should be low risk
-        analysis = model.predict_time_to_burnout(
-            resident_id,
-            0.6,
-            timedelta(days=30)
-        )
+        analysis = model.predict_time_to_burnout(resident_id, 0.6, timedelta(days=30))
 
         assert analysis.resident_id == resident_id
         assert analysis.creep_stage == CreepStage.PRIMARY
@@ -298,11 +292,7 @@ class TestPredictTimeToBurnout:
         resident_id = uuid4()
 
         # 75% workload for 60 days
-        analysis = model.predict_time_to_burnout(
-            resident_id,
-            0.75,
-            timedelta(days=60)
-        )
+        analysis = model.predict_time_to_burnout(resident_id, 0.75, timedelta(days=60))
 
         assert analysis.creep_stage == CreepStage.SECONDARY
         assert analysis.larson_miller_parameter > 20.0
@@ -313,11 +303,7 @@ class TestPredictTimeToBurnout:
         resident_id = uuid4()
 
         # 90% workload for 90 days - high risk
-        analysis = model.predict_time_to_burnout(
-            resident_id,
-            0.9,
-            timedelta(days=90)
-        )
+        analysis = model.predict_time_to_burnout(resident_id, 0.9, timedelta(days=90))
 
         assert analysis.creep_stage == CreepStage.TERTIARY
         assert analysis.estimated_time_to_failure.days < 30
@@ -329,11 +315,7 @@ class TestPredictTimeToBurnout:
         resident_id = uuid4()
 
         # Very high workload for extended period
-        analysis = model.predict_time_to_burnout(
-            resident_id,
-            0.95,
-            timedelta(days=120)
-        )
+        analysis = model.predict_time_to_burnout(resident_id, 0.95, timedelta(days=120))
 
         # Should show immediate risk
         assert analysis.creep_stage == CreepStage.TERTIARY
@@ -452,7 +434,7 @@ class TestSNCurveFatigue:
         cycles_custom = model.sn_curve_cycles_to_failure(
             0.7,
             material_constant=1e9,  # Lower constant
-            exponent=-3.0
+            exponent=-3.0,
         )
 
         # Lower constant should give fewer cycles
@@ -656,7 +638,9 @@ class TestCombinedRiskAssessment:
         assert len(recommendations) > 0
 
         # Should have urgent recommendation
-        urgent_found = any("URGENT" in r or "reduce" in r.lower() for r in recommendations)
+        urgent_found = any(
+            "URGENT" in r or "reduce" in r.lower() for r in recommendations
+        )
         assert urgent_found
 
     def test_assess_risk_score_calculation(self):
@@ -745,11 +729,7 @@ class TestEdgeCases:
         """Test prediction with zero duration."""
         model = CreepFatigueModel()
 
-        analysis = model.predict_time_to_burnout(
-            uuid4(),
-            0.8,
-            timedelta(days=0)
-        )
+        analysis = model.predict_time_to_burnout(uuid4(), 0.8, timedelta(days=0))
 
         # Should handle gracefully
         assert analysis.larson_miller_parameter == 0.0
@@ -787,29 +767,26 @@ class TestIntegrationScenarios:
 
         # Week 1-2: Fresh, adapting
         analysis_week2 = model.predict_time_to_burnout(
-            resident_id,
-            0.7,
-            timedelta(days=14)
+            resident_id, 0.7, timedelta(days=14)
         )
         assert analysis_week2.creep_stage == CreepStage.PRIMARY
 
         # Week 1-6: Steady state
         analysis_week6 = model.predict_time_to_burnout(
-            resident_id,
-            0.75,
-            timedelta(days=42)
+            resident_id, 0.75, timedelta(days=42)
         )
         # Should be transitioning to secondary
         assert analysis_week6.creep_stage in [CreepStage.PRIMARY, CreepStage.SECONDARY]
 
         # Week 1-12: High risk
         analysis_week12 = model.predict_time_to_burnout(
-            resident_id,
-            0.85,
-            timedelta(days=84)
+            resident_id, 0.85, timedelta(days=84)
         )
         # Likely in secondary or tertiary
-        assert analysis_week12.creep_stage in [CreepStage.SECONDARY, CreepStage.TERTIARY]
+        assert analysis_week12.creep_stage in [
+            CreepStage.SECONDARY,
+            CreepStage.TERTIARY,
+        ]
 
     def test_rotation_fatigue_accumulation_scenario(self):
         """Test realistic rotation stress accumulation."""
@@ -839,20 +816,14 @@ class TestIntegrationScenarios:
         resident_id = uuid4()
 
         # Before intervention: high stress
-        before = model.predict_time_to_burnout(
-            resident_id,
-            0.9,
-            timedelta(days=60)
-        )
+        before = model.predict_time_to_burnout(resident_id, 0.9, timedelta(days=60))
 
         # After intervention: reduced workload per recommendation
         reduction_pct = before.recommended_stress_reduction / 100.0
         new_workload = 0.9 * (1 - reduction_pct)
 
         after = model.predict_time_to_burnout(
-            resident_id,
-            new_workload,
-            timedelta(days=60)
+            resident_id, new_workload, timedelta(days=60)
         )
 
         # After intervention should be better

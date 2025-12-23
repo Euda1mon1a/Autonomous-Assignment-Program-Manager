@@ -68,17 +68,17 @@ Usage Example:
 """
 
 from app.tenancy.context import (
+    TenantContext,
+    clear_current_tenant,
     get_current_tenant,
     get_current_tenant_id,
-    set_current_tenant,
-    clear_current_tenant,
     require_tenant,
-    TenantContext,
+    set_current_tenant,
 )
 from app.tenancy.isolation import (
     IsolationStrategy,
-    TenantScope,
     TenantFilter,
+    TenantScope,
     get_tenant_schema,
 )
 from app.tenancy.models import Tenant, TenantStatus

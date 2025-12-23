@@ -57,8 +57,8 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
 
         if not include_expired:
             query = query.filter(
-                (ProcedureCredential.expiration_date.is_(None)) |
-                (ProcedureCredential.expiration_date >= date.today())
+                (ProcedureCredential.expiration_date.is_(None))
+                | (ProcedureCredential.expiration_date >= date.today())
             )
 
         return query.all()
@@ -88,8 +88,8 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
 
         if not include_expired:
             query = query.filter(
-                (ProcedureCredential.expiration_date.is_(None)) |
-                (ProcedureCredential.expiration_date >= date.today())
+                (ProcedureCredential.expiration_date.is_(None))
+                | (ProcedureCredential.expiration_date >= date.today())
             )
 
         return query.all()
@@ -104,11 +104,11 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
             .options(joinedload(ProcedureCredential.procedure))
             .filter(
                 ProcedureCredential.person_id == person_id,
-                ProcedureCredential.status == 'active',
+                ProcedureCredential.status == "active",
             )
             .filter(
-                (ProcedureCredential.expiration_date.is_(None)) |
-                (ProcedureCredential.expiration_date >= date.today())
+                (ProcedureCredential.expiration_date.is_(None))
+                | (ProcedureCredential.expiration_date >= date.today())
             )
             .all()
         )
@@ -127,12 +127,12 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
             .join(ProcedureCredential)
             .filter(
                 ProcedureCredential.procedure_id == procedure_id,
-                ProcedureCredential.status == 'active',
-                Person.type == 'faculty',
+                ProcedureCredential.status == "active",
+                Person.type == "faculty",
             )
             .filter(
-                (ProcedureCredential.expiration_date.is_(None)) |
-                (ProcedureCredential.expiration_date >= date.today())
+                (ProcedureCredential.expiration_date.is_(None))
+                | (ProcedureCredential.expiration_date >= date.today())
             )
             .all()
         )
@@ -151,11 +151,11 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
             .join(ProcedureCredential)
             .filter(
                 ProcedureCredential.person_id == person_id,
-                ProcedureCredential.status == 'active',
+                ProcedureCredential.status == "active",
             )
             .filter(
-                (ProcedureCredential.expiration_date.is_(None)) |
-                (ProcedureCredential.expiration_date >= date.today())
+                (ProcedureCredential.expiration_date.is_(None))
+                | (ProcedureCredential.expiration_date >= date.today())
             )
             .all()
         )
@@ -183,6 +183,7 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
             target_date.day,
         )
         from datetime import timedelta
+
         end_date = target_date + timedelta(days=days)
 
         return (
@@ -192,7 +193,7 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
                 joinedload(ProcedureCredential.procedure),
             )
             .filter(
-                ProcedureCredential.status == 'active',
+                ProcedureCredential.status == "active",
                 ProcedureCredential.expiration_date.isnot(None),
                 ProcedureCredential.expiration_date >= target_date,
                 ProcedureCredential.expiration_date <= end_date,
@@ -210,11 +211,11 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
             self.db.query(ProcedureCredential)
             .filter(
                 ProcedureCredential.procedure_id == procedure_id,
-                ProcedureCredential.status == 'active',
+                ProcedureCredential.status == "active",
             )
             .filter(
-                (ProcedureCredential.expiration_date.is_(None)) |
-                (ProcedureCredential.expiration_date >= date.today())
+                (ProcedureCredential.expiration_date.is_(None))
+                | (ProcedureCredential.expiration_date >= date.today())
             )
             .count()
         )

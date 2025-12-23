@@ -9,13 +9,13 @@ proper type safety.
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
-from typing import Optional
 
 from app.schemas.resilience import EquilibriumState, LoadSheddingLevel
 
 
 class ViolationSeverity(str, Enum):
     """Severity levels for MTF compliance violations."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -25,26 +25,29 @@ class ViolationSeverity(str, Enum):
 @dataclass
 class MTFViolation:
     """Represents a single MTF compliance violation."""
+
     rule_id: str
     severity: ViolationSeverity
     description: str
     affected_items: list[str] = field(default_factory=list)
-    recommendation: Optional[str] = None
+    recommendation: str | None = None
 
 
 @dataclass
 class MTFComplianceResult:
     """Result of an MTF compliance check."""
+
     is_compliant: bool
     violations: list[MTFViolation] = field(default_factory=list)
     score: float = 100.0
-    checked_at: Optional[date] = None
+    checked_at: date | None = None
     recommendations: list[str] = field(default_factory=list)
 
 
 @dataclass
 class StaffingLevel:
     """Staffing level information."""
+
     role: str
     required: int
     available: int
@@ -58,6 +61,7 @@ class StaffingLevel:
 @dataclass
 class CoverageGap:
     """Represents a coverage gap in the schedule."""
+
     date: date
     time_of_day: str
     rotation: str
@@ -78,6 +82,7 @@ class SystemHealthState:
     This replaces the generic dict[str, Any] system_state parameter used
     throughout MTF compliance functions.
     """
+
     # Contingency analysis results
     n1_pass: bool
     n2_pass: bool
@@ -125,6 +130,7 @@ class CascadePrediction:
 
     Replaces dict[str, Any] cascade_prediction parameter.
     """
+
     days_until_exhaustion: int
     cascade_probability: float = 0.0
     critical_faculty: list[int] = field(default_factory=list)
@@ -147,6 +153,7 @@ class PositiveFeedbackRisk:
 
     Replaces dict items in positive_feedback_risks list.
     """
+
     risk_type: str
     confidence: float
     description: str
@@ -171,13 +178,14 @@ class SupportingMetrics:
 
     Replaces dict[str, Any] supporting_metrics in RFFDocument.
     """
-    coverage_rate: Optional[float]
-    n1_pass: Optional[bool]
-    n2_pass: Optional[bool]
+
+    coverage_rate: float | None
+    n1_pass: bool | None
+    n2_pass: bool | None
     load_shedding_level: str
-    average_allostatic_load: Optional[float]
+    average_allostatic_load: float | None
     equilibrium_state: str
-    compensation_debt: Optional[float]
+    compensation_debt: float | None
     snapshot_timestamp: str
 
     def to_dict(self) -> dict[str, any]:
@@ -201,6 +209,7 @@ class ProjectionWithoutSupport:
 
     Replaces dict[str, Any] projected_without_support in RFFDocument.
     """
+
     timeline_days: int
     outcomes: list[str] = field(default_factory=list)
     mission_failure_likely: bool = False

@@ -18,25 +18,20 @@ For this implementation, we use a simplified approach with manual serialization.
 """
 
 import logging
+from collections.abc import Iterator
 from datetime import date, datetime, timedelta
-from typing import Iterator
 from uuid import UUID
 
 import grpc
-from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
 from app.grpc.converters import (
     from_proto_assignment,
     to_proto_assignment,
     to_proto_person,
-    to_proto_block,
-    to_proto_schedule,
 )
-from app.models.assignment import Assignment
-from app.models.block import Block
 from app.models.person import Person
-from app.schemas.assignment import AssignmentCreate, AssignmentResponse
+from app.schemas.assignment import AssignmentResponse
 from app.services.assignment_service import AssignmentService
 
 logger = logging.getLogger(__name__)
@@ -86,17 +81,17 @@ class ScheduleServicer:
             if start_date > end_date:
                 context.abort(
                     grpc.StatusCode.INVALID_ARGUMENT,
-                    "start_date must be before or equal to end_date"
+                    "start_date must be before or equal to end_date",
                 )
 
             if (end_date - start_date).days > 365:
                 context.abort(
                     grpc.StatusCode.INVALID_ARGUMENT,
-                    "Date range cannot exceed 365 days"
+                    "Date range cannot exceed 365 days",
                 )
 
             # Get user from context (set by AuthenticationInterceptor)
-            user_id = getattr(context, 'user_id', None)
+            user_id = getattr(context, "user_id", None)
             if not user_id:
                 context.abort(grpc.StatusCode.UNAUTHENTICATED, "User not authenticated")
 
@@ -188,9 +183,7 @@ class ScheduleServicer:
             db.close()
 
     def StreamAssignments(
-        self,
-        request: dict,
-        context: grpc.ServicerContext
+        self, request: dict, context: grpc.ServicerContext
     ) -> Iterator[dict]:
         """
         Stream assignments for a date range (server streaming RPC).
@@ -231,9 +224,7 @@ class ScheduleServicer:
 
                 # Query batch
                 result = service.list_assignments(
-                    start_date=current_date,
-                    end_date=batch_end,
-                    person_id=person_id
+                    start_date=current_date, end_date=batch_end, person_id=person_id
                 )
 
                 # Stream each assignment
@@ -249,7 +240,9 @@ class ScheduleServicer:
 
                     # Check if client cancelled
                     if context.is_active() is False:
-                        logger.info(f"Client cancelled streaming after {total_streamed} assignments")
+                        logger.info(
+                            f"Client cancelled streaming after {total_streamed} assignments"
+                        )
                         return
 
                 current_date = batch_end + timedelta(days=1)
@@ -326,8 +319,8 @@ class AssignmentServicer:
         db = SessionLocal()
         try:
             # Get user from context
-            user_id = getattr(context, 'user_id', None)
-            username = getattr(context, 'username', 'unknown')
+            user_id = getattr(context, "user_id", None)
+            username = getattr(context, "username", "unknown")
 
             # Convert from proto format
             assignment_data = from_proto_assignment(request)
@@ -381,12 +374,11 @@ class AssignmentServicer:
         try:
             assignment_id_str = request.get("id", "")
             assignment_id = UUID(assignment_id_str)
-            username = getattr(context, 'username', 'unknown')
+            username = getattr(context, "username", "unknown")
 
             service = AssignmentService(db)
             result = service.delete_assignment(
-                assignment_id=assignment_id,
-                deleted_by=username
+                assignment_id=assignment_id, deleted_by=username
             )
 
             if result.get("error"):
@@ -394,7 +386,7 @@ class AssignmentServicer:
 
             return {
                 "success": result.get("success", False),
-                "message": "Assignment deleted successfully"
+                "message": "Assignment deleted successfully",
             }
 
         except ValueError as e:
@@ -470,7 +462,7 @@ class PersonServicer:
         try:
             person_type = request.get("type", "")
             specialty = request.get("specialty", "")
-            is_active = request.get("is_active", None)
+            is_active = request.get("is_active")
             limit = request.get("limit", 100)
             offset = request.get("offset", 0)
 
@@ -561,6 +553,7 @@ class HealthServicer:
         # For now, we just keep the stream open
         while context.is_active():
             import time
+
             time.sleep(30)  # Check every 30 seconds
 
             # Send periodic heartbeat

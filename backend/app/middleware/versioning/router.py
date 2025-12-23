@@ -4,8 +4,9 @@ Version-Aware API Router.
 Extends FastAPI's APIRouter with version-awareness, allowing endpoints
 to be defined for specific API versions with automatic deprecation handling.
 """
+
 import logging
-from typing import Any, Callable, Optional
+from collections.abc import Callable
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
@@ -32,8 +33,8 @@ class VersionedRoute(APIRoute):
         path: str,
         endpoint: Callable,
         *,
-        min_version: Optional[APIVersion] = None,
-        max_version: Optional[APIVersion] = None,
+        min_version: APIVersion | None = None,
+        max_version: APIVersion | None = None,
         **kwargs,
     ):
         """
@@ -111,9 +112,7 @@ class VersionedRoute(APIRoute):
 
             # Add deprecation headers if applicable
             if isinstance(response, Response):
-                response = deprecation_mgr.add_deprecation_headers(
-                    response, request
-                )
+                response = deprecation_mgr.add_deprecation_headers(response, request)
 
             return response
 
@@ -134,8 +133,8 @@ class VersionedAPIRouter(APIRouter):
     def __init__(
         self,
         *,
-        min_version: Optional[APIVersion] = None,
-        max_version: Optional[APIVersion] = None,
+        min_version: APIVersion | None = None,
+        max_version: APIVersion | None = None,
         **kwargs,
     ):
         """
@@ -158,8 +157,8 @@ class VersionedAPIRouter(APIRouter):
         path: str,
         endpoint: Callable,
         *,
-        min_version: Optional[APIVersion] = None,
-        max_version: Optional[APIVersion] = None,
+        min_version: APIVersion | None = None,
+        max_version: APIVersion | None = None,
         **kwargs,
     ):
         """
@@ -216,6 +215,7 @@ class VersionedAPIRouter(APIRouter):
                 # V2 implementation with different response format
                 pass
         """
+
         def decorator(func: Callable):
             # Determine min/max versions from list
             min_ver = min(versions)
@@ -237,9 +237,10 @@ class VersionedAPIRouter(APIRouter):
 
 # Utility functions for version-aware routing
 
+
 def version_route(
     versions: list[APIVersion],
-    router: Optional[VersionedAPIRouter] = None,
+    router: VersionedAPIRouter | None = None,
 ):
     """
     Decorator for creating version-specific route handlers.
@@ -260,6 +261,7 @@ def version_route(
         async def modern_endpoint():
             return {"format": "new", "metadata": {...}}
     """
+
     def decorator(func: Callable):
         # Store version metadata on function
         func.__api_versions__ = versions
@@ -335,6 +337,7 @@ def version_dispatch(handlers: dict[APIVersion, Callable]):
                 APIVersion.V2: handle_v2,
             })(request)
     """
+
     async def dispatcher(*args, **kwargs):
         current_version = get_api_version()
 
@@ -344,17 +347,13 @@ def version_dispatch(handlers: dict[APIVersion, Callable]):
             return await handler(*args, **kwargs)
 
         # Fall back to highest version <= current
-        compatible_versions = [
-            v for v in handlers.keys()
-            if v <= current_version
-        ]
+        compatible_versions = [v for v in handlers if v <= current_version]
 
         if compatible_versions:
             best_version = max(compatible_versions)
             handler = handlers[best_version]
             logger.debug(
-                f"Version dispatch: {current_version.value} -> "
-                f"{best_version.value}"
+                f"Version dispatch: {current_version.value} -> {best_version.value}"
             )
             return await handler(*args, **kwargs)
 
@@ -369,10 +368,11 @@ def version_dispatch(handlers: dict[APIVersion, Callable]):
 
 # Deprecation route utilities
 
+
 async def deprecated_endpoint_handler(
     request: Request,
     replacement: str,
-    message: Optional[str] = None,
+    message: str | None = None,
 ) -> JSONResponse:
     """
     Standard handler for deprecated endpoints.
@@ -388,8 +388,7 @@ async def deprecated_endpoint_handler(
         JSON response with deprecation info
     """
     default_message = (
-        f"This endpoint has been deprecated. "
-        f"Please use {replacement} instead."
+        f"This endpoint has been deprecated. Please use {replacement} instead."
     )
 
     return JSONResponse(

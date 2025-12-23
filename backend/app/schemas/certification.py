@@ -1,4 +1,5 @@
 """Certification schemas for API validation."""
+
 from datetime import date, datetime
 from uuid import UUID
 
@@ -13,6 +14,7 @@ from app.validators.date_validators import validate_date_range
 
 class CertificationTypeBase(BaseModel):
     """Base certification type schema."""
+
     name: str
     full_name: str | None = None
     description: str | None = None
@@ -30,11 +32,13 @@ class CertificationTypeBase(BaseModel):
 
 class CertificationTypeCreate(CertificationTypeBase):
     """Schema for creating a certification type."""
+
     pass
 
 
 class CertificationTypeUpdate(BaseModel):
     """Schema for updating a certification type."""
+
     name: str | None = None
     full_name: str | None = None
     description: str | None = None
@@ -52,6 +56,7 @@ class CertificationTypeUpdate(BaseModel):
 
 class CertificationTypeResponse(CertificationTypeBase):
     """Schema for certification type response."""
+
     id: UUID
     created_at: datetime
     updated_at: datetime
@@ -62,12 +67,14 @@ class CertificationTypeResponse(CertificationTypeBase):
 
 class CertificationTypeListResponse(BaseModel):
     """Schema for list of certification types."""
+
     items: list[CertificationTypeResponse]
     total: int
 
 
 class CertificationTypeSummary(BaseModel):
     """Minimal certification type info."""
+
     id: UUID
     name: str
     full_name: str | None = None
@@ -83,10 +90,11 @@ class CertificationTypeSummary(BaseModel):
 
 class PersonCertificationBase(BaseModel):
     """Base person certification schema."""
+
     certification_number: str | None = None
     issued_date: date
     expiration_date: date
-    status: str = 'current'
+    status: str = "current"
     verified_by: str | None = None
     verified_date: date | None = None
     document_url: str | None = None
@@ -103,7 +111,7 @@ class PersonCertificationBase(BaseModel):
     @field_validator("status")
     @classmethod
     def validate_status(cls, v: str) -> str:
-        valid_statuses = ('current', 'expiring_soon', 'expired', 'pending')
+        valid_statuses = ("current", "expiring_soon", "expired", "pending")
         if v not in valid_statuses:
             raise ValueError(f"status must be one of {valid_statuses}")
         return v
@@ -121,12 +129,14 @@ class PersonCertificationBase(BaseModel):
 
 class PersonCertificationCreate(PersonCertificationBase):
     """Schema for creating a person certification."""
+
     person_id: UUID
     certification_type_id: UUID
 
 
 class PersonCertificationUpdate(BaseModel):
     """Schema for updating a person certification."""
+
     certification_number: str | None = None
     issued_date: date | None = None
     expiration_date: date | None = None
@@ -149,7 +159,7 @@ class PersonCertificationUpdate(BaseModel):
     def validate_status(cls, v: str | None) -> str | None:
         if v is None:
             return v
-        valid_statuses = ('current', 'expiring_soon', 'expired', 'pending')
+        valid_statuses = ("current", "expiring_soon", "expired", "pending")
         if v not in valid_statuses:
             raise ValueError(f"status must be one of {valid_statuses}")
         return v
@@ -157,6 +167,7 @@ class PersonCertificationUpdate(BaseModel):
 
 class PersonCertificationResponse(PersonCertificationBase):
     """Schema for person certification response."""
+
     id: UUID
     person_id: UUID
     certification_type_id: UUID
@@ -172,6 +183,7 @@ class PersonCertificationResponse(PersonCertificationBase):
 
 class PersonCertificationWithTypeResponse(PersonCertificationResponse):
     """Certification response with type details."""
+
     certification_type: CertificationTypeSummary
 
     class Config:
@@ -180,12 +192,14 @@ class PersonCertificationWithTypeResponse(PersonCertificationResponse):
 
 class PersonCertificationListResponse(BaseModel):
     """Schema for list of certifications."""
+
     items: list[PersonCertificationResponse]
     total: int
 
 
 class PersonCertificationWithTypeListResponse(BaseModel):
     """Schema for list of certifications with type details."""
+
     items: list[PersonCertificationWithTypeResponse]
     total: int
 
@@ -197,6 +211,7 @@ class PersonCertificationWithTypeListResponse(BaseModel):
 
 class PersonSummary(BaseModel):
     """Minimal person info for certification reports."""
+
     id: UUID
     name: str
     type: str
@@ -208,6 +223,7 @@ class PersonSummary(BaseModel):
 
 class ExpiringCertificationResponse(BaseModel):
     """Certification that's expiring soon."""
+
     id: UUID
     person: PersonSummary
     certification_type: CertificationTypeSummary
@@ -218,6 +234,7 @@ class ExpiringCertificationResponse(BaseModel):
 
 class ExpiringCertificationsListResponse(BaseModel):
     """List of expiring certifications."""
+
     items: list[ExpiringCertificationResponse]
     total: int
     days_threshold: int
@@ -225,6 +242,7 @@ class ExpiringCertificationsListResponse(BaseModel):
 
 class ComplianceSummaryResponse(BaseModel):
     """Overall certification compliance summary."""
+
     total: int
     current: int
     expiring_soon: int
@@ -234,6 +252,7 @@ class ComplianceSummaryResponse(BaseModel):
 
 class PersonComplianceResponse(BaseModel):
     """Certification compliance for a single person."""
+
     person: PersonSummary
     total_required: int
     total_current: int
@@ -245,6 +264,7 @@ class PersonComplianceResponse(BaseModel):
 
 class ReminderQueueResponse(BaseModel):
     """Certifications that need reminder emails."""
+
     days_threshold: int
     certifications: list[ExpiringCertificationResponse]
     total: int

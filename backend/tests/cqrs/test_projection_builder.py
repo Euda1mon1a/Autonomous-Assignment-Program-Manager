@@ -12,8 +12,6 @@ Tests:
 - Health monitoring
 """
 
-import asyncio
-from datetime import datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -24,23 +22,19 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.cqrs.projection_builder import (
     BaseProjection,
     BuildMode,
-    BuildResult,
     ProjectionBuilder,
     ProjectionCheckpoint,
-    ProjectionError,
     ProjectionMetadata,
-    ProjectionNotFoundError,
     ProjectionStatus,
 )
 from app.db.base import Base
-from app.events.event_store import EventStore, StoredEvent
+from app.events.event_store import EventStore
 from app.events.event_types import (
     AssignmentCreatedEvent,
     AssignmentUpdatedEvent,
-    PersonCreatedEvent,
     EventMetadata,
+    PersonCreatedEvent,
 )
-
 
 # =============================================================================
 # Test Fixtures
@@ -588,9 +582,7 @@ class TestProjectionManagement:
     """Test projection management operations."""
 
     @pytest.mark.asyncio
-    async def test_pause_resume_projection(
-        self, projection_builder, db_session
-    ):
+    async def test_pause_resume_projection(self, projection_builder, db_session):
         """Test pausing and resuming a projection."""
         projection = TestPersonProjection(db_session)
         projection_builder.register_projection(projection)
@@ -613,9 +605,7 @@ class TestProjectionManagement:
         assert metadata.status == ProjectionStatus.ACTIVE
 
     @pytest.mark.asyncio
-    async def test_disable_enable_projection(
-        self, projection_builder, db_session
-    ):
+    async def test_disable_enable_projection(self, projection_builder, db_session):
         """Test disabling and enabling a projection."""
         projection = TestPersonProjection(db_session)
         projection_builder.register_projection(projection)
@@ -636,9 +626,7 @@ class TestProjectionManagement:
         assert metadata.enabled is True
 
     @pytest.mark.asyncio
-    async def test_get_projection_status(
-        self, projection_builder, db_session
-    ):
+    async def test_get_projection_status(self, projection_builder, db_session):
         """Test getting projection status."""
         projection = TestPersonProjection(db_session)
         projection_builder.register_projection(projection)
@@ -653,9 +641,7 @@ class TestProjectionManagement:
         assert "events_processed" in status
 
     @pytest.mark.asyncio
-    async def test_get_all_projections_status(
-        self, projection_builder, db_session
-    ):
+    async def test_get_all_projections_status(self, projection_builder, db_session):
         """Test getting status of all projections."""
         person_proj = TestPersonProjection(db_session)
         assignment_proj = TestAssignmentProjection(db_session)
@@ -670,9 +656,7 @@ class TestProjectionManagement:
         assert assignment_proj.projection_name in statuses
 
     @pytest.mark.asyncio
-    async def test_get_build_history(
-        self, projection_builder, event_store, db_session
-    ):
+    async def test_get_build_history(self, projection_builder, event_store, db_session):
         """Test getting build history."""
         projection = TestPersonProjection(db_session)
         projection_builder.register_projection(projection)
@@ -703,9 +687,7 @@ class TestHealthMonitoring:
     """Test health monitoring."""
 
     @pytest.mark.asyncio
-    async def test_get_health_status(
-        self, projection_builder, db_session
-    ):
+    async def test_get_health_status(self, projection_builder, db_session):
         """Test getting overall health status."""
         person_proj = TestPersonProjection(db_session)
         assignment_proj = TestAssignmentProjection(db_session)
@@ -766,5 +748,11 @@ class TestEventHandlerDiscovery:
         projection = TestPersonProjection(db_session)
 
         assert projection._normalize_event_name("PersonCreated") == "person_created"
-        assert projection._normalize_event_name("AssignmentUpdated") == "assignment_updated"
-        assert projection._normalize_event_name("ACGMEViolationDetected") == "a_c_g_m_e_violation_detected"
+        assert (
+            projection._normalize_event_name("AssignmentUpdated")
+            == "assignment_updated"
+        )
+        assert (
+            projection._normalize_event_name("ACGMEViolationDetected")
+            == "a_c_g_m_e_violation_detected"
+        )

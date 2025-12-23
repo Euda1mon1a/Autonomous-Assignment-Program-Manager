@@ -1,25 +1,25 @@
 """Tests for ParetoOptimizationService."""
 
-import pytest
 from datetime import date, timedelta
+from unittest.mock import Mock, patch
 from uuid import uuid4
-from unittest.mock import Mock, MagicMock, patch
-import numpy as np
 
+import numpy as np
+import pytest
+
+from app.models.block import Block
+from app.models.person import Person
+from app.schemas.pareto import (
+    ObjectiveDirection,
+    ObjectiveName,
+    ParetoConstraint,
+    ParetoObjective,
+    ParetoSolution,
+)
 from app.services.pareto_optimization_service import (
     ParetoOptimizationService,
     SchedulingProblem,
 )
-from app.schemas.pareto import (
-    ParetoObjective,
-    ParetoConstraint,
-    ParetoSolution,
-    ObjectiveName,
-    ObjectiveDirection,
-    RankedSolution,
-)
-from app.models.person import Person
-from app.models.block import Block
 
 
 class TestSchedulingProblem:
@@ -206,7 +206,7 @@ class TestSchedulingProblem:
         coverage = problem._calculate_coverage(assignment_matrix)
 
         # 1/3 coverage = 0.333..., negated = -0.333...
-        assert coverage == pytest.approx(-1/3)
+        assert coverage == pytest.approx(-1 / 3)
 
     def test_calculate_preference_satisfaction_with_match(self):
         """Test preference satisfaction with matching preferences."""
@@ -705,7 +705,7 @@ class TestParetoOptimizationService:
         for i in range(3):
             person = Mock(spec=Person)
             person.id = uuid4()
-            person.name = f"Dr. Person {i+1}"
+            person.name = f"Dr. Person {i + 1}"
             person.pgy_level = i + 1
             person.preferred_activity_types = ["clinic"]
             persons.append(person)
@@ -719,7 +719,7 @@ class TestParetoOptimizationService:
         for i in range(5):
             block = Mock(spec=Block)
             block.id = uuid4()
-            block.name = f"Block {i+1}"
+            block.name = f"Block {i + 1}"
             block.activity_type = "clinic"
             block.specialty = "general"
             block.start_date = start_date + timedelta(days=i)
@@ -741,7 +741,7 @@ class TestParetoOptimizationService:
         assert service.block_repo is not None
         assert service.person_repo is not None
 
-    @patch('app.services.pareto_optimization_service.minimize')
+    @patch("app.services.pareto_optimization_service.minimize")
     def test_optimize_schedule_pareto_success(
         self, mock_minimize, service, mock_persons, mock_blocks
     ):
@@ -753,7 +753,27 @@ class TestParetoOptimizationService:
         # Mock pymoo result
         # 3 persons * 5 blocks = 15 decision variables
         mock_result = Mock()
-        mock_result.X = np.array([[0.9, 0.1, 0.8, 0.2, 0.7, 0.3, 0.6, 0.4, 0.5, 0.5, 0.8, 0.2, 0.7, 0.3, 0.6]])
+        mock_result.X = np.array(
+            [
+                [
+                    0.9,
+                    0.1,
+                    0.8,
+                    0.2,
+                    0.7,
+                    0.3,
+                    0.6,
+                    0.4,
+                    0.5,
+                    0.5,
+                    0.8,
+                    0.2,
+                    0.7,
+                    0.3,
+                    0.6,
+                ]
+            ]
+        )
         mock_result.F = np.array([[0.1, -0.9]])
         mock_result.algorithm = Mock()
         mock_result.algorithm.n_gen = 50
@@ -819,7 +839,7 @@ class TestParetoOptimizationService:
         assert len(result.solutions) == 0
         assert result.termination_reason == "No persons or blocks available"
 
-    @patch('app.services.pareto_optimization_service.minimize')
+    @patch("app.services.pareto_optimization_service.minimize")
     def test_optimize_schedule_pareto_with_person_filter(
         self, mock_minimize, service, mock_persons, mock_blocks
     ):
@@ -850,7 +870,7 @@ class TestParetoOptimizationService:
         service.person_repo.get_by_id.assert_called()
         assert result is not None
 
-    @patch('app.services.pareto_optimization_service.minimize')
+    @patch("app.services.pareto_optimization_service.minimize")
     def test_optimize_schedule_pareto_with_block_filter(
         self, mock_minimize, service, mock_persons, mock_blocks
     ):
@@ -1167,7 +1187,7 @@ class TestParetoOptimizationService:
         solutions = [
             ParetoSolution(
                 solution_id=0,
-                objective_values={"obj1": float('inf'), "obj2": 0.1},
+                objective_values={"obj1": float("inf"), "obj2": 0.1},
                 decision_variables={},
                 is_feasible=True,
                 constraint_violations=[],
@@ -1217,7 +1237,9 @@ class TestParetoOptimizationService:
 
         assert len(solutions) == 0
 
-    def test_extract_solutions_single_solution(self, service, mock_persons, mock_blocks):
+    def test_extract_solutions_single_solution(
+        self, service, mock_persons, mock_blocks
+    ):
         """Test _extract_solutions with single solution."""
         mock_result = Mock()
         # Single solution (1D array)

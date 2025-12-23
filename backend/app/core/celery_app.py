@@ -50,23 +50,18 @@ celery_app.conf.update(
     task_serializer="json",
     accept_content=["json"],
     result_serializer="json",
-
     # Timezone
     timezone="UTC",
     enable_utc=True,
-
     # Task settings
     task_track_started=True,
     task_time_limit=600,  # 10 minutes max per task
     task_soft_time_limit=540,  # Soft limit at 9 minutes
-
     # Result settings
     result_expires=3600,  # Results expire after 1 hour
-
     # Worker settings
     worker_prefetch_multiplier=1,
     worker_concurrency=4,
-
     # Beat schedule for periodic tasks
     beat_schedule={
         # Health check every 15 minutes
@@ -75,28 +70,24 @@ celery_app.conf.update(
             "schedule": crontab(minute="*/15"),
             "options": {"queue": "resilience"},
         },
-
         # Contingency analysis daily at 2 AM
         "resilience-contingency-analysis": {
             "task": "app.resilience.tasks.run_contingency_analysis",
             "schedule": crontab(hour=2, minute=0),
             "options": {"queue": "resilience"},
         },
-
         # Fallback precomputation weekly on Sunday at 3 AM
         "resilience-precompute-fallbacks": {
             "task": "app.resilience.tasks.precompute_fallback_schedules",
             "schedule": crontab(hour=3, minute=0, day_of_week=0),
             "options": {"queue": "resilience"},
         },
-
         # Utilization forecast daily at 6 AM
         "resilience-utilization-forecast": {
             "task": "app.resilience.tasks.generate_utilization_forecast",
             "schedule": crontab(hour=6, minute=0),
             "options": {"queue": "resilience"},
         },
-
         # Schedule Metrics - Hourly snapshots during business hours
         "schedule-metrics-hourly-snapshot": {
             "task": "app.tasks.schedule_metrics_tasks.snapshot_metrics",
@@ -104,7 +95,6 @@ celery_app.conf.update(
             "kwargs": {"period_days": 90},
             "options": {"queue": "metrics"},
         },
-
         # Schedule Metrics - Daily cleanup at 3 AM
         "schedule-metrics-daily-cleanup": {
             "task": "app.tasks.schedule_metrics_tasks.cleanup_old_snapshots",
@@ -112,7 +102,6 @@ celery_app.conf.update(
             "kwargs": {"retention_days": 365},
             "options": {"queue": "metrics"},
         },
-
         # Schedule Metrics - Weekly fairness report on Monday at 7 AM
         "schedule-metrics-weekly-fairness-report": {
             "task": "app.tasks.schedule_metrics_tasks.generate_fairness_trend_report",
@@ -120,21 +109,18 @@ celery_app.conf.update(
             "kwargs": {"weeks_back": 12},
             "options": {"queue": "metrics"},
         },
-
         # Schedule Metrics - Daily full computation at 5 AM
         "schedule-metrics-daily-computation": {
             "task": "app.tasks.schedule_metrics_tasks.compute_schedule_metrics",
             "schedule": crontab(hour=5, minute=0),
             "options": {"queue": "metrics"},
         },
-
         # Export Jobs - Run scheduled exports every 5 minutes
         "export-run-scheduled": {
             "task": "app.exports.jobs.run_scheduled_exports",
             "schedule": crontab(minute="*/5"),
             "options": {"queue": "exports"},
         },
-
         # Export Jobs - Daily cleanup at 4 AM
         "export-cleanup-old-executions": {
             "task": "app.exports.jobs.cleanup_old_executions",
@@ -142,35 +128,30 @@ celery_app.conf.update(
             "kwargs": {"retention_days": 90},
             "options": {"queue": "exports"},
         },
-
         # Export Jobs - Health check every hour
         "export-health-check": {
             "task": "app.exports.jobs.export_health_check",
             "schedule": crontab(minute=0),
             "options": {"queue": "exports"},
         },
-
         # Secret Rotation - Check scheduled rotations daily at 1 AM
         "security-check-scheduled-rotations": {
             "task": "app.security.rotation_tasks.check_scheduled_rotations",
             "schedule": crontab(hour=1, minute=0),
             "options": {"queue": "security"},
         },
-
         # Secret Rotation - Complete grace periods every hour
         "security-complete-grace-periods": {
             "task": "app.security.rotation_tasks.complete_grace_periods",
             "schedule": crontab(minute=30),
             "options": {"queue": "security"},
         },
-
         # Secret Rotation - Health monitoring daily at 8 AM
         "security-monitor-rotation-health": {
             "task": "app.security.rotation_tasks.monitor_rotation_health",
             "schedule": crontab(hour=8, minute=0),
             "options": {"queue": "security"},
         },
-
         # Secret Rotation - Cleanup old history monthly on the 1st at 2 AM
         "security-cleanup-rotation-history": {
             "task": "app.security.rotation_tasks.cleanup_old_rotation_history",
@@ -179,7 +160,6 @@ celery_app.conf.update(
             "options": {"queue": "security"},
         },
     },
-
     # Task routes
     task_routes={
         "app.resilience.tasks.*": {"queue": "resilience"},
@@ -188,7 +168,6 @@ celery_app.conf.update(
         "app.exports.jobs.*": {"queue": "exports"},
         "app.security.rotation_tasks.*": {"queue": "security"},
     },
-
     # Task queues
     task_queues={
         "default": {},

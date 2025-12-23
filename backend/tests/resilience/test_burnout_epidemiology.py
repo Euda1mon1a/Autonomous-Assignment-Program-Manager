@@ -4,29 +4,29 @@ Tests for burnout epidemiology module.
 Tests epidemiological modeling of burnout spread through social networks.
 """
 
-import pytest
 from datetime import datetime, timedelta
-from uuid import UUID, uuid4
+from uuid import uuid4
+
+import pytest
 
 try:
     import networkx as nx
+
     HAS_NETWORKX = True
 except ImportError:
     HAS_NETWORKX = False
 
 from app.resilience.burnout_epidemiology import (
-    BurnoutState,
-    BurnoutSIRModel,
-    EpiReport,
     BurnoutEpidemiology,
+    BurnoutSIRModel,
+    BurnoutState,
+    EpiReport,
     InterventionLevel,
 )
 
-
 # Skip all tests if NetworkX not available
 pytestmark = pytest.mark.skipif(
-    not HAS_NETWORKX,
-    reason="NetworkX required for burnout epidemiology tests"
+    not HAS_NETWORKX, reason="NetworkX required for burnout epidemiology tests"
 )
 
 
@@ -131,7 +131,7 @@ class TestBurnoutSIRModel:
         """Test R0 when gamma is zero (infinite infectious period)."""
         model = BurnoutSIRModel(beta=0.1, gamma=0.0, initial_infected=set())
 
-        assert model.basic_reproduction_number == float('inf')
+        assert model.basic_reproduction_number == float("inf")
 
     def test_invalid_beta_raises_error(self):
         """Test that invalid beta raises ValueError."""
@@ -273,9 +273,7 @@ class TestReproductionNumber:
 
         # Record one burnout case
         analyzer.record_burnout_state(
-            residents[0],
-            BurnoutState.BURNED_OUT,
-            datetime.now() - timedelta(weeks=2)
+            residents[0], BurnoutState.BURNED_OUT, datetime.now() - timedelta(weeks=2)
         )
 
         report = analyzer.calculate_reproduction_number({residents[0]})
@@ -292,28 +290,25 @@ class TestReproductionNumber:
 
         # Index case becomes burned out
         analyzer.record_burnout_state(
-            residents[0],
-            BurnoutState.BURNED_OUT,
-            now - timedelta(weeks=3)
+            residents[0], BurnoutState.BURNED_OUT, now - timedelta(weeks=3)
         )
 
         # Two contacts become burned out within time window
         analyzer.record_burnout_state(
-            residents[1],
-            BurnoutState.BURNED_OUT,
-            now - timedelta(weeks=2)
+            residents[1], BurnoutState.BURNED_OUT, now - timedelta(weeks=2)
         )
         analyzer.record_burnout_state(
-            residents[2],
-            BurnoutState.BURNED_OUT,
-            now - timedelta(weeks=1)
+            residents[2], BurnoutState.BURNED_OUT, now - timedelta(weeks=1)
         )
 
         report = analyzer.calculate_reproduction_number({residents[0]})
 
         # Should detect secondary cases
         assert report.reproduction_number > 0
-        assert residents[1] in report.high_risk_contacts or residents[2] in report.high_risk_contacts
+        assert (
+            residents[1] in report.high_risk_contacts
+            or residents[2] in report.high_risk_contacts
+        )
 
     def test_rt_status_declining(self, epi_analyzer):
         """Test status is 'declining' when Rt < 0.5."""
@@ -321,9 +316,7 @@ class TestReproductionNumber:
 
         # Mock a low Rt scenario
         analyzer.record_burnout_state(
-            residents[0],
-            BurnoutState.BURNED_OUT,
-            datetime.now() - timedelta(weeks=10)
+            residents[0], BurnoutState.BURNED_OUT, datetime.now() - timedelta(weeks=10)
         )
 
         report = analyzer.calculate_reproduction_number({residents[0]})
@@ -342,9 +335,7 @@ class TestReproductionNumber:
         # Multiple index cases
         for i in range(3):
             analyzer.record_burnout_state(
-                residents[i],
-                BurnoutState.BURNED_OUT,
-                now - timedelta(weeks=3)
+                residents[i], BurnoutState.BURNED_OUT, now - timedelta(weeks=3)
             )
 
         report = analyzer.calculate_reproduction_number(set(residents[:3]))
@@ -369,10 +360,7 @@ class TestSIRSimulation:
         initial = {residents[0]}
 
         results = analyzer.simulate_sir_spread(
-            initial_infected=initial,
-            beta=0.3,
-            gamma=0.1,
-            steps=20
+            initial_infected=initial, beta=0.3, gamma=0.1, steps=20
         )
 
         # Should have results for multiple steps
@@ -398,7 +386,7 @@ class TestSIRSimulation:
             initial_infected=initial,
             beta=0.0,  # No transmission
             gamma=0.5,  # Fast recovery
-            steps=10
+            steps=10,
         )
 
         # Infected should decline to zero
@@ -416,7 +404,7 @@ class TestSIRSimulation:
             initial_infected=initial,
             beta=0.8,  # High transmission
             gamma=0.05,  # Slow recovery
-            steps=30
+            steps=30,
         )
 
         # Should see infection spread
@@ -429,10 +417,7 @@ class TestSIRSimulation:
         G, residents = simple_network
         analyzer = BurnoutEpidemiology(G)
 
-        results = analyzer.simulate_sir_spread(
-            initial_infected={residents[0]},
-            steps=5
-        )
+        results = analyzer.simulate_sir_spread(initial_infected={residents[0]}, steps=5)
 
         # Check structure
         for step_data in results:
@@ -582,7 +567,9 @@ class TestInterventions:
 
         # Should recommend moderate interventions
         assert len(interventions) > 0
-        assert any("moderate" in i.lower() or "workload" in i.lower() for i in interventions)
+        assert any(
+            "moderate" in i.lower() or "workload" in i.lower() for i in interventions
+        )
 
     def test_interventions_rt_aggressive(self, epi_analyzer):
         """Test interventions when 2 <= Rt < 3."""
@@ -592,7 +579,9 @@ class TestInterventions:
 
         # Should recommend aggressive interventions
         assert len(interventions) > 0
-        assert any("aggressive" in i.lower() or "mandatory" in i.lower() for i in interventions)
+        assert any(
+            "aggressive" in i.lower() or "mandatory" in i.lower() for i in interventions
+        )
 
     def test_interventions_rt_emergency(self, epi_analyzer):
         """Test interventions when Rt >= 3."""
@@ -602,7 +591,9 @@ class TestInterventions:
 
         # Should recommend emergency interventions
         assert len(interventions) > 0
-        assert any("emergency" in i.lower() or "immediate" in i.lower() for i in interventions)
+        assert any(
+            "emergency" in i.lower() or "immediate" in i.lower() for i in interventions
+        )
 
     def test_interventions_include_super_spreaders(self, simple_network):
         """Test that interventions mention super-spreaders when Rt > 1."""
@@ -701,9 +692,7 @@ class TestBurnoutStateTracking:
         analyzer.record_burnout_state(
             residents[0], BurnoutState.BURNED_OUT, now - timedelta(weeks=2)
         )
-        analyzer.record_burnout_state(
-            residents[0], BurnoutState.RECOVERED, now
-        )
+        analyzer.record_burnout_state(residents[0], BurnoutState.RECOVERED, now)
 
         # Check progression
         history = analyzer.burnout_history[residents[0]]
@@ -779,10 +768,7 @@ class TestIntegration:
 
         # Simulate future spread
         sir_results = analyzer.simulate_sir_spread(
-            initial_infected=burned_out,
-            beta=0.1,
-            gamma=0.05,
-            steps=20
+            initial_infected=burned_out, beta=0.1, gamma=0.05, steps=20
         )
 
         # Should have projection
@@ -830,10 +816,7 @@ class TestIntegration:
 
         # Simulate - should spread quickly in complete network
         sir_results = analyzer.simulate_sir_spread(
-            initial_infected={residents[0]},
-            beta=0.3,
-            gamma=0.1,
-            steps=15
+            initial_infected={residents[0]}, beta=0.3, gamma=0.1, steps=15
         )
 
         # Infection should spread

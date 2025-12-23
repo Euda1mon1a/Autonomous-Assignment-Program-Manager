@@ -36,7 +36,6 @@ import math
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
-from typing import Optional
 from uuid import UUID
 
 from app.core.logging import get_logger
@@ -50,9 +49,10 @@ class CreepStage(str, Enum):
 
     Analogous to burnout progression in medical residents.
     """
-    PRIMARY = "primary"      # Initial adaptation, strain rate decreasing
+
+    PRIMARY = "primary"  # Initial adaptation, strain rate decreasing
     SECONDARY = "secondary"  # Steady-state, stable performance
-    TERTIARY = "tertiary"    # Accelerating damage, approaching burnout
+    TERTIARY = "tertiary"  # Accelerating damage, approaching burnout
 
 
 @dataclass
@@ -68,6 +68,7 @@ class CreepAnalysis:
         strain_rate: Current rate of performance degradation (per day)
         recommended_stress_reduction: Percentage reduction needed for safety
     """
+
     resident_id: UUID
     creep_stage: CreepStage
     larson_miller_parameter: float
@@ -89,6 +90,7 @@ class FatigueCurve:
         current_cycles: Number of cycles completed so far
         remaining_life_fraction: Fraction of life remaining before failure (0.0-1.0)
     """
+
     cycles_to_failure: int
     stress_amplitude: float
     current_cycles: int
@@ -118,10 +120,7 @@ class CreepFatigueModel:
     SAFE_LMP: float = 31.5
 
     def calculate_larson_miller(
-        self,
-        workload_fraction: float,
-        duration_days: int,
-        C: float = 20.0
+        self, workload_fraction: float, duration_days: int, C: float = 20.0
     ) -> float:
         """
         Calculate Larson-Miller Parameter for creep prediction.
@@ -175,9 +174,7 @@ class CreepFatigueModel:
         return lmp
 
     def determine_creep_stage(
-        self,
-        larson_miller: float,
-        threshold: float = FAILURE_THRESHOLD
+        self, larson_miller: float, threshold: float = FAILURE_THRESHOLD
     ) -> CreepStage:
         """
         Determine current creep stage based on Larson-Miller parameter.
@@ -201,10 +198,7 @@ class CreepFatigueModel:
         else:
             return CreepStage.TERTIARY
 
-    def calculate_strain_rate(
-        self,
-        workload_history: list[float]
-    ) -> float:
+    def calculate_strain_rate(self, workload_history: list[float]) -> float:
         """
         Calculate rate of accumulating fatigue from workload history.
 
@@ -255,10 +249,7 @@ class CreepFatigueModel:
         return slope
 
     def predict_time_to_burnout(
-        self,
-        resident_id: UUID,
-        sustained_workload: float,
-        duration: timedelta
+        self, resident_id: UUID, sustained_workload: float, duration: timedelta
     ) -> CreepAnalysis:
         """
         Predict time to burnout using creep analysis.
@@ -346,9 +337,7 @@ class CreepFatigueModel:
         return analysis
 
     def recommend_stress_reduction(
-        self,
-        current_lmp: float,
-        safe_lmp: float = SAFE_LMP
+        self, current_lmp: float, safe_lmp: float = SAFE_LMP
     ) -> float:
         """
         Calculate recommended stress reduction to reach safe LMP.
@@ -382,7 +371,7 @@ class CreepFatigueModel:
         self,
         stress_amplitude: float,
         material_constant: float = 1e10,
-        exponent: float = -3.0
+        exponent: float = -3.0,
     ) -> int:
         """
         Predict cycles to failure using S-N curve (Wöhler curve).
@@ -418,22 +407,19 @@ class CreepFatigueModel:
             return int(1e6)
 
         # S-N curve: N = A * S^b
-        cycles = material_constant * (stress_amplitude ** exponent)
+        cycles = material_constant * (stress_amplitude**exponent)
 
         # Ensure reasonable bounds
         cycles = max(1, min(int(cycles), int(1e6)))
 
         logger.debug(
-            f"S-N curve: stress={stress_amplitude:.2f} -> "
-            f"N={cycles} cycles to failure"
+            f"S-N curve: stress={stress_amplitude:.2f} -> N={cycles} cycles to failure"
         )
 
         return cycles
 
     def calculate_fatigue_damage(
-        self,
-        rotation_stresses: list[float],
-        cycles_per_rotation: int = 1
+        self, rotation_stresses: list[float], cycles_per_rotation: int = 1
     ) -> FatigueCurve:
         """
         Calculate cumulative fatigue damage using Miner's rule.
@@ -582,9 +568,7 @@ class CreepFatigueModel:
                 f"URGENT: Reduce workload by {creep.recommended_stress_reduction:.1f}%"
             )
         if fatigue.remaining_life_fraction < 0.3:
-            recommendations.append(
-                "Schedule easier rotations to allow recovery"
-            )
+            recommendations.append("Schedule easier rotations to allow recovery")
         if creep.recommended_stress_reduction > 0:
             recommendations.append(
                 f"Target workload reduction: {creep.recommended_stress_reduction:.1f}%"

@@ -21,7 +21,7 @@ Usage:
     # Run with verbose timing output
     pytest tests/performance/test_acgme_load.py -v -s
 """
-import asyncio
+
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
@@ -38,17 +38,17 @@ from app.scheduling.validator import ACGMEValidator
 
 from .conftest import (
     MAX_CONCURRENT_VALIDATION_TIME,
-    MAX_VALIDATION_TIME_100_RESIDENTS,
     MAX_VALIDATION_TIME_25_RESIDENTS,
     MAX_VALIDATION_TIME_50_RESIDENTS,
+    MAX_VALIDATION_TIME_100_RESIDENTS,
     assert_performance,
     measure_time,
 )
 
-
 # ============================================================================
 # ACGME Validation Performance Tests
 # ============================================================================
+
 
 @pytest.mark.performance
 @pytest.mark.slow
@@ -93,7 +93,7 @@ class TestACGMEPerformance:
         assert_performance(
             metrics["duration"],
             MAX_VALIDATION_TIME_100_RESIDENTS,
-            "80-hour rule validation (100 residents)"
+            "80-hour rule validation (100 residents)",
         )
 
         # Verify correctness (basic sanity checks)
@@ -106,7 +106,9 @@ class TestACGMEPerformance:
         # Log results
         print(f"Total violations: {result.total_violations}")
         print(f"Coverage rate: {result.coverage_rate:.1f}%")
-        print(f"Validation rate: {len(residents) / metrics['duration']:.1f} residents/sec")
+        print(
+            f"Validation rate: {len(residents) / metrics['duration']:.1f} residents/sec"
+        )
 
     def test_1_in_7_rule_large_dataset(
         self,
@@ -140,7 +142,7 @@ class TestACGMEPerformance:
         assert_performance(
             metrics["duration"],
             MAX_VALIDATION_TIME_100_RESIDENTS,
-            "1-in-7 rule validation (100 residents)"
+            "1-in-7 rule validation (100 residents)",
         )
 
         # Check for 1-in-7 violations specifically
@@ -152,7 +154,9 @@ class TestACGMEPerformance:
 
         # Our test data should be mostly compliant (residents get Sundays off)
         # Allow some violations but not excessive
-        assert len(one_in_seven_violations) < len(residents) * 0.1  # < 10% violation rate
+        assert (
+            len(one_in_seven_violations) < len(residents) * 0.1
+        )  # < 10% violation rate
 
     def test_supervision_ratio_validation_under_load(
         self,
@@ -179,7 +183,7 @@ class TestACGMEPerformance:
         start_date = four_week_blocks[0].date
         end_date = four_week_blocks[-1].date
 
-        print(f"\nValidating supervision ratios")
+        print("\nValidating supervision ratios")
         print(f"Residents: {len(large_resident_dataset['residents'])}")
         print(f"Faculty: {len(large_faculty_dataset)}")
         print(f"Blocks: {len(four_week_blocks)}")
@@ -191,13 +195,12 @@ class TestACGMEPerformance:
         assert_performance(
             metrics["duration"],
             MAX_VALIDATION_TIME_100_RESIDENTS,
-            "Supervision ratio validation"
+            "Supervision ratio validation",
         )
 
         # Check supervision violations
         supervision_violations = [
-            v for v in result.violations
-            if v.type == "SUPERVISION_RATIO_VIOLATION"
+            v for v in result.violations if v.type == "SUPERVISION_RATIO_VIOLATION"
         ]
 
         print(f"Supervision violations: {len(supervision_violations)}")
@@ -229,9 +232,9 @@ class TestACGMEPerformance:
             for i in range(17):  # ~17 residents per PGY level
                 resident = Person(
                     id=uuid4(),
-                    name=f"Med Resident PGY{pgy}-{i+1}",
+                    name=f"Med Resident PGY{pgy}-{i + 1}",
                     type="resident",
-                    email=f"med.pgy{pgy}.r{i+1}@hospital.org",
+                    email=f"med.pgy{pgy}.r{i + 1}@hospital.org",
                     pgy_level=pgy,
                 )
                 db.add(resident)
@@ -242,9 +245,9 @@ class TestACGMEPerformance:
         for i in range(15):
             fac = Person(
                 id=uuid4(),
-                name=f"Med Faculty {i+1}",
+                name=f"Med Faculty {i + 1}",
                 type="faculty",
-                email=f"med.faculty{i+1}@hospital.org",
+                email=f"med.faculty{i + 1}@hospital.org",
             )
             db.add(fac)
             faculty.append(fac)
@@ -285,7 +288,9 @@ class TestACGMEPerformance:
         start_date = four_week_blocks[0].date
         end_date = four_week_blocks[-1].date
 
-        print(f"\nFull validation: {len(residents)} residents, {len(four_week_blocks)} blocks")
+        print(
+            f"\nFull validation: {len(residents)} residents, {len(four_week_blocks)} blocks"
+        )
 
         with measure_time("Full ACGME validation (50 residents)") as metrics:
             result = validator.validate_all(start_date, end_date)
@@ -294,7 +299,7 @@ class TestACGMEPerformance:
         assert_performance(
             metrics["duration"],
             MAX_VALIDATION_TIME_50_RESIDENTS,
-            "Full ACGME validation (50 residents)"
+            "Full ACGME validation (50 residents)",
         )
 
         # Verify result structure
@@ -324,9 +329,9 @@ class TestACGMEPerformance:
             for i in range(8):  # 8 residents per level = 24 total
                 resident = Person(
                     id=uuid4(),
-                    name=f"Small Resident PGY{pgy}-{i+1}",
+                    name=f"Small Resident PGY{pgy}-{i + 1}",
                     type="resident",
-                    email=f"small.pgy{pgy}.r{i+1}@hospital.org",
+                    email=f"small.pgy{pgy}.r{i + 1}@hospital.org",
                     pgy_level=pgy,
                 )
                 db.add(resident)
@@ -337,9 +342,9 @@ class TestACGMEPerformance:
         for i in range(8):
             fac = Person(
                 id=uuid4(),
-                name=f"Small Faculty {i+1}",
+                name=f"Small Faculty {i + 1}",
                 type="faculty",
-                email=f"small.faculty{i+1}@hospital.org",
+                email=f"small.faculty{i + 1}@hospital.org",
             )
             db.add(fac)
             faculty.append(fac)
@@ -392,16 +397,19 @@ class TestACGMEPerformance:
         assert_performance(
             metrics["duration"],
             MAX_VALIDATION_TIME_25_RESIDENTS,
-            "ACGME validation (25 residents)"
+            "ACGME validation (25 residents)",
         )
 
         assert result is not None
-        print(f"Small dataset validation rate: {len(residents) / metrics['duration']:.1f} residents/sec")
+        print(
+            f"Small dataset validation rate: {len(residents) / metrics['duration']:.1f} residents/sec"
+        )
 
 
 # ============================================================================
 # Concurrent Validation Tests
 # ============================================================================
+
 
 @pytest.mark.performance
 @pytest.mark.slow
@@ -429,7 +437,7 @@ class TestConcurrentValidation:
         start_date = four_week_blocks[0].date
         end_date = four_week_blocks[-1].date
 
-        print(f"\nRunning 10 concurrent validations")
+        print("\nRunning 10 concurrent validations")
         print(f"Dataset: {len(large_resident_dataset['residents'])} residents")
 
         def run_validation(run_id: int) -> dict:
@@ -449,17 +457,14 @@ class TestConcurrentValidation:
         # Run 10 concurrent validations
         with measure_time("10 concurrent validations") as metrics:
             with ThreadPoolExecutor(max_workers=10) as executor:
-                futures = [
-                    executor.submit(run_validation, i)
-                    for i in range(10)
-                ]
+                futures = [executor.submit(run_validation, i) for i in range(10)]
                 results = [f.result() for f in futures]
 
         # Assert performance
         assert_performance(
             metrics["duration"],
             MAX_CONCURRENT_VALIDATION_TIME,
-            "10 concurrent validations"
+            "10 concurrent validations",
         )
 
         # All validations should complete successfully
@@ -474,10 +479,10 @@ class TestConcurrentValidation:
 
         # Log individual timings
         durations = [r["duration"] for r in results]
-        print(f"\nIndividual validation times:")
+        print("\nIndividual validation times:")
         print(f"  Min: {min(durations):.3f}s")
         print(f"  Max: {max(durations):.3f}s")
-        print(f"  Avg: {sum(durations)/len(durations):.3f}s")
+        print(f"  Avg: {sum(durations) / len(durations):.3f}s")
         print(f"  Total violations per run: {results[0]['violations']}")
 
     def test_rapid_sequential_validation(
@@ -504,7 +509,7 @@ class TestConcurrentValidation:
 
         durations = []
 
-        print(f"\nRunning 5 rapid sequential validations")
+        print("\nRunning 5 rapid sequential validations")
 
         for i in range(5):
             start_time = time.perf_counter()
@@ -512,7 +517,9 @@ class TestConcurrentValidation:
             duration = time.perf_counter() - start_time
             durations.append(duration)
 
-            print(f"  Run {i+1}: {duration:.3f}s ({result.total_violations} violations)")
+            print(
+                f"  Run {i + 1}: {duration:.3f}s ({result.total_violations} violations)"
+            )
 
         # First run is typically slower (cold cache)
         # Subsequent runs should be similar or faster
@@ -520,7 +527,9 @@ class TestConcurrentValidation:
 
         # Later runs should not be significantly slower (no resource leaks)
         avg_later_runs = sum(durations[1:]) / len(durations[1:])
-        assert avg_later_runs <= MAX_VALIDATION_TIME_100_RESIDENTS * 1.2  # Allow 20% overhead
+        assert (
+            avg_later_runs <= MAX_VALIDATION_TIME_100_RESIDENTS * 1.2
+        )  # Allow 20% overhead
 
         print(f"\nFirst run: {durations[0]:.3f}s")
         print(f"Avg subsequent runs: {avg_later_runs:.3f}s")
@@ -529,6 +538,7 @@ class TestConcurrentValidation:
 # ============================================================================
 # Memory and Scaling Tests
 # ============================================================================
+
 
 @pytest.mark.performance
 @pytest.mark.slow
@@ -559,7 +569,7 @@ class TestValidationMemoryEfficiency:
         start_date = huge_dataset["start_date"]
         end_date = huge_dataset["end_date"]
 
-        print(f"\nHuge dataset validation:")
+        print("\nHuge dataset validation:")
         print(f"  Residents: {len(huge_dataset['residents'])}")
         print(f"  Blocks: {len(huge_dataset['blocks'])}")
         print(f"  Assignments: {len(huge_dataset['assignments'])}")
@@ -570,11 +580,7 @@ class TestValidationMemoryEfficiency:
 
         # Should complete in reasonable time (3x the 4-week threshold)
         max_time = MAX_VALIDATION_TIME_100_RESIDENTS * 3
-        assert_performance(
-            metrics["duration"],
-            max_time,
-            "Huge dataset validation"
-        )
+        assert_performance(metrics["duration"], max_time, "Huge dataset validation")
 
         # Verify results are sensible
         assert result is not None
@@ -583,7 +589,9 @@ class TestValidationMemoryEfficiency:
 
         print(f"Total violations: {result.total_violations}")
         print(f"Assignments processed: {result.statistics['total_assignments']}")
-        print(f"Processing rate: {result.statistics['total_assignments'] / metrics['duration']:.0f} assignments/sec")
+        print(
+            f"Processing rate: {result.statistics['total_assignments'] / metrics['duration']:.0f} assignments/sec"
+        )
 
     def test_incremental_vs_full_validation(
         self,
@@ -607,7 +615,7 @@ class TestValidationMemoryEfficiency:
         full_end = four_week_blocks[-1].date
 
         # Full 4-week validation
-        print(f"\nComparing validation strategies:")
+        print("\nComparing validation strategies:")
 
         with measure_time("Full validation (4 weeks)") as full_metrics:
             full_result = validator.validate_all(full_start, full_end)
@@ -638,6 +646,7 @@ class TestValidationMemoryEfficiency:
 # Edge Cases and Stress Tests
 # ============================================================================
 
+
 @pytest.mark.performance
 class TestValidationEdgeCases:
     """Test ACGME validation edge cases that could impact performance."""
@@ -659,9 +668,9 @@ class TestValidationEdgeCases:
         for i in range(10):
             resident = Person(
                 id=uuid4(),
-                name=f"Unassigned Resident {i+1}",
+                name=f"Unassigned Resident {i + 1}",
                 type="resident",
-                email=f"unassigned{i+1}@hospital.org",
+                email=f"unassigned{i + 1}@hospital.org",
                 pgy_level=(i % 3) + 1,
             )
             db.add(resident)
@@ -727,7 +736,7 @@ class TestValidationEdgeCases:
         assert_performance(
             metrics["duration"],
             MAX_VALIDATION_TIME_100_RESIDENTS,
-            "Sparse schedule validation"
+            "Sparse schedule validation",
         )
 
         # Coverage should be low

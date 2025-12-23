@@ -1,6 +1,8 @@
 """Role-based view filtering service."""
-from typing import Dict, Any, List, Optional
-from app.schemas.role_views import StaffRole, ViewPermissions, RoleViewConfig
+
+from typing import Any, Dict, List, Optional
+
+from app.schemas.role_views import RoleViewConfig, StaffRole, ViewPermissions
 
 ROLE_PERMISSIONS = {
     StaffRole.ADMIN: ViewPermissions(
@@ -31,6 +33,7 @@ ROLE_PERMISSIONS = {
     ),
 }
 
+
 class RoleViewService:
     """Service for filtering views based on user roles."""
 
@@ -40,7 +43,9 @@ class RoleViewService:
         return ROLE_PERMISSIONS.get(role, ViewPermissions())
 
     @staticmethod
-    def filter_response_for_role(data: Dict[str, Any], role: StaffRole, user_id: Optional[int] = None) -> Dict[str, Any]:
+    def filter_response_for_role(
+        data: dict[str, Any], role: StaffRole, user_id: int | None = None
+    ) -> dict[str, Any]:
         """
         Filter API response based on role permissions.
 
@@ -60,15 +65,20 @@ class RoleViewService:
             if user_id and permissions.can_view_own_schedule:
                 # Only show user's own schedules
                 filtered_data["schedules"] = [
-                    schedule for schedule in filtered_data["schedules"]
-                    if schedule.get("person_id") == user_id or schedule.get("staff_id") == user_id
+                    schedule
+                    for schedule in filtered_data["schedules"]
+                    if schedule.get("person_id") == user_id
+                    or schedule.get("staff_id") == user_id
                 ]
             else:
                 # Remove schedules entirely if no permission
                 filtered_data.pop("schedules", None)
 
         # Filter academic blocks
-        if "academic_blocks" in filtered_data and not permissions.can_view_academic_blocks:
+        if (
+            "academic_blocks" in filtered_data
+            and not permissions.can_view_academic_blocks
+        ):
             filtered_data.pop("academic_blocks", None)
 
         # Filter compliance data
@@ -90,14 +100,18 @@ class RoleViewService:
         if role == StaffRole.CLINICAL_STAFF:
             # Keep only manifest and call roster
             allowed_keys = {"manifest", "call_roster", "today_assignments"}
-            keys_to_remove = [key for key in filtered_data.keys() if key not in allowed_keys]
+            keys_to_remove = [
+                key for key in filtered_data.keys() if key not in allowed_keys
+            ]
             for key in keys_to_remove:
                 filtered_data.pop(key, None)
 
         return filtered_data
 
     @staticmethod
-    def filter_schedule_list(schedules: List[Dict[str, Any]], role: StaffRole, user_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    def filter_schedule_list(
+        schedules: list[dict[str, Any]], role: StaffRole, user_id: int | None = None
+    ) -> list[dict[str, Any]]:
         """
         Filter a list of schedules based on role permissions.
 
@@ -118,13 +132,15 @@ class RoleViewService:
         # Clinical staff sees only today's manifest
         if role == StaffRole.CLINICAL_STAFF:
             from datetime import date
+
             today = date.today().isoformat()
             return [s for s in schedules if s.get("date") == today]
 
         # Others (faculty, residents) see only their own schedules
         if user_id and permissions.can_view_own_schedule:
             return [
-                s for s in schedules
+                s
+                for s in schedules
                 if s.get("person_id") == user_id or s.get("staff_id") == user_id
             ]
 
@@ -145,7 +161,8 @@ class RoleViewService:
         permissions = RoleViewService.get_permissions(role)
 
         access_map = {
-            "schedules": permissions.can_view_all_schedules or permissions.can_view_own_schedule,
+            "schedules": permissions.can_view_all_schedules
+            or permissions.can_view_own_schedule,
             "manifest": permissions.can_view_manifest,
             "call_roster": permissions.can_view_call_roster,
             "academic_blocks": permissions.can_view_academic_blocks,
@@ -168,6 +185,5 @@ class RoleViewService:
             RoleViewConfig object with role and permissions
         """
         return RoleViewConfig(
-            role=role,
-            permissions=RoleViewService.get_permissions(role)
+            role=role, permissions=RoleViewService.get_permissions(role)
         )

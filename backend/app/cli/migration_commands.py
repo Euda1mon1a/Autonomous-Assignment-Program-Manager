@@ -13,8 +13,6 @@ Usage:
     python -m app.cli.migration_commands rollback MIGRATION_ID
 """
 
-import json
-from datetime import datetime
 from uuid import UUID
 
 import typer
@@ -28,7 +26,9 @@ console = Console()
 @app.command()
 def create(
     name: str = typer.Argument(..., help="Migration name"),
-    description: str = typer.Option("", "--description", "-d", help="Migration description"),
+    description: str = typer.Option(
+        "", "--description", "-d", help="Migration description"
+    ),
     batch_size: int = typer.Option(100, "--batch-size", "-b", help="Records per batch"),
 ):
     """
@@ -43,10 +43,7 @@ def create(
     try:
         migrator = DataMigrator(db)
         migration_id = migrator.create_migration(
-            name=name,
-            description=description,
-            batch_size=batch_size,
-            created_by="cli"
+            name=name, description=description, batch_size=batch_size, created_by="cli"
         )
 
         console.print(f"[green]Created migration: {migration_id}[/green]")
@@ -84,7 +81,9 @@ def list(
                 status_filter = MigrationStatus(status.lower())
             except ValueError:
                 console.print(f"[red]Invalid status: {status}[/red]")
-                console.print("Valid statuses: pending, validating, running, completed, failed, rolled_back, dry_run")
+                console.print(
+                    "Valid statuses: pending, validating, running, completed, failed, rolled_back, dry_run"
+                )
                 raise typer.Exit(1)
 
         migrations = migrator.list_migrations(status=status_filter, limit=limit)
@@ -104,13 +103,19 @@ def list(
         for migration in migrations:
             # Calculate progress
             if migration.total_records > 0:
-                progress_pct = (migration.processed_records / migration.total_records) * 100
+                progress_pct = (
+                    migration.processed_records / migration.total_records
+                ) * 100
                 progress = f"{migration.processed_records}/{migration.total_records} ({progress_pct:.1f}%)"
             else:
                 progress = "N/A"
 
             # Format created date
-            created = migration.created_at.strftime("%Y-%m-%d %H:%M") if migration.created_at else "N/A"
+            created = (
+                migration.created_at.strftime("%Y-%m-%d %H:%M")
+                if migration.created_at
+                else "N/A"
+            )
 
             # Color code status
             status_display = migration.status
@@ -126,7 +131,7 @@ def list(
                 migration.name,
                 status_display,
                 progress,
-                created
+                created,
             )
 
         console.print(table)
@@ -167,7 +172,7 @@ def show(
         console.print(f"Description: {migration.description or 'N/A'}")
         console.print(f"Status: {migration.status}")
         console.print(f"Batch Size: {migration.batch_size}")
-        console.print(f"\n[bold]Progress[/bold]")
+        console.print("\n[bold]Progress[/bold]")
         console.print(f"Total Records: {migration.total_records}")
         console.print(f"Processed: {migration.processed_records}")
         console.print(f"Failed: {migration.failed_records}")
@@ -176,13 +181,13 @@ def show(
             progress_pct = (migration.processed_records / migration.total_records) * 100
             console.print(f"Progress: {progress_pct:.2f}%")
 
-        console.print(f"\n[bold]Timestamps[/bold]")
+        console.print("\n[bold]Timestamps[/bold]")
         console.print(f"Created: {migration.created_at}")
         console.print(f"Started: {migration.started_at or 'N/A'}")
         console.print(f"Completed: {migration.completed_at or 'N/A'}")
 
         if migration.error_message:
-            console.print(f"\n[bold red]Error[/bold red]")
+            console.print("\n[bold red]Error[/bold red]")
             console.print(f"{migration.error_message}")
 
     finally:
@@ -214,10 +219,12 @@ def progress(
         console.print(f"\n[bold]{progress_info['name']}[/bold]")
         console.print(f"Status: {progress_info['status']}")
         console.print(f"Progress: {progress_info['progress_percentage']}%")
-        console.print(f"Processed: {progress_info['processed_records']}/{progress_info['total_records']}")
+        console.print(
+            f"Processed: {progress_info['processed_records']}/{progress_info['total_records']}"
+        )
         console.print(f"Failed: {progress_info['failed_records']}")
 
-        if progress_info['error_message']:
+        if progress_info["error_message"]:
             console.print(f"\n[red]Error: {progress_info['error_message']}[/red]")
 
     except ValueError as e:
@@ -230,12 +237,14 @@ def progress(
 @app.command()
 def snapshot(
     migration_id: str = typer.Argument(..., help="Migration ID"),
-    table_name: str = typer.Argument(..., help="Table name (e.g., 'people', 'assignments')"),
+    table_name: str = typer.Argument(
+        ..., help="Table name (e.g., 'people', 'assignments')"
+    ),
     model_path: str = typer.Option(
         None,
         "--model",
         "-m",
-        help="Model import path (e.g., 'app.models.person:Person')"
+        help="Model import path (e.g., 'app.models.person:Person')",
     ),
 ):
     """
@@ -257,6 +266,7 @@ def snapshot(
         try:
             module_path, class_name = model_path.split(":")
             import importlib
+
             module = importlib.import_module(module_path)
             model_class = getattr(module, class_name)
         except (ValueError, ImportError, AttributeError) as e:
@@ -278,7 +288,7 @@ def snapshot(
             migration_id=mid,
             query=query,
             table_name=table_name,
-            strategy=RollbackStrategy.SNAPSHOT
+            strategy=RollbackStrategy.SNAPSHOT,
         )
 
         console.print(f"[green]Created snapshot: {snapshot_id}[/green]")
@@ -297,7 +307,7 @@ def rollback(
         None,
         "--model",
         "-m",
-        help="Model import path (e.g., 'app.models.person:Person')"
+        help="Model import path (e.g., 'app.models.person:Person')",
     ),
 ):
     """
@@ -319,6 +329,7 @@ def rollback(
         try:
             module_path, class_name = model_path.split(":")
             import importlib
+
             module = importlib.import_module(module_path)
             model_class = getattr(module, class_name)
         except (ValueError, ImportError, AttributeError) as e:
@@ -333,7 +344,9 @@ def rollback(
             raise typer.Exit(1)
 
         # Confirm rollback
-        confirm = typer.confirm(f"Are you sure you want to rollback migration {migration_id}?")
+        confirm = typer.confirm(
+            f"Are you sure you want to rollback migration {migration_id}?"
+        )
         if not confirm:
             console.print("[yellow]Rollback cancelled.[/yellow]")
             return
@@ -343,10 +356,10 @@ def rollback(
         result = rollback_mgr.rollback_migration(mid, model_class)
 
         if result.success:
-            console.print(f"[green]Rollback completed successfully![/green]")
+            console.print("[green]Rollback completed successfully![/green]")
             console.print(f"Records restored: {result.records_restored}")
         else:
-            console.print(f"[red]Rollback failed![/red]")
+            console.print("[red]Rollback failed![/red]")
             console.print(f"Records restored: {result.records_restored}")
             console.print(f"Records failed: {result.records_failed}")
             console.print(f"Error: {result.error_message}")
@@ -398,7 +411,7 @@ def list_snapshots(
                 str(snapshot.id)[:8] + "...",
                 snapshot.table_name,
                 str(snapshot.record_count),
-                snapshot.created_at.strftime("%Y-%m-%d %H:%M")
+                snapshot.created_at.strftime("%Y-%m-%d %H:%M"),
             )
 
         console.print(table)
@@ -409,7 +422,9 @@ def list_snapshots(
 
 @app.command()
 def cleanup(
-    days: int = typer.Option(30, "--days", "-d", help="Delete snapshots older than N days"),
+    days: int = typer.Option(
+        30, "--days", "-d", help="Delete snapshots older than N days"
+    ),
 ):
     """
     Clean up old snapshots to save disk space.
@@ -439,7 +454,9 @@ def cleanup(
 
 @app.command()
 def history(
-    migration_id: str = typer.Option(None, "--migration", "-m", help="Filter by migration ID"),
+    migration_id: str = typer.Option(
+        None, "--migration", "-m", help="Filter by migration ID"
+    ),
     limit: int = typer.Option(50, "--limit", "-l", help="Maximum records to show"),
 ):
     """
@@ -487,7 +504,7 @@ def history(
                 str(rollback.migration_id)[:8] + "...",
                 status_display,
                 str(rollback.records_restored),
-                rollback.created_at.strftime("%Y-%m-%d %H:%M")
+                rollback.created_at.strftime("%Y-%m-%d %H:%M"),
             )
 
         console.print(table)
@@ -503,30 +520,38 @@ def stats():
     """
     from app.db.session import SessionLocal
     from app.migrations.migrator import MigrationRecord, MigrationStatus
-    from app.migrations.rollback import SnapshotRecord, RollbackRecord
+    from app.migrations.rollback import RollbackRecord, SnapshotRecord
 
     db = SessionLocal()
     try:
         # Migration stats
         total_migrations = db.query(MigrationRecord).count()
-        completed_migrations = db.query(MigrationRecord).filter(
-            MigrationRecord.status == MigrationStatus.COMPLETED.value
-        ).count()
-        failed_migrations = db.query(MigrationRecord).filter(
-            MigrationRecord.status == MigrationStatus.FAILED.value
-        ).count()
-        running_migrations = db.query(MigrationRecord).filter(
-            MigrationRecord.status == MigrationStatus.RUNNING.value
-        ).count()
+        completed_migrations = (
+            db.query(MigrationRecord)
+            .filter(MigrationRecord.status == MigrationStatus.COMPLETED.value)
+            .count()
+        )
+        failed_migrations = (
+            db.query(MigrationRecord)
+            .filter(MigrationRecord.status == MigrationStatus.FAILED.value)
+            .count()
+        )
+        running_migrations = (
+            db.query(MigrationRecord)
+            .filter(MigrationRecord.status == MigrationStatus.RUNNING.value)
+            .count()
+        )
 
         # Snapshot stats
         total_snapshots = db.query(SnapshotRecord).count()
 
         # Rollback stats
         total_rollbacks = db.query(RollbackRecord).count()
-        successful_rollbacks = db.query(RollbackRecord).filter(
-            RollbackRecord.status == "completed"
-        ).count()
+        successful_rollbacks = (
+            db.query(RollbackRecord)
+            .filter(RollbackRecord.status == "completed")
+            .count()
+        )
 
         console.print("\n[bold]Migration Statistics[/bold]")
         console.print(f"Total Migrations: {total_migrations}")
@@ -534,10 +559,10 @@ def stats():
         console.print(f"  Failed: {failed_migrations}")
         console.print(f"  Running: {running_migrations}")
 
-        console.print(f"\n[bold]Snapshot Statistics[/bold]")
+        console.print("\n[bold]Snapshot Statistics[/bold]")
         console.print(f"Total Snapshots: {total_snapshots}")
 
-        console.print(f"\n[bold]Rollback Statistics[/bold]")
+        console.print("\n[bold]Rollback Statistics[/bold]")
         console.print(f"Total Rollbacks: {total_rollbacks}")
         console.print(f"  Successful: {successful_rollbacks}")
 

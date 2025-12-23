@@ -1,4 +1,5 @@
 """Report generation for schedule analytics."""
+
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -36,11 +37,7 @@ class ReportGenerator:
         """
         self.db = db
 
-    def generate_monthly_report(
-        self,
-        year: int,
-        month: int
-    ) -> MonthlyReport:
+    def generate_monthly_report(self, year: int, month: int) -> MonthlyReport:
         """
         Generate monthly summary report.
 
@@ -59,35 +56,35 @@ class ReportGenerator:
             end_date = date(year, month + 1, 1) - timedelta(days=1)
 
         # Get blocks and assignments
-        blocks = self.db.query(Block).filter(
-            and_(
-                Block.date >= start_date,
-                Block.date <= end_date
-            )
-        ).all()
+        blocks = (
+            self.db.query(Block)
+            .filter(and_(Block.date >= start_date, Block.date <= end_date))
+            .all()
+        )
 
-        assignments = self.db.query(Assignment).join(Block).filter(
-            and_(
-                Block.date >= start_date,
-                Block.date <= end_date
-            )
-        ).all()
+        assignments = (
+            self.db.query(Assignment)
+            .join(Block)
+            .filter(and_(Block.date >= start_date, Block.date <= end_date))
+            .all()
+        )
 
         # Get schedule runs
-        schedule_runs = self.db.query(ScheduleRun).filter(
-            and_(
-                ScheduleRun.start_date >= start_date,
-                ScheduleRun.end_date <= end_date
+        schedule_runs = (
+            self.db.query(ScheduleRun)
+            .filter(
+                and_(
+                    ScheduleRun.start_date >= start_date,
+                    ScheduleRun.end_date <= end_date,
+                )
             )
-        ).all()
+            .all()
+        )
 
         # Calculate metrics
         block_dicts = [{"id": str(b.id)} for b in blocks]
         assignment_dicts = [
-            {
-                "person_id": str(a.person_id),
-                "block_id": str(a.block_id)
-            }
+            {"person_id": str(a.person_id), "block_id": str(a.block_id)}
             for a in assignments
         ]
 
@@ -96,8 +93,7 @@ class ReportGenerator:
 
         total_violations = sum(sr.acgme_violations or 0 for sr in schedule_runs)
         compliance = calculate_acgme_compliance_rate(
-            violations=total_violations,
-            total_checks=len(blocks) if blocks else 1
+            violations=total_violations, total_checks=len(blocks) if blocks else 1
         )
 
         # Get top rotations
@@ -107,9 +103,7 @@ class ReportGenerator:
                 rotation_counts[assignment.rotation_template.name] += 1
 
         top_rotations = sorted(
-            rotation_counts.items(),
-            key=lambda x: x[1],
-            reverse=True
+            rotation_counts.items(), key=lambda x: x[1], reverse=True
         )[:5]
 
         # Recommendations
@@ -117,7 +111,9 @@ class ReportGenerator:
         if fairness["status"] != "good":
             recommendations.append("Review workload distribution to improve fairness")
         if coverage["value"] < 95.0:
-            recommendations.append(f"Increase coverage - currently at {coverage['value']}%")
+            recommendations.append(
+                f"Increase coverage - currently at {coverage['value']}%"
+            )
         if total_violations > 0:
             recommendations.append(f"Address {total_violations} ACGME violations")
 
@@ -127,36 +123,32 @@ class ReportGenerator:
                 "year": year,
                 "month": month,
                 "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat()
+                "end_date": end_date.isoformat(),
             },
             "summary": {
                 "total_blocks": len(blocks),
                 "total_assignments": len(assignments),
                 "unique_residents": len({a.person_id for a in assignments}),
                 "schedule_runs": len(schedule_runs),
-                "acgme_violations": total_violations
+                "acgme_violations": total_violations,
             },
             "metrics": {
                 "fairness": fairness,
                 "coverage": coverage,
-                "compliance": compliance
+                "compliance": compliance,
             },
             "charts": {
                 "top_rotations": [
-                    {"name": name, "count": count}
-                    for name, count in top_rotations
+                    {"name": name, "count": count} for name, count in top_rotations
                 ],
-                "daily_coverage": self._get_daily_coverage_chart(blocks, assignments)
+                "daily_coverage": self._get_daily_coverage_chart(blocks, assignments),
             },
             "recommendations": recommendations,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.utcnow().isoformat(),
         }
 
     def generate_resident_report(
-        self,
-        person_id: str,
-        start_date: date,
-        end_date: date
+        self, person_id: str, start_date: date, end_date: date
     ) -> ResidentReport | dict[str, str]:
         """
         Generate individual resident statistics report.
@@ -175,13 +167,18 @@ class ReportGenerator:
             return {"error": "Person not found"}
 
         # Get assignments
-        assignments = self.db.query(Assignment).join(Block).filter(
-            and_(
-                Assignment.person_id == person_id,
-                Block.date >= start_date,
-                Block.date <= end_date
+        assignments = (
+            self.db.query(Assignment)
+            .join(Block)
+            .filter(
+                and_(
+                    Assignment.person_id == person_id,
+                    Block.date >= start_date,
+                    Block.date <= end_date,
+                )
             )
-        ).all()
+            .all()
+        )
 
         # Build assignment dicts with dates
         assignment_dicts = [
@@ -190,7 +187,7 @@ class ReportGenerator:
                 "person_id": str(a.person_id),
                 "block_id": str(a.block_id),
                 "block_date": a.block.date,
-                "rotation": a.activity_name
+                "rotation": a.activity_name,
             }
             for a in assignments
         ]
@@ -225,24 +222,22 @@ class ReportGenerator:
                 "id": str(person.id),
                 "name": person.name,
                 "pgy_level": person.pgy_level,
-                "target_blocks": target_blocks
+                "target_blocks": target_blocks,
             },
             "period": {
                 "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat()
+                "end_date": end_date.isoformat(),
             },
             "summary": {
                 "total_assignments": len(assignments),
                 "unique_rotations": len(rotation_counts),
-                "utilization_percent": round(utilization, 2)
+                "utilization_percent": round(utilization, 2),
             },
             "duty_patterns": duty_stats,
             "rotations": [
                 {"name": name, "count": count}
                 for name, count in sorted(
-                    rotation_counts.items(),
-                    key=lambda x: x[1],
-                    reverse=True
+                    rotation_counts.items(), key=lambda x: x[1], reverse=True
                 )
             ],
             "charts": {
@@ -252,13 +247,11 @@ class ReportGenerator:
                 ]
             },
             "recommendations": recommendations,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.utcnow().isoformat(),
         }
 
     def generate_compliance_report(
-        self,
-        start_date: date,
-        end_date: date
+        self, start_date: date, end_date: date
     ) -> ComplianceReport:
         """
         Generate ACGME compliance summary report.
@@ -271,12 +264,16 @@ class ReportGenerator:
             Dict with compliance report data
         """
         # Get schedule runs in period
-        schedule_runs = self.db.query(ScheduleRun).filter(
-            and_(
-                ScheduleRun.start_date >= start_date,
-                ScheduleRun.end_date <= end_date
+        schedule_runs = (
+            self.db.query(ScheduleRun)
+            .filter(
+                and_(
+                    ScheduleRun.start_date >= start_date,
+                    ScheduleRun.end_date <= end_date,
+                )
             )
-        ).all()
+            .all()
+        )
 
         # Calculate compliance metrics
         total_violations = sum(sr.acgme_violations or 0 for sr in schedule_runs)
@@ -285,25 +282,24 @@ class ReportGenerator:
         successful_runs = sum(1 for sr in schedule_runs if sr.status == "success")
 
         # Get blocks for compliance rate calculation
-        blocks = self.db.query(Block).filter(
-            and_(
-                Block.date >= start_date,
-                Block.date <= end_date
-            )
-        ).all()
+        blocks = (
+            self.db.query(Block)
+            .filter(and_(Block.date >= start_date, Block.date <= end_date))
+            .all()
+        )
 
         compliance = calculate_acgme_compliance_rate(
-            violations=total_violations,
-            total_checks=len(blocks) if blocks else 1
+            violations=total_violations, total_checks=len(blocks) if blocks else 1
         )
 
         # Get all assignments to check supervision
-        assignments = self.db.query(Assignment).join(Block).join(Person).filter(
-            and_(
-                Block.date >= start_date,
-                Block.date <= end_date
-            )
-        ).all()
+        assignments = (
+            self.db.query(Assignment)
+            .join(Block)
+            .join(Person)
+            .filter(and_(Block.date >= start_date, Block.date <= end_date))
+            .all()
+        )
 
         # Check supervision ratios
         supervision_issues = []
@@ -313,17 +309,21 @@ class ReportGenerator:
             if assignment.block_id in blocks_checked:
                 continue
 
-            block_assignments = [a for a in assignments if a.block_id == assignment.block_id]
+            block_assignments = [
+                a for a in assignments if a.block_id == assignment.block_id
+            ]
             residents = [a for a in block_assignments if a.person.is_resident]
             faculty = [a for a in block_assignments if a.person.is_faculty]
 
             if residents and not faculty:
-                supervision_issues.append({
-                    "block_id": str(assignment.block_id),
-                    "date": assignment.block.date.isoformat(),
-                    "issue": "No faculty supervision",
-                    "residents": len(residents)
-                })
+                supervision_issues.append(
+                    {
+                        "block_id": str(assignment.block_id),
+                        "date": assignment.block.date.isoformat(),
+                        "issue": "No faculty supervision",
+                        "residents": len(residents),
+                    }
+                )
 
             blocks_checked.add(assignment.block_id)
 
@@ -344,7 +344,7 @@ class ReportGenerator:
             "report_type": "compliance",
             "period": {
                 "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat()
+                "end_date": end_date.isoformat(),
             },
             "summary": {
                 "total_violations": total_violations,
@@ -352,30 +352,28 @@ class ReportGenerator:
                 "unacknowledged_violations": total_violations - total_overrides,
                 "compliance_rate": compliance["value"],
                 "total_schedule_runs": total_runs,
-                "successful_runs": successful_runs
+                "successful_runs": successful_runs,
             },
             "details": {
                 "compliance_metric": compliance,
-                "supervision_issues": supervision_issues[:10]  # Top 10
+                "supervision_issues": supervision_issues[:10],  # Top 10
             },
             "charts": {
                 "violations_by_run": [
                     {
                         "run_id": str(sr.id),
                         "date": sr.created_at.isoformat(),
-                        "violations": sr.acgme_violations or 0
+                        "violations": sr.acgme_violations or 0,
                     }
                     for sr in schedule_runs
                 ]
             },
             "recommendations": recommendations,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.utcnow().isoformat(),
         }
 
     def generate_workload_report(
-        self,
-        start_date: date,
-        end_date: date
+        self, start_date: date, end_date: date
     ) -> WorkloadReport:
         """
         Generate workload distribution report.
@@ -394,27 +392,36 @@ class ReportGenerator:
 
         for resident in residents:
             # Get assignments
-            assignments = self.db.query(Assignment).join(Block).filter(
-                and_(
-                    Assignment.person_id == resident.id,
-                    Block.date >= start_date,
-                    Block.date <= end_date
+            assignments = (
+                self.db.query(Assignment)
+                .join(Block)
+                .filter(
+                    and_(
+                        Assignment.person_id == resident.id,
+                        Block.date >= start_date,
+                        Block.date <= end_date,
+                    )
                 )
-            ).all()
+                .all()
+            )
 
             target_blocks = resident.target_clinical_blocks or 48
             actual_blocks = len(assignments)
-            utilization = (actual_blocks / target_blocks * 100) if target_blocks > 0 else 0
+            utilization = (
+                (actual_blocks / target_blocks * 100) if target_blocks > 0 else 0
+            )
 
-            workload_data.append({
-                "person_id": str(resident.id),
-                "name": resident.name,
-                "pgy_level": resident.pgy_level,
-                "target_blocks": target_blocks,
-                "actual_blocks": actual_blocks,
-                "utilization_percent": round(utilization, 2),
-                "variance": actual_blocks - target_blocks
-            })
+            workload_data.append(
+                {
+                    "person_id": str(resident.id),
+                    "name": resident.name,
+                    "pgy_level": resident.pgy_level,
+                    "target_blocks": target_blocks,
+                    "actual_blocks": actual_blocks,
+                    "utilization_percent": round(utilization, 2),
+                    "variance": actual_blocks - target_blocks,
+                }
+            )
 
         # Calculate fairness
         assignment_dicts = [
@@ -448,33 +455,33 @@ class ReportGenerator:
             "report_type": "workload",
             "period": {
                 "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat()
+                "end_date": end_date.isoformat(),
             },
             "summary": {
                 "total_residents": len(residents),
                 "fairness_index": fairness["value"],
                 "over_utilized_count": len(over_utilized),
-                "under_utilized_count": len(under_utilized)
+                "under_utilized_count": len(under_utilized),
             },
             "details": {
                 "fairness_metric": fairness,
-                "workload_by_resident": workload_data
+                "workload_by_resident": workload_data,
             },
             "charts": {
                 "utilization_distribution": [
                     {"name": w["name"], "utilization": w["utilization_percent"]}
                     for w in workload_data
                 ],
-                "pgy_level_distribution": self._get_pgy_level_distribution(workload_data)
+                "pgy_level_distribution": self._get_pgy_level_distribution(
+                    workload_data
+                ),
             },
             "recommendations": recommendations,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.utcnow().isoformat(),
         }
 
     def _get_daily_coverage_chart(
-        self,
-        blocks: list[Any],
-        assignments: list[Any]
+        self, blocks: list[Any], assignments: list[Any]
     ) -> list[dict[str, Any]]:
         """Generate daily coverage chart data."""
         coverage_by_date = defaultdict(lambda: {"total": 0, "covered": 0})
@@ -488,17 +495,17 @@ class ReportGenerator:
         chart_data = []
         for date in sorted(coverage_by_date.keys()):
             data = coverage_by_date[date]
-            coverage_pct = (data["covered"] / data["total"] * 100) if data["total"] > 0 else 0
-            chart_data.append({
-                "date": date.isoformat(),
-                "coverage_percent": round(coverage_pct, 2)
-            })
+            coverage_pct = (
+                (data["covered"] / data["total"] * 100) if data["total"] > 0 else 0
+            )
+            chart_data.append(
+                {"date": date.isoformat(), "coverage_percent": round(coverage_pct, 2)}
+            )
 
         return chart_data
 
     def _get_pgy_level_distribution(
-        self,
-        workload_data: list[dict[str, Any]]
+        self, workload_data: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
         """Generate PGY level distribution chart data."""
         pgy_stats = defaultdict(lambda: {"count": 0, "total_blocks": 0})
@@ -511,11 +518,15 @@ class ReportGenerator:
         chart_data = []
         for pgy_level in sorted(pgy_stats.keys()):
             stats = pgy_stats[pgy_level]
-            avg_blocks = stats["total_blocks"] / stats["count"] if stats["count"] > 0 else 0
-            chart_data.append({
-                "pgy_level": pgy_level,
-                "resident_count": stats["count"],
-                "average_blocks": round(avg_blocks, 2)
-            })
+            avg_blocks = (
+                stats["total_blocks"] / stats["count"] if stats["count"] > 0 else 0
+            )
+            chart_data.append(
+                {
+                    "pgy_level": pgy_level,
+                    "resident_count": stats["count"],
+                    "average_blocks": round(avg_blocks, 2),
+                }
+            )
 
         return chart_data

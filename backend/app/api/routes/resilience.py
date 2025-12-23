@@ -16,6 +16,7 @@ Tier 2 (Strategic) endpoints:
 - Equilibrium analysis (Le Chatelier)
 - Stress and compensation tracking
 """
+
 import logging
 import time
 from datetime import date, datetime, timedelta
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy.orm import Session, joinedload
 
 from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user
@@ -72,7 +73,6 @@ from app.schemas.resilience import (
     VulnerabilityReportResponse,
 )
 from app.services.resilience.homeostasis import (
-    HomeostasisService,
     get_homeostasis_service,
 )
 
@@ -97,12 +97,14 @@ def persist_health_check(db: Session, report, metrics_snapshot: dict = None):
         utilization_level=report.utilization.level.value,
         buffer_remaining=report.utilization.buffer_remaining,
         defense_level=report.defense_level.name if report.defense_level else None,
-        load_shedding_level=report.load_shedding_level.name if report.load_shedding_level else None,
+        load_shedding_level=report.load_shedding_level.name
+        if report.load_shedding_level
+        else None,
         n1_pass=report.n1_pass,
         n2_pass=report.n2_pass,
         phase_transition_risk=report.phase_transition_risk,
         active_fallbacks=report.active_fallbacks,
-        crisis_mode=getattr(report, 'crisis_mode', False),
+        crisis_mode=getattr(report, "crisis_mode", False),
         immediate_actions=report.immediate_actions,
         watch_items=report.watch_items,
         metrics_snapshot=metrics_snapshot,
@@ -148,9 +150,15 @@ async def get_system_health(
     end_date: date | None = None,
     include_contingency: bool = False,
     persist: bool = True,
-    max_faculty: int | None = Query(None, ge=1, description="Optional limit for faculty records"),
-    max_blocks: int | None = Query(None, ge=1, description="Optional limit for block records"),
-    max_assignments: int | None = Query(None, ge=1, description="Optional limit for assignment records"),
+    max_faculty: int | None = Query(
+        None, ge=1, description="Optional limit for faculty records"
+    ),
+    max_blocks: int | None = Query(
+        None, ge=1, description="Optional limit for block records"
+    ),
+    max_assignments: int | None = Query(
+        None, ge=1, description="Optional limit for assignment records"
+    ),
     db: Session = Depends(get_db),
 ):
     """
@@ -186,15 +194,18 @@ async def get_system_health(
 
     # Load data for analysis - apply optional limits if specified
     query_start = time.time()
-    faculty_query = db.query(Person).filter(Person.type == "faculty").order_by(Person.id)
+    faculty_query = (
+        db.query(Person).filter(Person.type == "faculty").order_by(Person.id)
+    )
     if max_faculty:
         faculty_query = faculty_query.limit(max_faculty)
     faculty = faculty_query.all()
 
-    blocks_query = db.query(Block).filter(
-        Block.date >= start_date,
-        Block.date <= end_date
-    ).order_by(Block.date, Block.id)
+    blocks_query = (
+        db.query(Block)
+        .filter(Block.date >= start_date, Block.date <= end_date)
+        .order_by(Block.date, Block.id)
+    )
     if max_blocks:
         blocks_query = blocks_query.limit(max_blocks)
     blocks = blocks_query.all()
@@ -205,12 +216,9 @@ async def get_system_health(
         .options(
             joinedload(Assignment.block),
             joinedload(Assignment.person),
-            joinedload(Assignment.rotation_template)
+            joinedload(Assignment.rotation_template),
         )
-        .filter(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
+        .filter(Block.date >= start_date, Block.date <= end_date)
         .order_by(Block.date, Assignment.id)
     )
     if max_assignments:
@@ -221,8 +229,12 @@ async def get_system_health(
     logger.info(
         "Health check data loaded: faculty=%d, blocks=%d, assignments=%d, "
         "date_range=%s to %s, query_time=%.3fs",
-        len(faculty), len(blocks), len(assignments),
-        start_date, end_date, query_time
+        len(faculty),
+        len(blocks),
+        len(assignments),
+        start_date,
+        end_date,
+        query_time,
     )
 
     # Run health check
@@ -369,17 +381,27 @@ async def list_fallbacks(
         if is_active:
             active_count += 1
 
-        fallbacks.append(FallbackInfo(
-            scenario=scenario,
-            description=_get_scenario_description(scenario),
-            is_active=is_active,
-            is_precomputed=fallback_schedule is not None,
-            assignments_count=len(fallback_schedule.assignments) if fallback_schedule else None,
-            coverage_rate=fallback_schedule.coverage_rate if fallback_schedule else None,
-            services_reduced=fallback_schedule.services_reduced if fallback_schedule else [],
-            assumptions=fallback_schedule.assumptions if fallback_schedule else [],
-            activation_count=fallback_schedule.activation_count if fallback_schedule else 0,
-        ))
+        fallbacks.append(
+            FallbackInfo(
+                scenario=scenario,
+                description=_get_scenario_description(scenario),
+                is_active=is_active,
+                is_precomputed=fallback_schedule is not None,
+                assignments_count=len(fallback_schedule.assignments)
+                if fallback_schedule
+                else None,
+                coverage_rate=fallback_schedule.coverage_rate
+                if fallback_schedule
+                else None,
+                services_reduced=fallback_schedule.services_reduced
+                if fallback_schedule
+                else [],
+                assumptions=fallback_schedule.assumptions if fallback_schedule else [],
+                activation_count=fallback_schedule.activation_count
+                if fallback_schedule
+                else 0,
+            )
+        )
 
     return FallbackListResponse(
         fallbacks=fallbacks,
@@ -403,6 +425,7 @@ async def activate_fallback(
 
     # Map schema enum to service enum
     from app.resilience.static_stability import FallbackScenario as ServiceScenario
+
     scenario_map = {
         FallbackScenario.SINGLE_FACULTY_LOSS: ServiceScenario.SINGLE_FACULTY_LOSS,
         FallbackScenario.DOUBLE_FACULTY_LOSS: ServiceScenario.DOUBLE_FACULTY_LOSS,
@@ -415,7 +438,9 @@ async def activate_fallback(
 
     service_scenario = scenario_map.get(request.scenario)
     if not service_scenario:
-        raise HTTPException(status_code=400, detail=f"Unknown scenario: {request.scenario}")
+        raise HTTPException(
+            status_code=400, detail=f"Unknown scenario: {request.scenario}"
+        )
 
     fallback = service.activate_fallback(
         scenario=service_scenario,
@@ -425,7 +450,7 @@ async def activate_fallback(
     if not fallback:
         raise HTTPException(
             status_code=404,
-            detail=f"Fallback schedule for '{request.scenario.value}' not found or not precomputed"
+            detail=f"Fallback schedule for '{request.scenario.value}' not found or not precomputed",
         )
 
     # Persist activation
@@ -477,6 +502,7 @@ async def deactivate_fallback(
 
     # Map and deactivate
     from app.resilience.static_stability import FallbackScenario as ServiceScenario
+
     scenario_map = {
         FallbackScenario.SINGLE_FACULTY_LOSS: ServiceScenario.SINGLE_FACULTY_LOSS,
         FallbackScenario.DOUBLE_FACULTY_LOSS: ServiceScenario.DOUBLE_FACULTY_LOSS,
@@ -491,10 +517,14 @@ async def deactivate_fallback(
     service.fallback.deactivate_fallback(service_scenario)
 
     # Update activation record
-    activation = db.query(FallbackActivation).filter(
-        FallbackActivation.scenario == request.scenario.value,
-        FallbackActivation.deactivated_at.is_(None),
-    ).first()
+    activation = (
+        db.query(FallbackActivation)
+        .filter(
+            FallbackActivation.scenario == request.scenario.value,
+            FallbackActivation.deactivated_at.is_(None),
+        )
+        .first()
+    )
 
     if activation:
         activation.deactivated_at = datetime.utcnow()
@@ -512,7 +542,10 @@ async def deactivate_fallback(
 
     db.commit()
 
-    return {"success": True, "message": f"Fallback '{request.scenario.value}' deactivated"}
+    return {
+        "success": True,
+        "message": f"Fallback '{request.scenario.value}' deactivated",
+    }
 
 
 @router.get("/load-shedding", response_model=LoadSheddingStatus)
@@ -552,6 +585,7 @@ async def set_load_shedding_level(
 
     # Map schema enum to service enum
     from app.resilience.sacrifice_hierarchy import LoadSheddingLevel as ServiceLevel
+
     level_map = {
         LoadSheddingLevel.NORMAL: ServiceLevel.NORMAL,
         LoadSheddingLevel.YELLOW: ServiceLevel.YELLOW,
@@ -653,9 +687,11 @@ async def get_vulnerability_report(
     logger.info(
         "Vulnerability analysis completed: n1_pass=%s, n2_pass=%s, "
         "vulnerabilities=%d, fatal_pairs=%d, duration=%.3fs",
-        result.n1_pass, result.n2_pass,
-        len(result.n1_vulnerabilities), len(result.n2_fatal_pairs),
-        analysis_time
+        result.n1_pass,
+        result.n2_pass,
+        len(result.n1_vulnerabilities),
+        len(result.n2_fatal_pairs),
+        analysis_time,
     )
 
     # Persist vulnerability record
@@ -663,9 +699,11 @@ async def get_vulnerability_report(
         period_start=datetime.combine(start_date, datetime.min.time()),
         period_end=datetime.combine(end_date, datetime.min.time()),
         faculty_count=len(result.n1_simulations),
-        block_count=len(set(
-            b for s in result.n1_simulations for b in s.uncovered_blocks
-        )) if result.n1_simulations else 0,
+        block_count=len(
+            set(b for s in result.n1_simulations for b in s.uncovered_blocks)
+        )
+        if result.n1_simulations
+        else 0,
         n1_pass=result.n1_pass,
         n2_pass=result.n2_pass,
         phase_transition_risk=result.phase_transition_risk,
@@ -719,9 +757,15 @@ async def get_vulnerability_report(
 async def get_comprehensive_report(
     start_date: date | None = None,
     end_date: date | None = None,
-    max_faculty: int | None = Query(None, ge=1, description="Optional limit for faculty records"),
-    max_blocks: int | None = Query(None, ge=1, description="Optional limit for block records"),
-    max_assignments: int | None = Query(None, ge=1, description="Optional limit for assignment records"),
+    max_faculty: int | None = Query(
+        None, ge=1, description="Optional limit for faculty records"
+    ),
+    max_blocks: int | None = Query(
+        None, ge=1, description="Optional limit for block records"
+    ),
+    max_assignments: int | None = Query(
+        None, ge=1, description="Optional limit for assignment records"
+    ),
     db: Session = Depends(get_db),
 ):
     """
@@ -748,15 +792,18 @@ async def get_comprehensive_report(
 
     # Load data - apply optional limits if specified
     query_start = time.time()
-    faculty_query = db.query(Person).filter(Person.type == "faculty").order_by(Person.id)
+    faculty_query = (
+        db.query(Person).filter(Person.type == "faculty").order_by(Person.id)
+    )
     if max_faculty:
         faculty_query = faculty_query.limit(max_faculty)
     faculty = faculty_query.all()
 
-    blocks_query = db.query(Block).filter(
-        Block.date >= start_date,
-        Block.date <= end_date
-    ).order_by(Block.date, Block.id)
+    blocks_query = (
+        db.query(Block)
+        .filter(Block.date >= start_date, Block.date <= end_date)
+        .order_by(Block.date, Block.id)
+    )
     if max_blocks:
         blocks_query = blocks_query.limit(max_blocks)
     blocks = blocks_query.all()
@@ -767,12 +814,9 @@ async def get_comprehensive_report(
         .options(
             joinedload(Assignment.block),
             joinedload(Assignment.person),
-            joinedload(Assignment.rotation_template)
+            joinedload(Assignment.rotation_template),
         )
-        .filter(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
+        .filter(Block.date >= start_date, Block.date <= end_date)
         .order_by(Block.date, Assignment.id)
     )
     if max_assignments:
@@ -783,8 +827,12 @@ async def get_comprehensive_report(
     logger.info(
         "Comprehensive report data loaded: faculty=%d, blocks=%d, assignments=%d, "
         "date_range=%s to %s, query_time=%.3fs",
-        len(faculty), len(blocks), len(assignments),
-        start_date, end_date, query_time
+        len(faculty),
+        len(blocks),
+        len(assignments),
+        start_date,
+        end_date,
+        query_time,
     )
 
     report = service.get_comprehensive_report(faculty, blocks, assignments)
@@ -819,8 +867,7 @@ async def get_health_check_history(
     total = query.count()
 
     items = (
-        query
-        .order_by(desc(ResilienceHealthCheck.timestamp))
+        query.order_by(desc(ResilienceHealthCheck.timestamp))
         .offset((page - 1) * page_size)
         .limit(page_size)
         .all()
@@ -834,7 +881,9 @@ async def get_health_check_history(
                 overall_status=OverallStatus(item.overall_status),
                 utilization_rate=item.utilization_rate,
                 utilization_level=UtilizationLevel(item.utilization_level),
-                defense_level=DefenseLevel(item.defense_level) if item.defense_level else None,
+                defense_level=DefenseLevel(item.defense_level)
+                if item.defense_level
+                else None,
                 n1_pass=item.n1_pass,
                 n2_pass=item.n2_pass,
                 crisis_mode=item.crisis_mode,
@@ -867,8 +916,7 @@ async def get_event_history(
     total = query.count()
 
     items = (
-        query
-        .order_by(desc(ResilienceEvent.timestamp))
+        query.order_by(desc(ResilienceEvent.timestamp))
         .offset((page - 1) * page_size)
         .limit(page_size)
         .all()
@@ -893,6 +941,7 @@ async def get_event_history(
 
 
 # Helper functions
+
 
 def _get_scenario_description(scenario: FallbackScenario) -> str:
     """Get human-readable description for a fallback scenario."""
@@ -960,25 +1009,27 @@ async def get_homeostasis_status(
             current_value = loop.value_history[-1][1]
             deviation, _ = loop.setpoint.check_deviation(current_value)
 
-        loop_statuses.append(FeedbackLoopStatus(
-            loop_name=loop.name,
-            setpoint=SetpointInfo(
-                name=loop.setpoint.name,
-                description=loop.setpoint.description,
-                target_value=loop.setpoint.target_value,
-                tolerance=loop.setpoint.tolerance,
-                unit=loop.setpoint.unit,
-                is_critical=loop.setpoint.is_critical,
-            ),
-            current_value=current_value,
-            deviation=deviation,
-            deviation_severity=SchemaDeviationSeverity.NONE,
-            consecutive_deviations=loop.consecutive_deviations,
-            trend_direction=loop.get_trend(),
-            is_improving=loop.is_improving(),
-            last_checked=loop.last_checked,
-            total_corrections=loop.total_corrections,
-        ))
+        loop_statuses.append(
+            FeedbackLoopStatus(
+                loop_name=loop.name,
+                setpoint=SetpointInfo(
+                    name=loop.setpoint.name,
+                    description=loop.setpoint.description,
+                    target_value=loop.setpoint.target_value,
+                    tolerance=loop.setpoint.tolerance,
+                    unit=loop.setpoint.unit,
+                    is_critical=loop.setpoint.is_critical,
+                ),
+                current_value=current_value,
+                deviation=deviation,
+                deviation_severity=SchemaDeviationSeverity.NONE,
+                consecutive_deviations=loop.consecutive_deviations,
+                trend_direction=loop.get_trend(),
+                is_improving=loop.is_improving(),
+                last_checked=loop.last_checked,
+                total_corrections=loop.total_corrections,
+            )
+        )
 
     # Build positive feedback risks
     risk_infos = [
@@ -1110,21 +1161,23 @@ async def list_zones(
     zones = []
 
     for zone in service.blast_radius.zones.values():
-        zones.append(ZoneResponse(
-            id=zone.id,
-            name=zone.name,
-            zone_type=SchemaZoneType(zone.zone_type.value),
-            description=zone.description,
-            services=zone.services,
-            minimum_coverage=zone.minimum_coverage,
-            optimal_coverage=zone.optimal_coverage,
-            priority=zone.priority,
-            status=SchemaZoneStatus(zone.status.value),
-            containment_level=SchemaContainment(zone.containment_level.value),
-            borrowing_limit=zone.borrowing_limit,
-            lending_limit=zone.lending_limit,
-            is_active=True,
-        ))
+        zones.append(
+            ZoneResponse(
+                id=zone.id,
+                name=zone.name,
+                zone_type=SchemaZoneType(zone.zone_type.value),
+                description=zone.description,
+                services=zone.services,
+                minimum_coverage=zone.minimum_coverage,
+                optimal_coverage=zone.optimal_coverage,
+                priority=zone.priority,
+                status=SchemaZoneStatus(zone.status.value),
+                containment_level=SchemaContainment(zone.containment_level.value),
+                borrowing_limit=zone.borrowing_limit,
+                lending_limit=zone.lending_limit,
+                is_active=True,
+            )
+        )
 
     return {"zones": zones, "total": len(zones)}
 
@@ -1345,7 +1398,9 @@ async def set_containment_level(
     }
 
     if level not in level_map:
-        raise HTTPException(status_code=400, detail=f"Invalid containment level: {level}")
+        raise HTTPException(
+            status_code=400, detail=f"Invalid containment level: {level}"
+        )
 
     service = get_resilience_service(db)
     service.set_containment_level(level_map[level], reason)
@@ -1422,7 +1477,9 @@ async def get_equilibrium_report(
 
     return EquilibriumReportResponse(
         generated_at=report.generated_at,
-        current_equilibrium_state=SchemaEquilState(report.current_equilibrium_state.value),
+        current_equilibrium_state=SchemaEquilState(
+            report.current_equilibrium_state.value
+        ),
         current_capacity=report.current_capacity,
         current_demand=report.current_demand,
         current_coverage_rate=report.current_coverage_rate,
@@ -1471,7 +1528,9 @@ async def apply_stress(
     }
 
     if stress_type not in type_map:
-        raise HTTPException(status_code=400, detail=f"Invalid stress type: {stress_type}")
+        raise HTTPException(
+            status_code=400, detail=f"Invalid stress type: {stress_type}"
+        )
 
     service = get_resilience_service(db)
     stress = service.apply_system_stress(
@@ -1548,7 +1607,9 @@ async def initiate_compensation(
     }
 
     if compensation_type not in type_map:
-        raise HTTPException(status_code=400, detail=f"Invalid compensation type: {compensation_type}")
+        raise HTTPException(
+            status_code=400, detail=f"Invalid compensation type: {compensation_type}"
+        )
 
     service = get_resilience_service(db)
     compensation = service.initiate_compensation(
@@ -1605,7 +1666,9 @@ async def predict_stress_response(
     }
 
     if stress_type not in type_map:
-        raise HTTPException(status_code=400, detail=f"Invalid stress type: {stress_type}")
+        raise HTTPException(
+            status_code=400, detail=f"Invalid stress type: {stress_type}"
+        )
 
     service = get_resilience_service(db)
     prediction = service.predict_stress_response(
@@ -1716,7 +1779,9 @@ async def get_tier2_status(
         zones_healthy=status["blast_radius"]["zones_healthy"],
         zones_critical=status["blast_radius"]["zones_critical"],
         containment_active=status["blast_radius"]["containment_active"],
-        containment_level=SchemaContainment(status["blast_radius"]["containment_level"]),
+        containment_level=SchemaContainment(
+            status["blast_radius"]["containment_level"]
+        ),
         equilibrium_state=SchemaEquilState(status["equilibrium"]["state"]),
         current_coverage_rate=status["equilibrium"]["current_coverage_rate"],
         compensation_debt=status["equilibrium"]["compensation_debt"],
@@ -1908,7 +1973,9 @@ async def get_decision_queue(
         "by_category": status.by_category,
         "urgent_count": status.urgent_count,
         "can_auto_decide": status.can_auto_decide,
-        "oldest_pending": status.oldest_pending.isoformat() if status.oldest_pending else None,
+        "oldest_pending": status.oldest_pending.isoformat()
+        if status.oldest_pending
+        else None,
         "estimated_cognitive_cost": status.estimated_cognitive_cost,
         "recommendations": status.recommendations,
     }
@@ -2036,7 +2103,9 @@ async def record_behavioral_signal(
     }
 
     if signal_type not in type_map:
-        raise HTTPException(status_code=400, detail=f"Invalid signal type: {signal_type}")
+        raise HTTPException(
+            status_code=400, detail=f"Invalid signal type: {signal_type}"
+        )
 
     service = get_resilience_service(db)
     service.record_behavioral_signal(
@@ -2061,7 +2130,11 @@ async def get_collective_preference(
     pref = service.get_collective_preference(slot_type, slot_id)
 
     if not pref:
-        return {"found": False, "slot_type": slot_type, "slot_id": str(slot_id) if slot_id else None}
+        return {
+            "found": False,
+            "slot_type": slot_type,
+            "slot_id": str(slot_id) if slot_id else None,
+        }
 
     return {
         "found": True,
@@ -2221,8 +2294,12 @@ async def evaporate_trails(
 async def analyze_hubs(
     start_date: date | None = None,
     end_date: date | None = None,
-    max_faculty: int | None = Query(None, ge=1, description="Optional limit for faculty records"),
-    max_assignments: int | None = Query(None, ge=1, description="Optional limit for assignment records"),
+    max_faculty: int | None = Query(
+        None, ge=1, description="Optional limit for faculty records"
+    ),
+    max_assignments: int | None = Query(
+        None, ge=1, description="Optional limit for assignment records"
+    ),
     db: Session = Depends(get_db),
 ):
     """
@@ -2247,7 +2324,9 @@ async def analyze_hubs(
 
     # Load data - apply optional limits if specified
     query_start = time.time()
-    faculty_query = db.query(Person).filter(Person.type == "faculty").order_by(Person.id)
+    faculty_query = (
+        db.query(Person).filter(Person.type == "faculty").order_by(Person.id)
+    )
     if max_faculty:
         faculty_query = faculty_query.limit(max_faculty)
     faculty = faculty_query.all()
@@ -2258,12 +2337,9 @@ async def analyze_hubs(
         .options(
             joinedload(Assignment.block),
             joinedload(Assignment.person),
-            joinedload(Assignment.rotation_template)
+            joinedload(Assignment.rotation_template),
         )
-        .filter(
-            Block.date >= start_date,
-            Block.date <= end_date
-        )
+        .filter(Block.date >= start_date, Block.date <= end_date)
         .order_by(Block.date, Assignment.id)
     )
     if max_assignments:
@@ -2274,8 +2350,11 @@ async def analyze_hubs(
     logger.info(
         "Hub analysis data loaded: faculty=%d, assignments=%d, "
         "date_range=%s to %s, query_time=%.3fs",
-        len(faculty), len(assignments),
-        start_date, end_date, query_time
+        len(faculty),
+        len(assignments),
+        start_date,
+        end_date,
+        query_time,
     )
 
     # Build services mapping (simplified - would need proper implementation)
@@ -2414,7 +2493,9 @@ async def create_hub_protection_plan(
     )
 
     if not plan:
-        raise HTTPException(status_code=404, detail="Faculty is not a hub or not analyzed")
+        raise HTTPException(
+            status_code=404, detail="Faculty is not a hub or not analyzed"
+        )
 
     return {
         "plan_id": str(plan.id),

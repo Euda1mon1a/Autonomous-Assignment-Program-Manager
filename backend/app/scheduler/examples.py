@@ -6,10 +6,8 @@ including priority queues, dependencies, distributed locking, and retry logic.
 """
 
 import asyncio
-from datetime import datetime, timedelta
 
 from app.scheduler.advanced_scheduler import (
-    AdvancedTaskScheduler,
     RetryConfig,
     RetryStrategy,
     TaskDefinition,
@@ -329,7 +327,9 @@ async def example_complex_workflow():
     await asyncio.sleep(10)
 
     health = scheduler.get_health_status()
-    print(f"\nWorkflow Progress: {health['metrics']['tasks_completed']} tasks completed")
+    print(
+        f"\nWorkflow Progress: {health['metrics']['tasks_completed']} tasks completed"
+    )
 
     await scheduler.stop()
 

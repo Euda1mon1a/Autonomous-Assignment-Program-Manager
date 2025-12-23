@@ -1,15 +1,12 @@
 """Permission resolver with role hierarchy and inheritance support."""
+
 import logging
 from typing import Any
-from uuid import UUID
-
-from sqlalchemy.orm import Session
 
 from app.auth.permissions.cache import PermissionCache, get_permission_cache
 from app.auth.permissions.models import (
     DEFAULT_ROLE_PERMISSIONS,
     ROLE_HIERARCHY,
-    Permission,
     PermissionAction,
     PermissionCheckResult,
     ResourceType,
@@ -74,9 +71,7 @@ class PermissionResolver:
         return roles
 
     async def get_role_permissions(
-        self,
-        role: UserRole,
-        use_cache: bool = True
+        self, role: UserRole, use_cache: bool = True
     ) -> set[str]:
         """
         Get all permissions for a role including inherited permissions.
@@ -120,9 +115,7 @@ class PermissionResolver:
         return all_permissions
 
     async def get_user_permissions(
-        self,
-        user: User,
-        use_cache: bool = True
+        self, user: User, use_cache: bool = True
     ) -> set[str]:
         """
         Get all permissions for a user.
@@ -166,7 +159,7 @@ class PermissionResolver:
         action: PermissionAction | str,
         resource_id: str | None = None,
         conditions: dict[str, Any] | None = None,
-        use_cache: bool = True
+        use_cache: bool = True,
     ) -> PermissionCheckResult:
         """
         Check if user has permission to perform action on resource.
@@ -183,7 +176,9 @@ class PermissionResolver:
             PermissionCheckResult with allowed status and reason
         """
         # Normalize inputs
-        resource_str = resource.value if isinstance(resource, ResourceType) else resource
+        resource_str = (
+            resource.value if isinstance(resource, ResourceType) else resource
+        )
         action_str = action.value if isinstance(action, PermissionAction) else action
 
         permission_key = f"{resource_str}:{action_str}"
@@ -206,7 +201,9 @@ class PermissionResolver:
             if permission_key not in user_permissions:
                 reason = f"User does not have permission: {permission_key}"
             else:
-                reason = f"Resource-level permission denied for {resource_str}:{resource_id}"
+                reason = (
+                    f"Resource-level permission denied for {resource_str}:{resource_id}"
+                )
 
         return PermissionCheckResult(
             allowed=allowed,
@@ -220,7 +217,7 @@ class PermissionResolver:
         resource_type: str,
         action: str,
         resource_id: str,
-        conditions: dict[str, Any] | None = None
+        conditions: dict[str, Any] | None = None,
     ) -> bool:
         """
         Check resource-level permissions.
@@ -280,7 +277,7 @@ class PermissionResolver:
         resource: ResourceType | str,
         action: PermissionAction | str,
         resource_id: str | None = None,
-        use_cache: bool = True
+        use_cache: bool = True,
     ) -> bool:
         """
         Simplified permission check that returns boolean.
@@ -304,7 +301,7 @@ class PermissionResolver:
         self,
         user: User,
         permissions: list[tuple[ResourceType | str, PermissionAction | str]],
-        use_cache: bool = True
+        use_cache: bool = True,
     ) -> bool:
         """
         Check if user has any of the specified permissions.
@@ -326,7 +323,7 @@ class PermissionResolver:
         self,
         user: User,
         permissions: list[tuple[ResourceType | str, PermissionAction | str]],
-        use_cache: bool = True
+        use_cache: bool = True,
     ) -> bool:
         """
         Check if user has all of the specified permissions.
@@ -340,7 +337,9 @@ class PermissionResolver:
             True if user has all permissions, False otherwise
         """
         for resource, action in permissions:
-            if not await self.has_permission(user, resource, action, use_cache=use_cache):
+            if not await self.has_permission(
+                user, resource, action, use_cache=use_cache
+            ):
                 return False
         return True
 

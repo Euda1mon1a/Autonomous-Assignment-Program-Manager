@@ -10,6 +10,7 @@ Tests the end-to-end flow of:
 6. Swap with leave conflict - validation catches conflict
 7. Swap notification triggers - verify notifications sent
 """
+
 from datetime import datetime, timedelta
 from uuid import uuid4
 
@@ -361,9 +362,11 @@ class TestSwapWorkflow:
         integration_db.commit()
 
         # Verify both swaps are pending
-        pending_swaps = integration_db.query(SwapRecord).filter(
-            SwapRecord.status == SwapStatus.PENDING
-        ).all()
+        pending_swaps = (
+            integration_db.query(SwapRecord)
+            .filter(SwapRecord.status == SwapStatus.PENDING)
+            .all()
+        )
         assert len(pending_swaps) >= 2
 
         # Approve first swap
@@ -493,9 +496,11 @@ class TestSwapWorkflow:
         assert swap_record.status == SwapStatus.EXECUTED
 
         # Query for potential swap-related notifications
-        swap_notifications = integration_db.query(Notification).filter(
-            Notification.notification_type.like("%swap%")
-        ).all()
+        swap_notifications = (
+            integration_db.query(Notification)
+            .filter(Notification.notification_type.like("%swap%"))
+            .all()
+        )
 
         # Notifications may or may not be implemented yet
         # This test structure allows for future notification verification

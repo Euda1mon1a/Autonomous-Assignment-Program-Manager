@@ -15,6 +15,7 @@ Example:
     for version in assignment.versions:
         print(f"Version {version.transaction_id}: changed at {version.transaction.issued_at}")
 """
+
 from contextvars import ContextVar
 
 from sqlalchemy_continuum import make_versioned
@@ -51,7 +52,7 @@ make_versioned(
     options={
         "create_models": True,  # Auto-create version models
         "native_versioning": False,  # Use Python-based versioning (more compatible)
-    }
+    },
 )
 
 logger.info("SQLAlchemy-Continuum audit versioning initialized")

@@ -130,8 +130,12 @@ class AuditArchiver:
             backend_config["region"] = getattr(
                 settings, "AUDIT_ARCHIVE_S3_REGION", "us-east-1"
             )
-            backend_config["access_key"] = getattr(settings, "UPLOAD_S3_ACCESS_KEY", None)
-            backend_config["secret_key"] = getattr(settings, "UPLOAD_S3_SECRET_KEY", None)
+            backend_config["access_key"] = getattr(
+                settings, "UPLOAD_S3_ACCESS_KEY", None
+            )
+            backend_config["secret_key"] = getattr(
+                settings, "UPLOAD_S3_SECRET_KEY", None
+            )
             backend_config["endpoint_url"] = getattr(
                 settings, "UPLOAD_S3_ENDPOINT_URL", None
             )
@@ -497,9 +501,7 @@ class AuditArchiver:
         """
         # Calculate date range
         dates = [
-            datetime.fromisoformat(log["issued_at"])
-            for log in logs
-            if log["issued_at"]
+            datetime.fromisoformat(log["issued_at"]) for log in logs if log["issued_at"]
         ]
         date_range = {
             "start": min(dates).isoformat() if dates else cutoff_date.isoformat(),
@@ -561,7 +563,9 @@ class AuditArchiver:
                 table_name = f"{entity_type}_version"
 
                 # Build delete query
-                placeholders = ",".join([f":tid_{i}" for i in range(len(transaction_ids))])
+                placeholders = ",".join(
+                    [f":tid_{i}" for i in range(len(transaction_ids))]
+                )
                 delete_query = text(
                     f"DELETE FROM {table_name} WHERE transaction_id IN ({placeholders})"
                 )

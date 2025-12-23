@@ -15,7 +15,6 @@ from typing import Any, Optional
 
 from sqlalchemy import event, text
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -120,12 +119,11 @@ class QueryAnalyzer:
                 return
 
             # Calculate duration
-            duration_ms = (
-                time.perf_counter() - context._query_start_time
-            ) * 1000
+            duration_ms = (time.perf_counter() - context._query_start_time) * 1000
 
             # Get stack trace (limited depth to avoid noise)
             import traceback
+
             stack_trace = "".join(traceback.format_stack()[-8:-2])
 
             # Create query info
@@ -146,9 +144,7 @@ class QueryAnalyzer:
                 try:
                     explain_query = f"EXPLAIN ANALYZE {statement}"
                     result = conn.execute(text(explain_query), parameters)
-                    query_info.explain_plan = "\n".join(
-                        [row[0] for row in result]
-                    )
+                    query_info.explain_plan = "\n".join([row[0] for row in result])
                 except Exception as e:
                     logger.debug(f"Failed to get EXPLAIN plan: {e}")
 
@@ -335,9 +331,7 @@ class QueryAnalyzer:
 
         # Check if all queries have the same normalized SQL
         first_normalized = self._normalize_sql(queries[0].sql)
-        return all(
-            self._normalize_sql(q.sql) == first_normalized for q in queries[1:]
-        )
+        return all(self._normalize_sql(q.sql) == first_normalized for q in queries[1:])
 
     def _generate_recommendations(
         self, context: QueryContext, n_plus_one_warnings: list[dict[str, Any]]

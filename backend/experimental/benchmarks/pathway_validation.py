@@ -50,14 +50,14 @@ class PathwayValidator:
 
         # Handle different pathway structures
         if hasattr(pathway, "steps"):
-            steps_data = getattr(pathway, "steps")
+            steps_data = pathway.steps
             if isinstance(steps_data, list):
                 steps_count = len(steps_data)
             elif isinstance(steps_data, int):
                 steps_count = steps_data
 
         if hasattr(pathway, "transitions"):
-            transitions = getattr(pathway, "transitions")
+            transitions = pathway.transitions
             if isinstance(transitions, list):
                 steps_count = len(transitions)
 
@@ -72,9 +72,9 @@ class PathwayValidator:
 
         # Extract barriers bypassed
         if hasattr(pathway, "barriers_bypassed"):
-            barriers_count = getattr(pathway, "barriers_bypassed")
+            barriers_count = pathway.barriers_bypassed
         elif hasattr(pathway, "barriers"):
-            barriers = getattr(pathway, "barriers")
+            barriers = pathway.barriers
             if isinstance(barriers, list):
                 barriers_count = len(barriers)
             elif isinstance(barriers, int):
@@ -82,11 +82,11 @@ class PathwayValidator:
 
         # Extract catalysts used
         if hasattr(pathway, "catalysts_used"):
-            catalysts = getattr(pathway, "catalysts_used")
+            catalysts = pathway.catalysts_used
             if isinstance(catalysts, list):
                 catalyst_list = [str(c) for c in catalysts]
         elif hasattr(pathway, "catalysts"):
-            catalysts = getattr(pathway, "catalysts")
+            catalysts = pathway.catalysts
             if isinstance(catalysts, list):
                 catalyst_list = [str(c) for c in catalysts]
 

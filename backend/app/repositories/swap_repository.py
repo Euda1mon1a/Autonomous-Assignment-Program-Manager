@@ -1,4 +1,5 @@
 """Repository for swap data access."""
+
 from datetime import date, datetime
 from uuid import UUID
 
@@ -114,9 +115,12 @@ class SwapRepository:
         if not conditions:
             return []
 
-        return self.db.query(SwapRecord).filter(
-            or_(*conditions)
-        ).order_by(SwapRecord.requested_at.desc()).all()
+        return (
+            self.db.query(SwapRecord)
+            .filter(or_(*conditions))
+            .order_by(SwapRecord.requested_at.desc())
+            .all()
+        )
 
     def find_by_status(
         self,
@@ -161,10 +165,15 @@ class SwapRepository:
 
     def find_pending_for_faculty(self, faculty_id: UUID) -> list[SwapRecord]:
         """Find pending swaps where faculty is target (needs response)."""
-        return self.db.query(SwapRecord).filter(
-            SwapRecord.target_faculty_id == faculty_id,
-            SwapRecord.status == SwapStatus.PENDING,
-        ).order_by(SwapRecord.requested_at.desc()).all()
+        return (
+            self.db.query(SwapRecord)
+            .filter(
+                SwapRecord.target_faculty_id == faculty_id,
+                SwapRecord.status == SwapStatus.PENDING,
+            )
+            .order_by(SwapRecord.requested_at.desc())
+            .all()
+        )
 
     def find_recent(
         self,
@@ -219,9 +228,12 @@ class SwapRepository:
 
         total = query.count()
 
-        records = query.order_by(SwapRecord.requested_at.desc()).offset(
-            (page - 1) * page_size
-        ).limit(page_size).all()
+        records = (
+            query.order_by(SwapRecord.requested_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
 
         return records, total
 
@@ -251,9 +263,7 @@ class SwapRepository:
 
     def get_approvals(self, swap_id: UUID) -> list[SwapApproval]:
         """Get all approvals for a swap."""
-        return self.db.query(SwapApproval).filter(
-            SwapApproval.swap_id == swap_id
-        ).all()
+        return self.db.query(SwapApproval).filter(SwapApproval.swap_id == swap_id).all()
 
     def record_approval_response(
         self,
@@ -262,9 +272,9 @@ class SwapRepository:
         notes: str | None = None,
     ) -> SwapApproval | None:
         """Record response for an approval."""
-        approval = self.db.query(SwapApproval).filter(
-            SwapApproval.id == approval_id
-        ).first()
+        approval = (
+            self.db.query(SwapApproval).filter(SwapApproval.id == approval_id).first()
+        )
 
         if not approval:
             return None
@@ -291,10 +301,7 @@ class SwapRepository:
 
     def count_by_status(self, faculty_id: UUID | None = None) -> dict:
         """Count swaps by status."""
-        query = self.db.query(
-            SwapRecord.status,
-            func.count(SwapRecord.id)
-        )
+        query = self.db.query(SwapRecord.status, func.count(SwapRecord.id))
 
         if faculty_id:
             query = query.filter(

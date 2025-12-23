@@ -9,10 +9,11 @@ import json
 import logging
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -102,8 +103,8 @@ class QueueConfig:
     dlx_exchange: str = "scheduler.dlx"
     dlx_queue: str = "scheduler.dead_letters"
     prefetch_count: int = 10
-    message_ttl: Optional[int] = None
-    max_priority: Optional[int] = 10
+    message_ttl: int | None = None
+    max_priority: int | None = 10
     connection_timeout: float = 30.0
     reconnect_delay: float = 5.0
 
@@ -152,14 +153,14 @@ class Message:
 
     body: Any
     routing_key: str = ""
-    headers: Dict[str, Any] = field(default_factory=dict)
+    headers: dict[str, Any] = field(default_factory=dict)
     delivery_mode: DeliveryMode = DeliveryMode.PERSISTENT
     priority: int = 5
-    correlation_id: Optional[str] = None
-    reply_to: Optional[str] = None
-    expiration: Optional[int] = None
-    message_id: Optional[str] = None
-    timestamp: Optional[datetime] = None
+    correlation_id: str | None = None
+    reply_to: str | None = None
+    expiration: int | None = None
+    message_id: str | None = None
+    timestamp: datetime | None = None
     content_type: str = "application/json"
     content_encoding: str = "utf-8"
 
@@ -201,8 +202,8 @@ class MessageQueueAdapter(ABC):
     async def publish(
         self,
         message: Message,
-        exchange: Optional[str] = None,
-        routing_key: Optional[str] = None,
+        exchange: str | None = None,
+        routing_key: str | None = None,
     ) -> bool:
         """
         Publish message to queue.
@@ -221,7 +222,7 @@ class MessageQueueAdapter(ABC):
     async def consume(
         self,
         queue: str,
-        callback: Callable[[Dict[str, Any], Dict[str, Any]], Any],
+        callback: Callable[[dict[str, Any], dict[str, Any]], Any],
         ack_mode: AckMode = AckMode.MANUAL,
     ) -> None:
         """
@@ -264,7 +265,7 @@ class MessageQueueAdapter(ABC):
         queue: str,
         durable: bool = True,
         auto_delete: bool = False,
-        arguments: Optional[Dict[str, Any]] = None,
+        arguments: dict[str, Any] | None = None,
     ) -> None:
         """
         Declare a queue.
@@ -375,7 +376,9 @@ class RabbitMQAdapter(MessageQueueAdapter):
             await self._channel.set_qos(prefetch_count=self.config.prefetch_count)
 
             # Declare default exchange
-            self._exchanges[self.config.exchange] = await self._channel.declare_exchange(
+            self._exchanges[
+                self.config.exchange
+            ] = await self._channel.declare_exchange(
                 self.config.exchange,
                 type=self.config.exchange_type,
                 durable=True,
@@ -387,9 +390,7 @@ class RabbitMQAdapter(MessageQueueAdapter):
             )
             self._exchanges[self.config.dlx_exchange] = dlx
 
-            dlq = await self._channel.declare_queue(
-                self.config.dlx_queue, durable=True
-            )
+            dlq = await self._channel.declare_queue(self.config.dlx_queue, durable=True)
             await dlq.bind(dlx)
             self._queues[self.config.dlx_queue] = dlq
 
@@ -397,9 +398,7 @@ class RabbitMQAdapter(MessageQueueAdapter):
             logger.info(f"Connected to RabbitMQ at {self.config.url}")
 
         except ImportError:
-            logger.error(
-                "aio_pika not installed. Install with: pip install aio-pika"
-            )
+            logger.error("aio_pika not installed. Install with: pip install aio-pika")
             raise
         except Exception as e:
             logger.error(f"Failed to connect to RabbitMQ: {e}")
@@ -443,8 +442,8 @@ class RabbitMQAdapter(MessageQueueAdapter):
     async def publish(
         self,
         message: Message,
-        exchange: Optional[str] = None,
-        routing_key: Optional[str] = None,
+        exchange: str | None = None,
+        routing_key: str | None = None,
     ) -> bool:
         """
         Publish message to RabbitMQ exchange.
@@ -504,7 +503,7 @@ class RabbitMQAdapter(MessageQueueAdapter):
     async def consume(
         self,
         queue: str,
-        callback: Callable[[Dict[str, Any], Dict[str, Any]], Any],
+        callback: Callable[[dict[str, Any], dict[str, Any]], Any],
         ack_mode: AckMode = AckMode.MANUAL,
     ) -> None:
         """
@@ -529,11 +528,7 @@ class RabbitMQAdapter(MessageQueueAdapter):
 
             # Define message handler
             async def on_message(message):
-                import aio_pika
-
-                async with message.process(
-                    ignore_processed=ack_mode == AckMode.NONE
-                ):
+                async with message.process(ignore_processed=ack_mode == AckMode.NONE):
                     try:
                         # Deserialize message body
                         body = self.deserialize_message(message.body)
@@ -608,7 +603,7 @@ class RabbitMQAdapter(MessageQueueAdapter):
         queue: str,
         durable: bool = True,
         auto_delete: bool = False,
-        arguments: Optional[Dict[str, Any]] = None,
+        arguments: dict[str, Any] | None = None,
     ) -> None:
         """
         Declare a RabbitMQ queue.
@@ -671,7 +666,9 @@ class RabbitMQAdapter(MessageQueueAdapter):
         exchange_obj = self._exchanges[exchange]
         await queue_obj.bind(exchange_obj, routing_key=routing_key)
 
-        logger.info(f"Bound queue {queue} to exchange {exchange} with key {routing_key}")
+        logger.info(
+            f"Bound queue {queue} to exchange {exchange} with key {routing_key}"
+        )
 
     async def purge_queue(self, queue: str) -> int:
         """
@@ -778,8 +775,8 @@ class RedisQueueAdapter(MessageQueueAdapter):
     async def publish(
         self,
         message: Message,
-        exchange: Optional[str] = None,
-        routing_key: Optional[str] = None,
+        exchange: str | None = None,
+        routing_key: str | None = None,
     ) -> bool:
         """
         Publish message to Redis queue/channel.
@@ -796,7 +793,9 @@ class RedisQueueAdapter(MessageQueueAdapter):
             raise RuntimeError("Not connected to Redis")
 
         try:
-            routing_key = routing_key or message.routing_key or self.config.default_queue
+            routing_key = (
+                routing_key or message.routing_key or self.config.default_queue
+            )
             exchange_name = exchange or self.config.exchange
 
             # Create Redis key (exchange:routing_key)
@@ -840,7 +839,7 @@ class RedisQueueAdapter(MessageQueueAdapter):
     async def consume(
         self,
         queue: str,
-        callback: Callable[[Dict[str, Any], Dict[str, Any]], Any],
+        callback: Callable[[dict[str, Any], dict[str, Any]], Any],
         ack_mode: AckMode = AckMode.MANUAL,
     ) -> None:
         """
@@ -898,9 +897,7 @@ class RedisQueueAdapter(MessageQueueAdapter):
                         await self._redis.lrem(processing_key, 1, serialized)
 
                         # Handle retry logic
-                        retry_count = envelope.get("metadata", {}).get(
-                            "retry_count", 0
-                        )
+                        retry_count = envelope.get("metadata", {}).get("retry_count", 0)
 
                         if retry_count < retry_policy.max_retries:
                             # Update retry count
@@ -929,13 +926,12 @@ class RedisQueueAdapter(MessageQueueAdapter):
                             )
                         else:
                             # Max retries exceeded, send to DLQ
-                            envelope["metadata"]["dlq_reason"] = (
-                                "max_retries_exceeded"
-                            )
+                            envelope["metadata"]["dlq_reason"] = "max_retries_exceeded"
                             envelope["metadata"]["last_error"] = str(e)
 
                             await self._redis.lpush(
-                                dlq_key, json.dumps(envelope, default=str).encode("utf-8")
+                                dlq_key,
+                                json.dumps(envelope, default=str).encode("utf-8"),
                             )
 
                             logger.warning(
@@ -990,7 +986,7 @@ class RedisQueueAdapter(MessageQueueAdapter):
         queue: str,
         durable: bool = True,
         auto_delete: bool = False,
-        arguments: Optional[Dict[str, Any]] = None,
+        arguments: dict[str, Any] | None = None,
     ) -> None:
         """
         Declare a queue (no-op for Redis, queues are created on first use).
@@ -1016,9 +1012,7 @@ class RedisQueueAdapter(MessageQueueAdapter):
             routing_key: Routing key pattern (ignored in Redis)
         """
         # Redis uses key prefixes for routing, so this is a no-op
-        logger.debug(
-            f"Queue {queue} bound to exchange {exchange} (using key prefix)"
-        )
+        logger.debug(f"Queue {queue} bound to exchange {exchange} (using key prefix)")
 
     async def purge_queue(self, queue: str) -> int:
         """
@@ -1051,7 +1045,7 @@ class RedisQueueAdapter(MessageQueueAdapter):
         return total
 
 
-def create_queue_adapter(config: Optional[QueueConfig] = None) -> MessageQueueAdapter:
+def create_queue_adapter(config: QueueConfig | None = None) -> MessageQueueAdapter:
     """
     Factory function to create appropriate queue adapter.
 

@@ -1,4 +1,5 @@
 """Person model - residents and faculty."""
+
 import uuid
 from datetime import datetime
 from enum import Enum
@@ -17,12 +18,13 @@ class FacultyRole(str, Enum):
     Each role has different clinic requirements, FMIT eligibility,
     and call preferences. See FACULTY_SCHEDULING_SPECIFICATION.md.
     """
-    PD = "pd"                    # Program Director: 0 clinic, avoid Tue call
-    APD = "apd"                  # Associate Program Director: 2/week, avoid Tue call
-    OIC = "oic"                  # Officer in Charge: 2/week
-    DEPT_CHIEF = "dept_chief"   # Department Chief: 1/week, prefers Wed call
-    SPORTS_MED = "sports_med"   # Sports Medicine: 0 regular clinic, 4 SM clinic/week
-    CORE = "core"               # Core Faculty: max 4/week
+
+    PD = "pd"  # Program Director: 0 clinic, avoid Tue call
+    APD = "apd"  # Associate Program Director: 2/week, avoid Tue call
+    OIC = "oic"  # Officer in Charge: 2/week
+    DEPT_CHIEF = "dept_chief"  # Department Chief: 1/week, prefers Wed call
+    SPORTS_MED = "sports_med"  # Sports Medicine: 0 regular clinic, 4 SM clinic/week
+    CORE = "core"  # Core Faculty: max 4/week
 
 
 class ScreenerRole(str, Enum):
@@ -31,10 +33,11 @@ class ScreenerRole(str, Enum):
 
     Different roles have different efficiency levels and availability.
     """
-    DEDICATED = "dedicated"     # Dedicated screener (100% efficiency)
-    RN = "rn"                   # Registered Nurse (90% efficiency)
-    EMT = "emt"                 # Emergency Medical Technician (80% efficiency)
-    RESIDENT = "resident"       # Resident serving as screener (70% efficiency)
+
+    DEDICATED = "dedicated"  # Dedicated screener (100% efficiency)
+    RN = "rn"  # Registered Nurse (90% efficiency)
+    EMT = "emt"  # Emergency Medical Technician (80% efficiency)
+    RESIDENT = "resident"  # Resident serving as screener (70% efficiency)
 
 
 class Person(Base):
@@ -44,6 +47,7 @@ class Person(Base):
     Residents have PGY levels (1-3) and are supervised.
     Faculty have specialties and can perform procedures.
     """
+
     __tablename__ = "people"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -55,7 +59,9 @@ class Person(Base):
     pgy_level = Column(Integer)  # 1, 2, or 3 for residents
 
     # Capacity/workload fields
-    target_clinical_blocks = Column(Integer)  # Expected number of clinical blocks per scheduling period
+    target_clinical_blocks = Column(
+        Integer
+    )  # Expected number of clinical blocks per scheduling period
     # Examples:
     # - Regular resident: 48-56 blocks (12-14 weeks * 4 blocks/week)
     # - Chief resident: 24 blocks (6 clinical + 6 admin)
@@ -65,18 +71,32 @@ class Person(Base):
     performs_procedures = Column(Boolean, default=False)
     specialties = Column(StringArrayType())  # e.g., ['Sports Medicine', 'Dermatology']
     primary_duty = Column(String(255))
-    faculty_role = Column(String(50))  # FacultyRole enum value (pd, apd, oic, dept_chief, sports_med, core)
+    faculty_role = Column(
+        String(50)
+    )  # FacultyRole enum value (pd, apd, oic, dept_chief, sports_med, core)
 
     # Screener-specific fields
-    screener_role = Column(String(50))  # ScreenerRole enum value (dedicated, rn, emt, resident)
-    can_screen = Column(Boolean, default=False)  # Whether this person can serve as screener
-    screening_efficiency = Column(Integer, default=100)  # Efficiency percentage (70-100)
+    screener_role = Column(
+        String(50)
+    )  # ScreenerRole enum value (dedicated, rn, emt, resident)
+    can_screen = Column(
+        Boolean, default=False
+    )  # Whether this person can serve as screener
+    screening_efficiency = Column(
+        Integer, default=100
+    )  # Efficiency percentage (70-100)
 
     # Call and FMIT equity tracking (reset annually)
     # These track cumulative counts for fair distribution
-    sunday_call_count = Column(Integer, default=0)     # Sunday calls (tracked separately - worst day)
-    weekday_call_count = Column(Integer, default=0)    # Mon-Thurs calls (combined equity pool)
-    fmit_weeks_count = Column(Integer, default=0)      # FMIT weeks this year (target ~6 max)
+    sunday_call_count = Column(
+        Integer, default=0
+    )  # Sunday calls (tracked separately - worst day)
+    weekday_call_count = Column(
+        Integer, default=0
+    )  # Mon-Thurs calls (combined equity pool)
+    fmit_weeks_count = Column(
+        Integer, default=0
+    )  # FMIT weeks this year (target ~6 max)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -84,25 +104,33 @@ class Person(Base):
 
     # Relationships
     assignments = relationship("Assignment", back_populates="person")
-    absences = relationship("Absence", back_populates="person", foreign_keys="[Absence.person_id]")
+    absences = relationship(
+        "Absence", back_populates="person", foreign_keys="[Absence.person_id]"
+    )
     call_assignments = relationship("CallAssignment", back_populates="person")
-    procedure_credentials = relationship("ProcedureCredential", back_populates="person", cascade="all, delete-orphan")
-    certifications = relationship("PersonCertification", back_populates="person", cascade="all, delete-orphan")
+    procedure_credentials = relationship(
+        "ProcedureCredential", back_populates="person", cascade="all, delete-orphan"
+    )
+    certifications = relationship(
+        "PersonCertification", back_populates="person", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         CheckConstraint("type IN ('resident', 'faculty')", name="check_person_type"),
-        CheckConstraint("pgy_level IS NULL OR pgy_level BETWEEN 1 AND 3", name="check_pgy_level"),
+        CheckConstraint(
+            "pgy_level IS NULL OR pgy_level BETWEEN 1 AND 3", name="check_pgy_level"
+        ),
         CheckConstraint(
             "faculty_role IS NULL OR faculty_role IN ('pd', 'apd', 'oic', 'dept_chief', 'sports_med', 'core')",
-            name="check_faculty_role"
+            name="check_faculty_role",
         ),
         CheckConstraint(
             "screener_role IS NULL OR screener_role IN ('dedicated', 'rn', 'emt', 'resident')",
-            name="check_screener_role"
+            name="check_screener_role",
         ),
         CheckConstraint(
             "screening_efficiency IS NULL OR screening_efficiency BETWEEN 0 AND 100",
-            name="check_screening_efficiency"
+            name="check_screening_efficiency",
         ),
     )
 

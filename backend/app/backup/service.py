@@ -183,9 +183,7 @@ class BackupService:
 
         return strategy_class()
 
-    def _get_last_backup(
-        self, backup_type: str | None = None
-    ) -> dict[str, Any] | None:
+    def _get_last_backup(self, backup_type: str | None = None) -> dict[str, Any] | None:
         """
         Get the most recent backup.
 
@@ -420,9 +418,7 @@ class BackupService:
                 by_type[backup_type]["size_bytes"] += backup.get("size_bytes", 0)
 
             # Sort by created_at
-            sorted_backups = sorted(
-                all_backups, key=lambda x: x.get("created_at", "")
-            )
+            sorted_backups = sorted(all_backups, key=lambda x: x.get("created_at", ""))
 
             return {
                 "total_count": len(all_backups),

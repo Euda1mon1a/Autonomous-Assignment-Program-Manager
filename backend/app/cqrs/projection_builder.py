@@ -38,20 +38,27 @@ Usage:
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from collections import defaultdict
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import Column, DateTime, Integer, String, Text, Boolean, Index, desc, and_
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Index,
+    Integer,
+    String,
+    Text,
+    desc,
+)
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import AppException, ValidationError
-from app.cqrs.commands import DomainEvent
+from app.core.exceptions import AppException
 from app.db.base import Base
 from app.db.types import GUID, JSONType
 from app.events.event_store import EventStore
@@ -370,7 +377,7 @@ class BuildResult:
     projection_name: str
     events_processed: int
     duration_seconds: float
-    error: Optional[str] = None
+    error: str | None = None
     from_sequence: int = 0
     to_sequence: int = 0
 
@@ -392,7 +399,7 @@ class ProjectionBuilder:
     def __init__(
         self,
         db: Session,
-        event_store: Optional[EventStore] = None,
+        event_store: EventStore | None = None,
         max_workers: int = 4,
     ):
         """
@@ -462,8 +469,8 @@ class ProjectionBuilder:
         self,
         projection_name: str,
         mode: BuildMode = BuildMode.INCREMENTAL,
-        from_sequence: Optional[int] = None,
-        to_sequence: Optional[int] = None,
+        from_sequence: int | None = None,
+        to_sequence: int | None = None,
     ) -> BuildResult:
         """
         Build a single projection.
@@ -486,9 +493,7 @@ class ProjectionBuilder:
         projection = self._projections[projection_name]
         metadata = self._get_metadata(projection_name)
 
-        logger.info(
-            f"Starting {mode.value} build for projection: {projection_name}"
-        )
+        logger.info(f"Starting {mode.value} build for projection: {projection_name}")
 
         # Create build log
         build_log = ProjectionBuildLog(
@@ -533,9 +538,7 @@ class ProjectionBuilder:
             )
 
             # Process events
-            events_processed = await self._process_events(
-                projection, events, metadata
-            )
+            events_processed = await self._process_events(projection, events, metadata)
 
             # Update metadata
             if events:
@@ -636,13 +639,15 @@ class ProjectionBuilder:
                     if processed % projection.checkpoint_interval == 0:
                         await self._create_checkpoint(projection, metadata, processed)
 
-                except Exception as e:
+                except Exception:
                     if projection.retry_on_error:
                         # Retry logic
                         retry_count = 0
                         while retry_count < 3:
                             try:
-                                await asyncio.sleep(2 ** retry_count)  # Exponential backoff
+                                await asyncio.sleep(
+                                    2**retry_count
+                                )  # Exponential backoff
                                 await projection.handle_event(event)
                                 processed += 1
                                 break
@@ -705,7 +710,9 @@ class ProjectionBuilder:
         Returns:
             List of build results
         """
-        logger.info(f"Building all projections (mode={mode.value}, parallel={parallel})")
+        logger.info(
+            f"Building all projections (mode={mode.value}, parallel={parallel})"
+        )
 
         if parallel:
             return await self._build_all_parallel(mode)
@@ -790,7 +797,7 @@ class ProjectionBuilder:
 
     async def _get_latest_checkpoint(
         self, projection_name: str
-    ) -> Optional[ProjectionCheckpoint]:
+    ) -> ProjectionCheckpoint | None:
         """Get the latest checkpoint for a projection."""
         return (
             self.db.query(ProjectionCheckpoint)
@@ -813,7 +820,7 @@ class ProjectionBuilder:
         return metadata
 
     async def get_projection_status(
-        self, projection_name: Optional[str] = None
+        self, projection_name: str | None = None
     ) -> dict[str, Any]:
         """
         Get status of projections.
@@ -948,7 +955,9 @@ class ProjectionBuilder:
                 "id": str(log.id),
                 "build_mode": log.build_mode,
                 "started_at": log.started_at.isoformat() if log.started_at else None,
-                "completed_at": log.completed_at.isoformat() if log.completed_at else None,
+                "completed_at": log.completed_at.isoformat()
+                if log.completed_at
+                else None,
                 "duration_seconds": log.duration_seconds,
                 "events_processed": log.events_processed,
                 "success": log.success,
@@ -977,7 +986,9 @@ class ProjectionBuilder:
         max_lag_seconds = 0
         for metadata in all_metadata:
             if metadata.last_event_timestamp:
-                lag = (datetime.utcnow() - metadata.last_event_timestamp).total_seconds()
+                lag = (
+                    datetime.utcnow() - metadata.last_event_timestamp
+                ).total_seconds()
                 max_lag_seconds = max(max_lag_seconds, lag)
 
         return {

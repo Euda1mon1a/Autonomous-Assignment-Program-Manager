@@ -32,12 +32,13 @@ Example:
 
 import logging
 import uuid
+from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Column, DateTime, Integer, String, Text, func
+from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -67,7 +68,9 @@ class MigrationRecord(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False, index=True)
     description = Column(Text)
-    status = Column(String(50), nullable=False, default=MigrationStatus.PENDING.value, index=True)
+    status = Column(
+        String(50), nullable=False, default=MigrationStatus.PENDING.value, index=True
+    )
 
     # Execution details
     batch_size = Column(Integer, default=100)
@@ -101,8 +104,8 @@ class MigrationResult:
         total_records: int = 0,
         processed_records: int = 0,
         failed_records: int = 0,
-        error_message: Optional[str] = None,
-        dry_run: bool = False
+        error_message: str | None = None,
+        dry_run: bool = False,
     ):
         self.migration_id = migration_id
         self.success = success
@@ -144,7 +147,7 @@ class DataMigrator:
         name: str,
         description: str,
         batch_size: int = 100,
-        created_by: Optional[str] = None
+        created_by: str | None = None,
     ) -> UUID:
         """
         Create a new migration record.
@@ -168,7 +171,7 @@ class DataMigrator:
                 description=description,
                 batch_size=batch_size,
                 created_by=created_by,
-                status=MigrationStatus.PENDING.value
+                status=MigrationStatus.PENDING.value,
             )
 
             self.db.add(migration)
@@ -182,7 +185,7 @@ class DataMigrator:
             logger.error(f"Failed to create migration: {e}")
             raise
 
-    def get_migration(self, migration_id: UUID) -> Optional[MigrationRecord]:
+    def get_migration(self, migration_id: UUID) -> MigrationRecord | None:
         """
         Get migration record by ID.
 
@@ -192,15 +195,17 @@ class DataMigrator:
         Returns:
             MigrationRecord if found, None otherwise
         """
-        return self.db.query(MigrationRecord).filter(
-            MigrationRecord.id == migration_id
-        ).first()
+        return (
+            self.db.query(MigrationRecord)
+            .filter(MigrationRecord.id == migration_id)
+            .first()
+        )
 
     def update_status(
         self,
         migration_id: UUID,
         status: MigrationStatus,
-        error_message: Optional[str] = None
+        error_message: str | None = None,
     ) -> None:
         """
         Update migration status.
@@ -219,7 +224,11 @@ class DataMigrator:
         if status == MigrationStatus.RUNNING and not migration.started_at:
             migration.started_at = datetime.utcnow()
 
-        if status in (MigrationStatus.COMPLETED, MigrationStatus.FAILED, MigrationStatus.ROLLED_BACK):
+        if status in (
+            MigrationStatus.COMPLETED,
+            MigrationStatus.FAILED,
+            MigrationStatus.ROLLED_BACK,
+        ):
             migration.completed_at = datetime.utcnow()
 
         if error_message:
@@ -234,7 +243,7 @@ class DataMigrator:
         query: Any,
         transform_func: Callable[[Any], dict[str, Any]],
         dry_run: bool = False,
-        progress_callback: Optional[Callable[[int, int], None]] = None
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> MigrationResult:
         """
         Execute a migration with batch processing.
@@ -337,7 +346,9 @@ class DataMigrator:
 
             # Mark as completed if no failures
             success = failed_records == 0
-            final_status = MigrationStatus.COMPLETED if success else MigrationStatus.FAILED
+            final_status = (
+                MigrationStatus.COMPLETED if success else MigrationStatus.FAILED
+            )
 
             if not dry_run:
                 self.update_status(migration_id, final_status, error_message)
@@ -355,7 +366,7 @@ class DataMigrator:
                 processed_records=processed_records,
                 failed_records=failed_records,
                 error_message=error_message,
-                dry_run=dry_run
+                dry_run=dry_run,
             )
 
         except Exception as e:
@@ -363,11 +374,7 @@ class DataMigrator:
             self.db.rollback()
 
             if not dry_run:
-                self.update_status(
-                    migration_id,
-                    MigrationStatus.FAILED,
-                    str(e)
-                )
+                self.update_status(migration_id, MigrationStatus.FAILED, str(e))
 
             return MigrationResult(
                 migration_id=migration_id,
@@ -376,14 +383,14 @@ class DataMigrator:
                 processed_records=processed_records,
                 failed_records=failed_records,
                 error_message=str(e),
-                dry_run=dry_run
+                dry_run=dry_run,
             )
 
     def execute_custom_migration(
         self,
         migration_id: UUID,
         migration_func: Callable[[Session], None],
-        dry_run: bool = False
+        dry_run: bool = False,
     ) -> MigrationResult:
         """
         Execute a custom migration function.
@@ -436,9 +443,7 @@ class DataMigrator:
             logger.info(f"Custom migration {migration_id} completed successfully")
 
             return MigrationResult(
-                migration_id=migration_id,
-                success=True,
-                dry_run=dry_run
+                migration_id=migration_id, success=True, dry_run=dry_run
             )
 
         except Exception as e:
@@ -452,13 +457,11 @@ class DataMigrator:
                 migration_id=migration_id,
                 success=False,
                 error_message=str(e),
-                dry_run=dry_run
+                dry_run=dry_run,
             )
 
     def list_migrations(
-        self,
-        status: Optional[MigrationStatus] = None,
-        limit: int = 50
+        self, status: MigrationStatus | None = None, limit: int = 50
     ) -> list[MigrationRecord]:
         """
         List migrations with optional filtering.
@@ -503,8 +506,14 @@ class DataMigrator:
             "processed_records": migration.processed_records,
             "failed_records": migration.failed_records,
             "progress_percentage": round(progress_pct, 2),
-            "created_at": migration.created_at.isoformat() if migration.created_at else None,
-            "started_at": migration.started_at.isoformat() if migration.started_at else None,
-            "completed_at": migration.completed_at.isoformat() if migration.completed_at else None,
-            "error_message": migration.error_message
+            "created_at": migration.created_at.isoformat()
+            if migration.created_at
+            else None,
+            "started_at": migration.started_at.isoformat()
+            if migration.started_at
+            else None,
+            "completed_at": migration.completed_at.isoformat()
+            if migration.completed_at
+            else None,
+            "error_message": migration.error_message,
         }

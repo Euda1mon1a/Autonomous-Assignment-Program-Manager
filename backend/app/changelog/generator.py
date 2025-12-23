@@ -77,7 +77,7 @@ class VersionHistory:
             logger.warning(f"Version {version} not found at {version_file}")
             return None
 
-        with open(version_file, "r") as f:
+        with open(version_file) as f:
             data = json.load(f)
 
         return data
@@ -93,13 +93,15 @@ class VersionHistory:
 
         for version_file in self.storage_path.glob("*.json"):
             try:
-                with open(version_file, "r") as f:
+                with open(version_file) as f:
                     data = json.load(f)
-                    versions.append({
-                        "version": data.get("version"),
-                        "saved_at": data.get("saved_at"),
-                        "metadata": data.get("metadata", {}),
-                    })
+                    versions.append(
+                        {
+                            "version": data.get("version"),
+                            "saved_at": data.get("saved_at"),
+                            "metadata": data.get("metadata", {}),
+                        }
+                    )
             except Exception as e:
                 logger.error(f"Error reading {version_file}: {e}")
 
@@ -322,7 +324,9 @@ class ChangelogGenerator:
 
             # Details
             if change.path:
-                lines.append(f"**Affected Endpoint:** `{change.method or ''} {change.path}`")
+                lines.append(
+                    f"**Affected Endpoint:** `{change.method or ''} {change.path}`"
+                )
                 lines.append("")
 
             # Migration guide

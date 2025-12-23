@@ -7,6 +7,7 @@ Tests for:
 - Password hashing
 - JWT token handling
 """
+
 from datetime import timedelta
 
 import pytest
@@ -88,7 +89,7 @@ class TestConfigurationSettings:
         monkeypatch.setenv("DEBUG", "false")
         monkeypatch.setenv(
             "CORS_ORIGINS",
-            '["https://scheduler.hospital.org","https://scheduler-staging.hospital.org"]'
+            '["https://scheduler.hospital.org","https://scheduler-staging.hospital.org"]',
         )
 
         settings = Settings()
@@ -352,7 +353,9 @@ class TestSecretValidation:
         monkeypatch.setenv("DEBUG", "false")
         monkeypatch.setenv("REDIS_PASSWORD", "")
 
-        with pytest.raises(ValueError, match="REDIS_PASSWORD must be set in production"):
+        with pytest.raises(
+            ValueError, match="REDIS_PASSWORD must be set in production"
+        ):
             Settings()
 
     def test_redis_password_allows_empty_debug(self, monkeypatch):
@@ -401,17 +404,23 @@ class TestSecretValidation:
         from app.core.config import Settings
 
         monkeypatch.setenv("DEBUG", "false")
-        monkeypatch.setenv("DATABASE_URL", "postgresql://user:password@localhost:5432/db")
+        monkeypatch.setenv(
+            "DATABASE_URL", "postgresql://user:password@localhost:5432/db"
+        )
 
         with pytest.raises(ValueError, match="known weak/default password"):
             Settings()
 
-    def test_database_url_rejects_default_scheduler_password_production(self, monkeypatch):
+    def test_database_url_rejects_default_scheduler_password_production(
+        self, monkeypatch
+    ):
         """Test that DATABASE_URL rejects default 'scheduler' password in production."""
         from app.core.config import Settings
 
         monkeypatch.setenv("DEBUG", "false")
-        monkeypatch.setenv("DATABASE_URL", "postgresql://scheduler:scheduler@localhost:5432/db")
+        monkeypatch.setenv(
+            "DATABASE_URL", "postgresql://scheduler:scheduler@localhost:5432/db"
+        )
 
         with pytest.raises(ValueError, match="known weak/default password"):
             Settings()
@@ -431,7 +440,9 @@ class TestSecretValidation:
         from app.core.config import Settings
 
         monkeypatch.setenv("DEBUG", "true")
-        monkeypatch.setenv("DATABASE_URL", "postgresql://scheduler:scheduler@localhost:5432/db")
+        monkeypatch.setenv(
+            "DATABASE_URL", "postgresql://scheduler:scheduler@localhost:5432/db"
+        )
 
         # Should succeed in debug mode
         settings = Settings()
@@ -444,7 +455,7 @@ class TestSecretValidation:
         monkeypatch.setenv("DEBUG", "false")
         monkeypatch.setenv(
             "DATABASE_URL",
-            "postgresql://user:very_strong_db_password_123456@localhost:5432/db"
+            "postgresql://user:very_strong_db_password_123456@localhost:5432/db",
         )
 
         settings = Settings()
@@ -463,6 +474,7 @@ class TestSecretValidation:
     def test_all_secrets_strong_production(self, monkeypatch):
         """Test that all secrets can be strong in production."""
         import secrets
+
         from app.core.config import Settings
 
         monkeypatch.setenv("DEBUG", "false")
@@ -471,7 +483,7 @@ class TestSecretValidation:
         monkeypatch.setenv("REDIS_PASSWORD", secrets.token_urlsafe(32))
         monkeypatch.setenv(
             "DATABASE_URL",
-            f"postgresql://user:{secrets.token_urlsafe(32)}@localhost:5432/db"
+            f"postgresql://user:{secrets.token_urlsafe(32)}@localhost:5432/db",
         )
 
         # Should succeed with all strong secrets

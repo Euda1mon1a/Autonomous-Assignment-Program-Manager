@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from sqlalchemy import and_, case, cast, func, or_, text, String
+from sqlalchemy import String, and_, case, cast, func, or_, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import select
@@ -28,11 +28,11 @@ class SearchBackend(ABC):
     async def search(
         self,
         query: str,
-        entity_types: List[str],
-        filters: Optional[Dict[str, Any]] = None,
+        entity_types: list[str],
+        filters: dict[str, Any] | None = None,
         limit: int = 20,
         offset: int = 0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute search query.
 
@@ -54,7 +54,7 @@ class SearchBackend(ABC):
         query: str,
         entity_type: str,
         limit: int = 10,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Get search suggestions/autocomplete.
 
@@ -80,7 +80,7 @@ class PostgreSQLSearchBackend(SearchBackend):
     def __init__(
         self,
         db: Session,
-        analyzer: Optional[SearchAnalyzer] = None,
+        analyzer: SearchAnalyzer | None = None,
     ):
         """
         Initialize PostgreSQL search backend.
@@ -95,11 +95,11 @@ class PostgreSQLSearchBackend(SearchBackend):
     async def search(
         self,
         query: str,
-        entity_types: List[str],
-        filters: Optional[Dict[str, Any]] = None,
+        entity_types: list[str],
+        filters: dict[str, Any] | None = None,
         limit: int = 20,
         offset: int = 0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute search across specified entity types.
 
@@ -120,57 +120,57 @@ class PostgreSQLSearchBackend(SearchBackend):
 
         # Process query with analyzer
         tokens = self.analyzer.analyze(query)
-        search_query = ' & '.join(tokens) if tokens else query
+        search_query = " & ".join(tokens) if tokens else query
 
         # Search each entity type
         for entity_type in entity_types:
-            if entity_type == 'person':
+            if entity_type == "person":
                 entity_results = await self._search_people(
                     search_query, filters, limit, offset
                 )
-            elif entity_type == 'rotation':
+            elif entity_type == "rotation":
                 entity_results = await self._search_rotations(
                     search_query, filters, limit, offset
                 )
-            elif entity_type == 'procedure':
+            elif entity_type == "procedure":
                 entity_results = await self._search_procedures(
                     search_query, filters, limit, offset
                 )
-            elif entity_type == 'swap':
+            elif entity_type == "swap":
                 entity_results = await self._search_swaps(
                     search_query, filters, limit, offset
                 )
             else:
                 continue
 
-            results.extend(entity_results['items'])
-            total += entity_results['total']
+            results.extend(entity_results["items"])
+            total += entity_results["total"]
 
             # Merge facets
-            if 'facets' in entity_results:
-                for key, value in entity_results['facets'].items():
+            if "facets" in entity_results:
+                for key, value in entity_results["facets"].items():
                     if key not in facets:
                         facets[key] = {}
                     for k, v in value.items():
                         facets[key][k] = facets[key].get(k, 0) + v
 
         # Sort by relevance score (if available)
-        results.sort(key=lambda x: x.get('score', 0), reverse=True)
+        results.sort(key=lambda x: x.get("score", 0), reverse=True)
 
         return {
-            'items': results[:limit],
-            'total': total,
-            'facets': facets,
-            'query': query,
+            "items": results[:limit],
+            "total": total,
+            "facets": facets,
+            "query": query,
         }
 
     async def _search_people(
         self,
         query: str,
-        filters: Dict[str, Any],
+        filters: dict[str, Any],
         limit: int,
         offset: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Search people (residents and faculty).
 
@@ -189,22 +189,22 @@ class PostgreSQLSearchBackend(SearchBackend):
         # Apply filters
         conditions = []
 
-        if 'type' in filters:
-            conditions.append(Person.type == filters['type'])
+        if "type" in filters:
+            conditions.append(Person.type == filters["type"])
 
-        if 'pgy_level' in filters:
-            conditions.append(Person.pgy_level == filters['pgy_level'])
+        if "pgy_level" in filters:
+            conditions.append(Person.pgy_level == filters["pgy_level"])
 
-        if 'faculty_role' in filters:
-            conditions.append(Person.faculty_role == filters['faculty_role'])
+        if "faculty_role" in filters:
+            conditions.append(Person.faculty_role == filters["faculty_role"])
 
         # Full-text search on name and email
         if query:
             # Use PostgreSQL ILIKE for simple pattern matching
             # In production, consider using tsvector for better performance
             search_condition = or_(
-                Person.name.ilike(f'%{query}%'),
-                Person.email.ilike(f'%{query}%'),
+                Person.name.ilike(f"%{query}%"),
+                Person.email.ilike(f"%{query}%"),
             )
             conditions.append(search_condition)
 
@@ -221,11 +221,11 @@ class PostgreSQLSearchBackend(SearchBackend):
         if query:
             stmt = stmt.order_by(
                 case(
-                    (Person.name.ilike(f'{query}%'), 1),  # Starts with query
-                    (Person.name.ilike(f'%{query}%'), 2),  # Contains query
-                    else_=3
+                    (Person.name.ilike(f"{query}%"), 1),  # Starts with query
+                    (Person.name.ilike(f"%{query}%"), 2),  # Contains query
+                    else_=3,
                 ),
-                Person.name
+                Person.name,
             )
         else:
             stmt = stmt.order_by(Person.name)
@@ -243,30 +243,30 @@ class PostgreSQLSearchBackend(SearchBackend):
         # Format results
         items = [
             {
-                'id': str(person.id),
-                'type': 'person',
-                'entity': person,
-                'title': person.name,
-                'subtitle': f"{person.type.title()} - {person.email or 'No email'}",
-                'score': self._calculate_relevance_score(person.name, query),
-                'highlights': self._highlight_text(person.name, query),
+                "id": str(person.id),
+                "type": "person",
+                "entity": person,
+                "title": person.name,
+                "subtitle": f"{person.type.title()} - {person.email or 'No email'}",
+                "score": self._calculate_relevance_score(person.name, query),
+                "highlights": self._highlight_text(person.name, query),
             }
             for person in people
         ]
 
         return {
-            'items': items,
-            'total': total,
-            'facets': facets,
+            "items": items,
+            "total": total,
+            "facets": facets,
         }
 
     async def _search_rotations(
         self,
         query: str,
-        filters: Dict[str, Any],
+        filters: dict[str, Any],
         limit: int,
         offset: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Search rotation templates."""
         stmt = select(RotationTemplate)
 
@@ -274,13 +274,13 @@ class PostgreSQLSearchBackend(SearchBackend):
 
         if query:
             search_condition = or_(
-                RotationTemplate.name.ilike(f'%{query}%'),
-                RotationTemplate.abbreviation.ilike(f'%{query}%'),
+                RotationTemplate.name.ilike(f"%{query}%"),
+                RotationTemplate.abbreviation.ilike(f"%{query}%"),
             )
             conditions.append(search_condition)
 
-        if 'category' in filters:
-            conditions.append(RotationTemplate.category == filters['category'])
+        if "category" in filters:
+            conditions.append(RotationTemplate.category == filters["category"])
 
         if conditions:
             stmt = stmt.where(and_(*conditions))
@@ -294,11 +294,11 @@ class PostgreSQLSearchBackend(SearchBackend):
         if query:
             stmt = stmt.order_by(
                 case(
-                    (RotationTemplate.name.ilike(f'{query}%'), 1),
-                    (RotationTemplate.name.ilike(f'%{query}%'), 2),
-                    else_=3
+                    (RotationTemplate.name.ilike(f"{query}%"), 1),
+                    (RotationTemplate.name.ilike(f"%{query}%"), 2),
+                    else_=3,
                 ),
-                RotationTemplate.name
+                RotationTemplate.name,
             )
         else:
             stmt = stmt.order_by(RotationTemplate.name)
@@ -310,30 +310,30 @@ class PostgreSQLSearchBackend(SearchBackend):
 
         items = [
             {
-                'id': str(rotation.id),
-                'type': 'rotation',
-                'entity': rotation,
-                'title': rotation.name,
-                'subtitle': f"Category: {rotation.category or 'N/A'}",
-                'score': self._calculate_relevance_score(rotation.name, query),
-                'highlights': self._highlight_text(rotation.name, query),
+                "id": str(rotation.id),
+                "type": "rotation",
+                "entity": rotation,
+                "title": rotation.name,
+                "subtitle": f"Category: {rotation.category or 'N/A'}",
+                "score": self._calculate_relevance_score(rotation.name, query),
+                "highlights": self._highlight_text(rotation.name, query),
             }
             for rotation in rotations
         ]
 
         return {
-            'items': items,
-            'total': total,
-            'facets': {},
+            "items": items,
+            "total": total,
+            "facets": {},
         }
 
     async def _search_procedures(
         self,
         query: str,
-        filters: Dict[str, Any],
+        filters: dict[str, Any],
         limit: int,
         offset: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Search procedures."""
         stmt = select(Procedure)
 
@@ -341,8 +341,8 @@ class PostgreSQLSearchBackend(SearchBackend):
 
         if query:
             search_condition = or_(
-                Procedure.name.ilike(f'%{query}%'),
-                cast(Procedure.cpt_codes, String).ilike(f'%{query}%'),
+                Procedure.name.ilike(f"%{query}%"),
+                cast(Procedure.cpt_codes, String).ilike(f"%{query}%"),
             )
             conditions.append(search_condition)
 
@@ -363,40 +363,40 @@ class PostgreSQLSearchBackend(SearchBackend):
 
         items = [
             {
-                'id': str(procedure.id),
-                'type': 'procedure',
-                'entity': procedure,
-                'title': procedure.name,
-                'subtitle': f"CPT: {', '.join(procedure.cpt_codes or [])}",
-                'score': self._calculate_relevance_score(procedure.name, query),
-                'highlights': self._highlight_text(procedure.name, query),
+                "id": str(procedure.id),
+                "type": "procedure",
+                "entity": procedure,
+                "title": procedure.name,
+                "subtitle": f"CPT: {', '.join(procedure.cpt_codes or [])}",
+                "score": self._calculate_relevance_score(procedure.name, query),
+                "highlights": self._highlight_text(procedure.name, query),
             }
             for procedure in procedures
         ]
 
         return {
-            'items': items,
-            'total': total,
-            'facets': {},
+            "items": items,
+            "total": total,
+            "facets": {},
         }
 
     async def _search_swaps(
         self,
         query: str,
-        filters: Dict[str, Any],
+        filters: dict[str, Any],
         limit: int,
         offset: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Search swap records."""
         stmt = select(SwapRecord)
 
         conditions = []
 
-        if 'status' in filters:
-            conditions.append(SwapRecord.status == filters['status'])
+        if "status" in filters:
+            conditions.append(SwapRecord.status == filters["status"])
 
-        if 'swap_type' in filters:
-            conditions.append(SwapRecord.swap_type == filters['swap_type'])
+        if "swap_type" in filters:
+            conditions.append(SwapRecord.swap_type == filters["swap_type"])
 
         if conditions:
             stmt = stmt.where(and_(*conditions))
@@ -415,27 +415,27 @@ class PostgreSQLSearchBackend(SearchBackend):
 
         items = [
             {
-                'id': str(swap.id),
-                'type': 'swap',
-                'entity': swap,
-                'title': f"Swap Request - {swap.swap_type}",
-                'subtitle': f"Status: {swap.status}",
-                'score': 1.0,
-                'highlights': {},
+                "id": str(swap.id),
+                "type": "swap",
+                "entity": swap,
+                "title": f"Swap Request - {swap.swap_type}",
+                "subtitle": f"Status: {swap.status}",
+                "score": 1.0,
+                "highlights": {},
             }
             for swap in swaps
         ]
 
         return {
-            'items': items,
-            'total': total,
-            'facets': {},
+            "items": items,
+            "total": total,
+            "facets": {},
         }
 
     async def _calculate_people_facets(
         self,
-        conditions: List,
-    ) -> Dict[str, Dict[str, int]]:
+        conditions: list,
+    ) -> dict[str, dict[str, int]]:
         """
         Calculate facet counts for people search.
 
@@ -448,28 +448,30 @@ class PostgreSQLSearchBackend(SearchBackend):
         facets = {}
 
         # Type facets (resident vs faculty)
-        type_stmt = select(
-            Person.type,
-            func.count(Person.id).label('count')
-        ).group_by(Person.type)
+        type_stmt = select(Person.type, func.count(Person.id).label("count")).group_by(
+            Person.type
+        )
 
         if conditions:
             type_stmt = type_stmt.where(and_(*conditions))
 
         type_result = await self.db.execute(type_stmt)
-        facets['type'] = {row[0]: row[1] for row in type_result.all()}
+        facets["type"] = {row[0]: row[1] for row in type_result.all()}
 
         # PGY level facets (for residents)
-        pgy_stmt = select(
-            Person.pgy_level,
-            func.count(Person.id).label('count')
-        ).where(Person.pgy_level.isnot(None)).group_by(Person.pgy_level)
+        pgy_stmt = (
+            select(Person.pgy_level, func.count(Person.id).label("count"))
+            .where(Person.pgy_level.isnot(None))
+            .group_by(Person.pgy_level)
+        )
 
         if conditions:
             pgy_stmt = pgy_stmt.where(and_(*conditions))
 
         pgy_result = await self.db.execute(pgy_stmt)
-        facets['pgy_level'] = {f'PGY-{row[0]}': row[1] for row in pgy_result.all() if row[0]}
+        facets["pgy_level"] = {
+            f"PGY-{row[0]}": row[1] for row in pgy_result.all() if row[0]
+        }
 
         return facets
 
@@ -478,7 +480,7 @@ class PostgreSQLSearchBackend(SearchBackend):
         query: str,
         entity_type: str,
         limit: int = 10,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Get autocomplete suggestions.
 
@@ -492,20 +494,26 @@ class PostgreSQLSearchBackend(SearchBackend):
         """
         suggestions = []
 
-        if entity_type == 'person':
+        if entity_type == "person":
             # Get person name suggestions
-            stmt = select(Person.name).where(
-                Person.name.ilike(f'{query}%')
-            ).order_by(Person.name).limit(limit)
+            stmt = (
+                select(Person.name)
+                .where(Person.name.ilike(f"{query}%"))
+                .order_by(Person.name)
+                .limit(limit)
+            )
 
             result = await self.db.execute(stmt)
             suggestions = [row[0] for row in result.all()]
 
-        elif entity_type == 'rotation':
+        elif entity_type == "rotation":
             # Get rotation name suggestions
-            stmt = select(RotationTemplate.name).where(
-                RotationTemplate.name.ilike(f'{query}%')
-            ).order_by(RotationTemplate.name).limit(limit)
+            stmt = (
+                select(RotationTemplate.name)
+                .where(RotationTemplate.name.ilike(f"{query}%"))
+                .order_by(RotationTemplate.name)
+                .limit(limit)
+            )
 
             result = await self.db.execute(stmt)
             suggestions = [row[0] for row in result.all()]
@@ -550,7 +558,7 @@ class PostgreSQLSearchBackend(SearchBackend):
 
         return 0.1
 
-    def _highlight_text(self, text: str, query: str) -> Dict[str, List[str]]:
+    def _highlight_text(self, text: str, query: str) -> dict[str, list[str]]:
         """
         Generate highlighted fragments of text matching query.
 
@@ -583,9 +591,9 @@ class PostgreSQLSearchBackend(SearchBackend):
 
             # Add ellipsis if truncated
             if fragment_start > 0:
-                fragment = '...' + fragment
+                fragment = "..." + fragment
             if fragment_end < len(text):
-                fragment = fragment + '...'
+                fragment = fragment + "..."
 
             highlights.append(fragment)
             start = pos + len(query)
@@ -594,4 +602,4 @@ class PostgreSQLSearchBackend(SearchBackend):
             if len(highlights) >= 3:
                 break
 
-        return {'highlights': highlights} if highlights else {}
+        return {"highlights": highlights} if highlights else {}

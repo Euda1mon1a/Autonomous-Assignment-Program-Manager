@@ -1,8 +1,8 @@
 """Tests for OAuth2 PKCE implementation."""
-import pytest
-from datetime import datetime, timedelta
-from uuid import uuid4
 
+from datetime import datetime, timedelta
+
+import pytest
 from fastapi import HTTPException
 
 from app.auth.oauth2_pkce import (
@@ -168,7 +168,9 @@ class TestAuthorizationFlow:
         assert response.state == "random_state"
 
         # Verify code is stored in database
-        auth_code = db.query(OAuth2AuthorizationCode).filter_by(code=response.code).first()
+        auth_code = (
+            db.query(OAuth2AuthorizationCode).filter_by(code=response.code).first()
+        )
         assert auth_code is not None
         assert auth_code.user_id == test_user.id
         assert auth_code.code_challenge == code_challenge
@@ -189,7 +191,9 @@ class TestAuthorizationFlow:
         assert exc_info.value.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_create_authorization_code_invalid_redirect_uri(self, db, pkce_client, test_user):
+    async def test_create_authorization_code_invalid_redirect_uri(
+        self, db, pkce_client, test_user
+    ):
         """Test authorization code creation with invalid redirect URI."""
         request = AuthorizationRequest(
             client_id=pkce_client.client_id,
@@ -208,7 +212,9 @@ class TestTokenExchange:
     """Test token exchange with PKCE validation."""
 
     @pytest.mark.asyncio
-    async def test_exchange_code_for_token_success(self, db, auth_code_with_pkce, pkce_client):
+    async def test_exchange_code_for_token_success(
+        self, db, auth_code_with_pkce, pkce_client
+    ):
         """Test successful token exchange."""
         request = TokenRequest(
             code=auth_code_with_pkce["code"],
@@ -224,13 +230,17 @@ class TestTokenExchange:
         assert response.expires_in > 0
 
         # Verify code is marked as used
-        auth_code = db.query(OAuth2AuthorizationCode).filter_by(
-            code=auth_code_with_pkce["code"]
-        ).first()
+        auth_code = (
+            db.query(OAuth2AuthorizationCode)
+            .filter_by(code=auth_code_with_pkce["code"])
+            .first()
+        )
         assert auth_code.is_used == "true"
 
     @pytest.mark.asyncio
-    async def test_exchange_code_invalid_verifier(self, db, auth_code_with_pkce, pkce_client):
+    async def test_exchange_code_invalid_verifier(
+        self, db, auth_code_with_pkce, pkce_client
+    ):
         """Test token exchange with invalid code verifier."""
         request = TokenRequest(
             code=auth_code_with_pkce["code"],
@@ -246,7 +256,9 @@ class TestTokenExchange:
         assert "Invalid code verifier" in exc_info.value.detail
 
     @pytest.mark.asyncio
-    async def test_exchange_code_already_used(self, db, auth_code_with_pkce, pkce_client):
+    async def test_exchange_code_already_used(
+        self, db, auth_code_with_pkce, pkce_client
+    ):
         """Test token exchange with already used code."""
         # Use the code first time
         request = TokenRequest(
@@ -298,7 +310,9 @@ class TestTokenExchange:
         assert "expired" in exc_info.value.detail
 
     @pytest.mark.asyncio
-    async def test_exchange_code_redirect_uri_mismatch(self, db, auth_code_with_pkce, pkce_client):
+    async def test_exchange_code_redirect_uri_mismatch(
+        self, db, auth_code_with_pkce, pkce_client
+    ):
         """Test token exchange with mismatched redirect URI."""
         # Add another redirect URI to the client
         pkce_client.redirect_uris.append("https://other.com/callback")
@@ -374,6 +388,7 @@ class TestStateValidation:
 
 
 # Pytest fixtures
+
 
 @pytest.fixture
 def test_user(db):

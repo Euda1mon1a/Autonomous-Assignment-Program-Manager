@@ -4,10 +4,11 @@ Performance test fixtures and configuration.
 Provides shared fixtures for creating large-scale test data and measuring
 performance metrics across ACGME compliance validation tests.
 """
+
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import date, timedelta
-from typing import Generator
 from uuid import uuid4
 
 import pytest
@@ -24,8 +25,8 @@ from app.models.rotation_template import RotationTemplate
 
 # ACGME validation should complete quickly even for large datasets
 MAX_VALIDATION_TIME_100_RESIDENTS = 5.0  # seconds
-MAX_VALIDATION_TIME_50_RESIDENTS = 2.0   # seconds
-MAX_VALIDATION_TIME_25_RESIDENTS = 1.0   # seconds
+MAX_VALIDATION_TIME_50_RESIDENTS = 2.0  # seconds
+MAX_VALIDATION_TIME_25_RESIDENTS = 1.0  # seconds
 
 # Concurrent validation should not degrade significantly
 MAX_CONCURRENT_VALIDATION_TIME = 10.0  # seconds for 10 concurrent validations
@@ -37,6 +38,7 @@ MAX_MEMORY_MB = 500  # MB per validation operation
 # ============================================================================
 # Performance Measurement Utilities
 # ============================================================================
+
 
 class PerformanceTimer:
     """Context manager for measuring execution time."""
@@ -71,8 +73,10 @@ class PerformanceTimer:
 @pytest.fixture
 def perf_timer():
     """Fixture that provides a performance timer."""
+
     def _timer(name: str = "Operation") -> PerformanceTimer:
         return PerformanceTimer(name)
+
     return _timer
 
 
@@ -99,6 +103,7 @@ def measure_time(operation_name: str) -> Generator[dict, None, None]:
 # ============================================================================
 # Large Dataset Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def large_rotation_template(db: Session) -> RotationTemplate:
@@ -144,9 +149,9 @@ def large_resident_dataset(db: Session) -> dict:
         for i in range(count):
             resident = Person(
                 id=uuid4(),
-                name=f"Resident PGY{pgy_level}-{i+1:03d}",
+                name=f"Resident PGY{pgy_level}-{i + 1:03d}",
                 type="resident",
-                email=f"pgy{pgy_level}.r{i+1:03d}@hospital.org",
+                email=f"pgy{pgy_level}.r{i + 1:03d}@hospital.org",
                 pgy_level=pgy_level,
                 target_clinical_blocks=48,  # ~12 weeks clinical
             )
@@ -181,9 +186,9 @@ def large_faculty_dataset(db: Session) -> list[Person]:
     for i in range(30):
         fac = Person(
             id=uuid4(),
-            name=f"Faculty {i+1:03d}",
+            name=f"Faculty {i + 1:03d}",
             type="faculty",
-            email=f"faculty{i+1:03d}@hospital.org",
+            email=f"faculty{i + 1:03d}@hospital.org",
             performs_procedures=(i % 3 == 0),  # 1/3 perform procedures
             specialties=["Primary Care", "General Medicine"],
             primary_duty="Clinical Education",
@@ -296,7 +301,9 @@ def large_assignment_dataset(
         if not block.is_weekend:
             # Assign 2-3 faculty per weekday block for supervision
             for _ in range(3):
-                faculty = large_faculty_dataset[faculty_idx % len(large_faculty_dataset)]
+                faculty = large_faculty_dataset[
+                    faculty_idx % len(large_faculty_dataset)
+                ]
                 assignment = Assignment(
                     id=uuid4(),
                     block_id=block.id,
@@ -396,6 +403,7 @@ def huge_dataset(
 # Performance Assertion Helpers
 # ============================================================================
 
+
 def assert_performance(duration: float, max_duration: float, operation: str):
     """
     Assert that an operation completed within the performance threshold.
@@ -411,6 +419,8 @@ def assert_performance(duration: float, max_duration: float, operation: str):
     assert duration <= max_duration, (
         f"{operation} took {duration:.3f}s, "
         f"exceeding threshold of {max_duration:.3f}s "
-        f"(slowdown: {((duration/max_duration - 1) * 100):.1f}%)"
+        f"(slowdown: {((duration / max_duration - 1) * 100):.1f}%)"
     )
-    print(f"✓ {operation} completed in {duration:.3f}s (threshold: {max_duration:.3f}s)")
+    print(
+        f"✓ {operation} completed in {duration:.3f}s (threshold: {max_duration:.3f}s)"
+    )

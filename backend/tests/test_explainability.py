@@ -8,6 +8,7 @@ Tests cover:
 - Alternative candidate tracking
 - Audit hash computation
 """
+
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
@@ -32,9 +33,13 @@ from app.schemas.explainability import (
 # Test Fixtures
 # ============================================================================
 
+
 class MockPerson:
     """Mock person for testing."""
-    def __init__(self, id=None, name="Test Person", person_type="resident", pgy_level=1):
+
+    def __init__(
+        self, id=None, name="Test Person", person_type="resident", pgy_level=1
+    ):
         self.id = id or uuid4()
         self.name = name
         self.type = person_type
@@ -43,6 +48,7 @@ class MockPerson:
 
 class MockBlock:
     """Mock block for testing."""
+
     def __init__(self, id=None, block_date=None, time_of_day="AM", is_weekend=False):
         self.id = id or uuid4()
         self.date = block_date or date.today()
@@ -52,7 +58,14 @@ class MockBlock:
 
 class MockTemplate:
     """Mock rotation template for testing."""
-    def __init__(self, id=None, name="Test Rotation", max_residents=None, requires_procedure_credential=False):
+
+    def __init__(
+        self,
+        id=None,
+        name="Test Rotation",
+        max_residents=None,
+        requires_procedure_credential=False,
+    ):
         self.id = id or uuid4()
         self.name = name
         self.max_residents = max_residents
@@ -63,8 +76,7 @@ class MockTemplate:
 def explainability_context():
     """Create a context for explainability tests."""
     residents = [
-        MockPerson(name=f"Resident {i}", pgy_level=(i % 3) + 1)
-        for i in range(5)
+        MockPerson(name=f"Resident {i}", pgy_level=(i % 3) + 1) for i in range(5)
     ]
     faculty = [MockPerson(name="Faculty 1", person_type="faculty", pgy_level=None)]
 
@@ -73,11 +85,13 @@ def explainability_context():
     for day_offset in range(5):
         block_date = start_date + timedelta(days=day_offset)
         for tod in ["AM", "PM"]:
-            blocks.append(MockBlock(
-                block_date=block_date,
-                time_of_day=tod,
-                is_weekend=False,
-            ))
+            blocks.append(
+                MockBlock(
+                    block_date=block_date,
+                    time_of_day=tod,
+                    is_weekend=False,
+                )
+            )
 
     templates = [MockTemplate(name="Clinic")]
 
@@ -109,6 +123,7 @@ def constraint_manager():
 # ExplainabilityService Tests
 # ============================================================================
 
+
 class TestExplainabilityService:
     """Tests for ExplainabilityService."""
 
@@ -124,7 +139,9 @@ class TestExplainabilityService:
         assert service.context is explainability_context
         assert len(service._person_names) == 6  # 5 residents + 1 faculty
 
-    def test_explain_assignment_returns_explanation(self, explainability_context, constraint_manager):
+    def test_explain_assignment_returns_explanation(
+        self, explainability_context, constraint_manager
+    ):
         """Test that explain_assignment returns a valid explanation."""
         service = ExplainabilityService(
             context=explainability_context,
@@ -152,9 +169,15 @@ class TestExplainabilityService:
         assert explanation.person_name == selected.name
         assert explanation.inputs.block_id == block.id
         assert explanation.inputs.rotation_name == template.name
-        assert explanation.confidence in [ConfidenceLevel.HIGH, ConfidenceLevel.MEDIUM, ConfidenceLevel.LOW]
+        assert explanation.confidence in [
+            ConfidenceLevel.HIGH,
+            ConfidenceLevel.MEDIUM,
+            ConfidenceLevel.LOW,
+        ]
 
-    def test_explain_assignment_includes_alternatives(self, explainability_context, constraint_manager):
+    def test_explain_assignment_includes_alternatives(
+        self, explainability_context, constraint_manager
+    ):
         """Test that explanation includes alternative candidates."""
         service = ExplainabilityService(
             context=explainability_context,
@@ -184,7 +207,9 @@ class TestExplainabilityService:
         for alt in explanation.alternatives:
             assert alt.person_id != selected.id
 
-    def test_explain_assignment_evaluates_constraints(self, explainability_context, constraint_manager):
+    def test_explain_assignment_evaluates_constraints(
+        self, explainability_context, constraint_manager
+    ):
         """Test that explanation includes constraint evaluations."""
         service = ExplainabilityService(
             context=explainability_context,
@@ -212,10 +237,14 @@ class TestExplainabilityService:
         assert len(explanation.constraints_evaluated) > 0
 
         # Should have at least availability constraint
-        constraint_names = [c.constraint_name for c in explanation.constraints_evaluated]
+        constraint_names = [
+            c.constraint_name for c in explanation.constraints_evaluated
+        ]
         assert "Availability" in constraint_names
 
-    def test_explain_assignment_unavailable_resident(self, explainability_context, constraint_manager):
+    def test_explain_assignment_unavailable_resident(
+        self, explainability_context, constraint_manager
+    ):
         """Test explanation for unavailable resident shows violation."""
         # Mark first resident as unavailable
         resident = explainability_context.residents[0]
@@ -247,14 +276,20 @@ class TestExplainabilityService:
 
         # Should show availability violation
         availability_constraint = next(
-            (c for c in explanation.constraints_evaluated if c.constraint_name == "Availability"),
-            None
+            (
+                c
+                for c in explanation.constraints_evaluated
+                if c.constraint_name == "Availability"
+            ),
+            None,
         )
         assert availability_constraint is not None
         assert availability_constraint.status == ConstraintStatus.VIOLATED
         assert explanation.hard_constraints_satisfied is False
 
-    def test_explain_assignment_generates_trade_off_summary(self, explainability_context, constraint_manager):
+    def test_explain_assignment_generates_trade_off_summary(
+        self, explainability_context, constraint_manager
+    ):
         """Test that explanation includes trade-off summary."""
         service = ExplainabilityService(
             context=explainability_context,
@@ -288,10 +323,13 @@ class TestExplainabilityService:
 # Confidence Calculation Tests
 # ============================================================================
 
+
 class TestConfidenceCalculation:
     """Tests for confidence calculation."""
 
-    def test_high_confidence_with_large_margin(self, explainability_context, constraint_manager):
+    def test_high_confidence_with_large_margin(
+        self, explainability_context, constraint_manager
+    ):
         """Test that large margin produces high confidence."""
         service = ExplainabilityService(
             context=explainability_context,
@@ -321,7 +359,9 @@ class TestConfidenceCalculation:
         assert explanation.confidence == ConfidenceLevel.HIGH
         assert explanation.confidence_score >= 0.7
 
-    def test_single_candidate_increases_confidence(self, explainability_context, constraint_manager):
+    def test_single_candidate_increases_confidence(
+        self, explainability_context, constraint_manager
+    ):
         """Test that single candidate increases confidence."""
         service = ExplainabilityService(
             context=explainability_context,
@@ -353,6 +393,7 @@ class TestConfidenceCalculation:
 # Greedy Solver Explainability Tests
 # ============================================================================
 
+
 class TestGreedySolverExplainability:
     """Tests for greedy solver explainability integration."""
 
@@ -367,7 +408,9 @@ class TestGreedySolverExplainability:
         # Should have explanations for each assignment
         assert len(result.explanations) == len(result.assignments)
 
-    def test_greedy_solver_explanations_contain_required_fields(self, explainability_context):
+    def test_greedy_solver_explanations_contain_required_fields(
+        self, explainability_context
+    ):
         """Test that explanations contain all required fields."""
         solver = GreedySolver(generate_explanations=True)
         result = solver.solve(explainability_context)
@@ -392,7 +435,9 @@ class TestGreedySolverExplainability:
         assert result.success is True
         assert len(result.explanations) == 0
 
-    def test_greedy_solver_statistics_include_confidence_distribution(self, explainability_context):
+    def test_greedy_solver_statistics_include_confidence_distribution(
+        self, explainability_context
+    ):
         """Test that solver statistics include confidence distribution."""
         solver = GreedySolver(generate_explanations=True)
         result = solver.solve(explainability_context)
@@ -404,9 +449,9 @@ class TestGreedySolverExplainability:
 
         # Total should match assignments
         total_conf = (
-            result.statistics["high_confidence_assignments"] +
-            result.statistics["medium_confidence_assignments"] +
-            result.statistics["low_confidence_assignments"]
+            result.statistics["high_confidence_assignments"]
+            + result.statistics["medium_confidence_assignments"]
+            + result.statistics["low_confidence_assignments"]
         )
         assert total_conf == len(result.assignments)
 
@@ -414,6 +459,7 @@ class TestGreedySolverExplainability:
 # ============================================================================
 # Audit Hash Tests
 # ============================================================================
+
 
 class TestAuditHash:
     """Tests for audit hash computation."""
@@ -505,6 +551,7 @@ class TestAuditHash:
 # ============================================================================
 # Schema Tests
 # ============================================================================
+
 
 class TestExplainabilitySchemas:
     """Tests for explainability Pydantic schemas."""

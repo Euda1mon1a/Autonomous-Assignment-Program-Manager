@@ -9,9 +9,10 @@ Tests cover:
 - Batch operations
 - Edge cases and error conditions
 """
+
 from datetime import date, datetime, timedelta
-from unittest.mock import Mock, patch
-from uuid import UUID, uuid4
+from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 from sqlalchemy.orm import Session
@@ -27,12 +28,10 @@ from app.models.conflict_alert import (
 )
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
-from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.models.user import User
 from app.schemas.conflict_resolution import (
     ConflictAnalysis,
     ImpactAssessment,
-    ResolutionOption,
     ResolutionResult,
     ResolutionStatusEnum,
     ResolutionStrategyEnum,
@@ -40,7 +39,6 @@ from app.schemas.conflict_resolution import (
     SafetyCheckType,
 )
 from app.services.conflict_auto_resolver import ConflictAutoResolver
-
 
 # ==================== FIXTURES ====================
 
@@ -71,9 +69,7 @@ def sample_user(db: Session) -> User:
 
 
 @pytest.fixture
-def sample_conflict_alert(
-    db: Session, sample_faculty: Person
-) -> ConflictAlert:
+def sample_conflict_alert(db: Session, sample_faculty: Person) -> ConflictAlert:
     """Create a sample conflict alert."""
     fmit_week = date.today() + timedelta(days=14)
     alert = ConflictAlert(
@@ -176,7 +172,9 @@ class TestAnalyzeConflict:
         assert len(analysis.root_cause) > 0
         # Should contain relevant information about the conflict type
         if sample_conflict_alert.conflict_type == ConflictType.LEAVE_FMIT_OVERLAP:
-            assert "FMIT" in analysis.root_cause or "leave" in analysis.root_cause.lower()
+            assert (
+                "FMIT" in analysis.root_cause or "leave" in analysis.root_cause.lower()
+            )
 
     def test_analyze_conflict_complexity_scoring(
         self,
@@ -481,9 +479,7 @@ class TestGenerateResolutionOptions:
             for i in range(len(options) - 1):
                 score1 = options[i].impact.overall_score if options[i].impact else 0
                 score2 = (
-                    options[i + 1].impact.overall_score
-                    if options[i + 1].impact
-                    else 0
+                    options[i + 1].impact.overall_score if options[i + 1].impact else 0
                 )
                 assert score1 >= score2
 
@@ -550,7 +546,9 @@ class TestResolutionStrategies:
         assert len(swap_options) > 0
 
         swap_opt = swap_options[0]
-        assert "swap" in swap_opt.title.lower() or "swap" in swap_opt.description.lower()
+        assert (
+            "swap" in swap_opt.title.lower() or "swap" in swap_opt.description.lower()
+        )
         assert len(swap_opt.detailed_steps) > 0
 
     def test_reassign_junior_strategy(
@@ -582,7 +580,10 @@ class TestResolutionStrategies:
         ]
         if junior_options:
             junior_opt = junior_options[0]
-            assert "junior" in junior_opt.title.lower() or "junior" in junior_opt.description.lower()
+            assert (
+                "junior" in junior_opt.title.lower()
+                or "junior" in junior_opt.description.lower()
+            )
 
     def test_split_coverage_strategy(
         self,
@@ -613,7 +614,10 @@ class TestResolutionStrategies:
         assert len(split_options) > 0
 
         split_opt = split_options[0]
-        assert "split" in split_opt.title.lower() or "split" in split_opt.description.lower()
+        assert (
+            "split" in split_opt.title.lower()
+            or "split" in split_opt.description.lower()
+        )
 
     def test_escalate_to_backup_strategy(
         self,
@@ -644,7 +648,10 @@ class TestResolutionStrategies:
         assert len(backup_options) > 0
 
         backup_opt = backup_options[0]
-        assert "backup" in backup_opt.title.lower() or "backup" in backup_opt.description.lower()
+        assert (
+            "backup" in backup_opt.title.lower()
+            or "backup" in backup_opt.description.lower()
+        )
 
     def test_defer_to_human_always_available(
         self, resolver: ConflictAutoResolver, sample_conflict_alert: ConflictAlert
@@ -671,9 +678,7 @@ class TestResolutionStrategies:
 class TestAutoResolveIfSafe:
     """Tests for automatic resolution if safe."""
 
-    def test_auto_resolve_nonexistent_conflict(
-        self, resolver: ConflictAutoResolver
-    ):
+    def test_auto_resolve_nonexistent_conflict(self, resolver: ConflictAutoResolver):
         """Test auto-resolving a non-existent conflict."""
         fake_id = uuid4()
         result = resolver.auto_resolve_if_safe(fake_id)
@@ -909,7 +914,12 @@ class TestBatchAutoResolve:
 
         assert report.total_conflicts == 1
         # May or may not apply depending on safety checks
-        assert report.resolutions_applied + report.resolutions_deferred + report.resolutions_failed == 1
+        assert (
+            report.resolutions_applied
+            + report.resolutions_deferred
+            + report.resolutions_failed
+            == 1
+        )
 
     def test_batch_resolve_risk_level_filtering(
         self,
@@ -1210,7 +1220,9 @@ class TestEdgeCases:
 
         # Mock time passage
         with patch("app.services.conflict_auto_resolver.datetime") as mock_datetime:
-            mock_datetime.utcnow.return_value = datetime.utcnow() + timedelta(minutes=10)
+            mock_datetime.utcnow.return_value = datetime.utcnow() + timedelta(
+                minutes=10
+            )
 
             # Should regenerate after cache expiry
             options2 = resolver.generate_resolution_options(sample_conflict_alert.id)
@@ -1356,4 +1368,7 @@ class TestResolutionWorkflow:
         analysis = resolver.analyze_conflict(alert.id)
 
         # Should identify cascading nature
-        assert "cascade" in analysis.root_cause.lower() or "cascade" in analysis.conflict_type.lower()
+        assert (
+            "cascade" in analysis.root_cause.lower()
+            or "cascade" in analysis.conflict_type.lower()
+        )

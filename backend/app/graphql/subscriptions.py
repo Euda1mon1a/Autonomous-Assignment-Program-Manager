@@ -21,8 +21,9 @@ Usage:
 import asyncio
 import json
 import logging
+from collections.abc import AsyncGenerator
 from datetime import datetime
-from typing import Any, AsyncGenerator, Optional
+from typing import Any
 from uuid import UUID
 
 import redis.asyncio as redis
@@ -30,16 +31,6 @@ import strawberry
 from strawberry.types import Info
 
 from app.core.config import get_settings
-from app.models.conflict_alert import ConflictSeverity, ConflictType
-from app.models.swap import SwapStatus, SwapType
-from app.websocket.events import (
-    AssignmentChangedEvent,
-    ConflictDetectedEvent,
-    ResilienceAlertEvent,
-    ScheduleUpdatedEvent,
-    SwapApprovedEvent,
-    SwapRequestedEvent,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -61,9 +52,9 @@ CHANNEL_HEARTBEAT = "graphql:heartbeat"
 class ScheduleUpdate:
     """Schedule update notification."""
 
-    schedule_id: Optional[strawberry.ID] = None
-    academic_year_id: Optional[strawberry.ID] = None
-    user_id: Optional[strawberry.ID] = None
+    schedule_id: strawberry.ID | None = None
+    academic_year_id: strawberry.ID | None = None
+    user_id: strawberry.ID | None = None
     update_type: str
     affected_blocks_count: int
     message: str
@@ -77,9 +68,9 @@ class AssignmentUpdate:
     assignment_id: strawberry.ID
     person_id: strawberry.ID
     block_id: strawberry.ID
-    rotation_template_id: Optional[strawberry.ID] = None
+    rotation_template_id: strawberry.ID | None = None
     change_type: str
-    changed_by: Optional[strawberry.ID] = None
+    changed_by: strawberry.ID | None = None
     message: str
     timestamp: datetime
 
@@ -90,20 +81,20 @@ class SwapNotification:
 
     swap_id: strawberry.ID
     requester_id: strawberry.ID
-    target_person_id: Optional[strawberry.ID] = None
+    target_person_id: strawberry.ID | None = None
     swap_type: str
     status: str
     affected_assignments: list[strawberry.ID]
     message: str
     timestamp: datetime
-    approved_by: Optional[strawberry.ID] = None
+    approved_by: strawberry.ID | None = None
 
 
 @strawberry.type
 class ConflictNotification:
     """Conflict alert notification."""
 
-    conflict_id: Optional[strawberry.ID] = None
+    conflict_id: strawberry.ID | None = None
     person_id: strawberry.ID
     conflict_type: str
     severity: str
@@ -118,8 +109,8 @@ class ResilienceNotification:
 
     alert_type: str
     severity: str
-    current_utilization: Optional[float] = None
-    defense_level: Optional[str] = None
+    current_utilization: float | None = None
+    defense_level: str | None = None
     affected_persons: list[strawberry.ID]
     message: str
     recommendations: list[str]
@@ -133,7 +124,7 @@ class UserPresenceUpdate:
     user_id: strawberry.ID
     status: str  # "online", "offline", "away"
     last_seen: datetime
-    active_page: Optional[str] = None
+    active_page: str | None = None
 
 
 @strawberry.type
@@ -152,36 +143,36 @@ class HeartbeatResponse:
 class SubscriptionFilter:
     """Base filter for subscriptions."""
 
-    user_id: Optional[strawberry.ID] = None
-    role: Optional[str] = None
+    user_id: strawberry.ID | None = None
+    role: str | None = None
 
 
 @strawberry.input
 class ScheduleSubscriptionFilter:
     """Filter for schedule update subscriptions."""
 
-    schedule_id: Optional[strawberry.ID] = None
-    academic_year_id: Optional[strawberry.ID] = None
-    person_id: Optional[strawberry.ID] = None
-    update_types: Optional[list[str]] = None  # ["generated", "modified", "regenerated"]
+    schedule_id: strawberry.ID | None = None
+    academic_year_id: strawberry.ID | None = None
+    person_id: strawberry.ID | None = None
+    update_types: list[str] | None = None  # ["generated", "modified", "regenerated"]
 
 
 @strawberry.input
 class SwapSubscriptionFilter:
     """Filter for swap notification subscriptions."""
 
-    person_id: Optional[strawberry.ID] = None
-    swap_types: Optional[list[str]] = None  # ["one_to_one", "absorb"]
-    statuses: Optional[list[str]] = None  # ["pending", "approved", "executed", "rejected"]
+    person_id: strawberry.ID | None = None
+    swap_types: list[str] | None = None  # ["one_to_one", "absorb"]
+    statuses: list[str] | None = None  # ["pending", "approved", "executed", "rejected"]
 
 
 @strawberry.input
 class ConflictSubscriptionFilter:
     """Filter for conflict alert subscriptions."""
 
-    person_id: Optional[strawberry.ID] = None
-    severities: Optional[list[str]] = None  # ["critical", "warning", "info"]
-    conflict_types: Optional[list[str]] = None
+    person_id: strawberry.ID | None = None
+    severities: list[str] | None = None  # ["critical", "warning", "info"]
+    conflict_types: list[str] | None = None
 
 
 # Redis pub/sub manager
@@ -200,8 +191,8 @@ class RedisSubscriptionManager:
 
     def __init__(self):
         """Initialize the subscription manager."""
-        self._redis: Optional[redis.Redis] = None
-        self._pubsub: Optional[redis.client.PubSub] = None
+        self._redis: redis.Redis | None = None
+        self._pubsub: redis.client.PubSub | None = None
         self._settings = get_settings()
 
     async def get_redis(self) -> redis.Redis:
@@ -318,7 +309,7 @@ class RedisSubscriptionManager:
 
 
 # Global subscription manager instance
-_subscription_manager: Optional[RedisSubscriptionManager] = None
+_subscription_manager: RedisSubscriptionManager | None = None
 
 
 def get_subscription_manager() -> RedisSubscriptionManager:
@@ -339,7 +330,7 @@ def get_subscription_manager() -> RedisSubscriptionManager:
 
 def should_send_schedule_update(
     update: dict[str, Any],
-    filter_input: Optional[ScheduleSubscriptionFilter],
+    filter_input: ScheduleSubscriptionFilter | None,
     user_id: str,
 ) -> bool:
     """
@@ -357,11 +348,17 @@ def should_send_schedule_update(
         return True
 
     # Filter by schedule ID
-    if filter_input.schedule_id and update.get("schedule_id") != filter_input.schedule_id:
+    if (
+        filter_input.schedule_id
+        and update.get("schedule_id") != filter_input.schedule_id
+    ):
         return False
 
     # Filter by academic year
-    if filter_input.academic_year_id and update.get("academic_year_id") != filter_input.academic_year_id:
+    if (
+        filter_input.academic_year_id
+        and update.get("academic_year_id") != filter_input.academic_year_id
+    ):
         return False
 
     # Filter by person ID (user watching their own assignments)
@@ -369,7 +366,10 @@ def should_send_schedule_update(
         return False
 
     # Filter by update types
-    if filter_input.update_types and update.get("update_type") not in filter_input.update_types:
+    if (
+        filter_input.update_types
+        and update.get("update_type") not in filter_input.update_types
+    ):
         return False
 
     return True
@@ -377,7 +377,7 @@ def should_send_schedule_update(
 
 def should_send_swap_notification(
     swap: dict[str, Any],
-    filter_input: Optional[SwapSubscriptionFilter],
+    filter_input: SwapSubscriptionFilter | None,
     user_id: str,
 ) -> bool:
     """
@@ -397,8 +397,10 @@ def should_send_swap_notification(
     # Filter by person ID (requester or target)
     if filter_input.person_id:
         person_id_str = str(filter_input.person_id)
-        if (swap.get("requester_id") != person_id_str and
-            swap.get("target_person_id") != person_id_str):
+        if (
+            swap.get("requester_id") != person_id_str
+            and swap.get("target_person_id") != person_id_str
+        ):
             return False
 
     # Filter by swap types
@@ -414,7 +416,7 @@ def should_send_swap_notification(
 
 def should_send_conflict_notification(
     conflict: dict[str, Any],
-    filter_input: Optional[ConflictSubscriptionFilter],
+    filter_input: ConflictSubscriptionFilter | None,
     user_id: str,
 ) -> bool:
     """
@@ -432,15 +434,23 @@ def should_send_conflict_notification(
         return True
 
     # Filter by person ID
-    if filter_input.person_id and conflict.get("person_id") != str(filter_input.person_id):
+    if filter_input.person_id and conflict.get("person_id") != str(
+        filter_input.person_id
+    ):
         return False
 
     # Filter by severities
-    if filter_input.severities and conflict.get("severity") not in filter_input.severities:
+    if (
+        filter_input.severities
+        and conflict.get("severity") not in filter_input.severities
+    ):
         return False
 
     # Filter by conflict types
-    if filter_input.conflict_types and conflict.get("conflict_type") not in filter_input.conflict_types:
+    if (
+        filter_input.conflict_types
+        and conflict.get("conflict_type") not in filter_input.conflict_types
+    ):
         return False
 
     return True
@@ -468,7 +478,7 @@ class Subscription:
     async def schedule_updates(
         self,
         info: Info,
-        filter: Optional[ScheduleSubscriptionFilter] = None,
+        filter: ScheduleSubscriptionFilter | None = None,
     ) -> AsyncGenerator[ScheduleUpdate, None]:
         """
         Subscribe to schedule updates in real-time.
@@ -502,13 +512,21 @@ class Subscription:
                 # Apply filters
                 if should_send_schedule_update(message, filter, user_id):
                     yield ScheduleUpdate(
-                        schedule_id=strawberry.ID(message.get("schedule_id")) if message.get("schedule_id") else None,
-                        academic_year_id=strawberry.ID(message.get("academic_year_id")) if message.get("academic_year_id") else None,
-                        user_id=strawberry.ID(message.get("user_id")) if message.get("user_id") else None,
+                        schedule_id=strawberry.ID(message.get("schedule_id"))
+                        if message.get("schedule_id")
+                        else None,
+                        academic_year_id=strawberry.ID(message.get("academic_year_id"))
+                        if message.get("academic_year_id")
+                        else None,
+                        user_id=strawberry.ID(message.get("user_id"))
+                        if message.get("user_id")
+                        else None,
                         update_type=message.get("update_type", ""),
                         affected_blocks_count=message.get("affected_blocks_count", 0),
                         message=message.get("message", ""),
-                        timestamp=datetime.fromisoformat(message.get("timestamp", datetime.utcnow().isoformat())),
+                        timestamp=datetime.fromisoformat(
+                            message.get("timestamp", datetime.utcnow().isoformat())
+                        ),
                     )
 
         except asyncio.CancelledError:
@@ -522,7 +540,7 @@ class Subscription:
     async def assignment_updates(
         self,
         info: Info,
-        person_id: Optional[strawberry.ID] = None,
+        person_id: strawberry.ID | None = None,
     ) -> AsyncGenerator[AssignmentUpdate, None]:
         """
         Subscribe to assignment changes for a specific person or all assignments.
@@ -546,7 +564,9 @@ class Subscription:
         manager = get_subscription_manager()
         user_id = info.context.get("user", {}).get("user_id", "anonymous")
 
-        logger.info(f"User {user_id} subscribed to assignment updates (person_id={person_id})")
+        logger.info(
+            f"User {user_id} subscribed to assignment updates (person_id={person_id})"
+        )
 
         try:
             async for message in manager.subscribe(CHANNEL_ASSIGNMENT_UPDATES):
@@ -558,25 +578,35 @@ class Subscription:
                     assignment_id=strawberry.ID(message.get("assignment_id", "")),
                     person_id=strawberry.ID(message.get("person_id", "")),
                     block_id=strawberry.ID(message.get("block_id", "")),
-                    rotation_template_id=strawberry.ID(message.get("rotation_template_id")) if message.get("rotation_template_id") else None,
+                    rotation_template_id=strawberry.ID(
+                        message.get("rotation_template_id")
+                    )
+                    if message.get("rotation_template_id")
+                    else None,
                     change_type=message.get("change_type", ""),
-                    changed_by=strawberry.ID(message.get("changed_by")) if message.get("changed_by") else None,
+                    changed_by=strawberry.ID(message.get("changed_by"))
+                    if message.get("changed_by")
+                    else None,
                     message=message.get("message", ""),
-                    timestamp=datetime.fromisoformat(message.get("timestamp", datetime.utcnow().isoformat())),
+                    timestamp=datetime.fromisoformat(
+                        message.get("timestamp", datetime.utcnow().isoformat())
+                    ),
                 )
 
         except asyncio.CancelledError:
             logger.info(f"User {user_id} unsubscribed from assignment updates")
             raise
         except Exception as e:
-            logger.error(f"Error in assignment updates subscription: {e}", exc_info=True)
+            logger.error(
+                f"Error in assignment updates subscription: {e}", exc_info=True
+            )
             raise
 
     @strawberry.subscription
     async def swap_requests(
         self,
         info: Info,
-        filter: Optional[SwapSubscriptionFilter] = None,
+        filter: SwapSubscriptionFilter | None = None,
     ) -> AsyncGenerator[SwapNotification, None]:
         """
         Subscribe to swap request notifications.
@@ -612,12 +642,19 @@ class Subscription:
                     yield SwapNotification(
                         swap_id=strawberry.ID(message.get("swap_id", "")),
                         requester_id=strawberry.ID(message.get("requester_id", "")),
-                        target_person_id=strawberry.ID(message.get("target_person_id")) if message.get("target_person_id") else None,
+                        target_person_id=strawberry.ID(message.get("target_person_id"))
+                        if message.get("target_person_id")
+                        else None,
                         swap_type=message.get("swap_type", ""),
                         status=message.get("status", "pending"),
-                        affected_assignments=[strawberry.ID(aid) for aid in message.get("affected_assignments", [])],
+                        affected_assignments=[
+                            strawberry.ID(aid)
+                            for aid in message.get("affected_assignments", [])
+                        ],
                         message=message.get("message", ""),
-                        timestamp=datetime.fromisoformat(message.get("timestamp", datetime.utcnow().isoformat())),
+                        timestamp=datetime.fromisoformat(
+                            message.get("timestamp", datetime.utcnow().isoformat())
+                        ),
                         approved_by=None,
                     )
 
@@ -632,7 +669,7 @@ class Subscription:
     async def swap_approvals(
         self,
         info: Info,
-        filter: Optional[SwapSubscriptionFilter] = None,
+        filter: SwapSubscriptionFilter | None = None,
     ) -> AsyncGenerator[SwapNotification, None]:
         """
         Subscribe to swap approval notifications.
@@ -665,13 +702,22 @@ class Subscription:
                     yield SwapNotification(
                         swap_id=strawberry.ID(message.get("swap_id", "")),
                         requester_id=strawberry.ID(message.get("requester_id", "")),
-                        target_person_id=strawberry.ID(message.get("target_person_id")) if message.get("target_person_id") else None,
+                        target_person_id=strawberry.ID(message.get("target_person_id"))
+                        if message.get("target_person_id")
+                        else None,
                         swap_type=message.get("swap_type", ""),
                         status="approved",
-                        affected_assignments=[strawberry.ID(aid) for aid in message.get("affected_assignments", [])],
+                        affected_assignments=[
+                            strawberry.ID(aid)
+                            for aid in message.get("affected_assignments", [])
+                        ],
                         message=message.get("message", ""),
-                        timestamp=datetime.fromisoformat(message.get("timestamp", datetime.utcnow().isoformat())),
-                        approved_by=strawberry.ID(message.get("approved_by")) if message.get("approved_by") else None,
+                        timestamp=datetime.fromisoformat(
+                            message.get("timestamp", datetime.utcnow().isoformat())
+                        ),
+                        approved_by=strawberry.ID(message.get("approved_by"))
+                        if message.get("approved_by")
+                        else None,
                     )
 
         except asyncio.CancelledError:
@@ -685,7 +731,7 @@ class Subscription:
     async def conflict_alerts(
         self,
         info: Info,
-        filter: Optional[ConflictSubscriptionFilter] = None,
+        filter: ConflictSubscriptionFilter | None = None,
     ) -> AsyncGenerator[ConflictNotification, None]:
         """
         Subscribe to conflict alert notifications.
@@ -719,13 +765,20 @@ class Subscription:
                 # Apply filters
                 if should_send_conflict_notification(message, filter, user_id):
                     yield ConflictNotification(
-                        conflict_id=strawberry.ID(message.get("conflict_id")) if message.get("conflict_id") else None,
+                        conflict_id=strawberry.ID(message.get("conflict_id"))
+                        if message.get("conflict_id")
+                        else None,
                         person_id=strawberry.ID(message.get("person_id", "")),
                         conflict_type=message.get("conflict_type", ""),
                         severity=message.get("severity", ""),
-                        affected_blocks=[strawberry.ID(bid) for bid in message.get("affected_blocks", [])],
+                        affected_blocks=[
+                            strawberry.ID(bid)
+                            for bid in message.get("affected_blocks", [])
+                        ],
                         message=message.get("message", ""),
-                        timestamp=datetime.fromisoformat(message.get("timestamp", datetime.utcnow().isoformat())),
+                        timestamp=datetime.fromisoformat(
+                            message.get("timestamp", datetime.utcnow().isoformat())
+                        ),
                     )
 
         except asyncio.CancelledError:
@@ -773,10 +826,15 @@ class Subscription:
                     severity=message.get("severity", ""),
                     current_utilization=message.get("current_utilization"),
                     defense_level=message.get("defense_level"),
-                    affected_persons=[strawberry.ID(pid) for pid in message.get("affected_persons", [])],
+                    affected_persons=[
+                        strawberry.ID(pid)
+                        for pid in message.get("affected_persons", [])
+                    ],
                     message=message.get("message", ""),
                     recommendations=message.get("recommendations", []),
-                    timestamp=datetime.fromisoformat(message.get("timestamp", datetime.utcnow().isoformat())),
+                    timestamp=datetime.fromisoformat(
+                        message.get("timestamp", datetime.utcnow().isoformat())
+                    ),
                 )
 
         except asyncio.CancelledError:
@@ -813,30 +871,38 @@ class Subscription:
         logger.info(f"User {user_id} subscribed to user presence updates")
 
         # Publish own presence as online
-        await manager.publish(CHANNEL_USER_PRESENCE, {
-            "user_id": user_id,
-            "status": "online",
-            "last_seen": datetime.utcnow().isoformat(),
-            "active_page": None,
-        })
+        await manager.publish(
+            CHANNEL_USER_PRESENCE,
+            {
+                "user_id": user_id,
+                "status": "online",
+                "last_seen": datetime.utcnow().isoformat(),
+                "active_page": None,
+            },
+        )
 
         try:
             async for message in manager.subscribe(CHANNEL_USER_PRESENCE):
                 yield UserPresenceUpdate(
                     user_id=strawberry.ID(message.get("user_id", "")),
                     status=message.get("status", ""),
-                    last_seen=datetime.fromisoformat(message.get("last_seen", datetime.utcnow().isoformat())),
+                    last_seen=datetime.fromisoformat(
+                        message.get("last_seen", datetime.utcnow().isoformat())
+                    ),
                     active_page=message.get("active_page"),
                 )
 
         except asyncio.CancelledError:
             # Publish own presence as offline on disconnect
-            await manager.publish(CHANNEL_USER_PRESENCE, {
-                "user_id": user_id,
-                "status": "offline",
-                "last_seen": datetime.utcnow().isoformat(),
-                "active_page": None,
-            })
+            await manager.publish(
+                CHANNEL_USER_PRESENCE,
+                {
+                    "user_id": user_id,
+                    "status": "offline",
+                    "last_seen": datetime.utcnow().isoformat(),
+                    "active_page": None,
+                },
+            )
             logger.info(f"User {user_id} unsubscribed from user presence")
             raise
         except Exception as e:
@@ -872,7 +938,9 @@ class Subscription:
         user_id = info.context.get("user", {}).get("user_id", "anonymous")
         connection_id = str(uuid.uuid4())
 
-        logger.info(f"User {user_id} started heartbeat subscription (connection_id={connection_id})")
+        logger.info(
+            f"User {user_id} started heartbeat subscription (connection_id={connection_id})"
+        )
 
         try:
             while True:
@@ -896,9 +964,9 @@ class Subscription:
 
 
 async def broadcast_schedule_update(
-    schedule_id: Optional[UUID] = None,
-    academic_year_id: Optional[UUID] = None,
-    user_id: Optional[UUID] = None,
+    schedule_id: UUID | None = None,
+    academic_year_id: UUID | None = None,
+    user_id: UUID | None = None,
     update_type: str = "",
     affected_blocks_count: int = 0,
     message: str = "",
@@ -915,24 +983,27 @@ async def broadcast_schedule_update(
         message: Descriptive message
     """
     manager = get_subscription_manager()
-    await manager.publish(CHANNEL_SCHEDULE_UPDATES, {
-        "schedule_id": str(schedule_id) if schedule_id else None,
-        "academic_year_id": str(academic_year_id) if academic_year_id else None,
-        "user_id": str(user_id) if user_id else None,
-        "update_type": update_type,
-        "affected_blocks_count": affected_blocks_count,
-        "message": message,
-        "timestamp": datetime.utcnow().isoformat(),
-    })
+    await manager.publish(
+        CHANNEL_SCHEDULE_UPDATES,
+        {
+            "schedule_id": str(schedule_id) if schedule_id else None,
+            "academic_year_id": str(academic_year_id) if academic_year_id else None,
+            "user_id": str(user_id) if user_id else None,
+            "update_type": update_type,
+            "affected_blocks_count": affected_blocks_count,
+            "message": message,
+            "timestamp": datetime.utcnow().isoformat(),
+        },
+    )
 
 
 async def broadcast_assignment_update(
     assignment_id: UUID,
     person_id: UUID,
     block_id: UUID,
-    rotation_template_id: Optional[UUID] = None,
+    rotation_template_id: UUID | None = None,
     change_type: str = "",
-    changed_by: Optional[UUID] = None,
+    changed_by: UUID | None = None,
     message: str = "",
 ):
     """
@@ -948,24 +1019,29 @@ async def broadcast_assignment_update(
         message: Descriptive message
     """
     manager = get_subscription_manager()
-    await manager.publish(CHANNEL_ASSIGNMENT_UPDATES, {
-        "assignment_id": str(assignment_id),
-        "person_id": str(person_id),
-        "block_id": str(block_id),
-        "rotation_template_id": str(rotation_template_id) if rotation_template_id else None,
-        "change_type": change_type,
-        "changed_by": str(changed_by) if changed_by else None,
-        "message": message,
-        "timestamp": datetime.utcnow().isoformat(),
-    })
+    await manager.publish(
+        CHANNEL_ASSIGNMENT_UPDATES,
+        {
+            "assignment_id": str(assignment_id),
+            "person_id": str(person_id),
+            "block_id": str(block_id),
+            "rotation_template_id": str(rotation_template_id)
+            if rotation_template_id
+            else None,
+            "change_type": change_type,
+            "changed_by": str(changed_by) if changed_by else None,
+            "message": message,
+            "timestamp": datetime.utcnow().isoformat(),
+        },
+    )
 
 
 async def broadcast_swap_request(
     swap_id: UUID,
     requester_id: UUID,
-    target_person_id: Optional[UUID] = None,
+    target_person_id: UUID | None = None,
     swap_type: str = "",
-    affected_assignments: Optional[list[UUID]] = None,
+    affected_assignments: list[UUID] | None = None,
     message: str = "",
 ):
     """
@@ -980,25 +1056,28 @@ async def broadcast_swap_request(
         message: Descriptive message
     """
     manager = get_subscription_manager()
-    await manager.publish(CHANNEL_SWAP_REQUESTS, {
-        "swap_id": str(swap_id),
-        "requester_id": str(requester_id),
-        "target_person_id": str(target_person_id) if target_person_id else None,
-        "swap_type": swap_type,
-        "status": "pending",
-        "affected_assignments": [str(aid) for aid in (affected_assignments or [])],
-        "message": message,
-        "timestamp": datetime.utcnow().isoformat(),
-    })
+    await manager.publish(
+        CHANNEL_SWAP_REQUESTS,
+        {
+            "swap_id": str(swap_id),
+            "requester_id": str(requester_id),
+            "target_person_id": str(target_person_id) if target_person_id else None,
+            "swap_type": swap_type,
+            "status": "pending",
+            "affected_assignments": [str(aid) for aid in (affected_assignments or [])],
+            "message": message,
+            "timestamp": datetime.utcnow().isoformat(),
+        },
+    )
 
 
 async def broadcast_swap_approval(
     swap_id: UUID,
     requester_id: UUID,
-    target_person_id: Optional[UUID] = None,
+    target_person_id: UUID | None = None,
     swap_type: str = "",
-    approved_by: Optional[UUID] = None,
-    affected_assignments: Optional[list[UUID]] = None,
+    approved_by: UUID | None = None,
+    affected_assignments: list[UUID] | None = None,
     message: str = "",
 ):
     """
@@ -1014,25 +1093,28 @@ async def broadcast_swap_approval(
         message: Descriptive message
     """
     manager = get_subscription_manager()
-    await manager.publish(CHANNEL_SWAP_APPROVALS, {
-        "swap_id": str(swap_id),
-        "requester_id": str(requester_id),
-        "target_person_id": str(target_person_id) if target_person_id else None,
-        "swap_type": swap_type,
-        "status": "approved",
-        "approved_by": str(approved_by) if approved_by else None,
-        "affected_assignments": [str(aid) for aid in (affected_assignments or [])],
-        "message": message,
-        "timestamp": datetime.utcnow().isoformat(),
-    })
+    await manager.publish(
+        CHANNEL_SWAP_APPROVALS,
+        {
+            "swap_id": str(swap_id),
+            "requester_id": str(requester_id),
+            "target_person_id": str(target_person_id) if target_person_id else None,
+            "swap_type": swap_type,
+            "status": "approved",
+            "approved_by": str(approved_by) if approved_by else None,
+            "affected_assignments": [str(aid) for aid in (affected_assignments or [])],
+            "message": message,
+            "timestamp": datetime.utcnow().isoformat(),
+        },
+    )
 
 
 async def broadcast_conflict_alert(
     person_id: UUID,
     conflict_type: str,
     severity: str,
-    affected_blocks: Optional[list[UUID]] = None,
-    conflict_id: Optional[UUID] = None,
+    affected_blocks: list[UUID] | None = None,
+    conflict_id: UUID | None = None,
     message: str = "",
 ):
     """
@@ -1047,25 +1129,28 @@ async def broadcast_conflict_alert(
         message: Descriptive message
     """
     manager = get_subscription_manager()
-    await manager.publish(CHANNEL_CONFLICT_ALERTS, {
-        "conflict_id": str(conflict_id) if conflict_id else None,
-        "person_id": str(person_id),
-        "conflict_type": conflict_type,
-        "severity": severity,
-        "affected_blocks": [str(bid) for bid in (affected_blocks or [])],
-        "message": message,
-        "timestamp": datetime.utcnow().isoformat(),
-    })
+    await manager.publish(
+        CHANNEL_CONFLICT_ALERTS,
+        {
+            "conflict_id": str(conflict_id) if conflict_id else None,
+            "person_id": str(person_id),
+            "conflict_type": conflict_type,
+            "severity": severity,
+            "affected_blocks": [str(bid) for bid in (affected_blocks or [])],
+            "message": message,
+            "timestamp": datetime.utcnow().isoformat(),
+        },
+    )
 
 
 async def broadcast_resilience_alert(
     alert_type: str,
     severity: str,
     message: str = "",
-    current_utilization: Optional[float] = None,
-    defense_level: Optional[str] = None,
-    affected_persons: Optional[list[UUID]] = None,
-    recommendations: Optional[list[str]] = None,
+    current_utilization: float | None = None,
+    defense_level: str | None = None,
+    affected_persons: list[UUID] | None = None,
+    recommendations: list[str] | None = None,
 ):
     """
     Broadcast a resilience system alert.
@@ -1080,16 +1165,19 @@ async def broadcast_resilience_alert(
         recommendations: List of recommended actions
     """
     manager = get_subscription_manager()
-    await manager.publish(CHANNEL_RESILIENCE_ALERTS, {
-        "alert_type": alert_type,
-        "severity": severity,
-        "current_utilization": current_utilization,
-        "defense_level": defense_level,
-        "affected_persons": [str(pid) for pid in (affected_persons or [])],
-        "message": message,
-        "recommendations": recommendations or [],
-        "timestamp": datetime.utcnow().isoformat(),
-    })
+    await manager.publish(
+        CHANNEL_RESILIENCE_ALERTS,
+        {
+            "alert_type": alert_type,
+            "severity": severity,
+            "current_utilization": current_utilization,
+            "defense_level": defense_level,
+            "affected_persons": [str(pid) for pid in (affected_persons or [])],
+            "message": message,
+            "recommendations": recommendations or [],
+            "timestamp": datetime.utcnow().isoformat(),
+        },
+    )
 
 
 __all__ = [

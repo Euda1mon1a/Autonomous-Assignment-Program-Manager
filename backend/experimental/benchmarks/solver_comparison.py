@@ -73,7 +73,7 @@ class SolverBenchmark:
         # Try multiple attributes that might contain violation data
         if hasattr(result, "violations"):
             # If result has a violations list/count attribute
-            violations = getattr(result, "violations")
+            violations = result.violations
             if isinstance(violations, list):
                 return len(violations)
             elif isinstance(violations, int):
@@ -81,7 +81,7 @@ class SolverBenchmark:
 
         if hasattr(result, "constraint_violations"):
             # Direct constraint_violations attribute
-            return getattr(result, "constraint_violations")
+            return result.constraint_violations
 
         if hasattr(result, "statistics") and isinstance(result.statistics, dict):
             # Check in statistics dict
@@ -104,12 +104,12 @@ class SolverBenchmark:
         """Calculate coverage score (0.0-1.0)."""
         # Try multiple attributes that might contain coverage data
         if hasattr(result, "coverage_score"):
-            score = getattr(result, "coverage_score")
+            score = result.coverage_score
             if isinstance(score, (int, float)):
                 return float(score)
 
         if hasattr(result, "coverage"):
-            coverage = getattr(result, "coverage")
+            coverage = result.coverage
             if isinstance(coverage, (int, float)):
                 return float(coverage)
 
@@ -128,7 +128,7 @@ class SolverBenchmark:
             if isinstance(result.statistics, dict):
                 total_blocks = result.statistics.get("total_blocks", 0)
                 if total_blocks > 0 and hasattr(result, "assignments"):
-                    assignments = getattr(result, "assignments")
+                    assignments = result.assignments
                     if isinstance(assignments, list):
                         return len(assignments) / total_blocks
 

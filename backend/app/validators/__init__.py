@@ -10,11 +10,13 @@ Provides comprehensive validation capabilities:
 - Date/time validators (ranges, academic years, ACGME periods)
 - Input sanitization (XSS, SQL injection, path traversal prevention)
 """
+
 from datetime import date
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
+
     from app.models.person import Person
     from app.schemas.schedule import ValidationResult, Violation
 
@@ -206,7 +208,7 @@ def validate_schedule(
     start_date: date,
     end_date: date,
     include_fatigue: bool = True,
-    fatigue_threshold: float = 70.0
+    fatigue_threshold: float = 70.0,
 ) -> "ValidationResult":
     """
     Convenience function to validate schedule with all advanced checks.
@@ -229,10 +231,12 @@ def validate_schedule(
     """
     # Import here to avoid circular dependencies
     from sqlalchemy.orm import Session
-    from app.models.person import Person
+
     from app.models.assignment import Assignment
     from app.models.block import Block
+    from app.models.person import Person
     from app.schemas.schedule import ValidationResult, Violation
+
     from .advanced_acgme import AdvancedACGMEValidator
     from .fatigue_tracker import FatigueTracker
 
@@ -303,9 +307,7 @@ def validate_schedule(
 
     # Calculate coverage rate (simplified)
     total_blocks = (
-        db.query(Block)
-        .filter(Block.date >= start_date, Block.date <= end_date)
-        .count()
+        db.query(Block).filter(Block.date >= start_date, Block.date <= end_date).count()
     )
 
     assigned_blocks = (

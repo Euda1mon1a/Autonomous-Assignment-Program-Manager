@@ -19,10 +19,11 @@ Block-half transitions:
 Classes:
     - NightFloatPostCallConstraint: Force PC day after NF ends
 """
+
 import logging
 from collections import defaultdict
 from datetime import date, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from .base import (
     ConstraintPriority,
@@ -130,15 +131,25 @@ class NightFloatPostCallConstraint(HardConstraint):
                         # If NF on last day => PC on transition day (both AM and PM)
                         for am_block in am_blocks:
                             am_b_i = context.block_idx.get(am_block.id)
-                            if am_b_i is not None and (r_i, am_b_i, pc_t_i) in template_vars:
+                            if (
+                                am_b_i is not None
+                                and (r_i, am_b_i, pc_t_i) in template_vars
+                            ):
                                 # nf_var == 1 => pc_am_var == 1
-                                model.AddImplication(nf_var, template_vars[r_i, am_b_i, pc_t_i])
+                                model.AddImplication(
+                                    nf_var, template_vars[r_i, am_b_i, pc_t_i]
+                                )
 
                         for pm_block in pm_blocks:
                             pm_b_i = context.block_idx.get(pm_block.id)
-                            if pm_b_i is not None and (r_i, pm_b_i, pc_t_i) in template_vars:
+                            if (
+                                pm_b_i is not None
+                                and (r_i, pm_b_i, pc_t_i) in template_vars
+                            ):
                                 # nf_var == 1 => pc_pm_var == 1
-                                model.AddImplication(nf_var, template_vars[r_i, pm_b_i, pc_t_i])
+                                model.AddImplication(
+                                    nf_var, template_vars[r_i, pm_b_i, pc_t_i]
+                                )
 
     def add_to_pulp(
         self,
@@ -189,19 +200,25 @@ class NightFloatPostCallConstraint(HardConstraint):
                     # Implication as linear constraint: pc >= nf
                     for am_block in am_blocks:
                         am_b_i = context.block_idx.get(am_block.id)
-                        if am_b_i is not None and (r_i, am_b_i, pc_t_i) in template_vars:
+                        if (
+                            am_b_i is not None
+                            and (r_i, am_b_i, pc_t_i) in template_vars
+                        ):
                             model += (
                                 template_vars[r_i, am_b_i, pc_t_i] >= nf_var,
-                                f"nf_post_call_am_{r_i}_{b_i}_{constraint_count}"
+                                f"nf_post_call_am_{r_i}_{b_i}_{constraint_count}",
                             )
                             constraint_count += 1
 
                     for pm_block in pm_blocks:
                         pm_b_i = context.block_idx.get(pm_block.id)
-                        if pm_b_i is not None and (r_i, pm_b_i, pc_t_i) in template_vars:
+                        if (
+                            pm_b_i is not None
+                            and (r_i, pm_b_i, pc_t_i) in template_vars
+                        ):
                             model += (
                                 template_vars[r_i, pm_b_i, pc_t_i] >= nf_var,
-                                f"nf_post_call_pm_{r_i}_{b_i}_{constraint_count}"
+                                f"nf_post_call_pm_{r_i}_{b_i}_{constraint_count}",
                             )
                             constraint_count += 1
 
@@ -234,7 +251,7 @@ class NightFloatPostCallConstraint(HardConstraint):
         assignments_by_person_date_time = defaultdict(list)
         for a in assignments:
             block = block_by_id.get(a.block_id)
-            if block and hasattr(block, 'time_of_day'):
+            if block and hasattr(block, "time_of_day"):
                 key = (a.person_id, block.date, block.time_of_day)
                 assignments_by_person_date_time[key].append(a)
 
@@ -276,40 +293,44 @@ class NightFloatPostCallConstraint(HardConstraint):
                     )
 
                     if not has_pc_am:
-                        violations.append(ConstraintViolation(
-                            constraint_name=self.name,
-                            constraint_type=self.constraint_type,
-                            severity="CRITICAL",
-                            message=(
-                                f"{resident.name} on NF {block.date} missing "
-                                f"Post-Call for {transition_date} AM"
-                            ),
-                            person_id=resident.id,
-                            block_id=block.id,
-                            details={
-                                "nf_end_date": str(block.date),
-                                "expected_pc_date": str(transition_date),
-                                "time_of_day": "AM",
-                            },
-                        ))
+                        violations.append(
+                            ConstraintViolation(
+                                constraint_name=self.name,
+                                constraint_type=self.constraint_type,
+                                severity="CRITICAL",
+                                message=(
+                                    f"{resident.name} on NF {block.date} missing "
+                                    f"Post-Call for {transition_date} AM"
+                                ),
+                                person_id=resident.id,
+                                block_id=block.id,
+                                details={
+                                    "nf_end_date": str(block.date),
+                                    "expected_pc_date": str(transition_date),
+                                    "time_of_day": "AM",
+                                },
+                            )
+                        )
 
                     if not has_pc_pm:
-                        violations.append(ConstraintViolation(
-                            constraint_name=self.name,
-                            constraint_type=self.constraint_type,
-                            severity="CRITICAL",
-                            message=(
-                                f"{resident.name} on NF {block.date} missing "
-                                f"Post-Call for {transition_date} PM"
-                            ),
-                            person_id=resident.id,
-                            block_id=block.id,
-                            details={
-                                "nf_end_date": str(block.date),
-                                "expected_pc_date": str(transition_date),
-                                "time_of_day": "PM",
-                            },
-                        ))
+                        violations.append(
+                            ConstraintViolation(
+                                constraint_name=self.name,
+                                constraint_type=self.constraint_type,
+                                severity="CRITICAL",
+                                message=(
+                                    f"{resident.name} on NF {block.date} missing "
+                                    f"Post-Call for {transition_date} PM"
+                                ),
+                                person_id=resident.id,
+                                block_id=block.id,
+                                details={
+                                    "nf_end_date": str(block.date),
+                                    "expected_pc_date": str(transition_date),
+                                    "time_of_day": "PM",
+                                },
+                            )
+                        )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -318,14 +339,14 @@ class NightFloatPostCallConstraint(HardConstraint):
 
     def _find_template_id(
         self, context: SchedulingContext, abbreviation: str
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """Find template ID by abbreviation."""
         for t in context.templates:
-            if hasattr(t, 'abbreviation') and t.abbreviation:
+            if hasattr(t, "abbreviation") and t.abbreviation:
                 if t.abbreviation.upper() == abbreviation.upper():
                     return t.id
             # Fallback: check name
-            if hasattr(t, 'name') and t.name.upper() == abbreviation.upper():
+            if hasattr(t, "name") and t.name.upper() == abbreviation.upper():
                 return t.id
         return None
 
@@ -335,7 +356,7 @@ class NightFloatPostCallConstraint(HardConstraint):
         """Group blocks by (date, time_of_day) for quick lookup."""
         result: dict[tuple[date, str], list[Any]] = defaultdict(list)
         for block in context.blocks:
-            if hasattr(block, 'time_of_day'):
+            if hasattr(block, "time_of_day"):
                 key = (block.date, block.time_of_day)
                 result[key].append(block)
         return result
@@ -358,7 +379,7 @@ class NightFloatPostCallConstraint(HardConstraint):
         # Group blocks by block_number and block_half
         blocks_by_number_half: dict[tuple[int, int], list[Any]] = defaultdict(list)
         for block in context.blocks:
-            if hasattr(block, 'block_number') and hasattr(block, 'block_half'):
+            if hasattr(block, "block_number") and hasattr(block, "block_half"):
                 key = (block.block_number, block.block_half)
                 blocks_by_number_half[key].append(block)
 

@@ -1,4 +1,5 @@
 """Comprehensive tests for /api/me/dashboard endpoint."""
+
 from datetime import date, datetime, timedelta
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
@@ -16,10 +17,10 @@ from app.models.rotation_template import RotationTemplate
 from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.models.user import User
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def person_with_user(db: Session) -> tuple[Person, User]:
@@ -49,7 +50,9 @@ def person_with_user(db: Session) -> tuple[Person, User]:
 
 
 @pytest.fixture
-def user_auth_headers(client: TestClient, person_with_user: tuple[Person, User]) -> dict:
+def user_auth_headers(
+    client: TestClient, person_with_user: tuple[Person, User]
+) -> dict:
     """Get authentication headers for user with person profile."""
     _, user = person_with_user
     response = client.post(
@@ -156,6 +159,7 @@ def rotation_templates(db: Session) -> list[RotationTemplate]:
 # ============================================================================
 # Success Scenarios
 # ============================================================================
+
 
 class TestDashboardSuccess:
     """Tests for successful dashboard retrieval scenarios."""
@@ -305,7 +309,9 @@ class TestDashboardSuccess:
         assert "requested_at" in swap_item
 
         # Check other_party_name is correct
-        assert sample_faculty.name in [s["other_party_name"] for s in data["pending_swaps"]]
+        assert sample_faculty.name in [
+            s["other_party_name"] for s in data["pending_swaps"]
+        ]
 
     def test_get_dashboard_with_absences(
         self,
@@ -424,7 +430,9 @@ class TestDashboardSuccess:
         # Calendar sync URL should be present (or None if service fails)
         assert "calendar_sync_url" in data
         # URL should be a string or None
-        assert data["calendar_sync_url"] is None or isinstance(data["calendar_sync_url"], str)
+        assert data["calendar_sync_url"] is None or isinstance(
+            data["calendar_sync_url"], str
+        )
 
     @patch("app.api.routes.me_dashboard.CalendarService.create_subscription")
     @patch("app.api.routes.me_dashboard.CalendarService.list_subscriptions")
@@ -450,7 +458,9 @@ class TestDashboardSuccess:
         mock_create.return_value = mock_subscription
 
         # Mock URL generation
-        mock_generate_url.return_value = "https://example.com/api/calendar/test-token-123"
+        mock_generate_url.return_value = (
+            "https://example.com/api/calendar/test-token-123"
+        )
 
         response = client.get(
             "/api/me/dashboard",
@@ -468,7 +478,10 @@ class TestDashboardSuccess:
         assert call_kwargs["expires_days"] == 365
 
         # Verify URL was generated
-        assert data["calendar_sync_url"] == "https://example.com/api/calendar/test-token-123"
+        assert (
+            data["calendar_sync_url"]
+            == "https://example.com/api/calendar/test-token-123"
+        )
 
     @patch("app.api.routes.me_dashboard.CalendarService.create_subscription")
     @patch("app.api.routes.me_dashboard.CalendarService.list_subscriptions")
@@ -489,7 +502,9 @@ class TestDashboardSuccess:
         mock_list.return_value = [mock_subscription]
 
         # Mock URL generation
-        mock_generate_url.return_value = "https://example.com/api/calendar/existing-token"
+        mock_generate_url.return_value = (
+            "https://example.com/api/calendar/existing-token"
+        )
 
         response = client.get(
             "/api/me/dashboard",
@@ -503,7 +518,10 @@ class TestDashboardSuccess:
         mock_create.assert_not_called()
 
         # Verify URL was generated with existing token
-        assert data["calendar_sync_url"] == "https://example.com/api/calendar/existing-token"
+        assert (
+            data["calendar_sync_url"]
+            == "https://example.com/api/calendar/existing-token"
+        )
 
     @patch("app.api.routes.me_dashboard.CalendarService.create_subscription")
     def test_get_dashboard_calendar_sync_failure_continues(
@@ -602,6 +620,7 @@ class TestDashboardSuccess:
 # ============================================================================
 # Query Parameters
 # ============================================================================
+
 
 class TestDashboardQueryParameters:
     """Tests for dashboard query parameters."""
@@ -719,6 +738,7 @@ class TestDashboardQueryParameters:
 # Summary Statistics
 # ============================================================================
 
+
 class TestDashboardSummary:
     """Tests for dashboard summary statistics."""
 
@@ -736,7 +756,9 @@ class TestDashboardSummary:
 
         # Create assignment 5 days from now
         future_date = date.today() + timedelta(days=5)
-        future_block = [b for b in future_blocks if b.date == future_date and b.time_of_day == "AM"][0]
+        future_block = [
+            b for b in future_blocks if b.date == future_date and b.time_of_day == "AM"
+        ][0]
 
         assignment = Assignment(
             id=uuid4(),
@@ -828,7 +850,9 @@ class TestDashboardSummary:
             swap = SwapRecord(
                 id=uuid4(),
                 source_faculty_id=person.id,
-                target_faculty_id=sample_faculty_members[i % len(sample_faculty_members)].id,
+                target_faculty_id=sample_faculty_members[
+                    i % len(sample_faculty_members)
+                ].id,
                 source_week=date.today() + timedelta(days=14 + i * 7),
                 target_week=date.today() + timedelta(days=21 + i * 7),
                 swap_type=SwapType.ONE_TO_ONE,
@@ -919,6 +943,7 @@ class TestDashboardSummary:
 # ============================================================================
 # Schedule Item Details
 # ============================================================================
+
 
 class TestDashboardScheduleDetails:
     """Tests for schedule item details and transformations."""
@@ -1036,7 +1061,10 @@ class TestDashboardScheduleDetails:
         data = response.json()
 
         assert len(data["upcoming_schedule"]) == 1
-        assert data["upcoming_schedule"][0]["location"] == rotation_templates[0].clinic_location
+        assert (
+            data["upcoming_schedule"][0]["location"]
+            == rotation_templates[0].clinic_location
+        )
 
     def test_schedule_no_location(
         self,
@@ -1055,7 +1083,9 @@ class TestDashboardScheduleDetails:
             id=uuid4(),
             block_id=future_blocks[0].id,
             person_id=person.id,
-            rotation_template_id=rotation_templates[2].id,  # Admin template with no location
+            rotation_template_id=rotation_templates[
+                2
+            ].id,  # Admin template with no location
             role="primary",
         )
         db.add(assignment)
@@ -1093,7 +1123,9 @@ class TestDashboardScheduleDetails:
         ]
 
         for dt, time in dates_times:
-            block = [b for b in future_blocks if b.date == dt and b.time_of_day == time][0]
+            block = [
+                b for b in future_blocks if b.date == dt and b.time_of_day == time
+            ][0]
             assignment = Assignment(
                 id=uuid4(),
                 block_id=block.id,
@@ -1131,6 +1163,7 @@ class TestDashboardScheduleDetails:
 # ============================================================================
 # Swap Details
 # ============================================================================
+
 
 class TestDashboardSwapDetails:
     """Tests for swap item details."""
@@ -1253,7 +1286,12 @@ class TestDashboardSwapDetails:
         person, _ = person_with_user
 
         # Create swaps with different statuses
-        statuses = [SwapStatus.PENDING, SwapStatus.APPROVED, SwapStatus.EXECUTED, SwapStatus.REJECTED]
+        statuses = [
+            SwapStatus.PENDING,
+            SwapStatus.APPROVED,
+            SwapStatus.EXECUTED,
+            SwapStatus.REJECTED,
+        ]
 
         for i, status in enumerate(statuses):
             swap = SwapRecord(
@@ -1286,6 +1324,7 @@ class TestDashboardSwapDetails:
 # ============================================================================
 # Error Scenarios
 # ============================================================================
+
 
 class TestDashboardErrors:
     """Tests for error scenarios."""
@@ -1362,6 +1401,7 @@ class TestDashboardErrors:
 # Faculty User Tests
 # ============================================================================
 
+
 class TestDashboardFaculty:
     """Tests for faculty users."""
 
@@ -1399,6 +1439,7 @@ class TestDashboardFaculty:
 # ============================================================================
 # Edge Cases
 # ============================================================================
+
 
 class TestDashboardEdgeCases:
     """Tests for edge cases."""

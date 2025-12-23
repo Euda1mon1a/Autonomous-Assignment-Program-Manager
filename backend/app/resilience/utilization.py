@@ -26,16 +26,18 @@ logger = logging.getLogger(__name__)
 
 class UtilizationLevel(Enum):
     """Utilization status levels."""
-    GREEN = "green"      # < 70% - Healthy buffer
-    YELLOW = "yellow"    # 70-80% - Approaching threshold
-    ORANGE = "orange"    # 80-90% - Above threshold, degraded operations
-    RED = "red"          # 90-95% - Critical, cascade risk
-    BLACK = "black"      # > 95% - Imminent failure
+
+    GREEN = "green"  # < 70% - Healthy buffer
+    YELLOW = "yellow"  # 70-80% - Approaching threshold
+    ORANGE = "orange"  # 80-90% - Above threshold, degraded operations
+    RED = "red"  # 90-95% - Critical, cascade risk
+    BLACK = "black"  # > 95% - Imminent failure
 
 
 @dataclass
 class UtilizationThreshold:
     """Configuration for utilization thresholds."""
+
     max_utilization: float = 0.80  # Target maximum
     warning_threshold: float = 0.70  # Yellow alert
     critical_threshold: float = 0.90  # Red alert
@@ -77,6 +79,7 @@ class UtilizationThreshold:
 @dataclass
 class UtilizationMetrics:
     """Metrics for a utilization calculation."""
+
     total_capacity: int  # Total available faculty-blocks
     required_coverage: int  # Required coverage blocks
     current_assignments: int  # Currently assigned blocks
@@ -93,6 +96,7 @@ class UtilizationMetrics:
 @dataclass
 class UtilizationForecast:
     """Forecast of utilization over time."""
+
     date: date
     predicted_utilization: float
     predicted_level: UtilizationLevel
@@ -147,7 +151,9 @@ class UtilizationMonitor:
                 current_assignments=0,
                 utilization_rate=1.0 if required_blocks > 0 else 0.0,
                 effective_utilization=1.0 if required_blocks > 0 else 0.0,
-                level=UtilizationLevel.BLACK if required_blocks > 0 else UtilizationLevel.GREEN,
+                level=UtilizationLevel.BLACK
+                if required_blocks > 0
+                else UtilizationLevel.GREEN,
                 buffer_remaining=0.0,
             )
 
@@ -325,13 +331,15 @@ class UtilizationMonitor:
             elif level == UtilizationLevel.BLACK:
                 recommendations.append("Emergency staffing measures required")
 
-            forecasts.append(UtilizationForecast(
-                date=forecast_date,
-                predicted_utilization=utilization,
-                predicted_level=level,
-                contributing_factors=factors,
-                recommendations=recommendations,
-            ))
+            forecasts.append(
+                UtilizationForecast(
+                    date=forecast_date,
+                    predicted_utilization=utilization,
+                    predicted_level=level,
+                    contributing_factors=factors,
+                    recommendations=recommendations,
+                )
+            )
 
         return forecasts
 
@@ -362,7 +370,7 @@ class UtilizationMonitor:
             At 80% utilization, expect 4.0x wait times
         """
         if utilization >= 1.0:
-            return float('inf')
+            return float("inf")
         if utilization <= 0:
             return 0.0
 
@@ -417,7 +425,9 @@ class UtilizationMonitor:
             ),
             "capacity": {
                 "total": metrics.total_capacity,
-                "safe_maximum": int(metrics.total_capacity * self.threshold.max_utilization),
+                "safe_maximum": int(
+                    metrics.total_capacity * self.threshold.max_utilization
+                ),
                 "current_used": metrics.current_assignments,
             },
             "recommendations": self._get_recommendations(metrics.level),

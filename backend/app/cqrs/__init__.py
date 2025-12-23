@@ -75,14 +75,6 @@ from app.cqrs.commands import (
     CommandResult,
     CommandValidationMiddleware,
 )
-from app.cqrs.queries import (
-    Query,
-    QueryBus,
-    QueryHandler,
-    QueryResult,
-    ReadModel,
-    ReadModelProjector,
-)
 from app.cqrs.projection_builder import (
     BaseProjection,
     BuildMode,
@@ -95,6 +87,14 @@ from app.cqrs.projection_builder import (
     ProjectionMetadata,
     ProjectionNotFoundError,
     ProjectionStatus,
+)
+from app.cqrs.queries import (
+    Query,
+    QueryBus,
+    QueryHandler,
+    QueryResult,
+    ReadModel,
+    ReadModelProjector,
 )
 from app.cqrs.read_model_sync import (
     ConflictResolutionStrategy,

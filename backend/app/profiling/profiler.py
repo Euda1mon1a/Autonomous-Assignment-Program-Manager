@@ -5,17 +5,17 @@ Provides decorators and context managers for profiling code execution,
 including CPU time, memory usage, and function call statistics.
 """
 
-import asyncio
 import cProfile
 import functools
 import io
 import pstats
 import time
 import tracemalloc
+from collections.abc import Callable
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from typing import Any, TypeVar
 from uuid import uuid4
 
 import psutil
@@ -36,11 +36,11 @@ class ProfileResult:
     memory_mb: float
     memory_peak_mb: float
     call_count: int
-    stats: Optional[pstats.Stats] = None
-    traceback: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    stats: pstats.Stats | None = None
+    traceback: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "profile_id": self.profile_id,
@@ -71,8 +71,8 @@ class CPUProfiler:
             enabled: Whether profiling is enabled
         """
         self.enabled = enabled
-        self.profiler: Optional[cProfile.Profile] = None
-        self.results: List[ProfileResult] = []
+        self.profiler: cProfile.Profile | None = None
+        self.results: list[ProfileResult] = []
 
     @contextmanager
     def profile(self, function_name: str = "unknown"):
@@ -176,7 +176,7 @@ class MemoryProfiler:
             enabled: Whether profiling is enabled
         """
         self.enabled = enabled
-        self.results: List[ProfileResult] = []
+        self.results: list[ProfileResult] = []
         self._tracking = False
 
     @contextmanager
@@ -249,7 +249,7 @@ class MemoryProfiler:
             )
             self.results.append(result)
 
-    def get_top_allocations(self, limit: int = 10) -> List[str]:
+    def get_top_allocations(self, limit: int = 10) -> list[str]:
         """
         Get top memory allocations.
 
@@ -326,7 +326,7 @@ class ProfilerContext:
             with self.memory_profiler.profile(function_name) as mem_result:
                 yield {"cpu": cpu_result, "memory": mem_result}
 
-    def get_combined_report(self) -> Dict[str, Any]:
+    def get_combined_report(self) -> dict[str, Any]:
         """
         Get combined profiling report.
 

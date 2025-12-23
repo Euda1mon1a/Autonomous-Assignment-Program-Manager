@@ -24,14 +24,12 @@ Usage:
         ip_address="192.168.1.1"
     )
 """
-import asyncio
-import json
+
 import logging
 import statistics
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, TypedDict
-from uuid import UUID
 
 import redis.asyncio as redis
 
@@ -261,7 +259,9 @@ class APIAnalyticsService:
             endpoint_key = f"{self._prefix_endpoints}:{day_key}:{method}:{endpoint}"
             pipe.hincrby(endpoint_key, "count", 1)
             pipe.hincrbyfloat(endpoint_key, "total_latency", latency_ms)
-            pipe.zadd(f"{endpoint_key}:latencies", {str(latency_ms): timestamp.timestamp()})
+            pipe.zadd(
+                f"{endpoint_key}:latencies", {str(latency_ms): timestamp.timestamp()}
+            )
             pipe.expire(endpoint_key, self._retention_days * 86400)
 
             # Track success/error
@@ -323,7 +323,9 @@ class APIAnalyticsService:
             # 7. Record custom dimensions
             if custom_dimensions:
                 for dim_name, dim_value in custom_dimensions.items():
-                    custom_key = f"{self._prefix_custom}:{day_key}:{dim_name}:{dim_value}"
+                    custom_key = (
+                        f"{self._prefix_custom}:{day_key}:{dim_name}:{dim_value}"
+                    )
                     pipe.incr(custom_key)
                     pipe.hincrbyfloat(f"{custom_key}:latency", "total", latency_ms)
                     pipe.hincrby(f"{custom_key}:latency", "count", 1)
@@ -410,8 +412,12 @@ class APIAnalyticsService:
                     data = await redis_client.hgetall(key)
                     if data:
                         endpoint_data[endpoint_id]["count"] += int(data.get("count", 0))
-                        endpoint_data[endpoint_id]["success"] += int(data.get("success", 0))
-                        endpoint_data[endpoint_id]["errors"] += int(data.get("errors", 0))
+                        endpoint_data[endpoint_id]["success"] += int(
+                            data.get("success", 0)
+                        )
+                        endpoint_data[endpoint_id]["errors"] += int(
+                            data.get("errors", 0)
+                        )
                         endpoint_data[endpoint_id]["total_latency"] += float(
                             data.get("total_latency", 0.0)
                         )
@@ -452,11 +458,15 @@ class APIAnalyticsService:
                         p50_latency_ms=round(p50, 2),
                         p95_latency_ms=round(p95, 2),
                         p99_latency_ms=round(p99, 2),
-                        error_rate=round((data["errors"] / count) * 100, 2) if count > 0 else 0.0,
+                        error_rate=round((data["errors"] / count) * 100, 2)
+                        if count > 0
+                        else 0.0,
                         requests_per_minute=round(
                             count / ((end_date - start_date).total_seconds() / 60), 2
                         ),
-                        last_accessed=data.get("last_accessed", datetime.utcnow().isoformat()),
+                        last_accessed=data.get(
+                            "last_accessed", datetime.utcnow().isoformat()
+                        ),
                     )
                 )
 
@@ -571,7 +581,8 @@ class APIAnalyticsService:
                         if data["count"] > 0
                         else 0.0,
                         most_used_endpoint=most_used,
-                        last_active=data["last_active"] or datetime.utcnow().isoformat(),
+                        last_active=data["last_active"]
+                        or datetime.utcnow().isoformat(),
                         first_seen=data["first_seen"] or datetime.utcnow().isoformat(),
                     )
                 )
@@ -608,7 +619,13 @@ class APIAnalyticsService:
                 start_date = end_date - timedelta(days=7)
 
             geo_data: dict[str, dict[str, Any]] = defaultdict(
-                lambda: {"count": 0, "success": 0, "errors": 0, "total_latency": 0.0, "users": 0}
+                lambda: {
+                    "count": 0,
+                    "success": 0,
+                    "errors": 0,
+                    "total_latency": 0.0,
+                    "users": 0,
+                }
             )
 
             current = start_date
@@ -645,7 +662,9 @@ class APIAnalyticsService:
 
                     # Get unique users
                     user_count = await redis_client.pfcount(f"{key}:unique_users")
-                    geo_data[country]["users"] = max(geo_data[country]["users"], user_count)
+                    geo_data[country]["users"] = max(
+                        geo_data[country]["users"], user_count
+                    )
 
                 current += timedelta(days=1)
 
@@ -740,7 +759,9 @@ class APIAnalyticsService:
 
                     # Get unique users
                     users = await redis_client.pfcount(f"{key}:unique_users")
-                    version_data[version]["users"] = max(version_data[version]["users"], users)
+                    version_data[version]["users"] = max(
+                        version_data[version]["users"], users
+                    )
 
                 current += timedelta(days=1)
 
@@ -751,7 +772,9 @@ class APIAnalyticsService:
                     continue
 
                 adoption_rate = (
-                    round((data["count"] / total_requests) * 100, 2) if total_requests > 0 else 0.0
+                    round((data["count"] / total_requests) * 100, 2)
+                    if total_requests > 0
+                    else 0.0
                 )
 
                 results.append(
@@ -906,7 +929,9 @@ class APIAnalyticsService:
                     total_requests += int(day_total)
 
                 # Collect unique users key for pfcount
-                unique_users_sets.append(f"{self._prefix_requests}:{day_key}:unique_users")
+                unique_users_sets.append(
+                    f"{self._prefix_requests}:{day_key}:unique_users"
+                )
 
                 # Get error data
                 error_pattern = f"{self._prefix_errors}:{day_key}:*"
@@ -936,7 +961,9 @@ class APIAnalyticsService:
                 for hour in range(24):
                     hour_key = current.strftime(f"%Y-%m-%d-{hour:02d}")
                     latency_key = f"{self._prefix_latency}:{hour_key}"
-                    latencies = await redis_client.zrange(latency_key, 0, -1, withscores=True)
+                    latencies = await redis_client.zrange(
+                        latency_key, 0, -1, withscores=True
+                    )
                     all_latencies.extend([score for _, score in latencies])
 
                 current += timedelta(days=1)
@@ -951,7 +978,9 @@ class APIAnalyticsService:
                 p99=round(self._percentile(sorted_latencies, 99), 2),
                 max=round(max(sorted_latencies), 2) if sorted_latencies else 0.0,
                 min=round(min(sorted_latencies), 2) if sorted_latencies else 0.0,
-                avg=round(statistics.mean(sorted_latencies), 2) if sorted_latencies else 0.0,
+                avg=round(statistics.mean(sorted_latencies), 2)
+                if sorted_latencies
+                else 0.0,
             )
 
             # Get top endpoints
@@ -982,7 +1011,9 @@ class APIAnalyticsService:
             # Calculate requests per minute
             duration_minutes = (end_date - start_date).total_seconds() / 60
             requests_per_minute = (
-                round(total_requests / duration_minutes, 2) if duration_minutes > 0 else 0.0
+                round(total_requests / duration_minutes, 2)
+                if duration_minutes > 0
+                else 0.0
             )
 
             return APIMetrics(
@@ -1011,7 +1042,14 @@ class APIAnalyticsService:
                 error_rate=0.0,
                 avg_latency_ms=0.0,
                 latency_percentiles=LatencyPercentiles(
-                    p50=0.0, p75=0.0, p90=0.0, p95=0.0, p99=0.0, max=0.0, min=0.0, avg=0.0
+                    p50=0.0,
+                    p75=0.0,
+                    p90=0.0,
+                    p95=0.0,
+                    p99=0.0,
+                    max=0.0,
+                    min=0.0,
+                    avg=0.0,
                 ),
                 top_endpoints=[],
                 error_breakdown=[],

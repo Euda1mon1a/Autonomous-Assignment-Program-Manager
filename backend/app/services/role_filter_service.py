@@ -15,11 +15,12 @@ Role definitions (from PROJECT_STATUS_ASSESSMENT.md):
 
 from datetime import date
 from enum import Enum
-from typing import Dict, List, Any, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 
 class UserRole(str, Enum):
     """User role enumeration."""
+
     ADMIN = "admin"
     COORDINATOR = "coordinator"
     FACULTY = "faculty"
@@ -32,6 +33,7 @@ class UserRole(str, Enum):
 
 class ResourceType(str, Enum):
     """Resource types for access control."""
+
     SCHEDULES = "schedules"
     PEOPLE = "people"
     CONFLICTS = "conflicts"
@@ -53,7 +55,7 @@ class RoleFilterService:
     """
 
     # Define role permissions mapping
-    ROLE_PERMISSIONS: Dict[UserRole, Set[ResourceType]] = {
+    ROLE_PERMISSIONS: dict[UserRole, set[ResourceType]] = {
         UserRole.ADMIN: {
             ResourceType.SCHEDULES,
             ResourceType.PEOPLE,
@@ -162,7 +164,7 @@ class RoleFilterService:
         return resource in permissions
 
     @classmethod
-    def get_permissions(cls, role: str | UserRole) -> Set[ResourceType]:
+    def get_permissions(cls, role: str | UserRole) -> set[ResourceType]:
         """Get all permissions for a given role.
 
         Args:
@@ -185,11 +187,8 @@ class RoleFilterService:
 
     @classmethod
     def filter_for_role(
-        cls,
-        data: Dict[str, Any],
-        role: str | UserRole,
-        user_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        cls, data: dict[str, Any], role: str | UserRole, user_id: str | None = None
+    ) -> dict[str, Any]:
         """Filter response data based on user role.
 
         Args:
@@ -246,7 +245,10 @@ class RoleFilterService:
         if "compliance" in filtered_data and ResourceType.COMPLIANCE not in permissions:
             filtered_data.pop("compliance", None)
 
-        if "mtf_compliance" in filtered_data and ResourceType.COMPLIANCE not in permissions:
+        if (
+            "mtf_compliance" in filtered_data
+            and ResourceType.COMPLIANCE not in permissions
+        ):
             filtered_data.pop("mtf_compliance", None)
 
         # Filter audit logs
@@ -257,7 +259,10 @@ class RoleFilterService:
             filtered_data.pop("audit_logs", None)
 
         # Filter academic blocks
-        if "academic_blocks" in filtered_data and ResourceType.ACADEMIC_BLOCKS not in permissions:
+        if (
+            "academic_blocks" in filtered_data
+            and ResourceType.ACADEMIC_BLOCKS not in permissions
+        ):
             filtered_data.pop("academic_blocks", None)
 
         # Filter swap management
@@ -266,8 +271,15 @@ class RoleFilterService:
 
         # For clinical staff, only keep manifest and call roster
         if role in (UserRole.CLINICAL_STAFF, UserRole.RN, UserRole.LPN, UserRole.MSA):
-            allowed_keys = {"manifest", "call_roster", "today_assignments", "daily_manifest"}
-            keys_to_remove = [key for key in filtered_data.keys() if key not in allowed_keys]
+            allowed_keys = {
+                "manifest",
+                "call_roster",
+                "today_assignments",
+                "daily_manifest",
+            }
+            keys_to_remove = [
+                key for key in filtered_data.keys() if key not in allowed_keys
+            ]
             for key in keys_to_remove:
                 filtered_data.pop(key, None)
 
@@ -276,11 +288,11 @@ class RoleFilterService:
     @classmethod
     def filter_schedule_list(
         cls,
-        schedules: List[Dict[str, Any]],
+        schedules: list[dict[str, Any]],
         role: str | UserRole,
-        user_id: Optional[str] = None,
-        today_only: bool = False
-    ) -> List[Dict[str, Any]]:
+        user_id: str | None = None,
+        today_only: bool = False,
+    ) -> list[dict[str, Any]]:
         """Filter a list of schedules based on role permissions.
 
         Args:
@@ -318,16 +330,16 @@ class RoleFilterService:
         # Apply today filter if requested
         if today_only:
             today = date.today().isoformat()
-            schedules_filtered = [s for s in schedules_filtered if s.get("date") == today]
+            schedules_filtered = [
+                s for s in schedules_filtered if s.get("date") == today
+            ]
 
         return schedules_filtered
 
     @classmethod
     def _filter_own_schedules(
-        cls,
-        schedules: List[Dict[str, Any]],
-        user_id: str
-    ) -> List[Dict[str, Any]]:
+        cls, schedules: list[dict[str, Any]], user_id: str
+    ) -> list[dict[str, Any]]:
         """Filter schedules to only include those belonging to the user.
 
         Args:
@@ -338,19 +350,18 @@ class RoleFilterService:
             List of schedules belonging to the user
         """
         return [
-            s for s in schedules
-            if (s.get("person_id") == user_id or
-                s.get("staff_id") == user_id or
-                s.get("user_id") == user_id or
-                s.get("faculty_id") == user_id)
+            s
+            for s in schedules
+            if (
+                s.get("person_id") == user_id
+                or s.get("staff_id") == user_id
+                or s.get("user_id") == user_id
+                or s.get("faculty_id") == user_id
+            )
         ]
 
     @classmethod
-    def can_access_endpoint(
-        cls,
-        role: str | UserRole,
-        endpoint_category: str
-    ) -> bool:
+    def can_access_endpoint(cls, role: str | UserRole, endpoint_category: str) -> bool:
         """Check if a role can access a specific endpoint category.
 
         Args:
@@ -388,7 +399,7 @@ class RoleFilterService:
         return cls.can_access(resource, role)
 
     @classmethod
-    def get_accessible_resources(cls, role: str | UserRole) -> List[str]:
+    def get_accessible_resources(cls, role: str | UserRole) -> list[str]:
         """Get list of resource names accessible to a role.
 
         Args:
@@ -432,10 +443,15 @@ class RoleFilterService:
                 role = cls.get_role_from_string(role)
             except ValueError:
                 return False
-        return role in (UserRole.CLINICAL_STAFF, UserRole.RN, UserRole.LPN, UserRole.MSA)
+        return role in (
+            UserRole.CLINICAL_STAFF,
+            UserRole.RN,
+            UserRole.LPN,
+            UserRole.MSA,
+        )
 
     @classmethod
-    def get_role_description(cls, role: str | UserRole) -> Dict[str, Any]:
+    def get_role_description(cls, role: str | UserRole) -> dict[str, Any]:
         """Get human-readable description of a role's permissions.
 
         Args:
@@ -458,66 +474,69 @@ class RoleFilterService:
                 "title": "Administrator",
                 "sees": "Everything",
                 "hidden": "-",
-                "description": "Full system access including user management, compliance, and audit logs"
+                "description": "Full system access including user management, compliance, and audit logs",
             },
             UserRole.COORDINATOR: {
                 "role": "coordinator",
                 "title": "Program Coordinator",
                 "sees": "Schedules, people, conflicts",
                 "hidden": "User management",
-                "description": "Can manage schedules, people, and handle conflicts. Cannot manage users."
+                "description": "Can manage schedules, people, and handle conflicts. Cannot manage users.",
             },
             UserRole.FACULTY: {
                 "role": "faculty",
                 "title": "Faculty Member",
                 "sees": "Own schedule, swap requests",
                 "hidden": "Other faculty details",
-                "description": "Can view their own schedule and participate in swap requests."
+                "description": "Can view their own schedule and participate in swap requests.",
             },
             UserRole.CLINICAL_STAFF: {
                 "role": "clinical_staff",
                 "title": "Clinical Staff (RN/LPN/MSA)",
                 "sees": "Today's manifest, call roster",
                 "hidden": "Academic blocks, compliance",
-                "description": "Can view daily assignments and call roster. No access to academic scheduling."
+                "description": "Can view daily assignments and call roster. No access to academic scheduling.",
             },
             UserRole.RN: {
                 "role": "rn",
                 "title": "Registered Nurse",
                 "sees": "Today's manifest, call roster",
                 "hidden": "Academic blocks, compliance",
-                "description": "Can view daily assignments and call roster. No access to academic scheduling."
+                "description": "Can view daily assignments and call roster. No access to academic scheduling.",
             },
             UserRole.LPN: {
                 "role": "lpn",
                 "title": "Licensed Practical Nurse",
                 "sees": "Today's manifest, call roster",
                 "hidden": "Academic blocks, compliance",
-                "description": "Can view daily assignments and call roster. No access to academic scheduling."
+                "description": "Can view daily assignments and call roster. No access to academic scheduling.",
             },
             UserRole.MSA: {
                 "role": "msa",
                 "title": "Medical Support Assistant",
                 "sees": "Today's manifest, call roster",
                 "hidden": "Academic blocks, compliance",
-                "description": "Can view daily assignments and call roster. No access to academic scheduling."
+                "description": "Can view daily assignments and call roster. No access to academic scheduling.",
             },
             UserRole.RESIDENT: {
                 "role": "resident",
                 "title": "Resident",
                 "sees": "Own schedule, swap requests, conflicts",
                 "hidden": "Other resident details",
-                "description": "Can view their own schedule, participate in swaps, and see conflicts."
+                "description": "Can view their own schedule, participate in swaps, and see conflicts.",
             },
         }
 
-        description = descriptions.get(role, {
-            "role": str(role),
-            "title": "Unknown",
-            "sees": "Unknown",
-            "hidden": "Unknown",
-            "description": "No description available"
-        })
+        description = descriptions.get(
+            role,
+            {
+                "role": str(role),
+                "title": "Unknown",
+                "sees": "Unknown",
+                "hidden": "Unknown",
+                "description": "No description available",
+            },
+        )
 
         # Add permissions list
         description["permissions"] = cls.get_accessible_resources(role)

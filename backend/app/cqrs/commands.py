@@ -59,7 +59,8 @@ from datetime import datetime
 from typing import Any, Generic, TypeVar
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ValidationError as PydanticValidationError
+from pydantic import BaseModel
+from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ValidationError
@@ -510,7 +511,9 @@ class CommandBus:
                 extra={
                     "event_id": str(event.event_id),
                     "event_type": event.event_type,
-                    "aggregate_id": str(event.aggregate_id) if event.aggregate_id else None,
+                    "aggregate_id": str(event.aggregate_id)
+                    if event.aggregate_id
+                    else None,
                 },
             )
 

@@ -1,15 +1,12 @@
 """Tests for AssignmentService."""
 
-import pytest
 from datetime import date, timedelta
-from uuid import uuid4
 from unittest.mock import Mock, patch
+from uuid import uuid4
 
-from app.services.assignment_service import AssignmentService
 from app.models.assignment import Assignment
 from app.models.block import Block
-from app.models.person import Person
-from app.models.rotation_template import RotationTemplate
+from app.services.assignment_service import AssignmentService
 
 
 class TestAssignmentService:
@@ -70,7 +67,9 @@ class TestAssignmentService:
         assert result["total"] == 2
         assert len(result["items"]) == 2
 
-    def test_list_assignments_filter_by_person_id(self, db, sample_residents, sample_blocks):
+    def test_list_assignments_filter_by_person_id(
+        self, db, sample_residents, sample_blocks
+    ):
         """Test filtering assignments by person_id."""
         person1, person2, person3 = sample_residents
 
@@ -118,7 +117,9 @@ class TestAssignmentService:
         assert result["total"] == 1
         assert result["items"][0].role == "primary"
 
-    def test_list_assignments_filter_by_activity_type(self, db, sample_resident, sample_blocks):
+    def test_list_assignments_filter_by_activity_type(
+        self, db, sample_resident, sample_blocks
+    ):
         """Test filtering assignments by activity_type."""
         assignment1 = Assignment(
             id=uuid4(),
@@ -208,8 +209,10 @@ class TestAssignmentService:
     # Create Assignment Tests
     # ========================================================================
 
-    @patch('app.services.assignment_service.ACGMEValidator')
-    def test_create_assignment_success(self, mock_validator, db, sample_resident, sample_block):
+    @patch("app.services.assignment_service.ACGMEValidator")
+    def test_create_assignment_success(
+        self, mock_validator, db, sample_resident, sample_block
+    ):
         """Test creating an assignment successfully."""
         # Mock ACGME validation to return no violations
         mock_validator_instance = Mock()
@@ -232,9 +235,14 @@ class TestAssignmentService:
         assert result["is_compliant"] is True
         assert len(result["acgme_warnings"]) == 0
 
-    @patch('app.services.assignment_service.ACGMEValidator')
+    @patch("app.services.assignment_service.ACGMEValidator")
     def test_create_assignment_with_all_optional_fields(
-        self, mock_validator, db, sample_resident, sample_block, sample_rotation_template
+        self,
+        mock_validator,
+        db,
+        sample_resident,
+        sample_block,
+        sample_rotation_template,
     ):
         """Test creating an assignment with all optional fields."""
         mock_validator_instance = Mock()
@@ -257,8 +265,10 @@ class TestAssignmentService:
         assert assignment.activity_type == "clinic"
         assert assignment.notes == "Test assignment"
 
-    @patch('app.services.assignment_service.ACGMEValidator')
-    def test_create_assignment_duplicate_error(self, mock_validator, db, sample_resident, sample_block):
+    @patch("app.services.assignment_service.ACGMEValidator")
+    def test_create_assignment_duplicate_error(
+        self, mock_validator, db, sample_resident, sample_block
+    ):
         """Test creating a duplicate assignment returns error."""
         mock_validator_instance = Mock()
         mock_validator_instance.validate_all.return_value = Mock(violations=[])
@@ -286,8 +296,10 @@ class TestAssignmentService:
         assert result["error"] == "Person already assigned to this block"
         assert result["assignment"] is None
 
-    @patch('app.services.assignment_service.ACGMEValidator')
-    def test_create_assignment_with_acgme_violations(self, mock_validator, db, sample_resident, sample_block):
+    @patch("app.services.assignment_service.ACGMEValidator")
+    def test_create_assignment_with_acgme_violations(
+        self, mock_validator, db, sample_resident, sample_block
+    ):
         """Test creating an assignment with ACGME violations."""
         # Mock ACGME validation to return violations
         mock_violation = Mock()
@@ -314,8 +326,10 @@ class TestAssignmentService:
         assert len(result["acgme_warnings"]) == 1
         assert "WARNING: Exceeds maximum consecutive days" in result["acgme_warnings"]
 
-    @patch('app.services.assignment_service.ACGMEValidator')
-    def test_create_assignment_with_override_reason(self, mock_validator, db, sample_resident, sample_block):
+    @patch("app.services.assignment_service.ACGMEValidator")
+    def test_create_assignment_with_override_reason(
+        self, mock_validator, db, sample_resident, sample_block
+    ):
         """Test creating an assignment with override reason adds note."""
         # Mock ACGME validation to return violations
         mock_violation = Mock()
@@ -340,14 +354,19 @@ class TestAssignmentService:
 
         assignment = result["assignment"]
         assert "ACGME Override: Emergency coverage needed" in assignment.notes
-        assert "Override acknowledged: Emergency coverage needed" in result["acgme_warnings"]
+        assert (
+            "Override acknowledged: Emergency coverage needed"
+            in result["acgme_warnings"]
+        )
 
     # ========================================================================
     # Update Assignment Tests
     # ========================================================================
 
-    @patch('app.services.assignment_service.ACGMEValidator')
-    def test_update_assignment_success(self, mock_validator, db, sample_resident, sample_block):
+    @patch("app.services.assignment_service.ACGMEValidator")
+    def test_update_assignment_success(
+        self, mock_validator, db, sample_resident, sample_block
+    ):
         """Test updating an assignment successfully."""
         mock_validator_instance = Mock()
         mock_validator_instance.validate_all.return_value = Mock(violations=[])
@@ -387,7 +406,7 @@ class TestAssignmentService:
         assert result["error"] == "Assignment not found"
         assert result["assignment"] is None
 
-    @patch('app.services.assignment_service.ACGMEValidator')
+    @patch("app.services.assignment_service.ACGMEValidator")
     def test_update_assignment_optimistic_locking_conflict(
         self, mock_validator, db, sample_resident, sample_block
     ):
@@ -421,7 +440,7 @@ class TestAssignmentService:
         assert "Assignment has been modified by another user" in result["error"]
         assert result["assignment"] is None
 
-    @patch('app.services.assignment_service.ACGMEValidator')
+    @patch("app.services.assignment_service.ACGMEValidator")
     def test_update_assignment_with_acgme_validation(
         self, mock_validator, db, sample_resident, sample_block
     ):
@@ -482,7 +501,9 @@ class TestAssignmentService:
         assert result["error"] is None
 
         # Verify deletion
-        db_assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
+        db_assignment = (
+            db.query(Assignment).filter(Assignment.id == assignment_id).first()
+        )
         assert db_assignment is None
 
     def test_delete_assignment_not_found(self, db):

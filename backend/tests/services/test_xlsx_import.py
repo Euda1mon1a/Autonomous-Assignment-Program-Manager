@@ -3,20 +3,19 @@ Comprehensive edge case tests for xlsx_import service.
 
 Tests all dataclasses, enums, and helper methods without requiring openpyxl fixtures.
 """
+
 from datetime import date, timedelta
 
-import pytest
-
 from app.services.xlsx_import import (
+    ClinicScheduleImporter,
+    ImportResult,
+    ProviderSchedule,
     ScheduleConflict,
     ScheduleSlot,
     SlotType,
-    ProviderSchedule,
-    ImportResult,
-    ClinicScheduleImporter,
-    has_back_to_back_conflict,
     count_alternating_cycles,
     get_schedule_flexibility,
+    has_back_to_back_conflict,
 )
 
 
@@ -475,9 +474,9 @@ class TestProviderSchedule:
         # Week 1, skip week 2, week 3, skip week 4, week 5
         # This creates alternating pattern
         week_dates = [
-            date(2024, 1, 15),   # Week 1 (Mon)
-            date(2024, 1, 29),   # Week 3 (skip week 2)
-            date(2024, 2, 12),   # Week 5 (skip week 4)
+            date(2024, 1, 15),  # Week 1 (Mon)
+            date(2024, 1, 29),  # Week 3 (skip week 2)
+            date(2024, 2, 12),  # Week 5 (skip week 4)
         ]
 
         for d in week_dates:
@@ -516,9 +515,9 @@ class TestProviderSchedule:
 
         # Weeks with large gaps (more than 2 weeks)
         week_dates = [
-            date(2024, 1, 15),   # Week 1
-            date(2024, 2, 5),    # Week 4 (3 week gap)
-            date(2024, 2, 26),   # Week 7 (3 week gap)
+            date(2024, 1, 15),  # Week 1
+            date(2024, 2, 5),  # Week 4 (3 week gap)
+            date(2024, 2, 26),  # Week 7 (3 week gap)
         ]
 
         for d in week_dates:
@@ -540,9 +539,9 @@ class TestProviderSchedule:
 
         # Exactly 7 day gap (boundary case)
         week_dates = [
-            date(2024, 1, 15),   # Week 1 (Mon)
-            date(2024, 1, 29),   # Week 3 (14 days later = 7 day gap after week 1 ends)
-            date(2024, 2, 12),   # Week 5
+            date(2024, 1, 15),  # Week 1 (Mon)
+            date(2024, 1, 29),  # Week 3 (14 days later = 7 day gap after week 1 ends)
+            date(2024, 2, 12),  # Week 5
         ]
 
         for d in week_dates:
@@ -560,8 +559,7 @@ class TestProviderSchedule:
     def test_specialties_list(self):
         """Test provider with specialties."""
         schedule = ProviderSchedule(
-            name="Dr. Specialist",
-            specialties=["Sports Medicine", "Orthopedics"]
+            name="Dr. Specialist", specialties=["Sports Medicine", "Orthopedics"]
         )
 
         assert len(schedule.specialties) == 2
@@ -700,7 +698,7 @@ class TestImportResult:
             total_slots=100,
             clinic_slots=60,
             fmit_slots=30,
-            date_range=(date(2024, 1, 1), date(2024, 12, 31))
+            date_range=(date(2024, 1, 1), date(2024, 12, 31)),
         )
 
         assert result.total_slots == 100
@@ -712,8 +710,7 @@ class TestImportResult:
     def test_warnings_list(self):
         """Test adding warnings to result."""
         result = ImportResult(
-            success=True,
-            warnings=["Duplicate provider names found", "Missing dates"]
+            success=True, warnings=["Duplicate provider names found", "Missing dates"]
         )
 
         assert len(result.warnings) == 2
@@ -727,9 +724,27 @@ class TestSlotTypeMapping:
         """Test all clinic slot type mappings."""
         importer = ClinicScheduleImporter()
 
-        clinic_codes = ["c", "cc", "clc", "clinic", "cv", "pts", "patient", "appt",
-                        "sm", "asm", "sports", "pr", "vas", "pedc", "pedsp",
-                        "hv", "hc", "c-i", "rcc"]
+        clinic_codes = [
+            "c",
+            "cc",
+            "clc",
+            "clinic",
+            "cv",
+            "pts",
+            "patient",
+            "appt",
+            "sm",
+            "asm",
+            "sports",
+            "pr",
+            "vas",
+            "pedc",
+            "pedsp",
+            "hv",
+            "hc",
+            "c-i",
+            "rcc",
+        ]
 
         for code in clinic_codes:
             result = importer.classify_slot(code)
@@ -739,8 +754,21 @@ class TestSlotTypeMapping:
         """Test all FMIT slot type mappings."""
         importer = ClinicScheduleImporter()
 
-        fmit_codes = ["fmit", "nf", "nicu", "pedw", "imw", "inpt", "inpatient",
-                      "ward", "wards", "er", "kap", "straub", "oic"]
+        fmit_codes = [
+            "fmit",
+            "nf",
+            "nicu",
+            "pedw",
+            "imw",
+            "inpt",
+            "inpatient",
+            "ward",
+            "wards",
+            "er",
+            "kap",
+            "straub",
+            "oic",
+        ]
 
         for code in fmit_codes:
             result = importer.classify_slot(code)
@@ -770,8 +798,17 @@ class TestSlotTypeMapping:
         """Test all conference slot type mappings."""
         importer = ClinicScheduleImporter()
 
-        conf_codes = ["conf", "conference", "cme", "mtg", "lec", "sim",
-                      "usafp", "hafp", "facdev"]
+        conf_codes = [
+            "conf",
+            "conference",
+            "cme",
+            "mtg",
+            "lec",
+            "sim",
+            "usafp",
+            "hafp",
+            "facdev",
+        ]
 
         for code in conf_codes:
             result = importer.classify_slot(code)
@@ -781,8 +818,19 @@ class TestSlotTypeMapping:
         """Test all admin slot type mappings."""
         importer = ClinicScheduleImporter()
 
-        admin_codes = ["admin", "adm", "office", "gme", "rsh", "pi", "at",
-                       "pcat", "fac", "dm", "dfm"]
+        admin_codes = [
+            "admin",
+            "adm",
+            "office",
+            "gme",
+            "rsh",
+            "pi",
+            "at",
+            "pcat",
+            "fac",
+            "dm",
+            "dfm",
+        ]
 
         for code in admin_codes:
             result = importer.classify_slot(code)
@@ -824,7 +872,9 @@ class TestSlotTypeMapping:
         # Should prioritize restrictive types
         assert importer.classify_slot("PC/OFF") == SlotType.OFF
         assert importer.classify_slot("C/CV") == SlotType.CLINIC
-        assert importer.classify_slot("FMIT/VAC") == SlotType.FMIT  # FMIT is restrictive
+        assert (
+            importer.classify_slot("FMIT/VAC") == SlotType.FMIT
+        )  # FMIT is restrictive
 
     def test_prefix_matching(self):
         """Test prefix matching for longer codes."""
@@ -1030,9 +1080,9 @@ class TestHelperFunctions:
     def test_count_alternating_cycles_alternating(self):
         """Test alternating cycle count with alternating pattern."""
         weeks = [
-            date(2024, 1, 15),   # Week 1
-            date(2024, 1, 29),   # Week 3 (14 days = alternating)
-            date(2024, 2, 12),   # Week 5 (14 days = alternating)
+            date(2024, 1, 15),  # Week 1
+            date(2024, 1, 29),  # Week 3 (14 days = alternating)
+            date(2024, 2, 12),  # Week 5 (14 days = alternating)
         ]
         assert count_alternating_cycles(weeks) == 2
 
@@ -1142,9 +1192,9 @@ class TestWeekCalculationBoundaries:
 
         # Far apart FMIT slots
         dates = [
-            date(2024, 1, 15),   # January
-            date(2024, 6, 10),   # June (5 months later)
-            date(2024, 12, 2),   # December (6 months later)
+            date(2024, 1, 15),  # January
+            date(2024, 6, 10),  # June (5 months later)
+            date(2024, 12, 2),  # December (6 months later)
         ]
 
         for d in dates:

@@ -8,6 +8,7 @@ Tests cover:
 - Expiration handling
 - API endpoints
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -138,11 +139,13 @@ class TestProcedureRepository:
     def test_create_procedure(self, db: Session):
         """Test creating a procedure."""
         repo = ProcedureRepository(db)
-        procedure = repo.create({
-            "name": "Test Procedure",
-            "category": "office",
-            "specialty": "General",
-        })
+        procedure = repo.create(
+            {
+                "name": "Test Procedure",
+                "category": "office",
+                "specialty": "General",
+            }
+        )
         repo.commit()
 
         assert procedure.id is not None
@@ -178,7 +181,9 @@ class TestProcedureRepository:
         assert len(complex_procs) == 1
         assert complex_procs[0].name == "Mastectomy"
 
-    def test_get_unique_specialties(self, db: Session, sample_procedures: list[Procedure]):
+    def test_get_unique_specialties(
+        self, db: Session, sample_procedures: list[Procedure]
+    ):
         """Test getting unique specialties."""
         repo = ProcedureRepository(db)
         specialties = repo.get_unique_specialties()
@@ -201,19 +206,24 @@ class TestProcedureCredentialRepository:
     ):
         """Test creating a credential."""
         repo = ProcedureCredentialRepository(db)
-        credential = repo.create({
-            "person_id": sample_faculty.id,
-            "procedure_id": sample_procedure.id,
-            "status": "active",
-            "competency_level": "qualified",
-        })
+        credential = repo.create(
+            {
+                "person_id": sample_faculty.id,
+                "procedure_id": sample_procedure.id,
+                "status": "active",
+                "competency_level": "qualified",
+            }
+        )
         repo.commit()
 
         assert credential.id is not None
         assert credential.status == "active"
 
     def test_get_by_person_and_procedure(
-        self, db: Session, faculty_with_credentials: Person, sample_procedures: list[Procedure]
+        self,
+        db: Session,
+        faculty_with_credentials: Person,
+        sample_procedures: list[Procedure],
     ):
         """Test getting a credential by person and procedure."""
         repo = ProcedureCredentialRepository(db)
@@ -225,9 +235,7 @@ class TestProcedureCredentialRepository:
         assert credential is not None
         assert credential.person_id == faculty_with_credentials.id
 
-    def test_list_by_person(
-        self, db: Session, faculty_with_credentials: Person
-    ):
+    def test_list_by_person(self, db: Session, faculty_with_credentials: Person):
         """Test listing credentials for a person."""
         repo = ProcedureCredentialRepository(db)
         credentials = repo.list_by_person(faculty_with_credentials.id)
@@ -235,23 +243,35 @@ class TestProcedureCredentialRepository:
         assert len(credentials) == 2
 
     def test_is_faculty_qualified(
-        self, db: Session, faculty_with_credentials: Person, sample_procedures: list[Procedure]
+        self,
+        db: Session,
+        faculty_with_credentials: Person,
+        sample_procedures: list[Procedure],
     ):
         """Test checking if faculty is qualified."""
         repo = ProcedureCredentialRepository(db)
 
         # Has credential
-        assert repo.is_faculty_qualified_for_procedure(
-            faculty_with_credentials.id, sample_procedures[0].id
-        ) is True
+        assert (
+            repo.is_faculty_qualified_for_procedure(
+                faculty_with_credentials.id, sample_procedures[0].id
+            )
+            is True
+        )
 
         # No credential
-        assert repo.is_faculty_qualified_for_procedure(
-            faculty_with_credentials.id, sample_procedures[2].id
-        ) is False
+        assert (
+            repo.is_faculty_qualified_for_procedure(
+                faculty_with_credentials.id, sample_procedures[2].id
+            )
+            is False
+        )
 
     def test_list_qualified_faculty(
-        self, db: Session, faculty_with_credentials: Person, sample_procedures: list[Procedure]
+        self,
+        db: Session,
+        faculty_with_credentials: Person,
+        sample_procedures: list[Procedure],
     ):
         """Test listing qualified faculty for a procedure."""
         repo = ProcedureCredentialRepository(db)
@@ -260,20 +280,28 @@ class TestProcedureCredentialRepository:
         assert len(faculty) == 1
         assert faculty[0].id == faculty_with_credentials.id
 
-    def test_expired_credential_not_valid(self, db: Session, sample_faculty: Person, sample_procedure: Procedure):
+    def test_expired_credential_not_valid(
+        self, db: Session, sample_faculty: Person, sample_procedure: Procedure
+    ):
         """Test that expired credentials are not counted as valid."""
         repo = ProcedureCredentialRepository(db)
-        credential = repo.create({
-            "person_id": sample_faculty.id,
-            "procedure_id": sample_procedure.id,
-            "status": "active",
-            "expiration_date": date.today() - timedelta(days=1),  # Expired yesterday
-        })
+        credential = repo.create(
+            {
+                "person_id": sample_faculty.id,
+                "procedure_id": sample_procedure.id,
+                "status": "active",
+                "expiration_date": date.today()
+                - timedelta(days=1),  # Expired yesterday
+            }
+        )
         repo.commit()
 
-        assert repo.is_faculty_qualified_for_procedure(
-            sample_faculty.id, sample_procedure.id
-        ) is False
+        assert (
+            repo.is_faculty_qualified_for_procedure(
+                sample_faculty.id, sample_procedure.id
+            )
+            is False
+        )
 
 
 # ============================================================================
@@ -296,7 +324,9 @@ class TestProcedureService:
         assert result["error"] is None
         assert result["procedure"].name == "New Procedure"
 
-    def test_create_duplicate_name_fails(self, db: Session, sample_procedure: Procedure):
+    def test_create_duplicate_name_fails(
+        self, db: Session, sample_procedure: Procedure
+    ):
         """Test that duplicate names are rejected."""
         service = ProcedureService(db)
         result = service.create_procedure(
@@ -364,7 +394,10 @@ class TestCredentialService:
         assert "faculty" in result["error"].lower()
 
     def test_duplicate_credential_fails(
-        self, db: Session, faculty_with_credentials: Person, sample_procedures: list[Procedure]
+        self,
+        db: Session,
+        faculty_with_credentials: Person,
+        sample_procedures: list[Procedure],
     ):
         """Test that duplicate credentials are rejected."""
         service = CredentialService(db)
@@ -377,7 +410,10 @@ class TestCredentialService:
         assert "already exists" in result["error"].lower()
 
     def test_is_faculty_qualified(
-        self, db: Session, faculty_with_credentials: Person, sample_procedures: list[Procedure]
+        self,
+        db: Session,
+        faculty_with_credentials: Person,
+        sample_procedures: list[Procedure],
     ):
         """Test checking faculty qualification."""
         service = CredentialService(db)
@@ -395,7 +431,10 @@ class TestCredentialService:
         assert result["is_qualified"] is False
 
     def test_suspend_credential(
-        self, db: Session, faculty_with_credentials: Person, sample_procedures: list[Procedure]
+        self,
+        db: Session,
+        faculty_with_credentials: Person,
+        sample_procedures: list[Procedure],
     ):
         """Test suspending a credential."""
         service = CredentialService(db)
@@ -410,9 +449,7 @@ class TestCredentialService:
         assert result["error"] is None
         assert result["credential"].status == "suspended"
 
-    def test_get_faculty_summary(
-        self, db: Session, faculty_with_credentials: Person
-    ):
+    def test_get_faculty_summary(self, db: Session, faculty_with_credentials: Person):
         """Test getting faculty credential summary."""
         service = CredentialService(db)
         result = service.get_faculty_credential_summary(faculty_with_credentials.id)
@@ -430,7 +467,9 @@ class TestCredentialService:
 class TestProcedureAPI:
     """Tests for procedure API endpoints."""
 
-    def test_list_procedures(self, client, db: Session, sample_procedures: list[Procedure]):
+    def test_list_procedures(
+        self, client, db: Session, sample_procedures: list[Procedure]
+    ):
         """Test listing procedures."""
         response = client.get("/api/procedures")
         assert response.status_code == 200
@@ -454,7 +493,9 @@ class TestProcedureAPI:
         data = response.json()
         assert data["name"] == "IUD Placement"
 
-    def test_get_specialties(self, client, db: Session, sample_procedures: list[Procedure]):
+    def test_get_specialties(
+        self, client, db: Session, sample_procedures: list[Procedure]
+    ):
         """Test getting unique specialties."""
         response = client.get("/api/procedures/specialties")
         assert response.status_code == 200
@@ -470,23 +511,35 @@ class TestCredentialAPI:
         self, client, db: Session, faculty_with_credentials: Person
     ):
         """Test getting credentials for a person."""
-        response = client.get(f"/api/credentials/by-person/{faculty_with_credentials.id}")
+        response = client.get(
+            f"/api/credentials/by-person/{faculty_with_credentials.id}"
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 2
 
     def test_get_qualified_faculty(
-        self, client, db: Session, faculty_with_credentials: Person, sample_procedures: list[Procedure]
+        self,
+        client,
+        db: Session,
+        faculty_with_credentials: Person,
+        sample_procedures: list[Procedure],
     ):
         """Test getting qualified faculty for a procedure."""
-        response = client.get(f"/api/credentials/qualified-faculty/{sample_procedures[0].id}")
+        response = client.get(
+            f"/api/credentials/qualified-faculty/{sample_procedures[0].id}"
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 1
         assert data["qualified_faculty"][0]["id"] == str(faculty_with_credentials.id)
 
     def test_check_qualification(
-        self, client, db: Session, faculty_with_credentials: Person, sample_procedures: list[Procedure]
+        self,
+        client,
+        db: Session,
+        faculty_with_credentials: Person,
+        sample_procedures: list[Procedure],
     ):
         """Test checking qualification via API."""
         # Has credential
@@ -520,7 +573,9 @@ class TestPeopleCredentialAPI:
         self, client, db: Session, faculty_with_credentials: Person
     ):
         """Test getting credential summary via people endpoint."""
-        response = client.get(f"/api/people/{faculty_with_credentials.id}/credentials/summary")
+        response = client.get(
+            f"/api/people/{faculty_with_credentials.id}/credentials/summary"
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["total_credentials"] == 2

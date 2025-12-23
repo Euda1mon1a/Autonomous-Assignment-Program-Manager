@@ -1,10 +1,10 @@
 """OAuth2 PKCE API routes."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
 from app.auth.oauth2_pkce import (
     create_authorization_code,
     exchange_code_for_token,
@@ -13,6 +13,7 @@ from app.auth.oauth2_pkce import (
     revoke_token,
 )
 from app.core.security import get_current_active_user
+from app.db.session import get_db
 from app.models.user import User
 from app.schemas.oauth2 import (
     AuthorizationRequest,

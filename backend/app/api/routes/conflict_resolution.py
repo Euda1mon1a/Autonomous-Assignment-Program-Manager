@@ -3,6 +3,7 @@
 Exposes the ConflictAutoResolver service for analyzing and resolving
 schedule conflicts with safety checks and impact assessment.
 """
+
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -12,10 +13,10 @@ from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.conflict_resolution import (
+    BatchResolutionReport,
     ConflictAnalysis,
     ResolutionOption,
     ResolutionResult,
-    BatchResolutionReport,
 )
 from app.services.conflict_auto_resolver import ConflictAutoResolver
 
@@ -52,7 +53,7 @@ def analyze_conflict(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error analyzing conflict",
@@ -131,9 +132,15 @@ def resolve_conflict(
 
 @router.post("/batch/resolve", response_model=BatchResolutionReport)
 def batch_resolve_conflicts(
-    conflict_ids: list[UUID] | None = Query(None, description="Specific conflicts to resolve"),
-    max_conflicts: int = Query(20, ge=1, le=100, description="Maximum conflicts to process"),
-    severity_filter: str | None = Query(None, description="Filter by severity: HIGH, MEDIUM, LOW"),
+    conflict_ids: list[UUID] | None = Query(
+        None, description="Specific conflicts to resolve"
+    ),
+    max_conflicts: int = Query(
+        20, ge=1, le=100, description="Maximum conflicts to process"
+    ),
+    severity_filter: str | None = Query(
+        None, description="Filter by severity: HIGH, MEDIUM, LOW"
+    ),
     dry_run: bool = Query(False, description="Simulate without applying changes"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),

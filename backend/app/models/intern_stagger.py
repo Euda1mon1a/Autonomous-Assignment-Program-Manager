@@ -1,9 +1,9 @@
 """Intern stagger pattern model - defines PGY-1 orientation schedules."""
+
 import uuid
-from datetime import datetime, time
+from datetime import datetime
 
 from sqlalchemy import CheckConstraint, Column, DateTime, Integer, String, Time
-from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 from app.db.types import GUID
@@ -22,6 +22,7 @@ class InternStaggerPattern(Base):
     The overlap allows Group A interns to gain experience before
     supervising/training Group B interns during the overlap window.
     """
+
     __tablename__ = "intern_stagger_patterns"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -33,10 +34,14 @@ class InternStaggerPattern(Base):
 
     # Overlap metrics
     overlap_duration_minutes = Column(Integer, nullable=False)  # e.g., 240 (4 hours)
-    overlap_efficiency = Column(Integer, nullable=False, default=85)  # Percentage (0-100)
+    overlap_efficiency = Column(
+        Integer, nullable=False, default=85
+    )  # Percentage (0-100)
 
     # Experience requirements
-    min_intern_a_experience_weeks = Column(Integer, nullable=False, default=2)  # Weeks before overlap starts
+    min_intern_a_experience_weeks = Column(
+        Integer, nullable=False, default=2
+    )  # Weeks before overlap starts
 
     # Audit
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -48,12 +53,10 @@ class InternStaggerPattern(Base):
     __table_args__ = (
         CheckConstraint("overlap_duration_minutes > 0", name="check_overlap_duration"),
         CheckConstraint(
-            "overlap_efficiency BETWEEN 0 AND 100",
-            name="check_overlap_efficiency"
+            "overlap_efficiency BETWEEN 0 AND 100", name="check_overlap_efficiency"
         ),
         CheckConstraint(
-            "min_intern_a_experience_weeks >= 0",
-            name="check_min_experience"
+            "min_intern_a_experience_weeks >= 0", name="check_min_experience"
         ),
     )
 
@@ -78,7 +81,9 @@ class InternStaggerPattern(Base):
         Returns:
             float: Effective overlap hours with efficiency factored in
         """
-        return (self.overlap_duration_minutes / 60.0) * (self.overlap_efficiency / 100.0)
+        return (self.overlap_duration_minutes / 60.0) * (
+            self.overlap_efficiency / 100.0
+        )
 
     @property
     def display_schedule(self) -> str:

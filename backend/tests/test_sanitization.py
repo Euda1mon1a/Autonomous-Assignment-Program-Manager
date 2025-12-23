@@ -1,8 +1,8 @@
 """Tests for input sanitization module."""
+
 import pytest
 
 from app.sanitization.html import (
-    HTMLSanitizationError,
     count_html_tags,
     escape_html,
     is_safe_html,
@@ -42,87 +42,89 @@ class TestHTMLSanitization:
 
     def test_strip_all_tags_basic(self):
         """Test basic HTML tag stripping."""
-        assert strip_all_tags('<p>Hello World</p>') == 'Hello World'
-        assert strip_all_tags('<script>alert("xss")</script>') == ''
-        assert strip_all_tags('Plain text') == 'Plain text'
+        assert strip_all_tags("<p>Hello World</p>") == "Hello World"
+        assert strip_all_tags('<script>alert("xss")</script>') == ""
+        assert strip_all_tags("Plain text") == "Plain text"
 
     def test_strip_all_tags_complex(self):
         """Test stripping complex HTML."""
-        html = '<div><p>Hello <strong>World</strong></p><script>evil()</script></div>'
+        html = "<div><p>Hello <strong>World</strong></p><script>evil()</script></div>"
         result = strip_all_tags(html)
-        assert result == 'Hello World'
-        assert '<' not in result
-        assert '>' not in result
+        assert result == "Hello World"
+        assert "<" not in result
+        assert ">" not in result
 
     def test_strip_all_tags_empty(self):
         """Test stripping with empty input."""
-        assert strip_all_tags('') == ''
-        assert strip_all_tags(None) == ''
+        assert strip_all_tags("") == ""
+        assert strip_all_tags(None) == ""
 
     def test_sanitize_html_removes_dangerous_tags(self):
         """Test that dangerous tags are removed."""
         dangerous = '<script>alert("xss")</script><p>Safe</p>'
         result = sanitize_html(dangerous)
-        assert 'script' not in result.lower()
-        assert 'Safe' in result
+        assert "script" not in result.lower()
+        assert "Safe" in result
 
     def test_sanitize_html_removes_event_handlers(self):
         """Test that event handlers are removed."""
         html = '<p onclick="evil()">Text</p>'
         result = sanitize_html(html)
-        assert 'onclick' not in result.lower()
-        assert 'Text' in result
+        assert "onclick" not in result.lower()
+        assert "Text" in result
 
     def test_sanitize_html_removes_javascript_protocol(self):
         """Test that javascript: protocol is removed."""
         html = '<a href="javascript:alert(1)">Link</a>'
         result = sanitize_html(html)
-        assert 'javascript:' not in result.lower()
+        assert "javascript:" not in result.lower()
 
     def test_sanitize_html_allows_safe_tags(self):
         """Test that safe tags are preserved."""
-        html = '<p>Hello <strong>World</strong></p>'
+        html = "<p>Hello <strong>World</strong></p>"
         result = sanitize_html(html)
-        assert '<p>' in result or 'Hello' in result
-        assert 'World' in result
+        assert "<p>" in result or "Hello" in result
+        assert "World" in result
 
     def test_sanitize_rich_text(self):
         """Test rich text sanitization."""
-        html = '<p>Hello <strong>World</strong></p>'
+        html = "<p>Hello <strong>World</strong></p>"
         result = sanitize_rich_text(html)
-        assert 'Hello' in result
-        assert 'World' in result
+        assert "Hello" in result
+        assert "World" in result
 
     def test_escape_html(self):
         """Test HTML escaping."""
-        assert escape_html('<script>') == '&lt;script&gt;'
-        assert escape_html('"quotes"') == '&quot;quotes&quot;'
-        assert escape_html("'single'") == '&#x27;single&#x27;'
+        assert escape_html("<script>") == "&lt;script&gt;"
+        assert escape_html('"quotes"') == "&quot;quotes&quot;"
+        assert escape_html("'single'") == "&#x27;single&#x27;"
 
     def test_validate_url_protocol_safe(self):
         """Test URL protocol validation with safe URLs."""
-        assert validate_url_protocol('https://example.com') is True
-        assert validate_url_protocol('http://example.com') is True
-        assert validate_url_protocol('mailto:user@example.com') is True
-        assert validate_url_protocol('/relative/path') is True
+        assert validate_url_protocol("https://example.com") is True
+        assert validate_url_protocol("http://example.com") is True
+        assert validate_url_protocol("mailto:user@example.com") is True
+        assert validate_url_protocol("/relative/path") is True
 
     def test_validate_url_protocol_dangerous(self):
         """Test URL protocol validation with dangerous URLs."""
-        assert validate_url_protocol('javascript:alert(1)') is False
-        assert validate_url_protocol('data:text/html,<script>alert(1)</script>') is False
-        assert validate_url_protocol('vbscript:msgbox(1)') is False
+        assert validate_url_protocol("javascript:alert(1)") is False
+        assert (
+            validate_url_protocol("data:text/html,<script>alert(1)</script>") is False
+        )
+        assert validate_url_protocol("vbscript:msgbox(1)") is False
 
     def test_count_html_tags(self):
         """Test HTML tag counting."""
-        assert count_html_tags('<p>Text</p>') == 2
-        assert count_html_tags('Plain text') == 0
-        assert count_html_tags('<div><p>Text</p></div>') == 4
+        assert count_html_tags("<p>Text</p>") == 2
+        assert count_html_tags("Plain text") == 0
+        assert count_html_tags("<div><p>Text</p></div>") == 4
 
     def test_is_safe_html(self):
         """Test safe HTML detection."""
-        assert is_safe_html('<p>Normal content</p>') is True
-        assert is_safe_html('Plain text') is True
-        assert is_safe_html('<script>alert(1)</script>') is False
+        assert is_safe_html("<p>Normal content</p>") is True
+        assert is_safe_html("Plain text") is True
+        assert is_safe_html("<script>alert(1)</script>") is False
         assert is_safe_html('<p onclick="evil()">Text</p>') is False
 
 
@@ -233,11 +235,11 @@ class TestXSSPrevention:
     def test_detect_xss_script_tags(self):
         """Test XSS detection with script tags."""
         assert detect_xss('<script>alert("xss")</script>') is True
-        assert detect_xss('normal text') is False
+        assert detect_xss("normal text") is False
 
     def test_detect_xss_event_handlers(self):
         """Test XSS detection with event handlers."""
-        assert detect_xss('<img src=x onerror=alert(1)>') is True
+        assert detect_xss("<img src=x onerror=alert(1)>") is True
         assert detect_xss('<p onclick="evil()">Text</p>') is True
 
     def test_detect_xss_javascript_protocol(self):
@@ -246,7 +248,7 @@ class TestXSSPrevention:
 
     def test_detect_xss_encoded(self):
         """Test XSS detection with URL encoding."""
-        assert detect_xss('%3Cscript%3Ealert(1)%3C/script%3E') is True
+        assert detect_xss("%3Cscript%3Ealert(1)%3C/script%3E") is True
 
     def test_sanitize_input_normal(self):
         """Test sanitizing normal input."""
@@ -276,31 +278,31 @@ class TestXSSPrevention:
 
     def test_sanitize_url_safe(self):
         """Test URL sanitization with safe URLs."""
-        assert sanitize_url('https://example.com') == 'https://example.com'
-        assert sanitize_url('http://example.com/path') == 'http://example.com/path'
+        assert sanitize_url("https://example.com") == "https://example.com"
+        assert sanitize_url("http://example.com/path") == "http://example.com/path"
 
     def test_sanitize_url_dangerous(self):
         """Test URL sanitization with dangerous URLs."""
         with pytest.raises(XSSDetectionError):
-            sanitize_url('javascript:alert(1)')
+            sanitize_url("javascript:alert(1)")
 
         with pytest.raises(XSSDetectionError):
-            sanitize_url('data:text/html,<script>alert(1)</script>')
+            sanitize_url("data:text/html,<script>alert(1)</script>")
 
     def test_prevent_path_traversal(self):
         """Test path traversal prevention."""
-        assert prevent_path_traversal('safe/path/file.txt') == 'safe/path/file.txt'
+        assert prevent_path_traversal("safe/path/file.txt") == "safe/path/file.txt"
 
         with pytest.raises(XSSDetectionError):
-            prevent_path_traversal('../../../etc/passwd')
+            prevent_path_traversal("../../../etc/passwd")
 
         with pytest.raises(XSSDetectionError):
-            prevent_path_traversal('..\\..\\windows\\system32')
+            prevent_path_traversal("..\\..\\windows\\system32")
 
     def test_sanitize_email_valid(self):
         """Test email sanitization with valid emails."""
-        assert sanitize_email('user@example.com') == 'user@example.com'
-        assert sanitize_email('User@Example.COM') == 'user@example.com'
+        assert sanitize_email("user@example.com") == "user@example.com"
+        assert sanitize_email("User@Example.COM") == "user@example.com"
 
     def test_sanitize_email_invalid(self):
         """Test email sanitization with invalid emails."""
@@ -308,30 +310,30 @@ class TestXSSPrevention:
             sanitize_email('"><script>alert(1)</script>')
 
         with pytest.raises(XSSDetectionError):
-            sanitize_email('not-an-email')
+            sanitize_email("not-an-email")
 
     def test_is_safe_filename(self):
         """Test filename safety checking."""
-        assert is_safe_filename('document.pdf') is True
-        assert is_safe_filename('my_file_123.txt') is True
-        assert is_safe_filename('../../../etc/passwd') is False
-        assert is_safe_filename('file<script>.txt') is False
-        assert is_safe_filename('.hidden') is False
+        assert is_safe_filename("document.pdf") is True
+        assert is_safe_filename("my_file_123.txt") is True
+        assert is_safe_filename("../../../etc/passwd") is False
+        assert is_safe_filename("file<script>.txt") is False
+        assert is_safe_filename(".hidden") is False
 
     def test_encode_for_html_attribute(self):
         """Test HTML attribute encoding."""
-        assert encode_for_html_attribute('value') == 'value'
+        assert encode_for_html_attribute("value") == "value"
         result = encode_for_html_attribute('value with "quotes"')
-        assert '&quot;' in result
+        assert "&quot;" in result
         assert '"' not in result
 
     def test_strip_javascript(self):
         """Test JavaScript stripping."""
-        html = 'Hello <script>alert(1)</script> World'
+        html = "Hello <script>alert(1)</script> World"
         result = strip_javascript(html)
-        assert 'Hello' in result
-        assert 'World' in result
-        assert 'script' not in result.lower()
+        assert "Hello" in result
+        assert "World" in result
+        assert "script" not in result.lower()
 
 
 class TestSanitizationIntegration:
@@ -341,11 +343,11 @@ class TestSanitizationIntegration:
         """Test comprehensive XSS prevention."""
         payloads = [
             '<script>alert("xss")</script>',
-            '<img src=x onerror=alert(1)>',
-            '<svg/onload=alert(1)>',
-            'javascript:alert(1)',
+            "<img src=x onerror=alert(1)>",
+            "<svg/onload=alert(1)>",
+            "javascript:alert(1)",
             '<iframe src="javascript:alert(1)">',
-            '<body onload=alert(1)>',
+            "<body onload=alert(1)>",
         ]
 
         for payload in payloads:
@@ -427,14 +429,14 @@ class TestEdgeCases:
 
     def test_case_insensitive_detection(self):
         """Test case-insensitive threat detection."""
-        assert detect_xss('<SCRIPT>alert(1)</SCRIPT>') is True
+        assert detect_xss("<SCRIPT>alert(1)</SCRIPT>") is True
         assert detect_sql_injection("SELECT * FROM users") is True
         assert detect_sql_injection("select * from users") is True
 
     def test_whitespace_variations(self):
         """Test detection with various whitespace."""
-        assert detect_xss('<script\n>alert(1)</script>') is True
-        assert detect_xss('<script\t>alert(1)</script>') is True
+        assert detect_xss("<script\n>alert(1)</script>") is True
+        assert detect_xss("<script\t>alert(1)</script>") is True
 
     def test_null_byte_handling(self):
         """Test null byte removal."""

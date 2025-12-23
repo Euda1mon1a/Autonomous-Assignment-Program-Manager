@@ -191,7 +191,10 @@ class MetricsRegistry:
         self.cache_operations_total = Counter(
             "cache_operations_total",
             "Total cache operations by type and result",
-            ["operation", "result"],  # operation: get/set/delete, result: hit/miss/error
+            [
+                "operation",
+                "result",
+            ],  # operation: get/set/delete, result: hit/miss/error
             registry=REGISTRY,
         )
 
@@ -277,7 +280,10 @@ class MetricsRegistry:
         self.schedule_generation_total = Counter(
             "schedule_generation_total",
             "Total schedule generation attempts by algorithm and outcome",
-            ["algorithm", "outcome"],  # algorithm: greedy/cp_sat/pulp, outcome: success/failure
+            [
+                "algorithm",
+                "outcome",
+            ],  # algorithm: greedy/cp_sat/pulp, outcome: success/failure
             registry=REGISTRY,
         )
 
@@ -405,11 +411,13 @@ class MetricsRegistry:
             "Application version and build information",
             registry=REGISTRY,
         )
-        self.app_info.info({
-            "version": "1.0.0",
-            "application": "residency_scheduler",
-            "framework": "fastapi",
-        })
+        self.app_info.info(
+            {
+                "version": "1.0.0",
+                "application": "residency_scheduler",
+                "framework": "fastapi",
+            }
+        )
 
         logger.info("Prometheus metrics registry initialized successfully")
 
@@ -462,7 +470,9 @@ class MetricsRegistry:
             yield
         finally:
             duration = time.perf_counter() - start_time
-            self.cache_operation_duration_seconds.labels(operation=operation).observe(duration)
+            self.cache_operation_duration_seconds.labels(operation=operation).observe(
+                duration
+            )
 
     @contextmanager
     def time_background_task(self, task_name: str):
@@ -484,13 +494,19 @@ class MetricsRegistry:
         start_time = time.perf_counter()
         try:
             yield
-            self.background_tasks_total.labels(task_name=task_name, status="success").inc()
+            self.background_tasks_total.labels(
+                task_name=task_name, status="success"
+            ).inc()
         except Exception:
-            self.background_tasks_total.labels(task_name=task_name, status="failure").inc()
+            self.background_tasks_total.labels(
+                task_name=task_name, status="failure"
+            ).inc()
             raise
         finally:
             duration = time.perf_counter() - start_time
-            self.background_task_duration_seconds.labels(task_name=task_name).observe(duration)
+            self.background_task_duration_seconds.labels(task_name=task_name).observe(
+                duration
+            )
             self.background_tasks_in_progress.labels(task_name=task_name).dec()
 
     @contextmanager
@@ -513,18 +529,18 @@ class MetricsRegistry:
         try:
             yield
             self.schedule_generation_total.labels(
-                algorithm=algorithm,
-                outcome="success"
+                algorithm=algorithm, outcome="success"
             ).inc()
         except Exception:
             self.schedule_generation_total.labels(
-                algorithm=algorithm,
-                outcome="failure"
+                algorithm=algorithm, outcome="failure"
             ).inc()
             raise
         finally:
             duration = time.perf_counter() - start_time
-            self.schedule_generation_duration_seconds.labels(algorithm=algorithm).observe(duration)
+            self.schedule_generation_duration_seconds.labels(
+                algorithm=algorithm
+            ).observe(duration)
 
     def record_http_request(
         self,
@@ -603,6 +619,7 @@ def get_metrics() -> MetricsRegistry:
 # Backwards compatibility - lazy initialization
 class _MetricsProxy:
     """Proxy to support lazy initialization while keeping 'metrics' as module-level."""
+
     def __getattr__(self, name):
         return getattr(get_metrics(), name)
 

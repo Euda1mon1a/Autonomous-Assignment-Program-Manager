@@ -8,16 +8,15 @@ import json
 import logging
 import os
 from datetime import date
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import and_, select
-from sqlalchemy.orm import Session, contains_eager, joinedload, selectinload
+from sqlalchemy.orm import Session, contains_eager, selectinload
 
 from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
-from app.models.procedure_credential import ProcedureCredential
 from app.models.rotation_template import RotationTemplate
 from app.models.swap import SwapRecord
 
@@ -26,10 +25,10 @@ logger = logging.getLogger(__name__)
 
 def prefetch_assignments_with_relations(
     db: Session,
-    assignment_ids: Optional[list[str]] = None,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-    person_id: Optional[str] = None,
+    assignment_ids: list[str] | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    person_id: str | None = None,
 ) -> list[Assignment]:
     """
     Prefetch assignments with all related data in a single optimized query.
@@ -79,13 +78,13 @@ def prefetch_assignments_with_relations(
 
 def prefetch_persons_with_assignments(
     db: Session,
-    person_ids: Optional[list[str]] = None,
-    role: Optional[str] = None,
+    person_ids: list[str] | None = None,
+    role: str | None = None,
     include_leave: bool = False,
     include_certifications: bool = False,
     include_procedures: bool = False,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
 ) -> list[Person]:
     """
     Prefetch persons with their related data.
@@ -156,7 +155,7 @@ def prefetch_blocks_with_assignments(
     db: Session,
     start_date: date,
     end_date: date,
-    session: Optional[str] = None,
+    session: str | None = None,
     include_person_details: bool = True,
 ) -> list[Block]:
     """
@@ -172,9 +171,7 @@ def prefetch_blocks_with_assignments(
     Returns:
         List of Block objects with assignments loaded
     """
-    query = select(Block).where(
-        and_(Block.date >= start_date, Block.date <= end_date)
-    )
+    query = select(Block).where(and_(Block.date >= start_date, Block.date <= end_date))
 
     if session:
         query = query.where(Block.session == session)
@@ -183,9 +180,7 @@ def prefetch_blocks_with_assignments(
     if include_person_details:
         query = query.options(
             selectinload(Block.assignments).selectinload(Assignment.person),
-            selectinload(Block.assignments).selectinload(
-                Assignment.rotation_template
-            ),
+            selectinload(Block.assignments).selectinload(Assignment.rotation_template),
         )
     else:
         query = query.options(selectinload(Block.assignments))
@@ -200,7 +195,7 @@ def prefetch_schedule_data(
     db: Session,
     start_date: date,
     end_date: date,
-    person_ids: Optional[list[str]] = None,
+    person_ids: list[str] | None = None,
 ) -> dict[str, any]:
     """
     Prefetch all data needed for schedule display/analysis.
@@ -246,9 +241,7 @@ def prefetch_schedule_data(
     assignments = list(db.execute(assignments_query).scalars().all())
 
     # Extract unique person IDs from assignments
-    unique_person_ids = list(
-        set(str(a.person_id) for a in assignments if a.person_id)
-    )
+    unique_person_ids = list(set(str(a.person_id) for a in assignments if a.person_id))
 
     # Load persons with their leave requests
     persons = prefetch_persons_with_assignments(
@@ -263,11 +256,7 @@ def prefetch_schedule_data(
 
     # Load rotation templates used in this period
     rotation_ids = list(
-        set(
-            str(a.rotation_template_id)
-            for a in assignments
-            if a.rotation_template_id
-        )
+        set(str(a.rotation_template_id) for a in assignments if a.rotation_template_id)
     )
 
     rotations = []
@@ -290,9 +279,7 @@ def prefetch_schedule_data(
     )
 
     if person_ids:
-        absences_query = absences_query.where(
-            Absence.person_id.in_(person_ids)
-        )
+        absences_query = absences_query.where(Absence.person_id.in_(person_ids))
 
     absences = list(db.execute(absences_query).scalars().all())
 
@@ -307,8 +294,8 @@ def prefetch_schedule_data(
 
 def prefetch_swap_records_with_details(
     db: Session,
-    person_id: Optional[str] = None,
-    status: Optional[str] = None,
+    person_id: str | None = None,
+    status: str | None = None,
     limit: int = 100,
 ) -> list[SwapRecord]:
     """
@@ -366,10 +353,8 @@ def prefetch_person_workload_data(
         select(Person)
         .where(Person.id == person_id)
         .options(
-            selectinload(Person.assignments)
-            .selectinload(Assignment.block),
-            selectinload(Person.assignments)
-            .selectinload(Assignment.rotation_template),
+            selectinload(Person.assignments).selectinload(Assignment.block),
+            selectinload(Person.assignments).selectinload(Assignment.rotation_template),
             selectinload(Person.absences),
             selectinload(Person.certifications),
             selectinload(Person.procedure_credentials),
@@ -427,9 +412,7 @@ def prefetch_rotation_coverage_data(
         Dictionary with rotation, assignments, persons
     """
     # Load rotation
-    rotation_query = select(RotationTemplate).where(
-        RotationTemplate.id == rotation_id
-    )
+    rotation_query = select(RotationTemplate).where(RotationTemplate.id == rotation_id)
     rotation = db.execute(rotation_query).scalar_one_or_none()
 
     if not rotation:
@@ -494,8 +477,8 @@ def prefetch_with_caching(
     """
     # Try to get from Redis cache
     try:
-        import redis.asyncio as redis_async
         import redis as redis_sync
+        import redis.asyncio as redis_async
 
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         cache_full_key = f"prefetch:{cache_key}"

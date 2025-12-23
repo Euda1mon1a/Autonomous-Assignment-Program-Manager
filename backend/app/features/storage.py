@@ -5,6 +5,7 @@ Supports multiple storage backends:
 - Redis - Fast, distributed cache with TTL support
 - In-memory - Testing and development only
 """
+
 import json
 from abc import ABC, abstractmethod
 from typing import Any
@@ -101,22 +102,22 @@ class DatabaseStorageBackend(FeatureFlagStorageBackend):
             return None
 
         return {
-            'id': str(flag.id),
-            'key': flag.key,
-            'name': flag.name,
-            'description': flag.description,
-            'flag_type': flag.flag_type,
-            'enabled': flag.enabled,
-            'rollout_percentage': flag.rollout_percentage,
-            'environments': flag.environments,
-            'target_user_ids': flag.target_user_ids,
-            'target_roles': flag.target_roles,
-            'variants': flag.variants,
-            'dependencies': flag.dependencies,
-            'custom_attributes': flag.custom_attributes,
-            'created_by': str(flag.created_by) if flag.created_by else None,
-            'created_at': flag.created_at.isoformat() if flag.created_at else None,
-            'updated_at': flag.updated_at.isoformat() if flag.updated_at else None,
+            "id": str(flag.id),
+            "key": flag.key,
+            "name": flag.name,
+            "description": flag.description,
+            "flag_type": flag.flag_type,
+            "enabled": flag.enabled,
+            "rollout_percentage": flag.rollout_percentage,
+            "environments": flag.environments,
+            "target_user_ids": flag.target_user_ids,
+            "target_roles": flag.target_roles,
+            "variants": flag.variants,
+            "dependencies": flag.dependencies,
+            "custom_attributes": flag.custom_attributes,
+            "created_by": str(flag.created_by) if flag.created_by else None,
+            "created_at": flag.created_at.isoformat() if flag.created_at else None,
+            "updated_at": flag.updated_at.isoformat() if flag.updated_at else None,
         }
 
     async def set_flag(self, key: str, data: dict[str, Any]) -> None:
@@ -130,7 +131,11 @@ class DatabaseStorageBackend(FeatureFlagStorageBackend):
         if flag:
             # Update existing flag
             for field, value in data.items():
-                if hasattr(flag, field) and field not in ['id', 'created_at', 'created_by']:
+                if hasattr(flag, field) and field not in [
+                    "id",
+                    "created_at",
+                    "created_by",
+                ]:
                     setattr(flag, field, value)
         else:
             # Create new flag
@@ -161,22 +166,22 @@ class DatabaseStorageBackend(FeatureFlagStorageBackend):
 
         return [
             {
-                'id': str(flag.id),
-                'key': flag.key,
-                'name': flag.name,
-                'description': flag.description,
-                'flag_type': flag.flag_type,
-                'enabled': flag.enabled,
-                'rollout_percentage': flag.rollout_percentage,
-                'environments': flag.environments,
-                'target_user_ids': flag.target_user_ids,
-                'target_roles': flag.target_roles,
-                'variants': flag.variants,
-                'dependencies': flag.dependencies,
-                'custom_attributes': flag.custom_attributes,
-                'created_by': str(flag.created_by) if flag.created_by else None,
-                'created_at': flag.created_at.isoformat() if flag.created_at else None,
-                'updated_at': flag.updated_at.isoformat() if flag.updated_at else None,
+                "id": str(flag.id),
+                "key": flag.key,
+                "name": flag.name,
+                "description": flag.description,
+                "flag_type": flag.flag_type,
+                "enabled": flag.enabled,
+                "rollout_percentage": flag.rollout_percentage,
+                "environments": flag.environments,
+                "target_user_ids": flag.target_user_ids,
+                "target_roles": flag.target_roles,
+                "variants": flag.variants,
+                "dependencies": flag.dependencies,
+                "custom_attributes": flag.custom_attributes,
+                "created_by": str(flag.created_by) if flag.created_by else None,
+                "created_at": flag.created_at.isoformat() if flag.created_at else None,
+                "updated_at": flag.updated_at.isoformat() if flag.updated_at else None,
             }
             for flag in flags
         ]

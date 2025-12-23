@@ -3,13 +3,12 @@
 Comprehensive test suite covering data export functionality including
 CSV, JSON, and Excel formats for people, absences, and schedules.
 """
+
 import csv
 import io
-import json
 from datetime import date, timedelta
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -19,10 +18,10 @@ from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 
-
 # ============================================================================
 # Test Classes
 # ============================================================================
+
 
 class TestExportPeopleEndpoint:
     """Tests for GET /api/export/people endpoint."""
@@ -132,9 +131,7 @@ class TestExportPeopleEndpoint:
         # Should default to CSV or return error
         assert response.status_code in [200, 400, 422]
 
-    def test_export_people_csv_encoding(
-        self, client: TestClient, db: Session
-    ):
+    def test_export_people_csv_encoding(self, client: TestClient, db: Session):
         """Test that CSV export handles special characters correctly."""
         # Create person with special characters
         person = Person(
@@ -231,10 +228,7 @@ class TestExportAbsencesEndpoint:
         filter_start = date.today()
         response = client.get(
             "/api/v1/export/absences",
-            params={
-                "format": "json",
-                "start_date": filter_start.isoformat()
-            }
+            params={"format": "json", "start_date": filter_start.isoformat()},
         )
 
         assert response.status_code == 200
@@ -264,10 +258,7 @@ class TestExportAbsencesEndpoint:
         filter_end = date.today() + timedelta(days=40)
         response = client.get(
             "/api/v1/export/absences",
-            params={
-                "format": "json",
-                "end_date": filter_end.isoformat()
-            }
+            params={"format": "json", "end_date": filter_end.isoformat()},
         )
 
         assert response.status_code == 200
@@ -291,8 +282,8 @@ class TestExportAbsencesEndpoint:
             params={
                 "format": "json",
                 "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            }
+                "end_date": end.isoformat(),
+            },
         )
 
         assert response.status_code == 200
@@ -343,8 +334,7 @@ class TestExportAbsencesEndpoint:
 
         # Find the deployment
         deployment_data = next(
-            (a for a in data if a.get("deployment_orders") == "TDY-2024-001"),
-            None
+            (a for a in data if a.get("deployment_orders") == "TDY-2024-001"), None
         )
         assert deployment_data is not None
         assert deployment_data["tdy_location"] == "Remote Site Alpha"
@@ -365,8 +355,8 @@ class TestExportScheduleEndpoint:
             params={
                 "format": "csv",
                 "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            }
+                "end_date": end.isoformat(),
+            },
         )
 
         assert response.status_code == 200
@@ -399,8 +389,8 @@ class TestExportScheduleEndpoint:
             params={
                 "format": "json",
                 "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            }
+                "end_date": end.isoformat(),
+            },
         )
 
         assert response.status_code == 200
@@ -427,15 +417,13 @@ class TestExportScheduleEndpoint:
 
         # Missing end_date
         response = client.get(
-            "/api/v1/export/schedule",
-            params={"start_date": date.today().isoformat()}
+            "/api/v1/export/schedule", params={"start_date": date.today().isoformat()}
         )
         assert response.status_code == 422
 
         # Missing start_date
         response = client.get(
-            "/api/v1/export/schedule",
-            params={"end_date": date.today().isoformat()}
+            "/api/v1/export/schedule", params={"end_date": date.today().isoformat()}
         )
         assert response.status_code == 422
 
@@ -449,17 +437,20 @@ class TestExportScheduleEndpoint:
             params={
                 "format": "csv",
                 "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            }
+                "end_date": end.isoformat(),
+            },
         )
 
         # Should handle gracefully (might return empty or error)
         assert response.status_code in [200, 400, 422]
 
     def test_export_schedule_with_assignments(
-        self, client: TestClient, db: Session,
-        sample_resident: Person, sample_blocks: list[Block],
-        sample_rotation_template: RotationTemplate
+        self,
+        client: TestClient,
+        db: Session,
+        sample_resident: Person,
+        sample_blocks: list[Block],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test schedule export includes assignment details."""
         # Create assignment
@@ -482,8 +473,8 @@ class TestExportScheduleEndpoint:
             params={
                 "format": "json",
                 "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            }
+                "end_date": end.isoformat(),
+            },
         )
 
         assert response.status_code == 200
@@ -491,8 +482,7 @@ class TestExportScheduleEndpoint:
 
         # Find the assignment in export
         assignment_data = next(
-            (a for a in data if a.get("activity") == "Clinic Duty"),
-            None
+            (a for a in data if a.get("activity") == "Clinic Duty"), None
         )
         assert assignment_data is not None
 
@@ -507,8 +497,8 @@ class TestExportScheduleEndpoint:
             params={
                 "format": "csv",
                 "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            }
+                "end_date": end.isoformat(),
+            },
         )
 
         assert response.status_code == 200
@@ -530,8 +520,8 @@ class TestExportScheduleEndpoint:
             params={
                 "format": "json",
                 "start_date": day.isoformat(),
-                "end_date": day.isoformat()
-            }
+                "end_date": day.isoformat(),
+            },
         )
 
         assert response.status_code == 200
@@ -545,28 +535,30 @@ class TestExportScheduleEndpoint:
 class TestExportScheduleXLSXEndpoint:
     """Tests for GET /api/export/schedule/xlsx endpoint."""
 
-    def test_export_xlsx_success(self, client: TestClient, sample_assignment: Assignment):
+    def test_export_xlsx_success(
+        self, client: TestClient, sample_assignment: Assignment
+    ):
         """Test exporting schedule as Excel file."""
         start = date.today()
         end = date.today() + timedelta(days=27)  # 28-day block
 
         response = client.get(
             "/api/v1/export/schedule/xlsx",
-            params={
-                "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            }
+            params={"start_date": start.isoformat(), "end_date": end.isoformat()},
         )
 
         assert response.status_code == 200
-        assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        assert (
+            response.headers["content-type"]
+            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
         assert "attachment" in response.headers["content-disposition"]
         assert ".xlsx" in response.headers["content-disposition"]
 
         # Verify it's actual binary data (Excel file)
         assert len(response.content) > 0
         # Excel files start with PK (ZIP signature)
-        assert response.content[:2] == b'PK'
+        assert response.content[:2] == b"PK"
 
     def test_export_xlsx_requires_dates(self, client: TestClient):
         """Test that XLSX export requires date parameters."""
@@ -577,7 +569,7 @@ class TestExportScheduleXLSXEndpoint:
         # Missing end_date
         response = client.get(
             "/api/v1/export/schedule/xlsx",
-            params={"start_date": date.today().isoformat()}
+            params={"start_date": date.today().isoformat()},
         )
         assert response.status_code == 422
 
@@ -593,12 +585,15 @@ class TestExportScheduleXLSXEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-                "block_number": 5
-            }
+                "block_number": 5,
+            },
         )
 
         assert response.status_code == 200
-        assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        assert (
+            response.headers["content-type"]
+            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
     def test_export_xlsx_with_federal_holidays(
         self, client: TestClient, sample_assignment: Assignment
@@ -613,8 +608,8 @@ class TestExportScheduleXLSXEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-                "federal_holidays": holidays
-            }
+                "federal_holidays": holidays,
+            },
         )
 
         assert response.status_code == 200
@@ -629,8 +624,8 @@ class TestExportScheduleXLSXEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-                "federal_holidays": "invalid-date,also-invalid"
-            }
+                "federal_holidays": "invalid-date,also-invalid",
+            },
         )
 
         assert response.status_code == 400
@@ -646,10 +641,7 @@ class TestExportScheduleXLSXEndpoint:
 
         response = client.get(
             "/api/v1/export/schedule/xlsx",
-            params={
-                "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            }
+            params={"start_date": start.isoformat(), "end_date": end.isoformat()},
         )
 
         assert response.status_code == 200
@@ -667,10 +659,7 @@ class TestExportScheduleXLSXEndpoint:
 
         response = client.get(
             "/api/v1/export/schedule/xlsx",
-            params={
-                "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            }
+            params={"start_date": start.isoformat(), "end_date": end.isoformat()},
         )
 
         # Should still generate file
@@ -683,10 +672,7 @@ class TestExportScheduleXLSXEndpoint:
 
         response = client.get(
             "/api/v1/export/schedule/xlsx",
-            params={
-                "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            }
+            params={"start_date": start.isoformat(), "end_date": end.isoformat()},
         )
 
         # Should handle large range (might succeed or timeout)
@@ -709,8 +695,8 @@ class TestExportAuthenticationAndAuthorization:
             "/api/v1/export/absences",
             params={
                 "start_date": date.today().isoformat(),
-                "end_date": (date.today() + timedelta(days=7)).isoformat()
-            }
+                "end_date": (date.today() + timedelta(days=7)).isoformat(),
+            },
         )
 
         assert response.status_code in [200, 401, 403]
@@ -721,8 +707,8 @@ class TestExportAuthenticationAndAuthorization:
             "/api/v1/export/schedule",
             params={
                 "start_date": date.today().isoformat(),
-                "end_date": (date.today() + timedelta(days=7)).isoformat()
-            }
+                "end_date": (date.today() + timedelta(days=7)).isoformat(),
+            },
         )
 
         assert response.status_code in [200, 401, 403]
@@ -733,8 +719,8 @@ class TestExportAuthenticationAndAuthorization:
             "/api/v1/export/schedule/xlsx",
             params={
                 "start_date": date.today().isoformat(),
-                "end_date": (date.today() + timedelta(days=7)).isoformat()
-            }
+                "end_date": (date.today() + timedelta(days=7)).isoformat(),
+            },
         )
 
         assert response.status_code in [200, 401, 403]
@@ -743,9 +729,7 @@ class TestExportAuthenticationAndAuthorization:
 class TestExportEdgeCases:
     """Tests for edge cases and boundary conditions."""
 
-    def test_export_with_null_values(
-        self, client: TestClient, db: Session
-    ):
+    def test_export_with_null_values(self, client: TestClient, db: Session):
         """Test export handles null/None values correctly."""
         # Create person with minimal data
         person = Person(
@@ -788,17 +772,12 @@ class TestExportEdgeCases:
         data = response.json()
 
         # Find our absence
-        absence_data = next(
-            (a for a in data if a["absence_type"] == "vacation"),
-            None
-        )
+        absence_data = next((a for a in data if a["absence_type"] == "vacation"), None)
         assert absence_data is not None
         # notes should be null/None
         assert absence_data["notes"] is None or absence_data["notes"] == ""
 
-    def test_export_csv_quoting(
-        self, client: TestClient, db: Session
-    ):
+    def test_export_csv_quoting(self, client: TestClient, db: Session):
         """Test that CSV properly quotes fields with commas."""
         person = Person(
             id=uuid4(),
@@ -818,8 +797,11 @@ class TestExportEdgeCases:
         assert "Smith, Jr., John" in content or '"Smith, Jr., John"' in content
 
     def test_export_schedule_ordering(
-        self, client: TestClient, db: Session,
-        sample_resident: Person, sample_rotation_template: RotationTemplate
+        self,
+        client: TestClient,
+        db: Session,
+        sample_resident: Person,
+        sample_rotation_template: RotationTemplate,
     ):
         """Test that schedule export is properly ordered by date and time."""
         # Create blocks and assignments out of order
@@ -854,8 +836,8 @@ class TestExportEdgeCases:
             params={
                 "format": "json",
                 "start_date": min(dates).isoformat(),
-                "end_date": max(dates).isoformat()
-            }
+                "end_date": max(dates).isoformat(),
+            },
         )
 
         assert response.status_code == 200
@@ -882,9 +864,7 @@ class TestExportEdgeCases:
 class TestExportPerformance:
     """Tests for export performance and limits."""
 
-    def test_export_large_dataset(
-        self, client: TestClient, db: Session
-    ):
+    def test_export_large_dataset(self, client: TestClient, db: Session):
         """Test exporting large number of people."""
         # Create many people
         for i in range(50):
@@ -910,8 +890,11 @@ class TestExportPerformance:
         assert len(rows) >= 50
 
     def test_export_schedule_large_range(
-        self, client: TestClient, db: Session,
-        sample_resident: Person, sample_rotation_template: RotationTemplate
+        self,
+        client: TestClient,
+        db: Session,
+        sample_resident: Person,
+        sample_rotation_template: RotationTemplate,
     ):
         """Test exporting schedule over large date range."""
         # Create 90 days of blocks and assignments
@@ -944,8 +927,8 @@ class TestExportPerformance:
             params={
                 "format": "json",
                 "start_date": start_date.isoformat(),
-                "end_date": (start_date + timedelta(days=89)).isoformat()
-            }
+                "end_date": (start_date + timedelta(days=89)).isoformat(),
+            },
         )
 
         assert response.status_code == 200

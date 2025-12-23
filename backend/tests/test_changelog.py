@@ -1,13 +1,10 @@
 """Tests for API changelog generation."""
 
 import json
-import pytest
-from datetime import datetime
 
 from app.changelog.differ import APIDiffer, ChangeType
 from app.changelog.formatter import ChangelogFormatter, OutputFormat
 from app.changelog.generator import ChangelogGenerator
-
 
 # Sample OpenAPI schemas for testing
 SAMPLE_SCHEMA_V1 = {
@@ -68,7 +65,7 @@ SAMPLE_SCHEMA_V2_BREAKING = {
                         "in": "query",
                         "schema": {"type": "integer"},
                         "required": True,  # New required param (breaking)
-                    }
+                    },
                 ],
                 "responses": {
                     "200": {
@@ -113,7 +110,7 @@ SAMPLE_SCHEMA_V1_1_NON_BREAKING = {
                         "in": "query",
                         "schema": {"type": "integer"},
                         "required": False,  # New optional param (non-breaking)
-                    }
+                    },
                 ],
                 "responses": {
                     "200": {
@@ -154,7 +151,8 @@ class TestAPIDiffer:
 
         # Check that POST /users removal is detected
         removed_methods = [
-            c for c in diff.changes
+            c
+            for c in diff.changes
             if c.change_type == ChangeType.ENDPOINT_METHOD_REMOVED
         ]
         assert len(removed_methods) > 0
@@ -167,8 +165,7 @@ class TestAPIDiffer:
 
         # Check that /users/{id} is detected as new
         added_endpoints = [
-            c for c in diff.changes
-            if c.change_type == ChangeType.ENDPOINT_ADDED
+            c for c in diff.changes if c.change_type == ChangeType.ENDPOINT_ADDED
         ]
         assert any(c.path == "/users/{id}" for c in added_endpoints)
 
@@ -179,8 +176,7 @@ class TestAPIDiffer:
 
         # Check that required 'limit' param is detected
         required_params = [
-            c for c in diff.changes
-            if c.change_type == ChangeType.REQUIRED_PARAM_ADDED
+            c for c in diff.changes if c.change_type == ChangeType.REQUIRED_PARAM_ADDED
         ]
         assert len(required_params) > 0
         assert any("limit" in c.description for c in required_params)
@@ -192,8 +188,7 @@ class TestAPIDiffer:
 
         # Check that 'page' type change is detected
         type_changes = [
-            c for c in diff.changes
-            if c.change_type == ChangeType.PARAM_TYPE_CHANGED
+            c for c in diff.changes if c.change_type == ChangeType.PARAM_TYPE_CHANGED
         ]
         assert len(type_changes) > 0
         assert any("page" in c.description for c in type_changes)
@@ -205,8 +200,7 @@ class TestAPIDiffer:
 
         # Check that optional 'limit' param is detected
         optional_params = [
-            c for c in diff.changes
-            if c.change_type == ChangeType.OPTIONAL_PARAM_ADDED
+            c for c in diff.changes if c.change_type == ChangeType.OPTIONAL_PARAM_ADDED
         ]
         assert len(optional_params) > 0
         assert any("limit" in c.description for c in optional_params)

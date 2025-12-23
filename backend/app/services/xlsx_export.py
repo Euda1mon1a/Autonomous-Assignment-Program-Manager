@@ -4,6 +4,7 @@ Legacy Excel export service.
 Generates Excel files in the historical format used for schedule distribution.
 Format: 4-week block view with AM/PM columns per day, color-coded rotations.
 """
+
 import io
 from datetime import date, timedelta
 
@@ -20,18 +21,35 @@ from app.models.person import Person
 # Color definitions (ARGB format for openpyxl)
 COLORS = {
     # Rotation type colors (for column A labels)
-    "military": PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid"),  # Yellow
-    "night_float": PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid"),  # Red
-    "nicu": PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid"),  # Yellow
-    "fmit": PatternFill(start_color="00B0F0", end_color="00B0F0", fill_type="solid"),  # Blue
-    "default": PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid"),  # White
-
+    "military": PatternFill(
+        start_color="FFFF00", end_color="FFFF00", fill_type="solid"
+    ),  # Yellow
+    "night_float": PatternFill(
+        start_color="FF0000", end_color="FF0000", fill_type="solid"
+    ),  # Red
+    "nicu": PatternFill(
+        start_color="FFFF00", end_color="FFFF00", fill_type="solid"
+    ),  # Yellow
+    "fmit": PatternFill(
+        start_color="00B0F0", end_color="00B0F0", fill_type="solid"
+    ),  # Blue
+    "default": PatternFill(
+        start_color="FFFFFF", end_color="FFFFFF", fill_type="solid"
+    ),  # White
     # Special cell colors
-    "header_gray": PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+    "header_gray": PatternFill(
+        start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"
+    ),
     "weekend": PatternFill(start_color="E6E6E6", end_color="E6E6E6", fill_type="solid"),
-    "holiday": PatternFill(start_color="92D050", end_color="92D050", fill_type="solid"),  # Green
-    "highlight_yellow": PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid"),
-    "highlight_red": PatternFill(start_color="FF6B6B", end_color="FF6B6B", fill_type="solid"),
+    "holiday": PatternFill(
+        start_color="92D050", end_color="92D050", fill_type="solid"
+    ),  # Green
+    "highlight_yellow": PatternFill(
+        start_color="FFFF00", end_color="FFFF00", fill_type="solid"
+    ),
+    "highlight_red": PatternFill(
+        start_color="FF6B6B", end_color="FF6B6B", fill_type="solid"
+    ),
 }
 
 # Font styles
@@ -45,10 +63,10 @@ FONTS = {
 
 # Border styles
 THIN_BORDER = Border(
-    left=Side(style='thin'),
-    right=Side(style='thin'),
-    top=Side(style='thin'),
-    bottom=Side(style='thin')
+    left=Side(style="thin"),
+    right=Side(style="thin"),
+    top=Side(style="thin"),
+    bottom=Side(style="thin"),
 )
 
 
@@ -68,7 +86,9 @@ def get_rotation_color(rotation_name: str, abbreviation: str) -> PatternFill:
     return COLORS["default"]
 
 
-def calculate_block_dates(block_number: int, academic_year_start: date) -> tuple[date, date]:
+def calculate_block_dates(
+    block_number: int, academic_year_start: date
+) -> tuple[date, date]:
     """
     Calculate start and end dates for a given block number.
     Each block is 4 weeks (28 days).
@@ -104,7 +124,7 @@ class LegacyXlsxExporter:
         block_number: int,
         start_date: date,
         end_date: date,
-        federal_holidays: list[date] | None = None
+        federal_holidays: list[date] | None = None,
     ) -> None:
         """Generate a single block sheet in legacy format."""
 
@@ -163,7 +183,9 @@ class LegacyXlsxExporter:
             current = absence.start_date
             while current <= absence.end_date:
                 if start_date <= current <= end_date:
-                    absence_lookup[(str(absence.person_id), current)] = absence.absence_type
+                    absence_lookup[(str(absence.person_id), current)] = (
+                        absence.absence_type
+                    )
                 current += timedelta(days=1)
 
         # Calculate number of days
@@ -183,8 +205,14 @@ class LegacyXlsxExporter:
             current_pgy = resident.pgy_level
 
             self._write_person_row(
-                ws, current_row, resident, start_date, num_days,
-                assignment_lookup, absence_lookup, federal_holidays
+                ws,
+                current_row,
+                resident,
+                start_date,
+                num_days,
+                assignment_lookup,
+                absence_lookup,
+                federal_holidays,
             )
             current_row += 1
 
@@ -194,9 +222,15 @@ class LegacyXlsxExporter:
         # Write faculty data
         for fac in faculty:
             self._write_person_row(
-                ws, current_row, fac, start_date, num_days,
-                assignment_lookup, absence_lookup, federal_holidays,
-                is_faculty=True
+                ws,
+                current_row,
+                fac,
+                start_date,
+                num_days,
+                assignment_lookup,
+                absence_lookup,
+                federal_holidays,
+                is_faculty=True,
             )
             current_row += 1
 
@@ -209,30 +243,30 @@ class LegacyXlsxExporter:
         block_number: int,
         start_date: date,
         num_days: int,
-        federal_holidays: list[date]
+        federal_holidays: list[date],
     ) -> None:
         """Write the header section (rows 1-8)."""
 
         # Block number in merged cell C1:D3
-        ws.merge_cells('C1:D3')
-        ws['C1'] = block_number
-        ws['C1'].font = FONTS["block_number"]
-        ws['C1'].alignment = Alignment(horizontal='center', vertical='center')
+        ws.merge_cells("C1:D3")
+        ws["C1"] = block_number
+        ws["C1"].font = FONTS["block_number"]
+        ws["C1"].alignment = Alignment(horizontal="center", vertical="center")
 
         # Date range label
         end_date = start_date + timedelta(days=num_days - 1)
-        ws['C4'] = f"{start_date.strftime('%-d%b')}-{end_date.strftime('%-d%b')}"
-        ws['C4'].font = FONTS["header"]
+        ws["C4"] = f"{start_date.strftime('%-d%b')}-{end_date.strftime('%-d%b')}"
+        ws["C4"].font = FONTS["header"]
 
         # Row labels
-        ws['E3'] = "Date:"
-        ws['E4'] = "Staff Call"
-        ws['E5'] = "Resident Call"
-        ws['C6'] = "TEMPLATE"
-        ws['D6'] = "ROLE"
-        ws['E6'] = "PROVIDER"
+        ws["E3"] = "Date:"
+        ws["E4"] = "Staff Call"
+        ws["E5"] = "Resident Call"
+        ws["C6"] = "TEMPLATE"
+        ws["D6"] = "ROLE"
+        ws["E6"] = "PROVIDER"
 
-        for cell in ['E3', 'E4', 'E5', 'C6', 'D6', 'E6']:
+        for cell in ["E3", "E4", "E5", "C6", "D6", "E6"]:
             ws[cell].font = FONTS["header"]
 
         # Day headers and dates
@@ -247,28 +281,28 @@ class LegacyXlsxExporter:
             pm_letter = get_column_letter(pm_col)
 
             # Row 1-2: Day of week (merged)
-            ws.merge_cells(f'{am_letter}1:{pm_letter}1')
-            ws[f'{am_letter}1'] = get_day_abbreviation(current_date)
-            ws[f'{am_letter}1'].font = FONTS["header"]
-            ws[f'{am_letter}1'].alignment = Alignment(horizontal='center')
+            ws.merge_cells(f"{am_letter}1:{pm_letter}1")
+            ws[f"{am_letter}1"] = get_day_abbreviation(current_date)
+            ws[f"{am_letter}1"].font = FONTS["header"]
+            ws[f"{am_letter}1"].alignment = Alignment(horizontal="center")
 
             # Row 2: AM/PM labels
-            ws[f'{am_letter}2'] = "am"
-            ws[f'{pm_letter}2'] = "pm"
+            ws[f"{am_letter}2"] = "am"
+            ws[f"{pm_letter}2"] = "pm"
 
             # Row 3: Date (merged)
-            ws.merge_cells(f'{am_letter}3:{pm_letter}3')
-            ws[f'{am_letter}3'] = current_date
-            ws[f'{am_letter}3'].number_format = 'D-MMM'
-            ws[f'{am_letter}3'].alignment = Alignment(horizontal='center')
+            ws.merge_cells(f"{am_letter}3:{pm_letter}3")
+            ws[f"{am_letter}3"] = current_date
+            ws[f"{am_letter}3"].number_format = "D-MMM"
+            ws[f"{am_letter}3"].alignment = Alignment(horizontal="center")
 
             # Highlight weekends and holidays
             if current_date.weekday() >= 5:  # Weekend
-                ws[f'{am_letter}1'].fill = COLORS["weekend"]
-                ws[f'{pm_letter}1'].fill = COLORS["weekend"]
+                ws[f"{am_letter}1"].fill = COLORS["weekend"]
+                ws[f"{pm_letter}1"].fill = COLORS["weekend"]
             if current_date in federal_holidays:
-                ws[f'{am_letter}3'].fill = COLORS["holiday"]
-                ws[f'{pm_letter}3'].fill = COLORS["holiday"]
+                ws[f"{am_letter}3"].fill = COLORS["holiday"]
+                ws[f"{pm_letter}3"].fill = COLORS["holiday"]
 
             col += 2
 
@@ -282,7 +316,7 @@ class LegacyXlsxExporter:
         assignment_lookup: dict,
         absence_lookup: dict,
         federal_holidays: list[date],
-        is_faculty: bool = False
+        is_faculty: bool = False,
     ) -> None:
         """Write a single person's row with their schedule."""
 
@@ -299,27 +333,26 @@ class LegacyXlsxExporter:
         rotation_name = ""
         if first_assignment and first_assignment.rotation_template:
             rotation_name = first_assignment.rotation_template.name
-            ws['A' + str(row)] = rotation_name
-            ws['A' + str(row)].fill = get_rotation_color(
-                rotation_name,
-                first_assignment.rotation_template.abbreviation
+            ws["A" + str(row)] = rotation_name
+            ws["A" + str(row)].fill = get_rotation_color(
+                rotation_name, first_assignment.rotation_template.abbreviation
             )
 
         # Column C: PGY level code (R1, R2, R3) or C19 for faculty
         if is_faculty:
-            ws['C' + str(row)] = "C19"
+            ws["C" + str(row)] = "C19"
         else:
-            ws['C' + str(row)] = f"R{person.pgy_level}" if person.pgy_level else ""
+            ws["C" + str(row)] = f"R{person.pgy_level}" if person.pgy_level else ""
 
         # Column D: PGY level text or FAC
         if is_faculty:
-            ws['D' + str(row)] = "FAC"
+            ws["D" + str(row)] = "FAC"
         else:
-            ws['D' + str(row)] = f"PGY {person.pgy_level}" if person.pgy_level else ""
+            ws["D" + str(row)] = f"PGY {person.pgy_level}" if person.pgy_level else ""
 
         # Column E: Provider name
-        ws['E' + str(row)] = person.name
-        ws['E' + str(row)].font = FONTS["data"]
+        ws["E" + str(row)] = person.name
+        ws["E" + str(row)].font = FONTS["data"]
 
         # Data columns (F onwards)
         col = 6
@@ -356,7 +389,7 @@ class LegacyXlsxExporter:
                         # Default to W (working) or empty
                         cell.value = "W"
 
-                cell.alignment = Alignment(horizontal='center')
+                cell.alignment = Alignment(horizontal="center")
                 col += 1
 
     def _get_absence_abbreviation(self, absence_type: str) -> str:
@@ -375,11 +408,11 @@ class LegacyXlsxExporter:
 
     def _adjust_column_widths(self, ws, num_days: int) -> None:
         """Adjust column widths for readability."""
-        ws.column_dimensions['A'].width = 15
-        ws.column_dimensions['B'].width = 8
-        ws.column_dimensions['C'].width = 6
-        ws.column_dimensions['D'].width = 8
-        ws.column_dimensions['E'].width = 15
+        ws.column_dimensions["A"].width = 15
+        ws.column_dimensions["B"].width = 8
+        ws.column_dimensions["C"].width = 6
+        ws.column_dimensions["D"].width = 8
+        ws.column_dimensions["E"].width = 15
 
         # Data columns (narrower for AM/PM)
         col = 6
@@ -391,17 +424,19 @@ class LegacyXlsxExporter:
         self,
         academic_year_start: date,
         num_blocks: int = 13,
-        federal_holidays: list[date] | None = None
+        federal_holidays: list[date] | None = None,
     ) -> None:
         """Generate all block sheets for a full academic year."""
 
         for block_num in range(1, num_blocks + 1):
-            block_start, block_end = calculate_block_dates(block_num, academic_year_start)
+            block_start, block_end = calculate_block_dates(
+                block_num, academic_year_start
+            )
             self.generate_block_schedule(
                 block_number=block_num,
                 start_date=block_start,
                 end_date=block_end,
-                federal_holidays=federal_holidays or []
+                federal_holidays=federal_holidays or [],
             )
 
     def save_to_bytes(self) -> bytes:
@@ -417,7 +452,7 @@ def generate_legacy_xlsx(
     start_date: date,
     end_date: date,
     block_number: int | None = None,
-    federal_holidays: list[date] | None = None
+    federal_holidays: list[date] | None = None,
 ) -> bytes:
     """
     Generate legacy format Excel export.
@@ -437,7 +472,9 @@ def generate_legacy_xlsx(
     # Calculate block number if not provided (assume 28-day blocks starting July 1)
     if block_number is None:
         # Rough calculation - days since July 1 divided by 28
-        july_1 = date(start_date.year if start_date.month >= 7 else start_date.year - 1, 7, 1)
+        july_1 = date(
+            start_date.year if start_date.month >= 7 else start_date.year - 1, 7, 1
+        )
         days_since_start = (start_date - july_1).days
         block_number = (days_since_start // 28) + 1
 
@@ -445,7 +482,7 @@ def generate_legacy_xlsx(
         block_number=block_number,
         start_date=start_date,
         end_date=end_date,
-        federal_holidays=federal_holidays or []
+        federal_holidays=federal_holidays or [],
     )
 
     return exporter.save_to_bytes()

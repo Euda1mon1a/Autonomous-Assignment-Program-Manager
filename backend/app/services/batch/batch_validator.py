@@ -1,4 +1,5 @@
 """Batch operation validator."""
+
 from datetime import date, timedelta
 from uuid import UUID
 
@@ -8,6 +9,7 @@ from app.models.assignment import Assignment
 from app.repositories.assignment import AssignmentRepository
 from app.repositories.block import BlockRepository
 from app.repositories.person import PersonRepository
+from app.scheduling.validator import ACGMEValidator
 from app.schemas.batch import (
     BatchAssignmentCreate,
     BatchAssignmentDelete,
@@ -15,7 +17,6 @@ from app.schemas.batch import (
     BatchOperationResult,
     BatchValidationResult,
 )
-from app.scheduling.validator import ACGMEValidator
 
 
 class BatchValidator:
@@ -265,7 +266,7 @@ class BatchValidator:
                 success=False,
                 assignment_id=assignment.assignment_id,
                 error=f"Assignment has been modified. Expected version: {assignment.updated_at}, "
-                      f"Current version: {existing.updated_at}",
+                f"Current version: {existing.updated_at}",
             )
 
         return BatchOperationResult(
@@ -340,6 +341,8 @@ class BatchValidator:
             for violation in result.violations[:5]:
                 warnings.append(f"  - {violation.severity}: {violation.message}")
             if len(result.violations) > 5:
-                warnings.append(f"  ... and {len(result.violations) - 5} more violations")
+                warnings.append(
+                    f"  ... and {len(result.violations) - 5} more violations"
+                )
 
         return warnings

@@ -11,15 +11,14 @@ Tests for:
 - Schema documentation generation
 - Schema change notifications
 """
+
 from datetime import datetime, timedelta
-from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy.orm import Session
 
 from app.models.schema_version import (
     SchemaChangeEvent,
-    SchemaCompatibilityType,
     SchemaStatus,
     SchemaVersion,
 )
@@ -27,13 +26,10 @@ from app.schemas.registry import (
     SchemaCompatibilityResult,
     SchemaDocumentation,
     SchemaEvolutionRule,
-    SchemaRegistrationRequest,
     SchemaRegistry,
-    SchemaResponse,
     get_latest_schema,
     validate_schema_compatibility,
 )
-
 
 # ============================================================================
 # Sample Schema Definitions
@@ -142,8 +138,7 @@ class TestSchemaEvolutionRule:
     def test_backward_compatible_add_optional_field(self):
         """Test that adding optional field is backward compatible."""
         violations = SchemaEvolutionRule.validate_backward_compatibility(
-            PERSON_SCHEMA_V1,
-            PERSON_SCHEMA_V2_BACKWARD
+            PERSON_SCHEMA_V1, PERSON_SCHEMA_V2_BACKWARD
         )
 
         assert len(violations) == 0
@@ -151,8 +146,7 @@ class TestSchemaEvolutionRule:
     def test_backward_incompatible_add_required_field(self):
         """Test that adding required field is backward incompatible."""
         violations = SchemaEvolutionRule.validate_backward_compatibility(
-            PERSON_SCHEMA_V1,
-            PERSON_SCHEMA_V2_BREAKING
+            PERSON_SCHEMA_V1, PERSON_SCHEMA_V2_BREAKING
         )
 
         assert len(violations) > 0
@@ -170,8 +164,7 @@ class TestSchemaEvolutionRule:
         }
 
         violations = SchemaEvolutionRule.validate_backward_compatibility(
-            old_schema,
-            new_schema
+            old_schema, new_schema
         )
 
         assert len(violations) > 0
@@ -180,8 +173,7 @@ class TestSchemaEvolutionRule:
     def test_backward_incompatible_type_change(self):
         """Test that narrowing type change is backward incompatible."""
         violations = SchemaEvolutionRule.validate_backward_compatibility(
-            PERSON_SCHEMA_V1,
-            PERSON_SCHEMA_V2_TYPE_CHANGE
+            PERSON_SCHEMA_V1, PERSON_SCHEMA_V2_TYPE_CHANGE
         )
 
         assert len(violations) > 0
@@ -193,19 +185,19 @@ class TestSchemaEvolutionRule:
         new_schema = PERSON_SCHEMA_V1.copy()
 
         violations = SchemaEvolutionRule.validate_forward_compatibility(
-            old_schema,
-            new_schema
+            old_schema, new_schema
         )
 
         # Removing optional field is forward compatible
         # (old schema can still read new data)
-        assert len(violations) == 0 or all("removed" not in v.lower() for v in violations)
+        assert len(violations) == 0 or all(
+            "removed" not in v.lower() for v in violations
+        )
 
     def test_forward_incompatible_add_field(self):
         """Test that adding field is forward incompatible."""
         violations = SchemaEvolutionRule.validate_forward_compatibility(
-            PERSON_SCHEMA_V1,
-            PERSON_SCHEMA_V2_BACKWARD
+            PERSON_SCHEMA_V1, PERSON_SCHEMA_V2_BACKWARD
         )
 
         assert len(violations) > 0
@@ -214,8 +206,7 @@ class TestSchemaEvolutionRule:
     def test_full_compatibility_no_changes(self):
         """Test that identical schemas are fully compatible."""
         violations = SchemaEvolutionRule.validate_full_compatibility(
-            PERSON_SCHEMA_V1,
-            PERSON_SCHEMA_V1.copy()
+            PERSON_SCHEMA_V1, PERSON_SCHEMA_V1.copy()
         )
 
         assert len(violations) == 0
@@ -223,8 +214,7 @@ class TestSchemaEvolutionRule:
     def test_full_compatibility_breaking_changes(self):
         """Test that breaking changes are detected in full compatibility."""
         violations = SchemaEvolutionRule.validate_full_compatibility(
-            PERSON_SCHEMA_V1,
-            PERSON_SCHEMA_V2_BACKWARD
+            PERSON_SCHEMA_V1, PERSON_SCHEMA_V2_BACKWARD
         )
 
         # Adding optional field is backward compatible but not forward compatible
@@ -300,9 +290,11 @@ class TestSchemaRegistryBasicOperations:
             changelog="Initial version",
         )
 
-        events = db.query(SchemaChangeEvent).filter(
-            SchemaChangeEvent.schema_name == "EventTestSchema"
-        ).all()
+        events = (
+            db.query(SchemaChangeEvent)
+            .filter(SchemaChangeEvent.schema_name == "EventTestSchema")
+            .all()
+        )
 
         assert len(events) == 1
         assert events[0].event_type == "created"
@@ -411,9 +403,7 @@ class TestSchemaRegistryListOperations:
         sample_schema_v1: SchemaVersion,
     ):
         """Test filtering schemas by status."""
-        schemas = await registry.list_schemas(
-            status_filter=[SchemaStatus.ACTIVE.value]
-        )
+        schemas = await registry.list_schemas(status_filter=[SchemaStatus.ACTIVE.value])
 
         assert len(schemas) >= 1
         assert all(s.status == SchemaStatus.ACTIVE.value for s in schemas)
@@ -769,10 +759,7 @@ class TestSchemaDocumentation:
 
         assert len(doc.compatibility_history) >= 2
         assert all("version" in entry for entry in doc.compatibility_history)
-        assert all(
-            "compatibility_type" in entry
-            for entry in doc.compatibility_history
-        )
+        assert all("compatibility_type" in entry for entry in doc.compatibility_history)
 
     @pytest.mark.asyncio
     async def test_generate_documentation_deprecation_info(
@@ -889,9 +876,11 @@ class TestSchemaChangeEvents:
             changelog="Initial version",
         )
 
-        events = db.query(SchemaChangeEvent).filter(
-            SchemaChangeEvent.schema_name == "TestEventSchema"
-        ).all()
+        events = (
+            db.query(SchemaChangeEvent)
+            .filter(SchemaChangeEvent.schema_name == "TestEventSchema")
+            .all()
+        )
 
         assert len(events) == 1
         assert events[0].event_type == "created"
@@ -907,10 +896,14 @@ class TestSchemaChangeEvents:
         """Test that change event is created on deprecation."""
         await registry.deprecate_schema("PersonCreate", 1)
 
-        events = db.query(SchemaChangeEvent).filter(
-            SchemaChangeEvent.schema_name == "PersonCreate",
-            SchemaChangeEvent.event_type == "deprecated",
-        ).all()
+        events = (
+            db.query(SchemaChangeEvent)
+            .filter(
+                SchemaChangeEvent.schema_name == "PersonCreate",
+                SchemaChangeEvent.event_type == "deprecated",
+            )
+            .all()
+        )
 
         assert len(events) == 1
         assert events[0].new_version == 1
@@ -925,10 +918,14 @@ class TestSchemaChangeEvents:
         """Test that change event is created on archive."""
         await registry.archive_schema("PersonCreate", 1)
 
-        events = db.query(SchemaChangeEvent).filter(
-            SchemaChangeEvent.schema_name == "PersonCreate",
-            SchemaChangeEvent.event_type == "archived",
-        ).all()
+        events = (
+            db.query(SchemaChangeEvent)
+            .filter(
+                SchemaChangeEvent.schema_name == "PersonCreate",
+                SchemaChangeEvent.event_type == "archived",
+            )
+            .all()
+        )
 
         assert len(events) == 1
 
@@ -943,10 +940,14 @@ class TestSchemaChangeEvents:
         """Test that change event is created on set default."""
         await registry.set_default_version("PersonCreate", 2)
 
-        events = db.query(SchemaChangeEvent).filter(
-            SchemaChangeEvent.schema_name == "PersonCreate",
-            SchemaChangeEvent.event_type == "made_default",
-        ).all()
+        events = (
+            db.query(SchemaChangeEvent)
+            .filter(
+                SchemaChangeEvent.schema_name == "PersonCreate",
+                SchemaChangeEvent.event_type == "made_default",
+            )
+            .all()
+        )
 
         assert len(events) == 1
         assert events[0].new_version == 2

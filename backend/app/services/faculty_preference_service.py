@@ -1,4 +1,5 @@
 """Service for managing faculty FMIT scheduling preferences."""
+
 import logging
 from datetime import date, datetime, timedelta
 from uuid import UUID, uuid4
@@ -36,6 +37,7 @@ class FacultyPreferenceService:
         if self._cache is None:
             try:
                 from app.services.constraints.faculty import get_faculty_pref_cache
+
                 self._cache = get_faculty_pref_cache()
             except ImportError:
                 logger.debug("Faculty constraint cache not available")
@@ -59,16 +61,19 @@ class FacultyPreferenceService:
         Returns:
             FacultyPreference record (existing or newly created)
         """
-        preferences = self.db.query(FacultyPreference).filter(
-            FacultyPreference.faculty_id == faculty_id
-        ).first()
+        preferences = (
+            self.db.query(FacultyPreference)
+            .filter(FacultyPreference.faculty_id == faculty_id)
+            .first()
+        )
 
         if not preferences:
             # Verify faculty exists
-            faculty = self.db.query(Person).filter(
-                Person.id == faculty_id,
-                Person.type == "faculty"
-            ).first()
+            faculty = (
+                self.db.query(Person)
+                .filter(Person.id == faculty_id, Person.type == "faculty")
+                .first()
+            )
 
             if not faculty:
                 raise ValueError(f"Faculty {faculty_id} not found")
@@ -144,7 +149,9 @@ class FacultyPreferenceService:
 
         return preferences
 
-    def add_preferred_week(self, faculty_id: UUID, week_date: date) -> FacultyPreference:
+    def add_preferred_week(
+        self, faculty_id: UUID, week_date: date
+    ) -> FacultyPreference:
         """Add a week to the preferred list."""
         preferences = self.get_or_create_preferences(faculty_id)
         week_str = week_date.isoformat()
@@ -155,7 +162,9 @@ class FacultyPreferenceService:
         if week_str not in preferences.preferred_weeks:
             # Remove from blocked if present
             if preferences.blocked_weeks and week_str in preferences.blocked_weeks:
-                preferences.blocked_weeks = [w for w in preferences.blocked_weeks if w != week_str]
+                preferences.blocked_weeks = [
+                    w for w in preferences.blocked_weeks if w != week_str
+                ]
 
             preferences.preferred_weeks = preferences.preferred_weeks + [week_str]
             preferences.updated_at = datetime.utcnow()
@@ -177,7 +186,9 @@ class FacultyPreferenceService:
         if week_str not in preferences.blocked_weeks:
             # Remove from preferred if present
             if preferences.preferred_weeks and week_str in preferences.preferred_weeks:
-                preferences.preferred_weeks = [w for w in preferences.preferred_weeks if w != week_str]
+                preferences.preferred_weeks = [
+                    w for w in preferences.preferred_weeks if w != week_str
+                ]
 
             preferences.blocked_weeks = preferences.blocked_weeks + [week_str]
             preferences.updated_at = datetime.utcnow()
@@ -188,13 +199,17 @@ class FacultyPreferenceService:
 
         return preferences
 
-    def remove_preferred_week(self, faculty_id: UUID, week_date: date) -> FacultyPreference:
+    def remove_preferred_week(
+        self, faculty_id: UUID, week_date: date
+    ) -> FacultyPreference:
         """Remove a week from the preferred list."""
         preferences = self.get_or_create_preferences(faculty_id)
         week_str = week_date.isoformat()
 
         if preferences.preferred_weeks and week_str in preferences.preferred_weeks:
-            preferences.preferred_weeks = [w for w in preferences.preferred_weeks if w != week_str]
+            preferences.preferred_weeks = [
+                w for w in preferences.preferred_weeks if w != week_str
+            ]
             preferences.updated_at = datetime.utcnow()
             self.db.commit()
             self.db.refresh(preferences)
@@ -203,13 +218,17 @@ class FacultyPreferenceService:
 
         return preferences
 
-    def remove_blocked_week(self, faculty_id: UUID, week_date: date) -> FacultyPreference:
+    def remove_blocked_week(
+        self, faculty_id: UUID, week_date: date
+    ) -> FacultyPreference:
         """Remove a week from the blocked list."""
         preferences = self.get_or_create_preferences(faculty_id)
         week_str = week_date.isoformat()
 
         if preferences.blocked_weeks and week_str in preferences.blocked_weeks:
-            preferences.blocked_weeks = [w for w in preferences.blocked_weeks if w != week_str]
+            preferences.blocked_weeks = [
+                w for w in preferences.blocked_weeks if w != week_str
+            ]
             preferences.updated_at = datetime.utcnow()
             self.db.commit()
             self.db.refresh(preferences)
@@ -220,9 +239,11 @@ class FacultyPreferenceService:
 
     def is_week_blocked(self, faculty_id: UUID, week_date: date) -> bool:
         """Check if a week is blocked for a faculty member."""
-        preferences = self.db.query(FacultyPreference).filter(
-            FacultyPreference.faculty_id == faculty_id
-        ).first()
+        preferences = (
+            self.db.query(FacultyPreference)
+            .filter(FacultyPreference.faculty_id == faculty_id)
+            .first()
+        )
 
         if not preferences or not preferences.blocked_weeks:
             return False
@@ -231,9 +252,11 @@ class FacultyPreferenceService:
 
     def is_week_preferred(self, faculty_id: UUID, week_date: date) -> bool:
         """Check if a week is preferred by a faculty member."""
-        preferences = self.db.query(FacultyPreference).filter(
-            FacultyPreference.faculty_id == faculty_id
-        ).first()
+        preferences = (
+            self.db.query(FacultyPreference)
+            .filter(FacultyPreference.faculty_id == faculty_id)
+            .first()
+        )
 
         if not preferences or not preferences.preferred_weeks:
             return False
@@ -259,7 +282,8 @@ class FacultyPreferenceService:
         preferences = query.all()
 
         return [
-            p.faculty_id for p in preferences
+            p.faculty_id
+            for p in preferences
             if p.preferred_weeks and week_str in p.preferred_weeks
         ]
 
@@ -282,7 +306,8 @@ class FacultyPreferenceService:
         preferences = query.all()
 
         return [
-            p.faculty_id for p in preferences
+            p.faculty_id
+            for p in preferences
             if not p.blocked_weeks or week_str not in p.blocked_weeks
         ]
 
@@ -312,26 +337,30 @@ class FacultyPreferenceService:
             - reason: str explaining the match
         """
         # Get the original swap request
-        swap_request = self.db.query(SwapRecord).filter(
-            SwapRecord.id == swap_request_id
-        ).first()
+        swap_request = (
+            self.db.query(SwapRecord).filter(SwapRecord.id == swap_request_id).first()
+        )
 
         if not swap_request:
             raise ValueError(f"Swap request {swap_request_id} not found")
 
         # Find potential matching swaps (pending swaps where someone wants the source week)
-        potential_matches = self.db.query(SwapRecord).filter(
-            and_(
-                SwapRecord.id != swap_request_id,
-                SwapRecord.status == SwapStatus.PENDING,
-                or_(
-                    # They want our week as their target
-                    SwapRecord.target_week == swap_request.source_week,
-                    # Or we want their source week as our target
-                    SwapRecord.source_week == swap_request.target_week,
-                ),
+        potential_matches = (
+            self.db.query(SwapRecord)
+            .filter(
+                and_(
+                    SwapRecord.id != swap_request_id,
+                    SwapRecord.status == SwapStatus.PENDING,
+                    or_(
+                        # They want our week as their target
+                        SwapRecord.target_week == swap_request.source_week,
+                        # Or we want their source week as our target
+                        SwapRecord.source_week == swap_request.target_week,
+                    ),
+                )
             )
-        ).all()
+            .all()
+        )
 
         matches = []
         for candidate in potential_matches:
@@ -340,15 +369,17 @@ class FacultyPreferenceService:
             if score > 0:  # Only include viable matches
                 reason = self._generate_match_reason(swap_request, candidate, score)
 
-                matches.append({
-                    "swap_id": candidate.id,
-                    "compatibility_score": score,
-                    "source_faculty_id": candidate.source_faculty_id,
-                    "target_faculty_id": candidate.target_faculty_id,
-                    "source_week": candidate.source_week,
-                    "target_week": candidate.target_week,
-                    "reason": reason,
-                })
+                matches.append(
+                    {
+                        "swap_id": candidate.id,
+                        "compatibility_score": score,
+                        "source_faculty_id": candidate.source_faculty_id,
+                        "target_faculty_id": candidate.target_faculty_id,
+                        "source_week": candidate.source_week,
+                        "target_week": candidate.target_week,
+                        "reason": reason,
+                    }
+                )
 
         # Sort by compatibility score (highest first)
         matches.sort(key=lambda x: x["compatibility_score"], reverse=True)
@@ -431,14 +462,18 @@ class FacultyPreferenceService:
         preferences = self.get_or_create_preferences(person_id)
 
         # Get person's current assignments
-        current_assignments = self.db.query(Assignment, Block).join(
-            Block, Assignment.block_id == Block.id
-        ).filter(
-            and_(
-                Assignment.person_id == person_id,
-                Block.start_date >= datetime.utcnow().date(),  # Future assignments only
+        current_assignments = (
+            self.db.query(Assignment, Block)
+            .join(Block, Assignment.block_id == Block.id)
+            .filter(
+                and_(
+                    Assignment.person_id == person_id,
+                    Block.start_date
+                    >= datetime.utcnow().date(),  # Future assignments only
+                )
             )
-        ).all()
+            .all()
+        )
 
         suggestions = []
 
@@ -449,44 +484,48 @@ class FacultyPreferenceService:
             if self.is_week_blocked(person_id, current_week):
                 # Find someone who wants this week
                 interested_faculty = self.get_faculty_with_preference_for_week(
-                    current_week,
-                    exclude_faculty_ids=[person_id]
+                    current_week, exclude_faculty_ids=[person_id]
                 )
 
                 for partner_id in interested_faculty:
                     # Find their assignments on preferred weeks
-                    partner_assignments = self.db.query(Assignment, Block).join(
-                        Block, Assignment.block_id == Block.id
-                    ).filter(
-                        and_(
-                            Assignment.person_id == partner_id,
-                            Block.start_date >= datetime.utcnow().date(),
+                    partner_assignments = (
+                        self.db.query(Assignment, Block)
+                        .join(Block, Assignment.block_id == Block.id)
+                        .filter(
+                            and_(
+                                Assignment.person_id == partner_id,
+                                Block.start_date >= datetime.utcnow().date(),
+                            )
                         )
-                    ).all()
+                        .all()
+                    )
 
                     for partner_assignment, partner_block in partner_assignments:
                         partner_week = partner_block.start_date
 
                         # Check if we prefer their week and they don't block it
-                        if (self.is_week_preferred(person_id, partner_week) and
-                            not self.is_week_blocked(partner_id, partner_week)):
-
+                        if self.is_week_preferred(
+                            person_id, partner_week
+                        ) and not self.is_week_blocked(partner_id, partner_week):
                             benefit_score = self._calculate_swap_benefit(
                                 person_id, current_week, partner_week
                             )
 
-                            suggestions.append({
-                                "assignment_id": assignment.id,
-                                "current_week": current_week,
-                                "suggested_partner_id": partner_id,
-                                "suggested_week": partner_week,
-                                "benefit_score": benefit_score,
-                                "reason": (
-                                    f"You have this week blocked, they prefer it. "
-                                    f"You prefer their week ({partner_week.isoformat()}), "
-                                    f"and they don't have it blocked."
-                                ),
-                            })
+                            suggestions.append(
+                                {
+                                    "assignment_id": assignment.id,
+                                    "current_week": current_week,
+                                    "suggested_partner_id": partner_id,
+                                    "suggested_week": partner_week,
+                                    "benefit_score": benefit_score,
+                                    "reason": (
+                                        f"You have this week blocked, they prefer it. "
+                                        f"You prefer their week ({partner_week.isoformat()}), "
+                                        f"and they don't have it blocked."
+                                    ),
+                                }
+                            )
 
         # Sort by benefit score
         suggestions.sort(key=lambda x: x["benefit_score"], reverse=True)
@@ -522,13 +561,17 @@ class FacultyPreferenceService:
         cutoff_date = datetime.utcnow() - timedelta(days=lookback_days)
 
         # Get swap history where this person was involved
-        swaps = self.db.query(SwapRecord).filter(
-            or_(
-                SwapRecord.source_faculty_id == faculty_id,
-                SwapRecord.target_faculty_id == faculty_id,
-            ),
-            SwapRecord.requested_at >= cutoff_date,
-        ).all()
+        swaps = (
+            self.db.query(SwapRecord)
+            .filter(
+                or_(
+                    SwapRecord.source_faculty_id == faculty_id,
+                    SwapRecord.target_faculty_id == faculty_id,
+                ),
+                SwapRecord.requested_at >= cutoff_date,
+            )
+            .all()
+        )
 
         if not swaps:
             return {
@@ -541,10 +584,14 @@ class FacultyPreferenceService:
             }
 
         # Analyze acceptances
-        approvals = self.db.query(SwapApproval).filter(
-            SwapApproval.faculty_id == faculty_id,
-            SwapApproval.swap_id.in_([s.id for s in swaps]),
-        ).all()
+        approvals = (
+            self.db.query(SwapApproval)
+            .filter(
+                SwapApproval.faculty_id == faculty_id,
+                SwapApproval.swap_id.in_([s.id for s in swaps]),
+            )
+            .all()
+        )
 
         accepted = sum(1 for a in approvals if a.approved is True)
         rejected = sum(1 for a in approvals if a.approved is False)
@@ -562,25 +609,43 @@ class FacultyPreferenceService:
             if swap.source_faculty_id == faculty_id:
                 # They initiated - they want target_week, avoid source_week
                 if swap.target_week:
-                    desired_weeks[swap.target_week] = desired_weeks.get(swap.target_week, 0) + 1
-                avoided_weeks[swap.source_week] = avoided_weeks.get(swap.source_week, 0) + 1
+                    desired_weeks[swap.target_week] = (
+                        desired_weeks.get(swap.target_week, 0) + 1
+                    )
+                avoided_weeks[swap.source_week] = (
+                    avoided_weeks.get(swap.source_week, 0) + 1
+                )
 
                 if swap.status in [SwapStatus.APPROVED, SwapStatus.EXECUTED]:
-                    partners[swap.target_faculty_id] = partners.get(swap.target_faculty_id, 0) + 1
+                    partners[swap.target_faculty_id] = (
+                        partners.get(swap.target_faculty_id, 0) + 1
+                    )
 
             elif swap.target_faculty_id == faculty_id:
                 # They were target - they want source_week, would give up target_week
-                desired_weeks[swap.source_week] = desired_weeks.get(swap.source_week, 0) + 1
+                desired_weeks[swap.source_week] = (
+                    desired_weeks.get(swap.source_week, 0) + 1
+                )
                 if swap.target_week:
-                    avoided_weeks[swap.target_week] = avoided_weeks.get(swap.target_week, 0) + 1
+                    avoided_weeks[swap.target_week] = (
+                        avoided_weeks.get(swap.target_week, 0) + 1
+                    )
 
                 if swap.status in [SwapStatus.APPROVED, SwapStatus.EXECUTED]:
-                    partners[swap.source_faculty_id] = partners.get(swap.source_faculty_id, 0) + 1
+                    partners[swap.source_faculty_id] = (
+                        partners.get(swap.source_faculty_id, 0) + 1
+                    )
 
         # Sort and get top items
-        commonly_desired = sorted(desired_weeks.items(), key=lambda x: x[1], reverse=True)
-        commonly_avoided = sorted(avoided_weeks.items(), key=lambda x: x[1], reverse=True)
-        preferred_partners_list = sorted(partners.items(), key=lambda x: x[1], reverse=True)
+        commonly_desired = sorted(
+            desired_weeks.items(), key=lambda x: x[1], reverse=True
+        )
+        commonly_avoided = sorted(
+            avoided_weeks.items(), key=lambda x: x[1], reverse=True
+        )
+        preferred_partners_list = sorted(
+            partners.items(), key=lambda x: x[1], reverse=True
+        )
 
         return {
             "acceptance_rate": acceptance_rate,
@@ -607,10 +672,14 @@ class FacultyPreferenceService:
 
         # Check if A wants what B has, and B wants what A has
         a_wants_b_source = (
-            request_a.target_week == request_b.source_week if request_a.target_week else False
+            request_a.target_week == request_b.source_week
+            if request_a.target_week
+            else False
         )
         b_wants_a_source = (
-            request_b.target_week == request_a.source_week if request_b.target_week else False
+            request_b.target_week == request_a.source_week
+            if request_b.target_week
+            else False
         )
 
         # Perfect mutual alignment
@@ -625,14 +694,22 @@ class FacultyPreferenceService:
             b_prefs = self.get_or_create_preferences(request_b.source_faculty_id)
 
             a_prefers_b_week = (
-                b_prefs.preferred_weeks and
-                request_b.source_week.isoformat() in a_prefs.preferred_weeks
-            ) if a_prefs.preferred_weeks else False
+                (
+                    b_prefs.preferred_weeks
+                    and request_b.source_week.isoformat() in a_prefs.preferred_weeks
+                )
+                if a_prefs.preferred_weeks
+                else False
+            )
 
             b_prefers_a_week = (
-                a_prefs.preferred_weeks and
-                request_a.source_week.isoformat() in b_prefs.preferred_weeks
-            ) if b_prefs.preferred_weeks else False
+                (
+                    a_prefs.preferred_weeks
+                    and request_a.source_week.isoformat() in b_prefs.preferred_weeks
+                )
+                if b_prefs.preferred_weeks
+                else False
+            )
 
             if a_prefers_b_week and b_prefers_a_week:
                 score = 0.8
@@ -653,12 +730,10 @@ class FacultyPreferenceService:
         """
         # Check if either party has blocked the week they would receive
         a_blocks_b_week = self.is_week_blocked(
-            request_a.source_faculty_id,
-            request_b.source_week
+            request_a.source_faculty_id, request_b.source_week
         )
         b_blocks_a_week = self.is_week_blocked(
-            request_b.source_faculty_id,
-            request_a.source_week
+            request_b.source_faculty_id, request_a.source_week
         )
 
         if a_blocks_b_week or b_blocks_a_week:
@@ -698,13 +773,17 @@ class FacultyPreferenceService:
         b_prefs = self.get_or_create_preferences(request_b.source_faculty_id)
 
         # Count current assignments for each person
-        a_count = self.db.query(Assignment).filter(
-            Assignment.person_id == request_a.source_faculty_id
-        ).count()
+        a_count = (
+            self.db.query(Assignment)
+            .filter(Assignment.person_id == request_a.source_faculty_id)
+            .count()
+        )
 
-        b_count = self.db.query(Assignment).filter(
-            Assignment.person_id == request_b.source_faculty_id
-        ).count()
+        b_count = (
+            self.db.query(Assignment)
+            .filter(Assignment.person_id == request_b.source_faculty_id)
+            .count()
+        )
 
         # Get target weeks per year
         a_target = a_prefs.target_weeks_per_year or 6
@@ -730,8 +809,16 @@ class FacultyPreferenceService:
         reasons = []
 
         # Check mutual preference
-        a_wants_b = request_a.target_week == request_b.source_week if request_a.target_week else False
-        b_wants_a = request_b.target_week == request_a.source_week if request_b.target_week else False
+        a_wants_b = (
+            request_a.target_week == request_b.source_week
+            if request_a.target_week
+            else False
+        )
+        b_wants_a = (
+            request_b.target_week == request_a.source_week
+            if request_b.target_week
+            else False
+        )
 
         if a_wants_b and b_wants_a:
             reasons.append("Perfect mutual preference match")
@@ -749,8 +836,10 @@ class FacultyPreferenceService:
         a_prefs = self.get_or_create_preferences(request_a.source_faculty_id)
         b_prefs = self.get_or_create_preferences(request_b.source_faculty_id)
 
-        if (a_prefs.preferred_weeks and
-            request_b.source_week.isoformat() in a_prefs.preferred_weeks):
+        if (
+            a_prefs.preferred_weeks
+            and request_b.source_week.isoformat() in a_prefs.preferred_weeks
+        ):
             reasons.append("Their week is on your preferred list")
 
         if score >= 0.8:
@@ -758,7 +847,9 @@ class FacultyPreferenceService:
         elif score >= 0.6:
             reasons.insert(0, "Good match")
 
-        return "; ".join(reasons) if reasons else "Potential match based on availability"
+        return (
+            "; ".join(reasons) if reasons else "Potential match based on availability"
+        )
 
     def _calculate_swap_benefit(
         self,

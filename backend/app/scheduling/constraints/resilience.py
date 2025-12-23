@@ -18,10 +18,10 @@ Classes:
     - PreferenceTrailConstraint: Learn from history (soft, Tier 2)
     - N1VulnerabilityConstraint: Address single points of failure (soft, Tier 2)
 """
+
 import logging
 from collections import defaultdict
 from typing import Any
-from uuid import UUID
 
 from .base import (
     ConstraintPriority,
@@ -55,7 +55,7 @@ class HubProtectionConstraint(SoftConstraint):
     """
 
     # Hub score thresholds
-    HIGH_HUB_THRESHOLD = 0.4      # Above this = significant hub
+    HIGH_HUB_THRESHOLD = 0.4  # Above this = significant hub
     CRITICAL_HUB_THRESHOLD = 0.6  # Above this = critical hub (2x penalty)
 
     def __init__(self, weight: float = 15.0) -> None:
@@ -149,6 +149,7 @@ class HubProtectionConstraint(SoftConstraint):
     ) -> None:
         """Add hub protection penalty to PuLP model."""
         import pulp
+
         x = variables.get("assignments", {})
 
         if not x or not context.hub_scores:
@@ -222,20 +223,24 @@ class HubProtectionConstraint(SoftConstraint):
 
             # Report if hub is over-assigned (> average)
             if count > avg_assignments * 1.2:  # 20% above average
-                severity = "HIGH" if hub_score >= self.CRITICAL_HUB_THRESHOLD else "MEDIUM"
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity=severity,
-                    message=f"Hub faculty {faculty.name} (score={hub_score:.2f}) has {count} assignments (avg={avg_assignments:.1f})",
-                    person_id=faculty.id,
-                    details={
-                        "hub_score": hub_score,
-                        "assignment_count": count,
-                        "average_assignments": avg_assignments,
-                        "is_critical_hub": hub_score >= self.CRITICAL_HUB_THRESHOLD,
-                    },
-                ))
+                severity = (
+                    "HIGH" if hub_score >= self.CRITICAL_HUB_THRESHOLD else "MEDIUM"
+                )
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity=severity,
+                        message=f"Hub faculty {faculty.name} (score={hub_score:.2f}) has {count} assignments (avg={avg_assignments:.1f})",
+                        person_id=faculty.id,
+                        details={
+                            "hub_score": hub_score,
+                            "assignment_count": count,
+                            "average_assignments": avg_assignments,
+                            "is_critical_hub": hub_score >= self.CRITICAL_HUB_THRESHOLD,
+                        },
+                    )
+                )
 
         return ConstraintResult(
             satisfied=True,  # Soft constraint
@@ -352,6 +357,7 @@ class UtilizationBufferConstraint(SoftConstraint):
     ) -> None:
         """Add utilization buffer constraint to PuLP model."""
         import pulp
+
         x = variables.get("assignments", {})
 
         if not x:
@@ -391,13 +397,18 @@ class UtilizationBufferConstraint(SoftConstraint):
         workday_blocks = len([b for b in context.blocks if not b.is_weekend])
 
         # Capacity = faculty who can work * average available blocks
-        available_faculty = len([
-            f for f in context.faculty
-            if any(
-                context.availability.get(f.id, {}).get(b.id, {}).get("available", True)
-                for b in context.blocks
-            )
-        ])
+        available_faculty = len(
+            [
+                f
+                for f in context.faculty
+                if any(
+                    context.availability.get(f.id, {})
+                    .get(b.id, {})
+                    .get("available", True)
+                    for b in context.blocks
+                )
+            ]
+        )
 
         if available_faculty == 0 or workday_blocks == 0:
             return ConstraintResult(satisfied=True, penalty=0.0)
@@ -407,7 +418,11 @@ class UtilizationBufferConstraint(SoftConstraint):
         utilization = total_assignments / max_capacity if max_capacity > 0 else 0
 
         # Calculate penalty
-        target = context.target_utilization if context.target_utilization else self.target_utilization
+        target = (
+            context.target_utilization
+            if context.target_utilization
+            else self.target_utilization
+        )
 
         if utilization <= target:
             penalty = 0.0
@@ -415,7 +430,7 @@ class UtilizationBufferConstraint(SoftConstraint):
         else:
             # Quadratic penalty above threshold
             over_threshold = utilization - target
-            penalty = (over_threshold ** 2) * self.weight * 100
+            penalty = (over_threshold**2) * self.weight * 100
             buffer_remaining = 0.0
 
             # Determine severity based on how far over
@@ -426,20 +441,22 @@ class UtilizationBufferConstraint(SoftConstraint):
             else:
                 severity = "MEDIUM"
 
-            violations.append(ConstraintViolation(
-                constraint_name=self.name,
-                constraint_type=self.constraint_type,
-                severity=severity,
-                message=f"Utilization {utilization:.0%} exceeds target {target:.0%} (buffer exhausted)",
-                details={
-                    "utilization_rate": utilization,
-                    "target_utilization": target,
-                    "buffer_remaining": buffer_remaining,
-                    "total_assignments": total_assignments,
-                    "max_capacity": max_capacity,
-                    "danger_zone": utilization >= 0.90,
-                },
-            ))
+            violations.append(
+                ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity=severity,
+                    message=f"Utilization {utilization:.0%} exceeds target {target:.0%} (buffer exhausted)",
+                    details={
+                        "utilization_rate": utilization,
+                        "target_utilization": target,
+                        "buffer_remaining": buffer_remaining,
+                        "total_assignments": total_assignments,
+                        "max_capacity": max_capacity,
+                        "danger_zone": utilization >= 0.90,
+                    },
+                )
+            )
 
         return ConstraintResult(
             satisfied=True,  # Soft constraint
@@ -451,6 +468,7 @@ class UtilizationBufferConstraint(SoftConstraint):
 # =============================================================================
 # TIER 2: STRATEGIC RESILIENCE CONSTRAINTS
 # =============================================================================
+
 
 class ZoneBoundaryConstraint(SoftConstraint):
     """
@@ -473,12 +491,12 @@ class ZoneBoundaryConstraint(SoftConstraint):
 
     # Zone type priority multipliers
     ZONE_PRIORITY = {
-        "inpatient": 2.0,      # Critical - highest isolation
-        "outpatient": 1.5,     # Important
-        "on_call": 1.5,        # Important
-        "education": 1.0,      # Standard
-        "research": 0.8,       # Flexible
-        "admin": 0.5,          # Most flexible
+        "inpatient": 2.0,  # Critical - highest isolation
+        "outpatient": 1.5,  # Important
+        "on_call": 1.5,  # Important
+        "education": 1.0,  # Standard
+        "research": 0.8,  # Flexible
+        "admin": 0.5,  # Most flexible
     }
 
     def __init__(self, weight: float = 12.0) -> None:
@@ -541,6 +559,7 @@ class ZoneBoundaryConstraint(SoftConstraint):
     ) -> None:
         """Add zone boundary penalty to PuLP model."""
         import pulp
+
         x = variables.get("assignments", {})
 
         if not x or not context.zone_assignments or not context.block_zones:
@@ -604,7 +623,9 @@ class ZoneBoundaryConstraint(SoftConstraint):
         if cross_zone_count > 0:
             # Determine severity based on percentage
             total_assignments = len(assignments)
-            cross_zone_pct = cross_zone_count / total_assignments if total_assignments > 0 else 0
+            cross_zone_pct = (
+                cross_zone_count / total_assignments if total_assignments > 0 else 0
+            )
 
             if cross_zone_pct >= 0.20:
                 severity = "HIGH"
@@ -613,18 +634,20 @@ class ZoneBoundaryConstraint(SoftConstraint):
             else:
                 severity = "LOW"
 
-            violations.append(ConstraintViolation(
-                constraint_name=self.name,
-                constraint_type=self.constraint_type,
-                severity=severity,
-                message=f"{cross_zone_count} cross-zone assignments ({cross_zone_pct:.0%} of total) - blast radius isolation weakened",
-                details={
-                    "cross_zone_count": cross_zone_count,
-                    "total_assignments": total_assignments,
-                    "cross_zone_percentage": cross_zone_pct,
-                    "zone_violations": dict(zone_violation_details),
-                },
-            ))
+            violations.append(
+                ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity=severity,
+                    message=f"{cross_zone_count} cross-zone assignments ({cross_zone_pct:.0%} of total) - blast radius isolation weakened",
+                    details={
+                        "cross_zone_count": cross_zone_count,
+                        "total_assignments": total_assignments,
+                        "cross_zone_percentage": cross_zone_pct,
+                        "zone_violations": dict(zone_violation_details),
+                    },
+                )
+            )
 
         return ConstraintResult(
             satisfied=True,  # Soft constraint
@@ -654,8 +677,8 @@ class PreferenceTrailConstraint(SoftConstraint):
     """
 
     # Trail strength thresholds
-    STRONG_TRAIL_THRESHOLD = 0.6   # Above this = strong signal
-    WEAK_TRAIL_THRESHOLD = 0.3     # Below this = ignore
+    STRONG_TRAIL_THRESHOLD = 0.6  # Above this = strong signal
+    WEAK_TRAIL_THRESHOLD = 0.3  # Below this = ignore
 
     def __init__(self, weight: float = 8.0) -> None:
         super().__init__(
@@ -698,7 +721,9 @@ class PreferenceTrailConstraint(SoftConstraint):
                     continue
 
                 # Determine slot type from block
-                slot_type = f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+                slot_type = (
+                    f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+                )
 
                 # Check if we have a preference for this slot type
                 trail_strength = faculty_prefs.get(slot_type, 0.5)
@@ -723,6 +748,7 @@ class PreferenceTrailConstraint(SoftConstraint):
     ) -> None:
         """Add preference trail bonus/penalty to PuLP model."""
         import pulp
+
         x = variables.get("assignments", {})
 
         if not x or not context.preference_trails:
@@ -745,7 +771,9 @@ class PreferenceTrailConstraint(SoftConstraint):
                 if (f_i, b_i) not in x:
                     continue
 
-                slot_type = f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+                slot_type = (
+                    f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+                )
                 trail_strength = faculty_prefs.get(slot_type, 0.5)
 
                 if trail_strength >= self.STRONG_TRAIL_THRESHOLD:
@@ -797,7 +825,9 @@ class PreferenceTrailConstraint(SoftConstraint):
             if not block:
                 continue
 
-            slot_type = f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+            slot_type = (
+                f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
+            )
             trail_strength = faculty_prefs.get(slot_type, 0.5)
             total_checked += 1
 
@@ -813,19 +843,21 @@ class PreferenceTrailConstraint(SoftConstraint):
 
             # Report if significant misalignment
             if misaligned_count > 0 and misalignment_rate >= 0.10:
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="MEDIUM" if misalignment_rate >= 0.20 else "LOW",
-                    message=f"{misaligned_count} assignments against preference trails ({misalignment_rate:.0%})",
-                    details={
-                        "aligned_count": aligned_count,
-                        "misaligned_count": misaligned_count,
-                        "total_checked": total_checked,
-                        "alignment_rate": alignment_rate,
-                        "misalignment_rate": misalignment_rate,
-                    },
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="MEDIUM" if misalignment_rate >= 0.20 else "LOW",
+                        message=f"{misaligned_count} assignments against preference trails ({misalignment_rate:.0%})",
+                        details={
+                            "aligned_count": aligned_count,
+                            "misaligned_count": misaligned_count,
+                            "total_checked": total_checked,
+                            "alignment_rate": alignment_rate,
+                            "misalignment_rate": misalignment_rate,
+                        },
+                    )
+                )
 
         return ConstraintResult(
             satisfied=True,  # Soft constraint
@@ -893,9 +925,11 @@ class N1VulnerabilityConstraint(SoftConstraint):
                     continue
 
                 # Check availability
-                is_available = context.availability.get(
-                    faculty.id, {}
-                ).get(block.id, {}).get("available", True)
+                is_available = (
+                    context.availability.get(faculty.id, {})
+                    .get(block.id, {})
+                    .get("available", True)
+                )
 
                 if is_available and (f_i, b_i) in x:
                     available_for_block.append((f_i, faculty.id))
@@ -918,6 +952,7 @@ class N1VulnerabilityConstraint(SoftConstraint):
     ) -> None:
         """Add N-1 vulnerability penalty to PuLP model."""
         import pulp
+
         x = variables.get("assignments", {})
 
         if not x:
@@ -934,9 +969,11 @@ class N1VulnerabilityConstraint(SoftConstraint):
                 if f_i is None:
                     continue
 
-                is_available = context.availability.get(
-                    faculty.id, {}
-                ).get(block.id, {}).get("available", True)
+                is_available = (
+                    context.availability.get(faculty.id, {})
+                    .get(block.id, {})
+                    .get("available", True)
+                )
 
                 if is_available and (f_i, b_i) in x:
                     available_for_block.append(f_i)
@@ -994,7 +1031,9 @@ class N1VulnerabilityConstraint(SoftConstraint):
 
         # Report violations
         if n1_vulnerable_blocks:
-            vulnerability_rate = len(n1_vulnerable_blocks) / len(context.blocks) if context.blocks else 0
+            vulnerability_rate = (
+                len(n1_vulnerable_blocks) / len(context.blocks) if context.blocks else 0
+            )
 
             if vulnerability_rate >= 0.20:
                 severity = "CRITICAL"
@@ -1003,19 +1042,21 @@ class N1VulnerabilityConstraint(SoftConstraint):
             else:
                 severity = "MEDIUM"
 
-            violations.append(ConstraintViolation(
-                constraint_name=self.name,
-                constraint_type=self.constraint_type,
-                severity=severity,
-                message=f"{len(n1_vulnerable_blocks)} blocks have single-point-of-failure coverage ({vulnerability_rate:.0%})",
-                details={
-                    "n1_vulnerable_blocks": len(n1_vulnerable_blocks),
-                    "total_blocks": len(context.blocks),
-                    "vulnerability_rate": vulnerability_rate,
-                    "sole_provider_counts": dict(sole_providers),
-                    "n1_pass": len(n1_vulnerable_blocks) == 0,
-                },
-            ))
+            violations.append(
+                ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity=severity,
+                    message=f"{len(n1_vulnerable_blocks)} blocks have single-point-of-failure coverage ({vulnerability_rate:.0%})",
+                    details={
+                        "n1_vulnerable_blocks": len(n1_vulnerable_blocks),
+                        "total_blocks": len(context.blocks),
+                        "vulnerability_rate": vulnerability_rate,
+                        "sole_provider_counts": dict(sole_providers),
+                        "n1_pass": len(n1_vulnerable_blocks) == 0,
+                    },
+                )
+            )
 
         # Report sole providers
         for faculty_id, sole_count in sole_providers.items():
@@ -1026,21 +1067,22 @@ class N1VulnerabilityConstraint(SoftConstraint):
                     break
 
             if sole_count >= 3:  # Report faculty who are sole provider for 3+ blocks
-                violations.append(ConstraintViolation(
-                    constraint_name=self.name,
-                    constraint_type=self.constraint_type,
-                    severity="HIGH" if sole_count >= 5 else "MEDIUM",
-                    message=f"Faculty {faculty_name} is sole provider for {sole_count} blocks - single point of failure risk",
-                    person_id=faculty_id,
-                    details={
-                        "sole_coverage_blocks": sole_count,
-                        "recommendation": "Cross-train backup faculty",
-                    },
-                ))
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="HIGH" if sole_count >= 5 else "MEDIUM",
+                        message=f"Faculty {faculty_name} is sole provider for {sole_count} blocks - single point of failure risk",
+                        person_id=faculty_id,
+                        details={
+                            "sole_coverage_blocks": sole_count,
+                            "recommendation": "Cross-train backup faculty",
+                        },
+                    )
+                )
 
         return ConstraintResult(
             satisfied=True,  # Soft constraint
             violations=violations,
             penalty=total_penalty,
         )
-

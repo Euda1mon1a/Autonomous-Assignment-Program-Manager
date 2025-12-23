@@ -11,9 +11,8 @@ Tests all advanced features including:
 """
 
 import asyncio
-import time
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, Mock, patch
+from datetime import datetime
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -192,10 +191,13 @@ class TestTaskDependencyGraph:
 
         # Try to add task1 depending on task2 (creates cycle)
         with pytest.raises(ValueError, match="circular dependency"):
-            graph.add_task("task3", [
-                TaskDependency(task_id="task2"),
-                TaskDependency(task_id="task3"),  # Self-cycle
-            ])
+            graph.add_task(
+                "task3",
+                [
+                    TaskDependency(task_id="task2"),
+                    TaskDependency(task_id="task3"),  # Self-cycle
+                ],
+            )
 
     def test_topological_sort(self):
         """Test topological sorting of tasks."""
@@ -717,7 +719,9 @@ class TestAdvancedTaskSchedulerAsync:
             return {"result": "success"}
 
         # Mock the get_job_function to return our test task
-        with patch("app.scheduler.advanced_scheduler.get_job_function") as mock_get_func:
+        with patch(
+            "app.scheduler.advanced_scheduler.get_job_function"
+        ) as mock_get_func:
             mock_get_func.return_value = test_task
 
             task_def = TaskDefinition(
@@ -754,7 +758,9 @@ class TestAdvancedTaskSchedulerAsync:
                 raise Exception("Simulated failure")
             return {"result": "success after retries"}
 
-        with patch("app.scheduler.advanced_scheduler.get_job_function") as mock_get_func:
+        with patch(
+            "app.scheduler.advanced_scheduler.get_job_function"
+        ) as mock_get_func:
             mock_get_func.return_value = failing_task
 
             task_def = TaskDefinition(

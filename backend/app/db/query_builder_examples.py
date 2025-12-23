@@ -39,7 +39,10 @@ def example_comparison_filters(db: Session):
     """Example: Comparison operators (>, >=, <, <=, !=)."""
     # Get senior residents (PGY 2 or higher)
     senior_residents = (
-        QueryBuilder(Person, db).filter_by(type="resident").filter_gte("pgy_level", 2).all()
+        QueryBuilder(Person, db)
+        .filter_by(type="resident")
+        .filter_gte("pgy_level", 2)
+        .all()
     )
 
     # Get residents who are NOT PGY-1
@@ -51,7 +54,11 @@ def example_comparison_filters(db: Session):
 def example_pattern_matching(db: Session):
     """Example: Pattern matching with LIKE/ILIKE."""
     # Find people with "Smith" in their name (case-insensitive)
-    smiths = QueryBuilder(Person, db).filter_like("name", "%Smith%", case_sensitive=False).all()
+    smiths = (
+        QueryBuilder(Person, db)
+        .filter_like("name", "%Smith%", case_sensitive=False)
+        .all()
+    )
 
     # Find emails from specific domain
     hospital_emails = (
@@ -65,7 +72,10 @@ def example_in_filters(db: Session):
     """Example: IN and NOT IN filters."""
     # Get residents at specific PGY levels
     pgy_1_or_3 = (
-        QueryBuilder(Person, db).filter_by(type="resident").filter_in("pgy_level", [1, 3]).all()
+        QueryBuilder(Person, db)
+        .filter_by(type="resident")
+        .filter_in("pgy_level", [1, 3])
+        .all()
     )
 
     # Exclude specific PGY levels
@@ -104,7 +114,9 @@ def example_date_ranges(db: Session):
     )
 
     # Get all future blocks
-    future_blocks = QueryBuilder(Block, db).filter_date_range("date", start_date=today).all()
+    future_blocks = (
+        QueryBuilder(Block, db).filter_date_range("date", start_date=today).all()
+    )
 
     return next_week_blocks, future_blocks
 
@@ -181,16 +193,12 @@ def example_filter_by_joined(db: Session):
     """Example: Filtering on joined relationships."""
     # Get assignments for a specific person by name
     assignments_for_smith = (
-        QueryBuilder(Assignment, db)
-        .filter_by_joined("person", name="Dr. Smith")
-        .all()
+        QueryBuilder(Assignment, db).filter_by_joined("person", name="Dr. Smith").all()
     )
 
     # Get assignments for residents only
     resident_assignments = (
-        QueryBuilder(Assignment, db)
-        .filter_by_joined("person", type="resident")
-        .all()
+        QueryBuilder(Assignment, db).filter_by_joined("person", type="resident").all()
     )
 
     return assignments_for_smith, resident_assignments
@@ -232,7 +240,10 @@ def example_subqueries(db: Session):
     """Example: Using subqueries."""
     # Find people who have assignments
     subquery = (
-        QueryBuilder(Assignment, db).select_columns(Assignment.person_id).distinct().as_subquery()
+        QueryBuilder(Assignment, db)
+        .select_columns(Assignment.person_id)
+        .distinct()
+        .as_subquery()
     )
 
     people_with_assignments = QueryBuilder(Person, db).filter_in("id", subquery).all()
@@ -279,7 +290,9 @@ def example_complex_query(db: Session):
         .join_related("block")
         .filter_by_joined("person", type="resident")
         .filter(Person.pgy_level >= 2)  # Raw filter for joined table
-        .filter_date_range("date", start_date=today, end_date=next_week)  # Won't work - need block.date
+        .filter_date_range(
+            "date", start_date=today, end_date=next_week
+        )  # Won't work - need block.date
         .order_by("block_id")
         .paginate(page=1, page_size=20)
     )
@@ -304,9 +317,7 @@ def example_bulk_operations(db: Session):
 
     # Bulk delete: Remove test accounts
     # NOTE: Use with extreme caution
-    deleted_count = (
-        QueryBuilder(Person, db).filter_like("email", "%@test.org").delete()
-    )
+    deleted_count = QueryBuilder(Person, db).filter_like("email", "%@test.org").delete()
     db.commit()
 
     return updated_count, deleted_count
@@ -345,18 +356,14 @@ def example_terminal_methods(db: Session):
     # Get one result (raises error if 0 or multiple)
     try:
         one_result = (
-            QueryBuilder(Person, db)
-            .filter_by(type="resident", pgy_level=2)
-            .one()
+            QueryBuilder(Person, db).filter_by(type="resident", pgy_level=2).one()
         )
     except Exception:
         one_result = None
 
     # Get one or none (raises error only if multiple)
     one_or_none = (
-        QueryBuilder(Person, db)
-        .filter_by(type="resident", pgy_level=2)
-        .one_or_none()
+        QueryBuilder(Person, db).filter_by(type="resident", pgy_level=2).one_or_none()
     )
 
     # Just count without fetching

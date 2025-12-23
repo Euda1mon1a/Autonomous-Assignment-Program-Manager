@@ -13,6 +13,7 @@ References:
 - https://microservices.io/patterns/data/transactional-outbox.html
 - Enterprise Integration Patterns (Hohpe & Woolf)
 """
+
 import enum
 import uuid
 from datetime import datetime
@@ -33,11 +34,12 @@ from app.db.types import GUID, JSONType
 
 class OutboxStatus(str, enum.Enum):
     """Status of an outbox message."""
-    PENDING = "pending"        # Waiting to be published
+
+    PENDING = "pending"  # Waiting to be published
     PROCESSING = "processing"  # Currently being published
-    PUBLISHED = "published"    # Successfully published to broker
-    FAILED = "failed"          # Publishing failed (will retry)
-    ARCHIVED = "archived"      # Moved to archive (no longer active)
+    PUBLISHED = "published"  # Successfully published to broker
+    FAILED = "failed"  # Publishing failed (will retry)
+    ARCHIVED = "archived"  # Moved to archive (no longer active)
 
 
 class OutboxMessage(Base):
@@ -62,6 +64,7 @@ class OutboxMessage(Base):
     - Dead letter: Max retries exceeded moves to failed state
     - Cleanup: Archive old published messages to prevent table growth
     """
+
     __tablename__ = "outbox_messages"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -83,10 +86,7 @@ class OutboxMessage(Base):
 
     # Publishing metadata
     status = Column(
-        String(20),
-        nullable=False,
-        default=OutboxStatus.PENDING.value,
-        index=True
+        String(20), nullable=False, default=OutboxStatus.PENDING.value, index=True
     )
 
     # Retry tracking
@@ -104,13 +104,15 @@ class OutboxMessage(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     __table_args__ = (
         # Ensure valid status values
         CheckConstraint(
             "status IN ('pending', 'processing', 'published', 'failed', 'archived')",
-            name="check_outbox_status"
+            name="check_outbox_status",
         ),
         # Composite index for efficient polling of pending messages
         Index(
@@ -192,6 +194,7 @@ class OutboxArchive(Base):
     main outbox table small and performant. Archive can be periodically
     purged based on retention policies.
     """
+
     __tablename__ = "outbox_archive"
 
     id = Column(GUID(), primary_key=True)

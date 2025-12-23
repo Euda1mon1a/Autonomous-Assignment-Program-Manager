@@ -1,4 +1,5 @@
 """Tests for ConflictAutoDetector service."""
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -57,7 +58,9 @@ class TestConflictAutoDetector:
         conflicts = detector.detect_conflicts_for_absence(uuid4())
         assert conflicts == []
 
-    def test_detect_conflicts_for_blocking_absence(self, db, sample_faculty, sample_absence):
+    def test_detect_conflicts_for_blocking_absence(
+        self, db, sample_faculty, sample_absence
+    ):
         """Test detection for blocking absence."""
         detector = ConflictAutoDetector(db)
 
@@ -307,7 +310,9 @@ class TestCrossSystemConflicts:
         )
 
         assert len(conflicts) > 0
-        assert any(c.conflict_type == "residency_fmit_double_booking" for c in conflicts)
+        assert any(
+            c.conflict_type == "residency_fmit_double_booking" for c in conflicts
+        )
         assert any(c.severity == "critical" for c in conflicts)
 
 
@@ -523,9 +528,9 @@ class TestSupervisionViolations:
         for i in range(3):
             resident = Person(
                 id=uuid4(),
-                name=f"Dr. PGY1 Resident {i+1}",
+                name=f"Dr. PGY1 Resident {i + 1}",
                 type="resident",
-                email=f"pgy1_{i+1}@hospital.org",
+                email=f"pgy1_{i + 1}@hospital.org",
                 pgy_level=1,
             )
             db.add(resident)
@@ -743,14 +748,24 @@ class TestSeverityPriority:
 
     def test_severity_priority_ordering(self):
         """Test that severity priorities are correctly ordered."""
-        assert ConflictAutoDetector._severity_priority("critical") > ConflictAutoDetector._severity_priority("high")
-        assert ConflictAutoDetector._severity_priority("high") > ConflictAutoDetector._severity_priority("medium")
-        assert ConflictAutoDetector._severity_priority("medium") > ConflictAutoDetector._severity_priority("low")
+        assert ConflictAutoDetector._severity_priority(
+            "critical"
+        ) > ConflictAutoDetector._severity_priority("high")
+        assert ConflictAutoDetector._severity_priority(
+            "high"
+        ) > ConflictAutoDetector._severity_priority("medium")
+        assert ConflictAutoDetector._severity_priority(
+            "medium"
+        ) > ConflictAutoDetector._severity_priority("low")
 
     def test_severity_priority_backward_compat(self):
         """Test backward compatibility with old severity values."""
-        assert ConflictAutoDetector._severity_priority("warning") == ConflictAutoDetector._severity_priority("medium")
-        assert ConflictAutoDetector._severity_priority("info") == ConflictAutoDetector._severity_priority("low")
+        assert ConflictAutoDetector._severity_priority(
+            "warning"
+        ) == ConflictAutoDetector._severity_priority("medium")
+        assert ConflictAutoDetector._severity_priority(
+            "info"
+        ) == ConflictAutoDetector._severity_priority("low")
 
 
 class TestIntegratedConflictDetection:

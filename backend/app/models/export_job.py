@@ -1,4 +1,5 @@
 """Export job models for scheduled data exports."""
+
 import uuid
 from datetime import datetime
 from enum import Enum
@@ -12,6 +13,7 @@ from app.db.types import GUID, JSONType
 
 class ExportFormat(str, Enum):
     """Export file formats."""
+
     CSV = "csv"
     JSON = "json"
     XLSX = "xlsx"
@@ -20,6 +22,7 @@ class ExportFormat(str, Enum):
 
 class ExportDeliveryMethod(str, Enum):
     """Export delivery methods."""
+
     EMAIL = "email"
     S3 = "s3"
     BOTH = "both"
@@ -27,6 +30,7 @@ class ExportDeliveryMethod(str, Enum):
 
 class ExportJobStatus(str, Enum):
     """Export job execution status."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -36,6 +40,7 @@ class ExportJobStatus(str, Enum):
 
 class ExportTemplate(str, Enum):
     """Predefined export templates."""
+
     FULL_SCHEDULE = "full_schedule"
     PERSONNEL = "personnel"
     ABSENCES = "absences"
@@ -79,7 +84,9 @@ class ExportJob(Base):
     description = Column(Text, nullable=True)
     template = Column(String(50), nullable=False, default=ExportTemplate.CUSTOM.value)
     format = Column(String(20), nullable=False, default=ExportFormat.CSV.value)
-    delivery_method = Column(String(20), nullable=False, default=ExportDeliveryMethod.EMAIL.value)
+    delivery_method = Column(
+        String(20), nullable=False, default=ExportDeliveryMethod.EMAIL.value
+    )
 
     # Email delivery settings
     email_recipients = Column(ARRAY(String), nullable=True)
@@ -110,7 +117,9 @@ class ExportJob(Base):
 
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     created_by = Column(String(255), nullable=True)
 
     def __repr__(self):
@@ -155,7 +164,9 @@ class ExportJobExecution(Base):
     scheduled_run_time = Column(DateTime, nullable=True)
 
     # Status and results
-    status = Column(String(50), nullable=False, index=True, default=ExportJobStatus.PENDING.value)
+    status = Column(
+        String(50), nullable=False, index=True, default=ExportJobStatus.PENDING.value
+    )
     row_count = Column(Integer, nullable=True)
     file_size_bytes = Column(Integer, nullable=True)
 
@@ -170,7 +181,9 @@ class ExportJobExecution(Base):
     error_traceback = Column(Text, nullable=True)
 
     # Metadata
-    triggered_by = Column(String(255), nullable=True)  # 'scheduled', 'manual', or username
+    triggered_by = Column(
+        String(255), nullable=True
+    )  # 'scheduled', 'manual', or username
     execution_metadata = Column(JSONType, nullable=True, default=dict)
 
     def __repr__(self):

@@ -4,11 +4,13 @@ XML export service.
 Provides XML export functionality for schedules, assignments, people,
 and analytics data with streaming support for large datasets.
 """
+
 import gzip
 import io
 import xml.etree.ElementTree as ET
+from collections.abc import AsyncIterator
 from datetime import date, datetime
-from typing import Any, AsyncIterator
+from typing import Any
 from xml.dom import minidom
 
 from sqlalchemy import select
@@ -112,7 +114,9 @@ class XMLExporter:
 
             # Format assignments
             for a in assignments:
-                formatted = format_assignment(a, fields=fields, include_relations=include_relations)
+                formatted = format_assignment(
+                    a, fields=fields, include_relations=include_relations
+                )
                 assignment_elem = self._dict_to_xml(formatted, "assignment")
                 data_elem.append(assignment_elem)
                 count += 1
@@ -129,7 +133,7 @@ class XMLExporter:
         if compress:
             return self._compress(xml_content)
 
-        return xml_content.encode('utf-8')
+        return xml_content.encode("utf-8")
 
     async def export_schedule(
         self,
@@ -208,7 +212,9 @@ class XMLExporter:
             # Format rows
             for a in assignments:
                 if nested:
-                    formatted = format_assignment(a, fields=fields, include_relations=True)
+                    formatted = format_assignment(
+                        a, fields=fields, include_relations=True
+                    )
                     row_elem = self._dict_to_xml(formatted, "assignment")
                 else:
                     formatted = format_schedule_row(a, flat=True)
@@ -231,7 +237,7 @@ class XMLExporter:
         if compress:
             return self._compress(xml_content)
 
-        return xml_content.encode('utf-8')
+        return xml_content.encode("utf-8")
 
     async def export_people(
         self,
@@ -305,7 +311,7 @@ class XMLExporter:
         if compress:
             return self._compress(xml_content)
 
-        return xml_content.encode('utf-8')
+        return xml_content.encode("utf-8")
 
     async def export_blocks(
         self,
@@ -385,7 +391,7 @@ class XMLExporter:
         if compress:
             return self._compress(xml_content)
 
-        return xml_content.encode('utf-8')
+        return xml_content.encode("utf-8")
 
     async def export_analytics(
         self,
@@ -425,13 +431,9 @@ class XMLExporter:
         if compress:
             return self._compress(xml_content)
 
-        return xml_content.encode('utf-8')
+        return xml_content.encode("utf-8")
 
-    async def stream_export(
-        self,
-        export_type: str,
-        **kwargs
-    ) -> AsyncIterator[bytes]:
+    async def stream_export(self, export_type: str, **kwargs) -> AsyncIterator[bytes]:
         """
         Stream export data in chunks (for large datasets).
 
@@ -457,7 +459,7 @@ class XMLExporter:
         # Yield in chunks
         chunk_size = 8192  # 8KB chunks
         for i in range(0, len(data), chunk_size):
-            yield data[i:i + chunk_size]
+            yield data[i : i + chunk_size]
 
     def _dict_to_xml(self, data: dict[str, Any], root_name: str) -> ET.Element:
         """
@@ -516,11 +518,11 @@ class XMLExporter:
         """
         if pretty:
             # Pretty print using minidom
-            xml_str = ET.tostring(root, encoding='unicode')
+            xml_str = ET.tostring(root, encoding="unicode")
             dom = minidom.parseString(xml_str)
             return dom.toprettyxml(indent="  ")
         else:
-            return ET.tostring(root, encoding='unicode')
+            return ET.tostring(root, encoding="unicode")
 
     def _compress(self, content: str) -> bytes:
         """
@@ -533,8 +535,8 @@ class XMLExporter:
             Compressed bytes
         """
         output = io.BytesIO()
-        with gzip.GzipFile(fileobj=output, mode='wb') as gz:
-            gz.write(content.encode('utf-8'))
+        with gzip.GzipFile(fileobj=output, mode="wb") as gz:
+            gz.write(content.encode("utf-8"))
         return output.getvalue()
 
     @staticmethod
@@ -554,9 +556,7 @@ class XMLExporter:
 
     @staticmethod
     def get_filename(
-        base_name: str,
-        compress: bool = False,
-        timestamp: bool = True
+        base_name: str, compress: bool = False, timestamp: bool = True
     ) -> str:
         """
         Generate filename for XML export.

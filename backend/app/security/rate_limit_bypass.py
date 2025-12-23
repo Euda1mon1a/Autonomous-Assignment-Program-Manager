@@ -15,15 +15,14 @@ Features:
 - Automatic blocking: Temporarily blocks suspicious IPs and users
 - Alert system: Integrates with notification system for security alerts
 """
+
 import hashlib
 import logging
 import time
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Optional
-from uuid import UUID
 
 import redis
 from fastapi import Request
@@ -37,6 +36,7 @@ settings = get_settings()
 
 class BypassTechnique(str, Enum):
     """Types of bypass techniques detected."""
+
     IP_ROTATION = "ip_rotation"
     USER_AGENT_SPOOFING = "user_agent_spoofing"
     DISTRIBUTED_ATTACK = "distributed_attack"
@@ -48,6 +48,7 @@ class BypassTechnique(str, Enum):
 
 class ThreatLevel(str, Enum):
     """Threat severity levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -71,10 +72,11 @@ class BypassDetection:
         timestamp: When the attempt was detected
         should_block: Whether to block this request
     """
+
     technique: BypassTechnique
     threat_level: ThreatLevel
     ip_address: str
-    user_id: Optional[str]
+    user_id: str | None
     user_agent: str
     endpoint: str
     fingerprint: str
@@ -102,7 +104,7 @@ class RateLimitBypassDetector:
     BEHAVIORAL_ANOMALY_WINDOW = 300  # 5 minutes
     BLOCK_DURATION = 3600  # 1 hour block duration
 
-    def __init__(self, redis_client: Optional[redis.Redis] = None):
+    def __init__(self, redis_client: redis.Redis | None = None):
         """
         Initialize the bypass detector.
 
@@ -132,9 +134,9 @@ class RateLimitBypassDetector:
     def detect_bypass_attempt(
         self,
         request: Request,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None
-    ) -> Optional[BypassDetection]:
+        user_id: str | None = None,
+        session_id: str | None = None,
+    ) -> BypassDetection | None:
         """
         Analyze a request for bypass attempts using multiple detection techniques.
 
@@ -170,7 +172,7 @@ class RateLimitBypassDetector:
                 fingerprint=fingerprint,
                 evidence={"reason": "Previously blocked for bypass attempts"},
                 timestamp=datetime.utcnow(),
-                should_block=True
+                should_block=True,
             )
 
         # Run detection techniques in order of severity
@@ -182,9 +184,7 @@ class RateLimitBypassDetector:
             detections.append(ip_rotation)
 
         # 2. User agent spoofing detection
-        ua_spoofing = self._detect_user_agent_spoofing(
-            ip_address, user_id, user_agent
-        )
+        ua_spoofing = self._detect_user_agent_spoofing(ip_address, user_id, user_agent)
         if ua_spoofing:
             detections.append(ua_spoofing)
 
@@ -214,22 +214,18 @@ class RateLimitBypassDetector:
                 ThreatLevel.CRITICAL: 4,
                 ThreatLevel.HIGH: 3,
                 ThreatLevel.MEDIUM: 2,
-                ThreatLevel.LOW: 1
+                ThreatLevel.LOW: 1,
             }
             detections.sort(
-                key=lambda d: threat_order.get(d.threat_level, 0),
-                reverse=True
+                key=lambda d: threat_order.get(d.threat_level, 0), reverse=True
             )
             return detections[0]
 
         return None
 
     def _detect_ip_rotation(
-        self,
-        ip_address: str,
-        user_id: Optional[str],
-        session_id: Optional[str]
-    ) -> Optional[BypassDetection]:
+        self, ip_address: str, user_id: str | None, session_id: str | None
+    ) -> BypassDetection | None:
         """
         Detect IP rotation by tracking IP changes per user/session.
 
@@ -277,10 +273,10 @@ class RateLimitBypassDetector:
                     evidence={
                         "unique_ips": unique_ips,
                         "ip_list": list(ip_list),
-                        "window_seconds": self.IP_ROTATION_WINDOW
+                        "window_seconds": self.IP_ROTATION_WINDOW,
                     },
                     timestamp=datetime.utcnow(),
-                    should_block=True
+                    should_block=True,
                 )
 
         except Exception as e:
@@ -289,11 +285,8 @@ class RateLimitBypassDetector:
         return None
 
     def _detect_user_agent_spoofing(
-        self,
-        ip_address: str,
-        user_id: Optional[str],
-        user_agent: str
-    ) -> Optional[BypassDetection]:
+        self, ip_address: str, user_id: str | None, user_agent: str
+    ) -> BypassDetection | None:
         """
         Detect user agent spoofing by tracking UA changes.
 
@@ -341,10 +334,10 @@ class RateLimitBypassDetector:
                     fingerprint="",
                     evidence={
                         "unique_user_agents": unique_uas,
-                        "window_seconds": self.UA_CHANGE_WINDOW
+                        "window_seconds": self.UA_CHANGE_WINDOW,
                     },
                     timestamp=datetime.utcnow(),
-                    should_block=True
+                    should_block=True,
                 )
 
         except Exception as e:
@@ -353,10 +346,8 @@ class RateLimitBypassDetector:
         return None
 
     def _detect_distributed_attack(
-        self,
-        ip_address: str,
-        endpoint: str
-    ) -> Optional[BypassDetection]:
+        self, ip_address: str, endpoint: str
+    ) -> BypassDetection | None:
         """
         Detect distributed attacks by tracking multiple IPs targeting same endpoint.
 
@@ -399,10 +390,10 @@ class RateLimitBypassDetector:
                     evidence={
                         "unique_ips": unique_ips,
                         "attacking_ips": list(ip_list)[:20],  # Limit for logging
-                        "window_seconds": self.DISTRIBUTED_ATTACK_WINDOW
+                        "window_seconds": self.DISTRIBUTED_ATTACK_WINDOW,
                     },
                     timestamp=datetime.utcnow(),
-                    should_block=True
+                    should_block=True,
                 )
 
         except Exception as e:
@@ -411,12 +402,8 @@ class RateLimitBypassDetector:
         return None
 
     def _detect_behavioral_anomaly(
-        self,
-        request: Request,
-        ip_address: str,
-        user_id: Optional[str],
-        fingerprint: str
-    ) -> Optional[BypassDetection]:
+        self, request: Request, ip_address: str, user_id: str | None, fingerprint: str
+    ) -> BypassDetection | None:
         """
         Detect behavioral anomalies using multiple signals.
 
@@ -470,7 +457,9 @@ class RateLimitBypassDetector:
 
             # Store behavior count
             if suspicious_count > 0:
-                self.redis.zadd(key, {f"{current_time}:{suspicious_count}": current_time})
+                self.redis.zadd(
+                    key, {f"{current_time}:{suspicious_count}": current_time}
+                )
                 self.redis.expire(key, self.BEHAVIORAL_ANOMALY_WINDOW)
 
                 # Remove old entries
@@ -499,10 +488,10 @@ class RateLimitBypassDetector:
                         evidence={
                             "suspicious_behaviors": behaviors,
                             "total_count": total_suspicious,
-                            "window_seconds": self.BEHAVIORAL_ANOMALY_WINDOW
+                            "window_seconds": self.BEHAVIORAL_ANOMALY_WINDOW,
                         },
                         timestamp=datetime.utcnow(),
-                        should_block=True
+                        should_block=True,
                     )
 
         except Exception as e:
@@ -511,11 +500,8 @@ class RateLimitBypassDetector:
         return None
 
     def _detect_fingerprint_mismatch(
-        self,
-        ip_address: str,
-        user_id: Optional[str],
-        fingerprint: str
-    ) -> Optional[BypassDetection]:
+        self, ip_address: str, user_id: str | None, fingerprint: str
+    ) -> BypassDetection | None:
         """
         Detect fingerprint mismatches indicating session hijacking or spoofing.
 
@@ -549,10 +535,10 @@ class RateLimitBypassDetector:
                     fingerprint=fingerprint,
                     evidence={
                         "expected_fingerprint": stored_fingerprint,
-                        "actual_fingerprint": fingerprint
+                        "actual_fingerprint": fingerprint,
                     },
                     timestamp=datetime.utcnow(),
-                    should_block=True
+                    should_block=True,
                 )
             else:
                 # Store fingerprint for future comparison (24 hour expiry)
@@ -611,7 +597,7 @@ class RateLimitBypassDetector:
 
         return "unknown"
 
-    def _is_blocked(self, ip_address: str, user_id: Optional[str]) -> bool:
+    def _is_blocked(self, ip_address: str, user_id: str | None) -> bool:
         """
         Check if an IP or user is currently blocked.
 
@@ -642,7 +628,7 @@ class RateLimitBypassDetector:
 
         return False
 
-    def block_ip(self, ip_address: str, duration: Optional[int] = None) -> bool:
+    def block_ip(self, ip_address: str, duration: int | None = None) -> bool:
         """
         Block an IP address for a specified duration.
 
@@ -666,7 +652,7 @@ class RateLimitBypassDetector:
             logger.error(f"Failed to block IP {ip_address}: {e}")
             return False
 
-    def block_user(self, user_id: str, duration: Optional[int] = None) -> bool:
+    def block_user(self, user_id: str, duration: int | None = None) -> bool:
         """
         Block a user for a specified duration.
 
@@ -735,9 +721,7 @@ class RateLimitBypassDetector:
             return False
 
     async def log_and_alert(
-        self,
-        detection: BypassDetection,
-        db: Optional[Session] = None
+        self, detection: BypassDetection, db: Session | None = None
     ) -> None:
         """
         Log bypass attempt and send alerts.
@@ -773,9 +757,6 @@ class RateLimitBypassDetector:
         # Send alert notification for high/critical threats
         if detection.threat_level in (ThreatLevel.HIGH, ThreatLevel.CRITICAL) and db:
             try:
-                from app.notifications.service import NotificationService
-                from app.notifications.templates import NotificationType
-
                 # Get admin users to notify (would need to query from DB)
                 # For now, just log - in production, would send to admins
                 logger.critical(
@@ -788,7 +769,7 @@ class RateLimitBypassDetector:
 
 
 # Global bypass detector instance
-_bypass_detector: Optional[RateLimitBypassDetector] = None
+_bypass_detector: RateLimitBypassDetector | None = None
 
 
 def get_bypass_detector() -> RateLimitBypassDetector:
@@ -806,11 +787,11 @@ def get_bypass_detector() -> RateLimitBypassDetector:
 
 async def check_for_bypass(
     request: Request,
-    user_id: Optional[str] = None,
-    session_id: Optional[str] = None,
+    user_id: str | None = None,
+    session_id: str | None = None,
     auto_block: bool = True,
-    db: Optional[Session] = None
-) -> Optional[BypassDetection]:
+    db: Session | None = None,
+) -> BypassDetection | None:
     """
     Check a request for rate limit bypass attempts.
 

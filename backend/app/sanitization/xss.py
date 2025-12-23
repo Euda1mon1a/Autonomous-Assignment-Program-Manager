@@ -8,52 +8,53 @@ This module provides comprehensive XSS protection through:
 - Input sanitization with configurable strictness
 - Path traversal prevention
 """
+
 import re
 import unicodedata
-from typing import Optional
-from urllib.parse import urlparse, quote, unquote
+from urllib.parse import unquote, urlparse
 
 
 class XSSDetectionError(Exception):
     """Exception raised when XSS patterns are detected."""
+
     pass
 
 
 # XSS attack patterns to detect
 XSS_PATTERNS = [
     # Script tags
-    r'<\s*script[^>]*>',
-    r'<\s*/\s*script\s*>',
+    r"<\s*script[^>]*>",
+    r"<\s*/\s*script\s*>",
     # Event handlers
-    r'\bon\w+\s*=',
-    r'on(load|error|click|mouse\w+|key\w+|focus|blur|change|submit)\s*=',
+    r"\bon\w+\s*=",
+    r"on(load|error|click|mouse\w+|key\w+|focus|blur|change|submit)\s*=",
     # JavaScript protocol
-    r'javascript\s*:',
-    r'vbscript\s*:',
+    r"javascript\s*:",
+    r"vbscript\s*:",
     # Data URIs (can contain JavaScript)
-    r'data\s*:.*base64',
-    r'data\s*:.*text/html',
+    r"data\s*:.*base64",
+    r"data\s*:.*text/html",
     # Common XSS payloads
-    r'alert\s*\(',
-    r'prompt\s*\(',
-    r'confirm\s*\(',
-    r'eval\s*\(',
-    r'expression\s*\(',
+    r"alert\s*\(",
+    r"prompt\s*\(",
+    r"confirm\s*\(",
+    r"eval\s*\(",
+    r"expression\s*\(",
     # Document/window manipulation
-    r'document\s*\.\s*(write|cookie|location)',
-    r'window\s*\.\s*(location|open)',
+    r"document\s*\.\s*(write|cookie|location)",
+    r"window\s*\.\s*(location|open)",
     # Style-based XSS
-    r'<\s*style[^>]*>',
-    r'@import',
-    r'behavior\s*:',
+    r"<\s*style[^>]*>",
+    r"@import",
+    r"behavior\s*:",
     # Meta refresh
-    r'<\s*meta[^>]*http-equiv[^>]*refresh',
+    r"<\s*meta[^>]*http-equiv[^>]*refresh",
     # Object/embed tags
-    r'<\s*(object|embed|applet|iframe)[^>]*>',
+    r"<\s*(object|embed|applet|iframe)[^>]*>",
     # Form manipulation
-    r'<\s*form[^>]*action',
+    r"<\s*form[^>]*action",
     # Encoded variations
-    r'&#x?[0-9a-f]+;',  # HTML entities (can encode scripts)
+    r"&#x?[0-9a-f]+;",  # HTML entities (can encode scripts)
 ]
 
 # Dangerous Unicode characters that might be used for obfuscation
@@ -67,12 +68,12 @@ DANGEROUS_UNICODE_RANGES = [
 
 # Path traversal patterns
 PATH_TRAVERSAL_PATTERNS = [
-    r'\.\.',
-    r'\.\./',
-    r'\.\.',
-    r'%2e%2e',
-    r'%252e%252e',
-    r'\.\.\\',
+    r"\.\.",
+    r"\.\./",
+    r"\.\.",
+    r"%2e%2e",
+    r"%252e%252e",
+    r"\.\.\\",
 ]
 
 
@@ -111,16 +112,16 @@ def detect_xss(input_string: str, strict: bool = True) -> bool:
     # In strict mode, check for suspicious character combinations
     if strict:
         # Check for HTML-like structures
-        if '<' in input_string and '>' in input_string:
+        if "<" in input_string and ">" in input_string:
             # Count tags
-            tag_count = len(re.findall(r'<[^>]+>', input_string))
+            tag_count = len(re.findall(r"<[^>]+>", input_string))
             if tag_count > 0:
                 # Has HTML-like content, check if it looks malicious
-                if re.search(r'<\w+[^>]*\w+\s*=', input_string):
+                if re.search(r"<\w+[^>]*\w+\s*=", input_string):
                     return True
 
         # Check for encoded scripts
-        if '%3C' in input_string or '%3E' in input_string:
+        if "%3C" in input_string or "%3E" in input_string:
             # URL-encoded < and >
             decoded = unquote(input_string)
             if detect_xss(decoded, strict=False):
@@ -131,9 +132,9 @@ def detect_xss(input_string: str, strict: bool = True) -> bool:
 
 def sanitize_input(
     input_string: str,
-    max_length: Optional[int] = None,
+    max_length: int | None = None,
     allow_html: bool = False,
-    normalize: bool = True
+    normalize: bool = True,
 ) -> str:
     """
     Sanitize general user input to prevent XSS attacks.
@@ -165,9 +166,7 @@ def sanitize_input(
 
     # Check for XSS patterns first
     if detect_xss(input_string, strict=True):
-        raise XSSDetectionError(
-            "Input contains patterns that may indicate XSS attempt"
-        )
+        raise XSSDetectionError("Input contains patterns that may indicate XSS attempt")
 
     # Normalize Unicode if requested
     if normalize:
@@ -178,28 +177,31 @@ def sanitize_input(
         input_string = input_string[:max_length]
 
     # Remove null bytes
-    input_string = input_string.replace('\x00', '')
+    input_string = input_string.replace("\x00", "")
 
     # Handle HTML
     if not allow_html:
         # Import here to avoid circular dependency
         from app.sanitization.html import strip_all_tags
+
         input_string = strip_all_tags(input_string)
     else:
         # Import here to avoid circular dependency
         from app.sanitization.html import sanitize_html
+
         input_string = sanitize_html(input_string)
 
     # Remove control characters except newlines and tabs
-    input_string = ''.join(
-        char for char in input_string
-        if char in '\n\r\t' or not unicodedata.category(char).startswith('C')
+    input_string = "".join(
+        char
+        for char in input_string
+        if char in "\n\r\t" or not unicodedata.category(char).startswith("C")
     )
 
     return input_string.strip()
 
 
-def normalize_unicode(text: str, form: str = 'NFKC') -> str:
+def normalize_unicode(text: str, form: str = "NFKC") -> str:
     """
     Normalize Unicode text to prevent Unicode-based attacks.
 
@@ -227,12 +229,11 @@ def normalize_unicode(text: str, form: str = 'NFKC') -> str:
     normalized = unicodedata.normalize(form, text)
 
     # Remove dangerous Unicode characters
-    cleaned = ''
+    cleaned = ""
     for char in normalized:
         code_point = ord(char)
         is_dangerous = any(
-            start <= code_point <= end
-            for start, end in DANGEROUS_UNICODE_RANGES
+            start <= code_point <= end for start, end in DANGEROUS_UNICODE_RANGES
         )
         if not is_dangerous:
             cleaned += char
@@ -240,7 +241,7 @@ def normalize_unicode(text: str, form: str = 'NFKC') -> str:
     return cleaned
 
 
-def sanitize_url(url: str, allowed_schemes: Optional[set[str]] = None) -> str:
+def sanitize_url(url: str, allowed_schemes: set[str] | None = None) -> str:
     """
     Sanitize URL to prevent XSS through malicious URLs.
 
@@ -267,7 +268,7 @@ def sanitize_url(url: str, allowed_schemes: Optional[set[str]] = None) -> str:
 
     # Default allowed schemes
     if allowed_schemes is None:
-        allowed_schemes = {'http', 'https', 'mailto', 'ftp'}
+        allowed_schemes = {"http", "https", "mailto", "ftp"}
 
     url = url.strip()
 
@@ -290,7 +291,7 @@ def sanitize_url(url: str, allowed_schemes: Optional[set[str]] = None) -> str:
             )
 
     # Check for dangerous patterns in URL components
-    dangerous_patterns = ['javascript:', 'data:', 'vbscript:', 'file:']
+    dangerous_patterns = ["javascript:", "data:", "vbscript:", "file:"]
     url_lower = url.lower()
     for pattern in dangerous_patterns:
         if pattern in url_lower:
@@ -300,7 +301,7 @@ def sanitize_url(url: str, allowed_schemes: Optional[set[str]] = None) -> str:
 
 
 def prevent_path_traversal(path: str) -> str:
-    """
+    r"""
     Prevent path traversal attacks in file paths.
 
     Removes ../, ..\, and other path traversal patterns.
@@ -328,27 +329,25 @@ def prevent_path_traversal(path: str) -> str:
     # Check for path traversal patterns
     for pattern in PATH_TRAVERSAL_PATTERNS:
         if re.search(pattern, path_lower, re.IGNORECASE):
-            raise XSSDetectionError(
-                "Path contains traversal patterns"
-            )
+            raise XSSDetectionError("Path contains traversal patterns")
 
     # Remove leading slashes (absolute paths)
-    while path.startswith(('/', '\\')):
+    while path.startswith(("/", "\\")):
         path = path[1:]
 
     # Normalize path separators to forward slashes
-    path = path.replace('\\', '/')
+    path = path.replace("\\", "/")
 
     # Split path and remove any '..' components
-    parts = path.split('/')
+    parts = path.split("/")
     safe_parts = []
     for part in parts:
-        if part and part != '..' and part != '.':
+        if part and part != ".." and part != ".":
             # Remove dangerous characters from filename
-            part = re.sub(r'[^\w\-_.]', '_', part)
+            part = re.sub(r"[^\w\-_.]", "_", part)
             safe_parts.append(part)
 
-    return '/'.join(safe_parts)
+    return "/".join(safe_parts)
 
 
 def sanitize_email(email: str) -> str:
@@ -382,12 +381,12 @@ def sanitize_email(email: str) -> str:
         raise XSSDetectionError("Email contains XSS patterns")
 
     # Basic email pattern validation
-    email_pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+    email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
     if not email_pattern.match(email):
         raise XSSDetectionError("Invalid email format")
 
     # Additional safety checks
-    dangerous_chars = ['<', '>', '"', "'", '\\', '/', '(', ')', ';']
+    dangerous_chars = ["<", ">", '"', "'", "\\", "/", "(", ")", ";"]
     for char in dangerous_chars:
         if char in email:
             raise XSSDetectionError(f"Email contains dangerous character: {char}")
@@ -417,7 +416,7 @@ def sanitize_json_string(json_str: str) -> str:
         raise XSSDetectionError("JSON contains XSS patterns")
 
     # Escape special characters
-    json_str = json_str.replace('\\', '\\\\')
+    json_str = json_str.replace("\\", "\\\\")
     json_str = json_str.replace('"', '\\"')
 
     return json_str
@@ -445,17 +444,17 @@ def is_safe_filename(filename: str) -> bool:
         return False
 
     # Check for path traversal
-    if '..' in filename or '/' in filename or '\\' in filename:
+    if ".." in filename or "/" in filename or "\\" in filename:
         return False
 
     # Check for dangerous characters
-    dangerous_chars = ['<', '>', '"', "'", '|', '\x00', '\n', '\r']
+    dangerous_chars = ["<", ">", '"', "'", "|", "\x00", "\n", "\r"]
     for char in dangerous_chars:
         if char in filename:
             return False
 
     # Check for hidden files
-    if filename.startswith('.'):
+    if filename.startswith("."):
         return False
 
     # Check length
@@ -483,12 +482,12 @@ def encode_for_html_attribute(value: str) -> str:
         return ""
 
     # Encode special HTML characters
-    value = value.replace('&', '&amp;')
-    value = value.replace('<', '&lt;')
-    value = value.replace('>', '&gt;')
-    value = value.replace('"', '&quot;')
-    value = value.replace("'", '&#x27;')
-    value = value.replace('/', '&#x2F;')
+    value = value.replace("&", "&amp;")
+    value = value.replace("<", "&lt;")
+    value = value.replace(">", "&gt;")
+    value = value.replace('"', "&quot;")
+    value = value.replace("'", "&#x27;")
+    value = value.replace("/", "&#x2F;")
 
     return value
 
@@ -511,13 +510,15 @@ def strip_javascript(text: str) -> str:
         return ""
 
     # Remove script tags and content
-    text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(
+        r"<script[^>]*>.*?</script>", "", text, flags=re.IGNORECASE | re.DOTALL
+    )
 
     # Remove event handlers
-    text = re.sub(r'\son\w+\s*=\s*["\'][^"\']*["\']', '', text, flags=re.IGNORECASE)
-    text = re.sub(r'\son\w+\s*=\s*\S+', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'\son\w+\s*=\s*["\'][^"\']*["\']', "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\son\w+\s*=\s*\S+", "", text, flags=re.IGNORECASE)
 
     # Remove javascript: protocol
-    text = re.sub(r'javascript\s*:', '', text, flags=re.IGNORECASE)
+    text = re.sub(r"javascript\s*:", "", text, flags=re.IGNORECASE)
 
     return text.strip()

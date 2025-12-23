@@ -1,7 +1,9 @@
 """FastAPI decorators and dependencies for permission checking."""
+
 import logging
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
 from fastapi import Depends, HTTPException, status
 
@@ -27,7 +29,7 @@ async def check_permission_dependency(
     resource: ResourceType | str,
     action: PermissionAction | str,
     resource_id: str | None = None,
-    use_cache: bool = True
+    use_cache: bool = True,
 ) -> Callable:
     """
     Create a FastAPI dependency that checks permissions.
@@ -50,8 +52,9 @@ async def check_permission_dependency(
     Returns:
         Dependency function
     """
+
     async def permission_checker(
-        current_user: User = Depends(get_current_active_user)
+        current_user: User = Depends(get_current_active_user),
     ) -> User:
         """Check if current user has required permission."""
         resolver = await get_permission_resolver()
@@ -80,7 +83,7 @@ def require_permission(
     resource: ResourceType | str,
     action: PermissionAction | str,
     resource_id_param: str | None = None,
-    use_cache: bool = True
+    use_cache: bool = True,
 ):
     """
     Decorator for route handlers to require specific permissions.
@@ -117,6 +120,7 @@ def require_permission(
     Returns:
         Decorator function
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
@@ -154,12 +158,13 @@ def require_permission(
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
 def require_any_permission(
     *permissions: tuple[ResourceType | str, PermissionAction | str],
-    use_cache: bool = True
+    use_cache: bool = True,
 ):
     """
     Decorator to require any of the specified permissions.
@@ -180,6 +185,7 @@ def require_any_permission(
     Returns:
         Decorator function
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
@@ -213,12 +219,13 @@ def require_any_permission(
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
 def require_all_permissions(
     *permissions: tuple[ResourceType | str, PermissionAction | str],
-    use_cache: bool = True
+    use_cache: bool = True,
 ):
     """
     Decorator to require all of the specified permissions.
@@ -241,6 +248,7 @@ def require_all_permissions(
     Returns:
         Decorator function
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
@@ -274,13 +282,11 @@ def require_all_permissions(
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
-def require_role(
-    *roles: str,
-    allow_admin: bool = True
-):
+def require_role(*roles: str, allow_admin: bool = True):
     """
     Decorator to require specific roles.
 
@@ -304,6 +310,7 @@ def require_role(
     Returns:
         Decorator function
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
@@ -333,6 +340,7 @@ def require_role(
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
@@ -354,21 +362,31 @@ RequireAssignmentRead = Depends(
     lambda: check_permission_dependency(ResourceType.ASSIGNMENT, PermissionAction.READ)
 )
 RequireAssignmentCreate = Depends(
-    lambda: check_permission_dependency(ResourceType.ASSIGNMENT, PermissionAction.CREATE)
+    lambda: check_permission_dependency(
+        ResourceType.ASSIGNMENT, PermissionAction.CREATE
+    )
 )
 
 RequireUserManagement = Depends(
-    lambda: check_permission_dependency(ResourceType.USER, PermissionAction.MANAGE_USERS)
+    lambda: check_permission_dependency(
+        ResourceType.USER, PermissionAction.MANAGE_USERS
+    )
 )
 
 RequireAnalytics = Depends(
-    lambda: check_permission_dependency(ResourceType.ANALYTICS, PermissionAction.VIEW_ANALYTICS)
+    lambda: check_permission_dependency(
+        ResourceType.ANALYTICS, PermissionAction.VIEW_ANALYTICS
+    )
 )
 
 RequireResilienceView = Depends(
-    lambda: check_permission_dependency(ResourceType.RESILIENCE, PermissionAction.VIEW_RESILIENCE)
+    lambda: check_permission_dependency(
+        ResourceType.RESILIENCE, PermissionAction.VIEW_RESILIENCE
+    )
 )
 
 RequireResilienceManage = Depends(
-    lambda: check_permission_dependency(ResourceType.RESILIENCE, PermissionAction.MANAGE_RESILIENCE)
+    lambda: check_permission_dependency(
+        ResourceType.RESILIENCE, PermissionAction.MANAGE_RESILIENCE
+    )
 )

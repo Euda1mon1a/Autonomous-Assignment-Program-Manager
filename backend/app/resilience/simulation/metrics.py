@@ -6,23 +6,24 @@ summarizing metrics during simulation runs. It supports time series data,
 counters, gauges, and events with statistical analysis capabilities.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
-from uuid import UUID
 import statistics
+from dataclasses import dataclass
+from uuid import UUID
 
 
 @dataclass
 class TimeSeriesPoint:
     """A single data point in a time series."""
+
     time: float
     value: float
-    label: Optional[str] = None
+    label: str | None = None
 
 
 @dataclass
 class MetricsSummary:
     """Statistical summary of a metric."""
+
     name: str
     count: int
     mean: float
@@ -49,17 +50,13 @@ class MetricsCollector:
 
     def __init__(self):
         """Initialize empty metrics storage."""
-        self._time_series: Dict[str, List[TimeSeriesPoint]] = {}
-        self._counters: Dict[str, int] = {}
-        self._events: List[dict] = []
-        self._gauges: Dict[str, float] = {}
+        self._time_series: dict[str, list[TimeSeriesPoint]] = {}
+        self._counters: dict[str, int] = {}
+        self._events: list[dict] = []
+        self._gauges: dict[str, float] = {}
 
     def record_value(
-        self,
-        metric: str,
-        time: float,
-        value: float,
-        label: Optional[str] = None
+        self, metric: str, time: float, value: float, label: str | None = None
     ) -> None:
         """
         Record a time series value.
@@ -119,11 +116,7 @@ class MetricsCollector:
             time: Timestamp
             data: Event metadata
         """
-        event = {
-            "type": event_type,
-            "time": time,
-            **data
-        }
+        event = {"type": event_type, "time": time, **data}
         self._events.append(event)
 
     def get_counter(self, name: str) -> int:
@@ -138,7 +131,7 @@ class MetricsCollector:
         """
         return self._counters.get(name, 0)
 
-    def get_gauge(self, name: str) -> Optional[float]:
+    def get_gauge(self, name: str) -> float | None:
         """
         Get current gauge value.
 
@@ -150,7 +143,7 @@ class MetricsCollector:
         """
         return self._gauges.get(name)
 
-    def get_time_series(self, metric: str) -> List[TimeSeriesPoint]:
+    def get_time_series(self, metric: str) -> list[TimeSeriesPoint]:
         """
         Get all time series points for a metric.
 
@@ -162,7 +155,7 @@ class MetricsCollector:
         """
         return self._time_series.get(metric, [])
 
-    def get_summary(self, metric: str) -> Optional[MetricsSummary]:
+    def get_summary(self, metric: str) -> MetricsSummary | None:
         """
         Calculate statistical summary for a metric.
 
@@ -196,7 +189,7 @@ class MetricsCollector:
                 p50=val,
                 p75=val,
                 p95=val,
-                p99=val
+                p99=val,
             )
 
         # Calculate statistics
@@ -234,10 +227,10 @@ class MetricsCollector:
             p50=p50,
             p75=p75,
             p95=p95,
-            p99=p99
+            p99=p99,
         )
 
-    def get_all_summaries(self) -> Dict[str, MetricsSummary]:
+    def get_all_summaries(self) -> dict[str, MetricsSummary]:
         """
         Get statistical summaries for all metrics.
 
@@ -251,7 +244,7 @@ class MetricsCollector:
                 summaries[metric] = summary
         return summaries
 
-    def get_events(self, event_type: Optional[str] = None) -> List[dict]:
+    def get_events(self, event_type: str | None = None) -> list[dict]:
         """
         Get events, optionally filtered by type.
 
@@ -276,18 +269,13 @@ class MetricsCollector:
         return {
             "time_series": {
                 name: [
-                    {
-                        "time": p.time,
-                        "value": p.value,
-                        "label": p.label
-                    }
-                    for p in points
+                    {"time": p.time, "value": p.value, "label": p.label} for p in points
                 ]
                 for name, points in self._time_series.items()
             },
             "counters": self._counters.copy(),
             "gauges": self._gauges.copy(),
-            "events": self._events.copy()
+            "events": self._events.copy(),
         }
 
     def reset(self) -> None:
@@ -335,12 +323,7 @@ class SimulationMetrics:
         """
         self.collector.record_value("coverage_rate", time, rate)
 
-    def record_zone_status(
-        self,
-        time: float,
-        zone_id: UUID,
-        status: str
-    ) -> None:
+    def record_zone_status(self, time: float, zone_id: UUID, status: str) -> None:
         """
         Record zone status change.
 
@@ -350,12 +333,7 @@ class SimulationMetrics:
             status: New status
         """
         self.collector.record_event(
-            "zone_status_change",
-            time,
-            {
-                "zone_id": str(zone_id),
-                "status": status
-            }
+            "zone_status_change", time, {"zone_id": str(zone_id), "status": status}
         )
 
     def record_cascade_event(self, time: float, zones_affected: int) -> None:
@@ -367,13 +345,7 @@ class SimulationMetrics:
             zones_affected: Number of zones affected
         """
         self.collector.increment("cascade_events")
-        self.collector.record_event(
-            "cascade",
-            time,
-            {
-                "zones_affected": zones_affected
-            }
-        )
+        self.collector.record_event("cascade", time, {"zones_affected": zones_affected})
 
     def record_borrowing_attempt(self, time: float, approved: bool) -> None:
         """
@@ -387,15 +359,9 @@ class SimulationMetrics:
         if approved:
             self.collector.increment("borrowing_approved")
 
-        self.collector.record_event(
-            "borrowing_attempt",
-            time,
-            {
-                "approved": approved
-            }
-        )
+        self.collector.record_event("borrowing_attempt", time, {"approved": approved})
 
-    def get_coverage_summary(self) -> Optional[MetricsSummary]:
+    def get_coverage_summary(self) -> MetricsSummary | None:
         """
         Get statistical summary of coverage rates.
 
@@ -404,7 +370,7 @@ class SimulationMetrics:
         """
         return self.collector.get_summary("coverage_rate")
 
-    def get_faculty_summary(self) -> Optional[MetricsSummary]:
+    def get_faculty_summary(self) -> MetricsSummary | None:
         """
         Get statistical summary of faculty counts.
 

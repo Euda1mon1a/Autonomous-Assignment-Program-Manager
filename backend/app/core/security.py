@@ -1,4 +1,5 @@
 """Security utilities for authentication and authorization."""
+
 import uuid
 from datetime import datetime, timedelta
 from uuid import UUID
@@ -44,8 +45,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(
-    data: dict,
-    expires_delta: timedelta | None = None
+    data: dict, expires_delta: timedelta | None = None
 ) -> tuple[str, str, datetime]:
     """
     Create a JWT access token with jti for blacklist support.
@@ -62,16 +62,20 @@ def create_access_token(
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.utcnow() + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
 
     # Generate unique token identifier for blacklist tracking
     jti = str(uuid.uuid4())
 
-    to_encode.update({
-        "exp": expire,
-        "jti": jti,
-        "iat": datetime.utcnow(),
-    })
+    to_encode.update(
+        {
+            "exp": expire,
+            "jti": jti,
+            "iat": datetime.utcnow(),
+        }
+    )
 
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
 
@@ -83,8 +87,7 @@ def create_access_token(
 
 
 def create_refresh_token(
-    data: dict,
-    expires_delta: timedelta | None = None
+    data: dict, expires_delta: timedelta | None = None
 ) -> tuple[str, str, datetime]:
     """
     Create a JWT refresh token with jti for blacklist support.
@@ -109,12 +112,14 @@ def create_refresh_token(
     # Generate unique token identifier for blacklist tracking
     jti = str(uuid.uuid4())
 
-    to_encode.update({
-        "exp": expire,
-        "jti": jti,
-        "iat": datetime.utcnow(),
-        "type": "refresh",  # Distinguish from access tokens
-    })
+    to_encode.update(
+        {
+            "exp": expire,
+            "jti": jti,
+            "iat": datetime.utcnow(),
+            "type": "refresh",  # Distinguish from access tokens
+        }
+    )
 
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
 
@@ -126,9 +131,7 @@ def create_refresh_token(
 
 
 def verify_refresh_token(
-    token: str,
-    db: Session,
-    blacklist_on_use: bool = False
+    token: str, db: Session, blacklist_on_use: bool = False
 ) -> tuple[TokenData | None, str | None, datetime | None]:
     """
     Verify and decode a JWT refresh token.
@@ -181,7 +184,7 @@ def verify_refresh_token(
                 jti=jti,
                 expires_at=expires_at,
                 user_id=UUID(user_id) if user_id else None,
-                reason="refresh_rotation"
+                reason="refresh_rotation",
             )
 
         return token_data, jti, expires_at
@@ -259,7 +262,7 @@ def blacklist_token(
     jti: str,
     expires_at: datetime,
     user_id: UUID | None = None,
-    reason: str = "logout"
+    reason: str = "logout",
 ) -> TokenBlacklist:
     """
     Add a token to the blacklist.
@@ -325,7 +328,7 @@ def authenticate_user(db: Session, username: str, password: str) -> User | None:
 async def get_current_user(
     request: Request,
     token: str | None = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> User | None:
     """
     Get the current authenticated user from JWT token.
@@ -365,7 +368,7 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-    current_user: User | None = Depends(get_current_user)
+    current_user: User | None = Depends(get_current_user),
 ) -> User:
     """
     Require an authenticated active user.
@@ -381,9 +384,7 @@ async def get_current_active_user(
     return current_user
 
 
-async def get_admin_user(
-    current_user: User = Depends(get_current_active_user)
-) -> User:
+async def get_admin_user(current_user: User = Depends(get_current_active_user)) -> User:
     """
     Require an admin user.
 
@@ -398,7 +399,7 @@ async def get_admin_user(
 
 
 async def get_scheduler_user(
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ) -> User:
     """
     Require a user who can manage schedules (admin or coordinator).

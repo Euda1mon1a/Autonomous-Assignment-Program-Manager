@@ -1,16 +1,15 @@
 """Tests for Phase 4 constraints: SM alignment and Post-call assignments."""
 
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
 
-from app.scheduling.constraints.sports_medicine import SMResidentFacultyAlignmentConstraint
-from app.scheduling.constraints.post_call import PostCallAutoAssignmentConstraint
-from app.scheduling.constraints.fmit import is_sun_thurs
 from app.scheduling.constraints.base import (
-    ConstraintResult,
-    ConstraintViolation,
     SchedulingContext,
+)
+from app.scheduling.constraints.fmit import is_sun_thurs
+from app.scheduling.constraints.post_call import PostCallAutoAssignmentConstraint
+from app.scheduling.constraints.sports_medicine import (
+    SMResidentFacultyAlignmentConstraint,
 )
 
 
@@ -63,8 +62,8 @@ class TestSMResidentFacultyAlignmentConstraint:
         context = SchedulingContext(
             residents=[],
             faculty=[
-                MockFaculty(faculty_role='sports_med'),
-                MockFaculty(faculty_role='core'),
+                MockFaculty(faculty_role="sports_med"),
+                MockFaculty(faculty_role="core"),
             ],
             blocks=[],
             templates=[],
@@ -72,7 +71,7 @@ class TestSMResidentFacultyAlignmentConstraint:
 
         sm_faculty = constraint._get_sm_faculty(context)
         assert len(sm_faculty) == 1
-        assert sm_faculty[0].faculty_role == 'sports_med'
+        assert sm_faculty[0].faculty_role == "sports_med"
 
     def test_sm_faculty_detection_by_flag(self):
         """Test that SM faculty is detected by is_sports_medicine flag."""
@@ -353,8 +352,8 @@ class TestPhase4Integration:
     def test_constraints_can_be_imported_from_package(self):
         """Test constraints are properly exported from package."""
         from app.scheduling.constraints import (
-            SMResidentFacultyAlignmentConstraint,
             PostCallAutoAssignmentConstraint,
+            SMResidentFacultyAlignmentConstraint,
         )
 
         assert SMResidentFacultyAlignmentConstraint is not None

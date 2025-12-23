@@ -8,23 +8,26 @@ Provides domain-specific assertions for:
 - ACGME compliance verification
 - Conflict detection
 """
+
 import re
-from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Pattern, Union
+from datetime import datetime
+from re import Pattern
+from typing import Any
 
 from app.testing.mock_server import MockResponse
 
 
 class AssertionError(Exception):
     """Custom assertion error with detailed messages."""
+
     pass
 
 
 def assert_api_response(
     response: MockResponse,
     status_code: int = 200,
-    body_contains: Dict[str, Any] = None,
-    headers_contain: Dict[str, str] = None,
+    body_contains: dict[str, Any] = None,
+    headers_contain: dict[str, str] = None,
 ) -> None:
     """
     Assert API response matches expectations.
@@ -127,9 +130,7 @@ def assert_json_match(
     if isinstance(expected, dict):
         for key, expected_value in expected.items():
             if key not in actual:
-                raise AssertionError(
-                    f"Missing key at {path}.{key}"
-                )
+                raise AssertionError(f"Missing key at {path}.{key}")
 
             assert_json_match(
                 actual=actual[key],
@@ -161,7 +162,7 @@ def assert_json_match(
 
 
 def assert_schedule_valid(
-    schedule: Dict[str, Any],
+    schedule: dict[str, Any],
     check_acgme: bool = True,
     check_conflicts: bool = True,
 ) -> None:
@@ -206,9 +207,7 @@ def assert_schedule_valid(
     for i, assignment in enumerate(assignments):
         for field in required_fields:
             if field not in assignment:
-                raise AssertionError(
-                    f"Assignment {i} missing required field: {field}"
-                )
+                raise AssertionError(f"Assignment {i} missing required field: {field}")
 
     # Check ACGME compliance if requested
     if check_acgme and "acgme_compliance" in schedule:
@@ -223,13 +222,11 @@ def assert_schedule_valid(
     if check_conflicts and "conflicts" in schedule:
         conflicts = schedule["conflicts"]
         if conflicts:
-            raise AssertionError(
-                f"Schedule has conflicts: {conflicts}"
-            )
+            raise AssertionError(f"Schedule has conflicts: {conflicts}")
 
 
 def assert_compliance_valid(
-    compliance_data: Dict[str, Any],
+    compliance_data: dict[str, Any],
     expect_compliant: bool = True,
 ) -> None:
     """
@@ -264,9 +261,7 @@ def assert_compliance_valid(
                 f"Expected compliant schedule, but found violations: {violations}"
             )
         else:
-            raise AssertionError(
-                "Expected non-compliant schedule, but it is compliant"
-            )
+            raise AssertionError("Expected non-compliant schedule, but it is compliant")
 
     # If expecting violations, check they're present
     if not expect_compliant:
@@ -286,13 +281,11 @@ def assert_compliance_valid(
         ]
         for field in required_summary_fields:
             if field not in summary:
-                raise AssertionError(
-                    f"Compliance summary missing field: {field}"
-                )
+                raise AssertionError(f"Compliance summary missing field: {field}")
 
 
 def assert_no_conflicts(
-    assignments: List[Dict[str, Any]],
+    assignments: list[dict[str, Any]],
     check_double_booking: bool = True,
     check_acgme: bool = False,
 ) -> None:
@@ -379,7 +372,7 @@ def assert_response_time(
 
 def assert_matches_pattern(
     value: str,
-    pattern: Union[str, Pattern],
+    pattern: str | Pattern,
     message: str = None,
 ) -> None:
     """
@@ -406,7 +399,9 @@ def assert_matches_pattern(
         pattern = re.compile(pattern)
 
     if not pattern.match(value):
-        error_msg = message or f"Value '{value}' doesn't match pattern {pattern.pattern}"
+        error_msg = (
+            message or f"Value '{value}' doesn't match pattern {pattern.pattern}"
+        )
         raise AssertionError(error_msg)
 
 
@@ -461,12 +456,14 @@ def assert_valid_date(
     try:
         datetime.strptime(value, date_format)
     except ValueError:
-        error_msg = message or f"Expected valid date (format: {date_format}), got '{value}'"
+        error_msg = (
+            message or f"Expected valid date (format: {date_format}), got '{value}'"
+        )
         raise AssertionError(error_msg)
 
 
 def assert_paginated_response(
-    response: Dict[str, Any],
+    response: dict[str, Any],
     expected_items: int = None,
     expected_total: int = None,
     item_key: str = "items",
@@ -496,24 +493,18 @@ def assert_paginated_response(
     required_fields = [item_key, "total", "page", "page_size"]
     for field in required_fields:
         if field not in response:
-            raise AssertionError(
-                f"Paginated response missing required field: {field}"
-            )
+            raise AssertionError(f"Paginated response missing required field: {field}")
 
     # Check items is a list
     items = response[item_key]
     if not isinstance(items, list):
-        raise AssertionError(
-            f"Expected {item_key} to be list, got {type(items)}"
-        )
+        raise AssertionError(f"Expected {item_key} to be list, got {type(items)}")
 
     # Check expected counts
     if expected_items is not None:
         actual_items = len(items)
         if actual_items != expected_items:
-            raise AssertionError(
-                f"Expected {expected_items} items, got {actual_items}"
-            )
+            raise AssertionError(f"Expected {expected_items} items, got {actual_items}")
 
     if expected_total is not None:
         actual_total = response["total"]

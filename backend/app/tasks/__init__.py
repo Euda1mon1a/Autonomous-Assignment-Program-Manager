@@ -62,14 +62,6 @@ Or manually update the includes:
 """
 
 # Import all tasks for easy access
-from app.tasks.schedule_metrics_tasks import (
-    cleanup_old_snapshots,
-    compute_schedule_metrics,
-    compute_version_diff,
-    generate_fairness_trend_report,
-    snapshot_metrics,
-)
-
 # Import configuration helpers
 from app.tasks.periodic_tasks import (
     SCHEDULE_METRICS_BEAT_SCHEDULE,
@@ -79,6 +71,13 @@ from app.tasks.periodic_tasks import (
     configure_celery_for_schedule_metrics,
     get_beat_schedule_for_environment,
     get_schedule_metrics_beat_schedule,
+)
+from app.tasks.schedule_metrics_tasks import (
+    cleanup_old_snapshots,
+    compute_schedule_metrics,
+    compute_version_diff,
+    generate_fairness_trend_report,
+    snapshot_metrics,
 )
 
 __all__ = [

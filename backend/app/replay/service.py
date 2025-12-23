@@ -16,13 +16,10 @@ import hashlib
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Callable, Optional
-from uuid import UUID, uuid4
+from typing import Any
+from uuid import uuid4
 
 import httpx
-from sqlalchemy import and_, desc, or_
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
@@ -146,6 +143,7 @@ class ReplayReport(BaseModel):
 # In-Memory Storage (for MVP - replace with DB models in production)
 # =============================================================================
 
+
 class ReplayStorage:
     """In-memory storage for captured requests and replay results."""
 
@@ -159,7 +157,7 @@ class ReplayStorage:
         self.requests[request.id] = request
         return request.id
 
-    async def get_request(self, request_id: str) -> Optional[CapturedRequest]:
+    async def get_request(self, request_id: str) -> CapturedRequest | None:
         """Retrieve a captured request by ID."""
         return self.requests.get(request_id)
 
@@ -178,10 +176,14 @@ class ReplayStorage:
             results = [r for r in results if r.response_status == filters.status_code]
 
         if filters.status_code_min:
-            results = [r for r in results if r.response_status >= filters.status_code_min]
+            results = [
+                r for r in results if r.response_status >= filters.status_code_min
+            ]
 
         if filters.status_code_max:
-            results = [r for r in results if r.response_status <= filters.status_code_max]
+            results = [
+                r for r in results if r.response_status <= filters.status_code_max
+            ]
 
         if filters.created_after:
             results = [r for r in results if r.timestamp >= filters.created_after]
@@ -205,7 +207,7 @@ class ReplayStorage:
         results.sort(key=lambda x: x.timestamp, reverse=True)
 
         # Apply limit
-        return results[:filters.limit]
+        return results[: filters.limit]
 
     async def store_result(self, request_id: str, result: ReplayResult) -> None:
         """Store a replay result."""
@@ -222,7 +224,7 @@ class ReplayStorage:
         self.schedules[schedule.id] = schedule
         return schedule.id
 
-    async def get_schedule(self, schedule_id: str) -> Optional[ReplaySchedule]:
+    async def get_schedule(self, schedule_id: str) -> ReplaySchedule | None:
         """Get a replay schedule by ID."""
         return self.schedules.get(schedule_id)
 
@@ -237,6 +239,7 @@ class ReplayStorage:
 # =============================================================================
 # ReplayService Class
 # =============================================================================
+
 
 class ReplayService:
     """
@@ -253,7 +256,7 @@ class ReplayService:
 
     def __init__(
         self,
-        storage: Optional[ReplayStorage] = None,
+        storage: ReplayStorage | None = None,
         base_url: str = "http://localhost:8000",
     ):
         """
@@ -279,16 +282,16 @@ class ReplayService:
         self,
         method: str,
         url: str,
-        headers: Optional[dict[str, str]] = None,
-        query_params: Optional[dict[str, str]] = None,
-        body: Optional[dict[str, Any]] = None,
+        headers: dict[str, str] | None = None,
+        query_params: dict[str, str] | None = None,
+        body: dict[str, Any] | None = None,
         response_status: int = 0,
-        response_headers: Optional[dict[str, str]] = None,
-        response_body: Optional[dict[str, Any]] = None,
+        response_headers: dict[str, str] | None = None,
+        response_body: dict[str, Any] | None = None,
         response_time_ms: float = 0.0,
-        user_id: Optional[str] = None,
-        tags: Optional[list[str]] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        user_id: str | None = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """
         Capture an HTTP request and its response.
@@ -339,7 +342,7 @@ class ReplayService:
 
         return request_id
 
-    async def get_captured_request(self, request_id: str) -> Optional[CapturedRequest]:
+    async def get_captured_request(self, request_id: str) -> CapturedRequest | None:
         """
         Retrieve a captured request by ID.
 
@@ -370,7 +373,7 @@ class ReplayService:
     async def replay_request(
         self,
         request_id: str,
-        modifications: Optional[dict[str, Any]] = None,
+        modifications: dict[str, Any] | None = None,
         delay_ms: int = 0,
         timeout_seconds: int = 30,
         compare: bool = True,
@@ -492,9 +495,7 @@ class ReplayService:
 
         # Update body (deep merge)
         if "body" in modifications and modified.body:
-            modified.body = self._deep_merge(
-                modified.body, modifications["body"]
-            )
+            modified.body = self._deep_merge(modified.body, modifications["body"])
 
         # Update URL
         if "url" in modifications:
@@ -510,7 +511,11 @@ class ReplayService:
         """Deep merge two dictionaries."""
         result = base.copy()
         for key, value in updates.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
                 result[key] = self._deep_merge(result[key], value)
             else:
                 result[key] = value
@@ -552,11 +557,13 @@ class ReplayService:
 
         # Detailed differences
         if not comparison.status_match:
-            comparison.differences.append({
-                "field": "status_code",
-                "original": original.response_status,
-                "replay": replay.status_code,
-            })
+            comparison.differences.append(
+                {
+                    "field": "status_code",
+                    "original": original.response_status,
+                    "replay": replay.status_code,
+                }
+            )
 
         if not comparison.body_match:
             body_diffs = self._find_json_differences(
@@ -588,20 +595,24 @@ class ReplayService:
         replay_keys = set(replay.keys())
 
         for key in original_keys - replay_keys:
-            differences.append({
-                "field": f"{path}.{key}" if path else key,
-                "original": original[key],
-                "replay": None,
-                "type": "missing_in_replay",
-            })
+            differences.append(
+                {
+                    "field": f"{path}.{key}" if path else key,
+                    "original": original[key],
+                    "replay": None,
+                    "type": "missing_in_replay",
+                }
+            )
 
         for key in replay_keys - original_keys:
-            differences.append({
-                "field": f"{path}.{key}" if path else key,
-                "original": None,
-                "replay": replay[key],
-                "type": "extra_in_replay",
-            })
+            differences.append(
+                {
+                    "field": f"{path}.{key}" if path else key,
+                    "original": None,
+                    "replay": replay[key],
+                    "type": "extra_in_replay",
+                }
+            )
 
         # Check for value differences
         for key in original_keys & replay_keys:
@@ -615,12 +626,14 @@ class ReplayService:
                     self._find_json_differences(orig_val, replay_val, field_path)
                 )
             elif orig_val != replay_val:
-                differences.append({
-                    "field": field_path,
-                    "original": orig_val,
-                    "replay": replay_val,
-                    "type": "value_mismatch",
-                })
+                differences.append(
+                    {
+                        "field": field_path,
+                        "original": orig_val,
+                        "replay": replay_val,
+                        "type": "value_mismatch",
+                    }
+                )
 
         return differences
 
@@ -631,7 +644,7 @@ class ReplayService:
     async def bulk_replay(
         self,
         filters: ReplayFilter,
-        modifications: Optional[dict[str, Any]] = None,
+        modifications: dict[str, Any] | None = None,
         delay_between_ms: int = 0,
         max_concurrent: int = 5,
         timeout_seconds: int = 30,
@@ -686,7 +699,8 @@ class ReplayService:
                     # Update status distribution
                     if result.status_code > 0:
                         report.status_code_distribution[result.status_code] = (
-                            report.status_code_distribution.get(result.status_code, 0) + 1
+                            report.status_code_distribution.get(result.status_code, 0)
+                            + 1
                         )
 
                     return result
@@ -704,7 +718,8 @@ class ReplayService:
 
         # Calculate average response time
         valid_times = [
-            r.response_time_ms for r in results
+            r.response_time_ms
+            for r in results
             if isinstance(r, ReplayResult) and r.response_time_ms > 0
         ]
         if valid_times:
@@ -752,7 +767,7 @@ class ReplayService:
 
         return schedule_id
 
-    async def get_schedule(self, schedule_id: str) -> Optional[ReplaySchedule]:
+    async def get_schedule(self, schedule_id: str) -> ReplaySchedule | None:
         """
         Get a replay schedule by ID.
 
@@ -782,8 +797,8 @@ class ReplayService:
 
     async def generate_report(
         self,
-        request_ids: Optional[list[str]] = None,
-        filters: Optional[ReplayFilter] = None,
+        request_ids: list[str] | None = None,
+        filters: ReplayFilter | None = None,
     ) -> ReplayReport:
         """
         Generate a report for replay results.
@@ -835,7 +850,9 @@ class ReplayService:
                 report.comparisons.append(ReplayComparison(**result.comparison))
 
         # Calculate average response time
-        valid_times = [r.response_time_ms for r in all_results if r.response_time_ms > 0]
+        valid_times = [
+            r.response_time_ms for r in all_results if r.response_time_ms > 0
+        ]
         if valid_times:
             report.avg_response_time_ms = sum(valid_times) / len(valid_times)
 

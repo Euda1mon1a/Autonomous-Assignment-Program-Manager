@@ -3,13 +3,13 @@
 Comprehensive test suite covering CRUD operations, filters, validation,
 calendar view, webhook integration, and bulk import for leave endpoints.
 """
+
 import hashlib
 import hmac
 import json
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -53,7 +53,9 @@ class TestListLeaveEndpoint:
         assert "is_blocking" in leave
         assert "description" in leave
 
-    def test_list_leave_filter_by_faculty_id(self, client: TestClient, db: Session, sample_faculty: Person):
+    def test_list_leave_filter_by_faculty_id(
+        self, client: TestClient, db: Session, sample_faculty: Person
+    ):
         """Test filtering leave by faculty_id."""
         # Create absences for different faculty
         other_faculty = Person(
@@ -85,8 +87,7 @@ class TestListLeaveEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/v1/leave/",
-            params={"faculty_id": str(sample_faculty.id)}
+            "/api/v1/leave/", params={"faculty_id": str(sample_faculty.id)}
         )
 
         assert response.status_code == 200
@@ -96,7 +97,9 @@ class TestListLeaveEndpoint:
         for leave in data["items"]:
             assert leave["faculty_id"] == str(sample_faculty.id)
 
-    def test_list_leave_filter_by_start_date(self, client: TestClient, db: Session, sample_faculty: Person):
+    def test_list_leave_filter_by_start_date(
+        self, client: TestClient, db: Session, sample_faculty: Person
+    ):
         """Test filtering leave by start_date."""
         # Create absences with different date ranges
         past_absence = Absence(
@@ -118,10 +121,7 @@ class TestListLeaveEndpoint:
         db.commit()
 
         filter_date = (date.today() + timedelta(days=5)).isoformat()
-        response = client.get(
-            "/api/v1/leave/",
-            params={"start_date": filter_date}
-        )
+        response = client.get("/api/v1/leave/", params={"start_date": filter_date})
 
         assert response.status_code == 200
         data = response.json()
@@ -131,7 +131,9 @@ class TestListLeaveEndpoint:
             leave_end = date.fromisoformat(leave["end_date"])
             assert leave_end >= date.fromisoformat(filter_date)
 
-    def test_list_leave_filter_by_end_date(self, client: TestClient, db: Session, sample_faculty: Person):
+    def test_list_leave_filter_by_end_date(
+        self, client: TestClient, db: Session, sample_faculty: Person
+    ):
         """Test filtering leave by end_date."""
         # Create absences with different date ranges
         near_absence = Absence(
@@ -153,10 +155,7 @@ class TestListLeaveEndpoint:
         db.commit()
 
         filter_date = (date.today() + timedelta(days=10)).isoformat()
-        response = client.get(
-            "/api/v1/leave/",
-            params={"end_date": filter_date}
-        )
+        response = client.get("/api/v1/leave/", params={"end_date": filter_date})
 
         assert response.status_code == 200
         data = response.json()
@@ -166,7 +165,9 @@ class TestListLeaveEndpoint:
             leave_start = date.fromisoformat(leave["start_date"])
             assert leave_start <= date.fromisoformat(filter_date)
 
-    def test_list_leave_filter_by_date_range(self, client: TestClient, db: Session, sample_faculty: Person):
+    def test_list_leave_filter_by_date_range(
+        self, client: TestClient, db: Session, sample_faculty: Person
+    ):
         """Test filtering leave by date range."""
         # Create absences across different time periods
         absences = [
@@ -202,10 +203,7 @@ class TestListLeaveEndpoint:
 
         response = client.get(
             "/api/v1/leave/",
-            params={
-                "start_date": filter_start,
-                "end_date": filter_end
-            }
+            params={"start_date": filter_start, "end_date": filter_end},
         )
 
         assert response.status_code == 200
@@ -222,7 +220,9 @@ class TestListLeaveEndpoint:
             assert leave_end >= date.fromisoformat(filter_start)
             assert leave_start <= date.fromisoformat(filter_end)
 
-    def test_list_leave_pagination(self, client: TestClient, db: Session, sample_faculty: Person):
+    def test_list_leave_pagination(
+        self, client: TestClient, db: Session, sample_faculty: Person
+    ):
         """Test pagination parameters."""
         # Create multiple absences
         for i in range(25):
@@ -237,10 +237,7 @@ class TestListLeaveEndpoint:
         db.commit()
 
         # Test first page
-        response = client.get(
-            "/api/v1/leave/",
-            params={"page": 1, "page_size": 10}
-        )
+        response = client.get("/api/v1/leave/", params={"page": 1, "page_size": 10})
 
         assert response.status_code == 200
         data = response.json()
@@ -250,10 +247,7 @@ class TestListLeaveEndpoint:
         assert len(data["items"]) == 10
 
         # Test second page
-        response = client.get(
-            "/api/v1/leave/",
-            params={"page": 2, "page_size": 10}
-        )
+        response = client.get("/api/v1/leave/", params={"page": 2, "page_size": 10})
 
         assert response.status_code == 200
         data = response.json()
@@ -274,7 +268,7 @@ class TestGetLeaveCalendarEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -284,7 +278,9 @@ class TestGetLeaveCalendarEndpoint:
         assert data["entries"] == []
         assert data["conflict_count"] == 0
 
-    def test_get_leave_calendar_with_data(self, client: TestClient, db: Session, sample_faculty: Person):
+    def test_get_leave_calendar_with_data(
+        self, client: TestClient, db: Session, sample_faculty: Person
+    ):
         """Test getting leave calendar with leave data."""
         # Create absences in the range
         start = date.today()
@@ -305,7 +301,7 @@ class TestGetLeaveCalendarEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -328,7 +324,9 @@ class TestGetLeaveCalendarEndpoint:
 
         assert response.status_code == 422  # Validation error
 
-    def test_get_leave_calendar_filters_by_date_range(self, client: TestClient, db: Session, sample_faculty: Person):
+    def test_get_leave_calendar_filters_by_date_range(
+        self, client: TestClient, db: Session, sample_faculty: Person
+    ):
         """Test that calendar only includes leave in the specified range."""
         start = date.today() + timedelta(days=10)
         end = date.today() + timedelta(days=20)
@@ -358,7 +356,7 @@ class TestGetLeaveCalendarEndpoint:
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -415,12 +413,16 @@ class TestCreateLeaveEndpoint:
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
-    def test_create_leave_invalid_date_range(self, client: TestClient, sample_faculty: Person):
+    def test_create_leave_invalid_date_range(
+        self, client: TestClient, sample_faculty: Person
+    ):
         """Test creating leave with end_date before start_date."""
         leave_data = {
             "faculty_id": str(sample_faculty.id),
             "start_date": (date.today() + timedelta(days=15)).isoformat(),
-            "end_date": (date.today() + timedelta(days=10)).isoformat(),  # Before start!
+            "end_date": (
+                date.today() + timedelta(days=10)
+            ).isoformat(),  # Before start!
             "leave_type": "vacation",
             "is_blocking": True,
         }
@@ -440,7 +442,9 @@ class TestCreateLeaveEndpoint:
 
         assert response.status_code == 422  # Validation error
 
-    def test_create_leave_invalid_leave_type(self, client: TestClient, sample_faculty: Person):
+    def test_create_leave_invalid_leave_type(
+        self, client: TestClient, sample_faculty: Person
+    ):
         """Test creating leave with invalid leave_type."""
         leave_data = {
             "faculty_id": str(sample_faculty.id),
@@ -454,7 +458,9 @@ class TestCreateLeaveEndpoint:
 
         assert response.status_code == 422  # Validation error
 
-    def test_create_leave_deployment_type(self, client: TestClient, sample_faculty: Person):
+    def test_create_leave_deployment_type(
+        self, client: TestClient, sample_faculty: Person
+    ):
         """Test creating deployment leave (always blocking)."""
         leave_data = {
             "faculty_id": str(sample_faculty.id),
@@ -472,7 +478,9 @@ class TestCreateLeaveEndpoint:
         # Deployment should always be blocking
         assert data["is_blocking"] is True
 
-    def test_create_leave_without_description(self, client: TestClient, sample_faculty: Person):
+    def test_create_leave_without_description(
+        self, client: TestClient, sample_faculty: Person
+    ):
         """Test creating leave without optional description."""
         leave_data = {
             "faculty_id": str(sample_faculty.id),
@@ -492,7 +500,9 @@ class TestCreateLeaveEndpoint:
 class TestUpdateLeaveEndpoint:
     """Tests for PUT /api/leave/{leave_id} endpoint."""
 
-    def test_update_leave_success(self, client: TestClient, db: Session, sample_faculty: Person):
+    def test_update_leave_success(
+        self, client: TestClient, db: Session, sample_faculty: Person
+    ):
         """Test successfully updating a leave record."""
         # Create a leave to update
         absence = Absence(
@@ -532,7 +542,9 @@ class TestUpdateLeaveEndpoint:
 
         assert response.status_code == 404
 
-    def test_update_leave_partial_update(self, client: TestClient, db: Session, sample_faculty: Person):
+    def test_update_leave_partial_update(
+        self, client: TestClient, db: Session, sample_faculty: Person
+    ):
         """Test partial update (only some fields)."""
         # Create a leave to update
         absence = Absence(
@@ -564,7 +576,9 @@ class TestUpdateLeaveEndpoint:
         assert data["end_date"] == original_end.isoformat()
         assert data["description"] == update_data["description"]
 
-    def test_update_leave_change_type(self, client: TestClient, db: Session, sample_faculty: Person):
+    def test_update_leave_change_type(
+        self, client: TestClient, db: Session, sample_faculty: Person
+    ):
         """Test updating leave type."""
         # Create a leave to update
         absence = Absence(
@@ -592,7 +606,9 @@ class TestUpdateLeaveEndpoint:
 class TestDeleteLeaveEndpoint:
     """Tests for DELETE /api/leave/{leave_id} endpoint."""
 
-    def test_delete_leave_success(self, client: TestClient, db: Session, sample_faculty: Person):
+    def test_delete_leave_success(
+        self, client: TestClient, db: Session, sample_faculty: Person
+    ):
         """Test successfully deleting a leave record."""
         # Create a leave to delete
         absence = Absence(
@@ -622,7 +638,9 @@ class TestDeleteLeaveEndpoint:
 
         assert response.status_code == 404
 
-    def test_delete_leave_twice(self, client: TestClient, db: Session, sample_faculty: Person):
+    def test_delete_leave_twice(
+        self, client: TestClient, db: Session, sample_faculty: Person
+    ):
         """Test deleting the same leave twice."""
         # Create a leave to delete
         absence = Absence(
@@ -654,9 +672,9 @@ class TestLeaveWebhookEndpoint:
         body = json.dumps(payload)
         message = f"{timestamp}.{body}"
         signature = hmac.new(
-            settings.WEBHOOK_SECRET.encode('utf-8'),
-            message.encode('utf-8'),
-            hashlib.sha256
+            settings.WEBHOOK_SECRET.encode("utf-8"),
+            message.encode("utf-8"),
+            hashlib.sha256,
         ).hexdigest()
         return signature
 
@@ -689,7 +707,7 @@ class TestLeaveWebhookEndpoint:
         response = client.post(
             "/api/v1/leave/webhook",
             json=payload,
-            headers={"X-Webhook-Signature": "fake_signature"}
+            headers={"X-Webhook-Signature": "fake_signature"},
         )
 
         assert response.status_code == 401
@@ -712,7 +730,7 @@ class TestLeaveWebhookEndpoint:
             headers={
                 "X-Webhook-Signature": "invalid_signature",
                 "X-Webhook-Timestamp": timestamp,
-            }
+            },
         )
 
         assert response.status_code == 401
@@ -728,7 +746,9 @@ class TestLeaveWebhookEndpoint:
             "leave_type": "vacation",
         }
         # Timestamp from 10 minutes ago
-        old_timestamp = str(int((datetime.utcnow() - timedelta(minutes=10)).timestamp()))
+        old_timestamp = str(
+            int((datetime.utcnow() - timedelta(minutes=10)).timestamp())
+        )
         signature = self._create_webhook_signature(payload, old_timestamp)
 
         response = client.post(
@@ -737,7 +757,7 @@ class TestLeaveWebhookEndpoint:
             headers={
                 "X-Webhook-Signature": signature,
                 "X-Webhook-Timestamp": old_timestamp,
-            }
+            },
         )
 
         # Should fail if timestamp tolerance is less than 10 minutes
@@ -762,7 +782,7 @@ class TestLeaveWebhookEndpoint:
             headers={
                 "X-Webhook-Signature": signature,
                 "X-Webhook-Timestamp": timestamp,
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -774,7 +794,9 @@ class TestLeaveWebhookEndpoint:
 class TestBulkLeaveImportEndpoint:
     """Tests for POST /api/leave/bulk-import endpoint."""
 
-    def test_bulk_import_requires_admin(self, client: TestClient, sample_faculty: Person):
+    def test_bulk_import_requires_admin(
+        self, client: TestClient, sample_faculty: Person
+    ):
         """Test that bulk import requires admin role."""
         # This test assumes authentication is required
         # Without proper auth, should get 401 or 403
@@ -796,7 +818,14 @@ class TestBulkLeaveImportEndpoint:
         # Should require authentication/authorization
         assert response.status_code in [401, 403]
 
-    def test_bulk_import_success(self, client: TestClient, db: Session, admin_user, auth_headers, sample_faculty: Person):
+    def test_bulk_import_success(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_user,
+        auth_headers,
+        sample_faculty: Person,
+    ):
         """Test successful bulk import with admin user."""
         payload = {
             "records": [
@@ -813,12 +842,14 @@ class TestBulkLeaveImportEndpoint:
                     "end_date": (date.today() + timedelta(days=25)).isoformat(),
                     "leave_type": "conference",
                     "is_blocking": False,
-                }
+                },
             ],
             "skip_duplicates": True,
         }
 
-        response = client.post("/api/v1/leave/bulk-import", json=payload, headers=auth_headers)
+        response = client.post(
+            "/api/v1/leave/bulk-import", json=payload, headers=auth_headers
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -826,7 +857,14 @@ class TestBulkLeaveImportEndpoint:
         assert data["imported_count"] == 2
         assert data["error_count"] == 0
 
-    def test_bulk_import_skip_duplicates(self, client: TestClient, db: Session, admin_user, auth_headers, sample_faculty: Person):
+    def test_bulk_import_skip_duplicates(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_user,
+        auth_headers,
+        sample_faculty: Person,
+    ):
         """Test bulk import with skip_duplicates enabled."""
         # Create an existing absence
         existing = Absence(
@@ -854,12 +892,14 @@ class TestBulkLeaveImportEndpoint:
                     "end_date": (date.today() + timedelta(days=25)).isoformat(),
                     "leave_type": "conference",
                     "is_blocking": False,
-                }
+                },
             ],
             "skip_duplicates": True,
         }
 
-        response = client.post("/api/v1/leave/bulk-import", json=payload, headers=auth_headers)
+        response = client.post(
+            "/api/v1/leave/bulk-import", json=payload, headers=auth_headers
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -870,7 +910,9 @@ class TestBulkLeaveImportEndpoint:
 class TestLeaveEdgeCases:
     """Tests for edge cases and boundary conditions."""
 
-    def test_create_leave_same_start_end_date(self, client: TestClient, sample_faculty: Person):
+    def test_create_leave_same_start_end_date(
+        self, client: TestClient, sample_faculty: Person
+    ):
         """Test creating leave with same start and end date (single day)."""
         leave_data = {
             "faculty_id": str(sample_faculty.id),
@@ -898,7 +940,9 @@ class TestLeaveEdgeCases:
 
         assert response.status_code == 201
 
-    def test_create_leave_long_description(self, client: TestClient, sample_faculty: Person):
+    def test_create_leave_long_description(
+        self, client: TestClient, sample_faculty: Person
+    ):
         """Test creating leave with very long description."""
         leave_data = {
             "faculty_id": str(sample_faculty.id),
@@ -914,7 +958,9 @@ class TestLeaveEdgeCases:
         # Should fail validation if max_length=500 is enforced
         assert response.status_code in [201, 422]
 
-    def test_overlapping_leave_same_faculty(self, client: TestClient, db: Session, sample_faculty: Person):
+    def test_overlapping_leave_same_faculty(
+        self, client: TestClient, db: Session, sample_faculty: Person
+    ):
         """Test creating overlapping leave for the same faculty."""
         # Create first leave
         absence1 = Absence(

@@ -1,19 +1,16 @@
 """Tests for call equity and preference constraints."""
 
-import pytest
 from datetime import date
-from uuid import uuid4
 
-from app.scheduling.constraints.call_equity import (
-    SundayCallEquityConstraint,
-    WeekdayCallEquityConstraint,
-    TuesdayCallPreferenceConstraint,
-    DeptChiefWednesdayPreferenceConstraint,
-)
 from app.scheduling.constraints.base import (
     ConstraintPriority,
-    ConstraintResult,
     SchedulingContext,
+)
+from app.scheduling.constraints.call_equity import (
+    DeptChiefWednesdayPreferenceConstraint,
+    SundayCallEquityConstraint,
+    TuesdayCallPreferenceConstraint,
+    WeekdayCallEquityConstraint,
 )
 
 

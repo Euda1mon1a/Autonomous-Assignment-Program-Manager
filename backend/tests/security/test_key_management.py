@@ -13,10 +13,10 @@ Tests cover:
 - HSM integration hooks
 - Key revocation
 """
+
 import base64
 import uuid
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
 
 import pytest
 from sqlalchemy import select
@@ -50,7 +50,7 @@ def key_service_with_hsm():
         enabled=True,
         provider="pkcs11",
         endpoint="https://hsm.example.com",
-        key_wrapping_enabled=True
+        key_wrapping_enabled=True,
     )
     return KeyManagementService(hsm_config=hsm_config)
 
@@ -66,7 +66,7 @@ def sample_key_request():
         access_policy=AccessPolicy.ADMIN_ONLY,
         allowed_users=["admin", "service-account"],
         expires_in_days=365,
-        auto_rotate=False
+        auto_rotate=False,
     )
 
 
@@ -82,13 +82,14 @@ def sample_rsa_key_request():
         allowed_users=["signer-service"],
         expires_in_days=730,
         auto_rotate=True,
-        rotation_interval_days=90
+        rotation_interval_days=90,
     )
 
 
 # =============================================================================
 # Encryption/Decryption Tests
 # =============================================================================
+
 
 class TestEncryptionDecryption:
     """Test suite for encryption and decryption functions."""
@@ -152,16 +153,17 @@ class TestEncryptionDecryption:
 # Key Generation Tests
 # =============================================================================
 
+
 class TestKeyGeneration:
     """Test suite for key generation functionality."""
 
     @pytest.mark.asyncio
-    async def test_generate_symmetric_key(self, async_db, key_service, sample_key_request):
+    async def test_generate_symmetric_key(
+        self, async_db, key_service, sample_key_request
+    ):
         """Test generating a symmetric encryption key."""
         metadata = await key_service.generate_key(
-            async_db,
-            sample_key_request,
-            created_by="admin"
+            async_db, sample_key_request, created_by="admin"
         )
 
         assert metadata is not None
@@ -175,12 +177,12 @@ class TestKeyGeneration:
         assert "admin" in metadata.allowed_users
 
     @pytest.mark.asyncio
-    async def test_generate_rsa_key(self, async_db, key_service, sample_rsa_key_request):
+    async def test_generate_rsa_key(
+        self, async_db, key_service, sample_rsa_key_request
+    ):
         """Test generating an RSA key pair."""
         metadata = await key_service.generate_key(
-            async_db,
-            sample_rsa_key_request,
-            created_by="admin"
+            async_db, sample_rsa_key_request, created_by="admin"
         )
 
         assert metadata is not None
@@ -209,7 +211,7 @@ class TestKeyGeneration:
             key_type=KeyType.SYMMETRIC,
             purpose=KeyPurpose.API_KEY,
             name="expiring-key",
-            expires_in_days=30
+            expires_in_days=30,
         )
 
         metadata = await key_service.generate_key(async_db, request, "admin")
@@ -226,7 +228,7 @@ class TestKeyGeneration:
             purpose=KeyPurpose.DATABASE,
             name="auto-rotate-key",
             auto_rotate=True,
-            rotation_interval_days=90
+            rotation_interval_days=90,
         )
 
         metadata = await key_service.generate_key(async_db, request, "admin")
@@ -263,13 +265,14 @@ class TestKeyGeneration:
                 purpose=KeyPurpose.ENCRYPTION,
                 name="bad-auto-rotate",
                 auto_rotate=True,
-                rotation_interval_days=None  # This should fail validation
+                rotation_interval_days=None,  # This should fail validation
             )
 
 
 # =============================================================================
 # Key Retrieval Tests
 # =============================================================================
+
 
 class TestKeyRetrieval:
     """Test suite for key retrieval functionality."""
@@ -282,10 +285,7 @@ class TestKeyRetrieval:
 
         # Retrieve key
         key_data = await key_service.get_key(
-            async_db,
-            created.id,
-            user_id="admin",
-            decrypt=False
+            async_db, created.id, user_id="admin", decrypt=False
         )
 
         assert key_data is not None
@@ -303,10 +303,7 @@ class TestKeyRetrieval:
 
         # Retrieve with decryption
         key_data = await key_service.get_key(
-            async_db,
-            created.id,
-            user_id="admin",
-            decrypt=True
+            async_db, created.id, user_id="admin", decrypt=True
         )
 
         assert key_data is not None
@@ -324,17 +321,12 @@ class TestKeyRetrieval:
         """Test retrieving RSA key with private key material."""
         # Create RSA key
         created = await key_service.generate_key(
-            async_db,
-            sample_rsa_key_request,
-            "admin"
+            async_db, sample_rsa_key_request, "admin"
         )
 
         # Retrieve with decryption
         key_data = await key_service.get_key(
-            async_db,
-            created.id,
-            user_id="admin",
-            decrypt=True
+            async_db, created.id, user_id="admin", decrypt=True
         )
 
         assert "public_key" in key_data
@@ -350,9 +342,7 @@ class TestKeyRetrieval:
 
         # Retrieve by name
         metadata = await key_service.get_key_by_name(
-            async_db,
-            "test-encryption-key",
-            user_id="admin"
+            async_db, "test-encryption-key", user_id="admin"
         )
 
         assert metadata is not None
@@ -375,7 +365,7 @@ class TestKeyRetrieval:
                 key_type=KeyType.SYMMETRIC,
                 purpose=KeyPurpose.ENCRYPTION,
                 name=f"key-{i}",
-                access_policy=AccessPolicy.ADMIN_ONLY
+                access_policy=AccessPolicy.ADMIN_ONLY,
             )
             await key_service.generate_key(async_db, request, "admin")
 
@@ -392,23 +382,19 @@ class TestKeyRetrieval:
         request = KeyGenerationRequest(
             key_type=KeyType.SYMMETRIC,
             purpose=KeyPurpose.ENCRYPTION,
-            name="revoked-key"
+            name="revoked-key",
         )
         created = await key_service.generate_key(async_db, request, "admin")
         await key_service.revoke_key(async_db, created.id, "admin", "test")
 
         # List active keys
         active_keys = await key_service.list_keys(
-            async_db,
-            user_id="admin",
-            status=KeyStatus.ACTIVE
+            async_db, user_id="admin", status=KeyStatus.ACTIVE
         )
 
         # List revoked keys
         revoked_keys = await key_service.list_keys(
-            async_db,
-            user_id="admin",
-            status=KeyStatus.REVOKED
+            async_db, user_id="admin", status=KeyStatus.REVOKED
         )
 
         assert all(k.status == KeyStatus.ACTIVE for k in active_keys)
@@ -420,6 +406,7 @@ class TestKeyRetrieval:
 # Access Control Tests
 # =============================================================================
 
+
 class TestAccessControl:
     """Test suite for key access control and policies."""
 
@@ -430,17 +417,13 @@ class TestAccessControl:
             key_type=KeyType.SYMMETRIC,
             purpose=KeyPurpose.ENCRYPTION,
             name="admin-key",
-            access_policy=AccessPolicy.ADMIN_ONLY
+            access_policy=AccessPolicy.ADMIN_ONLY,
         )
 
         created = await key_service.generate_key(async_db, request, "admin")
 
         # Admin should have access
-        key_data = await key_service.get_key(
-            async_db,
-            created.id,
-            user_id="admin"
-        )
+        key_data = await key_service.get_key(async_db, created.id, user_id="admin")
         assert key_data is not None
 
     @pytest.mark.asyncio
@@ -453,26 +436,18 @@ class TestAccessControl:
             purpose=KeyPurpose.ENCRYPTION,
             name="user-specific-key",
             access_policy=AccessPolicy.USER_SPECIFIC,
-            allowed_users=["alice", "bob"]
+            allowed_users=["alice", "bob"],
         )
 
         created = await key_service.generate_key(async_db, request, "admin")
 
         # Alice should have access
-        key_data = await key_service.get_key(
-            async_db,
-            created.id,
-            user_id="alice"
-        )
+        key_data = await key_service.get_key(async_db, created.id, user_id="alice")
         assert key_data is not None
 
         # Charlie should not have access
         with pytest.raises(ForbiddenError):
-            await key_service.get_key(
-                async_db,
-                created.id,
-                user_id="charlie"
-            )
+            await key_service.get_key(async_db, created.id, user_id="charlie")
 
     @pytest.mark.asyncio
     async def test_public_read_policy_allows_all(self, async_db, key_service):
@@ -481,24 +456,21 @@ class TestAccessControl:
             key_type=KeyType.SYMMETRIC,
             purpose=KeyPurpose.ENCRYPTION,
             name="public-key",
-            access_policy=AccessPolicy.PUBLIC_READ
+            access_policy=AccessPolicy.PUBLIC_READ,
         )
 
         created = await key_service.generate_key(async_db, request, "admin")
 
         # Any user should have access
         for user in ["alice", "bob", "charlie", "anonymous"]:
-            key_data = await key_service.get_key(
-                async_db,
-                created.id,
-                user_id=user
-            )
+            key_data = await key_service.get_key(async_db, created.id, user_id=user)
             assert key_data is not None
 
 
 # =============================================================================
 # Key Lifecycle Tests
 # =============================================================================
+
 
 class TestKeyLifecycle:
     """Test suite for key lifecycle management."""
@@ -507,20 +479,12 @@ class TestKeyLifecycle:
     async def test_rotate_key(self, async_db, key_service, sample_key_request):
         """Test rotating a key to create a new version."""
         # Create original key
-        original = await key_service.generate_key(
-            async_db,
-            sample_key_request,
-            "admin"
-        )
+        original = await key_service.generate_key(async_db, sample_key_request, "admin")
 
         assert original.version == 1
 
         # Rotate key
-        rotated = await key_service.rotate_key(
-            async_db,
-            original.id,
-            user_id="admin"
-        )
+        rotated = await key_service.rotate_key(async_db, original.id, user_id="admin")
 
         assert rotated.version == 2
         assert rotated.name == original.name
@@ -530,18 +494,11 @@ class TestKeyLifecycle:
     async def test_revoke_key(self, async_db, key_service, sample_key_request):
         """Test revoking a key."""
         # Create key
-        created = await key_service.generate_key(
-            async_db,
-            sample_key_request,
-            "admin"
-        )
+        created = await key_service.generate_key(async_db, sample_key_request, "admin")
 
         # Revoke key
         revoked = await key_service.revoke_key(
-            async_db,
-            created.id,
-            user_id="admin",
-            reason="Compromised"
+            async_db, created.id, user_id="admin", reason="Compromised"
         )
 
         assert revoked.status == KeyStatus.REVOKED
@@ -549,9 +506,7 @@ class TestKeyLifecycle:
 
         # Verify in database
         result = await async_db.execute(
-            select(CryptographicKey).where(
-                CryptographicKey.id == uuid.UUID(created.id)
-            )
+            select(CryptographicKey).where(CryptographicKey.id == uuid.UUID(created.id))
         )
         key_record = result.scalar_one()
 
@@ -560,14 +515,12 @@ class TestKeyLifecycle:
         assert key_record.revocation_reason == "Compromised"
 
     @pytest.mark.asyncio
-    async def test_cannot_rotate_revoked_key(self, async_db, key_service, sample_key_request):
+    async def test_cannot_rotate_revoked_key(
+        self, async_db, key_service, sample_key_request
+    ):
         """Test that revoked keys cannot be rotated."""
         # Create and revoke key
-        created = await key_service.generate_key(
-            async_db,
-            sample_key_request,
-            "admin"
-        )
+        created = await key_service.generate_key(async_db, sample_key_request, "admin")
         await key_service.revoke_key(async_db, created.id, "admin", "test")
 
         # Try to rotate
@@ -578,11 +531,7 @@ class TestKeyLifecycle:
     async def test_delete_revoked_key(self, async_db, key_service, sample_key_request):
         """Test deleting a revoked key."""
         # Create and revoke key
-        created = await key_service.generate_key(
-            async_db,
-            sample_key_request,
-            "admin"
-        )
+        created = await key_service.generate_key(async_db, sample_key_request, "admin")
         await key_service.revoke_key(async_db, created.id, "admin", "test")
 
         # Delete key
@@ -598,11 +547,7 @@ class TestKeyLifecycle:
     ):
         """Test that active keys cannot be deleted without force flag."""
         # Create key
-        created = await key_service.generate_key(
-            async_db,
-            sample_key_request,
-            "admin"
-        )
+        created = await key_service.generate_key(async_db, sample_key_request, "admin")
 
         # Try to delete without force
         with pytest.raises(ValidationError, match="Cannot delete active key"):
@@ -614,11 +559,7 @@ class TestKeyLifecycle:
     ):
         """Test force deleting an active key."""
         # Create key
-        created = await key_service.generate_key(
-            async_db,
-            sample_key_request,
-            "admin"
-        )
+        created = await key_service.generate_key(async_db, sample_key_request, "admin")
 
         # Force delete
         await key_service.delete_key(async_db, created.id, "admin", force=True)
@@ -632,6 +573,7 @@ class TestKeyLifecycle:
 # Usage Tracking Tests
 # =============================================================================
 
+
 class TestUsageTracking:
     """Test suite for key usage tracking and auditing."""
 
@@ -641,22 +583,14 @@ class TestUsageTracking:
     ):
         """Test that using a key increments usage count."""
         # Create key
-        created = await key_service.generate_key(
-            async_db,
-            sample_key_request,
-            "admin"
-        )
+        created = await key_service.generate_key(async_db, sample_key_request, "admin")
 
         # Use key multiple times
         for _ in range(3):
             await key_service.get_key(async_db, created.id, "admin", decrypt=False)
 
         # Check usage count
-        metadata = await key_service.get_key_by_name(
-            async_db,
-            created.name,
-            "admin"
-        )
+        metadata = await key_service.get_key_by_name(async_db, created.name, "admin")
         assert metadata.usage_count >= 3
 
     @pytest.mark.asyncio
@@ -665,20 +599,14 @@ class TestUsageTracking:
     ):
         """Test retrieving usage history for a key."""
         # Create key
-        created = await key_service.generate_key(
-            async_db,
-            sample_key_request,
-            "admin"
-        )
+        created = await key_service.generate_key(async_db, sample_key_request, "admin")
 
         # Use key
         await key_service.get_key(async_db, created.id, "admin", decrypt=True)
 
         # Get usage history
         usage_records = await key_service.get_key_usage(
-            async_db,
-            created.id,
-            user_id="admin"
+            async_db, created.id, user_id="admin"
         )
 
         assert len(usage_records) > 0
@@ -691,11 +619,7 @@ class TestUsageTracking:
     ):
         """Test that usage logs track different operations."""
         # Create key
-        created = await key_service.generate_key(
-            async_db,
-            sample_key_request,
-            "admin"
-        )
+        created = await key_service.generate_key(async_db, sample_key_request, "admin")
 
         # Perform various operations
         await key_service.get_key(async_db, created.id, "admin", decrypt=False)
@@ -703,9 +627,7 @@ class TestUsageTracking:
 
         # Verify usage logs in database
         result = await async_db.execute(
-            select(KeyUsageLog).where(
-                KeyUsageLog.key_id == uuid.UUID(created.id)
-            )
+            select(KeyUsageLog).where(KeyUsageLog.key_id == uuid.UUID(created.id))
         )
         logs = result.scalars().all()
 
@@ -718,6 +640,7 @@ class TestUsageTracking:
 # Backup and Recovery Tests
 # =============================================================================
 
+
 class TestBackupRecovery:
     """Test suite for key backup and recovery functionality."""
 
@@ -725,11 +648,7 @@ class TestBackupRecovery:
     async def test_backup_key(self, async_db, key_service, sample_key_request):
         """Test marking a key as backed up."""
         # Create key
-        created = await key_service.generate_key(
-            async_db,
-            sample_key_request,
-            "admin"
-        )
+        created = await key_service.generate_key(async_db, sample_key_request, "admin")
 
         assert created.is_backed_up is False
 
@@ -738,16 +657,14 @@ class TestBackupRecovery:
             async_db,
             created.id,
             user_id="admin",
-            backup_location="s3://backup-bucket/keys/test-key"
+            backup_location="s3://backup-bucket/keys/test-key",
         )
 
         assert backed_up.is_backed_up is True
 
         # Verify in database
         result = await async_db.execute(
-            select(CryptographicKey).where(
-                CryptographicKey.id == uuid.UUID(created.id)
-            )
+            select(CryptographicKey).where(CryptographicKey.id == uuid.UUID(created.id))
         )
         key_record = result.scalar_one()
 
@@ -760,6 +677,7 @@ class TestBackupRecovery:
 # HSM Integration Tests
 # =============================================================================
 
+
 class TestHSMIntegration:
     """Test suite for HSM integration functionality."""
 
@@ -770,26 +688,19 @@ class TestHSMIntegration:
         """Test linking a key to an HSM-stored key."""
         # Create key
         created = await key_service_with_hsm.generate_key(
-            async_db,
-            sample_key_request,
-            "admin"
+            async_db, sample_key_request, "admin"
         )
 
         # Integrate with HSM
         integrated = await key_service_with_hsm.integrate_with_hsm(
-            async_db,
-            created.id,
-            user_id="admin",
-            hsm_key_id="hsm-key-12345"
+            async_db, created.id, user_id="admin", hsm_key_id="hsm-key-12345"
         )
 
         assert integrated.hsm_integrated is True
 
         # Verify in database
         result = await async_db.execute(
-            select(CryptographicKey).where(
-                CryptographicKey.id == uuid.UUID(created.id)
-            )
+            select(CryptographicKey).where(CryptographicKey.id == uuid.UUID(created.id))
         )
         key_record = result.scalar_one()
 
@@ -803,19 +714,12 @@ class TestHSMIntegration:
     ):
         """Test that HSM integration fails when HSM is not enabled."""
         # Create key with HSM disabled
-        created = await key_service.generate_key(
-            async_db,
-            sample_key_request,
-            "admin"
-        )
+        created = await key_service.generate_key(async_db, sample_key_request, "admin")
 
         # Try to integrate with HSM
         with pytest.raises(ValidationError, match="HSM integration is not enabled"):
             await key_service.integrate_with_hsm(
-                async_db,
-                created.id,
-                user_id="admin",
-                hsm_key_id="hsm-key-12345"
+                async_db, created.id, user_id="admin", hsm_key_id="hsm-key-12345"
             )
 
     @pytest.mark.asyncio
@@ -824,9 +728,7 @@ class TestHSMIntegration:
     ):
         """Test that keys are marked as HSM-integrated when HSM is enabled."""
         created = await key_service_with_hsm.generate_key(
-            async_db,
-            sample_key_request,
-            "admin"
+            async_db, sample_key_request, "admin"
         )
 
         assert created.hsm_integrated is True
@@ -835,6 +737,7 @@ class TestHSMIntegration:
 # =============================================================================
 # Edge Cases and Error Handling Tests
 # =============================================================================
+
 
 class TestEdgeCases:
     """Test suite for edge cases and error handling."""
@@ -845,9 +748,7 @@ class TestEdgeCases:
         long_name = "a" * 300
 
         request = KeyGenerationRequest(
-            key_type=KeyType.SYMMETRIC,
-            purpose=KeyPurpose.ENCRYPTION,
-            name=long_name
+            key_type=KeyType.SYMMETRIC, purpose=KeyPurpose.ENCRYPTION, name=long_name
         )
 
         # This should be caught by Pydantic validation
@@ -862,16 +763,14 @@ class TestEdgeCases:
             key_type=KeyType.SYMMETRIC,
             purpose=KeyPurpose.API_KEY,
             name="expired-key",
-            expires_in_days=1
+            expires_in_days=1,
         )
 
         created = await key_service.generate_key(async_db, request, "admin")
 
         # Manually set expiration to past
         result = await async_db.execute(
-            select(CryptographicKey).where(
-                CryptographicKey.id == uuid.UUID(created.id)
-            )
+            select(CryptographicKey).where(CryptographicKey.id == uuid.UUID(created.id))
         )
         key_record = result.scalar_one()
         key_record.expires_at = datetime.utcnow() - timedelta(days=1)
@@ -879,9 +778,7 @@ class TestEdgeCases:
 
         # Verify expiration is tracked
         result = await async_db.execute(
-            select(CryptographicKey).where(
-                CryptographicKey.id == uuid.UUID(created.id)
-            )
+            select(CryptographicKey).where(CryptographicKey.id == uuid.UUID(created.id))
         )
         key_record = result.scalar_one()
         assert key_record.expires_at < datetime.utcnow()

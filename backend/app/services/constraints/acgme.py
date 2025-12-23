@@ -23,6 +23,7 @@ ACGME Reference:
     Common Program Requirements, Section VI:
     https://www.acgme.org/globalassets/pfassets/programrequirements/cprresidency_2022v3.pdf
 """
+
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -92,7 +93,9 @@ class Validator(Protocol):
     to ensure compatibility with the scheduling system.
     """
 
-    def validate(self, assignments: list, context: "SchedulingContext") -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: "SchedulingContext"
+    ) -> ConstraintResult:
         """
         Validate constraint against assignments.
 
@@ -183,7 +186,9 @@ class HardConstraint:
         """Add constraint to PuLP model."""
         raise NotImplementedError("Subclass must implement add_to_pulp")
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """Validate constraint against assignments."""
         raise NotImplementedError("Subclass must implement validate")
 
@@ -257,7 +262,9 @@ class AvailabilityConstraint(HardConstraint):
                             if (r_i, b_i) in x:
                                 model += x[r_i, b_i] == 0, f"avail_{r_i}_{b_i}"
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """
         Validate that no assignments occur during absences.
 
@@ -406,9 +413,7 @@ class EightyHourRuleConstraint(HardConstraint):
 
             # Get all blocks in this strict 28-day window
             window_blocks = [
-                b
-                for b in context.blocks
-                if window_start <= b.date <= window_end
+                b for b in context.blocks if window_start <= b.date <= window_end
             ]
 
             if not window_blocks:
@@ -447,9 +452,7 @@ class EightyHourRuleConstraint(HardConstraint):
             window_end = window_start + timedelta(days=self.ROLLING_DAYS - 1)
 
             window_blocks = [
-                b
-                for b in context.blocks
-                if window_start <= b.date <= window_end
+                b for b in context.blocks if window_start <= b.date <= window_end
             ]
 
             if not window_blocks:
@@ -469,7 +472,9 @@ class EightyHourRuleConstraint(HardConstraint):
                     )
             window_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """
         Check 80-hour rule compliance with strict 4-week rolling average.
 
@@ -666,7 +671,9 @@ class OneInSevenRuleConstraint(HardConstraint):
                     )
                     constraint_count += 1
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """
         Check for consecutive days violations.
 
@@ -782,7 +789,9 @@ class SupervisionRatioConstraint(HardConstraint):
         """Supervision ratio is typically handled post-hoc for residents."""
         pass
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """
         Check supervision ratios per block.
 
@@ -882,7 +891,9 @@ class ACGMEConstraintValidator:
             SupervisionRatioConstraint(),
         ]
 
-    def validate(self, assignments: list, context: SchedulingContext) -> ConstraintResult:
+    def validate(
+        self, assignments: list, context: SchedulingContext
+    ) -> ConstraintResult:
         """
         Validate all ACGME constraints.
 

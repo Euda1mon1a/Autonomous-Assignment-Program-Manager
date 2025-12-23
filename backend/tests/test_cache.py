@@ -11,6 +11,7 @@ Covers:
 - Decorator-based caching
 - Cache statistics
 """
+
 import time
 from datetime import date
 from unittest.mock import MagicMock, patch
@@ -25,10 +26,8 @@ from app.core.cache import (
     ServiceCache,
     get_service_cache,
     invalidate_person_cache,
-    invalidate_rotation_cache,
     invalidate_schedule_cache,
 )
-
 
 # ============================================================================
 # Test Fixtures
@@ -91,7 +90,9 @@ class TestServiceCache:
     def test_cache_initialization_redis_unavailable(self):
         """Test cache handles Redis unavailability gracefully."""
         with patch("app.core.cache.redis.from_url") as mock_from_url:
-            mock_from_url.return_value.ping.side_effect = redis.RedisError("Connection refused")
+            mock_from_url.return_value.ping.side_effect = redis.RedisError(
+                "Connection refused"
+            )
             cache = ServiceCache()
             assert cache.is_available is False
 
@@ -109,7 +110,6 @@ class TestServiceCache:
 
     def test_set_with_custom_ttl(self, service_cache, mock_redis):
         """Test set uses custom TTL when provided."""
-        import pickle
 
         service_cache.set("test_key", {"data": "value"}, ttl=300)
         mock_redis.setex.assert_called_once()
@@ -181,7 +181,10 @@ class TestCacheInvalidation:
 
     def test_invalidate_pattern(self, service_cache, mock_redis):
         """Test pattern-based cache invalidation."""
-        mock_redis.scan.return_value = (0, [b"svc_cache:heatmap:test1", b"svc_cache:heatmap:test2"])
+        mock_redis.scan.return_value = (
+            0,
+            [b"svc_cache:heatmap:test1", b"svc_cache:heatmap:test2"],
+        )
         mock_redis.delete.return_value = 2
 
         count = service_cache.invalidate_pattern("heatmap:*")
@@ -189,7 +192,10 @@ class TestCacheInvalidation:
 
     def test_invalidate_by_prefix(self, service_cache, mock_redis):
         """Test prefix-based cache invalidation."""
-        mock_redis.scan.return_value = (0, [b"svc_cache:heatmap:1", b"svc_cache:heatmap:2"])
+        mock_redis.scan.return_value = (
+            0,
+            [b"svc_cache:heatmap:1", b"svc_cache:heatmap:2"],
+        )
         mock_redis.delete.return_value = 2
 
         count = service_cache.invalidate_by_prefix(CachePrefix.HEATMAP)
@@ -197,7 +203,10 @@ class TestCacheInvalidation:
 
     def test_invalidate_all(self, service_cache, mock_redis):
         """Test clearing all cache entries."""
-        mock_redis.scan.return_value = (0, [b"svc_cache:key1", b"svc_cache:key2", b"svc_cache:key3"])
+        mock_redis.scan.return_value = (
+            0,
+            [b"svc_cache:key1", b"svc_cache:key2", b"svc_cache:key3"],
+        )
         mock_redis.delete.return_value = 3
 
         count = service_cache.invalidate_all()
@@ -209,7 +218,6 @@ class TestCacheDecorator:
 
     def test_decorator_caches_result(self, service_cache, mock_redis):
         """Test that decorator caches function results."""
-        import pickle
 
         # Setup mock to return None (cache miss), then return cached value
         mock_redis.get.return_value = None

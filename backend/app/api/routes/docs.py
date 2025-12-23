@@ -4,8 +4,8 @@ Documentation API routes.
 Provides endpoints for accessing enhanced API documentation, code examples,
 and metadata about the API.
 """
+
 import logging
-from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse, PlainTextResponse
@@ -55,8 +55,7 @@ async def get_enhanced_openapi(request: Request) -> JSONResponse:
     except Exception as e:
         logger.error(f"Failed to generate enhanced OpenAPI schema: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail="Failed to generate enhanced OpenAPI schema"
+            status_code=500, detail="Failed to generate enhanced OpenAPI schema"
         )
 
 
@@ -81,8 +80,7 @@ async def get_markdown_docs(request: Request) -> PlainTextResponse:
     except Exception as e:
         logger.error(f"Failed to generate Markdown documentation: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail="Failed to generate Markdown documentation"
+            status_code=500, detail="Failed to generate Markdown documentation"
         )
 
 
@@ -91,7 +89,7 @@ async def get_endpoint_documentation(
     request: Request,
     path: str = Query(..., description="API path (e.g., /api/v1/people)"),
     method: str = Query(..., description="HTTP method (e.g., GET, POST)"),
-    format: str = Query("markdown", description="Output format (markdown or json)")
+    format: str = Query("markdown", description="Output format (markdown or json)"),
 ) -> Response:
     """
     Get documentation for a specific endpoint.
@@ -116,9 +114,7 @@ async def get_endpoint_documentation(
     try:
         generator = _get_doc_generator(request)
         docs = generator.get_endpoint_documentation(
-            path=path,
-            method=method.lower(),
-            format=format.lower()
+            path=path, method=method.lower(), format=format.lower()
         )
 
         if format.lower() == "json":
@@ -129,8 +125,7 @@ async def get_endpoint_documentation(
     except Exception as e:
         logger.error(f"Failed to generate endpoint documentation: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail="Failed to generate endpoint documentation"
+            status_code=500, detail="Failed to generate endpoint documentation"
         )
 
 
@@ -139,7 +134,9 @@ async def get_code_examples(
     request: Request,
     path: str = Query(..., description="API path (e.g., /api/v1/people)"),
     method: str = Query(..., description="HTTP method (e.g., GET, POST)"),
-    language: Optional[str] = Query(None, description="Programming language (python, javascript, curl, typescript)")
+    language: str | None = Query(
+        None, description="Programming language (python, javascript, curl, typescript)"
+    ),
 ) -> JSONResponse:
     """
     Get code examples for a specific endpoint.
@@ -164,19 +161,14 @@ async def get_code_examples(
     try:
         generator = _get_doc_generator(request)
         examples = generator.get_code_examples(
-            path=path,
-            method=method.lower(),
-            language=language
+            path=path, method=method.lower(), language=language
         )
 
         return JSONResponse(content=examples)
 
     except Exception as e:
         logger.error(f"Failed to generate code examples: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to generate code examples"
-        )
+        raise HTTPException(status_code=500, detail="Failed to generate code examples")
 
 
 @router.get("/errors")
@@ -201,8 +193,7 @@ async def get_error_documentation(request: Request) -> JSONResponse:
     except Exception as e:
         logger.error(f"Failed to generate error documentation: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail="Failed to generate error documentation"
+            status_code=500, detail="Failed to generate error documentation"
         )
 
 
@@ -227,10 +218,7 @@ async def get_changelog(request: Request) -> PlainTextResponse:
 
     except Exception as e:
         logger.error(f"Failed to generate changelog: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to generate changelog"
-        )
+        raise HTTPException(status_code=500, detail="Failed to generate changelog")
 
 
 @router.get("/version")
@@ -264,10 +252,7 @@ async def get_version_info(request: Request) -> JSONResponse:
 
     except Exception as e:
         logger.error(f"Failed to get version info: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to get version information"
-        )
+        raise HTTPException(status_code=500, detail="Failed to get version information")
 
 
 @router.get("/stats")
@@ -311,15 +296,14 @@ async def get_documentation_stats(request: Request) -> JSONResponse:
     except Exception as e:
         logger.error(f"Failed to generate documentation stats: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail="Failed to generate documentation statistics"
+            status_code=500, detail="Failed to generate documentation statistics"
         )
 
 
 @router.get("/export/openapi")
 async def export_openapi_schema(
     request: Request,
-    filepath: str = Query("openapi-enhanced.json", description="Output file path")
+    filepath: str = Query("openapi-enhanced.json", description="Output file path"),
 ) -> JSONResponse:
     """
     Export enhanced OpenAPI schema to a file.
@@ -342,24 +326,25 @@ async def export_openapi_schema(
         generator = _get_doc_generator(request)
         generator.export_openapi_json(filepath)
 
-        return JSONResponse(content={
-            "status": "success",
-            "message": f"OpenAPI schema exported to {filepath}",
-            "filepath": filepath
-        })
+        return JSONResponse(
+            content={
+                "status": "success",
+                "message": f"OpenAPI schema exported to {filepath}",
+                "filepath": filepath,
+            }
+        )
 
     except Exception as e:
         logger.error(f"Failed to export OpenAPI schema: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to export OpenAPI schema: {str(e)}"
+            status_code=500, detail=f"Failed to export OpenAPI schema: {str(e)}"
         )
 
 
 @router.get("/export/markdown")
 async def export_markdown_documentation(
     request: Request,
-    filepath: str = Query("api-documentation.md", description="Output file path")
+    filepath: str = Query("api-documentation.md", description="Output file path"),
 ) -> JSONResponse:
     """
     Export complete Markdown documentation to a file.
@@ -382,17 +367,18 @@ async def export_markdown_documentation(
         generator = _get_doc_generator(request)
         generator.export_markdown_docs(filepath)
 
-        return JSONResponse(content={
-            "status": "success",
-            "message": f"Markdown documentation exported to {filepath}",
-            "filepath": filepath
-        })
+        return JSONResponse(
+            content={
+                "status": "success",
+                "message": f"Markdown documentation exported to {filepath}",
+                "filepath": filepath,
+            }
+        )
 
     except Exception as e:
         logger.error(f"Failed to export Markdown documentation: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to export Markdown documentation: {str(e)}"
+            status_code=500, detail=f"Failed to export Markdown documentation: {str(e)}"
         )
 
 
@@ -409,59 +395,61 @@ async def documentation_index(request: Request) -> JSONResponse:
         curl http://localhost:8000/api/v1/docs/
         ```
     """
-    return JSONResponse(content={
-        "title": "API Documentation Endpoints",
-        "description": "Enhanced API documentation generator for the Residency Scheduler API",
-        "endpoints": {
-            "/openapi-enhanced.json": {
-                "description": "Enhanced OpenAPI 3.0 schema with examples and metadata",
-                "method": "GET"
+    return JSONResponse(
+        content={
+            "title": "API Documentation Endpoints",
+            "description": "Enhanced API documentation generator for the Residency Scheduler API",
+            "endpoints": {
+                "/openapi-enhanced.json": {
+                    "description": "Enhanced OpenAPI 3.0 schema with examples and metadata",
+                    "method": "GET",
+                },
+                "/markdown": {
+                    "description": "Complete API documentation in Markdown format",
+                    "method": "GET",
+                },
+                "/endpoint": {
+                    "description": "Documentation for a specific endpoint",
+                    "method": "GET",
+                    "parameters": ["path", "method", "format"],
+                },
+                "/examples": {
+                    "description": "Code examples for a specific endpoint",
+                    "method": "GET",
+                    "parameters": ["path", "method", "language"],
+                },
+                "/errors": {
+                    "description": "Comprehensive error code documentation",
+                    "method": "GET",
+                },
+                "/changelog": {
+                    "description": "API changelog in Markdown format",
+                    "method": "GET",
+                },
+                "/version": {
+                    "description": "API versioning information",
+                    "method": "GET",
+                },
+                "/stats": {
+                    "description": "Statistics about the API documentation",
+                    "method": "GET",
+                },
+                "/export/openapi": {
+                    "description": "Export enhanced OpenAPI schema to file",
+                    "method": "GET",
+                    "parameters": ["filepath"],
+                },
+                "/export/markdown": {
+                    "description": "Export Markdown documentation to file",
+                    "method": "GET",
+                    "parameters": ["filepath"],
+                },
             },
-            "/markdown": {
-                "description": "Complete API documentation in Markdown format",
-                "method": "GET"
+            "usage": {
+                "interactive_docs": "http://localhost:8000/docs",
+                "redoc": "http://localhost:8000/redoc",
+                "enhanced_openapi": "http://localhost:8000/api/v1/docs/openapi-enhanced.json",
+                "markdown_docs": "http://localhost:8000/api/v1/docs/markdown",
             },
-            "/endpoint": {
-                "description": "Documentation for a specific endpoint",
-                "method": "GET",
-                "parameters": ["path", "method", "format"]
-            },
-            "/examples": {
-                "description": "Code examples for a specific endpoint",
-                "method": "GET",
-                "parameters": ["path", "method", "language"]
-            },
-            "/errors": {
-                "description": "Comprehensive error code documentation",
-                "method": "GET"
-            },
-            "/changelog": {
-                "description": "API changelog in Markdown format",
-                "method": "GET"
-            },
-            "/version": {
-                "description": "API versioning information",
-                "method": "GET"
-            },
-            "/stats": {
-                "description": "Statistics about the API documentation",
-                "method": "GET"
-            },
-            "/export/openapi": {
-                "description": "Export enhanced OpenAPI schema to file",
-                "method": "GET",
-                "parameters": ["filepath"]
-            },
-            "/export/markdown": {
-                "description": "Export Markdown documentation to file",
-                "method": "GET",
-                "parameters": ["filepath"]
-            }
-        },
-        "usage": {
-            "interactive_docs": "http://localhost:8000/docs",
-            "redoc": "http://localhost:8000/redoc",
-            "enhanced_openapi": "http://localhost:8000/api/v1/docs/openapi-enhanced.json",
-            "markdown_docs": "http://localhost:8000/api/v1/docs/markdown"
         }
-    })
+    )

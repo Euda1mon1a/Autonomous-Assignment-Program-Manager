@@ -3,12 +3,13 @@ Request/response transformation for API gateway.
 
 Provides transformation pipelines for modifying requests and responses.
 """
-import json
+
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 from fastapi import Request, Response
 from pydantic import BaseModel, Field
@@ -42,26 +43,24 @@ class TransformationRule(BaseModel):
 
     name: str = Field(..., description="Unique name for the rule")
     type: TransformationType = Field(..., description="Type of transformation")
-    operation: TransformationOperation = Field(
-        ..., description="Operation to perform"
-    )
-    source_field: Optional[str] = Field(
+    operation: TransformationOperation = Field(..., description="Operation to perform")
+    source_field: str | None = Field(
         default=None,
         description="Source field path (dot notation)",
     )
-    target_field: Optional[str] = Field(
+    target_field: str | None = Field(
         default=None,
         description="Target field path (dot notation)",
     )
-    value: Optional[Any] = Field(
+    value: Any | None = Field(
         default=None,
         description="Value for add operation",
     )
-    mapping: Optional[dict[str, str]] = Field(
+    mapping: dict[str, str] | None = Field(
         default=None,
         description="Field mapping for rename/map operations",
     )
-    filter_condition: Optional[str] = Field(
+    filter_condition: str | None = Field(
         default=None,
         description="Filter condition (Python expression)",
     )
@@ -75,8 +74,8 @@ class TransformationRule(BaseModel):
 class TransformationContext:
     """Context for transformation operations."""
 
-    request: Optional[Request] = None
-    response: Optional[Response] = None
+    request: Request | None = None
+    response: Response | None = None
     metadata: dict[str, Any] = None
 
     def __post_init__(self):
@@ -332,7 +331,7 @@ class RequestTransformer:
     Transforms incoming requests before routing to services.
     """
 
-    def __init__(self, rules: Optional[list[TransformationRule]] = None):
+    def __init__(self, rules: list[TransformationRule] | None = None):
         """
         Initialize request transformer.
 
@@ -359,8 +358,8 @@ class RequestTransformer:
     async def transform_request(
         self,
         request: Request,
-        body: Optional[dict] = None,
-    ) -> tuple[dict[str, str], Optional[dict]]:
+        body: dict | None = None,
+    ) -> tuple[dict[str, str], dict | None]:
         """
         Transform request.
 
@@ -375,9 +374,7 @@ class RequestTransformer:
 
         # Transform headers
         headers = dict(request.headers)
-        transformed_headers = await self.header_transformer.transform(
-            headers, context
-        )
+        transformed_headers = await self.header_transformer.transform(headers, context)
 
         # Transform body
         transformed_body = body
@@ -400,7 +397,7 @@ class ResponseTransformer:
     Transforms responses from services before returning to client.
     """
 
-    def __init__(self, rules: Optional[list[TransformationRule]] = None):
+    def __init__(self, rules: list[TransformationRule] | None = None):
         """
         Initialize response transformer.
 
@@ -428,7 +425,7 @@ class ResponseTransformer:
         self,
         headers: dict[str, str],
         body: Any,
-        request: Optional[Request] = None,
+        request: Request | None = None,
     ) -> tuple[dict[str, str], Any]:
         """
         Transform response.
@@ -444,9 +441,7 @@ class ResponseTransformer:
         context = TransformationContext(request=request)
 
         # Transform headers
-        transformed_headers = await self.header_transformer.transform(
-            headers, context
-        )
+        transformed_headers = await self.header_transformer.transform(headers, context)
 
         # Transform body
         transformed_body = body

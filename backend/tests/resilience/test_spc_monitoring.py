@@ -5,10 +5,9 @@ Comprehensive test suite for Western Electric Rules implementation and
 process capability calculations.
 """
 
-import math
 import statistics
 from datetime import datetime
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 
@@ -538,8 +537,12 @@ class TestCalculateControlLimits:
 
         assert limits["n"] == 8
         assert limits["centerline"] == pytest.approx(60.0)
-        assert limits["ucl"] == pytest.approx(limits["centerline"] + 3 * limits["sigma"])
-        assert limits["lcl"] == pytest.approx(limits["centerline"] - 3 * limits["sigma"])
+        assert limits["ucl"] == pytest.approx(
+            limits["centerline"] + 3 * limits["sigma"]
+        )
+        assert limits["lcl"] == pytest.approx(
+            limits["centerline"] - 3 * limits["sigma"]
+        )
 
     def test_calculate_control_limits_known_values(self):
         """Test control limits with known statistical values."""
@@ -625,8 +628,8 @@ class TestCalculateProcessCapability:
         capability = calculate_process_capability(data, lsl, usl)
 
         # Zero variation -> infinite capability
-        assert capability["cp"] == float('inf')
-        assert capability["cpk"] == float('inf')
+        assert capability["cp"] == float("inf")
+        assert capability["cpk"] == float("inf")
         assert capability["mean"] == 60.0
         assert capability["sigma"] == 0.0
 
@@ -730,7 +733,7 @@ class TestCalculateProcessCapability:
 
         assert capability["mean"] == 90.0
         assert capability["sigma"] == 0.0
-        assert capability["cpk"] == float('-inf')  # Outside spec
+        assert capability["cpk"] == float("-inf")  # Outside spec
         assert "outside specification" in capability["interpretation"].lower()
 
     def test_process_capability_acgme_scenario(self):
@@ -738,7 +741,7 @@ class TestCalculateProcessCapability:
         # Weekly hours: target 60, variation ±5
         # ACGME limit: 80 hours/week
         data = [58, 62, 59, 61, 63, 60, 58, 62, 64, 57]
-        lsl = 0   # Minimum hours (can't be negative)
+        lsl = 0  # Minimum hours (can't be negative)
         usl = 80  # ACGME limit
 
         capability = calculate_process_capability(data, lsl, usl)

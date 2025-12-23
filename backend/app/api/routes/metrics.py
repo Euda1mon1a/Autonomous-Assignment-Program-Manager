@@ -9,7 +9,7 @@ Provides endpoints for:
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import PlainTextResponse, Response
@@ -26,7 +26,7 @@ router = APIRouter(tags=["metrics"])
     summary="Metrics Health Check",
     description="Check if metrics collection is enabled and functioning",
 )
-async def metrics_health() -> Dict[str, Any]:
+async def metrics_health() -> dict[str, Any]:
     """
     Check metrics system health.
 
@@ -77,7 +77,7 @@ async def metrics_health() -> Dict[str, Any]:
     summary="Metrics Information",
     description="Get information about available metrics and their descriptions",
 )
-async def metrics_info() -> Dict[str, Any]:
+async def metrics_info() -> dict[str, Any]:
     """
     Get information about available metrics.
 
@@ -255,7 +255,9 @@ async def metrics_info() -> Dict[str, Any]:
 
     return {
         "metrics": metrics_documentation,
-        "total_metrics": sum(len(category) for category in metrics_documentation.values()),
+        "total_metrics": sum(
+            len(category) for category in metrics_documentation.values()
+        ),
         "categories": list(metrics_documentation.keys()),
     }
 
@@ -309,7 +311,7 @@ async def export_metrics(request: Request) -> Response:
     summary="Metrics Summary",
     description="Get high-level summary of current metrics",
 )
-async def metrics_summary() -> Dict[str, Any]:
+async def metrics_summary() -> dict[str, Any]:
     """
     Get a summary of current metrics values.
 
@@ -372,7 +374,7 @@ async def metrics_summary() -> Dict[str, Any]:
     summary="Reset Metrics (Development Only)",
     description="Reset all metric counters (only available in debug mode)",
 )
-async def reset_metrics() -> Dict[str, Any]:
+async def reset_metrics() -> dict[str, Any]:
     """
     Reset all metrics counters.
 

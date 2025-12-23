@@ -7,8 +7,9 @@ Provides automatic session management for HTTP requests:
 - Session ID extraction from cookies/headers
 - Integration with existing JWT authentication
 """
+
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -131,11 +132,7 @@ class SessionMiddleware(BaseHTTPMiddleware):
 
         return None
 
-    async def dispatch(
-        self,
-        request: Request,
-        call_next: Callable
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """
         Process request with session validation.
 

@@ -8,6 +8,7 @@ Tests cover:
 - HybridSolver
 - SolverFactory
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -30,9 +31,13 @@ from app.scheduling.solvers import (
 # Test Fixtures
 # ============================================================================
 
+
 class MockPerson:
     """Mock person for testing."""
-    def __init__(self, id=None, name="Test Person", person_type="resident", pgy_level=1):
+
+    def __init__(
+        self, id=None, name="Test Person", person_type="resident", pgy_level=1
+    ):
         self.id = id or uuid4()
         self.name = name
         self.type = person_type
@@ -41,6 +46,7 @@ class MockPerson:
 
 class MockBlock:
     """Mock block for testing."""
+
     def __init__(self, id=None, block_date=None, time_of_day="AM", is_weekend=False):
         self.id = id or uuid4()
         self.date = block_date or date.today()
@@ -50,7 +56,14 @@ class MockBlock:
 
 class MockTemplate:
     """Mock rotation template for testing."""
-    def __init__(self, id=None, name="Test Rotation", max_residents=None, requires_procedure_credential=False):
+
+    def __init__(
+        self,
+        id=None,
+        name="Test Rotation",
+        max_residents=None,
+        requires_procedure_credential=False,
+    ):
         self.id = id or uuid4()
         self.name = name
         self.max_residents = max_residents
@@ -61,8 +74,7 @@ class MockTemplate:
 def small_context():
     """Create a small scheduling context for quick tests."""
     residents = [
-        MockPerson(name=f"Resident {i}", pgy_level=(i % 3) + 1)
-        for i in range(3)
+        MockPerson(name=f"Resident {i}", pgy_level=(i % 3) + 1) for i in range(3)
     ]
     faculty = [MockPerson(name="Faculty 1", person_type="faculty", pgy_level=None)]
 
@@ -72,11 +84,13 @@ def small_context():
     for day_offset in range(3):
         block_date = start_date + timedelta(days=day_offset)
         for tod in ["AM", "PM"]:
-            blocks.append(MockBlock(
-                block_date=block_date,
-                time_of_day=tod,
-                is_weekend=False,
-            ))
+            blocks.append(
+                MockBlock(
+                    block_date=block_date,
+                    time_of_day=tod,
+                    is_weekend=False,
+                )
+            )
 
     templates = [MockTemplate(name="Clinic")]
 
@@ -107,8 +121,7 @@ def small_context():
 def medium_context():
     """Create a medium-sized context for solver tests."""
     residents = [
-        MockPerson(name=f"Resident {i}", pgy_level=(i % 3) + 1)
-        for i in range(6)
+        MockPerson(name=f"Resident {i}", pgy_level=(i % 3) + 1) for i in range(6)
     ]
     faculty = [
         MockPerson(name=f"Faculty {i}", person_type="faculty", pgy_level=None)
@@ -122,11 +135,13 @@ def medium_context():
         block_date = start_date + timedelta(days=day_offset)
         is_weekend = block_date.weekday() >= 5
         for tod in ["AM", "PM"]:
-            blocks.append(MockBlock(
-                block_date=block_date,
-                time_of_day=tod,
-                is_weekend=is_weekend,
-            ))
+            blocks.append(
+                MockBlock(
+                    block_date=block_date,
+                    time_of_day=tod,
+                    is_weekend=is_weekend,
+                )
+            )
 
     templates = [
         MockTemplate(name="Clinic"),
@@ -159,6 +174,7 @@ def medium_context():
 # ============================================================================
 # Greedy Solver Tests
 # ============================================================================
+
 
 class TestGreedySolver:
     """Tests for GreedySolver."""
@@ -229,6 +245,7 @@ class TestGreedySolver:
 
         # Count assignments per template per block
         from collections import defaultdict
+
         template_block_counts = defaultdict(lambda: defaultdict(int))
         for person_id, block_id, template_id in result.assignments:
             template_block_counts[template_id][block_id] += 1
@@ -236,12 +253,15 @@ class TestGreedySolver:
         # Verify no block has more than max_residents for any template
         for template_id, block_counts in template_block_counts.items():
             for block_id, count in block_counts.items():
-                assert count <= 1, f"Template {template_id} has {count} residents in block {block_id} (max: 1)"
+                assert count <= 1, (
+                    f"Template {template_id} has {count} residents in block {block_id} (max: 1)"
+                )
 
 
 # ============================================================================
 # CP-SAT Solver Tests
 # ============================================================================
+
 
 class TestCPSATSolver:
     """Tests for CPSATSolver."""
@@ -292,6 +312,7 @@ class TestCPSATSolver:
 # PuLP Solver Tests
 # ============================================================================
 
+
 class TestPuLPSolver:
     """Tests for PuLPSolver."""
 
@@ -339,6 +360,7 @@ class TestPuLPSolver:
 # Hybrid Solver Tests
 # ============================================================================
 
+
 class TestHybridSolver:
     """Tests for HybridSolver."""
 
@@ -366,6 +388,7 @@ class TestHybridSolver:
 # ============================================================================
 # Solver Factory Tests
 # ============================================================================
+
 
 class TestSolverFactory:
     """Tests for SolverFactory."""
@@ -421,6 +444,7 @@ class TestSolverFactory:
 # Solver Result Tests
 # ============================================================================
 
+
 class TestSolverResult:
     """Tests for SolverResult dataclass."""
 
@@ -467,6 +491,7 @@ class TestSolverResult:
 # ============================================================================
 # Performance Tests
 # ============================================================================
+
 
 class TestSolverPerformance:
     """Performance tests for solvers."""

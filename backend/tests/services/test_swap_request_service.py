@@ -1,5 +1,5 @@
 """Tests for SwapRequestService."""
-import pytest
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -7,7 +7,7 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
-from app.models.swap import SwapRecord, SwapStatus, SwapType
+from app.models.swap import SwapRecord, SwapStatus
 from app.services.swap_request_service import SwapRequestService
 
 
@@ -496,9 +496,9 @@ class TestCreateRequest:
         assert result.request_id is not None
 
         # Verify swap record was created
-        swap_record = db.query(SwapRecord).filter(
-            SwapRecord.id == result.request_id
-        ).first()
+        swap_record = (
+            db.query(SwapRecord).filter(SwapRecord.id == result.request_id).first()
+        )
         assert swap_record is not None
         assert swap_record.source_faculty_id == faculty.id
         assert swap_record.source_week == week_start

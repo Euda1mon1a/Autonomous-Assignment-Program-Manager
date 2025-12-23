@@ -50,25 +50,23 @@ Security:
 - Defense in depth: multiple validation layers
 - Connection pool isolation prevents resource exhaustion
 """
+
+import base64
+import hashlib
 import logging
 import re
-from contextlib import asynccontextmanager, contextmanager
-from datetime import datetime
-from typing import Any, Dict, Optional
-from uuid import UUID
-import hashlib
-import base64
 import secrets
+from datetime import datetime
+from typing import Any
+from uuid import UUID
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.backends import default_backend
-from sqlalchemy import create_engine, event, pool, text
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import Query, Session, sessionmaker
-from sqlalchemy.pool import NullPool, QueuePool
+from sqlalchemy.pool import QueuePool
 
 from app.tenancy.context import (
     get_current_tenant_id,
-    is_bypassing_tenant_filter,
 )
 from app.tenancy.models import Tenant, TenantAuditLog
 
@@ -109,7 +107,7 @@ class TenantScope:
     def __init__(
         self,
         session: Session,
-        tenant_id: Optional[UUID] = None,
+        tenant_id: UUID | None = None,
         use_schema: bool = False,
         bypass: bool = False,
     ):
@@ -192,9 +190,7 @@ class TenantScope:
         self._original_schema = result.scalar()
 
         # Set search_path to tenant schema
-        await self.session.execute(
-            text(f"SET search_path TO {schema_name}, public")
-        )
+        await self.session.execute(text(f"SET search_path TO {schema_name}, public"))
         logger.debug(f"Set search_path to schema: {schema_name}")
 
     async def _restore_schema(self):
@@ -214,17 +210,13 @@ class TenantScope:
         self._original_schema = result.scalar()
 
         # Set search_path to tenant schema
-        self.session.execute(
-            text(f"SET search_path TO {schema_name}, public")
-        )
+        self.session.execute(text(f"SET search_path TO {schema_name}, public"))
         logger.debug(f"Set search_path to schema: {schema_name}")
 
     def _restore_schema_sync(self):
         """Restore original search_path (sync)."""
         if self._original_schema:
-            self.session.execute(
-                text(f"SET search_path TO {self._original_schema}")
-            )
+            self.session.execute(text(f"SET search_path TO {self._original_schema}"))
 
     def _apply_row_level_filter(self):
         """
@@ -394,9 +386,7 @@ async def create_tenant_schema(session: Session, tenant_id: UUID) -> str:
         await session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
 
         # Set search_path to new schema
-        await session.execute(
-            text(f"SET search_path TO {schema_name}, public")
-        )
+        await session.execute(text(f"SET search_path TO {schema_name}, public"))
 
         # Create all tables in the schema
         # This would typically involve running migrations or using
@@ -413,7 +403,9 @@ async def create_tenant_schema(session: Session, tenant_id: UUID) -> str:
         raise RuntimeError(f"Failed to create tenant schema: {e}")
 
 
-async def drop_tenant_schema(session: Session, tenant_id: UUID, cascade: bool = False) -> None:
+async def drop_tenant_schema(
+    session: Session, tenant_id: UUID, cascade: bool = False
+) -> None:
     """
     Drop a PostgreSQL schema for a tenant.
 
@@ -474,7 +466,8 @@ def add_tenant_id_to_model(model_class):
             name = Column(String(255))
             # tenant_id is automatically added
     """
-    from sqlalchemy import Column, ForeignKey, Index
+    from sqlalchemy import Column, Index
+
     from app.db.types import GUID
 
     # Add tenant_id column if not already present
@@ -483,7 +476,7 @@ def add_tenant_id_to_model(model_class):
             GUID(),
             nullable=True,
             index=True,
-            doc="Tenant this record belongs to (for row-level isolation)"
+            doc="Tenant this record belongs to (for row-level isolation)",
         )
 
         # Add index on tenant_id for performance
@@ -630,7 +623,7 @@ class RowLevelSecurityManager:
     async def create_tenant_policy(
         self,
         table_name: str,
-        policy_name: Optional[str] = None,
+        policy_name: str | None = None,
     ) -> None:
         """
         Create RLS policy to enforce tenant isolation.
@@ -684,9 +677,7 @@ class RowLevelSecurityManager:
         Args:
             tenant_id: Tenant UUID to set
         """
-        await self.session.execute(
-            text(f"SET app.current_tenant_id = '{tenant_id}'")
-        )
+        await self.session.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
         logger.debug(f"Set session tenant_id to {tenant_id}")
 
     async def bypass_rls_for_session(self, bypass: bool = True) -> None:
@@ -697,9 +688,7 @@ class RowLevelSecurityManager:
             bypass: Whether to bypass RLS
         """
         value = "true" if bypass else "false"
-        await self.session.execute(
-            text(f"SET app.bypass_rls = '{value}'")
-        )
+        await self.session.execute(text(f"SET app.bypass_rls = '{value}'"))
         logger.debug(f"Set RLS bypass to {bypass}")
 
     async def disable_rls_for_table(self, table_name: str) -> None:
@@ -743,7 +732,7 @@ class TenantEncryptionService:
     - Cryptographic separation even if database isolation fails
     """
 
-    def __init__(self, master_key: Optional[bytes] = None):
+    def __init__(self, master_key: bytes | None = None):
         """
         Initialize encryption service.
 
@@ -777,15 +766,11 @@ class TenantEncryptionService:
             32-byte encryption key for this tenant
         """
         # Use tenant ID as salt in key derivation
-        tenant_bytes = str(tenant_id).encode('utf-8')
+        tenant_bytes = str(tenant_id).encode("utf-8")
 
         # Derive key using HMAC-SHA256
         derived = hashlib.pbkdf2_hmac(
-            'sha256',
-            self.master_key,
-            tenant_bytes,
-            iterations=100000,
-            dklen=32
+            "sha256", self.master_key, tenant_bytes, iterations=100000, dklen=32
         )
 
         return derived
@@ -819,7 +804,7 @@ class TenantEncryptionService:
             encrypted = nonce + ciphertext
 
             # Encode as base64 for text storage
-            return base64.b64encode(encrypted).decode('utf-8')
+            return base64.b64encode(encrypted).decode("utf-8")
 
         except Exception as e:
             logger.error(f"Encryption failed for tenant {tenant_id}: {e}")
@@ -873,7 +858,7 @@ class TenantEncryptionService:
         Returns:
             Base64-encoded ciphertext
         """
-        plaintext_bytes = plaintext.encode('utf-8')
+        plaintext_bytes = plaintext.encode("utf-8")
         return await self.encrypt_data(tenant_id, plaintext_bytes)
 
     async def decrypt_string(self, tenant_id: UUID, ciphertext: str) -> str:
@@ -888,7 +873,7 @@ class TenantEncryptionService:
             Decrypted string
         """
         plaintext_bytes = await self.decrypt_data(tenant_id, ciphertext)
-        return plaintext_bytes.decode('utf-8')
+        return plaintext_bytes.decode("utf-8")
 
 
 # =============================================================================
@@ -921,14 +906,14 @@ class TenantConnectionPoolManager:
         """
         self.database_url = database_url
         self.default_pool_size = default_pool_size
-        self._pools: Dict[UUID, sessionmaker] = {}
-        self._pool_configs: Dict[UUID, Dict[str, Any]] = {}
+        self._pools: dict[UUID, sessionmaker] = {}
+        self._pool_configs: dict[UUID, dict[str, Any]] = {}
 
     def create_tenant_pool(
         self,
         tenant_id: UUID,
-        pool_size: Optional[int] = None,
-        max_overflow: Optional[int] = None,
+        pool_size: int | None = None,
+        max_overflow: int | None = None,
         pool_timeout: int = 30,
         pool_recycle: int = 1800,
     ) -> sessionmaker:
@@ -964,19 +949,15 @@ class TenantConnectionPoolManager:
         )
 
         # Create sessionmaker
-        session_factory = sessionmaker(
-            autocommit=False,
-            autoflush=False,
-            bind=engine
-        )
+        session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
         # Store pool
         self._pools[tenant_id] = session_factory
         self._pool_configs[tenant_id] = {
-            'pool_size': pool_size,
-            'max_overflow': max_overflow,
-            'pool_timeout': pool_timeout,
-            'pool_recycle': pool_recycle,
+            "pool_size": pool_size,
+            "max_overflow": max_overflow,
+            "pool_timeout": pool_timeout,
+            "pool_recycle": pool_recycle,
         }
 
         logger.info(
@@ -1004,7 +985,7 @@ class TenantConnectionPoolManager:
 
         return self._pools[tenant_id]()
 
-    def get_pool_stats(self, tenant_id: UUID) -> Dict[str, Any]:
+    def get_pool_stats(self, tenant_id: UUID) -> dict[str, Any]:
         """
         Get connection pool statistics for a tenant.
 
@@ -1015,18 +996,18 @@ class TenantConnectionPoolManager:
             Dictionary with pool statistics
         """
         if tenant_id not in self._pools:
-            return {'error': 'No pool exists'}
+            return {"error": "No pool exists"}
 
         session_factory = self._pools[tenant_id]
-        engine = session_factory.kw['bind']
+        engine = session_factory.kw["bind"]
         pool_obj = engine.pool
 
         return {
-            'tenant_id': str(tenant_id),
-            'pool_size': pool_obj.size(),
-            'checked_out': pool_obj.checkedout(),
-            'overflow': pool_obj.overflow(),
-            'config': self._pool_configs.get(tenant_id, {}),
+            "tenant_id": str(tenant_id),
+            "pool_size": pool_obj.size(),
+            "checked_out": pool_obj.checkedout(),
+            "overflow": pool_obj.overflow(),
+            "config": self._pool_configs.get(tenant_id, {}),
         }
 
     def dispose_tenant_pool(self, tenant_id: UUID) -> None:
@@ -1045,7 +1026,7 @@ class TenantConnectionPoolManager:
 
         # Get engine and dispose
         session_factory = self._pools[tenant_id]
-        engine = session_factory.kw['bind']
+        engine = session_factory.kw["bind"]
         engine.dispose()
 
         # Remove from tracking
@@ -1159,7 +1140,7 @@ class TenantQuotaService:
     async def get_quota_usage(
         self,
         tenant_id: UUID,
-    ) -> Dict[str, Dict[str, Any]]:
+    ) -> dict[str, dict[str, Any]]:
         """
         Get current quota usage for a tenant.
 
@@ -1169,7 +1150,7 @@ class TenantQuotaService:
         Returns:
             Dictionary mapping quota names to usage info
         """
-        from sqlalchemy import select, func
+        from sqlalchemy import func, select
 
         result = await self.session.execute(
             select(Tenant).where(Tenant.id == tenant_id)
@@ -1187,15 +1168,18 @@ class TenantQuotaService:
         # Adjust based on your actual schema
         try:
             from app.models.user import User
+
             user_count_result = await self.session.execute(
                 select(func.count(User.id)).where(User.tenant_id == tenant_id)
             )
             user_count = user_count_result.scalar() or 0
 
-            usage['max_users'] = {
-                'current': user_count,
-                'limit': limits.get('max_users'),
-                'percentage': (user_count / limits['max_users'] * 100) if limits.get('max_users') else 0,
+            usage["max_users"] = {
+                "current": user_count,
+                "limit": limits.get("max_users"),
+                "percentage": (user_count / limits["max_users"] * 100)
+                if limits.get("max_users")
+                else 0,
             }
         except Exception as e:
             logger.debug(f"Could not count users: {e}")
@@ -1205,6 +1189,7 @@ class TenantQuotaService:
 
 class QuotaExceededError(Exception):
     """Exception raised when a tenant quota is exceeded."""
+
     pass
 
 
@@ -1231,8 +1216,8 @@ class TenantIsolationService:
     def __init__(
         self,
         session: Session,
-        master_encryption_key: Optional[bytes] = None,
-        database_url: Optional[str] = None,
+        master_encryption_key: bytes | None = None,
+        database_url: str | None = None,
     ):
         """
         Initialize isolation service.
@@ -1279,8 +1264,13 @@ class TenantIsolationService:
             if enable_rls:
                 # Enable RLS on common tables
                 tables_to_protect = [
-                    'people', 'assignments', 'blocks', 'absences',
-                    'schedules', 'swaps', 'notifications'
+                    "people",
+                    "assignments",
+                    "blocks",
+                    "absences",
+                    "schedules",
+                    "swaps",
+                    "notifications",
                 ]
 
                 for table in tables_to_protect:
@@ -1406,8 +1396,8 @@ class TenantIsolationService:
         action: str,
         resource_type: str,
         resource_id: UUID,
-        user_id: Optional[UUID] = None,
-        changes: Optional[Dict] = None,
+        user_id: UUID | None = None,
+        changes: dict | None = None,
     ) -> None:
         """
         Log an audit event for tenant operations.

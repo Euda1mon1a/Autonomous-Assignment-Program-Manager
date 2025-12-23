@@ -25,9 +25,10 @@ import tempfile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -190,6 +191,7 @@ class ExperimentalHarness:
             # Try importing the production solver
             # Note: This requires proper PYTHONPATH setup
             import sys
+
             backend_path = self.repo_root / "backend"
             if str(backend_path) not in sys.path:
                 sys.path.insert(0, str(backend_path))
@@ -198,22 +200,30 @@ class ExperimentalHarness:
 
             # Create a simple mock context based on scenario
             # In real implementation, would build full SchedulingContext
-            mock_context = type('MockContext', (), {
-                'blocks': [None] * scenario.get('blocks', 730),
-                'residents': [None] * scenario.get('residents', 24),
-            })()
+            mock_context = type(
+                "MockContext",
+                (),
+                {
+                    "blocks": [None] * scenario.get("blocks", 730),
+                    "residents": [None] * scenario.get("residents", 24),
+                },
+            )()
 
             # Create a simple mock solver that returns basic result structure
             class MockSolver:
                 def solve(self, context):
-                    return type('Result', (), {
-                        'success': True,
-                        'assignments': [],
-                        'statistics': {
-                            'coverage_rate': 0.98,
-                            'total_blocks': len(context.blocks),
+                    return type(
+                        "Result",
+                        (),
+                        {
+                            "success": True,
+                            "assignments": [],
+                            "statistics": {
+                                "coverage_rate": 0.98,
+                                "total_blocks": len(context.blocks),
+                            },
                         },
-                    })()
+                    )()
 
             benchmark = SolverBenchmark()
             result = benchmark.run(MockSolver(), "baseline", mock_context, scenario_key)
@@ -254,7 +264,9 @@ class ExperimentalHarness:
                 error_message=f"Branch not found for: {branch_key}",
             )
 
-        logger.info(f"Running experimental branch {branch_name} for scenario: {scenario_key}")
+        logger.info(
+            f"Running experimental branch {branch_name} for scenario: {scenario_key}"
+        )
 
         # Attempt isolated subprocess execution
         try:
@@ -275,18 +287,18 @@ class ExperimentalHarness:
                 # For now, just demonstrate the structure
 
                 # Create a subprocess script that would run the solver
-                script_content = f"""
+                script_content = """
 import json
 import sys
 
 # Mock experimental solver result
-result = {{
+result = {
     "success": True,
     "constraint_violations": 0,
     "coverage_score": 0.97,
     "solve_time_ms": 1200,
     "memory_mb": 280
-}}
+}
 
 print(json.dumps(result))
 """
@@ -356,7 +368,9 @@ print(json.dumps(result))
                 # Calculate delta vs baseline
                 if baseline.success and result.success:
                     result.baseline_solve_time_ms = baseline.solve_time_ms
-                    result.quality_delta = result.coverage_score - baseline.coverage_score
+                    result.quality_delta = (
+                        result.coverage_score - baseline.coverage_score
+                    )
 
                 if branch_key not in report.results:
                     report.results[branch_key] = []

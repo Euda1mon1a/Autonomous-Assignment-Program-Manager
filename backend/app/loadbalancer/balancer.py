@@ -10,7 +10,6 @@ Provides:
 - Metrics and monitoring
 """
 
-import asyncio
 import logging
 from typing import Any
 
@@ -179,9 +178,7 @@ class LoadBalancer:
             selected = await self.strategy.select_instance(instances)
 
             if selected:
-                logger.debug(
-                    f"Selected instance: {selected.endpoint} ({service_name})"
-                )
+                logger.debug(f"Selected instance: {selected.endpoint} ({service_name})")
 
             return selected
 
@@ -231,9 +228,7 @@ class LoadBalancer:
                 return instance
 
             # Instance is unhealthy, try another
-            logger.debug(
-                f"Instance {instance.endpoint} unhealthy, trying alternative"
-            )
+            logger.debug(f"Instance {instance.endpoint} unhealthy, trying alternative")
             self._failover_count += 1
             attempts += 1
 
@@ -299,9 +294,7 @@ class LoadBalancer:
 
             except Exception as e:
                 last_error = e
-                logger.warning(
-                    f"Execution failed on instance {instance.endpoint}: {e}"
-                )
+                logger.warning(f"Execution failed on instance {instance.endpoint}: {e}")
 
                 # Mark instance as unhealthy
                 await self.registry.update_health(instance.id, False)
@@ -422,7 +415,11 @@ class LoadBalancer:
             "failed_requests": self._failed_requests,
             "failover_count": self._failover_count,
             "success_rate": (
-                ((self._total_requests - self._failed_requests) / self._total_requests * 100)
+                (
+                    (self._total_requests - self._failed_requests)
+                    / self._total_requests
+                    * 100
+                )
                 if self._total_requests > 0
                 else 0.0
             ),

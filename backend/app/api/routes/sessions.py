@@ -10,6 +10,7 @@ Provides endpoints for:
 
 Thin routing layer following the application's layered architecture.
 """
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from app.auth.sessions.manager import SessionManager, get_session_manager

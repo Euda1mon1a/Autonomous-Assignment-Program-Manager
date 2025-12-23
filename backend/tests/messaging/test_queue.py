@@ -4,15 +4,13 @@ import asyncio
 import json
 import os
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from app.messaging.queue import (
-    AckMode,
     DeliveryMode,
     Message,
-    MessageQueueAdapter,
     QueueConfig,
     RabbitMQAdapter,
     RedisQueueAdapter,
@@ -234,9 +232,7 @@ class TestMessageQueueAdapter:
         config = QueueConfig()
         adapter = RedisQueueAdapter(config)  # Use concrete implementation
 
-        msg = Message(
-            body={"key": "value", "number": 42, "nested": {"data": "test"}}
-        )
+        msg = Message(body={"key": "value", "number": 42, "nested": {"data": "test"}})
 
         serialized = adapter.serialize_message(msg)
 
@@ -439,7 +435,9 @@ class TestRabbitMQAdapter:
         config = QueueConfig(backend="rabbitmq")
         adapter = RabbitMQAdapter(config)
 
-        with patch("builtins.__import__", side_effect=ImportError("No module named 'aio_pika'")):
+        with patch(
+            "builtins.__import__", side_effect=ImportError("No module named 'aio_pika'")
+        ):
             with pytest.raises(ImportError):
                 await adapter.connect()
 

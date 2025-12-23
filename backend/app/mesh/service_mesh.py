@@ -16,13 +16,11 @@ platforms like Istio, Linkerd, Consul Connect, or AWS App Mesh.
 """
 
 import asyncio
-import hashlib
 import logging
-import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -345,7 +343,7 @@ class RoutingRule(BaseModel):
         description="Request timeout in milliseconds",
         ge=100,
     )
-    retry_policy: Optional[RetryPolicy] = Field(
+    retry_policy: RetryPolicy | None = Field(
         default=None,
         description="Retry policy for this route",
     )
@@ -510,7 +508,9 @@ class SidecarConfig(BaseModel):
                                                         "domains": ["*"],
                                                         "routes": [
                                                             {
-                                                                "match": {"prefix": "/"},
+                                                                "match": {
+                                                                    "prefix": "/"
+                                                                },
                                                                 "route": {
                                                                     "cluster": self.service_name,
                                                                     "timeout": f"{self.timeout_policy.request_timeout_ms}ms",
@@ -601,7 +601,9 @@ class SidecarConfig(BaseModel):
                 "common_tls_context": {
                     "tls_certificates": [
                         {
-                            "certificate_chain": {"filename": self.mtls_config.cert_path},
+                            "certificate_chain": {
+                                "filename": self.mtls_config.cert_path
+                            },
                             "private_key": {"filename": self.mtls_config.key_path},
                         }
                     ],
@@ -669,7 +671,7 @@ class TrafficSplit:
     service_name: str
     weights: list[TrafficWeight]
     created_at: datetime = field(default_factory=datetime.utcnow)
-    expires_at: Optional[datetime] = None
+    expires_at: datetime | None = None
 
     def __post_init__(self):
         """Validate weights sum to 100."""
@@ -683,7 +685,7 @@ class TrafficSplit:
             return True
         return datetime.utcnow() < self.expires_at
 
-    def get_destination_for_request(self, headers: dict[str, str]) -> Optional[str]:
+    def get_destination_for_request(self, headers: dict[str, str]) -> str | None:
         """
         Determine destination version based on headers.
 
@@ -696,9 +698,7 @@ class TrafficSplit:
         # Check header-based routing first
         for weight in self.weights:
             if weight.headers:
-                match = all(
-                    headers.get(k) == v for k, v in weight.headers.items()
-                )
+                match = all(headers.get(k) == v for k, v in weight.headers.items())
                 if match:
                     return weight.service_version
 
@@ -722,7 +722,7 @@ class ObservabilityHeaders:
     request_id: str
     trace_id: str
     span_id: str
-    parent_span_id: Optional[str] = None
+    parent_span_id: str | None = None
     sampling_decision: bool = True
     baggage: dict[str, str] = field(default_factory=dict)
 
@@ -739,19 +739,15 @@ class ObservabilityHeaders:
         """
         # Support multiple tracing header formats
         trace_id = (
-            headers.get("x-b3-traceid")
-            or headers.get("traceparent", "").split("-")[1]
+            headers.get("x-b3-traceid") or headers.get("traceparent", "").split("-")[1]
             if "traceparent" in headers
-            else None
-            or str(uuid4().hex)
+            else None or str(uuid4().hex)
         )
 
         span_id = (
-            headers.get("x-b3-spanid")
-            or headers.get("traceparent", "").split("-")[2]
+            headers.get("x-b3-spanid") or headers.get("traceparent", "").split("-")[2]
             if "traceparent" in headers
-            else None
-            or str(uuid4().hex[:16])
+            else None or str(uuid4().hex[:16])
         )
 
         parent_span_id = headers.get("x-b3-parentspanid")
@@ -1034,7 +1030,7 @@ class ServiceHealthReporter:
         self.service_name = service_name
         self.version = version
         self.health_status = HealthStatus.UNKNOWN
-        self.last_check: Optional[datetime] = None
+        self.last_check: datetime | None = None
         self.checks: dict[str, bool] = {}
         self.metadata: dict[str, Any] = {}
 
@@ -1229,7 +1225,7 @@ class ServiceMesh:
         self,
         uri: str,
         headers: dict[str, str],
-    ) -> Optional[tuple[str, str]]:
+    ) -> tuple[str, str] | None:
         """
         Determine routing destination based on rules.
 

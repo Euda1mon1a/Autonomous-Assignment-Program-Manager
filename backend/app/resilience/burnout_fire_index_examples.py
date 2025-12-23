@@ -9,8 +9,6 @@ from uuid import uuid4
 
 from app.resilience.burnout_fire_index import (
     BurnoutDangerRating,
-    DangerClass,
-    FireDangerReport,
 )
 
 
@@ -21,21 +19,21 @@ def example_single_resident():
     # Example: Resident with moderate concern
     report = rating.calculate_burnout_danger(
         resident_id=uuid4(),
-        recent_hours=71.0,          # Hours worked last 2 weeks
-        monthly_load=264.0,         # Average monthly hours (last 3 months)
-        yearly_satisfaction=0.56,   # Job satisfaction (0.0-1.0)
-        workload_velocity=4.5,      # Hours/week increase rate
+        recent_hours=71.0,  # Hours worked last 2 weeks
+        monthly_load=264.0,  # Average monthly hours (last 3 months)
+        yearly_satisfaction=0.56,  # Job satisfaction (0.0-1.0)
+        workload_velocity=4.5,  # Hours/week increase rate
     )
 
     print(f"Danger Class: {report.danger_class.value.upper()}")
     print(f"FWI Score: {report.fwi_score:.1f}")
     print(f"Safe: {report.is_safe}")
     print(f"Requires Intervention: {report.requires_intervention}")
-    print(f"\nComponent Breakdown:")
+    print("\nComponent Breakdown:")
     print(f"  FFMC (2-week): {report.component_scores['ffmc']:.1f}")
     print(f"  DMC (3-month): {report.component_scores['dmc']:.1f}")
     print(f"  DC (1-year): {report.component_scores['dc']:.1f}")
-    print(f"\nRecommended Restrictions:")
+    print("\nRecommended Restrictions:")
     for restriction in report.recommended_restrictions:
         print(f"  - {restriction}")
 
@@ -137,20 +135,22 @@ def example_custom_targets():
 
     # Example: Surgery residency with higher expected hours
     surgery_rating = BurnoutDangerRating(
-        ffmc_target=70.0,    # 70h per 2 weeks (vs 60h default)
-        dmc_target=280.0,    # 280h per month (vs 240h default)
+        ffmc_target=70.0,  # 70h per 2 weeks (vs 60h default)
+        dmc_target=280.0,  # 280h per month (vs 240h default)
     )
 
     report = surgery_rating.calculate_burnout_danger(
         resident_id=uuid4(),
-        recent_hours=72.0,     # Would be high for IM, moderate for surgery
-        monthly_load=275.0,    # Ditto
+        recent_hours=72.0,  # Would be high for IM, moderate for surgery
+        monthly_load=275.0,  # Ditto
         yearly_satisfaction=0.7,
         workload_velocity=2.0,
     )
 
-    print(f"Surgery Residency (adjusted targets):")
-    print(f"  72h/2wk, 275h/mo → {report.danger_class.value.upper()} (FWI={report.fwi_score:.1f})")
+    print("Surgery Residency (adjusted targets):")
+    print(
+        f"  72h/2wk, 275h/mo → {report.danger_class.value.upper()} (FWI={report.fwi_score:.1f})"
+    )
 
 
 def example_danger_thresholds():
@@ -187,7 +187,9 @@ def example_temporal_integration():
             yearly_satisfaction=satisfaction,
             workload_velocity=velocity,
         )
-        print(f"{name:25s} → {report.danger_class.value.upper():<12} (FWI={report.fwi_score:.1f})")
+        print(
+            f"{name:25s} → {report.danger_class.value.upper():<12} (FWI={report.fwi_score:.1f})"
+        )
 
     print("\n→ Burnout requires alignment across multiple temporal scales")
     print("→ Single scale high = LOW/MODERATE")

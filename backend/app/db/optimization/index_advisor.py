@@ -7,7 +7,7 @@ optimal indexes for improving query performance.
 import logging
 import re
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -90,9 +90,7 @@ class IndexAdvisor:
         # Get tables with sequential scans
         seq_scan_tables = self._get_sequential_scan_tables(min_table_size_mb)
         for table_info in seq_scan_tables:
-            recommendations.extend(
-                self._recommend_indexes_for_table(table_info)
-            )
+            recommendations.extend(self._recommend_indexes_for_table(table_info))
 
         # Analyze slow query patterns
         recommendations.extend(self._analyze_slow_query_patterns())
@@ -219,9 +217,7 @@ class IndexAdvisor:
             logger.error(f"Error getting index usage stats: {e}")
             return []
 
-    def analyze_table_statistics(
-        self, table_name: str
-    ) -> dict[str, Any]:
+    def analyze_table_statistics(self, table_name: str) -> dict[str, Any]:
         """
         Get detailed statistics for a table.
 
@@ -292,9 +288,7 @@ class IndexAdvisor:
             logger.error(f"Error analyzing table {table_name}: {e}")
             return {}
 
-    def _get_sequential_scan_tables(
-        self, min_size_mb: float
-    ) -> list[dict[str, Any]]:
+    def _get_sequential_scan_tables(self, min_size_mb: float) -> list[dict[str, Any]]:
         """
         Get tables with high sequential scan counts.
 

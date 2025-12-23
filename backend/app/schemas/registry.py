@@ -45,9 +45,8 @@ Usage:
     )
 """
 
-import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -69,12 +68,13 @@ logger = logging.getLogger(__name__)
 # Pydantic schemas for API
 class SchemaRegistrationRequest(BaseModel):
     """Request to register a new schema version."""
+
     name: str = Field(..., description="Schema name")
     version: int = Field(..., gt=0, description="Version number")
     schema_definition: dict[str, Any] = Field(..., description="JSON schema definition")
     compatibility_type: str = Field(
         default="backward",
-        description="Compatibility type: none, backward, forward, full, transitive"
+        description="Compatibility type: none, backward, forward, full, transitive",
     )
     description: str | None = Field(None, description="Schema description")
     changelog: str | None = Field(None, description="Changes from previous version")
@@ -85,6 +85,7 @@ class SchemaRegistrationRequest(BaseModel):
 
 class SchemaResponse(BaseModel):
     """Response schema for schema version."""
+
     id: UUID
     name: str
     version: int
@@ -109,6 +110,7 @@ class SchemaResponse(BaseModel):
 
 class SchemaCompatibilityResult(BaseModel):
     """Result of schema compatibility check."""
+
     compatible: bool
     compatibility_type: str
     violations: list[str] = Field(default_factory=list)
@@ -118,6 +120,7 @@ class SchemaCompatibilityResult(BaseModel):
 
 class SchemaDocumentation(BaseModel):
     """Generated documentation for a schema."""
+
     name: str
     current_version: int
     total_versions: int
@@ -139,8 +142,7 @@ class SchemaEvolutionRule:
 
     @staticmethod
     def validate_backward_compatibility(
-        old_schema: dict[str, Any],
-        new_schema: dict[str, Any]
+        old_schema: dict[str, Any], new_schema: dict[str, Any]
     ) -> list[str]:
         """
         Validate backward compatibility (new schema can read old data).
@@ -174,9 +176,7 @@ class SchemaEvolutionRule:
         # Check for removed fields
         removed_fields = set(old_props.keys()) - set(new_props.keys())
         if removed_fields:
-            violations.append(
-                f"Backward incompatible: Removed fields {removed_fields}"
-            )
+            violations.append(f"Backward incompatible: Removed fields {removed_fields}")
 
         # Check for new required fields
         new_required_fields = new_required - old_required
@@ -203,8 +203,7 @@ class SchemaEvolutionRule:
 
     @staticmethod
     def validate_forward_compatibility(
-        old_schema: dict[str, Any],
-        new_schema: dict[str, Any]
+        old_schema: dict[str, Any], new_schema: dict[str, Any]
     ) -> list[str]:
         """
         Validate forward compatibility (old schema can read new data).
@@ -236,9 +235,7 @@ class SchemaEvolutionRule:
         # Check for new fields
         new_fields = set(new_props.keys()) - set(old_props.keys())
         if new_fields:
-            violations.append(
-                f"Forward incompatible: Added fields {new_fields}"
-            )
+            violations.append(f"Forward incompatible: Added fields {new_fields}")
 
         # Check for removed required fields
         removed_required = old_required - new_required
@@ -252,8 +249,7 @@ class SchemaEvolutionRule:
 
     @staticmethod
     def validate_full_compatibility(
-        old_schema: dict[str, Any],
-        new_schema: dict[str, Any]
+        old_schema: dict[str, Any], new_schema: dict[str, Any]
     ) -> list[str]:
         """
         Validate full compatibility (both backward and forward).
@@ -267,16 +263,10 @@ class SchemaEvolutionRule:
         """
         violations = []
         violations.extend(
-            SchemaEvolutionRule.validate_backward_compatibility(
-                old_schema,
-                new_schema
-            )
+            SchemaEvolutionRule.validate_backward_compatibility(old_schema, new_schema)
         )
         violations.extend(
-            SchemaEvolutionRule.validate_forward_compatibility(
-                old_schema,
-                new_schema
-            )
+            SchemaEvolutionRule.validate_forward_compatibility(old_schema, new_schema)
         )
         return violations
 
@@ -363,22 +353,17 @@ class SchemaRegistry:
         # Check if version already exists
         existing = await self._get_schema_by_name_version(name, version)
         if existing:
-            raise ValueError(
-                f"Schema {name} version {version} already exists"
-            )
+            raise ValueError(f"Schema {name} version {version} already exists")
 
         # Validate compatibility with previous version if exists
         if version > 1:
-            previous_version = await self._get_schema_by_name_version(
-                name,
-                version - 1
-            )
+            previous_version = await self._get_schema_by_name_version(name, version - 1)
             if previous_version:
                 compat_result = await self.check_compatibility(
                     name,
                     schema_definition,
                     compatibility_type,
-                    compare_to_version=version - 1
+                    compare_to_version=version - 1,
                 )
 
                 if not compat_result.compatible:
@@ -435,13 +420,11 @@ class SchemaRegistry:
         return {
             "schema_version": schema_version,
             "success": True,
-            "message": f"Schema {name} version {version} registered successfully"
+            "message": f"Schema {name} version {version} registered successfully",
         }
 
     async def get_schema(
-        self,
-        name: str,
-        version: int | None = None
+        self, name: str, version: int | None = None
     ) -> SchemaVersion | None:
         """
         Get a schema version by name and optional version number.
@@ -466,13 +449,10 @@ class SchemaRegistry:
                 .where(
                     or_(
                         SchemaVersion.is_default.is_(True),
-                        SchemaVersion.status == SchemaStatus.ACTIVE.value
+                        SchemaVersion.status == SchemaStatus.ACTIVE.value,
                     )
                 )
-                .order_by(
-                    desc(SchemaVersion.is_default),
-                    desc(SchemaVersion.version)
-                )
+                .order_by(desc(SchemaVersion.is_default), desc(SchemaVersion.version))
             )
             result = await self.db.execute(stmt)
             return result.scalars().first()
@@ -483,13 +463,10 @@ class SchemaRegistry:
                 .filter(
                     or_(
                         SchemaVersion.is_default.is_(True),
-                        SchemaVersion.status == SchemaStatus.ACTIVE.value
+                        SchemaVersion.status == SchemaStatus.ACTIVE.value,
                     )
                 )
-                .order_by(
-                    desc(SchemaVersion.is_default),
-                    desc(SchemaVersion.version)
-                )
+                .order_by(desc(SchemaVersion.is_default), desc(SchemaVersion.version))
                 .first()
             )
 
@@ -521,9 +498,7 @@ class SchemaRegistry:
             if status_filter:
                 stmt = stmt.where(SchemaVersion.status.in_(status_filter))
             elif not include_archived:
-                stmt = stmt.where(
-                    SchemaVersion.status != SchemaStatus.ARCHIVED.value
-                )
+                stmt = stmt.where(SchemaVersion.status != SchemaStatus.ARCHIVED.value)
 
             if tags:
                 # Filter by tags (PostgreSQL JSON array contains)
@@ -538,9 +513,7 @@ class SchemaRegistry:
             query = self.db.query(SchemaVersion)
 
             if name_filter:
-                query = query.filter(
-                    SchemaVersion.name.ilike(f"%{name_filter}%")
-                )
+                query = query.filter(SchemaVersion.name.ilike(f"%{name_filter}%"))
 
             if status_filter:
                 query = query.filter(SchemaVersion.status.in_(status_filter))
@@ -553,10 +526,7 @@ class SchemaRegistry:
                 for tag in tags:
                     query = query.filter(SchemaVersion.tags.contains([tag]))
 
-            return query.order_by(
-                SchemaVersion.name,
-                desc(SchemaVersion.version)
-            ).all()
+            return query.order_by(SchemaVersion.name, desc(SchemaVersion.version)).all()
 
     async def check_compatibility(
         self,
@@ -580,8 +550,7 @@ class SchemaRegistry:
         # Get schema to compare against
         if compare_to_version is not None:
             existing_schema = await self._get_schema_by_name_version(
-                schema_name,
-                compare_to_version
+                schema_name, compare_to_version
             )
         else:
             existing_schema = await self.get_schema(schema_name)
@@ -590,7 +559,7 @@ class SchemaRegistry:
             return SchemaCompatibilityResult(
                 compatible=True,
                 compatibility_type=compatibility_type,
-                warnings=["No existing schema to compare against"]
+                warnings=["No existing schema to compare against"],
             )
 
         old_definition = existing_schema.schema_definition
@@ -601,43 +570,34 @@ class SchemaRegistry:
         # Validate based on compatibility type
         if compatibility_type == SchemaCompatibilityType.BACKWARD.value:
             violations = SchemaEvolutionRule.validate_backward_compatibility(
-                old_definition,
-                new_schema_definition
+                old_definition, new_schema_definition
             )
         elif compatibility_type == SchemaCompatibilityType.FORWARD.value:
             violations = SchemaEvolutionRule.validate_forward_compatibility(
-                old_definition,
-                new_schema_definition
+                old_definition, new_schema_definition
             )
         elif compatibility_type == SchemaCompatibilityType.FULL.value:
             violations = SchemaEvolutionRule.validate_full_compatibility(
-                old_definition,
-                new_schema_definition
+                old_definition, new_schema_definition
             )
         elif compatibility_type == SchemaCompatibilityType.TRANSITIVE.value:
             # Check against all previous versions
             all_versions = await self._get_all_schema_versions(schema_name)
             for version_schema in all_versions:
-                version_violations = (
-                    SchemaEvolutionRule.validate_full_compatibility(
-                        version_schema.schema_definition,
-                        new_schema_definition
-                    )
+                version_violations = SchemaEvolutionRule.validate_full_compatibility(
+                    version_schema.schema_definition, new_schema_definition
                 )
                 if version_violations:
-                    violations.extend([
-                        f"v{version_schema.version}: {v}"
-                        for v in version_violations
-                    ])
+                    violations.extend(
+                        [f"v{version_schema.version}: {v}" for v in version_violations]
+                    )
 
         # Add suggestions for common issues
         if violations:
             suggestions.append(
                 "Consider using a higher version number for breaking changes"
             )
-            suggestions.append(
-                "Review migration notes to help users adapt to changes"
-            )
+            suggestions.append("Review migration notes to help users adapt to changes")
 
         return SchemaCompatibilityResult(
             compatible=len(violations) == 0,
@@ -707,7 +667,7 @@ class SchemaRegistry:
 
         return {
             "success": True,
-            "message": f"Schema {name} version {version} marked as deprecated"
+            "message": f"Schema {name} version {version} marked as deprecated",
         }
 
     async def archive_schema(
@@ -759,10 +719,7 @@ class SchemaRegistry:
 
         logger.info(f"Archived schema {name} version {version}")
 
-        return {
-            "success": True,
-            "message": f"Schema {name} version {version} archived"
-        }
+        return {"success": True, "message": f"Schema {name} version {version} archived"}
 
     async def set_default_version(
         self,
@@ -823,7 +780,7 @@ class SchemaRegistry:
 
         return {
             "success": True,
-            "message": f"Schema {name} version {version} set as default"
+            "message": f"Schema {name} version {version} set as default",
         }
 
     async def generate_documentation(
@@ -857,17 +814,20 @@ class SchemaRegistry:
         required_fields = set(schema.schema_definition.get("required", []))
 
         for field_name, field_def in properties.items():
-            fields.append({
-                "name": field_name,
-                "type": field_def.get("type", "unknown"),
-                "required": field_name in required_fields,
-                "description": field_def.get("description"),
-                "default": field_def.get("default"),
-                "constraints": {
-                    k: v for k, v in field_def.items()
-                    if k not in ("type", "description", "default")
-                },
-            })
+            fields.append(
+                {
+                    "name": field_name,
+                    "type": field_def.get("type", "unknown"),
+                    "required": field_name in required_fields,
+                    "description": field_def.get("description"),
+                    "default": field_def.get("default"),
+                    "constraints": {
+                        k: v
+                        for k, v in field_def.items()
+                        if k not in ("type", "description", "default")
+                    },
+                }
+            )
 
         # Build compatibility history
         compatibility_history = [
@@ -886,12 +846,10 @@ class SchemaRegistry:
         if schema.status == SchemaStatus.DEPRECATED.value:
             deprecation_info = {
                 "deprecated_at": (
-                    schema.deprecated_at.isoformat()
-                    if schema.deprecated_at else None
+                    schema.deprecated_at.isoformat() if schema.deprecated_at else None
                 ),
                 "removed_at": (
-                    schema.removed_at.isoformat()
-                    if schema.removed_at else None
+                    schema.removed_at.isoformat() if schema.removed_at else None
                 ),
                 "migration_notes": schema.migration_notes,
             }
@@ -900,11 +858,13 @@ class SchemaRegistry:
         migration_guides = []
         for i, version_schema in enumerate(all_versions):
             if i > 0 and version_schema.migration_notes:
-                migration_guides.append({
-                    "from_version": all_versions[i - 1].version,
-                    "to_version": version_schema.version,
-                    "notes": version_schema.migration_notes,
-                })
+                migration_guides.append(
+                    {
+                        "from_version": all_versions[i - 1].version,
+                        "to_version": version_schema.version,
+                        "notes": version_schema.migration_notes,
+                    }
+                )
 
         return SchemaDocumentation(
             name=name,
@@ -920,17 +880,12 @@ class SchemaRegistry:
     # Private helper methods
 
     async def _get_schema_by_name_version(
-        self,
-        name: str,
-        version: int
+        self, name: str, version: int
     ) -> SchemaVersion | None:
         """Get a specific schema version."""
         if self.is_async:
             stmt = select(SchemaVersion).where(
-                and_(
-                    SchemaVersion.name == name,
-                    SchemaVersion.version == version
-                )
+                and_(SchemaVersion.name == name, SchemaVersion.version == version)
             )
             result = await self.db.execute(stmt)
             return result.scalars().first()
@@ -938,10 +893,7 @@ class SchemaRegistry:
             return (
                 self.db.query(SchemaVersion)
                 .filter(
-                    and_(
-                        SchemaVersion.name == name,
-                        SchemaVersion.version == version
-                    )
+                    and_(SchemaVersion.name == name, SchemaVersion.version == version)
                 )
                 .first()
             )
@@ -965,9 +917,7 @@ class SchemaRegistry:
             )
 
     async def _unset_default_versions(
-        self,
-        name: str,
-        exclude_id: UUID | None = None
+        self, name: str, exclude_id: UUID | None = None
     ) -> None:
         """Unset default flag for all versions of a schema."""
         if self.is_async:
@@ -1027,20 +977,16 @@ class SchemaRegistry:
                     "previous_version": change_event.previous_version,
                     "description": change_event.change_description,
                     "changed_by": change_event.changed_by,
-                }
+                },
             )
 
         except Exception as e:
             logger.error(
-                f"Failed to send schema change notification: {e}",
-                exc_info=True
+                f"Failed to send schema change notification: {e}", exc_info=True
             )
 
     async def notify_schema_change(
-        self,
-        schema_name: str,
-        change_type: str,
-        details: dict = None
+        self, schema_name: str, change_type: str, details: dict = None
     ):
         """
         Notify about schema changes via notification service.
@@ -1051,9 +997,7 @@ class SchemaRegistry:
             details: Additional change details
         """
         try:
-            from app.models.person import Person
             from app.notifications.service import NotificationService
-            from app.notifications.templates import NotificationType
 
             service = NotificationService(self.db)
 
@@ -1109,7 +1053,9 @@ class SchemaRegistry:
             else:
                 self.db.commit()
 
-            logger.info(f"Notified {len(admin_ids)} admins about schema change: {schema_name}")
+            logger.info(
+                f"Notified {len(admin_ids)} admins about schema change: {schema_name}"
+            )
 
         except Exception as e:
             logger.warning(f"Failed to send schema change notification: {e}")
@@ -1158,9 +1104,9 @@ class SchemaRegistry:
 
 # Convenience functions for common operations
 
+
 async def get_latest_schema(
-    db: Session | AsyncSession,
-    schema_name: str
+    db: Session | AsyncSession, schema_name: str
 ) -> SchemaVersion | None:
     """
     Get the latest (default or most recent active) version of a schema.
@@ -1180,7 +1126,7 @@ async def validate_schema_compatibility(
     db: Session | AsyncSession,
     schema_name: str,
     new_definition: dict[str, Any],
-    compatibility_type: str = "backward"
+    compatibility_type: str = "backward",
 ) -> bool:
     """
     Quick check if a schema definition is compatible.
@@ -1196,8 +1142,6 @@ async def validate_schema_compatibility(
     """
     registry = SchemaRegistry(db)
     result = await registry.check_compatibility(
-        schema_name,
-        new_definition,
-        compatibility_type
+        schema_name, new_definition, compatibility_type
     )
     return result.compatible

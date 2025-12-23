@@ -1,6 +1,6 @@
 """Timezone detection utilities for user preferences and request analysis."""
-from datetime import datetime, timezone
-from typing import Optional
+
+from datetime import datetime
 from zoneinfo import ZoneInfo, available_timezones
 
 from fastapi import Request
@@ -256,8 +256,8 @@ class TimezoneDetector:
     @classmethod
     def get_user_timezone(
         cls,
-        user_preference: Optional[str] = None,
-        request: Optional[Request] = None,
+        user_preference: str | None = None,
+        request: Request | None = None,
     ) -> str:
         """
         Get timezone for a user.
@@ -350,7 +350,7 @@ class TimezoneDetector:
             ) from e
 
     @classmethod
-    def get_timezone_for_location(cls, location: str) -> Optional[str]:
+    def get_timezone_for_location(cls, location: str) -> str | None:
         """
         Get timezone for a known location name.
 

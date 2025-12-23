@@ -8,6 +8,7 @@ Tests all endpoints for faculty assignment timeline visualization:
 - Helper functions and calculations
 - Error handling and edge cases
 """
+
 from datetime import date, datetime, timedelta
 from unittest.mock import patch
 from uuid import uuid4
@@ -26,7 +27,6 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
-
 
 # ============================================================================
 # Fixtures for FMIT Timeline Tests
@@ -64,10 +64,10 @@ def fmit_faculty_members(db: Session) -> list[Person]:
             id=uuid4(),
             name=name,
             type="faculty",
-            email=f"faculty{i+1}@test.org",
+            email=f"faculty{i + 1}@test.org",
             performs_procedures=True,
             specialties=spec,
-            primary_duty="FMIT Supervision"
+            primary_duty="FMIT Supervision",
         )
         db.add(fac)
         faculty.append(fac)
@@ -115,7 +115,7 @@ def faculty_with_assignments(
     db: Session,
     fmit_faculty_members: list[Person],
     academic_year_blocks: list[Block],
-    sample_fmit_rotation: RotationTemplate
+    sample_fmit_rotation: RotationTemplate,
 ) -> tuple[list[Person], list[Assignment]]:
     """Create faculty with varied FMIT assignments across the academic year."""
     assignments = []
@@ -158,7 +158,7 @@ class TestHelperFunctions:
 
     def test_get_academic_year_dates_july_onwards(self):
         """Test academic year calculation for dates from July onwards."""
-        with patch('app.api.routes.fmit_timeline.date') as mock_date:
+        with patch("app.api.routes.fmit_timeline.date") as mock_date:
             mock_date.today.return_value = date(2024, 9, 15)
             start, end = get_academic_year_dates()
 
@@ -167,7 +167,7 @@ class TestHelperFunctions:
 
     def test_get_academic_year_dates_before_july(self):
         """Test academic year calculation for dates before July."""
-        with patch('app.api.routes.fmit_timeline.date') as mock_date:
+        with patch("app.api.routes.fmit_timeline.date") as mock_date:
             mock_date.today.return_value = date(2024, 3, 15)
             start, end = get_academic_year_dates()
 
@@ -176,7 +176,7 @@ class TestHelperFunctions:
 
     def test_get_academic_year_dates_july_boundary(self):
         """Test academic year calculation on July 1st boundary."""
-        with patch('app.api.routes.fmit_timeline.date') as mock_date:
+        with patch("app.api.routes.fmit_timeline.date") as mock_date:
             mock_date.today.return_value = date(2024, 7, 1)
             start, end = get_academic_year_dates()
 
@@ -198,9 +198,9 @@ class TestHelperFunctions:
         start, end = get_week_bounds(wednesday)
 
         assert start == date(2024, 1, 8)  # Previous Monday
-        assert end == date(2024, 1, 14)    # Following Sunday
+        assert end == date(2024, 1, 14)  # Following Sunday
         assert start.weekday() == 0  # Monday
-        assert end.weekday() == 6    # Sunday
+        assert end.weekday() == 6  # Sunday
 
     def test_get_week_bounds_sunday(self):
         """Test week bounds when date is Sunday."""
@@ -253,7 +253,7 @@ class TestHelperFunctions:
                 week_end=date(2024, 1, 7) + timedelta(weeks=i),
                 status="scheduled",
                 assignment_count=5,
-                total_blocks=10
+                total_blocks=10,
             )
             for i in range(5)  # 5 weeks
         ]
@@ -276,7 +276,7 @@ class TestHelperFunctions:
                 week_end=date(2024, 1, 7) + timedelta(weeks=i),
                 status="scheduled",
                 assignment_count=5,
-                total_blocks=10
+                total_blocks=10,
             )
             for i in range(7)  # 7 weeks
         ]
@@ -299,7 +299,7 @@ class TestHelperFunctions:
                 week_end=date(2024, 1, 7) + timedelta(weeks=i),
                 status="scheduled",
                 assignment_count=5,
-                total_blocks=10
+                total_blocks=10,
             )
             for i in range(3)  # 3 weeks
         ]
@@ -312,7 +312,6 @@ class TestHelperFunctions:
 
     def test_calculate_workload_summary_zero_target(self):
         """Test workload summary with zero target."""
-        from app.schemas.fmit_timeline import WeekAssignment
 
         weeks = []
         summary = calculate_workload_summary(weeks, target_weeks=0.0)
@@ -361,15 +360,10 @@ class TestAcademicYearTimeline:
     """Tests for GET /api/fmit-timeline/academic-year endpoint."""
 
     def test_get_academic_year_timeline_empty(
-        self,
-        client: TestClient,
-        auth_headers: dict
+        self, client: TestClient, auth_headers: dict
     ):
         """Test academic year timeline with no assignments."""
-        response = client.get(
-            "/api/fmit-timeline/academic-year",
-            headers=auth_headers
-        )
+        response = client.get("/api/fmit-timeline/academic-year", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -395,13 +389,10 @@ class TestAcademicYearTimeline:
         self,
         client: TestClient,
         auth_headers: dict,
-        faculty_with_assignments: tuple[list[Person], list[Assignment]]
+        faculty_with_assignments: tuple[list[Person], list[Assignment]],
     ):
         """Test academic year timeline with actual assignments."""
-        response = client.get(
-            "/api/fmit-timeline/academic-year",
-            headers=auth_headers
-        )
+        response = client.get("/api/fmit-timeline/academic-year", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -440,16 +431,9 @@ class TestAcademicYearTimeline:
         assert "min" in dist
         assert "max" in dist
 
-    def test_academic_year_date_range(
-        self,
-        client: TestClient,
-        auth_headers: dict
-    ):
+    def test_academic_year_date_range(self, client: TestClient, auth_headers: dict):
         """Test that academic year returns correct date range."""
-        response = client.get(
-            "/api/fmit-timeline/academic-year",
-            headers=auth_headers
-        )
+        response = client.get("/api/fmit-timeline/academic-year", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -473,13 +457,10 @@ class TestAcademicYearTimeline:
         self,
         client: TestClient,
         auth_headers: dict,
-        faculty_with_assignments: tuple[list[Person], list[Assignment]]
+        faculty_with_assignments: tuple[list[Person], list[Assignment]],
     ):
         """Test fairness index calculation with unequal workload distribution."""
-        response = client.get(
-            "/api/fmit-timeline/academic-year",
-            headers=auth_headers
-        )
+        response = client.get("/api/fmit-timeline/academic-year", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -505,30 +486,23 @@ class TestFacultyTimeline:
     """Tests for GET /api/fmit-timeline/faculty/{faculty_id} endpoint."""
 
     def test_get_faculty_timeline_not_found(
-        self,
-        client: TestClient,
-        auth_headers: dict
+        self, client: TestClient, auth_headers: dict
     ):
         """Test faculty timeline with non-existent faculty ID."""
         fake_id = uuid4()
         response = client.get(
-            f"/api/fmit-timeline/faculty/{fake_id}",
-            headers=auth_headers
+            f"/api/fmit-timeline/faculty/{fake_id}", headers=auth_headers
         )
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
     def test_get_faculty_timeline_no_assignments(
-        self,
-        client: TestClient,
-        auth_headers: dict,
-        sample_faculty: Person
+        self, client: TestClient, auth_headers: dict, sample_faculty: Person
     ):
         """Test faculty timeline for faculty with no assignments."""
         response = client.get(
-            f"/api/fmit-timeline/faculty/{sample_faculty.id}",
-            headers=auth_headers
+            f"/api/fmit-timeline/faculty/{sample_faculty.id}", headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -546,15 +520,14 @@ class TestFacultyTimeline:
         self,
         client: TestClient,
         auth_headers: dict,
-        faculty_with_assignments: tuple[list[Person], list[Assignment]]
+        faculty_with_assignments: tuple[list[Person], list[Assignment]],
     ):
         """Test faculty timeline with assignments."""
         faculty_list, _ = faculty_with_assignments
         faculty = faculty_list[0]  # Faculty with most assignments
 
         response = client.get(
-            f"/api/fmit-timeline/faculty/{faculty.id}",
-            headers=auth_headers
+            f"/api/fmit-timeline/faculty/{faculty.id}", headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -580,7 +553,7 @@ class TestFacultyTimeline:
         self,
         client: TestClient,
         auth_headers: dict,
-        faculty_with_assignments: tuple[list[Person], list[Assignment]]
+        faculty_with_assignments: tuple[list[Person], list[Assignment]],
     ):
         """Test faculty timeline with custom date range."""
         faculty_list, _ = faculty_with_assignments
@@ -591,11 +564,8 @@ class TestFacultyTimeline:
 
         response = client.get(
             f"/api/fmit-timeline/faculty/{faculty.id}",
-            params={
-                "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            },
-            headers=auth_headers
+            params={"start_date": start.isoformat(), "end_date": end.isoformat()},
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -606,15 +576,11 @@ class TestFacultyTimeline:
         assert data["end_date"] == end.isoformat()
 
     def test_get_faculty_timeline_default_date_range(
-        self,
-        client: TestClient,
-        auth_headers: dict,
-        sample_faculty: Person
+        self, client: TestClient, auth_headers: dict, sample_faculty: Person
     ):
         """Test that faculty timeline defaults to academic year."""
         response = client.get(
-            f"/api/fmit-timeline/faculty/{sample_faculty.id}",
-            headers=auth_headers
+            f"/api/fmit-timeline/faculty/{sample_faculty.id}", headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -638,18 +604,13 @@ class TestFacultyTimeline:
 class TestWeeklyView:
     """Tests for GET /api/fmit-timeline/week/{week_start} endpoint."""
 
-    def test_get_weekly_view_empty_week(
-        self,
-        client: TestClient,
-        auth_headers: dict
-    ):
+    def test_get_weekly_view_empty_week(self, client: TestClient, auth_headers: dict):
         """Test weekly view for a week with no assignments."""
         # Use a date far in the future with no data
         future_date = date.today() + timedelta(days=365)
 
         response = client.get(
-            f"/api/fmit-timeline/week/{future_date.isoformat()}",
-            headers=auth_headers
+            f"/api/fmit-timeline/week/{future_date.isoformat()}", headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -673,9 +634,7 @@ class TestWeeklyView:
         assert week["filled_slots"] == 0
 
     def test_get_weekly_view_normalizes_to_monday(
-        self,
-        client: TestClient,
-        auth_headers: dict
+        self, client: TestClient, auth_headers: dict
     ):
         """Test that weekly view normalizes any date to Monday."""
         # Use a Wednesday
@@ -684,8 +643,7 @@ class TestWeeklyView:
         expected_sunday = date(2024, 1, 14)
 
         response = client.get(
-            f"/api/fmit-timeline/week/{wednesday.isoformat()}",
-            headers=auth_headers
+            f"/api/fmit-timeline/week/{wednesday.isoformat()}", headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -701,7 +659,7 @@ class TestWeeklyView:
         auth_headers: dict,
         db: Session,
         fmit_faculty_members: list[Person],
-        sample_fmit_rotation: RotationTemplate
+        sample_fmit_rotation: RotationTemplate,
     ):
         """Test weekly view with actual assignments."""
         # Create blocks for this week
@@ -737,8 +695,7 @@ class TestWeeklyView:
         db.commit()
 
         response = client.get(
-            f"/api/fmit-timeline/week/{today.isoformat()}",
-            headers=auth_headers
+            f"/api/fmit-timeline/week/{today.isoformat()}", headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -769,7 +726,7 @@ class TestWeeklyView:
         auth_headers: dict,
         db: Session,
         fmit_faculty_members: list[Person],
-        sample_fmit_rotation: RotationTemplate
+        sample_fmit_rotation: RotationTemplate,
     ):
         """Test weekly view coverage percentage calculation."""
         # Create exactly 10 blocks
@@ -802,8 +759,7 @@ class TestWeeklyView:
         db.commit()
 
         response = client.get(
-            f"/api/fmit-timeline/week/{today.isoformat()}",
-            headers=auth_headers
+            f"/api/fmit-timeline/week/{today.isoformat()}", headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -815,16 +771,13 @@ class TestWeeklyView:
         assert week["coverage_percentage"] == 50.0
 
     def test_get_weekly_view_adjacent_weeks(
-        self,
-        client: TestClient,
-        auth_headers: dict
+        self, client: TestClient, auth_headers: dict
     ):
         """Test weekly view includes adjacent week information."""
         today = date.today()
 
         response = client.get(
-            f"/api/fmit-timeline/week/{today.isoformat()}",
-            headers=auth_headers
+            f"/api/fmit-timeline/week/{today.isoformat()}", headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -853,16 +806,9 @@ class TestWeeklyView:
 class TestGanttData:
     """Tests for GET /api/fmit-timeline/gantt-data endpoint."""
 
-    def test_get_gantt_data_empty(
-        self,
-        client: TestClient,
-        auth_headers: dict
-    ):
+    def test_get_gantt_data_empty(self, client: TestClient, auth_headers: dict):
         """Test Gantt data with no assignments."""
-        response = client.get(
-            "/api/fmit-timeline/gantt-data",
-            headers=auth_headers
-        )
+        response = client.get("/api/fmit-timeline/gantt-data", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -888,13 +834,10 @@ class TestGanttData:
         self,
         client: TestClient,
         auth_headers: dict,
-        faculty_with_assignments: tuple[list[Person], list[Assignment]]
+        faculty_with_assignments: tuple[list[Person], list[Assignment]],
     ):
         """Test Gantt data with actual assignments."""
-        response = client.get(
-            "/api/fmit-timeline/gantt-data",
-            headers=auth_headers
-        )
+        response = client.get("/api/fmit-timeline/gantt-data", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -927,9 +870,7 @@ class TestGanttData:
             assert 0 <= task["progress"] <= 100
 
     def test_get_gantt_data_custom_date_range(
-        self,
-        client: TestClient,
-        auth_headers: dict
+        self, client: TestClient, auth_headers: dict
     ):
         """Test Gantt data with custom date range."""
         start = date(2024, 1, 1)
@@ -937,11 +878,8 @@ class TestGanttData:
 
         response = client.get(
             "/api/fmit-timeline/gantt-data",
-            params={
-                "start_date": start.isoformat(),
-                "end_date": end.isoformat()
-            },
-            headers=auth_headers
+            params={"start_date": start.isoformat(), "end_date": end.isoformat()},
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -956,7 +894,7 @@ class TestGanttData:
         self,
         client: TestClient,
         auth_headers: dict,
-        faculty_with_assignments: tuple[list[Person], list[Assignment]]
+        faculty_with_assignments: tuple[list[Person], list[Assignment]],
     ):
         """Test Gantt data filtered by specific faculty IDs."""
         faculty_list, _ = faculty_with_assignments
@@ -965,7 +903,7 @@ class TestGanttData:
         response = client.get(
             "/api/fmit-timeline/gantt-data",
             params={"faculty_ids": [str(target_faculty.id)]},
-            headers=auth_headers
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -982,7 +920,7 @@ class TestGanttData:
         auth_headers: dict,
         db: Session,
         sample_faculty: Person,
-        sample_fmit_rotation: RotationTemplate
+        sample_fmit_rotation: RotationTemplate,
     ):
         """Test that Gantt tasks have different styles based on workload."""
         # Create a week with heavy workload (>8 blocks)
@@ -1011,10 +949,7 @@ class TestGanttData:
             db.add(assignment)
         db.commit()
 
-        response = client.get(
-            "/api/fmit-timeline/gantt-data",
-            headers=auth_headers
-        )
+        response = client.get("/api/fmit-timeline/gantt-data", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -1035,7 +970,7 @@ class TestGanttData:
         auth_headers: dict,
         db: Session,
         sample_faculty: Person,
-        sample_fmit_rotation: RotationTemplate
+        sample_fmit_rotation: RotationTemplate,
     ):
         """Test that Gantt tasks have correct progress based on status."""
         # Create past, present, and future assignments
@@ -1066,10 +1001,7 @@ class TestGanttData:
             db.add(assignment)
         db.commit()
 
-        response = client.get(
-            "/api/fmit-timeline/gantt-data",
-            headers=auth_headers
-        )
+        response = client.get("/api/fmit-timeline/gantt-data", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -1098,7 +1030,7 @@ class TestEdgeCasesAndErrors:
         db: Session,
         sample_faculty: Person,
         academic_year_blocks: list[Block],
-        sample_fmit_rotation: RotationTemplate
+        sample_fmit_rotation: RotationTemplate,
     ):
         """Test that single faculty results in perfect fairness index."""
         # Assign all blocks to one faculty
@@ -1113,10 +1045,7 @@ class TestEdgeCasesAndErrors:
             db.add(assignment)
         db.commit()
 
-        response = client.get(
-            "/api/fmit-timeline/academic-year",
-            headers=auth_headers
-        )
+        response = client.get("/api/fmit-timeline/academic-year", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -1130,7 +1059,7 @@ class TestEdgeCasesAndErrors:
         auth_headers: dict,
         db: Session,
         sample_faculty: Person,
-        sample_fmit_rotation: RotationTemplate
+        sample_fmit_rotation: RotationTemplate,
     ):
         """Test that week status is correctly determined (completed, in_progress, scheduled)."""
         today = date.today()
@@ -1138,8 +1067,8 @@ class TestEdgeCasesAndErrors:
         # Create past, present, and future assignments
         dates = [
             today - timedelta(days=14),  # Past (completed)
-            today,                        # Present (in_progress)
-            today + timedelta(days=14),   # Future (scheduled)
+            today,  # Present (in_progress)
+            today + timedelta(days=14),  # Future (scheduled)
         ]
 
         for test_date in dates:
@@ -1164,8 +1093,7 @@ class TestEdgeCasesAndErrors:
         db.commit()
 
         response = client.get(
-            f"/api/fmit-timeline/faculty/{sample_faculty.id}",
-            headers=auth_headers
+            f"/api/fmit-timeline/faculty/{sample_faculty.id}", headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -1182,32 +1110,24 @@ class TestEdgeCasesAndErrors:
         valid_statuses = {"completed", "in_progress", "scheduled"}
         assert all(status in valid_statuses for status in statuses)
 
-    def test_invalid_uuid_format(
-        self,
-        client: TestClient,
-        auth_headers: dict
-    ):
+    def test_invalid_uuid_format(self, client: TestClient, auth_headers: dict):
         """Test that invalid UUID format is handled properly."""
         response = client.get(
-            "/api/fmit-timeline/faculty/not-a-uuid",
-            headers=auth_headers
+            "/api/fmit-timeline/faculty/not-a-uuid", headers=auth_headers
         )
 
         # Should return 422 for validation error
         assert response.status_code == 422
 
     def test_coverage_percentage_with_no_blocks(
-        self,
-        client: TestClient,
-        auth_headers: dict
+        self, client: TestClient, auth_headers: dict
     ):
         """Test coverage percentage calculation when there are no blocks."""
         # Use a date range with no blocks
         future_date = date.today() + timedelta(days=365)
 
         response = client.get(
-            f"/api/fmit-timeline/week/{future_date.isoformat()}",
-            headers=auth_headers
+            f"/api/fmit-timeline/week/{future_date.isoformat()}", headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -1217,11 +1137,7 @@ class TestEdgeCasesAndErrors:
         assert week["total_slots"] == 0
         assert week["coverage_percentage"] == 0.0
 
-    def test_timeline_generated_timestamp(
-        self,
-        client: TestClient,
-        auth_headers: dict
-    ):
+    def test_timeline_generated_timestamp(self, client: TestClient, auth_headers: dict):
         """Test that all timeline responses include generated_at timestamp."""
         endpoints = [
             "/api/fmit-timeline/academic-year",
@@ -1237,4 +1153,4 @@ class TestEdgeCasesAndErrors:
             assert "generated_at" in data
             # Should be valid ISO format timestamp
             timestamp = data["generated_at"]
-            datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            datetime.fromisoformat(timestamp.replace("Z", "+00:00"))

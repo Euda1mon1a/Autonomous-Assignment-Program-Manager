@@ -59,50 +59,62 @@ class PIIDetector:
     """
 
     # Regex patterns for PII detection
-    EMAIL_PATTERN = re.compile(
-        r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-    )
+    EMAIL_PATTERN = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
 
     PHONE_PATTERN = re.compile(
-        r'\b(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})\b'
+        r"\b(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})\b"
     )
 
     SSN_PATTERN = re.compile(
-        r'\b(?!000|666|9\d{2})([0-8]\d{2}|7([0-6]\d))([-\s]?)(?!00)\d{2}\3(?!0000)\d{4}\b'
+        r"\b(?!000|666|9\d{2})([0-8]\d{2}|7([0-6]\d))([-\s]?)(?!00)\d{2}\3(?!0000)\d{4}\b"
     )
 
     IP_PATTERN = re.compile(
-        r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b'
+        r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
     )
 
     # Credit card pattern (basic Luhn algorithm validation can be added)
     CREDIT_CARD_PATTERN = re.compile(
-        r'\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|6(?:011|5[0-9]{2})[0-9]{12}|(?:2131|1800|35\d{3})\d{11})\b'
+        r"\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|6(?:011|5[0-9]{2})[0-9]{12}|(?:2131|1800|35\d{3})\d{11})\b"
     )
 
     # Medical record number pattern (MRN) - common formats
     MRN_PATTERN = re.compile(
-        r'\b(?:MRN|mrn|medical\s*record)[\s:]*([A-Z0-9]{6,12})\b',
-        re.IGNORECASE
+        r"\b(?:MRN|mrn|medical\s*record)[\s:]*([A-Z0-9]{6,12})\b", re.IGNORECASE
     )
 
     # Date of birth patterns
     DOB_PATTERN = re.compile(
-        r'\b(?:DOB|dob|date\s*of\s*birth)[\s:]*(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})\b',
-        re.IGNORECASE
+        r"\b(?:DOB|dob|date\s*of\s*birth)[\s:]*(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})\b",
+        re.IGNORECASE,
     )
 
     # Common name prefixes/titles for name detection
     NAME_PREFIXES = {
-        'dr', 'doctor', 'mr', 'mrs', 'ms', 'miss', 'prof', 'professor',
-        'capt', 'captain', 'lt', 'lieutenant', 'col', 'colonel',
-        'maj', 'major', 'sgt', 'sergeant'
+        "dr",
+        "doctor",
+        "mr",
+        "mrs",
+        "ms",
+        "miss",
+        "prof",
+        "professor",
+        "capt",
+        "captain",
+        "lt",
+        "lieutenant",
+        "col",
+        "colonel",
+        "maj",
+        "major",
+        "sgt",
+        "sergeant",
     }
 
     def __init__(
         self,
         enable_name_detection: bool = False,
-        custom_patterns: dict[str, re.Pattern] | None = None
+        custom_patterns: dict[str, re.Pattern] | None = None,
     ):
         """
         Initialize PII detector.
@@ -140,7 +152,9 @@ class PIIDetector:
 
         # Detect custom patterns
         for pii_type, pattern in self.custom_patterns.items():
-            matches.extend(self._detect_pattern(text, pattern, PIIType.CUSTOM, pii_type))
+            matches.extend(
+                self._detect_pattern(text, pattern, PIIType.CUSTOM, pii_type)
+            )
 
         # Sort by position in text
         matches.sort(key=lambda m: m.start)
@@ -165,7 +179,9 @@ class PIIDetector:
 
     def detect_credit_cards(self, text: str) -> list[PIIMatch]:
         """Detect credit card numbers."""
-        matches = self._detect_pattern(text, self.CREDIT_CARD_PATTERN, PIIType.CREDIT_CARD)
+        matches = self._detect_pattern(
+            text, self.CREDIT_CARD_PATTERN, PIIType.CREDIT_CARD
+        )
 
         # Validate using Luhn algorithm
         validated_matches = []
@@ -194,19 +210,23 @@ class PIIDetector:
 
         # Look for name prefixes followed by capitalized words
         pattern = re.compile(
-            r'\b(' + '|'.join(self.NAME_PREFIXES) + r')\.?\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b',
-            re.IGNORECASE
+            r"\b("
+            + "|".join(self.NAME_PREFIXES)
+            + r")\.?\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b",
+            re.IGNORECASE,
         )
 
         for match in pattern.finditer(text):
-            matches.append(PIIMatch(
-                type=PIIType.NAME,
-                value=match.group(0),
-                start=match.start(),
-                end=match.end(),
-                confidence=0.7,  # Lower confidence for heuristic detection
-                metadata={"prefix": match.group(1), "name": match.group(2)}
-            ))
+            matches.append(
+                PIIMatch(
+                    type=PIIType.NAME,
+                    value=match.group(0),
+                    start=match.start(),
+                    end=match.end(),
+                    confidence=0.7,  # Lower confidence for heuristic detection
+                    metadata={"prefix": match.group(1), "name": match.group(2)},
+                )
+            )
 
         return matches
 
@@ -242,20 +262,22 @@ class PIIDetector:
         text: str,
         pattern: re.Pattern,
         pii_type: PIIType,
-        custom_name: str | None = None
+        custom_name: str | None = None,
     ) -> list[PIIMatch]:
         """Helper method to detect PII using regex pattern."""
         matches = []
 
         for match in pattern.finditer(text):
-            matches.append(PIIMatch(
-                type=pii_type,
-                value=match.group(0),
-                start=match.start(),
-                end=match.end(),
-                confidence=1.0,
-                metadata={"custom_type": custom_name} if custom_name else None
-            ))
+            matches.append(
+                PIIMatch(
+                    type=pii_type,
+                    value=match.group(0),
+                    start=match.start(),
+                    end=match.end(),
+                    confidence=1.0,
+                    metadata={"custom_type": custom_name} if custom_name else None,
+                )
+            )
 
         return matches
 
@@ -270,7 +292,7 @@ class PIIDetector:
             True if valid according to Luhn algorithm
         """
         # Remove spaces and dashes
-        digits = ''.join(c for c in card_number if c.isdigit())
+        digits = "".join(c for c in card_number if c.isdigit())
 
         if not digits:
             return False
@@ -306,7 +328,9 @@ class PIIScanner:
         """
         self.detector = detector or PIIDetector()
 
-    def scan_model(self, model: Any, exclude_fields: set[str] | None = None) -> dict[str, list[PIIMatch]]:
+    def scan_model(
+        self, model: Any, exclude_fields: set[str] | None = None
+    ) -> dict[str, list[PIIMatch]]:
         """
         Scan SQLAlchemy model instance for PII.
 
@@ -321,7 +345,7 @@ class PIIScanner:
         results = {}
 
         # Get model columns
-        if hasattr(model, '__table__'):
+        if hasattr(model, "__table__"):
             for column in model.__table__.columns:
                 if column.name in exclude_fields:
                     continue
@@ -335,9 +359,7 @@ class PIIScanner:
         return results
 
     def scan_records(
-        self,
-        records: list[Any],
-        exclude_fields: set[str] | None = None
+        self, records: list[Any], exclude_fields: set[str] | None = None
     ) -> list[dict[str, list[PIIMatch]]]:
         """
         Scan multiple records for PII.

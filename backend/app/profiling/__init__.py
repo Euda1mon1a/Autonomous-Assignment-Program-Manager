@@ -11,6 +11,17 @@ This package provides comprehensive performance profiling capabilities including
 - Performance reporting
 """
 
+from app.profiling.analyzers import (
+    BottleneckDetector,
+    PerformanceAnalyzer,
+    QueryAnalyzer,
+)
+from app.profiling.collectors import (
+    MetricCollector,
+    RequestCollector,
+    SQLQueryCollector,
+    TraceCollector,
+)
 from app.profiling.profiler import (
     CPUProfiler,
     MemoryProfiler,
@@ -18,20 +29,9 @@ from app.profiling.profiler import (
     profile_async,
     profile_sync,
 )
-from app.profiling.collectors import (
-    MetricCollector,
-    SQLQueryCollector,
-    RequestCollector,
-    TraceCollector,
-)
-from app.profiling.analyzers import (
-    PerformanceAnalyzer,
-    BottleneckDetector,
-    QueryAnalyzer,
-)
 from app.profiling.reporters import (
-    PerformanceReporter,
     FlameGraphGenerator,
+    PerformanceReporter,
     ProfileReport,
 )
 

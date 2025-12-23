@@ -39,18 +39,19 @@ import os
 import re
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Column, DateTime, Integer, String, Text, Boolean, text
-from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import AppException, ConflictError, ValidationError
+from app.core.exceptions import AppException, ValidationError
 from app.db.base import Base
 from app.db.types import GUID, JSONType
 
@@ -104,10 +105,7 @@ class MigrationRunRecord(Base):
     run_name = Column(String(255), nullable=False, index=True)
     description = Column(Text)
     status = Column(
-        String(50),
-        nullable=False,
-        default=MigrationRunStatus.PENDING.value,
-        index=True
+        String(50), nullable=False, default=MigrationRunStatus.PENDING.value, index=True
     )
 
     # Migration details
@@ -186,10 +184,7 @@ class MigrationLock(Base):
     lock_name = Column(String(255), nullable=False, unique=True, index=True)
     lock_holder = Column(String(255), nullable=False)
     status = Column(
-        String(50),
-        nullable=False,
-        default=MigrationLockStatus.LOCKED.value,
-        index=True
+        String(50), nullable=False, default=MigrationLockStatus.LOCKED.value, index=True
     )
 
     # Lock details
@@ -225,10 +220,10 @@ class Migration:
     version: str
     description: str = ""
     dependencies: list[str] = field(default_factory=list)
-    upgrade_func: Optional[Callable] = None
-    downgrade_func: Optional[Callable] = None
-    file_path: Optional[str] = None
-    checksum: Optional[str] = None
+    upgrade_func: Callable | None = None
+    downgrade_func: Callable | None = None
+    file_path: str | None = None
+    checksum: str | None = None
 
     def __hash__(self):
         return hash(self.version)
@@ -249,8 +244,8 @@ class MigrationResult:
     completed_migrations: int = 0
     failed_migrations: int = 0
     skipped_migrations: int = 0
-    error_message: Optional[str] = None
-    error_details: Optional[dict] = None
+    error_message: str | None = None
+    error_details: dict | None = None
     dry_run: bool = False
     execution_time: float = 0.0
 
@@ -269,11 +264,11 @@ class MigrationResult:
 class MigrationHooks:
     """Hooks for migration lifecycle events."""
 
-    pre_run: Optional[Callable[[Session], None]] = None
-    post_run: Optional[Callable[[Session, MigrationResult], None]] = None
-    pre_migration: Optional[Callable[[Session, Migration], None]] = None
-    post_migration: Optional[Callable[[Session, Migration, bool], None]] = None
-    on_error: Optional[Callable[[Session, Migration, Exception], None]] = None
+    pre_run: Callable[[Session], None] | None = None
+    post_run: Callable[[Session, MigrationResult], None] | None = None
+    pre_migration: Callable[[Session, Migration], None] | None = None
+    post_migration: Callable[[Session, Migration, bool], None] | None = None
+    on_error: Callable[[Session, Migration, Exception], None] | None = None
 
 
 # =============================================================================
@@ -290,16 +285,19 @@ class MigrationError(AppException):
 
 class MigrationLockError(MigrationError):
     """Exception raised when unable to acquire migration lock."""
+
     pass
 
 
 class MigrationDependencyError(MigrationError):
     """Exception raised when migration dependencies cannot be resolved."""
+
     pass
 
 
 class MigrationVerificationError(MigrationError):
     """Exception raised when migration verification fails."""
+
     pass
 
 
@@ -312,9 +310,7 @@ class MigrationLockManager:
     """Manager for distributed migration locks."""
 
     def __init__(
-        self,
-        db: Session,
-        timeout_seconds: int = DEFAULT_LOCK_TIMEOUT_SECONDS
+        self, db: Session, timeout_seconds: int = DEFAULT_LOCK_TIMEOUT_SECONDS
     ):
         """
         Initialize lock manager.
@@ -332,7 +328,7 @@ class MigrationLockManager:
         lock_name: str,
         wait: bool = True,
         wait_timeout: int = MAX_LOCK_WAIT_SECONDS,
-        metadata: Optional[dict] = None
+        metadata: dict | None = None,
     ) -> MigrationLock:
         """
         Acquire a migration lock.
@@ -356,16 +352,12 @@ class MigrationLockManager:
                 # Try to acquire lock
                 lock = self._try_acquire_lock(lock_name, metadata)
                 if lock:
-                    logger.info(
-                        f"Lock '{lock_name}' acquired by {self.lock_holder_id}"
-                    )
+                    logger.info(f"Lock '{lock_name}' acquired by {self.lock_holder_id}")
                     return lock
 
                 # Check if we should wait
                 if not wait:
-                    raise MigrationLockError(
-                        f"Lock '{lock_name}' is already held"
-                    )
+                    raise MigrationLockError(f"Lock '{lock_name}' is already held")
 
                 # Check wait timeout
                 elapsed = time.time() - start_time
@@ -381,16 +373,12 @@ class MigrationLockManager:
                 # Lock already exists, retry
                 self.db.rollback()
                 if not wait:
-                    raise MigrationLockError(
-                        f"Lock '{lock_name}' is already held"
-                    )
+                    raise MigrationLockError(f"Lock '{lock_name}' is already held")
                 time.sleep(1)
 
     def _try_acquire_lock(
-        self,
-        lock_name: str,
-        metadata: Optional[dict] = None
-    ) -> Optional[MigrationLock]:
+        self, lock_name: str, metadata: dict | None = None
+    ) -> MigrationLock | None:
         """
         Try to acquire lock once.
 
@@ -402,9 +390,11 @@ class MigrationLockManager:
             MigrationLock if acquired, None otherwise
         """
         # Check for existing lock
-        existing_lock = self.db.query(MigrationLock).filter(
-            MigrationLock.lock_name == lock_name
-        ).first()
+        existing_lock = (
+            self.db.query(MigrationLock)
+            .filter(MigrationLock.lock_name == lock_name)
+            .first()
+        )
 
         if existing_lock:
             # Check if lock is expired
@@ -435,7 +425,7 @@ class MigrationLockManager:
             lock_holder=self.lock_holder_id,
             status=MigrationLockStatus.LOCKED.value,
             expires_at=expires_at,
-            metadata=metadata
+            metadata=metadata,
         )
 
         self.db.add(lock)
@@ -462,9 +452,7 @@ class MigrationLockManager:
             lock.status = MigrationLockStatus.UNLOCKED.value
             self.db.commit()
 
-            logger.info(
-                f"Lock '{lock.lock_name}' released by {self.lock_holder_id}"
-            )
+            logger.info(f"Lock '{lock.lock_name}' released by {self.lock_holder_id}")
 
         except Exception as e:
             logger.error(f"Error releasing lock: {e}")
@@ -501,10 +489,14 @@ class MigrationLockManager:
             Number of locks cleaned up
         """
         try:
-            expired_locks = self.db.query(MigrationLock).filter(
-                MigrationLock.expires_at < datetime.utcnow(),
-                MigrationLock.status == MigrationLockStatus.LOCKED.value
-            ).all()
+            expired_locks = (
+                self.db.query(MigrationLock)
+                .filter(
+                    MigrationLock.expires_at < datetime.utcnow(),
+                    MigrationLock.status == MigrationLockStatus.LOCKED.value,
+                )
+                .all()
+            )
 
             count = 0
             for lock in expired_locks:
@@ -533,8 +525,7 @@ class MigrationDiscovery:
 
     @staticmethod
     def discover_migrations(
-        directory: str,
-        pattern: str = r"^(\d+)_.+\.py$"
+        directory: str, pattern: str = r"^(\d+)_.+\.py$"
     ) -> list[Migration]:
         """
         Discover migrations from a directory.
@@ -575,7 +566,7 @@ class MigrationDiscovery:
         return migrations
 
     @staticmethod
-    def _load_migration_file(file_path: Path) -> Optional[Migration]:
+    def _load_migration_file(file_path: Path) -> Migration | None:
         """
         Load a migration from a file.
 
@@ -586,10 +577,7 @@ class MigrationDiscovery:
             Migration object or None
         """
         # Load module
-        spec = importlib.util.spec_from_file_location(
-            file_path.stem,
-            file_path
-        )
+        spec = importlib.util.spec_from_file_location(file_path.stem, file_path)
         if not spec or not spec.loader:
             return None
 
@@ -625,7 +613,7 @@ class MigrationDiscovery:
             upgrade_func=upgrade_func,
             downgrade_func=downgrade_func,
             file_path=str(file_path),
-            checksum=checksum
+            checksum=checksum,
         )
 
     @staticmethod
@@ -709,18 +697,15 @@ class DependencyResolver:
             if migration.version not in visited:
                 visit(migration)
 
-        logger.info(
-            f"Resolved migration order: "
-            f"{[m.version for m in ordered]}"
-        )
+        logger.info(f"Resolved migration order: {[m.version for m in ordered]}")
 
         return ordered
 
     @staticmethod
     def filter_to_target(
         migrations: list[Migration],
-        target_version: Optional[str] = None,
-        current_version: Optional[str] = None
+        target_version: str | None = None,
+        current_version: str | None = None,
     ) -> list[Migration]:
         """
         Filter migrations to only those needed to reach target version.
@@ -745,9 +730,7 @@ class DependencyResolver:
                     break
 
             if target_idx is None:
-                raise ValidationError(
-                    f"Target version {target_version} not found"
-                )
+                raise ValidationError(f"Target version {target_version} not found")
 
         # Find current version index
         current_idx = 0
@@ -794,9 +777,7 @@ class MigrationRunner:
         self.resolver = DependencyResolver()
 
     def discover_migrations(
-        self,
-        directory: str,
-        pattern: str = r"^(\d+)_.+\.py$"
+        self, directory: str, pattern: str = r"^(\d+)_.+\.py$"
     ) -> list[Migration]:
         """
         Discover migrations from directory.
@@ -814,12 +795,12 @@ class MigrationRunner:
         self,
         migrations: list[Migration],
         dry_run: bool = False,
-        target_version: Optional[str] = None,
-        current_version: Optional[str] = None,
-        hooks: Optional[MigrationHooks] = None,
-        created_by: Optional[str] = None,
+        target_version: str | None = None,
+        current_version: str | None = None,
+        hooks: MigrationHooks | None = None,
+        created_by: str | None = None,
         acquire_lock: bool = True,
-        run_name: Optional[str] = None
+        run_name: str | None = None,
     ) -> MigrationResult:
         """
         Run migrations with full orchestration.
@@ -846,7 +827,7 @@ class MigrationRunner:
                 lock = self.lock_manager.acquire_lock(
                     "migrations",
                     wait=True,
-                    metadata={"run_name": run_name or "migration_run"}
+                    metadata={"run_name": run_name or "migration_run"},
                 )
 
             # Resolve execution order
@@ -856,7 +837,7 @@ class MigrationRunner:
             filtered_migrations = self.resolver.filter_to_target(
                 ordered_migrations,
                 target_version=target_version,
-                current_version=current_version
+                current_version=current_version,
             )
 
             # Create run record
@@ -866,7 +847,7 @@ class MigrationRunner:
                 target_version=target_version or "head",
                 current_version=current_version,
                 dry_run=dry_run,
-                created_by=created_by
+                created_by=created_by,
             )
 
             # Execute pre-run hook
@@ -882,7 +863,7 @@ class MigrationRunner:
                 migrations=filtered_migrations,
                 dry_run=dry_run,
                 hooks=hooks,
-                lock=lock
+                lock=lock,
             )
 
             # Update run record
@@ -909,10 +890,10 @@ class MigrationRunner:
         self,
         run_name: str,
         total_migrations: int,
-        target_version: Optional[str],
-        current_version: Optional[str],
+        target_version: str | None,
+        current_version: str | None,
         dry_run: bool,
-        created_by: Optional[str]
+        created_by: str | None,
     ) -> MigrationRunRecord:
         """Create a migration run record."""
         run_record = MigrationRunRecord(
@@ -921,8 +902,10 @@ class MigrationRunner:
             target_version=target_version,
             current_version=current_version,
             dry_run=dry_run,
-            status=MigrationRunStatus.DRY_RUN.value if dry_run else MigrationRunStatus.PENDING.value,
-            created_by=created_by
+            status=MigrationRunStatus.DRY_RUN.value
+            if dry_run
+            else MigrationRunStatus.PENDING.value,
+            created_by=created_by,
         )
 
         self.db.add(run_record)
@@ -936,8 +919,8 @@ class MigrationRunner:
         run_id: UUID,
         migrations: list[Migration],
         dry_run: bool,
-        hooks: Optional[MigrationHooks],
-        lock: Optional[MigrationLock]
+        hooks: MigrationHooks | None,
+        lock: MigrationLock | None,
     ) -> MigrationResult:
         """Execute list of migrations."""
         completed = 0
@@ -964,7 +947,7 @@ class MigrationRunner:
                     run_id=run_id,
                     migration=migration,
                     execution_order=i,
-                    dry_run=dry_run
+                    dry_run=dry_run,
                 )
 
                 if success:
@@ -983,14 +966,10 @@ class MigrationRunner:
                 failed += 1
                 if not error_message:
                     error_message = str(e)
-                    error_details = {
-                        "migration": migration.version,
-                        "error": str(e)
-                    }
+                    error_details = {"migration": migration.version, "error": str(e)}
 
                 logger.error(
-                    f"Migration {migration.version} failed: {e}",
-                    exc_info=True
+                    f"Migration {migration.version} failed: {e}", exc_info=True
                 )
 
                 # Execute error hook
@@ -1009,15 +988,11 @@ class MigrationRunner:
             skipped_migrations=skipped,
             error_message=error_message,
             error_details=error_details,
-            dry_run=dry_run
+            dry_run=dry_run,
         )
 
     def _execute_single_migration(
-        self,
-        run_id: UUID,
-        migration: Migration,
-        execution_order: int,
-        dry_run: bool
+        self, run_id: UUID, migration: Migration, execution_order: int, dry_run: bool
     ) -> bool:
         """
         Execute a single migration.
@@ -1037,7 +1012,7 @@ class MigrationRunner:
             migration_version=migration.version,
             status=MigrationRunStatus.PENDING.value,
             execution_order=execution_order,
-            dependencies=migration.dependencies
+            dependencies=migration.dependencies,
         )
 
         self.db.add(exec_record)
@@ -1059,9 +1034,7 @@ class MigrationRunner:
             if migration.upgrade_func:
                 migration.upgrade_func()
             else:
-                logger.warning(
-                    f"Migration {migration.version} has no upgrade function"
-                )
+                logger.warning(f"Migration {migration.version} has no upgrade function")
 
             # Calculate checksum after
             exec_record.checksum_after = self._calculate_db_checksum()
@@ -1091,10 +1064,7 @@ class MigrationRunner:
             return True
 
         except Exception as e:
-            logger.error(
-                f"Migration {migration.version} failed: {e}",
-                exc_info=True
-            )
+            logger.error(f"Migration {migration.version} failed: {e}", exc_info=True)
 
             self.db.rollback()
 
@@ -1115,16 +1085,16 @@ class MigrationRunner:
         """
         try:
             # Query table names and column info
-            result = self.db.execute(text("""
+            result = self.db.execute(
+                text("""
                 SELECT table_name, column_name, data_type
                 FROM information_schema.columns
                 WHERE table_schema = 'public'
                 ORDER BY table_name, ordinal_position
-            """))
-
-            schema_info = "\n".join(
-                f"{row[0]}.{row[1]}:{row[2]}" for row in result
+            """)
             )
+
+            schema_info = "\n".join(f"{row[0]}.{row[1]}:{row[2]}" for row in result)
 
             return hashlib.sha256(schema_info.encode()).hexdigest()
 
@@ -1133,9 +1103,7 @@ class MigrationRunner:
             return ""
 
     def _verify_migration(
-        self,
-        migration: Migration,
-        exec_record: MigrationExecutionRecord
+        self, migration: Migration, exec_record: MigrationExecutionRecord
     ) -> None:
         """
         Verify migration executed correctly.
@@ -1155,9 +1123,7 @@ class MigrationRunner:
             )
 
     def _update_run_record(
-        self,
-        run_record: MigrationRunRecord,
-        result: MigrationResult
+        self, run_record: MigrationRunRecord, result: MigrationResult
     ) -> None:
         """Update migration run record with results."""
         run_record.completed_migrations = result.completed_migrations
@@ -1186,9 +1152,11 @@ class MigrationRunner:
         Returns:
             Dictionary with progress details
         """
-        run_record = self.db.query(MigrationRunRecord).filter(
-            MigrationRunRecord.id == run_id
-        ).first()
+        run_record = (
+            self.db.query(MigrationRunRecord)
+            .filter(MigrationRunRecord.id == run_id)
+            .first()
+        )
 
         if not run_record:
             raise ValidationError(f"Migration run {run_id} not found")
@@ -1211,16 +1179,20 @@ class MigrationRunner:
             "dry_run": run_record.dry_run,
             "target_version": run_record.target_version,
             "current_version": run_record.current_version,
-            "created_at": run_record.created_at.isoformat() if run_record.created_at else None,
-            "started_at": run_record.started_at.isoformat() if run_record.started_at else None,
-            "completed_at": run_record.completed_at.isoformat() if run_record.completed_at else None,
-            "error_message": run_record.error_message
+            "created_at": run_record.created_at.isoformat()
+            if run_record.created_at
+            else None,
+            "started_at": run_record.started_at.isoformat()
+            if run_record.started_at
+            else None,
+            "completed_at": run_record.completed_at.isoformat()
+            if run_record.completed_at
+            else None,
+            "error_message": run_record.error_message,
         }
 
     def list_runs(
-        self,
-        status: Optional[MigrationRunStatus] = None,
-        limit: int = 50
+        self, status: MigrationRunStatus | None = None, limit: int = 50
     ) -> list[MigrationRunRecord]:
         """
         List migration runs.
@@ -1237,6 +1209,4 @@ class MigrationRunner:
         if status:
             query = query.filter(MigrationRunRecord.status == status.value)
 
-        return query.order_by(
-            MigrationRunRecord.created_at.desc()
-        ).limit(limit).all()
+        return query.order_by(MigrationRunRecord.created_at.desc()).limit(limit).all()

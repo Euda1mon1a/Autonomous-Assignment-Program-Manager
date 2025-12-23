@@ -7,11 +7,11 @@ Implements various compression algorithms:
 - Streaming compression support
 - Fallback handling
 """
+
 import gzip
 import io
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +127,7 @@ class GzipEncoder(CompressionEncoder):
             # Process data in chunks
             offset = 0
             while offset < len(data):
-                chunk = data[offset:offset + chunk_size]
+                chunk = data[offset : offset + chunk_size]
                 gz.write(chunk)
                 offset += chunk_size
 
@@ -161,6 +161,7 @@ class BrotliEncoder(CompressionEncoder):
         # Try to import brotli
         try:
             import brotli
+
             self._brotli = brotli
             self._available = True
             logger.debug(f"BrotliEncoder initialized with quality {quality}")
@@ -168,8 +169,7 @@ class BrotliEncoder(CompressionEncoder):
             self._brotli = None
             self._available = False
             logger.warning(
-                "Brotli compression not available. "
-                "Install with: pip install brotli"
+                "Brotli compression not available. Install with: pip install brotli"
             )
 
     @property
@@ -223,7 +223,7 @@ class BrotliEncoder(CompressionEncoder):
         output = io.BytesIO()
         offset = 0
         while offset < len(data):
-            chunk = data[offset:offset + chunk_size]
+            chunk = data[offset : offset + chunk_size]
             compressed_chunk = compressor.process(chunk)
             if compressed_chunk:
                 output.write(compressed_chunk)
@@ -265,7 +265,7 @@ class EncoderFactory:
             f"brotli={self._brotli_encoder.available}"
         )
 
-    def get_encoder(self, accept_encoding: str) -> Optional[CompressionEncoder]:
+    def get_encoder(self, accept_encoding: str) -> CompressionEncoder | None:
         """
         Get best encoder based on Accept-Encoding header.
 

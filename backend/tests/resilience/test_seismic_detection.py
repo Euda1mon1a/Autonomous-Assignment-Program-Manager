@@ -5,11 +5,11 @@ Tests the burnout early warning system that uses seismology signal
 processing algorithms to detect behavioral pattern changes.
 """
 
-import pytest
 from datetime import datetime, timedelta
 from uuid import uuid4
 
 import numpy as np
+import pytest
 
 from app.resilience.seismic_detection import (
     BurnoutEarlyWarning,
@@ -40,7 +40,9 @@ class TestPrecursorSignal:
         assert PrecursorSignal.SICK_CALLS == "sick_calls"
         assert PrecursorSignal.PREFERENCE_DECLINE == "preference_decline"
         assert PrecursorSignal.RESPONSE_DELAYS == "response_delays"
-        assert PrecursorSignal.VOLUNTARY_COVERAGE_DECLINE == "voluntary_coverage_decline"
+        assert (
+            PrecursorSignal.VOLUNTARY_COVERAGE_DECLINE == "voluntary_coverage_decline"
+        )
 
 
 class TestSeismicAlert:
@@ -133,10 +135,12 @@ class TestBurnoutEarlyWarning:
     def test_classic_sta_lta_basic(self):
         """Test classic STA/LTA computation on simple signal."""
         # Create signal with sudden increase
-        data = np.concatenate([
-            np.ones(30),  # Baseline
-            np.ones(10) * 5,  # Sudden increase
-        ])
+        data = np.concatenate(
+            [
+                np.ones(30),  # Baseline
+                np.ones(10) * 5,  # Sudden increase
+            ]
+        )
 
         sta_lta = BurnoutEarlyWarning.classic_sta_lta(data, nsta=5, nlta=30)
 
@@ -165,10 +169,12 @@ class TestBurnoutEarlyWarning:
     def test_recursive_sta_lta_basic(self):
         """Test recursive STA/LTA computation."""
         # Create signal with sudden increase
-        data = np.concatenate([
-            np.ones(30),  # Baseline
-            np.ones(10) * 5,  # Sudden increase
-        ])
+        data = np.concatenate(
+            [
+                np.ones(30),  # Baseline
+                np.ones(10) * 5,  # Sudden increase
+            ]
+        )
 
         sta_lta = BurnoutEarlyWarning.recursive_sta_lta(data, nsta=5, nlta=30)
 
@@ -200,16 +206,22 @@ class TestBurnoutEarlyWarning:
     def test_trigger_onset_basic(self):
         """Test trigger onset detection."""
         # Create STA/LTA with clear trigger
-        sta_lta = np.array([
-            1.0, 1.0, 1.0,  # Below threshold
-            3.0, 4.0, 3.5,  # Above threshold
-            0.8, 0.8, 0.8,  # Back below
-        ])
+        sta_lta = np.array(
+            [
+                1.0,
+                1.0,
+                1.0,  # Below threshold
+                3.0,
+                4.0,
+                3.5,  # Above threshold
+                0.8,
+                0.8,
+                0.8,  # Back below
+            ]
+        )
 
         triggers = BurnoutEarlyWarning.trigger_onset(
-            sta_lta,
-            on_threshold=2.5,
-            off_threshold=1.0
+            sta_lta, on_threshold=2.5, off_threshold=1.0
         )
 
         assert len(triggers) == 1
@@ -218,15 +230,23 @@ class TestBurnoutEarlyWarning:
 
     def test_trigger_onset_multiple_triggers(self):
         """Test detection of multiple trigger periods."""
-        sta_lta = np.array([
-            1.0, 1.0, 3.0, 3.0, 0.5,  # First trigger
-            1.0, 1.0, 4.0, 4.0, 0.5,  # Second trigger
-        ])
+        sta_lta = np.array(
+            [
+                1.0,
+                1.0,
+                3.0,
+                3.0,
+                0.5,  # First trigger
+                1.0,
+                1.0,
+                4.0,
+                4.0,
+                0.5,  # Second trigger
+            ]
+        )
 
         triggers = BurnoutEarlyWarning.trigger_onset(
-            sta_lta,
-            on_threshold=2.5,
-            off_threshold=1.0
+            sta_lta, on_threshold=2.5, off_threshold=1.0
         )
 
         assert len(triggers) == 2
@@ -238,9 +258,7 @@ class TestBurnoutEarlyWarning:
         sta_lta = np.array([1.0, 1.0, 3.0, 3.5, 4.0])
 
         triggers = BurnoutEarlyWarning.trigger_onset(
-            sta_lta,
-            on_threshold=2.5,
-            off_threshold=1.0
+            sta_lta, on_threshold=2.5, off_threshold=1.0
         )
 
         assert len(triggers) == 1
@@ -252,9 +270,7 @@ class TestBurnoutEarlyWarning:
         sta_lta = np.array([1.0, 1.1, 1.2, 1.0, 0.9])
 
         triggers = BurnoutEarlyWarning.trigger_onset(
-            sta_lta,
-            on_threshold=2.5,
-            off_threshold=1.0
+            sta_lta, on_threshold=2.5, off_threshold=1.0
         )
 
         assert len(triggers) == 0
@@ -281,7 +297,7 @@ class TestBurnoutEarlyWarning:
         alerts = detector.detect_precursors(
             resident_id=resident_id,
             signal_type=PrecursorSignal.SWAP_REQUESTS,
-            time_series=time_series
+            time_series=time_series,
         )
 
         # Should detect at least one alert
@@ -306,7 +322,7 @@ class TestBurnoutEarlyWarning:
         alerts = detector.detect_precursors(
             resident_id=resident_id,
             signal_type=PrecursorSignal.SWAP_REQUESTS,
-            time_series=time_series
+            time_series=time_series,
         )
 
         # Should return empty list
@@ -323,7 +339,7 @@ class TestBurnoutEarlyWarning:
         alerts = detector.detect_precursors(
             resident_id=resident_id,
             signal_type=PrecursorSignal.SWAP_REQUESTS,
-            time_series=time_series
+            time_series=time_series,
         )
 
         # Should not detect any alerts
@@ -340,7 +356,7 @@ class TestBurnoutEarlyWarning:
         alerts = detector.detect_precursors(
             resident_id=resident_id,
             signal_type=PrecursorSignal.SICK_CALLS,
-            time_series=time_series
+            time_series=time_series,
         )
 
         assert len(alerts) > 0
@@ -360,7 +376,7 @@ class TestBurnoutEarlyWarning:
         alerts = detector.detect_precursors(
             resident_id=resident_id,
             signal_type=PrecursorSignal.RESPONSE_DELAYS,
-            time_series=time_series
+            time_series=time_series,
         )
 
         assert len(alerts) > 0
@@ -376,9 +392,7 @@ class TestBurnoutEarlyWarning:
         """Test magnitude prediction from single signal."""
         detector = BurnoutEarlyWarning(short_window=5, long_window=30)
 
-        signals = {
-            PrecursorSignal.SWAP_REQUESTS: [1.0] * 30 + [5.0] * 10
-        }
+        signals = {PrecursorSignal.SWAP_REQUESTS: [1.0] * 30 + [5.0] * 10}
 
         magnitude = detector.predict_burnout_magnitude(signals)
 
@@ -428,9 +442,7 @@ class TestBurnoutEarlyWarning:
         # Same spike in all signals
         spike_data = [1.0] * 30 + [5.0] * 10
 
-        single_signal = {
-            PrecursorSignal.SWAP_REQUESTS: spike_data.copy()
-        }
+        single_signal = {PrecursorSignal.SWAP_REQUESTS: spike_data.copy()}
 
         multiple_signals = {
             PrecursorSignal.SWAP_REQUESTS: spike_data.copy(),
@@ -452,8 +464,7 @@ class TestBurnoutEarlyWarning:
         # Critical threshold is 10.0
         # Should take ~5 days
         time_to_event = detector.estimate_time_to_event(
-            sta_lta_ratio=5.0,
-            signal_growth_rate=1.0
+            sta_lta_ratio=5.0, signal_growth_rate=1.0
         )
 
         assert time_to_event.days == 5
@@ -464,7 +475,7 @@ class TestBurnoutEarlyWarning:
 
         time_to_event = detector.estimate_time_to_event(
             sta_lta_ratio=12.0,  # Already above critical
-            signal_growth_rate=1.0
+            signal_growth_rate=1.0,
         )
 
         # Should return minimum (1 day)
@@ -476,7 +487,7 @@ class TestBurnoutEarlyWarning:
 
         time_to_event = detector.estimate_time_to_event(
             sta_lta_ratio=5.0,
-            signal_growth_rate=-0.5  # Improving
+            signal_growth_rate=-0.5,  # Improving
         )
 
         # Should return large value (1 year)
@@ -487,8 +498,7 @@ class TestBurnoutEarlyWarning:
         detector = BurnoutEarlyWarning()
 
         time_to_event = detector.estimate_time_to_event(
-            sta_lta_ratio=5.0,
-            signal_growth_rate=0.0
+            sta_lta_ratio=5.0, signal_growth_rate=0.0
         )
 
         assert time_to_event.days == 365
@@ -500,8 +510,7 @@ class TestBurnoutEarlyWarning:
         # Growth of 0.01 per day would take 500 days
         # Should be clamped to 365 days
         time_to_event = detector.estimate_time_to_event(
-            sta_lta_ratio=5.0,
-            signal_growth_rate=0.01
+            sta_lta_ratio=5.0, signal_growth_rate=0.01
         )
 
         assert time_to_event.days == 365
@@ -574,7 +583,7 @@ class TestIntegration:
         alerts = detector.detect_precursors(
             resident_id=resident_id,
             signal_type=PrecursorSignal.SWAP_REQUESTS,
-            time_series=time_series
+            time_series=time_series,
         )
 
         # Should detect anomaly
@@ -618,7 +627,7 @@ class TestIntegration:
         alerts = detector.detect_precursors(
             resident_id=resident_id,
             signal_type=PrecursorSignal.PREFERENCE_DECLINE,
-            time_series=gradual
+            time_series=gradual,
         )
 
         if alerts:

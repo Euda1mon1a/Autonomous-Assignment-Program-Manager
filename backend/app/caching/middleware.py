@@ -23,9 +23,9 @@ Example:
     app = FastAPI()
     app.add_middleware(HTTPCacheMiddleware)
 """
+
 import logging
 from datetime import datetime
-from typing import Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -66,13 +66,13 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: ASGIApp,
-        config: Optional[HTTPCacheConfig] = None,
+        config: HTTPCacheConfig | None = None,
         default_max_age: int = 300,
         enable_etag: bool = True,
         enable_last_modified: bool = True,
-        cache_methods: Optional[list[str]] = None,
-        exclude_paths: Optional[list[str]] = None,
-        vary_headers: Optional[list[str]] = None,
+        cache_methods: list[str] | None = None,
+        exclude_paths: list[str] | None = None,
+        vary_headers: list[str] | None = None,
     ):
         """
         Initialize HTTP cache middleware.
@@ -164,11 +164,12 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
         if if_modified_since_header:
             try:
                 if_modified_since = datetime.strptime(
-                    if_modified_since_header,
-                    "%a, %d %b %Y %H:%M:%S GMT"
+                    if_modified_since_header, "%a, %d %b %Y %H:%M:%S GMT"
                 )
             except ValueError:
-                logger.debug(f"Invalid If-Modified-Since header: {if_modified_since_header}")
+                logger.debug(
+                    f"Invalid If-Modified-Since header: {if_modified_since_header}"
+                )
 
         # Check if resource has been modified
         if if_none_match or if_modified_since:
@@ -227,7 +228,7 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
         request: Request,
         response: Response,
         cache_key: str,
-        vary_values: Optional[dict[str, str]],
+        vary_values: dict[str, str] | None,
     ) -> None:
         """
         Cache response if cacheable.
@@ -382,7 +383,7 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
 
         return key
 
-    def _get_vary_values(self, request: Request) -> Optional[dict[str, str]]:
+    def _get_vary_values(self, request: Request) -> dict[str, str] | None:
         """
         Get values for Vary headers.
 
@@ -421,7 +422,7 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
 
         return False
 
-    def _extract_resource(self, path: str) -> Optional[str]:
+    def _extract_resource(self, path: str) -> str | None:
         """
         Extract resource name from path.
 
@@ -440,7 +441,7 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
 
         return None
 
-    def _extract_resource_id(self, path: str, resource: str) -> Optional[str]:
+    def _extract_resource_id(self, path: str, resource: str) -> str | None:
         """
         Extract resource ID from path.
 

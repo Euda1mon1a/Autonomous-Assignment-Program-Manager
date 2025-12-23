@@ -524,7 +524,9 @@ class RefreshTokenService:
             should_rotate = True
         elif self.rotation_strategy == TokenRotationStrategy.THRESHOLD:
             # Calculate token age percentage
-            total_lifetime = (token_data.expires_at - token_data.created_at).total_seconds()
+            total_lifetime = (
+                token_data.expires_at - token_data.created_at
+            ).total_seconds()
             current_age = (datetime.utcnow() - token_data.created_at).total_seconds()
             age_percentage = current_age / total_lifetime if total_lifetime > 0 else 1.0
 
@@ -646,7 +648,9 @@ class RefreshTokenService:
             if await self.revoke_token(token_id, reason=reason):
                 revoked += 1
 
-        logger.warning(f"Revoked {revoked} tokens in family {family_id} (reason: {reason})")
+        logger.warning(
+            f"Revoked {revoked} tokens in family {family_id} (reason: {reason})"
+        )
 
         return revoked
 

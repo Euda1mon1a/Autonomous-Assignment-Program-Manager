@@ -4,21 +4,20 @@ Tenant models for multitenancy support.
 This module defines the database models for managing tenants in the system.
 Each tenant represents an isolated organization (e.g., hospital, residency program).
 """
+
 import uuid
 from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     CheckConstraint,
     Column,
     DateTime,
-    Integer,
-    JSON,
     String,
     Text,
 )
-from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 from app.db.types import GUID
@@ -88,25 +87,35 @@ class Tenant(Base):
     # Primary identification
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     slug = Column(
-        String(100), unique=True, nullable=False, index=True,
-        doc="URL-friendly tenant identifier"
+        String(100),
+        unique=True,
+        nullable=False,
+        index=True,
+        doc="URL-friendly tenant identifier",
     )
     name = Column(String(255), nullable=False, doc="Human-readable tenant name")
 
     # Status and lifecycle
     status = Column(
-        String(50), nullable=False, default=TenantStatus.PENDING.value, index=True,
-        doc="Current tenant status"
+        String(50),
+        nullable=False,
+        default=TenantStatus.PENDING.value,
+        index=True,
+        doc="Current tenant status",
     )
 
     # Isolation configuration
     isolation_strategy = Column(
-        String(50), nullable=False, default=IsolationStrategy.ROW_LEVEL.value,
-        doc="Data isolation strategy"
+        String(50),
+        nullable=False,
+        default=IsolationStrategy.ROW_LEVEL.value,
+        doc="Data isolation strategy",
     )
     schema_name = Column(
-        String(100), unique=True, nullable=True,
-        doc="PostgreSQL schema name for schema-based isolation"
+        String(100),
+        unique=True,
+        nullable=True,
+        doc="PostgreSQL schema name for schema-based isolation",
     )
 
     # Contact and billing
@@ -115,16 +124,22 @@ class Tenant(Base):
 
     # Configuration and limits
     settings = Column(
-        JSON, nullable=False, default=dict,
-        doc="Tenant-specific settings (ACGME rules, scheduling preferences)"
+        JSON,
+        nullable=False,
+        default=dict,
+        doc="Tenant-specific settings (ACGME rules, scheduling preferences)",
     )
     resource_limits = Column(
-        JSON, nullable=False, default=dict,
-        doc="Resource quotas (max users, schedules, storage)"
+        JSON,
+        nullable=False,
+        default=dict,
+        doc="Resource quotas (max users, schedules, storage)",
     )
     metadata = Column(
-        JSON, nullable=False, default=dict,
-        doc="Additional tenant information (address, phone, etc.)"
+        JSON,
+        nullable=False,
+        default=dict,
+        doc="Additional tenant information (address, phone, etc.)",
     )
 
     # Audit and tracking
@@ -136,12 +151,8 @@ class Tenant(Base):
     updated_at = Column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
-    activated_at = Column(
-        DateTime, nullable=True, doc="When tenant became active"
-    )
-    suspended_at = Column(
-        DateTime, nullable=True, doc="When tenant was suspended"
-    )
+    activated_at = Column(DateTime, nullable=True, doc="When tenant became active")
+    suspended_at = Column(DateTime, nullable=True, doc="When tenant was suspended")
 
     # Relationships (if we add user-tenant mapping)
     # users = relationship("TenantUser", back_populates="tenant")
@@ -163,7 +174,9 @@ class Tenant(Base):
     )
 
     def __repr__(self):
-        return f"<Tenant(slug='{self.slug}', name='{self.name}', status='{self.status}')>"
+        return (
+            f"<Tenant(slug='{self.slug}', name='{self.name}', status='{self.status}')>"
+        )
 
     @property
     def is_active(self) -> bool:
@@ -241,24 +254,21 @@ class TenantUser(Base):
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     tenant_id = Column(
-        GUID(), nullable=False, index=True,
-        doc="Tenant this user belongs to"
+        GUID(), nullable=False, index=True, doc="Tenant this user belongs to"
     )
-    user_id = Column(
-        GUID(), nullable=False, index=True,
-        doc="User account"
-    )
+    user_id = Column(GUID(), nullable=False, index=True, doc="User account")
 
     # Role within this tenant (can differ from global role)
     role = Column(
-        String(50), nullable=False, default="coordinator",
-        doc="User's role within this tenant"
+        String(50),
+        nullable=False,
+        default="coordinator",
+        doc="User's role within this tenant",
     )
 
     # Primary tenant flag
     is_primary = Column(
-        Boolean, default=False,
-        doc="Whether this is the user's primary tenant"
+        Boolean, default=False, doc="Whether this is the user's primary tenant"
     )
 
     # Timestamps
@@ -309,33 +319,24 @@ class TenantAuditLog(Base):
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     tenant_id = Column(
-        GUID(), nullable=True, index=True,
-        doc="Tenant this audit event relates to"
+        GUID(), nullable=True, index=True, doc="Tenant this audit event relates to"
     )
     user_id = Column(
-        GUID(), nullable=True, index=True,
-        doc="User who performed the action"
+        GUID(), nullable=True, index=True, doc="User who performed the action"
     )
 
     # Event details
     action = Column(
-        String(100), nullable=False, index=True,
-        doc="Action performed (create_tenant, suspend_tenant, cross_tenant_query)"
+        String(100),
+        nullable=False,
+        index=True,
+        doc="Action performed (create_tenant, suspend_tenant, cross_tenant_query)",
     )
-    resource_type = Column(
-        String(100), nullable=True,
-        doc="Type of resource affected"
-    )
-    resource_id = Column(
-        GUID(), nullable=True,
-        doc="ID of affected resource"
-    )
+    resource_type = Column(String(100), nullable=True, doc="Type of resource affected")
+    resource_id = Column(GUID(), nullable=True, doc="ID of affected resource")
 
     # Change tracking
-    changes = Column(
-        JSON, nullable=True,
-        doc="Before/after values for the change"
-    )
+    changes = Column(JSON, nullable=True, doc="Before/after values for the change")
 
     # Request context
     ip_address = Column(String(45), nullable=True, doc="IPv4 or IPv6 address")

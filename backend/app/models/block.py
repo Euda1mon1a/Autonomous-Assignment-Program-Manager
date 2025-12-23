@@ -1,4 +1,5 @@
 """Block model - half-day scheduling blocks."""
+
 import uuid
 from datetime import date, timedelta
 
@@ -24,12 +25,15 @@ class Block(Base):
     730 blocks per year: 365 days × 2 (AM/PM)
     Each block represents a schedulable unit for assignments.
     """
+
     __tablename__ = "blocks"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     date = Column(Date, nullable=False)
     time_of_day = Column(String(2), nullable=False)  # 'AM' or 'PM'
-    block_number = Column(Integer, nullable=False)  # Academic year block (e.g., Block 2, Block 3)
+    block_number = Column(
+        Integer, nullable=False
+    )  # Academic year block (e.g., Block 2, Block 3)
     is_weekend = Column(Boolean, default=False)
     is_holiday = Column(Boolean, default=False)
     holiday_name = Column(String(255))

@@ -9,6 +9,7 @@ Key features:
 - TFT validation for production-readiness
 - Integration with resilience framework
 """
+
 import logging
 from datetime import datetime
 from typing import Any
@@ -56,7 +57,7 @@ class ResilienceConfigPlayer(axl.Player):
         initial_action: str = "cooperate",
         forgiveness_probability: float = 0.0,
         retaliation_memory: int = 1,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
         self.strategy_type = strategy_type
@@ -85,7 +86,10 @@ class ResilienceConfigPlayer(axl.Player):
 
         elif self.strategy_type == "tit_for_tat":
             # Mirror opponent's last move
-            if self.forgiveness_probability > 0 and opponent.history[-1] == axl.Action.D:
+            if (
+                self.forgiveness_probability > 0
+                and opponent.history[-1] == axl.Action.D
+            ):
                 if random.random() < self.forgiveness_probability:
                     return axl.Action.C
             return opponent.history[-1]
@@ -103,7 +107,9 @@ class ResilienceConfigPlayer(axl.Player):
             if last_payoff >= 3:  # Good outcome (CC or DC)
                 return self.history[-1]
             else:
-                return axl.Action.C if self.history[-1] == axl.Action.D else axl.Action.D
+                return (
+                    axl.Action.C if self.history[-1] == axl.Action.D else axl.Action.D
+                )
 
         elif self.strategy_type == "random":
             return axl.Action.C if random.random() > 0.5 else axl.Action.D
@@ -116,7 +122,7 @@ class ResilienceConfigPlayer(axl.Player):
 
         elif self.strategy_type == "forgiving_tft":
             # TFT but only retaliate if opponent defected multiple times
-            recent = opponent.history[-self.retaliation_memory:]
+            recent = opponent.history[-self.retaliation_memory :]
             defection_count = recent.count(axl.Action.D)
             if defection_count >= self.retaliation_memory:
                 return axl.Action.D
@@ -157,7 +163,7 @@ class GameTheoryService:
         strategy_type: str,
         description: str | None = None,
         created_by: str | None = None,
-        **config_params
+        **config_params,
     ) -> ConfigStrategy:
         """Create a new configuration strategy."""
         strategy = ConfigStrategy(
@@ -168,7 +174,9 @@ class GameTheoryService:
             utilization_target=config_params.get("utilization_target", 0.80),
             cross_zone_borrowing=config_params.get("cross_zone_borrowing", True),
             sacrifice_willingness=config_params.get("sacrifice_willingness", "medium"),
-            defense_activation_threshold=config_params.get("defense_activation_threshold", 3),
+            defense_activation_threshold=config_params.get(
+                "defense_activation_threshold", 3
+            ),
             response_timeout_ms=config_params.get("response_timeout_ms", 5000),
             initial_action=config_params.get("initial_action", "cooperate"),
             forgiveness_probability=config_params.get("forgiveness_probability", 0.0),
@@ -183,7 +191,11 @@ class GameTheoryService:
 
     def get_strategy(self, strategy_id: UUID) -> ConfigStrategy | None:
         """Get a strategy by ID."""
-        return self.db.query(ConfigStrategy).filter(ConfigStrategy.id == strategy_id).first()
+        return (
+            self.db.query(ConfigStrategy)
+            .filter(ConfigStrategy.id == strategy_id)
+            .first()
+        )
 
     def list_strategies(self, active_only: bool = True) -> list[ConfigStrategy]:
         """List all strategies."""
@@ -268,9 +280,11 @@ class GameTheoryService:
 
         created = []
         for config in defaults:
-            existing = self.db.query(ConfigStrategy).filter(
-                ConfigStrategy.name == config["name"]
-            ).first()
+            existing = (
+                self.db.query(ConfigStrategy)
+                .filter(ConfigStrategy.name == config["name"])
+                .first()
+            )
             if not existing:
                 strategy = self.create_strategy(**config, created_by="system")
                 created.append(strategy)
@@ -317,15 +331,20 @@ class GameTheoryService:
 
     def get_tournament(self, tournament_id: UUID) -> GameTheoryTournament | None:
         """Get a tournament by ID."""
-        return self.db.query(GameTheoryTournament).filter(
-            GameTheoryTournament.id == tournament_id
-        ).first()
+        return (
+            self.db.query(GameTheoryTournament)
+            .filter(GameTheoryTournament.id == tournament_id)
+            .first()
+        )
 
     def list_tournaments(self, limit: int = 50) -> list[GameTheoryTournament]:
         """List recent tournaments."""
-        return self.db.query(GameTheoryTournament).order_by(
-            GameTheoryTournament.created_at.desc()
-        ).limit(limit).all()
+        return (
+            self.db.query(GameTheoryTournament)
+            .order_by(GameTheoryTournament.created_at.desc())
+            .limit(limit)
+            .all()
+        )
 
     def run_tournament(self, tournament_id: UUID) -> dict:
         """
@@ -382,17 +401,23 @@ class GameTheoryService:
             rankings = []
             for rank, player_index in enumerate(results.ranking):
                 name = results.ranked_names[rank]
-                strategy = strategies[player_index] if player_index < len(strategies) else next((s for s in strategies if s.name == name), None)
+                strategy = (
+                    strategies[player_index]
+                    if player_index < len(strategies)
+                    else next((s for s in strategies if s.name == name), None)
+                )
                 scores = results.scores[player_index]
                 avg_score = sum(scores) / len(scores) if scores else 0
 
-                rankings.append({
-                    "rank": rank + 1,
-                    "strategy_id": str(strategy.id) if strategy else None,
-                    "strategy_name": name,
-                    "total_score": sum(scores),
-                    "average_score": avg_score,
-                })
+                rankings.append(
+                    {
+                        "rank": rank + 1,
+                        "strategy_id": str(strategy.id) if strategy else None,
+                        "strategy_name": name,
+                        "total_score": sum(scores),
+                        "average_score": avg_score,
+                    }
+                )
 
                 # Update strategy stats
                 if strategy:
@@ -406,7 +431,9 @@ class GameTheoryService:
             for i, p1 in enumerate(players):
                 payoff_matrix[p1.name] = {}
                 for j, p2 in enumerate(players):
-                    if i < len(results.payoff_matrix) and j < len(results.payoff_matrix[i]):
+                    if i < len(results.payoff_matrix) and j < len(
+                        results.payoff_matrix[i]
+                    ):
                         payoff_matrix[p1.name][p2.name] = results.payoff_matrix[i][j]
 
             # Store matches
@@ -417,9 +444,19 @@ class GameTheoryService:
             # Update tournament
             tournament.status = SimulationStatus.COMPLETED.value
             tournament.completed_at = datetime.utcnow()
-            tournament.total_matches = len(results.interactions) if hasattr(results, 'interactions') else len(players) * (len(players) - 1) // 2
-            tournament.winner_strategy_name = rankings[0]["strategy_name"] if rankings else None
-            tournament.winner_strategy_id = UUID(rankings[0]["strategy_id"]) if rankings and rankings[0]["strategy_id"] else None
+            tournament.total_matches = (
+                len(results.interactions)
+                if hasattr(results, "interactions")
+                else len(players) * (len(players) - 1) // 2
+            )
+            tournament.winner_strategy_name = (
+                rankings[0]["strategy_name"] if rankings else None
+            )
+            tournament.winner_strategy_id = (
+                UUID(rankings[0]["strategy_id"])
+                if rankings and rankings[0]["strategy_id"]
+                else None
+            )
             tournament.rankings = rankings
             tournament.payoff_matrix = payoff_matrix
 
@@ -474,15 +511,20 @@ class GameTheoryService:
 
     def get_evolution(self, evolution_id: UUID) -> EvolutionSimulation | None:
         """Get an evolution simulation by ID."""
-        return self.db.query(EvolutionSimulation).filter(
-            EvolutionSimulation.id == evolution_id
-        ).first()
+        return (
+            self.db.query(EvolutionSimulation)
+            .filter(EvolutionSimulation.id == evolution_id)
+            .first()
+        )
 
     def list_evolutions(self, limit: int = 50) -> list[EvolutionSimulation]:
         """List recent evolution simulations."""
-        return self.db.query(EvolutionSimulation).order_by(
-            EvolutionSimulation.created_at.desc()
-        ).limit(limit).all()
+        return (
+            self.db.query(EvolutionSimulation)
+            .order_by(EvolutionSimulation.created_at.desc())
+            .limit(limit)
+            .all()
+        )
 
     def run_evolution(self, evolution_id: UUID) -> dict:
         """
@@ -535,10 +577,9 @@ class GameTheoryService:
                         for player in pop:
                             name = player.name
                             counts[name] = counts.get(name, 0) + 1
-                        population_history.append({
-                            "generation": gen,
-                            "populations": counts
-                        })
+                        population_history.append(
+                            {"generation": gen, "populations": counts}
+                        )
 
                     if gen >= evolution.max_generations:
                         break
@@ -557,7 +598,11 @@ class GameTheoryService:
                 final_counts[name] = final_counts.get(name, 0) + 1
 
             # Determine winner
-            winner_name = mp.winning_strategy_name if hasattr(mp, 'winning_strategy_name') else None
+            winner_name = (
+                mp.winning_strategy_name
+                if hasattr(mp, "winning_strategy_name")
+                else None
+            )
             if not winner_name and final_counts:
                 winner_name = max(final_counts.keys(), key=lambda k: final_counts[k])
 
@@ -566,15 +611,19 @@ class GameTheoryService:
             evolution.completed_at = datetime.utcnow()
             evolution.generations_completed = generations
             evolution.winner_strategy_name = winner_name
-            evolution.is_evolutionarily_stable = mp.fixated if hasattr(mp, 'fixated') else False
+            evolution.is_evolutionarily_stable = (
+                mp.fixated if hasattr(mp, "fixated") else False
+            )
             evolution.population_history = population_history
             evolution.final_population = final_counts
 
             # Find winner strategy ID
             if winner_name:
-                winner = self.db.query(ConfigStrategy).filter(
-                    ConfigStrategy.name == winner_name
-                ).first()
+                winner = (
+                    self.db.query(ConfigStrategy)
+                    .filter(ConfigStrategy.name == winner_name)
+                    .first()
+                )
                 if winner:
                     evolution.winner_strategy_id = winner.id
 
@@ -645,13 +694,17 @@ class GameTheoryService:
         passed = avg_score >= pass_threshold
         if passed and coop_rate >= 0.6:
             assessment = "cooperative"
-            recommendation = "Strategy is cooperative and performs well. Suitable for production."
+            recommendation = (
+                "Strategy is cooperative and performs well. Suitable for production."
+            )
         elif passed and coop_rate < 0.4:
             assessment = "exploitative"
             recommendation = "Strategy passes but is not cooperative. May cause issues in shared environment."
         elif not passed and coop_rate < 0.3:
             assessment = "too_aggressive"
-            recommendation = "Strategy is too aggressive. Will trigger retaliation and underperform."
+            recommendation = (
+                "Strategy is too aggressive. Will trigger retaliation and underperform."
+            )
         else:
             assessment = "exploitable"
             recommendation = "Strategy underperforms. Consider more adaptive approach."
@@ -729,7 +782,11 @@ class GameTheoryService:
             results[opponent.name] = {
                 "score": match.final_score()[0],
                 "cooperation_rate": match.cooperation()[0],
-                "outcome": "win" if match.winner() == config_player else "loss" if match.winner() else "tie"
+                "outcome": "win"
+                if match.winner() == config_player
+                else "loss"
+                if match.winner()
+                else "tie",
             }
 
             total_score += match.final_score()[0]
@@ -742,9 +799,13 @@ class GameTheoryService:
 
         # Generate recommendation
         if avg_score >= 2.5 and avg_coop >= 0.6:
-            recommendation = "Config is cooperative and performs well. Suitable for production."
+            recommendation = (
+                "Config is cooperative and performs well. Suitable for production."
+            )
         elif avg_score >= 2.0 and avg_coop < 0.4:
-            recommendation = "Config is too aggressive. May cause issues in shared environment."
+            recommendation = (
+                "Config is too aggressive. May cause issues in shared environment."
+            )
         elif avg_score < 2.0:
             recommendation = "Config underperforms. Consider more adaptive strategy."
         else:

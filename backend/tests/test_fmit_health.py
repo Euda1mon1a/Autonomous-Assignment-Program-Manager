@@ -11,6 +11,7 @@ Comprehensive test coverage for the FMIT health monitoring endpoints including:
 - Coverage forecast endpoint
 - Alert summary endpoint
 """
+
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 
@@ -29,7 +30,6 @@ from app.models.conflict_alert import (
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.swap import SwapRecord, SwapStatus, SwapType
-
 
 # ============================================================================
 # Fixtures
@@ -164,7 +164,9 @@ def sample_swap_records(
             source_faculty_id=source_faculty.id,
             source_week=month_start + timedelta(days=i * 7),
             target_faculty_id=target_faculty.id,
-            target_week=month_start + timedelta(days=(i + 1) * 7) if i % 2 == 0 else None,
+            target_week=month_start + timedelta(days=(i + 1) * 7)
+            if i % 2 == 0
+            else None,
             swap_type=SwapType.ONE_TO_ONE if i % 2 == 0 else SwapType.ABSORB,
             status=status,
             requested_at=datetime.utcnow() - timedelta(days=i),
@@ -201,12 +203,32 @@ def sample_conflict_alerts(
 
     # Create alerts with different combinations
     alert_configs = [
-        (ConflictSeverity.CRITICAL, ConflictAlertStatus.NEW, ConflictType.LEAVE_FMIT_OVERLAP),
-        (ConflictSeverity.CRITICAL, ConflictAlertStatus.ACKNOWLEDGED, ConflictType.CALL_CASCADE),
+        (
+            ConflictSeverity.CRITICAL,
+            ConflictAlertStatus.NEW,
+            ConflictType.LEAVE_FMIT_OVERLAP,
+        ),
+        (
+            ConflictSeverity.CRITICAL,
+            ConflictAlertStatus.ACKNOWLEDGED,
+            ConflictType.CALL_CASCADE,
+        ),
         (ConflictSeverity.WARNING, ConflictAlertStatus.NEW, ConflictType.BACK_TO_BACK),
-        (ConflictSeverity.WARNING, ConflictAlertStatus.ACKNOWLEDGED, ConflictType.EXCESSIVE_ALTERNATING),
-        (ConflictSeverity.INFO, ConflictAlertStatus.NEW, ConflictType.EXTERNAL_COMMITMENT),
-        (ConflictSeverity.INFO, ConflictAlertStatus.RESOLVED, ConflictType.BACK_TO_BACK),
+        (
+            ConflictSeverity.WARNING,
+            ConflictAlertStatus.ACKNOWLEDGED,
+            ConflictType.EXCESSIVE_ALTERNATING,
+        ),
+        (
+            ConflictSeverity.INFO,
+            ConflictAlertStatus.NEW,
+            ConflictType.EXTERNAL_COMMITMENT,
+        ),
+        (
+            ConflictSeverity.INFO,
+            ConflictAlertStatus.RESOLVED,
+            ConflictType.BACK_TO_BACK,
+        ),
     ]
 
     for i, (severity, status, conflict_type) in enumerate(alert_configs):
@@ -643,7 +665,9 @@ class TestFMITCoverageEndpoint:
         data = response.json()
 
         # At least one week should have faculty assigned
-        weeks_with_faculty = [w for w in data["weeks"] if len(w["faculty_assigned"]) > 0]
+        weeks_with_faculty = [
+            w for w in data["weeks"] if len(w["faculty_assigned"]) > 0
+        ]
         assert len(weeks_with_faculty) > 0
 
         # Faculty names should be sorted
@@ -717,10 +741,10 @@ class TestFMITCoverageGapsEndpoint:
 
         # Total should equal sum of severity categories
         total_by_severity = (
-            data["critical_gaps"] +
-            data["high_priority_gaps"] +
-            data["medium_priority_gaps"] +
-            data["low_priority_gaps"]
+            data["critical_gaps"]
+            + data["high_priority_gaps"]
+            + data["medium_priority_gaps"]
+            + data["low_priority_gaps"]
         )
         assert data["total_gaps"] == total_by_severity
 
@@ -835,8 +859,7 @@ class TestFMITCoverageSuggestionsEndpoint:
 
         # At least some suggestions should have faculty candidates
         suggestions_with_faculty = [
-            s for s in data["suggestions"]
-            if len(s["faculty_candidates"]) > 0
+            s for s in data["suggestions"] if len(s["faculty_candidates"]) > 0
         ]
         assert len(suggestions_with_faculty) > 0
 
@@ -1064,7 +1087,10 @@ class TestFMITAlertsSummaryEndpoint:
         assert data["info_count"] == 1  # Only unresolved info alerts
 
         # Total should equal sum of severities
-        assert data["total_count"] == data["critical_count"] + data["warning_count"] + data["info_count"]
+        assert (
+            data["total_count"]
+            == data["critical_count"] + data["warning_count"] + data["info_count"]
+        )
 
     def test_alerts_summary_by_type(
         self,
@@ -1125,7 +1151,9 @@ class TestFMITAlertsSummaryEndpoint:
         assert data["oldest_unresolved"] is not None
 
         # Should be a valid ISO format datetime
-        oldest_dt = datetime.fromisoformat(data["oldest_unresolved"].replace("Z", "+00:00"))
+        oldest_dt = datetime.fromisoformat(
+            data["oldest_unresolved"].replace("Z", "+00:00")
+        )
         assert isinstance(oldest_dt, datetime)
 
     def test_alerts_summary_resolution_time(
@@ -1200,7 +1228,10 @@ class TestFMITHealthIntegration:
 
         # Verify consistency across endpoints
         assert health_data["pending_swap_requests"] == status_data["pending_swaps"]
-        assert health_data["total_swaps_this_month"] == metrics_data["total_swaps_this_month"]
+        assert (
+            health_data["total_swaps_this_month"]
+            == metrics_data["total_swaps_this_month"]
+        )
         assert health_data["active_conflict_alerts"] == alerts_data["total_count"]
 
     def test_coverage_gaps_and_suggestions_consistency(

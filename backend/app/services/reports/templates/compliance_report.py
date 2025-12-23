@@ -1,4 +1,5 @@
 """ACGME compliance report template."""
+
 import logging
 from collections import defaultdict
 from datetime import date, timedelta
@@ -11,8 +12,8 @@ from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from app.models.person import Person
-from app.schemas.reports import ComplianceReportRequest
 from app.scheduling.validator import ACGMEValidator
+from app.schemas.reports import ComplianceReportRequest
 from app.services.reports.pdf_generator import PDFReportGenerator
 
 logger = logging.getLogger(__name__)
@@ -101,12 +102,12 @@ class ComplianceReportTemplate:
         if validation_result.violations and not request.include_violations_only:
             elements.append(PageBreak())
             elements.append(
-                Paragraph(
-                    "Detailed Violations", self.generator.styles["SectionHeader"]
-                )
+                Paragraph("Detailed Violations", self.generator.styles["SectionHeader"])
             )
             elements.extend(
-                self._create_detailed_violations(validation_result.violations, residents)
+                self._create_detailed_violations(
+                    validation_result.violations, residents
+                )
             )
         elif not validation_result.violations:
             elements.append(
@@ -143,14 +144,10 @@ class ComplianceReportTemplate:
 
         # Status indicator
         if validation_result.valid:
-            status_text = (
-                '<font color="#28a745" size=12><b>✓ COMPLIANT</b></font>'
-            )
+            status_text = '<font color="#28a745" size=12><b>✓ COMPLIANT</b></font>'
             status_desc = "All ACGME requirements are met for this period."
         else:
-            status_text = (
-                '<font color="#dc3545" size=12><b>✗ NON-COMPLIANT</b></font>'
-            )
+            status_text = '<font color="#dc3545" size=12><b>✗ NON-COMPLIANT</b></font>'
             status_desc = (
                 f"Found {validation_result.total_violations} violation(s) "
                 "requiring attention."
@@ -193,9 +190,7 @@ class ComplianceReportTemplate:
 
         # Violations by type table
         elements.append(
-            Paragraph(
-                "Violations by Type", self.generator.styles["SubsectionHeader"]
-            )
+            Paragraph("Violations by Type", self.generator.styles["SubsectionHeader"])
         )
 
         type_data = [["Violation Type", "Count"]]
@@ -244,7 +239,9 @@ class ComplianceReportTemplate:
 
         return elements
 
-    def _create_detailed_violations(self, violations: list, residents: list[Person]) -> list:
+    def _create_detailed_violations(
+        self, violations: list, residents: list[Person]
+    ) -> list:
         """Create detailed violations listing."""
         elements = []
 
@@ -275,11 +272,15 @@ class ComplianceReportTemplate:
             violation_data = [["Type", "Severity", "Message"]]
 
             for violation in person_violations:
-                violation_data.append([
-                    violation.type,
-                    violation.severity,
-                    violation.message[:80] + "..." if len(violation.message) > 80 else violation.message,
-                ])
+                violation_data.append(
+                    [
+                        violation.type,
+                        violation.severity,
+                        violation.message[:80] + "..."
+                        if len(violation.message) > 80
+                        else violation.message,
+                    ]
+                )
 
             violation_table = self.generator._create_table(
                 violation_data,
@@ -300,11 +301,15 @@ class ComplianceReportTemplate:
 
             violation_data = [["Type", "Severity", "Message"]]
             for violation in orphan_violations:
-                violation_data.append([
-                    violation.type,
-                    violation.severity,
-                    violation.message[:80] + "..." if len(violation.message) > 80 else violation.message,
-                ])
+                violation_data.append(
+                    [
+                        violation.type,
+                        violation.severity,
+                        violation.message[:80] + "..."
+                        if len(violation.message) > 80
+                        else violation.message,
+                    ]
+                )
 
             violation_table = self.generator._create_table(
                 violation_data,

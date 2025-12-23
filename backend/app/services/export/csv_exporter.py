@@ -4,11 +4,13 @@ CSV export service.
 Provides CSV export functionality for schedules, assignments, people,
 and analytics data with streaming support for large datasets.
 """
+
 import csv
 import gzip
 import io
+from collections.abc import AsyncIterator
 from datetime import date, datetime
-from typing import Any, AsyncIterator, BinaryIO
+from typing import Any, BinaryIO
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -125,7 +127,7 @@ class CSVExporter:
         if compress:
             return self._compress(csv_content)
 
-        return csv_content.encode('utf-8')
+        return csv_content.encode("utf-8")
 
     async def export_schedule(
         self,
@@ -189,10 +191,7 @@ class CSVExporter:
 
             # Filter fields if specified
             if fields:
-                rows = [
-                    {k: v for k, v in row.items() if k in fields}
-                    for row in rows
-                ]
+                rows = [{k: v for k, v in row.items() if k in fields} for row in rows]
 
             # Write header on first batch
             if writer is None:
@@ -215,7 +214,7 @@ class CSVExporter:
         if compress:
             return self._compress(csv_content)
 
-        return csv_content.encode('utf-8')
+        return csv_content.encode("utf-8")
 
     async def export_people(
         self,
@@ -282,7 +281,7 @@ class CSVExporter:
         if compress:
             return self._compress(csv_content)
 
-        return csv_content.encode('utf-8')
+        return csv_content.encode("utf-8")
 
     async def export_blocks(
         self,
@@ -353,7 +352,7 @@ class CSVExporter:
         if compress:
             return self._compress(csv_content)
 
-        return csv_content.encode('utf-8')
+        return csv_content.encode("utf-8")
 
     async def export_analytics(
         self,
@@ -397,13 +396,9 @@ class CSVExporter:
         if compress:
             return self._compress(csv_content)
 
-        return csv_content.encode('utf-8')
+        return csv_content.encode("utf-8")
 
-    async def stream_export(
-        self,
-        export_type: str,
-        **kwargs
-    ) -> AsyncIterator[bytes]:
+    async def stream_export(self, export_type: str, **kwargs) -> AsyncIterator[bytes]:
         """
         Stream export data in chunks (for large datasets).
 
@@ -430,7 +425,7 @@ class CSVExporter:
         # Yield in chunks
         chunk_size = 8192  # 8KB chunks
         for i in range(0, len(data), chunk_size):
-            yield data[i:i + chunk_size]
+            yield data[i : i + chunk_size]
 
     def _compress(self, content: str) -> bytes:
         """
@@ -443,8 +438,8 @@ class CSVExporter:
             Compressed bytes
         """
         output = io.BytesIO()
-        with gzip.GzipFile(fileobj=output, mode='wb') as gz:
-            gz.write(content.encode('utf-8'))
+        with gzip.GzipFile(fileobj=output, mode="wb") as gz:
+            gz.write(content.encode("utf-8"))
         return output.getvalue()
 
     @staticmethod
@@ -464,9 +459,7 @@ class CSVExporter:
 
     @staticmethod
     def get_filename(
-        base_name: str,
-        compress: bool = False,
-        timestamp: bool = True
+        base_name: str, compress: bool = False, timestamp: bool = True
     ) -> str:
         """
         Generate filename for CSV export.

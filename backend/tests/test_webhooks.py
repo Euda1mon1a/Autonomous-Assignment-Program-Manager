@@ -1,10 +1,9 @@
 """Tests for webhook delivery service."""
-import asyncio
+
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
-import httpx
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -13,7 +12,6 @@ from app.db.base import Base
 from app.webhooks.delivery import WebhookDeliveryManager
 from app.webhooks.models import (
     Webhook,
-    WebhookDeadLetter,
     WebhookDelivery,
     WebhookDeliveryStatus,
     WebhookEventType,
@@ -21,7 +19,6 @@ from app.webhooks.models import (
 )
 from app.webhooks.service import WebhookService
 from app.webhooks.signatures import WebhookSignatureGenerator
-
 
 # Async test database setup
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -35,9 +32,7 @@ async def async_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    async_session = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
         yield session
@@ -144,7 +139,7 @@ class TestWebhookService:
             url="https://example.com/webhook",
             name="Test Webhook",
             event_types=[WebhookEventType.SCHEDULE_CREATED.value],
-            description="Test webhook endpoint"
+            description="Test webhook endpoint",
         )
 
         assert webhook.id is not None
@@ -164,7 +159,7 @@ class TestWebhookService:
                 db=async_db,
                 url="https://example.com/webhook",
                 name="Test Webhook",
-                event_types=["invalid.event.type"]
+                event_types=["invalid.event.type"],
             )
 
     @pytest.mark.asyncio
@@ -177,7 +172,7 @@ class TestWebhookService:
             db=async_db,
             url="https://example.com/webhook",
             name="Test Webhook",
-            event_types=[WebhookEventType.SCHEDULE_CREATED.value]
+            event_types=[WebhookEventType.SCHEDULE_CREATED.value],
         )
 
         # Get webhook
@@ -197,7 +192,7 @@ class TestWebhookService:
             db=async_db,
             url="https://example.com/webhook",
             name="Test Webhook",
-            event_types=[WebhookEventType.SCHEDULE_CREATED.value]
+            event_types=[WebhookEventType.SCHEDULE_CREATED.value],
         )
 
         # Update webhook
@@ -205,7 +200,7 @@ class TestWebhookService:
             async_db,
             webhook.id,
             name="Updated Webhook",
-            url="https://example.com/updated"
+            url="https://example.com/updated",
         )
 
         assert updated.name == "Updated Webhook"
@@ -221,7 +216,7 @@ class TestWebhookService:
             db=async_db,
             url="https://example.com/webhook",
             name="Test Webhook",
-            event_types=[WebhookEventType.SCHEDULE_CREATED.value]
+            event_types=[WebhookEventType.SCHEDULE_CREATED.value],
         )
 
         # Delete webhook
@@ -242,7 +237,7 @@ class TestWebhookService:
             db=async_db,
             url="https://example.com/webhook",
             name="Test Webhook",
-            event_types=[WebhookEventType.SCHEDULE_CREATED.value]
+            event_types=[WebhookEventType.SCHEDULE_CREATED.value],
         )
 
         # Pause webhook
@@ -263,14 +258,14 @@ class TestWebhookService:
             db=async_db,
             url="https://example.com/webhook",
             name="Test Webhook",
-            event_types=[WebhookEventType.SCHEDULE_CREATED.value]
+            event_types=[WebhookEventType.SCHEDULE_CREATED.value],
         )
 
         # Trigger event
         count = await service.trigger_event(
             db=async_db,
             event_type=WebhookEventType.SCHEDULE_CREATED.value,
-            payload={"schedule_id": "123"}
+            payload={"schedule_id": "123"},
         )
 
         assert count == 1
@@ -289,7 +284,7 @@ class TestWebhookService:
         count = await service.trigger_event(
             db=async_db,
             event_type=WebhookEventType.SCHEDULE_CREATED.value,
-            payload={"schedule_id": "123"}
+            payload={"schedule_id": "123"},
         )
 
         assert count == 0
@@ -318,14 +313,13 @@ class TestWebhookDeliveryManager:
     async def test_calculate_retry_delay_with_cap(self):
         """Test retry delay respects maximum."""
         manager = WebhookDeliveryManager(
-            base_retry_delay_seconds=60,
-            max_retry_delay_seconds=300
+            base_retry_delay_seconds=60, max_retry_delay_seconds=300
         )
 
         assert manager._calculate_retry_delay(10) == 300  # Capped
 
     @pytest.mark.asyncio
-    @patch('httpx.AsyncClient.post')
+    @patch("httpx.AsyncClient.post")
     async def test_successful_delivery(self, mock_post, async_db):
         """Test successful webhook delivery."""
         # Create webhook and delivery
@@ -337,7 +331,7 @@ class TestWebhookDeliveryManager:
             secret="test-secret-key-12345678901234567890",
             status=WebhookStatus.ACTIVE.value,
             timeout_seconds=30,
-            max_retries=5
+            max_retries=5,
         )
         async_db.add(webhook)
         await async_db.commit()
@@ -349,7 +343,7 @@ class TestWebhookDeliveryManager:
             event_type=WebhookEventType.SCHEDULE_CREATED.value,
             payload={"schedule_id": "123"},
             status=WebhookDeliveryStatus.PENDING.value,
-            max_attempts=5
+            max_attempts=5,
         )
         async_db.add(delivery)
         await async_db.commit()
@@ -371,7 +365,7 @@ class TestWebhookDeliveryManager:
         assert delivery.http_status_code == 200
 
     @pytest.mark.asyncio
-    @patch('httpx.AsyncClient.post')
+    @patch("httpx.AsyncClient.post")
     async def test_failed_delivery_with_retry(self, mock_post, async_db):
         """Test failed delivery creates retry."""
         # Create webhook and delivery
@@ -383,7 +377,7 @@ class TestWebhookDeliveryManager:
             secret="test-secret-key-12345678901234567890",
             status=WebhookStatus.ACTIVE.value,
             timeout_seconds=30,
-            max_retries=5
+            max_retries=5,
         )
         async_db.add(webhook)
         await async_db.commit()
@@ -395,7 +389,7 @@ class TestWebhookDeliveryManager:
             event_type=WebhookEventType.SCHEDULE_CREATED.value,
             payload={"schedule_id": "123"},
             status=WebhookDeliveryStatus.PENDING.value,
-            max_attempts=5
+            max_attempts=5,
         )
         async_db.add(delivery)
         await async_db.commit()
@@ -418,7 +412,7 @@ class TestWebhookDeliveryManager:
         assert delivery.next_retry_at is not None
 
     @pytest.mark.asyncio
-    @patch('httpx.AsyncClient.post')
+    @patch("httpx.AsyncClient.post")
     async def test_max_retries_creates_dead_letter(self, mock_post, async_db):
         """Test max retries exceeded creates dead letter."""
         # Create webhook and delivery
@@ -430,7 +424,7 @@ class TestWebhookDeliveryManager:
             secret="test-secret-key-12345678901234567890",
             status=WebhookStatus.ACTIVE.value,
             timeout_seconds=30,
-            max_retries=2
+            max_retries=2,
         )
         async_db.add(webhook)
         await async_db.commit()
@@ -443,7 +437,7 @@ class TestWebhookDeliveryManager:
             payload={"schedule_id": "123"},
             status=WebhookDeliveryStatus.PENDING.value,
             max_attempts=2,
-            attempt_count=2  # Already at max attempts
+            attempt_count=2,  # Already at max attempts
         )
         async_db.add(delivery)
         await async_db.commit()
@@ -479,7 +473,7 @@ class TestWebhookIntegration:
     """Integration tests for complete webhook flow."""
 
     @pytest.mark.asyncio
-    @patch('httpx.AsyncClient.post')
+    @patch("httpx.AsyncClient.post")
     async def test_complete_webhook_flow(self, mock_post, async_db):
         """Test complete webhook creation, trigger, and delivery flow."""
         service = WebhookService()
@@ -490,7 +484,7 @@ class TestWebhookIntegration:
             url="https://example.com/webhook",
             name="Test Webhook",
             event_types=[WebhookEventType.SCHEDULE_CREATED.value],
-            description="Integration test webhook"
+            description="Integration test webhook",
         )
 
         assert webhook.id is not None
@@ -499,7 +493,7 @@ class TestWebhookIntegration:
         count = await service.trigger_event(
             db=async_db,
             event_type=WebhookEventType.SCHEDULE_CREATED.value,
-            payload={"schedule_id": "123", "created_by": "test-user"}
+            payload={"schedule_id": "123", "created_by": "test-user"},
         )
 
         assert count == 1

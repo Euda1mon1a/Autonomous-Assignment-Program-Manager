@@ -1,4 +1,5 @@
 """Pydantic schemas for experiments/A/B testing API endpoints."""
+
 from datetime import datetime
 from typing import Any
 
@@ -9,10 +10,8 @@ from app.experiments.ab_testing import (
     ExperimentStatus,
     ExperimentTargeting,
     MetricType,
-    TargetingOperator,
     Variant,
 )
-
 
 # =============================================================================
 # Request Schemas
@@ -22,8 +21,12 @@ from app.experiments.ab_testing import (
 class ExperimentCreateRequest(BaseModel):
     """Request schema for creating a new experiment."""
 
-    key: str = Field(..., description="Unique experiment identifier", min_length=1, max_length=100)
-    name: str = Field(..., description="Human-readable experiment name", min_length=1, max_length=255)
+    key: str = Field(
+        ..., description="Unique experiment identifier", min_length=1, max_length=100
+    )
+    name: str = Field(
+        ..., description="Human-readable experiment name", min_length=1, max_length=255
+    )
     description: str = Field(default="", description="Experiment description")
     hypothesis: str = Field(default="", description="Hypothesis being tested")
     variants: list[Variant] = Field(
@@ -35,7 +38,9 @@ class ExperimentCreateRequest(BaseModel):
     config: ExperimentConfig = Field(
         default_factory=ExperimentConfig, description="Experiment configuration"
     )
-    start_date: datetime | None = Field(default=None, description="Scheduled start date")
+    start_date: datetime | None = Field(
+        default=None, description="Scheduled start date"
+    )
     end_date: datetime | None = Field(default=None, description="Scheduled end date")
 
 
@@ -45,8 +50,12 @@ class ExperimentUpdateRequest(BaseModel):
     name: str | None = Field(default=None, description="Human-readable experiment name")
     description: str | None = Field(default=None, description="Experiment description")
     hypothesis: str | None = Field(default=None, description="Hypothesis being tested")
-    targeting: ExperimentTargeting | None = Field(default=None, description="Targeting rules")
-    config: ExperimentConfig | None = Field(default=None, description="Experiment configuration")
+    targeting: ExperimentTargeting | None = Field(
+        default=None, description="Targeting rules"
+    )
+    config: ExperimentConfig | None = Field(
+        default=None, description="Experiment configuration"
+    )
     end_date: datetime | None = Field(default=None, description="Scheduled end date")
 
 
@@ -67,10 +76,16 @@ class MetricTrackRequest(BaseModel):
 
     user_id: str = Field(..., description="User identifier")
     variant_key: str = Field(..., description="Variant identifier")
-    metric_name: str = Field(..., description="Metric name", min_length=1, max_length=100)
+    metric_name: str = Field(
+        ..., description="Metric name", min_length=1, max_length=100
+    )
     value: float = Field(..., description="Metric value")
-    metric_type: MetricType = Field(default=MetricType.NUMERIC, description="Type of metric")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metric_type: MetricType = Field(
+        default=MetricType.NUMERIC, description="Type of metric"
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
 
 class ConcludeExperimentRequest(BaseModel):

@@ -1,10 +1,11 @@
 """API analytics module for request/response metrics and usage tracking."""
+
 from app.analytics.api.service import (
     APIAnalyticsService,
     APIMetrics,
     EndpointStats,
-    UserActivityMetrics,
     GeographicDistribution,
+    UserActivityMetrics,
     get_api_analytics_service,
 )
 

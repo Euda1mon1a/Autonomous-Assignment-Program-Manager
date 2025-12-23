@@ -14,11 +14,13 @@ Invalidation events can be triggered by:
 - Scheduled tasks
 - External webhooks
 """
+
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 from app.caching.http_cache import HTTPCache
 
@@ -61,9 +63,11 @@ class InvalidationEvent:
     """
 
     resource: str  # Resource type (e.g., "users", "schedules")
-    resource_id: Optional[str] = None  # Specific resource ID
+    resource_id: str | None = None  # Specific resource ID
     reason: InvalidationReason = InvalidationReason.MANUAL
-    patterns: list[str] = field(default_factory=list)  # Cache key patterns to invalidate
+    patterns: list[str] = field(
+        default_factory=list
+    )  # Cache key patterns to invalidate
     tags: list[str] = field(default_factory=list)  # Cache tags to invalidate
     cascade: bool = False  # Whether to cascade to related resources
     metadata: dict[str, Any] = field(default_factory=dict)  # Additional context
@@ -126,7 +130,7 @@ class CacheInvalidator:
         invalidator.register_hook("users", on_user_update)
     """
 
-    def __init__(self, http_cache: Optional[HTTPCache] = None):
+    def __init__(self, http_cache: HTTPCache | None = None):
         """
         Initialize cache invalidator.
 
@@ -136,7 +140,7 @@ class CacheInvalidator:
         self.http_cache = http_cache or HTTPCache()
         self._hooks: dict[str, list[Callable]] = {}
         self._invalidation_count = 0
-        self._last_invalidation: Optional[datetime] = None
+        self._last_invalidation: datetime | None = None
 
     async def invalidate(self, event: InvalidationEvent) -> int:
         """
@@ -182,7 +186,7 @@ class CacheInvalidator:
     async def invalidate_resource(
         self,
         resource: str,
-        resource_id: Optional[str] = None,
+        resource_id: str | None = None,
         reason: InvalidationReason = InvalidationReason.MANUAL,
         cascade: bool = False,
     ) -> int:
@@ -368,8 +372,12 @@ class CacheInvalidator:
 
             if event.resource_id:
                 # Specific resource - invalidate related queries
-                patterns.append(f"/api/{related_resource}?{event.resource}={event.resource_id}")
-                patterns.append(f"/api/{related_resource}?{event.resource}_id={event.resource_id}")
+                patterns.append(
+                    f"/api/{related_resource}?{event.resource}={event.resource_id}"
+                )
+                patterns.append(
+                    f"/api/{related_resource}?{event.resource}_id={event.resource_id}"
+                )
 
             # Invalidate collection (might be affected)
             patterns.append(f"/api/{related_resource}")
@@ -409,7 +417,7 @@ class CacheInvalidator:
 
 
 # Global invalidator instance
-_invalidator: Optional[CacheInvalidator] = None
+_invalidator: CacheInvalidator | None = None
 
 
 def get_invalidator() -> CacheInvalidator:

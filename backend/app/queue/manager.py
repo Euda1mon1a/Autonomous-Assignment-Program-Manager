@@ -12,12 +12,11 @@ Manages task queues with advanced features:
 import json
 import logging
 import os
-from datetime import datetime, timedelta
-from typing import Any, Optional
-from uuid import uuid4
+from datetime import datetime
+from typing import Any
 
 from celery import chain, chord, group
-from celery.result import AsyncResult, GroupResult
+from celery.result import AsyncResult
 
 from app.core.celery_app import celery_app
 from app.queue.tasks import TaskPriority, TaskStatus, get_task_result
@@ -376,11 +375,7 @@ class QueueManager:
         )
 
     def store_in_dead_letter_queue(
-        self,
-        job_id: str,
-        job_data: dict,
-        error: str,
-        retry_count: int
+        self, job_id: str, job_data: dict, error: str, retry_count: int
     ) -> bool:
         """
         Store failed job in persistent dead letter queue.
@@ -401,7 +396,7 @@ class QueueManager:
                 "error": str(error),
                 "retry_count": retry_count,
                 "failed_at": datetime.utcnow().isoformat(),
-                "status": "failed"
+                "status": "failed",
             }
 
             # Try Redis first (using synchronous client)
@@ -424,7 +419,7 @@ class QueueManager:
             os.makedirs(dlq_dir, exist_ok=True)
 
             filepath = os.path.join(dlq_dir, f"{job_id}.json")
-            with open(filepath, 'w') as f:
+            with open(filepath, "w") as f:
                 json.dump(dlq_entry, f, indent=2, default=str)
 
             logger.info(f"Stored job {job_id} in DLQ (file)")

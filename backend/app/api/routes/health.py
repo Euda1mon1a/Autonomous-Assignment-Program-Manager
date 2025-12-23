@@ -23,9 +23,7 @@ router = APIRouter()
 
 # Global health aggregator instance
 health_aggregator = HealthAggregator(
-    enable_history=True,
-    history_size=100,
-    timeout=10.0
+    enable_history=True, history_size=100, timeout=10.0
 )
 
 
@@ -79,8 +77,7 @@ async def readiness_probe() -> dict[str, Any]:
 
     if result["status"] == "unhealthy":
         raise HTTPException(
-            status_code=503,
-            detail="Service not ready - dependencies unhealthy"
+            status_code=503, detail="Service not ready - dependencies unhealthy"
         )
 
     return result
@@ -171,16 +168,18 @@ async def check_service(service_name: str) -> dict[str, Any]:
         result = await health_aggregator.check_service(service_name)
         return result.model_dump()
 
-    except ValueError as e:
+    except ValueError:
         raise HTTPException(
             status_code=404,
-            detail=f"Unknown service: {service_name}. Valid services: database, redis, celery"
+            detail=f"Unknown service: {service_name}. Valid services: database, redis, celery",
         )
 
 
 @router.get("/history")
 async def get_health_history(
-    limit: int = Query(10, ge=1, le=100, description="Number of history entries to return")
+    limit: int = Query(
+        10, ge=1, le=100, description="Number of history entries to return"
+    ),
 ) -> dict[str, Any]:
     """
     Get health check history.

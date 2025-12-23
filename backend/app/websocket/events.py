@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -44,9 +44,9 @@ class ScheduleUpdatedEvent(BaseModel):
 
     event_type: EventType = EventType.SCHEDULE_UPDATED
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    schedule_id: Optional[UUID] = None
-    academic_year_id: Optional[UUID] = None
-    user_id: Optional[UUID] = None
+    schedule_id: UUID | None = None
+    academic_year_id: UUID | None = None
+    user_id: UUID | None = None
     update_type: str  # "generated", "modified", "regenerated"
     affected_blocks_count: int = 0
     message: str = ""
@@ -69,9 +69,9 @@ class AssignmentChangedEvent(BaseModel):
     assignment_id: UUID
     person_id: UUID
     block_id: UUID
-    rotation_template_id: Optional[UUID] = None
+    rotation_template_id: UUID | None = None
     change_type: str  # "created", "updated", "deleted"
-    changed_by: Optional[UUID] = None
+    changed_by: UUID | None = None
     message: str = ""
 
     class Config:
@@ -91,7 +91,7 @@ class SwapRequestedEvent(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     swap_id: UUID
     requester_id: UUID
-    target_person_id: Optional[UUID] = None
+    target_person_id: UUID | None = None
     swap_type: str  # "one_to_one", "absorb"
     affected_assignments: list[UUID] = Field(default_factory=list)
     message: str = ""
@@ -113,7 +113,7 @@ class SwapApprovedEvent(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     swap_id: UUID
     requester_id: UUID
-    target_person_id: Optional[UUID] = None
+    target_person_id: UUID | None = None
     approved_by: UUID
     affected_assignments: list[UUID] = Field(default_factory=list)
     message: str = ""
@@ -133,7 +133,7 @@ class ConflictDetectedEvent(BaseModel):
 
     event_type: EventType = EventType.CONFLICT_DETECTED
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    conflict_id: Optional[UUID] = None
+    conflict_id: UUID | None = None
     person_id: UUID
     conflict_type: str  # "double_booking", "acgme_violation", "absence_overlap"
     severity: str  # "low", "medium", "high", "critical"
@@ -155,10 +155,12 @@ class ResilienceAlertEvent(BaseModel):
 
     event_type: EventType = EventType.RESILIENCE_ALERT
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    alert_type: str  # "utilization_high", "n1_failure", "n2_failure", "defense_level_change"
+    alert_type: (
+        str  # "utilization_high", "n1_failure", "n2_failure", "defense_level_change"
+    )
     severity: str  # "green", "yellow", "orange", "red", "black"
-    current_utilization: Optional[float] = None
-    defense_level: Optional[str] = None
+    current_utilization: float | None = None
+    defense_level: str | None = None
     affected_persons: list[UUID] = Field(default_factory=list)
     message: str = ""
     recommendations: list[str] = Field(default_factory=list)

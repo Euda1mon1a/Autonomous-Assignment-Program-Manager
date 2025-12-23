@@ -9,19 +9,19 @@ This module provides a comprehensive workflow execution engine with:
 - Workflow cancellation
 - Template versioning
 """
+
 import asyncio
 import importlib
 import logging
 import traceback
+from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Any, Callable
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.workflow import (
-    StepExecutionMode,
     StepStatus,
     WorkflowInstance,
     WorkflowStatus,
@@ -34,26 +34,31 @@ logger = logging.getLogger(__name__)
 
 class WorkflowExecutionError(Exception):
     """Base exception for workflow execution errors."""
+
     pass
 
 
 class WorkflowTimeoutError(WorkflowExecutionError):
     """Raised when workflow execution times out."""
+
     pass
 
 
 class StepTimeoutError(WorkflowExecutionError):
     """Raised when step execution times out."""
+
     pass
 
 
 class StepExecutionError(WorkflowExecutionError):
     """Raised when step execution fails."""
+
     pass
 
 
 class ConditionEvaluationError(WorkflowExecutionError):
     """Raised when condition evaluation fails."""
+
     pass
 
 
@@ -152,9 +157,11 @@ class WorkflowEngine:
             WorkflowTemplate instance or None if not found
         """
         if template_id:
-            return self.db.query(WorkflowTemplate).filter(
-                WorkflowTemplate.id == template_id
-            ).first()
+            return (
+                self.db.query(WorkflowTemplate)
+                .filter(WorkflowTemplate.id == template_id)
+                .first()
+            )
 
         if name:
             query = self.db.query(WorkflowTemplate).filter(
@@ -260,7 +267,9 @@ class WorkflowEngine:
             raise ValueError(f"Template {template_id} not found")
 
         if not template.is_active:
-            raise ValueError(f"Template {template.name} v{template.version} is inactive")
+            raise ValueError(
+                f"Template {template.name} v{template.version} is inactive"
+            )
 
         # Calculate timeout
         default_timeout = template.definition.get("default_timeout_seconds", 3600)
@@ -337,9 +346,7 @@ class WorkflowEngine:
             raise ValueError(f"Workflow instance {instance_id} not found")
 
         if not instance.can_cancel:
-            raise ValueError(
-                f"Cannot cancel workflow in status {instance.status}"
-            )
+            raise ValueError(f"Cannot cancel workflow in status {instance.status}")
 
         instance.status = WorkflowStatus.CANCELLED.value
         instance.cancelled_at = datetime.utcnow()
@@ -453,10 +460,7 @@ class WorkflowEngine:
             return instance
 
         except Exception as e:
-            logger.error(
-                f"Workflow {instance_id} failed: {str(e)}",
-                exc_info=True
-            )
+            logger.error(f"Workflow {instance_id} failed: {str(e)}", exc_info=True)
 
             instance = self.get_instance(instance_id)
             if instance:
@@ -491,7 +495,8 @@ class WorkflowEngine:
         while len(executed) < len(steps):
             # Find steps with no unmet dependencies
             ready_steps = [
-                step for step in steps
+                step
+                for step in steps
                 if step["id"] not in executed
                 and all(dep in executed for dep in step.get("depends_on", []))
             ]
@@ -577,7 +582,9 @@ class WorkflowEngine:
                 if step_exec.status == StepStatus.COMPLETED.value:
                     # Update execution state with step output
                     instance.execution_state["completed_steps"].append(step_id)
-                    instance.execution_state["step_outputs"][step_id] = step_exec.output_data
+                    instance.execution_state["step_outputs"][step_id] = (
+                        step_exec.output_data
+                    )
                     self.db.commit()
                     return step_exec
 
@@ -586,7 +593,7 @@ class WorkflowEngine:
                     # Calculate backoff delay
                     backoff_multiplier = retry_policy.get("backoff_multiplier", 2.0)
                     max_backoff = retry_policy.get("max_backoff_seconds", 300)
-                    delay = min(backoff_multiplier ** attempt, max_backoff)
+                    delay = min(backoff_multiplier**attempt, max_backoff)
 
                     logger.info(
                         f"Step {step_id} failed (attempt {attempt}/{max_attempts}), "
@@ -594,15 +601,16 @@ class WorkflowEngine:
                     )
 
                     step_exec.status = StepStatus.RETRYING.value
-                    step_exec.next_retry_at = datetime.utcnow() + timedelta(seconds=delay)
+                    step_exec.next_retry_at = datetime.utcnow() + timedelta(
+                        seconds=delay
+                    )
                     self.db.commit()
 
                     await asyncio.sleep(delay)
 
             except Exception as e:
                 logger.error(
-                    f"Step {step_id} attempt {attempt} failed: {str(e)}",
-                    exc_info=True
+                    f"Step {step_id} attempt {attempt} failed: {str(e)}", exc_info=True
                 )
 
                 if attempt >= max_attempts:
@@ -701,7 +709,9 @@ class WorkflowEngine:
             step_exec.completed_at = datetime.utcnow()
 
             if step_exec.started_at:
-                duration = (step_exec.completed_at - step_exec.started_at).total_seconds()
+                duration = (
+                    step_exec.completed_at - step_exec.started_at
+                ).total_seconds()
                 step_exec.duration_seconds = duration
 
             self.db.commit()
@@ -713,15 +723,13 @@ class WorkflowEngine:
 
             return step_exec
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             step_exec.status = StepStatus.TIMED_OUT.value
             step_exec.completed_at = datetime.utcnow()
             step_exec.error_message = f"Step timed out after {timeout_seconds}s"
             self.db.commit()
 
-            raise StepTimeoutError(
-                f"Step {step_id} timed out after {timeout_seconds}s"
-            )
+            raise StepTimeoutError(f"Step {step_id} timed out after {timeout_seconds}s")
 
         except Exception as e:
             step_exec.status = StepStatus.FAILED.value
@@ -919,7 +927,9 @@ class WorkflowEngine:
 
         # Apply pagination and ordering
         instances = (
-            query.order_by(WorkflowInstance.priority.desc(), WorkflowInstance.created_at.desc())
+            query.order_by(
+                WorkflowInstance.priority.desc(), WorkflowInstance.created_at.desc()
+            )
             .limit(limit)
             .offset(offset)
             .all()
@@ -943,10 +953,18 @@ class WorkflowEngine:
             query = query.filter(WorkflowInstance.template_id == template_id)
 
         total = query.count()
-        running = query.filter(WorkflowInstance.status == WorkflowStatus.RUNNING.value).count()
-        completed = query.filter(WorkflowInstance.status == WorkflowStatus.COMPLETED.value).count()
-        failed = query.filter(WorkflowInstance.status == WorkflowStatus.FAILED.value).count()
-        cancelled = query.filter(WorkflowInstance.status == WorkflowStatus.CANCELLED.value).count()
+        running = query.filter(
+            WorkflowInstance.status == WorkflowStatus.RUNNING.value
+        ).count()
+        completed = query.filter(
+            WorkflowInstance.status == WorkflowStatus.COMPLETED.value
+        ).count()
+        failed = query.filter(
+            WorkflowInstance.status == WorkflowStatus.FAILED.value
+        ).count()
+        cancelled = query.filter(
+            WorkflowInstance.status == WorkflowStatus.CANCELLED.value
+        ).count()
 
         # Calculate success rate
         success_rate = (completed / total * 100) if total > 0 else 0.0

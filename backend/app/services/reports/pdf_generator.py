@@ -1,4 +1,5 @@
 """Core PDF report generation service using ReportLab."""
+
 import io
 import logging
 import uuid
@@ -174,7 +175,9 @@ class PDFReportGenerator:
 
         # Draw header background
         canvas_obj.setFillColor(self.PRIMARY_COLOR)
-        canvas_obj.rect(0, self.PAGE_HEIGHT - 0.6 * inch, self.PAGE_WIDTH, 0.6 * inch, fill=1)
+        canvas_obj.rect(
+            0, self.PAGE_HEIGHT - 0.6 * inch, self.PAGE_WIDTH, 0.6 * inch, fill=1
+        )
 
         # Add title text
         canvas_obj.setFillColor(colors.white)
@@ -278,14 +281,16 @@ class PDFReportGenerator:
 
         # Header row style
         if header_row:
-            style.extend([
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, 0), 10),
-                ("BACKGROUND", (0, 0), (-1, 0), self.PRIMARY_COLOR),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
-                ("TOPPADDING", (0, 0), (-1, 0), 8),
-            ])
+            style.extend(
+                [
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, 0), 10),
+                    ("BACKGROUND", (0, 0), (-1, 0), self.PRIMARY_COLOR),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+                    ("TOPPADDING", (0, 0), (-1, 0), 8),
+                ]
+            )
 
         table.setStyle(TableStyle(style))
         return table

@@ -24,17 +24,15 @@ import asyncio
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Coroutine, Optional
-from uuid import UUID, uuid4
+from typing import Any
+from uuid import uuid4
 
 from pydantic import BaseModel
-from sqlalchemy import and_, desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import AppException, ConflictError, ValidationError
+from app.core.exceptions import ConflictError, ValidationError
 from app.cqrs.commands import DomainEvent
 from app.cqrs.queries import ReadModelProjector
 from app.events.event_bus import EventBus, get_event_bus
@@ -95,9 +93,9 @@ class SyncMetrics:
     """Metrics for read model synchronization."""
 
     read_model_name: str
-    last_synced_event_id: Optional[str] = None
-    last_synced_sequence: Optional[int] = None
-    last_sync_timestamp: Optional[datetime] = None
+    last_synced_event_id: str | None = None
+    last_synced_sequence: int | None = None
+    last_sync_timestamp: datetime | None = None
     total_events_processed: int = 0
     events_processed_success: int = 0
     events_processed_failed: int = 0
@@ -105,8 +103,8 @@ class SyncMetrics:
     current_sync_lag_seconds: float = 0.0
     status: SyncStatus = SyncStatus.IN_SYNC
     error_count: int = 0
-    last_error: Optional[str] = None
-    last_error_timestamp: Optional[datetime] = None
+    last_error: str | None = None
+    last_error_timestamp: datetime | None = None
 
     def update_lag(self, event_timestamp: datetime) -> None:
         """
@@ -142,8 +140,7 @@ class SyncMetrics:
         # Update average processing time (exponential moving average)
         alpha = 0.1  # Smoothing factor
         self.average_processing_time_ms = (
-            alpha * processing_time_ms
-            + (1 - alpha) * self.average_processing_time_ms
+            alpha * processing_time_ms + (1 - alpha) * self.average_processing_time_ms
         )
 
     def record_failure(self, error_message: str) -> None:
@@ -188,8 +185,8 @@ class SyncConflict(BaseModel):
         ConflictResolutionStrategy.LAST_WRITE_WINS
     )
     resolved: bool = False
-    resolved_at: Optional[datetime] = None
-    resolved_by: Optional[str] = None
+    resolved_at: datetime | None = None
+    resolved_by: str | None = None
 
     class Config:
         """Pydantic config."""
@@ -207,7 +204,7 @@ class BatchProcessingStats:
     events_failed: int = 0
     processing_time_ms: float = 0.0
     started_at: datetime = field(default_factory=datetime.utcnow)
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
 
 
 # =============================================================================
@@ -248,8 +245,8 @@ class ReadModelSyncService:
         self,
         db_write: Session,
         db_read: Session,
-        event_bus: Optional[EventBus] = None,
-        event_store: Optional[EventStore] = None,
+        event_bus: EventBus | None = None,
+        event_store: EventStore | None = None,
         enable_batch_processing: bool = True,
         batch_size: int = DEFAULT_BATCH_SIZE,
         batch_timeout_seconds: int = DEFAULT_BATCH_TIMEOUT_SECONDS,
@@ -299,7 +296,7 @@ class ReadModelSyncService:
         # Batch processing
         self._event_batch: list[tuple[str, DomainEvent]] = []
         self._batch_lock = asyncio.Lock()
-        self._batch_task: Optional[asyncio.Task] = None
+        self._batch_task: asyncio.Task | None = None
 
         # Subscription tracking
         self._subscription_ids: dict[str, str] = {}
@@ -383,9 +380,7 @@ class ReadModelSyncService:
         async def event_handler(event: DomainEvent) -> None:
             """Handle incoming events for this projector."""
             if projector_name in self._paused_projectors:
-                logger.debug(
-                    f"Projector '{projector_name}' is paused, skipping event"
-                )
+                logger.debug(f"Projector '{projector_name}' is paused, skipping event")
                 return
 
             if self.enable_batch_processing:
@@ -526,8 +521,8 @@ class ReadModelSyncService:
             # Update stats
             batch_stats.completed_at = datetime.utcnow()
             batch_stats.processing_time_ms = (
-                (batch_stats.completed_at - start_time).total_seconds() * 1000
-            )
+                batch_stats.completed_at - start_time
+            ).total_seconds() * 1000
 
             logger.info(
                 f"Batch processing completed: {batch_stats.events_processed} "
@@ -541,8 +536,8 @@ class ReadModelSyncService:
 
     async def process_event_batch(
         self,
-        batch_size: Optional[int] = None,
-        from_sequence: Optional[int] = None,
+        batch_size: int | None = None,
+        from_sequence: int | None = None,
     ) -> int:
         """
         Process a batch of events from the event store.
@@ -572,7 +567,9 @@ class ReadModelSyncService:
             # Get starting sequence
             start_sequence = from_sequence
             if start_sequence is None and projector_name in self._checkpoints:
-                start_sequence = self._checkpoints[projector_name].last_processed_sequence + 1
+                start_sequence = (
+                    self._checkpoints[projector_name].last_processed_sequence + 1
+                )
 
             # Fetch events from store
             try:
@@ -643,9 +640,7 @@ class ReadModelSyncService:
             await self.db_read.commit()
 
             # Update metrics
-            processing_time_ms = (
-                (datetime.utcnow() - start_time).total_seconds() * 1000
-            )
+            processing_time_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
             metrics.record_success(processing_time_ms)
             metrics.last_synced_event_id = event.metadata.event_id
 
@@ -694,9 +689,7 @@ class ReadModelSyncService:
     # Consistency Verification
     # =========================================================================
 
-    async def _check_consistency(
-        self, projector_name: str, event: DomainEvent
-    ) -> None:
+    async def _check_consistency(self, projector_name: str, event: DomainEvent) -> None:
         """
         Verify consistency between write and read models.
 
@@ -711,7 +704,7 @@ class ReadModelSyncService:
 
     async def verify_consistency(
         self, projector_name: str, aggregate_id: str
-    ) -> tuple[bool, Optional[SyncConflict]]:
+    ) -> tuple[bool, SyncConflict | None]:
         """
         Verify consistency for a specific aggregate.
 
@@ -733,8 +726,8 @@ class ReadModelSyncService:
     async def resolve_conflict(
         self,
         conflict: SyncConflict,
-        strategy: Optional[ConflictResolutionStrategy] = None,
-        resolved_by: Optional[str] = None,
+        strategy: ConflictResolutionStrategy | None = None,
+        resolved_by: str | None = None,
     ) -> None:
         """
         Resolve a detected conflict.
@@ -844,7 +837,7 @@ class ReadModelSyncService:
             },
         )
 
-    async def load_checkpoint(self, projector_name: str) -> Optional[SyncCheckpoint]:
+    async def load_checkpoint(self, projector_name: str) -> SyncCheckpoint | None:
         """
         Load checkpoint from database.
 
@@ -945,7 +938,7 @@ class ReadModelSyncService:
     # Metrics and Monitoring
     # =========================================================================
 
-    def get_sync_metrics(self, projector_name: str) -> Optional[SyncMetrics]:
+    def get_sync_metrics(self, projector_name: str) -> SyncMetrics | None:
         """
         Get synchronization metrics for a projector.
 
@@ -980,9 +973,7 @@ class ReadModelSyncService:
         lagging = sum(
             1 for m in self._metrics.values() if m.status == SyncStatus.LAGGING
         )
-        failed = sum(
-            1 for m in self._metrics.values() if m.status == SyncStatus.FAILED
-        )
+        failed = sum(1 for m in self._metrics.values() if m.status == SyncStatus.FAILED)
         paused = len(self._paused_projectors)
 
         max_lag = max(
@@ -1006,9 +997,7 @@ class ReadModelSyncService:
             "is_running": self._is_running,
         }
 
-    def get_conflicts(
-        self, resolved: Optional[bool] = None
-    ) -> list[SyncConflict]:
+    def get_conflicts(self, resolved: bool | None = None) -> list[SyncConflict]:
         """
         Get list of sync conflicts.
 
@@ -1040,32 +1029,38 @@ class ReadModelSyncService:
         for name, metrics in self._metrics.items():
             if metrics.status == SyncStatus.FAILED:
                 health["healthy"] = False
-                health["issues"].append({
-                    "projector": name,
-                    "issue": "sync_failed",
-                    "last_error": metrics.last_error,
-                    "error_timestamp": metrics.last_error_timestamp.isoformat()
-                    if metrics.last_error_timestamp
-                    else None,
-                })
+                health["issues"].append(
+                    {
+                        "projector": name,
+                        "issue": "sync_failed",
+                        "last_error": metrics.last_error,
+                        "error_timestamp": metrics.last_error_timestamp.isoformat()
+                        if metrics.last_error_timestamp
+                        else None,
+                    }
+                )
 
             # Check for critical lag
             if metrics.current_sync_lag_seconds >= SYNC_LAG_CRITICAL_SECONDS:
                 health["healthy"] = False
-                health["issues"].append({
-                    "projector": name,
-                    "issue": "critical_lag",
-                    "lag_seconds": metrics.current_sync_lag_seconds,
-                })
+                health["issues"].append(
+                    {
+                        "projector": name,
+                        "issue": "critical_lag",
+                        "lag_seconds": metrics.current_sync_lag_seconds,
+                    }
+                )
 
         # Check for unresolved conflicts
         unresolved = [c for c in self._conflicts if not c.resolved]
         if len(unresolved) > 10:  # Threshold
             health["healthy"] = False
-            health["issues"].append({
-                "issue": "too_many_conflicts",
-                "count": len(unresolved),
-            })
+            health["issues"].append(
+                {
+                    "issue": "too_many_conflicts",
+                    "count": len(unresolved),
+                }
+            )
 
         return health
 

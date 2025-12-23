@@ -39,43 +39,48 @@ logger = logging.getLogger(__name__)
 
 class ZoneStatus(str, Enum):
     """Health status of a scheduling zone."""
-    GREEN = "green"         # Fully operational, can support others
-    YELLOW = "yellow"       # Operational but at minimum capacity
-    ORANGE = "orange"       # Degraded, using backup faculty
-    RED = "red"             # Critical, needs support
-    BLACK = "black"         # Failed, services suspended
+
+    GREEN = "green"  # Fully operational, can support others
+    YELLOW = "yellow"  # Operational but at minimum capacity
+    ORANGE = "orange"  # Degraded, using backup faculty
+    RED = "red"  # Critical, needs support
+    BLACK = "black"  # Failed, services suspended
 
 
 class ZoneType(str, Enum):
     """Types of scheduling zones."""
-    INPATIENT = "inpatient"      # ICU, wards, procedures
-    OUTPATIENT = "outpatient"    # Clinics, consults
-    EDUCATION = "education"      # Didactics, simulation
-    RESEARCH = "research"        # Research activities
-    ADMINISTRATIVE = "admin"     # Meetings, committees
-    ON_CALL = "on_call"          # Call coverage
+
+    INPATIENT = "inpatient"  # ICU, wards, procedures
+    OUTPATIENT = "outpatient"  # Clinics, consults
+    EDUCATION = "education"  # Didactics, simulation
+    RESEARCH = "research"  # Research activities
+    ADMINISTRATIVE = "admin"  # Meetings, committees
+    ON_CALL = "on_call"  # Call coverage
 
 
 class BorrowingPriority(str, Enum):
     """Priority levels for cross-zone borrowing."""
-    CRITICAL = "critical"    # Life safety, must fulfill
-    HIGH = "high"            # Important, should fulfill if possible
-    MEDIUM = "medium"        # Normal priority
-    LOW = "low"              # Optional, decline if any strain
+
+    CRITICAL = "critical"  # Life safety, must fulfill
+    HIGH = "high"  # Important, should fulfill if possible
+    MEDIUM = "medium"  # Normal priority
+    LOW = "low"  # Optional, decline if any strain
 
 
 class ContainmentLevel(str, Enum):
     """Level of failure containment."""
-    NONE = "none"               # No containment active
-    SOFT = "soft"               # Advisory, log borrowing
-    MODERATE = "moderate"       # Require approval for borrowing
-    STRICT = "strict"           # No cross-zone borrowing
-    LOCKDOWN = "lockdown"       # Zone completely isolated
+
+    NONE = "none"  # No containment active
+    SOFT = "soft"  # Advisory, log borrowing
+    MODERATE = "moderate"  # Require approval for borrowing
+    STRICT = "strict"  # No cross-zone borrowing
+    LOCKDOWN = "lockdown"  # Zone completely isolated
 
 
 @dataclass
 class ZoneFacultyAssignment:
     """Faculty assignment to a zone."""
+
     faculty_id: UUID
     faculty_name: str
     role: str  # "primary", "secondary", "backup"
@@ -86,6 +91,7 @@ class ZoneFacultyAssignment:
 @dataclass
 class BorrowingRequest:
     """Request to borrow faculty from another zone."""
+
     id: UUID
     requesting_zone_id: UUID
     lending_zone_id: UUID
@@ -110,6 +116,7 @@ class BorrowingRequest:
 @dataclass
 class ZoneIncident:
     """An incident affecting a zone."""
+
     id: UUID
     zone_id: UUID
     incident_type: str  # "faculty_loss", "demand_surge", "quality_issue", "external"
@@ -136,6 +143,7 @@ class SchedulingZone:
     Implements AWS availability zone pattern for blast radius isolation.
     Each zone has dedicated resources and can operate without other zones.
     """
+
     id: UUID
     name: str
     zone_type: ZoneType
@@ -163,7 +171,7 @@ class SchedulingZone:
     can_borrow_from: list[UUID] = field(default_factory=list)
     can_lend_to: list[UUID] = field(default_factory=list)
     borrowing_limit: int = 2  # Max faculty can borrow at once
-    lending_limit: int = 1    # Max faculty can lend at once
+    lending_limit: int = 1  # Max faculty can lend at once
     borrowed_faculty: list[UUID] = field(default_factory=list)
     lent_faculty: list[UUID] = field(default_factory=list)
 
@@ -191,11 +199,11 @@ class SchedulingZone:
     def get_total_available(self) -> int:
         """Get total available faculty count."""
         return (
-            len(self.get_available_primary()) +
-            len(self.get_available_secondary()) +
-            len(self.get_available_backup()) +
-            len(self.borrowed_faculty) -
-            len(self.lent_faculty)
+            len(self.get_available_primary())
+            + len(self.get_available_secondary())
+            + len(self.get_available_backup())
+            + len(self.borrowed_faculty)
+            - len(self.lent_faculty)
         )
 
     def is_self_sufficient(self) -> bool:
@@ -225,6 +233,7 @@ class SchedulingZone:
 @dataclass
 class ZoneHealthReport:
     """Health report for a scheduling zone."""
+
     zone_id: UUID
     zone_name: str
     zone_type: ZoneType
@@ -258,6 +267,7 @@ class ZoneHealthReport:
 @dataclass
 class BlastRadiusReport:
     """Overall blast radius containment report."""
+
     generated_at: datetime
     total_zones: int
     zones_healthy: int
@@ -498,21 +508,26 @@ class BlastRadiusManager:
             logger.warning("Borrowing blocked: System in lockdown")
             return None
 
-        if (
-            self.global_containment == ContainmentLevel.STRICT and
-            priority not in (BorrowingPriority.CRITICAL,)
+        if self.global_containment == ContainmentLevel.STRICT and priority not in (
+            BorrowingPriority.CRITICAL,
         ):
-            logger.warning("Borrowing blocked: Strict containment, only critical allowed")
+            logger.warning(
+                "Borrowing blocked: Strict containment, only critical allowed"
+            )
             return None
 
         # Check zone-level containment
         if lending_zone.containment_level == ContainmentLevel.LOCKDOWN:
-            logger.warning(f"Borrowing blocked: Zone {lending_zone.name} is locked down")
+            logger.warning(
+                f"Borrowing blocked: Zone {lending_zone.name} is locked down"
+            )
             return None
 
         # Check if lending zone is in can_borrow_from list
         if lending_zone_id not in requesting_zone.can_borrow_from:
-            logger.warning(f"Borrowing not allowed: {requesting_zone.name} cannot borrow from {lending_zone.name}")
+            logger.warning(
+                f"Borrowing not allowed: {requesting_zone.name} cannot borrow from {lending_zone.name}"
+            )
             return None
 
         # Check lending zone capacity
@@ -594,7 +609,10 @@ class BlastRadiusManager:
                 requesting_zone = self.zones.get(request.requesting_zone_id)
                 lending_zone = self.zones.get(request.lending_zone_id)
 
-                if requesting_zone and request.faculty_id in requesting_zone.borrowed_faculty:
+                if (
+                    requesting_zone
+                    and request.faculty_id in requesting_zone.borrowed_faculty
+                ):
                     requesting_zone.borrowed_faculty.remove(request.faculty_id)
 
                 if lending_zone and request.faculty_id in lending_zone.lent_faculty:
@@ -643,9 +661,9 @@ class BlastRadiusManager:
         # Calculate capacity lost
         if faculty_affected:
             total_faculty = (
-                len(zone.primary_faculty) +
-                len(zone.secondary_faculty) +
-                len(zone.backup_faculty)
+                len(zone.primary_faculty)
+                + len(zone.secondary_faculty)
+                + len(zone.backup_faculty)
             )
             if total_faculty > 0:
                 incident.capacity_lost = len(faculty_affected) / total_faculty
@@ -672,7 +690,9 @@ class BlastRadiusManager:
 
         if zone.status != previous_status:
             zone.last_status_change = datetime.now()
-            logger.info(f"Zone {zone.name} status changed: {previous_status.value} -> {zone.status.value}")
+            logger.info(
+                f"Zone {zone.name} status changed: {previous_status.value} -> {zone.status.value}"
+            )
 
             # Notify handlers
             for handler in self._on_zone_status_change:
@@ -703,7 +723,9 @@ class BlastRadiusManager:
         previous = self.global_containment
         self.global_containment = level
 
-        logger.warning(f"Global containment changed: {previous.value} -> {level.value}. Reason: {reason}")
+        logger.warning(
+            f"Global containment changed: {previous.value} -> {level.value}. Reason: {reason}"
+        )
 
         # Notify handlers
         for handler in self._on_containment_change:
@@ -730,21 +752,31 @@ class BlastRadiusManager:
         self._update_zone_status(zone)
 
         available = zone.get_total_available()
-        capacity_ratio = available / zone.minimum_coverage if zone.minimum_coverage > 0 else float('inf')
+        capacity_ratio = (
+            available / zone.minimum_coverage
+            if zone.minimum_coverage > 0
+            else float("inf")
+        )
 
         # Build recommendations
         recommendations = []
 
         if zone.status == ZoneStatus.BLACK:
-            recommendations.append(f"CRITICAL: Zone {zone.name} has failed - activate fallback immediately")
+            recommendations.append(
+                f"CRITICAL: Zone {zone.name} has failed - activate fallback immediately"
+            )
         elif zone.status == ZoneStatus.RED:
-            recommendations.append(f"Zone {zone.name} critical - request emergency support")
+            recommendations.append(
+                f"Zone {zone.name} critical - request emergency support"
+            )
             if zone.can_borrow_from:
                 recommendations.append("Consider borrowing from available zones")
         elif zone.status == ZoneStatus.ORANGE:
             recommendations.append(f"Zone {zone.name} degraded - monitor closely")
         elif zone.has_surplus():
-            recommendations.append(f"Zone {zone.name} has surplus - can support other zones")
+            recommendations.append(
+                f"Zone {zone.name} has surplus - can support other zones"
+            )
 
         # Check active incidents
         active_incidents = [i for i in zone.incidents if not i.resolved_at]
@@ -766,7 +798,9 @@ class BlastRadiusManager:
             faculty_lent=len(zone.lent_faculty),
             net_borrowing=len(zone.borrowed_faculty) - len(zone.lent_faculty),
             active_incidents=len(active_incidents),
-            services_affected=[s for i in active_incidents for s in i.services_affected],
+            services_affected=[
+                s for i in active_incidents for s in i.services_affected
+            ],
             recommendations=recommendations,
         )
 
@@ -800,7 +834,13 @@ class BlastRadiusManager:
 
         # Count borrowing requests
         pending = len([r for r in self.borrowing_requests if r.status == "pending"])
-        active = len([r for r in self.borrowing_requests if r.status == "approved" and not r.completed_at])
+        active = len(
+            [
+                r
+                for r in self.borrowing_requests
+                if r.status == "approved" and not r.completed_at
+            ]
+        )
 
         # Build recommendations
         recommendations = []
@@ -809,13 +849,17 @@ class BlastRadiusManager:
             recommendations.append(f"ALERT: {critical} zone(s) in critical status")
 
         if degraded > len(self.zones) * 0.5:
-            recommendations.append("Over 50% of zones degraded - consider global load shedding")
+            recommendations.append(
+                "Over 50% of zones degraded - consider global load shedding"
+            )
 
         if self.global_containment == ContainmentLevel.NONE and critical > 0:
             recommendations.append("Consider activating containment to prevent cascade")
 
         if pending > 3:
-            recommendations.append(f"{pending} pending borrowing requests - review and process")
+            recommendations.append(
+                f"{pending} pending borrowing requests - review and process"
+            )
 
         return BlastRadiusReport(
             generated_at=datetime.now(),

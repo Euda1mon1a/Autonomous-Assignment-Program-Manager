@@ -1,4 +1,5 @@
 """Unified heatmap service combining residency and FMIT schedules."""
+
 from collections import defaultdict
 from datetime import date, timedelta
 from typing import Any
@@ -83,7 +84,9 @@ class UnifiedHeatmapService:
             .filter(
                 Block.date >= start_date,
                 Block.date <= end_date,
-                Assignment.rotation_template_id.in_(rotation_ids) if rotation_ids else False,
+                Assignment.rotation_template_id.in_(rotation_ids)
+                if rotation_ids
+                else False,
             )
             .all()
         )
@@ -241,7 +244,9 @@ class UnifiedHeatmapService:
             ValueError: If format is not supported
         """
         if format not in ["png", "svg", "pdf"]:
-            raise ValueError(f"Unsupported format: {format}. Must be 'png', 'svg', or 'pdf'")
+            raise ValueError(
+                f"Unsupported format: {format}. Must be 'png', 'svg', or 'pdf'"
+            )
 
         # Get heatmap data
         data = self.generate_coverage_heatmap(
@@ -343,7 +348,9 @@ class UnifiedHeatmapService:
                 .filter(
                     CallAssignment.date >= start_date,
                     CallAssignment.date <= end_date,
-                    CallAssignment.person_id.in_(person_id_list) if person_id_list else False,
+                    CallAssignment.person_id.in_(person_id_list)
+                    if person_id_list
+                    else False,
                 )
                 .all()
             )
@@ -401,9 +408,7 @@ class UnifiedHeatmapService:
         """
         # Get FMIT rotation template
         fmit_template = (
-            db.query(RotationTemplate)
-            .filter(RotationTemplate.name == "FMIT")
-            .first()
+            db.query(RotationTemplate).filter(RotationTemplate.name == "FMIT").first()
         )
 
         if not fmit_template:
@@ -430,7 +435,12 @@ class UnifiedHeatmapService:
         x_labels = [w.strftime("%Y-%m-%d") for w in weeks]
 
         # Get all faculty
-        faculty = db.query(Person).filter(Person.type == "faculty").order_by(Person.name).all()
+        faculty = (
+            db.query(Person)
+            .filter(Person.type == "faculty")
+            .order_by(Person.name)
+            .all()
+        )
         y_labels = [f.name for f in faculty]
         faculty_ids = [f.id for f in faculty]
 

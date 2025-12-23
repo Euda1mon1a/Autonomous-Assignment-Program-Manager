@@ -28,16 +28,15 @@ import json
 import logging
 import sys
 from contextvars import ContextVar
-from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 from loguru import logger
 
 # Context variable for request correlation ID (integrates with observability.py)
-_request_id_ctx: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
+_request_id_ctx: ContextVar[str | None] = ContextVar("request_id", default=None)
 
 
-def get_request_id() -> Optional[str]:
+def get_request_id() -> str | None:
     """Get the current request's correlation ID."""
     return _request_id_ctx.get()
 
@@ -110,8 +109,12 @@ def _json_serializer(record: dict) -> str:
     # Add exception info if present
     if record["exception"]:
         subset["exception"] = {
-            "type": record["exception"].type.__name__ if record["exception"].type else None,
-            "value": str(record["exception"].value) if record["exception"].value else None,
+            "type": record["exception"].type.__name__
+            if record["exception"].type
+            else None,
+            "value": str(record["exception"].value)
+            if record["exception"].value
+            else None,
             "traceback": record["exception"].traceback is not None,
         }
 
@@ -138,8 +141,7 @@ def _text_format(record: dict) -> str:
     extra_str = ""
     if record.get("extra"):
         extra_items = [
-            f"{k}={v}" for k, v in record["extra"].items()
-            if k not in ("request_id",)
+            f"{k}={v}" for k, v in record["extra"].items() if k not in ("request_id",)
         ]
         if extra_items:
             extra_str = " | " + ", ".join(extra_items)
@@ -158,7 +160,7 @@ def _text_format(record: dict) -> str:
 def setup_logging(
     level: str = "INFO",
     format_type: str = "text",
-    log_file: Optional[str] = None,
+    log_file: str | None = None,
 ) -> None:
     """
     Configure loguru logging for the application.

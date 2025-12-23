@@ -12,63 +12,80 @@ Key features:
 - Sanitize input for parameterized queries
 - Pattern-based attack detection
 """
+
 import re
-from typing import Optional
 
 
 class SQLInjectionError(Exception):
     """Exception raised when SQL injection is detected."""
+
     pass
 
 
 # Common SQL injection patterns to detect
 SQL_INJECTION_PATTERNS = [
     # Comment-based injection
-    r'--',
-    r'/\*',
-    r'\*/',
-    r'#',
+    r"--",
+    r"/\*",
+    r"\*/",
+    r"#",
     # Union-based injection
-    r'\bunion\b.*\bselect\b',
-    r'\bor\b.*\b=\b.*\b(or|and)\b',
+    r"\bunion\b.*\bselect\b",
+    r"\bor\b.*\b=\b.*\b(or|and)\b",
     # Boolean-based injection
     r"'\s*(or|and)\s*'?\w*'?\s*=\s*'?\w*'?",
     r'"\s*(or|and)\s*"?\w*"?\s*=\s*"?\w*"?',
-    r'1\s*=\s*1',
+    r"1\s*=\s*1",
     r"'\s*or\s*'1'\s*=\s*'1",
     r'"\s*or\s*"1"\s*=\s*"1',
     # Time-based injection
-    r'\bsleep\s*\(',
-    r'\bwaitfor\s+delay\b',
-    r'\bbenchmark\s*\(',
+    r"\bsleep\s*\(",
+    r"\bwaitfor\s+delay\b",
+    r"\bbenchmark\s*\(",
     # Stacked queries
-    r';\s*(drop|delete|update|insert|create|alter)\s+',
+    r";\s*(drop|delete|update|insert|create|alter)\s+",
     # System commands
-    r'\bexec\s*\(',
-    r'\bexecute\s*\(',
-    r'\bxp_cmdshell\b',
+    r"\bexec\s*\(",
+    r"\bexecute\s*\(",
+    r"\bxp_cmdshell\b",
     # Information schema access
-    r'\binformation_schema\b',
-    r'\bsys\.\b',
-    r'\bsystem\.\b',
+    r"\binformation_schema\b",
+    r"\bsys\.\b",
+    r"\bsystem\.\b",
     # Database-specific functions
-    r'\bload_file\s*\(',
-    r'\boutfile\s+',
-    r'\bdumpfile\s+',
+    r"\bload_file\s*\(",
+    r"\boutfile\s+",
+    r"\bdumpfile\s+",
     # Subqueries
-    r'\bselect\b.*\bfrom\b.*\bwhere\b',
+    r"\bselect\b.*\bfrom\b.*\bwhere\b",
 ]
 
 # Keywords that should not appear in user input
 DANGEROUS_SQL_KEYWORDS = {
-    'select', 'insert', 'update', 'delete', 'drop', 'create', 'alter',
-    'truncate', 'exec', 'execute', 'union', 'declare', 'cast',
-    'information_schema', 'sysobjects', 'syscolumns', 'xp_cmdshell',
-    'sp_executesql', 'openrowset', 'openquery'
+    "select",
+    "insert",
+    "update",
+    "delete",
+    "drop",
+    "create",
+    "alter",
+    "truncate",
+    "exec",
+    "execute",
+    "union",
+    "declare",
+    "cast",
+    "information_schema",
+    "sysobjects",
+    "syscolumns",
+    "xp_cmdshell",
+    "sp_executesql",
+    "openrowset",
+    "openquery",
 }
 
 # Valid identifier pattern (alphanumeric + underscore, must start with letter)
-VALID_IDENTIFIER_PATTERN = re.compile(r'^[a-zA-Z][a-zA-Z0-9_]*$')
+VALID_IDENTIFIER_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*$")
 
 
 def detect_sql_injection(input_string: str, strict: bool = True) -> bool:
@@ -105,14 +122,14 @@ def detect_sql_injection(input_string: str, strict: bool = True) -> bool:
 
     # In strict mode, also check for dangerous keywords
     if strict:
-        words = re.findall(r'\b\w+\b', input_lower)
+        words = re.findall(r"\b\w+\b", input_lower)
         for word in words:
             if word in DANGEROUS_SQL_KEYWORDS:
                 return True
 
     # Check for multiple SQL statements (semicolon followed by keyword)
-    if ';' in input_string:
-        parts = input_string.split(';')
+    if ";" in input_string:
+        parts = input_string.split(";")
         if len(parts) > 1:
             for part in parts[1:]:
                 part_stripped = part.strip().lower()
@@ -123,9 +140,7 @@ def detect_sql_injection(input_string: str, strict: bool = True) -> bool:
 
 
 def sanitize_sql_input(
-    input_string: str,
-    max_length: Optional[int] = None,
-    allow_wildcards: bool = False
+    input_string: str, max_length: int | None = None, allow_wildcards: bool = False
 ) -> str:
     """
     Sanitize input for use in SQL queries.
@@ -165,10 +180,10 @@ def sanitize_sql_input(
 
     # Remove SQL wildcards unless explicitly allowed
     if not allow_wildcards:
-        input_string = input_string.replace('%', '').replace('_', '')
+        input_string = input_string.replace("%", "").replace("_", "")
 
     # Remove null bytes
-    input_string = input_string.replace('\x00', '')
+    input_string = input_string.replace("\x00", "")
 
     return input_string.strip()
 
@@ -218,9 +233,7 @@ def validate_identifier(identifier: str, max_length: int = 64) -> str:
 
     # Check against dangerous keywords
     if identifier.lower() in DANGEROUS_SQL_KEYWORDS:
-        raise SQLInjectionError(
-            f"Identifier '{identifier}' is a reserved SQL keyword"
-        )
+        raise SQLInjectionError(f"Identifier '{identifier}' is a reserved SQL keyword")
 
     return identifier
 
@@ -256,16 +269,14 @@ def validate_like_pattern(pattern: str, max_length: int = 100) -> str:
         )
 
     # Remove wildcards temporarily for injection check
-    temp_pattern = pattern.replace('%', '').replace('_', '')
+    temp_pattern = pattern.replace("%", "").replace("_", "")
 
     # Check for SQL injection in non-wildcard parts
     if detect_sql_injection(temp_pattern, strict=True):
-        raise SQLInjectionError(
-            "LIKE pattern contains dangerous SQL patterns"
-        )
+        raise SQLInjectionError("LIKE pattern contains dangerous SQL patterns")
 
     # Remove null bytes
-    pattern = pattern.replace('\x00', '')
+    pattern = pattern.replace("\x00", "")
 
     return pattern
 
@@ -293,9 +304,9 @@ def escape_like_wildcards(text: str) -> str:
         return ""
 
     # Escape backslash first, then wildcards
-    text = text.replace('\\', '\\\\')
-    text = text.replace('%', '\\%')
-    text = text.replace('_', '\\_')
+    text = text.replace("\\", "\\\\")
+    text = text.replace("%", "\\%")
+    text = text.replace("_", "\\_")
 
     return text
 
@@ -323,7 +334,7 @@ def is_safe_order_by(column: str, allowed_columns: set[str]) -> bool:
         return False
 
     # Remove DESC/ASC suffix if present
-    column_clean = column.upper().replace(' DESC', '').replace(' ASC', '').strip()
+    column_clean = column.upper().replace(" DESC", "").replace(" ASC", "").strip()
 
     # Validate identifier format
     try:
@@ -335,7 +346,7 @@ def is_safe_order_by(column: str, allowed_columns: set[str]) -> bool:
     return column_clean.lower() in {c.lower() for c in allowed_columns}
 
 
-def sanitize_numeric_id(value: str) -> Optional[int]:
+def sanitize_numeric_id(value: str) -> int | None:
     """
     Sanitize and validate numeric ID input.
 
@@ -438,11 +449,11 @@ def check_query_complexity(query: str, max_length: int = 1000) -> bool:
         return False
 
     # Check for excessive nesting (subqueries)
-    if query.count('(') > 10 or query.count(')') > 10:
+    if query.count("(") > 10 or query.count(")") > 10:
         return False
 
     # Check for excessive UNION statements
-    union_count = len(re.findall(r'\bunion\b', query, re.IGNORECASE))
+    union_count = len(re.findall(r"\bunion\b", query, re.IGNORECASE))
     if union_count > 3:
         return False
 

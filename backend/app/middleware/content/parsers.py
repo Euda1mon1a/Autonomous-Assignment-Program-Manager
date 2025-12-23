@@ -11,10 +11,11 @@ Implements parsers for multiple formats:
 
 Each parser handles conversion from format-specific bytes to Python objects.
 """
+
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import parse_qs
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,7 @@ class Parser(ABC):
 
 class ParsingError(Exception):
     """Exception raised when parsing fails."""
+
     pass
 
 
@@ -112,12 +114,14 @@ class XMLParser(Parser):
         # Try to use lxml (more powerful)
         try:
             from lxml import etree
+
             self._etree = etree
             self._lxml_available = True
             logger.debug("XMLParser using lxml")
         except ImportError:
             # Fallback to standard library
             import xml.etree.ElementTree as etree
+
             self._etree = etree
             self._lxml_available = False
             logger.debug("XMLParser using xml.etree (fallback)")
@@ -214,6 +218,7 @@ class YAMLParser(Parser):
         # Try to import PyYAML
         try:
             import yaml
+
             self._yaml = yaml
             self._available = True
             logger.debug("YAMLParser initialized")
@@ -221,8 +226,7 @@ class YAMLParser(Parser):
             self._yaml = None
             self._available = False
             logger.warning(
-                "YAML parsing not available. "
-                "Install with: pip install pyyaml"
+                "YAML parsing not available. Install with: pip install pyyaml"
             )
 
     @property
@@ -271,6 +275,7 @@ class MessagePackParser(Parser):
         # Try to import msgpack
         try:
             import msgpack
+
             self._msgpack = msgpack
             self._available = True
             logger.debug("MessagePackParser initialized")
@@ -278,8 +283,7 @@ class MessagePackParser(Parser):
             self._msgpack = None
             self._available = False
             logger.warning(
-                "MessagePack parsing not available. "
-                "Install with: pip install msgpack"
+                "MessagePack parsing not available. Install with: pip install msgpack"
             )
 
     @property
@@ -411,9 +415,7 @@ class ParserRegistry:
             parser: Parser instance to register
         """
         if not parser.available:
-            logger.warning(
-                f"Cannot register unavailable parser: {parser.content_type}"
-            )
+            logger.warning(f"Cannot register unavailable parser: {parser.content_type}")
             return
 
         self._parsers[parser.content_type] = parser
@@ -430,7 +432,7 @@ class ParserRegistry:
             del self._parsers[content_type]
             logger.debug(f"Unregistered parser: {content_type}")
 
-    def get_parser(self, content_type: str) -> Optional[Parser]:
+    def get_parser(self, content_type: str) -> Parser | None:
         """
         Get parser for content type.
 
