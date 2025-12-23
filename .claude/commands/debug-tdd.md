@@ -27,8 +27,10 @@ from datetime import date
 
 ***REMOVED*** Import relevant modules based on bug type
 
+***REMOVED*** Note: Replace [SLUG] with a valid Python identifier (e.g., issue_247, double_booking)
+***REMOVED*** Create slug: echo "$ARGUMENTS" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/_/g'
 
-class TestBugFix$ARGUMENTS:
+class TestBugFix_[SLUG]:
     """Reproduce and verify fix for: $ARGUMENTS"""
 
     async def test_bug_reproduction(self, db):
