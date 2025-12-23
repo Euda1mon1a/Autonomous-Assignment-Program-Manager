@@ -198,9 +198,11 @@ class RunState:
             status=data["status"],
             best_score=data["best_score"],
             best_iteration=data["best_iteration"],
-            best_params=GeneratorParams.from_dict(data["best_params"])
-            if data.get("best_params")
-            else None,
+            best_params=(
+                GeneratorParams.from_dict(data["best_params"])
+                if data.get("best_params")
+                else None
+            ),
             target_score=data["target_score"],
             stagnation_limit=data["stagnation_limit"],
             iterations_since_improvement=data["iterations_since_improvement"],

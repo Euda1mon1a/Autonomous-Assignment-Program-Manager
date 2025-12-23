@@ -203,7 +203,8 @@ def _query_version_table(
 
     where_sql = " AND ".join(where_clauses)
 
-    query = text(f"""
+    query = text(
+        f"""
         SELECT
             v.id,
             v.transaction_id,
@@ -216,7 +217,8 @@ def _query_version_table(
         WHERE {where_sql}
         ORDER BY t.issued_at DESC
         LIMIT 1000
-    """)
+    """
+    )
 
     rows = db.execute(query, params).fetchall()
 
@@ -536,13 +538,15 @@ def get_audit_users(db: Session) -> list[AuditUser]:
     """Get list of users who have audit activity."""
     try:
         # Query transaction table for unique users
-        query = text("""
+        query = text(
+            """
             SELECT DISTINCT t.user_id
             FROM transaction t
             WHERE t.user_id IS NOT NULL
             ORDER BY t.user_id
             LIMIT 100
-        """)
+        """
+        )
 
         rows = db.execute(query).fetchall()
 
@@ -893,9 +897,9 @@ class AuditService:
                 "entity_id": entry.get("entity_id"),
                 "transaction_id": entry.get("transaction_id"),
                 "operation": entry.get("operation"),
-                "changed_at": str(entry.get("changed_at"))
-                if entry.get("changed_at")
-                else None,
+                "changed_at": (
+                    str(entry.get("changed_at")) if entry.get("changed_at") else None
+                ),
                 "changed_by": entry.get("changed_by"),
             }
             writer.writerow(row)

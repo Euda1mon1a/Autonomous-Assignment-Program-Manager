@@ -819,9 +819,9 @@ class HubAnalyzer:
         hubs = [c for c in centrality_list if c.is_hub]
 
         return {
-            "last_analysis": self._last_analysis.isoformat()
-            if self._last_analysis
-            else None,
+            "last_analysis": (
+                self._last_analysis.isoformat() if self._last_analysis else None
+            ),
             "total_faculty_analyzed": len(centrality_list),
             "total_hubs": len(hubs),
             "hubs_by_risk": {

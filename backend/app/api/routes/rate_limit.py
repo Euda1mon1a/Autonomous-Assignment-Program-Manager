@@ -133,8 +133,8 @@ async def get_rate_limit_status(
     # Get current status from Redis
     current_time = time.time()
 
-    # Token bucket status
-    bucket = TokenBucket(
+    # Token bucket status (created for potential future use)
+    _bucket = TokenBucket(
         redis_client,
         client_id,
         config.burst_size,

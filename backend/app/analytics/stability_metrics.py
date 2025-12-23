@@ -258,10 +258,12 @@ class StabilityMetricsComputer:
 
             # Query for the most recent transaction before the latest one
             # that affected the assignments we're interested in
-            latest_transaction_query = text("""
+            latest_transaction_query = text(
+                """
                 SELECT MAX(transaction_id) as latest_tx
                 FROM assignment_version
-            """)
+            """
+            )
 
             result = self.db.execute(latest_transaction_query).fetchone()
             if not result or not result[0]:
@@ -271,11 +273,13 @@ class StabilityMetricsComputer:
             latest_tx = result[0]
 
             # Get the previous transaction
-            prev_transaction_query = text("""
+            prev_transaction_query = text(
+                """
                 SELECT MAX(transaction_id) as prev_tx
                 FROM assignment_version
                 WHERE transaction_id < :latest_tx
-            """)
+            """
+            )
 
             result = self.db.execute(
                 prev_transaction_query, {"latest_tx": latest_tx}
@@ -305,14 +309,13 @@ class StabilityMetricsComputer:
             assignment_map = {}
             for version in previous_versions:
                 # Keep the version with the highest transaction_id <= prev_tx for each assignment
+                # Only include if this version was created or updated (not deleted)
                 if (
                     version.id not in assignment_map
                     or version.transaction_id
                     > assignment_map[version.id].transaction_id
-                ):
-                    # Only include if this version was created or updated (not deleted)
-                    if version.operation_type != 2:  # 2 = delete
-                        assignment_map[version.id] = version
+                ) and version.operation_type != 2:  # 2 = delete
+                    assignment_map[version.id] = version
 
             previous_assignments = list(assignment_map.values())
 
@@ -759,7 +762,8 @@ class StabilityMetricsComputer:
             from app.models.assignment import Assignment
 
             # Get all transactions with assignment changes, ordered by most recent
-            transaction_query = text("""
+            transaction_query = text(
+                """
                 SELECT
                     t.id as transaction_id,
                     t.issued_at,
@@ -770,7 +774,8 @@ class StabilityMetricsComputer:
                 GROUP BY t.id, t.issued_at
                 ORDER BY t.issued_at DESC
                 LIMIT 100
-            """)
+            """
+            )
 
             transactions = self.db.execute(transaction_query).fetchall()
 
@@ -822,20 +827,19 @@ class StabilityMetricsComputer:
                 # Check if this qualifies as a major change
                 is_major = churn_rate > 0.30 or changed_count > 50
 
-                if is_major:
+                if is_major and tx_date:
                     # Calculate days since this transaction
-                    if tx_date:
-                        # Convert datetime to date for comparison
-                        tx_date_only = (
-                            tx_date.date() if hasattr(tx_date, "date") else tx_date
-                        )
-                        days_since = (reference_date - tx_date_only).days
-                        logger.info(
-                            f"Found major change at transaction {tx_id}: "
-                            f"{changed_count} changes, {churn_rate:.1%} churn rate, "
-                            f"{days_since} days ago"
-                        )
-                        return max(0, days_since)
+                    # Convert datetime to date for comparison
+                    tx_date_only = (
+                        tx_date.date() if hasattr(tx_date, "date") else tx_date
+                    )
+                    days_since = (reference_date - tx_date_only).days
+                    logger.info(
+                        f"Found major change at transaction {tx_id}: "
+                        f"{changed_count} changes, {churn_rate:.1%} churn rate, "
+                        f"{days_since} days ago"
+                    )
+                    return max(0, days_since)
 
             # No major changes found in recent history
             # Return days since the oldest transaction we checked

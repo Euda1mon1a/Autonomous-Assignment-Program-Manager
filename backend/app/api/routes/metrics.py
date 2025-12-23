@@ -66,9 +66,11 @@ async def metrics_health() -> dict[str, Any]:
         "metrics_enabled": prometheus_available,
         "collectors": collectors,
         "prometheus_available": prometheus_available,
-        "message": "Metrics collection operational"
-        if prometheus_available
-        else "Metrics disabled - prometheus_client not available",
+        "message": (
+            "Metrics collection operational"
+            if prometheus_available
+            else "Metrics disabled - prometheus_client not available"
+        ),
     }
 
 

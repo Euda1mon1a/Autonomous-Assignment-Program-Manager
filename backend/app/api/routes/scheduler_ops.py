@@ -707,9 +707,9 @@ async def initiate_fix_it_mode(
                     task_id=f"task-{i + 1}",
                     task_name=f"Scheduled task #{i + 1}",
                     previous_status=TaskStatus.FAILED,
-                    new_status=TaskStatus.COMPLETED
-                    if i < tasks_fixed
-                    else TaskStatus.FAILED,
+                    new_status=(
+                        TaskStatus.COMPLETED if i < tasks_fixed else TaskStatus.FAILED
+                    ),
                     action_taken=(
                         "Retried with corrective action"
                         if i < tasks_fixed

@@ -73,9 +73,9 @@ class SecurityHeaders:
             Dict[str, str]: Dictionary of header names to values.
         """
         return {
-            cls.HSTS_HEADER: cls.HSTS_VALUE_DEVELOPMENT
-            if debug
-            else cls.HSTS_VALUE_PRODUCTION,
+            cls.HSTS_HEADER: (
+                cls.HSTS_VALUE_DEVELOPMENT if debug else cls.HSTS_VALUE_PRODUCTION
+            ),
             cls.FRAME_OPTIONS_HEADER: cls.FRAME_OPTIONS_VALUE,
             cls.CONTENT_TYPE_OPTIONS_HEADER: cls.CONTENT_TYPE_OPTIONS_VALUE,
             cls.XSS_PROTECTION_HEADER: cls.XSS_PROTECTION_VALUE,

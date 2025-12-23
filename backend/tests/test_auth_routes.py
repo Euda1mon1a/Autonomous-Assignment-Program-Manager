@@ -1405,9 +1405,9 @@ class TestRefreshTokenEndpoint:
                 .filter(TokenBlacklist.jti == decoded["jti"])
                 .first()
             )
-            assert blacklisted is not None, (
-                f"Token with JTI {decoded['jti']} should be blacklisted"
-            )
+            assert (
+                blacklisted is not None
+            ), f"Token with JTI {decoded['jti']} should be blacklisted"
 
         # Latest token should not be blacklisted yet
         latest_decoded = jwt.decode(

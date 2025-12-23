@@ -74,16 +74,18 @@ from app.resilience.circuit_breaker import (
     collect_metrics_for_all_breakers,
     get_breaker_from_function,
     get_breaker_name_from_function,
-    get_registry,
-    setup_registry,
-    with_async_circuit_breaker,
-    with_circuit_breaker,
 )
+from app.resilience.circuit_breaker import get_metrics as get_circuit_breaker_metrics
 from app.resilience.circuit_breaker import (
-    get_metrics as get_circuit_breaker_metrics,
+    get_registry,
 )
 from app.resilience.circuit_breaker import (
     setup_metrics as setup_circuit_breaker_metrics,
+)
+from app.resilience.circuit_breaker import (
+    setup_registry,
+    with_async_circuit_breaker,
+    with_circuit_breaker,
 )
 
 # Tier 3 imports

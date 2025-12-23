@@ -188,28 +188,36 @@ async def get_database_health(
         )
 
         # Get database size
-        db_size_query = text("""
+        db_size_query = text(
+            """
             SELECT pg_database_size(current_database()) / (1024.0 * 1024.0) as size_mb
-        """)
+        """
+        )
         db_size_mb = db.execute(db_size_query).scalar()
 
         # Get active connections
-        active_conn_query = text("""
+        active_conn_query = text(
+            """
             SELECT count(*) FROM pg_stat_activity WHERE state = 'active'
-        """)
+        """
+        )
         active_connections = db.execute(active_conn_query).scalar()
 
         # Get table count
-        table_count_query = text("""
+        table_count_query = text(
+            """
             SELECT count(*) FROM information_schema.tables
             WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-        """)
+        """
+        )
         total_tables = db.execute(table_count_query).scalar()
 
         # Get index count
-        index_count_query = text("""
+        index_count_query = text(
+            """
             SELECT count(*) FROM pg_indexes WHERE schemaname = 'public'
-        """)
+        """
+        )
         total_indexes = db.execute(index_count_query).scalar()
 
         # Generate recommendations
@@ -453,13 +461,13 @@ async def get_table_statistics(
             dead_tuples=stats["dead_tuples"],
             scan_ratio=round(stats["scan_ratio"], 4),
             last_vacuum=str(stats["last_vacuum"]) if stats["last_vacuum"] else None,
-            last_autovacuum=str(stats["last_autovacuum"])
-            if stats["last_autovacuum"]
-            else None,
+            last_autovacuum=(
+                str(stats["last_autovacuum"]) if stats["last_autovacuum"] else None
+            ),
             last_analyze=str(stats["last_analyze"]) if stats["last_analyze"] else None,
-            last_autoanalyze=str(stats["last_autoanalyze"])
-            if stats["last_autoanalyze"]
-            else None,
+            last_autoanalyze=(
+                str(stats["last_autoanalyze"]) if stats["last_autoanalyze"] else None
+            ),
         )
 
     except HTTPException:
@@ -556,13 +564,15 @@ async def vacuum_table(
             )
 
         # Check if table exists
-        check_query = text("""
+        check_query = text(
+            """
             SELECT EXISTS (
                 SELECT FROM information_schema.tables
                 WHERE table_schema = 'public'
                 AND table_name = :table_name
             )
-        """)
+        """
+        )
         exists = db.execute(check_query, {"table_name": table_name}).scalar()
 
         if not exists:

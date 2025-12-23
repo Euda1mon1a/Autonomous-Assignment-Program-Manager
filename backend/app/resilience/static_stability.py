@@ -331,9 +331,12 @@ class FallbackScheduler:
                 "status": (
                     "GREEN"
                     if is_healthy
-                    else "YELLOW"
-                    if dedicated_available + backup_available >= zone.minimum_coverage
-                    else "RED"
+                    else (
+                        "YELLOW"
+                        if dedicated_available + backup_available
+                        >= zone.minimum_coverage
+                        else "RED"
+                    )
                 ),
             }
 

@@ -1018,26 +1018,30 @@ class CanaryReleaseManager:
             },
             "timing": {
                 "created_at": release.created_at.isoformat(),
-                "started_at": release.started_at.isoformat()
-                if release.started_at
-                else None,
-                "completed_at": release.completed_at.isoformat()
-                if release.completed_at
-                else None,
+                "started_at": (
+                    release.started_at.isoformat() if release.started_at else None
+                ),
+                "completed_at": (
+                    release.completed_at.isoformat() if release.completed_at else None
+                ),
                 "elapsed_minutes": (
                     (datetime.utcnow() - release.started_at).total_seconds() / 60.0
                     if release.started_at
                     else 0
                 ),
             },
-            "rollback": {
-                "reason": release.rollback_reason.value
+            "rollback": (
+                {
+                    "reason": (
+                        release.rollback_reason.value
+                        if release.rollback_reason
+                        else None
+                    ),
+                    "message": release.rollback_message,
+                }
                 if release.rollback_reason
-                else None,
-                "message": release.rollback_message,
-            }
-            if release.rollback_reason
-            else None,
+                else None
+            ),
         }
 
     def get_active_releases(self) -> list[CanaryRelease]:

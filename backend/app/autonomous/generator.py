@@ -74,9 +74,9 @@ class ScheduleCandidate:
             {
                 "block_id": str(a.block_id),
                 "person_id": str(a.person_id),
-                "rotation_template_id": str(a.rotation_template_id)
-                if a.rotation_template_id
-                else None,
+                "rotation_template_id": (
+                    str(a.rotation_template_id) if a.rotation_template_id else None
+                ),
                 "role": a.role,
             }
             for a in self.assignments

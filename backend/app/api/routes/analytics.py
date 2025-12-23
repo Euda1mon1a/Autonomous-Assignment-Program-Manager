@@ -390,7 +390,7 @@ async def get_fairness_trend(
             recommendations.append(
                 "Fairness is improving - current approach is effective"
             )
-        if len(set(dp.residents_count for dp in data_points)) > 1:
+        if len({dp.residents_count for dp in data_points}) > 1:
             recommendations.append(
                 "Resident count has changed - ensure fairness metrics account for cohort size"
             )

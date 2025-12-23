@@ -268,9 +268,9 @@ class CachedResponse:
             "content_type": self.content_type,
             "cached_at": self.cached_at,
             "etag": self.etag,
-            "last_modified": self.last_modified.isoformat()
-            if self.last_modified
-            else None,
+            "last_modified": (
+                self.last_modified.isoformat() if self.last_modified else None
+            ),
             "max_age": self.max_age,
             "vary": self.vary,
         }

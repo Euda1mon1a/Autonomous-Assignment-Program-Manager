@@ -104,9 +104,11 @@ class HealthChecker:
                     is_healthy=is_healthy,
                     lag_seconds=lag_seconds,
                     last_check=datetime.utcnow(),
-                    error_message=None
-                    if is_healthy
-                    else f"Replication lag too high: {lag_seconds}s",
+                    error_message=(
+                        None
+                        if is_healthy
+                        else f"Replication lag too high: {lag_seconds}s"
+                    ),
                     consecutive_failures=0 if is_healthy else 1,
                 )
 
@@ -182,7 +184,8 @@ class HealthChecker:
 
             # Get replay lag (time between last WAL received and applied)
             lag_result = connection.execute(
-                text("""
+                text(
+                    """
                     SELECT EXTRACT(EPOCH FROM (
                         pg_last_wal_receive_lsn() - pg_last_wal_replay_lsn()
                     )) /
@@ -191,7 +194,8 @@ class HealthChecker:
                         0
                     ) AS lag_bytes,
                     EXTRACT(EPOCH FROM (now() - pg_last_xact_replay_timestamp())) AS lag_seconds
-                """)
+                """
+                )
             ).first()
 
             if lag_result and lag_result[1] is not None:

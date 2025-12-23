@@ -252,15 +252,15 @@ class TestLargeDatasetScenarios:
         )
 
         # Verify none are truncated
-        assert len(faculty_result) == 125, (
-            f"Expected 125 faculty, got {len(faculty_result)}"
-        )
-        assert len(blocks_result) == 120, (
-            f"Expected 120 blocks, got {len(blocks_result)}"
-        )
-        assert len(assignments_result) == 200, (
-            f"Expected 200 assignments, got {len(assignments_result)}"
-        )
+        assert (
+            len(faculty_result) == 125
+        ), f"Expected 125 faculty, got {len(faculty_result)}"
+        assert (
+            len(blocks_result) == 120
+        ), f"Expected 120 blocks, got {len(blocks_result)}"
+        assert (
+            len(assignments_result) == 200
+        ), f"Expected 200 assignments, got {len(assignments_result)}"
 
     def test_query_ordering_is_deterministic(self, db: Session):
         """

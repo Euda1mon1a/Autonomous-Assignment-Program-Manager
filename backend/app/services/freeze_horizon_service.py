@@ -79,14 +79,16 @@ class FreezeCheckResult:
     def to_dict(self) -> dict:
         return {
             "is_frozen": self.is_frozen,
-            "assignment_date": self.assignment_date.isoformat()
-            if self.assignment_date
-            else None,
+            "assignment_date": (
+                self.assignment_date.isoformat() if self.assignment_date else None
+            ),
             "days_until_assignment": self.days_until_assignment,
             "freeze_horizon_days": self.freeze_horizon_days,
-            "freeze_scope": self.freeze_scope.value
-            if isinstance(self.freeze_scope, FreezeScope)
-            else self.freeze_scope,
+            "freeze_scope": (
+                self.freeze_scope.value
+                if isinstance(self.freeze_scope, FreezeScope)
+                else self.freeze_scope
+            ),
             "requires_override": self.requires_override,
             "can_use_emergency_bypass": self.can_use_emergency_bypass,
             "message": self.message,

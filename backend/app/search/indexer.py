@@ -283,9 +283,9 @@ class IndexHealth:
             "status": self.status.value,
             "doc_count": self.doc_count,
             "index_size_bytes": self.index_size_bytes,
-            "last_index_time": self.last_index_time.isoformat()
-            if self.last_index_time
-            else None,
+            "last_index_time": (
+                self.last_index_time.isoformat() if self.last_index_time else None
+            ),
             "last_reindex_time": (
                 self.last_reindex_time.isoformat() if self.last_reindex_time else None
             ),

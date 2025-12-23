@@ -1016,9 +1016,11 @@ class ChaosExperiment:
             successful_injections=self.successful_injections,
             failed_injections=self.failed_injections,
             slo_breaches=self.slo_monitor.breached_slos,
-            rollback_reason=self.slo_monitor.get_breach_summary()
-            if self.status == ChaosExperimentStatus.ROLLED_BACK
-            else None,
+            rollback_reason=(
+                self.slo_monitor.get_breach_summary()
+                if self.status == ChaosExperimentStatus.ROLLED_BACK
+                else None
+            ),
             observations=self.observations,
         )
 

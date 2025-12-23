@@ -527,9 +527,11 @@ class WebhookVerificationService:
                     "Duplicate delivery detected (retry)",
                     metadata={
                         "delivery_id": delivery_id,
-                        "original_attempt_at": existing_delivery.first_attempted_at.isoformat()
-                        if existing_delivery.first_attempted_at
-                        else None,
+                        "original_attempt_at": (
+                            existing_delivery.first_attempted_at.isoformat()
+                            if existing_delivery.first_attempted_at
+                            else None
+                        ),
                         "attempt_count": existing_delivery.attempt_count,
                     },
                 )

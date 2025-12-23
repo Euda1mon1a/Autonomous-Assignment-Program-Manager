@@ -164,9 +164,9 @@ def sample_swap_records(
             source_faculty_id=source_faculty.id,
             source_week=month_start + timedelta(days=i * 7),
             target_faculty_id=target_faculty.id,
-            target_week=month_start + timedelta(days=(i + 1) * 7)
-            if i % 2 == 0
-            else None,
+            target_week=(
+                month_start + timedelta(days=(i + 1) * 7) if i % 2 == 0 else None
+            ),
             swap_type=SwapType.ONE_TO_ONE if i % 2 == 0 else SwapType.ABSORB,
             status=status,
             requested_at=datetime.utcnow() - timedelta(days=i),

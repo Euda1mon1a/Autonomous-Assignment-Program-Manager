@@ -371,9 +371,9 @@ class HealthCheck:
                     check_type=HealthCheckType.DATABASE_CONNECTIVITY,
                     is_healthy=is_healthy,
                     response_time_ms=elapsed_ms,
-                    message="Database connected"
-                    if is_healthy
-                    else "Database unreachable",
+                    message=(
+                        "Database connected" if is_healthy else "Database unreachable"
+                    ),
                 )
         except Exception as e:
             elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
@@ -444,9 +444,11 @@ class HealthCheck:
                     check_type=HealthCheckType.CELERY_WORKERS,
                     is_healthy=is_healthy,
                     response_time_ms=elapsed_ms,
-                    message="Celery workers active"
-                    if is_healthy
-                    else "Celery workers unavailable",
+                    message=(
+                        "Celery workers active"
+                        if is_healthy
+                        else "Celery workers unavailable"
+                    ),
                     details=details,
                 )
         except Exception as e:

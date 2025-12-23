@@ -175,9 +175,11 @@ class AnalyticsReportTemplate:
 
         return {
             "gini_coefficient": gini,
-            "std_deviation": statistics.stdev(assignment_counts)
-            if len(assignment_counts) > 1
-            else 0.0,
+            "std_deviation": (
+                statistics.stdev(assignment_counts)
+                if len(assignment_counts) > 1
+                else 0.0
+            ),
             "mean": statistics.mean(assignment_counts),
             "median": statistics.median(assignment_counts),
             "min": min(assignment_counts),

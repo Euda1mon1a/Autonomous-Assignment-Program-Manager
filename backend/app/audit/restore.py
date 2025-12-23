@@ -523,12 +523,14 @@ class AuditRestorer:
 
                 for record in entity_records:
                     # Build insert query
-                    insert_query = text(f"""
+                    insert_query = text(
+                        f"""
                         INSERT INTO {table_name}
                         (id, transaction_id, operation_type)
                         VALUES (:entity_id, :transaction_id, :operation_type)
                         ON CONFLICT (id, transaction_id) DO NOTHING
-                    """)
+                    """
+                    )
 
                     self.db.execute(
                         insert_query,

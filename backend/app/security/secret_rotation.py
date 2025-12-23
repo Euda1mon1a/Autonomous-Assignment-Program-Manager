@@ -36,8 +36,9 @@ from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, Column, DateTime, String, Text
+from sqlalchemy import Boolean, Column, DateTime
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import String, Text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Session
 
@@ -350,9 +351,9 @@ class SecretRotationService:
                 priority=RotationPriority.MEDIUM,
                 details={
                     "rotation_id": str(rotation_id),
-                    "grace_period_ends": grace_period_ends.isoformat()
-                    if grace_period_ends
-                    else None,
+                    "grace_period_ends": (
+                        grace_period_ends.isoformat() if grace_period_ends else None
+                    ),
                     "initiated_by": str(initiated_by) if initiated_by else "automated",
                     "reason": reason,
                 },
@@ -1033,9 +1034,9 @@ async def rotate_jwt_key(
     return await service.rotate_secret(
         SecretType.JWT_SIGNING_KEY,
         initiated_by=initiated_by,
-        reason="Manual JWT key rotation"
-        if initiated_by
-        else "Scheduled JWT key rotation",
+        reason=(
+            "Manual JWT key rotation" if initiated_by else "Scheduled JWT key rotation"
+        ),
         force=force,
     )
 

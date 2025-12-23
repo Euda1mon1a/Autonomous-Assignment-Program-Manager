@@ -191,9 +191,11 @@ class LoadBalancer:
             stats[name] = {
                 "is_healthy": health.is_healthy if health else None,
                 "lag_seconds": health.lag_seconds if health else None,
-                "last_check": health.last_check.isoformat()
-                if health and health.last_check
-                else None,
+                "last_check": (
+                    health.last_check.isoformat()
+                    if health and health.last_check
+                    else None
+                ),
                 "consecutive_failures": health.consecutive_failures if health else 0,
                 "pool_size": engine.pool.size(),
                 "checked_in_connections": engine.pool.checkedin(),

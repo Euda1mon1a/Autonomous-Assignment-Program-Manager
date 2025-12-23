@@ -145,7 +145,7 @@ def get_my_schedule(
 
         # Convert to FMITWeekInfo
         today = datetime.utcnow().date()
-        for week_start, week_assignments in sorted(week_map.items()):
+        for week_start, _week_assignments in sorted(week_map.items()):
             week_end = week_start + timedelta(days=6)
             has_pending_swap = week_start in pending_swap_weeks
 
@@ -453,7 +453,7 @@ def create_swap_request(
             .options(joinedload(FacultyPreference.faculty))
             .filter(
                 FacultyPreference.faculty_id != faculty.id,
-                FacultyPreference.notify_swap_requests == True,
+                FacultyPreference.notify_swap_requests.is_(True),
             )
             .limit(100)
             .all()
@@ -698,15 +698,21 @@ def get_my_preferences(
         max_consecutive_weeks=preferences.max_consecutive_weeks or 1,
         min_gap_between_weeks=preferences.min_gap_between_weeks or 2,
         target_weeks_per_year=preferences.target_weeks_per_year or 6,
-        notify_swap_requests=preferences.notify_swap_requests
-        if preferences.notify_swap_requests is not None
-        else True,
-        notify_schedule_changes=preferences.notify_schedule_changes
-        if preferences.notify_schedule_changes is not None
-        else True,
-        notify_conflict_alerts=preferences.notify_conflict_alerts
-        if preferences.notify_conflict_alerts is not None
-        else True,
+        notify_swap_requests=(
+            preferences.notify_swap_requests
+            if preferences.notify_swap_requests is not None
+            else True
+        ),
+        notify_schedule_changes=(
+            preferences.notify_schedule_changes
+            if preferences.notify_schedule_changes is not None
+            else True
+        ),
+        notify_conflict_alerts=(
+            preferences.notify_conflict_alerts
+            if preferences.notify_conflict_alerts is not None
+            else True
+        ),
         notify_reminder_days=preferences.notify_reminder_days or 7,
         notes=preferences.notes,
         updated_at=preferences.updated_at,
@@ -842,15 +848,21 @@ def update_my_preferences(
         max_consecutive_weeks=preferences.max_consecutive_weeks or 1,
         min_gap_between_weeks=preferences.min_gap_between_weeks or 2,
         target_weeks_per_year=preferences.target_weeks_per_year or 6,
-        notify_swap_requests=preferences.notify_swap_requests
-        if preferences.notify_swap_requests is not None
-        else True,
-        notify_schedule_changes=preferences.notify_schedule_changes
-        if preferences.notify_schedule_changes is not None
-        else True,
-        notify_conflict_alerts=preferences.notify_conflict_alerts
-        if preferences.notify_conflict_alerts is not None
-        else True,
+        notify_swap_requests=(
+            preferences.notify_swap_requests
+            if preferences.notify_swap_requests is not None
+            else True
+        ),
+        notify_schedule_changes=(
+            preferences.notify_schedule_changes
+            if preferences.notify_schedule_changes is not None
+            else True
+        ),
+        notify_conflict_alerts=(
+            preferences.notify_conflict_alerts
+            if preferences.notify_conflict_alerts is not None
+            else True
+        ),
         notify_reminder_days=preferences.notify_reminder_days or 7,
         notes=preferences.notes,
         updated_at=preferences.updated_at,
@@ -928,7 +940,7 @@ def get_my_dashboard(
         weeks_assigned = len(week_map)
 
         # Count completed vs remaining weeks
-        for week_start in week_map.keys():
+        for week_start in week_map:
             week_end = week_start + timedelta(days=6)
             if week_end < today:
                 weeks_completed += 1
@@ -937,7 +949,7 @@ def get_my_dashboard(
 
         # Get upcoming weeks (next 8 weeks)
         eight_weeks_out = today + timedelta(weeks=8)
-        for week_start, week_assignments in sorted(week_map.items()):
+        for week_start, _week_assignments in sorted(week_map.items()):
             week_end = week_start + timedelta(days=6)
 
             # Only include weeks starting from today up to 8 weeks out
@@ -1074,9 +1086,9 @@ def get_my_dashboard(
         pending_swap_decisions.append(
             SwapRequestSummary(
                 id=swap.id,
-                other_faculty_name=swap.source_faculty.name
-                if swap.source_faculty
-                else "Unknown",
+                other_faculty_name=(
+                    swap.source_faculty.name if swap.source_faculty else "Unknown"
+                ),
                 week_to_give=swap.target_week,  # What they want from us
                 week_to_receive=swap.source_week,  # What we would get
                 status=swap.status.value,
@@ -1202,9 +1214,9 @@ def get_swap_marketplace(
 
         entry = MarketplaceEntry(
             request_id=swap.id,
-            requesting_faculty_name=swap.source_faculty.name
-            if swap.source_faculty
-            else "Unknown",
+            requesting_faculty_name=(
+                swap.source_faculty.name if swap.source_faculty else "Unknown"
+            ),
             week_available=swap.source_week,
             reason=swap.reason,
             posted_at=swap.requested_at,

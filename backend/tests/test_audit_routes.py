@@ -462,9 +462,7 @@ class TestAuditExportEndpoint:
         """Test export with invalid format."""
         response = client.post(
             "/api/audit/export",
-            json={
-                "format": "xml"  # Unsupported format
-            },
+            json={"format": "xml"},  # Unsupported format
             headers=auth_headers,
         )
 

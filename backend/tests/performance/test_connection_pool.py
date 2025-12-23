@@ -210,9 +210,9 @@ class TestConnectionPoolStress:
         assert successful > 0, "At least some requests should succeed"
         assert timeouts > 0, "Some requests should timeout when pool is exhausted"
         assert errors == 0, "No unexpected errors should occur"
-        assert successful + timeouts == num_requests, (
-            "All requests should complete (success or timeout)"
-        )
+        assert (
+            successful + timeouts == num_requests
+        ), "All requests should complete (success or timeout)"
 
         # Pool should be healthy (no connections leaked)
         pool_status = small_pool_engine.pool.status()
@@ -328,12 +328,12 @@ class TestConnectionPoolStress:
         celery_successful = sum(1 for r in results["celery"] if r.get("success"))
 
         # Most operations should succeed (some may timeout under high load)
-        assert api_successful >= 3, (
-            f"Most API requests should succeed, got {api_successful}/5"
-        )
-        assert celery_successful >= 2, (
-            f"Most Celery tasks should succeed, got {celery_successful}/3"
-        )
+        assert (
+            api_successful >= 3
+        ), f"Most API requests should succeed, got {api_successful}/5"
+        assert (
+            celery_successful >= 2
+        ), f"Most Celery tasks should succeed, got {celery_successful}/3"
 
         # API requests should be faster than Celery tasks
         avg_api_time = sum(
@@ -343,9 +343,9 @@ class TestConnectionPoolStress:
             r["duration"] for r in results["celery"] if r.get("success")
         ) / max(celery_successful, 1)
 
-        assert avg_api_time < avg_celery_time, (
-            "API requests should be faster than Celery tasks"
-        )
+        assert (
+            avg_api_time < avg_celery_time
+        ), "API requests should be faster than Celery tasks"
 
 
 # ============================================================================
@@ -404,9 +404,9 @@ class TestConnectionLeakDetection:
 
         # All checked-out connections should be returned (within small margin)
         leak_count = checkout_count - checkin_count
-        assert leak_count <= 10, (
-            f"Connection leak detected: {leak_count} connections not returned"
-        )
+        assert (
+            leak_count <= 10
+        ), f"Connection leak detected: {leak_count} connections not returned"
 
         # Pool should be at or near baseline
         pool_status = monitored_pool_engine.pool.status()
@@ -490,15 +490,15 @@ class TestConnectionLeakDetection:
         quick_results = [r for r in results if r.get("type") == "quick"]
 
         # Long transaction should complete
-        assert long_tx_result.get("success"), (
-            "Long transaction should complete successfully"
-        )
+        assert long_tx_result.get(
+            "success"
+        ), "Long transaction should complete successfully"
 
         # Most quick queries should succeed (some may timeout)
         successful_quick = sum(1 for r in quick_results if r.get("success"))
-        assert successful_quick >= 4, (
-            f"Most quick queries should succeed, got {successful_quick}/7"
-        )
+        assert (
+            successful_quick >= 4
+        ), f"Most quick queries should succeed, got {successful_quick}/7"
 
     def test_rollback_releases_connection(self, monitored_pool_engine):
         """
@@ -558,9 +558,9 @@ class TestConnectionLeakDetection:
         connections_returned = final_checkin_count - initial_checkin_count
 
         # Should be close to num_failures (within small margin for concurrent timing)
-        assert connections_returned >= num_failures - 5, (
-            f"All connections should be returned: {connections_returned}/{num_failures}"
-        )
+        assert (
+            connections_returned >= num_failures - 5
+        ), f"All connections should be returned: {connections_returned}/{num_failures}"
 
 
 # ============================================================================
@@ -753,9 +753,11 @@ class TestConcurrentTransactionIsolation:
         try:
             person = session.query(Person).filter(Person.id == person_id).first()
             assert person is not None, "Person should still exist"
-            assert person.name in ["Name A", "Name B", "Name C"], (
-                "Name should be one of the updates"
-            )
+            assert person.name in [
+                "Name A",
+                "Name B",
+                "Name C",
+            ], "Name should be one of the updates"
         finally:
             session.close()
 
@@ -908,9 +910,9 @@ class TestConcurrentTransactionIsolation:
         assert successful >= 1, "At least one transaction should succeed"
 
         # No unhandled exceptions - all should return result dict
-        assert all("success" in r for r in results), (
-            "All transactions should complete (success or failure)"
-        )
+        assert all(
+            "success" in r for r in results
+        ), "All transactions should complete (success or failure)"
 
 
 # ============================================================================
@@ -1083,12 +1085,12 @@ class TestConnectionPoolMetrics:
         pool_metrics["successful_operations"] = num_operations
 
         # Performance assertions (reasonable thresholds)
-        assert avg_checkout_time < 0.1, (
-            f"Connection checkout should be fast: {avg_checkout_time:.3f}s"
-        )
-        assert throughput > 50, (
-            f"Should achieve reasonable throughput: {throughput:.1f} ops/sec"
-        )
+        assert (
+            avg_checkout_time < 0.1
+        ), f"Connection checkout should be fast: {avg_checkout_time:.3f}s"
+        assert (
+            throughput > 50
+        ), f"Should achieve reasonable throughput: {throughput:.1f} ops/sec"
 
         # Print metrics for analysis
         print(f"\n{'=' * 60}")

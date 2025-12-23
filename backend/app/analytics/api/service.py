@@ -428,7 +428,7 @@ class APIAnalyticsService:
                     latency_key = f"{key}:latencies"
                     latencies = await redis_client.zrange(latency_key, 0, -1)
                     endpoint_data[endpoint_id]["latencies"].extend(
-                        [float(l) for l in latencies if l]
+                        [float(lat) for lat in latencies if lat]
                     )
 
                 current += timedelta(days=1)
@@ -458,9 +458,11 @@ class APIAnalyticsService:
                         p50_latency_ms=round(p50, 2),
                         p95_latency_ms=round(p95, 2),
                         p99_latency_ms=round(p99, 2),
-                        error_rate=round((data["errors"] / count) * 100, 2)
-                        if count > 0
-                        else 0.0,
+                        error_rate=(
+                            round((data["errors"] / count) * 100, 2)
+                            if count > 0
+                            else 0.0
+                        ),
                         requests_per_minute=round(
                             count / ((end_date - start_date).total_seconds() / 60), 2
                         ),
@@ -577,9 +579,11 @@ class APIAnalyticsService:
                         total_requests=data["count"],
                         unique_endpoints=len(data["endpoints"]),
                         avg_latency_ms=round(data["total_latency"] / data["count"], 2),
-                        error_rate=round((data["errors"] / data["count"]) * 100, 2)
-                        if data["count"] > 0
-                        else 0.0,
+                        error_rate=(
+                            round((data["errors"] / data["count"]) * 100, 2)
+                            if data["count"] > 0
+                            else 0.0
+                        ),
                         most_used_endpoint=most_used,
                         last_active=data["last_active"]
                         or datetime.utcnow().isoformat(),
@@ -680,12 +684,16 @@ class APIAnalyticsService:
                         region=None,  # Would need GeoIP for region
                         request_count=data["count"],
                         unique_users=data["users"],
-                        avg_latency_ms=round(data["total_latency"] / data["count"], 2)
-                        if data["count"] > 0
-                        else 0.0,
-                        error_rate=round((data["errors"] / data["count"]) * 100, 2)
-                        if data["count"] > 0
-                        else 0.0,
+                        avg_latency_ms=(
+                            round(data["total_latency"] / data["count"], 2)
+                            if data["count"] > 0
+                            else 0.0
+                        ),
+                        error_rate=(
+                            round((data["errors"] / data["count"]) * 100, 2)
+                            if data["count"] > 0
+                            else 0.0
+                        ),
                     )
                 )
 
@@ -874,9 +882,11 @@ class APIAnalyticsService:
                         dimension_value=dim_value,
                         request_count=data["count"],
                         unique_users=data["users"],
-                        avg_latency_ms=round(data["total_latency"] / data["count"], 2)
-                        if data["count"] > 0
-                        else 0.0,
+                        avg_latency_ms=(
+                            round(data["total_latency"] / data["count"], 2)
+                            if data["count"] > 0
+                            else 0.0
+                        ),
                     )
                 )
 
@@ -978,9 +988,11 @@ class APIAnalyticsService:
                 p99=round(self._percentile(sorted_latencies, 99), 2),
                 max=round(max(sorted_latencies), 2) if sorted_latencies else 0.0,
                 min=round(min(sorted_latencies), 2) if sorted_latencies else 0.0,
-                avg=round(statistics.mean(sorted_latencies), 2)
-                if sorted_latencies
-                else 0.0,
+                avg=(
+                    round(statistics.mean(sorted_latencies), 2)
+                    if sorted_latencies
+                    else 0.0
+                ),
             )
 
             # Get top endpoints
@@ -995,9 +1007,11 @@ class APIAnalyticsService:
                     ErrorBreakdown(
                         status_code=status_code,
                         count=data["count"],
-                        percentage=round((data["count"] / total_errors) * 100, 2)
-                        if total_errors > 0
-                        else 0.0,
+                        percentage=(
+                            round((data["count"] / total_errors) * 100, 2)
+                            if total_errors > 0
+                            else 0.0
+                        ),
                         endpoints=list(data["endpoints"]),
                     )
                 )
@@ -1021,9 +1035,11 @@ class APIAnalyticsService:
                 period_end=end_date.isoformat(),
                 total_requests=total_requests,
                 total_errors=total_errors,
-                error_rate=round((total_errors / total_requests) * 100, 2)
-                if total_requests > 0
-                else 0.0,
+                error_rate=(
+                    round((total_errors / total_requests) * 100, 2)
+                    if total_requests > 0
+                    else 0.0
+                ),
                 avg_latency_ms=latency_percentiles["avg"],
                 latency_percentiles=latency_percentiles,
                 top_endpoints=top_endpoints,

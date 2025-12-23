@@ -582,9 +582,9 @@ class WorkflowEngine:
                 if step_exec.status == StepStatus.COMPLETED.value:
                     # Update execution state with step output
                     instance.execution_state["completed_steps"].append(step_id)
-                    instance.execution_state["step_outputs"][step_id] = (
-                        step_exec.output_data
-                    )
+                    instance.execution_state["step_outputs"][
+                        step_id
+                    ] = step_exec.output_data
                     self.db.commit()
                     return step_exec
 

@@ -78,7 +78,8 @@ class BackupStrategy(ABC):
         Returns:
             list: Table names to backup
         """
-        query = text("""
+        query = text(
+            """
             SELECT tablename
             FROM pg_tables
             WHERE schemaname = 'public'
@@ -86,7 +87,8 @@ class BackupStrategy(ABC):
             AND tablename != 'alembic_version'
             AND tablename != 'transaction'
             ORDER BY tablename
-        """)
+        """
+        )
 
         result = db.execute(query)
         tables = [row[0] for row in result]
@@ -398,7 +400,8 @@ class IncrementalBackupStrategy(BackupStrategy):
             dict: Table data with changed rows
         """
         # Check if table has updated_at column
-        column_query = text(f"""
+        column_query = text(
+            f"""
             SELECT column_name
             FROM information_schema.columns
             WHERE table_name = '{table}'
@@ -410,19 +413,22 @@ class IncrementalBackupStrategy(BackupStrategy):
                     WHEN 'created_at' THEN 3
                 END
             LIMIT 1
-        """)
+        """
+        )
 
         result = db.execute(column_query)
         timestamp_column = result.scalar()
 
         if timestamp_column:
             # Query rows changed since last backup
-            query = text(f"""
+            query = text(
+                f"""
                 SELECT *
                 FROM {table}
                 WHERE {timestamp_column} > :since
                 ORDER BY {timestamp_column}
-            """)
+            """
+            )
             result = db.execute(query, {"since": since})
         else:
             # No timestamp column - include all rows as a safety measure

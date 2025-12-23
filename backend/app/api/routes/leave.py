@@ -153,12 +153,12 @@ def list_leave(
                 leave_type=absence.absence_type,
                 is_blocking=absence.should_block_assignment,
                 description=absence.notes,
-                created_at=absence.created_at
-                if hasattr(absence, "created_at")
-                else None,
-                updated_at=absence.updated_at
-                if hasattr(absence, "updated_at")
-                else None,
+                created_at=(
+                    absence.created_at if hasattr(absence, "created_at") else None
+                ),
+                updated_at=(
+                    absence.updated_at if hasattr(absence, "updated_at") else None
+                ),
             )
         )
 

@@ -902,9 +902,11 @@ class MigrationRunner:
             target_version=target_version,
             current_version=current_version,
             dry_run=dry_run,
-            status=MigrationRunStatus.DRY_RUN.value
-            if dry_run
-            else MigrationRunStatus.PENDING.value,
+            status=(
+                MigrationRunStatus.DRY_RUN.value
+                if dry_run
+                else MigrationRunStatus.PENDING.value
+            ),
             created_by=created_by,
         )
 
@@ -1086,12 +1088,14 @@ class MigrationRunner:
         try:
             # Query table names and column info
             result = self.db.execute(
-                text("""
+                text(
+                    """
                 SELECT table_name, column_name, data_type
                 FROM information_schema.columns
                 WHERE table_schema = 'public'
                 ORDER BY table_name, ordinal_position
-            """)
+            """
+                )
             )
 
             schema_info = "\n".join(f"{row[0]}.{row[1]}:{row[2]}" for row in result)
@@ -1179,15 +1183,15 @@ class MigrationRunner:
             "dry_run": run_record.dry_run,
             "target_version": run_record.target_version,
             "current_version": run_record.current_version,
-            "created_at": run_record.created_at.isoformat()
-            if run_record.created_at
-            else None,
-            "started_at": run_record.started_at.isoformat()
-            if run_record.started_at
-            else None,
-            "completed_at": run_record.completed_at.isoformat()
-            if run_record.completed_at
-            else None,
+            "created_at": (
+                run_record.created_at.isoformat() if run_record.created_at else None
+            ),
+            "started_at": (
+                run_record.started_at.isoformat() if run_record.started_at else None
+            ),
+            "completed_at": (
+                run_record.completed_at.isoformat() if run_record.completed_at else None
+            ),
             "error_message": run_record.error_message,
         }
 

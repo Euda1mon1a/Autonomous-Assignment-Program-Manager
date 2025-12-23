@@ -114,7 +114,8 @@ class IndexAdvisor:
         Returns:
             List of unused index statistics
         """
-        query = text("""
+        query = text(
+            """
             SELECT
                 schemaname,
                 tablename,
@@ -132,7 +133,8 @@ class IndexAdvisor:
                 AND indexname NOT LIKE '%_pkey'
                 AND pg_relation_size(indexrelid) > :min_size_bytes
             ORDER BY pg_relation_size(indexrelid) DESC
-        """)
+        """
+        )
 
         try:
             result = self.db.execute(
@@ -172,7 +174,8 @@ class IndexAdvisor:
         Returns:
             List of index usage statistics
         """
-        query = text("""
+        query = text(
+            """
             SELECT
                 schemaname,
                 tablename,
@@ -187,7 +190,8 @@ class IndexAdvisor:
             JOIN pg_index ON pg_stat_user_indexes.indexrelid = pg_index.indexrelid
             WHERE schemaname = 'public'
             ORDER BY idx_scan DESC, pg_relation_size(indexrelid) DESC
-        """)
+        """
+        )
 
         try:
             result = self.db.execute(query)
@@ -227,7 +231,8 @@ class IndexAdvisor:
         Returns:
             Dictionary with table statistics
         """
-        query = text("""
+        query = text(
+            """
             SELECT
                 schemaname,
                 tablename,
@@ -250,7 +255,8 @@ class IndexAdvisor:
                 last_autoanalyze
             FROM pg_stat_user_tables
             WHERE tablename = :table_name
-        """)
+        """
+        )
 
         try:
             result = self.db.execute(query, {"table_name": table_name}).fetchone()
@@ -298,7 +304,8 @@ class IndexAdvisor:
         Returns:
             List of table information dictionaries
         """
-        query = text("""
+        query = text(
+            """
             SELECT
                 schemaname,
                 tablename,
@@ -315,7 +322,8 @@ class IndexAdvisor:
                 AND pg_relation_size(schemaname||'.'||tablename) > :min_size_bytes
             ORDER BY seq_scan DESC
             LIMIT 20
-        """)
+        """
+        )
 
         try:
             result = self.db.execute(
@@ -428,13 +436,15 @@ class IndexAdvisor:
         Returns:
             True if index exists
         """
-        query = text("""
+        query = text(
+            """
             SELECT COUNT(*)
             FROM pg_indexes
             WHERE schemaname = 'public'
                 AND tablename = :table_name
                 AND indexdef ILIKE :pattern
-        """)
+        """
+        )
 
         try:
             # Build pattern to match column order

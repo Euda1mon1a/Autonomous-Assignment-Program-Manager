@@ -924,9 +924,11 @@ class HomeostasisMonitor:
                             f"High load ratio: {high_load_ratio:.0%}",
                         ],
                         confidence=min(0.95, high_load_ratio + 0.4),
-                        severity=DeviationSeverity.CRITICAL
-                        if high_load_ratio > 0.5
-                        else DeviationSeverity.MAJOR,
+                        severity=(
+                            DeviationSeverity.CRITICAL
+                            if high_load_ratio > 0.5
+                            else DeviationSeverity.MAJOR
+                        ),
                         intervention="Immediately reduce workload for highest-load faculty, consider temporary service reduction",
                         urgency="immediate" if high_load_ratio > 0.5 else "soon",
                     )

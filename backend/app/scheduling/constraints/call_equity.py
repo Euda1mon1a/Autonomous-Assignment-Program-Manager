@@ -83,11 +83,7 @@ class SundayCallEquityConstraint(SoftConstraint):
             return
 
         # Find Sunday blocks
-        sunday_blocks = [
-            b
-            for b in context.blocks
-            if b.date.weekday() == 6  # Sunday
-        ]
+        sunday_blocks = [b for b in context.blocks if b.date.weekday() == 6]  # Sunday
 
         if not sunday_blocks:
             return
@@ -268,9 +264,7 @@ class WeekdayCallEquityConstraint(SoftConstraint):
 
         # Find Mon-Thurs blocks (weekday 0-3)
         weekday_blocks = [
-            b
-            for b in context.blocks
-            if b.date.weekday() in (0, 1, 2, 3)  # Mon-Thurs
+            b for b in context.blocks if b.date.weekday() in (0, 1, 2, 3)  # Mon-Thurs
         ]
 
         if not weekday_blocks:
@@ -441,11 +435,7 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
             return
 
         # Find Tuesday blocks (weekday 1)
-        tuesday_blocks = [
-            b
-            for b in context.blocks
-            if b.date.weekday() == 1  # Tuesday
-        ]
+        tuesday_blocks = [b for b in context.blocks if b.date.weekday() == 1]  # Tuesday
 
         if not tuesday_blocks:
             return
@@ -602,9 +592,7 @@ class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
 
         # Find Wednesday blocks (weekday 2)
         wednesday_blocks = [
-            b
-            for b in context.blocks
-            if b.date.weekday() == 2  # Wednesday
+            b for b in context.blocks if b.date.weekday() == 2  # Wednesday
         ]
 
         if not wednesday_blocks:

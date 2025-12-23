@@ -46,9 +46,9 @@ class ConstraintRigidityAnalyzer:
         """Initialize the rigidity analyzer."""
         self.graph: nx.Graph | None = None
         self.pebbles: dict[str, list[str]] = {}  # node -> list of pebble ids
-        self.edge_status: dict[
-            tuple[str, str], str
-        ] = {}  # edge -> "independent" or "redundant"
+        self.edge_status: dict[tuple[str, str], str] = (
+            {}
+        )  # edge -> "independent" or "redundant"
         self.parent_map: dict[str, str | None] = {}  # for pebble search
 
     def build_constraint_graph(

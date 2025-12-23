@@ -1149,7 +1149,6 @@ async def get_coverage_gaps(
     low_priority_gaps = sum(1 for gap in all_gaps if gap.severity == "low")
 
     # Count gaps by period
-    today = date.today()
     gaps_by_period = {
         "daily": sum(1 for gap in all_gaps if gap.days_until <= 1),
         "weekly": sum(1 for gap in all_gaps if 2 <= gap.days_until <= 7),
@@ -1361,7 +1360,7 @@ async def get_coverage_forecast(
                 and_(
                     Block.date >= forecast_date,
                     Block.date <= week_end,
-                    Block.is_holiday == True,
+                    Block.is_holiday.is_(True),
                 )
             )
             .count()

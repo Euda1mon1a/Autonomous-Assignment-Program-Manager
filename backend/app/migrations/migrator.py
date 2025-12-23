@@ -506,14 +506,14 @@ class DataMigrator:
             "processed_records": migration.processed_records,
             "failed_records": migration.failed_records,
             "progress_percentage": round(progress_pct, 2),
-            "created_at": migration.created_at.isoformat()
-            if migration.created_at
-            else None,
-            "started_at": migration.started_at.isoformat()
-            if migration.started_at
-            else None,
-            "completed_at": migration.completed_at.isoformat()
-            if migration.completed_at
-            else None,
+            "created_at": (
+                migration.created_at.isoformat() if migration.created_at else None
+            ),
+            "started_at": (
+                migration.started_at.isoformat() if migration.started_at else None
+            ),
+            "completed_at": (
+                migration.completed_at.isoformat() if migration.completed_at else None
+            ),
             "error_message": migration.error_message,
         }

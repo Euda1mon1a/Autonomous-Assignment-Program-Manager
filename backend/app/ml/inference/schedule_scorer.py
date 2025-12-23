@@ -316,9 +316,11 @@ class ScheduleScorer:
                     {
                         "type": "conflict_mitigation",
                         "priority": risk_item["conflict_probability"],
-                        "impact": "critical"
-                        if risk_item["conflict_probability"] >= 0.8
-                        else "high",
+                        "impact": (
+                            "critical"
+                            if risk_item["conflict_probability"] >= 0.8
+                            else "high"
+                        ),
                         "action": "review_or_reassign",
                         "details": risk_item,
                     }
@@ -392,11 +394,11 @@ class ScheduleScorer:
             components_comparison[component] = {
                 "schedule_a": a_score,
                 "schedule_b": b_score,
-                "winner": "schedule_a"
-                if a_score > b_score
-                else "schedule_b"
-                if b_score > a_score
-                else "tie",
+                "winner": (
+                    "schedule_a"
+                    if a_score > b_score
+                    else "schedule_b" if b_score > a_score else "tie"
+                ),
             }
 
         return {

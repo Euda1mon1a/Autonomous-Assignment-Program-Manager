@@ -212,7 +212,8 @@ class DataVersioningService:
         VersionClass = version_class(model_class)
 
         # Query versions
-        query = text(f"""
+        query = text(
+            f"""
             SELECT
                 v.transaction_id,
                 v.operation_type,
@@ -224,7 +225,8 @@ class DataVersioningService:
             WHERE v.id = :entity_id
             ORDER BY v.transaction_id DESC
             LIMIT :limit
-        """)
+        """
+        )
 
         result = self.db.execute(query, {"entity_id": str(entity_id), "limit": limit})
         rows = result.fetchall()
@@ -323,7 +325,8 @@ class DataVersioningService:
         model_class = ENTITY_MODEL_MAP[entity_type]
 
         # Find the most recent version before or at the timestamp
-        query = text(f"""
+        query = text(
+            f"""
             SELECT
                 v.transaction_id,
                 v.operation_type,
@@ -334,7 +337,8 @@ class DataVersioningService:
                 AND t.issued_at <= :timestamp
             ORDER BY v.transaction_id DESC
             LIMIT 1
-        """)
+        """
+        )
 
         result = self.db.execute(
             query, {"entity_id": str(entity_id), "timestamp": timestamp}
@@ -397,12 +401,14 @@ class DataVersioningService:
         model_class = ENTITY_MODEL_MAP[entity_type]
 
         # Get all unique entity IDs that existed at or before the timestamp
-        query = text(f"""
+        query = text(
+            f"""
             SELECT DISTINCT v.id
             FROM {model_class.__tablename__}_version v
             LEFT JOIN transaction t ON v.transaction_id = t.id
             WHERE t.issued_at <= :timestamp
-        """)
+        """
+        )
 
         result = self.db.execute(query, {"timestamp": timestamp})
         entity_ids = [row[0] for row in result.fetchall()]
@@ -949,11 +955,13 @@ class DataVersioningService:
         transaction_id: int,
     ) -> datetime:
         """Get the timestamp of a specific version."""
-        query = text("""
+        query = text(
+            """
             SELECT t.issued_at
             FROM transaction t
             WHERE t.id = :transaction_id
-        """)
+        """
+        )
 
         result = self.db.execute(query, {"transaction_id": transaction_id})
         row = result.fetchone()

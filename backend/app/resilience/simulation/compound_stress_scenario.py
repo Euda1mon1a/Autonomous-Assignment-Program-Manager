@@ -711,9 +711,9 @@ class CompoundStressScenario:
             days_survived=self._day,
             final_faculty=self._faculty,
             final_screeners=self._screener_dedicated,
-            final_defense_level=states[-1].defense_level
-            if states
-            else DefenseLevel.BLACK,
+            final_defense_level=(
+                states[-1].defense_level if states else DefenseLevel.BLACK
+            ),
             fmit_weeks_covered=self._fmit_covered,
             fmit_weeks_turfed=self._fmit_turfed,
             fmit_weeks_failed=self._fmit_failed,

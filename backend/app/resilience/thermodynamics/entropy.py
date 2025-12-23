@@ -427,9 +427,11 @@ class ScheduleEntropyMonitor:
         return {
             "current_entropy": self.entropy_history[-1],
             "rate_of_change": self.get_entropy_rate_of_change(),
-            "production_rate": self.production_rate_history[-1]
-            if self.production_rate_history
-            else 0.0,
+            "production_rate": (
+                self.production_rate_history[-1]
+                if self.production_rate_history
+                else 0.0
+            ),
             "critical_slowing": self.detect_critical_slowing(),
             "measurements": len(self.entropy_history),
         }
