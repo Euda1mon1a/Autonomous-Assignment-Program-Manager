@@ -139,6 +139,19 @@ The commit hash from the last clean audit tells you the boundary for investigati
 
 ## Automated Scanning
 
+### Pre-commit Hook (Active)
+
+**Configuration:** `.pre-commit-config.yaml`
+**Script:** `scripts/pii-scan.sh`
+
+The pre-commit hook runs locally before every commit and checks for:
+- SSN patterns (fails commit if found)
+- Suspicious .mil email addresses (warning only)
+- Staged data files (.csv, .dump, .sql)
+- Staged .env files
+
+This provides first-line defense before changes reach GitHub.
+
 ### GitHub Actions (Active)
 
 **Workflow:** `.github/workflows/pii-scan.yml`
@@ -147,6 +160,7 @@ The commit hash from the last clean audit tells you the boundary for investigati
 |---------|-----------|--------------|
 | PR to main | Every PR | Scans for PII patterns, blocks merge if SSNs found |
 | Push to main | Every push | Same scan, results in workflow summary |
+| Push to claude/** | Every AI commit | Scans AI-created branches for PII |
 | Scheduled | Weekly (Sundays) | Proactive scan even without commits |
 | Manual | On-demand | `workflow_dispatch` trigger in Actions tab |
 
@@ -211,11 +225,11 @@ Enable GitHub's built-in secret scanning:
 - Settings → Security → Secret scanning
 - Automatically detects API keys, tokens, passwords
 
-### Recommended Production Setup
+### Current Production Setup
 
-1. **Pre-commit hook** - First line of defense (local)
-2. **GitHub Actions** - Second line (PR/push)
-3. **Weekly n8n/Claude audit** - Deep periodic review
-4. **GitHub Secret Scanning** - API key detection
+1. **Pre-commit hook** - First line of defense (local) - **ACTIVE** (`scripts/pii-scan.sh`)
+2. **GitHub Actions** - Second line (PR/push) - **ACTIVE** (`.github/workflows/pii-scan.yml`)
+3. **Weekly scheduled scan** - Proactive review - **ACTIVE** (Sunday midnight UTC)
+4. **GitHub Secret Scanning** - API key detection - Enable in repo settings
 
 This layered approach catches issues at multiple stages.
