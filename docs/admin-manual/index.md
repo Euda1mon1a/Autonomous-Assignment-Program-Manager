@@ -39,6 +39,11 @@ Advanced system configuration.
 Data backup and recovery procedures.
 </div>
 
+<div class="feature-card" markdown>
+### :material-robot: [AI Interface Guide](ai-interface-guide.md)
+Understanding Web vs CLI AI assistants.
+</div>
+
 </div>
 
 ---
