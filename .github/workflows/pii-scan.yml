@@ -1,0 +1,180 @@
+# PII/OPSEC/PERSEC Scan Workflow
+# Automated scanning for potential data leakage
+# Runs on PRs and weekly schedule
+
+name: PII Security Scan
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches:
+      - main
+      - master
+  schedule:
+    # Run weekly on Sundays at midnight UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  pii-scan:
+    runs-on: ubuntu-latest
+    name: Scan for PII Leakage
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for thorough scan
+
+      - name: Scan for email patterns
+        id: email-scan
+        run: |
+          echo "## Email Pattern Scan" >> $GITHUB_STEP_SUMMARY
+
+          # Scan for emails, excluding known safe patterns
+          EMAILS=$(grep -rn --include="*.py" --include="*.ts" --include="*.tsx" --include="*.json" \
+            -E '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' \
+            --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv \
+            --exclude-dir=__pycache__ --exclude="package*.json" \
+            . 2>/dev/null | \
+            grep -viE '(example|test|fake|dummy|sample|noreply|localhost|hospital\.org|hospital\.mil|@example\.|@test\.)' || true)
+
+          if [ -n "$EMAILS" ]; then
+            echo "⚠️ **Potential email addresses found (review manually):**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$EMAILS" | head -20 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "emails_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ No suspicious email patterns found" >> $GITHUB_STEP_SUMMARY
+            echo "emails_found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Scan for phone number patterns
+        id: phone-scan
+        run: |
+          echo "## Phone Number Scan" >> $GITHUB_STEP_SUMMARY
+
+          PHONES=$(grep -rn --include="*.py" --include="*.ts" --include="*.tsx" --include="*.json" \
+            -E '\b\d{3}[-.]?\d{3}[-.]?\d{4}\b' \
+            --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv \
+            . 2>/dev/null || true)
+
+          if [ -n "$PHONES" ]; then
+            echo "⚠️ **Potential phone numbers found:**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$PHONES" | head -20 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "phones_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ No phone number patterns found" >> $GITHUB_STEP_SUMMARY
+            echo "phones_found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Scan for SSN patterns
+        id: ssn-scan
+        run: |
+          echo "## SSN Pattern Scan" >> $GITHUB_STEP_SUMMARY
+
+          # SSN pattern: XXX-XX-XXXX
+          SSNS=$(grep -rn --include="*.py" --include="*.ts" --include="*.tsx" --include="*.json" \
+            -E '\b\d{3}-\d{2}-\d{4}\b' \
+            --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv \
+            . 2>/dev/null || true)
+
+          if [ -n "$SSNS" ]; then
+            echo "🚨 **POTENTIAL SSN PATTERNS FOUND - INVESTIGATE IMMEDIATELY:**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$SSNS" | head -10 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "ssns_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ No SSN patterns found" >> $GITHUB_STEP_SUMMARY
+            echo "ssns_found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for tracked data files
+        id: datafile-scan
+        run: |
+          echo "## Data File Scan" >> $GITHUB_STEP_SUMMARY
+
+          # Check if any data files are tracked (excluding known safe ones)
+          DATAFILES=$(git ls-files | grep -E '\.(csv|dump|sql)$' | grep -v 'alembic' || true)
+
+          # Check for xlsx files (may be OK if sanitized)
+          XLSXFILES=$(git ls-files | grep -E '\.xlsx$' || true)
+
+          if [ -n "$DATAFILES" ]; then
+            echo "🚨 **Data files tracked in git (should these be here?):**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$DATAFILES" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -n "$XLSXFILES" ]; then
+            echo "⚠️ **Excel files in repo (verify sanitized):**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$XLSXFILES" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -z "$DATAFILES" ] && [ -z "$XLSXFILES" ]; then
+            echo "✅ No unexpected data files tracked" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Scan for .mil domains (potential real military emails)
+        id: mil-scan
+        run: |
+          echo "## Military Domain Scan" >> $GITHUB_STEP_SUMMARY
+
+          # Look for .mil emails that aren't obviously fake
+          MIL=$(grep -rn --include="*.py" --include="*.ts" --include="*.json" \
+            -E '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.mil\b' \
+            --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv \
+            . 2>/dev/null | \
+            grep -viE '(example|test|fake|dummy|sample|hospital\.mil|@test\.mil)' || true)
+
+          if [ -n "$MIL" ]; then
+            echo "⚠️ **Potential .mil addresses (verify these are mock data):**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$MIL" | head -20 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No suspicious .mil addresses found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check gitignore effectiveness
+        run: |
+          echo "## Gitignore Verification" >> $GITHUB_STEP_SUMMARY
+
+          # Verify sensitive patterns are gitignored
+          LEAKED=$(git ls-files | grep -E '(\.env|secrets|credentials|password)' | grep -v '.example' || true)
+
+          if [ -n "$LEAKED" ]; then
+            echo "🚨 **Potentially sensitive files tracked:**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$LEAKED" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No sensitive files leaked past gitignore" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Summary
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "## Scan Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Review any warnings above. False positives from mock data are expected." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Reference:** \`docs/security/PII_AUDIT_LOG.md\` for baseline verification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Last verified clean commit:** Check the audit log for the baseline commit hash" >> $GITHUB_STEP_SUMMARY
+
+      # Fail the build if SSN patterns are found (most critical)
+      - name: Fail on critical findings
+        if: steps.ssn-scan.outputs.ssns_found == 'true'
+        run: |
+          echo "::error::SSN patterns detected - investigate immediately!"
+          exit 1
