@@ -8,19 +8,19 @@ Tests:
 - Cache invalidation on preference updates
 """
 
-import pytest
-from datetime import date, timedelta
-from unittest.mock import Mock, MagicMock, patch
+from datetime import date
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
+
+import pytest
 
 from app.models.faculty_preference import FacultyPreference
 from app.models.person import Person
 from app.models.user import User
 from app.services.constraints.faculty import (
-    FacultyPreferenceCache,
     CachedFacultyPreferenceService,
     FacultyConstraintService,
-    get_faculty_pref_cache,
+    FacultyPreferenceCache,
 )
 
 
@@ -334,9 +334,17 @@ class TestFacultyConstraintService:
         mock_pref.max_consecutive_weeks = 1
         mock_pref.min_gap_between_weeks = 2
 
-        with patch.object(CachedFacultyPreferenceService, 'is_week_blocked', return_value=True):
-            with patch.object(CachedFacultyPreferenceService, 'is_week_preferred', return_value=False):
-                with patch.object(CachedFacultyPreferenceService, 'get_preferences', return_value=mock_pref):
+        with patch.object(
+            CachedFacultyPreferenceService, "is_week_blocked", return_value=True
+        ):
+            with patch.object(
+                CachedFacultyPreferenceService, "is_week_preferred", return_value=False
+            ):
+                with patch.object(
+                    CachedFacultyPreferenceService,
+                    "get_preferences",
+                    return_value=mock_pref,
+                ):
                     service = FacultyConstraintService(mock_db)
                     result = service.check_week_availability(faculty_id, week_date)
 

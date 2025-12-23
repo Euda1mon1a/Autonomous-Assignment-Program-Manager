@@ -1,4 +1,5 @@
 """Certification models - track required certifications like BLS, ACLS, PALS, etc."""
+
 import uuid
 from datetime import date, datetime
 
@@ -30,6 +31,7 @@ class CertificationType(Base):
     - ALSO (Advanced Life Support in Obstetrics) - variable
     - NRP (Neonatal Resuscitation Program) - 2 year renewal
     """
+
     __tablename__ = "certification_types"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -43,14 +45,16 @@ class CertificationType(Base):
     ***REMOVED*** Who needs this certification
     required_for_residents = Column(Boolean, default=True)
     required_for_faculty = Column(Boolean, default=True)
-    required_for_specialties = Column(String(500))  ***REMOVED*** Comma-separated, e.g., "OB/GYN,Pediatrics"
+    required_for_specialties = Column(
+        String(500)
+    )  ***REMOVED*** Comma-separated, e.g., "OB/GYN,Pediatrics"
 
     ***REMOVED*** Reminder configuration (days before expiration)
-    reminder_days_180 = Column(Boolean, default=True)   ***REMOVED*** 6 months
-    reminder_days_90 = Column(Boolean, default=True)    ***REMOVED*** 3 months
-    reminder_days_30 = Column(Boolean, default=True)    ***REMOVED*** 1 month
-    reminder_days_14 = Column(Boolean, default=True)    ***REMOVED*** 2 weeks
-    reminder_days_7 = Column(Boolean, default=True)     ***REMOVED*** 1 week
+    reminder_days_180 = Column(Boolean, default=True)  ***REMOVED*** 6 months
+    reminder_days_90 = Column(Boolean, default=True)  ***REMOVED*** 3 months
+    reminder_days_30 = Column(Boolean, default=True)  ***REMOVED*** 1 month
+    reminder_days_14 = Column(Boolean, default=True)  ***REMOVED*** 2 weeks
+    reminder_days_7 = Column(Boolean, default=True)  ***REMOVED*** 1 week
 
     ***REMOVED*** Status
     is_active = Column(Boolean, default=True)
@@ -60,7 +64,11 @@ class CertificationType(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     ***REMOVED*** Relationships
-    person_certifications = relationship("PersonCertification", back_populates="certification_type", cascade="all, delete-orphan")
+    person_certifications = relationship(
+        "PersonCertification",
+        back_populates="certification_type",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self):
         return f"<CertificationType(name='{self.name}', renewal_months={self.renewal_period_months})>"
@@ -88,13 +96,18 @@ class PersonCertification(Base):
     Records when someone obtained a certification, when it expires,
     and tracks reminder notifications sent.
     """
+
     __tablename__ = "person_certifications"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
 
     ***REMOVED*** Links
-    person_id = Column(GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False)
-    certification_type_id = Column(GUID(), ForeignKey("certification_types.id", ondelete="CASCADE"), nullable=False)
+    person_id = Column(
+        GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False
+    )
+    certification_type_id = Column(
+        GUID(), ForeignKey("certification_types.id", ondelete="CASCADE"), nullable=False
+    )
 
     ***REMOVED*** Certification details
     certification_number = Column(String(100))  ***REMOVED*** Card/certificate number
@@ -102,7 +115,9 @@ class PersonCertification(Base):
     expiration_date = Column(Date, nullable=False)
 
     ***REMOVED*** Status
-    status = Column(String(50), default='current')  ***REMOVED*** 'current', 'expiring_soon', 'expired', 'pending'
+    status = Column(
+        String(50), default="current"
+    )  ***REMOVED*** 'current', 'expiring_soon', 'expired', 'pending'
 
     ***REMOVED*** Verification
     verified_by = Column(String(255))  ***REMOVED*** Who verified the cert
@@ -125,11 +140,15 @@ class PersonCertification(Base):
 
     ***REMOVED*** Relationships
     person = relationship("Person", back_populates="certifications")
-    certification_type = relationship("CertificationType", back_populates="person_certifications")
+    certification_type = relationship(
+        "CertificationType", back_populates="person_certifications"
+    )
 
     ***REMOVED*** Unique constraint: one certification type per person (latest one)
     __table_args__ = (
-        UniqueConstraint('person_id', 'certification_type_id', name='uq_person_certification_type'),
+        UniqueConstraint(
+            "person_id", "certification_type_id", name="uq_person_certification_type"
+        ),
     )
 
     def __repr__(self):

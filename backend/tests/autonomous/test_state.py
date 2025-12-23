@@ -3,19 +3,15 @@ Tests for the run state store.
 """
 
 import json
-import pytest
-import tempfile
 from datetime import date, datetime
-from pathlib import Path
-from uuid import uuid4
 
+from app.autonomous.evaluator import EvaluationResult
 from app.autonomous.state import (
-    StateStore,
-    RunState,
     GeneratorParams,
     IterationRecord,
+    RunState,
+    StateStore,
 )
-from app.autonomous.evaluator import EvaluationResult
 
 
 class TestGeneratorParams:

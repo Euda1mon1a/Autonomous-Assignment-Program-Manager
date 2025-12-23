@@ -11,6 +11,7 @@ Usage in controllers:
     if result.get("error_code") == ErrorCode.NOT_FOUND:
         raise HTTPException(status_code=404, detail=result["error"])
 """
+
 from enum import Enum
 
 

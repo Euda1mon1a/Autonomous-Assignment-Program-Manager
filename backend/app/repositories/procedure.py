@@ -1,6 +1,5 @@
 """Procedure repository for database operations."""
 
-
 from sqlalchemy.orm import Session
 
 from app.models.procedure import Procedure
@@ -15,11 +14,7 @@ class ProcedureRepository(BaseRepository[Procedure]):
 
     def get_by_name(self, name: str) -> Procedure | None:
         """Get a procedure by its name."""
-        return (
-            self.db.query(Procedure)
-            .filter(Procedure.name == name)
-            .first()
-        )
+        return self.db.query(Procedure).filter(Procedure.name == name).first()
 
     def list_with_filters(
         self,

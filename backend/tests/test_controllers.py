@@ -4,6 +4,7 @@ Unit tests for controller layer.
 These tests mock the service layer to test controllers in isolation,
 focusing on request/response handling and HTTP exception conversion.
 """
+
 from datetime import date, timedelta
 from unittest.mock import MagicMock
 from uuid import uuid4
@@ -286,7 +287,9 @@ class TestAuthControllerLogin:
 
         assert result.access_token == "test_token"
         assert result.token_type == "bearer"
-        controller.service.authenticate.assert_called_once_with("testuser", "password123")
+        controller.service.authenticate.assert_called_once_with(
+            "testuser", "password123"
+        )
 
     def test_login_invalid_credentials_raises_401(self):
         """Should raise HTTPException 401 on invalid credentials."""
@@ -916,7 +919,9 @@ class TestProcedureControllerGetByName:
         mock_db = MagicMock()
         controller = ProcedureController(mock_db)
         mock_procedure = {"id": str(uuid4()), "name": "ACL Repair"}
-        controller.service.get_procedure_by_name = MagicMock(return_value=mock_procedure)
+        controller.service.get_procedure_by_name = MagicMock(
+            return_value=mock_procedure
+        )
 
         result = controller.get_procedure_by_name("ACL Repair")
 
@@ -1146,7 +1151,11 @@ class TestBlockControllerCreateBlock:
         """Should return created block."""
         mock_db = MagicMock()
         controller = BlockController(mock_db)
-        mock_block = {"id": str(uuid4()), "date": str(date.today()), "time_of_day": "AM"}
+        mock_block = {
+            "id": str(uuid4()),
+            "date": str(date.today()),
+            "time_of_day": "AM",
+        }
         controller.service.create_block = MagicMock(
             return_value={"block": mock_block, "error": None}
         )
@@ -1556,7 +1565,9 @@ class TestCertificationControllerTypes:
         controller = CertificationController(mock_db)
         cert_type_id = uuid4()
         mock_cert_type = {"id": str(cert_type_id), "name": "BLS"}
-        controller.service.get_certification_type = MagicMock(return_value=mock_cert_type)
+        controller.service.get_certification_type = MagicMock(
+            return_value=mock_cert_type
+        )
 
         result = controller.get_certification_type(cert_type_id)
 

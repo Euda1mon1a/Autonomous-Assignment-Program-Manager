@@ -240,7 +240,7 @@ class LeastConnectionsStrategy(LoadBalancingStrategy):
             return None
 
         ***REMOVED*** Find instance with minimum connections
-        min_connections = float('inf')
+        min_connections = float("inf")
         selected = None
 
         for instance in instances:

@@ -3,6 +3,7 @@
 Tests the "Where is everyone NOW" endpoint critical for clinic staff.
 Validates staffing summaries, location grouping, and time filtering.
 """
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -16,7 +17,6 @@ from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.user import User
-
 
 ***REMOVED*** ============================================================================
 ***REMOVED*** Fixtures
@@ -181,70 +181,84 @@ def populated_manifest(
 
     ***REMOVED*** Building A - Sports Medicine (AM and PM)
     ***REMOVED*** AM: 2 residents + 1 faculty
-    assignments.append(Assignment(
-        id=uuid4(),
-        block_id=test_day_blocks[0].id,  ***REMOVED*** AM block
-        person_id=test_residents[0].id,  ***REMOVED*** PGY1
-        rotation_template_id=test_rotation_templates["clinic_a"].id,
-        role="primary",
-        created_by=test_user.username,
-    ))
-    assignments.append(Assignment(
-        id=uuid4(),
-        block_id=test_day_blocks[0].id,  ***REMOVED*** AM block
-        person_id=test_residents[1].id,  ***REMOVED*** PGY2
-        rotation_template_id=test_rotation_templates["clinic_a"].id,
-        role="primary",
-        created_by=test_user.username,
-    ))
-    assignments.append(Assignment(
-        id=uuid4(),
-        block_id=test_day_blocks[0].id,  ***REMOVED*** AM block
-        person_id=test_faculty[0].id,
-        rotation_template_id=test_rotation_templates["clinic_a"].id,
-        role="supervising",
-        created_by=test_user.username,
-    ))
+    assignments.append(
+        Assignment(
+            id=uuid4(),
+            block_id=test_day_blocks[0].id,  ***REMOVED*** AM block
+            person_id=test_residents[0].id,  ***REMOVED*** PGY1
+            rotation_template_id=test_rotation_templates["clinic_a"].id,
+            role="primary",
+            created_by=test_user.username,
+        )
+    )
+    assignments.append(
+        Assignment(
+            id=uuid4(),
+            block_id=test_day_blocks[0].id,  ***REMOVED*** AM block
+            person_id=test_residents[1].id,  ***REMOVED*** PGY2
+            rotation_template_id=test_rotation_templates["clinic_a"].id,
+            role="primary",
+            created_by=test_user.username,
+        )
+    )
+    assignments.append(
+        Assignment(
+            id=uuid4(),
+            block_id=test_day_blocks[0].id,  ***REMOVED*** AM block
+            person_id=test_faculty[0].id,
+            rotation_template_id=test_rotation_templates["clinic_a"].id,
+            role="supervising",
+            created_by=test_user.username,
+        )
+    )
 
     ***REMOVED*** PM: 1 resident + 1 faculty
-    assignments.append(Assignment(
-        id=uuid4(),
-        block_id=test_day_blocks[1].id,  ***REMOVED*** PM block
-        person_id=test_residents[2].id,  ***REMOVED*** PGY3
-        rotation_template_id=test_rotation_templates["clinic_a"].id,
-        role="primary",
-        created_by=test_user.username,
-    ))
-    assignments.append(Assignment(
-        id=uuid4(),
-        block_id=test_day_blocks[1].id,  ***REMOVED*** PM block
-        person_id=test_faculty[1].id,
-        rotation_template_id=test_rotation_templates["clinic_a"].id,
-        role="supervising",
-        created_by=test_user.username,
-    ))
+    assignments.append(
+        Assignment(
+            id=uuid4(),
+            block_id=test_day_blocks[1].id,  ***REMOVED*** PM block
+            person_id=test_residents[2].id,  ***REMOVED*** PGY3
+            rotation_template_id=test_rotation_templates["clinic_a"].id,
+            role="primary",
+            created_by=test_user.username,
+        )
+    )
+    assignments.append(
+        Assignment(
+            id=uuid4(),
+            block_id=test_day_blocks[1].id,  ***REMOVED*** PM block
+            person_id=test_faculty[1].id,
+            rotation_template_id=test_rotation_templates["clinic_a"].id,
+            role="supervising",
+            created_by=test_user.username,
+        )
+    )
 
     ***REMOVED*** Building B - Primary Care (AM only)
     ***REMOVED*** AM: 1 resident
-    assignments.append(Assignment(
-        id=uuid4(),
-        block_id=test_day_blocks[0].id,  ***REMOVED*** AM block
-        person_id=test_residents[3].id,  ***REMOVED*** PGY2
-        rotation_template_id=test_rotation_templates["clinic_b"].id,
-        role="primary",
-        created_by=test_user.username,
-    ))
+    assignments.append(
+        Assignment(
+            id=uuid4(),
+            block_id=test_day_blocks[0].id,  ***REMOVED*** AM block
+            person_id=test_residents[3].id,  ***REMOVED*** PGY2
+            rotation_template_id=test_rotation_templates["clinic_b"].id,
+            role="primary",
+            created_by=test_user.username,
+        )
+    )
 
     ***REMOVED*** Unassigned location (no clinic_location)
     ***REMOVED*** PM: 1 faculty on admin duty
-    assignments.append(Assignment(
-        id=uuid4(),
-        block_id=test_day_blocks[1].id,  ***REMOVED*** PM block
-        person_id=test_faculty[0].id,
-        rotation_template_id=test_rotation_templates["no_location"].id,
-        role="primary",
-        created_by=test_user.username,
-    ))
+    assignments.append(
+        Assignment(
+            id=uuid4(),
+            block_id=test_day_blocks[1].id,  ***REMOVED*** PM block
+            person_id=test_faculty[0].id,
+            rotation_template_id=test_rotation_templates["no_location"].id,
+            role="primary",
+            created_by=test_user.username,
+        )
+    )
 
     for assignment in assignments:
         db.add(assignment)
@@ -269,7 +283,9 @@ def populated_manifest(
 class TestDailyManifestAuthentication:
     """Test authentication requirements for daily manifest endpoint."""
 
-    def test_requires_authentication(self, client: TestClient, manifest_test_date: date):
+    def test_requires_authentication(
+        self, client: TestClient, manifest_test_date: date
+    ):
         """Test that the daily manifest endpoint requires authentication."""
         response = client.get(
             "/api/assignments/daily-manifest",
@@ -716,7 +732,8 @@ class TestDailyManifestLocationGrouping:
 
         ***REMOVED*** Find Building A location (has both AM and PM assignments)
         building_a = next(
-            loc for loc in data["locations"]
+            loc
+            for loc in data["locations"]
             if loc["clinic_location"] == "Building A - Sports Medicine"
         )
 
@@ -764,7 +781,8 @@ class TestDailyManifestStaffingSummary:
 
         ***REMOVED*** Find Building A location
         building_a = next(
-            loc for loc in data["locations"]
+            loc
+            for loc in data["locations"]
             if loc["clinic_location"] == "Building A - Sports Medicine"
         )
 
@@ -792,7 +810,8 @@ class TestDailyManifestStaffingSummary:
 
         ***REMOVED*** Find Building A location
         building_a = next(
-            loc for loc in data["locations"]
+            loc
+            for loc in data["locations"]
             if loc["clinic_location"] == "Building A - Sports Medicine"
         )
 
@@ -844,7 +863,8 @@ class TestDailyManifestStaffingSummary:
 
         ***REMOVED*** Find Building A location
         building_a = next(
-            loc for loc in data["locations"]
+            loc
+            for loc in data["locations"]
             if loc["clinic_location"] == "Building A - Sports Medicine"
         )
 
@@ -913,7 +933,8 @@ class TestDailyManifestStaffingSummary:
 
         ***REMOVED*** Find Building A location
         building_a = next(
-            loc for loc in data["locations"]
+            loc
+            for loc in data["locations"]
             if loc["clinic_location"] == "Building A - Sports Medicine"
         )
 
@@ -965,7 +986,8 @@ class TestDailyManifestStaffingSummary:
 
         ***REMOVED*** Find Building B location
         building_b = next(
-            loc for loc in data["locations"]
+            loc
+            for loc in data["locations"]
             if loc["clinic_location"] == "Building B - Primary Care"
         )
 

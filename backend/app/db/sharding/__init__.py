@@ -18,6 +18,7 @@ Example:
 """
 
 from app.db.sharding.manager import ShardManager
+from app.db.sharding.migration import ShardMigration, ShardRebalancer
 from app.db.sharding.router import ShardRouter
 from app.db.sharding.strategies import (
     DirectoryShardingStrategy,
@@ -25,7 +26,6 @@ from app.db.sharding.strategies import (
     RangeShardingStrategy,
     ShardingStrategy,
 )
-from app.db.sharding.migration import ShardMigration, ShardRebalancer
 
 __all__ = [
     "ShardManager",

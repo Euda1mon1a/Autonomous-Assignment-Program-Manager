@@ -5,11 +5,11 @@ consistent performance and avoid N+1 queries.
 """
 
 import logging
-from datetime import date, datetime
-from typing import Any, Optional
+from datetime import date
+from typing import Any
 
 from sqlalchemy import and_, func, or_, select
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.absence import Absence
 from app.models.assignment import Assignment
@@ -47,11 +47,11 @@ class OptimizedQueryBuilder:
 
     def get_assignments_with_relations(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        person_id: Optional[str] = None,
-        rotation_id: Optional[str] = None,
-        limit: Optional[int] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        person_id: str | None = None,
+        rotation_id: str | None = None,
+        limit: int | None = None,
     ) -> list[Assignment]:
         """
         Get assignments with all related data eagerly loaded.
@@ -103,10 +103,10 @@ class OptimizedQueryBuilder:
 
     def get_persons_with_assignments(
         self,
-        role: Optional[str] = None,
+        role: str | None = None,
         include_assignments: bool = True,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
     ) -> list[Person]:
         """
         Get persons with their assignments eagerly loaded.
@@ -159,7 +159,7 @@ class OptimizedQueryBuilder:
         self,
         start_date: date,
         end_date: date,
-        session: Optional[str] = None,
+        session: str | None = None,
     ) -> list[Block]:
         """
         Get blocks with assignments eagerly loaded.
@@ -192,7 +192,7 @@ class OptimizedQueryBuilder:
         return list(result.scalars().all())
 
     def get_active_swap_records(
-        self, person_id: Optional[str] = None, include_relations: bool = True
+        self, person_id: str | None = None, include_relations: bool = True
     ) -> list[SwapRecord]:
         """
         Get active swap records with relations loaded.
@@ -204,9 +204,7 @@ class OptimizedQueryBuilder:
         Returns:
             List of active SwapRecord objects
         """
-        query = select(SwapRecord).where(
-            SwapRecord.status.in_(["pending", "approved"])
-        )
+        query = select(SwapRecord).where(SwapRecord.status.in_(["pending", "approved"]))
 
         if include_relations:
             query = query.options(
@@ -231,8 +229,8 @@ class OptimizedQueryBuilder:
         self,
         start_date: date,
         end_date: date,
-        person_id: Optional[str] = None,
-        absence_type: Optional[str] = None,
+        person_id: str | None = None,
+        absence_type: str | None = None,
     ) -> list[Absence]:
         """
         Get absences that overlap with date range.
@@ -335,7 +333,7 @@ class OptimizedQueryBuilder:
         self,
         start_date: date,
         end_date: date,
-        role: Optional[str] = None,
+        role: str | None = None,
     ) -> dict[str, dict[str, Any]]:
         """
         Get assignment counts grouped by person.
@@ -398,9 +396,7 @@ class OptimizedQueryBuilder:
                 RotationTemplate.id,
                 RotationTemplate.name,
                 func.count(Assignment.id).label("assignment_count"),
-                func.count(func.distinct(Assignment.person_id)).label(
-                    "unique_persons"
-                ),
+                func.count(func.distinct(Assignment.person_id)).label("unique_persons"),
             )
             .join(Assignment, Assignment.rotation_template_id == RotationTemplate.id)
             .join(Block, Block.id == Assignment.block_id)
@@ -423,7 +419,7 @@ class OptimizedQueryBuilder:
         return stats
 
     def get_uncovered_blocks(
-        self, start_date: date, end_date: date, limit: Optional[int] = 100
+        self, start_date: date, end_date: date, limit: int | None = 100
     ) -> list[Block]:
         """
         Get blocks without assignments.
@@ -498,9 +494,7 @@ class OptimizedQueryBuilder:
             logger.error(f"Error batch creating assignments: {e}")
             raise
 
-    def batch_update_assignments(
-        self, updates: list[dict[str, Any]]
-    ) -> None:
+    def batch_update_assignments(self, updates: list[dict[str, Any]]) -> None:
         """
         Bulk update assignments efficiently.
 

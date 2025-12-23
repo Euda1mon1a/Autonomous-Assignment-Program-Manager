@@ -35,32 +35,35 @@ logger = logging.getLogger(__name__)
 
 class TrailType(str, Enum):
     """Types of preference trails."""
-    PREFERENCE = "preference"       ***REMOVED*** Faculty prefers this slot
-    AVOIDANCE = "avoidance"         ***REMOVED*** Faculty avoids this slot
+
+    PREFERENCE = "preference"  ***REMOVED*** Faculty prefers this slot
+    AVOIDANCE = "avoidance"  ***REMOVED*** Faculty avoids this slot
     SWAP_AFFINITY = "swap_affinity"  ***REMOVED*** Willing to swap with specific person
-    WORKLOAD = "workload"           ***REMOVED*** Preferred workload pattern
-    SEQUENCE = "sequence"           ***REMOVED*** Preferred assignment sequences
+    WORKLOAD = "workload"  ***REMOVED*** Preferred workload pattern
+    SEQUENCE = "sequence"  ***REMOVED*** Preferred assignment sequences
 
 
 class TrailStrength(str, Enum):
     """Categorical strength of a trail."""
-    VERY_WEAK = "very_weak"    ***REMOVED*** 0.0 - 0.2
-    WEAK = "weak"              ***REMOVED*** 0.2 - 0.4
-    MODERATE = "moderate"      ***REMOVED*** 0.4 - 0.6
-    STRONG = "strong"          ***REMOVED*** 0.6 - 0.8
+
+    VERY_WEAK = "very_weak"  ***REMOVED*** 0.0 - 0.2
+    WEAK = "weak"  ***REMOVED*** 0.2 - 0.4
+    MODERATE = "moderate"  ***REMOVED*** 0.4 - 0.6
+    STRONG = "strong"  ***REMOVED*** 0.6 - 0.8
     VERY_STRONG = "very_strong"  ***REMOVED*** 0.8 - 1.0
 
 
 class SignalType(str, Enum):
     """Types of behavioral signals that update trails."""
+
     EXPLICIT_PREFERENCE = "explicit_preference"  ***REMOVED*** User explicitly stated
     ACCEPTED_ASSIGNMENT = "accepted_assignment"  ***REMOVED*** Accepted without complaint
-    REQUESTED_SWAP = "requested_swap"            ***REMOVED*** Tried to swap away
-    COMPLETED_SWAP = "completed_swap"            ***REMOVED*** Successful swap
-    DECLINED_OFFER = "declined_offer"            ***REMOVED*** Rejected an offer
-    HIGH_SATISFACTION = "high_satisfaction"       ***REMOVED*** Reported satisfaction
-    LOW_SATISFACTION = "low_satisfaction"         ***REMOVED*** Reported dissatisfaction
-    PATTERN_DETECTED = "pattern_detected"        ***REMOVED*** System detected pattern
+    REQUESTED_SWAP = "requested_swap"  ***REMOVED*** Tried to swap away
+    COMPLETED_SWAP = "completed_swap"  ***REMOVED*** Successful swap
+    DECLINED_OFFER = "declined_offer"  ***REMOVED*** Rejected an offer
+    HIGH_SATISFACTION = "high_satisfaction"  ***REMOVED*** Reported satisfaction
+    LOW_SATISFACTION = "low_satisfaction"  ***REMOVED*** Reported dissatisfaction
+    PATTERN_DETECTED = "pattern_detected"  ***REMOVED*** System detected pattern
 
 
 @dataclass
@@ -71,15 +74,16 @@ class PreferenceTrail:
     Trails accumulate strength through repeated signals and
     decay over time through evaporation.
     """
+
     id: UUID
     faculty_id: UUID
     trail_type: TrailType
 
     ***REMOVED*** What the trail is about
-    slot_id: UUID | None = None       ***REMOVED*** Specific slot
-    slot_type: str | None = None      ***REMOVED*** Type of slot (e.g., "monday_am")
-    block_type: str | None = None     ***REMOVED*** Type of block
-    service_type: str | None = None   ***REMOVED*** Type of service
+    slot_id: UUID | None = None  ***REMOVED*** Specific slot
+    slot_type: str | None = None  ***REMOVED*** Type of slot (e.g., "monday_am")
+    block_type: str | None = None  ***REMOVED*** Type of block
+    service_type: str | None = None  ***REMOVED*** Type of service
     target_faculty_id: UUID | None = None  ***REMOVED*** For swap affinity
 
     ***REMOVED*** Trail strength (0.0 - 1.0)
@@ -91,12 +95,14 @@ class PreferenceTrail:
 
     ***REMOVED*** Evaporation parameters
     evaporation_rate: float = 0.1  ***REMOVED*** Per day
-    min_strength: float = 0.01    ***REMOVED*** Trails never fully disappear
+    min_strength: float = 0.01  ***REMOVED*** Trails never fully disappear
     max_strength: float = 1.0
 
     ***REMOVED*** Statistics
     reinforcement_count: int = 0
-    signal_history: list[tuple[datetime, SignalType, float]] = field(default_factory=list)
+    signal_history: list[tuple[datetime, SignalType, float]] = field(
+        default_factory=list
+    )
 
     def reinforce(self, signal_type: SignalType, amount: float = 0.1):
         """
@@ -152,10 +158,7 @@ class PreferenceTrail:
         ***REMOVED*** Exponential decay
         decay_factor = math.exp(-self.evaporation_rate * days_elapsed)
         old_strength = self.strength
-        self.strength = max(
-            self.min_strength,
-            self.strength * decay_factor
-        )
+        self.strength = max(self.min_strength, self.strength * decay_factor)
         self.last_evaporated = datetime.now()
 
         if old_strength - self.strength > 0.01:
@@ -195,6 +198,7 @@ class CollectivePreference:
 
     Represents emergent consensus about a slot or pattern.
     """
+
     slot_type: str
     total_preference_strength: float
     total_avoidance_strength: float
@@ -221,11 +225,14 @@ class SwapNetwork:
 
     Built from swap trails to identify natural swap partners.
     """
+
     edges: dict[tuple[UUID, UUID], float]  ***REMOVED*** (faculty1, faculty2) -> affinity
     successful_swaps: dict[tuple[UUID, UUID], int]
     failed_swaps: dict[tuple[UUID, UUID], int]
 
-    def get_best_partners(self, faculty_id: UUID, top_n: int = 3) -> list[tuple[UUID, float]]:
+    def get_best_partners(
+        self, faculty_id: UUID, top_n: int = 3
+    ) -> list[tuple[UUID, float]]:
         """Get best swap partners for a faculty member."""
         partners = []
         for (f1, f2), affinity in self.edges.items():
@@ -240,6 +247,7 @@ class SwapNetwork:
 @dataclass
 class StigmergyStatus:
     """Overall status of the stigmergy system."""
+
     timestamp: datetime
     total_trails: int
     active_trails: int  ***REMOVED*** Strength > 0.1
@@ -317,12 +325,19 @@ class StigmergicScheduler:
         """
         ***REMOVED*** Check for existing trail
         existing = self._find_trail(
-            faculty_id, trail_type, slot_id, slot_type,
-            block_type, service_type, target_faculty_id
+            faculty_id,
+            trail_type,
+            slot_id,
+            slot_type,
+            block_type,
+            service_type,
+            target_faculty_id,
         )
 
         if existing:
-            existing.reinforce(SignalType.EXPLICIT_PREFERENCE, self.reinforcement_amount)
+            existing.reinforce(
+                SignalType.EXPLICIT_PREFERENCE, self.reinforcement_amount
+            )
             return existing
 
         ***REMOVED*** Create new trail
@@ -342,9 +357,7 @@ class StigmergicScheduler:
         self.trails[trail.id] = trail
         self._index_trail(trail)
 
-        logger.info(
-            f"Created preference trail: {faculty_id} -> {trail_type.value}"
-        )
+        logger.info(f"Created preference trail: {faculty_id} -> {trail_type.value}")
 
         return trail
 
@@ -379,10 +392,14 @@ class StigmergicScheduler:
             trail_type = TrailType.PREFERENCE
             strengthen = True
 
-        elif signal_type in (
-            SignalType.REQUESTED_SWAP,
-            SignalType.LOW_SATISFACTION,
-        ) or signal_type == SignalType.DECLINED_OFFER:
+        elif (
+            signal_type
+            in (
+                SignalType.REQUESTED_SWAP,
+                SignalType.LOW_SATISFACTION,
+            )
+            or signal_type == SignalType.DECLINED_OFFER
+        ):
             trail_type = TrailType.AVOIDANCE
             strengthen = True
 
@@ -396,8 +413,11 @@ class StigmergicScheduler:
 
         ***REMOVED*** Find or create trail
         trail = self._find_trail(
-            faculty_id, trail_type, slot_id, slot_type,
-            target_faculty_id=target_faculty_id
+            faculty_id,
+            trail_type,
+            slot_id,
+            slot_type,
+            target_faculty_id=target_faculty_id,
         )
 
         if not trail:
@@ -466,7 +486,12 @@ class StigmergicScheduler:
         relevant_trails = []
 
         for trail in self.trails.values():
-            if slot_id and trail.slot_id == slot_id or slot_type and trail.slot_type == slot_type:
+            if (
+                slot_id
+                and trail.slot_id == slot_id
+                or slot_type
+                and trail.slot_type == slot_type
+            ):
                 relevant_trails.append(trail)
 
         if not relevant_trails:
@@ -493,11 +518,15 @@ class StigmergicScheduler:
         net = preference_strength - avoidance_strength
 
         ***REMOVED*** Confidence based on signal density
-        avg_reinforcements = statistics.mean(
-            [t.reinforcement_count for t in relevant_trails]
-        ) if relevant_trails else 0
+        avg_reinforcements = (
+            statistics.mean([t.reinforcement_count for t in relevant_trails])
+            if relevant_trails
+            else 0
+        )
 
-        confidence = min(1.0, avg_reinforcements / 10)  ***REMOVED*** Max confidence at 10 reinforcements
+        confidence = min(
+            1.0, avg_reinforcements / 10
+        )  ***REMOVED*** Max confidence at 10 reinforcements
 
         return CollectivePreference(
             slot_type=slot_type or str(slot_id),
@@ -604,7 +633,8 @@ class StigmergicScheduler:
 
             ***REMOVED*** Check preference trails
             pref_trails = [
-                t for t in self.get_faculty_preferences(faculty_id, TrailType.PREFERENCE)
+                t
+                for t in self.get_faculty_preferences(faculty_id, TrailType.PREFERENCE)
                 if t.slot_id == slot_id or t.slot_type == slot_type
             ]
             if pref_trails:
@@ -614,7 +644,8 @@ class StigmergicScheduler:
 
             ***REMOVED*** Check avoidance trails
             avoid_trails = [
-                t for t in self.get_faculty_preferences(faculty_id, TrailType.AVOIDANCE)
+                t
+                for t in self.get_faculty_preferences(faculty_id, TrailType.AVOIDANCE)
                 if t.slot_id == slot_id or t.slot_type == slot_type
             ]
             if avoid_trails:
@@ -645,7 +676,11 @@ class StigmergicScheduler:
             if not trail.slot_type:
                 continue
             if trail.slot_type not in slot_preferences:
-                slot_preferences[trail.slot_type] = {"prefer": 0.0, "avoid": 0.0, "count": 0}
+                slot_preferences[trail.slot_type] = {
+                    "prefer": 0.0,
+                    "avoid": 0.0,
+                    "count": 0,
+                }
 
             if trail.trail_type == TrailType.PREFERENCE:
                 slot_preferences[trail.slot_type]["prefer"] += trail.strength
@@ -672,8 +707,7 @@ class StigmergicScheduler:
         ***REMOVED*** Find swap cliques
         swap_network = self.get_swap_network()
         strong_pairs = [
-            (f1, f2, s) for (f1, f2), s in swap_network.edges.items()
-            if s > 0.6
+            (f1, f2, s) for (f1, f2), s in swap_network.edges.items() if s > 0.6
         ]
 
         return {
@@ -719,19 +753,29 @@ class StigmergicScheduler:
         recommendations = []
 
         if avg_strength < 0.3:
-            recommendations.append("Low average trail strength - encourage more preference input")
+            recommendations.append(
+                "Low average trail strength - encourage more preference input"
+            )
 
         if hours_since > self.evaporation_interval_hours * 2:
-            recommendations.append(f"Evaporation overdue by {hours_since - self.evaporation_interval_hours:.0f} hours")
+            recommendations.append(
+                f"Evaporation overdue by {hours_since - self.evaporation_interval_hours:.0f} hours"
+            )
 
         if len(patterns["unpopular_slots"]) > 3:
-            recommendations.append("Multiple unpopular slots detected - review scheduling constraints")
+            recommendations.append(
+                "Multiple unpopular slots detected - review scheduling constraints"
+            )
 
         if active_count < len(self.trails) * 0.5:
-            recommendations.append("Many weak trails - consider pruning or encouraging engagement")
+            recommendations.append(
+                "Many weak trails - consider pruning or encouraging engagement"
+            )
 
         if not recommendations:
-            recommendations.append("Stigmergy system healthy - collective preferences emerging normally")
+            recommendations.append(
+                "Stigmergy system healthy - collective preferences emerging normally"
+            )
 
         return StigmergyStatus(
             timestamp=datetime.now(),
@@ -740,7 +784,9 @@ class StigmergicScheduler:
             trails_by_type=trails_by_type,
             average_strength=avg_strength,
             average_age_days=avg_age,
-            evaporation_debt_hours=max(0, hours_since - self.evaporation_interval_hours),
+            evaporation_debt_hours=max(
+                0, hours_since - self.evaporation_interval_hours
+            ),
             popular_slots=[s[0] for s in patterns["popular_slots"][:5]],
             unpopular_slots=[s[0] for s in patterns["unpopular_slots"][:5]],
             strong_swap_pairs=len(patterns["strong_swap_pairs"]),
@@ -817,8 +863,7 @@ class StigmergicScheduler:
             Number of trails pruned
         """
         to_remove = [
-            tid for tid, trail in self.trails.items()
-            if trail.strength < threshold
+            tid for tid, trail in self.trails.items() if trail.strength < threshold
         ]
 
         for tid in to_remove:

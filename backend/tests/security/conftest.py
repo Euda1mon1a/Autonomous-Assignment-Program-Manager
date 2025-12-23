@@ -3,9 +3,9 @@ Pytest configuration for security tests.
 
 Provides async database fixtures for testing security components.
 """
-import pytest
+
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base

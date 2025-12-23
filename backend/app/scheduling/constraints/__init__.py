@@ -26,6 +26,14 @@ Example:
 """
 
 ***REMOVED*** Base classes and types
+***REMOVED*** ACGME compliance constraints
+from .acgme import (
+    ACGMEConstraintValidator,
+    AvailabilityConstraint,
+    EightyHourRuleConstraint,
+    OneInSevenRuleConstraint,
+    SupervisionRatioConstraint,
+)
 from .base import (
     Constraint,
     ConstraintPriority,
@@ -37,13 +45,12 @@ from .base import (
     SoftConstraint,
 )
 
-***REMOVED*** ACGME compliance constraints
-from .acgme import (
-    ACGMEConstraintValidator,
-    AvailabilityConstraint,
-    EightyHourRuleConstraint,
-    OneInSevenRuleConstraint,
-    SupervisionRatioConstraint,
+***REMOVED*** Call equity and preference constraints
+from .call_equity import (
+    DeptChiefWednesdayPreferenceConstraint,
+    SundayCallEquityConstraint,
+    TuesdayCallPreferenceConstraint,
+    WeekdayCallEquityConstraint,
 )
 
 ***REMOVED*** Capacity and coverage constraints
@@ -54,12 +61,8 @@ from .capacity import (
     OnePersonPerBlockConstraint,
 )
 
-***REMOVED*** Temporal constraints
-from .temporal import (
-    InvertedWednesdayConstraint,
-    WednesdayAMInternOnlyConstraint,
-    WednesdayPMSingleFacultyConstraint,
-)
+***REMOVED*** Equity and continuity constraints
+from .equity import ContinuityConstraint, EquityConstraint
 
 ***REMOVED*** Faculty and preference constraints
 from .faculty import PreferenceConstraint
@@ -81,25 +84,14 @@ from .fmit import (
     is_sun_thurs,
 )
 
-***REMOVED*** Equity and continuity constraints
-from .equity import ContinuityConstraint, EquityConstraint
-
-***REMOVED*** Sports Medicine coordination constraints
-from .sports_medicine import SMResidentFacultyAlignmentConstraint
-
-***REMOVED*** Post-call assignment constraints
-from .post_call import PostCallAutoAssignmentConstraint
+***REMOVED*** Constraint manager
+from .manager import ConstraintManager
 
 ***REMOVED*** Night Float post-call constraints
 from .night_float_post_call import NightFloatPostCallConstraint
 
-***REMOVED*** Call equity and preference constraints
-from .call_equity import (
-    DeptChiefWednesdayPreferenceConstraint,
-    SundayCallEquityConstraint,
-    TuesdayCallPreferenceConstraint,
-    WeekdayCallEquityConstraint,
-)
+***REMOVED*** Post-call assignment constraints
+from .post_call import PostCallAutoAssignmentConstraint
 
 ***REMOVED*** Resilience-aware constraints
 from .resilience import (
@@ -110,8 +102,15 @@ from .resilience import (
     ZoneBoundaryConstraint,
 )
 
-***REMOVED*** Constraint manager
-from .manager import ConstraintManager
+***REMOVED*** Sports Medicine coordination constraints
+from .sports_medicine import SMResidentFacultyAlignmentConstraint
+
+***REMOVED*** Temporal constraints
+from .temporal import (
+    InvertedWednesdayConstraint,
+    WednesdayAMInternOnlyConstraint,
+    WednesdayPMSingleFacultyConstraint,
+)
 
 ***REMOVED*** Define __all__ for explicit exports
 __all__ = [

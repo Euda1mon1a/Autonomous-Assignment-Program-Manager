@@ -48,49 +48,49 @@ Usage:
 from app.events.event_bus import EventBus, get_event_bus
 from app.events.event_store import EventStore, get_event_store
 from app.events.event_types import (
+    AbsenceApprovedEvent,
+    AbsenceCreatedEvent,
+    ACGMEOverrideAppliedEvent,
+    ACGMEViolationDetectedEvent,
+    AssignmentCreatedEvent,
+    AssignmentDeletedEvent,
+    AssignmentUpdatedEvent,
     BaseEvent,
     EventMetadata,
     EventType,
     ScheduleCreatedEvent,
     ScheduleUpdatedEvent,
-    AssignmentCreatedEvent,
-    AssignmentUpdatedEvent,
-    AssignmentDeletedEvent,
-    SwapRequestedEvent,
     SwapApprovedEvent,
     SwapExecutedEvent,
-    AbsenceCreatedEvent,
-    AbsenceApprovedEvent,
-    ACGMEViolationDetectedEvent,
-    ACGMEOverrideAppliedEvent,
+    SwapRequestedEvent,
 )
 from app.events.projections import (
-    EventProjection,
-    ScheduleProjection,
     AssignmentProjection,
     AuditProjection,
+    EventProjection,
+    ScheduleProjection,
 )
 from app.events.replay_service import (
     EventReplayService,
     ReplayConfig,
     ReplayFilterConfig,
     ReplayProgress,
-    ReplayStatus,
     ReplaySpeed,
-    ReplayTargetConfig,
+    ReplayStatus,
     ReplayTarget,
+    ReplayTargetConfig,
     ReplayVerificationResult,
     create_replay_from_timestamp,
     replay_aggregate_history,
 )
 from app.events.snapshot_store import (
-    SnapshotStore,
     SnapshotConfig,
     SnapshotMetadata,
+    SnapshotStore,
     SnapshotValidationResult,
-    get_snapshot_store,
     auto_snapshot_aggregate,
     cleanup_all_old_snapshots,
+    get_snapshot_store,
 )
 
 __all__ = [

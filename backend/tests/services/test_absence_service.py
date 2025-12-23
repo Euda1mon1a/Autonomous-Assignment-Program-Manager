@@ -1,12 +1,10 @@
 """Tests for AbsenceService."""
 
-import pytest
 from datetime import date, timedelta
 from uuid import uuid4
 
-from app.services.absence_service import AbsenceService
 from app.models.absence import Absence
-from app.models.person import Person
+from app.services.absence_service import AbsenceService
 
 
 class TestAbsenceService:

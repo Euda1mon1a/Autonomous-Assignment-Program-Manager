@@ -29,13 +29,13 @@ Modules:
 from app.scheduling.conflicts.analyzer import ConflictAnalyzer
 from app.scheduling.conflicts.resolver import ConflictResolver
 from app.scheduling.conflicts.types import (
+    ACGMEViolationConflict,
     Conflict,
     ConflictCategory,
     ConflictSeverity,
     ConflictType,
-    TimeOverlapConflict,
     ResourceContentionConflict,
-    ACGMEViolationConflict,
+    TimeOverlapConflict,
 )
 from app.scheduling.conflicts.visualizer import ConflictVisualizer
 

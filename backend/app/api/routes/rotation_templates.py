@@ -1,4 +1,5 @@
 """Rotation template API routes."""
+
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -41,7 +42,9 @@ def get_rotation_template(
     current_user: User = Depends(get_current_active_user),
 ):
     """Get a rotation template by ID. Requires authentication."""
-    template = db.query(RotationTemplate).filter(RotationTemplate.id == template_id).first()
+    template = (
+        db.query(RotationTemplate).filter(RotationTemplate.id == template_id).first()
+    )
     if not template:
         raise HTTPException(status_code=404, detail="Rotation template not found")
     return template
@@ -69,7 +72,9 @@ def update_rotation_template(
     current_user: User = Depends(get_current_active_user),
 ):
     """Update an existing rotation template. Requires authentication."""
-    template = db.query(RotationTemplate).filter(RotationTemplate.id == template_id).first()
+    template = (
+        db.query(RotationTemplate).filter(RotationTemplate.id == template_id).first()
+    )
     if not template:
         raise HTTPException(status_code=404, detail="Rotation template not found")
 
@@ -89,7 +94,9 @@ def delete_rotation_template(
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete a rotation template. Requires authentication."""
-    template = db.query(RotationTemplate).filter(RotationTemplate.id == template_id).first()
+    template = (
+        db.query(RotationTemplate).filter(RotationTemplate.id == template_id).first()
+    )
     if not template:
         raise HTTPException(status_code=404, detail="Rotation template not found")
 

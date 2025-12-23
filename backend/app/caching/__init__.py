@@ -14,7 +14,7 @@ This package implements RFC 7234 (HTTP Caching) and RFC 7232 (Conditional Reques
 """
 
 from app.caching.etag import ETagGenerator, generate_etag, weak_etag
-from app.caching.http_cache import HTTPCache, HTTPCacheConfig, CacheDirective
+from app.caching.http_cache import CacheDirective, HTTPCache, HTTPCacheConfig
 from app.caching.invalidation import CacheInvalidator, InvalidationEvent
 from app.caching.middleware import HTTPCacheMiddleware
 

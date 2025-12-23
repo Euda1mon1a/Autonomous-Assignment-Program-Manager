@@ -1,9 +1,8 @@
 """Upload schemas for request and response validation."""
 
-from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 
 class UploadMetadata(BaseModel):
@@ -15,9 +14,7 @@ class UploadMetadata(BaseModel):
     related_entity_id: str | None = Field(
         None, description="ID of related entity (person, procedure, etc.)"
     )
-    related_entity_type: str | None = Field(
-        None, description="Type of related entity"
-    )
+    related_entity_type: str | None = Field(None, description="Type of related entity")
     custom_metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional custom metadata"
     )

@@ -53,6 +53,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Security: Checks httpOnly cookie automatically via validateToken
   useEffect(() => {
     async function initAuth() {
+      console.log('[AuthContext] initAuth() - checking for existing session...')
       try {
         const validatedUser = await validateToken()
         setUser(validatedUser)
@@ -60,6 +61,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Token validation failed, user remains null
       }
       setIsLoading(false)
+      console.log('[AuthContext] initAuth() - complete, isLoading=false')
     }
 
     initAuth()
@@ -67,6 +69,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Login function
   const login = useCallback(async (credentials: LoginCredentials) => {
+    console.log('[AuthContext] login() - starting login for:', credentials.username)
     setIsLoading(true)
     try {
       const response = await authLogin(credentials)
@@ -75,6 +78,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       throw err  // Re-throw so LoginForm can catch it
     } finally {
       setIsLoading(false)
+      console.log('[AuthContext] login() - complete')
     }
   }, [])
 

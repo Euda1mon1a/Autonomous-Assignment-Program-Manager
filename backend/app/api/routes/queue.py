@@ -22,7 +22,6 @@ from app.queue.scheduler import TaskScheduler
 from app.queue.tasks import TaskPriority, get_task_status
 from app.queue.workers import WorkerManager
 from app.schemas.queue import (
-    DeadLetterQueueResponse,
     PeriodicTaskControlRequest,
     PeriodicTaskControlResponse,
     PeriodicTaskRequest,
@@ -109,10 +108,10 @@ async def submit_task(
         if eta:
             estimated_execution = eta.isoformat()
         elif request.countdown:
-            estimated_execution = (
-                datetime.utcnow().timestamp() + request.countdown
-            )
-            estimated_execution = datetime.fromtimestamp(estimated_execution).isoformat()
+            estimated_execution = datetime.utcnow().timestamp() + request.countdown
+            estimated_execution = datetime.fromtimestamp(
+                estimated_execution
+            ).isoformat()
         else:
             estimated_execution = "immediate"
 
@@ -551,9 +550,7 @@ async def get_worker_utilization(
 
     except Exception as e:
         logger.error(f"Error getting worker utilization: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching worker utilization"
-        )
+        raise HTTPException(status_code=500, detail="Error fetching worker utilization")
 
 
 @router.get("/workers/tasks", response_model=WorkerTasksResponse)
@@ -632,7 +629,9 @@ async def control_worker(
             message = f"Worker {request.worker_name} pool shrunk by {n}"
 
         else:
-            raise HTTPException(status_code=400, detail=f"Invalid action: {request.action}")
+            raise HTTPException(
+                status_code=400, detail=f"Invalid action: {request.action}"
+            )
 
         return WorkerControlResponse(
             worker_name=request.worker_name,
@@ -692,9 +691,7 @@ async def schedule_task(
         if eta:
             scheduled_for = eta.isoformat()
         elif request.countdown:
-            scheduled_for = (
-                datetime.utcnow().timestamp() + request.countdown
-            )
+            scheduled_for = datetime.utcnow().timestamp() + request.countdown
             scheduled_for = datetime.fromtimestamp(scheduled_for).isoformat()
         else:
             scheduled_for = "immediate"
@@ -837,7 +834,9 @@ async def control_periodic_task(
             message = f"Periodic task '{request.name}' removed"
 
         else:
-            raise HTTPException(status_code=400, detail=f"Invalid action: {request.action}")
+            raise HTTPException(
+                status_code=400, detail=f"Invalid action: {request.action}"
+            )
 
         return PeriodicTaskControlResponse(
             name=request.name,

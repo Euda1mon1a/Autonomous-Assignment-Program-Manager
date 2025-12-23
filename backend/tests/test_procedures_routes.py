@@ -3,6 +3,7 @@
 Comprehensive test suite covering procedure CRUD operations, filtering,
 categorization, activation/deactivation, and validation.
 """
+
 from uuid import uuid4
 
 import pytest
@@ -11,10 +12,10 @@ from sqlalchemy.orm import Session
 
 from app.models.procedure import Procedure
 
-
 ***REMOVED*** ============================================================================
 ***REMOVED*** Fixtures
 ***REMOVED*** ============================================================================
+
 
 @pytest.fixture
 def sample_procedure(db: Session) -> Procedure:
@@ -120,6 +121,7 @@ def sample_procedures(db: Session) -> list[Procedure]:
 ***REMOVED*** List Procedures Endpoint
 ***REMOVED*** ============================================================================
 
+
 class TestListProceduresEndpoint:
     """Tests for GET /api/procedures endpoint."""
 
@@ -207,7 +209,9 @@ class TestListProceduresEndpoint:
         self, client: TestClient, sample_procedures
     ):
         """Test filtering procedures by complexity level."""
-        response = client.get("/api/v1/procedures", params={"complexity_level": "basic"})
+        response = client.get(
+            "/api/v1/procedures", params={"complexity_level": "basic"}
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -225,7 +229,7 @@ class TestListProceduresEndpoint:
             params={
                 "category": "office",
                 "is_active": True,
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -240,8 +244,7 @@ class TestListProceduresEndpoint:
     def test_list_procedures_no_matches(self, client: TestClient, sample_procedures):
         """Test filtering with no matching results."""
         response = client.get(
-            "/api/v1/procedures",
-            params={"specialty": "NonExistentSpecialty"}
+            "/api/v1/procedures", params={"specialty": "NonExistentSpecialty"}
         )
 
         assert response.status_code == 200
@@ -253,6 +256,7 @@ class TestListProceduresEndpoint:
 ***REMOVED*** ============================================================================
 ***REMOVED*** Get Specialties and Categories Endpoints
 ***REMOVED*** ============================================================================
+
 
 class TestGetSpecialtiesEndpoint:
     """Tests for GET /api/procedures/specialties endpoint."""
@@ -341,6 +345,7 @@ class TestGetCategoriesEndpoint:
 ***REMOVED*** Get Procedure Endpoints
 ***REMOVED*** ============================================================================
 
+
 class TestGetProcedureByNameEndpoint:
     """Tests for GET /api/procedures/by-name/{name} endpoint."""
 
@@ -372,7 +377,9 @@ class TestGetProcedureByNameEndpoint:
         assert response.status_code == 200
 
         ***REMOVED*** Different case might not work (depends on implementation)
-        response = client.get(f"/api/v1/procedures/by-name/{sample_procedure.name.lower()}")
+        response = client.get(
+            f"/api/v1/procedures/by-name/{sample_procedure.name.lower()}"
+        )
         ***REMOVED*** Could be 200 or 404 depending on case sensitivity
         assert response.status_code in [200, 404]
 
@@ -413,6 +420,7 @@ class TestGetProcedureEndpoint:
 ***REMOVED*** ============================================================================
 ***REMOVED*** Create Procedure Endpoint
 ***REMOVED*** ============================================================================
+
 
 class TestCreateProcedureEndpoint:
     """Tests for POST /api/procedures endpoint."""
@@ -558,6 +566,7 @@ class TestCreateProcedureEndpoint:
 ***REMOVED*** Update Procedure Endpoint
 ***REMOVED*** ============================================================================
 
+
 class TestUpdateProcedureEndpoint:
     """Tests for PUT /api/procedures/{procedure_id} endpoint."""
 
@@ -601,9 +610,7 @@ class TestUpdateProcedureEndpoint:
 
         assert response.status_code == 401
 
-    def test_update_procedure_not_found(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_update_procedure_not_found(self, client: TestClient, auth_headers: dict):
         """Test updating non-existent procedure."""
         fake_id = uuid4()
         update_data = {"description": "New description"}
@@ -665,6 +672,7 @@ class TestUpdateProcedureEndpoint:
 ***REMOVED*** Delete Procedure Endpoint
 ***REMOVED*** ============================================================================
 
+
 class TestDeleteProcedureEndpoint:
     """Tests for DELETE /api/procedures/{procedure_id} endpoint."""
 
@@ -701,9 +709,7 @@ class TestDeleteProcedureEndpoint:
 
         assert response.status_code == 401
 
-    def test_delete_procedure_not_found(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_delete_procedure_not_found(self, client: TestClient, auth_headers: dict):
         """Test deleting non-existent procedure."""
         fake_id = uuid4()
         response = client.delete(
@@ -717,6 +723,7 @@ class TestDeleteProcedureEndpoint:
 ***REMOVED*** ============================================================================
 ***REMOVED*** Activate/Deactivate Procedure Endpoints
 ***REMOVED*** ============================================================================
+
 
 class TestDeactivateProcedureEndpoint:
     """Tests for POST /api/procedures/{procedure_id}/deactivate endpoint."""
@@ -807,9 +814,7 @@ class TestActivateProcedureEndpoint:
         assert data["is_active"] is True
         assert data["id"] == str(procedure.id)
 
-    def test_activate_procedure_requires_auth(
-        self, client: TestClient, db: Session
-    ):
+    def test_activate_procedure_requires_auth(self, client: TestClient, db: Session):
         """Test that activating procedure requires authentication."""
         procedure = Procedure(
             id=uuid4(),
@@ -824,9 +829,7 @@ class TestActivateProcedureEndpoint:
 
         assert response.status_code == 401
 
-    def test_activate_procedure_not_found(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_activate_procedure_not_found(self, client: TestClient, auth_headers: dict):
         """Test activating non-existent procedure."""
         fake_id = uuid4()
         response = client.post(
@@ -856,6 +859,7 @@ class TestActivateProcedureEndpoint:
 ***REMOVED*** ============================================================================
 ***REMOVED*** Edge Cases and Validation
 ***REMOVED*** ============================================================================
+
 
 class TestProcedureEdgeCases:
     """Tests for edge cases and boundary conditions."""
@@ -989,9 +993,18 @@ class TestProcedureEdgeCases:
         data = response.json()
 
         required_fields = [
-            "id", "name", "description", "category", "specialty",
-            "supervision_ratio", "requires_certification", "complexity_level",
-            "min_pgy_level", "is_active", "created_at", "updated_at"
+            "id",
+            "name",
+            "description",
+            "category",
+            "specialty",
+            "supervision_ratio",
+            "requires_certification",
+            "complexity_level",
+            "min_pgy_level",
+            "is_active",
+            "created_at",
+            "updated_at",
         ]
 
         for field in required_fields:
@@ -1001,7 +1014,7 @@ class TestProcedureEdgeCases:
         self, client: TestClient, auth_headers: dict
     ):
         """Test all valid complexity level values."""
-        valid_levels = ['basic', 'standard', 'advanced', 'complex']
+        valid_levels = ["basic", "standard", "advanced", "complex"]
 
         for i, level in enumerate(valid_levels):
             response = client.post(

@@ -12,7 +12,7 @@ import httpx
 from celery import shared_task
 
 from app.core.logging import get_logger
-from app.services.email_service import EmailService, EmailConfig
+from app.services.email_service import EmailConfig, EmailService
 
 logger = get_logger(__name__)
 
@@ -59,7 +59,9 @@ def send_email(
     Returns:
         Dict with delivery status and metadata
     """
-    logger.info("Sending email to %s: %s (attempt %d)", to, subject, self.request.retries + 1)
+    logger.info(
+        "Sending email to %s: %s (attempt %d)", to, subject, self.request.retries + 1
+    )
 
     try:
         email_service = get_email_service()

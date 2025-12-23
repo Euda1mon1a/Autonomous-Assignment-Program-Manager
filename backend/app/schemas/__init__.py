@@ -1,4 +1,5 @@
 """Pydantic schemas for API validation."""
+
 from app.schemas.absence import AbsenceCreate, AbsenceResponse, AbsenceUpdate
 from app.schemas.assignment import (
     AssignmentCreate,

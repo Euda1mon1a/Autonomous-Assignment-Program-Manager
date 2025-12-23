@@ -168,6 +168,7 @@ def update_person_certification(
 
 class RenewalRequest(BaseModel):
     """Request body for renewing a certification."""
+
     new_issued_date: date
     new_expiration_date: date
     new_certification_number: str | None = None

@@ -1,4 +1,5 @@
 """Tests for swap API routes."""
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -8,7 +9,9 @@ from fastapi.testclient import TestClient
 class TestSwapExecuteEndpoint:
     """Tests for POST /api/swaps/execute endpoint."""
 
-    def test_execute_swap_success(self, client: TestClient, auth_headers: dict, sample_faculty_members):
+    def test_execute_swap_success(
+        self, client: TestClient, auth_headers: dict, sample_faculty_members
+    ):
         """Test successful swap execution."""
         source = sample_faculty_members[0]
         target = sample_faculty_members[1]
@@ -31,7 +34,9 @@ class TestSwapExecuteEndpoint:
         assert "success" in data
         assert "validation" in data
 
-    def test_execute_swap_unauthorized(self, client: TestClient, sample_faculty_members):
+    def test_execute_swap_unauthorized(
+        self, client: TestClient, sample_faculty_members
+    ):
         """Test swap execution requires authentication."""
         source = sample_faculty_members[0]
         target = sample_faculty_members[1]
@@ -66,7 +71,9 @@ class TestSwapExecuteEndpoint:
         assert data["success"] is False
         assert data["validation"]["valid"] is False
 
-    def test_execute_swap_past_date(self, client: TestClient, auth_headers: dict, sample_faculty_members):
+    def test_execute_swap_past_date(
+        self, client: TestClient, auth_headers: dict, sample_faculty_members
+    ):
         """Test swap with past date fails validation."""
         source = sample_faculty_members[0]
         target = sample_faculty_members[1]
@@ -91,7 +98,9 @@ class TestSwapExecuteEndpoint:
 class TestSwapValidateEndpoint:
     """Tests for POST /api/swaps/validate endpoint."""
 
-    def test_validate_swap_valid(self, client: TestClient, auth_headers: dict, sample_faculty_members):
+    def test_validate_swap_valid(
+        self, client: TestClient, auth_headers: dict, sample_faculty_members
+    ):
         """Test validating a valid swap."""
         source = sample_faculty_members[0]
         target = sample_faculty_members[1]
@@ -113,7 +122,9 @@ class TestSwapValidateEndpoint:
         assert "errors" in data
         assert "warnings" in data
 
-    def test_validate_swap_with_conflict(self, client: TestClient, auth_headers: dict, sample_faculty_members, db):
+    def test_validate_swap_with_conflict(
+        self, client: TestClient, auth_headers: dict, sample_faculty_members, db
+    ):
         """Test validation detects external conflicts."""
         from app.models.absence import Absence
 
@@ -166,7 +177,9 @@ class TestSwapHistoryEndpoint:
         assert "total" in data
         assert "page" in data
 
-    def test_get_history_with_filters(self, client: TestClient, auth_headers: dict, sample_faculty):
+    def test_get_history_with_filters(
+        self, client: TestClient, auth_headers: dict, sample_faculty
+    ):
         """Test history with filter parameters."""
         response = client.get(
             "/api/swaps/history",

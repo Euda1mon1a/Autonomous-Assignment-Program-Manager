@@ -1,4 +1,5 @@
 """Template validation utilities."""
+
 import logging
 import re
 from typing import Any

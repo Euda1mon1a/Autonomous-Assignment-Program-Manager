@@ -18,9 +18,9 @@ from enum import Enum
 class JitterType(Enum):
     """Types of jitter strategies."""
 
-    NONE = "none"              ***REMOVED*** No jitter (deterministic delays)
-    FULL = "full"              ***REMOVED*** Full jitter (0 to delay)
-    EQUAL = "equal"            ***REMOVED*** Equal jitter (delay/2 + random(0, delay/2))
+    NONE = "none"  ***REMOVED*** No jitter (deterministic delays)
+    FULL = "full"  ***REMOVED*** Full jitter (0 to delay)
+    EQUAL = "equal"  ***REMOVED*** Equal jitter (delay/2 + random(0, delay/2))
     DECORRELATED = "decorrelated"  ***REMOVED*** Decorrelated jitter (AWS-style)
 
 

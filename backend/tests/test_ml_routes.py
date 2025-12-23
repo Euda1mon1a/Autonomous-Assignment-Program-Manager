@@ -1,7 +1,6 @@
 """Tests for ML API routes."""
-import pytest
+
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
 
 class TestMLRoutes:
@@ -64,7 +63,9 @@ class TestMLRoutes:
         assert "risk_level" in data
         assert "recommendation" in data
 
-    def test_predict_preference_ml_disabled(self, client: TestClient, auth_headers: dict):
+    def test_predict_preference_ml_disabled(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test preference prediction when ML is disabled."""
         request_data = {
             "person_id": "test-person-id",

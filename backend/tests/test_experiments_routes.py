@@ -1,12 +1,10 @@
 """Tests for experiments/A/B testing API routes."""
+
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
 from app.experiments import (
-    Experiment,
     ExperimentConfig,
-    ExperimentStatus,
     ExperimentTargeting,
     Variant,
 )
@@ -22,7 +20,12 @@ class TestExperimentsRoutes:
             "name": "Test Experiment",
             "description": "A test experiment",
             "variants": [
-                {"key": "control", "name": "Control", "allocation": 50, "is_control": True},
+                {
+                    "key": "control",
+                    "name": "Control",
+                    "allocation": 50,
+                    "is_control": True,
+                },
                 {"key": "treatment", "name": "Treatment", "allocation": 50},
             ],
         }
@@ -40,7 +43,9 @@ class TestExperimentsRoutes:
         assert data["status"] == "draft"
         assert len(data["variants"]) == 2
 
-    def test_create_experiment_invalid_allocation(self, client: TestClient, auth_headers: dict):
+    def test_create_experiment_invalid_allocation(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test that experiment creation fails with invalid allocation."""
         experiment_data = {
             "key": "invalid_experiment",

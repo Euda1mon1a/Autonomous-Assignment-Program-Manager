@@ -55,13 +55,6 @@ Features:
 """
 
 ***REMOVED*** States
-from app.resilience.circuit_breaker.states import (
-    CircuitMetrics,
-    CircuitState,
-    StateMachine,
-    StateTransition,
-)
-
 ***REMOVED*** Main breaker
 from app.resilience.circuit_breaker.breaker import (
     CircuitBreaker,
@@ -69,13 +62,6 @@ from app.resilience.circuit_breaker.breaker import (
     CircuitBreakerError,
     CircuitBreakerTimeoutError,
     CircuitOpenError,
-)
-
-***REMOVED*** Registry
-from app.resilience.circuit_breaker.registry import (
-    CircuitBreakerRegistry,
-    get_registry,
-    setup_registry,
 )
 
 ***REMOVED*** Decorators
@@ -95,6 +81,19 @@ from app.resilience.circuit_breaker.monitoring import (
     collect_metrics_for_all_breakers,
     get_metrics,
     setup_metrics,
+)
+
+***REMOVED*** Registry
+from app.resilience.circuit_breaker.registry import (
+    CircuitBreakerRegistry,
+    get_registry,
+    setup_registry,
+)
+from app.resilience.circuit_breaker.states import (
+    CircuitMetrics,
+    CircuitState,
+    StateMachine,
+    StateTransition,
 )
 
 __all__ = [

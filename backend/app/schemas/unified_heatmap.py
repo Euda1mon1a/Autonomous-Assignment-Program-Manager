@@ -1,4 +1,5 @@
 """Unified heatmap schemas for combined residency and FMIT schedule visualization."""
+
 from datetime import date, datetime
 from typing import Any
 from uuid import UUID
@@ -12,7 +13,9 @@ class UnifiedCoverageRequest(BaseModel):
     start_date: date = Field(..., description="Start date for heatmap")
     end_date: date = Field(..., description="End date for heatmap")
     include_fmit: bool = Field(True, description="Include FMIT assignments in heatmap")
-    include_residency: bool = Field(True, description="Include residency assignments in heatmap")
+    include_residency: bool = Field(
+        True, description="Include residency assignments in heatmap"
+    )
 
     class Config:
         json_schema_extra = {
@@ -33,7 +36,9 @@ class UnifiedCoverageResponse(BaseModel):
     z_values: list[list[float]] = Field(..., description="Matrix of coverage values")
     color_scale: str = Field(..., description="Plotly color scale name")
     metadata: dict[str, Any] = Field(..., description="Additional metadata")
-    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp of generation")
+    generated_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Timestamp of generation"
+    )
 
     class Config:
         json_schema_extra = {
@@ -58,8 +63,12 @@ class PersonCoverageRequest(BaseModel):
 
     start_date: date = Field(..., description="Start date for heatmap")
     end_date: date = Field(..., description="End date for heatmap")
-    person_ids: list[UUID] | None = Field(None, description="Optional filter by person IDs")
-    include_call: bool = Field(False, description="Include call assignments in coverage")
+    person_ids: list[UUID] | None = Field(
+        None, description="Optional filter by person IDs"
+    )
+    include_call: bool = Field(
+        False, description="Include call assignments in coverage"
+    )
 
     class Config:
         json_schema_extra = {
@@ -77,10 +86,14 @@ class PersonCoverageResponse(BaseModel):
 
     x_labels: list[str] = Field(..., description="X-axis labels (dates)")
     y_labels: list[str] = Field(..., description="Y-axis labels (person names)")
-    z_values: list[list[float]] = Field(..., description="Matrix of assignment counts per person per day")
+    z_values: list[list[float]] = Field(
+        ..., description="Matrix of assignment counts per person per day"
+    )
     color_scale: str = Field(..., description="Plotly color scale name")
     metadata: dict[str, Any] = Field(..., description="Additional metadata")
-    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp of generation")
+    generated_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Timestamp of generation"
+    )
 
     class Config:
         json_schema_extra = {
@@ -120,10 +133,14 @@ class WeeklyFMITResponse(BaseModel):
 
     x_labels: list[str] = Field(..., description="X-axis labels (week start dates)")
     y_labels: list[str] = Field(..., description="Y-axis labels (faculty names)")
-    z_values: list[list[float]] = Field(..., description="Matrix showing FMIT assignments (1=assigned, 0=not assigned)")
+    z_values: list[list[float]] = Field(
+        ..., description="Matrix showing FMIT assignments (1=assigned, 0=not assigned)"
+    )
     color_scale: str = Field(..., description="Plotly color scale name")
     metadata: dict[str, Any] = Field(..., description="Additional metadata")
-    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp of generation")
+    generated_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Timestamp of generation"
+    )
 
     class Config:
         json_schema_extra = {

@@ -1,4 +1,5 @@
 """Tests for visualization API routes and heatmap service."""
+
 from datetime import date, timedelta
 from uuid import uuid4
 
@@ -427,9 +428,7 @@ class TestHeatmapService:
             group_by="person",
         )
 
-        fig_dict = service.create_plotly_figure(
-            data=result.data, title=result.title
-        )
+        fig_dict = service.create_plotly_figure(data=result.data, title=result.title)
 
         assert isinstance(fig_dict, dict)
         assert "data" in fig_dict
@@ -474,9 +473,7 @@ class TestVisualizationAPI:
         data = response.json()
         assert len(data["data"]["y_labels"]) == 1
 
-    def test_get_unified_heatmap_invalid_date_range(
-        self, client, admin_token
-    ):
+    def test_get_unified_heatmap_invalid_date_range(self, client, admin_token):
         """Test heatmap with invalid date range."""
         response = client.get(
             "/api/v1/visualization/heatmap?start_date=2024-01-15&end_date=2024-01-01",
@@ -484,11 +481,12 @@ class TestVisualizationAPI:
         )
 
         assert response.status_code == 400
-        assert "start_date must be before or equal to end_date" in response.json()["detail"]
+        assert (
+            "start_date must be before or equal to end_date"
+            in response.json()["detail"]
+        )
 
-    def test_get_unified_heatmap_invalid_group_by(
-        self, client, admin_token
-    ):
+    def test_get_unified_heatmap_invalid_group_by(self, client, admin_token):
         """Test heatmap with invalid group_by parameter."""
         response = client.get(
             "/api/v1/visualization/heatmap?start_date=2024-01-01&end_date=2024-01-07&group_by=invalid",
@@ -550,9 +548,7 @@ class TestVisualizationAPI:
         assert "title" in data
         assert data["title"] == "Person Workload Heatmap"
 
-    def test_get_workload_heatmap_no_person_ids(
-        self, client, admin_token
-    ):
+    def test_get_workload_heatmap_no_person_ids(self, client, admin_token):
         """Test workload heatmap without person IDs."""
         response = client.get(
             "/api/v1/visualization/workload?start_date=2024-01-01&end_date=2024-01-07",
@@ -588,9 +584,7 @@ class TestVisualizationAPI:
         except Exception as e:
             pytest.skip(f"Image export not available: {str(e)}")
 
-    def test_export_heatmap_invalid_type(
-        self, client, admin_token
-    ):
+    def test_export_heatmap_invalid_type(self, client, admin_token):
         """Test export with invalid heatmap type."""
         export_request = {
             "heatmap_type": "invalid",
@@ -769,9 +763,7 @@ class TestVisualizationAPI:
         assert response.status_code == 400
         assert "group_by must be 'person' or 'rotation'" in response.json()["detail"]
 
-    def test_unified_heatmap_custom_range_missing_dates(
-        self, client, admin_token
-    ):
+    def test_unified_heatmap_custom_range_missing_dates(self, client, admin_token):
         """Test unified heatmap with custom range missing dates."""
         request_data = {
             "time_range": {

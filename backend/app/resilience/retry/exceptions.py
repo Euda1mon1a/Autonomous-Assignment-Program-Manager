@@ -4,8 +4,6 @@ Retry-specific exceptions.
 Defines custom exceptions for retry mechanisms and retry-related errors.
 """
 
-from typing import Any, Optional
-
 
 class RetryError(Exception):
     """Base exception for retry-related errors."""
@@ -14,7 +12,7 @@ class RetryError(Exception):
         self,
         message: str,
         attempts: int = 0,
-        last_exception: Optional[Exception] = None,
+        last_exception: Exception | None = None,
     ):
         """
         Initialize retry error.
@@ -35,7 +33,7 @@ class MaxRetriesExceeded(RetryError):
     def __init__(
         self,
         attempts: int,
-        last_exception: Optional[Exception] = None,
+        last_exception: Exception | None = None,
         operation: str = "operation",
     ):
         """
@@ -46,9 +44,7 @@ class MaxRetriesExceeded(RetryError):
             last_exception: The last exception that caused retry failure
             operation: Name of the operation that failed
         """
-        message = (
-            f"Maximum retry attempts ({attempts}) exceeded for {operation}"
-        )
+        message = f"Maximum retry attempts ({attempts}) exceeded for {operation}"
         super().__init__(message, attempts=attempts, last_exception=last_exception)
         self.operation = operation
 
@@ -59,7 +55,7 @@ class NonRetryableError(RetryError):
     def __init__(
         self,
         message: str,
-        original_exception: Optional[Exception] = None,
+        original_exception: Exception | None = None,
     ):
         """
         Initialize non-retryable error.
@@ -79,7 +75,7 @@ class RetryTimeoutError(RetryError):
         self,
         timeout_seconds: float,
         attempts: int = 0,
-        last_exception: Optional[Exception] = None,
+        last_exception: Exception | None = None,
     ):
         """
         Initialize retry timeout error.
@@ -89,7 +85,9 @@ class RetryTimeoutError(RetryError):
             attempts: Number of attempts made before timeout
             last_exception: The last exception before timeout
         """
-        message = f"Retry operation timed out after {timeout_seconds}s ({attempts} attempts)"
+        message = (
+            f"Retry operation timed out after {timeout_seconds}s ({attempts} attempts)"
+        )
         super().__init__(message, attempts=attempts, last_exception=last_exception)
         self.timeout_seconds = timeout_seconds
 
@@ -97,7 +95,7 @@ class RetryTimeoutError(RetryError):
 class InvalidRetryConfigError(RetryError):
     """Raised when retry configuration is invalid."""
 
-    def __init__(self, message: str, config_field: Optional[str] = None):
+    def __init__(self, message: str, config_field: str | None = None):
         """
         Initialize invalid config error.
 

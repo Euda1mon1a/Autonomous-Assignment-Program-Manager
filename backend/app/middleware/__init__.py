@@ -1,6 +1,6 @@
 """Middleware components for the application."""
+
 from app.middleware.audit import AuditContextMiddleware, get_audit_info
-from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.middleware.content import (
     AcceptHeader,
     ContentNegotiationMiddleware,
@@ -8,9 +8,9 @@ from app.middleware.content import (
     Parser,
     ParserRegistry,
     ParsingError,
+    SerializationError,
     Serializer,
     SerializerRegistry,
-    SerializationError,
     get_parser_registry,
     get_serializer_registry,
     register_parser,
@@ -24,6 +24,7 @@ from app.middleware.logging import (
     get_response_metrics,
 )
 from app.middleware.rate_limit_middleware import RateLimitMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.middleware.throttling import (
     ThrottleConfig,
     ThrottlePriority,

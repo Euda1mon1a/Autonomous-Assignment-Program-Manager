@@ -1,4 +1,5 @@
 """Absence model - leave, deployments, TDY."""
+
 import uuid
 from datetime import datetime
 
@@ -17,24 +18,23 @@ from sqlalchemy.orm import relationship
 from app.db.base import Base
 from app.db.types import GUID
 
-
 ***REMOVED*** Valid absence types with their default blocking behavior
 ***REMOVED*** Blocking types: person cannot be assigned to any rotation during absence
 ***REMOVED*** Non-blocking types: tracked but person can still be assigned
 ABSENCE_TYPES = {
     ***REMOVED*** Original types
-    "vacation": False,           ***REMOVED*** Planned leave - non-blocking by default
-    "deployment": True,          ***REMOVED*** Military deployment - always blocking
-    "tdy": True,                 ***REMOVED*** Temporary duty - always blocking
-    "medical": None,             ***REMOVED*** Duration-based: >7 days = blocking
-    "family_emergency": True,    ***REMOVED*** Emergency - blocking (Hawaii reality: 7+ days travel)
-    "conference": False,         ***REMOVED*** Educational - non-blocking
+    "vacation": False,  ***REMOVED*** Planned leave - non-blocking by default
+    "deployment": True,  ***REMOVED*** Military deployment - always blocking
+    "tdy": True,  ***REMOVED*** Temporary duty - always blocking
+    "medical": None,  ***REMOVED*** Duration-based: >7 days = blocking
+    "family_emergency": True,  ***REMOVED*** Emergency - blocking (Hawaii reality: 7+ days travel)
+    "conference": False,  ***REMOVED*** Educational - non-blocking
     ***REMOVED*** New types (Hawaii-appropriate defaults)
-    "bereavement": True,         ***REMOVED*** Death in family - blocking (mainland travel required)
-    "emergency_leave": True,     ***REMOVED*** Urgent personal emergency - blocking
-    "sick": None,                ***REMOVED*** Duration-based: >3 days = blocking
-    "convalescent": True,        ***REMOVED*** Post-surgery/injury recovery - always blocking
-    "maternity_paternity": True, ***REMOVED*** Parental leave - always blocking
+    "bereavement": True,  ***REMOVED*** Death in family - blocking (mainland travel required)
+    "emergency_leave": True,  ***REMOVED*** Urgent personal emergency - blocking
+    "sick": None,  ***REMOVED*** Duration-based: >3 days = blocking
+    "convalescent": True,  ***REMOVED*** Post-surgery/injury recovery - always blocking
+    "maternity_paternity": True,  ***REMOVED*** Parental leave - always blocking
 }
 
 ***REMOVED*** Types that are always blocking regardless of duration
@@ -61,11 +61,14 @@ class Absence(Base):
     Version history is tracked via SQLAlchemy-Continuum.
     Access history: absence.versions
     """
+
     __tablename__ = "absences"
     __versioned__ = {}  ***REMOVED*** Enable audit trail - tracks all changes with who/what/when
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    person_id = Column(GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False)
+    person_id = Column(
+        GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False
+    )
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     absence_type = Column(String(50), nullable=False)
@@ -82,7 +85,9 @@ class Absence(Base):
 
     ***REMOVED*** Track who entered the absence (for on-behalf-of workflow)
     ***REMOVED*** When admin enters absence for resident during emergency, this tracks who entered it
-    created_by_id = Column(GUID(), ForeignKey("people.id", ondelete="SET NULL"), nullable=True)
+    created_by_id = Column(
+        GUID(), ForeignKey("people.id", ondelete="SET NULL"), nullable=True
+    )
 
     ***REMOVED*** Military-specific
     deployment_orders = Column(Boolean, default=False)
@@ -103,7 +108,7 @@ class Absence(Base):
         CheckConstraint(
             "absence_type IN ('vacation', 'deployment', 'tdy', 'medical', 'family_emergency', "
             "'conference', 'bereavement', 'emergency_leave', 'sick', 'convalescent', 'maternity_paternity')",
-            name="check_absence_type"
+            name="check_absence_type",
         ),
     )
 

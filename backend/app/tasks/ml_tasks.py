@@ -11,7 +11,7 @@ Provides automated background tasks for:
 import asyncio
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from celery import shared_task
 from sqlalchemy.orm import Session
@@ -26,6 +26,7 @@ settings = get_settings()
 def get_db_session() -> Session:
     """Get a database session for task execution."""
     from app.db.session import SessionLocal
+
     return SessionLocal()
 
 
@@ -47,8 +48,8 @@ def _run_async(coro):
 )
 def train_ml_models(
     self,
-    model_types: Optional[list[str]] = None,
-    lookback_days: Optional[int] = None,
+    model_types: list[str] | None = None,
+    lookback_days: int | None = None,
     force_retrain: bool = False,
 ) -> dict[str, Any]:
     """
@@ -192,7 +193,9 @@ def train_ml_models(
                 results["workload"] = {"status": "failed", "error": str(e)}
 
         trained_count = sum(1 for r in results.values() if r.get("status") == "trained")
-        logger.info(f"ML training complete: {trained_count}/{len(model_types)} models trained")
+        logger.info(
+            f"ML training complete: {trained_count}/{len(model_types)} models trained"
+        )
 
         return {
             "timestamp": datetime.utcnow().isoformat(),
@@ -250,9 +253,15 @@ def score_schedule(
         models_dir = Path(settings.ML_MODELS_DIR)
 
         scorer = ScheduleScorer(
-            preference_model_path=models_dir / "preference_predictor" if (models_dir / "preference_predictor").exists() else None,
-            conflict_model_path=models_dir / "conflict_predictor" if (models_dir / "conflict_predictor").exists() else None,
-            workload_model_path=models_dir / "workload_optimizer" if (models_dir / "workload_optimizer").exists() else None,
+            preference_model_path=models_dir / "preference_predictor"
+            if (models_dir / "preference_predictor").exists()
+            else None,
+            conflict_model_path=models_dir / "conflict_predictor"
+            if (models_dir / "conflict_predictor").exists()
+            else None,
+            workload_model_path=models_dir / "workload_optimizer"
+            if (models_dir / "workload_optimizer").exists()
+            else None,
             db=db,
         )
 

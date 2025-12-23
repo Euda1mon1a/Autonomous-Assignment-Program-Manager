@@ -1,4 +1,5 @@
 """ProcedureCredential schemas."""
+
 from datetime import date, datetime
 from uuid import UUID
 
@@ -10,8 +11,9 @@ from app.validators.date_validators import validate_date_range
 
 class CredentialBase(BaseModel):
     """Base credential schema."""
-    status: str = 'active'
-    competency_level: str = 'qualified'
+
+    status: str = "active"
+    competency_level: str = "qualified"
     issued_date: date | None = None
     expiration_date: date | None = None
     last_verified_date: date | None = None
@@ -31,7 +33,7 @@ class CredentialBase(BaseModel):
     @field_validator("status")
     @classmethod
     def validate_status(cls, v: str) -> str:
-        valid_statuses = ('active', 'expired', 'suspended', 'pending')
+        valid_statuses = ("active", "expired", "suspended", "pending")
         if v not in valid_statuses:
             raise ValueError(f"status must be one of {valid_statuses}")
         return v
@@ -39,7 +41,7 @@ class CredentialBase(BaseModel):
     @field_validator("competency_level")
     @classmethod
     def validate_competency(cls, v: str) -> str:
-        valid_levels = ('trainee', 'qualified', 'expert', 'master')
+        valid_levels = ("trainee", "qualified", "expert", "master")
         if v not in valid_levels:
             raise ValueError(f"competency_level must be one of {valid_levels}")
         return v
@@ -58,12 +60,14 @@ class CredentialBase(BaseModel):
 
 class CredentialCreate(CredentialBase):
     """Schema for creating a credential."""
+
     person_id: UUID
     procedure_id: UUID
 
 
 class CredentialUpdate(BaseModel):
     """Schema for updating a credential."""
+
     status: str | None = None
     competency_level: str | None = None
     expiration_date: date | None = None
@@ -86,7 +90,7 @@ class CredentialUpdate(BaseModel):
     def validate_status(cls, v: str | None) -> str | None:
         if v is None:
             return v
-        valid_statuses = ('active', 'expired', 'suspended', 'pending')
+        valid_statuses = ("active", "expired", "suspended", "pending")
         if v not in valid_statuses:
             raise ValueError(f"status must be one of {valid_statuses}")
         return v
@@ -96,7 +100,7 @@ class CredentialUpdate(BaseModel):
     def validate_competency(cls, v: str | None) -> str | None:
         if v is None:
             return v
-        valid_levels = ('trainee', 'qualified', 'expert', 'master')
+        valid_levels = ("trainee", "qualified", "expert", "master")
         if v not in valid_levels:
             raise ValueError(f"competency_level must be one of {valid_levels}")
         return v
@@ -104,6 +108,7 @@ class CredentialUpdate(BaseModel):
 
 class CredentialResponse(CredentialBase):
     """Schema for credential response."""
+
     id: UUID
     person_id: UUID
     procedure_id: UUID
@@ -117,6 +122,7 @@ class CredentialResponse(CredentialBase):
 
 class CredentialWithProcedureResponse(CredentialResponse):
     """Credential response including procedure details."""
+
     procedure: ProcedureSummary
 
     class Config:
@@ -125,18 +131,21 @@ class CredentialWithProcedureResponse(CredentialResponse):
 
 class CredentialListResponse(BaseModel):
     """Schema for list of credentials."""
+
     items: list[CredentialResponse]
     total: int
 
 
 class CredentialWithProcedureListResponse(BaseModel):
     """Schema for list of credentials with procedure details."""
+
     items: list[CredentialWithProcedureResponse]
     total: int
 
 
 class PersonSummary(BaseModel):
     """Minimal person info for embedding in credential responses."""
+
     id: UUID
     name: str
     type: str
@@ -147,6 +156,7 @@ class PersonSummary(BaseModel):
 
 class CredentialWithPersonResponse(CredentialResponse):
     """Credential response including person details."""
+
     person: PersonSummary
 
     class Config:
@@ -155,6 +165,7 @@ class CredentialWithPersonResponse(CredentialResponse):
 
 class QualifiedFacultyResponse(BaseModel):
     """Response for listing faculty qualified for a procedure."""
+
     procedure_id: UUID
     procedure_name: str
     qualified_faculty: list[PersonSummary]
@@ -163,6 +174,7 @@ class QualifiedFacultyResponse(BaseModel):
 
 class FacultyCredentialSummary(BaseModel):
     """Summary of a faculty member's credentials."""
+
     person_id: UUID
     person_name: str
     total_credentials: int

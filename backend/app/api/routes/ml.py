@@ -8,9 +8,9 @@ Endpoints for ML model management and predictions:
 - Predict preferences
 - Analyze workload
 """
+
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,7 +23,6 @@ from app.schemas.ml import (
     ConflictPredictionResponse,
     ModelHealthResponse,
     ModelStatusResponse,
-    PersonWorkloadResponse,
     PredictConflictRequest,
     PredictPreferenceRequest,
     PreferencePredictionResponse,
@@ -67,24 +66,28 @@ async def get_model_health(
             mtime = datetime.fromtimestamp(path.stat().st_mtime)
             age_days = (datetime.now() - mtime).days
 
-            models.append(ModelStatusResponse(
-                name=name,
-                available=True,
-                last_trained=mtime,
-                age_days=age_days,
-            ))
+            models.append(
+                ModelStatusResponse(
+                    name=name,
+                    available=True,
+                    last_trained=mtime,
+                    age_days=age_days,
+                )
+            )
 
             if age_days > settings.ML_TRAINING_FREQUENCY_DAYS * 2:
                 recommendations.append(
                     f"{name} model is {age_days} days old. Consider retraining."
                 )
         else:
-            models.append(ModelStatusResponse(
-                name=name,
-                available=False,
-                last_trained=None,
-                age_days=None,
-            ))
+            models.append(
+                ModelStatusResponse(
+                    name=name,
+                    available=False,
+                    last_trained=None,
+                    age_days=None,
+                )
+            )
             recommendations.append(f"{name} model not found. Run training.")
 
     available_count = sum(1 for m in models if m.available)
@@ -312,9 +315,15 @@ async def score_schedule(
         models_dir = Path(settings.ML_MODELS_DIR)
 
         scorer = ScheduleScorer(
-            preference_model_path=models_dir / "preference_predictor" if (models_dir / "preference_predictor").exists() else None,
-            conflict_model_path=models_dir / "conflict_predictor" if (models_dir / "conflict_predictor").exists() else None,
-            workload_model_path=models_dir / "workload_optimizer" if (models_dir / "workload_optimizer").exists() else None,
+            preference_model_path=models_dir / "preference_predictor"
+            if (models_dir / "preference_predictor").exists()
+            else None,
+            conflict_model_path=models_dir / "conflict_predictor"
+            if (models_dir / "conflict_predictor").exists()
+            else None,
+            workload_model_path=models_dir / "workload_optimizer"
+            if (models_dir / "workload_optimizer").exists()
+            else None,
             db=db,
         )
 
@@ -411,7 +420,10 @@ async def predict_conflict(
 
         prob = predictor.predict_conflict_probability(
             person_data={"id": request.person_id},
-            assignment_data={"block_id": request.block_id, "rotation_id": request.rotation_id},
+            assignment_data={
+                "block_id": request.block_id,
+                "rotation_id": request.rotation_id,
+            },
             existing_assignments=request.existing_assignments,
             context={},
         )
@@ -422,7 +434,9 @@ async def predict_conflict(
             recommendation = "High conflict risk. Consider alternative assignment."
         elif prob >= 0.6:
             risk_level = "HIGH"
-            recommendation = "Elevated conflict risk. Review carefully before proceeding."
+            recommendation = (
+                "Elevated conflict risk. Review carefully before proceeding."
+            )
         elif prob >= 0.4:
             risk_level = "MEDIUM"
             recommendation = "Moderate conflict risk. Monitor after assignment."

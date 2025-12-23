@@ -12,7 +12,8 @@ Provides convenient decorators for applying circuit breakers to functions:
 import asyncio
 import functools
 import logging
-from typing import Any, Callable, Optional, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from app.resilience.circuit_breaker.registry import get_registry
 
@@ -22,13 +23,13 @@ T = TypeVar("T")
 
 
 def circuit_breaker(
-    name: Optional[str] = None,
+    name: str | None = None,
     failure_threshold: int = 5,
     success_threshold: int = 2,
     timeout_seconds: float = 60.0,
-    call_timeout_seconds: Optional[float] = None,
-    excluded_exceptions: Optional[tuple[type[Exception], ...]] = None,
-    fallback: Optional[Callable] = None,
+    call_timeout_seconds: float | None = None,
+    excluded_exceptions: tuple[type[Exception], ...] | None = None,
+    fallback: Callable | None = None,
 ):
     """
     Decorator to protect a function with a circuit breaker.
@@ -65,6 +66,7 @@ def circuit_breaker(
         def call_api(endpoint: str):
             return requests.get(endpoint)
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         breaker_name = name or func.__name__
         registry = get_registry()
@@ -97,13 +99,13 @@ def circuit_breaker(
 
 
 def async_circuit_breaker(
-    name: Optional[str] = None,
+    name: str | None = None,
     failure_threshold: int = 5,
     success_threshold: int = 2,
     timeout_seconds: float = 60.0,
-    call_timeout_seconds: Optional[float] = None,
-    excluded_exceptions: Optional[tuple[type[Exception], ...]] = None,
-    fallback: Optional[Callable] = None,
+    call_timeout_seconds: float | None = None,
+    excluded_exceptions: tuple[type[Exception], ...] | None = None,
+    fallback: Callable | None = None,
 ):
     """
     Decorator to protect an async function with a circuit breaker.
@@ -141,11 +143,12 @@ def async_circuit_breaker(
                 response = await client.get(endpoint)
                 return response.json()
     """
+
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError(
-                f"@async_circuit_breaker can only be applied to async functions. "
-                f"Use @circuit_breaker for sync functions."
+                "@async_circuit_breaker can only be applied to async functions. "
+                "Use @circuit_breaker for sync functions."
             )
 
         breaker_name = name or func.__name__
@@ -201,6 +204,7 @@ def with_circuit_breaker(breaker_name: str):
         def api_call_2():
             return call_endpoint_2()
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         registry = get_registry()
 
@@ -237,10 +241,11 @@ def with_async_circuit_breaker(breaker_name: str):
         async def db_query_2():
             return await execute_query_2()
     """
+
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError(
-                f"@with_async_circuit_breaker can only be applied to async functions."
+                "@with_async_circuit_breaker can only be applied to async functions."
             )
 
         registry = get_registry()
@@ -257,7 +262,7 @@ def with_async_circuit_breaker(breaker_name: str):
     return decorator
 
 
-def get_breaker_from_function(func: Callable) -> Optional[Any]:
+def get_breaker_from_function(func: Callable) -> Any | None:
     """
     Get the circuit breaker attached to a decorated function.
 
@@ -278,7 +283,7 @@ def get_breaker_from_function(func: Callable) -> Optional[Any]:
     return getattr(func, "_circuit_breaker", None)
 
 
-def get_breaker_name_from_function(func: Callable) -> Optional[str]:
+def get_breaker_name_from_function(func: Callable) -> str | None:
     """
     Get the circuit breaker name from a decorated function.
 

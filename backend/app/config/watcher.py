@@ -6,8 +6,8 @@ Monitors configuration files for changes and triggers hot reload.
 import asyncio
 import logging
 import threading
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, List, Optional, Set
 
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
@@ -20,7 +20,7 @@ class ConfigFileHandler(FileSystemEventHandler):
 
     def __init__(
         self,
-        watched_files: Set[Path],
+        watched_files: set[Path],
         on_change_callback: Callable[[Path], None],
     ):
         """
@@ -111,7 +111,7 @@ class ConfigWatcher:
 
     def __init__(
         self,
-        config_files: Optional[List[Path]] = None,
+        config_files: list[Path] | None = None,
         auto_reload: bool = True,
     ):
         """
@@ -121,10 +121,10 @@ class ConfigWatcher:
             config_files: List of configuration files to watch
             auto_reload: Whether to automatically reload on file changes
         """
-        self.config_files: Set[Path] = set()
+        self.config_files: set[Path] = set()
         self.auto_reload = auto_reload
-        self.observer: Optional[Observer] = None
-        self._callbacks: List[Callable[[Path], None]] = []
+        self.observer: Observer | None = None
+        self._callbacks: list[Callable[[Path], None]] = []
         self._running = False
         self._lock = threading.Lock()
 

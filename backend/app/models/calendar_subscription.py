@@ -1,4 +1,5 @@
 """Calendar subscription model for webcal feeds."""
+
 import secrets
 from datetime import datetime, timedelta
 from uuid import UUID

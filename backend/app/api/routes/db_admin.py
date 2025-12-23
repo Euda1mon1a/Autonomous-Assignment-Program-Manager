@@ -5,16 +5,14 @@ and optimization recommendations. Restricted to admin users only.
 """
 
 import logging
-from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_active_user
 from app.auth.permissions.decorators import require_role
-from app.db.optimization import IndexAdvisor, QueryAnalyzer
-from app.db.optimization.query_builder import OptimizedQueryBuilder
+from app.core.security import get_current_active_user
+from app.db.optimization import IndexAdvisor
 from app.db.session import get_db
 from app.models.user import User
 
@@ -83,10 +81,10 @@ class TableStatisticsResponse(BaseModel):
     live_tuples: int
     dead_tuples: int
     scan_ratio: float
-    last_vacuum: Optional[str] = None
-    last_autovacuum: Optional[str] = None
-    last_analyze: Optional[str] = None
-    last_autoanalyze: Optional[str] = None
+    last_vacuum: str | None = None
+    last_autovacuum: str | None = None
+    last_analyze: str | None = None
+    last_autoanalyze: str | None = None
 
 
 class QueryStatsResponse(BaseModel):
@@ -182,8 +180,10 @@ async def get_database_health(
             overflow=pool.overflow(),
             total_connections=pool.checkedout() + pool.overflow(),
             utilization_percent=round(
-                (pool.checkedout() + pool.overflow()) / (pool.size() + pool._max_overflow) * 100,
-                2
+                (pool.checkedout() + pool.overflow())
+                / (pool.size() + pool._max_overflow)
+                * 100,
+                2,
             ),
         )
 
@@ -255,7 +255,9 @@ async def get_database_health(
     dependencies=[Depends(require_role("ADMIN"))],
 )
 async def get_index_recommendations(
-    min_table_size_mb: float = Query(1.0, ge=0, description="Minimum table size to analyze"),
+    min_table_size_mb: float = Query(
+        1.0, ge=0, description="Minimum table size to analyze"
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> list[IndexRecommendationResponse]:
@@ -451,9 +453,13 @@ async def get_table_statistics(
             dead_tuples=stats["dead_tuples"],
             scan_ratio=round(stats["scan_ratio"], 4),
             last_vacuum=str(stats["last_vacuum"]) if stats["last_vacuum"] else None,
-            last_autovacuum=str(stats["last_autovacuum"]) if stats["last_autovacuum"] else None,
+            last_autovacuum=str(stats["last_autovacuum"])
+            if stats["last_autovacuum"]
+            else None,
             last_analyze=str(stats["last_analyze"]) if stats["last_analyze"] else None,
-            last_autoanalyze=str(stats["last_autoanalyze"]) if stats["last_autoanalyze"] else None,
+            last_autoanalyze=str(stats["last_autoanalyze"])
+            if stats["last_autoanalyze"]
+            else None,
         )
 
     except HTTPException:
@@ -578,7 +584,9 @@ async def vacuum_table(
         connection = db.connection()
         connection.execute(vacuum_query)
 
-        logger.info(f"VACUUM{'ANALYZE' if analyze else ''} completed for table {table_name}")
+        logger.info(
+            f"VACUUM{'ANALYZE' if analyze else ''} completed for table {table_name}"
+        )
 
         return {
             "message": f"VACUUM {'ANALYZE ' if analyze else ''}completed successfully for {table_name}",

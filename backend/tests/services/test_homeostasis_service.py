@@ -4,17 +4,16 @@ Tests the homeostasis service that monitors system feedback loops,
 tracks allostatic load, and detects positive feedback risks.
 """
 
-import pytest
 from datetime import datetime
 from uuid import uuid4
 
-from app.services.resilience.homeostasis import (
-    HomeostasisService,
-    get_homeostasis_service,
-)
 from app.schemas.resilience import (
     AllostasisState,
     HomeostasisReport,
+)
+from app.services.resilience.homeostasis import (
+    HomeostasisService,
+    get_homeostasis_service,
 )
 
 

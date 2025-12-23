@@ -1,14 +1,14 @@
 """Redis-based permission caching for improved authorization performance."""
+
 import json
 import logging
-from datetime import datetime
 from typing import Any
 
 import redis.asyncio as aioredis
 from redis.exceptions import RedisError
 
-from app.core.config import get_settings
 from app.auth.permissions.models import UserRole
+from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -145,10 +145,7 @@ class PermissionCache:
             return None
 
     async def set_role_permissions(
-        self,
-        role: UserRole | str,
-        permissions: set[str],
-        ttl: int | None = None
+        self, role: UserRole | str, permissions: set[str], ttl: int | None = None
     ) -> bool:
         """
         Cache permissions for a role.
@@ -203,10 +200,7 @@ class PermissionCache:
             return None
 
     async def set_user_permissions(
-        self,
-        user_id: str,
-        permissions: set[str],
-        ttl: int | None = None
+        self, user_id: str, permissions: set[str], ttl: int | None = None
     ) -> bool:
         """
         Cache permissions for a user.
@@ -337,7 +331,9 @@ class PermissionCache:
             if await self.set_role_permissions(role, permissions):
                 cached_count += 1
 
-        logger.info(f"Cache warming completed: {cached_count}/{len(permissions_map)} roles cached")
+        logger.info(
+            f"Cache warming completed: {cached_count}/{len(permissions_map)} roles cached"
+        )
         return cached_count
 
     async def get_cache_stats(self) -> dict[str, Any]:

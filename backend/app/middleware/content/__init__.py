@@ -72,6 +72,7 @@ Examples:
     Content-Type: application/xml
     <user><name>John</name></user>
 """
+
 from app.middleware.content.negotiation import (
     AcceptHeader,
     ContentNegotiationMiddleware,
@@ -92,9 +93,9 @@ from app.middleware.content.parsers import (
 from app.middleware.content.serializers import (
     JSONSerializer,
     MessagePackSerializer,
+    SerializationError,
     Serializer,
     SerializerRegistry,
-    SerializationError,
     XMLSerializer,
     YAMLSerializer,
     get_serializer_registry,

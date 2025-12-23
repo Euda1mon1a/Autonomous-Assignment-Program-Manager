@@ -1,4 +1,5 @@
 """Factory for creating leave providers."""
+
 from pathlib import Path
 
 from sqlalchemy.orm import Session

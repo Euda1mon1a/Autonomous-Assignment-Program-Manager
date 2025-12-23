@@ -7,44 +7,84 @@ This module provides functions to safely handle HTML content by:
 - Escaping special characters
 - Removing script and style elements
 """
+
 import html
 import re
-from typing import Optional
 
 
 class HTMLSanitizationError(Exception):
     """Exception raised when HTML sanitization fails."""
+
     pass
 
 
 ***REMOVED*** Dangerous HTML tags that should always be removed
 DANGEROUS_TAGS = {
-    'script', 'style', 'iframe', 'object', 'embed', 'applet',
-    'meta', 'link', 'base', 'form', 'input', 'button', 'textarea',
-    'select', 'option', 'frame', 'frameset', 'bgsound', 'xml'
+    "script",
+    "style",
+    "iframe",
+    "object",
+    "embed",
+    "applet",
+    "meta",
+    "link",
+    "base",
+    "form",
+    "input",
+    "button",
+    "textarea",
+    "select",
+    "option",
+    "frame",
+    "frameset",
+    "bgsound",
+    "xml",
 }
 
 ***REMOVED*** Safe HTML tags allowed for rich text content
 SAFE_TAGS = {
-    'p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li',
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-    'blockquote', 'pre', 'code', 'hr',
-    'a', 'span', 'div', 'table', 'tr', 'td', 'th', 'thead', 'tbody'
+    "p",
+    "br",
+    "strong",
+    "em",
+    "u",
+    "ul",
+    "ol",
+    "li",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "blockquote",
+    "pre",
+    "code",
+    "hr",
+    "a",
+    "span",
+    "div",
+    "table",
+    "tr",
+    "td",
+    "th",
+    "thead",
+    "tbody",
 }
 
 ***REMOVED*** Safe attributes allowed for specific tags
 SAFE_ATTRIBUTES = {
-    'a': {'href', 'title', 'target'},
-    'img': {'src', 'alt', 'title', 'width', 'height'},
-    'span': {'class'},
-    'div': {'class'},
-    'table': {'class'},
-    'td': {'colspan', 'rowspan'},
-    'th': {'colspan', 'rowspan'},
+    "a": {"href", "title", "target"},
+    "img": {"src", "alt", "title", "width", "height"},
+    "span": {"class"},
+    "div": {"class"},
+    "table": {"class"},
+    "td": {"colspan", "rowspan"},
+    "th": {"colspan", "rowspan"},
 }
 
 ***REMOVED*** Protocol whitelist for URLs
-SAFE_PROTOCOLS = {'http', 'https', 'mailto', 'ftp'}
+SAFE_PROTOCOLS = {"http", "https", "mailto", "ftp"}
 
 
 def strip_all_tags(text: str) -> str:
@@ -70,21 +110,19 @@ def strip_all_tags(text: str) -> str:
         return ""
 
     ***REMOVED*** Remove HTML tags using regex
-    clean_text = re.sub(r'<[^>]+>', '', text)
+    clean_text = re.sub(r"<[^>]+>", "", text)
 
     ***REMOVED*** Unescape HTML entities
     clean_text = html.unescape(clean_text)
 
     ***REMOVED*** Remove multiple spaces and normalize whitespace
-    clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+    clean_text = re.sub(r"\s+", " ", clean_text).strip()
 
     return clean_text
 
 
 def sanitize_html(
-    text: str,
-    allowed_tags: Optional[set[str]] = None,
-    strip_tags: bool = False
+    text: str, allowed_tags: set[str] | None = None, strip_tags: bool = False
 ) -> str:
     """
     Sanitize HTML content by removing dangerous tags and attributes.
@@ -124,45 +162,30 @@ def sanitize_html(
         for tag in DANGEROUS_TAGS:
             ***REMOVED*** Remove opening and closing tags and everything between
             text = re.sub(
-                rf'<{tag}[^>]*>.*?</{tag}>',
-                '',
-                text,
-                flags=re.IGNORECASE | re.DOTALL
+                rf"<{tag}[^>]*>.*?</{tag}>", "", text, flags=re.IGNORECASE | re.DOTALL
             )
             ***REMOVED*** Remove self-closing tags
-            text = re.sub(
-                rf'<{tag}[^>]*/?>',
-                '',
-                text,
-                flags=re.IGNORECASE
-            )
+            text = re.sub(rf"<{tag}[^>]*/?>", "", text, flags=re.IGNORECASE)
 
         ***REMOVED*** Second pass: Remove on* event handlers (onclick, onerror, etc.)
-        text = re.sub(r'\s+on\w+\s*=\s*["\'][^"\']*["\']', '', text, flags=re.IGNORECASE)
-        text = re.sub(r'\s+on\w+\s*=\s*\S+', '', text, flags=re.IGNORECASE)
+        text = re.sub(
+            r'\s+on\w+\s*=\s*["\'][^"\']*["\']', "", text, flags=re.IGNORECASE
+        )
+        text = re.sub(r"\s+on\w+\s*=\s*\S+", "", text, flags=re.IGNORECASE)
 
         ***REMOVED*** Third pass: Remove javascript: protocol from URLs
         text = re.sub(
-            r'(href|src)\s*=\s*["\']?\s*javascript:',
-            r'\1="',
-            text,
-            flags=re.IGNORECASE
+            r'(href|src)\s*=\s*["\']?\s*javascript:', r'\1="', text, flags=re.IGNORECASE
         )
 
         ***REMOVED*** Fourth pass: Remove data: protocol (can be used for XSS)
         text = re.sub(
-            r'(href|src)\s*=\s*["\']?\s*data:',
-            r'\1="',
-            text,
-            flags=re.IGNORECASE
+            r'(href|src)\s*=\s*["\']?\s*data:', r'\1="', text, flags=re.IGNORECASE
         )
 
         ***REMOVED*** Fifth pass: Remove vbscript: protocol
         text = re.sub(
-            r'(href|src)\s*=\s*["\']?\s*vbscript:',
-            r'\1="',
-            text,
-            flags=re.IGNORECASE
+            r'(href|src)\s*=\s*["\']?\s*vbscript:', r'\1="', text, flags=re.IGNORECASE
         )
 
         ***REMOVED*** Sixth pass: Remove tags not in allowed list
@@ -173,14 +196,14 @@ def sanitize_html(
                 return match.group(0)
             else:
                 ***REMOVED*** Remove the tag but keep the content
-                return ''
+                return ""
 
         ***REMOVED*** Remove opening tags not in allowed list
-        text = re.sub(r'<(/?)(\w+)[^>]*>', replace_tag, text)
+        text = re.sub(r"<(/?)(\w+)[^>]*>", replace_tag, text)
 
         ***REMOVED*** Final pass: Clean up any remaining dangerous patterns
-        text = re.sub(r'<\s*script', '&lt;script', text, flags=re.IGNORECASE)
-        text = re.sub(r'javascript\s*:', '', text, flags=re.IGNORECASE)
+        text = re.sub(r"<\s*script", "&lt;script", text, flags=re.IGNORECASE)
+        text = re.sub(r"javascript\s*:", "", text, flags=re.IGNORECASE)
 
         return text.strip()
 
@@ -257,21 +280,21 @@ def validate_url_protocol(url: str) -> bool:
     url_lower = url.lower().strip()
 
     ***REMOVED*** Check for dangerous protocols
-    dangerous_protocols = ['javascript:', 'data:', 'vbscript:', 'file:']
+    dangerous_protocols = ["javascript:", "data:", "vbscript:", "file:"]
     for protocol in dangerous_protocols:
         if url_lower.startswith(protocol):
             return False
 
     ***REMOVED*** If URL has a protocol, it must be in safe list
-    if '://' in url_lower:
-        protocol = url_lower.split('://')[0]
+    if "://" in url_lower:
+        protocol = url_lower.split("://")[0]
         return protocol in SAFE_PROTOCOLS
 
     ***REMOVED*** Relative URLs are okay
     return True
 
 
-def sanitize_attribute(tag: str, attr_name: str, attr_value: str) -> Optional[str]:
+def sanitize_attribute(tag: str, attr_name: str, attr_value: str) -> str | None:
     """
     Sanitize an HTML attribute value based on tag and attribute name.
 
@@ -297,12 +320,12 @@ def sanitize_attribute(tag: str, attr_name: str, attr_value: str) -> Optional[st
         return None
 
     ***REMOVED*** Special handling for URL attributes
-    if attr_name in {'href', 'src'}:
+    if attr_name in {"href", "src"}:
         if not validate_url_protocol(attr_value):
             return None
 
     ***REMOVED*** Remove event handlers disguised as attributes
-    if attr_name.lower().startswith('on'):
+    if attr_name.lower().startswith("on"):
         return None
 
     return attr_value
@@ -328,7 +351,7 @@ def count_html_tags(text: str) -> int:
     """
     if not text:
         return 0
-    return len(re.findall(r'<[^>]+>', text))
+    return len(re.findall(r"<[^>]+>", text))
 
 
 def is_safe_html(text: str, max_tags: int = 50) -> bool:
@@ -358,15 +381,15 @@ def is_safe_html(text: str, max_tags: int = 50) -> bool:
     ***REMOVED*** Check for dangerous tags
     text_lower = text.lower()
     for tag in DANGEROUS_TAGS:
-        if f'<{tag}' in text_lower or f'</{tag}>' in text_lower:
+        if f"<{tag}" in text_lower or f"</{tag}>" in text_lower:
             return False
 
     ***REMOVED*** Check for event handlers
-    if re.search(r'\son\w+\s*=', text, re.IGNORECASE):
+    if re.search(r"\son\w+\s*=", text, re.IGNORECASE):
         return False
 
     ***REMOVED*** Check for dangerous protocols
-    if re.search(r'(javascript|data|vbscript):', text, re.IGNORECASE):
+    if re.search(r"(javascript|data|vbscript):", text, re.IGNORECASE):
         return False
 
     return True

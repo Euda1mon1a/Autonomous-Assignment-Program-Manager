@@ -151,7 +151,9 @@ class LocalStorageBackend(StorageBackend):
 
             ***REMOVED*** Create date-based subdirectory structure
             now = datetime.utcnow()
-            date_path = self.base_path / str(now.year) / f"{now.month:02d}" / f"{now.day:02d}"
+            date_path = (
+                self.base_path / str(now.year) / f"{now.month:02d}" / f"{now.day:02d}"
+            )
             date_path.mkdir(parents=True, exist_ok=True)
 
             ***REMOVED*** Determine file extension

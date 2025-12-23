@@ -1,4 +1,5 @@
 """Tests for ConflictAlert model."""
+
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 

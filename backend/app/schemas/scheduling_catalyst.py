@@ -1,5 +1,6 @@
 """Pydantic schemas for scheduling catalyst API endpoints."""
-from datetime import date, datetime
+
+from datetime import date
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -59,21 +60,27 @@ class CatalystAnalysisRequest(BaseModel):
     barriers: list["EnergyBarrierResponse"] = Field(
         ..., description="Barriers to find catalysts for"
     )
-    max_catalysts: int = Field(default=3, ge=1, le=10, description="Maximum catalysts per barrier")
+    max_catalysts: int = Field(
+        default=3, ge=1, le=10, description="Maximum catalysts per barrier"
+    )
 
 
 class PathwayOptimizationRequest(BaseModel):
     """Request to find optimal pathway for a schedule change."""
 
     assignment_id: UUID = Field(..., description="ID of the assignment to change")
-    proposed_change: dict[str, Any] = Field(..., description="Description of the proposed change")
+    proposed_change: dict[str, Any] = Field(
+        ..., description="Description of the proposed change"
+    )
     energy_threshold: float = Field(
         default=0.8, ge=0.0, le=1.0, description="Maximum acceptable activation energy"
     )
     prefer_mechanisms: bool = Field(
         default=True, description="Prefer automated mechanisms over personnel"
     )
-    allow_multi_step: bool = Field(default=True, description="Allow multi-step pathways")
+    allow_multi_step: bool = Field(
+        default=True, description="Allow multi-step pathways"
+    )
 
 
 class SwapBarrierAnalysisRequest(BaseModel):
@@ -82,7 +89,9 @@ class SwapBarrierAnalysisRequest(BaseModel):
     source_faculty_id: UUID = Field(..., description="ID of source faculty")
     source_week: date = Field(..., description="Source week date")
     target_faculty_id: UUID = Field(..., description="ID of target faculty")
-    target_week: date | None = Field(default=None, description="Target week date (for 1:1 swaps)")
+    target_week: date | None = Field(
+        default=None, description="Target week date (for 1:1 swaps)"
+    )
     swap_type: str = Field(default="one_to_one", description="Type of swap")
 
 
@@ -127,10 +136,14 @@ class ActivationEnergyResponse(BaseModel):
     catalyzed_value: float | None = Field(
         default=None, description="Energy after catalyst application"
     )
-    catalyst_effect: float = Field(default=0.0, description="Reduction achieved by catalysts")
+    catalyst_effect: float = Field(
+        default=0.0, description="Reduction achieved by catalysts"
+    )
     is_feasible: bool = Field(description="Whether the change is feasible")
     effective_energy: float = Field(description="Effective energy after catalysis")
-    reduction_percentage: float = Field(description="Percentage reduction from catalysis")
+    reduction_percentage: float = Field(
+        description="Percentage reduction from catalysis"
+    )
 
 
 class CatalystPersonResponse(BaseModel):
@@ -165,7 +178,9 @@ class CatalystRecommendationResponse(BaseModel):
     person_catalysts: list[CatalystPersonResponse]
     mechanism_catalysts: list[CatalystMechanismResponse]
     recommended_catalyst: str = Field(description="Most recommended catalyst")
-    confidence: float = Field(ge=0.0, le=1.0, description="Confidence in recommendation")
+    confidence: float = Field(
+        ge=0.0, le=1.0, description="Confidence in recommendation"
+    )
 
 
 class TransitionStateResponse(BaseModel):
@@ -216,7 +231,9 @@ class SwapBarrierAnalysisResponse(BaseModel):
     swap_feasible: bool
     barriers: list[EnergyBarrierResponse]
     activation_energy: ActivationEnergyResponse
-    catalyst_recommendations: list[CatalystRecommendationResponse] = Field(default_factory=list)
+    catalyst_recommendations: list[CatalystRecommendationResponse] = Field(
+        default_factory=list
+    )
     blocking_barriers: list[EnergyBarrierResponse] = Field(default_factory=list)
     pathway: PathwayResultResponse | None = None
     recommendations: list[str] = Field(default_factory=list)

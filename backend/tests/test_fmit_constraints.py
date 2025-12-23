@@ -1,24 +1,20 @@
 """Tests for FMIT and faculty role constraints."""
 
-import pytest
 from datetime import date, timedelta
-from uuid import uuid4
 
-from app.scheduling.constraints.fmit import (
-    get_fmit_week_dates,
-    is_sun_thurs,
-    FMITWeekBlockingConstraint,
-    FMITMandatoryCallConstraint,
-    PostFMITRecoveryConstraint,
+from app.scheduling.constraints.base import (
+    SchedulingContext,
 )
 from app.scheduling.constraints.faculty_role import (
     FacultyRoleClinicConstraint,
     SMFacultyClinicConstraint,
 )
-from app.scheduling.constraints.base import (
-    ConstraintResult,
-    ConstraintViolation,
-    SchedulingContext,
+from app.scheduling.constraints.fmit import (
+    FMITMandatoryCallConstraint,
+    FMITWeekBlockingConstraint,
+    PostFMITRecoveryConstraint,
+    get_fmit_week_dates,
+    is_sun_thurs,
 )
 
 

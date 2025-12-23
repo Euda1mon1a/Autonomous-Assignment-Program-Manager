@@ -9,9 +9,10 @@ Provides API gateway patterns including:
 - Load balancing
 - Service discovery integration
 """
-from app.gateway.aggregator import ResponseAggregator, AggregationStrategy
-from app.gateway.proxy import ServiceProxy, ProxyConfig
-from app.gateway.router import DynamicRouter, RouteRule, RouteConfig
+
+from app.gateway.aggregator import AggregationStrategy, ResponseAggregator
+from app.gateway.proxy import ProxyConfig, ServiceProxy
+from app.gateway.router import DynamicRouter, RouteConfig, RouteRule
 from app.gateway.transformer import (
     RequestTransformer,
     ResponseTransformer,

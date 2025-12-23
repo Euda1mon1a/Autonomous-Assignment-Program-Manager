@@ -1,4 +1,5 @@
 """Built-in notification templates for the Residency Scheduler."""
+
 from app.notifications.templates.registry import TemplateVersion, get_template_registry
 
 

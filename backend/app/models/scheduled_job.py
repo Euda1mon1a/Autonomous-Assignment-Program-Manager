@@ -1,9 +1,9 @@
 """Scheduled job model for job scheduler."""
+
 import uuid
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
-from sqlalchemy.dialects.postgresql import JSONB
 
 from app.db.base import Base
 from app.db.types import GUID, JSONType
@@ -52,7 +52,9 @@ class ScheduledJob(Base):
     enabled = Column(Boolean, default=True, index=True)
     description = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     created_by = Column(String(255), nullable=True)
 
     def __repr__(self):

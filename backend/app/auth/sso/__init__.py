@@ -6,9 +6,9 @@ Provides enterprise SSO authentication via:
 - OAuth2/OpenID Connect (OIDC)
 """
 
-from app.auth.sso.config import SSOConfig, SAMLConfig, OAuth2Config
-from app.auth.sso.saml_provider import SAMLProvider
+from app.auth.sso.config import OAuth2Config, SAMLConfig, SSOConfig
 from app.auth.sso.oauth2_provider import OAuth2Provider
+from app.auth.sso.saml_provider import SAMLProvider
 
 __all__ = [
     "SSOConfig",
