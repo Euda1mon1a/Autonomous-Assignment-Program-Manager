@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Guidelines for Autonomous Claude Work
 
-> **Last Updated:** 2025-12-18
+> **Last Updated:** 2025-12-23
 > **Purpose:** Guidelines for autonomous AI-assisted development on the Residency Scheduler project
 
 ---
@@ -649,11 +649,22 @@ GET some_key
 
 These rules apply to Claude Code, Codex, and any AI agent working in this repo.
 
+> **Full Documentation:**
+> - [AI Rules of Engagement](docs/development/AI_RULES_OF_ENGAGEMENT.md) - Complete rules with environment detection
+> - [AI Interface Guide](docs/admin-manual/ai-interface-guide.md) - Web vs CLI comparison for clinicians
+
 ### Core Policy
 
 - Full autonomy for local work is allowed.
 - All changes destined for GitHub must go through a PR.
 - No direct commits or pushes to `main` / `origin/main` unless explicitly approved.
+
+### Environment Detection (Required)
+
+Before making changes, AI agents MUST:
+1. **Identify interface type** (Web App = Suggestion Mode, CLI/IDE = Direct Edit Mode)
+2. **Check git context** (`git branch --show-current`, `git status`)
+3. **Adapt behavior** - If on main, create a feature branch first
 
 ### Branching and PR Workflow
 
@@ -851,7 +862,14 @@ When making changes, update relevant documentation:
   - `docs/api/`: API reference
   - `docs/user-guide/`: User documentation
   - `docs/development/`: Development guides
+  - `docs/admin-manual/`: Administrator guides (includes AI Interface Guide)
 - **HUMAN_TODO.md**: Tasks requiring human action
+
+### AI-Specific Documentation
+
+- **[AI Interface Guide](docs/admin-manual/ai-interface-guide.md)**: Web vs CLI comparison for clinician administrators
+- **[AI Rules of Engagement](docs/development/AI_RULES_OF_ENGAGEMENT.md)**: Complete rules with environment detection
+- **[Git Safe Sync Checklist](docs/development/CLAUDE_GIT_SAFE_SYNC_CHECKLIST.md)**: Daily sync procedures
 
 ### Code References
 
