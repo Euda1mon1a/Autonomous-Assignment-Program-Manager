@@ -96,11 +96,16 @@ Med students have different constraints than residents:
 
 ### Hard Constraints
 
-1. **ASM Wednesday AM**: All med students must have Wednesday AM blocked for ASM
-2. **Max 2 learners per physician**: Cannot assign >2 med students + residents to same attending
-3. **Procedures conflict**: Med student NOT in procedures if intern (PGY-1) is assigned there
-4. **Inprocessing**: First AM of block is unavailable (orientation)
-5. **Outprocessing**: Last Friday PM is unavailable (studying/checkout)
+1. **ASM Wednesday AM**: All learners have Wednesday AM blocked for ASM
+2. **Wednesday PM Didactics**: Same afternoon didactics as residents
+3. **4th Wednesday Inverted**: On the 4th Wednesday of the block, schedule is inverted (TBD: AM/PM swap?)
+4. **Max 2 learners per physician**: Any attending or PGY-2/3 resident can supervise max 2 learners
+5. **FM Interns cannot supervise**: PGY-1 FM interns get 0 learners assigned to them
+6. **Procedures conflict**: Learner NOT in procedures if FM intern (PGY-1) is assigned there
+7. **Inprocessing**: First AM of block is unavailable (orientation)
+8. **Outprocessing**: Last Friday PM is unavailable (studying/checkout)
+9. **Weekends**: Learners only work weekends during FMIT week (follows resident schedule)
+10. **Night coverage**: Only FMIT Thursday overnight - no separate night float rotations
 
 ### Soft Constraints
 
@@ -110,27 +115,48 @@ Med students have different constraints than residents:
 
 ---
 
-## 7 Template Design
+## Learner Track System
 
-Need 7 distinct rotation templates for up to 7 concurrent med students. Templates should be **staggered** to:
+### Concept: Generic Tracks
 
-1. Minimize conflicts (not all in same clinic/procedure at once)
-2. Maximize exposure (each student works with different attendings/residents)
-3. Distribute FMIT weeks across the block
+Instead of creating templates tied to specific people, use **7 generic learner tracks** that actual learners get assigned to:
 
-### Proposed Template Staggering
+```
+Track 1  ──→  [Block assignments for Track 1]  ──→  "Jane Doe (MS3)" assigned to Track 1
+Track 2  ──→  [Block assignments for Track 2]  ──→  "John Smith (TY)" assigned to Track 2
+...
+Track 7  ──→  [Block assignments for Track 7]  ──→  (unassigned)
+```
 
-| Template | FMIT Week | Mon AM | Mon PM | Tue AM | Tue PM | Wed AM | Wed PM | Thu AM | Thu PM | Fri AM | Fri PM |
-|----------|-----------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|
-| MS-1 | Week 1 | Varies by FMIT week | | | | ASM | | | | | |
-| MS-2 | Week 2 | | | | | ASM | | | | | |
-| MS-3 | Week 3 | | | | | ASM | | | | | |
-| MS-4 | Week 4 | | | | | ASM | | | | | |
-| MS-5 | Week 1 | Offset from MS-1 | | | | ASM | | | | | |
-| MS-6 | Week 2 | Offset from MS-2 | | | | ASM | | | | | |
-| MS-7 | Week 3 | Offset from MS-3 | | | | ASM | | | | | |
+### Backend Requirements
 
-> **TODO**: Define specific half-day assignments for each template based on clinic capacity and attending availability.
+1. **Track entity**: `LearnerTrack` with ID 1-7 (or A-G)
+2. **Track schedule**: Each track has block assignments (clinic pairings, FMIT week, etc.)
+3. **Person assignment**: Assign actual learner (Person) to a track for a date range
+4. **Add/remove flexibility**:
+   - Can add new block assignments to a track
+   - Can remove block assignments (with warning: "This will affect assigned learners")
+
+### Frontend GUI Workflow
+
+1. Coordinator views Track 1's schedule for Block 5
+2. Adds/modifies half-day assignments (pair with Dr. Smith AM, procedures PM, etc.)
+3. Assigns "Jane Doe" to Track 1 for Block 5-6 date range
+4. Jane sees her schedule populated from Track 1
+
+### Staggered FMIT Distribution
+
+| Track | FMIT Week | Notes |
+|-------|-----------|-------|
+| Track 1 | Week 1 | |
+| Track 2 | Week 2 | |
+| Track 3 | Week 3 | |
+| Track 4 | Week 4 | |
+| Track 5 | Week 1 | Offset clinic assignments from Track 1 |
+| Track 6 | Week 2 | Offset clinic assignments from Track 2 |
+| Track 7 | Week 3 | Offset clinic assignments from Track 3 |
+
+> **Note**: TY/PSYCH interns use same tracks but skip FMIT week (substitute with clinic/procedures).
 
 ---
 
@@ -200,36 +226,94 @@ class LearnerAssignment(Base):
     )
 ```
 
-### Rotation Templates
+### Learner Track Model (NEW)
 
-Create 7 new templates:
+Generic tracks that learners get assigned to:
 
 ```python
-MED_STUDENT_TEMPLATES = [
-    {"name": "Med Student Template 1", "abbreviation": "MS-1", "activity_type": "med_student"},
-    {"name": "Med Student Template 2", "abbreviation": "MS-2", "activity_type": "med_student"},
-    # ... etc
-]
+class LearnerTrack(Base):
+    """
+    A generic learner track (1-7) that actual learners are assigned to.
+
+    Tracks have their own schedule templates. When a learner is assigned
+    to a track, they inherit that track's schedule for their rotation period.
+    """
+    __tablename__ = "learner_tracks"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    track_number = Column(Integer, nullable=False, unique=True)  # 1-7
+    name = Column(String(50))  # "Track 1" or "Track A" - display name
+
+    # Default FMIT week for this track (1-4), null for TY/PSYCH tracks
+    default_fmit_week = Column(Integer)
+
+    # Relationships
+    assignments = relationship("LearnerTrackAssignment", back_populates="track")
+    learner_assignments = relationship("LearnerToTrack", back_populates="track")
+
+
+class LearnerToTrack(Base):
+    """
+    Assigns a specific learner (Person) to a track for a date range.
+    """
+    __tablename__ = "learner_to_tracks"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    learner_id = Column(GUID(), ForeignKey("people.id"), nullable=False)
+    track_id = Column(GUID(), ForeignKey("learner_tracks.id"), nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+
+    # Override FMIT requirement (False for TY/PSYCH even on MS track)
+    requires_fmit = Column(Boolean, default=True)
+
+    # Relationships
+    learner = relationship("Person")
+    track = relationship("LearnerTrack", back_populates="learner_assignments")
 ```
 
 ---
 
 ## Supervision Tracking
 
+### Supervision Rules
+
+| Supervisor Type | Max Learners | Notes |
+|-----------------|--------------|-------|
+| Attending (any) | 2 | Can supervise MS, TY, PSYCH |
+| PGY-2/PGY-3 Resident | 2 | Can supervise, but prefer attendings |
+| PGY-1 FM Intern | **0** | Cannot supervise any learners |
+
 ### Learner Counting
 
-When assigning a med student to a clinic session, count total learners with that attending:
+When assigning a learner to a clinic session, validate supervisor capacity:
 
 ```python
-def count_learners_with_attending(block_id: UUID, attending_id: UUID) -> int:
-    """Count residents + med students assigned to this attending in this block."""
-    # Query assignments where supervising_person_id == attending_id
-    # Sum residents + med_students
-    pass
+def can_supervise_learners(person: Person) -> bool:
+    """Check if this person can supervise learners."""
+    if person.is_faculty:
+        return True
+    if person.is_resident and person.pgy_level >= 2:
+        return True  # PGY-2/3 can supervise
+    return False  # PGY-1 cannot supervise
 
-def can_assign_med_student(block_id: UUID, attending_id: UUID) -> bool:
-    """Check if attending has capacity for another learner."""
-    return count_learners_with_attending(block_id, attending_id) < 2
+
+def count_learners_with_supervisor(block_id: UUID, supervisor_id: UUID) -> int:
+    """Count learners currently assigned to this supervisor in this block."""
+    return db.query(LearnerAssignment).filter(
+        LearnerAssignment.parent_assignment.has(
+            Assignment.block_id == block_id,
+            Assignment.person_id == supervisor_id
+        )
+    ).count()
+
+
+def can_assign_learner(block_id: UUID, supervisor_id: UUID) -> bool:
+    """Check if supervisor has capacity for another learner."""
+    supervisor = get_person(supervisor_id)
+    if not can_supervise_learners(supervisor):
+        return False
+    return count_learners_with_supervisor(block_id, supervisor_id) < 2
 ```
 
 ---
@@ -299,10 +383,10 @@ def check_procedures_conflict(block_id: UUID, med_student_id: UUID) -> bool:
 
 ## Open Questions
 
-1. **Clinic locations**: Which specific clinics do med students rotate through? Same as residents?
-2. **Template details**: What are the specific half-day assignments for non-FMIT, non-ASM slots?
-3. **Weekend coverage**: Do med students ever work weekends?
-4. **Night float**: Do med students participate in night float, or just FMIT overnight?
+1. ~~**Weekend coverage**: Do med students ever work weekends?~~ ✅ Only during FMIT week
+2. ~~**Night float**: Do med students participate in night float, or just FMIT overnight?~~ ✅ FMIT overnight only
+3. **4th Wednesday "inverted"**: What exactly is inverted? AM/PM swap? Different activities?
+4. **Clinic locations**: Which specific clinics do med students rotate through? Same as residents?
 5. **Leave requests**: Can med students request time off during the 4-week block?
 
 ---
