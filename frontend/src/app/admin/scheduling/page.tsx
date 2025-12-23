@@ -135,6 +135,7 @@ export default function AdminSchedulingPage() {
   const createRollback = useCreateRollbackPoint();
   const revertRollback = useRevertToRollbackPoint();
   const triggerSync = useTriggerSync();
+  const unlockAssignment = useUnlockAssignment();
 
   const handleConfigChange = useCallback((updates: Partial<RunConfiguration>) => {
     setConfiguration(prev => ({ ...prev, ...updates }));
@@ -282,9 +283,11 @@ export default function AdminSchedulingPage() {
               dryRun: false,
             })}
             onSync={() => triggerSync.mutate()}
+            onUnlock={(lockId) => unlockAssignment.mutate(lockId)}
             isCreatingRollback={createRollback.isPending}
             isReverting={revertRollback.isPending}
             isSyncing={triggerSync.isPending}
+            isUnlocking={unlockAssignment.isPending}
           />
         )}
       </main>
@@ -1273,9 +1276,11 @@ function OverridesPanel({
   onCreateRollback,
   onRevert,
   onSync,
+  onUnlock,
   isCreatingRollback,
   isReverting,
   isSyncing,
+  isUnlocking,
 }: {
   locks: { id: string; personName: string; blockDate: string; rotationName: string; reason: string }[];
   holidays: { id: string; date: string; name: string; type: string }[];
@@ -1284,9 +1289,11 @@ function OverridesPanel({
   onCreateRollback: (description: string) => void;
   onRevert: (pointId: string, reason: string) => void;
   onSync: () => void;
+  onUnlock: (lockId: string) => void;
   isCreatingRollback: boolean;
   isReverting: boolean;
   isSyncing: boolean;
+  isUnlocking: boolean;
 }) {
   const [rollbackDescription, setRollbackDescription] = useState('');
   const [revertPointId, setRevertPointId] = useState('');
@@ -1316,7 +1323,12 @@ function OverridesPanel({
                     {lock.rotationName} • {lock.blockDate}
                   </div>
                 </div>
-                <button className="p-1.5 text-slate-400 hover:text-amber-400 transition-colors">
+                <button
+                  className="p-1.5 text-slate-400 hover:text-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => onUnlock(lock.id)}
+                  disabled={isUnlocking}
+                  aria-label={`Unlock assignment for ${lock.personName}`}
+                >
                   <Unlock className="w-4 h-4" />
                 </button>
               </div>
