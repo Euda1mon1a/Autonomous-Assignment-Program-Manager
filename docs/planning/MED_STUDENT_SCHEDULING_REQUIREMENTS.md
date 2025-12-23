@@ -386,8 +386,8 @@ def check_procedures_conflict(block_id: UUID, med_student_id: UUID) -> bool:
 1. ~~**Weekend coverage**: Do med students ever work weekends?~~ ✅ Only during FMIT week
 2. ~~**Night float**: Do med students participate in night float, or just FMIT overnight?~~ ✅ FMIT overnight only
 3. ~~**4th Wednesday "inverted"**: What exactly is inverted?~~ ✅ No ASM, Lecture AM, Advising PM
-4. **Clinic locations**: Which specific clinics do med students rotate through? Same as residents?
-5. **Leave requests**: Can med students request time off during the 4-week block?
+4. ~~**Clinic locations**: Which specific clinics do med students rotate through?~~ ✅ Single clinic only
+5. ~~**Leave requests**: Can med students request time off?~~ ✅ N/A - not tracked
 
 ---
 
