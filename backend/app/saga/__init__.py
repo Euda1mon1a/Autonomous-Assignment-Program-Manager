@@ -166,7 +166,7 @@ Database Models:
 - `SagaEvent`: Event log for monitoring and debugging
 
 See also:
-- docs/ARCHITECTURE.md for system design
+- ARCHITECTURE.md for system design
 - docs/SAGA_PATTERN.md for detailed documentation
 """
 
