@@ -10,6 +10,12 @@ repos:
         files: ^backend/
   - repo: local
     hooks:
+      - id: frontend-typecheck
+        name: TypeScript type-check (frontend)
+        entry: bash -c "cd frontend && npx tsc --noEmit"
+        language: system
+        pass_filenames: false
+        files: ^frontend/.*\.(ts|tsx)$
       - id: eslint
         name: eslint (frontend)
         entry: bash -c "cd frontend && npm run lint:fix"
