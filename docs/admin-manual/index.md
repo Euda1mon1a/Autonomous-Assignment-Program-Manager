@@ -110,6 +110,47 @@ docker-compose logs --tail=100 backend
 
 ---
 
+## Operational Lessons Learned
+
+Use these safeguards to avoid schedule loss and unexpected changes:
+
+- Regenerate schedules only when necessary and confirm the date range.
+- Preserve manual overrides with a written reason and timestamp.
+- Treat emergency closures as manual decisions (do not auto-cancel clinics).
+- Prefer draft runs before overwriting a stable schedule.
+- Document any exception to coverage or supervision rules.
+- **Split terminal is not shared context**: an AI session cannot see another AI's terminal state; coordinate explicitly.
+
+---
+
+## "main" and "origin" Explained (Clinician-Friendly)
+
+If you ever follow terminal steps, you may see "main" and "origin." They are just names:
+
+- **main**: the official, approved version of the system (the source of truth).
+- **origin**: the remote copy of that official version (the GitHub server).
+
+Think of it like this:
+- **main** = the published policy binder.
+- **origin** = the same binder stored in a central, shared cabinet.
+
+If the system says "main and origin are aligned," your local copy matches the official version.
+
+---
+
+## Parallel AI Sessions (What “Split Terminal” Really Means)
+
+If you are running multiple AI tools (e.g., Claude Web and Codex), they do **not** share a live terminal. Each session sees only what is on disk when it runs its own commands.
+
+Practical guidance:
+
+- Assume AI sessions are **independent** unless you explicitly coordinate.
+- If two sessions are working on the same files, expect conflicts.
+- Always check `git status -sb` before and after AI runs.
+- Prefer one “driver” session at a time for changes that touch the same files.
+
+---
+
 ## Security Considerations
 
 !!! danger "Production Security"

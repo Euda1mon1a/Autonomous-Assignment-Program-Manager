@@ -408,6 +408,17 @@ The scheduler:
 - Check **Compliance** page for any violations
 - Export if needed
 
+### Lessons Learned (Operational Safeguards)
+
+These practices help prevent schedule loss or unexpected changes:
+
+- **Avoid overwriting a good schedule**: Only regenerate when necessary, and confirm the date range before running.
+- **Record manual overrides**: When you change assignments by hand, add a reason so the change is auditable.
+- **Preserve manual decisions**: Use "locked" or "protected" assignments when available to prevent automatic replacements.
+- **Emergency closures are manual**: Unexpected holidays (e.g., presidential orders) should be handled explicitly; do not assume clinic is canceled by default.
+- **Double-check algorithm choice**: Faster modes are useful for drafts, but may not meet all constraints.
+- **Document anomalies**: If coverage cannot be met, record the exception and why.
+
 ---
 
 ## Exporting Data
