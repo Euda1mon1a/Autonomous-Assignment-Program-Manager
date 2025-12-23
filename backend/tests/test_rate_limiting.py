@@ -382,9 +382,10 @@ class TestRateLimitingOnAuthEndpoints:
             )
             # Should get 201 (created) or 400 (validation error) not 429
             if response.status_code != 429:
-                assert response.status_code in [201, 400], (
-                    f"Attempt {i + 1} should return 201 or 400"
-                )
+                assert response.status_code in [
+                    201,
+                    400,
+                ], f"Attempt {i + 1} should return 201 or 400"
 
         # Next request might be rate limited
         response = client.post(

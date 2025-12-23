@@ -166,9 +166,9 @@ class Mutation:
         db_assignment = DBAssignment(
             block_id=UUID(input.block_id),
             person_id=UUID(input.person_id),
-            rotation_template_id=UUID(input.rotation_template_id)
-            if input.rotation_template_id
-            else None,
+            rotation_template_id=(
+                UUID(input.rotation_template_id) if input.rotation_template_id else None
+            ),
             role=input.role.value,
             activity_override=input.activity_override,
             notes=input.notes,
@@ -286,9 +286,11 @@ class Mutation:
                 db_assignment = DBAssignment(
                     block_id=UUID(input.block_id),
                     person_id=UUID(input.person_id),
-                    rotation_template_id=UUID(input.rotation_template_id)
-                    if input.rotation_template_id
-                    else None,
+                    rotation_template_id=(
+                        UUID(input.rotation_template_id)
+                        if input.rotation_template_id
+                        else None
+                    ),
                     role=input.role.value,
                     activity_override=input.activity_override,
                     notes=input.notes,

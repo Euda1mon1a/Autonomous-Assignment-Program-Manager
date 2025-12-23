@@ -97,9 +97,9 @@ def persist_health_check(db: Session, report, metrics_snapshot: dict = None):
         utilization_level=report.utilization.level.value,
         buffer_remaining=report.utilization.buffer_remaining,
         defense_level=report.defense_level.name if report.defense_level else None,
-        load_shedding_level=report.load_shedding_level.name
-        if report.load_shedding_level
-        else None,
+        load_shedding_level=(
+            report.load_shedding_level.name if report.load_shedding_level else None
+        ),
         n1_pass=report.n1_pass,
         n2_pass=report.n2_pass,
         phase_transition_risk=report.phase_transition_risk,
@@ -387,19 +387,19 @@ async def list_fallbacks(
                 description=_get_scenario_description(scenario),
                 is_active=is_active,
                 is_precomputed=fallback_schedule is not None,
-                assignments_count=len(fallback_schedule.assignments)
-                if fallback_schedule
-                else None,
-                coverage_rate=fallback_schedule.coverage_rate
-                if fallback_schedule
-                else None,
-                services_reduced=fallback_schedule.services_reduced
-                if fallback_schedule
-                else [],
+                assignments_count=(
+                    len(fallback_schedule.assignments) if fallback_schedule else None
+                ),
+                coverage_rate=(
+                    fallback_schedule.coverage_rate if fallback_schedule else None
+                ),
+                services_reduced=(
+                    fallback_schedule.services_reduced if fallback_schedule else []
+                ),
                 assumptions=fallback_schedule.assumptions if fallback_schedule else [],
-                activation_count=fallback_schedule.activation_count
-                if fallback_schedule
-                else 0,
+                activation_count=(
+                    fallback_schedule.activation_count if fallback_schedule else 0
+                ),
             )
         )
 
@@ -699,11 +699,11 @@ async def get_vulnerability_report(
         period_start=datetime.combine(start_date, datetime.min.time()),
         period_end=datetime.combine(end_date, datetime.min.time()),
         faculty_count=len(result.n1_simulations),
-        block_count=len(
-            set(b for s in result.n1_simulations for b in s.uncovered_blocks)
-        )
-        if result.n1_simulations
-        else 0,
+        block_count=(
+            len(set(b for s in result.n1_simulations for b in s.uncovered_blocks))
+            if result.n1_simulations
+            else 0
+        ),
         n1_pass=result.n1_pass,
         n2_pass=result.n2_pass,
         phase_transition_risk=result.phase_transition_risk,
@@ -881,9 +881,9 @@ async def get_health_check_history(
                 overall_status=OverallStatus(item.overall_status),
                 utilization_rate=item.utilization_rate,
                 utilization_level=UtilizationLevel(item.utilization_level),
-                defense_level=DefenseLevel(item.defense_level)
-                if item.defense_level
-                else None,
+                defense_level=(
+                    DefenseLevel(item.defense_level) if item.defense_level else None
+                ),
                 n1_pass=item.n1_pass,
                 n2_pass=item.n2_pass,
                 crisis_mode=item.crisis_mode,
@@ -982,12 +982,8 @@ async def get_homeostasis_status(
 
     Returns status of all feedback loops and detected positive feedback risks.
     """
-    from app.schemas.resilience import (
-        AllostasisState as SchemaAllostasisState,
-    )
-    from app.schemas.resilience import (
-        DeviationSeverity as SchemaDeviationSeverity,
-    )
+    from app.schemas.resilience import AllostasisState as SchemaAllostasisState
+    from app.schemas.resilience import DeviationSeverity as SchemaDeviationSeverity
     from app.schemas.resilience import (
         FeedbackLoopStatus,
         HomeostasisStatusResponse,
@@ -1144,18 +1140,12 @@ async def list_zones(
     """
     List all scheduling zones and their current status.
     """
-    from app.schemas.resilience import (
-        ContainmentLevel as SchemaContainment,
-    )
+    from app.schemas.resilience import ContainmentLevel as SchemaContainment
     from app.schemas.resilience import (
         ZoneResponse,
     )
-    from app.schemas.resilience import (
-        ZoneStatus as SchemaZoneStatus,
-    )
-    from app.schemas.resilience import (
-        ZoneType as SchemaZoneType,
-    )
+    from app.schemas.resilience import ZoneStatus as SchemaZoneStatus
+    from app.schemas.resilience import ZoneType as SchemaZoneType
 
     service = get_resilience_service(db)
     zones = []
@@ -1194,18 +1184,10 @@ async def get_blast_radius_report(
     from app.schemas.resilience import (
         BlastRadiusReportResponse,
     )
-    from app.schemas.resilience import (
-        ContainmentLevel as SchemaContainment,
-    )
-    from app.schemas.resilience import (
-        ZoneHealthReport as SchemaZoneHealth,
-    )
-    from app.schemas.resilience import (
-        ZoneStatus as SchemaZoneStatus,
-    )
-    from app.schemas.resilience import (
-        ZoneType as SchemaZoneType,
-    )
+    from app.schemas.resilience import ContainmentLevel as SchemaContainment
+    from app.schemas.resilience import ZoneHealthReport as SchemaZoneHealth
+    from app.schemas.resilience import ZoneStatus as SchemaZoneStatus
+    from app.schemas.resilience import ZoneType as SchemaZoneType
 
     service = get_resilience_service(db)
     report = service.check_all_zones()
@@ -1426,22 +1408,16 @@ async def get_equilibrium_report(
 
     Shows current stresses, compensations, and sustainability analysis.
     """
-    from app.schemas.resilience import (
-        CompensationResponse as SchemaCompResponse,
-    )
-    from app.schemas.resilience import (
-        CompensationType as SchemaCompType,
-    )
+    from app.schemas.resilience import CompensationResponse as SchemaCompResponse
+    from app.schemas.resilience import CompensationType as SchemaCompType
     from app.schemas.resilience import (
         EquilibriumReportResponse,
+    )
+    from app.schemas.resilience import EquilibriumState as SchemaEquilState
+    from app.schemas.resilience import (
         StressResponse,
     )
-    from app.schemas.resilience import (
-        EquilibriumState as SchemaEquilState,
-    )
-    from app.schemas.resilience import (
-        StressType as SchemaStressType,
-    )
+    from app.schemas.resilience import StressType as SchemaStressType
 
     service = get_resilience_service(db)
     report = service.get_equilibrium_report()
@@ -1752,15 +1728,9 @@ async def get_tier2_status(
 
     Returns summary of homeostasis, blast radius, and equilibrium status.
     """
-    from app.schemas.resilience import (
-        AllostasisState as SchemaAllostasisState,
-    )
-    from app.schemas.resilience import (
-        ContainmentLevel as SchemaContainment,
-    )
-    from app.schemas.resilience import (
-        EquilibriumState as SchemaEquilState,
-    )
+    from app.schemas.resilience import AllostasisState as SchemaAllostasisState
+    from app.schemas.resilience import ContainmentLevel as SchemaContainment
+    from app.schemas.resilience import EquilibriumState as SchemaEquilState
     from app.schemas.resilience import (
         Tier2StatusResponse,
     )
@@ -1973,9 +1943,9 @@ async def get_decision_queue(
         "by_category": status.by_category,
         "urgent_count": status.urgent_count,
         "can_auto_decide": status.can_auto_decide,
-        "oldest_pending": status.oldest_pending.isoformat()
-        if status.oldest_pending
-        else None,
+        "oldest_pending": (
+            status.oldest_pending.isoformat() if status.oldest_pending else None
+        ),
         "estimated_cognitive_cost": status.estimated_cognitive_cost,
         "recommendations": status.recommendations,
     }

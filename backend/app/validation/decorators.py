@@ -25,8 +25,9 @@ from .rules import ValidationRule
 def validate_request(
     query_rules: dict[str, list[ValidationRule]] | None = None,
     body_rules: dict[str, list[ValidationRule]] | None = None,
-    cross_field_validator: Callable[[dict[str, Any], ValidationContext], None]
-    | None = None,
+    cross_field_validator: (
+        Callable[[dict[str, Any], ValidationContext], None] | None
+    ) = None,
     locale: Locale = Locale.EN_US,
 ) -> Callable:
     """

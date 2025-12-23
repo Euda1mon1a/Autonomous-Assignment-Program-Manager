@@ -124,9 +124,9 @@ class DatabaseHealthCheck:
             # All checks passed
             return {
                 "status": "healthy",
-                "database_version": db_version.split(",")[0]
-                if db_version
-                else "unknown",
+                "database_version": (
+                    db_version.split(",")[0] if db_version else "unknown"
+                ),
                 "connection_pool": pool_status,
                 "tables_accessible": table_check["accessible"],
                 "tables_checked": table_check["checked"],
@@ -222,12 +222,14 @@ class DatabaseHealthCheck:
 
             # Create a temporary table for health checks
             db.execute(
-                text("""
+                text(
+                    """
                 CREATE TABLE IF NOT EXISTS health_check_temp (
                     id SERIAL PRIMARY KEY,
                     checked_at TIMESTAMP DEFAULT NOW()
                 )
-            """)
+            """
+                )
             )
 
             # Insert test record
@@ -239,14 +241,16 @@ class DatabaseHealthCheck:
 
             # Cleanup old records (keep only last 10)
             db.execute(
-                text("""
+                text(
+                    """
                 DELETE FROM health_check_temp
                 WHERE id NOT IN (
                     SELECT id FROM health_check_temp
                     ORDER BY checked_at DESC
                     LIMIT 10
                 )
-            """)
+            """
+                )
             )
 
             db.commit()

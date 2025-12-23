@@ -413,9 +413,9 @@ async def get_tournament_results(
             rankings.append(
                 TournamentRanking(
                     rank=r.get("rank", 0),
-                    strategy_id=UUID(r["strategy_id"])
-                    if r.get("strategy_id")
-                    else None,
+                    strategy_id=(
+                        UUID(r["strategy_id"]) if r.get("strategy_id") else None
+                    ),
                     strategy_name=r.get("strategy_name", "Unknown"),
                     total_score=r.get("total_score", 0),
                     average_score=r.get("average_score", 0),
@@ -435,10 +435,9 @@ async def get_tournament_results(
         payoff_matrix=tournament.payoff_matrix or {},
         total_matches=tournament.total_matches or 0,
         total_turns=(tournament.total_matches or 0) * tournament.turns_per_match,
-        average_cooperation_rate=sum(r.cooperation_rate for r in rankings)
-        / len(rankings)
-        if rankings
-        else 0,
+        average_cooperation_rate=(
+            sum(r.cooperation_rate for r in rankings) / len(rankings) if rankings else 0
+        ),
     )
 
 
@@ -516,7 +515,7 @@ async def create_evolution(
     service = get_game_theory_service(db)
 
     # Validate strategies exist
-    for sid_str in request.initial_composition.keys():
+    for sid_str in request.initial_composition:
         if not service.get_strategy(UUID(sid_str)):
             raise HTTPException(status_code=400, detail=f"Strategy {sid_str} not found")
 

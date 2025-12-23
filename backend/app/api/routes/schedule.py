@@ -97,9 +97,11 @@ def generate_schedule(
         "end_date": request.end_date.isoformat(),
         "algorithm": request.algorithm.value,
         "pgy_levels": request.pgy_levels,
-        "rotation_template_ids": [str(x) for x in request.rotation_template_ids]
-        if request.rotation_template_ids
-        else None,
+        "rotation_template_ids": (
+            [str(x) for x in request.rotation_template_ids]
+            if request.rotation_template_ids
+            else None
+        ),
         "timeout_seconds": request.timeout_seconds,
     }
 
@@ -538,12 +540,16 @@ def analyze_imported_schedules(
     # Build response
     return ImportAnalysisResponse(
         success=True,
-        fmit_schedule=ScheduleSummary(**result["fmit_schedule"])
-        if result.get("fmit_schedule")
-        else None,
-        clinic_schedule=ScheduleSummary(**result["clinic_schedule"])
-        if result.get("clinic_schedule")
-        else None,
+        fmit_schedule=(
+            ScheduleSummary(**result["fmit_schedule"])
+            if result.get("fmit_schedule")
+            else None
+        ),
+        clinic_schedule=(
+            ScheduleSummary(**result["clinic_schedule"])
+            if result.get("clinic_schedule")
+            else None
+        ),
         conflicts=[ConflictItem(**c) for c in result.get("conflicts", [])],
         recommendations=[
             Recommendation(**r) for r in result.get("recommendations", [])
@@ -796,9 +802,9 @@ def find_swap_candidates(
             SwapCandidateResponse(
                 faculty=candidate.faculty,
                 can_take_week=candidate.can_take_week.isoformat(),
-                gives_week=candidate.gives_week.isoformat()
-                if candidate.gives_week
-                else None,
+                gives_week=(
+                    candidate.gives_week.isoformat() if candidate.gives_week else None
+                ),
                 back_to_back_ok=candidate.back_to_back_ok,
                 external_conflict=candidate.external_conflict,
                 flexibility=candidate.flexibility,

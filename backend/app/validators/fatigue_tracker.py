@@ -216,9 +216,12 @@ class FatigueTracker:
             trend_direction = (
                 "INCREASING"
                 if predictions[-1]["fatigue_score"] > predictions[0]["fatigue_score"]
-                else "DECREASING"
-                if predictions[-1]["fatigue_score"] < predictions[0]["fatigue_score"]
-                else "STABLE"
+                else (
+                    "DECREASING"
+                    if predictions[-1]["fatigue_score"]
+                    < predictions[0]["fatigue_score"]
+                    else "STABLE"
+                )
             )
         else:
             trend_direction = "STABLE"

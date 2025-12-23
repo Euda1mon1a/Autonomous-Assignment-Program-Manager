@@ -93,9 +93,9 @@ def test_80_hour_rule_catches_all_violations(daily_hours):
 
     # Property: constraint should find violation if one exists
     if has_violation:
-        assert not result.satisfied or len(result.violations) > 0, (
-            f"Constraint missed violation in window with {weekly_avg} hours/week avg"
-        )
+        assert (
+            not result.satisfied or len(result.violations) > 0
+        ), f"Constraint missed violation in window with {weekly_avg} hours/week avg"
 
 
 @given(st.lists(st.booleans(), min_size=7, max_size=14))
@@ -147,6 +147,6 @@ def test_one_in_seven_rule_property(work_days):
     result = constraint.validate(assignments, context)
 
     if has_violation:
-        assert not result.satisfied or len(result.violations) > 0, (
-            f"Constraint missed {max_consecutive} consecutive work days"
-        )
+        assert (
+            not result.satisfied or len(result.violations) > 0
+        ), f"Constraint missed {max_consecutive} consecutive work days"

@@ -25,7 +25,12 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
-from app.schemas.schedule import NFPCAudit, NFPCAuditViolation, ValidationResult, Violation
+from app.schemas.schedule import (
+    NFPCAudit,
+    NFPCAuditViolation,
+    ValidationResult,
+    Violation,
+)
 
 logger = get_logger(__name__)
 
@@ -214,9 +219,11 @@ class SchedulingEngine:
                         Violation(
                             type="NF_PC_COVERAGE",
                             severity="HIGH",
-                            person_id=UUID(nf_violation["person_id"])
-                            if nf_violation.get("person_id")
-                            else None,
+                            person_id=(
+                                UUID(nf_violation["person_id"])
+                                if nf_violation.get("person_id")
+                                else None
+                            ),
                             person_name=nf_violation.get("person_name"),
                             message=(
                                 "Missing Post-Call coverage after Night Float day"
@@ -257,14 +264,16 @@ class SchedulingEngine:
                         NFPCAuditViolation(
                             person_id=person_uuid,
                             person_name=v.get("person_name"),
-                            nf_date=date.fromisoformat(v["nf_date"])
-                            if isinstance(v.get("nf_date"), str)
-                            else v.get("nf_date"),
-                            pc_required_date=date.fromisoformat(
-                                v["pc_required_date"]
-                            )
-                            if isinstance(v.get("pc_required_date"), str)
-                            else v.get("pc_required_date"),
+                            nf_date=(
+                                date.fromisoformat(v["nf_date"])
+                                if isinstance(v.get("nf_date"), str)
+                                else v.get("nf_date")
+                            ),
+                            pc_required_date=(
+                                date.fromisoformat(v["pc_required_date"])
+                                if isinstance(v.get("pc_required_date"), str)
+                                else v.get("pc_required_date")
+                            ),
                             missing_am_pc=v.get("missing_am_pc", False),
                             missing_pm_pc=v.get("missing_pm_pc", False),
                         )
@@ -306,29 +315,37 @@ class SchedulingEngine:
                 "solver_stats": solver_result.statistics,
                 "nf_pc_audit": nf_pc_audit_model,
                 "resilience": {
-                    "pre_generation_status": self._pre_health_report.overall_status
-                    if self._pre_health_report
-                    else None,
-                    "post_generation_status": post_health_report.overall_status
-                    if post_health_report
-                    else None,
-                    "utilization_rate": post_health_report.utilization.utilization_rate
-                    if post_health_report
-                    else None,
-                    "n1_compliant": post_health_report.n1_pass
-                    if post_health_report
-                    else None,
-                    "n2_compliant": post_health_report.n2_pass
-                    if post_health_report
-                    else None,
+                    "pre_generation_status": (
+                        self._pre_health_report.overall_status
+                        if self._pre_health_report
+                        else None
+                    ),
+                    "post_generation_status": (
+                        post_health_report.overall_status
+                        if post_health_report
+                        else None
+                    ),
+                    "utilization_rate": (
+                        post_health_report.utilization.utilization_rate
+                        if post_health_report
+                        else None
+                    ),
+                    "n1_compliant": (
+                        post_health_report.n1_pass if post_health_report else None
+                    ),
+                    "n2_compliant": (
+                        post_health_report.n2_pass if post_health_report else None
+                    ),
                     "warnings": resilience_warnings,
-                    "immediate_actions": post_health_report.immediate_actions
-                    if post_health_report
-                    else [],
+                    "immediate_actions": (
+                        post_health_report.immediate_actions
+                        if post_health_report
+                        else []
+                    ),
                     # New: Include resilience constraint activity
-                    "resilience_constraints_active": context.has_resilience_data()
-                    if context
-                    else False,
+                    "resilience_constraints_active": (
+                        context.has_resilience_data() if context else False
+                    ),
                     "hub_faculty_count": len(context.hub_scores) if context else 0,
                 },
             }

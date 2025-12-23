@@ -23,9 +23,7 @@ from app.resilience.homeostasis import (
     HomeostasisStatus,
 )
 from app.resilience.service import ResilienceConfig, ResilienceService
-from app.schemas.resilience import (
-    AllostasisState as SchemaAllostasisState,
-)
+from app.schemas.resilience import AllostasisState as SchemaAllostasisState
 from app.schemas.resilience import (
     HomeostasisReport,
 )
@@ -235,9 +233,9 @@ class HomeostasisService:
             "trend": loop.get_trend(),
             "is_improving": loop.is_improving(),
             "total_corrections": loop.total_corrections,
-            "last_checked": loop.last_checked.isoformat()
-            if loop.last_checked
-            else None,
+            "last_checked": (
+                loop.last_checked.isoformat() if loop.last_checked else None
+            ),
         }
 
     def get_all_feedback_loops(self) -> list[dict]:

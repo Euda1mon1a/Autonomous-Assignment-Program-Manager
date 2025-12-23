@@ -253,9 +253,7 @@ class TestWorkloadAnalysis:
         weekend_assignments = (
             db.query(Assignment)
             .join(Block)
-            .filter(
-                Block.is_weekend == True  # noqa: E712
-            )
+            .filter(Block.is_weekend == True)  # noqa: E712
             .all()
         )
 

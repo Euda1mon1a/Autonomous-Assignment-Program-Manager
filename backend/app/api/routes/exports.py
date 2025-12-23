@@ -443,7 +443,9 @@ async def get_export_stats(
 
         # Count active jobs
         active_jobs_result = await db.execute(
-            select(func.count()).select_from(ExportJob).where(ExportJob.enabled == True)
+            select(func.count())
+            .select_from(ExportJob)
+            .where(ExportJob.enabled.is_(True))
         )
         active_jobs = active_jobs_result.scalar()
 
@@ -451,7 +453,7 @@ async def get_export_stats(
         scheduled_jobs_result = await db.execute(
             select(func.count())
             .select_from(ExportJob)
-            .where(ExportJob.enabled == True, ExportJob.schedule_enabled == True)
+            .where(ExportJob.enabled.is_(True), ExportJob.schedule_enabled.is_(True))
         )
         scheduled_jobs = scheduled_jobs_result.scalar()
 

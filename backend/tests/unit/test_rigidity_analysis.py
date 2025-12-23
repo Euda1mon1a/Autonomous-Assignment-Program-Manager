@@ -255,9 +255,7 @@ class TestStressedStructure:
             {"id": "D", "type": "shift"},
         ]
         # Create complete graph: all pairs connected
-        constraints = [
-            {"type": "c1", "tasks": ["A", "B", "C", "D"]}  # Creates 6 edges
-        ]
+        constraints = [{"type": "c1", "tasks": ["A", "B", "C", "D"]}]  # Creates 6 edges
         graph = analyzer.build_constraint_graph(tasks=tasks, constraints=constraints)
         result = analyzer.run_pebble_game(graph)
 
@@ -557,9 +555,7 @@ class TestEdgeCases:
         """Test constraint referencing non-existent task is ignored."""
         analyzer = ConstraintRigidityAnalyzer()
         tasks = [{"id": "A", "type": "shift"}]
-        constraints = [
-            {"type": "c1", "tasks": ["A", "Z"]}  # Z doesn't exist
-        ]
+        constraints = [{"type": "c1", "tasks": ["A", "Z"]}]  # Z doesn't exist
         graph = analyzer.build_constraint_graph(tasks=tasks, constraints=constraints)
 
         # Should only have node A, no edges
@@ -570,9 +566,7 @@ class TestEdgeCases:
         """Test constraint with only one task (no edge created)."""
         analyzer = ConstraintRigidityAnalyzer()
         tasks = [{"id": "A", "type": "shift"}, {"id": "B", "type": "shift"}]
-        constraints = [
-            {"type": "c1", "tasks": ["A"]}  # Only one task
-        ]
+        constraints = [{"type": "c1", "tasks": ["A"]}]  # Only one task
         graph = analyzer.build_constraint_graph(tasks=tasks, constraints=constraints)
 
         assert graph.number_of_nodes() == 2

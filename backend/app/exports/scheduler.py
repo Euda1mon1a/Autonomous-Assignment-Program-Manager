@@ -479,9 +479,9 @@ class ExportSchedulerService:
             row = {
                 "person_name": absence.person.name if absence.person else "Unknown",
                 "absence_type": absence.absence_type,
-                "start_date": absence.start_date.isoformat()
-                if absence.start_date
-                else None,
+                "start_date": (
+                    absence.start_date.isoformat() if absence.start_date else None
+                ),
                 "end_date": absence.end_date.isoformat() if absence.end_date else None,
                 "notes": absence.notes,
             }
@@ -532,12 +532,12 @@ class ExportSchedulerService:
         for assignment in assignments:
             row = {
                 "date": assignment.block.date.isoformat() if assignment.block else None,
-                "time_of_day": assignment.block.time_of_day
-                if assignment.block
-                else None,
-                "person_name": assignment.person.name
-                if assignment.person
-                else "Unknown",
+                "time_of_day": (
+                    assignment.block.time_of_day if assignment.block else None
+                ),
+                "person_name": (
+                    assignment.person.name if assignment.person else "Unknown"
+                ),
                 "person_type": assignment.person.type if assignment.person else None,
                 "role": assignment.role,
                 "activity": assignment.activity_name,
@@ -568,15 +568,19 @@ class ExportSchedulerService:
         for cert in certs:
             row = {
                 "person_name": cert.person.name if cert.person else "Unknown",
-                "certification_name": cert.certification_type.name
-                if cert.certification_type
-                else "Unknown",
-                "expiration_date": cert.expiration_date.isoformat()
-                if cert.expiration_date
-                else None,
-                "status": "Active"
-                if cert.expiration_date and cert.expiration_date > date.today()
-                else "Expired",
+                "certification_name": (
+                    cert.certification_type.name
+                    if cert.certification_type
+                    else "Unknown"
+                ),
+                "expiration_date": (
+                    cert.expiration_date.isoformat() if cert.expiration_date else None
+                ),
+                "status": (
+                    "Active"
+                    if cert.expiration_date and cert.expiration_date > date.today()
+                    else "Expired"
+                ),
             }
             if columns:
                 row = {k: v for k, v in row.items() if k in columns}
@@ -602,13 +606,13 @@ class ExportSchedulerService:
             row = {
                 "swap_type": swap.swap_type,
                 "status": swap.status,
-                "requested_date": swap.requested_date.isoformat()
-                if swap.requested_date
-                else None,
+                "requested_date": (
+                    swap.requested_date.isoformat() if swap.requested_date else None
+                ),
                 "created_at": swap.created_at.isoformat() if swap.created_at else None,
-                "executed_at": swap.executed_at.isoformat()
-                if swap.executed_at
-                else None,
+                "executed_at": (
+                    swap.executed_at.isoformat() if swap.executed_at else None
+                ),
             }
             if columns:
                 row = {k: v for k, v in row.items() if k in columns}

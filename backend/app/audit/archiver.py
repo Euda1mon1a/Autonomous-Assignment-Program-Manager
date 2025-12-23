@@ -359,7 +359,8 @@ class AuditArchiver:
         for table_name in version_tables:
             try:
                 # Query version table with transaction join
-                query = text(f"""
+                query = text(
+                    f"""
                     SELECT
                         v.id as entity_id,
                         v.transaction_id,
@@ -372,7 +373,8 @@ class AuditArchiver:
                     WHERE t.issued_at < :cutoff_date
                     ORDER BY t.issued_at ASC
                     LIMIT :batch_size
-                """)
+                """
+                )
 
                 result = self.db.execute(
                     query, {"cutoff_date": cutoff_date, "batch_size": batch_size}
@@ -440,7 +442,8 @@ class AuditArchiver:
 
         for table_name in version_tables:
             try:
-                query = text(f"""
+                query = text(
+                    f"""
                     SELECT
                         v.id as entity_id,
                         v.transaction_id,
@@ -453,7 +456,8 @@ class AuditArchiver:
                     WHERE t.issued_at >= :start_date
                       AND t.issued_at <= :end_date
                     ORDER BY t.issued_at ASC
-                """)
+                """
+                )
 
                 result = self.db.execute(
                     query, {"start_date": start_date, "end_date": end_date}

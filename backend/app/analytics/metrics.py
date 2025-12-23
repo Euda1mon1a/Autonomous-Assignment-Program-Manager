@@ -302,9 +302,9 @@ def calculate_consecutive_duty_stats(
         "person_id": person_id,
         "max_consecutive_days": max_consecutive,
         "total_duty_days": len(duty_dates),
-        "average_rest_days": round(statistics.mean(rest_periods), 2)
-        if rest_periods
-        else 0,
+        "average_rest_days": (
+            round(statistics.mean(rest_periods), 2) if rest_periods else 0
+        ),
         "status": status,
         "description": f"Max {max_consecutive} consecutive days",
         "details": {

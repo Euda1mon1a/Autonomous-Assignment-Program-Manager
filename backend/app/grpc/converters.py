@@ -272,9 +272,11 @@ class BlockConverter:
         """
         return {
             "id": uuid_to_string(block.id),
-            "date": block.date.isoformat()
-            if hasattr(block.date, "isoformat")
-            else str(block.date),
+            "date": (
+                block.date.isoformat()
+                if hasattr(block.date, "isoformat")
+                else str(block.date)
+            ),
             "period": block.period,
             "is_weekend": block.is_weekend if hasattr(block, "is_weekend") else False,
             "is_holiday": block.is_holiday if hasattr(block, "is_holiday") else False,

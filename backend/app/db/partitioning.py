@@ -289,12 +289,14 @@ class PartitioningService:
 
         partition_type = self._get_partition_type(strategy)
 
-        sql = text(f"""
+        sql = text(
+            f"""
             -- This is a placeholder for production partitioning
             -- In production, use pg_partman or manual migration process
             CREATE TABLE IF NOT EXISTS {table_name}_partitioned
             PARTITION BY {partition_type} ({partition_column});
-        """)
+        """
+        )
 
         # Note: Actual implementation would need:
         # - Schema migration
@@ -336,12 +338,14 @@ class PartitioningService:
             return partition_name
 
         # Create partition
-        sql = text(f"""
+        sql = text(
+            f"""
             CREATE TABLE IF NOT EXISTS {partition_name}
             PARTITION OF {parent_table}
             FOR VALUES FROM ('{range_start.isoformat()}')
                          TO ('{range_end.isoformat()}');
-        """)
+        """
+        )
 
         try:
             self.db.execute(sql)
@@ -477,11 +481,13 @@ class PartitioningService:
             start_clause = f"'{range_start}'" if range_start is not None else "MINVALUE"
             end_clause = f"'{range_end}'" if range_end is not None else "MAXVALUE"
 
-            sql = text(f"""
+            sql = text(
+                f"""
                 CREATE TABLE IF NOT EXISTS {partition_name}
                 PARTITION OF {table_name}
                 FOR VALUES FROM ({start_clause}) TO ({end_clause});
-            """)
+            """
+            )
 
             try:
                 self.db.execute(sql)
@@ -539,11 +545,13 @@ class PartitioningService:
                 logger.debug(f"Partition {partition_name} already exists")
                 continue
 
-            sql = text(f"""
+            sql = text(
+                f"""
                 CREATE TABLE IF NOT EXISTS {partition_name}
                 PARTITION OF {table_name}
                 FOR VALUES WITH (MODULUS {num_partitions}, REMAINDER {i});
-            """)
+            """
+            )
 
             try:
                 self.db.execute(sql)
@@ -577,10 +585,12 @@ class PartitioningService:
         logger.info(f"Detaching partition {partition_name} from {table_name}")
 
         concurrent_clause = "CONCURRENTLY" if concurrent else ""
-        sql = text(f"""
+        sql = text(
+            f"""
             ALTER TABLE {table_name}
             DETACH PARTITION {partition_name} {concurrent_clause};
-        """)
+        """
+        )
 
         try:
             self.db.execute(sql)
@@ -614,18 +624,22 @@ class PartitioningService:
         logger.info(f"Attaching {partition_name} to {table_name}")
 
         if range_start and range_end:
-            sql = text(f"""
+            sql = text(
+                f"""
                 ALTER TABLE {table_name}
                 ATTACH PARTITION {partition_name}
                 FOR VALUES FROM ('{range_start.isoformat()}')
                              TO ('{range_end.isoformat()}');
-            """)
+            """
+            )
         else:
             # For default partition
-            sql = text(f"""
+            sql = text(
+                f"""
                 ALTER TABLE {table_name}
                 ATTACH PARTITION {partition_name} DEFAULT;
-            """)
+            """
+            )
 
         try:
             self.db.execute(sql)
@@ -766,10 +780,12 @@ class PartitioningService:
         setting = "on" if enable else "off"
         logger.info(f"Setting partition pruning to {setting} for {table_name}")
 
-        sql = text(f"""
+        sql = text(
+            f"""
             ALTER TABLE {table_name}
             SET (enable_partition_pruning = {setting});
-        """)
+        """
+        )
 
         try:
             self.db.execute(sql)
@@ -848,7 +864,8 @@ class PartitioningService:
         Returns:
             List of PartitionInfo objects
         """
-        sql = text("""
+        sql = text(
+            """
             SELECT
                 c.relname AS partition_name,
                 parent.relname AS parent_table,
@@ -861,7 +878,8 @@ class PartitioningService:
             JOIN pg_class parent ON parent.oid = i.inhparent
             WHERE parent.relname = :table_name
             ORDER BY c.relname;
-        """)
+        """
+        )
 
         try:
             result = self.db.execute(sql, {"table_name": table_name})
@@ -1050,11 +1068,13 @@ class PartitioningService:
 
     def _is_table_partitioned(self, table_name: str) -> bool:
         """Check if a table is partitioned."""
-        sql = text("""
+        sql = text(
+            """
             SELECT relispartition OR relkind = 'p'
             FROM pg_class
             WHERE relname = :table_name;
-        """)
+        """
+        )
 
         result = self.db.execute(sql, {"table_name": table_name})
         row = result.fetchone()
@@ -1062,11 +1082,13 @@ class PartitioningService:
 
     def _partition_exists(self, partition_name: str) -> bool:
         """Check if a partition exists."""
-        sql = text("""
+        sql = text(
+            """
             SELECT EXISTS (
                 SELECT 1 FROM pg_class WHERE relname = :partition_name
             );
-        """)
+        """
+        )
 
         result = self.db.execute(sql, {"partition_name": partition_name})
         return result.scalar()
@@ -1121,10 +1143,12 @@ class PartitioningService:
         # Example: Use COPY TO for file-based archives
         if archive_location.startswith("file://"):
             file_path = archive_location.replace("file://", "")
-            sql = text(f"""
+            sql = text(
+                f"""
                 COPY {partition_name} TO '{file_path}'
                 WITH (FORMAT csv, HEADER true);
-            """)
+            """
+            )
             try:
                 self.db.execute(sql)
                 return True

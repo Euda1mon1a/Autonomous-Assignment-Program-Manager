@@ -53,15 +53,15 @@ def test_solver_benchmark():
     print(f"✓ Memory tracking: {result.memory_mb:.2f}MB")
 
     # Test 2: Violation counting
-    assert result.constraint_violations == 3, (
-        "Should extract violations from statistics"
-    )
+    assert (
+        result.constraint_violations == 3
+    ), "Should extract violations from statistics"
     print(f"✓ Violation counting: {result.constraint_violations} violations")
 
     # Test 3: Coverage calculation
-    assert abs(result.coverage_score - 0.85) < 0.01, (
-        "Should extract coverage from statistics"
-    )
+    assert (
+        abs(result.coverage_score - 0.85) < 0.01
+    ), "Should extract coverage from statistics"
     print(f"✓ Coverage calculation: {result.coverage_score:.2f}")
 
     # Test 4: Result with no violations
@@ -75,9 +75,9 @@ def test_solver_benchmark():
             return Result()
 
     result2 = benchmark.run(SuccessSolver(), "success_solver", MockContext(), "success")
-    assert result2.constraint_violations == 0, (
-        "Should default to 0 for successful result"
-    )
+    assert (
+        result2.constraint_violations == 0
+    ), "Should default to 0 for successful result"
     print(f"✓ No violations for successful result: {result2.constraint_violations}")
 
     print("\n✅ All SolverBenchmark tests passed!")
@@ -135,9 +135,9 @@ def test_pathway_validator():
     # Test 5: Success rate calculation
     success_rate = validator.success_rate()
     expected_rate = 3 / 4  # 3 valid out of 4 total
-    assert abs(success_rate - expected_rate) < 0.01, (
-        "Should calculate correct success rate"
-    )
+    assert (
+        abs(success_rate - expected_rate) < 0.01
+    ), "Should calculate correct success rate"
     print(f"✓ Success rate: {success_rate:.2%}")
 
     print("\n✅ All PathwayValidator tests passed!")

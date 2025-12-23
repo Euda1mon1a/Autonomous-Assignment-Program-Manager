@@ -512,15 +512,21 @@ class Subscription:
                 # Apply filters
                 if should_send_schedule_update(message, filter, user_id):
                     yield ScheduleUpdate(
-                        schedule_id=strawberry.ID(message.get("schedule_id"))
-                        if message.get("schedule_id")
-                        else None,
-                        academic_year_id=strawberry.ID(message.get("academic_year_id"))
-                        if message.get("academic_year_id")
-                        else None,
-                        user_id=strawberry.ID(message.get("user_id"))
-                        if message.get("user_id")
-                        else None,
+                        schedule_id=(
+                            strawberry.ID(message.get("schedule_id"))
+                            if message.get("schedule_id")
+                            else None
+                        ),
+                        academic_year_id=(
+                            strawberry.ID(message.get("academic_year_id"))
+                            if message.get("academic_year_id")
+                            else None
+                        ),
+                        user_id=(
+                            strawberry.ID(message.get("user_id"))
+                            if message.get("user_id")
+                            else None
+                        ),
                         update_type=message.get("update_type", ""),
                         affected_blocks_count=message.get("affected_blocks_count", 0),
                         message=message.get("message", ""),
@@ -578,15 +584,17 @@ class Subscription:
                     assignment_id=strawberry.ID(message.get("assignment_id", "")),
                     person_id=strawberry.ID(message.get("person_id", "")),
                     block_id=strawberry.ID(message.get("block_id", "")),
-                    rotation_template_id=strawberry.ID(
-                        message.get("rotation_template_id")
-                    )
-                    if message.get("rotation_template_id")
-                    else None,
+                    rotation_template_id=(
+                        strawberry.ID(message.get("rotation_template_id"))
+                        if message.get("rotation_template_id")
+                        else None
+                    ),
                     change_type=message.get("change_type", ""),
-                    changed_by=strawberry.ID(message.get("changed_by"))
-                    if message.get("changed_by")
-                    else None,
+                    changed_by=(
+                        strawberry.ID(message.get("changed_by"))
+                        if message.get("changed_by")
+                        else None
+                    ),
                     message=message.get("message", ""),
                     timestamp=datetime.fromisoformat(
                         message.get("timestamp", datetime.utcnow().isoformat())
@@ -642,9 +650,11 @@ class Subscription:
                     yield SwapNotification(
                         swap_id=strawberry.ID(message.get("swap_id", "")),
                         requester_id=strawberry.ID(message.get("requester_id", "")),
-                        target_person_id=strawberry.ID(message.get("target_person_id"))
-                        if message.get("target_person_id")
-                        else None,
+                        target_person_id=(
+                            strawberry.ID(message.get("target_person_id"))
+                            if message.get("target_person_id")
+                            else None
+                        ),
                         swap_type=message.get("swap_type", ""),
                         status=message.get("status", "pending"),
                         affected_assignments=[
@@ -702,9 +712,11 @@ class Subscription:
                     yield SwapNotification(
                         swap_id=strawberry.ID(message.get("swap_id", "")),
                         requester_id=strawberry.ID(message.get("requester_id", "")),
-                        target_person_id=strawberry.ID(message.get("target_person_id"))
-                        if message.get("target_person_id")
-                        else None,
+                        target_person_id=(
+                            strawberry.ID(message.get("target_person_id"))
+                            if message.get("target_person_id")
+                            else None
+                        ),
                         swap_type=message.get("swap_type", ""),
                         status="approved",
                         affected_assignments=[
@@ -715,9 +727,11 @@ class Subscription:
                         timestamp=datetime.fromisoformat(
                             message.get("timestamp", datetime.utcnow().isoformat())
                         ),
-                        approved_by=strawberry.ID(message.get("approved_by"))
-                        if message.get("approved_by")
-                        else None,
+                        approved_by=(
+                            strawberry.ID(message.get("approved_by"))
+                            if message.get("approved_by")
+                            else None
+                        ),
                     )
 
         except asyncio.CancelledError:
@@ -765,9 +779,11 @@ class Subscription:
                 # Apply filters
                 if should_send_conflict_notification(message, filter, user_id):
                     yield ConflictNotification(
-                        conflict_id=strawberry.ID(message.get("conflict_id"))
-                        if message.get("conflict_id")
-                        else None,
+                        conflict_id=(
+                            strawberry.ID(message.get("conflict_id"))
+                            if message.get("conflict_id")
+                            else None
+                        ),
                         person_id=strawberry.ID(message.get("person_id", "")),
                         conflict_type=message.get("conflict_type", ""),
                         severity=message.get("severity", ""),
@@ -1025,9 +1041,9 @@ async def broadcast_assignment_update(
             "assignment_id": str(assignment_id),
             "person_id": str(person_id),
             "block_id": str(block_id),
-            "rotation_template_id": str(rotation_template_id)
-            if rotation_template_id
-            else None,
+            "rotation_template_id": (
+                str(rotation_template_id) if rotation_template_id else None
+            ),
             "change_type": change_type,
             "changed_by": str(changed_by) if changed_by else None,
             "message": message,

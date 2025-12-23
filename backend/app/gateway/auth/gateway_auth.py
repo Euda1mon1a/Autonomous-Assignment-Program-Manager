@@ -951,9 +951,9 @@ class GatewayAuthenticator:
         return {
             "allowed": not is_limited,
             "remaining": info.get("remaining", 0),
-            "reset_at": datetime.fromtimestamp(info["reset_at"])
-            if "reset_at" in info
-            else None,
+            "reset_at": (
+                datetime.fromtimestamp(info["reset_at"]) if "reset_at" in info else None
+            ),
         }
 
     def _get_client_ip(self, request: Request) -> str:

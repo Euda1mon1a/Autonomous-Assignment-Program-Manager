@@ -371,9 +371,7 @@ class AccessControlMatrix:
             ResourceType.ASSIGNMENT: {PermissionAction.READ, PermissionAction.LIST},
             ResourceType.BLOCK: {PermissionAction.READ, PermissionAction.LIST},
             ResourceType.ROTATION: {PermissionAction.READ, PermissionAction.LIST},
-            ResourceType.PERSON: {
-                PermissionAction.READ  # Own profile
-            },
+            ResourceType.PERSON: {PermissionAction.READ},  # Own profile
             ResourceType.ABSENCE: {
                 PermissionAction.CREATE,
                 PermissionAction.READ,
@@ -443,9 +441,7 @@ class AccessControlMatrix:
             ResourceType.ASSIGNMENT: {PermissionAction.READ, PermissionAction.LIST},
             ResourceType.BLOCK: {PermissionAction.READ, PermissionAction.LIST},
             ResourceType.ROTATION: {PermissionAction.READ, PermissionAction.LIST},
-            ResourceType.PERSON: {
-                PermissionAction.READ  # Own profile
-            },
+            ResourceType.PERSON: {PermissionAction.READ},  # Own profile
             ResourceType.ABSENCE: {PermissionAction.CREATE, PermissionAction.READ},
             ResourceType.LEAVE: {PermissionAction.CREATE, PermissionAction.READ},
             ResourceType.SWAP: {
@@ -647,12 +643,16 @@ class AccessControlMatrix:
         entry = PermissionAuditEntry(
             action="checked",
             role=role if isinstance(role, UserRole) else UserRole(role),
-            resource=resource
-            if isinstance(resource, ResourceType)
-            else ResourceType(resource),
-            permission=action
-            if isinstance(action, PermissionAction)
-            else PermissionAction(action),
+            resource=(
+                resource
+                if isinstance(resource, ResourceType)
+                else ResourceType(resource)
+            ),
+            permission=(
+                action
+                if isinstance(action, PermissionAction)
+                else PermissionAction(action)
+            ),
             result=result,
             reason=reason,
             context=context,

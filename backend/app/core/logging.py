@@ -109,12 +109,12 @@ def _json_serializer(record: dict) -> str:
     # Add exception info if present
     if record["exception"]:
         subset["exception"] = {
-            "type": record["exception"].type.__name__
-            if record["exception"].type
-            else None,
-            "value": str(record["exception"].value)
-            if record["exception"].value
-            else None,
+            "type": (
+                record["exception"].type.__name__ if record["exception"].type else None
+            ),
+            "value": (
+                str(record["exception"].value) if record["exception"].value else None
+            ),
             "traceback": record["exception"].traceback is not None,
         }
 

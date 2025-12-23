@@ -164,11 +164,7 @@ extra:
   version:
     provider: mike
   consent:
-<<<<<<< HEAD
     title: Cookie consent
-=======
-    title: PGY2-01ie consent
->>>>>>> origin/docs/session-14-summary
     description: >-
       We use cookies to recognize your preferences and measure the
       effectiveness of our documentation. With your consent, you help

@@ -505,9 +505,9 @@ class TranscriptionFactorScheduler:
 
     def __init__(self):
         self.transcription_factors: dict[UUID, TranscriptionFactor] = {}
-        self.promoters: dict[
-            UUID, PromoterArchitecture
-        ] = {}  # constraint_id -> promoter
+        self.promoters: dict[UUID, PromoterArchitecture] = (
+            {}
+        )  # constraint_id -> promoter
         self.edges: dict[UUID, RegulatoryEdge] = {}
         self.detected_loops: list[RegulatoryLoop] = []
 
@@ -1119,9 +1119,11 @@ class TranscriptionFactorScheduler:
                             tf_ids=[tf_id, target_id],
                             constraint_ids=[],
                             edges=[edge_1, edge_2],
-                            stability="stable"
-                            if loop_type == LoopType.NEGATIVE_FEEDBACK
-                            else "potentially_unstable",
+                            stability=(
+                                "stable"
+                                if loop_type == LoopType.NEGATIVE_FEEDBACK
+                                else "potentially_unstable"
+                            ),
                         )
                         loops.append(loop)
 
@@ -1158,12 +1160,14 @@ class TranscriptionFactorScheduler:
                             id=uuid4(),
                             loop_type=loop_type,
                             description=f"Feed-forward: {tfa.name} -> {tfb.name if tfb else tf_b} -> {target_c}",
-                            tf_ids=[tf_a, tf_b]
-                            if tf_b in self.transcription_factors
-                            else [tf_a],
-                            constraint_ids=[target_c]
-                            if target_c in self.promoters
-                            else [],
+                            tf_ids=(
+                                [tf_a, tf_b]
+                                if tf_b in self.transcription_factors
+                                else [tf_a]
+                            ),
+                            constraint_ids=(
+                                [target_c] if target_c in self.promoters else []
+                            ),
                             edges=[edge_ab, edge_ac, edge_bc],
                         )
                         loops.append(loop)

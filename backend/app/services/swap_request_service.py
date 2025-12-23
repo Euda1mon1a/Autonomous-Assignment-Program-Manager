@@ -283,14 +283,14 @@ class SwapRequestService:
             status=swap.status,
             swap_type=swap.swap_type,
             source_faculty_id=swap.source_faculty_id,
-            source_faculty_name=swap.source_faculty.name
-            if swap.source_faculty
-            else "Unknown",
+            source_faculty_name=(
+                swap.source_faculty.name if swap.source_faculty else "Unknown"
+            ),
             source_week=swap.source_week,
             target_faculty_id=swap.target_faculty_id,
-            target_faculty_name=swap.target_faculty.name
-            if swap.target_faculty
-            else "Unknown",
+            target_faculty_name=(
+                swap.target_faculty.name if swap.target_faculty else "Unknown"
+            ),
             target_week=swap.target_week,
             reason=swap.reason,
             requested_at=swap.requested_at,
@@ -841,14 +841,14 @@ class SwapRequestService:
             status=swap.status,
             swap_type=swap.swap_type,
             source_faculty_id=swap.source_faculty_id,
-            source_faculty_name=swap.source_faculty.name
-            if swap.source_faculty
-            else "Unknown",
+            source_faculty_name=(
+                swap.source_faculty.name if swap.source_faculty else "Unknown"
+            ),
             source_week=swap.source_week,
             target_faculty_id=swap.target_faculty_id,
-            target_faculty_name=swap.target_faculty.name
-            if swap.target_faculty
-            else "Unknown",
+            target_faculty_name=(
+                swap.target_faculty.name if swap.target_faculty else "Unknown"
+            ),
             target_week=swap.target_week,
             reason=swap.reason,
             requested_at=swap.requested_at,

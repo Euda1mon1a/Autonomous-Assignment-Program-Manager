@@ -170,13 +170,15 @@ class AuditRepository:
             # Validate and quote table name to prevent SQL injection
             quoted_table = self._validate_and_quote_table_name(table_name)
 
-            query = text(f"""
+            query = text(
+                f"""
                 SELECT v.id, v.transaction_id, v.operation_type,
                        t.issued_at, t.user_id
                 FROM {quoted_table} v
                 LEFT JOIN transaction t ON v.transaction_id = t.id
                 WHERE v.id = :entry_id
-            """)
+            """
+            )
 
             row = self.db.execute(query, {"entry_id": entry_id}).fetchone()
 
@@ -241,7 +243,8 @@ class AuditRepository:
                     # Validate and quote table name to prevent SQL injection
                     quoted_table = self._validate_and_quote_table_name(table_name)
 
-                    query = text(f"""
+                    query = text(
+                        f"""
                         SELECT
                             COUNT(*) as total,
                             v.operation_type,
@@ -251,7 +254,8 @@ class AuditRepository:
                         LEFT JOIN transaction t ON v.transaction_id = t.id
                         WHERE 1=1 {date_filter}
                         GROUP BY v.operation_type, t.user_id, DATE(t.issued_at)
-                    """)
+                    """
+                    )
 
                     rows = self.db.execute(query, params).fetchall()
 
@@ -299,13 +303,15 @@ class AuditRepository:
             List of dicts with user_id and change_count
         """
         try:
-            query = text("""
+            query = text(
+                """
                 SELECT user_id, COUNT(*) as change_count
                 FROM transaction
                 WHERE user_id IS NOT NULL
                 GROUP BY user_id
                 ORDER BY change_count DESC
-            """)
+            """
+            )
 
             rows = self.db.execute(query).fetchall()
 
@@ -366,14 +372,16 @@ class AuditRepository:
             # Validate and quote table name to prevent SQL injection
             quoted_table = self._validate_and_quote_table_name(table_name)
 
-            query = text(f"""
+            query = text(
+                f"""
                 SELECT v.id, v.transaction_id, v.operation_type,
                        t.issued_at, t.user_id
                 FROM {quoted_table} v
                 LEFT JOIN transaction t ON v.transaction_id = t.id
                 WHERE v.id = :entity_id
                 ORDER BY t.issued_at ASC
-            """)
+            """
+            )
 
             rows = self.db.execute(query, {"entity_id": str(entity_id)}).fetchall()
 

@@ -84,9 +84,11 @@ class UnifiedHeatmapService:
             .filter(
                 Block.date >= start_date,
                 Block.date <= end_date,
-                Assignment.rotation_template_id.in_(rotation_ids)
-                if rotation_ids
-                else False,
+                (
+                    Assignment.rotation_template_id.in_(rotation_ids)
+                    if rotation_ids
+                    else False
+                ),
             )
             .all()
         )
@@ -348,9 +350,11 @@ class UnifiedHeatmapService:
                 .filter(
                     CallAssignment.date >= start_date,
                     CallAssignment.date <= end_date,
-                    CallAssignment.person_id.in_(person_id_list)
-                    if person_id_list
-                    else False,
+                    (
+                        CallAssignment.person_id.in_(person_id_list)
+                        if person_id_list
+                        else False
+                    ),
                 )
                 .all()
             )

@@ -264,9 +264,9 @@ def rotate_secret(
             "rotation_id": str(result.rotation_id),
             "secret_type": secret_type,
             "started_at": result.started_at.isoformat(),
-            "completed_at": result.completed_at.isoformat()
-            if result.completed_at
-            else None,
+            "completed_at": (
+                result.completed_at.isoformat() if result.completed_at else None
+            ),
             "grace_period_ends": (
                 result.grace_period_ends.isoformat()
                 if result.grace_period_ends
@@ -537,9 +537,11 @@ def monitor_rotation_health(self) -> dict:
                             "overdue_rotations": overdue_rotations,
                             "issues": issues,
                         },
-                        severity="high"
-                        if failed_rotations > 0 or len(overdue_rotations) > 0
-                        else "medium",
+                        severity=(
+                            "high"
+                            if failed_rotations > 0 or len(overdue_rotations) > 0
+                            else "medium"
+                        ),
                     )
                 )
             except Exception as e:

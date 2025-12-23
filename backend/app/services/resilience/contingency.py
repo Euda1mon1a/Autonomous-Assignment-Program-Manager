@@ -477,11 +477,11 @@ class ContingencyService:
             period_start=start_date,
             period_end=end_date,
             total_faculty=len(set(s.faculty_id for s in result.n1_simulations)),
-            total_blocks=len(
-                set(b for s in result.n1_simulations for b in s.uncovered_blocks)
-            )
-            if result.n1_simulations
-            else 0,
+            total_blocks=(
+                len(set(b for s in result.n1_simulations for b in s.uncovered_blocks))
+                if result.n1_simulations
+                else 0
+            ),
             total_assignments=0,  # Set from actual count
             n1_pass=result.n1_pass,
             n2_pass=result.n2_pass,

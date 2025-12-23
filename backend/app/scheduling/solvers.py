@@ -407,9 +407,9 @@ class PuLPSolver(BaseSolver):
                 "total_templates": len(context.templates),
                 "resident_assignments": len(assignments) - faculty_assignment_count,
                 "faculty_assignments": faculty_assignment_count,
-                "coverage_rate": len(assignments) / len(workday_blocks)
-                if workday_blocks
-                else 0,
+                "coverage_rate": (
+                    len(assignments) / len(workday_blocks) if workday_blocks else 0
+                ),
             },
         )
 
@@ -784,18 +784,24 @@ class CPSATSolver(BaseSolver):
                 status_name = solver.StatusName(status)
                 final_data = {
                     "solutions_found": callback.solution_count if callback else 0,
-                    "current_objective": solver.ObjectiveValue()
-                    if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]
-                    else 0,
-                    "best_bound": solver.BestObjectiveBound()
-                    if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]
-                    else 0,
+                    "current_objective": (
+                        solver.ObjectiveValue()
+                        if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]
+                        else 0
+                    ),
+                    "best_bound": (
+                        solver.BestObjectiveBound()
+                        if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]
+                        else 0
+                    ),
                     "optimality_gap_pct": 0.0 if status == cp_model.OPTIMAL else None,
                     "progress_pct": 100.0 if status == cp_model.OPTIMAL else 99.0,
                     "elapsed_seconds": round(runtime, 2),
-                    "status": "completed"
-                    if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]
-                    else "failed",
+                    "status": (
+                        "completed"
+                        if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]
+                        else "failed"
+                    ),
                     "solver_status": status_name,
                     "timestamp": time.time(),
                 }
@@ -878,9 +884,9 @@ class CPSATSolver(BaseSolver):
                 "total_templates": len(context.templates),
                 "resident_assignments": len(assignments) - faculty_assignment_count,
                 "faculty_assignments": faculty_assignment_count,
-                "coverage_rate": len(assignments) / len(workday_blocks)
-                if workday_blocks
-                else 0,
+                "coverage_rate": (
+                    len(assignments) / len(workday_blocks) if workday_blocks else 0
+                ),
                 "branches": solver.NumBranches(),
                 "conflicts": solver.NumConflicts(),
             },
@@ -1256,9 +1262,9 @@ class GreedySolver(BaseSolver):
                 "total_blocks": len(workday_blocks),
                 "total_residents": len(context.residents),
                 "total_templates": len(context.templates),
-                "coverage_rate": len(assignments) / len(sorted_blocks)
-                if sorted_blocks
-                else 0,
+                "coverage_rate": (
+                    len(assignments) / len(sorted_blocks) if sorted_blocks else 0
+                ),
                 "high_confidence_assignments": high_conf,
                 "medium_confidence_assignments": med_conf,
                 "low_confidence_assignments": low_conf,

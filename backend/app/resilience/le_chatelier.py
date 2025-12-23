@@ -440,10 +440,12 @@ class LeChatelierAnalyzer:
         # Daily debt rate
         daily_debt_rate = total_hidden_cost / max(
             1,
-            sum(c.sustainability_days for c in active_compensations)
-            / len(active_compensations)
-            if active_compensations
-            else 1,
+            (
+                sum(c.sustainability_days for c in active_compensations)
+                / len(active_compensations)
+                if active_compensations
+                else 1
+            ),
         )
 
         # Burnout risk
@@ -659,9 +661,9 @@ class LeChatelierAnalyzer:
             "capacity": effective_capacity,
             "sustainable_capacity": raw_new_capacity,  # What's sustainable long-term
             "compensation_debt": compensation_cost,
-            "compensation_ratio": compensation / stress_reduction
-            if stress_reduction > 0
-            else 0,
+            "compensation_ratio": (
+                compensation / stress_reduction if stress_reduction > 0 else 0
+            ),
         }
 
     def resolve_stress(
@@ -797,9 +799,9 @@ class LeChatelierAnalyzer:
             latest_shift=latest_shift,
             compensation_debt=self._compensation_debt,
             sustainability_score=sustainability_score,
-            days_until_equilibrium=-1
-            if current_state == EquilibriumState.STABLE
-            else 7,
+            days_until_equilibrium=(
+                -1 if current_state == EquilibriumState.STABLE else 7
+            ),
             days_until_exhaustion=days_until_exhaustion,
             recommendations=recommendations,
         )

@@ -253,15 +253,21 @@ def score_schedule(
         models_dir = Path(settings.ML_MODELS_DIR)
 
         scorer = ScheduleScorer(
-            preference_model_path=models_dir / "preference_predictor"
-            if (models_dir / "preference_predictor").exists()
-            else None,
-            conflict_model_path=models_dir / "conflict_predictor"
-            if (models_dir / "conflict_predictor").exists()
-            else None,
-            workload_model_path=models_dir / "workload_optimizer"
-            if (models_dir / "workload_optimizer").exists()
-            else None,
+            preference_model_path=(
+                models_dir / "preference_predictor"
+                if (models_dir / "preference_predictor").exists()
+                else None
+            ),
+            conflict_model_path=(
+                models_dir / "conflict_predictor"
+                if (models_dir / "conflict_predictor").exists()
+                else None
+            ),
+            workload_model_path=(
+                models_dir / "workload_optimizer"
+                if (models_dir / "workload_optimizer").exists()
+                else None
+            ),
             db=db,
         )
 

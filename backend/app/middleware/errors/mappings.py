@@ -22,9 +22,7 @@ from app.core.exceptions import (
     NotFoundError,
     UnauthorizedError,
 )
-from app.core.exceptions import (
-    ValidationError as AppValidationError,
-)
+from app.core.exceptions import ValidationError as AppValidationError
 
 
 class ExceptionMapping:

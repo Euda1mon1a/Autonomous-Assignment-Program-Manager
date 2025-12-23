@@ -649,7 +649,8 @@ class RowLevelSecurityManager:
             # Create new policy
             # Policy checks if tenant_id matches current_setting
             await self.session.execute(
-                text(f"""
+                text(
+                    f"""
                     CREATE POLICY {policy_name} ON {table_name}
                     FOR ALL
                     USING (
@@ -660,7 +661,8 @@ class RowLevelSecurityManager:
                         tenant_id::text = current_setting('app.current_tenant_id', TRUE)
                         OR current_setting('app.bypass_rls', TRUE) = 'true'
                     )
-                """)
+                """
+                )
             )
 
             logger.info(f"Created RLS policy {policy_name} for {table_name}")
@@ -1177,9 +1179,11 @@ class TenantQuotaService:
             usage["max_users"] = {
                 "current": user_count,
                 "limit": limits.get("max_users"),
-                "percentage": (user_count / limits["max_users"] * 100)
-                if limits.get("max_users")
-                else 0,
+                "percentage": (
+                    (user_count / limits["max_users"] * 100)
+                    if limits.get("max_users")
+                    else 0
+                ),
             }
         except Exception as e:
             logger.debug(f"Could not count users: {e}")

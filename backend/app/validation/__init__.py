@@ -73,7 +73,7 @@ from .messages import (
 )
 
 # Validation rules
-from .rules import (
+from .rules import (  # Predefined rules
     ValidationRule,
     all_of,
     any_of,
@@ -87,7 +87,6 @@ from .rules import (
     numeric_range,
     percentage_rule,
     person_type_rule,
-    # Predefined rules
     pgy_level_rule,
     phone_number_rule,
     positive_number_rule,

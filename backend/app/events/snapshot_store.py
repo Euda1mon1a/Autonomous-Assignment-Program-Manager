@@ -304,9 +304,9 @@ class SnapshotStore:
             "is_compressed": is_compressed,
             "original_size_bytes": original_size,
             "compressed_size_bytes": compressed_size,
-            "compression_ratio": compressed_size / original_size
-            if original_size > 0
-            else 1.0,
+            "compression_ratio": (
+                compressed_size / original_size if original_size > 0 else 1.0
+            ),
             "checksum": checksum,
         }
 
@@ -458,9 +458,9 @@ class SnapshotStore:
             "restored_from_snapshot": snapshot_result["snapshot_id"],
             "snapshot_version": snapshot_version,
             "current_state": state,
-            "events_replayed": len(events_after_snapshot)
-            if include_events_after_snapshot
-            else 0,
+            "events_replayed": (
+                len(events_after_snapshot) if include_events_after_snapshot else 0
+            ),
         }
 
     async def get_snapshot_by_id(
@@ -742,12 +742,12 @@ class SnapshotStore:
         return {
             "total_snapshots": total_snapshots,
             "aggregates_with_snapshots": unique_aggregates,
-            "oldest_snapshot": oldest_snapshot.snapshot_timestamp
-            if oldest_snapshot
-            else None,
-            "newest_snapshot": newest_snapshot.snapshot_timestamp
-            if newest_snapshot
-            else None,
+            "oldest_snapshot": (
+                oldest_snapshot.snapshot_timestamp if oldest_snapshot else None
+            ),
+            "newest_snapshot": (
+                newest_snapshot.snapshot_timestamp if newest_snapshot else None
+            ),
             "average_events_per_snapshot": float(avg_events),
         }
 

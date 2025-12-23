@@ -70,9 +70,9 @@ class AnalyticsEngine:
                 "id": str(a.id),
                 "person_id": str(a.person_id),
                 "block_id": str(a.block_id),
-                "rotation_template_id": str(a.rotation_template_id)
-                if a.rotation_template_id
-                else None,
+                "rotation_template_id": (
+                    str(a.rotation_template_id) if a.rotation_template_id else None
+                ),
                 "block_date": a.block.date,
             }
             for a in assignments

@@ -266,12 +266,14 @@ def calculate_aggregate_metrics(
     # Calculate distribution statistics
     load_dist = LoadDistribution(
         mean=round(statistics.mean(weeks_per_faculty), 2) if weeks_per_faculty else 0.0,
-        median=round(statistics.median(weeks_per_faculty), 2)
-        if weeks_per_faculty
-        else 0.0,
-        stdev=round(statistics.stdev(weeks_per_faculty), 2)
-        if len(weeks_per_faculty) > 1
-        else 0.0,
+        median=(
+            round(statistics.median(weeks_per_faculty), 2) if weeks_per_faculty else 0.0
+        ),
+        stdev=(
+            round(statistics.stdev(weeks_per_faculty), 2)
+            if len(weeks_per_faculty) > 1
+            else 0.0
+        ),
         min=float(min(weeks_per_faculty)) if weeks_per_faculty else 0.0,
         max=float(max(weeks_per_faculty)) if weeks_per_faculty else 0.0,
     )
@@ -399,9 +401,11 @@ async def get_faculty_timeline(
                 weeks_assigned=[],
                 workload=WorkloadSummary(),
                 department=getattr(faculty, "primary_duty", None),
-                specialty=faculty.specialties[0]
-                if hasattr(faculty, "specialties") and faculty.specialties
-                else None,
+                specialty=(
+                    faculty.specialties[0]
+                    if hasattr(faculty, "specialties") and faculty.specialties
+                    else None
+                ),
             )
         ]
 
@@ -622,9 +626,7 @@ async def get_gantt_data(
             progress = (
                 100.0
                 if week.status == "completed"
-                else 50.0
-                if week.status == "in_progress"
-                else 0.0
+                else 50.0 if week.status == "in_progress" else 0.0
             )
 
             # Custom styling based on workload
