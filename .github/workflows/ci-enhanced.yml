@@ -57,7 +57,9 @@ jobs:
 
       - name: Check for merge conflicts
         run: |
-          if grep -r "<<<<<<< HEAD\|=======\|>>>>>>>" --include="*.py" --include="*.ts" --include="*.tsx" .; then
+          # Only check for the unambiguous conflict markers (<<< and >>> followed by space)
+          # Avoid matching ======= which appears in legitimate comment separators
+          if grep -rE "^<{7} |^>{7} " --include="*.py" --include="*.ts" --include="*.tsx" .; then
             echo "❌ Merge conflict markers found"
             exit 1
           fi
