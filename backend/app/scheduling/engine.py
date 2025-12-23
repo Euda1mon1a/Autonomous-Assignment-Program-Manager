@@ -25,6 +25,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
+from app.schemas.schedule import NFPCAudit, NFPCAuditViolation, ValidationResult, Violation
 
 logger = get_logger(__name__)
 
@@ -190,10 +191,12 @@ class SchedulingEngine:
                     solver_result = self._run_solver("greedy", context, timeout_seconds)
 
             # Step 6: Convert solver results to assignments
-            self._create_assignments_from_result(solver_result, residents, templates)
+            self._create_assignments_from_result(
+                solver_result, residents, templates, run.id
+            )
 
             # Step 7: Assign faculty supervision
-            self._assign_faculty(faculty, blocks)
+            self._assign_faculty(faculty, blocks, run.id)
 
             # Step 8: Add assignments to session (but don't commit yet)
             for assignment in self.assignments:
@@ -201,6 +204,78 @@ class SchedulingEngine:
 
             # Step 9: Validate
             validation = self.validator.validate_all(self.start_date, self.end_date)
+
+            # Step 9.5: Run NF -> PC audit and surface violations
+            nf_pc_audit = self._audit_nf_pc_allocations()
+            if not nf_pc_audit.get("compliant", True):
+                violations = list(validation.violations)
+                for nf_violation in nf_pc_audit.get("violations", []):
+                    violations.append(
+                        Violation(
+                            type="NF_PC_COVERAGE",
+                            severity="HIGH",
+                            person_id=UUID(nf_violation["person_id"])
+                            if nf_violation.get("person_id")
+                            else None,
+                            person_name=nf_violation.get("person_name"),
+                            message=(
+                                "Missing Post-Call coverage after Night Float day"
+                            ),
+                            details={
+                                "nf_date": nf_violation.get("nf_date"),
+                                "pc_required_date": nf_violation.get(
+                                    "pc_required_date"
+                                ),
+                                "missing_am_pc": nf_violation.get("missing_am_pc"),
+                                "missing_pm_pc": nf_violation.get("missing_pm_pc"),
+                            },
+                        )
+                    )
+                validation = ValidationResult(
+                    valid=False,
+                    total_violations=len(violations),
+                    violations=violations,
+                    coverage_rate=validation.coverage_rate,
+                    statistics=validation.statistics,
+                )
+
+            nf_pc_audit_model = None
+            if nf_pc_audit:
+                audit_violations = []
+                for v in nf_pc_audit.get("violations", []):
+                    person_value = v.get("person_id")
+                    person_uuid = None
+                    if isinstance(person_value, UUID):
+                        person_uuid = person_value
+                    elif person_value:
+                        try:
+                            person_uuid = UUID(person_value)
+                        except (TypeError, ValueError):
+                            person_uuid = None
+
+                    audit_violations.append(
+                        NFPCAuditViolation(
+                            person_id=person_uuid,
+                            person_name=v.get("person_name"),
+                            nf_date=date.fromisoformat(v["nf_date"])
+                            if isinstance(v.get("nf_date"), str)
+                            else v.get("nf_date"),
+                            pc_required_date=date.fromisoformat(
+                                v["pc_required_date"]
+                            )
+                            if isinstance(v.get("pc_required_date"), str)
+                            else v.get("pc_required_date"),
+                            missing_am_pc=v.get("missing_am_pc", False),
+                            missing_pm_pc=v.get("missing_pm_pc", False),
+                        )
+                    )
+
+                nf_pc_audit_model = NFPCAudit(
+                    compliant=nf_pc_audit.get("compliant", True),
+                    total_nf_transitions=nf_pc_audit.get("total_nf_transitions", 0),
+                    violations=audit_violations,
+                    message=nf_pc_audit.get("message"),
+                )
 
             # Step 10: Update run record with results
             runtime = time.time() - start_time
@@ -229,6 +304,7 @@ class SchedulingEngine:
                 "validation": validation,
                 "run_id": run.id,
                 "solver_stats": solver_result.statistics,
+                "nf_pc_audit": nf_pc_audit_model,
                 "resilience": {
                     "pre_generation_status": self._pre_health_report.overall_status
                     if self._pre_health_report
@@ -579,6 +655,7 @@ class SchedulingEngine:
         result: SolverResult,
         residents: list[Person],
         templates: list[RotationTemplate],
+        run_id: UUID,
     ):
         """Convert solver results to Assignment objects."""
         for person_id, block_id, template_id in result.assignments:
@@ -587,6 +664,7 @@ class SchedulingEngine:
                 person_id=person_id,
                 rotation_template_id=template_id,
                 role="primary",
+                schedule_run_id=run_id,
             )
             self.assignments.append(assignment)
 
@@ -787,7 +865,7 @@ class SchedulingEngine:
 
         return query.all()
 
-    def _assign_faculty(self, faculty: list[Person], blocks: list[Block]):
+    def _assign_faculty(self, faculty: list[Person], blocks: list[Block], run_id: UUID):
         """
         Assign faculty supervision based on ACGME supervision ratios.
 
@@ -868,6 +946,7 @@ class SchedulingEngine:
                     block_id=block_id,
                     person_id=fac.id,
                     role="supervising",
+                    schedule_run_id=run_id,
                 )
                 self.assignments.append(assignment)
                 faculty_assignments[fac.id] += 1
@@ -1128,8 +1207,6 @@ class SchedulingEngine:
 
     def _empty_validation(self):
         """Return empty validation result."""
-        from app.schemas.schedule import ValidationResult
-
         return ValidationResult(
             valid=True,
             total_violations=0,

@@ -63,6 +63,26 @@ class Violation(BaseModel):
     details: dict | None = None
 
 
+class NFPCAuditViolation(BaseModel):
+    """Details for NF -> PC audit violations."""
+
+    person_id: UUID | None = None
+    person_name: str | None = None
+    nf_date: date
+    pc_required_date: date
+    missing_am_pc: bool
+    missing_pm_pc: bool
+
+
+class NFPCAudit(BaseModel):
+    """Post-generation audit results for Night Float to Post-Call coverage."""
+
+    compliant: bool
+    total_nf_transitions: int
+    violations: list[NFPCAuditViolation]
+    message: str | None = None
+
+
 class ValidationResult(BaseModel):
     """Schema for ACGME validation results."""
 
@@ -93,6 +113,7 @@ class ScheduleResponse(BaseModel):
     validation: ValidationResult
     run_id: UUID | None = None
     solver_stats: SolverStatistics | None = None
+    nf_pc_audit: NFPCAudit | None = None
     acgme_override_count: int = 0  # Number of acknowledged ACGME overrides
 
 
