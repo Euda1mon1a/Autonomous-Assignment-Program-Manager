@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 ***REMOVED*** Faculty Constraints Implementation Plan
-=======
-***REMOVED*** Constraints Implementation Plan
->>>>>>> origin/docs/session-14-summary
 
 > **Created:** 2025-12-19
 > **Specification:** [FACULTY_SCHEDULING_SPECIFICATION.md](../architecture/FACULTY_SCHEDULING_SPECIFICATION.md)
@@ -47,11 +43,7 @@ class Person(Base):
     ***REMOVED*** ... existing fields ...
 
     ***REMOVED*** New field
-<<<<<<< HEAD
     faculty_role = Column(String(50))  ***REMOVED*** FacultyRole enum value
-=======
-    faculty_role = Column(String(50))  ***REMOVED***Role enum value
->>>>>>> origin/docs/session-14-summary
 ```
 
 **Migration:**

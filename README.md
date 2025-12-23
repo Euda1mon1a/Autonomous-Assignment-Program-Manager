@@ -78,7 +78,7 @@ Track faculty qualifications for supervising medical procedures:
 - **Certification Management**: Track BLS, ACLS, PALS, and other required certifications
 - **Compliance Monitoring**: Ensure qualified supervisors are scheduled for procedure blocks
 
-See [API Documentation](docs/api/endpoints/credentials.md) for endpoint details.
+See [API Documentation](docs/api/authentication.md) for endpoint details.
 
 ***REMOVED******REMOVED******REMOVED*** Resilience Framework
 Built-in system resilience inspired by cross-industry best practices:
@@ -177,7 +177,7 @@ docker-compose up -d
 
 ***REMOVED******REMOVED******REMOVED*** Local Development
 
-See [docs/SETUP.md](docs/SETUP.md) for detailed installation and configuration instructions.
+See [Getting Started](docs/getting-started/installation.md) for detailed installation and configuration instructions.
 
 ***REMOVED******REMOVED******REMOVED******REMOVED*** Backend Quick Start
 ```bash
@@ -373,7 +373,7 @@ POST /api/resilience/crisis          ***REMOVED*** Activate crisis response
 GET  /api/resilience/fallbacks       ***REMOVED*** List available fallback schedules
 ```
 
-See [API Reference](docs/API_REFERENCE.md) for complete documentation.
+See [API Reference](docs/api/index.md) for complete documentation.
 
 ---
 
