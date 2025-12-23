@@ -868,10 +868,27 @@ When making changes, update relevant documentation:
 
 ### AI-Specific Documentation
 
+- **[Agent Skills Reference](docs/development/AGENT_SKILLS.md)**: Complete guide to 11 AI agent skills
+- **[AI Agent User Guide](docs/guides/AI_AGENT_USER_GUIDE.md)**: Skills, MCP tools, and Claude Code setup
 - **[AI Interface Guide](docs/admin-manual/ai-interface-guide.md)**: Web vs CLI comparison for clinician administrators
 - **[AI Rules of Engagement](docs/development/AI_RULES_OF_ENGAGEMENT.md)**: Complete rules with environment detection
 - **[CI/CD Troubleshooting](docs/development/CI_CD_TROUBLESHOOTING.md)**: Error codes, auto-fixes, and LLM failure patterns
 - **[Git Safe Sync Checklist](docs/development/CLAUDE_GIT_SAFE_SYNC_CHECKLIST.md)**: Daily sync procedures
+
+### Agent Skills (`.claude/skills/`)
+
+AI agents automatically load skills for specialized tasks:
+
+| Skill | Purpose |
+|-------|---------|
+| `acgme-compliance` | ACGME regulatory expertise |
+| `code-review` | Review generated code |
+| `database-migration` | Alembic migration expertise |
+| `pr-reviewer` | Pull request review |
+| `security-audit` | Healthcare/military security |
+| `test-writer` | Generate pytest/Jest tests |
+
+See full list: [Agent Skills Reference](docs/development/AGENT_SKILLS.md)
 
 ### Code References
 
