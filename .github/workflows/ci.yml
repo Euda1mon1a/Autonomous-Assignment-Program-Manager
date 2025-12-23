@@ -8,7 +8,10 @@ on:
   pull_request:
     branches: [main, master, develop]
   push:
-    branches: [main, master]
+    branches:
+      - main
+      - master
+      - 'claude/**'  # Claude Code AI-created branches
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
