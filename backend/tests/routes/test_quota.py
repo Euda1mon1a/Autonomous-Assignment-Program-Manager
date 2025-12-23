@@ -9,14 +9,47 @@ Tests the quota management functionality including:
 """
 
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.api.routes.quota import get_quota_manager, get_redis_client
+from app.main import app
 from app.models.user import User
+
+
+@pytest.fixture
+def mock_redis_client():
+    """Create a mock Redis client."""
+    client = MagicMock()
+    client.ping.return_value = True
+    return client
+
+
+@pytest.fixture
+def mock_quota_manager():
+    """Create a mock quota manager."""
+    manager = MagicMock()
+    return manager
+
+
+@pytest.fixture
+def client_with_mock_quota(db, mock_redis_client, mock_quota_manager):
+    """Create test client with mocked quota dependencies."""
+    from app.db.session import get_db
+
+    app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_redis_client] = lambda: mock_redis_client
+    app.dependency_overrides[get_quota_manager] = lambda: mock_quota_manager
+
+    with TestClient(app) as test_client:
+        yield test_client
+
+    app.dependency_overrides.clear()
 
 
 class TestQuotaRoutes:
@@ -50,13 +83,10 @@ class TestQuotaRoutes:
     # Admin-Only Endpoint Tests
     # ========================================================================
 
-    @patch("app.api.routes.quota.get_redis_client")
-    @patch("app.api.routes.quota.get_quota_manager")
     def test_set_custom_quota_requires_admin(
         self,
-        mock_get_quota_manager: MagicMock,
-        mock_get_redis: MagicMock,
-        client: TestClient,
+        client_with_mock_quota: TestClient,
+        mock_quota_manager: MagicMock,
         auth_headers: dict,
     ):
         """Test that setting custom quota requires admin role."""
@@ -65,12 +95,8 @@ class TestQuotaRoutes:
         # with a non-admin user separately
         pass  # Covered by role-based access control in the app
 
-    @patch("app.api.routes.quota.get_redis_client")
-    @patch("app.api.routes.quota.get_quota_manager")
     def test_reset_quota_requires_admin(
         self,
-        mock_get_quota_manager: MagicMock,
-        mock_get_redis: MagicMock,
         client: TestClient,
     ):
         """Test that resetting quota requires admin role."""
@@ -89,20 +115,15 @@ class TestQuotaRoutes:
     # Quota Status Tests
     # ========================================================================
 
-    @patch("app.api.routes.quota.get_redis_client")
-    @patch("app.api.routes.quota.get_quota_manager")
     def test_get_quota_status_success(
         self,
-        mock_get_quota_manager: MagicMock,
-        mock_get_redis: MagicMock,
-        client: TestClient,
+        client_with_mock_quota: TestClient,
+        mock_quota_manager: MagicMock,
         auth_headers: dict,
         admin_user: User,
     ):
         """Test successful quota status retrieval."""
-        # Mock quota manager
-        mock_manager = MagicMock()
-        mock_manager.get_usage_summary.return_value = {
+        mock_quota_manager.get_usage_summary.return_value = {
             "user_id": str(admin_user.id),
             "policy_type": "admin",
             "reset_times": {
@@ -118,9 +139,8 @@ class TestQuotaRoutes:
                 }
             },
         }
-        mock_get_quota_manager.return_value = mock_manager
 
-        response = client.get("/api/quota/status", headers=auth_headers)
+        response = client_with_mock_quota.get("/api/quota/status", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -128,21 +148,16 @@ class TestQuotaRoutes:
         assert "policy_type" in data
         assert "resources" in data
 
-    @patch("app.api.routes.quota.get_redis_client")
-    @patch("app.api.routes.quota.get_quota_manager")
     def test_get_quota_status_error(
         self,
-        mock_get_quota_manager: MagicMock,
-        mock_get_redis: MagicMock,
-        client: TestClient,
+        client_with_mock_quota: TestClient,
+        mock_quota_manager: MagicMock,
         auth_headers: dict,
     ):
         """Test quota status error handling."""
-        mock_manager = MagicMock()
-        mock_manager.get_usage_summary.side_effect = Exception("Redis error")
-        mock_get_quota_manager.return_value = mock_manager
+        mock_quota_manager.get_usage_summary.side_effect = Exception("Redis error")
 
-        response = client.get("/api/quota/status", headers=auth_headers)
+        response = client_with_mock_quota.get("/api/quota/status", headers=auth_headers)
         assert response.status_code == 500
         assert "quota status" in response.json()["detail"].lower()
 
@@ -150,19 +165,15 @@ class TestQuotaRoutes:
     # Quota Alerts Tests
     # ========================================================================
 
-    @patch("app.api.routes.quota.get_redis_client")
-    @patch("app.api.routes.quota.get_quota_manager")
     def test_get_quota_alerts_success(
         self,
-        mock_get_quota_manager: MagicMock,
-        mock_get_redis: MagicMock,
-        client: TestClient,
+        client_with_mock_quota: TestClient,
+        mock_quota_manager: MagicMock,
         auth_headers: dict,
         admin_user: User,
     ):
         """Test successful quota alerts retrieval."""
-        mock_manager = MagicMock()
-        mock_manager.get_alerts.return_value = [
+        mock_quota_manager.get_alerts.return_value = [
             {
                 "resource_type": "schedule",
                 "timestamp": "2025-12-20T15:30:00",
@@ -171,9 +182,8 @@ class TestQuotaRoutes:
                 "monthly_percentage": 78.3,
             }
         ]
-        mock_get_quota_manager.return_value = mock_manager
 
-        response = client.get("/api/quota/alerts", headers=auth_headers)
+        response = client_with_mock_quota.get("/api/quota/alerts", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -181,21 +191,16 @@ class TestQuotaRoutes:
         assert "alerts" in data
         assert isinstance(data["alerts"], list)
 
-    @patch("app.api.routes.quota.get_redis_client")
-    @patch("app.api.routes.quota.get_quota_manager")
     def test_get_quota_alerts_empty(
         self,
-        mock_get_quota_manager: MagicMock,
-        mock_get_redis: MagicMock,
-        client: TestClient,
+        client_with_mock_quota: TestClient,
+        mock_quota_manager: MagicMock,
         auth_headers: dict,
     ):
         """Test empty alerts response."""
-        mock_manager = MagicMock()
-        mock_manager.get_alerts.return_value = []
-        mock_get_quota_manager.return_value = mock_manager
+        mock_quota_manager.get_alerts.return_value = []
 
-        response = client.get("/api/quota/alerts", headers=auth_headers)
+        response = client_with_mock_quota.get("/api/quota/alerts", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -205,19 +210,15 @@ class TestQuotaRoutes:
     # Quota Report Tests
     # ========================================================================
 
-    @patch("app.api.routes.quota.get_redis_client")
-    @patch("app.api.routes.quota.get_quota_manager")
     def test_get_quota_report_daily(
         self,
-        mock_get_quota_manager: MagicMock,
-        mock_get_redis: MagicMock,
-        client: TestClient,
+        client_with_mock_quota: TestClient,
+        mock_quota_manager: MagicMock,
         auth_headers: dict,
         admin_user: User,
     ):
         """Test daily quota report."""
-        mock_manager = MagicMock()
-        mock_manager.get_usage_summary.return_value = {
+        mock_quota_manager.get_usage_summary.return_value = {
             "user_id": str(admin_user.id),
             "policy_type": "admin",
             "resources": {
@@ -229,9 +230,10 @@ class TestQuotaRoutes:
                 }
             },
         }
-        mock_get_quota_manager.return_value = mock_manager
 
-        response = client.get("/api/quota/report?period=daily", headers=auth_headers)
+        response = client_with_mock_quota.get(
+            "/api/quota/report?period=daily", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -240,19 +242,15 @@ class TestQuotaRoutes:
         assert "total_limit" in data
         assert "usage_percentage" in data
 
-    @patch("app.api.routes.quota.get_redis_client")
-    @patch("app.api.routes.quota.get_quota_manager")
     def test_get_quota_report_monthly(
         self,
-        mock_get_quota_manager: MagicMock,
-        mock_get_redis: MagicMock,
-        client: TestClient,
+        client_with_mock_quota: TestClient,
+        mock_quota_manager: MagicMock,
         auth_headers: dict,
         admin_user: User,
     ):
         """Test monthly quota report."""
-        mock_manager = MagicMock()
-        mock_manager.get_usage_summary.return_value = {
+        mock_quota_manager.get_usage_summary.return_value = {
             "user_id": str(admin_user.id),
             "policy_type": "admin",
             "resources": {
@@ -264,9 +262,10 @@ class TestQuotaRoutes:
                 }
             },
         }
-        mock_get_quota_manager.return_value = mock_manager
 
-        response = client.get("/api/quota/report?period=monthly", headers=auth_headers)
+        response = client_with_mock_quota.get(
+            "/api/quota/report?period=monthly", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -332,22 +331,17 @@ class TestQuotaRoutes:
     # Set Custom Quota Tests
     # ========================================================================
 
-    @patch("app.api.routes.quota.get_redis_client")
-    @patch("app.api.routes.quota.get_quota_manager")
     def test_set_custom_quota_success(
         self,
-        mock_get_quota_manager: MagicMock,
-        mock_get_redis: MagicMock,
-        client: TestClient,
+        client_with_mock_quota: TestClient,
+        mock_quota_manager: MagicMock,
         auth_headers: dict,
     ):
         """Test successful custom quota setting."""
-        mock_manager = MagicMock()
-        mock_manager.set_custom_policy.return_value = True
-        mock_get_quota_manager.return_value = mock_manager
+        mock_quota_manager.set_custom_policy.return_value = True
 
         user_id = str(uuid4())
-        response = client.post(
+        response = client_with_mock_quota.post(
             "/api/quota/custom",
             headers=auth_headers,
             json={
@@ -374,21 +368,16 @@ class TestQuotaRoutes:
         assert data["user_id"] == user_id
         assert "expires_at" in data
 
-    @patch("app.api.routes.quota.get_redis_client")
-    @patch("app.api.routes.quota.get_quota_manager")
     def test_set_custom_quota_failure(
         self,
-        mock_get_quota_manager: MagicMock,
-        mock_get_redis: MagicMock,
-        client: TestClient,
+        client_with_mock_quota: TestClient,
+        mock_quota_manager: MagicMock,
         auth_headers: dict,
     ):
         """Test custom quota setting failure."""
-        mock_manager = MagicMock()
-        mock_manager.set_custom_policy.return_value = False
-        mock_get_quota_manager.return_value = mock_manager
+        mock_quota_manager.set_custom_policy.return_value = False
 
-        response = client.post(
+        response = client_with_mock_quota.post(
             "/api/quota/custom",
             headers=auth_headers,
             json={
@@ -413,22 +402,17 @@ class TestQuotaRoutes:
     # Remove Custom Quota Tests
     # ========================================================================
 
-    @patch("app.api.routes.quota.get_redis_client")
-    @patch("app.api.routes.quota.get_quota_manager")
     def test_remove_custom_quota_success(
         self,
-        mock_get_quota_manager: MagicMock,
-        mock_get_redis: MagicMock,
-        client: TestClient,
+        client_with_mock_quota: TestClient,
+        mock_quota_manager: MagicMock,
         auth_headers: dict,
     ):
         """Test successful custom quota removal."""
-        mock_manager = MagicMock()
-        mock_manager.remove_custom_policy.return_value = True
-        mock_get_quota_manager.return_value = mock_manager
+        mock_quota_manager.remove_custom_policy.return_value = True
 
         user_id = str(uuid4())
-        response = client.delete(
+        response = client_with_mock_quota.delete(
             f"/api/quota/custom/{user_id}",
             headers=auth_headers,
         )
@@ -442,22 +426,17 @@ class TestQuotaRoutes:
     # Reset Quota Tests
     # ========================================================================
 
-    @patch("app.api.routes.quota.get_redis_client")
-    @patch("app.api.routes.quota.get_quota_manager")
     def test_reset_quota_success(
         self,
-        mock_get_quota_manager: MagicMock,
-        mock_get_redis: MagicMock,
-        client: TestClient,
+        client_with_mock_quota: TestClient,
+        mock_quota_manager: MagicMock,
         auth_headers: dict,
     ):
         """Test successful quota reset."""
-        mock_manager = MagicMock()
-        mock_manager.reset_user_quota.return_value = True
-        mock_get_quota_manager.return_value = mock_manager
+        mock_quota_manager.reset_user_quota.return_value = True
 
         user_id = str(uuid4())
-        response = client.post(
+        response = client_with_mock_quota.post(
             "/api/quota/reset",
             headers=auth_headers,
             json={
@@ -477,22 +456,17 @@ class TestQuotaRoutes:
     # Record Usage Tests
     # ========================================================================
 
-    @patch("app.api.routes.quota.get_redis_client")
-    @patch("app.api.routes.quota.get_quota_manager")
     def test_record_usage_success(
         self,
-        mock_get_quota_manager: MagicMock,
-        mock_get_redis: MagicMock,
-        client: TestClient,
+        client_with_mock_quota: TestClient,
+        mock_quota_manager: MagicMock,
         auth_headers: dict,
     ):
         """Test successful usage recording."""
-        mock_manager = MagicMock()
-        mock_manager.record_usage.return_value = (110, 610)  # daily, monthly
-        mock_get_quota_manager.return_value = mock_manager
+        mock_quota_manager.record_usage.return_value = (110, 610)  # daily, monthly
 
         user_id = str(uuid4())
-        response = client.post(
+        response = client_with_mock_quota.post(
             "/api/quota/record",
             headers=auth_headers,
             json={
@@ -514,22 +488,27 @@ class TestQuotaRoutes:
     # Redis Connection Tests
     # ========================================================================
 
-    @patch("app.api.routes.quota.get_redis_client")
     def test_redis_connection_failure(
         self,
-        mock_get_redis: MagicMock,
+        db,
         client: TestClient,
         auth_headers: dict,
     ):
         """Test handling of Redis connection failure."""
-        import redis
-        from fastapi import HTTPException
+        from app.db.session import get_db
 
-        mock_get_redis.side_effect = HTTPException(
-            status_code=503,
-            detail="Quota service temporarily unavailable",
-        )
+        def raise_redis_error():
+            raise HTTPException(
+                status_code=503,
+                detail="Quota service temporarily unavailable",
+            )
 
-        response = client.get("/api/quota/status", headers=auth_headers)
-        assert response.status_code == 503
-        assert "unavailable" in response.json()["detail"].lower()
+        app.dependency_overrides[get_db] = lambda: db
+        app.dependency_overrides[get_redis_client] = raise_redis_error
+
+        with TestClient(app) as test_client:
+            response = test_client.get("/api/quota/status", headers=auth_headers)
+            assert response.status_code == 503
+            assert "unavailable" in response.json()["detail"].lower()
+
+        app.dependency_overrides.clear()
