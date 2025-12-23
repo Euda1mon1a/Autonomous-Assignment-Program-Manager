@@ -7,13 +7,36 @@ Tests the webhook management functionality including:
 - Dead letter queue management
 """
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 
+from app.api.routes.webhooks import get_webhook_service
+from app.main import app
 from app.models.user import User
+
+
+@pytest.fixture
+def mock_webhook_service():
+    """Create a mock webhook service."""
+    service = AsyncMock()
+    return service
+
+
+@pytest.fixture
+def client_with_mock_service(db, mock_webhook_service):
+    """Create test client with mocked webhook service."""
+    from app.db.session import get_db
+
+    app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_webhook_service] = lambda: mock_webhook_service
+
+    with TestClient(app) as test_client:
+        yield test_client
+
+    app.dependency_overrides.clear()
 
 
 class TestWebhookRoutes:
@@ -54,26 +77,23 @@ class TestWebhookRoutes:
     # Webhook CRUD Tests
     # ========================================================================
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_create_webhook_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test successful webhook creation."""
         webhook_id = uuid4()
-        mock_service = AsyncMock()
-        mock_service.create_webhook.return_value = {
+        mock_webhook_service.create_webhook.return_value = {
             "id": str(webhook_id),
             "url": "https://example.com/webhook",
             "name": "Test Webhook",
             "event_types": ["schedule.updated"],
             "status": "active",
         }
-        mock_get_service.return_value = mock_service
 
-        response = client.post(
+        response = client_with_mock_service.post(
             "/api/webhooks",
             headers=auth_headers,
             json={
@@ -87,17 +107,15 @@ class TestWebhookRoutes:
         data = response.json()
         assert data["name"] == "Test Webhook"
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_create_webhook_with_options(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test webhook creation with all options."""
         webhook_id = uuid4()
-        mock_service = AsyncMock()
-        mock_service.create_webhook.return_value = {
+        mock_webhook_service.create_webhook.return_value = {
             "id": str(webhook_id),
             "url": "https://example.com/webhook",
             "name": "Full Webhook",
@@ -107,9 +125,8 @@ class TestWebhookRoutes:
             "timeout_seconds": 30,
             "max_retries": 5,
         }
-        mock_get_service.return_value = mock_service
 
-        response = client.post(
+        response = client_with_mock_service.post(
             "/api/webhooks",
             headers=auth_headers,
             json={
@@ -125,16 +142,14 @@ class TestWebhookRoutes:
         )
         assert response.status_code == 201
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_list_webhooks_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test listing webhooks."""
-        mock_service = AsyncMock()
-        mock_service.list_webhooks.return_value = [
+        mock_webhook_service.list_webhooks.return_value = [
             {
                 "id": str(uuid4()),
                 "url": "https://example.com/webhook1",
@@ -148,94 +163,81 @@ class TestWebhookRoutes:
                 "status": "paused",
             },
         ]
-        mock_get_service.return_value = mock_service
 
-        response = client.get("/api/webhooks", headers=auth_headers)
+        response = client_with_mock_service.get("/api/webhooks", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
         assert "webhooks" in data
         assert len(data["webhooks"]) == 2
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_list_webhooks_with_filter(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test listing webhooks with status filter."""
-        mock_service = AsyncMock()
-        mock_service.list_webhooks.return_value = []
-        mock_get_service.return_value = mock_service
+        mock_webhook_service.list_webhooks.return_value = []
 
-        response = client.get(
+        response = client_with_mock_service.get(
             "/api/webhooks?status=active&skip=0&limit=50",
             headers=auth_headers,
         )
         assert response.status_code == 200
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_get_webhook_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test getting a specific webhook."""
         webhook_id = uuid4()
-        mock_service = AsyncMock()
-        mock_service.get_webhook.return_value = {
+        mock_webhook_service.get_webhook.return_value = {
             "id": str(webhook_id),
             "url": "https://example.com/webhook",
             "name": "Test Webhook",
             "status": "active",
         }
-        mock_get_service.return_value = mock_service
 
-        response = client.get(
+        response = client_with_mock_service.get(
             f"/api/webhooks/{webhook_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_get_webhook_not_found(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test getting non-existent webhook."""
-        mock_service = AsyncMock()
-        mock_service.get_webhook.return_value = None
-        mock_get_service.return_value = mock_service
+        mock_webhook_service.get_webhook.return_value = None
 
-        response = client.get(
+        response = client_with_mock_service.get(
             f"/api/webhooks/{uuid4()}",
             headers=auth_headers,
         )
         assert response.status_code == 404
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_update_webhook_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test updating a webhook."""
         webhook_id = uuid4()
-        mock_service = AsyncMock()
-        mock_service.update_webhook.return_value = {
+        mock_webhook_service.update_webhook.return_value = {
             "id": str(webhook_id),
             "url": "https://example.com/webhook-updated",
             "name": "Updated Webhook",
             "status": "active",
         }
-        mock_get_service.return_value = mock_service
 
-        response = client.put(
+        response = client_with_mock_service.put(
             f"/api/webhooks/{webhook_id}",
             headers=auth_headers,
             json={
@@ -245,38 +247,32 @@ class TestWebhookRoutes:
         )
         assert response.status_code == 200
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_delete_webhook_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test deleting a webhook."""
         webhook_id = uuid4()
-        mock_service = AsyncMock()
-        mock_service.delete_webhook.return_value = True
-        mock_get_service.return_value = mock_service
+        mock_webhook_service.delete_webhook.return_value = True
 
-        response = client.delete(
+        response = client_with_mock_service.delete(
             f"/api/webhooks/{webhook_id}",
             headers=auth_headers,
         )
         assert response.status_code == 204
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_delete_webhook_not_found(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test deleting non-existent webhook."""
-        mock_service = AsyncMock()
-        mock_service.delete_webhook.return_value = False
-        mock_get_service.return_value = mock_service
+        mock_webhook_service.delete_webhook.return_value = False
 
-        response = client.delete(
+        response = client_with_mock_service.delete(
             f"/api/webhooks/{uuid4()}",
             headers=auth_headers,
         )
@@ -286,45 +282,39 @@ class TestWebhookRoutes:
     # Pause/Resume Tests
     # ========================================================================
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_pause_webhook_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test pausing a webhook."""
         webhook_id = uuid4()
-        mock_service = AsyncMock()
-        mock_service.pause_webhook.return_value = {
+        mock_webhook_service.pause_webhook.return_value = {
             "id": str(webhook_id),
             "status": "paused",
         }
-        mock_get_service.return_value = mock_service
 
-        response = client.post(
+        response = client_with_mock_service.post(
             f"/api/webhooks/{webhook_id}/pause",
             headers=auth_headers,
         )
         assert response.status_code == 200
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_resume_webhook_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test resuming a webhook."""
         webhook_id = uuid4()
-        mock_service = AsyncMock()
-        mock_service.resume_webhook.return_value = {
+        mock_webhook_service.resume_webhook.return_value = {
             "id": str(webhook_id),
             "status": "active",
         }
-        mock_get_service.return_value = mock_service
 
-        response = client.post(
+        response = client_with_mock_service.post(
             f"/api/webhooks/{webhook_id}/resume",
             headers=auth_headers,
         )
@@ -334,19 +324,16 @@ class TestWebhookRoutes:
     # Event Trigger Tests
     # ========================================================================
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_trigger_event_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test triggering a webhook event."""
-        mock_service = AsyncMock()
-        mock_service.trigger_event.return_value = 3  # 3 webhooks triggered
-        mock_get_service.return_value = mock_service
+        mock_webhook_service.trigger_event.return_value = 3  # 3 webhooks triggered
 
-        response = client.post(
+        response = client_with_mock_service.post(
             "/api/webhooks/events/trigger",
             headers=auth_headers,
             json={
@@ -363,16 +350,14 @@ class TestWebhookRoutes:
     # Delivery Monitoring Tests
     # ========================================================================
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_list_deliveries_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test listing webhook deliveries."""
-        mock_service = AsyncMock()
-        mock_service.list_deliveries.return_value = [
+        mock_webhook_service.list_deliveries.return_value = [
             {
                 "id": str(uuid4()),
                 "webhook_id": str(uuid4()),
@@ -380,54 +365,49 @@ class TestWebhookRoutes:
                 "response_code": 200,
             }
         ]
-        mock_get_service.return_value = mock_service
 
-        response = client.get("/api/webhooks/deliveries", headers=auth_headers)
+        response = client_with_mock_service.get(
+            "/api/webhooks/deliveries", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
         assert "deliveries" in data
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_get_delivery_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test getting a specific delivery."""
         delivery_id = uuid4()
-        mock_service = AsyncMock()
-        mock_service.get_delivery_status.return_value = {
+        mock_webhook_service.get_delivery_status.return_value = {
             "id": str(delivery_id),
             "status": "delivered",
         }
-        mock_get_service.return_value = mock_service
 
-        response = client.get(
+        response = client_with_mock_service.get(
             f"/api/webhooks/deliveries/{delivery_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_retry_delivery_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test retrying a failed delivery."""
         delivery_id = uuid4()
-        mock_service = AsyncMock()
-        mock_service.retry_delivery.return_value = True
-        mock_service.get_delivery_status.return_value = {
+        mock_webhook_service.retry_delivery.return_value = True
+        mock_webhook_service.get_delivery_status.return_value = {
             "id": str(delivery_id),
             "status": "pending",
         }
-        mock_get_service.return_value = mock_service
 
-        response = client.post(
+        response = client_with_mock_service.post(
             "/api/webhooks/deliveries/retry",
             headers=auth_headers,
             json={"delivery_id": str(delivery_id)},
@@ -438,50 +418,46 @@ class TestWebhookRoutes:
     # Dead Letter Queue Tests
     # ========================================================================
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_list_dead_letters_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test listing dead letter queue."""
-        mock_service = AsyncMock()
-        mock_service.list_dead_letters.return_value = [
+        mock_webhook_service.list_dead_letters.return_value = [
             {
                 "id": str(uuid4()),
                 "delivery_id": str(uuid4()),
                 "resolved": False,
             }
         ]
-        mock_get_service.return_value = mock_service
 
-        response = client.get("/api/webhooks/dead-letters", headers=auth_headers)
+        response = client_with_mock_service.get(
+            "/api/webhooks/dead-letters", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
         assert "dead_letters" in data
 
-    @patch("app.api.routes.webhooks.get_webhook_service")
     def test_resolve_dead_letter_success(
         self,
-        mock_get_service: MagicMock,
-        client: TestClient,
+        client_with_mock_service: TestClient,
+        mock_webhook_service: AsyncMock,
         auth_headers: dict,
     ):
         """Test resolving a dead letter."""
         dead_letter_id = uuid4()
-        mock_service = AsyncMock()
-        mock_service.resolve_dead_letter.return_value = True
-        mock_service.list_dead_letters.return_value = [
+        mock_webhook_service.resolve_dead_letter.return_value = True
+        mock_webhook_service.list_dead_letters.return_value = [
             {
                 "id": str(dead_letter_id),
                 "resolved": True,
             }
         ]
-        mock_get_service.return_value = mock_service
 
-        response = client.post(
+        response = client_with_mock_service.post(
             f"/api/webhooks/dead-letters/{dead_letter_id}/resolve",
             headers=auth_headers,
             json={"notes": "Resolved manually", "retry": False},
