@@ -241,6 +241,20 @@ class SystemStateDict(TypedDict, total=False):
     volatility_level: str
 
 
+class ViolationDict(TypedDict, total=False):
+    """
+    Dictionary representation of a single compliance violation.
+
+    Provides type safety for violation data passed as dictionaries.
+    """
+
+    rule_id: str
+    severity: str  # 'critical', 'warning', 'info'
+    description: str
+    affected_items: list[str]
+    recommendation: str | None
+
+
 class MTFComplianceResultDict(TypedDict):
     """
     Dictionary representation of MTF compliance check results.
@@ -250,7 +264,7 @@ class MTFComplianceResultDict(TypedDict):
 
     is_compliant: bool
     score: float
-    violations: list[dict[str, Any]]
+    violations: list[ViolationDict]
     recommendations: list[str]
     checked_at: NotRequired[date | None]
 

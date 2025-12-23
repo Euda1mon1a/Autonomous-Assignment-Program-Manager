@@ -145,7 +145,7 @@ Flag TODOs older than 6 months. Check git blame for age.
 
 #### 4.3 Dead Documentation References
 Verify referenced docs exist:
-- `docs/TODO_RESILIENCE.md` - Referenced but may not exist
+- ~~`docs/TODO_RESILIENCE.md`~~ - Fixed: now references `docs/architecture/resilience.md`
 
 ---
 

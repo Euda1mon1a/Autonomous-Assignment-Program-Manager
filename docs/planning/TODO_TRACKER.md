@@ -272,7 +272,7 @@ This document tracks all TODO, FIXME, and HACK comments found in the codebase th
 - `backend/app/api/routes/portal.py` - Faculty portal endpoints
 
 ### External Reference
-- See `docs/TODO_RESILIENCE.md` for production resilience checklist
+- See `docs/architecture/resilience.md` for production resilience framework
 - Referenced in `backend/app/notifications/tasks.py:37`
 
 ---

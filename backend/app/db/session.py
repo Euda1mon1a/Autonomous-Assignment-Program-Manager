@@ -3,7 +3,7 @@
 Connection Pooling Strategy
 ---------------------------
 This module configures SQLAlchemy's connection pool for optimal performance
-and reliability. See docs/ARCHITECTURE.md for detailed documentation.
+and reliability. See ARCHITECTURE.md for detailed documentation.
 
 Pool settings are configurable via environment variables:
 - DB_POOL_SIZE: Base number of connections (default: 10)
