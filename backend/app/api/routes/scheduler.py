@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
+from app.api.deps import get_db
 from app.core.security import get_current_active_user
 from app.models.scheduled_job import JobExecution
 from app.models.user import User

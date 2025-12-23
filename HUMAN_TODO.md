@@ -40,6 +40,7 @@
 
 ***REMOVED******REMOVED*** Other Pending Tasks
 
+<<<<<<< HEAD
 ***REMOVED******REMOVED******REMOVED*** Backend Fix: Faculty Assignments Missing rotation_template_id
 
 **Priority:** Medium
@@ -73,6 +74,9 @@ if (
 ```
 
 ---
+=======
+_(Add other human-required tasks here)_
+>>>>>>> origin/docs/session-14-summary
 
 ---
 

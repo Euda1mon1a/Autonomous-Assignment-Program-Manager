@@ -1,6 +1,5 @@
 """GraphQL types for Assignment entity."""
 from datetime import datetime
-from enum import Enum
 from typing import Optional
 from uuid import UUID
 
@@ -9,7 +8,7 @@ from strawberry.scalars import JSON
 
 
 @strawberry.enum
-class AssignmentRole(str, Enum):
+class AssignmentRole(str):
     """Assignment role types."""
     PRIMARY = "primary"
     SUPERVISING = "supervising"

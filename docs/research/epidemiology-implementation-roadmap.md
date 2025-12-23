@@ -206,7 +206,11 @@ class ContactTracingProtocol:
 
     def trace_and_intervene(
         self,
+<<<<<<< HEAD
         outbreak_case: UUID,  ***REMOVED*** Faculty who just burned out
+=======
+        outbreak_case: UUID,  ***REMOVED*** who just burned out
+>>>>>>> origin/docs/session-14-summary
         network: nx.Graph,    ***REMOVED*** Swap network
         allostatic_loads: dict[UUID, float],
     ) -> list[InterventionRecommendation]:

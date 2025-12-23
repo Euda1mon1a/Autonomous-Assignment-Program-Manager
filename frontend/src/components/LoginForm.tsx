@@ -3,7 +3,11 @@
 import { useState, FormEvent, useCallback, useMemo } from 'react'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+<<<<<<< HEAD
 import { validateRequired } from '@/lib/validation'
+=======
+import { validateRequired, validatePassword } from '@/lib/validation'
+>>>>>>> origin/docs/session-14-summary
 
 interface LoginFormProps {
   onSuccess?: () => void
@@ -30,10 +34,16 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       errors.username = usernameError;
     }
 
+<<<<<<< HEAD
     // Skip password complexity validation for login - backend handles it
     // Only check if password is provided
     if (!password) {
       errors.password = 'Password is required';
+=======
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      errors.password = passwordError;
+>>>>>>> origin/docs/session-14-summary
     }
 
     return errors;
@@ -42,9 +52,13 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const formErrors = useMemo(() => validateForm(), [validateForm]);
 
   const isFormValid = useMemo(() => {
+<<<<<<< HEAD
     const valid = Object.keys(formErrors).length === 0 && username.trim() !== '' && password !== '';
     console.log('[LoginForm] isFormValid:', valid, { errorCount: Object.keys(formErrors).length, username: !!username, password: !!password })
     return valid;
+=======
+    return Object.keys(formErrors).length === 0 && username.trim() !== '' && password !== '';
+>>>>>>> origin/docs/session-14-summary
   }, [formErrors, username, password]);
 
   const handleBlur = (field: string) => {
@@ -53,27 +67,38 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+<<<<<<< HEAD
     console.log('[LoginForm] Form submitted', { username, password: '***', isFormValid, formErrors })
+=======
+>>>>>>> origin/docs/session-14-summary
 
     // Mark all fields as touched
     setTouched({ username: true, password: true });
 
     // Check for validation errors
     const errors = validateForm();
+<<<<<<< HEAD
     console.log('[LoginForm] Validation errors:', errors)
     if (Object.keys(errors).length > 0) {
       console.log('[LoginForm] Validation failed, not submitting')
+=======
+    if (Object.keys(errors).length > 0) {
+>>>>>>> origin/docs/session-14-summary
       return;
     }
 
     setError(null)
     setIsSubmitting(true)
+<<<<<<< HEAD
     console.log('[LoginForm] Starting login request...')
+=======
+>>>>>>> origin/docs/session-14-summary
 
     try {
       await login({ username, password })
       onSuccess?.()
     } catch (err) {
+<<<<<<< HEAD
       // Descriptive error for local development troubleshooting
       let errorMessage = 'Invalid username or password'
       if (err instanceof Error) {
@@ -88,6 +113,10 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         }
       }
       console.error('[LoginForm] Login failed:', err)
+=======
+      const errorMessage =
+        err instanceof Error ? err.message : 'Invalid username or password'
+>>>>>>> origin/docs/session-14-summary
       setError(errorMessage)
     } finally {
       setIsSubmitting(false)
@@ -170,6 +199,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </button>
       </form>
 
+<<<<<<< HEAD
       {/* Demo Account Info - Local Development Only */}
       <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
         <h3 className="text-sm font-medium text-blue-800 mb-3">Local Dev Credentials</h3>
@@ -182,6 +212,25 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         <p className="mt-3 text-xs text-blue-600">
           API: {typeof window !== 'undefined' ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api' : 'loading...'}
         </p>
+=======
+      {/* Demo Account Info */}
+      <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <h3 className="text-sm font-medium text-gray-700 mb-3">Demo Accounts</h3>
+        <div className="space-y-2 text-sm text-gray-600">
+          <div className="flex justify-between">
+            <span className="font-mono">admin</span>
+            <span className="text-gray-400">admin123</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-mono">coordinator</span>
+            <span className="text-gray-400">coord123</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-mono">faculty</span>
+            <span className="text-gray-400">faculty123</span>
+          </div>
+        </div>
+>>>>>>> origin/docs/session-14-summary
       </div>
 
       {/* Help Section */}

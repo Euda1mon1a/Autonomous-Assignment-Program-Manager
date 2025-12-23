@@ -47,7 +47,7 @@ class StressType(str, Enum):
 class CompensationType(str, Enum):
     """Types of compensation responses."""
     OVERTIME = "overtime"                    ***REMOVED*** Extra hours worked
-    CROSS_COVERAGE = "cross_coverage"        ***REMOVED*** Faculty covering unfamiliar areas
+    CROSS_COVERAGE = "cross_coverage"        ***REMOVED*** covering unfamiliar areas
     DEFERRED_LEAVE = "deferred_leave"        ***REMOVED*** Postponed time off
     SERVICE_REDUCTION = "service_reduction"  ***REMOVED*** Reduced scope
     EFFICIENCY_GAIN = "efficiency_gain"      ***REMOVED*** Working smarter (limited)

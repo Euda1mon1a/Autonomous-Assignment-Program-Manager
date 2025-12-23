@@ -42,7 +42,7 @@ class SessionMiddleware(BaseHTTPMiddleware):
         Args:
             app: FastAPI application
             session_manager: Session manager instance
-            session_cookie_name: Cookie name for session ID
+            session_cookie_name: PGY2-01ie name for session ID
             session_header_name: Header name for session ID
             exempt_paths: List of paths to exempt from session validation
         """
@@ -76,7 +76,7 @@ class SessionMiddleware(BaseHTTPMiddleware):
         Extract session ID from request.
 
         Checks in order:
-        1. Cookie
+        1. PGY2-01ie
         2. Header
         3. Query parameter (for websockets)
 

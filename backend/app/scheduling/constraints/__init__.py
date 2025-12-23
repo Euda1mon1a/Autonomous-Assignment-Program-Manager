@@ -61,10 +61,10 @@ from .temporal import (
     WednesdayPMSingleFacultyConstraint,
 )
 
-***REMOVED*** Faculty and preference constraints
+***REMOVED*** and preference constraints
 from .faculty import PreferenceConstraint
 
-***REMOVED*** Faculty role-based constraints
+***REMOVED*** role-based constraints
 from .faculty_role import (
     FacultyRoleClinicConstraint,
     SMFacultyClinicConstraint,
@@ -89,9 +89,6 @@ from .sports_medicine import SMResidentFacultyAlignmentConstraint
 
 ***REMOVED*** Post-call assignment constraints
 from .post_call import PostCallAutoAssignmentConstraint
-
-***REMOVED*** Night Float post-call constraints
-from .night_float_post_call import NightFloatPostCallConstraint
 
 ***REMOVED*** Call equity and preference constraints
 from .call_equity import (
@@ -139,9 +136,9 @@ __all__ = [
     "WednesdayAMInternOnlyConstraint",
     "WednesdayPMSingleFacultyConstraint",
     "InvertedWednesdayConstraint",
-    ***REMOVED*** Faculty constraints
+    ***REMOVED*** constraints
     "PreferenceConstraint",
-    ***REMOVED*** Faculty role constraints
+    ***REMOVED*** role constraints
     "FacultyRoleClinicConstraint",
     "SMFacultyClinicConstraint",
     ***REMOVED*** FMIT constraints
@@ -159,8 +156,6 @@ __all__ = [
     "SMResidentFacultyAlignmentConstraint",
     ***REMOVED*** Post-call assignment constraints
     "PostCallAutoAssignmentConstraint",
-    ***REMOVED*** Night Float post-call constraints
-    "NightFloatPostCallConstraint",
     ***REMOVED*** Call equity and preference constraints
     "DeptChiefWednesdayPreferenceConstraint",
     "SundayCallEquityConstraint",

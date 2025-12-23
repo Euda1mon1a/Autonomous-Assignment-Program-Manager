@@ -198,7 +198,11 @@ Client → Route → Auth Check → RoleFilterService
               Filtered data returned
 ```
 
+<<<<<<< HEAD
 ***REMOVED******REMOVED******REMOVED*** Faculty User Request
+=======
+***REMOVED******REMOVED******REMOVED*** User Request
+>>>>>>> origin/docs/session-14-summary
 ```
 Client → Route → Auth Check → RoleFilterService
                    ✓              ↓

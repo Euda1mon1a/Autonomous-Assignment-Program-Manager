@@ -171,7 +171,7 @@ __all__ = [
     "ConflictAlertStatus",
     "ConflictSeverity",
     "ConflictType",
-    ***REMOVED*** Faculty Preference model
+    ***REMOVED*** Preference model
     "FacultyPreference",
     ***REMOVED*** Tier 1 Resilience models
     "ResilienceHealthCheck",

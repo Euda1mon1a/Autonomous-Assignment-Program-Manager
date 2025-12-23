@@ -26,7 +26,7 @@ class RateLimitTier(str, Enum):
     """
     FREE = "free"           ***REMOVED*** Default tier for unauthenticated requests
     STANDARD = "standard"   ***REMOVED*** Clinical staff, residents
-    PREMIUM = "premium"     ***REMOVED*** Faculty, coordinators
+    PREMIUM = "premium"     ***REMOVED***, coordinators
     ADMIN = "admin"         ***REMOVED*** Admin users
     INTERNAL = "internal"   ***REMOVED*** Internal services (bypass limits)
 

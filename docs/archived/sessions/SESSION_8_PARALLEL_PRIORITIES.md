@@ -227,7 +227,11 @@ backend/app/scheduling/constraints/
 ├── __init__.py
 ├── base.py           ***REMOVED*** Abstract constraint class
 ├── acgme.py          ***REMOVED*** ACGME compliance constraints
+<<<<<<< HEAD
 ├── faculty.py        ***REMOVED*** Faculty-related constraints
+=======
+├── faculty.py        ***REMOVED***-related constraints
+>>>>>>> origin/docs/session-14-summary
 ├── temporal.py       ***REMOVED*** Time-based constraints
 ├── capacity.py       ***REMOVED*** Load/capacity constraints
 ├── custom.py         ***REMOVED*** Custom program constraints

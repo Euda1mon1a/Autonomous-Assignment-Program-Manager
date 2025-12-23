@@ -497,7 +497,7 @@ class TestAcademicYearTimeline:
 
 
 ***REMOVED*** ============================================================================
-***REMOVED*** Faculty Timeline Tests
+***REMOVED*** Timeline Tests
 ***REMOVED*** ============================================================================
 
 
@@ -550,7 +550,7 @@ class TestFacultyTimeline:
     ):
         """Test faculty timeline with assignments."""
         faculty_list, _ = faculty_with_assignments
-        faculty = faculty_list[0]  ***REMOVED*** Faculty with most assignments
+        faculty = faculty_list[0]  ***REMOVED*** with most assignments
 
         response = client.get(
             f"/api/fmit-timeline/faculty/{faculty.id}",

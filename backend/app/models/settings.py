@@ -26,7 +26,7 @@ class OverrideReasonCode(str, Enum):
 
     These map to operational realities in medical scheduling.
     """
-    SICK_CALL = "sick_call"           ***REMOVED*** Faculty/resident called in sick
+    SICK_CALL = "sick_call"           ***REMOVED***/resident called in sick
     DEPLOYMENT = "deployment"          ***REMOVED*** Military deployment order
     SAFETY = "safety"                  ***REMOVED*** Patient or staff safety concern
     COVERAGE_GAP = "coverage_gap"      ***REMOVED*** Critical coverage gap discovered

@@ -1,4 +1,4 @@
-***REMOVED*** Faculty Dashboard Implementation Summary
+***REMOVED*** Dashboard Implementation Summary
 
 ***REMOVED******REMOVED*** Overview
 Successfully implemented the faculty dashboard endpoint (`/api/portal/my/dashboard`) with real data queries, replacing stub data that returned zeros.

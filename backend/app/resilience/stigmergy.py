@@ -35,8 +35,8 @@ logger = logging.getLogger(__name__)
 
 class TrailType(str, Enum):
     """Types of preference trails."""
-    PREFERENCE = "preference"       ***REMOVED*** Faculty prefers this slot
-    AVOIDANCE = "avoidance"         ***REMOVED*** Faculty avoids this slot
+    PREFERENCE = "preference"       ***REMOVED*** prefers this slot
+    AVOIDANCE = "avoidance"         ***REMOVED*** avoids this slot
     SWAP_AFFINITY = "swap_affinity"  ***REMOVED*** Willing to swap with specific person
     WORKLOAD = "workload"           ***REMOVED*** Preferred workload pattern
     SEQUENCE = "sequence"           ***REMOVED*** Preferred assignment sequences

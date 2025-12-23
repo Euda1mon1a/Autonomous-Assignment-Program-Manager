@@ -254,7 +254,7 @@ class ClinicScheduleImporter:
         "sim": SlotType.CONFERENCE,  ***REMOVED*** Simulation
         "usafp": SlotType.CONFERENCE,
         "hafp": SlotType.CONFERENCE,
-        "facdev": SlotType.CONFERENCE,  ***REMOVED*** Faculty Development
+        "facdev": SlotType.CONFERENCE,  ***REMOVED*** Development
 
         ***REMOVED*** --- ADMIN (Administrative time) ---
         "admin": SlotType.ADMIN,
@@ -265,7 +265,7 @@ class ClinicScheduleImporter:
         "pi": SlotType.ADMIN,        ***REMOVED*** Process Improvement
         "at": SlotType.ADMIN,        ***REMOVED*** Admin Time
         "pcat": SlotType.ADMIN,      ***REMOVED*** Patient Care Admin Team
-        "fac": SlotType.ADMIN,       ***REMOVED*** Faculty (administrative)
+        "fac": SlotType.ADMIN,       ***REMOVED*** (administrative)
         "dm": SlotType.ADMIN,        ***REMOVED*** Department Meeting
         "dfm": SlotType.ADMIN,       ***REMOVED*** DFM administrative
     }
@@ -779,7 +779,7 @@ class ConflictDetector:
         Args:
             fmit_schedule: Parsed FMIT rotation schedule
             clinic_schedule: Parsed clinic schedule
-            specialty_providers: Dict of specialty -> provider names (e.g., {"Sports Medicine": ["Faculty-C-Last"]})
+            specialty_providers: Dict of specialty -> provider names (e.g., {"Sports Medicine": ["FAC-SPORTS"]})
         """
         self.fmit = fmit_schedule
         self.clinic = clinic_schedule

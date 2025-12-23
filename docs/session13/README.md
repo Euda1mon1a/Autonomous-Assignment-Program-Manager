@@ -285,5 +285,9 @@ All URLs and conversation links are preserved in the Individual Conversation Fil
 
 **Document Status:** Master Index - Complete  
 **Last Updated:** December 20, 2025, 7:00 AM HST  
+<<<<<<< HEAD
 **Maintainer:** Aaron Montgomery (Euda1mon1a)
+=======
+**Maintainer:** FAC-CORE-01 (Euda1mon1a)
+>>>>>>> origin/docs/session-14-summary
 

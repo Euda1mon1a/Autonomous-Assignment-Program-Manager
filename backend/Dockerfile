@@ -16,7 +16,7 @@
 ***REMOVED*** =============================================================================
 ***REMOVED*** Build Stage - includes compilers and build tools
 ***REMOVED*** =============================================================================
-FROM python:3.14-slim AS builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
@@ -39,7 +39,7 @@ RUN pip install --upgrade pip --no-cache-dir \
 ***REMOVED*** =============================================================================
 ***REMOVED*** Runtime Stage - minimal production image
 ***REMOVED*** =============================================================================
-FROM python:3.14-slim AS runtime
+FROM python:3.12-slim AS runtime
 
 ***REMOVED*** Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -48,10 +48,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-***REMOVED*** Install only runtime dependencies (libpq for psycopg2, libmagic for python-magic)
+***REMOVED*** Install only runtime dependencies (libpq for psycopg2)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
-    libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
 ***REMOVED*** Copy virtual environment from builder

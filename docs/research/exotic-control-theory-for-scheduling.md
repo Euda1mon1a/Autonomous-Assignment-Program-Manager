@@ -862,7 +862,11 @@ class ScheduleHealthEKF:
         overall_health,      ***REMOVED*** Latent health score (0-1)
         coverage_quality,    ***REMOVED*** True coverage quality
         workload_stress,     ***REMOVED*** Underlying stress level
+<<<<<<< HEAD
         morale,              ***REMOVED*** Faculty morale
+=======
+        morale,              ***REMOVED*** morale
+>>>>>>> origin/docs/session-14-summary
     ]
 
     Measurements:
@@ -2647,7 +2651,11 @@ class KalmanFilterState(Base):
 
     id = Column(UUID, primary_key=True)
     filter_name = Column(String, index=True)
+<<<<<<< HEAD
     entity_id = Column(UUID)  ***REMOVED*** Faculty or system
+=======
+    entity_id = Column(UUID)  ***REMOVED*** or system
+>>>>>>> origin/docs/session-14-summary
     timestamp = Column(DateTime, index=True)
 
     ***REMOVED*** Estimate

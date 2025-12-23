@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, field_validator
 
 
 class FacultyRoleSchema(str, Enum):
@@ -45,23 +45,6 @@ class PersonBase(BaseModel):
 class PersonCreate(PersonBase):
     """Schema for creating a person."""
     pass
-
-
-class BulkPersonImport(BaseModel):
-    """Schema for bulk importing people."""
-    items: list[PersonCreate]
-    options: dict | None = None
-
-
-class BulkImportResult(BaseModel):
-    """Result of a bulk import operation."""
-    success: bool
-    totalProcessed: int
-    successCount: int
-    errorCount: int
-    skippedCount: int = 0
-    errors: list[dict] = Field(default_factory=list)
-    importedIds: list[str] = Field(default_factory=list)
 
 
 class PersonUpdate(BaseModel):

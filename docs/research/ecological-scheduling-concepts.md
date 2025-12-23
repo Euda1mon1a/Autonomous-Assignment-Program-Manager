@@ -80,7 +80,11 @@ class SuccessionStage:
     stage: str  ***REMOVED*** "pioneer", "intermediate", "climax"
     stability_index: float  ***REMOVED*** 0.0-1.0 (higher = more stable)
     specialization_ratio: float  ***REMOVED*** Specialists / Generalists
+<<<<<<< HEAD
     turnover_rate: float  ***REMOVED*** Faculty changes per month
+=======
+    turnover_rate: float  ***REMOVED*** changes per month
+>>>>>>> origin/docs/session-14-summary
     time_to_climax_estimate: int  ***REMOVED*** Months until stable
 
     ***REMOVED*** Stage thresholds
@@ -473,7 +477,11 @@ class CrisisNicheExpansion:
 @dataclass
 class NichePartitioningReport:
     team_niche_diversity: float  ***REMOVED*** Higher = better coverage
+<<<<<<< HEAD
     high_overlap_pairs: list[tuple[str, str, float]]  ***REMOVED*** Faculty pairs competing
+=======
+    high_overlap_pairs: list[tuple[str, str, float]]  ***REMOVED*** pairs competing
+>>>>>>> origin/docs/session-14-summary
     underserved_niches: list[str]  ***REMOVED*** Shift types no one wants
     overserved_niches: list[str]  ***REMOVED*** Shift types everyone wants
 
@@ -545,8 +553,13 @@ class CarryingCapacityFactors:
     inpatient_beds: int
 
     ***REMOVED*** Support infrastructure
+<<<<<<< HEAD
     coordinator_capacity: int  ***REMOVED*** Faculty per coordinator (1:10 ratio typical)
     IT_support_capacity: int   ***REMOVED*** Faculty per IT staff
+=======
+    coordinator_capacity: int  ***REMOVED*** per coordinator (1:10 ratio typical)
+    IT_support_capacity: int   ***REMOVED*** per IT staff
+>>>>>>> origin/docs/session-14-summary
     admin_staff_count: int
 
     ***REMOVED*** Financial
@@ -836,7 +849,11 @@ class CarryingCapacityReport:
     utilization_of_K: float
 
     limiting_factor: str  ***REMOVED*** Which resource is constraining K
+<<<<<<< HEAD
     headroom: int  ***REMOVED*** Faculty slots available before hitting K
+=======
+    headroom: int  ***REMOVED*** slots available before hitting K
+>>>>>>> origin/docs/session-14-summary
 
     ***REMOVED*** All constraint limits
     constraint_breakdown: dict[str, int]
@@ -923,8 +940,13 @@ class LotkaVolterraParams:
     beta: float   ***REMOVED*** Rate at which faculty "consume" (fill) shifts
 
     ***REMOVED*** Predator (faculty supply) parameters
+<<<<<<< HEAD
     gamma: float  ***REMOVED*** Faculty attrition rate (burnout, resignation)
     delta: float  ***REMOVED*** Faculty recruitment rate (response to demand)
+=======
+    gamma: float  ***REMOVED*** attrition rate (burnout, resignation)
+    delta: float  ***REMOVED*** recruitment rate (response to demand)
+>>>>>>> origin/docs/session-14-summary
 
     ***REMOVED*** Typical values (estimated)
     ***REMOVED*** alpha = 0.05 (demand grows 5%/month if unmet)
@@ -967,9 +989,15 @@ def simulate_demand_supply_dynamics(
         ***REMOVED*** Demand grows naturally but is reduced when filled by faculty
         d_shifts = (params.alpha * shifts - params.beta * shifts * faculty) * dt
 
+<<<<<<< HEAD
         ***REMOVED*** Faculty supply dynamics
         ***REMOVED*** dy/dt = δ*x*y - γ*y
         ***REMOVED*** Faculty grow when demand is high, decline due to attrition
+=======
+        ***REMOVED*** supply dynamics
+        ***REMOVED*** dy/dt = δ*x*y - γ*y
+        ***REMOVED*** grow when demand is high, decline due to attrition
+>>>>>>> origin/docs/session-14-summary
         d_faculty = (params.delta * shifts * faculty - params.gamma * faculty) * dt
 
         ***REMOVED*** Update populations
@@ -1279,7 +1307,11 @@ class KeystoneMetrics:
     is_department_chair: bool
 
     ***REMOVED*** Dependency metrics (how many people depend on them)
+<<<<<<< HEAD
     dependent_faculty_count: int  ***REMOVED*** Faculty who need their teaching/approval
+=======
+    dependent_faculty_count: int  ***REMOVED*** who need their teaching/approval
+>>>>>>> origin/docs/session-14-summary
     dependent_procedures_count: int  ***REMOVED*** Procedures that require them
     dependent_services_count: int  ***REMOVED*** Services that can't run without them
 
