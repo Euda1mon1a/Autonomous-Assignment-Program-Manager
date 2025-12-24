@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "command": "python",
+      "args": ["-m", "scheduler_mcp.server"],
+      "cwd": "mcp-server/src",
+      "env": {
+        "API_BASE_URL": "http://localhost:8000",
+        "PYTHONPATH": "mcp-server/src",
+        "LOG_LEVEL": "INFO"
+      },
+      "transport": "stdio"
+    }
+  }
+}

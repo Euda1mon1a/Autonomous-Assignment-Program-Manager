@@ -207,7 +207,7 @@ Finds compatible swap candidates using multi-factor scoring.
   "candidates": [
     {
       "candidate_id": "person-uuid-2",
-      "candidate_name": "Dr. Williams",
+      "candidate_role": "Faculty",
       "match_score": 0.92,
       "target_assignment": {
         "id": "assignment-uuid-2",
