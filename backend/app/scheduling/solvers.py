@@ -7,6 +7,18 @@ This module provides multiple solver implementations:
 - Hybrid Solver: Combines approaches for best results
 
 Each solver uses the modular constraint system from constraints.py.
+
+WARNING - KNOWN ISSUE (2025-12-23):
+The GreedySolver template selection logic (lines ~1190-1202) has a bug where
+it always selects the first template that passes constraints, resulting in
+all assignments going to a single rotation (e.g., "Post-Call Recovery").
+
+Recommended workaround: Use 'cp_sat' or 'pulp' algorithm instead of 'greedy'.
+
+TODO: Implement proper rotation distribution logic in GreedySolver._select_template
+- Consider rotation target counts and current utilization
+- Distribute assignments across rotation types based on program needs
+- Match solver behavior to CP-SAT's balanced distribution
 """
 
 import json
