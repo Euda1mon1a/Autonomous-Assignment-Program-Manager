@@ -37,6 +37,29 @@ Navigate to **Compliance** to see:
 
 ---
 
+***REMOVED******REMOVED*** Proactive Compliance: Scheduled Hours Calculator
+
+!!! tip "Prevention Over Correction"
+    The **Scheduled Hours Calculator** displays projected work hours based on schedule assignments, enabling you to identify potential ACGME violations **before** they occur.
+
+***REMOVED******REMOVED******REMOVED*** Scheduled vs. Actual Hours
+
+| Metric | Source | Purpose |
+|--------|--------|---------|
+| **Scheduled Hours** | Schedule assignments | Proactive planning |
+| **Actual Duty Hours** | MyEvaluations | Official ACGME reporting |
+
+The Scheduled Hours Calculator shows:
+- Current week projected hours
+- 4-week rolling average projection
+- Compliance status: On Track / Review Needed / Action Required
+
+When status shows **Review Needed** or **Action Required**, adjust the schedule proactively before violations occur.
+
+See [GUI Improvements > Scheduled Hours Calculator](gui-improvements.md***REMOVED***scheduled-hours-calculator) for full details.
+
+---
+
 ***REMOVED******REMOVED*** Resolving Violations
 
 1. Click on a violation in the dashboard
