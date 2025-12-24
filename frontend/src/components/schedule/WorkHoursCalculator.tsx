@@ -1,10 +1,10 @@
 'use client'
 
 import { useMemo } from 'react'
-import { Clock, AlertTriangle, CheckCircle, TrendingUp, Info } from 'lucide-react'
+import { Clock, AlertTriangle, CheckCircle, TrendingUp, Info, Calendar } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-interface WorkHourMetrics {
+interface ScheduledHourMetrics {
   thisWeek: number
   lastWeek: number
   fourWeekAverage: number
@@ -12,7 +12,7 @@ interface WorkHourMetrics {
 }
 
 interface WorkHoursCalculatorProps {
-  /** Total assignments in the current period */
+  /** Scheduled assignments in the current period */
   assignments: Array<{
     date: string
     time_of_day: 'AM' | 'PM'
@@ -28,30 +28,44 @@ interface WorkHoursCalculatorProps {
   className?: string
 }
 
-// Approximate hours for different activity types
-const ACTIVITY_HOURS: Record<string, number> = {
-  call: 12, // Call shifts are typically longer
-  inpatient: 5,
-  clinic: 4,
-  procedure: 4,
-  conference: 2,
-  elective: 4,
-  default: 4,
+/**
+ * Standard hours by activity type for schedule-based estimation.
+ * These are planning estimates, not actual logged hours.
+ *
+ * Note: Actual duty hours are logged in MyEvaluations.
+ * This calculator provides transparency into scheduled workload
+ * to help identify potential ACGME compliance issues proactively.
+ */
+const SCHEDULED_ACTIVITY_HOURS: Record<string, number> = {
+  call: 12,      // Call shifts typically scheduled for 12h
+  inpatient: 5,  // Inpatient half-day ~5h
+  clinic: 4,     // Clinic session ~4h
+  procedure: 4,  // Procedure block ~4h
+  conference: 2, // Didactic sessions ~2h
+  elective: 4,   // Elective rotation ~4h
+  default: 4,    // Default half-day estimate
 }
 
-function getHoursForActivity(activity: string): number {
+function getScheduledHoursForActivity(activity: string): number {
   const activityLower = activity.toLowerCase()
-  for (const [key, hours] of Object.entries(ACTIVITY_HOURS)) {
+  for (const [key, hours] of Object.entries(SCHEDULED_ACTIVITY_HOURS)) {
     if (activityLower.includes(key)) return hours
   }
-  return ACTIVITY_HOURS.default
+  return SCHEDULED_ACTIVITY_HOURS.default
 }
 
 /**
- * Work Hours Calculator Component
+ * Scheduled Work Hours Calculator Component
  *
- * Displays ACGME-compliant work hour tracking for residents.
- * Shows current week hours, 4-week rolling average, and compliance status.
+ * Displays PROJECTED work hours based on schedule assignments for
+ * proactive ACGME compliance monitoring and transparency.
+ *
+ * IMPORTANT: This shows SCHEDULED hours, not actual duty hours.
+ * - Scheduled hours = what the schedule projects
+ * - Actual duty hours = logged in MyEvaluations
+ *
+ * Purpose: Help residents and program leaders identify potential
+ * ACGME violations BEFORE they occur, enabling proactive adjustment.
  */
 export function WorkHoursCalculator({
   assignments,
@@ -60,7 +74,7 @@ export function WorkHoursCalculator({
   showDetails = true,
   className = '',
 }: WorkHoursCalculatorProps) {
-  const metrics = useMemo<WorkHourMetrics>(() => {
+  const metrics = useMemo<ScheduledHourMetrics>(() => {
     const now = new Date()
     const startOfThisWeek = new Date(now)
     startOfThisWeek.setDate(now.getDate() - now.getDay())
@@ -79,7 +93,7 @@ export function WorkHoursCalculator({
 
     assignments.forEach((assignment) => {
       const assignmentDate = new Date(assignment.date)
-      const hours = getHoursForActivity(assignment.activity)
+      const hours = getScheduledHoursForActivity(assignment.activity)
 
       // This week
       if (assignmentDate >= startOfThisWeek) {
@@ -96,7 +110,7 @@ export function WorkHoursCalculator({
       }
     })
 
-    // Calculate days off (7 days in week minus days with assignments)
+    // Calculate scheduled days off (7 days minus days with assignments)
     const daysOffThisWeek = 7 - daysWithAssignmentsThisWeek.size
 
     return {
@@ -140,15 +154,18 @@ export function WorkHoursCalculator({
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-blue-600" />
-            <h3 className="font-semibold text-gray-900">Work Hours</h3>
+            <Calendar className="w-5 h-5 text-blue-600" />
+            <div>
+              <h3 className="font-semibold text-gray-900">Scheduled Hours</h3>
+              <p className="text-xs text-gray-500">Based on assignments</p>
+            </div>
           </div>
           <div
             className={`px-2 py-1 rounded-full text-xs font-medium border ${statusColors[status]}`}
           >
-            {status === 'safe' && 'ACGME Compliant'}
-            {status === 'warning' && 'Approaching Limit'}
-            {status === 'danger' && 'Limit Exceeded'}
+            {status === 'safe' && 'On Track'}
+            {status === 'warning' && 'Review Needed'}
+            {status === 'danger' && 'Action Required'}
           </div>
         </div>
       </div>
@@ -157,7 +174,7 @@ export function WorkHoursCalculator({
       <div className="p-4 grid grid-cols-2 gap-4">
         {/* This Week */}
         <div className="space-y-1">
-          <div className="text-sm text-gray-500">This Week</div>
+          <div className="text-sm text-gray-500">This Week (Scheduled)</div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-gray-900">
               {metrics.thisWeek.toFixed(0)}
@@ -181,11 +198,11 @@ export function WorkHoursCalculator({
         {/* 4-Week Average (ACGME) */}
         <div className="space-y-1">
           <div className="flex items-center gap-1 text-sm text-gray-500">
-            4-Week Average
+            4-Week Projection
             <div className="relative group">
               <Info className="w-3 h-3 text-gray-400 cursor-help" />
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
-                ACGME requires &le;80 hours averaged over 4 weeks
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block w-56 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                ACGME limit: ≤80 hours/week averaged over 4 weeks. This shows scheduled hours for proactive planning.
               </div>
             </div>
           </div>
@@ -224,7 +241,7 @@ export function WorkHoursCalculator({
         </div>
         <div className="mt-1 flex justify-between text-xs text-gray-400">
           <span>0h</span>
-          <span>{maxWeeklyHours}h limit</span>
+          <span>{maxWeeklyHours}h ACGME limit</span>
         </div>
       </div>
 
@@ -232,7 +249,7 @@ export function WorkHoursCalculator({
       {showDetails && (
         <div className="px-4 pb-4 pt-2 border-t border-gray-100 grid grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="text-gray-500">Days off this week:</span>{' '}
+            <span className="text-gray-500">Scheduled days off:</span>{' '}
             <span
               className={`font-medium ${
                 metrics.daysOffThisWeek >= 1 ? 'text-green-600' : 'text-red-600'
@@ -254,12 +271,19 @@ export function WorkHoursCalculator({
           {statusIcons[status]}
           <span className="text-sm">
             {status === 'warning' &&
-              `You're at ${((metrics.fourWeekAverage / maxWeeklyHours) * 100).toFixed(0)}% of the weekly limit`}
+              `Schedule projects ${((metrics.fourWeekAverage / maxWeeklyHours) * 100).toFixed(0)}% of limit - consider adjustments`}
             {status === 'danger' &&
-              `Work hours exceed ACGME limit. Please discuss with your program director.`}
+              `Schedule exceeds ACGME limit - review with program director before finalizing`}
           </span>
         </div>
       )}
+
+      {/* Disclaimer */}
+      <div className="px-4 py-2 bg-gray-50 border-t border-gray-100">
+        <p className="text-xs text-gray-500 text-center">
+          Estimated from schedule. Actual duty hours logged in MyEvaluations.
+        </p>
+      </div>
     </motion.div>
   )
 }
