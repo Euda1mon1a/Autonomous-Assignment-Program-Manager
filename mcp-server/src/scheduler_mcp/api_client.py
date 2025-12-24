@@ -103,19 +103,40 @@ class SchedulerAPIClient:
         response.raise_for_status()
         return response.json()
 
-    async def get_swap_candidates(self, person_id: str, block_id: str) -> dict[str, Any]:
-        """Get swap candidates via API.
+    async def get_swap_candidates(
+        self,
+        person_id: str,
+        assignment_id: str | None = None,
+        block_id: str | None = None,
+        max_candidates: int = 10,
+    ) -> dict[str, Any]:
+        """Get swap candidates via JSON-based API.
 
-        NOTE: The backend endpoint /schedule/swaps/find requires file upload
-        which isn't suitable for MCP. This method is a placeholder until a
-        simpler API endpoint is added. Currently returns NotImplementedError.
+        Uses the /schedule/swaps/candidates endpoint which queries the database
+        directly without requiring file upload.
+
+        Args:
+            person_id: ID of the person requesting the swap
+            assignment_id: Optional specific assignment to swap
+            block_id: Optional specific block to find candidates for
+            max_candidates: Maximum number of candidates to return
+
+        Returns:
+            SwapCandidateJsonResponse with ranked candidates
         """
-        # The actual endpoint POST /schedule/swaps/find requires Excel file upload
-        # A simpler JSON-based endpoint is needed for MCP integration
-        raise NotImplementedError(
-            "Swap candidates API requires file upload. "
-            "Use mock implementation in tools.py until backend supports JSON-only endpoint."
+        headers = await self._ensure_authenticated()
+        response = await self.client.post(
+            f"{self.config.api_prefix}/schedule/swaps/candidates",
+            headers=headers,
+            json={
+                "person_id": person_id,
+                "assignment_id": assignment_id,
+                "block_id": block_id,
+                "max_candidates": max_candidates,
+            },
         )
+        response.raise_for_status()
+        return response.json()
 
     async def run_contingency_analysis(
         self, scenario: str, affected_ids: list[str], start_date: str, end_date: str

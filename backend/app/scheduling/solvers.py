@@ -19,22 +19,27 @@ solvers will incorrectly assign residents to them.
 
 KNOWN ISSUES (2025-12-24) - ALL FIXED:
 
-1. GREEDY SOLVER - Template Selection Bug (lines ~1227-1252):
+1. GREEDY SOLVER - Template Selection Bug (lines ~1273-1279):
    Previously always selected the first template that passes constraints.
    STATUS: FIXED - Now selects template with fewest total assignments for
    even distribution across rotation types.
 
-2. CP-SAT SOLVER - No Template Balance (lines ~779-822):
+2. CP-SAT SOLVER - No Template Balance (lines ~794-816):
    Previously only penalized resident equity, not template concentration.
    STATUS: FIXED - Added template_balance_penalty to objective function.
    Penalizes max template count to encourage distribution.
 
-3. TEMPLATE FILTERING - Engine Issue (engine.py:874-905):
+3. PuLP SOLVER - No Template Balance (lines ~346-386):
+   Previously only penalized resident equity, not template concentration.
+   STATUS: FIXED - Added template_balance_penalty to objective function.
+   Same pattern as CP-SAT: penalizes max template count.
+
+4. TEMPLATE FILTERING - Engine Issue (engine.py:874-905):
    Previously returned ALL templates without filtering.
    STATUS: FIXED - _get_rotation_templates() now defaults to activity_type="clinic".
    Block-assigned rotations (NF, PC, FMIT, inpatient) excluded by default.
 
-All three fixes applied 2025-12-24. Solvers should now:
+All four fixes applied 2025-12-24. Solvers should now:
 - Only receive clinic templates (outpatient half-day optimization)
 - Distribute assignments evenly across available rotation types
 - Balance both resident workload AND template variety
@@ -336,14 +341,52 @@ class PuLPSolver(BaseSolver):
 
         # ==================================================
         # OBJECTIVE FUNCTION
-        # Maximize: coverage * weight - equity_penalty
+        # Maximize: coverage * 1000 - equity_penalty - template_balance_penalty
+        #
+        # Template balance ensures assignments are distributed across rotation
+        # types, not concentrated in a single rotation (e.g., all Night Float).
         # ==================================================
         coverage = pulp.lpSum(x.values())
 
-        # Equity penalty: minimize max assignments
-        max_assigns = variables.get("equity_penalty")
-        if max_assigns:
-            prob += 1000 * coverage - 10 * max_assigns, "objective"
+        # Calculate template assignment counts for balance penalty
+        template_counts = {}
+        for t_i, template in enumerate(context.templates):
+            template_vars = [
+                x[r_i, b_i, t_i]
+                for r_i in range(len(context.residents))
+                for b_i in range(len(workday_blocks))
+                if (r_i, b_i, t_i) in x
+            ]
+            if template_vars:
+                template_counts[t_i] = pulp.lpSum(template_vars)
+
+        # Template balance penalty: penalize max template count to encourage distribution
+        # This prevents all assignments going to one rotation type
+        template_balance_penalty = None
+        if len(template_counts) > 1:
+            max_template_count = pulp.LpVariable(
+                "max_template_count",
+                lowBound=0,
+                cat=pulp.LpInteger,
+            )
+            for t_i, count_expr in template_counts.items():
+                prob += (
+                    max_template_count >= count_expr,
+                    f"max_template_ge_{t_i}",
+                )
+            template_balance_penalty = max_template_count
+
+        # Build objective with all penalties
+        equity_penalty = variables.get("equity_penalty")
+        if equity_penalty is not None and template_balance_penalty is not None:
+            prob += (
+                1000 * coverage - 10 * equity_penalty - 5 * template_balance_penalty,
+                "objective",
+            )
+        elif equity_penalty is not None:
+            prob += 1000 * coverage - 10 * equity_penalty, "objective"
+        elif template_balance_penalty is not None:
+            prob += 1000 * coverage - 5 * template_balance_penalty, "objective"
         else:
             prob += coverage, "objective"
 

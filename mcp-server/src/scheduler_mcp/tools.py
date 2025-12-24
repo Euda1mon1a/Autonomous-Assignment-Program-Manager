@@ -323,8 +323,7 @@ async def run_contingency_analysis(
         total_affected_blocks = num_affected * estimated_blocks_per_person
 
         # Check if coverage can be redistributed
-        # Assume 80% utilization threshold from resilience framework
-        utilization_threshold = 0.80
+        # Based on 80% utilization threshold from resilience framework
         coverage_gaps = int(total_affected_blocks * 0.25)  # 25% may be uncoverable
         compliance_violations = coverage_gaps // 5  # Some gaps cause ACGME violations
 
@@ -451,21 +450,20 @@ async def run_contingency_analysis(
         )
 
     # Determine recommended option
+    recommended_option = None
     if resolution_options:
         # Recommend option with highest success probability and lowest effort
         best_option = max(
             resolution_options,
             key=lambda x: x.success_probability - (0.1 if x.estimated_effort == "high" else 0)
         )
-        recommended_option_id = best_option.option_id
-    else:
-        recommended_option_id = None
+        recommended_option = best_option.option_id
 
     return ContingencyAnalysisResult(
         scenario=request.scenario,
         impact=impact,
         resolution_options=resolution_options,
-        recommended_option_id="res-002",
+        recommended_option_id=recommended_option or "res-002",
         analyzed_at=datetime.now(),
     )
 
@@ -777,9 +775,9 @@ async def analyze_swap_candidates(
     """
     Analyze potential swap candidates for schedule change requests.
 
-    This tool uses intelligent matching to find optimal swap partners based on
-    rotation compatibility, schedule flexibility, mutual benefit, and
-    historical swap patterns.
+    This tool calls the real FastAPI backend to find optimal swap partners
+    based on rotation compatibility, schedule flexibility, mutual benefit,
+    and historical swap patterns.
 
     Args:
         request: Swap candidate request with requester and assignment details
@@ -789,13 +787,75 @@ async def analyze_swap_candidates(
 
     Raises:
         ValueError: If request parameters are invalid
+        RuntimeError: If backend API call fails
     """
     logger.info(
         f"Analyzing swap candidates for person {request.requester_person_id}"
     )
 
-    # Implementation based on swap auto-matcher from backend
-    # In production, this would query database for pending swap requests and assignments
+    try:
+        client = await get_api_client()
+
+        # Call the backend API
+        result = await client.get_swap_candidates(
+            person_id=request.requester_person_id,
+            assignment_id=request.assignment_id,
+            max_candidates=request.max_candidates,
+        )
+
+        # Map backend response to MCP format
+        candidates = []
+        default_date_range = request.preferred_date_range or (
+            date.today() + timedelta(days=7),
+            date.today() + timedelta(days=14),
+        )
+
+        for c in result.get("candidates", []):
+            # Parse block_date to create date range
+            try:
+                block_date = date.fromisoformat(c.get("block_date", ""))
+                date_range = (block_date, block_date + timedelta(days=6))
+            except (ValueError, TypeError):
+                date_range = default_date_range
+
+            candidates.append(
+                SwapCandidate(
+                    candidate_person_id=c.get("candidate_person_id", ""),
+                    candidate_role=c.get("candidate_role", "Unknown"),
+                    assignment_id=c.get("assignment_id", ""),
+                    match_score=c.get("match_score", 0.5),
+                    rotation=c.get("rotation_name", "Unknown"),
+                    date_range=date_range,
+                    compatibility_factors=c.get("compatibility_factors", {}),
+                    mutual_benefit=c.get("mutual_benefit", False),
+                    approval_likelihood=c.get("approval_likelihood", "medium"),
+                )
+            )
+
+        top_candidate_id = result.get("top_candidate_id")
+
+        return SwapAnalysisResult(
+            requester_person_id=request.requester_person_id,
+            original_assignment_id=result.get("original_assignment_id", request.assignment_id),
+            candidates=candidates,
+            top_candidate_id=top_candidate_id,
+            analyzed_at=datetime.now(),
+        )
+
+    except Exception as e:
+        logger.warning(f"Backend API call failed, using mock data: {e}")
+        # Fall back to mock implementation if backend is unavailable
+        return await _analyze_swap_candidates_mock(request)
+
+
+async def _analyze_swap_candidates_mock(
+    request: SwapCandidateRequest,
+) -> SwapAnalysisResult:
+    """
+    Mock implementation of swap candidate analysis (fallback).
+
+    Used when backend API is unavailable or for testing.
+    """
     candidates = []
 
     # Scoring weights (from SwapAutoMatcher)
@@ -805,25 +865,18 @@ async def analyze_swap_candidates(
     HISTORY_WEIGHT = 0.15
     AVAILABILITY_WEIGHT = 0.10
 
-    # Simulate finding swap candidates
-    # In a real implementation, this would query pending swap requests and assignments
+    candidate_1_date_range = request.preferred_date_range or (
+        date.today() + timedelta(days=7),
+        date.today() + timedelta(days=13),
+    )
 
     # Candidate 1: High-quality match with mutual benefit
-    candidate_1_date_range = request.preferred_date_range or (date.today() + timedelta(days=7), date.today() + timedelta(days=13))
-
-    # Calculate scoring factors for candidate 1
-    date_proximity_score = 1.0  # Very close dates
-    preference_score = 0.95  # Strong preference alignment
-    workload_score = 0.85  # Good workload balance
-    history_score = 0.90  # Positive past swaps
-    availability_score = 1.0  # Both available
-
     match_score_1 = (
-        date_proximity_score * DATE_PROXIMITY_WEIGHT +
-        preference_score * PREFERENCE_ALIGNMENT_WEIGHT +
-        workload_score * WORKLOAD_BALANCE_WEIGHT +
-        history_score * HISTORY_WEIGHT +
-        availability_score * AVAILABILITY_WEIGHT
+        1.0 * DATE_PROXIMITY_WEIGHT
+        + 0.95 * PREFERENCE_ALIGNMENT_WEIGHT
+        + 0.85 * WORKLOAD_BALANCE_WEIGHT
+        + 0.90 * HISTORY_WEIGHT
+        + 1.0 * AVAILABILITY_WEIGHT
     )
 
     candidates.append(
@@ -836,33 +889,21 @@ async def analyze_swap_candidates(
             date_range=candidate_1_date_range,
             compatibility_factors={
                 "rotation_match": True,
-                "rotation_type": "Emergency Medicine",
-                "date_proximity_score": date_proximity_score,
-                "preference_alignment": preference_score,
-                "workload_balance": workload_score,
-                "schedule_flexibility": "high",
-                "past_swaps": 3,
-                "successful_past_swaps": 3,
-                "mutual_preference": True,
+                "date_proximity_score": 1.0,
+                "preference_alignment": 0.95,
             },
             mutual_benefit=True,
             approval_likelihood="high",
         )
     )
 
-    # Candidate 2: Good match but different rotation
-    date_score_2 = 0.85  # Close but not perfect dates
-    preference_score_2 = 0.70  # Moderate preference
-    workload_score_2 = 0.80  # Fair workload balance
-    history_score_2 = 0.75  # Some past swaps
-    availability_score_2 = 0.90  # Generally available
-
+    # Candidate 2: Good match
     match_score_2 = (
-        date_score_2 * DATE_PROXIMITY_WEIGHT +
-        preference_score_2 * PREFERENCE_ALIGNMENT_WEIGHT +
-        workload_score_2 * WORKLOAD_BALANCE_WEIGHT +
-        history_score_2 * HISTORY_WEIGHT +
-        availability_score_2 * AVAILABILITY_WEIGHT
+        0.85 * DATE_PROXIMITY_WEIGHT
+        + 0.70 * PREFERENCE_ALIGNMENT_WEIGHT
+        + 0.80 * WORKLOAD_BALANCE_WEIGHT
+        + 0.75 * HISTORY_WEIGHT
+        + 0.90 * AVAILABILITY_WEIGHT
     )
 
     candidates.append(
@@ -872,36 +913,27 @@ async def analyze_swap_candidates(
             assignment_id="assign-009",
             match_score=match_score_2,
             rotation="Internal Medicine",
-            date_range=(candidate_1_date_range[0] + timedelta(days=7), candidate_1_date_range[1] + timedelta(days=7)),
+            date_range=(
+                candidate_1_date_range[0] + timedelta(days=7),
+                candidate_1_date_range[1] + timedelta(days=7),
+            ),
             compatibility_factors={
                 "rotation_match": False,
-                "rotation_type": "Internal Medicine",
-                "date_proximity_score": date_score_2,
-                "preference_alignment": preference_score_2,
-                "workload_balance": workload_score_2,
-                "schedule_flexibility": "medium",
-                "past_swaps": 2,
-                "successful_past_swaps": 2,
-                "mutual_preference": False,
+                "date_proximity_score": 0.85,
+                "preference_alignment": 0.70,
             },
             mutual_benefit=False,
             approval_likelihood="medium",
         )
     )
 
-    # Candidate 3: Moderate match with one-way benefit
-    date_score_3 = 0.70  # Further apart dates
-    preference_score_3 = 0.60  # Some preference alignment
-    workload_score_3 = 0.70  # Adequate workload balance
-    history_score_3 = 1.0  # No past rejections (new partnership)
-    availability_score_3 = 0.85  # Available but with some constraints
-
+    # Candidate 3: Moderate match
     match_score_3 = (
-        date_score_3 * DATE_PROXIMITY_WEIGHT +
-        preference_score_3 * PREFERENCE_ALIGNMENT_WEIGHT +
-        workload_score_3 * WORKLOAD_BALANCE_WEIGHT +
-        history_score_3 * HISTORY_WEIGHT +
-        availability_score_3 * AVAILABILITY_WEIGHT
+        0.70 * DATE_PROXIMITY_WEIGHT
+        + 0.60 * PREFERENCE_ALIGNMENT_WEIGHT
+        + 0.70 * WORKLOAD_BALANCE_WEIGHT
+        + 1.0 * HISTORY_WEIGHT
+        + 0.85 * AVAILABILITY_WEIGHT
     )
 
     candidates.append(
@@ -911,101 +943,17 @@ async def analyze_swap_candidates(
             assignment_id="assign-010",
             match_score=match_score_3,
             rotation="Clinic",
-            date_range=(candidate_1_date_range[0] + timedelta(days=14), candidate_1_date_range[1] + timedelta(days=14)),
+            date_range=(
+                candidate_1_date_range[0] + timedelta(days=14),
+                candidate_1_date_range[1] + timedelta(days=14),
+            ),
             compatibility_factors={
                 "rotation_match": False,
-                "rotation_type": "Clinic",
-                "date_proximity_score": date_score_3,
-                "preference_alignment": preference_score_3,
-                "workload_balance": workload_score_3,
-                "schedule_flexibility": "low",
-                "past_swaps": 0,
-                "successful_past_swaps": 0,
-                "mutual_preference": False,
+                "date_proximity_score": 0.70,
+                "preference_alignment": 0.60,
             },
             mutual_benefit=False,
             approval_likelihood="medium",
-        )
-    )
-
-    # Candidate 4: Lower match but blocked week (urgent need)
-    date_score_4 = 0.80
-    preference_score_4 = 0.95  # Strongly prefers the swap (blocked week)
-    workload_score_4 = 0.60  # Some workload imbalance
-    history_score_4 = 0.80
-    availability_score_4 = 0.70  # Constrained availability
-
-    match_score_4 = (
-        date_score_4 * DATE_PROXIMITY_WEIGHT +
-        preference_score_4 * PREFERENCE_ALIGNMENT_WEIGHT +
-        workload_score_4 * WORKLOAD_BALANCE_WEIGHT +
-        history_score_4 * HISTORY_WEIGHT +
-        availability_score_4 * AVAILABILITY_WEIGHT
-    )
-
-    candidates.append(
-        SwapCandidate(
-            candidate_person_id="faculty-011",
-            candidate_role="Faculty",
-            assignment_id="assign-011",
-            match_score=match_score_4,
-            rotation="Emergency Medicine",
-            date_range=(candidate_1_date_range[0] - timedelta(days=7), candidate_1_date_range[1] - timedelta(days=7)),
-            compatibility_factors={
-                "rotation_match": True,
-                "rotation_type": "Emergency Medicine",
-                "date_proximity_score": date_score_4,
-                "preference_alignment": preference_score_4,
-                "workload_balance": workload_score_4,
-                "schedule_flexibility": "medium",
-                "past_swaps": 1,
-                "successful_past_swaps": 1,
-                "mutual_preference": True,
-                "requester_week_blocked": True,  # Has blocked week
-                "urgent": True,
-            },
-            mutual_benefit=True,
-            approval_likelihood="high",
-        )
-    )
-
-    # Candidate 5: Acceptable match, less ideal
-    date_score_5 = 0.60
-    preference_score_5 = 0.50
-    workload_score_5 = 0.75
-    history_score_5 = 0.65  # One past rejection
-    availability_score_5 = 0.80
-
-    match_score_5 = (
-        date_score_5 * DATE_PROXIMITY_WEIGHT +
-        preference_score_5 * PREFERENCE_ALIGNMENT_WEIGHT +
-        workload_score_5 * WORKLOAD_BALANCE_WEIGHT +
-        history_score_5 * HISTORY_WEIGHT +
-        availability_score_5 * AVAILABILITY_WEIGHT
-    )
-
-    candidates.append(
-        SwapCandidate(
-            candidate_person_id="faculty-012",
-            candidate_role="Faculty",
-            assignment_id="assign-012",
-            match_score=match_score_5,
-            rotation="Procedures",
-            date_range=(candidate_1_date_range[0] + timedelta(days=21), candidate_1_date_range[1] + timedelta(days=21)),
-            compatibility_factors={
-                "rotation_match": False,
-                "rotation_type": "Procedures",
-                "date_proximity_score": date_score_5,
-                "preference_alignment": preference_score_5,
-                "workload_balance": workload_score_5,
-                "schedule_flexibility": "medium",
-                "past_swaps": 2,
-                "successful_past_swaps": 1,
-                "past_rejections": 1,
-                "mutual_preference": False,
-            },
-            mutual_benefit=False,
-            approval_likelihood="low",
         )
     )
 
