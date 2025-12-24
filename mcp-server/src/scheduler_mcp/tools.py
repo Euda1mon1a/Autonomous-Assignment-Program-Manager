@@ -12,6 +12,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from .api_client import get_api_client
+
 logger = logging.getLogger(__name__)
 
 
@@ -201,8 +203,8 @@ async def validate_schedule(
     """
     Validate a schedule against ACGME regulations and institutional policies.
 
-    This tool performs comprehensive validation of work hours, supervision
-    requirements, rest periods, and consecutive duty restrictions.
+    This tool calls the real FastAPI backend to perform comprehensive validation
+    of work hours, supervision requirements, rest periods, and consecutive duty.
 
     Args:
         request: Validation request with date range and check options
@@ -212,6 +214,7 @@ async def validate_schedule(
 
     Raises:
         ValueError: If date range is invalid
+        RuntimeError: If backend API call fails
     """
     if request.end_date < request.start_date:
         raise ValueError("end_date must be after start_date")
@@ -220,150 +223,60 @@ async def validate_schedule(
         f"Validating schedule from {request.start_date} to {request.end_date}"
     )
 
-    # Implementation based on ACGME validation logic from backend
-    issues: list[ValidationIssue] = []
+    try:
+        client = await get_api_client()
 
-    # Constants from ACGME constraints
-    HOURS_PER_BLOCK = 6
-    MAX_WEEKLY_HOURS = 80
-    ROLLING_WEEKS = 4
-    MAX_CONSECUTIVE_DAYS = 6
-    PGY1_RATIO = 2  # 1 faculty per 2 PGY-1
-    OTHER_RATIO = 4  # 1 faculty per 4 PGY-2/3
-
-    # In a real implementation, this would query the database for assignments
-    # For now, we simulate with mock data showing the validation logic
-
-    # 1. Check 80-hour work week violations
-    if request.check_work_hours:
-        # Simulate checking residents' weekly hours
-        # Each block = 6 hours, max blocks per 4-week window = (80 * 4) / 6 = 53
-        max_blocks_per_window = (MAX_WEEKLY_HOURS * ROLLING_WEEKS) // HOURS_PER_BLOCK
-
-        # Example violations (in production, these would come from database queries)
-        # Simulating a resident approaching the limit
-        projected_hours = 78.5
-        if projected_hours > MAX_WEEKLY_HOURS * 0.95:  # 95% threshold for warning
-            issues.append(
-                ValidationIssue(
-                    severity=ValidationSeverity.WARNING,
-                    rule_type="80_hour_rule",
-                    person_id="resident-001",
-                    role="PGY-2",
-                    date_range=(request.start_date, request.end_date),
-                    message=f"Approaching 80-hour weekly limit: {projected_hours:.1f} hours",
-                    details={
-                        "projected_hours": projected_hours,
-                        "limit": MAX_WEEKLY_HOURS,
-                        "blocks_assigned": 52,
-                        "max_blocks": max_blocks_per_window,
-                    },
-                    suggested_fix="Reduce assignment hours or redistribute workload to maintain compliance",
-                )
-            )
-
-        # Simulating an actual violation
-        violation_hours = 85.0
-        if violation_hours > MAX_WEEKLY_HOURS:
-            issues.append(
-                ValidationIssue(
-                    severity=ValidationSeverity.CRITICAL,
-                    rule_type="80_hour_rule",
-                    person_id="resident-002",
-                    role="PGY-1",
-                    date_range=(request.start_date, request.end_date),
-                    message=f"ACGME 80-hour violation: {violation_hours:.1f} hours/week average",
-                    details={
-                        "average_weekly_hours": violation_hours,
-                        "limit": MAX_WEEKLY_HOURS,
-                        "excess_hours": violation_hours - MAX_WEEKLY_HOURS,
-                    },
-                    suggested_fix="URGENT: Remove assignments to comply with ACGME 80-hour limit",
-                )
-            )
-
-    # 2. Check 1-in-7 rest period violations
-    if request.check_rest_periods:
-        # Simulate checking for consecutive work days > 6
-        consecutive_days = 7
-        if consecutive_days > MAX_CONSECUTIVE_DAYS:
-            issues.append(
-                ValidationIssue(
-                    severity=ValidationSeverity.CRITICAL,
-                    rule_type="1_in_7_rule",
-                    person_id="resident-003",
-                    role="PGY-3",
-                    date_range=(request.start_date, request.end_date),
-                    message=f"ACGME 1-in-7 violation: {consecutive_days} consecutive duty days",
-                    details={
-                        "consecutive_days": consecutive_days,
-                        "limit": MAX_CONSECUTIVE_DAYS,
-                    },
-                    suggested_fix="Ensure at least one 24-hour period off every 7 days",
-                )
-            )
-
-    # 3. Check supervision ratio violations
-    if request.check_supervision:
-        # Simulate checking faculty-to-resident ratios per block
-        # Example: Block with insufficient supervision
-        pgy1_count = 5
-        faculty_count = 2
-        required_faculty = (pgy1_count + PGY1_RATIO - 1) // PGY1_RATIO  # Ceiling division
-
-        if faculty_count < required_faculty:
-            issues.append(
-                ValidationIssue(
-                    severity=ValidationSeverity.CRITICAL,
-                    rule_type="supervision_ratio",
-                    person_id=None,
-                    role="Block-level",  # Supervision issues affect entire blocks, not individuals
-                    date_range=(request.start_date, request.start_date),
-                    message=f"Supervision ratio violation: {pgy1_count} PGY-1 residents need {required_faculty} faculty, only {faculty_count} assigned",
-                    details={
-                        "pgy1_count": pgy1_count,
-                        "faculty_count": faculty_count,
-                        "required_faculty": required_faculty,
-                        "ratio": "1:2 for PGY-1",
-                    },
-                    suggested_fix="Assign additional supervising faculty to meet ACGME requirements",
-                )
-            )
-
-    # 4. Check consecutive duty violations
-    if request.check_consecutive_duty:
-        # Simulate checking for assignments during scheduled absences
-        issues.append(
-            ValidationIssue(
-                severity=ValidationSeverity.WARNING,
-                rule_type="availability",
-                person_id="faculty-001",
-                role="Faculty",
-                date_range=(request.start_date, request.end_date),
-                message="Assignment during scheduled absence/leave",
-                details={
-                    "absence_type": "Military TDY",
-                    "conflict_dates": "2025-01-15 to 2025-01-20",
-                },
-                suggested_fix="Remove assignment or cancel absence to resolve conflict",
-            )
+        # Call the real backend API
+        result = await client.validate_schedule(
+            start_date=request.start_date.isoformat(),
+            end_date=request.end_date.isoformat(),
         )
 
-    critical_count = sum(1 for i in issues if i.severity == ValidationSeverity.CRITICAL)
-    warning_count = sum(1 for i in issues if i.severity == ValidationSeverity.WARNING)
-    info_count = sum(1 for i in issues if i.severity == ValidationSeverity.INFO)
+        # Transform backend response to MCP format
+        issues: list[ValidationIssue] = []
 
-    return ScheduleValidationResult(
-        is_valid=(critical_count == 0),
-        overall_compliance_rate=0.95,
-        total_issues=len(issues),
-        critical_issues=critical_count,
-        warning_issues=warning_count,
-        info_issues=info_count,
-        issues=issues,
-        validated_at=datetime.now(),
-        date_range=(request.start_date, request.end_date),
-    )
+        # Parse violations from backend response
+        for violation in result.get("violations", []):
+            severity_str = violation.get("severity", "warning").lower()
+            if severity_str == "critical" or severity_str == "error":
+                severity = ValidationSeverity.CRITICAL
+            elif severity_str == "warning":
+                severity = ValidationSeverity.WARNING
+            else:
+                severity = ValidationSeverity.INFO
+
+            issues.append(
+                ValidationIssue(
+                    severity=severity,
+                    rule_type=violation.get("rule_type", "unknown"),
+                    person_id=violation.get("person_id"),
+                    role=violation.get("role"),
+                    date_range=(request.start_date, request.end_date),
+                    message=violation.get("message", "Validation issue"),
+                    details=violation.get("details", {}),
+                    suggested_fix=violation.get("suggested_fix"),
+                )
+            )
+
+        critical_count = sum(1 for i in issues if i.severity == ValidationSeverity.CRITICAL)
+        warning_count = sum(1 for i in issues if i.severity == ValidationSeverity.WARNING)
+        info_count = sum(1 for i in issues if i.severity == ValidationSeverity.INFO)
+
+        return ScheduleValidationResult(
+            is_valid=result.get("valid", critical_count == 0),
+            overall_compliance_rate=result.get("compliance_rate", 1.0 if critical_count == 0 else 0.0),
+            total_issues=len(issues),
+            critical_issues=critical_count,
+            warning_issues=warning_count,
+            info_issues=info_count,
+            issues=issues,
+            validated_at=datetime.now(),
+            date_range=(request.start_date, request.end_date),
+        )
+
+    except Exception as e:
+        logger.error(f"Schedule validation failed: {e}")
+        raise RuntimeError(f"Failed to validate schedule: {e}") from e
 
 
 async def run_contingency_analysis(
@@ -563,9 +476,9 @@ async def detect_conflicts(
     """
     Detect scheduling conflicts and identify auto-resolution options.
 
-    This tool scans the schedule for various types of conflicts including
-    double-bookings, work hour violations, and supervision gaps. It can
-    optionally suggest automatic resolution strategies.
+    This tool calls the real FastAPI backend to scan the schedule for various
+    types of conflicts including double-bookings, work hour violations, and
+    supervision gaps.
 
     Args:
         request: Conflict detection request with date range and options
@@ -575,6 +488,7 @@ async def detect_conflicts(
 
     Raises:
         ValueError: If date range is invalid
+        RuntimeError: If backend API call fails
     """
     if request.end_date < request.start_date:
         raise ValueError("end_date must be after start_date")
@@ -583,8 +497,76 @@ async def detect_conflicts(
         f"Detecting conflicts from {request.start_date} to {request.end_date}"
     )
 
-    # Implementation based on conflict auto-detector from backend
-    # In production, this would query the database for actual conflicts
+    try:
+        client = await get_api_client()
+
+        # Call the real backend API
+        result = await client.get_conflicts(
+            start_date=request.start_date.isoformat(),
+            end_date=request.end_date.isoformat(),
+        )
+
+        # Transform backend response to MCP format
+        conflicts: list[ConflictInfo] = []
+
+        for conflict in result.get("conflicts", []):
+            # Map backend conflict type to MCP ConflictType
+            conflict_type_str = conflict.get("type", "").upper()
+            try:
+                conflict_type = ConflictType(conflict_type_str.lower())
+            except ValueError:
+                # Default to double_booking if unknown type
+                conflict_type = ConflictType.DOUBLE_BOOKING
+
+            # Map severity
+            severity_str = conflict.get("severity", "warning").lower()
+            if severity_str in ("critical", "error", "high"):
+                severity = ValidationSeverity.CRITICAL
+            elif severity_str == "warning":
+                severity = ValidationSeverity.WARNING
+            else:
+                severity = ValidationSeverity.INFO
+
+            conflicts.append(
+                ConflictInfo(
+                    conflict_id=conflict.get("id", f"conflict-{len(conflicts)}"),
+                    conflict_type=conflict_type,
+                    severity=severity,
+                    affected_people=conflict.get("affected_people", []),
+                    date_range=(request.start_date, request.end_date),
+                    description=conflict.get("description", ""),
+                    auto_resolution_available=False,  # Backend doesn't provide auto-resolution
+                    resolution_options=[],
+                )
+            )
+
+        conflicts_by_type = {
+            ctype: sum(1 for c in conflicts if c.conflict_type == ctype)
+            for ctype in ConflictType
+        }
+
+        return ConflictDetectionResult(
+            total_conflicts=len(conflicts),
+            conflicts_by_type=conflicts_by_type,
+            conflicts=conflicts,
+            auto_resolvable_count=0,
+            detected_at=datetime.now(),
+        )
+
+    except Exception as e:
+        logger.error(f"Conflict detection failed: {e}")
+        raise RuntimeError(f"Failed to detect conflicts: {e}") from e
+
+
+# Keep mock implementation as fallback for swap candidates (requires file upload in backend)
+async def _detect_conflicts_mock(
+    request: ConflictDetectionRequest,
+) -> ConflictDetectionResult:
+    """
+    Mock implementation of conflict detection (fallback).
+
+    Used when backend API is unavailable or for testing.
+    """
     conflicts: list[ConflictInfo] = []
 
     check_types = request.conflict_types or list(ConflictType)
@@ -1039,3 +1021,109 @@ async def analyze_swap_candidates(
         top_candidate_id=top_candidate_id,
         analyzed_at=datetime.now(),
     )
+
+
+# Schedule Generation Models and Function
+
+
+class ScheduleAlgorithm(str, Enum):
+    """Available scheduling algorithms."""
+
+    GREEDY = "greedy"
+    CP_SAT = "cp_sat"
+    PULP = "pulp"
+    HYBRID = "hybrid"
+
+
+class ScheduleGenerationRequest(BaseModel):
+    """Request to generate a schedule."""
+
+    start_date: date
+    end_date: date
+    # Default to CP_SAT - greedy has a known bug (see backend/app/scheduling/solvers.py)
+    algorithm: ScheduleAlgorithm = ScheduleAlgorithm.CP_SAT
+    timeout_seconds: float = Field(default=120.0, ge=5.0, le=300.0)
+    clear_existing: bool = True
+
+
+class ScheduleGenerationResult(BaseModel):
+    """Result of schedule generation."""
+
+    status: str  # "success", "partial", "failed"
+    total_blocks_assigned: int
+    message: str
+    validation_passed: bool
+    total_violations: int
+    coverage_rate: float
+    generated_at: datetime
+    date_range: tuple[date, date]
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+async def generate_schedule(
+    request: ScheduleGenerationRequest,
+) -> ScheduleGenerationResult:
+    """
+    Generate a schedule for the given date range using the backend API.
+
+    This tool calls the FastAPI backend to generate a schedule using the
+    specified algorithm. It optionally clears existing assignments first.
+
+    SAFETY NOTE: This is a database-modifying operation. The safe-schedule-generation
+    skill requires backup verification before calling this tool.
+
+    Args:
+        request: Schedule generation request with date range and options
+
+    Returns:
+        ScheduleGenerationResult with generation status and validation results
+
+    Raises:
+        ValueError: If date range is invalid
+        RuntimeError: If backend API call fails
+    """
+    if request.end_date < request.start_date:
+        raise ValueError("end_date must be after start_date")
+
+    logger.info(
+        f"Generating schedule from {request.start_date} to {request.end_date} "
+        f"using {request.algorithm.value} algorithm"
+    )
+
+    try:
+        client = await get_api_client()
+
+        # Call the backend API
+        result = await client.generate_schedule(
+            start_date=request.start_date.isoformat(),
+            end_date=request.end_date.isoformat(),
+            algorithm=request.algorithm.value,
+            timeout_seconds=request.timeout_seconds,
+            clear_existing=request.clear_existing,
+        )
+
+        # Extract validation info
+        validation = result.get("validation", {})
+        total_violations = validation.get("total_violations", 0)
+        coverage_rate = validation.get("coverage_rate", 0.0)
+
+        return ScheduleGenerationResult(
+            status=result.get("status", "unknown"),
+            total_blocks_assigned=result.get("total_blocks_assigned", 0),
+            message=result.get("message", "Schedule generation completed"),
+            validation_passed=validation.get("valid", total_violations == 0),
+            total_violations=total_violations,
+            coverage_rate=coverage_rate,
+            generated_at=datetime.now(),
+            date_range=(request.start_date, request.end_date),
+            details={
+                "algorithm": request.algorithm.value,
+                "solver_stats": result.get("solver_stats", {}),
+                "resilience": result.get("resilience", {}),
+                "nf_pc_audit": result.get("nf_pc_audit", {}),
+            },
+        )
+
+    except Exception as e:
+        logger.error(f"Schedule generation failed: {e}")
+        raise RuntimeError(f"Failed to generate schedule: {e}") from e
