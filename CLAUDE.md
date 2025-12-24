@@ -1088,6 +1088,13 @@ When making changes, update relevant documentation:
 - **[CI/CD Troubleshooting](docs/development/CI_CD_TROUBLESHOOTING.md)**: Error codes, auto-fixes, and LLM failure patterns
 - **[Git Safe Sync Checklist](docs/development/CLAUDE_GIT_SAFE_SYNC_CHECKLIST.md)**: Daily sync procedures
 
+### Technical Deep Dives
+
+- **[Solver Algorithm](docs/architecture/SOLVER_ALGORITHM.md)**: Comprehensive scheduling engine documentation (constraints, solvers, optimization)
+- **[MCP Placeholder Plan](docs/planning/MCP_PLACEHOLDER_IMPLEMENTATION_PLAN.md)**: Implementation roadmap for MCP tool integrations
+- **[Security Pattern Audit](docs/security/SECURITY_PATTERN_AUDIT.md)**: Security architecture review and OWASP compliance
+- **[Cross-Disciplinary Resilience](docs/architecture/cross-disciplinary-resilience.md)**: Resilience framework concepts (queuing theory, epidemiology, materials science)
+
 ### Agent Skills (`.claude/skills/`)
 
 AI agents automatically load skills for specialized tasks:
