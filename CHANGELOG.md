@@ -59,6 +59,25 @@ Fixes for bugs identified in Codex review of Session 13 PRs (#312):
 
 ### Added
 
+#### API Route Test Coverage (Session 14 - 2025-12-24)
+- **15 new API route test files** (~7,591 lines): Comprehensive tests for previously untested routes
+  - `test_batch_routes.py`: Batch operations for assignments (4 test classes)
+  - `test_conflicts_routes.py`: Conflict analysis and visualizations (9 test classes)
+  - `test_credentials_routes.py`: Faculty procedure credentials (12 test classes)
+  - `test_daily_manifest_routes.py`: Daily staffing manifest (5 test classes)
+  - `test_db_admin_routes.py`: Database admin endpoints (9 test classes)
+  - `test_features_routes.py`: Feature flag management (13 test classes)
+  - `test_jobs_routes.py`: Background job management (8 test classes)
+  - `test_metrics_routes.py`: Prometheus metrics endpoints (7 test classes)
+  - `test_profiling_routes.py`: Performance profiling (13 test classes)
+  - `test_queue_routes.py`: Celery task queue management (15 test classes)
+  - `test_quota_routes.py`: API quota management (10 test classes)
+  - `test_rate_limit_routes.py`: Rate limiting management (7 test classes)
+  - `test_reports_routes.py`: PDF report generation (5 test classes)
+  - `test_search_routes.py`: Full-text search endpoints (8 test classes)
+  - `test_upload_routes.py`: File upload management (7 test classes)
+- Test patterns: Authentication/authorization testing, success paths, error handling, response structure verification, integration tests, edge cases
+
 #### Test Coverage Expansion (Session 11 - 2025-12-20)
 - **Certification Scheduler Tests**: 34 tests for background certification expiration checks
   - Scheduler lifecycle (start/stop), reminder thresholds, admin summary
