@@ -48,8 +48,10 @@ from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus
 from app.models.faculty_preference import FacultyPreference
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
+from app.models.feature_flag import FeatureFlag
 from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.models.user import User
+from app.features.evaluator import FeatureFlagEvaluator
 from app.schemas.portal import (
     DashboardAlert,
     DashboardResponse,
@@ -69,6 +71,64 @@ from app.schemas.portal import (
 from app.services.swap_notification_service import SwapNotificationService
 
 router = APIRouter(prefix="/portal", tags=["portal"])
+
+# Feature flag key for swap marketplace access
+SWAP_MARKETPLACE_FLAG_KEY = "swap_marketplace_enabled"
+
+
+def _check_marketplace_access(db: Session, user: User) -> bool:
+    """
+    Check if the user has access to the swap marketplace.
+
+    Uses the feature flag system to determine access based on user role.
+    By default, the marketplace is disabled for residents to prevent
+    gamification of swaps (e.g., exploiting post-call PCAT/DO rules).
+
+    Args:
+        db: Database session
+        user: Authenticated user
+
+    Returns:
+        True if user has marketplace access, False otherwise
+    """
+    # Query the feature flag
+    flag = (
+        db.query(FeatureFlag)
+        .filter(FeatureFlag.key == SWAP_MARKETPLACE_FLAG_KEY)
+        .first()
+    )
+
+    # If flag doesn't exist, default to allowing access for non-residents
+    # This maintains backward compatibility while still blocking residents by default
+    if flag is None:
+        # Default behavior: residents are blocked, others allowed
+        return user.role != "resident"
+
+    # Convert flag to dict for evaluator
+    flag_data = {
+        "key": flag.key,
+        "enabled": flag.enabled,
+        "flag_type": flag.flag_type,
+        "rollout_percentage": flag.rollout_percentage,
+        "environments": flag.environments,
+        "target_user_ids": (
+            [str(uid) for uid in flag.target_user_ids] if flag.target_user_ids else None
+        ),
+        "target_roles": flag.target_roles,
+        "variants": flag.variants,
+        "dependencies": flag.dependencies,
+        "custom_attributes": flag.custom_attributes,
+    }
+
+    # Evaluate flag for this user
+    evaluator = FeatureFlagEvaluator()
+    enabled, _, _ = evaluator.evaluate(
+        flag_data=flag_data,
+        user_id=str(user.id),
+        user_role=user.role,
+    )
+
+    return enabled
 
 
 @router.get("/my/schedule", response_model=MyScheduleResponse)
@@ -345,6 +405,7 @@ def create_swap_request(
         HTTPException: 400 if faculty has no FMIT assignment for the specified week
         HTTPException: 400 if a pending swap already exists for the week
         HTTPException: 403 if current user has no linked faculty profile
+        HTTPException: 403 if posting to marketplace and access is disabled for role
 
     Business Logic:
         - Validates the requesting faculty has FMIT assignments for the week
@@ -354,7 +415,19 @@ def create_swap_request(
         - If auto_find_candidates=True, queries faculty with notification
           preferences enabled and sends swap opportunity notifications
         - Creates SwapRecord with PENDING status
+        - Marketplace posting restricted by 'swap_marketplace_enabled' flag
+          (disabled for residents by default to prevent gamification)
     """
+    # Check marketplace access if posting to marketplace (no target specified)
+    if not request.preferred_target_faculty_id:
+        if not _check_marketplace_access(db, current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Swap marketplace posting is not enabled for your role. "
+                "You can still request direct swaps with specific faculty members. "
+                "Contact an administrator if you need marketplace access.",
+            )
+
     faculty = _get_faculty_for_user(db, current_user)
 
     # Implement swap request creation
@@ -1165,6 +1238,7 @@ def get_swap_marketplace(
 
     Raises:
         HTTPException: 403 if current user has no linked faculty profile
+        HTTPException: 403 if marketplace access is disabled for user's role
 
     Business Logic:
         - Only shows PENDING swaps from other faculty (excludes own requests)
@@ -1173,7 +1247,17 @@ def get_swap_marketplace(
         - Counts user's own active marketplace postings separately
         - Eager loads source_faculty and blocks to avoid N+1 queries
         - Orders by most recently posted first
+        - Marketplace access controlled by 'swap_marketplace_enabled' feature flag
+          (disabled for residents by default to prevent gamification)
     """
+    # Check marketplace access before proceeding
+    if not _check_marketplace_access(db, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Swap marketplace access is not enabled for your role. "
+            "Contact an administrator if you believe this is an error.",
+        )
+
     faculty = _get_faculty_for_user(db, current_user)
 
     # Query open swap requests for marketplace
