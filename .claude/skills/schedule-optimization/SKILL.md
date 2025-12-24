@@ -7,6 +7,53 @@ description: Multi-objective schedule optimization expertise using constraint pr
 
 Expert knowledge for generating and optimizing medical residency schedules using constraint programming and multi-objective optimization.
 
+## Solver Status (2025-12-24) - ALL FIXED
+
+| Issue | Status | Fix Applied |
+|-------|--------|-------------|
+| Greedy template selection | FIXED | Selects template with fewest assignments |
+| CP-SAT no template balance | FIXED | Added template_balance_penalty to objective |
+| Template filtering missing | FIXED | `_get_rotation_templates()` defaults to `activity_type="clinic"` |
+
+See `backend/app/scheduling/solvers.py` header for implementation details.
+
+## Architecture: Block vs Half-Day Scheduling
+
+**IMPORTANT:** This system has two distinct scheduling modes:
+
+| Mode | Rotations | Assignment Unit | Solver Role |
+|------|-----------|-----------------|-------------|
+| **Block-Assigned** | FMIT, NF, Inpatient, NICU | Full block or half-block | Pre-assigned, NOT optimized |
+| **Half-Day Optimized** | Clinic, Specialty | Half-day (AM/PM) | Solver optimizes these |
+
+**The solvers are ONLY for outpatient half-day optimization.** Block-assigned rotations
+are handled separately and should NOT be passed to the solver.
+
+If solver assigns everyone to NF/PC/inpatient, check that templates are filtered
+to `activity_type == "clinic"` in `engine._get_rotation_templates()`.
+
+### Night Float (NF) Half-Block Mirrored Pairing
+
+NF has idiosyncratic half-block constraints - residents are paired in mirrored patterns:
+
+```
+Block 5 (4 weeks):
+├── Half 1 (Days 1-14)     ├── Half 2 (Days 15-28)
+│                          │
+│ Resident A: NF           │ Resident A: NICU (or elective)
+│ Resident B: NEURO        │ Resident B: NF
+```
+
+**Key rules:**
+- NF is assigned per **half-block** (2 weeks), not full block
+- Residents are **mirrored pairs**: one on NF half 1, partner on NF half 2
+- The non-NF half is a mini 2-week rotation (NICU, NEURO, elective)
+- **Post-Call (PC)** day required after NF ends (Day 15 or Day 1 of next block)
+- Exactly 1 resident on NF per half-block
+
+**Files:** See `backend/app/scheduling/constraints/night_float_post_call.py` and
+`docs/development/CODEX_SYSTEM_OVERVIEW.md` for full NF/PC constraint logic.
+
 ## When This Skill Activates
 
 - Generating new schedules
@@ -325,3 +372,63 @@ Rank opportunities by impact/effort:
 | `generate_pareto_schedules` | Multi-objective options |
 | `validate_schedule` | Compliance check |
 | `run_contingency_analysis_resilience_tool` | N-1/N-2 analysis |
+
+## REQUIRED: Documentation After Each Step
+
+**Every scheduling task MUST include documentation updates.** This prevents knowledge loss
+between sessions and ensures issues are tracked properly.
+
+### Documentation Checkpoint Protocol
+
+After EACH significant step, document:
+
+1. **What was attempted** - The specific action or fix tried
+2. **What happened** - Actual results (success, failure, unexpected behavior)
+3. **What was learned** - New understanding of the system
+4. **What needs to happen next** - Remaining work or blockers
+
+### Where to Document
+
+| Finding Type | Location | Example |
+|--------------|----------|---------|
+| Bug/Known Issue | `solvers.py` header | Template selection bug |
+| Architecture insight | This skill file | Block vs half-day modes |
+| Workaround | Code comments + skill | Manual adjustment needed |
+| Fix needed | TODO in code + HUMAN_TODO.md | Template filtering |
+
+### Planning Template
+
+When starting a scheduling task, create a plan that includes documentation:
+
+```markdown
+## Task: [Description]
+
+### Phase 1: Investigation
+- [ ] Explore current state
+- [ ] Document findings in [location]
+
+### Phase 2: Implementation
+- [ ] Make changes
+- [ ] Document what changed in commit message
+
+### Phase 3: Verification
+- [ ] Test the changes
+- [ ] Document results (success/failure)
+
+### Phase 4: Documentation Update
+- [ ] Update skill if new knowledge gained
+- [ ] Update code comments if behavior clarified
+- [ ] Update HUMAN_TODO.md if manual work needed
+```
+
+### Anti-Pattern: Silent Failures
+
+**DO NOT:**
+- Discover an issue and only mention it in chat
+- Switch to a "workaround" without documenting why
+- Assume the next session will remember context
+
+**DO:**
+- Add issues to code headers immediately
+- Update skill files with architectural insights
+- Create explicit TODOs for unfixed problems

@@ -74,6 +74,53 @@ if (
 
 ---
 
+### Solver Template Distribution Bugs - FIXED
+
+**Priority:** High
+**Found:** Session review (2025-12-24)
+**Fixed:** 2025-12-24
+**Location:** `backend/app/scheduling/solvers.py`, `backend/app/scheduling/engine.py`
+
+**Issue:** Both greedy and CP-SAT solvers were assigning all residents to the same rotation.
+
+**Three bugs fixed:**
+
+1. [x] **Greedy Solver:** Now selects template with fewest total assignments for even distribution
+2. [x] **CP-SAT Solver:** Added `template_balance_penalty` to objective function
+3. [x] **Template Filtering:** `_get_rotation_templates()` now defaults to `activity_type="clinic"`
+
+**Architecture Note:**
+- Block-assigned rotations (FMIT, NF, inpatient) are pre-assigned and shouldn't go to solver
+- Solvers are for outpatient half-day optimization only
+- Templates now filtered to `activity_type == "clinic"` by default
+
+---
+
+### NF Half-Block Documentation Consistency - VERIFIED
+
+**Priority:** Medium
+**Found:** Session review (2025-12-24)
+**Verified:** 2025-12-24
+
+**Issue:** Night Float (NF) half-block mirrored pairing pattern is documented in multiple places.
+
+**Audit completed - Documentation is CONSISTENT across all locations:**
+
+| Location | Status | Notes |
+|----------|--------|-------|
+| `docs/development/CODEX_SYSTEM_OVERVIEW.md` | Consistent | Most comprehensive, has PC rules |
+| `backend/app/scheduling/constraints/night_float_post_call.py` | Consistent | Implementation matches docs |
+| `.claude/skills/schedule-optimization/SKILL.md` | Consistent | Cross-references other files |
+
+**Verified consistent terminology:**
+- [x] "block-half" used everywhere (not "half-block")
+- [x] Day 15 as transition point between half 1 and half 2
+- [x] PC = full day (AM + PM blocked)
+- [x] NF in half 1 → Day 15 = PC; NF in half 2 → Day 1 next block = PC
+- [x] Mirrored pairing pattern documented identically
+
+---
+
 ## Cleanup Session Report (2025-12-21 Overnight)
 
 ### Completed Autonomously
@@ -115,4 +162,4 @@ The following links in `README.md` point to non-existent files:
 
 ---
 
-*Last updated: 2025-12-21*
+*Last updated: 2025-12-24*
