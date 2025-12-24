@@ -1117,6 +1117,43 @@ EOF
 
 ---
 
+***REMOVED******REMOVED*** Admin MCP Chat Interface
+
+The frontend includes a dedicated chat interface for administrators to interact with MCP tools using natural language.
+
+***REMOVED******REMOVED******REMOVED*** Components
+
+| Component | Purpose |
+|-----------|---------|
+| `ClaudeCodeChat` | Main chat interface with streaming messages |
+| `MCPCapabilitiesPanel` | Browse all 30+ MCP tools by category |
+
+***REMOVED******REMOVED******REMOVED*** Features
+
+- **Chat Persistence**: Sessions survive page refresh (localStorage)
+- **MCP Capabilities Panel**: Searchable tool browser with descriptions
+- **Quick Prompts**: One-click common actions
+- **Artifacts**: Download generated reports as JSON
+- **Session History**: Last 20 sessions retained
+
+***REMOVED******REMOVED******REMOVED*** Usage
+
+```tsx
+import { ClaudeCodeChat, MCPCapabilitiesPanel } from '@/components/admin';
+
+<div className="admin-layout">
+  <MCPCapabilitiesPanel onSelectPrompt={(p) => setInput(p)} />
+  <ClaudeCodeChat programId="..." adminId="..." />
+</div>
+```
+
+***REMOVED******REMOVED******REMOVED*** Documentation
+
+- [MCP Admin Guide](../admin-manual/mcp-admin-guide.md) - Step-by-step workflows
+- [Claude Chat Bridge](../development/CLAUDE_CHAT_BRIDGE.md) - Technical architecture
+
+---
+
 ***REMOVED******REMOVED*** Resources
 
 - [Claude Code Documentation](https://docs.anthropic.com/claude-code)
