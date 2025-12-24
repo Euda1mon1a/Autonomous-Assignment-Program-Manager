@@ -257,6 +257,71 @@ After changes:
 
 ---
 
+## Local-Only Git Workflow (For PII Files)
+
+Some files contain real names (faculty, residents) and should **NEVER go to GitHub**. These stay on your local machine only.
+
+### The Simple Rule
+
+| Action | For PII Files | For Code |
+|--------|---------------|----------|
+| `git add` | ✅ Yes | ✅ Yes |
+| `git commit` | ✅ Yes | ✅ Yes |
+| `git merge` | ✅ Yes (locally) | ✅ Yes |
+| `git push` | ❌ **NEVER** | ✅ Via PR |
+| `git pull` | ❌ Skip for main | ✅ Yes |
+
+### What Are PII Files?
+
+Files in `docs/data/` that contain real names:
+- `LOCAL_SCHEDULE_NOTES.md` - Program-specific documentation
+- `*.csv` - Schedule exports with names
+- `*.json` - Airtable exports with names
+
+### How It Works
+
+```
+Your Local Machine                     GitHub (origin)
+─────────────────                     ────────────────
+
+local main ──────────────────────     origin/main
+    │                                      │
+    ├── PII commit (stays here)            │ (no PII)
+    │                                      │
+    └── Never push ────────X───────────────┘
+```
+
+**Step by step:**
+
+1. **Make changes** to local files (schedules, notes with real names)
+2. **Commit locally:** `git add` + `git commit`
+3. **Stay on local main** - your local main will diverge from origin/main
+4. **That's OK** - PII stays on your machine, code goes to GitHub separately
+
+### What "Diverge" Means
+
+Your local main has commits that origin/main doesn't have. This is intentional:
+
+```bash
+$ git status
+On branch main
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)   # ← DO NOT DO THIS
+```
+
+**Ignore the suggestion to push.** Those commits contain PII.
+
+### If You Accidentally Push PII
+
+1. **Don't panic** - but act quickly
+2. Contact the repository owner immediately
+3. The commit history needs to be rewritten (force push)
+4. GitHub support may need to purge cached data
+
+**Prevention:** Create a pre-push hook that blocks `docs/data/` files.
+
+---
+
 ## Summary
 
 | Situation | Recommendation |
@@ -268,12 +333,14 @@ After changes:
 | Reviewing what changed | CLI with git diff |
 | Learning or experimenting | Web app (safer) |
 | Production changes | CLI with PR workflow |
+| **Files with real names** | **Local commit only, NEVER push** |
 
 **Golden Rules:**
 1. One AI session per project at a time
 2. Web suggests, CLI edits
 3. Always use Pull Requests, never push to main
 4. Each session starts fresh - provide context
+5. **PII files: commit locally, never push**
 
 ---
 
