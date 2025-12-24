@@ -346,7 +346,33 @@ Your branch is ahead of 'origin/main' by 1 commit.
 
 ## Related Documentation
 
+- [MCP Admin Guide](mcp-admin-guide.md) - **Step-by-step workflows for using MCP tools via chat**
 - [AI Rules of Engagement](../development/AI_RULES_OF_ENGAGEMENT.md) - Policies for AI agents
+- [Claude Chat Bridge](../development/CLAUDE_CHAT_BRIDGE.md) - Technical WebSocket architecture
 - [Configuration Guide](configuration.md) - System settings
 - [User Management](users.md) - Access control
+
+---
+
+## MCP Chat Interface Quick Start
+
+The admin interface includes a Claude Code chat panel with MCP tools. See the [MCP Admin Guide](mcp-admin-guide.md) for detailed workflows.
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Chat Persistence** | Sessions survive page refresh (localStorage) |
+| **MCP Capabilities Panel** | Browse 30+ tools with descriptions |
+| **Quick Prompts** | One-click common actions |
+| **Artifacts** | Download generated reports as JSON |
+
+### Example Commands
+
+```
+"Validate ACGME compliance for this week"
+"Find swap candidates for Dr. Smith's Tuesday clinic"
+"Run N-1 contingency analysis"
+"What is our current defense level?"
+```
 
