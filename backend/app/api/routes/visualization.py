@@ -395,3 +395,312 @@ def export_heatmap(
             "Content-Disposition": f"attachment; filename={request.heatmap_type}_heatmap.{request.format}"
         },
     )
+
+
+# =============================================================================
+# 3D Voxel Visualization Endpoints (Novel)
+# =============================================================================
+
+
+@router.get("/voxel-grid")
+def get_3d_voxel_grid(
+    start_date: date = Query(..., description="Start date for voxel grid"),
+    end_date: date = Query(..., description="End date for voxel grid"),
+    person_ids: list[UUID] | None = Query(None, description="Filter by person IDs"),
+    activity_types: list[str] | None = Query(None, description="Filter by activity types"),
+    include_violations: bool = Query(True, description="Include ACGME violation data"),
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> dict:
+    """
+    Generate 3D voxel grid representation of schedule data.
+
+    This is a novel visualization approach that represents the schedule as
+    a 3D space where:
+    - X-axis: Time (blocks/dates)
+    - Y-axis: People (residents, faculty)
+    - Z-axis: Activity type (clinic, inpatient, procedures, etc.)
+
+    Each voxel represents an assignment with properties:
+    - Position (x, y, z) in the 3D grid
+    - Color based on activity type or compliance status
+    - Opacity based on confidence score
+    - State flags (occupied, conflict, violation)
+
+    This enables spatial reasoning about:
+    - Collision detection = double-booking (same x,y position)
+    - Empty space = coverage gaps
+    - Layer analysis = supervision compliance
+    - Volume distribution = workload balance
+
+    Args:
+        start_date: Start date for visualization
+        end_date: End date for visualization
+        person_ids: Optional filter for specific people
+        activity_types: Optional filter for specific activity types
+        include_violations: Whether to include ACGME violation markers
+
+    Returns:
+        3D voxel grid data structure ready for Three.js rendering
+    """
+    from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
+
+    from app.models.assignment import Assignment
+    from app.models.block import Block
+    from app.models.person import Person
+    from app.visualization import transform_schedule_to_voxels
+
+    if start_date > end_date:
+        raise HTTPException(
+            status_code=400, detail="start_date must be before or equal to end_date"
+        )
+
+    # Fetch blocks in date range
+    blocks_query = select(Block).where(
+        Block.date >= start_date,
+        Block.date <= end_date,
+    ).order_by(Block.date, Block.time_of_day)
+
+    blocks_result = db.execute(blocks_query)
+    blocks = blocks_result.scalars().all()
+
+    if not blocks:
+        return {
+            "dimensions": {"x_size": 0, "y_size": 0, "z_size": 0},
+            "voxels": [],
+            "statistics": {"total_assignments": 0},
+            "error": "No blocks found in date range",
+        }
+
+    block_ids = [b.id for b in blocks]
+    blocks_data = [
+        {"id": str(b.id), "date": b.date.isoformat(), "time_of_day": b.time_of_day}
+        for b in blocks
+    ]
+
+    # Fetch persons (optionally filtered)
+    persons_query = select(Person)
+    if person_ids:
+        persons_query = persons_query.where(Person.id.in_(person_ids))
+    persons_query = persons_query.order_by(Person.type.desc(), Person.pgy_level, Person.name)
+
+    persons_result = db.execute(persons_query)
+    persons = persons_result.scalars().all()
+
+    if not persons:
+        return {
+            "dimensions": {"x_size": len(blocks), "y_size": 0, "z_size": 0},
+            "voxels": [],
+            "statistics": {"total_assignments": 0},
+            "error": "No persons found",
+        }
+
+    person_ids_list = [p.id for p in persons]
+    persons_data = [
+        {
+            "id": str(p.id),
+            "name": p.name,
+            "type": p.type,
+            "pgy_level": p.pgy_level,
+        }
+        for p in persons
+    ]
+
+    # Fetch assignments with related data
+    assignments_query = (
+        select(Assignment)
+        .options(selectinload(Assignment.rotation_template))
+        .where(
+            Assignment.block_id.in_(block_ids),
+            Assignment.person_id.in_(person_ids_list),
+        )
+    )
+
+    assignments_result = db.execute(assignments_query)
+    assignments = assignments_result.scalars().all()
+
+    # Convert to dict format for transformer
+    assignments_data = []
+    for a in assignments:
+        activity_type = "unknown"
+        activity_name = "Unknown"
+
+        if a.rotation_template:
+            activity_type = a.rotation_template.activity_type or "unknown"
+            activity_name = a.rotation_template.name
+        elif a.activity_override:
+            activity_name = a.activity_override
+            # Try to infer activity type from override name
+            override_lower = a.activity_override.lower()
+            if "clinic" in override_lower:
+                activity_type = "clinic"
+            elif "inpatient" in override_lower or "ward" in override_lower:
+                activity_type = "inpatient"
+            elif "proc" in override_lower:
+                activity_type = "procedure"
+            elif "call" in override_lower:
+                activity_type = "call"
+            elif "leave" in override_lower or "off" in override_lower:
+                activity_type = "leave"
+
+        # Filter by activity type if specified
+        if activity_types and activity_type not in activity_types:
+            continue
+
+        # Find person name
+        person_name = next(
+            (p.name for p in persons if p.id == a.person_id),
+            "Unknown"
+        )
+
+        assignment_dict = {
+            "id": str(a.id),
+            "person_id": str(a.person_id),
+            "person_name": person_name,
+            "block_id": str(a.block_id),
+            "activity_type": activity_type,
+            "activity_name": activity_name,
+            "role": a.role,
+            "confidence": a.confidence or 1.0,
+        }
+
+        # Add ACGME warnings if requested
+        if include_violations:
+            # For now, we don't have warnings stored directly
+            # This would be populated from validation service
+            assignment_dict["acgme_warnings"] = []
+
+        assignments_data.append(assignment_dict)
+
+    # Transform to voxel grid
+    voxel_grid = transform_schedule_to_voxels(
+        assignments=assignments_data,
+        persons=persons_data,
+        blocks=blocks_data,
+    )
+
+    return voxel_grid.to_dict()
+
+
+@router.get("/voxel-grid/conflicts")
+def get_3d_conflicts(
+    start_date: date = Query(..., description="Start date"),
+    end_date: date = Query(..., description="End date"),
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> dict:
+    """
+    Get schedule conflicts detected through 3D voxel collision analysis.
+
+    This endpoint uses spatial collision detection to find double-bookings
+    where multiple assignments occupy the same (time, person) coordinate.
+
+    Returns:
+        Dictionary with conflict details and voxel positions
+    """
+    # Get full voxel grid first
+    grid_response = get_3d_voxel_grid(
+        start_date=start_date,
+        end_date=end_date,
+        person_ids=None,
+        activity_types=None,
+        include_violations=True,
+        db=db,
+        current_user=current_user,
+    )
+
+    # Extract conflicts
+    conflicts = []
+    conflict_positions = set()
+
+    for voxel in grid_response.get("voxels", []):
+        if voxel.get("state", {}).get("is_conflict"):
+            pos = voxel.get("position", {})
+            conflict_positions.add((pos.get("x"), pos.get("y")))
+            conflicts.append({
+                "position": pos,
+                "identity": voxel.get("identity"),
+                "details": voxel.get("state", {}).get("violation_details", []),
+            })
+
+    return {
+        "total_conflicts": len(conflict_positions),
+        "conflict_voxels": conflicts,
+        "conflict_positions": [
+            {"x": x, "y": y} for x, y in conflict_positions
+        ],
+        "date_range": grid_response.get("date_range"),
+    }
+
+
+@router.get("/voxel-grid/coverage-gaps")
+def get_3d_coverage_gaps(
+    start_date: date = Query(..., description="Start date"),
+    end_date: date = Query(..., description="End date"),
+    required_activity_types: list[str] = Query(
+        ["clinic"], description="Activity types that must be covered"
+    ),
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> dict:
+    """
+    Identify coverage gaps using 3D voxel space analysis.
+
+    Finds empty regions in the voxel grid where assignments should exist.
+
+    Returns:
+        Dictionary with gap positions and suggested coverage needs
+    """
+    # Get full voxel grid
+    grid_response = get_3d_voxel_grid(
+        start_date=start_date,
+        end_date=end_date,
+        person_ids=None,
+        activity_types=None,
+        include_violations=True,
+        db=db,
+        current_user=current_user,
+    )
+
+    dimensions = grid_response.get("dimensions", {})
+    x_size = dimensions.get("x_size", 0)
+    y_size = dimensions.get("y_size", 0)
+
+    # Build occupancy map
+    occupied = set()
+    for voxel in grid_response.get("voxels", []):
+        pos = voxel.get("position", {})
+        occupied.add((pos.get("x"), pos.get("y")))
+
+    # Find gaps (time slots where no one is assigned)
+    gaps = []
+    x_labels = dimensions.get("x_labels", [])
+    y_labels = dimensions.get("y_labels", [])
+
+    for x in range(x_size):
+        # Check if any person is assigned at this time
+        coverage_at_time = sum(1 for y in range(y_size) if (x, y) in occupied)
+
+        if coverage_at_time == 0:
+            gaps.append({
+                "x": x,
+                "time_label": x_labels[x] if x < len(x_labels) else f"Block {x}",
+                "coverage_count": 0,
+                "severity": "critical",  # No one assigned
+            })
+        elif coverage_at_time < y_size * 0.2:  # Less than 20% coverage
+            gaps.append({
+                "x": x,
+                "time_label": x_labels[x] if x < len(x_labels) else f"Block {x}",
+                "coverage_count": coverage_at_time,
+                "severity": "warning",
+            })
+
+    return {
+        "total_gaps": len([g for g in gaps if g["severity"] == "critical"]),
+        "total_warnings": len([g for g in gaps if g["severity"] == "warning"]),
+        "gaps": gaps,
+        "dimensions": dimensions,
+        "date_range": grid_response.get("date_range"),
+    }
