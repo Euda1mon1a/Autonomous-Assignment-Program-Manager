@@ -8,17 +8,42 @@ This module provides multiple solver implementations:
 
 Each solver uses the modular constraint system from constraints.py.
 
-WARNING - KNOWN ISSUE (2025-12-23):
-The GreedySolver template selection logic (lines ~1190-1202) has a bug where
-it always selects the first template that passes constraints, resulting in
-all assignments going to a single rotation (e.g., "Post-Call Recovery").
+ARCHITECTURE NOTE:
+These solvers are designed for OUTPATIENT HALF-DAY OPTIMIZATION only.
+Block-assigned rotations (FMIT, NF, inpatient) are handled separately and
+should NOT be passed to these solvers.
 
-Recommended workaround: Use 'cp_sat' or 'pulp' algorithm instead of 'greedy'.
+IMPORTANT: The engine._get_rotation_templates() must filter to activity_type="clinic"
+before passing templates to solvers. If NF/PC/inpatient templates are included,
+solvers will incorrectly assign residents to them.
 
-TODO: Implement proper rotation distribution logic in GreedySolver._select_template
-- Consider rotation target counts and current utilization
-- Distribute assignments across rotation types based on program needs
-- Match solver behavior to CP-SAT's balanced distribution
+KNOWN ISSUES (2025-12-24):
+
+1. GREEDY SOLVER - Template Selection Bug (lines ~1190-1218):
+   The GreedySolver always selects the first template that passes constraints,
+   resulting in all assignments going to a single rotation.
+   STATUS: NOT FIXED - needs rotation distribution logic
+
+2. CP-SAT SOLVER - No Template Balance (lines ~754-764):
+   The CP-SAT objective function only penalizes resident equity (workload balance),
+   NOT template concentration. Result: all residents assigned to same rotation
+   (e.g., all Night Float) because solver maximizes coverage without variety.
+   STATUS: NOT FIXED - needs template distribution penalty in objective
+
+3. TEMPLATE FILTERING - Engine Issue (engine.py:874-883):
+   _get_rotation_templates() returns ALL templates without filtering by
+   activity_type. Clinic-only templates should be passed to outpatient solvers.
+   STATUS: NOT FIXED - add filter: activity_type == "clinic"
+
+WORKAROUND: None currently - both greedy and CP-SAT have template concentration bugs.
+Manual schedule adjustment required after generation.
+
+TODO - Required Fixes:
+1. Filter templates in engine.py to activity_type="clinic" for outpatient scheduling
+2. Add template balance penalty to CP-SAT objective function
+3. Implement rotation distribution logic in GreedySolver._select_template
+4. Consider rotation target counts and current utilization
+5. Distribute assignments across rotation types based on program needs
 """
 
 import json
