@@ -30,12 +30,14 @@
 - `mcp-server/src/scheduler_mcp/api_client.py` - Updated to call new endpoint
 - `mcp-server/src/scheduler_mcp/resilience_integration.py` - Added backend response mapping
 
-### 3. PuLP Solver Template Balance
+### 3. PuLP Solver Template Balance - DONE
 **Priority:** Low
-**Context:** Only fixed greedy + CP-SAT, PuLP may have same issue
+**Context:** Only fixed greedy + CP-SAT, PuLP may have same issue - **FIXED 2025-12-24**
 
-- [ ] Check if PuLP solver has template concentration bug
-- [ ] Apply same fix pattern if needed (select template with fewest assignments)
+- [x] Check if PuLP solver has template concentration bug ✅
+- [x] Apply same fix pattern if needed (select template with fewest assignments) ✅
+
+**Fix Applied:** Added template balance penalty to PuLP solver objective function, matching CP-SAT pattern
 
 ### 4. Optional: Add `solver_managed` Flag
 **Priority:** Low (nice-to-have)
