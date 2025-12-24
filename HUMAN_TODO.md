@@ -74,60 +74,50 @@ if (
 
 ---
 
-### Solver Template Distribution Bugs
+### Solver Template Distribution Bugs - FIXED
 
 **Priority:** High
 **Found:** Session review (2025-12-24)
+**Fixed:** 2025-12-24
 **Location:** `backend/app/scheduling/solvers.py`, `backend/app/scheduling/engine.py`
 
-**Issue:** Both greedy and CP-SAT solvers assign all residents to the same rotation
-(e.g., all Night Float) instead of distributing across clinic templates.
+**Issue:** Both greedy and CP-SAT solvers were assigning all residents to the same rotation.
 
-**Three related bugs:**
+**Three bugs fixed:**
 
-1. **Greedy Solver (lines ~1190-1218):** Always picks first valid template and `break`s
-2. **CP-SAT Solver (lines ~754-764):** Objective only penalizes resident equity, not template concentration
-3. **Template Filtering (engine.py:874-883):** `_get_rotation_templates()` returns ALL templates without filtering by `activity_type == "clinic"`
+1. [x] **Greedy Solver:** Now selects template with fewest total assignments for even distribution
+2. [x] **CP-SAT Solver:** Added `template_balance_penalty` to objective function
+3. [x] **Template Filtering:** `_get_rotation_templates()` now defaults to `activity_type="clinic"`
 
 **Architecture Note:**
 - Block-assigned rotations (FMIT, NF, inpatient) are pre-assigned and shouldn't go to solver
 - Solvers are for outpatient half-day optimization only
-- Need to filter templates to `activity_type == "clinic"` before passing to solver
-
-**Files to fix:**
-- `backend/app/scheduling/engine.py` - Add activity_type filter to `_get_rotation_templates()`
-- `backend/app/scheduling/solvers.py` - Add template balance to CP-SAT objective
-- `backend/app/scheduling/solvers.py` - Fix greedy template selection to rotate
-
-**Workaround:** Manual schedule adjustment after generation.
+- Templates now filtered to `activity_type == "clinic"` by default
 
 ---
 
-### NF Half-Block Documentation Consistency
+### NF Half-Block Documentation Consistency - VERIFIED
 
 **Priority:** Medium
 **Found:** Session review (2025-12-24)
+**Verified:** 2025-12-24
 
-**Issue:** Night Float (NF) half-block mirrored pairing pattern is documented in multiple places
-but may be inconsistent. NF is a **half-block constraint** (2 weeks, not 4 weeks).
+**Issue:** Night Float (NF) half-block mirrored pairing pattern is documented in multiple places.
 
-**Key pattern to document consistently:**
-```
-Block 5:
-├── Half 1 (Days 1-14): Resident A = NF, Resident B = NEURO
-└── Half 2 (Days 15-28): Resident A = NICU, Resident B = NF
-```
+**Audit completed - Documentation is CONSISTENT across all locations:**
 
-**Current documentation locations:**
-- `docs/development/CODEX_SYSTEM_OVERVIEW.md` - Most comprehensive (block_half, PC rules)
-- `backend/app/scheduling/constraints/night_float_post_call.py` - Constraint implementation
-- `.claude/skills/schedule-optimization/SKILL.md` - Skill reference (just added)
+| Location | Status | Notes |
+|----------|--------|-------|
+| `docs/development/CODEX_SYSTEM_OVERVIEW.md` | Consistent | Most comprehensive, has PC rules |
+| `backend/app/scheduling/constraints/night_float_post_call.py` | Consistent | Implementation matches docs |
+| `.claude/skills/schedule-optimization/SKILL.md` | Consistent | Cross-references other files |
 
-**TODO:** Audit these files for consistency:
-- [ ] Verify block_half terminology is consistent
-- [ ] Ensure mirrored pairing pattern is explained the same way
-- [ ] Check PC day rules are documented identically
-- [ ] Add cross-references between files
+**Verified consistent terminology:**
+- [x] "block-half" used everywhere (not "half-block")
+- [x] Day 15 as transition point between half 1 and half 2
+- [x] PC = full day (AM + PM blocked)
+- [x] NF in half 1 → Day 15 = PC; NF in half 2 → Day 1 next block = PC
+- [x] Mirrored pairing pattern documented identically
 
 ---
 

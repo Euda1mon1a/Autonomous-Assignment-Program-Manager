@@ -7,19 +7,15 @@ description: Multi-objective schedule optimization expertise using constraint pr
 
 Expert knowledge for generating and optimizing medical residency schedules using constraint programming and multi-objective optimization.
 
-## CRITICAL: Known Issues (2025-12-24)
+## Solver Status (2025-12-24) - ALL FIXED
 
-**READ THIS FIRST** - Current solver limitations affect all schedule generation:
+| Issue | Status | Fix Applied |
+|-------|--------|-------------|
+| Greedy template selection | FIXED | Selects template with fewest assignments |
+| CP-SAT no template balance | FIXED | Added template_balance_penalty to objective |
+| Template filtering missing | FIXED | `_get_rotation_templates()` defaults to `activity_type="clinic"` |
 
-| Issue | Status | Impact |
-|-------|--------|--------|
-| Greedy template selection | NOT FIXED | Always picks first valid template |
-| CP-SAT no template balance | NOT FIXED | All residents assigned to same rotation |
-| Template filtering missing | NOT FIXED | NF/PC/inpatient passed to outpatient solver |
-
-**Workaround:** Manual schedule adjustment required after generation.
-
-See `backend/app/scheduling/solvers.py` header for full details.
+See `backend/app/scheduling/solvers.py` header for implementation details.
 
 ## Architecture: Block vs Half-Day Scheduling
 
