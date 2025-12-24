@@ -503,8 +503,129 @@ After PR is merged, AI agents should NOT:
 
 ---
 
+## MCP Tool Safety Rules
+
+**CRITICAL:** MCP tools that modify the database require additional safety checks beyond standard Git guardrails.
+
+### Database-Modifying Operations
+
+MCP tools that modify the database MUST follow this protocol:
+
+1. **Backup first** - Verify recent backup exists before any write operation
+2. **User confirmation** - Get explicit approval before schedule generation
+3. **Rollback ready** - Know how to restore if generation fails
+4. **Skill activation** - The `safe-schedule-generation` skill auto-activates for these operations
+
+### Operation Classification
+
+| Operation | MCP Tool | Risk Level | Requirements |
+|-----------|----------|------------|--------------|
+| Generate schedule | `generate_schedule` | HIGH | Backup + user approval |
+| Execute swap | `execute_swap` | MEDIUM | Single swap, audit logged |
+| Bulk assign | `bulk_assign` | HIGH | Backup + user approval |
+| Clear assignments | N/A (manual) | CRITICAL | Never automated |
+
+### Read-Only Operations (Always Safe)
+
+These MCP tools are read-only and can be called without backup verification:
+
+| Operation | MCP Tool |
+|-----------|----------|
+| Validate schedule | `validate_schedule` |
+| Detect conflicts | `detect_conflicts` |
+| Get swap candidates | `analyze_swap_candidates` |
+| Run contingency analysis | `run_contingency_analysis` |
+| Check health | `health_check` |
+
+### Pre-Flight Checklist for Database Modifications
+
+Before calling any database-modifying MCP tool:
+
+```bash
+# 1. Verify recent backup exists
+ls -la backups/postgres/*.sql.gz | tail -1
+
+# 2. Check backup is recent (within 2 hours)
+find backups/postgres -name "*.sql.gz" -mmin -120 | head -1
+
+# 3. If no recent backup:
+./scripts/backup-db.sh --docker
+
+# 4. Verify backend health
+curl -s http://localhost:8000/health
+
+# 5. Confirm with user
+# "Backup verified at [timestamp]. Proceed with [operation]?"
+```
+
+### MCP Tool Decision Tree
+
+```
+┌─────────────────────────────────────────────────────┐
+│           MCP TOOL SAFETY DECISION TREE             │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  Does this MCP tool modify the database?            │
+│     NO  → Safe to proceed (read-only)               │
+│     YES → Continue checks                           │
+│                                                     │
+│  Is there a recent backup (< 2 hours)?              │
+│     NO  → CREATE BACKUP FIRST                       │
+│     YES → Continue                                  │
+│                                                     │
+│  Is backend healthy?                                │
+│     NO  → FIX BACKEND FIRST                         │
+│     YES → Continue                                  │
+│                                                     │
+│  Has user explicitly approved this operation?       │
+│     NO  → ASK USER FOR APPROVAL                     │
+│     YES → Proceed with operation                    │
+│                                                     │
+│  After operation - check result:                    │
+│     Violations < 5? Coverage > 80%?                 │
+│     If BAD → Offer to restore from backup           │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+### Rollback Procedure
+
+If an MCP operation produces bad results:
+
+```bash
+# 1. Find most recent backup
+ls -la backups/postgres/*.sql.gz | tail -3
+
+# 2. Decompress (keeps original .gz)
+gunzip -k backups/postgres/residency_scheduler_YYYYMMDD_HHMMSS.sql.gz
+
+# 3. Restore to database
+docker compose exec -T db psql -U scheduler -d residency_scheduler \
+  < backups/postgres/residency_scheduler_YYYYMMDD_HHMMSS.sql
+
+# 4. Verify restoration
+docker compose exec db psql -U scheduler -d residency_scheduler \
+  -c "SELECT COUNT(*) FROM assignments;"
+```
+
+### Local Data Sources (PII - for Reimport)
+
+If database corruption requires full reimport:
+
+| File | Location | Contents |
+|------|----------|----------|
+| Residents | `docs/data/airtable_residents.json` | Names, PGY levels |
+| Faculty | `docs/data/airtable_faculty.json` | Names, roles |
+| Absences | `docs/data/airtable_*_absences.json` | Leave, TDY |
+| Rotations | `docs/data/airtable_rotation_templates.json` | Templates |
+
+**CRITICAL:** These files contain real names - never commit to repository.
+
+---
+
 ## Related Documentation
 
 - [AI Interface Guide](../admin-manual/ai-interface-guide.md) - Web vs CLI comparison
 - [Git Safe Sync Checklist](CLAUDE_GIT_SAFE_SYNC_CHECKLIST.md) - Daily sync procedures
 - [CI/CD Troubleshooting Guide](CI_CD_TROUBLESHOOTING.md) - Error codes, fixes, and recovery workflows
+- [Safe Schedule Generation Skill](../../.claude/skills/safe-schedule-generation/SKILL.md) - Backup-first workflow
