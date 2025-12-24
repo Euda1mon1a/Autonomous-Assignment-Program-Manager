@@ -10,6 +10,7 @@ Manages multiple circuit breakers for different services:
 """
 
 import logging
+from typing import Callable
 
 from app.resilience.circuit_breaker.breaker import (
     CircuitBreaker,
@@ -80,7 +81,7 @@ class CircuitBreakerRegistry:
         call_timeout_seconds: float | None = None,
         half_open_max_calls: int | None = None,
         excluded_exceptions: tuple[type[Exception], ...] | None = None,
-        fallback_function: callable | None = None,
+        fallback_function: Callable | None = None,
         config: CircuitBreakerConfig | None = None,
     ) -> CircuitBreaker:
         """
