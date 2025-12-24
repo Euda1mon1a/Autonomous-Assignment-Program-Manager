@@ -14,14 +14,21 @@
 - [ ] Verify assignments distributed across clinic templates (not all one rotation)
 - [ ] Run pytest suite: `cd backend && pytest tests/scheduling/ -v`
 
-### 2. Complete MCP Wiring
+### 2. Complete MCP Wiring - DONE
 **Priority:** Medium
-**Context:** PR #402 wired 3/5 tools, 2 remaining
+**Context:** PR #402 wired 3/5 tools, 2 remaining - **FIXED 2025-12-24**
 
-| Tool | Issue | Fix Needed |
-|------|-------|------------|
-| `analyze_swap_candidates` | Backend requires file upload | Refactor to JSON input |
-| `run_contingency_analysis` | Different response structure | Map response fields |
+| Tool | Issue | Fix Applied |
+|------|-------|-------------|
+| `analyze_swap_candidates` | Backend required file upload | Created `/schedule/swaps/candidates` JSON endpoint |
+| `run_contingency_analysis` | Different response structure | Added response mapping in `resilience_integration.py` |
+
+**Files Changed:**
+- `backend/app/api/routes/schedule.py` - Added JSON-based swap candidates endpoint
+- `backend/app/schemas/schedule.py` - Added new request/response schemas
+- `mcp-server/src/scheduler_mcp/tools.py` - Wired to backend, kept mock as fallback
+- `mcp-server/src/scheduler_mcp/api_client.py` - Updated to call new endpoint
+- `mcp-server/src/scheduler_mcp/resilience_integration.py` - Added backend response mapping
 
 ### 3. PuLP Solver Template Balance
 **Priority:** Low

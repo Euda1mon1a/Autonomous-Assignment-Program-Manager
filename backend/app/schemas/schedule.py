@@ -308,3 +308,42 @@ class SwapFinderResponse(BaseModel):
     viable_candidates: int  # Candidates with no back-to-back issues
     alternating_patterns: list[AlternatingPatternInfo] = []
     message: str = ""
+
+
+# JSON-based swap candidate schemas for MCP integration
+class SwapCandidateJsonRequest(BaseModel):
+    """Request schema for JSON-based swap candidate lookup (no file upload)."""
+
+    person_id: str
+    assignment_id: str | None = None  # Optional: specific assignment
+    block_id: str | None = None  # Optional: specific block
+    max_candidates: int = Field(default=10, ge=1, le=50)
+
+
+class SwapCandidateJsonItem(BaseModel):
+    """A single swap candidate from JSON-based lookup."""
+
+    candidate_person_id: str
+    candidate_name: str
+    candidate_role: str  # Role-based identifier (e.g., "Faculty") - no PII
+    assignment_id: str | None = None
+    block_date: str  # ISO date
+    block_session: str  # AM/PM
+    match_score: float = Field(ge=0.0, le=1.0)
+    rotation_name: str | None = None
+    compatibility_factors: dict = Field(default_factory=dict)
+    mutual_benefit: bool = False
+    approval_likelihood: str = "medium"  # "low", "medium", "high"
+
+
+class SwapCandidateJsonResponse(BaseModel):
+    """Response schema for JSON-based swap candidate lookup."""
+
+    success: bool
+    requester_person_id: str
+    requester_name: str | None = None
+    original_assignment_id: str | None = None
+    candidates: list[SwapCandidateJsonItem]
+    total_candidates: int
+    top_candidate_id: str | None = None
+    message: str = ""

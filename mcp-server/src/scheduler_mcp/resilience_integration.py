@@ -11,11 +11,13 @@ Tier 3 (Advanced): Behavioral patterns and cognitive load
 """
 
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel, Field
+
+from .api_client import get_api_client
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +80,8 @@ class DefenseLevelResponse(BaseModel):
 class ContingencyAnalysisRequest(BaseModel):
     """Request for N-1/N-2 contingency analysis."""
 
+    start_date: date | None = None  # Defaults to today in backend
+    end_date: date | None = None  # Defaults to 30 days from start in backend
     analyze_n1: bool = True
     analyze_n2: bool = True
     include_cascade_simulation: bool = False
@@ -668,34 +672,111 @@ async def run_contingency_analysis_deep(
 
     Raises:
         ValueError: If request parameters are invalid
+        RuntimeError: If backend API call fails
     """
     logger.info(
         f"Running contingency analysis: N-1={request.analyze_n1}, N-2={request.analyze_n2}"
     )
 
     try:
-        # This would integrate with the actual backend service
-        # For now, return a placeholder response
-        logger.warning("Contingency analysis not yet fully integrated with backend")
+        client = await get_api_client()
+
+        # Prepare date parameters (use defaults if not specified)
+        # Default to one block (28 days) for analysis period
+        start = request.start_date or datetime.now().date()
+        end = request.end_date or (start + timedelta(days=28))
+
+        # Call backend vulnerability endpoint
+        result = await client.run_contingency_analysis(
+            scenario="n1_n2_analysis",  # Not used by backend but required by signature
+            affected_ids=[],
+            start_date=start.isoformat(),
+            end_date=end.isoformat(),
+        )
+
+        # Map backend VulnerabilityReportResponse to MCP ContingencyAnalysisResponse
+        # Backend response structure:
+        # - analyzed_at: datetime
+        # - period_start, period_end: date
+        # - n1_pass, n2_pass: bool
+        # - phase_transition_risk: str
+        # - n1_vulnerabilities: list[dict] with faculty_id, affected_blocks, severity
+        # - n2_fatal_pairs: list[dict] with faculty1_id, faculty2_id
+        # - most_critical_faculty: list[CentralityScore] with person_id, centrality_score, name
+        # - recommended_actions: list[str]
+
+        # Map n1_vulnerabilities
+        n1_vulns = []
+        for v in result.get("n1_vulnerabilities", []):
+            n1_vulns.append(VulnerabilityInfo(
+                faculty_id=v.get("faculty_id", ""),
+                faculty_name=v.get("faculty_name", f"Faculty {v.get('faculty_id', 'unknown')}"),
+                severity=v.get("severity", "medium"),
+                affected_blocks=v.get("affected_blocks", 0),
+                is_unique_provider=v.get("affected_blocks", 0) > 10,  # Heuristic
+                details=f"Loss would affect {v.get('affected_blocks', 0)} blocks",
+                services_affected=[],
+            ))
+
+        # Map n2_fatal_pairs
+        n2_pairs = []
+        for p in result.get("n2_fatal_pairs", []):
+            n2_pairs.append(FatalPairInfo(
+                faculty_1_id=p.get("faculty1_id", ""),
+                faculty_1_name=p.get("faculty1_name", f"Faculty {p.get('faculty1_id', 'unknown')}"),
+                faculty_2_id=p.get("faculty2_id", ""),
+                faculty_2_name=p.get("faculty2_name", f"Faculty {p.get('faculty2_id', 'unknown')}"),
+                uncoverable_blocks=p.get("uncoverable_blocks", 0),
+                affected_services=[],
+            ))
+
+        # Map most_critical_faculty (CentralityScore -> list[str])
+        critical_faculty = []
+        for f in result.get("most_critical_faculty", []):
+            if isinstance(f, dict):
+                name = f.get("name") or f.get("person_id", "unknown")
+                critical_faculty.append(name)
+            else:
+                critical_faculty.append(str(f))
+
+        # Determine severity based on pass/fail status
+        n1_pass = result.get("n1_pass", True)
+        n2_pass = result.get("n2_pass", True)
+        if not n1_pass:
+            severity = "critical"
+        elif not n2_pass:
+            severity = "vulnerable"
+        else:
+            severity = "healthy"
+
+        # Generate leading indicators based on vulnerability data
+        leading_indicators = []
+        if len(n1_vulns) > 3:
+            leading_indicators.append(f"{len(n1_vulns)} N-1 vulnerabilities detected")
+        if len(n2_pairs) > 5:
+            leading_indicators.append(f"{len(n2_pairs)} fatal faculty pairs identified")
+        phase_risk = result.get("phase_transition_risk", "low")
+        if phase_risk in ("high", "critical"):
+            leading_indicators.append(f"Phase transition risk is {phase_risk}")
 
         return ContingencyAnalysisResponse(
-            analysis_date=datetime.now().date().isoformat(),
-            period_start=datetime.now().date().isoformat(),
-            period_end=(datetime.now().date()).isoformat(),
-            n1_pass=True,
-            n1_vulnerabilities=[],
-            n2_pass=True,
-            n2_fatal_pairs=[],
-            most_critical_faculty=[],
-            phase_transition_risk="low",
-            leading_indicators=[],
-            recommended_actions=[],
-            severity="healthy",
+            analysis_date=result.get("analyzed_at", datetime.now().isoformat())[:10],
+            period_start=result.get("period_start", start.isoformat()),
+            period_end=result.get("period_end", end.isoformat()),
+            n1_pass=n1_pass,
+            n1_vulnerabilities=n1_vulns,
+            n2_pass=n2_pass,
+            n2_fatal_pairs=n2_pairs,
+            most_critical_faculty=critical_faculty,
+            phase_transition_risk=phase_risk,
+            leading_indicators=leading_indicators,
+            recommended_actions=result.get("recommended_actions", []),
+            severity=severity,
         )
 
     except Exception as e:
         logger.error(f"Contingency analysis failed: {e}")
-        raise
+        raise RuntimeError(f"Failed to run contingency analysis: {e}") from e
 
 
 async def get_static_fallbacks() -> StaticFallbacksResponse:

@@ -23,6 +23,9 @@ from app.schemas.schedule import (
     ScheduleResponse,
     ScheduleSummary,
     SolverStatistics,
+    SwapCandidateJsonItem,
+    SwapCandidateJsonRequest,
+    SwapCandidateJsonResponse,
     SwapCandidateResponse,
     SwapFinderRequest,
     SwapFinderResponse,
@@ -838,4 +841,209 @@ def find_swap_candidates(
         viable_candidates=viable_count,
         alternating_patterns=alternating_info,
         message=f"Found {viable_count} viable swap candidates out of {len(candidates)} total",
+    )
+
+
+@router.post("/swaps/candidates", response_model=SwapCandidateJsonResponse)
+def find_swap_candidates_json(
+    request: SwapCandidateJsonRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Find swap candidates using JSON input (no file upload required).
+
+    This endpoint queries the database directly to find potential swap partners
+    for a given person and optionally a specific assignment or block.
+
+    Unlike /swaps/find which requires an Excel file, this endpoint works with
+    database assignments and is suitable for MCP tool integration.
+
+    Args:
+        request: JSON request with person_id and optional assignment/block
+
+    Returns:
+        SwapCandidateJsonResponse with ranked candidates
+    """
+    from datetime import datetime
+    from uuid import UUID
+
+    from app.models.assignment import Assignment
+    from app.models.block import Block
+    from app.models.person import Person
+    from app.models.rotation_template import RotationTemplate
+
+    # Validate person exists
+    try:
+        person_uuid = UUID(request.person_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid person_id format")
+
+    requester = db.query(Person).filter(Person.id == person_uuid).first()
+    if not requester:
+        raise HTTPException(status_code=404, detail=f"Person {request.person_id} not found")
+
+    # Get the target assignment if specified
+    target_assignment = None
+    target_block = None
+
+    if request.assignment_id:
+        try:
+            assignment_uuid = UUID(request.assignment_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid assignment_id format")
+
+        target_assignment = (
+            db.query(Assignment)
+            .filter(Assignment.id == assignment_uuid)
+            .first()
+        )
+        if not target_assignment:
+            raise HTTPException(
+                status_code=404, detail=f"Assignment {request.assignment_id} not found"
+            )
+        target_block = db.query(Block).filter(Block.id == target_assignment.block_id).first()
+
+    elif request.block_id:
+        try:
+            block_uuid = UUID(request.block_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid block_id format")
+
+        target_block = db.query(Block).filter(Block.id == block_uuid).first()
+        if not target_block:
+            raise HTTPException(status_code=404, detail=f"Block {request.block_id} not found")
+
+        # Find the requester's assignment for this block
+        target_assignment = (
+            db.query(Assignment)
+            .filter(
+                Assignment.person_id == person_uuid,
+                Assignment.block_id == block_uuid,
+            )
+            .first()
+        )
+
+    # Get future assignments for the requester if no specific target
+    if not target_block:
+        future_assignments = (
+            db.query(Assignment, Block)
+            .join(Block, Assignment.block_id == Block.id)
+            .filter(
+                Assignment.person_id == person_uuid,
+                Block.start_date >= datetime.utcnow().date(),
+            )
+            .order_by(Block.start_date)
+            .limit(5)
+            .all()
+        )
+
+        if not future_assignments:
+            return SwapCandidateJsonResponse(
+                success=True,
+                requester_person_id=request.person_id,
+                requester_name=requester.name,
+                original_assignment_id=None,
+                candidates=[],
+                total_candidates=0,
+                top_candidate_id=None,
+                message="No future assignments found for this person",
+            )
+
+        # Use the first future assignment as target
+        target_assignment, target_block = future_assignments[0]
+
+    # Find potential swap candidates
+    # Look for other people with assignments on nearby blocks
+    candidates = []
+
+    # Get other people's assignments on the same block or nearby
+    other_assignments = (
+        db.query(Assignment, Block, Person, RotationTemplate)
+        .join(Block, Assignment.block_id == Block.id)
+        .join(Person, Assignment.person_id == Person.id)
+        .outerjoin(RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id)
+        .filter(
+            Assignment.person_id != person_uuid,
+            Person.type == requester.type,  # Same type (faculty/resident)
+            Block.start_date >= datetime.utcnow().date(),
+        )
+        .order_by(Block.start_date)
+        .limit(100)  # Get a pool of candidates
+        .all()
+    )
+
+    for assignment, block, person, rotation in other_assignments:
+        # Calculate a simple match score based on various factors
+        score = 0.5  # Base score
+
+        # Boost if same block (direct swap possible)
+        if target_block and block.id == target_block.id:
+            score += 0.3
+
+        # Boost if same rotation type
+        if (
+            target_assignment
+            and target_assignment.rotation_template_id
+            and rotation
+            and rotation.id == target_assignment.rotation_template_id
+        ):
+            score += 0.1
+
+        # Penalize if dates are far apart
+        if target_block:
+            days_apart = abs((block.start_date - target_block.start_date).days)
+            if days_apart <= 7:
+                score += 0.1
+            elif days_apart <= 28:
+                pass  # neutral
+            else:
+                score -= 0.2
+
+        score = max(0.0, min(1.0, score))
+
+        # Determine approval likelihood based on score
+        if score >= 0.8:
+            likelihood = "high"
+        elif score >= 0.5:
+            likelihood = "medium"
+        else:
+            likelihood = "low"
+
+        candidates.append(
+            SwapCandidateJsonItem(
+                candidate_person_id=str(person.id),
+                candidate_name=person.name,
+                candidate_role=person.type.capitalize() if person.type else "Unknown",
+                assignment_id=str(assignment.id),
+                block_date=block.start_date.isoformat(),
+                block_session=block.session or "AM",
+                match_score=score,
+                rotation_name=rotation.name if rotation else None,
+                compatibility_factors={
+                    "same_type": person.type == requester.type,
+                    "same_block": target_block and block.id == target_block.id,
+                },
+                mutual_benefit=target_block and block.id == target_block.id,
+                approval_likelihood=likelihood,
+            )
+        )
+
+    # Sort by match score
+    candidates.sort(key=lambda c: c.match_score, reverse=True)
+
+    # Limit to max_candidates
+    candidates = candidates[: request.max_candidates]
+
+    top_candidate_id = candidates[0].candidate_person_id if candidates else None
+
+    return SwapCandidateJsonResponse(
+        success=True,
+        requester_person_id=request.person_id,
+        requester_name=requester.name,
+        original_assignment_id=str(target_assignment.id) if target_assignment else None,
+        candidates=candidates,
+        total_candidates=len(candidates),
+        top_candidate_id=top_candidate_id,
+        message=f"Found {len(candidates)} swap candidates",
     )
