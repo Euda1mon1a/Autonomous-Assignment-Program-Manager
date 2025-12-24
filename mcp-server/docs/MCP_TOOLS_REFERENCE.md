@@ -4,7 +4,7 @@ This document provides a comprehensive reference for the MCP (Model Context Prot
 
 ## Overview
 
-The MCP server exposes 4 primary tools for schedule validation, contingency analysis, conflict detection, and swap matching. These tools enable AI assistants to perform intelligent scheduling operations.
+The MCP server exposes 5 primary tools for schedule validation, contingency analysis, conflict detection, and swap matching. These tools enable AI assistants to perform intelligent scheduling operations.
 
 ---
 
@@ -54,6 +54,74 @@ Validates a schedule against ACGME compliance rules.
   }
 }
 ```
+
+---
+
+### 1a. `validate_schedule_by_id` (ConstraintService Integration)
+
+> **New in v1.1** - Enhanced validation tool with ConstraintService backend integration.
+
+Validates a schedule by ID using the backend ConstraintService with proper input sanitization and PII protection.
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `schedule_id` | string | Yes | UUID or alphanumeric identifier (validated against injection) |
+| `constraint_config` | enum | No | Configuration level: `default`, `minimal`, `strict`, `resilience` |
+| `include_suggestions` | boolean | No | Include suggested actions for issues (default: true) |
+
+#### Input Validation
+
+The `schedule_id` is validated against:
+- Path traversal (`..`, `/`, `\`)
+- Injection characters (`<`, `>`, `'`, `"`, `;`, `&`, `|`, `$`, `` ` ``)
+- Control characters (`\n`, `\r`, `\x00`)
+- Must be a valid UUID or alphanumeric identifier (max 64 chars)
+
+#### Constraint Configurations
+
+| Config | Description |
+|--------|-------------|
+| `default` | Standard ACGME compliance checks |
+| `minimal` | Fast validation with critical rules only |
+| `strict` | All rules with lower thresholds |
+| `resilience` | Include resilience framework checks |
+
+#### Response (Sanitized)
+
+```json
+{
+  "schedule_id": "abc123",
+  "is_valid": true,
+  "compliance_rate": 0.95,
+  "total_issues": 2,
+  "critical_count": 0,
+  "warning_count": 1,
+  "info_count": 1,
+  "issues": [
+    {
+      "severity": "warning",
+      "rule_type": "supervision",
+      "message": "Block has 3 PGY-1 with 1 faculty (requires 2)",
+      "constraint_name": "supervision_ratio",
+      "affected_entity_ref": "block-2025-12-20-AM",
+      "suggested_action": "Add faculty supervision"
+    }
+  ],
+  "validated_at": "2025-12-20T10:00:00Z",
+  "constraint_config": "default",
+  "metadata": {
+    "source": "constraint_service"
+  }
+}
+```
+
+#### Security Features
+
+- **Input Sanitization**: All schedule IDs validated against injection attacks
+- **PII Protection**: No person names in responses, only role-based identifiers
+- **Graceful Degradation**: Returns placeholder data if backend unavailable
 
 ---
 

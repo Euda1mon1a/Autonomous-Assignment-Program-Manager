@@ -83,8 +83,64 @@ The MCP server exposes tools for:
 - **Swap Management**: Process swap requests, find matches
 - **Domain Context**: Expand abbreviations (PGY-1, FMIT, etc.)
 - **Constraint Explanations**: Explain scheduling rules
+- **Resilience Framework**: N-1/N-2 contingency, defense levels, utilization
+- **Deployment Tools**: Security scans, smoke tests, production promotion
 
 See `/home/user/Autonomous-Assignment-Program-Manager/mcp-server/src/scheduler_mcp/server.py` for full tool definitions.
+
+### MCP Server Module Structure
+
+```
+mcp-server/src/scheduler_mcp/
+├── __init__.py           # Package initialization
+├── server.py             # Main MCP server with tool registration
+├── api_client.py         # HTTP client for backend API calls
+├── tools.py              # Core tool definitions (validation, conflicts)
+├── tools/                # Specialized tool implementations
+│   ├── __init__.py       # Tools subpackage exports
+│   └── validate_schedule.py  # ConstraintService integration
+├── resources.py          # MCP resources (schedule status, compliance)
+├── domain_context.py     # Domain abbreviations and glossary
+├── resilience_integration.py  # Resilience framework tools
+├── deployment_tools.py   # CI/CD deployment tools
+├── async_tools.py        # Background task management
+└── error_handling.py     # Standardized error responses
+```
+
+#### Adding New Tools
+
+To add a new tool with backend service integration:
+
+1. **Create module in `tools/`**:
+   ```python
+   # mcp-server/src/scheduler_mcp/tools/my_tool.py
+   from pydantic import BaseModel, Field, field_validator
+
+   class MyToolRequest(BaseModel):
+       param: str = Field(..., min_length=1)
+
+       @field_validator("param")
+       @classmethod
+       def validate_param(cls, v: str) -> str:
+           # Add input validation
+           return v.strip()
+
+   async def my_tool(request: MyToolRequest) -> dict:
+       # Implement with backend service calls
+       pass
+   ```
+
+2. **Export in `tools/__init__.py`**:
+   ```python
+   from .my_tool import MyToolRequest, my_tool
+   ```
+
+3. **Import in `server.py`**:
+   ```python
+   from .tools.my_tool import MyToolRequest, my_tool
+   ```
+
+4. **Register with `@mcp.tool()`** decorator in `server.py`
 
 ## Prerequisites
 

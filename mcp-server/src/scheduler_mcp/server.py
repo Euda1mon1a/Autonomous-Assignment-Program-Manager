@@ -49,13 +49,11 @@ from .deployment_tools import (
     validate_deployment,
 )
 from .resilience_integration import (
+    BehavioralPatternsResponse,
     BlastRadiusAnalysisRequest,
     BlastRadiusAnalysisResponse,
-    BehavioralPatternsResponse,
     CognitiveLoadRequest,
     CognitiveLoadResponse,
-    ContingencyAnalysisRequest as ResilienceContingencyRequest,
-    ContingencyAnalysisResponse as ResilienceContingencyResponse,
     DefenseLevelResponse,
     EquilibriumAnalysisResponse,
     HomeostasisStatusResponse,
@@ -83,6 +81,12 @@ from .resilience_integration import (
     get_static_fallbacks,
     run_contingency_analysis_deep,
 )
+from .resilience_integration import (
+    ContingencyAnalysisRequest as ResilienceContingencyRequest,
+)
+from .resilience_integration import (
+    ContingencyAnalysisResponse as ResilienceContingencyResponse,
+)
 from .resources import (
     ComplianceSummaryResource,
     ScheduleStatusResource,
@@ -92,8 +96,8 @@ from .resources import (
 from .tools import (
     ConflictDetectionRequest,
     ConflictDetectionResult,
-    ContingencyRequest,
     ContingencyAnalysisResult,
+    ContingencyRequest,
     ScheduleValidationRequest,
     ScheduleValidationResult,
     SwapAnalysisResult,
@@ -103,12 +107,18 @@ from .tools import (
     run_contingency_analysis,
     validate_schedule,
 )
+from .tools.validate_schedule import (
+    ConstraintConfig,
+)
 
 # Import new validate_schedule tool with ConstraintService integration
-from tools.validate_schedule import (
+from .tools.validate_schedule import (
     ScheduleValidationRequest as ConstraintValidationRequest,
+)
+from .tools.validate_schedule import (
     ScheduleValidationResponse as ConstraintValidationResponse,
-    ConstraintConfig,
+)
+from .tools.validate_schedule import (
     validate_schedule as validate_schedule_by_id,
 )
 
@@ -351,7 +361,7 @@ async def detect_conflicts_tool(
     request = ConflictDetectionRequest(
         start_date=date.fromisoformat(start_date),
         end_date=date.fromisoformat(end_date),
-        conflict_types=[ct for ct in conflict_types] if conflict_types else None,  # type: ignore
+        conflict_types=list(conflict_types) if conflict_types else None,  # type: ignore
         include_auto_resolution=include_auto_resolution,
     )
 
@@ -637,7 +647,7 @@ async def execute_sacrifice_hierarchy_tool(
     except ValueError as e:
         raise ValueError(
             f"Invalid target_level: {target_level}. Must be one of: "
-            f"{[l.value for l in LoadSheddingLevelEnum]}"
+            f"{[level.value for level in LoadSheddingLevelEnum]}"
         ) from e
 
     return await execute_sacrifice_hierarchy(level_enum, simulate_only)

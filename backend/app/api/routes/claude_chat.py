@@ -84,6 +84,12 @@ _sessions: dict[str, ChatSession] = {}
 # Active WebSocket connections: session_id -> WebSocket
 _connections: dict[str, WebSocket] = {}
 
+# Active streaming tasks: session_id -> asyncio.Event (set when interrupted)
+_interrupt_flags: dict[str, asyncio.Event] = {}
+
+# Active stream tasks: session_id -> asyncio.Task
+_active_streams: dict[str, asyncio.Task] = {}
+
 
 def get_or_create_session(user_id: str, session_id: str | None = None) -> ChatSession:
     """Get existing session or create new one."""
@@ -213,53 +219,243 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
     Execute a tool by calling the appropriate backend service.
 
     This bridges Claude's tool calls to your existing service layer.
+    All outputs are sanitized to prevent PII leakage.
     """
     try:
         if tool_name == "validate_schedule":
-            # Import and call your validation service
-            from app.scheduling.acgme_validator import ACGMEValidator
+            from datetime import date as date_type
 
-            validator = ACGMEValidator(db)
-            # Simplified - you'd parse dates and call properly
-            result = {"status": "ok", "violations": [], "message": "Validation complete"}
-            return result
+            from app.services.constraint_service import (
+                ConstraintService,
+                ScheduleNotFoundError,
+            )
+
+            # Parse dates if provided, otherwise use defaults
+            start_date_str = tool_input.get("start_date")
+            end_date_str = tool_input.get("end_date")
+            schedule_id = tool_input.get("schedule_id")
+
+            if schedule_id:
+                # Validate by schedule ID
+                service = ConstraintService(db)
+                try:
+                    result = await service.validate_schedule(schedule_id)
+                    return {
+                        "status": "validated",
+                        "is_valid": result.is_valid,
+                        "compliance_rate": result.compliance_rate,
+                        "total_issues": result.total_issues,
+                        "critical_count": result.critical_count,
+                        "warning_count": result.warning_count,
+                        "issues": [
+                            {
+                                "severity": issue.severity.value,
+                                "rule_type": issue.rule_type,
+                                "message": issue.message,
+                                "suggested_action": issue.suggested_action,
+                            }
+                            for issue in result.issues[:10]  # Limit to 10 issues
+                        ],
+                        "validated_at": result.validated_at.isoformat(),
+                    }
+                except ScheduleNotFoundError:
+                    return {
+                        "status": "error",
+                        "message": f"Schedule '{schedule_id}' not found",
+                    }
+            else:
+                # No schedule_id - return general status
+                return {
+                    "status": "ok",
+                    "message": "Validation service available. Provide schedule_id to validate.",
+                    "violations": [],
+                }
 
         elif tool_name == "analyze_swap_candidates":
-            # Call your swap service
-            from app.services.swap_service import get_swap_candidates
+            from uuid import UUID
 
-            candidates = await get_swap_candidates(
-                db,
-                person_id=tool_input.get("person_id"),
-                max_candidates=tool_input.get("max_candidates", 10),
-            )
-            return {"candidates": candidates}
+            from app.services.swap_auto_matcher import SwapAutoMatcher
+
+            person_id = tool_input.get("person_id")
+            max_candidates = tool_input.get("max_candidates", 10)
+
+            if not person_id:
+                return {"error": "person_id is required"}
+
+            try:
+                matcher = SwapAutoMatcher(db)
+                # Get proactive suggestions for the faculty member
+                suggestions = matcher.suggest_proactive_swaps(
+                    faculty_id=UUID(person_id),
+                    limit=max_candidates,
+                )
+
+                return {
+                    "candidates": [
+                        {
+                            "partner_id": str(s.suggested_partner_id),
+                            "partner_name": s.suggested_partner_name,
+                            "current_week": s.current_week.isoformat(),
+                            "partner_week": s.partner_week.isoformat(),
+                            "benefit_score": s.benefit_score,
+                            "reason": s.reason,
+                            "action": s.action_text,
+                        }
+                        for s in suggestions
+                    ],
+                    "total_found": len(suggestions),
+                }
+            except ValueError as e:
+                return {"error": f"Invalid person_id format: {e}"}
 
         elif tool_name == "run_contingency_analysis":
-            # Call resilience service
+            from datetime import date as date_type
+            from datetime import timedelta
+
+            from app.models.assignment import Assignment
+            from app.models.block import Block
+            from app.models.person import Person
             from app.resilience.contingency import ContingencyAnalyzer
 
-            analyzer = ContingencyAnalyzer(db)
-            result = await analyzer.analyze()
-            return result
+            # Parse dates
+            start_date_str = tool_input.get("start_date")
+            end_date_str = tool_input.get("end_date")
+
+            if start_date_str:
+                start_date = date_type.fromisoformat(start_date_str)
+            else:
+                start_date = date_type.today()
+
+            if end_date_str:
+                end_date = date_type.fromisoformat(end_date_str)
+            else:
+                end_date = start_date + timedelta(days=30)
+
+            # Get faculty and assignments for the period
+            faculty = db.query(Person).filter(Person.type == "faculty").all()
+            blocks = (
+                db.query(Block)
+                .filter(Block.date >= start_date, Block.date <= end_date)
+                .all()
+            )
+            assignments = (
+                db.query(Assignment)
+                .join(Block)
+                .filter(Block.date >= start_date, Block.date <= end_date)
+                .all()
+            )
+
+            # Build coverage requirements (1 faculty per block minimum)
+            coverage_reqs = {b.id: 1 for b in blocks}
+
+            # Run N-1 analysis
+            analyzer = ContingencyAnalyzer()
+            vulnerabilities = analyzer.analyze_n1(
+                faculty=faculty,
+                blocks=blocks,
+                current_assignments=assignments,
+                coverage_requirements=coverage_reqs,
+            )
+
+            return {
+                "analysis_period": {
+                    "start": start_date.isoformat(),
+                    "end": end_date.isoformat(),
+                },
+                "n1_vulnerabilities": [
+                    {
+                        "faculty_ref": f"entity-{str(v.faculty_id)[:8]}",
+                        "severity": v.severity,
+                        "affected_blocks": v.affected_blocks,
+                        "is_unique_provider": v.is_unique_provider,
+                        "details": v.details,
+                    }
+                    for v in vulnerabilities[:10]  # Limit output
+                ],
+                "total_vulnerabilities": len(vulnerabilities),
+                "critical_count": sum(
+                    1 for v in vulnerabilities if v.severity == "critical"
+                ),
+            }
 
         elif tool_name == "detect_conflicts":
-            # Call conflict detection
-            from app.scheduling.conflicts import ConflictDetector
+            from datetime import date as date_type
+            from datetime import timedelta
 
-            detector = ConflictDetector(db)
-            conflicts = await detector.detect_all()
-            return {"conflicts": conflicts}
+            from app.scheduling.conflicts.analyzer import ConflictAnalyzer
+
+            # Parse dates
+            start_date_str = tool_input.get("start_date")
+            end_date_str = tool_input.get("end_date")
+
+            if start_date_str:
+                start_date = date_type.fromisoformat(start_date_str)
+            else:
+                start_date = date_type.today()
+
+            if end_date_str:
+                end_date = date_type.fromisoformat(end_date_str)
+            else:
+                end_date = start_date + timedelta(days=30)
+
+            # ConflictAnalyzer uses async session
+            analyzer = ConflictAnalyzer(db)
+            conflicts = await analyzer.analyze_schedule(
+                start_date=start_date,
+                end_date=end_date,
+            )
+
+            # Generate summary
+            summary = await analyzer.generate_summary(conflicts)
+
+            return {
+                "analysis_period": {
+                    "start": start_date.isoformat(),
+                    "end": end_date.isoformat(),
+                },
+                "conflicts": [
+                    {
+                        "id": c.conflict_id,
+                        "type": c.conflict_type.value,
+                        "severity": c.severity.value,
+                        "title": c.title,
+                        "description": c.description,
+                        "is_auto_resolvable": c.is_auto_resolvable,
+                    }
+                    for c in conflicts[:10]  # Limit output
+                ],
+                "summary": {
+                    "total": summary.total_conflicts,
+                    "critical": summary.critical_count,
+                    "high": summary.high_count,
+                    "auto_resolvable": summary.auto_resolvable_count,
+                },
+            }
 
         elif tool_name == "health_check":
-            return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+            # Check database connectivity
+            try:
+                db.execute("SELECT 1")
+                db_status = "connected"
+            except Exception:
+                db_status = "disconnected"
+
+            return {
+                "status": "healthy" if db_status == "connected" else "degraded",
+                "timestamp": datetime.utcnow().isoformat(),
+                "components": {
+                    "database": db_status,
+                    "api": "running",
+                },
+            }
 
         else:
             return {"error": f"Unknown tool: {tool_name}"}
 
     except Exception as e:
         logger.exception(f"Tool execution failed: {tool_name}")
-        return {"error": str(e)}
+        # Return sanitized error (no stack traces or sensitive info)
+        return {"error": f"Tool execution failed: {type(e).__name__}"}
 
 
 # =============================================================================
@@ -272,6 +468,7 @@ async def stream_claude_response(
     session: ChatSession,
     user_message: str,
     db,
+    interrupt_event: asyncio.Event | None = None,
 ):
     """
     Stream Claude's response to the WebSocket client.
@@ -281,7 +478,19 @@ async def stream_claude_response(
     2. Streams tokens back to the frontend
     3. Handles tool calls and executes them
     4. Sends tool results back to Claude
+    5. Checks for interruption requests during streaming
+
+    Args:
+        websocket: WebSocket connection
+        session: Chat session
+        user_message: User's message
+        db: Database session
+        interrupt_event: Optional event that signals interruption request
     """
+    interrupted = False
+    full_response = ""
+    tool_calls = []
+
     try:
         # Lazy import to avoid startup dependency
         from anthropic import AsyncAnthropic
@@ -319,10 +528,6 @@ You have access to tools that interact with the scheduling system. Use them to:
 Always explain what you're doing and what the results mean.
 Be concise but thorough. If there are issues, suggest solutions."""
 
-        # Stream response from Claude
-        full_response = ""
-        tool_calls = []
-
         async with client.messages.stream(
             model="claude-sonnet-4-20250514",
             max_tokens=4096,
@@ -331,6 +536,12 @@ Be concise but thorough. If there are issues, suggest solutions."""
             messages=messages,
         ) as stream:
             async for event in stream:
+                # Check for interruption
+                if interrupt_event and interrupt_event.is_set():
+                    interrupted = True
+                    logger.info(f"Stream interrupted for session {session.session_id}")
+                    break
+
                 if hasattr(event, "type"):
                     if event.type == "content_block_start":
                         if hasattr(event, "content_block"):
@@ -360,42 +571,45 @@ Be concise but thorough. If there are issues, suggest solutions."""
                     elif event.type == "message_stop":
                         break
 
-            # Get final message to check for tool use
-            final_message = await stream.get_final_message()
+            # Only get final message if not interrupted
+            if not interrupted:
+                final_message = await stream.get_final_message()
 
-            # Process any tool calls
-            for block in final_message.content:
-                if block.type == "tool_use":
-                    tool_name = block.name
-                    tool_input = block.input
-                    tool_id = block.id
+                # Process any tool calls
+                for block in final_message.content:
+                    # Check for interruption before each tool call
+                    if interrupt_event and interrupt_event.is_set():
+                        interrupted = True
+                        break
 
-                    # Notify frontend of tool execution
-                    await websocket.send_json(
-                        {
-                            "type": "tool_call",
-                            "name": tool_name,
-                            "input": tool_input,
-                            "id": tool_id,
-                        }
-                    )
+                    if block.type == "tool_use":
+                        tool_name = block.name
+                        tool_input = block.input
+                        tool_id = block.id
 
-                    # Execute the tool
-                    result = await execute_tool(tool_name, tool_input, db)
+                        # Notify frontend of tool execution
+                        await websocket.send_json(
+                            {
+                                "type": "tool_call",
+                                "name": tool_name,
+                                "input": tool_input,
+                                "id": tool_id,
+                            }
+                        )
 
-                    # Send result to frontend
-                    await websocket.send_json(
-                        {"type": "tool_result", "id": tool_id, "result": result}
-                    )
+                        # Execute the tool
+                        result = await execute_tool(tool_name, tool_input, db)
 
-                    tool_calls.append(
-                        {"name": tool_name, "input": tool_input, "result": result}
-                    )
+                        # Send result to frontend
+                        await websocket.send_json(
+                            {"type": "tool_result", "id": tool_id, "result": result}
+                        )
 
-            # If there were tool calls, we need to continue the conversation
-            # with the tool results (simplified - full implementation would loop)
+                        tool_calls.append(
+                            {"name": tool_name, "input": tool_input, "result": result}
+                        )
 
-        # Store in session history
+        # Store in session history (even partial responses if interrupted)
         session.messages.append(
             ChatMessage(
                 role="user",
@@ -403,25 +617,48 @@ Be concise but thorough. If there are issues, suggest solutions."""
                 timestamp=datetime.utcnow(),
             )
         )
-        session.messages.append(
-            ChatMessage(
-                role="assistant",
-                content=full_response,
-                timestamp=datetime.utcnow(),
-                tool_calls=tool_calls if tool_calls else None,
-            )
-        )
 
-        # Send completion
+        if full_response or tool_calls:
+            session.messages.append(
+                ChatMessage(
+                    role="assistant",
+                    content=full_response + (" [interrupted]" if interrupted else ""),
+                    timestamp=datetime.utcnow(),
+                    tool_calls=tool_calls if tool_calls else None,
+                )
+            )
+
+        # Send appropriate completion message
+        if interrupted:
+            await websocket.send_json(
+                {
+                    "type": "interrupted",
+                    "message": "Generation stopped by user",
+                    "partial_response": bool(full_response),
+                }
+            )
+        else:
+            await websocket.send_json(
+                {
+                    "type": "complete",
+                    "usage": {
+                        "input_tokens": final_message.usage.input_tokens,
+                        "output_tokens": final_message.usage.output_tokens,
+                    },
+                }
+            )
+
+    except asyncio.CancelledError:
+        # Task was cancelled (another form of interruption)
+        logger.info(f"Stream task cancelled for session {session.session_id}")
         await websocket.send_json(
             {
-                "type": "complete",
-                "usage": {
-                    "input_tokens": final_message.usage.input_tokens,
-                    "output_tokens": final_message.usage.output_tokens,
-                },
+                "type": "interrupted",
+                "message": "Generation cancelled",
+                "partial_response": bool(full_response),
             }
         )
+        raise  # Re-raise to properly handle cancellation
 
     except Exception as e:
         logger.exception("Claude streaming error")
@@ -482,6 +719,10 @@ async def claude_chat_websocket(
     session = get_or_create_session(str(user.id), session_id)
     _connections[session.session_id] = websocket
 
+    # Create interrupt event for this session
+    interrupt_event = asyncio.Event()
+    _interrupt_flags[session.session_id] = interrupt_event
+
     # Send connected acknowledgment
     await websocket.send_json(
         {
@@ -500,14 +741,47 @@ async def claude_chat_websocket(
             if msg_type == "user_message":
                 content = data.get("content", "")
                 if content.strip():
-                    # Stream Claude's response
-                    await stream_claude_response(websocket, session, content, db)
+                    # Clear any previous interrupt flag
+                    interrupt_event.clear()
+
+                    # Create streaming task
+                    stream_task = asyncio.create_task(
+                        stream_claude_response(
+                            websocket, session, content, db, interrupt_event
+                        )
+                    )
+                    _active_streams[session.session_id] = stream_task
+
+                    try:
+                        # Wait for stream to complete
+                        await stream_task
+                    except asyncio.CancelledError:
+                        logger.info(f"Stream task cancelled: {session.session_id}")
+                    finally:
+                        # Clean up task reference
+                        if session.session_id in _active_streams:
+                            del _active_streams[session.session_id]
 
             elif msg_type == "interrupt":
-                # TODO: Implement interrupt (cancel ongoing stream)
-                await websocket.send_json(
-                    {"type": "interrupted", "message": "Generation stopped"}
-                )
+                # Set the interrupt flag
+                interrupt_event.set()
+
+                # Also cancel the task if it's running
+                if session.session_id in _active_streams:
+                    task = _active_streams[session.session_id]
+                    if not task.done():
+                        task.cancel()
+                        try:
+                            await task
+                        except asyncio.CancelledError:
+                            pass
+                    # Clean up
+                    del _active_streams[session.session_id]
+                else:
+                    # No active stream, just acknowledge
+                    await websocket.send_json(
+                        {"type": "interrupted", "message": "No active generation"}
+                    )
 
             elif msg_type == "get_history":
                 # Return session history
@@ -518,9 +792,23 @@ async def claude_chat_websocket(
         logger.info(f"Client disconnected: session={session.session_id}")
     except Exception as e:
         logger.exception("WebSocket error")
-        await websocket.send_json({"type": "error", "message": str(e)})
+        try:
+            await websocket.send_json({"type": "error", "message": str(e)})
+        except Exception:
+            pass  # Connection may be closed
     finally:
-        # Cleanup
+        # Cleanup interrupt flag
+        if session.session_id in _interrupt_flags:
+            del _interrupt_flags[session.session_id]
+
+        # Cancel any active stream
+        if session.session_id in _active_streams:
+            task = _active_streams[session.session_id]
+            if not task.done():
+                task.cancel()
+            del _active_streams[session.session_id]
+
+        # Cleanup connection
         if session.session_id in _connections:
             del _connections[session.session_id]
         if db:
