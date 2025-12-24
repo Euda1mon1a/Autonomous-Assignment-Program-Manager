@@ -7,4 +7,13 @@ Autonomous Assignment Program Manager residency scheduling system.
 
 __version__ = "0.1.0"
 __author__ = "Autonomous Assignment Program Manager Team"
-__all__ = ["server", "resources", "tools", "async_tools", "deployment_tools", "error_handling", "agent_server"]
+__all__ = [
+    "server",
+    "resources",
+    "tools",
+    "async_tools",
+    "deployment_tools",
+    "error_handling",
+    "agent_server",
+    "api_client",
+]
