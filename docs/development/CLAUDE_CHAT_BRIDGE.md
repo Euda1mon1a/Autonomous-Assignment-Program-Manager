@@ -340,6 +340,35 @@ You have access to tools that interact with the scheduling system...
 
 ## Related Documentation
 
+- [MCP Admin Guide](../admin-manual/mcp-admin-guide.md) - **Step-by-step admin workflows for using MCP via chat**
 - [MCP Setup](./MCP_SETUP.md) - MCP server configuration
 - [MCP Tools Reference](../../mcp-server/docs/MCP_TOOLS_REFERENCE.md) - Full tool documentation
 - [AI Rules of Engagement](./AI_RULES_OF_ENGAGEMENT.md) - AI agent policies
+- [AI Interface Guide](../admin-manual/ai-interface-guide.md) - Web vs CLI comparison
+
+## Frontend Components
+
+### Chat Session Persistence
+
+The chat interface persists sessions to localStorage:
+
+- **Sessions survive page refresh** - Messages are restored automatically
+- **Last 20 sessions retained** - Older sessions are pruned
+- **Auto-save on message** - Every message triggers persistence
+
+### MCP Capabilities Panel
+
+A companion panel displays all 30+ MCP tools organized by category:
+
+| Category | Tools | Purpose |
+|----------|-------|---------|
+| Scheduling & Compliance | 4 | validate_schedule, detect_conflicts, etc. |
+| Resilience Framework | 8 | utilization, defense levels, N-1/N-2 |
+| Background Tasks | 4 | async task management |
+| Deployment & CI/CD | 7 | validate, scan, promote, rollback |
+| Advanced Analytics | 5 | Le Chatelier, cognitive load, stigmergy |
+
+Features:
+- **Searchable** - Find tools by name or description
+- **Click-to-try** - Example prompts for each tool
+- **Collapsible categories** - Focus on relevant tools
