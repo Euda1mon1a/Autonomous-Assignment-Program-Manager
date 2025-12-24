@@ -30,6 +30,40 @@ if [ -d "$PROJECT_ROOT/.git" ]; then
             echo "Create a feature branch before making changes."
             echo ""
         fi
+
+        # Check if branch is tracking a remote
+        UPSTREAM=$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo "")
+        if [ -z "$UPSTREAM" ]; then
+            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            echo "  DANGER: Branch '$CURRENT_BRANCH' has NO REMOTE TRACKING!"
+            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            echo ""
+            echo "  This branch is LOCAL ONLY. Work here will NOT"
+            echo "  be on GitHub until you push with:"
+            echo ""
+            echo "    git push -u origin $CURRENT_BRANCH"
+            echo ""
+            echo "  Or create a proper branch from origin/main:"
+            echo ""
+            echo "    git fetch origin"
+            echo "    git checkout -b <new-branch> origin/main"
+            echo "    git push -u origin <new-branch>"
+            echo ""
+            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            echo ""
+            log "DANGER: No remote tracking for branch $CURRENT_BRANCH"
+        else
+            # Branch has upstream, verify it exists on remote
+            git -C "$PROJECT_ROOT" fetch origin "$CURRENT_BRANCH" --dry-run 2>/dev/null
+            if [ $? -ne 0 ]; then
+                echo "WARNING: Remote branch may not exist yet."
+                echo "Run: git push -u origin $CURRENT_BRANCH"
+                echo ""
+                log "WARNING: Remote branch may not exist: $CURRENT_BRANCH"
+            else
+                log "Remote tracking OK: $UPSTREAM"
+            fi
+        fi
     fi
 fi
 

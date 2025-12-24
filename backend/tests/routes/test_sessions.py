@@ -16,7 +16,30 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.api.routes.sessions import get_session_manager
+from app.main import app
 from app.models.user import User
+
+
+@pytest.fixture
+def mock_session_manager():
+    """Create a mock session manager."""
+    manager = AsyncMock()
+    return manager
+
+
+@pytest.fixture
+def client_with_mock_manager(db, mock_session_manager):
+    """Create test client with mocked session manager."""
+    from app.db.session import get_db
+
+    app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_session_manager] = lambda: mock_session_manager
+
+    with TestClient(app) as test_client:
+        yield test_client
+
+    app.dependency_overrides.clear()
 
 
 class TestSessionRoutes:
@@ -72,17 +95,15 @@ class TestSessionRoutes:
     # Get My Sessions Tests
     # ========================================================================
 
-    @patch("app.api.routes.sessions.get_session_manager")
     def test_get_my_sessions_success(
         self,
-        mock_get_manager: MagicMock,
-        client: TestClient,
+        client_with_mock_manager: TestClient,
+        mock_session_manager: AsyncMock,
         auth_headers: dict,
         admin_user: User,
     ):
         """Test successful retrieval of user sessions."""
-        mock_manager = AsyncMock()
-        mock_manager.get_user_sessions.return_value = {
+        mock_session_manager.get_user_sessions.return_value = {
             "user_id": str(admin_user.id),
             "sessions": [
                 {
@@ -99,28 +120,24 @@ class TestSessionRoutes:
             ],
             "count": 1,
         }
-        mock_get_manager.return_value = mock_manager
 
-        response = client.get("/api/sessions/me", headers=auth_headers)
+        response = client_with_mock_manager.get("/api/sessions/me", headers=auth_headers)
         assert response.status_code == 200
 
-    @patch("app.api.routes.sessions.get_session_manager")
     def test_get_my_sessions_empty(
         self,
-        mock_get_manager: MagicMock,
-        client: TestClient,
+        client_with_mock_manager: TestClient,
+        mock_session_manager: AsyncMock,
         auth_headers: dict,
     ):
         """Test retrieval when no sessions exist."""
-        mock_manager = AsyncMock()
-        mock_manager.get_user_sessions.return_value = {
+        mock_session_manager.get_user_sessions.return_value = {
             "user_id": str(uuid4()),
             "sessions": [],
             "count": 0,
         }
-        mock_get_manager.return_value = mock_manager
 
-        response = client.get("/api/sessions/me", headers=auth_headers)
+        response = client_with_mock_manager.get("/api/sessions/me", headers=auth_headers)
         assert response.status_code == 200
 
     # ========================================================================
@@ -169,13 +186,12 @@ class TestSessionRoutes:
     # Refresh Session Tests
     # ========================================================================
 
-    @patch("app.api.routes.sessions.get_session_manager")
     @patch("app.api.routes.sessions.SessionState")
     def test_refresh_session_success(
         self,
         mock_session_state: MagicMock,
-        mock_get_manager: MagicMock,
-        client: TestClient,
+        client_with_mock_manager: TestClient,
+        mock_session_manager: AsyncMock,
         auth_headers: dict,
     ):
         """Test successful session refresh."""
@@ -184,14 +200,14 @@ class TestSessionRoutes:
         mock_session.session_id = session_id
         mock_session_state.get_session.return_value = mock_session
 
-        mock_manager = AsyncMock()
         refreshed_session = MagicMock()
         refreshed_session.session_id = session_id
         refreshed_session.expires_at = datetime.utcnow() + timedelta(hours=24)
-        mock_manager.refresh_session.return_value = refreshed_session
-        mock_get_manager.return_value = mock_manager
+        mock_session_manager.refresh_session.return_value = refreshed_session
 
-        response = client.post("/api/sessions/me/refresh", headers=auth_headers)
+        response = client_with_mock_manager.post(
+            "/api/sessions/me/refresh", headers=auth_headers
+        )
         assert response.status_code == 200
         assert "message" in response.json()
 
@@ -213,11 +229,10 @@ class TestSessionRoutes:
     # Logout Session Tests
     # ========================================================================
 
-    @patch("app.api.routes.sessions.get_session_manager")
     def test_logout_specific_session_success(
         self,
-        mock_get_manager: MagicMock,
-        client: TestClient,
+        client_with_mock_manager: TestClient,
+        mock_session_manager: AsyncMock,
         auth_headers: dict,
         admin_user: User,
     ):
@@ -227,51 +242,43 @@ class TestSessionRoutes:
         mock_session = MagicMock()
         mock_session.user_id = str(admin_user.id)
 
-        mock_manager = AsyncMock()
-        mock_manager.get_session.return_value = mock_session
-        mock_manager.logout_session.return_value = True
-        mock_get_manager.return_value = mock_manager
+        mock_session_manager.get_session.return_value = mock_session
+        mock_session_manager.logout_session.return_value = True
 
-        response = client.delete(
+        response = client_with_mock_manager.delete(
             f"/api/sessions/me/{session_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
 
-    @patch("app.api.routes.sessions.get_session_manager")
     def test_logout_session_not_found(
         self,
-        mock_get_manager: MagicMock,
-        client: TestClient,
+        client_with_mock_manager: TestClient,
+        mock_session_manager: AsyncMock,
         auth_headers: dict,
     ):
         """Test logout when session not found."""
-        mock_manager = AsyncMock()
-        mock_manager.get_session.return_value = None
-        mock_get_manager.return_value = mock_manager
+        mock_session_manager.get_session.return_value = None
 
-        response = client.delete(
+        response = client_with_mock_manager.delete(
             f"/api/sessions/me/{uuid4()}",
             headers=auth_headers,
         )
         assert response.status_code == 404
 
-    @patch("app.api.routes.sessions.get_session_manager")
     def test_logout_other_users_session_forbidden(
         self,
-        mock_get_manager: MagicMock,
-        client: TestClient,
+        client_with_mock_manager: TestClient,
+        mock_session_manager: AsyncMock,
         auth_headers: dict,
     ):
         """Test that users cannot logout other users' sessions."""
         mock_session = MagicMock()
         mock_session.user_id = str(uuid4())  # Different user
 
-        mock_manager = AsyncMock()
-        mock_manager.get_session.return_value = mock_session
-        mock_get_manager.return_value = mock_manager
+        mock_session_manager.get_session.return_value = mock_session
 
-        response = client.delete(
+        response = client_with_mock_manager.delete(
             f"/api/sessions/me/{uuid4()}",
             headers=auth_headers,
         )
@@ -281,13 +288,12 @@ class TestSessionRoutes:
     # Logout Other Sessions Tests
     # ========================================================================
 
-    @patch("app.api.routes.sessions.get_session_manager")
     @patch("app.api.routes.sessions.SessionState")
     def test_logout_other_sessions_success(
         self,
         mock_session_state: MagicMock,
-        mock_get_manager: MagicMock,
-        client: TestClient,
+        client_with_mock_manager: TestClient,
+        mock_session_manager: AsyncMock,
         auth_headers: dict,
     ):
         """Test logout all other sessions."""
@@ -295,11 +301,11 @@ class TestSessionRoutes:
         current_session.session_id = str(uuid4())
         mock_session_state.get_session.return_value = current_session
 
-        mock_manager = AsyncMock()
-        mock_manager.logout_user_sessions.return_value = 3
-        mock_get_manager.return_value = mock_manager
+        mock_session_manager.logout_user_sessions.return_value = 3
 
-        response = client.delete("/api/sessions/me/other", headers=auth_headers)
+        response = client_with_mock_manager.delete(
+            "/api/sessions/me/other", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -310,19 +316,18 @@ class TestSessionRoutes:
     # Logout All Sessions Tests
     # ========================================================================
 
-    @patch("app.api.routes.sessions.get_session_manager")
     def test_logout_all_sessions_success(
         self,
-        mock_get_manager: MagicMock,
-        client: TestClient,
+        client_with_mock_manager: TestClient,
+        mock_session_manager: AsyncMock,
         auth_headers: dict,
     ):
         """Test logout all sessions for current user."""
-        mock_manager = AsyncMock()
-        mock_manager.logout_user_sessions.return_value = 5
-        mock_get_manager.return_value = mock_manager
+        mock_session_manager.logout_user_sessions.return_value = 5
 
-        response = client.delete("/api/sessions/me/all", headers=auth_headers)
+        response = client_with_mock_manager.delete(
+            "/api/sessions/me/all", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -333,44 +338,40 @@ class TestSessionRoutes:
     # Admin: Session Stats Tests
     # ========================================================================
 
-    @patch("app.api.routes.sessions.get_session_manager")
     def test_get_session_stats_success(
         self,
-        mock_get_manager: MagicMock,
-        client: TestClient,
+        client_with_mock_manager: TestClient,
+        mock_session_manager: AsyncMock,
         auth_headers: dict,
     ):
         """Test getting session statistics."""
-        mock_manager = AsyncMock()
-        mock_manager.get_session_stats.return_value = {
+        mock_session_manager.get_session_stats.return_value = {
             "total_active_sessions": 100,
             "unique_users": 50,
             "sessions_by_status": {"active": 95, "expired": 5},
         }
-        mock_get_manager.return_value = mock_manager
 
-        response = client.get("/api/sessions/stats", headers=auth_headers)
+        response = client_with_mock_manager.get(
+            "/api/sessions/stats", headers=auth_headers
+        )
         assert response.status_code == 200
 
     # ========================================================================
     # Admin: Force Logout Tests
     # ========================================================================
 
-    @patch("app.api.routes.sessions.get_session_manager")
     def test_force_logout_user_success(
         self,
-        mock_get_manager: MagicMock,
-        client: TestClient,
+        client_with_mock_manager: TestClient,
+        mock_session_manager: AsyncMock,
         auth_headers: dict,
     ):
         """Test force logout user by admin."""
         user_id = str(uuid4())
 
-        mock_manager = AsyncMock()
-        mock_manager.force_logout_user.return_value = 3
-        mock_get_manager.return_value = mock_manager
+        mock_session_manager.force_logout_user.return_value = 3
 
-        response = client.delete(
+        response = client_with_mock_manager.delete(
             f"/api/sessions/user/{user_id}/force-logout",
             headers=auth_headers,
         )
@@ -383,39 +384,33 @@ class TestSessionRoutes:
     # Admin: Revoke Session Tests
     # ========================================================================
 
-    @patch("app.api.routes.sessions.get_session_manager")
     def test_revoke_session_success(
         self,
-        mock_get_manager: MagicMock,
-        client: TestClient,
+        client_with_mock_manager: TestClient,
+        mock_session_manager: AsyncMock,
         auth_headers: dict,
     ):
         """Test admin session revocation."""
         session_id = str(uuid4())
 
-        mock_manager = AsyncMock()
-        mock_manager.revoke_session.return_value = True
-        mock_get_manager.return_value = mock_manager
+        mock_session_manager.revoke_session.return_value = True
 
-        response = client.delete(
+        response = client_with_mock_manager.delete(
             f"/api/sessions/session/{session_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
 
-    @patch("app.api.routes.sessions.get_session_manager")
     def test_revoke_session_not_found(
         self,
-        mock_get_manager: MagicMock,
-        client: TestClient,
+        client_with_mock_manager: TestClient,
+        mock_session_manager: AsyncMock,
         auth_headers: dict,
     ):
         """Test revoke when session not found."""
-        mock_manager = AsyncMock()
-        mock_manager.revoke_session.return_value = False
-        mock_get_manager.return_value = mock_manager
+        mock_session_manager.revoke_session.return_value = False
 
-        response = client.delete(
+        response = client_with_mock_manager.delete(
             f"/api/sessions/session/{uuid4()}",
             headers=auth_headers,
         )
@@ -425,19 +420,18 @@ class TestSessionRoutes:
     # Admin: Cleanup Tests
     # ========================================================================
 
-    @patch("app.api.routes.sessions.get_session_manager")
     def test_cleanup_expired_sessions(
         self,
-        mock_get_manager: MagicMock,
-        client: TestClient,
+        client_with_mock_manager: TestClient,
+        mock_session_manager: AsyncMock,
         auth_headers: dict,
     ):
         """Test cleanup of expired sessions."""
-        mock_manager = AsyncMock()
-        mock_manager.cleanup_expired_sessions.return_value = 10
-        mock_get_manager.return_value = mock_manager
+        mock_session_manager.cleanup_expired_sessions.return_value = 10
 
-        response = client.post("/api/sessions/cleanup", headers=auth_headers)
+        response = client_with_mock_manager.post(
+            "/api/sessions/cleanup", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
