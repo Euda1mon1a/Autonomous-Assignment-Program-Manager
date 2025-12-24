@@ -26,7 +26,7 @@ class AssignmentInfo(BaseModel):
 
     assignment_id: str
     person_id: str
-    person_name: str
+    person_role: str  # Role-based identifier (e.g., "Faculty", "PGY-1") - no PII
     block_name: str
     rotation: str
     start_date: date
@@ -68,7 +68,7 @@ class ViolationInfo(BaseModel):
     violation_type: str
     severity: str  # "critical", "warning", "info"
     person_id: str
-    person_name: str
+    person_role: str  # Role-based identifier (e.g., "PGY-1", "Faculty") - no PII
     date_range: tuple[date, date]
     description: str
     details: dict[str, Any]
@@ -211,10 +211,18 @@ async def get_schedule_status(
             assignment_dates[block.date]["person_ids"].add(person.id)
 
             # Create assignment info
+            # Determine role based on person type
+            if person.is_resident:
+                person_role = f"PGY-{person.pgy_level}" if person.pgy_level else "Resident"
+            elif person.is_faculty:
+                person_role = "Faculty"
+            else:
+                person_role = "Staff"
+
             assignment_list.append(AssignmentInfo(
                 assignment_id=str(assignment.id),
                 person_id=str(person.id),
-                person_name=person.name,
+                person_role=person_role,
                 block_name=block.display_name,
                 rotation=rotation.name if rotation else assignment.activity_override or "Unknown",
                 start_date=block.date,
@@ -435,11 +443,13 @@ async def get_compliance_summary(
                 if avg_weekly > MAX_WEEKLY_HOURS:
                     work_hour_violations += 1
                     residents_affected_set.add(resident.id)
+                    # Determine role for violation
+                    resident_role = f"PGY-{resident.pgy_level}" if resident.pgy_level else "Resident"
                     violations_list.append(ViolationInfo(
                         violation_type="work_hour_limit",
                         severity="critical",
                         person_id=str(resident.id),
-                        person_name=resident.name,
+                        person_role=resident_role,
                         date_range=(window_start, window_end),
                         description=f"Exceeded 80-hour weekly work limit",
                         details={
@@ -472,11 +482,13 @@ async def get_compliance_summary(
                 if max_consecutive > MAX_CONSECUTIVE_DAYS:
                     consecutive_duty_violations += 1
                     residents_affected_set.add(resident.id)
+                    # Determine role for violation
+                    resident_role = f"PGY-{resident.pgy_level}" if resident.pgy_level else "Resident"
                     violations_list.append(ViolationInfo(
                         violation_type="consecutive_duty",
                         severity="critical",
                         person_id=str(resident.id),
-                        person_name=resident.name,
+                        person_role=resident_role,
                         date_range=(start_consecutive, start_consecutive + timedelta(days=max_consecutive - 1)),
                         description=f"Worked {max_consecutive} consecutive days (limit: {MAX_CONSECUTIVE_DAYS})",
                         details={
@@ -526,7 +538,7 @@ async def get_compliance_summary(
                     violation_type="supervision_ratio",
                     severity="warning",
                     person_id=str(block_id),  # Block ID for supervision issues
-                    person_name=f"Block {block.display_name}",
+                    person_role="Block-level",  # Supervision issues affect entire blocks
                     date_range=(block.date, block.date),
                     description=f"Inadequate supervision: {len(faculty_in_block)} faculty for {len(residents_in_block)} residents",
                     details={
@@ -535,6 +547,7 @@ async def get_compliance_summary(
                         "faculty_count": len(faculty_in_block),
                         "required_faculty": required_faculty,
                         "block_date": block.date.isoformat(),
+                        "block_name": block.display_name,
                     },
                 ))
 

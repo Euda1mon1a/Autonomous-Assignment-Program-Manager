@@ -32,7 +32,7 @@ class ValidationIssue(BaseModel):
     severity: ValidationSeverity
     rule_type: str
     person_id: str | None = None
-    person_name: str | None = None
+    role: str | None = None  # Role-based identifier (e.g., "PGY-1", "Faculty") - no PII
     date_range: tuple[date, date] | None = None
     message: str
     details: dict[str, Any] = Field(default_factory=dict)
@@ -172,7 +172,7 @@ class SwapCandidate(BaseModel):
     """A potential swap candidate."""
 
     candidate_person_id: str
-    candidate_name: str
+    candidate_role: str  # Role-based identifier (e.g., "Faculty", "PGY-2") - no PII
     assignment_id: str
     match_score: float = Field(ge=0.0, le=1.0)
     rotation: str
@@ -249,7 +249,7 @@ async def validate_schedule(
                     severity=ValidationSeverity.WARNING,
                     rule_type="80_hour_rule",
                     person_id="resident-001",
-                    person_name="Dr. Williams",
+                    role="PGY-2",
                     date_range=(request.start_date, request.end_date),
                     message=f"Approaching 80-hour weekly limit: {projected_hours:.1f} hours",
                     details={
@@ -270,7 +270,7 @@ async def validate_schedule(
                     severity=ValidationSeverity.CRITICAL,
                     rule_type="80_hour_rule",
                     person_id="resident-002",
-                    person_name="Dr. Chen",
+                    role="PGY-1",
                     date_range=(request.start_date, request.end_date),
                     message=f"ACGME 80-hour violation: {violation_hours:.1f} hours/week average",
                     details={
@@ -292,7 +292,7 @@ async def validate_schedule(
                     severity=ValidationSeverity.CRITICAL,
                     rule_type="1_in_7_rule",
                     person_id="resident-003",
-                    person_name="Dr. Patel",
+                    role="PGY-3",
                     date_range=(request.start_date, request.end_date),
                     message=f"ACGME 1-in-7 violation: {consecutive_days} consecutive duty days",
                     details={
@@ -317,7 +317,7 @@ async def validate_schedule(
                     severity=ValidationSeverity.CRITICAL,
                     rule_type="supervision_ratio",
                     person_id=None,
-                    person_name=None,
+                    role="Block-level",  # Supervision issues affect entire blocks, not individuals
                     date_range=(request.start_date, request.start_date),
                     message=f"Supervision ratio violation: {pgy1_count} PGY-1 residents need {required_faculty} faculty, only {faculty_count} assigned",
                     details={
@@ -338,7 +338,7 @@ async def validate_schedule(
                 severity=ValidationSeverity.WARNING,
                 rule_type="availability",
                 person_id="faculty-001",
-                person_name="Dr. Martinez",
+                role="Faculty",
                 date_range=(request.start_date, request.end_date),
                 message="Assignment during scheduled absence/leave",
                 details={
@@ -847,7 +847,7 @@ async def analyze_swap_candidates(
     candidates.append(
         SwapCandidate(
             candidate_person_id="faculty-008",
-            candidate_name="Dr. Chen",
+            candidate_role="Faculty",
             assignment_id="assign-008",
             match_score=match_score_1,
             rotation="Emergency Medicine",
@@ -886,7 +886,7 @@ async def analyze_swap_candidates(
     candidates.append(
         SwapCandidate(
             candidate_person_id="faculty-009",
-            candidate_name="Dr. Patel",
+            candidate_role="Faculty",
             assignment_id="assign-009",
             match_score=match_score_2,
             rotation="Internal Medicine",
@@ -925,7 +925,7 @@ async def analyze_swap_candidates(
     candidates.append(
         SwapCandidate(
             candidate_person_id="faculty-010",
-            candidate_name="Dr. Martinez",
+            candidate_role="Faculty",
             assignment_id="assign-010",
             match_score=match_score_3,
             rotation="Clinic",
@@ -964,7 +964,7 @@ async def analyze_swap_candidates(
     candidates.append(
         SwapCandidate(
             candidate_person_id="faculty-011",
-            candidate_name="Dr. Thompson",
+            candidate_role="Faculty",
             assignment_id="assign-011",
             match_score=match_score_4,
             rotation="Emergency Medicine",
@@ -1005,7 +1005,7 @@ async def analyze_swap_candidates(
     candidates.append(
         SwapCandidate(
             candidate_person_id="faculty-012",
-            candidate_name="Dr. Lee",
+            candidate_role="Faculty",
             assignment_id="assign-012",
             match_score=match_score_5,
             rotation="Procedures",

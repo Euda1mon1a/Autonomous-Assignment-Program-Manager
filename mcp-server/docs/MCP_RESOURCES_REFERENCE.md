@@ -31,7 +31,7 @@ schedule://status/{schedule_id}?date_range={start},{end}
     {
       "id": "assignment-uuid",
       "person_id": "person-uuid",
-      "person_name": "Dr. Smith",
+      "person_role": "Faculty",
       "person_type": "faculty",
       "pgy_level": null,
       "rotation": "Inpatient",
@@ -98,7 +98,7 @@ compliance://summary/{schedule_id}?date_range={start},{end}
       "rule": "80_hour",
       "severity": "critical",
       "affected_person_id": "person-uuid",
-      "affected_person_name": "Dr. Smith",
+      "affected_person_role": "PGY-2",
       "period": "2025-12-08 to 2025-12-14",
       "details": "Worked 86 hours (6 hours over limit)",
       "recommendation": "Reduce 1 block assignment"

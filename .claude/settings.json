@@ -118,5 +118,7 @@
   "env": {
     "CLAUDE_PROJECT": "residency-scheduler",
     "CLAUDE_GUARDRAILS": "strict"
-  }
+  },
+
+  "enableAllProjectMcpServers": true
 }
