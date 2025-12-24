@@ -16,6 +16,42 @@
 
 **Key Principle:** Claude Code (IDE) handles all database and PII operations. Claude (Web) receives anonymized exports for analysis.
 
+**Capabilities Reference:** See [SESSION_CAPABILITIES.md](SESSION_CAPABILITIES.md) for full skills, tools, and MCP inventory.
+
+---
+
+## Available Capabilities Summary
+
+### Skills (Invoke via `Skill` tool)
+
+| Skill | Claude Web? | Claude Code (IDE)? |
+|-------|-------------|-------------------|
+| `acgme-compliance` | Yes | Yes |
+| `code-review` | Yes | Yes |
+| `security-audit` | Yes | Yes |
+| `test-writer` | Yes (mock data) | Yes (real data) |
+| `automated-code-fixer` | Yes | Yes |
+| `safe-schedule-generation` | No (needs DB) | Yes |
+| `swap-management` | No (needs DB) | Yes |
+| `xlsx` / `pdf` | No (needs PII) | Yes |
+
+### MCP Tools Status
+
+| Status | Count | Examples |
+|--------|-------|----------|
+| **Functional** | 19 | `validate_schedule`, `detect_conflicts`, `health_check` |
+| **Placeholder** | 10 | `analyze_homeostasis`, `get_static_fallbacks` |
+| **Missing** | 5+ | `generate_schedule`, `execute_swap` |
+
+### Execution Tools
+
+| Tool | Claude Web Safe? |
+|------|------------------|
+| `Read`, `Write`, `Edit` | Yes (code/docs only) |
+| `Bash` | Limited (no DB/PII) |
+| `Glob`, `Grep` | Yes |
+| `WebFetch`, `WebSearch` | Yes |
+
 ---
 
 ## Executive Summary
