@@ -93,6 +93,15 @@ def main():
     print("  PUT  /api/v1/features/swap_marketplace_enabled")
     print("  POST /api/v1/features/swap_marketplace_enabled/enable")
     print("  POST /api/v1/features/swap_marketplace_enabled/disable")
+    print("\n--- Feature Flag Semantics ---")
+    print("IMPORTANT: None vs empty list ([]) have different meanings:")
+    print("  target_roles: None  = all roles allowed (if flag enabled)")
+    print("  target_roles: []    = NO roles allowed")
+    print("  target_user_ids: None = no user-specific targeting")
+    print("  target_user_ids: []   = NO users allowed (blocks everyone)")
+    print("  environments: None    = all environments")
+    print("  environments: []      = NO environments (flag never applies)")
+    print("\nEnvironment is read from TELEMETRY_ENVIRONMENT setting.")
 
 
 if __name__ == "__main__":
