@@ -9,3 +9,6 @@ export type { CoverageDataPoint, CoverageTrendChartProps } from './CoverageTrend
 
 export { AlgorithmComparisonChart, MOCK_ALGORITHM_DATA } from './AlgorithmComparisonChart';
 export type { AlgorithmMetrics, AlgorithmComparisonChartProps } from './AlgorithmComparisonChart';
+
+export { default as ClaudeCodeChat } from './ClaudeCodeChat';
+export { default as MCPCapabilitiesPanel } from './MCPCapabilitiesPanel';
