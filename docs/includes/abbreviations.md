@@ -5,7 +5,7 @@
 *[PALS]: Pediatric Advanced Life Support
 *[CRUD]: Create, Read, Update, Delete
 *[CSS]: Cascading Style Sheets
-*[FMIT]: Family Medicine Intern Training
+*[FMIT]: Family Medicine Inpatient Team
 *[HTML]: Hypertext Markup Language
 *[HTTP]: Hypertext Transfer Protocol
 *[HTTPS]: HTTP Secure
@@ -29,3 +29,9 @@
 *[SSO]: Single Sign-On
 *[LDAP]: Lightweight Directory Access Protocol
 *[SAML]: Security Assertion Markup Language
+*[ASM]: Academic Sports Medicine
+*[LCME]: Liaison Committee on Medical Education
+*[MS]: Medical Student
+*[PC]: Post Call
+*[TY]: Transitional Year Intern
+*[PSYCH]: Psychiatry Intern
