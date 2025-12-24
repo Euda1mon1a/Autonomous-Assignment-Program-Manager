@@ -1,8 +1,20 @@
 # Block 10 Roadmap: Current Status & Actionable Plan
 
 > **Created:** 2025-12-24
-> **Purpose:** Evaluate Block 10 status, prioritize work, and coordinate Claude Code vs human work
+> **Purpose:** Evaluate Block 10 status, prioritize work, and coordinate Claude agents
 > **Branch:** `claude/plan-block-10-roadmap-IDOo9`
+
+---
+
+## Agent Access Model
+
+| Agent | Environment | PII Access | Primary Role |
+|-------|-------------|------------|--------------|
+| **Claude Code (IDE)** | Local terminal | Full access | DB operations, schedule generation, testing with real data |
+| **Claude (Web)** | Browser | Sanitized only | Documentation, architecture, algorithm design, code review |
+| **Human** | All | Full access | Approval, validation, strategic decisions |
+
+**Key Principle:** Claude Code (IDE) handles all database and PII operations. Claude (Web) receives anonymized exports for analysis.
 
 ---
 
@@ -28,9 +40,9 @@
 
 ## Checkpoint System
 
-### Checkpoint 1: Data Preparation (HUMAN)
+### Checkpoint 1: Data Preparation (CLAUDE CODE IDE)
 
-**Owner:** Human (handles PII)
+**Owner:** Claude Code (IDE) - has full PII access
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -48,27 +60,28 @@
 
 ---
 
-### Checkpoint 2: Schedule Generation Test (HUMAN + CLAUDE)
+### Checkpoint 2: Schedule Generation Test (CLAUDE CODE IDE)
 
-**Owner:** Human generates, Claude validates logic
+**Owner:** Claude Code (IDE) generates and runs validation
 
 | Task | Owner | Status |
 |------|-------|--------|
-| Run Block 10 generation | Human | `docker compose exec backend python -m app.scheduling.engine --block 10` |
-| Validate ACGME compliance | Claude | Analyze sanitized output |
-| Check coverage metrics | Claude | Analyze coverage report |
-| Review constraint violations | Claude | Analyze violation summary |
+| Run Block 10 generation | Claude Code (IDE) | `docker compose exec backend python -m app.scheduling.engine --block 10` |
+| Validate ACGME compliance | Claude Code (IDE) | Direct DB queries |
+| Check coverage metrics | Claude Code (IDE) | Generate report |
+| Export sanitized metrics | Claude Code (IDE) | For Claude Web analysis |
 
 **Completion Criteria:**
 - [ ] Schedule generated without errors
 - [ ] < 5 ACGME violations
 - [ ] > 80% coverage achieved
+- [ ] Sanitized export ready for web analysis
 
 ---
 
-### Checkpoint 3: Quality Analysis (CLAUDE)
+### Checkpoint 3: Quality Analysis (CLAUDE WEB)
 
-**Owner:** Claude Code (sanitized data only)
+**Owner:** Claude (Web) - receives sanitized data only
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -84,14 +97,14 @@
 
 ---
 
-### Checkpoint 4: UI/UX Testing (CLAUDE SAFE)
+### Checkpoint 4: UI/UX Testing (CLAUDE CODE IDE)
 
-**Owner:** Claude Code
+**Owner:** Claude Code (IDE) - can test with real or mock data
 
 | Task | Status | Notes |
 |------|--------|-------|
 | Add Block 10 date picker tests | Pending | Frontend component tests |
-| Test schedule view rendering | Pending | Mock data, no PII |
+| Test schedule view rendering | Pending | Can use real data locally |
 | Validate export functionality | Pending | Excel/PDF/ICS |
 | Review 3D visualization | Pending | Canvas rendering tests |
 
@@ -102,16 +115,16 @@
 
 ---
 
-### Checkpoint 5: Production Readiness (JOINT)
+### Checkpoint 5: Production Readiness (HUMAN + CLAUDE)
 
-**Owner:** Human approves, Claude documents
+**Owner:** Human approves, Claude Code (IDE) assists, Claude (Web) documents
 
 | Task | Owner | Status |
 |------|-------|--------|
 | Final schedule review | Human | Visual inspection |
-| Swap auto-matcher test | Human | With test faculty |
-| Generate production export | Human | Excel for distribution |
-| Document any issues | Claude | Update CHANGELOG |
+| Swap auto-matcher test | Claude Code (IDE) | With test faculty |
+| Generate production export | Claude Code (IDE) | Excel for distribution |
+| Document any issues | Claude (Web) | Update CHANGELOG |
 
 **Completion Criteria:**
 - [ ] Schedule approved by human
@@ -120,37 +133,45 @@
 
 ---
 
-## Safe Work for Claude Code (PII-Free)
+## Work Distribution by Agent
 
-These tasks can proceed **independently** while human handles sensitive data:
+### Claude Code (IDE) - Full Access Tasks
 
-### Tier 1: Immediate (No Dependencies)
-
-| # | Task | Effort | Files Affected |
-|---|------|--------|----------------|
-| 1 | **Add date range validation tests** | 2h | `frontend/__tests__/utils/` |
-| 2 | **Improve error message clarity** | 1h | `backend/app/core/exceptions.py` |
-| 3 | **Document solver algorithm** | 3h | `docs/architecture/solver.md` |
-| 4 | **Add TypeDoc to CI** | 2h | `.github/workflows/` |
-| 5 | **Review MCP tool implementations** | 4h | `mcp-server/src/` |
-
-### Tier 2: After Checkpoint 2 (Needs Anonymized Data)
-
-| # | Task | Effort | Input Required |
-|---|------|--------|----------------|
-| 6 | **Analyze coverage gaps** | 2h | Anonymized schedule JSON |
-| 7 | **Identify constraint hotspots** | 2h | Violation summary |
-| 8 | **Recommend solver tuning** | 4h | Benchmark results |
-| 9 | **Generate fairness report** | 2h | Distribution stats |
-
-### Tier 3: Documentation & Maintenance
+These tasks involve PII or database operations:
 
 | # | Task | Effort | Notes |
 |---|------|--------|-------|
-| 10 | **Consolidate API docs** | 4h | Merge scattered docs |
-| 11 | **Update CLAUDE.md** | 1h | Add new patterns |
-| 12 | **Create operator runbook** | 3h | For production ops |
-| 13 | **Archive completed sessions** | 1h | Move to archive/ |
+| 1 | **Seed database with Block 10 data** | 1h | From Airtable exports |
+| 2 | **Run schedule generation** | 30m | `--block 10` flag |
+| 3 | **Test with real faculty data** | 2h | Swap matching, conflicts |
+| 4 | **Generate production exports** | 1h | Excel for distribution |
+| 5 | **Run integration tests** | 2h | Full stack with DB |
+| 6 | **Debug ACGME violations** | 2h | Query specific assignments |
+| 7 | **Test UI with real schedule** | 1h | Visual validation |
+
+### Claude (Web) - Sanitized Data Tasks
+
+These tasks require only anonymized data:
+
+| # | Task | Effort | Input Required |
+|---|------|--------|----------------|
+| 8 | **Analyze coverage gaps** | 2h | `block10_metrics.json` |
+| 9 | **Identify constraint hotspots** | 2h | Violation summary |
+| 10 | **Recommend solver tuning** | 4h | Benchmark results |
+| 11 | **Generate fairness report** | 2h | Distribution stats |
+| 12 | **Document algorithm design** | 3h | Code review (no PII in code) |
+| 13 | **Review MCP tool logic** | 4h | Implementation analysis |
+
+### Claude (Web) - No Data Required
+
+| # | Task | Effort | Notes |
+|---|------|--------|-------|
+| 14 | **Document solver algorithm** | 3h | `docs/architecture/solver.md` |
+| 15 | **Consolidate API docs** | 4h | Merge scattered docs |
+| 16 | **Update CLAUDE.md** | 1h | Add new patterns |
+| 17 | **Create operator runbook** | 3h | For production ops |
+| 18 | **Add TypeDoc to CI** | 2h | `.github/workflows/` |
+| 19 | **Improve error messages** | 1h | `backend/app/core/exceptions.py` |
 
 ---
 
@@ -295,19 +316,36 @@ date,half_day,rotation_type,pgy_level,is_covered
 ### Handoff Pattern
 
 ```
-Human completes Checkpoint N
+Claude Code (IDE) completes Checkpoint N
     ↓
-Human exports sanitized data
+Claude Code (IDE) exports sanitized data
     ↓
-Human updates this document (marks complete)
+Claude Code (IDE) updates this document (marks complete)
     ↓
-Claude reads document + data
+Claude (Web) receives sanitized JSON
     ↓
-Claude proceeds with Tier 2 analysis
+Claude (Web) performs analysis
     ↓
-Claude updates document with findings
+Claude (Web) documents findings
     ↓
-Human reviews and proceeds to Checkpoint N+1
+Human reviews and approves
+    ↓
+Proceed to Checkpoint N+1
+```
+
+### Parallel Work Pattern
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Claude Code (IDE)              │  Claude (Web)             │
+├─────────────────────────────────┼───────────────────────────┤
+│  Seed database (PII)            │  Document solver algo     │
+│  Run schedule generation        │  Review MCP tool code     │
+│  Debug violations               │  Update CLAUDE.md         │
+│  → Export sanitized metrics ────┼→ Analyze coverage gaps    │
+│  Test with real data            │  Generate fairness report │
+│  Generate production exports    │  Write operator runbook   │
+└─────────────────────────────────┴───────────────────────────┘
 ```
 
 ---
@@ -356,24 +394,45 @@ docker compose exec -T db psql -U scheduler -d residency_scheduler < backup.sql
 
 ## Quick Reference
 
-### Start Claude Work (Safe Tasks)
+### Claude Code (IDE) - Full Access Commands
 ```bash
-# Claude can work on these immediately:
-cd frontend && npm test -- --watch
-cd backend && pytest tests/unit/
-# Documentation updates in docs/
-```
-
-### Start Human Work (PII Tasks)
-```bash
-# Seed database
+# Seed database with Block 10 data
 cd backend && python scripts/seed_data.py
 
 # Generate schedule
 docker compose exec backend python -m app.scheduling.engine --block 10
 
-# Export sanitized metrics
-docker compose exec backend python scripts/export_metrics.py --anonymize
+# Run full test suite with real DB
+cd backend && pytest
+
+# Export sanitized metrics for Claude Web
+python scripts/export_sanitized_metrics.py --block 10 --include-violations -o /tmp/block10_metrics.json
+
+# Test with real data
+cd frontend && npm run dev  # View actual schedule
+```
+
+### Claude (Web) - Sanitized Data Analysis
+```
+# Provide these files to Claude Web for analysis:
+- block10_metrics.json (coverage, workload, violations)
+- Anonymized timeline CSV (if needed)
+- Solver benchmark results
+
+# Claude Web can review code directly (no PII in source):
+- backend/app/scheduling/*.py
+- backend/app/resilience/*.py
+- mcp-server/src/*.py
+```
+
+### Human - Approval & Strategy
+```bash
+# Review schedule visually
+open http://localhost:3000/schedule
+
+# Approve production export
+# Review CHANGELOG updates
+# Make strategic decisions
 ```
 
 ---
