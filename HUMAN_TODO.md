@@ -74,6 +74,35 @@ if (
 
 ---
 
+### Solver Template Distribution Bugs
+
+**Priority:** High
+**Found:** Session review (2025-12-24)
+**Location:** `backend/app/scheduling/solvers.py`, `backend/app/scheduling/engine.py`
+
+**Issue:** Both greedy and CP-SAT solvers assign all residents to the same rotation
+(e.g., all Night Float) instead of distributing across clinic templates.
+
+**Three related bugs:**
+
+1. **Greedy Solver (lines ~1190-1218):** Always picks first valid template and `break`s
+2. **CP-SAT Solver (lines ~754-764):** Objective only penalizes resident equity, not template concentration
+3. **Template Filtering (engine.py:874-883):** `_get_rotation_templates()` returns ALL templates without filtering by `activity_type == "clinic"`
+
+**Architecture Note:**
+- Block-assigned rotations (FMIT, NF, inpatient) are pre-assigned and shouldn't go to solver
+- Solvers are for outpatient half-day optimization only
+- Need to filter templates to `activity_type == "clinic"` before passing to solver
+
+**Files to fix:**
+- `backend/app/scheduling/engine.py` - Add activity_type filter to `_get_rotation_templates()`
+- `backend/app/scheduling/solvers.py` - Add template balance to CP-SAT objective
+- `backend/app/scheduling/solvers.py` - Fix greedy template selection to rotate
+
+**Workaround:** Manual schedule adjustment after generation.
+
+---
+
 ## Cleanup Session Report (2025-12-21 Overnight)
 
 ### Completed Autonomously
@@ -115,4 +144,4 @@ The following links in `README.md` point to non-existent files:
 
 ---
 
-*Last updated: 2025-12-21*
+*Last updated: 2025-12-24*
