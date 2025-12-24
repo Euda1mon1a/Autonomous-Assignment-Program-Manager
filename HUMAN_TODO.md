@@ -4,6 +4,42 @@
 
 ---
 
+## Next Session Priority (2025-12-24)
+
+### 1. Test Solver Fixes with Real Data
+**Priority:** High
+**Context:** Template distribution fixes applied but not tested with PII data
+
+- [ ] Run schedule generation with Docker backend
+- [ ] Verify assignments distributed across clinic templates (not all one rotation)
+- [ ] Run pytest suite: `cd backend && pytest tests/scheduling/ -v`
+
+### 2. Complete MCP Wiring
+**Priority:** Medium
+**Context:** PR #402 wired 3/5 tools, 2 remaining
+
+| Tool | Issue | Fix Needed |
+|------|-------|------------|
+| `analyze_swap_candidates` | Backend requires file upload | Refactor to JSON input |
+| `run_contingency_analysis` | Different response structure | Map response fields |
+
+### 3. PuLP Solver Template Balance
+**Priority:** Low
+**Context:** Only fixed greedy + CP-SAT, PuLP may have same issue
+
+- [ ] Check if PuLP solver has template concentration bug
+- [ ] Apply same fix pattern if needed (select template with fewest assignments)
+
+### 4. Optional: Add `solver_managed` Flag
+**Priority:** Low (nice-to-have)
+**Context:** Cleaner than filtering by `activity_type`
+
+- [ ] Add `solver_managed: bool` to RotationTemplate model
+- [ ] Create Alembic migration
+- [ ] Update `_get_rotation_templates()` to use flag
+
+---
+
 ## Slack Integration Setup
 
 - [ ] **Test Slack Webhook Connection**
