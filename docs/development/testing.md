@@ -63,6 +63,21 @@ tests/
 ├── test_assignment_service.py    ***REMOVED*** 22 tests: CRUD, ACGME validation
 ├── test_person_service.py        ***REMOVED*** 37 tests: CRUD, filtering
 ├── test_block_service.py         ***REMOVED*** 31 tests: CRUD, block generation
+├── test_batch_routes.py          ***REMOVED*** Batch operations for assignments
+├── test_conflicts_routes.py      ***REMOVED*** Conflict analysis and visualizations
+├── test_credentials_routes.py    ***REMOVED*** Faculty procedure credentials
+├── test_daily_manifest_routes.py ***REMOVED*** Daily staffing manifest
+├── test_db_admin_routes.py       ***REMOVED*** Database admin (admin only)
+├── test_features_routes.py       ***REMOVED*** Feature flag management
+├── test_jobs_routes.py           ***REMOVED*** Background job management
+├── test_metrics_routes.py        ***REMOVED*** Prometheus metrics endpoints
+├── test_profiling_routes.py      ***REMOVED*** Performance profiling
+├── test_queue_routes.py          ***REMOVED*** Celery task queue management
+├── test_quota_routes.py          ***REMOVED*** API quota management
+├── test_rate_limit_routes.py     ***REMOVED*** Rate limiting management
+├── test_reports_routes.py        ***REMOVED*** PDF report generation
+├── test_search_routes.py         ***REMOVED*** Full-text search
+├── test_upload_routes.py         ***REMOVED*** File upload management
 ├── integration/
 │   └── test_swap_workflow.py
 └── conftest.py
@@ -96,6 +111,26 @@ __tests__/
 | `test_block_service.py` | 31 | Block CRUD, generation, date filtering |
 | `test_absence_service.py` | 23 | Absence CRUD, date range validation |
 | `test_assignment_service.py` | 22 | Assignment CRUD, ACGME validation |
+
+***REMOVED******REMOVED******REMOVED*** API Route Test Files
+
+| Test File | Classes | Coverage Area |
+|-----------|---------|---------------|
+| `test_batch_routes.py` | 4 | Batch create/update/delete assignments |
+| `test_conflicts_routes.py` | 9 | Conflict analysis, heatmap, gantt, distribution |
+| `test_credentials_routes.py` | 12 | Faculty procedure credentials, bulk operations |
+| `test_daily_manifest_routes.py` | 5 | Daily staffing manifest, coverage tracking |
+| `test_db_admin_routes.py` | 9 | Database health, indexes, VACUUM (admin only) |
+| `test_features_routes.py` | 13 | Feature flag management, bulk evaluation |
+| `test_jobs_routes.py` | 8 | Background job management, Celery tasks |
+| `test_metrics_routes.py` | 7 | Prometheus metrics, health, export |
+| `test_profiling_routes.py` | 13 | Performance profiling, bottlenecks, flamegraph |
+| `test_queue_routes.py` | 15 | Celery task queue, workers, scheduling |
+| `test_quota_routes.py` | 10 | API quota management, policies, alerts |
+| `test_rate_limit_routes.py` | 7 | Rate limiting, tiers, custom limits |
+| `test_reports_routes.py` | 5 | PDF report generation (schedule, compliance) |
+| `test_search_routes.py` | 8 | Full-text search, quick search, suggestions |
+| `test_upload_routes.py` | 7 | File upload, progress, download, delete |
 
 ***REMOVED******REMOVED******REMOVED*** Frontend Test Files
 
