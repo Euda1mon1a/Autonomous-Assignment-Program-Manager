@@ -83,8 +83,64 @@ The MCP server exposes tools for:
 - **Swap Management**: Process swap requests, find matches
 - **Domain Context**: Expand abbreviations (PGY-1, FMIT, etc.)
 - **Constraint Explanations**: Explain scheduling rules
+- **Resilience Framework**: N-1/N-2 contingency, defense levels, utilization
+- **Deployment Tools**: Security scans, smoke tests, production promotion
 
 See `/home/user/Autonomous-Assignment-Program-Manager/mcp-server/src/scheduler_mcp/server.py` for full tool definitions.
+
+***REMOVED******REMOVED******REMOVED*** MCP Server Module Structure
+
+```
+mcp-server/src/scheduler_mcp/
+├── __init__.py           ***REMOVED*** Package initialization
+├── server.py             ***REMOVED*** Main MCP server with tool registration
+├── api_client.py         ***REMOVED*** HTTP client for backend API calls
+├── tools.py              ***REMOVED*** Core tool definitions (validation, conflicts)
+├── tools/                ***REMOVED*** Specialized tool implementations
+│   ├── __init__.py       ***REMOVED*** Tools subpackage exports
+│   └── validate_schedule.py  ***REMOVED*** ConstraintService integration
+├── resources.py          ***REMOVED*** MCP resources (schedule status, compliance)
+├── domain_context.py     ***REMOVED*** Domain abbreviations and glossary
+├── resilience_integration.py  ***REMOVED*** Resilience framework tools
+├── deployment_tools.py   ***REMOVED*** CI/CD deployment tools
+├── async_tools.py        ***REMOVED*** Background task management
+└── error_handling.py     ***REMOVED*** Standardized error responses
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Adding New Tools
+
+To add a new tool with backend service integration:
+
+1. **Create module in `tools/`**:
+   ```python
+   ***REMOVED*** mcp-server/src/scheduler_mcp/tools/my_tool.py
+   from pydantic import BaseModel, Field, field_validator
+
+   class MyToolRequest(BaseModel):
+       param: str = Field(..., min_length=1)
+
+       @field_validator("param")
+       @classmethod
+       def validate_param(cls, v: str) -> str:
+           ***REMOVED*** Add input validation
+           return v.strip()
+
+   async def my_tool(request: MyToolRequest) -> dict:
+       ***REMOVED*** Implement with backend service calls
+       pass
+   ```
+
+2. **Export in `tools/__init__.py`**:
+   ```python
+   from .my_tool import MyToolRequest, my_tool
+   ```
+
+3. **Import in `server.py`**:
+   ```python
+   from .tools.my_tool import MyToolRequest, my_tool
+   ```
+
+4. **Register with `@mcp.tool()`** decorator in `server.py`
 
 ***REMOVED******REMOVED*** Prerequisites
 
