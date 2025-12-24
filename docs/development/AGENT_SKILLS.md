@@ -46,11 +46,15 @@ All skills are located in `.claude/skills/`:
 │   ├── SKILL.md
 │   ├── reference.md
 │   └── examples.md
+├── changelog-generator/        ***REMOVED*** Release notes from git
+│   └── SKILL.md
 ├── code-quality-monitor/       ***REMOVED*** Quality gate enforcement
 │   └── SKILL.md
 ├── code-review/                ***REMOVED*** Code review procedures
 │   └── SKILL.md
 ├── database-migration/         ***REMOVED*** Alembic migration expertise
+│   └── SKILL.md
+├── pdf/                        ***REMOVED*** PDF generation & extraction
 │   └── SKILL.md
 ├── pr-reviewer/                ***REMOVED*** Pull request review
 │   └── SKILL.md
@@ -62,7 +66,9 @@ All skills are located in `.claude/skills/`:
 │   └── SKILL.md
 ├── swap-management/            ***REMOVED*** Shift swap workflows
 │   └── SKILL.md
-└── test-writer/                ***REMOVED*** Test generation
+├── test-writer/                ***REMOVED*** Test generation
+│   └── SKILL.md
+└── xlsx/                       ***REMOVED*** Excel import/export
     └── SKILL.md
 ```
 
@@ -89,6 +95,14 @@ All skills are located in `.claude/skills/`:
 | `database-migration` | Alembic migration expertise | Schema changes, migrations |
 | `pr-reviewer` | Pull request review | PR validation, merge decisions |
 | `security-audit` | Security auditing | HIPAA, OPSEC/PERSEC compliance |
+| `changelog-generator` | Release notes from git | Deployment docs, stakeholder updates |
+
+***REMOVED******REMOVED******REMOVED*** Document Skills
+
+| Skill | Description | Primary Use Case |
+|-------|-------------|------------------|
+| `xlsx` | Excel import/export | Schedule imports, compliance reports, coverage matrices |
+| `pdf` | PDF generation & extraction | Printable schedules, compliance reports, document parsing |
 
 ***REMOVED******REMOVED******REMOVED*** Operations Skills
 
@@ -371,6 +385,107 @@ gh pr merge <number> --squash
 **Frameworks**:
 - Python: pytest with async support
 - TypeScript: Jest + React Testing Library
+
+---
+
+***REMOVED******REMOVED******REMOVED*** xlsx
+
+**Purpose**: Excel spreadsheet import and export for schedules, coverage matrices, and compliance reports.
+
+**Activates When**:
+- Importing schedules from Excel files
+- Exporting schedules to Excel format
+- Creating coverage matrices or rotation calendars
+- Generating ACGME compliance reports in spreadsheet format
+- Bulk data imports (residents, faculty, rotations)
+
+**Key Libraries**:
+| Library | Use Case |
+|---------|----------|
+| `pandas` | Data analysis, basic read/write |
+| `openpyxl` | Formulas, formatting, Excel-specific features |
+
+**Core Principles**:
+1. Use Excel formulas, not hardcoded calculated values
+2. Cell indices are 1-based in openpyxl
+3. Use `data_only=True` only for read-only analysis (loses formulas)
+
+**Import Patterns**:
+- Bulk resident import (Name, Email, PGY Level, Start Date)
+- Schedule assignment import (person × date grid)
+- Validation helpers for headers and date formats
+
+**Export Patterns**:
+- Weekly schedule with formatting
+- Coverage matrix with totals
+- ACGME compliance report with conditional formatting
+
+---
+
+***REMOVED******REMOVED******REMOVED*** pdf
+
+**Purpose**: PDF generation and manipulation for printable schedules, compliance reports, and document extraction.
+
+**Activates When**:
+- Generating printable schedule PDFs
+- Creating ACGME compliance reports
+- Extracting data from uploaded PDF documents
+- Merging, splitting, or watermarking PDFs
+
+**Key Libraries**:
+| Library | Use Case |
+|---------|----------|
+| `reportlab` | PDF generation (Platypus for tables) |
+| `pypdf` | Read, merge, split, watermark |
+| `pdfplumber` | Text and table extraction |
+
+**Generation Patterns**:
+- Schedule report (landscape, table with styling)
+- ACGME compliance report (summary + individual details)
+- Watermarked documents
+
+**Extraction Patterns**:
+- Text extraction with `pdfplumber`
+- Table extraction to DataFrames
+- OCR for scanned documents (optional pytesseract)
+
+**Security**:
+- Validate uploaded files are actually PDFs (magic bytes)
+- Sanitize extracted text (remove control characters)
+
+---
+
+***REMOVED******REMOVED******REMOVED*** changelog-generator
+
+**Purpose**: Automatically generate user-friendly changelogs from git commit history.
+
+**Activates When**:
+- Preparing release notes for deployment
+- Creating weekly/monthly change summaries
+- Documenting updates for non-technical stakeholders
+- Generating app store update descriptions
+
+**Commit Categories**:
+| Category | Prefixes | Label |
+|----------|----------|-------|
+| Features | `feat:`, `add:` | New Features |
+| Fixes | `fix:`, `bugfix:` | Bug Fixes |
+| Breaking | `BREAKING:` | Breaking Changes |
+| Security | `security:` | Security Updates |
+| Performance | `perf:` | Performance |
+
+**Filtered Out (Internal)**:
+- `refactor:`, `test:`, `chore:`, `ci:`, `docs:`, `style:`
+- Merge commits
+
+**Transformation Rules**:
+- "Implement X endpoint" → "Added X feature"
+- "Fix N+1 query" → "Improved loading speed"
+- "Add validation" → "Enhanced reliability"
+
+**Output Formats**:
+- Standard changelog (markdown with sections)
+- Compact format (bullet points for app stores)
 
 ---
 
