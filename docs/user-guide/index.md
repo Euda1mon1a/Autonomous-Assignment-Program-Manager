@@ -89,6 +89,11 @@ On-call schedule with contact information.
 Test configurations using Axelrod's tournament framework.
 </div>
 
+<div class="feature-card" markdown>
+### :material-monitor-dashboard: [GUI Improvements](gui-improvements.md)
+Enhanced interface features for all user roles.
+</div>
+
 </div>
 
 ---

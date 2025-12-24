@@ -3,13 +3,18 @@
 import { useState, useMemo } from 'react'
 import { format, startOfWeek, addWeeks, addDays, subWeeks, startOfMonth, endOfMonth } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Calendar, Download, Printer } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, Download, Printer, Share2 } from 'lucide-react'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
 import { PersonalScheduleCard, ScheduleAssignment } from '@/components/schedule/PersonalScheduleCard'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { EmptyState } from '@/components/EmptyState'
+import { ScheduleLegend } from '@/components/schedule/ScheduleLegend'
+import { WorkHoursCalculator } from '@/components/schedule/WorkHoursCalculator'
+import { PageBreadcrumbs } from '@/components/common/Breadcrumbs'
+import { CopyUrlButton } from '@/components/common/CopyToClipboard'
+import { useKeyboardShortcut } from '@/components/common/KeyboardShortcutHelp'
 import { get } from '@/lib/api'
 import { ListResponse, usePeople, useRotationTemplates } from '@/lib/hooks'
 import type { Assignment, Block, Person, RotationTemplate } from '@/types/api'
@@ -150,6 +155,9 @@ export default function MySchedulePage() {
 
   const handleToday = () => setCurrentDate(new Date())
 
+  // Listen for keyboard shortcut to go to today
+  useKeyboardShortcut('go-to-today', handleToday)
+
   const handlePrint = () => window.print()
 
   const handleExport = () => {
@@ -186,13 +194,21 @@ export default function MySchedulePage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        {/* Breadcrumbs */}
+        <PageBreadcrumbs className="mb-4" />
+
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">My Schedule</h1>
-          <p className="text-gray-600 mt-1">
-            {user?.username ? `Viewing schedule for ${user.username}` : 'Your personal rotation schedule'}
-          </p>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">My Schedule</h1>
+            <p className="text-gray-600 mt-1">
+              {user?.username ? `Viewing schedule for ${user.username}` : 'Your personal rotation schedule'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <CopyUrlButton label="Share" size="sm" variant="outline" />
+          </div>
         </div>
 
         {/* Controls */}
@@ -290,41 +306,57 @@ export default function MySchedulePage() {
         )}
 
         {!isLoading && !error && currentPerson && (
-          <PersonalScheduleCard
-            person={currentPerson}
-            assignments={myAssignments}
-            startDate={dateRange.start}
-            endDate={dateRange.end}
-            showHeader={false}
-          />
+          <>
+            {/* Schedule Legend */}
+            <ScheduleLegend compact className="mb-4" />
+
+            <PersonalScheduleCard
+              person={currentPerson}
+              assignments={myAssignments}
+              startDate={dateRange.start}
+              endDate={dateRange.end}
+              showHeader={false}
+            />
+          </>
         )}
 
-        {/* Summary stats */}
+        {/* Work Hours & Summary Stats */}
         {!isLoading && !error && currentPerson && myAssignments.length > 0 && (
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <div className="text-2xl font-bold text-gray-900">
-                {myAssignments.length}
-              </div>
-              <div className="text-sm text-gray-500">Total assignments</div>
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Work Hours Calculator */}
+            <div className="lg:col-span-1">
+              <WorkHoursCalculator
+                assignments={myAssignments}
+                showDetails={true}
+              />
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <div className="text-2xl font-bold text-blue-600">
-                {myAssignments.filter((a) => a.activity.toLowerCase().includes('clinic')).length}
+
+            {/* Summary stats grid */}
+            <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div className="text-2xl font-bold text-gray-900">
+                  {myAssignments.length}
+                </div>
+                <div className="text-sm text-gray-500">Total assignments</div>
               </div>
-              <div className="text-sm text-gray-500">Clinic sessions</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <div className="text-2xl font-bold text-purple-600">
-                {myAssignments.filter((a) => a.activity.toLowerCase().includes('inpatient')).length}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div className="text-2xl font-bold text-blue-600">
+                  {myAssignments.filter((a) => a.activity.toLowerCase().includes('clinic')).length}
+                </div>
+                <div className="text-sm text-gray-500">Clinic sessions</div>
               </div>
-              <div className="text-sm text-gray-500">Inpatient sessions</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <div className="text-2xl font-bold text-orange-600">
-                {myAssignments.filter((a) => a.activity.toLowerCase().includes('call')).length}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div className="text-2xl font-bold text-purple-600">
+                  {myAssignments.filter((a) => a.activity.toLowerCase().includes('inpatient')).length}
+                </div>
+                <div className="text-sm text-gray-500">Inpatient sessions</div>
               </div>
-              <div className="text-sm text-gray-500">Call shifts</div>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div className="text-2xl font-bold text-orange-600">
+                  {myAssignments.filter((a) => a.activity.toLowerCase().includes('call')).length}
+                </div>
+                <div className="text-sm text-gray-500">Call shifts</div>
+              </div>
             </div>
           </div>
         )}
