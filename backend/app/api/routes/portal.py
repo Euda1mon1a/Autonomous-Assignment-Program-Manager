@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.config import get_settings
 from app.core.security import get_current_user
 from app.db.session import get_db
 from app.models.assignment import Assignment
@@ -90,6 +91,16 @@ def _check_marketplace_access(db: Session, user: User) -> bool:
 
     Returns:
         True if user has marketplace access, False otherwise
+
+    Feature Flag Semantics:
+        - Flag key: 'swap_marketplace_enabled'
+        - If flag doesn't exist: residents blocked, others allowed
+        - If flag.enabled=False: all users blocked
+        - If flag.target_roles is None: all roles allowed (if enabled)
+        - If flag.target_roles is []: no roles allowed
+        - If flag.target_user_ids is None: no user-specific targeting
+        - If flag.target_user_ids is []: no users allowed (overrides roles)
+        - Environment targeting respects TELEMETRY_ENVIRONMENT setting
     """
     # Query the feature flag
     flag = (
@@ -105,6 +116,9 @@ def _check_marketplace_access(db: Session, user: User) -> bool:
         return user.role != "resident"
 
     # Convert flag to dict for evaluator
+    # IMPORTANT: Preserve empty lists vs None semantics:
+    # - None means "no targeting" (allow everyone)
+    # - [] means "target nobody" (allow no one)
     flag_data = {
         "key": flag.key,
         "enabled": flag.enabled,
@@ -112,7 +126,9 @@ def _check_marketplace_access(db: Session, user: User) -> bool:
         "rollout_percentage": flag.rollout_percentage,
         "environments": flag.environments,
         "target_user_ids": (
-            [str(uid) for uid in flag.target_user_ids] if flag.target_user_ids else None
+            [str(uid) for uid in flag.target_user_ids]
+            if flag.target_user_ids is not None
+            else None
         ),
         "target_roles": flag.target_roles,
         "variants": flag.variants,
@@ -120,8 +136,9 @@ def _check_marketplace_access(db: Session, user: User) -> bool:
         "custom_attributes": flag.custom_attributes,
     }
 
-    # Evaluate flag for this user
-    evaluator = FeatureFlagEvaluator()
+    # Evaluate flag for this user, respecting environment targeting
+    settings = get_settings()
+    evaluator = FeatureFlagEvaluator(environment=settings.TELEMETRY_ENVIRONMENT)
     enabled, _, _ = evaluator.evaluate(
         flag_data=flag_data,
         user_id=str(user.id),
