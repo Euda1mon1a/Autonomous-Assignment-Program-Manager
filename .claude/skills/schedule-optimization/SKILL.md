@@ -27,7 +27,7 @@ See `backend/app/scheduling/solvers.py` header for full details.
 
 | Mode | Rotations | Assignment Unit | Solver Role |
 |------|-----------|-----------------|-------------|
-| **Block-Assigned** | FMIT, NF, Inpatient | Full block (4 weeks) | Pre-assigned, NOT optimized |
+| **Block-Assigned** | FMIT, NF, Inpatient, NICU | Full block or half-block | Pre-assigned, NOT optimized |
 | **Half-Day Optimized** | Clinic, Specialty | Half-day (AM/PM) | Solver optimizes these |
 
 **The solvers are ONLY for outpatient half-day optimization.** Block-assigned rotations
@@ -35,6 +35,28 @@ are handled separately and should NOT be passed to the solver.
 
 If solver assigns everyone to NF/PC/inpatient, check that templates are filtered
 to `activity_type == "clinic"` in `engine._get_rotation_templates()`.
+
+### Night Float (NF) Half-Block Mirrored Pairing
+
+NF has idiosyncratic half-block constraints - residents are paired in mirrored patterns:
+
+```
+Block 5 (4 weeks):
+├── Half 1 (Days 1-14)     ├── Half 2 (Days 15-28)
+│                          │
+│ Resident A: NF           │ Resident A: NICU (or elective)
+│ Resident B: NEURO        │ Resident B: NF
+```
+
+**Key rules:**
+- NF is assigned per **half-block** (2 weeks), not full block
+- Residents are **mirrored pairs**: one on NF half 1, partner on NF half 2
+- The non-NF half is a mini 2-week rotation (NICU, NEURO, elective)
+- **Post-Call (PC)** day required after NF ends (Day 15 or Day 1 of next block)
+- Exactly 1 resident on NF per half-block
+
+**Files:** See `backend/app/scheduling/constraints/night_float_post_call.py` and
+`docs/development/CODEX_SYSTEM_OVERVIEW.md` for full NF/PC constraint logic.
 
 ## When This Skill Activates
 

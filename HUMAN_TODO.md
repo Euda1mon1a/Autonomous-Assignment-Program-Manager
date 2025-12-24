@@ -103,6 +103,34 @@ if (
 
 ---
 
+### NF Half-Block Documentation Consistency
+
+**Priority:** Medium
+**Found:** Session review (2025-12-24)
+
+**Issue:** Night Float (NF) half-block mirrored pairing pattern is documented in multiple places
+but may be inconsistent. NF is a **half-block constraint** (2 weeks, not 4 weeks).
+
+**Key pattern to document consistently:**
+```
+Block 5:
+├── Half 1 (Days 1-14): Resident A = NF, Resident B = NEURO
+└── Half 2 (Days 15-28): Resident A = NICU, Resident B = NF
+```
+
+**Current documentation locations:**
+- `docs/development/CODEX_SYSTEM_OVERVIEW.md` - Most comprehensive (block_half, PC rules)
+- `backend/app/scheduling/constraints/night_float_post_call.py` - Constraint implementation
+- `.claude/skills/schedule-optimization/SKILL.md` - Skill reference (just added)
+
+**TODO:** Audit these files for consistency:
+- [ ] Verify block_half terminology is consistent
+- [ ] Ensure mirrored pairing pattern is explained the same way
+- [ ] Check PC day rules are documented identically
+- [ ] Add cross-references between files
+
+---
+
 ## Cleanup Session Report (2025-12-21 Overnight)
 
 ### Completed Autonomously
