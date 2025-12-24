@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Guidelines for Autonomous Claude Work
 
-> **Last Updated:** 2025-12-23
+> **Last Updated:** 2025-12-24
 > **Purpose:** Guidelines for autonomous AI-assisted development on the Residency Scheduler project
 
 ---
@@ -910,6 +910,65 @@ Used for:
 - Conflict detection after leave approval
 - Email notifications
 - Schedule metrics calculation
+
+### Slot-Type Invariants (Credential Requirements)
+
+Convert recurring admin requirements into binary schedule invariants. Each slot type defines hard and soft credential requirements.
+
+**Invariant Structure:**
+```python
+invariant_catalog = {
+    "inpatient_call": {
+        "hard": ["HIPAA", "Cyber_Training", "AUP", "Chaperone", "N95_Fit"],
+        "soft": [{"name": "expiring_soon", "window_days": 14, "penalty": 3}]
+    },
+    "peds_clinic": {
+        "hard": ["Flu_Vax", "Tdap"]
+    },
+    "procedures_half_day": {
+        "hard": ["BBP_Module", "Sharps_Safety"]
+    }
+}
+```
+
+**Eligibility Logic:**
+```python
+def is_eligible(person_id: str, slot_type: str, date: date) -> tuple[bool, int]:
+    """Check if person meets slot requirements.
+
+    Returns:
+        (eligible: bool, penalty: int) - False if hard constraint fails
+    """
+    reqs = invariant_catalog.get(slot_type, {})
+
+    # Hard constraints - must pass all
+    for req in reqs.get("hard", []):
+        cred = get_credential(person_id, req)
+        if not cred or not cred.is_valid or cred.expires_at < date:
+            return False, 0
+
+    # Soft constraints - accumulate penalties
+    penalty = 0
+    for soft in reqs.get("soft", []):
+        if soft["name"] == "expiring_soon":
+            if any_credential_expiring(person_id, soft["window_days"], date):
+                penalty += soft["penalty"]
+
+    return True, penalty
+```
+
+**Common Credential Categories:**
+| Category | Examples | Typical Validity |
+|----------|----------|------------------|
+| Annual Training | JKO Cyber, HIPAA, AUP | 12 months |
+| Immunizations | Flu, Tdap, Hep B | Varies |
+| Safety | N95 Fit, BBP, Chaperone | 12-24 months |
+| Procedures | BLS, ACLS, PALS, NRP | 24 months |
+
+**Dashboard Integration:**
+- "Next block hard failures" - Who can't work scheduled slots
+- "Expiring in 30/60/90 days" - Proactive renewal reminders
+- "Grace period active" - Track temporary exceptions
 
 ---
 

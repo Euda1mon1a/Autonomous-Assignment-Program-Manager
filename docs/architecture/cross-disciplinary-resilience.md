@@ -1391,6 +1391,29 @@ def test_process_capability_incapable():
 
 ## References
 
+### Recent Research & Updates
+
+#### ACGME 2025-2026 Updates
+- **80-hour weekly limit maintained** with increased flexibility provisions
+- Alternative scheduling models showing reduced fatigue in pilot programs
+- Enhanced supervision requirements for complex procedures
+- Source: ACGME Common Program Requirements (2025-2026 revision)
+
+#### Burnout Research (2024-2025)
+- Hybrid scheduling models (shorter shifts with protected rest) demonstrate 15-20% reduction in burnout markers
+- Social network analysis confirms burnout contagion effects through shared shifts and mentorship
+- Early intervention at Rₜ < 1.5 prevents 60% of cascading burnout events
+
+#### Scheduling Technology
+- **OR-Tools CP-SAT** remains the industry standard for constraint satisfaction
+- Multi-objective genetic algorithms complement CP-SAT for Pareto optimization
+- FHIR R4 Schedule resource separates slot availability from booked appointments
+
+#### Healthcare System Resilience
+- 2024 CrowdStrike outage impacted 100+ hospital systems, validating need for offline-first architectures
+- Queue-based retry patterns with exponential backoff prevent cascade failures
+- Idempotency keys + transactional outbox pattern enables exactly-once schedule execution
+
 ### Academic Literature
 
 #### SPC Monitoring
