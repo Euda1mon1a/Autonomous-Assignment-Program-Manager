@@ -53,6 +53,53 @@ The system automatically finds compatible swaps using a 5-factor algorithm:
 
 ---
 
+## Marketplace Access Control
+
+The swap marketplace is controlled by a feature flag (`swap_marketplace_enabled`) to prevent gamification of the swap system.
+
+### Default Access
+
+| Role | Marketplace Access |
+|------|-------------------|
+| **Admin** | Full access |
+| **Coordinator** | Full access |
+| **Faculty** | Full access |
+| **Resident** | **Disabled by default** |
+
+### Why Residents Are Restricted
+
+Residents are blocked from the marketplace by default to prevent exploitation of post-call rules. For example:
+- Faculty A had call, so automatically has PCAT + DO the next day
+- Without restrictions, residents could use swaps to strategically avoid clinic half-days
+- This could lead to unfair distribution of less desirable shifts
+
+### Enabling Marketplace for Residents
+
+Administrators can enable marketplace access for residents via the Feature Flags API:
+
+```bash
+# Enable for all residents
+curl -X PUT /api/v1/features/swap_marketplace_enabled \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{"target_roles": ["admin", "coordinator", "faculty", "resident"]}'
+
+# Enable for specific residents only
+curl -X PUT /api/v1/features/swap_marketplace_enabled \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{"target_user_ids": ["user-uuid-1", "user-uuid-2"]}'
+```
+
+### Direct Swaps Still Allowed
+
+Even when marketplace access is disabled, residents can still:
+- Request direct swaps with a specific faculty member (one-to-one swaps)
+- Respond to swap requests directed at them
+- View their own swap history
+
+Only marketplace browsing and open posting are restricted.
+
+---
+
 ## ACGME Compliance
 
 All swaps are validated against ACGME rules:
