@@ -1,5 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-import { useClaudeChat } from '../hooks/useClaudeChat';
+import { useClaudeChat, SavedSession } from '../hooks/useClaudeChat';
 import { ChatMessage, ChatSession } from '../types/chat';
 
 interface ClaudeChatContextType {
@@ -12,6 +12,8 @@ interface ClaudeChatContextType {
   cancelRequest: () => void;
   clearMessages: () => void;
   exportSession: () => any;
+  getSavedSessions: () => SavedSession[];
+  loadSession: (sessionId: string) => boolean;
 }
 
 const ClaudeChatContext = createContext<ClaudeChatContextType | undefined>(undefined);
