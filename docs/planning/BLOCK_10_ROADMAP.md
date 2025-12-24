@@ -18,6 +18,8 @@
 
 **Capabilities Reference:** See [SESSION_CAPABILITIES.md](SESSION_CAPABILITIES.md) for full skills, tools, and MCP inventory.
 
+**Coordination Guide:** See [PARALLEL_CLAUDE_BEST_PRACTICES.md](../development/PARALLEL_CLAUDE_BEST_PRACTICES.md) for parallel work patterns.
+
 ---
 
 ## Available Capabilities Summary
