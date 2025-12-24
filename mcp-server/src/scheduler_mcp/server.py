@@ -111,6 +111,20 @@ from .tools.validate_schedule import (
     ConstraintConfig,
 )
 
+# Import empirical testing tools
+from .empirical_tools import (
+    AblationResult,
+    ConstraintBenchmarkResult,
+    ModuleUsageResult,
+    ResilienceBenchmarkResult,
+    SolverBenchmarkResult,
+    ablation_study,
+    benchmark_constraints,
+    benchmark_resilience,
+    benchmark_solvers,
+    module_usage_analysis,
+)
+
 # Import new validate_schedule tool with ConstraintService integration
 from .tools.validate_schedule import (
     ScheduleValidationRequest as ConstraintValidationRequest,
@@ -1160,6 +1174,161 @@ async def list_deployments_tool(
     )
 
     return await list_deployments(request)
+
+
+# =============================================================================
+# Empirical Testing Tools
+# =============================================================================
+
+
+@mcp.tool()
+async def benchmark_solvers_tool(
+    solvers: list[str] | None = None,
+    scenario_count: int = 10,
+    timeout_per_run: int = 60,
+) -> SolverBenchmarkResult:
+    """
+    Benchmark scheduling solvers head-to-head.
+
+    Runs each solver on identical scenarios and compares runtime,
+    violation count, coverage, and fairness. Use this to determine
+    which solver should be the default.
+
+    Args:
+        solvers: Solvers to test (default: all available)
+        scenario_count: Number of test scenarios
+        timeout_per_run: Timeout per solver run in seconds
+
+    Returns:
+        Comparison results with winner by metric and recommendations
+
+    Example:
+        # Compare all solvers
+        result = await benchmark_solvers_tool()
+
+        # Compare specific solvers
+        result = await benchmark_solvers_tool(
+            solvers=["greedy", "cp_sat"],
+            scenario_count=20
+        )
+    """
+    return await benchmark_solvers(
+        solvers=solvers,
+        scenario_count=scenario_count,
+        timeout_per_run=timeout_per_run,
+    )
+
+
+@mcp.tool()
+async def benchmark_constraints_tool(
+    test_schedules: str = "historical",
+) -> ConstraintBenchmarkResult:
+    """
+    Measure constraint effectiveness and yield.
+
+    Analyzes which constraints catch real issues (high yield) vs
+    generate false positives (low yield). Identifies candidates
+    for removal.
+
+    Args:
+        test_schedules: Type of schedules to test against
+            - "historical": Use past schedules
+            - "synthetic": Generate test schedules
+            - "edge_cases": Focus on boundary conditions
+
+    Returns:
+        Constraint statistics with high/low yield lists
+
+    Example:
+        result = await benchmark_constraints_tool()
+        print(f"High yield: {result.high_yield}")
+        print(f"Remove candidates: {result.candidates_for_removal}")
+    """
+    return await benchmark_constraints(test_schedules=test_schedules)
+
+
+@mcp.tool()
+async def ablation_study_tool(
+    module_path: str,
+) -> AblationResult:
+    """
+    Test impact of removing a module.
+
+    Analyzes what would happen if a module were removed:
+    - How many lines of code
+    - What imports this module
+    - What tests would break
+    - Whether it's safe to remove
+
+    Args:
+        module_path: Path relative to backend/app/
+            Examples: "scheduling/tensegrity/", "resilience/stigmergy.py"
+
+    Returns:
+        Ablation analysis with safety recommendation
+
+    Example:
+        # Check if tensegrity solver can be removed
+        result = await ablation_study_tool("scheduling/tensegrity/")
+        if result.safe_to_remove:
+            print(f"Safe to remove: {result.module_size_lines} lines")
+    """
+    return await ablation_study(module_path=module_path)
+
+
+@mcp.tool()
+async def benchmark_resilience_tool(
+    modules: list[str] | None = None,
+) -> ResilienceBenchmarkResult:
+    """
+    Compare resilience framework components.
+
+    Evaluates each resilience module for:
+    - Detection rate (true positives)
+    - False alarm rate
+    - Complexity (lines of code)
+    - Value score (detection - false alarms)
+
+    Args:
+        modules: Specific modules to test (default: all)
+
+    Returns:
+        Module statistics with high-value and cut-candidate lists
+
+    Example:
+        result = await benchmark_resilience_tool()
+        print(f"High value: {result.high_value}")
+        print(f"Cut candidates: {result.cut_candidates}")
+    """
+    return await benchmark_resilience(modules=modules)
+
+
+@mcp.tool()
+async def module_usage_analysis_tool(
+    entry_points: list[str] | None = None,
+) -> ModuleUsageResult:
+    """
+    Analyze which modules are actually used.
+
+    Traces imports from entry points to find:
+    - Reachable modules (used)
+    - Unreachable modules (dead code candidates)
+    - Hot paths (frequently imported)
+    - Cold paths (rarely imported)
+
+    Args:
+        entry_points: Starting points for analysis
+            Default: ["main", "api", "scheduling"]
+
+    Returns:
+        Usage analysis with dead code statistics
+
+    Example:
+        result = await module_usage_analysis_tool()
+        print(f"Dead code: {result.dead_code_lines} lines")
+        print(f"Unreachable: {result.unreachable_modules}")
+    """
+    return await module_usage_analysis(entry_points=entry_points)
 
 
 # Server lifecycle hooks
