@@ -264,7 +264,9 @@ class WeekdayCallEquityConstraint(SoftConstraint):
 
         # Find Mon-Thurs blocks (weekday 0-3)
         weekday_blocks = [
-            b for b in context.blocks if b.date.weekday() in (0, 1, 2, 3)  # Mon-Thurs
+            b
+            for b in context.blocks
+            if b.date.weekday() in (0, 1, 2, 3)  # Mon-Thurs
         ]
 
         if not weekday_blocks:
@@ -719,9 +721,7 @@ class CallSpacingConstraint(SoftConstraint):
                     # Add (has_week1 + has_week2 - 1) capped at 0
                     # Or simply: penalty = has_week1 + has_week2 - 1 when both are 1
                     # Use auxiliary variable
-                    btb = pulp.LpVariable(
-                        f"btb_{f_i}_{constraint_count}", cat="Binary"
-                    )
+                    btb = pulp.LpVariable(f"btb_{f_i}_{constraint_count}", cat="Binary")
                     # btb = 1 iff has_week1 = 1 AND has_week2 = 1
                     model += btb <= has_week1
                     model += btb <= has_week2
@@ -774,9 +774,13 @@ class CallSpacingConstraint(SoftConstraint):
                 # Check if weeks are consecutive
                 # (same year and adjacent week, or year rollover)
                 is_consecutive = False
-                if week1[0] == week2[0] and week2[1] == week1[1] + 1:
-                    is_consecutive = True
-                elif week1[0] + 1 == week2[0] and week1[1] >= 52 and week2[1] == 1:
+                if (
+                    week1[0] == week2[0]
+                    and week2[1] == week1[1] + 1
+                    or week1[0] + 1 == week2[0]
+                    and week1[1] >= 52
+                    and week2[1] == 1
+                ):
                     is_consecutive = True
 
                 if is_consecutive and week_calls[week1] > 0 and week_calls[week2] > 0:
@@ -844,7 +848,9 @@ class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
 
         # Find Wednesday blocks (weekday 2)
         wednesday_blocks = [
-            b for b in context.blocks if b.date.weekday() == 2  # Wednesday
+            b
+            for b in context.blocks
+            if b.date.weekday() == 2  # Wednesday
         ]
 
         if not wednesday_blocks:
