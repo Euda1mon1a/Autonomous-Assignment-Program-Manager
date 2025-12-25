@@ -24,6 +24,7 @@ This document defines the **Blackwall** architecture - a multi-layered defense s
 6. [Layer 4: WAF Integration](#layer-4-waf-integration)
 7. [Layer 5: Response Filtering](#layer-5-response-filtering)
 8. [Implementation Roadmap](#implementation-roadmap)
+   - [Phase 0: Pre-Implementation Research](#phase-0-pre-implementation-research-critical)
 9. [Integration Points](#integration-points)
 10. [Monitoring & Alerting](#monitoring--alerting)
 11. [Testing Strategy](#testing-strategy)
@@ -784,7 +785,60 @@ class ResponseFilterMiddleware(BaseHTTPMiddleware):
 
 ## Implementation Roadmap
 
-### Phase 1: Foundation (Week 1-2)
+### Phase 0: Pre-Implementation Research (CRITICAL)
+
+**The AI security landscape is evolving rapidly.** Before implementing any component, survey the current state of tooling:
+
+#### Libraries & Frameworks to Evaluate
+
+| Category | What to Check | Why |
+|----------|---------------|-----|
+| **Prompt Injection Detection** | rebuff, LLM Guard, Lakera Guard, Vigil | May have better pattern coverage than custom regex |
+| **LLM Firewalls** | Protect AI, Prompt Armor, Arthur Shield | Production-ready solutions may exist |
+| **Request Fingerprinting** | ja3-python, http2-fingerprinting | TLS/HTTP2 fingerprint databases |
+| **WAF Rules** | OWASP CRS updates, AI-specific rulesets | New attack signatures |
+| **Behavioral Analysis** | Bot detection APIs (DataDome, PerimeterX) | May be more cost-effective than building |
+
+#### Research Checklist
+
+Before each phase, run this checklist:
+
+```bash
+# Check for new libraries (example searches)
+pip search "prompt injection" 2>/dev/null || pip index versions rebuff
+npm search "llm security"
+gh search repos "prompt injection detection" --sort=updated
+
+# Check OWASP for updates
+# https://owasp.org/www-project-top-10-for-large-language-model-applications/
+
+# Check recent CVEs for LLM vulnerabilities
+# https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=llm
+```
+
+#### Key Resources to Monitor
+
+- **OWASP LLM Top 10**: https://owasp.org/www-project-top-10-for-large-language-model-applications/
+- **AI Incident Database**: https://incidentdatabase.ai/
+- **LLM Security Newsletter**: (subscribe when available)
+- **Hugging Face Security**: https://huggingface.co/docs/hub/security
+- **Anthropic Security Research**: https://www.anthropic.com/research (prompt injection papers)
+- **Simon Willison's Blog**: https://simonwillison.net/tags/security/ (practical LLM security)
+
+#### Build vs. Buy Decision Matrix
+
+| Component | Build If... | Buy/Use If... |
+|-----------|-------------|---------------|
+| Pattern Detection | Need custom patterns for medical domain | General patterns sufficient |
+| Behavioral Analysis | Unique traffic patterns | Standard bot detection works |
+| WAF | Custom ModSecurity rules | Cloud WAF has LLM rules |
+| Fingerprinting | On-prem requirement | CDN provides (Cloudflare, AWS) |
+
+**NOTE:** Re-evaluate this section each time you start a new phase. What was cutting-edge 6 months ago may be obsolete.
+
+---
+
+### Phase 1: Foundation
 - [ ] Create `backend/app/core/llm_firewall.py`
 - [ ] Add Pydantic validator integration
 - [ ] Unit tests for pattern detection
