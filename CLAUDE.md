@@ -1,6 +1,6 @@
 ***REMOVED*** CLAUDE.md - Project Guidelines for Autonomous Claude Work
 
-> **Last Updated:** 2025-12-24
+> **Last Updated:** 2025-12-25
 > **Purpose:** Guidelines for autonomous AI-assisted development on the Residency Scheduler project
 
 ---
@@ -78,9 +78,17 @@ This is a **scheduling application** for medical residency programs. All work mu
 | **TailwindCSS** | 3.3.0 | Utility-first CSS |
 | **TanStack Query** | 5.17.0 | Data fetching and caching |
 
+***REMOVED******REMOVED******REMOVED*** MCP Server (AI Integration)
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **FastMCP** | 0.2.0+ | Model Context Protocol framework |
+| **httpx** | 0.25.0+ | Async HTTP client for API calls |
+
 ***REMOVED******REMOVED******REMOVED*** Infrastructure
 
 - **Docker** + **Docker Compose**: Containerization and orchestration
+- **MCP Server Container**: AI tool integration (29+ scheduling tools)
 - **Prometheus**: Metrics and monitoring
 - **Grafana**: Dashboard visualization
 
@@ -462,7 +470,7 @@ npm run test:e2e  ***REMOVED*** Playwright E2E tests
 ***REMOVED******REMOVED******REMOVED*** Docker
 
 ```bash
-***REMOVED*** Start all services
+***REMOVED*** Start all services (includes MCP server)
 docker-compose up -d
 
 ***REMOVED*** View logs
@@ -479,6 +487,26 @@ docker-compose exec backend pytest
 
 ***REMOVED*** Access database
 docker-compose exec db psql -U scheduler -d residency_scheduler
+```
+
+***REMOVED******REMOVED******REMOVED*** MCP Server (AI Integration)
+
+```bash
+***REMOVED*** View MCP server logs
+docker-compose logs -f mcp-server
+
+***REMOVED*** Test MCP server health
+docker-compose exec mcp-server python -c \
+  "from scheduler_mcp.server import mcp; print(f'Tools: {len(mcp.tools)}')"
+
+***REMOVED*** Test API connectivity from MCP container
+docker-compose exec mcp-server curl -s http://backend:8000/health
+
+***REMOVED*** Development mode (with HTTP transport on port 8080)
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d mcp-server
+
+***REMOVED*** Rebuild MCP server after changes
+docker-compose up -d --build mcp-server
 ```
 
 ***REMOVED******REMOVED******REMOVED*** Useful Database Queries
