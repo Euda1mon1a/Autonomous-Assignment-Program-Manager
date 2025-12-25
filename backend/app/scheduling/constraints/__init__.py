@@ -47,6 +47,7 @@ from .base import (
 
 ***REMOVED*** Call equity and preference constraints
 from .call_equity import (
+    CallSpacingConstraint,
     DeptChiefWednesdayPreferenceConstraint,
     SundayCallEquityConstraint,
     TuesdayCallPreferenceConstraint,
@@ -80,6 +81,7 @@ from .fmit import (
     FMITStaffingFloorConstraint,
     FMITWeekBlockingConstraint,
     PostFMITRecoveryConstraint,
+    PostFMITSundayBlockingConstraint,
     get_fmit_week_dates,
     is_sun_thurs,
 )
@@ -100,6 +102,12 @@ from .resilience import (
     PreferenceTrailConstraint,
     UtilizationBufferConstraint,
     ZoneBoundaryConstraint,
+)
+
+***REMOVED*** Resident inpatient constraints
+from .inpatient import (
+    FMITResidentClinicDayConstraint,
+    ResidentInpatientHeadcountConstraint,
 )
 
 ***REMOVED*** Sports Medicine coordination constraints
@@ -149,6 +157,7 @@ __all__ = [
     "FMITStaffingFloorConstraint",
     "FMITWeekBlockingConstraint",
     "PostFMITRecoveryConstraint",
+    "PostFMITSundayBlockingConstraint",
     "get_fmit_week_dates",
     "is_sun_thurs",
     ***REMOVED*** Equity constraints
@@ -161,6 +170,7 @@ __all__ = [
     ***REMOVED*** Night Float post-call constraints
     "NightFloatPostCallConstraint",
     ***REMOVED*** Call equity and preference constraints
+    "CallSpacingConstraint",
     "DeptChiefWednesdayPreferenceConstraint",
     "SundayCallEquityConstraint",
     "TuesdayCallPreferenceConstraint",
@@ -171,6 +181,9 @@ __all__ = [
     "PreferenceTrailConstraint",
     "UtilizationBufferConstraint",
     "ZoneBoundaryConstraint",
+    ***REMOVED*** Resident inpatient constraints
+    "FMITResidentClinicDayConstraint",
+    "ResidentInpatientHeadcountConstraint",
     ***REMOVED*** Manager
     "ConstraintManager",
 ]
