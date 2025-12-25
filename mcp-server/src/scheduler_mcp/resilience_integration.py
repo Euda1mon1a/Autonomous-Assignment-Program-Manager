@@ -264,7 +264,9 @@ class StressInfo(BaseModel):
 class EquilibriumAnalysisResponse(BaseModel):
     """Response from Le Chatelier analysis."""
 
-    current_equilibrium_state: str  # "stable", "compensating", "stressed", "unsustainable", "critical"
+    current_equilibrium_state: (
+        str  # "stable", "compensating", "stressed", "unsustainable", "critical"
+    )
     current_capacity: float
     current_demand: float
     current_coverage_rate: float
@@ -452,9 +454,7 @@ async def check_utilization_threshold(
     if required_blocks < 0:
         raise ValueError("required_blocks must be non-negative")
 
-    logger.info(
-        f"Checking utilization: {available_faculty} faculty, {required_blocks} blocks"
-    )
+    logger.info(f"Checking utilization: {available_faculty} faculty, {required_blocks} blocks")
 
     try:
         from app.resilience.utilization import UtilizationMonitor, UtilizationThreshold
@@ -468,9 +468,7 @@ async def check_utilization_threshold(
         )
 
         status_report = monitor.get_status_report(metrics)
-        wait_multiplier = monitor.calculate_wait_time_multiplier(
-            metrics.utilization_rate
-        )
+        wait_multiplier = monitor.calculate_wait_time_multiplier(metrics.utilization_rate)
 
         # Determine severity
         severity_map = {
@@ -531,7 +529,7 @@ async def check_utilization_threshold(
             wait_time_multiplier=utilization / (1 - min(utilization, 0.99))
             if utilization < 1.0
             else 999.9,
-            message=f"Utilization at {utilization*100:.0f}% (service unavailable, using fallback calculation)",
+            message=f"Utilization at {utilization * 100:.0f}% (service unavailable, using fallback calculation)",
             recommendations=["Service unavailable - using simplified calculation"],
             severity=severity,
         )
@@ -674,9 +672,7 @@ async def run_contingency_analysis_deep(
         ValueError: If request parameters are invalid
         RuntimeError: If backend API call fails
     """
-    logger.info(
-        f"Running contingency analysis: N-1={request.analyze_n1}, N-2={request.analyze_n2}"
-    )
+    logger.info(f"Running contingency analysis: N-1={request.analyze_n1}, N-2={request.analyze_n2}")
 
     try:
         client = await get_api_client()
@@ -708,27 +704,35 @@ async def run_contingency_analysis_deep(
         # Map n1_vulnerabilities
         n1_vulns = []
         for v in result.get("n1_vulnerabilities", []):
-            n1_vulns.append(VulnerabilityInfo(
-                faculty_id=v.get("faculty_id", ""),
-                faculty_name=v.get("faculty_name", f"Faculty {v.get('faculty_id', 'unknown')}"),
-                severity=v.get("severity", "medium"),
-                affected_blocks=v.get("affected_blocks", 0),
-                is_unique_provider=v.get("affected_blocks", 0) > 10,  # Heuristic
-                details=f"Loss would affect {v.get('affected_blocks', 0)} blocks",
-                services_affected=[],
-            ))
+            n1_vulns.append(
+                VulnerabilityInfo(
+                    faculty_id=v.get("faculty_id", ""),
+                    faculty_name=v.get("faculty_name", f"Faculty {v.get('faculty_id', 'unknown')}"),
+                    severity=v.get("severity", "medium"),
+                    affected_blocks=v.get("affected_blocks", 0),
+                    is_unique_provider=v.get("affected_blocks", 0) > 10,  # Heuristic
+                    details=f"Loss would affect {v.get('affected_blocks', 0)} blocks",
+                    services_affected=[],
+                )
+            )
 
         # Map n2_fatal_pairs
         n2_pairs = []
         for p in result.get("n2_fatal_pairs", []):
-            n2_pairs.append(FatalPairInfo(
-                faculty_1_id=p.get("faculty1_id", ""),
-                faculty_1_name=p.get("faculty1_name", f"Faculty {p.get('faculty1_id', 'unknown')}"),
-                faculty_2_id=p.get("faculty2_id", ""),
-                faculty_2_name=p.get("faculty2_name", f"Faculty {p.get('faculty2_id', 'unknown')}"),
-                uncoverable_blocks=p.get("uncoverable_blocks", 0),
-                affected_services=[],
-            ))
+            n2_pairs.append(
+                FatalPairInfo(
+                    faculty_1_id=p.get("faculty1_id", ""),
+                    faculty_1_name=p.get(
+                        "faculty1_name", f"Faculty {p.get('faculty1_id', 'unknown')}"
+                    ),
+                    faculty_2_id=p.get("faculty2_id", ""),
+                    faculty_2_name=p.get(
+                        "faculty2_name", f"Faculty {p.get('faculty2_id', 'unknown')}"
+                    ),
+                    uncoverable_blocks=p.get("uncoverable_blocks", 0),
+                    affected_services=[],
+                )
+            )
 
         # Map most_critical_faculty (CentralityScore -> list[str])
         critical_faculty = []
@@ -1165,9 +1169,7 @@ async def analyze_stigmergy(
     Raises:
         ValueError: If request is invalid
     """
-    logger.info(
-        f"Analyzing stigmergy for slot_id={request.slot_id}, slot_type={request.slot_type}"
-    )
+    logger.info(f"Analyzing stigmergy for slot_id={request.slot_id}, slot_type={request.slot_type}")
 
     try:
         # Placeholder for actual integration
@@ -1210,39 +1212,74 @@ async def check_mtf_compliance(
     logger.info(f"Checking MTF compliance (circuit_breaker={request.check_circuit_breaker})")
 
     try:
-        # Placeholder for actual integration
-        logger.warning("MTF compliance check not yet fully integrated with backend")
+        from scheduler_mcp.api_client import get_api_client
 
+        # Get API client and call the MTF compliance endpoint
+        api_client = await get_api_client()
+        result = await api_client.get_mtf_compliance(
+            check_circuit_breaker=request.check_circuit_breaker
+        )
+
+        # Parse circuit breaker info from response
+        cb_data = result.get("circuit_breaker")
+        if cb_data:
+            circuit_breaker = CircuitBreakerInfo(
+                state=cb_data.get("state", "closed"),
+                tripped=cb_data.get("tripped", False),
+                trigger=cb_data.get("trigger"),
+                trigger_details=cb_data.get("trigger_details"),
+                triggered_at=cb_data.get("triggered_at"),
+                locked_operations=cb_data.get("locked_operations", []),
+                override_active=cb_data.get("override_active", False),
+            )
+        else:
+            circuit_breaker = CircuitBreakerInfo(
+                state="closed",
+                tripped=False,
+                trigger=None,
+                trigger_details=None,
+                triggered_at=None,
+                locked_operations=[],
+                override_active=False,
+            )
+
+        return MTFComplianceResponse(
+            drrs_category=result.get("drrs_category", "C1"),
+            mission_capability=result.get("mission_capability", "FMC"),
+            personnel_rating=result.get("personnel_rating", "P1"),
+            capability_rating=result.get("capability_rating", "S1"),
+            circuit_breaker=circuit_breaker,
+            executive_summary=result.get("executive_summary", ""),
+            deficiencies=result.get("deficiencies", []),
+            mfrs_generated=result.get("mfrs_generated", 0),
+            rffs_generated=result.get("rffs_generated", 0),
+            iron_dome_status=result.get("iron_dome_status", "green"),
+            severity=result.get("severity", "healthy"),
+        )
+
+    except Exception as e:
+        logger.error(f"MTF compliance check failed: {e}")
+        # Return fallback response when API is unavailable
+        logger.warning("Returning fallback MTF compliance response")
         circuit_breaker = CircuitBreakerInfo(
-            state="closed",
+            state="unknown",
             tripped=False,
             trigger=None,
-            trigger_details=None,
+            trigger_details="API connection failed",
             triggered_at=None,
             locked_operations=[],
             override_active=False,
         )
-
-        executive_summary = (
-            "UNIT STATUS: GREEN\n"
-            "Overall: C1 | Personnel: P1 | Capability: S1\n\n"
-            "MISSION IMPACT: Unit is Fully Mission Capable."
-        )
-
         return MTFComplianceResponse(
             drrs_category="C1",
             mission_capability="FMC",
             personnel_rating="P1",
             capability_rating="S1",
             circuit_breaker=circuit_breaker,
-            executive_summary=executive_summary,
-            deficiencies=[],
+            executive_summary=f"MTF compliance check unavailable: {e}",
+            deficiencies=["Unable to connect to backend API"],
             mfrs_generated=0,
             rffs_generated=0,
-            iron_dome_status="green",
-            severity="healthy",
+            iron_dome_status="yellow",
+            severity="warning",
         )
-
-    except Exception as e:
-        logger.error(f"MTF compliance check failed: {e}")
-        raise
