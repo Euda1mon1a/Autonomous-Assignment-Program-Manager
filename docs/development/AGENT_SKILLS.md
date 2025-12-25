@@ -566,6 +566,18 @@ gh pr merge <number> --squash
 - Event handler types (React.ChangeEvent, etc.)
 - TanStack Query typed hooks
 
+**Validated Against Real Errors** (Dec 2025):
+This skill was created and validated against actual TypeScript errors in the frontend codebase:
+
+| Error Code | Count | Pattern Covered |
+|------------|-------|-----------------|
+| TS2322 (`unknown` to `ReactNode`) | 3+ | Section 4 |
+| TS7053 (index signature) | 5 | Section 7 |
+| TS2339 (property doesn't exist) | 4 | Section 5 |
+| TS2769 (overload matching) | 2 | Section 6 |
+
+All common frontend TypeScript errors in this project are addressed by this skill.
+
 ---
 
 ### frontend-development
