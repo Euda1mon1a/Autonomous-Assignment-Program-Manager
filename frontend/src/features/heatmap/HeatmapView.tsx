@@ -9,6 +9,7 @@
 
 import React, { useMemo } from 'react';
 import dynamic from 'next/dynamic';
+import type Plotly from 'plotly.js';
 import { Loader2, AlertCircle } from 'lucide-react';
 import type { HeatmapData, HeatmapCellClickData } from './types';
 
@@ -232,10 +233,10 @@ export function HeatmapView({
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
       <Plot
-        data={plotData}
-        layout={plotLayout}
-        config={plotConfig}
-        onClick={handleClick}
+        data={plotData as Plotly.Data[]}
+        layout={plotLayout as Plotly.Layout}
+        config={plotConfig as Partial<Plotly.Config>}
+        onClick={handleClick as unknown as (event: Readonly<Plotly.PlotMouseEvent>) => void}
         style={{ width, height }}
         useResizeHandler={true}
         className="w-full"

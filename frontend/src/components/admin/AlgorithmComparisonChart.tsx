@@ -58,7 +58,9 @@ const ALGORITHM_COLORS: Record<Algorithm, string> = {
   hybrid: 'bg-violet-500',
 };
 
-const METRIC_CONFIG: Record<string, { label: string; unit: string; higherIsBetter: boolean; format: (v: number) => string }> = {
+type MetricKey = 'coverage' | 'violations' | 'fairness' | 'runtime' | 'stability';
+
+const METRIC_CONFIG: Record<MetricKey, { label: string; unit: string; higherIsBetter: boolean; format: (v: number) => string }> = {
   coverage: { label: 'Coverage', unit: '%', higherIsBetter: true, format: (v) => `${v.toFixed(1)}%` },
   violations: { label: 'ACGME Violations', unit: '', higherIsBetter: false, format: (v) => v.toString() },
   fairness: { label: 'Fairness Score', unit: '%', higherIsBetter: true, format: (v) => `${v.toFixed(1)}%` },
@@ -75,7 +77,7 @@ export function AlgorithmComparisonChart({
   metric = 'coverage',
   height = 250,
 }: AlgorithmComparisonChartProps) {
-  const [selectedMetric, setSelectedMetric] = useState<keyof typeof METRIC_CONFIG>(metric);
+  const [selectedMetric, setSelectedMetric] = useState<MetricKey>(metric);
   const [hoveredBar, setHoveredBar] = useState<Algorithm | null>(null);
 
   const chartData = useMemo(() => {

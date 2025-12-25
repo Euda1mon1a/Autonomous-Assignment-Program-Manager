@@ -160,7 +160,7 @@ function transformMarketplaceEntry(entry: MarketplaceEntryApiResponse): Marketpl
     reason: entry.reason,
     postedAt: entry.posted_at,
     expiresAt: entry.expires_at,
-    isCompatible: entry.is_compatible,
+    isCompatible: entry.is_compatible ?? false,
   };
 }
 
@@ -328,7 +328,7 @@ export function useCreateSwapRequest() {
         success: response.success,
         requestId: response.request_id,
         message: response.message,
-        candidatesNotified: response.candidates_notified,
+        candidatesNotified: response.candidates_notified ?? 0,
       };
     },
     onSuccess: () => {

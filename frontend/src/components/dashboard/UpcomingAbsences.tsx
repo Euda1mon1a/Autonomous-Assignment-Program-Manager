@@ -124,9 +124,9 @@ export function UpcomingAbsences() {
           current = addDays(current, 1)
         }
 
-        // Calculate impact based on concurrent absences and role
-        const role = person?.role?.toLowerCase() || ''
-        const isCriticalRole = role.includes('faculty') || role.includes('attending')
+        // Calculate impact based on concurrent absences and type
+        const personType = person?.type?.toLowerCase() || ''
+        const isCriticalRole = personType === 'faculty'
         let impact: ImpactLevel = 'low'
 
         if (maxConcurrent >= 4 || (maxConcurrent >= 2 && isCriticalRole)) {
@@ -141,7 +141,7 @@ export function UpcomingAbsences() {
           id: absence.id,
           person_id: absence.person_id,
           person_name: person?.name ?? 'Unknown',
-          person_role: person?.role,
+          person_role: person?.type,
           absence_type: absence.absence_type,
           start_date: absence.start_date,
           end_date: absence.end_date,

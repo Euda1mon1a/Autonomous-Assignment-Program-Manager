@@ -514,10 +514,15 @@ function AnalysisTab({
   isAnalyzing: boolean;
   result?: any;
 }) {
-  const [config, setConfig] = useState({
+  const [config, setConfig] = useState<{
+    utilization_target: number;
+    cross_zone_borrowing: boolean;
+    sacrifice_willingness: 'low' | 'medium' | 'high';
+    defense_activation_threshold: number;
+  }>({
     utilization_target: 0.8,
     cross_zone_borrowing: true,
-    sacrifice_willingness: 'medium' as const,
+    sacrifice_willingness: 'medium',
     defense_activation_threshold: 3,
   });
 
