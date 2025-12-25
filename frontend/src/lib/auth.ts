@@ -126,7 +126,7 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
       },
       withCredentials: true, // Required for cookies
     })
-    console.log('[auth.ts] Login response received:', { status: 'success', hasToken: !!tokenResponse?.access_token })
+    console.log('[auth.ts] Login response received:', { status: 'success', hasToken: !!tokenResponse?.data?.access_token })
   } catch (loginError) {
     console.error('[auth.ts] Login request FAILED:', loginError)
     throw loginError

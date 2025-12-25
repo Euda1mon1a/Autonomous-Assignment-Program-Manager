@@ -133,7 +133,7 @@ export function UpcomingAssignmentsPreview({
             template?.abbreviation ||
             template?.name?.substring(0, 3).toUpperCase() ||
             '???',
-          notes: assignment.notes,
+          notes: assignment.notes ?? undefined,
         })
       })
 
