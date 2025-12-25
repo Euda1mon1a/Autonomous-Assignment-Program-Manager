@@ -76,6 +76,11 @@ Barrier analysis and schedule change optimization.
 ML-based schedule scoring and predictions.
 </div>
 
+<div class="feature-card" markdown>
+### :material-book-open-variant: [Endpoint Catalog](ENDPOINT_CATALOG.md)
+Comprehensive reference of all 200+ API endpoints.
+</div>
+
 </div>
 
 ---
