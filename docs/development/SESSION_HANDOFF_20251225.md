@@ -171,9 +171,13 @@ added to `ConstraintManager.create_default()`.
 2. Added `scripts/verify_constraints.py` - Pre-flight script to run before commits
 3. Updated `manager.py` - All Block 10 constraints now registered in both
    `create_default()` and `create_resilience_aware()`
+4. Added `constraint-preflight` skill - AI agents auto-activate this skill when
+   working on constraints, ensuring the verification workflow is followed
 
-**Prevention:** Always run `python scripts/verify_constraints.py` before committing
-constraint-related changes.
+**Prevention:**
+- Always run `python scripts/verify_constraints.py` before committing constraint changes
+- The `constraint-preflight` skill auto-activates for AI agents working on constraints
+- CI tests in `test_constraint_registration.py` catch gaps before merge
 
 ---
 
@@ -185,6 +189,8 @@ constraint-related changes.
 | `backend/app/scheduling/constraints/manager.py` | Registered Block 10 constraints |
 | `backend/tests/test_constraint_registration.py` | NEW - Tests to prevent registration gaps |
 | `scripts/verify_constraints.py` | NEW - Pre-flight verification script |
+| `.claude/skills/constraint-preflight/SKILL.md` | NEW - AI skill for constraint development |
+| `docs/development/AGENT_SKILLS.md` | Updated with constraint-preflight skill |
 | `docs/development/SESSION_HANDOFF_20251225.md` | Updated with fix details |
 
 ---
@@ -197,6 +203,9 @@ constraint-related changes.
 | `backend/app/scheduling/constraints/fmit.py` | PostFMITSundayBlockingConstraint |
 | `backend/app/scheduling/constraints/inpatient.py` | ResidentInpatientHeadcountConstraint |
 | `backend/app/scheduling/constraints/call_equity.py` | CallSpacingConstraint |
+| `scripts/verify_constraints.py` | Pre-flight verification script |
+| `backend/tests/test_constraint_registration.py` | CI tests for constraint registration |
+| `.claude/skills/constraint-preflight/SKILL.md` | AI skill for constraint workflows |
 | `backups/postgres/*.sql.gz` | Database backups |
 | `backend/alembic/versions/018_*.py` | Missing columns migration |
 

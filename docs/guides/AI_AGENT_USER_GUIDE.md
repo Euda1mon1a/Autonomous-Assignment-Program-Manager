@@ -32,7 +32,7 @@ This repository has a complete AI agent infrastructure:
 │  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐         │
 │  │   SKILLS     │   │  MCP TOOLS   │   │  ADK AGENTS  │         │
 │  │  (Knowledge) │ + │  (Actions)   │ + │  (Testing)   │         │
-│  │  21 skills   │   │  16+ tools   │   │  TypeScript  │         │
+│  │  22 skills   │   │  16+ tools   │   │  TypeScript  │         │
 │  └──────────────┘   └──────────────┘   └──────────────┘         │
 │         │                  │                  │                  │
 │         └──────────────────┼──────────────────┘                  │
@@ -460,7 +460,7 @@ The tools complement each other:
 
 **What:** Packaged expertise in `.claude/skills/` folders
 
-**Available Skills (21 total):**
+**Available Skills (22 total):**
 
 | Skill | Purpose |
 |-------|---------|
@@ -468,6 +468,7 @@ The tools complement each other:
 | `automated-code-fixer` | Fix code issues with strict quality gates |
 | `code-quality-monitor` | Enforce quality standards before commits |
 | `code-review` | Review generated code for bugs, security, performance |
+| `constraint-preflight` | Verify scheduling constraints are registered before commit |
 | `database-migration` | Alembic migration expertise and safe schema evolution |
 | `fastapi-production` | Production-grade FastAPI patterns |
 | `frontend-development` | Next.js 14, React, TailwindCSS patterns |
