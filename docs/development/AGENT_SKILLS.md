@@ -54,6 +54,10 @@ All skills are located in `.claude/skills/`:
 │   └── SKILL.md
 ├── constraint-preflight/       # Constraint verification pre-flight
 │   └── SKILL.md
+├── docker-containerization/    # Docker development & orchestration
+│   ├── SKILL.md
+│   ├── security.md
+│   └── troubleshooting.md
 ├── database-migration/         # Alembic migration expertise
 │   └── SKILL.md
 ├── fastapi-production/         # Production FastAPI patterns
@@ -108,6 +112,7 @@ All skills are located in `.claude/skills/`:
 |-------|-------------|------------------|
 | `code-review` | Code review procedures | Reviewing generated code, quality checks |
 | `constraint-preflight` | Constraint verification pre-flight | Verify constraints are implemented, exported, registered, tested |
+| `docker-containerization` | Docker development & orchestration | Dockerfiles, docker-compose, container debugging, image optimization |
 | `automated-code-fixer` | Auto-fix code issues | Test failures, linting errors |
 | `code-quality-monitor` | Quality gate enforcement | Pre-commit validation, PR checks |
 | `lint-monorepo` | Unified Python/TypeScript linting | Auto-fix, root-cause analysis for lint errors |
@@ -235,6 +240,63 @@ cd backend && python ../scripts/verify_constraints.py
 | `scripts/verify_constraints.py` | Pre-flight verification script |
 | `backend/tests/test_constraint_registration.py` | CI tests for registration |
 | `backend/app/scheduling/constraints/manager.py` | Where constraints are registered |
+
+---
+
+### docker-containerization
+
+**Purpose**: Docker development and container orchestration expertise.
+
+**Activates When**:
+- Creating or modifying Dockerfiles
+- Setting up docker-compose configurations
+- Debugging container build failures or runtime issues
+- Optimizing Docker image size or build performance
+- Configuring health checks and service dependencies
+- Implementing container security hardening
+- CI/CD pipeline Docker integration
+
+**Key Capabilities**:
+| Capability | Description |
+|------------|-------------|
+| Multi-Stage Builds | Optimized production images with separate build/runtime stages |
+| Docker Compose | Development and production orchestration |
+| Health Checks | Service dependency management |
+| Security Hardening | Non-root users, read-only filesystems, secrets management |
+| Debugging | Container logs, networking issues, build failures |
+| Image Optimization | Layer caching, size reduction, .dockerignore |
+
+**Project Docker Files**:
+- `/backend/Dockerfile` - Production backend (multi-stage)
+- `/frontend/Dockerfile` - Production frontend (multi-stage)
+- `docker-compose.yml` - Base configuration
+- `docker-compose.dev.yml` - Development overrides
+- `.docker/docker-compose.prod.yml` - Hardened production
+
+**Supporting Files**:
+- `security.md` - Container security patterns for HIPAA/military contexts
+- `troubleshooting.md` - Common issues and solutions
+
+**Quick Commands**:
+```bash
+# Development
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# View logs
+docker compose logs -f backend
+
+# Shell into container
+docker compose exec backend bash
+
+# Clean up
+docker system prune -af --volumes
+```
+
+**Escalation Triggers**:
+- Production docker-compose.yml changes
+- Secrets management configuration
+- Network security policy changes
+- Resource limit adjustments for production
 
 ---
 
