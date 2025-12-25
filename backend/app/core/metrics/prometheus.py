@@ -342,6 +342,53 @@ class MetricsRegistry:
         )
 
         # =====================================================================
+        # CONSTRAINT METRICS (Solver Diagnostics)
+        # =====================================================================
+
+        self.constraint_violations_total = Counter(
+            "scheduler_constraint_violations_total",
+            "Constraint violations during solving by name, type, and severity",
+            ["constraint_name", "constraint_type", "severity"],
+            registry=REGISTRY,
+        )
+
+        self.constraint_evaluation_duration_seconds = Histogram(
+            "scheduler_constraint_evaluation_seconds",
+            "Time spent evaluating constraints by name",
+            ["constraint_name"],
+            buckets=[0.0001, 0.0005, 0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5],
+            registry=REGISTRY,
+        )
+
+        self.constraint_satisfaction_rate = Gauge(
+            "scheduler_constraint_satisfaction_rate",
+            "Constraint satisfaction rate (0.0-1.0) by constraint name",
+            ["constraint_name"],
+            registry=REGISTRY,
+        )
+
+        self.solver_iterations_total = Counter(
+            "scheduler_solver_iterations_total",
+            "Total solver iterations by algorithm",
+            ["algorithm"],
+            registry=REGISTRY,
+        )
+
+        self.solver_abort_total = Counter(
+            "scheduler_solver_abort_total",
+            "Total solver aborts by reason",
+            ["reason"],  # timeout, operator_request, memory_limit, error
+            registry=REGISTRY,
+        )
+
+        self.solver_best_score = Gauge(
+            "scheduler_solver_best_score",
+            "Current best objective score during solving",
+            ["run_id", "algorithm"],
+            registry=REGISTRY,
+        )
+
+        # =====================================================================
         # ERROR TRACKING
         # =====================================================================
 
@@ -597,6 +644,102 @@ class MetricsRegistry:
         """Update ACGME compliance score (0.0-1.0)."""
         if self._enabled:
             self.acgme_compliance_score.labels(rule=rule).set(score)
+
+    # =========================================================================
+    # CONSTRAINT METRICS HELPERS
+    # =========================================================================
+
+    def record_constraint_violation(
+        self, constraint_name: str, constraint_type: str, severity: str = "soft"
+    ):
+        """
+        Record a constraint violation during solving.
+
+        Args:
+            constraint_name: Name of the constraint (e.g., "Availability", "80HourWeek")
+            constraint_type: Type category (e.g., "availability", "duty_hours", "supervision")
+            severity: Violation severity ("hard", "soft", "warning")
+
+        Usage:
+            metrics.record_constraint_violation("80HourWeek", "duty_hours", "hard")
+        """
+        if self._enabled:
+            self.constraint_violations_total.labels(
+                constraint_name=constraint_name,
+                constraint_type=constraint_type,
+                severity=severity,
+            ).inc()
+
+    @contextmanager
+    def time_constraint_evaluation(self, constraint_name: str):
+        """
+        Context manager to time constraint evaluation.
+
+        Args:
+            constraint_name: Name of the constraint being evaluated
+
+        Usage:
+            with metrics.time_constraint_evaluation("Availability"):
+                result = constraint.validate(assignments, context)
+        """
+        if not self._enabled:
+            yield
+            return
+
+        start_time = time.perf_counter()
+        try:
+            yield
+        finally:
+            duration = time.perf_counter() - start_time
+            self.constraint_evaluation_duration_seconds.labels(
+                constraint_name=constraint_name
+            ).observe(duration)
+
+    def update_constraint_satisfaction(self, constraint_name: str, rate: float):
+        """
+        Update constraint satisfaction rate.
+
+        Args:
+            constraint_name: Name of the constraint
+            rate: Satisfaction rate (0.0-1.0)
+        """
+        if self._enabled:
+            self.constraint_satisfaction_rate.labels(
+                constraint_name=constraint_name
+            ).set(rate)
+
+    def record_solver_iteration(self, algorithm: str, count: int = 1):
+        """
+        Record solver iteration(s).
+
+        Args:
+            algorithm: Solver algorithm (greedy, cp_sat, pulp, hybrid)
+            count: Number of iterations to record (default 1)
+        """
+        if self._enabled:
+            self.solver_iterations_total.labels(algorithm=algorithm).inc(count)
+
+    def record_solver_abort(self, reason: str):
+        """
+        Record a solver abort event.
+
+        Args:
+            reason: Abort reason (timeout, operator_request, memory_limit, error)
+        """
+        if self._enabled:
+            self.solver_abort_total.labels(reason=reason).inc()
+
+    def update_solver_best_score(self, run_id: str, algorithm: str, score: float):
+        """
+        Update best objective score during solving.
+
+        Args:
+            run_id: Schedule run ID
+            algorithm: Solver algorithm
+            score: Current best objective score
+        """
+        if self._enabled:
+            self.solver_best_score.labels(run_id=run_id, algorithm=algorithm).set(score)
 
 
 # Global metrics instance - use singleton pattern to avoid re-registration on reload
