@@ -53,6 +53,16 @@ from .temporal import (
     WednesdayPMSingleFacultyConstraint,
 )
 
+# Block 10 constraints - call equity and inpatient headcount
+from .call_equity import (
+    CallSpacingConstraint,
+    SundayCallEquityConstraint,
+    TuesdayCallPreferenceConstraint,
+    WeekdayCallEquityConstraint,
+)
+from .fmit import PostFMITSundayBlockingConstraint
+from .inpatient import ResidentInpatientHeadcountConstraint
+
 logger = logging.getLogger(__name__)
 
 
@@ -284,10 +294,21 @@ class ConstraintManager:
         manager.add(InvertedWednesdayConstraint())
         manager.add(NightFloatPostCallConstraint())
 
+        # Block 10 hard constraints - inpatient headcount and post-FMIT blocking
+        manager.add(ResidentInpatientHeadcountConstraint())
+        manager.add(PostFMITSundayBlockingConstraint())
+
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))
         manager.add(EquityConstraint(weight=10.0))
         manager.add(ContinuityConstraint(weight=5.0))
+
+        # Block 10 soft constraints - call equity (weight hierarchy documented)
+        # Weight order: Sunday (10) > CallSpacing (8) > Weekday (5) > Tuesday (2)
+        manager.add(SundayCallEquityConstraint(weight=10.0))
+        manager.add(CallSpacingConstraint(weight=8.0))
+        manager.add(WeekdayCallEquityConstraint(weight=5.0))
+        manager.add(TuesdayCallPreferenceConstraint(weight=2.0))
 
         # Tier 1: Resilience-aware soft constraints (ENABLED by default)
         # These provide critical protection against cascade failures
@@ -341,10 +362,20 @@ class ConstraintManager:
         manager.add(InvertedWednesdayConstraint())
         manager.add(NightFloatPostCallConstraint())
 
+        # Block 10 hard constraints - inpatient headcount and post-FMIT blocking
+        manager.add(ResidentInpatientHeadcountConstraint())
+        manager.add(PostFMITSundayBlockingConstraint())
+
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))
         manager.add(EquityConstraint(weight=10.0))
         manager.add(ContinuityConstraint(weight=5.0))
+
+        # Block 10 soft constraints - call equity
+        manager.add(SundayCallEquityConstraint(weight=10.0))
+        manager.add(CallSpacingConstraint(weight=8.0))
+        manager.add(WeekdayCallEquityConstraint(weight=5.0))
+        manager.add(TuesdayCallPreferenceConstraint(weight=2.0))
 
         # Tier 1: Core resilience constraints (ENABLED)
         manager.add(HubProtectionConstraint(weight=15.0))

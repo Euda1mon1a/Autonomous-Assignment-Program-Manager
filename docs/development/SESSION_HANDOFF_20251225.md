@@ -75,15 +75,27 @@ backups/postgres/
 
 ## Block 10 Constraint Status (Code Layer)
 
-All Block 10 constraints are **implemented and registered**:
+All Block 10 constraints are **implemented, tested, and registered**:
 
-| Constraint | Type | File | Registered |
-|------------|------|------|------------|
-| `PostFMITSundayBlockingConstraint` | Hard | `fmit.py` | manager.py:292 |
-| `ResidentInpatientHeadcountConstraint` | Hard | `inpatient.py` | manager.py:291 |
-| `CallSpacingConstraint` | Soft | `call_equity.py` | manager.py:300 |
+| Constraint | Type | File | Status |
+|------------|------|------|--------|
+| `PostFMITSundayBlockingConstraint` | Hard | `fmit.py` | Registered in manager.py |
+| `ResidentInpatientHeadcountConstraint` | Hard | `inpatient.py` | Registered in manager.py |
+| `CallSpacingConstraint` | Soft | `call_equity.py` | Registered in manager.py |
+| `SundayCallEquityConstraint` | Soft | `call_equity.py` | Registered in manager.py |
+| `WeekdayCallEquityConstraint` | Soft | `call_equity.py` | Registered in manager.py |
+| `TuesdayCallPreferenceConstraint` | Soft | `call_equity.py` | Registered in manager.py |
 
-**Tests passing**: 64 tests in constraint test files
+**Tests passing**: 64+ tests in constraint test files
+
+**Registration verified in both**:
+- `ConstraintManager.create_default()`
+- `ConstraintManager.create_resilience_aware()`
+
+**Weight hierarchy** (documented in call_equity.py):
+```
+Sunday (10.0) > CallSpacing (8.0) > Weekday (5.0) > Tuesday (2.0)
+```
 
 ---
 
@@ -146,6 +158,23 @@ WARNING: This will reset the database. Type 'RESET DATABASE' to confirm:
 **Issue:** MCP tools use relative imports, can't be invoked directly from CLI.
 **Fix:** MCP tools must be run via the MCP server, not imported directly.
 
+### 4. Constraint Registration Gap (FIXED 2025-12-25)
+**Issue:** Session handoff doc claimed constraints were "registered" when they weren't.
+The constraints were implemented, exported in `__init__.py`, and tested, but never
+added to `ConstraintManager.create_default()`.
+
+**Root cause:** Manual verification of line numbers without running actual tests.
+
+**Fixes implemented:**
+1. Added `test_constraint_registration.py` - Tests that verify exported constraints
+   are actually registered in the manager factory methods
+2. Added `scripts/verify_constraints.py` - Pre-flight script to run before commits
+3. Updated `manager.py` - All Block 10 constraints now registered in both
+   `create_default()` and `create_resilience_aware()`
+
+**Prevention:** Always run `python scripts/verify_constraints.py` before committing
+constraint-related changes.
+
 ---
 
 ## Files Modified This Session
@@ -153,7 +182,10 @@ WARNING: This will reset the database. Type 'RESET DATABASE' to confirm:
 | File | Change |
 |------|--------|
 | Database `people` table | Added 7 columns |
-| No code files modified | - |
+| `backend/app/scheduling/constraints/manager.py` | Registered Block 10 constraints |
+| `backend/tests/test_constraint_registration.py` | NEW - Tests to prevent registration gaps |
+| `scripts/verify_constraints.py` | NEW - Pre-flight verification script |
+| `docs/development/SESSION_HANDOFF_20251225.md` | Updated with fix details |
 
 ---
 
