@@ -2426,4 +2426,620 @@ The exotic pattern library represents months of research into cross-disciplinary
 
 ---
 
+## Appendix A: Complete Pattern Inventory (54 Modules)
+
+### A.1 Pattern Categories
+
+The resilience library contains **54+ modules** across **14 categories**. This appendix provides complete documentation for SDK orchestration integration.
+
+```
+backend/app/resilience/
+├── Core Framework (5 modules)
+│   ├── service.py                 # Main resilience service
+│   ├── metrics.py                 # Prometheus metrics
+│   ├── tasks.py                   # Celery background tasks
+│   ├── utilization.py             # 80% threshold monitoring
+│   └── __init__.py                # Package exports
+│
+├── Power Grid Patterns (4 modules)
+│   ├── contingency.py             # N-1/N-2 analysis
+│   ├── defense_in_depth.py        # 5-level safety tiers
+│   ├── static_stability.py        # Pre-computed fallbacks
+│   └── sacrifice_hierarchy.py     # Triage-based shedding
+│
+├── Network Analysis (3 modules)
+│   ├── hub_analysis.py            # Centrality metrics (betweenness, degree)
+│   ├── blast_radius.py            # Zone isolation (AWS-inspired)
+│   └── behavioral_network.py      # Shadow org chart / COIN patterns
+│
+├── Epidemiology (2 modules)
+│   ├── burnout_epidemiology.py    # SIR/SEIR burnout spread
+│   └── contagion_model.py         # SIS network transmission
+│
+├── Thermodynamics (3 modules)
+│   ├── thermodynamics/entropy.py          # Shannon entropy analysis
+│   ├── thermodynamics/phase_transitions.py # Critical phenomena
+│   └── thermodynamics/__init__.py
+│
+├── Materials Science (1 module)
+│   └── creep_fatigue.py           # Larson-Miller parameter
+│
+├── Chemistry (1 module)
+│   └── le_chatelier.py            # Equilibrium stress response
+│
+├── Biology (4 modules)
+│   ├── homeostasis.py             # Negative/positive feedback
+│   ├── transcription_factors.py   # Gene regulatory networks
+│   ├── immune_system.py           # Negative selection / clonal selection
+│   └── mtf_types.py               # Multi-transcription factor types
+│
+├── Psychology/Human Factors (2 modules)
+│   ├── cognitive_load.py          # Decision fatigue / Miller's Law
+│   └── equity_metrics.py          # Fairness measurement
+│
+├── Geophysics (1 module)
+│   └── seismic_detection.py       # STA/LTA early warning
+│
+├── Forestry (2 modules)
+│   ├── burnout_fire_index.py      # CFFDRS danger rating
+│   └── burnout_fire_index_examples.py
+│
+├── Entomology (1 module)
+│   └── stigmergy.py               # Ant colony optimization
+│
+├── Manufacturing (3 modules)
+│   ├── spc_monitoring.py          # Western Electric rules
+│   ├── process_capability.py      # Cp/Cpk Six Sigma
+│   └── mtf_compliance.py          # MTF regulatory compliance
+│
+├── Telecommunications (1 module)
+│   └── erlang_coverage.py         # Queuing theory
+│
+├── Fault Tolerance (12 modules)
+│   ├── circuit_breaker/breaker.py     # State machine
+│   ├── circuit_breaker/states.py      # Open/closed/half-open
+│   ├── circuit_breaker/decorators.py  # Function wrappers
+│   ├── circuit_breaker/registry.py    # Global registry
+│   ├── circuit_breaker/monitoring.py  # Metrics
+│   ├── circuit_breaker/__init__.py
+│   ├── retry/decorator.py         # Exponential backoff
+│   ├── retry/strategies.py        # Retry strategies
+│   ├── retry/jitter.py            # Jitter algorithms
+│   ├── retry/context.py           # Retry context
+│   ├── retry/exceptions.py        # Custom exceptions
+│   └── retry/__init__.py
+│
+├── Distributed Transactions (Saga)
+│   └── saga/orchestrator.py       # Compensation patterns
+│
+├── Simulation Framework (6 modules)
+│   ├── simulation/base.py             # SimPy environment
+│   ├── simulation/events.py           # Event definitions
+│   ├── simulation/metrics.py          # Simulation metrics
+│   ├── simulation/n2_scenario.py      # N-2 failure scenarios
+│   ├── simulation/cascade_scenario.py # Cascade simulation
+│   ├── simulation/compound_stress_scenario.py
+│   └── simulation/__init__.py
+│
+└── Cross-Domain Integrators (2 modules)
+    ├── unified_critical_index.py  # N-1 + Epi + Hub fusion
+    └── tier3_persistence.py       # Tier 3+ pattern storage
+```
+
+### A.2 New Pattern Mappings for SDK Orchestration
+
+These patterns weren't covered in Phase 6-7 but have direct SDK applications:
+
+#### A.2.1 Immune System Pattern → Anomaly Detection
+
+```python
+# SDK Application: Detect anomalous agent behavior without explicit rules
+
+from dataclasses import dataclass
+from typing import Any
+
+@dataclass
+class AgentDetector:
+    """
+    Negative selection detector for agent behavior.
+
+    Trained on successful agent sessions to detect anomalies:
+    - Unusual tool usage patterns
+    - Abnormal response lengths
+    - Unexpected error rates
+    - Out-of-character domain access
+    """
+    center: list[float]  # Feature vector center
+    radius: float        # Detection threshold
+
+    def matches(self, agent_features: list[float]) -> bool:
+        """Return True if agent behavior is anomalous."""
+        distance = sum((a - b) ** 2 for a, b in zip(agent_features, self.center)) ** 0.5
+        return distance > self.radius
+
+
+class AgentImmuneSystem:
+    """
+    Self/Non-Self discrimination for agent orchestration.
+
+    Use cases:
+    - Detect compromised or misbehaving agents
+    - Identify sessions that have "gone off track"
+    - Auto-repair with clonal selection (choose best fix)
+    """
+
+    def __init__(self, detector_count: int = 50):
+        self.detectors: list[AgentDetector] = []
+        self.repair_antibodies: dict[str, callable] = {}
+
+    def train_on_successful_sessions(self, session_features: list[list[float]]):
+        """Generate detectors that DON'T match good sessions."""
+        # Negative selection: any detector matching self is discarded
+        pass
+
+    def is_anomalous(self, current_features: list[float]) -> bool:
+        """Check if current agent behavior is anomalous."""
+        return any(d.matches(current_features) for d in self.detectors)
+
+    def select_repair(self, anomaly_features: list[float]) -> callable:
+        """Clonal selection: choose best repair for this anomaly type."""
+        # Match antibody with highest affinity
+        pass
+```
+
+#### A.2.2 Behavioral Network → Agent Power Dynamics
+
+```python
+# SDK Application: Detect informal patterns in agent interactions
+
+from enum import Enum
+
+class AgentRole(str, Enum):
+    """Emergent roles from agent behavior patterns."""
+    NEUTRAL = "neutral"        # Normal behavior
+    WORKHORSE = "workhorse"    # Consistently handles most tasks
+    SPECIALIST = "specialist"  # Excels in specific domains
+    BOTTLENECK = "bottleneck"  # Tasks queue behind this agent
+    COLLABORATOR = "collaborator"  # Frequently triggers handoffs
+    ISOLATE = "isolate"        # Rarely interacts with others
+
+
+class AgentBehavioralAnalysis:
+    """
+    Map the 'shadow org chart' of agent interactions.
+
+    From COIN doctrine: formal assignment != actual influence
+    From forensic accounting: activity != contribution
+
+    Use cases:
+    - Identify which agents are de facto critical (even if not assigned critical tasks)
+    - Detect bottleneck agents that slow the system
+    - Find collaboration patterns that emerge organically
+    - Protect "workhorse" agents from overload
+    """
+
+    def __init__(self):
+        self.task_history: dict[str, list[str]] = {}  # agent_id → task_ids
+        self.handoff_graph: dict[tuple[str, str], int] = {}  # (from, to) → count
+        self.burden_scores: dict[str, float] = {}
+
+    def classify_agent_role(self, agent_id: str) -> AgentRole:
+        """Determine agent's emergent behavioral role."""
+        pass
+
+    def get_shadow_criticality(self) -> dict[str, float]:
+        """
+        Calculate actual criticality from behavior (not assignment).
+
+        An agent assigned to low-priority tasks but frequently needed
+        for handoffs is actually more critical than assignments suggest.
+        """
+        pass
+```
+
+#### A.2.3 SPC Monitoring → Orchestrator Quality Control
+
+```python
+# SDK Application: Western Electric rules for orchestrator metrics
+
+@dataclass
+class OrchestratorControlChart:
+    """
+    Statistical Process Control for SDK orchestration.
+
+    Western Electric Rules applied to orchestrator metrics:
+    - Rule 1: 1 point beyond 3σ → CRITICAL (task duration spike)
+    - Rule 2: 2/3 points beyond 2σ → WARNING (pattern shift)
+    - Rule 3: 4/5 points beyond 1σ → WARNING (trending)
+    - Rule 4: 8 consecutive same side → INFO (sustained shift)
+
+    Metrics to monitor:
+    - Task completion time
+    - Error rate per lane
+    - Handoff latency
+    - Queue depth
+    - Review iteration count
+    """
+    target: float          # Expected value (centerline)
+    sigma: float           # Standard deviation
+    history: list[float]   # Recent observations
+
+    def check_rule_1(self) -> bool:
+        """1 point beyond 3σ - process out of control."""
+        if not self.history:
+            return False
+        return abs(self.history[-1] - self.target) > 3 * self.sigma
+
+    def check_rule_4(self) -> bool:
+        """8 consecutive points on same side - sustained shift."""
+        if len(self.history) < 8:
+            return False
+        recent = self.history[-8:]
+        above = all(v > self.target for v in recent)
+        below = all(v < self.target for v in recent)
+        return above or below
+
+    def get_process_capability(self) -> float:
+        """
+        Calculate Cpk (process capability index).
+
+        Cpk ≥ 1.33: Process is capable (4σ)
+        Cpk ≥ 1.67: Process is highly capable (5σ)
+        Cpk < 1.00: Process not capable, needs improvement
+        """
+        if len(self.history) < 2:
+            return 0.0
+
+        import statistics
+        mean = statistics.mean(self.history)
+        std = statistics.stdev(self.history)
+
+        if std == 0:
+            return float('inf')
+
+        # Assuming spec limits at target ± 3σ
+        usl = self.target + 3 * self.sigma
+        lsl = self.target - 3 * self.sigma
+
+        cpu = (usl - mean) / (3 * std)
+        cpl = (mean - lsl) / (3 * std)
+
+        return min(cpu, cpl)
+```
+
+#### A.2.4 Cognitive Load → Orchestrator Decision Management
+
+```python
+# SDK Application: Prevent decision fatigue in orchestrator
+
+class OrchestratorDecisionManager:
+    """
+    Manage cognitive load in orchestrator decisions.
+
+    Miller's Law: Working memory ~7±2 items
+    Decision fatigue: Quality degrades after repeated decisions
+
+    SDK Applications:
+    - Batch similar lane assignments together
+    - Provide safe defaults for common decisions
+    - Limit cascading decisions in single cycle
+    - Monitor decision quality over session
+    """
+
+    def __init__(self, max_decisions_per_cycle: int = 7):
+        self.max_decisions = max_decisions_per_cycle
+        self.decisions_this_cycle: int = 0
+        self.safe_defaults: dict[str, any] = {}
+
+    def should_use_default(self, decision_type: str) -> bool:
+        """Check if we should use safe default to reduce load."""
+        return (
+            self.decisions_this_cycle >= self.max_decisions and
+            decision_type in self.safe_defaults
+        )
+
+    def batch_similar_decisions(self, decisions: list[dict]) -> list[list[dict]]:
+        """
+        Group similar decisions to reduce context switching.
+
+        Example: All "lane assignment" decisions together,
+        then all "retry" decisions, then all "handoff" decisions.
+        """
+        batches: dict[str, list[dict]] = {}
+        for d in decisions:
+            dtype = d.get("type", "unknown")
+            batches.setdefault(dtype, []).append(d)
+        return list(batches.values())
+```
+
+### A.3 Simulation Framework for Orchestrator Testing
+
+The `simulation/` subdirectory provides discrete-event simulation (SimPy) for testing orchestrator resilience:
+
+```python
+# SDK Application: Simulate orchestrator failure scenarios
+
+from dataclasses import dataclass
+
+@dataclass
+class OrchestratorSimConfig:
+    """Configuration for orchestrator simulation."""
+    seed: int = 42
+    duration_hours: int = 24
+    lane_count: int = 8
+    task_arrival_rate: float = 5.0  # tasks/hour
+    lane_failure_probability: float = 0.01  # per hour
+    recovery_time_minutes: float = 5.0
+
+
+class OrchestratorSimulator:
+    """
+    SimPy-based discrete event simulation for SDK orchestrator.
+
+    Scenarios available:
+    1. N-2 Failure: Two lanes fail simultaneously
+    2. Cascade: One failure triggers others
+    3. Compound Stress: High load + failure
+    4. Recovery: Test recovery time under various conditions
+    """
+
+    def run_n2_scenario(self, config: OrchestratorSimConfig):
+        """Simulate N-2 lane failure."""
+        pass
+
+    def run_cascade_scenario(self, config: OrchestratorSimConfig):
+        """Simulate cascade failure propagation."""
+        pass
+
+    def calculate_mttr(self) -> float:
+        """Mean Time To Recovery."""
+        pass
+
+    def calculate_availability(self) -> float:
+        """System availability percentage."""
+        pass
+```
+
+---
+
+## Appendix B: Pattern Cross-Reference Matrix
+
+### B.1 Pattern Dependencies
+
+Patterns often work together. This matrix shows which patterns enhance or depend on others:
+
+```
+                    │ UCI │ ENT │ HOM │ TF  │ SPC │ C/F │ IMM │ STG │
+────────────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+Unified Crit Index  │  -  │  ↑  │  ↑  │     │  ↑  │     │     │     │
+Entropy             │  ↓  │  -  │     │     │     │     │     │  ↑  │
+Homeostasis         │  ↓  │     │  -  │  ↑  │     │     │     │     │
+Transcription Fact  │     │     │  ↓  │  -  │     │     │     │     │
+SPC Monitoring      │  ↓  │     │     │     │  -  │  ↑  │     │     │
+Creep/Fatigue       │     │     │     │     │  ↓  │  -  │     │     │
+Immune System       │     │     │     │     │     │     │  -  │     │
+Stigmergy           │     │  ↓  │     │     │     │     │     │  -  │
+
+Legend:
+  ↑ = This pattern feeds data TO the column pattern
+  ↓ = This pattern receives data FROM the column pattern
+  (blank) = No direct dependency
+```
+
+### B.2 Recommended Integration Order
+
+Based on dependencies, integrate patterns in this order:
+
+```
+Phase 1: Foundation Patterns (No dependencies)
+├── Retry/Backoff (standalone)
+├── Circuit Breaker (standalone)
+└── Entropy Monitoring (standalone)
+
+Phase 2: Feedback Patterns (Depend on Phase 1)
+├── Homeostasis (uses Entropy for setpoint detection)
+├── SPC Monitoring (uses Entropy for baseline)
+└── Creep/Fatigue (uses metrics from Phase 1)
+
+Phase 3: Regulatory Patterns (Depend on Phase 2)
+├── Transcription Factors (uses Homeostasis signals)
+├── Le Chatelier (uses SPC for stress detection)
+└── Cognitive Load (uses fatigue signals)
+
+Phase 4: Detection Patterns (Depend on Phase 2-3)
+├── STA/LTA Seismic (uses SPC data streams)
+├── Phase Transitions (uses Entropy + SPC)
+└── Immune System (uses all baseline data)
+
+Phase 5: Integration Patterns (Depend on all above)
+├── Unified Critical Index (aggregates all signals)
+├── Behavioral Network (long-term pattern analysis)
+└── Stigmergy (emerges from usage patterns)
+```
+
+### B.3 Signal Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        EXOTIC PATTERN SIGNAL FLOW                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   RAW METRICS                                                               │
+│   ┌─────────────┬─────────────┬─────────────┬─────────────┐                │
+│   │ Task Times  │ Error Rates │ Queue Depth │ Lane States │                │
+│   └──────┬──────┴──────┬──────┴──────┬──────┴──────┬──────┘                │
+│          │             │             │             │                        │
+│          ▼             ▼             ▼             ▼                        │
+│   ┌─────────────────────────────────────────────────────────┐              │
+│   │                  ENTROPY ANALYZER                        │              │
+│   │   H = -Σ p(i) log₂ p(i)                                 │              │
+│   │   Detects: Distribution imbalance, bottlenecks           │              │
+│   └────────────────────────┬────────────────────────────────┘              │
+│                            │                                                │
+│          ┌─────────────────┼─────────────────┐                             │
+│          ▼                 ▼                 ▼                             │
+│   ┌────────────┐    ┌────────────┐    ┌────────────┐                       │
+│   │ HOMEOSTASIS│    │    SPC     │    │CREEP/FATIGUE│                      │
+│   │ Setpoints  │    │ W.E. Rules │    │ Larson-Miller│                     │
+│   │ Feedback   │    │ Control    │    │ Session LMP  │                     │
+│   └─────┬──────┘    └─────┬──────┘    └──────┬──────┘                      │
+│         │                 │                  │                              │
+│         └────────┬────────┴────────┬─────────┘                             │
+│                  ▼                 ▼                                        │
+│         ┌─────────────┐    ┌─────────────┐                                 │
+│         │TRANSCRIPTION│    │  STA/LTA    │                                 │
+│         │  FACTORS    │    │  SEISMIC    │                                 │
+│         │ Constraint  │    │  Detection  │                                 │
+│         │ Activation  │    │             │                                 │
+│         └──────┬──────┘    └──────┬──────┘                                 │
+│                │                  │                                         │
+│                └─────────┬────────┘                                         │
+│                          ▼                                                  │
+│            ┌───────────────────────────┐                                   │
+│            │   UNIFIED CRITICAL INDEX  │                                   │
+│            │   Aggregates all signals  │                                   │
+│            │   Risk = f(N-1, Epi, Hub) │                                   │
+│            └─────────────┬─────────────┘                                   │
+│                          │                                                  │
+│                          ▼                                                  │
+│            ┌───────────────────────────┐                                   │
+│            │     ACTION DECISIONS      │                                   │
+│            ├───────────────────────────┤                                   │
+│            │ • Scale lanes             │                                   │
+│            │ • Refresh sessions        │                                   │
+│            │ • Activate constraints    │                                   │
+│            │ • Trigger circuit breaker │                                   │
+│            │ • Queue rebalancing       │                                   │
+│            └───────────────────────────┘                                   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Appendix C: Quick Reference Guide
+
+### C.1 Pattern Selection by Problem Type
+
+| Problem | Best Pattern | Fallback | Phase |
+|---------|--------------|----------|-------|
+| **Lane overload** | Entropy | Utilization | 6 |
+| **Session exhaustion** | Creep/Fatigue | Homeostasis | 6 |
+| **Error spreading** | Contagion | Circuit Breaker | 7 |
+| **Quality degradation** | SPC | Entropy | 7 |
+| **Unpredictable failures** | Phase Transitions | STA/LTA | 7 |
+| **Complex constraints** | Transcription Factors | - | 6 |
+| **Backpressure buildup** | Le Chatelier | Queue monitoring | 7 |
+| **Anomaly detection** | Immune System | SPC | 7 |
+| **Optimal routing** | Stigmergy | Entropy | 7 |
+| **Multi-domain tasks** | Saga | Handoff Manager | 7 |
+| **Decision fatigue** | Cognitive Load | Batching | 7 |
+| **System criticality** | Unified Index | N-1/N-2 | 7 |
+
+### C.2 One-Line Pattern Summaries
+
+```
+ENTROPY:        "How evenly distributed are tasks across lanes?"
+CREEP/FATIGUE:  "How tired is this session?"
+HOMEOSTASIS:    "Are we deviating from healthy setpoints?"
+SPC:            "Are metrics in statistical control?"
+PHASE TRANS:    "Are we approaching a tipping point?"
+TRANSCRIPTION:  "Which constraints should be active now?"
+LE CHATELIER:   "How is the system compensating for stress?"
+CONTAGION:      "Are errors spreading between agents?"
+IMMUNE:         "Is this behavior anomalous?"
+STIGMERGY:      "What routing has worked before?"
+STA/LTA:        "Is something sudden happening?"
+UNIFIED INDEX:  "What's the overall risk level?"
+COGNITIVE:      "Are we making too many decisions?"
+BEHAVIORAL:     "What informal patterns have emerged?"
+SAGA:           "How do we handle multi-step failures?"
+```
+
+### C.3 Implementation Complexity Matrix
+
+| Pattern | Lines | Dependencies | Test Coverage | Ready? |
+|---------|-------|--------------|---------------|--------|
+| Entropy | ~440 | numpy | High | ✅ |
+| Creep/Fatigue | ~600 | numpy | High | ✅ |
+| Homeostasis | ~400 | - | High | ✅ |
+| Retry/Backoff | ~470 | - | High | ✅ |
+| Circuit Breaker | ~800 | asyncio | High | ✅ |
+| Transcription | ~1300 | - | Medium | ✅ |
+| SPC Monitoring | ~400 | statistics | High | ⚡ |
+| Contagion | ~600 | networkx | Medium | ⚡ |
+| Phase Transitions | ~500 | scipy | Medium | ⚡ |
+| Le Chatelier | ~350 | - | Medium | ⚡ |
+| Unified Index | ~900 | networkx | Medium | ⚡ |
+| Immune System | ~700 | numpy | Low | 🔬 |
+| Stigmergy | ~500 | - | Low | 🔬 |
+| Cognitive Load | ~450 | - | Low | 🔬 |
+| Behavioral Net | ~600 | - | Low | 🔬 |
+| Simulation | ~1500 | simpy | Medium | 🔬 |
+
+Legend: ✅ Ready  ⚡ Needs Adaptation  🔬 Research Phase
+
+---
+
+## Appendix D: Pattern Integration Checklist
+
+### D.1 Before Integrating Any Pattern
+
+- [ ] Read the module docstring completely
+- [ ] Understand the domain analogy (biology, physics, etc.)
+- [ ] Identify input metrics needed
+- [ ] Identify output actions possible
+- [ ] Check dependencies (numpy, scipy, networkx, etc.)
+- [ ] Review existing tests in `backend/tests/resilience/`
+
+### D.2 Integration Template
+
+```python
+# Template for integrating any exotic pattern
+
+from dataclasses import dataclass
+from typing import Protocol
+
+class PatternAdapter(Protocol):
+    """Standard interface for exotic pattern adapters."""
+
+    def update(self, metrics: dict[str, float]) -> None:
+        """Feed new metrics to the pattern analyzer."""
+        ...
+
+    def check(self) -> dict:
+        """Check pattern state, return recommendations."""
+        ...
+
+    def get_prometheus_metrics(self) -> list[tuple[str, float]]:
+        """Export metrics for Prometheus."""
+        ...
+
+
+@dataclass
+class PatternResult:
+    """Standard result from any pattern check."""
+    pattern_name: str
+    severity: str  # "OK", "WARNING", "CRITICAL"
+    message: str
+    recommended_action: str | None
+    confidence: float  # 0.0 - 1.0
+    raw_data: dict
+```
+
+### D.3 Testing Integration
+
+```bash
+# Run existing resilience tests to ensure no regression
+cd backend
+pytest tests/resilience/ -v
+
+# Run specific pattern tests
+pytest tests/resilience/test_entropy.py -v
+pytest tests/resilience/test_homeostasis.py -v
+pytest tests/resilience/test_creep_fatigue.py -v
+```
+
+---
+
 *This roadmap transforms your Signal Transduction concept from browser automation into production-grade SDK orchestration, enhanced with cross-disciplinary exotic patterns.*
