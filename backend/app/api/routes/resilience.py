@@ -969,6 +969,184 @@ def _centrality_to_risk(score: float) -> str:
 
 
 # =============================================================================
+# MTF Compliance / Iron Dome Endpoint
+# =============================================================================
+
+
+@router.get("/mtf-compliance")
+async def get_mtf_compliance(
+    check_circuit_breaker: bool = Query(
+        True, description="Check circuit breaker status"
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    Get MTF (Military Treatment Facility) compliance status using the Iron Dome service.
+
+    Returns DRRS readiness ratings, circuit breaker status, and compliance documentation.
+
+    This endpoint translates scheduling system metrics into military reporting format:
+    - DRRS C-ratings (C1-C5)
+    - Personnel P-ratings (P1-P4)
+    - Capability S-ratings (S1-S4)
+    - Circuit breaker status (tripped/locked operations)
+    """
+    from datetime import timedelta
+
+    from app.models.assignment import Assignment
+    from app.models.block import Block
+    from app.models.person import Person
+    from app.resilience.mtf_compliance import IronDomeService
+
+    # Default date range: next 30 days
+    start_date = date.today()
+    end_date = start_date + timedelta(days=30)
+
+    # Load data for analysis
+    faculty = db.query(Person).filter(Person.type == "faculty").all()
+    blocks = (
+        db.query(Block).filter(Block.date >= start_date, Block.date <= end_date).all()
+    )
+    assignments = (
+        db.query(Assignment)
+        .join(Block)
+        .filter(Block.date >= start_date, Block.date <= end_date)
+        .all()
+    )
+
+    # Get resilience service for current system state
+    resilience_service = get_resilience_service(db)
+
+    # Run health check to get current metrics
+    health = resilience_service.check_health(
+        faculty=faculty,
+        blocks=blocks,
+        assignments=assignments,
+    )
+
+    # Initialize Iron Dome service
+    iron_dome = IronDomeService()
+
+    # Map load shedding level
+    from app.resilience.sacrifice_hierarchy import LoadSheddingLevel as ServiceLevel
+
+    level_map = {
+        ServiceLevel.NORMAL: "NORMAL",
+        ServiceLevel.YELLOW: "YELLOW",
+        ServiceLevel.ORANGE: "ORANGE",
+        ServiceLevel.RED: "RED",
+        ServiceLevel.BLACK: "BLACK",
+        ServiceLevel.CRITICAL: "CRITICAL",
+    }
+    load_level_str = level_map.get(health.load_shedding_level, "NORMAL")
+
+    # Map equilibrium state - use a default if not available
+    equilibrium_state = "STABLE"
+    try:
+        tier2_status = resilience_service.get_tier2_status()
+        equilibrium_state = tier2_status.get("equilibrium", {}).get("state", "STABLE")
+    except Exception:
+        pass
+
+    # Calculate required faculty (based on blocks)
+    required_faculty = max(len(blocks) // 2, len(faculty))
+
+    # Count overloaded faculty (faculty with high assignment counts)
+    assignment_counts = {}
+    for a in assignments:
+        if a.person_id:
+            assignment_counts[a.person_id] = assignment_counts.get(a.person_id, 0) + 1
+    avg_assignments = sum(assignment_counts.values()) / max(len(assignment_counts), 1)
+    overloaded = sum(1 for c in assignment_counts.values() if c > avg_assignments * 1.5)
+
+    # Perform readiness assessment
+    from app.schemas.resilience import EquilibriumState
+    from app.schemas.resilience import LoadSheddingLevel as SchemaLoadLevel
+
+    schema_level = SchemaLoadLevel[load_level_str]
+    schema_equilibrium = EquilibriumState[equilibrium_state.upper().replace("-", "_")]
+
+    assessment = iron_dome.assess_readiness(
+        load_shedding_level=schema_level,
+        equilibrium_state=schema_equilibrium,
+        n1_pass=health.n1_pass,
+        n2_pass=health.n2_pass,
+        coverage_rate=health.utilization.utilization_rate,
+        available_faculty=len(faculty),
+        required_faculty=required_faculty,
+        overloaded_faculty_count=overloaded,
+    )
+
+    # Check circuit breaker if requested
+    circuit_breaker_info = None
+    if check_circuit_breaker:
+        # Get additional metrics for circuit breaker
+        avg_allostatic_load = 50.0  # Default
+        volatility_level = "low"
+        compensation_debt = 0.0
+        try:
+            tier2 = resilience_service.get_tier2_status()
+            avg_allostatic_load = tier2.get("homeostasis", {}).get(
+                "average_allostatic_load", 50.0
+            )
+            compensation_debt = tier2.get("equilibrium", {}).get(
+                "compensation_debt", 0.0
+            )
+        except Exception:
+            pass
+
+        cb_check = iron_dome.check_circuit_breaker(
+            n1_pass=health.n1_pass,
+            n2_pass=health.n2_pass,
+            coverage_rate=health.utilization.utilization_rate,
+            average_allostatic_load=avg_allostatic_load,
+            volatility_level=volatility_level,
+            compensation_debt=compensation_debt,
+        )
+
+        circuit_breaker_info = {
+            "state": cb_check.state,
+            "tripped": cb_check.tripped,
+            "trigger": cb_check.trigger,
+            "trigger_details": cb_check.trigger_details,
+            "locked_operations": cb_check.locked_operations,
+            "override_active": cb_check.override_active,
+        }
+
+    # Map severity based on DRRS rating
+    severity_map = {
+        "C1": "healthy",
+        "C2": "healthy",
+        "C3": "warning",
+        "C4": "critical",
+        "C5": "emergency",
+    }
+
+    # Map iron dome status based on circuit breaker
+    iron_dome_status = "green"
+    if (
+        circuit_breaker_info and circuit_breaker_info["tripped"]
+    ) or assessment.overall_rating in ["C4", "C5"]:
+        iron_dome_status = "red"
+    elif assessment.overall_rating in ["C3"]:
+        iron_dome_status = "yellow"
+
+    return {
+        "drrs_category": assessment.overall_rating,
+        "mission_capability": assessment.overall_capability,
+        "personnel_rating": assessment.personnel_rating,
+        "capability_rating": assessment.capability_rating,
+        "circuit_breaker": circuit_breaker_info,
+        "executive_summary": assessment.executive_summary,
+        "deficiencies": assessment.deficiencies,
+        "mfrs_generated": len(iron_dome.mfr_history),
+        "rffs_generated": len(iron_dome.rff_history),
+        "iron_dome_status": iron_dome_status,
+        "severity": severity_map.get(assessment.overall_rating, "warning"),
+    }
+
+
+# =============================================================================
 # Tier 2: Homeostasis Endpoints
 # =============================================================================
 
