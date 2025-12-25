@@ -124,3 +124,4 @@ docs/data/people.json
 # PII sanitization mappings (NEVER COMMIT - contains real→synthetic mapping)
 .sanitize/
 *.mapping.json
+backups/

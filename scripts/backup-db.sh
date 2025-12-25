@@ -177,6 +177,33 @@ backup_database() {
     return 0
 }
 
+# Capture Alembic version metadata
+capture_version_metadata() {
+    METADATA_FILE="${BACKUP_FILE%.sql}.metadata"
+    log_info "Capturing schema version metadata..."
+
+    # Get Alembic version
+    if [ "$DOCKER_MODE" = true ]; then
+        ALEMBIC_VERSION=$(docker compose exec -T backend alembic current 2>/dev/null | grep -oE '[a-f0-9]+' | head -1 || echo "unknown")
+    else
+        ALEMBIC_VERSION=$(cd backend && alembic current 2>/dev/null | grep -oE '[a-f0-9]+' | head -1 || echo "unknown")
+    fi
+
+    # Write metadata file
+    cat > "$METADATA_FILE" << EOF
+# Residency Scheduler Backup Metadata
+# Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+timestamp: $TIMESTAMP
+alembic_version: $ALEMBIC_VERSION
+database: $DB_NAME
+backup_file: $(basename "$BACKUP_FILE")
+EOF
+
+    log_success "Metadata saved: alembic_version=$ALEMBIC_VERSION"
+    return 0
+}
+
 # Compress backup
 compress_backup() {
     log_info "Compressing backup..."
@@ -288,6 +315,7 @@ main() {
     check_prerequisites || handle_error "Prerequisites check"
     create_backup_dir || handle_error "Create backup directory"
     backup_database || handle_error "Database backup"
+    capture_version_metadata || log_warning "Could not capture version metadata"
     compress_backup || handle_error "Compression"
 
     # Optional steps (don't fail on error)
