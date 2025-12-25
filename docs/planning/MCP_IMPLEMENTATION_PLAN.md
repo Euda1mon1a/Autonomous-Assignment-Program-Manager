@@ -443,81 +443,84 @@ def enrich_violation_response(violation: dict) -> dict:
 
 ---
 
-## Stream 4: IDE Connection
+## Stream 4: IDE Connection (IMPLEMENTED 2025-12-25)
 
-### File: `.claude/settings.json` (Updated)
+### Docker Container Approach
 
+Instead of running the MCP server directly via Python, we now use a Docker container
+following the Docker MCP Toolkit patterns. This provides:
+
+- **Isolation**: Container-level security
+- **Consistency**: Same environment across all deployments
+- **Security**: Resource limits, privilege dropping
+
+### Docker Compose Service (Implemented)
+
+```yaml
+# docker-compose.yml
+mcp-server:
+  build:
+    context: ./mcp-server
+    dockerfile: Dockerfile
+  container_name: residency-scheduler-mcp
+  depends_on:
+    backend:
+      condition: service_healthy
+  environment:
+    API_BASE_URL: http://backend:8000
+    CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+  security_opt:
+    - no-new-privileges:true
+  deploy:
+    resources:
+      limits:
+        cpus: '1'
+        memory: 2G
+```
+
+### Claude Code Integration Options
+
+**Option 1: Docker exec (stdio transport)**
 ```json
 {
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "model": "claude-sonnet-4-5-20250514",
-
-  "permissions": {
-    // ... existing permissions ...
-  },
-
   "mcpServers": {
     "residency-scheduler": {
-      "command": "python",
-      "args": ["-m", "scheduler_mcp.server"],
-      "cwd": "${workspaceFolder}/mcp-server/src",
-      "env": {
-        "API_BASE_URL": "http://localhost:8000",
-        "PYTHONPATH": "${workspaceFolder}/mcp-server/src",
-        "LOG_LEVEL": "INFO"
-      },
+      "command": "docker",
+      "args": ["exec", "-i", "residency-scheduler-mcp",
+               "python", "-m", "scheduler_mcp.server"],
       "transport": "stdio"
     }
-  },
-
-  "hooks": {
-    // ... existing hooks ...
-  },
-
-  "env": {
-    "CLAUDE_PROJECT": "residency-scheduler",
-    "CLAUDE_GUARDRAILS": "strict"
   }
 }
 ```
 
-### New File: `scripts/start-mcp.sh`
+**Option 2: HTTP transport (development)**
+```json
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "url": "http://localhost:8080",
+      "transport": "http"
+    }
+  }
+}
+```
+
+### Starting the MCP Server
 
 ```bash
-#!/bin/bash
-# Start MCP server with required dependencies
+# Start all services including MCP server
+docker-compose up -d
 
-set -e
+# Development mode with hot reload
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
-# Ensure we're in project root
-cd "$(dirname "$0")/.."
+# View MCP server logs
+docker-compose logs -f mcp-server
 
-# Check if FastAPI backend is running
-echo "Checking FastAPI backend..."
-if ! curl -s http://localhost:8000/health > /dev/null 2>&1; then
-    echo "FastAPI backend not running. Starting with Docker Compose..."
-    docker-compose up -d backend
-    echo "Waiting for backend to be healthy..."
-    sleep 5
-fi
-
-# Verify backend is healthy
-if ! curl -s http://localhost:8000/health > /dev/null 2>&1; then
-    echo "ERROR: FastAPI backend failed to start"
-    exit 1
-fi
-
-echo "FastAPI backend is healthy"
-
-# Set environment
-export API_BASE_URL="http://localhost:8000"
-export PYTHONPATH="${PWD}/mcp-server/src"
-export LOG_LEVEL="INFO"
-
-# Start MCP server
-echo "Starting MCP server..."
-cd mcp-server/src
-python -m scheduler_mcp.server
+# Test MCP server
+docker-compose exec mcp-server python -c \
+  "from scheduler_mcp.server import mcp; print(f'Tools: {len(mcp.tools)}')"
 ```
 
 ---

@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Guidelines for Autonomous Claude Work
 
-> **Last Updated:** 2025-12-24
+> **Last Updated:** 2025-12-25
 > **Purpose:** Guidelines for autonomous AI-assisted development on the Residency Scheduler project
 
 ---
@@ -78,9 +78,17 @@ This is a **scheduling application** for medical residency programs. All work mu
 | **TailwindCSS** | 3.3.0 | Utility-first CSS |
 | **TanStack Query** | 5.17.0 | Data fetching and caching |
 
+### MCP Server (AI Integration)
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **FastMCP** | 0.2.0+ | Model Context Protocol framework |
+| **httpx** | 0.25.0+ | Async HTTP client for API calls |
+
 ### Infrastructure
 
 - **Docker** + **Docker Compose**: Containerization and orchestration
+- **MCP Server Container**: AI tool integration (29+ scheduling tools)
 - **Prometheus**: Metrics and monitoring
 - **Grafana**: Dashboard visualization
 
@@ -462,7 +470,7 @@ npm run test:e2e  # Playwright E2E tests
 ### Docker
 
 ```bash
-# Start all services
+# Start all services (includes MCP server)
 docker-compose up -d
 
 # View logs
@@ -479,6 +487,26 @@ docker-compose exec backend pytest
 
 # Access database
 docker-compose exec db psql -U scheduler -d residency_scheduler
+```
+
+### MCP Server (AI Integration)
+
+```bash
+# View MCP server logs
+docker-compose logs -f mcp-server
+
+# Test MCP server health
+docker-compose exec mcp-server python -c \
+  "from scheduler_mcp.server import mcp; print(f'Tools: {len(mcp.tools)}')"
+
+# Test API connectivity from MCP container
+docker-compose exec mcp-server curl -s http://backend:8000/health
+
+# Development mode (with HTTP transport on port 8080)
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d mcp-server
+
+# Rebuild MCP server after changes
+docker-compose up -d --build mcp-server
 ```
 
 ### Useful Database Queries

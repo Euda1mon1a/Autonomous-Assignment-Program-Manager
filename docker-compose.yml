@@ -139,6 +139,54 @@ services:
     networks:
       - app-network
 
+  # MCP Server - Model Context Protocol for AI Assistant Integration
+  # Provides 29+ specialized scheduling tools for Claude Code and other AI agents
+  # Security model follows Docker MCP Toolkit patterns (resource limits, privilege dropping)
+  mcp-server:
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    container_name: residency-scheduler-mcp
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # API Integration - connects to FastAPI backend (not direct DB)
+      API_BASE_URL: http://backend:8000
+      # Celery for async task management
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-dev_only_password}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-dev_only_password}@redis:6379/0
+      # Logging
+      LOG_LEVEL: ${MCP_LOG_LEVEL:-INFO}
+      # Python path for imports
+      PYTHONPATH: /app/src
+    # Security constraints (Docker MCP Toolkit pattern)
+    # - Resource limits prevent runaway processes
+    # - no-new-privileges prevents privilege escalation
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    # No ports exposed by default - stdio transport via docker exec
+    # For HTTP transport, uncomment: ports: ["8080:8080"]
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "from scheduler_mcp.server import mcp; print('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   # n8n - Workflow Automation
   n8n:
     image: n8nio/n8n

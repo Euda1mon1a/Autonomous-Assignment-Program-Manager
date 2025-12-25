@@ -2,7 +2,8 @@
 
 > **Decision Required:** How should MCP tools access schedule data?
 > **Created:** 2025-12-24
-> **Status:** RECOMMENDATION: FastAPI
+> **Updated:** 2025-12-25
+> **Status:** IMPLEMENTED: FastAPI + Docker Container
 
 ---
 
@@ -295,5 +296,140 @@ data_source = (
 
 ---
 
+---
+
+## Implementation: Docker Container (2025-12-25)
+
+### Container Architecture
+
+Following the Docker MCP Toolkit patterns, the MCP server runs as an isolated container:
+
+```
+AI Client (Claude Code/VS Code/Cursor)
+         ↓ stdio/SSE/HTTP
+   MCP Server Container (residency-scheduler-mcp)
+         ↓ HTTP (internal network)
+   FastAPI Backend Container (residency-scheduler-backend)
+         ↓ SQL
+   PostgreSQL Database Container (residency-scheduler-db)
+```
+
+### Docker Compose Service
+
+```yaml
+# docker-compose.yml
+mcp-server:
+  build:
+    context: ./mcp-server
+    dockerfile: Dockerfile
+  container_name: residency-scheduler-mcp
+  depends_on:
+    backend:
+      condition: service_healthy
+  environment:
+    API_BASE_URL: http://backend:8000
+    CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+  security_opt:
+    - no-new-privileges:true
+  deploy:
+    resources:
+      limits:
+        cpus: '1'
+        memory: 2G
+```
+
+### Security Model (Docker MCP Toolkit Pattern)
+
+Following Docker's MCP Toolkit security patterns:
+
+| Constraint | Implementation | Rationale |
+|------------|----------------|-----------|
+| **Resource Limits** | 1 CPU, 2GB RAM | Prevent runaway processes |
+| **Privilege Dropping** | `no-new-privileges:true` | No privilege escalation |
+| **Network Isolation** | `app-network` bridge | Container-only access |
+| **No Host Access** | No volume mounts (prod) | Filesystem isolation |
+| **Secret Injection** | Environment variables | No secrets in image |
+
+### Transport Modes
+
+| Mode | Use Case | Configuration |
+|------|----------|---------------|
+| **stdio** | Claude Code IDE | Default (no ports exposed) |
+| **HTTP** | Testing, multi-client | `ports: ["8080:8080"]` |
+| **SSE** | Streaming responses | Not yet implemented |
+
+### Development vs Production
+
+**Production (docker-compose.yml):**
+- No ports exposed (stdio transport)
+- 1 CPU, 2GB RAM limits
+- INFO log level
+- No volume mounts
+
+**Development (docker-compose.dev.yml):**
+- Port 8080 exposed (HTTP transport)
+- 2 CPU, 4GB RAM limits
+- DEBUG log level
+- Source code mounted for hot reload
+
+### Claude Code Integration
+
+Claude Code connects via the unified Gateway pattern:
+
+```json
+// .claude/settings.json
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "command": "docker",
+      "args": ["exec", "-i", "residency-scheduler-mcp",
+               "python", "-m", "scheduler_mcp.server"],
+      "transport": "stdio"
+    }
+  }
+}
+```
+
+Or for development with HTTP:
+
+```json
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "url": "http://localhost:8080",
+      "transport": "http"
+    }
+  }
+}
+```
+
+### Startup Sequence
+
+1. PostgreSQL container starts, becomes healthy
+2. Redis container starts, becomes healthy
+3. FastAPI backend starts, runs migrations, becomes healthy
+4. MCP server starts, connects to backend API
+5. MCP server ready for tool invocations
+
+### Verification Commands
+
+```bash
+# Check MCP server health
+docker compose ps mcp-server
+
+# View MCP server logs
+docker compose logs -f mcp-server
+
+# Test MCP server import
+docker compose exec mcp-server python -c \
+  "from scheduler_mcp.server import mcp; print(f'Tools: {len(mcp.tools)}')"
+
+# Test API connectivity from MCP container
+docker compose exec mcp-server curl -s http://backend:8000/health
+```
+
+---
+
 *Decision Date: 2025-12-24*
-*Approved By: TBD*
+*Implementation Date: 2025-12-25*
+*Approved By: Implemented*

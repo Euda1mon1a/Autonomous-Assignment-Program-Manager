@@ -34,3 +34,21 @@ services:
     environment:
       NODE_ENV: development
       NEXT_PUBLIC_API_URL: http://localhost:8000
+
+  # MCP Server with hot reload and HTTP transport for testing
+  mcp-server:
+    volumes:
+      - ./mcp-server/src:/app/src
+      - ./mcp-server/tests:/app/tests
+    # HTTP transport for testing with curl/httpie
+    command: python -m scheduler_mcp.server --host 0.0.0.0 --port 8080 --log-level DEBUG
+    ports:
+      - "8080:8080"
+    environment:
+      LOG_LEVEL: DEBUG
+      # Relaxed resource limits for development
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
