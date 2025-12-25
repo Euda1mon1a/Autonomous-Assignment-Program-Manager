@@ -569,4 +569,448 @@ No code changes required.
 
 ---
 
-*Document created during Kubernetes evaluation session - December 2025*
+## Appendix: DOD Platform Ecosystem (2025)
+
+> **Updated:** December 2025
+> **Purpose:** Deep dive into DOD platforms relevant for enterprise scheduling deployment
+
+### DOD AI & Deployment Landscape
+
+The DOD has rapidly matured its AI and DevSecOps ecosystem. For a scheduling application going DOD-wide, understanding these platforms is critical.
+
+```
+DOD Platform Ecosystem (December 2025)
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │                    USER-FACING AI PLATFORMS                      │   │
+│  │                                                                  │   │
+│  │  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐    │   │
+│  │  │  GenAI.mil   │     │  Ask Sage    │     │  DHA AI      │    │   │
+│  │  │  (Google     │     │  (IL5/IL6    │     │  (Healthcare │    │   │
+│  │  │   Gemini)    │     │   Multi-LLM) │     │   specific)  │    │   │
+│  │  │              │     │              │     │              │    │   │
+│  │  │  3M users    │     │  Army-wide   │     │  PHI-approved│    │   │
+│  │  │  IL5         │     │  FedRAMP High│     │  MHS         │    │   │
+│  │  └──────────────┘     └──────────────┘     └──────────────┘    │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                    │                                    │
+│                                    ▼                                    │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │                    DEPLOYMENT INFRASTRUCTURE                     │   │
+│  │                                                                  │   │
+│  │  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐    │   │
+│  │  │ Platform One │     │  Iron Bank   │     │   ArgoCD     │    │   │
+│  │  │  Big Bang    │     │  (Hardened   │     │   (GitOps)   │    │   │
+│  │  │  (k8s)       │     │   Images)    │     │              │    │   │
+│  │  │              │     │              │     │              │    │   │
+│  │  │  cATO ready  │     │  1,800+      │     │  Continuous  │    │   │
+│  │  │  IL2-IL6     │     │  containers  │     │  Delivery    │    │   │
+│  │  └──────────────┘     └──────────────┘     └──────────────┘    │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### GenAI.mil - Pentagon's Enterprise AI Platform
+
+**Official Launch:** December 9, 2025
+
+> "For the first time ever, by the end of this week, 3 million employees, warfighters, and contractors are going to have AI on their desktop, every single one."
+> — Emil Michael, Pentagon Chief Technology Officer
+
+#### Overview
+
+| Aspect | Details |
+|--------|---------|
+| **URL** | GenAI.mil (CAC required) |
+| **Users** | 3 million DOD personnel |
+| **Initial Model** | Google Gemini for Government |
+| **Security Level** | IL-5 (highly sensitive unclassified) |
+| **Future Models** | Anthropic, xAI, OpenAI planned |
+
+#### Key Features
+
+- **Deep Research**: Complex analysis tasks
+- **Document Formatting**: Automated report generation
+- **Video/Image Analysis**: Multi-modal capabilities
+- **RAG + Web Grounding**: Reduces hallucinations via Google Search grounding
+- **Data Isolation**: DOD data never trains public models
+
+#### Relevance for Residency Scheduler
+
+```
+Integration Opportunity:
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                  │
+│  Residency Scheduler + GenAI.mil                                │
+│                                                                  │
+│  Current: MCP Server (29+ tools) for Claude/local AI            │
+│                                                                  │
+│  Future DOD-wide: Could integrate with GenAI.mil for:           │
+│  - Schedule analysis ("Why is Dr. Smith overloaded?")           │
+│  - ACGME compliance explanations                                │
+│  - Natural language schedule queries                            │
+│  - Report generation                                            │
+│                                                                  │
+│  BUT: Your MCP server already does this locally.                │
+│  GenAI.mil is for GENERAL AI tasks, not domain-specific.        │
+│  Your specialized scheduling AI > generic GenAI.mil for this.   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Sources:**
+- [Pentagon rolls out GenAI platform - Breaking Defense](https://breakingdefense.com/2025/12/pentagon-rolls-out-genai-platform-to-all-personnel-using-googles-gemini/)
+- [Google Cloud Powers GenAI.mil](https://www.googlecloudpresscorner.com/2025-12-09-Chief-Digital-and-Artificial-Intelligence-Office-Selects-Google-Clouds-AI-to-Power-GenAI-mil)
+- [DOD GenAI.mil Platform - DefenseScoop](https://defensescoop.com/2025/12/09/genai-mil-platform-dod-commercial-ai-models-agentic-tools-google-gemini/)
+
+---
+
+### Ask Sage - FedRAMP High / IL5-IL6 Authorized GenAI
+
+**Status:** Most mature DOD-authorized GenAI platform (as of Dec 2025)
+
+#### Key Achievements
+
+| Metric | Value |
+|--------|-------|
+| **Army Contract** | $49M / 5 years (Project Athena) |
+| **CDAO Partnership** | $10M first year |
+| **Security Levels** | FedRAMP High, IL5, IL6, Top Secret |
+| **Model Support** | 150+ models (model-agnostic) |
+| **PHI Approved** | First and only IL5 GenAI for PHI |
+
+#### Demonstrated Results (Army)
+
+| Capability | Improvement |
+|------------|-------------|
+| **Coding Speed** | 35x faster |
+| **Acquisition Tasks** | 50x productivity |
+| **Personnel Reclassification** | 300,000 records in 1 week (saved 50,000 hours) |
+| **Document Analysis** | Thousands in minutes vs days |
+
+#### Defense Health Agency Partnership
+
+> **December 8, 2025:** Ask Sage announced enterprise-wide agreement with DHA
+
+This is **directly relevant** for Residency Scheduler:
+
+```
+Ask Sage + DHA Integration
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                  │
+│  Ask Sage is the ONLY IL5-authorized GenAI approved for PHI     │
+│                                                                  │
+│  DHA Use Cases:                                                  │
+│  - Clinical workflows                                            │
+│  - Operational planning                                          │
+│  - Administrative automation                                     │
+│  - Military Health System innovation                             │
+│                                                                  │
+│  Residency Scheduling IS an administrative/operational          │
+│  workflow within DHA context.                                    │
+│                                                                  │
+│  Potential: If DOD-wide, could deploy via DHA's Ask Sage        │
+│  infrastructure rather than building separate AI integration.   │
+│                                                                  │
+│  Your MCP Server tools could be exposed through Ask Sage's      │
+│  multi-modal architecture.                                       │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Edge AI Capability
+
+Ask Sage Edge enables:
+- **Disconnected Operations**: Works without network
+- **Zero-Trust Architecture**: Government-grade security
+- **150+ AI Models**: Local model selection
+- **Cloud Agnostic**: Any cloud or on-premise
+
+**This aligns with your airgapped requirement!** Ask Sage Edge could be a DOD-approved alternative to local MCP server for airgapped sites.
+
+**Sources:**
+- [Ask Sage + DOD CDAO Partnership](https://www.asksage.ai/press-releases/ask-sage-partners-with-dod-cdao-and-u-s-army-to-provide-unlimited-access-to-generative-ai-across-combatant-commands-joint-staff-and-office-of-the-secretary-of-defense)
+- [Ask Sage IL5 with Microsoft](https://www.asksage.ai/press-releases/ask-sage-announces-generative-ai-army-enterprise-offering-at-il5-in-collaboration-with-microsoft)
+- [Ask Sage + DHA Launch](https://www.globenewswire.com/news-release/2025/12/08/3201787/0/en/Ask-Sage-and-the-Defense-Health-Agency-Launch-Enterprise-Wide-Generative-AI-Offering-to-Accelerate-Military-Health-Innovation.html)
+- [Pentagon Awards Ask Sage $10M - Breaking Defense](https://breakingdefense.com/2025/06/pentagon-ai-office-army-award-ask-sage-10m-for-genai-expansion/)
+
+---
+
+### Platform One & Big Bang - Deep Dive
+
+#### What Big Bang Actually Is
+
+```
+Big Bang Architecture
+┌─────────────────────────────────────────────────────────────────────────┐
+│  Big Bang = Helm Chart of Helm Charts                                   │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  CORE PACKAGES (Required by DevSecOps Reference Architecture)   │   │
+│  │                                                                  │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐       │   │
+│  │  │  Istio   │  │ Gatekeeper│  │   ECK    │  │Prometheus│       │   │
+│  │  │ (Mesh)   │  │ (Policy)  │  │(Logging) │  │(Metrics) │       │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘       │   │
+│  │                                                                  │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐                      │   │
+│  │  │ Twistlock│  │ Kiali    │  │ Jaeger   │                      │   │
+│  │  │(Runtime) │  │(Observ)  │  │(Tracing) │                      │   │
+│  │  └──────────┘  └──────────┘  └──────────┘                      │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  ADDONS (Optional - Enable as needed)                           │   │
+│  │                                                                  │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐       │   │
+│  │  │ ArgoCD   │  │ GitLab   │  │ Keycloak │  │ Vault    │       │   │
+│  │  │(GitOps)  │  │(CI/CD)   │  │  (SSO)   │  │(Secrets) │       │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘       │   │
+│  │                                                                  │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐       │   │
+│  │  │ Mattermost│ │  MinIO   │  │ Anchore  │  │ Sonarqube│       │   │
+│  │  │  (Chat)  │  │(Storage) │  │(Security)│  │(Quality) │       │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘       │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  YOUR APPLICATION                                                │   │
+│  │                                                                  │   │
+│  │  ┌──────────────────────────────────────────────────────────┐  │   │
+│  │  │  Residency Scheduler (Helm Chart)                        │  │   │
+│  │  │  - Backend pods (FastAPI)                                │  │   │
+│  │  │  - Frontend pods (Next.js)                               │  │   │
+│  │  │  - Celery workers                                        │  │   │
+│  │  │  - PostgreSQL StatefulSet                                │  │   │
+│  │  │  - Redis                                                 │  │   │
+│  │  │  - MCP Server (optional)                                 │  │   │
+│  │  └──────────────────────────────────────────────────────────┘  │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Big Bang Deployment Options
+
+| Environment | Description | Your Use Case |
+|-------------|-------------|---------------|
+| **Cloud** | AWS GovCloud, Azure Gov | DOD-wide internet-connected |
+| **On-Premise** | Own hardware | Large MTF with IT staff |
+| **Airgapped** | Disconnected/SCIF | Classified or isolated networks |
+| **Edge** | Tactical/forward deployed | Not applicable for scheduling |
+
+**Key Insight:** Big Bang supports airgapped deployment! This could be an alternative to Docker Compose for airgapped sites that want enterprise features.
+
+#### Continuous ATO (cATO) Benefits
+
+```
+Traditional ATO vs cATO
+┌────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│  Traditional ATO:                                                       │
+│  ┌────────────────────────────────────────────────────────────────┐   │
+│  │  Build App → 12-18 month ATO process → Deploy → Repeat         │   │
+│  │                                                                 │   │
+│  │  Problem: By the time you're authorized, app is outdated       │   │
+│  └────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  cATO with Platform One:                                                │
+│  ┌────────────────────────────────────────────────────────────────┐   │
+│  │  Big Bang provides baseline cATO                                │   │
+│  │  ↓                                                              │   │
+│  │  Your app inherits security posture                            │   │
+│  │  ↓                                                              │   │
+│  │  Focus on YOUR app's security, not infrastructure              │   │
+│  │  ↓                                                              │   │
+│  │  Deploy in weeks, not months                                   │   │
+│  └────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+**Sources:**
+- [Big Bang Documentation](https://docs-bigbang.dso.mil/latest/)
+- [Big Bang GitHub](https://github.com/DoD-Platform-One/bigbang)
+- [Platform One Services](https://p1.dso.mil/services/big-bang)
+
+---
+
+### Iron Bank - Container Security Deep Dive
+
+#### Overview
+
+| Aspect | Details |
+|--------|---------|
+| **Purpose** | DOD's source for hardened container images |
+| **Images Available** | 1,800+ base images |
+| **Cost** | Free (DOD funded) |
+| **Access** | Public at IL2 |
+| **Compliance** | DoD STIG hardening, CIS benchmarks |
+
+#### How to Get Your Images in Iron Bank
+
+```
+Iron Bank Submission Process
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  1. PREPARE                                                              │
+│     ├── Use approved base image (Ubuntu, UBI, Alpine)                   │
+│     ├── Follow Container Hardening Guide                                 │
+│     ├── Remove unnecessary packages                                      │
+│     └── Set appropriate user (non-root)                                 │
+│                                                                          │
+│  2. SUBMIT                                                               │
+│     ├── Create repo in Repo1 (GitLab)                                   │
+│     ├── Add Dockerfile + hardening.manifest.yaml                        │
+│     ├── Request onboarding from Iron Bank team                          │
+│     └── Submit for pipeline evaluation                                  │
+│                                                                          │
+│  3. SCAN & EVALUATE                                                      │
+│     ├── Automated CVE scanning                                          │
+│     ├── STIG compliance check                                           │
+│     ├── Container best practices validation                              │
+│     └── Manual review for high-risk items                               │
+│                                                                          │
+│  4. APPROVAL                                                             │
+│     ├── Receive Overall Risk Assessment (ORA) score                     │
+│     ├── Address any critical findings                                    │
+│     └── Image marked "approved" in Iron Bank                            │
+│                                                                          │
+│  5. CONTINUOUS MONITORING                                                │
+│     ├── Weekly CVE rescans                                              │
+│     ├── Automated alerts for new vulnerabilities                        │
+│     └── Required remediation timelines                                  │
+│                                                                          │
+│  Timeline: 2-6 weeks depending on complexity and findings               │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Images You'd Submit for Residency Scheduler
+
+| Image | Base | Priority |
+|-------|------|----------|
+| `scheduler-backend` | python:3.11-slim (UBI preferred) | HIGH |
+| `scheduler-frontend` | node:20-alpine | HIGH |
+| `scheduler-celery` | Same as backend | HIGH |
+| `scheduler-mcp` | python:3.11-slim | MEDIUM |
+
+**Note:** PostgreSQL and Redis already have Iron Bank approved images - use those!
+
+**Sources:**
+- [Iron Bank Documentation](https://docs-ironbank.dso.mil/overview/)
+- [Iron Bank Container Registry](https://ironbank.dso.mil/about)
+- [DevSecOps Container Hardening Guide](https://dl.dod.cyber.mil/wp-content/uploads/devsecops/pdf/Final_DevSecOps_Enterprise_Container_Hardening_Guide_1.2.pdf)
+
+---
+
+### DOD-Wide Deployment Decision Tree
+
+```
+DOD-Wide Deployment Decision Tree (Updated Dec 2025)
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  Is this for Defense Health Agency (DHA)?                               │
+│     │                                                                    │
+│     ├── YES → Consider Ask Sage integration                             │
+│     │         - Already has DHA enterprise agreement                     │
+│     │         - IL5 + PHI approved                                       │
+│     │         - Could host your scheduling tools                         │
+│     │                                                                    │
+│     └── NO → Continue to general DOD path                               │
+│                                                                          │
+│  Is this for general DOD deployment?                                    │
+│     │                                                                    │
+│     ├── YES → Use Platform One + Big Bang                               │
+│     │         │                                                          │
+│     │         ├── Step 1: Submit images to Iron Bank                    │
+│     │         ├── Step 2: Create Helm charts                            │
+│     │         ├── Step 3: Configure for Big Bang                        │
+│     │         ├── Step 4: Deploy via ArgoCD (GitOps)                    │
+│     │         └── Step 5: Inherit cATO from Platform One                │
+│     │                                                                    │
+│     └── Single MTF only → Docker Compose                                │
+│                           - Simpler operations                           │
+│                           - No k8s expertise needed                      │
+│                           - Works airgapped 10+ years                    │
+│                                                                          │
+│  Need AI features in DOD environment?                                   │
+│     │                                                                    │
+│     ├── Generic AI → GenAI.mil (Gemini)                                 │
+│     │   - Available to all 3M DOD personnel                             │
+│     │   - Good for research, drafting, analysis                         │
+│     │                                                                    │
+│     ├── Enterprise AI → Ask Sage                                        │
+│     │   - Model-agnostic (150+ models)                                  │
+│     │   - IL5/IL6/TS authorized                                         │
+│     │   - DHA approved for PHI                                          │
+│     │                                                                    │
+│     └── Domain-specific AI → Your MCP Server                            │
+│         - 29+ scheduling-specific tools                                 │
+│         - Works locally/airgapped                                       │
+│         - Specialized for residency scheduling                          │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Strategic Recommendation for DOD-Wide
+
+```
+Recommended DOD-Wide Architecture
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  PHASE 1: Local Deployment (Current)                                    │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  Docker Compose at single MTF                                    │   │
+│  │  - Airgap ready                                                  │   │
+│  │  - MCP Server for local AI                                       │   │
+│  │  - No external dependencies                                      │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                          │
+│  PHASE 2: DHA Integration (If sponsored by DHA)                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  Explore Ask Sage partnership                                    │   │
+│  │  - DHA already has enterprise agreement                          │   │
+│  │  - Your scheduling tools could be MCP-style plugins              │   │
+│  │  - Leverage their IL5 + PHI authorization                        │   │
+│  │  - Edge deployment for airgapped sites                           │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                          │
+│  PHASE 3: Platform One Deployment (Full DOD)                            │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  Big Bang on Platform One                                        │   │
+│  │  - Iron Bank hardened images                                     │   │
+│  │  - Helm charts for deployment                                    │   │
+│  │  - ArgoCD for GitOps                                             │   │
+│  │  - Inherit cATO                                                  │   │
+│  │  - Auto-scaling for enterprise load                              │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                          │
+│  All phases use SAME codebase - just different deployment manifests     │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Key Contacts & Resources
+
+| Resource | URL | Purpose |
+|----------|-----|---------|
+| Platform One | https://p1.dso.mil/ | DevSecOps platform |
+| Iron Bank | https://ironbank.dso.mil/ | Hardened containers |
+| Repo1 | https://repo1.dso.mil/ | DOD GitLab |
+| Big Bang Docs | https://docs-bigbang.dso.mil/ | Deployment guides |
+| Ask Sage | https://www.asksage.ai/ | GenAI platform |
+| GenAI.mil | GenAI.mil (CAC required) | Pentagon AI |
+| DHA | https://dha.mil/ | Defense Health Agency |
+
+---
+
+*DOD Platform Appendix added December 2025 based on latest announcements*
