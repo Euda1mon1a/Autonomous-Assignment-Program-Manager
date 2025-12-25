@@ -105,7 +105,7 @@ export function ProgressIndicator({
     return (
       <div className={`flex items-center gap-3 ${className}`}>
         <Icon
-          className={`${iconSizes[size]} ${config.color} ${config.animate ? 'animate-spin' : ''}`}
+          className={`${iconSizes[size]} ${config.color} ${'animate' in config && config.animate ? 'animate-spin' : ''}`}
         />
         <span className="text-gray-700">{message}</span>
         {progress !== undefined && (
@@ -127,7 +127,7 @@ export function ProgressIndicator({
             className={`w-16 h-16 rounded-full ${config.bgColor} flex items-center justify-center mx-auto mb-6`}
           >
             <Icon
-              className={`w-8 h-8 ${config.color} ${config.animate ? 'animate-spin' : ''}`}
+              className={`w-8 h-8 ${config.color} ${'animate' in config && config.animate ? 'animate-spin' : ''}`}
             />
           </div>
 
@@ -185,7 +185,7 @@ export function ProgressIndicator({
     >
       <div className="flex items-start gap-3">
         <Icon
-          className={`${iconSizes[size]} ${config.color} flex-shrink-0 mt-0.5 ${config.animate ? 'animate-spin' : ''}`}
+          className={`${iconSizes[size]} ${config.color} flex-shrink-0 mt-0.5 ${'animate' in config && config.animate ? 'animate-spin' : ''}`}
         />
         <div className="flex-1 min-w-0">
           <p className="font-medium text-gray-900">{message}</p>
