@@ -171,9 +171,34 @@ echo "PR validation: PASS"
 
 ## Integration Points
 
+### With lint-monorepo (Primary Linting)
+For all linting operations, delegate to the `lint-monorepo` skill:
+
+```
+Quality gate check needed
+    → Invoke lint-monorepo skill
+    → lint-monorepo runs auto-fix workflow
+    → Returns pass/fail with details
+```
+
+**Linting workflow:**
+```bash
+# lint-monorepo handles both Python and TypeScript
+# See .claude/skills/lint-monorepo/ for details
+
+# Quick lint check
+cd /home/user/Autonomous-Assignment-Program-Manager/backend
+ruff check app/ tests/
+
+cd /home/user/Autonomous-Assignment-Program-Manager/frontend
+npm run lint
+```
+
+**For persistent lint errors:** Use `lint-monorepo` root-cause analysis workflow.
+
 ### With automated-code-fixer
 When quality issues are detected, the `automated-code-fixer` skill can be triggered to automatically resolve:
-- Linting issues (auto-fixable)
+- Linting issues (auto-fixable) - coordinates with `lint-monorepo`
 - Formatting issues
 - Simple type annotation additions
 - Import organization

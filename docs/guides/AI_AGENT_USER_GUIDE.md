@@ -32,7 +32,7 @@ This repository has a complete AI agent infrastructure:
 │  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐         │
 │  │   SKILLS     │   │  MCP TOOLS   │   │  ADK AGENTS  │         │
 │  │  (Knowledge) │ + │  (Actions)   │ + │  (Testing)   │         │
-│  │  11 skills   │   │  16+ tools   │   │  TypeScript  │         │
+│  │  21 skills   │   │  16+ tools   │   │  TypeScript  │         │
 │  └──────────────┘   └──────────────┘   └──────────────┘         │
 │         │                  │                  │                  │
 │         └──────────────────┼──────────────────┘                  │
@@ -460,7 +460,7 @@ The tools complement each other:
 
 **What:** Packaged expertise in `.claude/skills/` folders
 
-**Available Skills:**
+**Available Skills (21 total):**
 
 | Skill | Purpose |
 |-------|---------|
@@ -469,12 +469,21 @@ The tools complement each other:
 | `code-quality-monitor` | Enforce quality standards before commits |
 | `code-review` | Review generated code for bugs, security, performance |
 | `database-migration` | Alembic migration expertise and safe schema evolution |
+| `fastapi-production` | Production-grade FastAPI patterns |
+| `frontend-development` | Next.js 14, React, TailwindCSS patterns |
+| `lint-monorepo` | Unified Python (Ruff) + TypeScript (ESLint) linting |
+| `pdf` | PDF generation and extraction |
 | `pr-reviewer` | Pull request review with quality gates |
 | `production-incident-responder` | Crisis response using MCP resilience tools |
+| `python-testing-patterns` | Advanced pytest patterns and fixtures |
+| `react-typescript` | TypeScript for React/Next.js components |
+| `safe-schedule-generation` | Backup-first schedule generation |
 | `schedule-optimization` | Multi-objective optimization strategies |
 | `security-audit` | Security auditing for healthcare/military contexts |
 | `swap-management` | Shift swap workflow procedures |
+| `systematic-debugger` | Systematic debugging workflow |
 | `test-writer` | Test generation for pytest and Jest |
+| `xlsx` | Excel import/export for schedules |
 
 **How They Work:**
 ```
@@ -612,6 +621,13 @@ Skills activate automatically based on your question:
 | "Review this PR" | `pr-reviewer` |
 | "Is this secure?" | `security-audit` |
 | "Write tests for this" | `test-writer` |
+| "Fix the lint errors" | `lint-monorepo` |
+| "TypeScript error in component" | `react-typescript` |
+| "Build a new page" | `frontend-development` |
+| "Create a new API endpoint" | `fastapi-production` |
+| "Debug this flaky test" | `python-testing-patterns` |
+| "Investigate this bug" | `systematic-debugger` |
+| "Generate a new schedule" | `safe-schedule-generation` |
 
 ### Skill Files
 

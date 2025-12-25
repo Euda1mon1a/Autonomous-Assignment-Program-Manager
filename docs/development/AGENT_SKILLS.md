@@ -2,7 +2,7 @@
 
 > **Complete reference for AI Agent Skills in the Residency Scheduler**
 >
-> Last Updated: 2025-12-23
+> Last Updated: 2025-12-25
 
 ---
 
@@ -54,17 +54,33 @@ All skills are located in `.claude/skills/`:
 │   └── SKILL.md
 ├── database-migration/         # Alembic migration expertise
 │   └── SKILL.md
+├── fastapi-production/         # Production FastAPI patterns
+│   └── SKILL.md
+├── frontend-development/       # Next.js/React/TailwindCSS
+│   └── SKILL.md
+├── lint-monorepo/              # Unified Python/TypeScript linting
+│   ├── SKILL.md
+│   ├── python.md
+│   └── typescript.md
 ├── pdf/                        # PDF generation & extraction
 │   └── SKILL.md
 ├── pr-reviewer/                # Pull request review
 │   └── SKILL.md
 ├── production-incident-responder/  # Crisis response
 │   └── SKILL.md
+├── python-testing-patterns/    # Advanced pytest patterns
+│   └── SKILL.md
+├── react-typescript/           # TypeScript for React/Next.js
+│   └── SKILL.md
+├── safe-schedule-generation/   # Backup-first schedule generation
+│   └── SKILL.md
 ├── schedule-optimization/      # Multi-objective optimization
 │   └── SKILL.md
 ├── security-audit/             # Security auditing
 │   └── SKILL.md
 ├── swap-management/            # Shift swap workflows
+│   └── SKILL.md
+├── systematic-debugger/        # Systematic debugging workflow
 │   └── SKILL.md
 ├── test-writer/                # Test generation
 │   └── SKILL.md
@@ -91,11 +107,22 @@ All skills are located in `.claude/skills/`:
 | `code-review` | Code review procedures | Reviewing generated code, quality checks |
 | `automated-code-fixer` | Auto-fix code issues | Test failures, linting errors |
 | `code-quality-monitor` | Quality gate enforcement | Pre-commit validation, PR checks |
+| `lint-monorepo` | Unified Python/TypeScript linting | Auto-fix, root-cause analysis for lint errors |
 | `test-writer` | Test generation | Writing pytest/Jest tests |
+| `python-testing-patterns` | Advanced pytest patterns | Async tests, fixtures, mocking, flaky tests |
 | `database-migration` | Alembic migration expertise | Schema changes, migrations |
+| `fastapi-production` | Production FastAPI patterns | API endpoints, SQLAlchemy, error handling |
 | `pr-reviewer` | Pull request review | PR validation, merge decisions |
 | `security-audit` | Security auditing | HIPAA, OPSEC/PERSEC compliance |
 | `changelog-generator` | Release notes from git | Deployment docs, stakeholder updates |
+| `systematic-debugger` | Systematic debugging workflow | Complex bugs, exploration-first debugging |
+
+### Frontend Skills
+
+| Skill | Description | Primary Use Case |
+|-------|-------------|------------------|
+| `react-typescript` | TypeScript for React/Next.js | Type errors, component typing, TanStack Query |
+| `frontend-development` | Next.js 14, TailwindCSS, React | UI components, pages, performance |
 
 ### Document Skills
 
@@ -486,6 +513,190 @@ gh pr merge <number> --squash
 **Output Formats**:
 - Standard changelog (markdown with sections)
 - Compact format (bullet points for app stores)
+
+---
+
+### lint-monorepo
+
+**Purpose**: Unified linting and auto-fix for Python (Ruff) and TypeScript (ESLint) in monorepo.
+
+**Activates When**:
+- Lint errors reported in CI/CD
+- Pre-commit quality checks
+- Code review identifies style issues
+- `ruff check` or `npm run lint` fails
+- Persistent lint errors after auto-fix attempts
+
+**Workflow**:
+1. **Auto-fix first**: Always try `--fix` before manual intervention
+2. **Triage remaining**: Categorize errors (unsafe fixes, logic errors, type errors)
+3. **Root-cause analysis**: For persistent errors, investigate why
+4. **Targeted fix**: Apply fixes based on root cause
+
+**Supporting Files**:
+- `python.md` - Ruff error codes (F401, E712, B006, S105, etc.)
+- `typescript.md` - ESLint/TypeScript patterns
+
+**Integration**: Primary linting skill, invoked by `code-quality-monitor`.
+
+---
+
+### react-typescript
+
+**Purpose**: TypeScript expertise for React/Next.js development.
+
+**Activates When**:
+- TypeScript compilation errors in React components
+- Writing new React components with proper typing
+- Handling generic components and hooks
+- Working with TanStack Query type inference
+- Fixing `any` type issues
+
+**Common Error Patterns**:
+| Error | Cause | Fix |
+|-------|-------|-----|
+| TS2307 | Cannot find module 'react' | Reinstall `@types/react` |
+| TS7006 | Parameter implicitly has 'any' | Add explicit type annotation |
+| TS7026 | JSX element implicitly has 'any' | Check tsconfig jsx setting |
+| TS2322 | Type 'unknown' not assignable | Add generic type to useQuery |
+
+**Key Patterns**:
+- Component props interfaces
+- Generic components with trailing comma (`<T,>`)
+- Event handler types (React.ChangeEvent, etc.)
+- TanStack Query typed hooks
+
+**Validated Against Real Errors** (Dec 2025):
+This skill was created and validated against actual TypeScript errors in the frontend codebase:
+
+| Error Code | Count | Pattern Covered |
+|------------|-------|-----------------|
+| TS2322 (`unknown` to `ReactNode`) | 3+ | Section 4 |
+| TS7053 (index signature) | 5 | Section 7 |
+| TS2339 (property doesn't exist) | 4 | Section 5 |
+| TS2769 (overload matching) | 2 | Section 6 |
+
+All common frontend TypeScript errors in this project are addressed by this skill.
+
+---
+
+### frontend-development
+
+**Purpose**: Modern frontend development with Next.js 14, React 18, TailwindCSS.
+
+**Activates When**:
+- Building new React components or pages
+- Implementing Next.js App Router patterns
+- Styling with TailwindCSS
+- Data fetching with TanStack Query
+- Performance optimization
+
+**Key Patterns**:
+| Pattern | Use Case |
+|---------|----------|
+| App Router pages | `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx` |
+| Compound components | DataTable, Modal, Card |
+| TanStack Query hooks | `useQuery`, `useMutation` with query keys |
+| TailwindCSS utilities | Mobile-first, dark mode, responsive |
+
+**Integration**: Works with `react-typescript` for type-specific patterns.
+
+---
+
+### python-testing-patterns
+
+**Purpose**: Advanced pytest patterns for Python backend testing.
+
+**Activates When**:
+- Debugging flaky or failing tests
+- Complex async testing scenarios
+- Database transaction isolation issues
+- Mocking external services
+- Test performance optimization
+
+**Key Patterns**:
+| Pattern | Use Case |
+|---------|----------|
+| Factory fixtures | Create test data with customization |
+| Fixture composition | Build complex test scenarios |
+| AsyncMock | Mock async functions and context managers |
+| Parametrized tests | Test multiple inputs systematically |
+| Transaction isolation | Prevent test pollution |
+
+**Complements**: `test-writer` generates basic tests; this skill handles advanced scenarios.
+
+---
+
+### fastapi-production
+
+**Purpose**: Production-grade FastAPI patterns for async APIs.
+
+**Activates When**:
+- Building new API endpoints
+- Database query optimization
+- Error handling and validation
+- Middleware implementation
+- Authentication/authorization patterns
+
+**Architecture**:
+```
+Route (thin) → Controller → Service → Repository → Model
+```
+
+**Key Patterns**:
+| Pattern | Purpose |
+|---------|---------|
+| Pydantic schemas | Request/response validation |
+| Dependency injection | Database sessions, auth |
+| Custom exceptions | Structured error handling |
+| Eager loading | Prevent N+1 queries |
+| Row locking | Handle concurrent updates |
+
+**Integration**: Works with `database-migration` for schema changes.
+
+---
+
+### systematic-debugger
+
+**Purpose**: Systematic debugging for complex issues.
+
+**Activates When**:
+- Complex bugs requiring investigation
+- Unclear root cause
+- Multiple potential failure points
+- Test failures with non-obvious causes
+
+**Four-Phase Workflow**:
+1. **Exploration** (DO NOT FIX YET) - Read code, understand system
+2. **Planning** - Use extended thinking, create hypothesis list
+3. **Implementation** - Apply fixes, verify edge cases
+4. **Commit** - Document what was fixed and why
+
+**Extended Thinking Triggers** (in order of computational budget):
+- `"think"` < `"think hard"` < `"think harder"` < `"ultrathink"`
+
+---
+
+### safe-schedule-generation
+
+**Purpose**: Schedule generation with mandatory backup before write operations.
+
+**Activates When**:
+- Generating new schedules
+- Bulk assignment operations
+- Executing swaps
+- Any MCP tool that modifies schedule data
+
+**Safety Protocol**:
+1. Verify recent backup exists (< 2 hours)
+2. If no backup, create one first
+3. Check backend health
+4. Get user approval
+5. Execute operation
+6. Verify results (violations < 5, coverage > 80%)
+7. Offer rollback if results are bad
+
+**Critical Rule**: NEVER execute schedule-modifying MCP tools without backup verification.
 
 ---
 
