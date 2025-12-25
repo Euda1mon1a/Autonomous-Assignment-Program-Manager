@@ -20,6 +20,7 @@ import {
   BarChart3,
   FileUp,
   ClipboardList,
+  Beaker,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
