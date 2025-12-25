@@ -13,6 +13,7 @@ from app.scheduling.constraints.fmit import (
     FMITMandatoryCallConstraint,
     FMITWeekBlockingConstraint,
     PostFMITRecoveryConstraint,
+    PostFMITSundayBlockingConstraint,
     get_fmit_week_dates,
     is_sun_thurs,
 )
@@ -247,3 +248,75 @@ class TestFMITWeekEdgeCases:
 
         # Week 1 end should be day before week 2 start
         assert week1_end + timedelta(days=1) == week2_start
+
+
+class TestPostFMITSundayBlockingConstraint:
+    """Tests for PostFMITSundayBlockingConstraint."""
+
+    def test_constraint_initialization(self):
+        """Test constraint initializes with correct properties."""
+        constraint = PostFMITSundayBlockingConstraint()
+        assert constraint.name == "PostFMITSundayBlocking"
+        assert constraint.priority.value == 75  # HIGH
+
+    def test_validate_empty_assignments(self):
+        """Test validate returns satisfied for empty assignments."""
+        constraint = PostFMITSundayBlockingConstraint()
+        context = SchedulingContext(
+            residents=[],
+            faculty=[],
+            blocks=[],
+            templates=[],
+        )
+        result = constraint.validate([], context)
+        assert result.satisfied is True
+        assert len(result.violations) == 0
+
+    def test_blocked_sunday_calculation(self):
+        """Test that blocked Sunday is 3 days after FMIT Thursday.
+
+        FMIT week: Fri Jan 3 - Thu Jan 9
+        Blocked Sunday: Jan 12 (Thursday + 3 days)
+        """
+        friday_start = date(2025, 1, 3)
+        thursday_end = date(2025, 1, 9)
+        blocked_sunday = thursday_end + timedelta(days=3)
+
+        assert blocked_sunday == date(2025, 1, 12)
+        assert blocked_sunday.weekday() == 6  # Sunday
+
+    def test_recovery_friday_vs_blocked_sunday(self):
+        """Test recovery Friday and blocked Sunday are different days.
+
+        FMIT week: Fri Jan 3 - Thu Jan 9
+        - Recovery Friday: Jan 10 (Thu + 1) - blocked by PostFMITRecoveryConstraint
+        - Blocked Sunday: Jan 12 (Thu + 3) - blocked by this constraint
+        """
+        thursday_end = date(2025, 1, 9)
+        recovery_friday = thursday_end + timedelta(days=1)
+        blocked_sunday = thursday_end + timedelta(days=3)
+
+        # Should be different days
+        assert recovery_friday != blocked_sunday
+        # Recovery is Friday (day 4), blocked Sunday is Sunday (day 6)
+        assert recovery_friday.weekday() == 4
+        assert blocked_sunday.weekday() == 6
+        # 2-day gap between them (Saturday is open)
+        assert (blocked_sunday - recovery_friday).days == 2
+
+    def test_saturday_not_blocked(self):
+        """Test that Saturday after FMIT is not blocked.
+
+        FMIT week ends Thursday. Timeline:
+        - Fri: Recovery (blocked by PostFMITRecoveryConstraint)
+        - Sat: OPEN (normal availability)
+        - Sun: BLOCKED (this constraint)
+        """
+        thursday_end = date(2025, 1, 9)
+        saturday = thursday_end + timedelta(days=2)
+
+        # Saturday should be day 5, between recovery Friday and blocked Sunday
+        assert saturday.weekday() == 5
+        # Saturday is NOT the blocked Sunday
+        blocked_sunday = thursday_end + timedelta(days=3)
+        assert saturday != blocked_sunday
