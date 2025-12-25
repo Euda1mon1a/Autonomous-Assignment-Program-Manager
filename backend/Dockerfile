@@ -59,6 +59,10 @@ COPY --from=builder /opt/venv /opt/venv
 # Copy application code
 COPY . .
 
+# Copy and make entrypoint executable
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Create non-root user for security
 RUN adduser --disabled-password --gecos '' --uid 1001 appuser \
     && chown -R appuser:appuser /app
@@ -71,5 +75,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
-# Run migrations and start server with uvicorn
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+# Run migrations and start server
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD []
