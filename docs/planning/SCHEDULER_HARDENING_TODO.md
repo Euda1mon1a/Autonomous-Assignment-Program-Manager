@@ -284,8 +284,138 @@ class ScheduleSolutionCallback(cp_model.CpSolverSolutionCallback):
 
 ---
 
+## MCP Server Integration
+
+### MCP Tool: Solver Abort
+
+**Why:** AI agents need ability to abort runaway solvers via MCP tools.
+
+**Implementation:**
+```
+mcp-server/scheduler_mcp/tools/solver_control.py (new)
+```
+
+**Tool definition:**
+```python
+@mcp.tool()
+async def abort_solver(
+    run_id: str,
+    reason: str = "AI agent request"
+) -> dict:
+    """
+    Abort a running solver job.
+
+    Args:
+        run_id: Schedule run ID to abort
+        reason: Reason for abort (logged for audit)
+
+    Returns:
+        Status of abort request
+    """
+    response = await api_client.post(
+        f"/scheduler/runs/{run_id}/abort",
+        json={"reason": reason, "requested_by": "mcp-agent"}
+    )
+    return response.json()
+```
+
+**Effort:** Low (thin wrapper over existing API)
+
+---
+
+### MCP Tool: Solver Progress
+
+**Why:** AI agents monitoring long solves need real-time progress.
+
+**Implementation:**
+```python
+@mcp.tool()
+async def get_solver_progress(run_id: str) -> dict:
+    """Get progress for a running solver."""
+    response = await api_client.get(f"/scheduler/runs/{run_id}/progress")
+    return response.json()
+
+@mcp.tool()
+async def list_active_solvers() -> dict:
+    """List all currently running solver jobs."""
+    response = await api_client.get("/scheduler/runs/active")
+    return response.json()
+```
+
+**Effort:** Low (thin wrapper over existing API)
+
+---
+
+### MCP Tool: Constraint Diagnostics
+
+**Why:** AI agents need visibility into constraint violation patterns for debugging.
+
+**Implementation:**
+```python
+@mcp.tool()
+async def get_constraint_metrics() -> dict:
+    """
+    Get constraint violation metrics.
+
+    Returns breakdown of violations by constraint name,
+    type, and severity for the last solve.
+    """
+    # Query Prometheus metrics or Redis cache
+    return {
+        "violations_by_constraint": {...},
+        "evaluation_times": {...},
+        "satisfaction_rates": {...}
+    }
+```
+
+**Effort:** Medium (needs metrics aggregation endpoint)
+
+---
+
+### MCP Resource: Solver Status (SSE)
+
+**Why:** Real-time progress streaming for long solver runs.
+
+**Implementation:**
+```python
+@mcp.resource("solver://runs/{run_id}/stream")
+async def solver_stream(run_id: str):
+    """Server-sent events for solver progress."""
+    while True:
+        progress = await get_progress(run_id)
+        yield json.dumps(progress)
+        if progress["status"] != "running":
+            break
+        await asyncio.sleep(1)
+```
+
+**Effort:** Medium (requires SSE support in MCP)
+
+---
+
+### Integration with Safe Schedule Generation Skill
+
+**Current skill:** `.claude/skills/safe-schedule-generation/SKILL.md`
+
+**Enhancement needed:**
+1. Before calling `generate_schedule` MCP tool, check for active solvers
+2. After generation starts, provide abort capability
+3. Stream progress during long solves
+
+**Code path:**
+```
+AI Agent → Skill activation → Backup check → generate_schedule MCP tool
+                                          → abort_solver if needed
+                                          → get_solver_progress for monitoring
+```
+
+**Effort:** Low (skill documentation update)
+
+---
+
 ## References
 
 - [ChatGPT Pulse 2025-12-25](../references/chatgpt-pulse-2025-12-25.md) - Source recommendations
 - [Cross-Disciplinary Resilience](../architecture/cross-disciplinary-resilience.md) - Resilience concepts
 - [Solver Algorithm](../architecture/SOLVER_ALGORITHM.md) - Solver internals
+- [MCP Server README](../../mcp-server/README.md) - MCP tool documentation
