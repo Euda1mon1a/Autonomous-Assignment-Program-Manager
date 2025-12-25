@@ -82,6 +82,8 @@ All skills are located in `.claude/skills/`:
 │   └── SKILL.md
 ├── swap-management/            # Shift swap workflows
 │   └── SKILL.md
+├── session-documentation/      # Comprehensive documentation enforcement
+│   └── SKILL.md
 ├── systematic-debugger/        # Systematic debugging workflow
 │   └── SKILL.md
 ├── test-writer/                # Test generation
@@ -118,6 +120,7 @@ All skills are located in `.claude/skills/`:
 | `pr-reviewer` | Pull request review | PR validation, merge decisions |
 | `security-audit` | Security auditing | HIPAA, OPSEC/PERSEC compliance |
 | `changelog-generator` | Release notes from git | Deployment docs, stakeholder updates |
+| `session-documentation` | Comprehensive documentation enforcement | Session handoffs, feature completion, PR creation |
 | `systematic-debugger` | Systematic debugging workflow | Complex bugs, exploration-first debugging |
 
 ### Frontend Skills
@@ -368,6 +371,56 @@ gh pr merge <number> --squash
 | Soft | Fairness (0.25), preferences (0.20), continuity (0.20), resilience (0.20), efficiency (0.15) |
 
 **Uses**: Google OR-Tools CP-SAT solver
+
+---
+
+### session-documentation
+
+**Purpose**: Enforce comprehensive documentation as part of work completion.
+
+**Activates When**:
+- Feature implementation completed
+- Bug fix committed
+- Significant code change made
+- Session ending
+- Handoff requested
+- PR ready for creation
+
+**Why This Skill Exists**:
+Documentation debt compounds session over session. Without proactive documentation:
+- Future sessions rebuild context from scratch (~50K tokens)
+- Handoff errors occur (e.g., constraints implemented but not registered)
+- Users must prompt 3x for comprehensive docs
+
+**Required Outputs**:
+
+| Category | Required | Contents |
+|----------|----------|----------|
+| What Was Done | Always | Bullet list, files modified, tests added |
+| Why It Was Done | Always | Context, problem solved, references |
+| How to Verify | Always | Commands, expected output |
+| What Remains | Always | Incomplete tasks, limitations |
+| Decisions Made | Recommended | Design choices, alternatives rejected |
+| Gotchas | Recommended | Pitfalls, non-obvious behavior |
+
+**Session Handoff Format**:
+```markdown
+## Session Summary
+- Current State (working/broken)
+- Completed This Session (with commit hashes)
+- Blocked Items (with reasons)
+- Next Steps (prioritized)
+- Verification Commands
+- Key Files table
+```
+
+**Anti-Pattern**:
+```
+BAD: "Fixed the bug in scheduler.py"
+GOOD: [Full documentation with files, verification, root cause]
+```
+
+**Integration**: Works with `pr-reviewer` (docs in PR), `changelog-generator` (user-facing notes).
 
 ---
 
