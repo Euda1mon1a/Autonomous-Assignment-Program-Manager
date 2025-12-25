@@ -274,7 +274,7 @@ cd backend && python ../scripts/verify_constraints.py
 - `.docker/docker-compose.prod.yml` - Hardened production
 
 **Supporting Files**:
-- `security.md` - Container security patterns for HIPAA/military contexts
+- `security.md` - Container security patterns for military contexts
 - `troubleshooting.md` - Common issues and solutions
 
 **Quick Commands**:
