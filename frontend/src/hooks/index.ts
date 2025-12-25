@@ -95,6 +95,21 @@ export {
 } from './useResilience'
 
 // ============================================================================
+// Health Hooks
+// ============================================================================
+export {
+  useHealthLive,
+  useHealthReady,
+  useHealthDetailed,
+  useServiceHealth,
+  healthQueryKeys,
+  type ServiceHealth,
+  type HealthLiveResponse,
+  type HealthReadyResponse,
+  type HealthDetailedResponse,
+} from './useHealth'
+
+// ============================================================================
 // Swap Hooks
 // ============================================================================
 export {
