@@ -92,21 +92,62 @@ To use async task tools, you also need:
 
 ## Running the Server
 
-### Standalone Mode
+### Docker Container (Recommended)
+
+The MCP server runs as a Docker container following Docker MCP Toolkit patterns:
+
 ```bash
+# Start all services including MCP server
+docker-compose up -d
+
+# Development mode (hot reload, HTTP transport on port 8080)
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# View MCP server logs
+docker-compose logs -f mcp-server
+
+# Test MCP server health
+docker-compose exec mcp-server python -c \
+  "from scheduler_mcp.server import mcp; print(f'Tools: {len(mcp.tools)}')"
+```
+
+**Container Security Features:**
+- Resource limits: 1 CPU, 2GB RAM
+- Privilege dropping: `no-new-privileges:true`
+- Network isolation: Internal `app-network` only
+- No host filesystem access (production)
+
+### Standalone Mode (Development)
+
+```bash
+cd mcp-server
+pip install -e .
 python -m scheduler_mcp.server
 ```
 
-### As MCP Server (for Claude Desktop, etc.)
-Add to your MCP client configuration:
+### Claude Code Integration
 
+**Option 1: Docker exec (stdio transport)**
 ```json
 {
   "mcpServers": {
     "residency-scheduler": {
-      "command": "python",
-      "args": ["-m", "scheduler_mcp.server"],
-      "cwd": "/path/to/mcp-server"
+      "command": "docker",
+      "args": ["exec", "-i", "residency-scheduler-mcp",
+               "python", "-m", "scheduler_mcp.server"],
+      "transport": "stdio"
+    }
+  }
+}
+```
+
+**Option 2: HTTP transport (development)**
+```json
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "url": "http://localhost:8080",
+      "transport": "http"
     }
   }
 }
@@ -158,10 +199,25 @@ This MCP server is designed to complement the main FastAPI application by:
 
 ## Security Considerations
 
-- The MCP server should run in a trusted environment
-- Database credentials should be securely managed
-- Consider implementing authentication for production deployments
+The MCP server follows Docker MCP Toolkit security patterns:
+
+**Container-Level Security:**
+- Resource limits prevent runaway processes (1 CPU, 2GB RAM)
+- `no-new-privileges:true` prevents privilege escalation
+- Network isolation restricts access to internal services only
+- No host filesystem mounts in production
+- Non-root user (`mcp:mcp`) inside container
+
+**Application-Level Security:**
+- Connects to FastAPI backend (not direct database) for PII protection
+- Database credentials never exposed to MCP server
+- All sensitive data sanitized through API layer
 - Audit all tool invocations for compliance tracking
+
+**Credential Management:**
+- Secrets injected via environment variables at runtime
+- No secrets stored in Docker image
+- Redis password required for Celery integration
 
 ## Future Enhancements
 
