@@ -38,9 +38,7 @@ class SchedulerAPIClient:
         self._token: str | None = None
 
     async def __aenter__(self) -> "SchedulerAPIClient":
-        self._client = httpx.AsyncClient(
-            base_url=self.config.base_url, timeout=self.config.timeout
-        )
+        self._client = httpx.AsyncClient(base_url=self.config.base_url, timeout=self.config.timeout)
         return self
 
     async def __aexit__(self, *args: Any) -> None:
@@ -235,6 +233,35 @@ class SchedulerAPIClient:
             f"{self.config.api_prefix}/people",
             headers=headers,
             params={"limit": limit},
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def get_mtf_compliance(self, check_circuit_breaker: bool = True) -> dict[str, Any]:
+        """Get MTF compliance status using the Iron Dome service.
+
+        Returns DRRS readiness ratings, circuit breaker status, and compliance data.
+
+        Args:
+            check_circuit_breaker: Whether to include circuit breaker check
+
+        Returns:
+            MTF compliance response with:
+            - drrs_category: C1-C5 readiness rating
+            - mission_capability: FMC/PMC/NMC
+            - personnel_rating: P1-P4
+            - capability_rating: S1-S4
+            - circuit_breaker: Circuit breaker status
+            - executive_summary: SITREP-style narrative
+            - deficiencies: List of specific issues
+            - iron_dome_status: green/yellow/red
+            - severity: healthy/warning/critical/emergency
+        """
+        headers = await self._ensure_authenticated()
+        response = await self.client.get(
+            f"{self.config.api_prefix}/resilience/mtf-compliance",
+            headers=headers,
+            params={"check_circuit_breaker": check_circuit_breaker},
         )
         response.raise_for_status()
         return response.json()
