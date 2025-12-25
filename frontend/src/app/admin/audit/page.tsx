@@ -318,89 +318,89 @@ function EntryDetail({ entry, onClose }: EntryDetailProps) {
         </div>
 
         {/* User Info */}
-        {entry.userName && (
+        {entry.userName ? (
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">User</label>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium">
-                {entry.userName.split(' ').map(n => n[0]).join('')}
+                {entry.userName.split(' ').map((n: string) => n[0]).join('')}
               </div>
               <div>
                 <div className="text-sm text-white">{entry.userName}</div>
-                {entry.userId && (
+                {entry.userId ? (
                   <div className="text-xs text-slate-400">{entry.userId}</div>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Target */}
-        {entry.targetType && (
+        {entry.targetType ? (
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">Target</label>
             <div className="text-sm text-white">
               {entry.targetType}
-              {entry.targetName && `: ${entry.targetName}`}
+              {entry.targetName ? `: ${entry.targetName}` : null}
             </div>
-            {entry.targetId && (
+            {entry.targetId ? (
               <div className="text-xs text-slate-400 mt-0.5">{entry.targetId}</div>
-            )}
+            ) : null}
           </div>
-        )}
+        ) : null}
 
         {/* IP Address */}
-        {entry.ipAddress && (
+        {entry.ipAddress ? (
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">IP Address</label>
             <div className="text-sm text-white font-mono">{entry.ipAddress}</div>
           </div>
-        )}
+        ) : null}
 
         {/* Error Message */}
-        {entry.errorMessage && (
+        {entry.errorMessage ? (
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">Error Message</label>
             <div className="p-3 bg-red-900/30 border border-red-800/50 rounded-lg text-sm text-red-200">
               {entry.errorMessage}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Old/New Values */}
-        {(entry.oldValue || entry.newValue) && (
+        {(entry.oldValue !== undefined || entry.newValue !== undefined) ? (
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-2">Changes</label>
             <div className="grid grid-cols-2 gap-3">
-              {entry.oldValue && (
+              {entry.oldValue !== undefined ? (
                 <div>
                   <div className="text-xs text-slate-500 mb-1">Before</div>
                   <pre className="p-2 bg-slate-900 rounded-lg text-xs text-slate-300 overflow-x-auto">
                     {JSON.stringify(entry.oldValue, null, 2)}
                   </pre>
                 </div>
-              )}
-              {entry.newValue && (
+              ) : null}
+              {entry.newValue !== undefined ? (
                 <div>
                   <div className="text-xs text-slate-500 mb-1">After</div>
                   <pre className="p-2 bg-slate-900 rounded-lg text-xs text-slate-300 overflow-x-auto">
                     {JSON.stringify(entry.newValue, null, 2)}
                   </pre>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Additional Details */}
-        {entry.details && Object.keys(entry.details).length > 0 && (
+        {entry.details && Object.keys(entry.details).length > 0 ? (
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-2">Additional Details</label>
             <pre className="p-3 bg-slate-900 rounded-lg text-xs text-slate-300 overflow-x-auto">
               {JSON.stringify(entry.details, null, 2)}
             </pre>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

@@ -201,18 +201,18 @@ export function useTimelineMetrics(
 export function useAvailableFaculty(
   specialty?: string,
   options?: Omit<
-    UseQueryOptions<Array<{ id: string; name: string; specialty: string }>, ApiError>,
-    'queryKey' | 'queryFn'
+    UseQueryOptions<PersonApiResponse[] | ApiListResponse<PersonApiResponse>, ApiError, Array<{ id: string; name: string; specialty: string }>>,
+    'queryKey' | 'queryFn' | 'select'
   >
 ) {
   const params = specialty ? `?specialty=${encodeURIComponent(specialty)}` : '';
 
-  return useQuery<Array<{ id: string; name: string; specialty: string }>, ApiError>({
+  return useQuery({
     queryKey: ['fmit-timeline', 'faculty-list', specialty],
     queryFn: () => get<PersonApiResponse[] | ApiListResponse<PersonApiResponse>>(`/people/faculty${params}`),
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
-    select: (data: PersonApiResponse[] | ApiListResponse<PersonApiResponse>) => {
+    select: (data: PersonApiResponse[] | ApiListResponse<PersonApiResponse>): Array<{ id: string; name: string; specialty: string }> => {
       // Handle both array response and object with items array
       const items = Array.isArray(data) ? data : data.items || [];
       return items.map((person: PersonApiResponse) => ({
@@ -229,14 +229,14 @@ export function useAvailableFaculty(
  * Fetch available rotations for filtering
  */
 export function useAvailableRotations(
-  options?: Omit<UseQueryOptions<Array<{ id: string; name: string }>, ApiError>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<RotationTemplateApiResponse[] | ApiListResponse<RotationTemplateApiResponse>, ApiError, Array<{ id: string; name: string }>>, 'queryKey' | 'queryFn' | 'select'>
 ) {
-  return useQuery<Array<{ id: string; name: string }>, ApiError>({
+  return useQuery({
     queryKey: ['fmit-timeline', 'rotations'],
     queryFn: () => get<RotationTemplateApiResponse[] | ApiListResponse<RotationTemplateApiResponse>>('/rotation-templates'),
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
-    select: (data: RotationTemplateApiResponse[] | ApiListResponse<RotationTemplateApiResponse>) => {
+    select: (data: RotationTemplateApiResponse[] | ApiListResponse<RotationTemplateApiResponse>): Array<{ id: string; name: string }> => {
       // Handle both array response and object with items array
       const items = Array.isArray(data) ? data : data.items || [];
       return items.map((template: RotationTemplateApiResponse) => ({
