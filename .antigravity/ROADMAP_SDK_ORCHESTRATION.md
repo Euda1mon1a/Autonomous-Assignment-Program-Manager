@@ -1604,3 +1604,826 @@ python -m .antigravity.orchestrator.minimal
 ---
 
 *This roadmap transforms your Signal Transduction concept from browser automation into production-grade SDK orchestration.*
+
+---
+
+***REMOVED******REMOVED*** Phase 6: Exotic Pattern Integration (Advanced)
+
+**Goal:** Leverage cross-disciplinary resilience patterns for orchestrator enhancement
+
+***REMOVED******REMOVED******REMOVED*** Discovery: The Exotic Resilience Library
+
+The codebase contains a remarkable collection of cross-disciplinary resilience patterns. Each can be mapped to SDK orchestration challenges:
+
+```
+backend/app/resilience/
+├── unified_critical_index.py   ***REMOVED*** Master integrator (N-1/Epi/Hub)
+├── homeostasis.py              ***REMOVED*** Biological feedback loops
+├── le_chatelier.py             ***REMOVED*** Chemical equilibrium shifts
+├── creep_fatigue.py            ***REMOVED*** Materials science (Larson-Miller)
+├── contagion_model.py          ***REMOVED*** SIS epidemiology
+├── stigmergy.py                ***REMOVED*** Ant colony optimization
+├── seismic_detection.py        ***REMOVED*** STA/LTA early warning
+├── burnout_fire_index.py       ***REMOVED*** Forestry danger rating
+├── transcription_factors.py    ***REMOVED*** Gene regulatory networks
+├── thermodynamics/
+│   ├── entropy.py              ***REMOVED*** Shannon entropy analysis
+│   └── phase_transitions.py    ***REMOVED*** Critical phenomena detection
+├── saga/
+│   └── orchestrator.py         ***REMOVED*** Distributed transactions
+└── retry/
+    └── decorator.py            ***REMOVED*** Exponential backoff
+```
+
+***REMOVED******REMOVED******REMOVED*** Integration Map: Exotic Patterns → SDK Orchestration
+
+| Exotic Pattern | Origin Domain | Scheduling Use | **SDK Orchestration Use** |
+|----------------|---------------|----------------|---------------------------|
+| **Larson-Miller (Creep/Fatigue)** | Materials Science | Burnout prediction | Agent session fatigue tracking |
+| **Shannon Entropy** | Information Theory | Schedule disorder | Task distribution balance across lanes |
+| **Phase Transitions** | Statistical Physics | Early warning signals | Orchestrator failure prediction |
+| **Transcription Factors** | Molecular Biology | Context-sensitive constraints | Dynamic task constraint activation |
+| **SIS Contagion** | Epidemiology | Burnout spread | Error propagation modeling |
+| **Le Chatelier** | Physical Chemistry | System stress response | Backpressure equilibrium shifts |
+| **Homeostasis** | Physiology | Feedback loops | Lane health feedback control |
+| **Stigmergy** | Entomology | Preference optimization | Task routing preference trails |
+| **STA/LTA Seismic** | Geophysics | Burnout precursors | Orchestrator instability detection |
+| **Unified Critical Index** | Novel (Cross-domain) | Faculty risk aggregation | Lane/agent criticality assessment |
+
+***REMOVED******REMOVED******REMOVED*** Implementation: Entropy-Based Task Distribution
+
+```python
+***REMOVED*** .antigravity/orchestrator/entropy_monitor.py
+"""
+Apply Shannon entropy analysis to task distribution across lanes.
+
+High entropy → Tasks evenly distributed (good)
+Low entropy → Tasks concentrated in few lanes (bottleneck risk)
+"""
+import math
+from collections import Counter
+from dataclasses import dataclass
+from datetime import datetime
+
+
+@dataclass
+class LaneEntropyMetrics:
+    """Entropy analysis of task distribution across lanes."""
+    lane_entropy: float           ***REMOVED*** Shannon entropy of task distribution
+    normalized_entropy: float     ***REMOVED*** 0-1 (1 = perfectly balanced)
+    max_lane_load: int           ***REMOVED*** Highest task count on any lane
+    min_lane_load: int           ***REMOVED*** Lowest task count
+    imbalance_ratio: float       ***REMOVED*** max/min load ratio
+    recommendation: str          ***REMOVED*** Action recommendation
+
+
+def calculate_lane_entropy(lane_tasks: dict[int, int]) -> LaneEntropyMetrics:
+    """
+    Calculate Shannon entropy of task distribution.
+
+    Args:
+        lane_tasks: Dictionary of lane_id → task_count
+
+    Returns:
+        LaneEntropyMetrics with entropy analysis
+    """
+    total_tasks = sum(lane_tasks.values())
+    if total_tasks == 0:
+        return LaneEntropyMetrics(
+            lane_entropy=0.0,
+            normalized_entropy=1.0,
+            max_lane_load=0,
+            min_lane_load=0,
+            imbalance_ratio=1.0,
+            recommendation="System idle - no tasks"
+        )
+
+    ***REMOVED*** Calculate probabilities
+    probabilities = [count / total_tasks for count in lane_tasks.values() if count > 0]
+
+    ***REMOVED*** Shannon entropy: H = -Σ p(i) * log2(p(i))
+    entropy = -sum(p * math.log2(p) for p in probabilities if p > 0)
+
+    ***REMOVED*** Maximum entropy for uniform distribution
+    max_entropy = math.log2(len(lane_tasks)) if lane_tasks else 1.0
+
+    ***REMOVED*** Normalized (0-1 scale)
+    normalized = entropy / max_entropy if max_entropy > 0 else 1.0
+
+    loads = list(lane_tasks.values())
+    max_load = max(loads) if loads else 0
+    min_load = min(loads) if loads else 0
+
+    ***REMOVED*** Generate recommendation
+    if normalized > 0.9:
+        recommendation = "Excellent - tasks well distributed"
+    elif normalized > 0.7:
+        recommendation = "Good - minor imbalance"
+    elif normalized > 0.5:
+        recommendation = "Warning - consider rebalancing"
+    else:
+        recommendation = "Critical - severe concentration risk"
+
+    return LaneEntropyMetrics(
+        lane_entropy=entropy,
+        normalized_entropy=normalized,
+        max_lane_load=max_load,
+        min_lane_load=min_load,
+        imbalance_ratio=max_load / min_load if min_load > 0 else float('inf'),
+        recommendation=recommendation
+    )
+
+
+class OrchestratorEntropyMonitor:
+    """
+    Real-time entropy monitoring for lane health.
+
+    Integrates with KinaseLoop to detect task concentration issues
+    before they cause cascade failures.
+    """
+
+    def __init__(self, num_lanes: int = 8, history_window: int = 50):
+        self.num_lanes = num_lanes
+        self.history_window = history_window
+        self.entropy_history: list[float] = []
+        self.timestamp_history: list[datetime] = []
+
+    def update(self, lane_tasks: dict[int, int]) -> LaneEntropyMetrics:
+        """Update with current lane task counts."""
+        metrics = calculate_lane_entropy(lane_tasks)
+
+        self.entropy_history.append(metrics.normalized_entropy)
+        self.timestamp_history.append(datetime.now())
+
+        ***REMOVED*** Trim history
+        if len(self.entropy_history) > self.history_window:
+            self.entropy_history.pop(0)
+            self.timestamp_history.pop(0)
+
+        return metrics
+
+    def detect_critical_slowing(self) -> bool:
+        """
+        Detect critical slowing down in entropy dynamics.
+
+        Near phase transitions, entropy changes slow down as system
+        explores many configurations. High autocorrelation + low
+        rate of change = approaching instability.
+        """
+        if len(self.entropy_history) < 10:
+            return False
+
+        recent = self.entropy_history[-10:]
+
+        ***REMOVED*** Calculate autocorrelation at lag=1
+        mean = sum(recent) / len(recent)
+        c0 = sum((v - mean) ** 2 for v in recent)
+
+        if c0 == 0:
+            return False
+
+        c1 = sum((recent[i] - mean) * (recent[i+1] - mean)
+                 for i in range(len(recent) - 1))
+        autocorr = c1 / c0
+
+        ***REMOVED*** Rate of change
+        rate = abs(recent[-1] - recent[0]) / len(recent)
+
+        ***REMOVED*** Critical slowing: high autocorrelation + low rate
+        return autocorr > 0.8 and rate < 0.05
+```
+
+***REMOVED******REMOVED******REMOVED*** Implementation: Creep-Fatigue for Agent Sessions
+
+```python
+***REMOVED*** .antigravity/orchestrator/session_fatigue.py
+"""
+Apply Larson-Miller parameter to track agent session fatigue.
+
+Long sessions with high task load accumulate "creep damage" like
+materials under sustained stress. Prevents session exhaustion.
+"""
+import math
+from dataclasses import dataclass
+from datetime import datetime
+
+
+@dataclass
+class SessionFatigueMetrics:
+    """Fatigue analysis for an agent session."""
+    session_id: str
+    duration_minutes: float
+    task_count: int
+    larson_miller_parameter: float  ***REMOVED*** LMP value
+    fatigue_stage: str              ***REMOVED*** PRIMARY, SECONDARY, TERTIARY
+    recommended_action: str
+
+
+***REMOVED*** Constants from materials science (calibrated for agent sessions)
+LMP_CONSTANT = 20.0            ***REMOVED*** Larson-Miller constant
+SAFE_LMP = 31.5                ***REMOVED*** 70% of failure threshold
+FAILURE_THRESHOLD = 45.0       ***REMOVED*** Session should end
+
+
+def calculate_session_fatigue(
+    session_id: str,
+    started_at: datetime,
+    task_count: int,
+    now: datetime | None = None
+) -> SessionFatigueMetrics:
+    """
+    Calculate session fatigue using Larson-Miller parameter.
+
+    LMP = workload_fraction * (base + multiplier * log10(duration))
+
+    Theory:
+    - Short high-intensity sessions: acceptable
+    - Long high-intensity sessions: fatigue accumulates non-linearly
+    - The log10(duration) captures time-temperature analogy from materials
+    """
+    now = now or datetime.now()
+    duration_minutes = (now - started_at).total_seconds() / 60
+
+    ***REMOVED*** Prevent log(0)
+    if duration_minutes < 1:
+        duration_minutes = 1
+
+    ***REMOVED*** Normalize workload (assume 5 tasks/hour is baseline)
+    tasks_per_hour = (task_count / duration_minutes) * 60
+    workload_fraction = min(1.0, tasks_per_hour / 5.0)
+
+    ***REMOVED*** Larson-Miller calculation
+    base = LMP_CONSTANT / 2.0
+    multiplier = LMP_CONSTANT * 1.25
+    lmp = workload_fraction * (base + multiplier * math.log10(duration_minutes))
+
+    ***REMOVED*** Determine fatigue stage
+    lmp_ratio = lmp / FAILURE_THRESHOLD
+
+    if lmp_ratio < 0.3:
+        stage = "PRIMARY"
+        action = "Continue - session healthy"
+    elif lmp_ratio < 0.6:
+        stage = "SECONDARY"
+        action = "Monitor - steady state fatigue"
+    elif lmp_ratio < 0.85:
+        stage = "TERTIARY"
+        action = "Warning - consider session refresh"
+    else:
+        stage = "FAILURE_IMMINENT"
+        action = "CRITICAL - refresh session immediately"
+
+    return SessionFatigueMetrics(
+        session_id=session_id,
+        duration_minutes=duration_minutes,
+        task_count=task_count,
+        larson_miller_parameter=lmp,
+        fatigue_stage=stage,
+        recommended_action=action
+    )
+
+
+class SessionFatigueMonitor:
+    """
+    Monitor fatigue across all active agent sessions.
+
+    Triggers session refresh before failures occur.
+    """
+
+    def __init__(self, sessions: dict[str, datetime] | None = None):
+        self.sessions: dict[str, datetime] = sessions or {}
+        self.task_counts: dict[str, int] = {}
+
+    def start_session(self, session_id: str):
+        """Register a new agent session."""
+        self.sessions[session_id] = datetime.now()
+        self.task_counts[session_id] = 0
+
+    def record_task(self, session_id: str):
+        """Record a task completion for a session."""
+        self.task_counts[session_id] = self.task_counts.get(session_id, 0) + 1
+
+    def get_fatigue(self, session_id: str) -> SessionFatigueMetrics | None:
+        """Get fatigue metrics for a session."""
+        if session_id not in self.sessions:
+            return None
+
+        return calculate_session_fatigue(
+            session_id=session_id,
+            started_at=self.sessions[session_id],
+            task_count=self.task_counts.get(session_id, 0)
+        )
+
+    def get_sessions_needing_refresh(self) -> list[str]:
+        """Get sessions that should be refreshed."""
+        needing_refresh = []
+
+        for session_id in self.sessions:
+            metrics = self.get_fatigue(session_id)
+            if metrics and metrics.fatigue_stage in ("TERTIARY", "FAILURE_IMMINENT"):
+                needing_refresh.append(session_id)
+
+        return needing_refresh
+```
+
+***REMOVED******REMOVED******REMOVED*** Implementation: Transcription Factor Task Constraints
+
+```python
+***REMOVED*** .antigravity/orchestrator/constraint_regulation.py
+"""
+Apply gene regulatory network concepts to task constraints.
+
+Constraints are "genes" that can be activated/repressed based on
+context "transcription factors". Enables context-sensitive behavior.
+"""
+from dataclasses import dataclass, field
+from enum import Enum
+from datetime import datetime
+
+
+class TFType(Enum):
+    """Transcription factor types."""
+    ACTIVATOR = "activator"       ***REMOVED*** Turns on constraints
+    REPRESSOR = "repressor"       ***REMOVED*** Turns off constraints
+    DUAL = "dual"                 ***REMOVED*** Can do both
+    MASTER = "master"             ***REMOVED*** Always active, controls others
+
+
+class BindingLogic(Enum):
+    """How multiple TFs combine."""
+    AND = "and"           ***REMOVED*** All must be active
+    OR = "or"             ***REMOVED*** Any one active
+    MAJORITY = "majority" ***REMOVED*** >50% active
+    THRESHOLD = "threshold"  ***REMOVED*** Sum of strengths > threshold
+
+
+@dataclass
+class TranscriptionFactor:
+    """A regulatory factor that controls constraint activation."""
+    id: str
+    name: str
+    tf_type: TFType
+    basal_expression: float = 0.0     ***REMOVED*** Default activity level
+    current_expression: float = 0.0   ***REMOVED*** Current activity
+    activation_strength: float = 1.0  ***REMOVED*** How strongly it activates
+    repression_strength: float = 0.5  ***REMOVED*** How strongly it represses
+
+
+@dataclass
+class RegulatedConstraint:
+    """A constraint regulated by transcription factors."""
+    id: str
+    name: str
+    description: str
+    activators: list[str] = field(default_factory=list)   ***REMOVED*** TF IDs that activate
+    repressors: list[str] = field(default_factory=list)   ***REMOVED*** TF IDs that repress
+    binding_logic: BindingLogic = BindingLogic.AND
+    current_state: float = 1.0  ***REMOVED*** 0=fully off, 1=fully on
+
+
+class ConstraintRegulator:
+    """
+    Regulate task constraints using transcription factor model.
+
+    Use cases for SDK orchestration:
+    - Activate strict mode during review phases
+    - Repress verbose logging during batch processing
+    - Enable cross-domain access during emergencies
+    - Enforce serial execution when detecting conflicts
+    """
+
+    def __init__(self):
+        self.transcription_factors: dict[str, TranscriptionFactor] = {}
+        self.constraints: dict[str, RegulatedConstraint] = {}
+        self._initialize_defaults()
+
+    def _initialize_defaults(self):
+        """Initialize default TFs for SDK orchestration."""
+        ***REMOVED*** Master regulators (always active)
+        self.transcription_factors["Safety_MR"] = TranscriptionFactor(
+            id="Safety_MR",
+            name="Safety Master Regulator",
+            tf_type=TFType.MASTER,
+            basal_expression=1.0,
+            current_expression=1.0
+        )
+
+        ***REMOVED*** Context-sensitive TFs
+        self.transcription_factors["CrisisMode_TF"] = TranscriptionFactor(
+            id="CrisisMode_TF",
+            name="Crisis Mode",
+            tf_type=TFType.DUAL,
+            basal_expression=0.0,
+            activation_strength=2.0,
+            repression_strength=0.8
+        )
+
+        self.transcription_factors["BatchMode_TF"] = TranscriptionFactor(
+            id="BatchMode_TF",
+            name="Batch Processing Mode",
+            tf_type=TFType.REPRESSOR,
+            basal_expression=0.0,
+            repression_strength=0.7
+        )
+
+        self.transcription_factors["ReviewPhase_TF"] = TranscriptionFactor(
+            id="ReviewPhase_TF",
+            name="Review Phase",
+            tf_type=TFType.ACTIVATOR,
+            basal_expression=0.0,
+            activation_strength=1.5
+        )
+
+    def induce_tf(self, tf_id: str, strength: float = 1.0):
+        """Induce (activate) a transcription factor."""
+        if tf_id in self.transcription_factors:
+            tf = self.transcription_factors[tf_id]
+            tf.current_expression = min(1.0, tf.basal_expression + strength)
+
+    def suppress_tf(self, tf_id: str, strength: float = 1.0):
+        """Suppress (deactivate) a transcription factor."""
+        if tf_id in self.transcription_factors:
+            tf = self.transcription_factors[tf_id]
+            tf.current_expression = max(0.0, tf.current_expression - strength)
+
+    def add_constraint(
+        self,
+        constraint_id: str,
+        name: str,
+        description: str,
+        activators: list[str] | None = None,
+        repressors: list[str] | None = None
+    ):
+        """Add a regulated constraint."""
+        self.constraints[constraint_id] = RegulatedConstraint(
+            id=constraint_id,
+            name=name,
+            description=description,
+            activators=activators or [],
+            repressors=repressors or []
+        )
+
+    def evaluate_constraint(self, constraint_id: str) -> float:
+        """
+        Evaluate current state of a constraint.
+
+        Returns 0.0-1.0 based on TF activity.
+        """
+        if constraint_id not in self.constraints:
+            return 1.0  ***REMOVED*** Default: enabled
+
+        constraint = self.constraints[constraint_id]
+
+        ***REMOVED*** Calculate activation signal
+        activation = 0.0
+        for tf_id in constraint.activators:
+            if tf_id in self.transcription_factors:
+                tf = self.transcription_factors[tf_id]
+                activation += tf.current_expression * tf.activation_strength
+
+        ***REMOVED*** Calculate repression signal
+        repression = 0.0
+        for tf_id in constraint.repressors:
+            if tf_id in self.transcription_factors:
+                tf = self.transcription_factors[tf_id]
+                repression += tf.current_expression * tf.repression_strength
+
+        ***REMOVED*** Net effect (activation - repression), clamped to 0-1
+        constraint.current_state = max(0.0, min(1.0, 0.5 + activation - repression))
+
+        return constraint.current_state
+
+    def is_constraint_active(self, constraint_id: str, threshold: float = 0.5) -> bool:
+        """Check if constraint is effectively active."""
+        return self.evaluate_constraint(constraint_id) >= threshold
+```
+
+***REMOVED******REMOVED******REMOVED*** Validation Criteria (Phase 6)
+- [ ] Entropy monitor detects task concentration issues
+- [ ] Session fatigue triggers before failures
+- [ ] Constraint regulator responds to context changes
+- [ ] Integration with KinaseLoop working
+- [ ] Metrics exposed for all exotic patterns
+
+---
+
+***REMOVED******REMOVED*** Phase 7: Potential Explorations
+
+**Goal:** Document advanced concepts for future development
+
+***REMOVED******REMOVED******REMOVED*** 7.1 Unified Orchestrator Critical Index (Novel)
+
+Adapt the `UnifiedCriticalIndex` from faculty risk to orchestrator health:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              UNIFIED ORCHESTRATOR CRITICAL INDEX                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   Domain 1: Lane Contingency (N-1/N-2)                          │
+│   ├─ Which lanes can fail without cascade?                      │
+│   ├─ Single points of failure in domain coverage?              │
+│   └─ Maps to: backend/app/resilience/contingency.py            │
+│                                                                 │
+│   Domain 2: Task Contagion (Epidemiology)                       │
+│   ├─ Do failed tasks spread to other lanes?                     │
+│   ├─ Which tasks are "super-spreaders" of errors?              │
+│   └─ Maps to: backend/app/resilience/contagion_model.py        │
+│                                                                 │
+│   Domain 3: Lane Hub Analysis (Network)                         │
+│   ├─ Which lanes are most interconnected?                       │
+│   ├─ What's the handoff dependency graph topology?             │
+│   └─ Maps to: backend/app/resilience/hub_analysis.py           │
+│                                                                 │
+│   CROSS-DOMAIN PATTERNS:                                        │
+│   ├─ All 3 high: CRITICAL - orchestrator at risk               │
+│   ├─ Contingency + Hub: Structural vulnerability               │
+│   ├─ Contagion + Hub: Error amplification risk                 │
+│   └─ Single domain: Targeted intervention                      │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+***REMOVED******REMOVED******REMOVED*** 7.2 Phase Transition Early Warning
+
+Adapt the `PhaseTransitionDetector` to predict orchestrator failures:
+
+**Signals to monitor:**
+1. **Increasing Variance**: Lane completion times becoming erratic
+2. **Autocorrelation**: Tasks taking longer after previous slow tasks
+3. **Flickering**: Lanes rapidly switching between active/error states
+4. **Skewness**: Distribution of task durations becoming asymmetric
+
+**Implementation hook:**
+```python
+***REMOVED*** In Phase 5 metrics.py, add:
+from backend.app.resilience.thermodynamics.phase_transitions import PhaseTransitionDetector
+
+class OrchestratorPhaseMonitor:
+    def __init__(self):
+        self.detector = PhaseTransitionDetector(window_size=50)
+
+    def update(self, metrics: dict[str, float]):
+        ***REMOVED*** Feed orchestrator metrics to detector
+        self.detector.update({
+            "lane_completion_time": metrics.get("avg_task_duration"),
+            "error_rate": metrics.get("error_rate"),
+            "queue_depth": metrics.get("queue_depth"),
+            "entropy": metrics.get("task_entropy")
+        })
+
+    def check_early_warnings(self) -> dict:
+        risk = self.detector.detect_critical_phenomena()
+        return {
+            "severity": risk.overall_severity.value,
+            "signals": len(risk.signals),
+            "time_to_transition": risk.time_to_transition,
+            "recommendations": risk.recommendations
+        }
+```
+
+***REMOVED******REMOVED******REMOVED*** 7.3 Le Chatelier Backpressure Equilibrium
+
+When the system is stressed (queue depth increases), Le Chatelier's principle tells us the system will naturally compensate, but only partially:
+
+```python
+***REMOVED*** Stress response mapping for orchestrator:
+STRESS_RESPONSES = {
+    "queue_buildup": {
+        "stress_type": "DEMAND_SURGE",
+        "natural_compensation": 0.30,  ***REMOVED*** 30% compensation from backpressure
+        "interventions": [
+            "spawn_additional_lanes",     ***REMOVED*** Increase capacity
+            "defer_low_priority_tasks",   ***REMOVED*** Reduce demand
+            "accept_new_equilibrium"      ***REMOVED*** Lower throughput is OK
+        ]
+    },
+    "lane_failure": {
+        "stress_type": "CAPACITY_LOSS",
+        "natural_compensation": 0.25,  ***REMOVED*** Remaining lanes absorb ~25%
+        "interventions": [
+            "cross_domain_coverage",
+            "activate_backup_lane",
+            "reduce_parallelism"
+        ]
+    }
+}
+```
+
+***REMOVED******REMOVED******REMOVED*** 7.4 Stigmergy for Task Routing
+
+Ant colony optimization for learning optimal task→lane routing:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    STIGMERGY TASK ROUTING                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   Task Type: REFACTOR_API                                       │
+│   ├─ Lane 1: ████████░░ 0.80 (strong preference)               │
+│   ├─ Lane 2: █████░░░░░ 0.50 (moderate)                        │
+│   ├─ Lane 3: ██░░░░░░░░ 0.20 (weak)                            │
+│   └─ Lane 4: █░░░░░░░░░ 0.10 (avoid)                           │
+│                                                                 │
+│   Pheromone Rules:                                              │
+│   ├─ Success: Deposit pheromone on (task_type, lane)           │
+│   ├─ Failure: Evaporate pheromone                              │
+│   ├─ Fast completion: Extra pheromone                          │
+│   └─ Cross-pollination: Share learning across similar tasks    │
+│                                                                 │
+│   Over time:                                                    │
+│   ├─ Optimal routes emerge from collective experience          │
+│   ├─ New task types start with exploration                     │
+│   └─ Stale routes decay (adapt to changes)                     │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+***REMOVED******REMOVED******REMOVED*** 7.5 Saga Pattern for Multi-Lane Transactions
+
+When a task spans multiple domains and requires coordinated commits:
+
+```python
+***REMOVED*** From backend/app/saga/orchestrator.py - adapt for SDK
+
+class OrchestratorSaga:
+    """
+    Saga pattern for multi-domain task orchestration.
+
+    When a task requires changes across CORE, API, and TEST domains,
+    treat it as a distributed transaction with compensation.
+    """
+
+    async def execute_cross_domain_task(self, task: MultiDomainTask):
+        completed_steps = []
+
+        try:
+            ***REMOVED*** Step 1: CORE domain changes
+            core_result = await self.run_in_domain(Domain.CORE, task.core_prompt)
+            completed_steps.append(("CORE", core_result))
+
+            ***REMOVED*** Step 2: API domain changes
+            api_result = await self.run_in_domain(Domain.API, task.api_prompt)
+            completed_steps.append(("API", api_result))
+
+            ***REMOVED*** Step 3: TEST domain changes
+            test_result = await self.run_in_domain(Domain.TEST, task.test_prompt)
+            completed_steps.append(("TEST", test_result))
+
+            return SagaResult(success=True, steps=completed_steps)
+
+        except Exception as e:
+            ***REMOVED*** Compensation: Revert completed steps in reverse order
+            for domain, result in reversed(completed_steps):
+                await self.compensate(domain, result)
+
+            return SagaResult(success=False, error=str(e), compensated=True)
+```
+
+***REMOVED******REMOVED******REMOVED*** 7.6 STA/LTA Seismic Detection for Instability
+
+Short-Term Average / Long-Term Average ratio detects sudden changes:
+
+```python
+***REMOVED*** Seismic detection for orchestrator instability
+
+def detect_instability(metric_history: list[float], sta_window: int = 5, lta_window: int = 20) -> dict:
+    """
+    STA/LTA algorithm from seismology.
+
+    When short-term behavior diverges from long-term trend,
+    something significant is happening.
+    """
+    if len(metric_history) < lta_window:
+        return {"ratio": 1.0, "alert": False}
+
+    sta = sum(metric_history[-sta_window:]) / sta_window
+    lta = sum(metric_history[-lta_window:]) / lta_window
+
+    ratio = sta / lta if lta > 0 else 1.0
+
+    ***REMOVED*** Thresholds from seismology (calibrate for orchestrator)
+    TRIGGER_ON = 2.5   ***REMOVED*** Start of event
+    TRIGGER_OFF = 1.5  ***REMOVED*** End of event
+
+    return {
+        "ratio": ratio,
+        "sta": sta,
+        "lta": lta,
+        "alert": ratio > TRIGGER_ON,
+        "interpretation": (
+            "INSTABILITY DETECTED" if ratio > TRIGGER_ON
+            else "RECOVERING" if ratio > TRIGGER_OFF
+            else "STABLE"
+        )
+    }
+```
+
+***REMOVED******REMOVED******REMOVED*** Integration Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                SDK ORCHESTRATOR + EXOTIC PATTERNS               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   ┌───────────────────────────────────────────────────────────┐ │
+│   │                    KINASE LOOP (Phase 2)                  │ │
+│   │   Lane 1 ─┐                                               │ │
+│   │   Lane 2 ─┼─► Entropy Monitor ───► Rebalance             │ │
+│   │   ...     │   (Shannon)              Trigger              │ │
+│   │   Lane 8 ─┘                                               │ │
+│   └───────────────────────────────────────────────────────────┘ │
+│                            │                                    │
+│                            ▼                                    │
+│   ┌───────────────────────────────────────────────────────────┐ │
+│   │              SESSION MANAGER (Phase 6)                    │ │
+│   │   ┌────────────┐  ┌────────────┐  ┌────────────┐          │ │
+│   │   │ Session 1  │  │ Session 2  │  │ Session N  │          │ │
+│   │   │ LMP: 28.5  │  │ LMP: 42.1  │  │ LMP: 15.2  │          │ │
+│   │   │ PRIMARY    │  │ TERTIARY ⚠ │  │ PRIMARY    │          │ │
+│   │   └────────────┘  └────────────┘  └────────────┘          │ │
+│   │              Creep/Fatigue Monitor                        │ │
+│   └───────────────────────────────────────────────────────────┘ │
+│                            │                                    │
+│                            ▼                                    │
+│   ┌───────────────────────────────────────────────────────────┐ │
+│   │            CONSTRAINT REGULATOR (Phase 6)                 │ │
+│   │   Transcription Factors:                                  │ │
+│   │   ├─ Safety_MR: ████████ 1.0 (always on)                 │ │
+│   │   ├─ CrisisMode_TF: ░░░░░░░░ 0.0 (inactive)              │ │
+│   │   ├─ BatchMode_TF: ████░░░░ 0.5 (partial)                │ │
+│   │   └─ ReviewPhase_TF: ██████░░ 0.75 (active)              │ │
+│   └───────────────────────────────────────────────────────────┘ │
+│                            │                                    │
+│                            ▼                                    │
+│   ┌───────────────────────────────────────────────────────────┐ │
+│   │              EARLY WARNING SYSTEM (Phase 7)               │ │
+│   │   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐       │ │
+│   │   │ Phase Trans │  │  STA/LTA    │  │  Unified    │       │ │
+│   │   │  Detector   │  │   Seismic   │  │   Index     │       │ │
+│   │   │ Severity: ▲ │  │ Ratio: 1.2  │  │ Risk: 0.45  │       │ │
+│   │   └─────────────┘  └─────────────┘  └─────────────┘       │ │
+│   └───────────────────────────────────────────────────────────┘ │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+***REMOVED******REMOVED******REMOVED*** Priority Ranking for Exploration
+
+| Exploration | Value | Complexity | Recommended |
+|-------------|-------|------------|-------------|
+| **Entropy Monitor** | High | Low | Phase 6.1 |
+| **Session Fatigue** | High | Low | Phase 6.2 |
+| **Constraint Regulator** | Medium | Medium | Phase 6.3 |
+| **Phase Transition** | High | Medium | Phase 7.1 |
+| **STA/LTA Seismic** | Medium | Low | Phase 7.2 |
+| **Unified Index** | High | High | Phase 7.3 |
+| **Stigmergy Routing** | Medium | High | Phase 7.4 |
+| **Saga Transactions** | High | High | Phase 7.5 |
+
+---
+
+***REMOVED******REMOVED*** Summary: The Exotic Pattern Library
+
+The codebase contains an extraordinary collection of cross-disciplinary resilience patterns:
+
+***REMOVED******REMOVED******REMOVED*** Tier 1: Ready to Integrate (Phase 6)
+| Pattern | Implementation | Lines | Readiness |
+|---------|----------------|-------|-----------|
+| Shannon Entropy | `thermodynamics/entropy.py` | 438 | ✅ Direct |
+| Creep/Fatigue | `creep_fatigue.py` | 600+ | ✅ Direct |
+| Transcription Factors | `transcription_factors.py` | 1300+ | ✅ Direct |
+| Retry/Backoff | `retry/decorator.py` | 468 | ✅ Direct |
+
+***REMOVED******REMOVED******REMOVED*** Tier 2: Requires Adaptation (Phase 7)
+| Pattern | Implementation | Adaptation Needed |
+|---------|----------------|-------------------|
+| Unified Critical Index | `unified_critical_index.py` | Faculty→Lane mapping |
+| Phase Transitions | `thermodynamics/phase_transitions.py` | Schedule→Orchestrator metrics |
+| SIS Contagion | `contagion_model.py` | Burnout→Error propagation |
+| Homeostasis | `homeostasis.py` | Setpoints for orchestrator |
+
+***REMOVED******REMOVED******REMOVED*** Tier 3: Novel Research (Future)
+| Pattern | Source | Novel Application |
+|---------|--------|-------------------|
+| Stigmergy | `stigmergy.py` | Task routing optimization |
+| Le Chatelier | `le_chatelier.py` | Backpressure equilibrium |
+| STA/LTA Seismic | `seismic_detection.py` | Instability detection |
+| Saga Pattern | `saga/orchestrator.py` | Multi-domain transactions |
+
+---
+
+***REMOVED******REMOVED*** Next Steps
+
+1. **Phase 1-2**: Get basic SDK orchestration working
+2. **Phase 3**: Add dual-nucleus review cycle
+3. **Phase 4**: Implement handoffs and recovery
+4. **Phase 5**: Production hardening with metrics
+5. **Phase 6**: Integrate exotic patterns (entropy, fatigue, constraints)
+6. **Phase 7**: Explore advanced patterns as needed
+
+The exotic pattern library represents months of research into cross-disciplinary resilience. Leveraging it for SDK orchestration creates a uniquely robust system that draws from materials science, information theory, molecular biology, epidemiology, and physics.
+
+---
+
+*This roadmap transforms your Signal Transduction concept from browser automation into production-grade SDK orchestration, enhanced with cross-disciplinary exotic patterns.*
