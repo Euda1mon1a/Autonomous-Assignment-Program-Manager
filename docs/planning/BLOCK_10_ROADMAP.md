@@ -291,15 +291,632 @@ backend/app/scheduling/constraints/
 | Review constraint satisfaction | Pending | Violation types, not names |
 | Evaluate fairness metrics | Pending | Distribution statistics |
 | Identify optimization opportunities | Pending | Algorithm improvements |
-| **Design inpatient pre-loading** | Pending | Extend `preserve_fmit` pattern |
-| **Design call solver integration** | Pending | See call constraints below |
+| **Design inpatient pre-loading** | ✅ Done | See Design 1 below |
+| **Design call solver integration** | ✅ Done | See Design 2 below |
 
 **Completion Criteria:**
 - [ ] Coverage analysis document created
 - [ ] Optimization recommendations provided
 - [ ] No PII in analysis outputs
-- [ ] Inpatient pre-loading design documented
-- [ ] Call constraint implementation plan
+- [x] Inpatient pre-loading design documented
+- [x] Call constraint implementation plan
+
+---
+
+## Checkpoint 3 Design Document (Claude Web - 2025-12-25)
+
+### Design 1: Inpatient Pre-Loading Mechanism
+
+#### Problem Statement
+
+The current solver only schedules **outpatient rotations** (Mon-Fri clinics). Inpatient rotations (FMIT, NF, PC, NICU) are **not loaded** as constraints, causing:
+
+1. **71% coverage** (weekends missing because no inpatient assignments feed into coverage)
+2. **NF over-assignment bug**: Night Float assigned to ALL 29 people (no headcount constraint)
+3. **No FMIT clinic day enforcement**: PGY-level specific clinic days not respected
+
+#### Solution: Extend `preserve_fmit` Pattern
+
+The existing `preserve_fmit` pattern in `engine.py:148-154` provides a template:
+
+```python
+if preserve_fmit:
+    fmit_assignments = self._load_fmit_assignments()
+    preserve_ids = {a.id for a in fmit_assignments}
+```
+
+**Extend this to resident inpatient:**
+
+```python
+def generate_schedule(
+    ...,
+    preserve_fmit: bool = True,
+    preserve_resident_inpatient: bool = True,  # NEW
+):
+    # Step 1.5a: Load FMIT faculty assignments
+    if preserve_fmit:
+        fmit_assignments = self._load_fmit_assignments()
+        preserve_ids.update({a.id for a in fmit_assignments})
+
+    # Step 1.5b: Load resident inpatient assignments  # NEW
+    if preserve_resident_inpatient:
+        resident_inpatient = self._load_resident_inpatient_assignments()
+        preserve_ids.update({a.id for a in resident_inpatient})
+```
+
+#### New Method: `_load_resident_inpatient_assignments()`
+
+```python
+def _load_resident_inpatient_assignments(self) -> list[Assignment]:
+    """
+    Load resident inpatient assignments (FMIT, NF, NICU) for the date range.
+
+    These assignments are sourced from Airtable `tbl ResidencyBlockSchedule`
+    and should be loaded BEFORE solver runs as fixed constraints.
+
+    Detection logic:
+        - person.type == 'resident'
+        - template.activity_type == 'inpatient'
+        - Includes: FMIT AM/PM, Night Float AM/PM, NICU
+
+    Business Rules Applied:
+        - FMIT: 1 per PGY level per block (PGY1=Wed AM, PGY2=Tue PM, PGY3=Mon PM)
+        - NF: Only 1 resident at a time
+        - NICU: Clinic Friday PM (always)
+        - PC: Thursday after NF ends (auto-generated, not loaded)
+
+    Returns:
+        List of Assignment objects for residents on inpatient rotations
+    """
+    return (
+        self.db.query(Assignment)
+        .join(Block, Assignment.block_id == Block.id)
+        .join(Person, Assignment.person_id == Person.id)
+        .join(RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id)
+        .filter(
+            Block.date >= self.start_date,
+            Block.date <= self.end_date,
+            Person.type == "resident",
+            RotationTemplate.activity_type == "inpatient",
+        )
+        .all()
+    )
+```
+
+#### Pre-Loading from Airtable Source
+
+**Current Gap:** Assignments in DB may not reflect Airtable source of truth.
+
+**Solution:** Add optional pre-load step before solver:
+
+```python
+def _preload_inpatient_from_source(self, block_number: int) -> None:
+    """
+    Load resident inpatient assignments from source data (Airtable export).
+
+    This ensures DB reflects the authoritative block schedule before
+    solver optimization.
+
+    Args:
+        block_number: Academic block number (1-13)
+
+    Source: docs/data/airtable_block_schedule.json
+
+    Processing:
+        1. Parse block-resident mappings for block_number
+        2. Create Assignment records for:
+           - FMIT (full block, clinic days per PGY)
+           - NF (half-block, with PC follow-up)
+           - NICU (half-block, Friday PM clinic)
+        3. Commit to database before solver runs
+    """
+    # Implementation by Claude Code (IDE) - requires DB access
+    pass
+```
+
+#### Inpatient Rotation Rules (Encoded as Constraints)
+
+| Rotation | Constraint Type | Implementation |
+|----------|-----------------|----------------|
+| **FMIT** | Headcount | 1 per PGY level per block |
+| **FMIT PGY1** | Clinic Day | Wednesday AM (hard) |
+| **FMIT PGY2** | Clinic Day | Tuesday PM (hard) |
+| **FMIT PGY3** | Clinic Day | Monday PM (hard) |
+| **Night Float** | Headcount | 1 resident at a time (hard) |
+| **NF Prep** | Pre-NF | C30 Thursday PM before starting |
+| **Post-Call** | Post-NF | Thursday after NF ends (hard) |
+| **Inter-block PC** | Block boundary | CRITICAL - must bridge blocks |
+| **NICU** | Clinic Day | Friday PM (hard) |
+
+#### New Constraint: `ResidentInpatientHeadcountConstraint`
+
+**Location:** `backend/app/scheduling/constraints/inpatient.py` (NEW FILE)
+
+```python
+class ResidentInpatientHeadcountConstraint(HardConstraint):
+    """
+    Enforces headcount limits for resident inpatient rotations.
+
+    FMIT: Exactly 1 per PGY level per block (3 total)
+    Night Float: Exactly 1 resident at a time
+    NICU: Per template max_residents (if set)
+
+    This constraint reads inpatient assignments from context.existing_assignments
+    and validates headcount limits are not exceeded.
+    """
+
+    FMIT_PER_PGY_PER_BLOCK = 1
+    NF_CONCURRENT_MAX = 1
+
+    def __init__(self) -> None:
+        super().__init__(
+            name="ResidentInpatientHeadcount",
+            constraint_type=ConstraintType.CAPACITY,
+            priority=ConstraintPriority.CRITICAL,
+        )
+
+    def add_to_cpsat(self, model, variables, context):
+        """
+        Add headcount constraints for FMIT and NF.
+
+        For FMIT: sum(fmit_vars for PGY-X) <= 1 per block
+        For NF: sum(nf_vars for all residents) <= 1 per day
+        """
+        template_vars = variables.get("template_assignments", {})
+        if not template_vars:
+            return
+
+        fmit_template_ids = self._get_fmit_template_ids(context)
+        nf_template_ids = self._get_nf_template_ids(context)
+
+        # FMIT headcount per PGY level per block
+        for pgy_level in [1, 2, 3]:
+            pgy_residents = [r for r in context.residents
+                           if hasattr(r, 'pgy_level') and r.pgy_level == pgy_level]
+
+            for block in context.blocks:
+                b_i = context.block_idx[block.id]
+                fmit_vars = []
+
+                for resident in pgy_residents:
+                    r_i = context.resident_idx.get(resident.id)
+                    if r_i is None:
+                        continue
+
+                    for t_id in fmit_template_ids:
+                        t_i = context.template_idx.get(t_id)
+                        if t_i is not None and (r_i, b_i, t_i) in template_vars:
+                            fmit_vars.append(template_vars[r_i, b_i, t_i])
+
+                if fmit_vars:
+                    model.Add(sum(fmit_vars) <= self.FMIT_PER_PGY_PER_BLOCK)
+
+        # NF headcount per day (across all residents)
+        for block in context.blocks:
+            b_i = context.block_idx[block.id]
+            nf_vars = []
+
+            for resident in context.residents:
+                r_i = context.resident_idx.get(resident.id)
+                if r_i is None:
+                    continue
+
+                for t_id in nf_template_ids:
+                    t_i = context.template_idx.get(t_id)
+                    if t_i is not None and (r_i, b_i, t_i) in template_vars:
+                        nf_vars.append(template_vars[r_i, b_i, t_i])
+
+            if nf_vars:
+                model.Add(sum(nf_vars) <= self.NF_CONCURRENT_MAX)
+```
+
+#### FMIT Clinic Day Constraint
+
+```python
+class FMITResidentClinicDayConstraint(HardConstraint):
+    """
+    Enforces PGY-specific clinic days for FMIT residents.
+
+    - PGY-1 on FMIT: Wednesday AM clinic
+    - PGY-2 on FMIT: Tuesday PM clinic
+    - PGY-3 on FMIT: Monday PM clinic
+
+    Exception: Federal holidays or clinic closures → defaults back to FMIT duty
+    Exception: Inverted 4th Wednesday → PGY-1 NOT assigned clinic
+    """
+
+    FMIT_CLINIC_DAYS = {
+        1: {"weekday": 2, "time_of_day": "AM"},  # Wed AM for PGY-1
+        2: {"weekday": 1, "time_of_day": "PM"},  # Tue PM for PGY-2
+        3: {"weekday": 0, "time_of_day": "PM"},  # Mon PM for PGY-3
+    }
+
+    def add_to_cpsat(self, model, variables, context):
+        """
+        For each FMIT resident, force clinic assignment on their designated day.
+        """
+        # Implementation: if resident is on FMIT and date matches their clinic day,
+        # force clinic template assignment instead of FMIT template
+        pass
+```
+
+---
+
+### Design 2: Call Solver Integration
+
+#### Current State
+
+| Constraint | Status | File |
+|------------|--------|------|
+| FMIT → Fri/Sat call | Exists | `fmit.py:FMITMandatoryCallConstraint` |
+| FMIT → No Sun-Thu call | Exists | `fmit.py:FMITWeekBlockingConstraint` |
+| Post-FMIT recovery | Exists | `fmit.py:PostFMITRecoveryConstraint` |
+| Sunday call equity | Exists | `call_equity.py:SundayCallEquityConstraint` |
+| Weekday call equity | Exists | `call_equity.py:WeekdayCallEquityConstraint` |
+| PD/APD Tuesday avoidance | Exists | `call_equity.py:TuesdayCallPreferenceConstraint` |
+| Dept Chief Wednesday pref | Exists | `call_equity.py:DeptChiefWednesdayPreferenceConstraint` |
+| **Post-FMIT Sunday block** | **MISSING** | **NEW** |
+| **Call spacing (alternating weeks)** | **MISSING** | **NEW** |
+
+#### New Constraint 1: `PostFMITSundayBlockingConstraint`
+
+**Business Rule:** Faculty who ends FMIT on Thursday cannot take Sunday call.
+
+Timeline: `Thu FMIT ends → Fri PC (blocked) → Sat OK → Sun BLOCKED`
+
+**Location:** `backend/app/scheduling/constraints/fmit.py` (add to existing file)
+
+```python
+class PostFMITSundayBlockingConstraint(HardConstraint):
+    """
+    Blocks Sunday call for faculty immediately after FMIT week.
+
+    FMIT week ends Thursday. Faculty gets:
+    - Friday: Recovery day (already blocked by PostFMITRecoveryConstraint)
+    - Saturday: Normal availability
+    - Sunday: BLOCKED from overnight call (this constraint)
+
+    Rationale: Even after Friday recovery, Sunday call is too soon after
+    the demanding FMIT week.
+
+    Implementation:
+        - Identify FMIT weeks from context.existing_assignments
+        - For each FMIT week ending Thursday, block Sunday call
+        - Sunday = Thursday + 3 days
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            name="PostFMITSundayBlocking",
+            constraint_type=ConstraintType.CALL,
+            priority=ConstraintPriority.HIGH,
+        )
+
+    def add_to_cpsat(self, model, variables, context):
+        """Block Sunday call after FMIT week."""
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        fmit_weeks_by_faculty = self._identify_fmit_weeks(context)
+
+        for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
+            f_i = context.resident_idx.get(faculty_id)
+            if f_i is None:
+                continue
+
+            for friday_start, thursday_end in fmit_weeks:
+                # Sunday after FMIT = Thursday + 3 days
+                blocked_sunday = thursday_end + timedelta(days=3)
+
+                for block in context.blocks:
+                    if block.date == blocked_sunday:
+                        b_i = context.block_idx[block.id]
+                        if (f_i, b_i, "overnight") in call_vars:
+                            model.Add(call_vars[f_i, b_i, "overnight"] == 0)
+
+    def validate(self, assignments, context):
+        """Validate no Sunday call after FMIT."""
+        violations = []
+        fmit_weeks_by_faculty = self._identify_fmit_weeks(context)
+
+        # Build lookup of blocked Sundays
+        blocked_sundays = {}
+        for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
+            blocked_sundays[faculty_id] = set()
+            for friday_start, thursday_end in fmit_weeks:
+                blocked_sunday = thursday_end + timedelta(days=3)
+                blocked_sundays[faculty_id].add(blocked_sunday)
+
+        # Check call assignments
+        for assignment in assignments:
+            if not hasattr(assignment, "call_type") or assignment.call_type != "overnight":
+                continue
+
+            block = next((b for b in context.blocks if b.id == assignment.block_id), None)
+            if not block:
+                continue
+
+            if assignment.person_id in blocked_sundays:
+                if block.date in blocked_sundays[assignment.person_id]:
+                    faculty = next((f for f in context.faculty if f.id == assignment.person_id), None)
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="HIGH",
+                            message=f"{faculty.name if faculty else 'Faculty'} assigned Sunday call on {block.date} immediately after FMIT",
+                            person_id=assignment.person_id,
+                            block_id=block.id,
+                            details={"blocked_date": str(block.date)},
+                        )
+                    )
+
+        return ConstraintResult(satisfied=len(violations) == 0, violations=violations)
+```
+
+#### New Constraint 2: `CallSpacingConstraint`
+
+**Business Rule:** Penalize back-to-back call weeks for same faculty.
+
+**Type:** Soft constraint (penalty-based, not blocking)
+
+**Location:** `backend/app/scheduling/constraints/call_equity.py` (add to existing file)
+
+```python
+class CallSpacingConstraint(SoftConstraint):
+    """
+    Penalizes back-to-back call weeks for the same faculty.
+
+    Goal: Encourage alternating weeks - if faculty takes call in week N,
+    avoid scheduling them for call in week N+1.
+
+    This is a soft constraint to allow flexibility when staffing is tight,
+    but with sufficient penalty to prefer spacing when possible.
+
+    Penalty calculation:
+        - Week gap of 0 (back-to-back): weight * 2
+        - Week gap of 1 (every other): weight * 0 (ideal)
+        - Week gap of 2+: weight * 0 (also ideal)
+
+    The penalty is applied per occurrence of back-to-back calls.
+    """
+
+    def __init__(self, weight: float = 8.0) -> None:
+        """
+        Initialize call spacing constraint.
+
+        Args:
+            weight: Penalty for back-to-back call weeks (default 8.0 - high)
+        """
+        super().__init__(
+            name="CallSpacing",
+            constraint_type=ConstraintType.EQUITY,
+            weight=weight,
+            priority=ConstraintPriority.MEDIUM,
+        )
+
+    def add_to_cpsat(self, model, variables, context):
+        """
+        Add back-to-back call penalty to CP-SAT objective.
+
+        For each faculty, for each pair of adjacent weeks:
+        If call in week N AND call in week N+1 → penalty
+        """
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        # Group blocks by week number (ISO week)
+        weeks = self._group_blocks_by_week(context)
+        sorted_week_nums = sorted(weeks.keys())
+
+        penalty_vars = []
+
+        for faculty in context.faculty:
+            f_i = context.resident_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            # For each pair of adjacent weeks
+            for i in range(len(sorted_week_nums) - 1):
+                week_n = sorted_week_nums[i]
+                week_n1 = sorted_week_nums[i + 1]
+
+                # Check if weeks are actually adjacent
+                if week_n1 - week_n != 1:
+                    continue
+
+                # Get call vars for this faculty in week N
+                week_n_vars = []
+                for block in weeks[week_n]:
+                    b_i = context.block_idx.get(block.id)
+                    if b_i is not None and (f_i, b_i, "overnight") in call_vars:
+                        week_n_vars.append(call_vars[f_i, b_i, "overnight"])
+
+                # Get call vars for this faculty in week N+1
+                week_n1_vars = []
+                for block in weeks[week_n1]:
+                    b_i = context.block_idx.get(block.id)
+                    if b_i is not None and (f_i, b_i, "overnight") in call_vars:
+                        week_n1_vars.append(call_vars[f_i, b_i, "overnight"])
+
+                if week_n_vars and week_n1_vars:
+                    # Create indicator: has_call_week_n
+                    has_call_n = model.NewBoolVar(f"has_call_{f_i}_{week_n}")
+                    model.AddMaxEquality(has_call_n, week_n_vars)
+
+                    # Create indicator: has_call_week_n1
+                    has_call_n1 = model.NewBoolVar(f"has_call_{f_i}_{week_n1}")
+                    model.AddMaxEquality(has_call_n1, week_n1_vars)
+
+                    # Create penalty indicator: both weeks have call
+                    back_to_back = model.NewBoolVar(f"b2b_{f_i}_{week_n}_{week_n1}")
+                    model.AddBoolAnd([has_call_n, has_call_n1]).OnlyEnforceIf(back_to_back)
+                    model.AddBoolOr([has_call_n.Not(), has_call_n1.Not()]).OnlyEnforceIf(back_to_back.Not())
+
+                    penalty_vars.append(back_to_back)
+
+        if penalty_vars:
+            objective_vars = variables.get("objective_terms", [])
+            for var in penalty_vars:
+                objective_vars.append((var, int(self.weight)))
+            variables["objective_terms"] = objective_vars
+
+    def validate(self, assignments, context):
+        """Calculate penalty for back-to-back call weeks."""
+        # Group call assignments by faculty and week
+        call_weeks_by_faculty = defaultdict(set)
+
+        for assignment in assignments:
+            if not hasattr(assignment, "call_type") or assignment.call_type != "overnight":
+                continue
+
+            block = next((b for b in context.blocks if b.id == assignment.block_id), None)
+            if not block:
+                continue
+
+            week_num = block.date.isocalendar()[1]
+            call_weeks_by_faculty[assignment.person_id].add(week_num)
+
+        # Count back-to-back occurrences
+        violations = []
+        total_penalty = 0.0
+
+        for faculty_id, weeks in call_weeks_by_faculty.items():
+            sorted_weeks = sorted(weeks)
+            for i in range(len(sorted_weeks) - 1):
+                if sorted_weeks[i + 1] - sorted_weeks[i] == 1:
+                    # Back-to-back call weeks
+                    total_penalty += self.weight
+                    faculty = next((f for f in context.faculty if f.id == faculty_id), None)
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="MEDIUM",
+                            message=f"{faculty.name if faculty else 'Faculty'} has back-to-back call in weeks {sorted_weeks[i]} and {sorted_weeks[i+1]}",
+                            person_id=faculty_id,
+                            details={
+                                "week_1": sorted_weeks[i],
+                                "week_2": sorted_weeks[i + 1],
+                            },
+                        )
+                    )
+
+        return ConstraintResult(satisfied=True, violations=violations, penalty=total_penalty)
+
+    def _group_blocks_by_week(self, context):
+        """Group blocks by ISO week number."""
+        weeks = defaultdict(list)
+        for block in context.blocks:
+            week_num = block.date.isocalendar()[1]
+            weeks[week_num].append(block)
+        return weeks
+```
+
+---
+
+### Design 3: Constraint File Organization
+
+#### Current Structure
+```
+backend/app/scheduling/constraints/
+├── __init__.py
+├── base.py                  # Base classes
+├── manager.py               # Constraint registration
+├── capacity.py              # OnePersonPerBlock, ClinicCapacity, Coverage
+├── call_equity.py           # Sunday/Weekday equity, preferences
+├── fmit.py                  # Faculty FMIT constraints
+├── night_float_post_call.py # NF → PC transition
+└── (future files)
+```
+
+#### Recommended New Files
+
+| File | Purpose | Constraints |
+|------|---------|-------------|
+| `inpatient.py` | Resident inpatient constraints | `ResidentInpatientHeadcountConstraint`, `FMITResidentClinicDayConstraint` |
+| `preload.py` | Pre-solver loading utilities | Helper functions for Airtable → DB sync |
+
+#### Updated `__init__.py`
+
+```python
+# backend/app/scheduling/constraints/__init__.py
+
+from .base import (
+    Constraint,
+    HardConstraint,
+    SoftConstraint,
+    ConstraintType,
+    ConstraintPriority,
+    ConstraintResult,
+    ConstraintViolation,
+    SchedulingContext,
+)
+
+from .capacity import (
+    OnePersonPerBlockConstraint,
+    ClinicCapacityConstraint,
+    MaxPhysiciansInClinicConstraint,
+    CoverageConstraint,
+)
+
+from .call_equity import (
+    SundayCallEquityConstraint,
+    WeekdayCallEquityConstraint,
+    TuesdayCallPreferenceConstraint,
+    DeptChiefWednesdayPreferenceConstraint,
+    CallSpacingConstraint,  # NEW
+)
+
+from .fmit import (
+    FMITWeekBlockingConstraint,
+    FMITMandatoryCallConstraint,
+    PostFMITRecoveryConstraint,
+    PostFMITSundayBlockingConstraint,  # NEW
+    FMITContinuityTurfConstraint,
+    FMITStaffingFloorConstraint,
+)
+
+from .night_float_post_call import (
+    NightFloatPostCallConstraint,
+)
+
+from .inpatient import (  # NEW FILE
+    ResidentInpatientHeadcountConstraint,
+    FMITResidentClinicDayConstraint,
+)
+
+from .manager import ConstraintManager
+```
+
+---
+
+### Implementation Priority (for Claude Code IDE)
+
+| Priority | Task | Effort | Files to Modify |
+|----------|------|--------|-----------------|
+| **P0** | Add `preserve_resident_inpatient` parameter | 1h | `engine.py` |
+| **P0** | Implement `_load_resident_inpatient_assignments()` | 1h | `engine.py` |
+| **P0** | Create `inpatient.py` with headcount constraint | 2h | NEW FILE |
+| **P1** | Add `PostFMITSundayBlockingConstraint` | 1h | `fmit.py` |
+| **P1** | Add `CallSpacingConstraint` | 2h | `call_equity.py` |
+| **P2** | Add `FMITResidentClinicDayConstraint` | 2h | `inpatient.py` |
+| **P2** | Airtable pre-load sync (optional) | 3h | `preload.py` |
+
+---
+
+### Verification Checklist (for Claude Code IDE)
+
+After implementation, verify:
+
+- [ ] Block 10 coverage ≥ 90% (currently 71%)
+- [ ] NF assigned to ≤ 2 residents per half-day (currently 29)
+- [ ] FMIT headcount = 3 per block (1 per PGY level)
+- [ ] No Sunday call assignments within 3 days of FMIT end
+- [ ] Back-to-back call weeks flagged with penalty
+- [ ] All tests pass: `pytest tests/scheduling/`
 
 ---
 
@@ -684,6 +1301,11 @@ docker compose exec -T db psql -U scheduler -d residency_scheduler < backup.sql
 | 2025-12-24 | Claude Code (IDE) | Added faculty call constraints (hard + soft), sanitized FMIT schedule, inter-block handoffs |
 | 2025-12-24 | Claude Code (IDE) | New constraints needed: PostFMITSundayBlockingConstraint, CallSpacingConstraint |
 | 2025-12-24 | Claude Code (IDE) | Future: decay factor for FMIT/call recency (not Block 10 scope) |
+| 2025-12-25 | Claude (Web) | **CP3 Design Complete**: Inpatient pre-loading mechanism, call solver integration |
+| 2025-12-25 | Claude (Web) | New constraints designed: ResidentInpatientHeadcountConstraint, FMITResidentClinicDayConstraint |
+| 2025-12-25 | Claude (Web) | New constraints designed: PostFMITSundayBlockingConstraint, CallSpacingConstraint |
+| 2025-12-25 | Claude (Web) | Recommended new file: `backend/app/scheduling/constraints/inpatient.py` |
+| 2025-12-25 | Claude (Web) | Implementation priority table and verification checklist added |
 
 ---
 
