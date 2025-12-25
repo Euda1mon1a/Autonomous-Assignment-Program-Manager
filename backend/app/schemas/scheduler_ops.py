@@ -267,6 +267,60 @@ class ApprovalResponse(BaseModel):
     warnings: list[str] = Field(default_factory=list, description="Warnings if any")
 
 
+# Solver Control Schemas (Kill-Switch)
+
+
+class SolverAbortRequest(BaseModel):
+    """Request to abort a running solver job."""
+
+    reason: str = Field(
+        default="operator request",
+        min_length=1,
+        max_length=500,
+        description="Reason for aborting the solver",
+    )
+    requested_by: str = Field(
+        ..., min_length=1, max_length=100, description="User requesting abort"
+    )
+
+
+class SolverAbortResponse(BaseModel):
+    """Response from solver abort request."""
+
+    status: str = Field(
+        ..., description="Status: abort_requested, not_found, already_completed"
+    )
+    run_id: str = Field(..., description="Schedule run ID")
+    reason: str = Field(..., description="Abort reason")
+    requested_by: str = Field(..., description="User who requested abort")
+    requested_at: datetime = Field(default_factory=datetime.utcnow)
+    message: str = Field(..., description="Human-readable status message")
+
+
+class SolverProgressResponse(BaseModel):
+    """Progress information for a running solver."""
+
+    run_id: str = Field(..., description="Schedule run ID")
+    iteration: int = Field(..., ge=0, description="Current solver iteration")
+    best_score: float = Field(..., description="Best objective score found")
+    assignments_count: int = Field(
+        ..., ge=0, description="Assignments in best solution"
+    )
+    violations_count: int = Field(..., ge=0, description="Constraint violations")
+    status: str = Field(..., description="Solver status: running, completing, aborted")
+    updated_at: str | None = Field(None, description="Last update timestamp")
+
+
+class ActiveSolversResponse(BaseModel):
+    """Response listing active solver runs."""
+
+    active_runs: list[SolverProgressResponse] = Field(
+        default_factory=list, description="Currently running solver jobs"
+    )
+    count: int = Field(..., ge=0, description="Number of active runs")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
 # Error Response Schema
 
 

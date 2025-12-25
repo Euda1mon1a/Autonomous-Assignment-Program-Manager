@@ -88,6 +88,8 @@ All skills are located in `.claude/skills/`:
 │   └── SKILL.md
 ├── session-documentation/      # Comprehensive documentation enforcement
 │   └── SKILL.md
+├── solver-control/             # Kill-switch & progress monitoring
+│   └── SKILL.md
 ├── systematic-debugger/        # Systematic debugging workflow
 │   └── SKILL.md
 ├── test-writer/                # Test generation
@@ -433,6 +435,45 @@ gh pr merge <number> --squash
 | Soft | Fairness (0.25), preferences (0.20), continuity (0.20), resilience (0.20), efficiency (0.15) |
 
 **Uses**: Google OR-Tools CP-SAT solver
+
+---
+
+### solver-control
+
+**Purpose**: Kill-switch and progress monitoring for schedule generation solvers.
+
+**Activates When**:
+- Solver is taking too long and needs to be stopped
+- Monitoring progress of long-running schedule generation
+- Integrating abort checks into solver code
+- Debugging solver performance or stuck jobs
+- Emergency situations requiring immediate solver termination
+
+**Key Features**:
+| Feature | Description |
+|---------|-------------|
+| Abort Signal | Redis-backed kill-switch for graceful solver termination |
+| Progress Tracking | Real-time iteration, score, and violation monitoring |
+| Partial Results | Save best solution when interrupted |
+| Active Run List | Monitor all running solver jobs |
+
+**API Endpoints**:
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/scheduler/runs/{run_id}/abort` | POST | Signal solver to abort |
+| `/scheduler/runs/{run_id}/progress` | GET | Get current progress |
+| `/scheduler/runs/active` | GET | List active solvers |
+
+**Key Files**:
+- `backend/app/scheduling/solver_control.py` - SolverControl class
+- `backend/app/api/routes/scheduler_ops.py` - API endpoints
+
+**Quick Abort**:
+```bash
+curl -X POST http://localhost:8000/scheduler/runs/{run_id}/abort \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"reason": "taking too long", "requested_by": "admin"}'
+```
 
 ---
 

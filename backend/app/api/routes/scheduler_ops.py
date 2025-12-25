@@ -26,6 +26,7 @@ from app.models.block import Block
 from app.models.person import Person
 from app.models.user import User
 from app.schemas.scheduler_ops import (
+    ActiveSolversResponse,
     AffectedTask,
     ApprovalAction,
     ApprovalRequest,
@@ -37,6 +38,9 @@ from app.schemas.scheduler_ops import (
     FixItResponse,
     RecentTaskInfo,
     SitrepResponse,
+    SolverAbortRequest,
+    SolverAbortResponse,
+    SolverProgressResponse,
     TaskMetrics,
     TaskStatus,
 )
@@ -958,4 +962,185 @@ async def generate_approval_token(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Token generation failed: {str(e)}",
+        )
+
+
+# ============================================================================
+# Solver Control Endpoints (Kill-Switch)
+# ============================================================================
+
+
+@router.post("/runs/{run_id}/abort", response_model=SolverAbortResponse)
+async def abort_solver_run(
+    run_id: str,
+    request: SolverAbortRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> SolverAbortResponse:
+    """
+    Abort a running solver job.
+
+    This endpoint signals a running solver to stop gracefully and
+    save its best solution so far. Use this when:
+    - A solver is taking too long
+    - A constraint bug is causing pathological behavior
+    - Resources need to be freed immediately
+
+    The solver will:
+    1. Receive the abort signal on its next iteration check
+    2. Save its best solution found so far
+    3. Clean up and return a partial result
+
+    Requires authentication. Admin role recommended for production.
+    """
+    from app.scheduling.solver_control import SolverControl
+
+    logger.warning(
+        f"Abort requested for run {run_id} by {request.requested_by}: {request.reason}"
+    )
+
+    try:
+        # Check if run exists and is active
+        progress = SolverControl.get_progress(run_id)
+
+        if progress and progress.get("status") == "running":
+            # Request abort
+            success = SolverControl.request_abort(
+                run_id=run_id, reason=request.reason, requested_by=request.requested_by
+            )
+
+            if success:
+                return SolverAbortResponse(
+                    status="abort_requested",
+                    run_id=run_id,
+                    reason=request.reason,
+                    requested_by=request.requested_by,
+                    message=f"Abort signal sent to solver run {run_id}. "
+                    f"Solver will stop on next iteration check.",
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to send abort signal",
+                )
+        elif progress:
+            # Run exists but not running
+            return SolverAbortResponse(
+                status="already_completed",
+                run_id=run_id,
+                reason=request.reason,
+                requested_by=request.requested_by,
+                message=f"Solver run {run_id} is not currently running "
+                f"(status: {progress.get('status', 'unknown')})",
+            )
+        else:
+            # No progress found - might still be starting or doesn't exist
+            # Send abort anyway in case it's just starting
+            SolverControl.request_abort(
+                run_id=run_id, reason=request.reason, requested_by=request.requested_by
+            )
+
+            return SolverAbortResponse(
+                status="abort_requested",
+                run_id=run_id,
+                reason=request.reason,
+                requested_by=request.requested_by,
+                message=f"Abort signal sent for run {run_id}. "
+                f"No active progress found - run may not have started yet.",
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error aborting solver run {run_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to abort solver: {str(e)}",
+        )
+
+
+@router.get("/runs/{run_id}/progress", response_model=SolverProgressResponse)
+async def get_solver_progress(
+    run_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> SolverProgressResponse:
+    """
+    Get progress for a running or recently completed solver job.
+
+    Returns current iteration, best score, and status for monitoring
+    long-running solver operations.
+
+    Requires authentication.
+    """
+    from app.scheduling.solver_control import SolverControl
+
+    try:
+        progress = SolverControl.get_progress(run_id)
+
+        if not progress:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No progress found for run {run_id}",
+            )
+
+        return SolverProgressResponse(
+            run_id=progress["run_id"],
+            iteration=progress["iteration"],
+            best_score=progress["best_score"],
+            assignments_count=progress["assignments_count"],
+            violations_count=progress["violations_count"],
+            status=progress["status"],
+            updated_at=progress.get("updated_at"),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting progress for {run_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get solver progress: {str(e)}",
+        )
+
+
+@router.get("/runs/active", response_model=ActiveSolversResponse)
+async def get_active_solvers(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> ActiveSolversResponse:
+    """
+    Get all currently active solver runs.
+
+    Returns a list of all solver jobs that are currently running,
+    useful for monitoring and deciding which jobs to abort.
+
+    Requires authentication.
+    """
+    from app.scheduling.solver_control import SolverControl
+
+    try:
+        active_runs = SolverControl.get_active_runs()
+
+        return ActiveSolversResponse(
+            active_runs=[
+                SolverProgressResponse(
+                    run_id=run["run_id"],
+                    iteration=run["iteration"],
+                    best_score=run["best_score"],
+                    assignments_count=run["assignments_count"],
+                    violations_count=run["violations_count"],
+                    status=run["status"],
+                    updated_at=run.get("updated_at"),
+                )
+                for run in active_runs
+            ],
+            count=len(active_runs),
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting active solvers: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get active solvers: {str(e)}",
         )

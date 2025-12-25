@@ -8,6 +8,55 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### :shield: Operational Resilience - Solver Kill-Switch & Constraint Metrics
+
+Added operational hardening features for scheduler reliability and diagnostics.
+
+#### Kill-Switch for Solver Jobs (P0)
+Allows operators to abort runaway solver jobs gracefully.
+
+**New Endpoints:**
+- `POST /scheduler/runs/{run_id}/abort` - Abort a running solver
+- `GET /scheduler/runs/{run_id}/progress` - Get solver progress
+- `GET /scheduler/runs/active` - List all active solver runs
+
+**New Files:**
+- `backend/app/scheduling/solver_control.py` - Redis-backed solver control
+
+**Features:**
+- Redis-backed abort signaling with TTL cleanup
+- Progress tracking (iteration, score, assignments, violations)
+- Graceful shutdown with best-solution capture
+- Active run monitoring
+
+#### Constraint-Level Violation Metrics (P1)
+Added Prometheus metrics for solver diagnostics.
+
+**New Metrics:**
+| Metric | Description |
+|--------|-------------|
+| `scheduler_constraint_violations_total` | Violations by name, type, severity |
+| `scheduler_constraint_evaluation_seconds` | Constraint evaluation timing |
+| `scheduler_constraint_satisfaction_rate` | Satisfaction rate gauge |
+| `scheduler_solver_iterations_total` | Solver iterations by algorithm |
+| `scheduler_solver_abort_total` | Abort events by reason |
+| `scheduler_solver_best_score` | Best objective score during solve |
+
+**New Helper Methods:**
+- `metrics.record_constraint_violation()`
+- `metrics.time_constraint_evaluation()` - Context manager
+- `metrics.update_constraint_satisfaction()`
+- `metrics.record_solver_iteration()`
+- `metrics.record_solver_abort()`
+- `metrics.update_solver_best_score()`
+
+#### Future Hardening (Documented)
+See `docs/planning/SCHEDULER_HARDENING_TODO.md` for planned items:
+- P2: Solver checkpointing, diff guard, publish staging, SLO metrics
+- P3: Resource sandboxing, field-level encryption, replay protection
+
+---
+
 ### :lock: Security - Refresh Token Rotation Fix
 
 Fixed a security vulnerability in refresh token rotation where old tokens were not being blacklisted.
