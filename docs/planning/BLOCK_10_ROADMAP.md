@@ -1,8 +1,204 @@
 ***REMOVED*** Block 10 Roadmap: Current Status & Actionable Plan
 
 > **Created:** 2025-12-24
+> **Last Evaluated:** 2025-12-25
 > **Purpose:** Evaluate Block 10 status, prioritize work, and coordinate Claude agents
-> **Branch:** `claude/plan-block-10-roadmap-IDOo9`
+> **Branch:** `claude/plan-block-10-roadmap-lMz4I`
+
+---
+
+***REMOVED******REMOVED*** 📊 STATUS EVALUATION (2025-12-25)
+
+***REMOVED******REMOVED******REMOVED*** What's Complete ✅
+
+| Component | Status | Evidence |
+|-----------|--------|----------|
+| **TODO Tracker** | 100% (25/25) | All backend TODOs resolved |
+| **Documentation** | Comprehensive | 200+ API endpoints cataloged, solver docs complete |
+| **Core Infrastructure** | Production-ready | Docker, DB, Auth, Rate limiting all working |
+| **Frontend Tests** | ~1,400+ tests | Session 13 added comprehensive coverage |
+| **Backend Tests** | 70%+ coverage | Swap, leave, portal, resilience tested |
+| **ACGME Validator** | Complete | 80-hour, 1-in-7, supervision ratios |
+
+***REMOVED******REMOVED******REMOVED*** What's Partially Complete ⚠️
+
+| Component | Progress | Blocker |
+|-----------|----------|---------|
+| **Checkpoint 2: Schedule Generation** | 71% | Weekends missing (inpatient not loaded) |
+| **Inpatient Rotation Loading** | Design done | Needs implementation in engine.py |
+| **NF/PC Headcount** | Bug identified | No max_residents constraint for NF |
+| **Swap Executor** | 40% | TODOs documented, DB model needed |
+
+***REMOVED******REMOVED******REMOVED*** Critical Root Causes Identified
+
+```
+╔══════════════════════════════════════════════════════════════════╗
+║  ROOT CAUSE ***REMOVED***1: Only outpatient rotations being scheduled        ║
+║  - Inpatient (FMIT, NF, NICU) not loaded into solver             ║
+║  - Result: 16/56 half-days missing (all weekends)                ║
+╠══════════════════════════════════════════════════════════════════╣
+║  ROOT CAUSE ***REMOVED***2: No NF headcount constraint                       ║
+║  - All 29 people assigned to Night Float (should be 1-2)         ║
+║  - max_residents=NULL in rotation_templates table                ║
+╠══════════════════════════════════════════════════════════════════╣
+║  ROOT CAUSE ***REMOVED***3: NF/PC need pre-solver assignment                 ║
+║  - Cannot be optimized freely - based on inpatient schedule      ║
+║  - Need to extend preserve_fmit pattern to residents             ║
+╚══════════════════════════════════════════════════════════════════╝
+```
+
+---
+
+***REMOVED******REMOVED*** 🎯 PRIORITY ACTION PLAN
+
+***REMOVED******REMOVED******REMOVED*** NOW: Safe Work for Claude Code (While User Handles PII)
+
+These tasks are **100% safe** - no database writes, no PII access required:
+
+| ***REMOVED*** | Task | Effort | Why Safe |
+|---|------|--------|----------|
+| **S1** | Write unit tests for new constraints | 2-3h | Mock data only |
+| **S2** | Implement `PostFMITSundayBlockingConstraint` | 2h | Pure logic, no DB |
+| **S3** | Implement `CallSpacingConstraint` | 2h | Pure logic, no DB |
+| **S4** | Add `max_residents` validation to NF template | 1h | Schema validation |
+| **S5** | Document inpatient pre-loading design | 1h | Docs only |
+| **S6** | Review and improve error messages | 1h | Code quality |
+| **S7** | Add frontend loading states for schedule view | 2h | UI only |
+
+***REMOVED******REMOVED******REMOVED*** NOW: User/Human Tasks (Requires PII Access)
+
+| ***REMOVED*** | Task | Why Human Required |
+|---|------|-------------------|
+| **H1** | Run schedule generation with real data | Database writes |
+| **H2** | Validate ACGME compliance against real roster | PII in output |
+| **H3** | Test swap matcher with real faculty | Real identities |
+| **H4** | Export production schedule to Excel | Contains names |
+| **H5** | Seed missing Block 10 data from Airtable | Real personnel |
+
+***REMOVED******REMOVED******REMOVED*** NEXT: After User Confirms DB State
+
+| ***REMOVED*** | Task | Owner | Depends On |
+|---|------|-------|------------|
+| **N1** | Implement `_load_resident_inpatient_assignments()` | Claude Code | H5 complete |
+| **N2** | Add `preserve_resident_inpatient` flag | Claude Code | N1 complete |
+| **N3** | Set `max_residents=1` for NF template | User | Backup done |
+| **N4** | Re-run schedule generation | User | N2, N3 complete |
+| **N5** | Validate 100% coverage achieved | Either | N4 complete |
+
+---
+
+***REMOVED******REMOVED*** 📍 CHECKPOINT DOCUMENTATION
+
+***REMOVED******REMOVED******REMOVED*** Checkpoint 1: Data Preparation ✅ COMPLETE
+**Completed:** 2025-12-22 (Session 14)
+
+Evidence:
+- 17 residents (6 PGY1, 6 PGY2, 5 PGY3)
+- 12 faculty members
+- 38 rotation templates
+- 153 absences loaded
+
+***REMOVED******REMOVED******REMOVED*** Checkpoint 2: Schedule Generation ⚠️ PARTIAL (71%)
+**Current State:** 80 assignments, 40/56 half-days covered
+
+Missing:
+- 16 weekend half-days (all Sat/Sun)
+- Root cause: Inpatient rotations not loaded
+
+Next Action: Implement inpatient pre-loading (Task N1-N2)
+
+***REMOVED******REMOVED******REMOVED*** Checkpoint 3: Quality Analysis ⏳ PENDING
+**Blocked on:** Checkpoint 2 completion
+
+Tasks when unblocked:
+- [ ] Analyze coverage patterns
+- [ ] Review constraint satisfaction
+- [ ] Evaluate fairness metrics
+
+***REMOVED******REMOVED******REMOVED*** Checkpoint 4: UI/UX Testing ⏳ PENDING
+**Blocked on:** Checkpoint 3 completion
+
+Tasks when unblocked:
+- [ ] Test schedule view rendering
+- [ ] Validate export functionality
+- [ ] Review 3D visualization
+
+***REMOVED******REMOVED******REMOVED*** Checkpoint 5: Production Readiness ⏳ PENDING
+**Blocked on:** Checkpoint 4 completion
+
+Tasks when unblocked:
+- [ ] Final schedule review (Human)
+- [ ] Swap auto-matcher test
+- [ ] Generate production export
+
+---
+
+***REMOVED******REMOVED*** 🔒 SAFE WORK BOUNDARIES
+
+***REMOVED******REMOVED******REMOVED*** Claude Code CAN Safely Do Now
+
+```
+✅ Read any source code
+✅ Write/edit tests (using mock data)
+✅ Implement pure constraint logic
+✅ Edit documentation
+✅ Add frontend components (non-data-fetching)
+✅ Run linters: ruff check, ruff format, npm lint
+✅ Run tests: pytest (with --no-db-writes flag)
+✅ Review code patterns
+✅ Design algorithms
+```
+
+***REMOVED******REMOVED******REMOVED*** Claude Code MUST NOT Do Now
+
+```
+❌ Run schedule generation (writes to DB)
+❌ Execute swaps (modifies assignments)
+❌ Seed data (imports PII)
+❌ Export schedules (contains names)
+❌ Query production database directly
+❌ Run integration tests against real DB
+```
+
+***REMOVED******REMOVED******REMOVED*** Handoff Signal
+
+When user says one of these, Claude Code can proceed with DB operations:
+- "DB is backed up, proceed"
+- "Ready for schedule generation"
+- "Real data is loaded, run tests"
+
+---
+
+***REMOVED******REMOVED*** 📋 IMMEDIATE NEXT STEPS
+
+***REMOVED******REMOVED******REMOVED*** For Claude Code (Start Immediately)
+
+```bash
+***REMOVED*** 1. Implement PostFMITSundayBlockingConstraint
+File: backend/app/scheduling/constraints/call_fmit.py
+Pattern: See existing constraints in call_equity.py
+
+***REMOVED*** 2. Write tests for new constraint
+File: backend/tests/scheduling/test_post_fmit_constraint.py
+Pattern: See existing test patterns
+
+***REMOVED*** 3. Document the constraint behavior
+File: docs/architecture/SOLVER_ALGORITHM.md (add section)
+```
+
+***REMOVED******REMOVED******REMOVED*** For User (When Ready)
+
+```bash
+***REMOVED*** 1. Backup database
+./scripts/backup-db.sh --docker
+
+***REMOVED*** 2. Verify Block 10 data completeness
+docker compose exec db psql -U scheduler -d residency_scheduler \
+  -c "SELECT COUNT(*) FROM assignments WHERE block_id IN (SELECT id FROM blocks WHERE number = 10);"
+
+***REMOVED*** 3. When ready, signal Claude Code
+"DB backed up at [timestamp], proceed with schedule generation"
+```
 
 ---
 
