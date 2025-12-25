@@ -52,6 +52,8 @@ All skills are located in `.claude/skills/`:
 │   └── SKILL.md
 ├── code-review/                # Code review procedures
 │   └── SKILL.md
+├── constraint-preflight/       # Constraint verification pre-flight
+│   └── SKILL.md
 ├── database-migration/         # Alembic migration expertise
 │   └── SKILL.md
 ├── fastapi-production/         # Production FastAPI patterns
@@ -105,6 +107,7 @@ All skills are located in `.claude/skills/`:
 | Skill | Description | Primary Use Case |
 |-------|-------------|------------------|
 | `code-review` | Code review procedures | Reviewing generated code, quality checks |
+| `constraint-preflight` | Constraint verification pre-flight | Verify constraints are implemented, exported, registered, tested |
 | `automated-code-fixer` | Auto-fix code issues | Test failures, linting errors |
 | `code-quality-monitor` | Quality gate enforcement | Pre-commit validation, PR checks |
 | `lint-monorepo` | Unified Python/TypeScript linting | Auto-fix, root-cause analysis for lint errors |
@@ -201,6 +204,37 @@ All skills are located in `.claude/skills/`:
 | Test Coverage | >= 80% | >= 70% |
 | Type Coverage | 100% public APIs | >= 90% |
 | Cyclomatic Complexity | <= 10 | <= 15 |
+
+---
+
+### constraint-preflight
+
+**Purpose**: Pre-flight verification for scheduling constraint development.
+
+**Activates When**:
+- Creating new scheduling constraints
+- Modifying existing constraints
+- Before committing constraint-related changes
+- After adding constraints to `__init__.py` exports
+
+**Verification Checklist**:
+1. Constraint class implemented with proper methods
+2. Constraint exported in `__init__.py`
+3. Constraint registered in `ConstraintManager.create_default()`
+4. Constraint registered in `ConstraintManager.create_resilience_aware()`
+5. Tests verify constraint is registered (not just logic)
+
+**Pre-Flight Command**:
+```bash
+cd backend && python ../scripts/verify_constraints.py
+```
+
+**Key Files**:
+| File | Purpose |
+|------|---------|
+| `scripts/verify_constraints.py` | Pre-flight verification script |
+| `backend/tests/test_constraint_registration.py` | CI tests for registration |
+| `backend/app/scheduling/constraints/manager.py` | Where constraints are registered |
 
 ---
 
