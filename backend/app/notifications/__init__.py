@@ -19,7 +19,7 @@ from app.notifications.service import (
     notify_acgme_warning,
     notify_schedule_published,
 )
-from app.notifications.templates import (
+from app.notifications.notification_types import (
     NOTIFICATION_TEMPLATES,
     NotificationTemplate,
     NotificationType,

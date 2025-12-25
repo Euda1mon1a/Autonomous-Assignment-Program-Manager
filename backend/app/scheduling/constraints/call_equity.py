@@ -553,6 +553,258 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
         )
 
 
+class CallSpacingConstraint(SoftConstraint):
+    """
+    Penalizes back-to-back call weeks for the same faculty.
+
+    When a faculty member takes call in consecutive weeks, this constraint
+    adds a penalty to encourage better spacing. This helps with:
+    - Burnout prevention (avoids call fatigue)
+    - Schedule equity (spreads call burden more evenly)
+    - Work-life balance (allows recovery time between call weeks)
+
+    The penalty applies when the same faculty has call assignments in
+    adjacent weeks (e.g., call on Week 1 Sunday and Week 2 Monday).
+    """
+
+    def __init__(self, weight: float = 8.0) -> None:
+        """
+        Initialize call spacing constraint.
+
+        Args:
+            weight: Penalty weight (default 8.0 - moderately high to encourage spacing)
+        """
+        super().__init__(
+            name="CallSpacing",
+            constraint_type=ConstraintType.EQUITY,
+            weight=weight,
+            priority=ConstraintPriority.MEDIUM,
+        )
+
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Add back-to-back call penalty to CP-SAT objective."""
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        # Group blocks by week (using ISO week number)
+        blocks_by_week: dict[tuple[int, int], list[Any]] = defaultdict(list)
+        for block in context.blocks:
+            iso_year, iso_week, _ = block.date.isocalendar()
+            blocks_by_week[(iso_year, iso_week)].append(block)
+
+        # Sort weeks
+        sorted_weeks = sorted(blocks_by_week.keys())
+        if len(sorted_weeks) < 2:
+            return
+
+        # For each faculty, penalize consecutive week calls
+        penalty_vars = []
+        for faculty in context.faculty:
+            f_i = context.resident_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            # Check each pair of consecutive weeks
+            for i in range(len(sorted_weeks) - 1):
+                week1 = sorted_weeks[i]
+                week2 = sorted_weeks[i + 1]
+
+                # Get call vars for this faculty in each week
+                week1_calls = []
+                for block in blocks_by_week[week1]:
+                    b_i = context.block_idx.get(block.id)
+                    if b_i is not None and (f_i, b_i, "overnight") in call_vars:
+                        week1_calls.append(call_vars[f_i, b_i, "overnight"])
+
+                week2_calls = []
+                for block in blocks_by_week[week2]:
+                    b_i = context.block_idx.get(block.id)
+                    if b_i is not None and (f_i, b_i, "overnight") in call_vars:
+                        week2_calls.append(call_vars[f_i, b_i, "overnight"])
+
+                if week1_calls and week2_calls:
+                    # Create indicator for "has call in both weeks"
+                    has_week1 = model.NewBoolVar(f"call_week1_{f_i}_{week1}")
+                    has_week2 = model.NewBoolVar(f"call_week2_{f_i}_{week2}")
+
+                    # has_week1 = 1 if any call in week1
+                    model.AddMaxEquality(has_week1, week1_calls)
+                    model.AddMaxEquality(has_week2, week2_calls)
+
+                    # back_to_back = has_week1 AND has_week2
+                    back_to_back = model.NewBoolVar(f"btb_{f_i}_{week1}")
+                    model.AddMultiplicationEquality(
+                        back_to_back, [has_week1, has_week2]
+                    )
+
+                    penalty_vars.append(back_to_back)
+
+        if penalty_vars:
+            objective_vars = variables.get("objective_terms", [])
+            for var in penalty_vars:
+                objective_vars.append((var, int(self.weight)))
+            variables["objective_terms"] = objective_vars
+
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Add back-to-back call penalty to PuLP objective."""
+        import pulp
+
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        blocks_by_week: dict[tuple[int, int], list[Any]] = defaultdict(list)
+        for block in context.blocks:
+            iso_year, iso_week, _ = block.date.isocalendar()
+            blocks_by_week[(iso_year, iso_week)].append(block)
+
+        sorted_weeks = sorted(blocks_by_week.keys())
+        if len(sorted_weeks) < 2:
+            return
+
+        constraint_count = 0
+        for faculty in context.faculty:
+            f_i = context.resident_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            for i in range(len(sorted_weeks) - 1):
+                week1 = sorted_weeks[i]
+                week2 = sorted_weeks[i + 1]
+
+                week1_calls = []
+                for block in blocks_by_week[week1]:
+                    b_i = context.block_idx.get(block.id)
+                    if b_i is not None and (f_i, b_i, "overnight") in call_vars:
+                        week1_calls.append(call_vars[f_i, b_i, "overnight"])
+
+                week2_calls = []
+                for block in blocks_by_week[week2]:
+                    b_i = context.block_idx.get(block.id)
+                    if b_i is not None and (f_i, b_i, "overnight") in call_vars:
+                        week2_calls.append(call_vars[f_i, b_i, "overnight"])
+
+                if week1_calls and week2_calls:
+                    # Create indicator variables
+                    has_week1 = pulp.LpVariable(
+                        f"has_call_w1_{f_i}_{constraint_count}", cat="Binary"
+                    )
+                    has_week2 = pulp.LpVariable(
+                        f"has_call_w2_{f_i}_{constraint_count}", cat="Binary"
+                    )
+
+                    # has_week = 1 if any call in that week
+                    # sum(calls) >= 1 implies has_week = 1
+                    M = len(week1_calls)  # Big-M for week1
+                    model += pulp.lpSum(week1_calls) <= M * has_week1
+                    model += pulp.lpSum(week1_calls) >= has_week1
+
+                    M = len(week2_calls)
+                    model += pulp.lpSum(week2_calls) <= M * has_week2
+                    model += pulp.lpSum(week2_calls) >= has_week2
+
+                    # back_to_back penalty linearization
+                    # We want to penalize when both = 1
+                    # Add (has_week1 + has_week2 - 1) capped at 0
+                    # Or simply: penalty = has_week1 + has_week2 - 1 when both are 1
+                    # Use auxiliary variable
+                    btb = pulp.LpVariable(
+                        f"btb_{f_i}_{constraint_count}", cat="Binary"
+                    )
+                    # btb = 1 iff has_week1 = 1 AND has_week2 = 1
+                    model += btb <= has_week1
+                    model += btb <= has_week2
+                    model += btb >= has_week1 + has_week2 - 1
+
+                    if "objective" in variables:
+                        variables["objective"] += self.weight * btb
+
+                    constraint_count += 1
+
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
+        """Validate and calculate penalty for back-to-back call weeks."""
+        faculty_by_id = {f.id: f for f in context.faculty}
+        block_by_id = {b.id: b for b in context.blocks}
+
+        # Group call assignments by faculty and week
+        calls_by_faculty_week: dict[Any, dict[tuple[int, int], int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
+
+        for assignment in assignments:
+            has_call = hasattr(assignment, "call_type")
+            if not has_call or assignment.call_type != "overnight":
+                continue
+
+            if assignment.person_id not in faculty_by_id:
+                continue
+
+            block = block_by_id.get(assignment.block_id)
+            if not block:
+                continue
+
+            iso_year, iso_week, _ = block.date.isocalendar()
+            calls_by_faculty_week[assignment.person_id][(iso_year, iso_week)] += 1
+
+        violations = []
+        penalty = 0.0
+
+        for faculty_id, week_calls in calls_by_faculty_week.items():
+            sorted_weeks = sorted(week_calls.keys())
+
+            for i in range(len(sorted_weeks) - 1):
+                week1 = sorted_weeks[i]
+                week2 = sorted_weeks[i + 1]
+
+                # Check if weeks are consecutive
+                # (same year and adjacent week, or year rollover)
+                is_consecutive = False
+                if week1[0] == week2[0] and week2[1] == week1[1] + 1:
+                    is_consecutive = True
+                elif week1[0] + 1 == week2[0] and week1[1] >= 52 and week2[1] == 1:
+                    is_consecutive = True
+
+                if is_consecutive and week_calls[week1] > 0 and week_calls[week2] > 0:
+                    penalty += self.weight
+                    faculty = faculty_by_id.get(faculty_id)
+                    name = faculty.name if faculty else "Faculty"
+                    msg = f"{name} has back-to-back call: week {week1[1]}/{week2[1]}"
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="MEDIUM",
+                            message=msg,
+                            person_id=faculty_id,
+                            details={
+                                "week1": f"{week1[0]}-W{week1[1]:02d}",
+                                "week2": f"{week2[0]}-W{week2[1]:02d}",
+                            },
+                        )
+                    )
+
+        return ConstraintResult(
+            satisfied=True,  # Soft constraint
+            violations=violations,
+            penalty=penalty,
+        )
+
+
 class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
     """
     Soft preference for Department Chief to take Wednesday call.
