@@ -40,6 +40,11 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
+# Create non-root user for security
+RUN adduser --disabled-password --gecos '' --uid 1001 nextjs \
+    && chown -R nextjs:nextjs /app
+USER nextjs
+
 # Expose port
 EXPOSE 3000
 

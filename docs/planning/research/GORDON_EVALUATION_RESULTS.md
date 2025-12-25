@@ -2574,7 +2574,91 @@ This Gordon AI evaluation provides a comprehensive roadmap for optimizing the Re
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** 2025-12-19
+**Document Version:** 1.1
+**Last Updated:** 2025-12-25
 **Maintained By:** Infrastructure Team
 **Review Schedule:** Quarterly
+
+---
+
+## Addendum: Security Best Practices Review (2025-12-25)
+
+### Review Summary
+
+An external review of Docker security best practices was conducted on 2025-12-25. The initial analysis made several claims about missing best practices that were subsequently verified against the actual codebase.
+
+### Claims Verified as INCORRECT
+
+| Claim | Reality |
+|-------|---------|
+| "No vulnerability scanning" | `.github/workflows/security.yml` has Trivy scanning (filesystem + container images) |
+| "No logging configuration" | `docker-compose.prod.yml` has comprehensive JSON logging with rotation |
+| "Resource limits only in prod" | This is intentional - dev shouldn't have limits interfering with debugging |
+
+### Claims Verified as VALID
+
+| Issue | Resolution |
+|-------|------------|
+| Frontend missing non-root user | Fixed: Added `nextjs` user (UID 1001) |
+| Backend uses `sh -c` entrypoint | Fixed: Added `docker-entrypoint.sh` with `exec` for proper signal handling |
+
+### Implemented Improvements
+
+**Commit:** `cd03310` on branch `claude/review-docker-setup-7HRSC`
+
+1. **Frontend Dockerfile**: Added non-root user
+   ```dockerfile
+   RUN adduser --disabled-password --gecos '' --uid 1001 nextjs \
+       && chown -R nextjs:nextjs /app
+   USER nextjs
+   ```
+
+2. **Backend Dockerfile**: Added entrypoint script
+   ```dockerfile
+   COPY docker-entrypoint.sh /usr/local/bin/
+   RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+   ENTRYPOINT ["docker-entrypoint.sh"]
+   ```
+
+3. **Backend docker-entrypoint.sh**: Proper signal handling
+   ```bash
+   #!/bin/sh
+   set -e
+   alembic upgrade head
+   exec uvicorn app.main:app --host 0.0.0.0 --port 8000 "$@"
+   ```
+
+### What Was Already Implemented
+
+The following practices were already in place (contrary to initial claims):
+
+- Multi-stage builds on all custom images
+- Non-root users on backend, MCP server, and nginx
+- Health checks on all services
+- `no-new-privileges` security option on MCP server
+- Resource limits and reservations in production
+- Network isolation with dedicated `app-network`
+- Automated vulnerability scanning (Trivy, Safety, npm audit, Bandit, CodeQL, Semgrep)
+- Structured logging configuration in production compose
+- Secret validation (app refuses to start with weak secrets)
+
+### Recommendations Not Implemented (with Rationale)
+
+| Practice | Status | Rationale |
+|----------|--------|-----------|
+| Image signing (Cosign) | Not implemented | Adds operational overhead; only critical for public registries |
+| Multi-arch builds | Not implemented | No ARM64 deployment target currently |
+| BuildKit cache mounts | Not implemented | Marginal benefit for this project size |
+| tini init process | Not implemented | Entrypoint script with `exec` achieves same goal |
+
+### Lessons Learned
+
+1. **Verify claims against actual codebase** before accepting recommendations
+2. **Check CI/CD workflows** - security scanning may already be in place
+3. **Look for all compose file variants** - features may be in prod overlay
+4. **Understand design decisions** - some "missing" practices are intentional
+
+### Related Documentation
+
+- [DOCKER_SECURITY_BEST_PRACTICES.md](../../architecture/DOCKER_SECURITY_BEST_PRACTICES.md) - Comprehensive security documentation
+- [security.yml](../../../.github/workflows/security.yml) - CI/CD security scanning workflow
