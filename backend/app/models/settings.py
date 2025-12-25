@@ -77,6 +77,12 @@ class ApplicationSettings(Base):
         String(50), nullable=False, default=FreezeScope.NON_EMERGENCY_ONLY.value
     )
 
+    # Schema versioning - for backup/restore compatibility detection
+    # Stores current Alembic head revision to detect schema mismatches
+    alembic_version = Column(String(255), nullable=True)
+    # Timestamp when schema version was last updated (after migration)
+    schema_timestamp = Column(DateTime, nullable=True)
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -130,4 +136,6 @@ class ApplicationSettings(Base):
             "default_block_duration_hours": self.default_block_duration_hours,
             "freeze_horizon_days": self.freeze_horizon_days,
             "freeze_scope": self.freeze_scope,
+            "alembic_version": self.alembic_version,
+            "schema_timestamp": self.schema_timestamp.isoformat() if self.schema_timestamp else None,
         }
