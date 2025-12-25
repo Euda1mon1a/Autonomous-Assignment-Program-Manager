@@ -153,13 +153,17 @@ class RotationTemplate(Base):
 
 ## FMIT Calendar Exception Explained
 
-FMIT (Family Medicine Inpatient Team) faculty operate on a **different calendar**:
+FMIT (Family Medicine Inpatient Team) operates on a **different week structure**:
 
-| Aspect | Residents | FMIT Faculty |
-|--------|-----------|--------------|
+| Aspect | Standard Rotations | FMIT |
+|--------|-------------------|------|
 | Week structure | Mon-Sun | **Fri-Thu** |
 | Rotation unit | 28-day blocks | 7-day weeks |
 | Block alignment | Aligned | **Independent** |
+
+> **Clarification (2025-12-25):** The FMIT exception is specifically about Friday-Thursday
+> week boundaries, not about FMIT using Gregorian months. FMIT still operates within the
+> academic year, just with offset week boundaries.
 
 ### Current Hardcoding (fmit.py:45-67)
 
