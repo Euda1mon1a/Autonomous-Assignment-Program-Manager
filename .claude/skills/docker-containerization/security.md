@@ -1,6 +1,6 @@
 ***REMOVED*** Container Security Reference
 
-Security hardening patterns for Docker containers in healthcare/military environments.
+Security hardening patterns for Docker containers in military environments.
 
 ***REMOVED******REMOVED*** Security Checklist
 
@@ -199,13 +199,13 @@ docker run --rm -i hadolint/hadolint < Dockerfile
 ***REMOVED*** DL3009 - Delete apt-get lists after installing
 ```
 
-***REMOVED******REMOVED*** HIPAA Considerations for Containers
+***REMOVED******REMOVED*** Data Security Considerations
 
-***REMOVED******REMOVED******REMOVED*** PHI Data Handling
+***REMOVED******REMOVED******REMOVED*** Sensitive Data Handling
 
-1. **Never mount PHI data directly** - Use encrypted volumes
+1. **Never mount sensitive data directly** - Use encrypted volumes
 2. **Audit logging** - All container access logged
-3. **Encryption at rest** - Database volumes must be encrypted
+3. **Encryption at rest** - Database volumes should be encrypted
 4. **Network encryption** - TLS between all services
 
 ***REMOVED******REMOVED******REMOVED*** Volume Encryption
@@ -235,7 +235,6 @@ services:
     labels:
       service: "backend"
       environment: "production"
-      compliance: "hipaa"
 ```
 
 ***REMOVED******REMOVED*** Common Security Vulnerabilities
