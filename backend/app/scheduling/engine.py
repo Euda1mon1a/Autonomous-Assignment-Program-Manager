@@ -106,6 +106,7 @@ class SchedulingEngine:
         timeout_seconds: float = 60.0,
         check_resilience: bool = True,
         preserve_fmit: bool = True,
+        preserve_resident_inpatient: bool = True,
     ) -> dict:
         """
         Generate a complete schedule.
@@ -117,6 +118,8 @@ class SchedulingEngine:
             timeout_seconds: Maximum solver runtime
             check_resilience: Run resilience health check before/after generation
             preserve_fmit: Preserve existing FMIT faculty assignments (default True)
+            preserve_resident_inpatient: Preserve existing resident inpatient assignments
+                                        (FMIT, NF, NICU) - prevents over-assignment bug
 
         Returns:
             Dictionary with status, assignments, validation results, and resilience info
@@ -142,7 +145,7 @@ class SchedulingEngine:
             # Step 1: Ensure blocks exist (but don't commit yet)
             blocks = self._ensure_blocks_exist(commit=False)
 
-            # Step 1.5: Load FMIT assignments if preserving them
+            # Step 1.5a: Load FMIT faculty assignments if preserving them
             fmit_assignments = []
             preserve_ids: set[UUID] = set()
             if preserve_fmit:
@@ -151,6 +154,19 @@ class SchedulingEngine:
                 if fmit_assignments:
                     logger.info(
                         f"Preserving {len(fmit_assignments)} FMIT faculty assignments"
+                    )
+
+            # Step 1.5b: Load resident inpatient assignments if preserving them
+            resident_inpatient_assignments = []
+            if preserve_resident_inpatient:
+                resident_inpatient_assignments = (
+                    self._load_resident_inpatient_assignments()
+                )
+                preserve_ids.update({a.id for a in resident_inpatient_assignments})
+                if resident_inpatient_assignments:
+                    logger.info(
+                        f"Preserving {len(resident_inpatient_assignments)} "
+                        "resident inpatient assignments (FMIT/NF/NICU)"
                     )
 
             # NOTE: Deletion deferred until after successful solve (see Step 5.5)
@@ -866,6 +882,44 @@ class SchedulingEngine:
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
                 Person.type == "faculty",
+                RotationTemplate.activity_type == "inpatient",
+            )
+            .all()
+        )
+
+    def _load_resident_inpatient_assignments(self) -> list[Assignment]:
+        """
+        Load resident inpatient assignments (FMIT, NF, NICU) for the date range.
+
+        These assignments are sourced from the block schedule and should be
+        loaded BEFORE solver runs as fixed constraints. This prevents the
+        NF over-assignment bug where solver assigns Night Float to everyone.
+
+        Detection logic:
+            - person.type == 'resident'
+            - template.activity_type == 'inpatient'
+            - Includes: FMIT AM/PM, Night Float AM/PM, NICU
+
+        Business Rules:
+            - FMIT: 1 per PGY level per block (PGY1=Wed AM, PGY2=Tue PM, PGY3=Mon PM)
+            - NF: Only 1 resident at a time
+            - NICU: Clinic Friday PM (always)
+            - PC: Thursday after NF ends (auto-generated, not loaded here)
+
+        Returns:
+            List of Assignment objects for residents on inpatient rotations
+        """
+        return (
+            self.db.query(Assignment)
+            .join(Block, Assignment.block_id == Block.id)
+            .join(Person, Assignment.person_id == Person.id)
+            .join(
+                RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
+            )
+            .filter(
+                Block.date >= self.start_date,
+                Block.date <= self.end_date,
+                Person.type == "resident",
                 RotationTemplate.activity_type == "inpatient",
             )
             .all()

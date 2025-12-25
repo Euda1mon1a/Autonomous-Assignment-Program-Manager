@@ -668,6 +668,189 @@ class PostFMITRecoveryConstraint(HardConstraint):
         return {k: list(v) for k, v in fmit_weeks.items()}
 
 
+class PostFMITSundayBlockingConstraint(HardConstraint):
+    """
+    Blocks Sunday call for faculty immediately after FMIT week.
+
+    FMIT week ends Thursday. Faculty gets:
+    - Friday: Recovery day (already blocked by PostFMITRecoveryConstraint)
+    - Saturday: Normal availability
+    - Sunday: BLOCKED from overnight call (this constraint)
+
+    Rationale: Even after Friday recovery, Sunday call is too soon after
+    the demanding FMIT week. This prevents burnout and ensures adequate rest.
+
+    Timeline: Thu FMIT ends → Fri PC (blocked) → Sat OK → Sun BLOCKED for call
+    """
+
+    def __init__(self) -> None:
+        """Initialize post-FMIT Sunday blocking constraint."""
+        super().__init__(
+            name="PostFMITSundayBlocking",
+            constraint_type=ConstraintType.CALL,
+            priority=ConstraintPriority.HIGH,
+        )
+
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Block Sunday call after FMIT week in CP-SAT model."""
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        fmit_weeks_by_faculty = self._identify_fmit_weeks(context)
+        if not fmit_weeks_by_faculty:
+            return
+
+        for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
+            f_i = context.resident_idx.get(faculty_id)
+            if f_i is None:
+                continue
+
+            for friday_start, thursday_end in fmit_weeks:
+                # Sunday after FMIT = Thursday + 3 days
+                blocked_sunday = thursday_end + timedelta(days=3)
+
+                for block in context.blocks:
+                    if block.date == blocked_sunday:
+                        b_i = context.block_idx.get(block.id)
+                        if b_i is not None and (f_i, b_i, "overnight") in call_vars:
+                            model.Add(call_vars[f_i, b_i, "overnight"] == 0)
+
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Block Sunday call after FMIT week in PuLP model."""
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        fmit_weeks_by_faculty = self._identify_fmit_weeks(context)
+        if not fmit_weeks_by_faculty:
+            return
+
+        constraint_count = 0
+        for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
+            f_i = context.resident_idx.get(faculty_id)
+            if f_i is None:
+                continue
+
+            for friday_start, thursday_end in fmit_weeks:
+                blocked_sunday = thursday_end + timedelta(days=3)
+
+                for block in context.blocks:
+                    if block.date == blocked_sunday:
+                        b_i = context.block_idx.get(block.id)
+                        if b_i is not None and (f_i, b_i, "overnight") in call_vars:
+                            model += (
+                                call_vars[f_i, b_i, "overnight"] == 0,
+                                f"post_fmit_no_sunday_{f_i}_{constraint_count}",
+                            )
+                            constraint_count += 1
+
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
+        """Validate no Sunday call after FMIT week."""
+        violations: list[ConstraintViolation] = []
+
+        fmit_weeks_by_faculty = self._identify_fmit_weeks(context)
+        if not fmit_weeks_by_faculty:
+            return ConstraintResult(satisfied=True, violations=[])
+
+        faculty_by_id = {f.id: f for f in context.faculty}
+        block_by_id = {b.id: b for b in context.blocks}
+
+        # Build lookup of blocked Sundays per faculty
+        blocked_sundays: dict[Any, set[date]] = {}
+        for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
+            blocked_sundays[faculty_id] = set()
+            for friday_start, thursday_end in fmit_weeks:
+                blocked_sunday = thursday_end + timedelta(days=3)
+                blocked_sundays[faculty_id].add(blocked_sunday)
+
+        # Check call assignments
+        for assignment in assignments:
+            has_call = hasattr(assignment, "call_type")
+            if not has_call or assignment.call_type != "overnight":
+                continue
+
+            block = block_by_id.get(assignment.block_id)
+            if not block:
+                continue
+
+            if assignment.person_id in blocked_sundays:
+                if block.date in blocked_sundays[assignment.person_id]:
+                    faculty = faculty_by_id.get(assignment.person_id)
+                    name = faculty.name if faculty else "Faculty"
+                    msg = f"{name} has Sunday call on {block.date} after FMIT"
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="HIGH",
+                            message=msg,
+                            person_id=assignment.person_id,
+                            block_id=block.id,
+                            details={"blocked_date": str(block.date)},
+                        )
+                    )
+
+        return ConstraintResult(
+            satisfied=len(violations) == 0,
+            violations=violations,
+        )
+
+    def _identify_fmit_weeks(
+        self, context: SchedulingContext
+    ) -> dict[Any, list[tuple[date, date]]]:
+        """Identify FMIT weeks from existing assignments."""
+        fmit_weeks: dict[Any, set[tuple[date, date]]] = defaultdict(set)
+
+        for a in context.existing_assignments:
+            template = None
+            for t in context.templates:
+                if t.id == a.rotation_template_id:
+                    template = t
+                    break
+
+            if not template:
+                continue
+
+            is_fmit = (
+                hasattr(template, "activity_type")
+                and template.activity_type == "inpatient"
+                and hasattr(template, "name")
+                and "FMIT" in template.name.upper()
+            )
+
+            if not is_fmit:
+                continue
+
+            block = None
+            for b in context.blocks:
+                if b.id == a.block_id:
+                    block = b
+                    break
+
+            if not block:
+                continue
+
+            friday_start, thursday_end = get_fmit_week_dates(block.date)
+            fmit_weeks[a.person_id].add((friday_start, thursday_end))
+
+        return {k: list(v) for k, v in fmit_weeks.items()}
+
+
 class FMITContinuityTurfConstraint(HardConstraint):
     """
     FMIT continuity delivery turf rules based on system load.

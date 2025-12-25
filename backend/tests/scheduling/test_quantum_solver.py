@@ -68,7 +68,6 @@ def create_test_context(
         faculty=[],
         templates=templates,
         availability={},  # All available
-        preferences={},
         existing_assignments=[],
     )
 
