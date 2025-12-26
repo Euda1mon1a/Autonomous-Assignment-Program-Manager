@@ -32,8 +32,7 @@ strawberry-graphql[fastapi]==0.219.2
 # Data Processing
 pandas==2.3.3
 numpy==2.3.5
-scipy==1.15.3  # Sparse matrix operations for tensegrity solver
-scipy==1.15.3  # Scientific computing for Erlang C queuing calculations
+scipy==1.15.3  # Sparse matrix operations, Erlang C queuing calculations
 python-dateutil==2.9.0.post0
 
 # Machine Learning
@@ -42,13 +41,12 @@ joblib>=1.3.0  # Model serialization
 
 # Graph Analysis (for resilience hub vulnerability analysis)
 networkx>=3.0
-ndlib>=5.1.0  # Network diffusion library for burnout contagion modeling
+ndlib>=5.1.0  # Network diffusion library for burnout contagion modeling (SIR on graphs)
 
 # Cross-Disciplinary Engineering Analytics
 # Libraries from manufacturing, epidemiology, and industrial engineering for resilience analysis
 pyspc>=0.1.0  # Statistical Process Control charts with Western Electric rules
 manufacturing>=1.2.0  # Six Sigma Cp/Cpk process capability analysis
-ndlib>=5.1.0  # Network diffusion/epidemiology models (SIR on graphs)
 pyworkforce>=0.2.0  # Erlang C queuing theory for workforce optimization
 
 # Constraint Programming & Optimization

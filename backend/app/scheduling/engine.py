@@ -225,6 +225,10 @@ class SchedulingEngine:
                     logger.info("Falling back to greedy solver")
                     solver_result = self._run_solver("greedy", context, timeout_seconds)
 
+            # Step 5.5: Delete existing assignments (except preserved ones)
+            # This happens AFTER successful solve to prevent data loss on solver failure
+            self._delete_existing_assignments(preserve_ids)
+
             # Step 6: Convert solver results to assignments
             self._create_assignments_from_result(
                 solver_result, residents, templates, run.id

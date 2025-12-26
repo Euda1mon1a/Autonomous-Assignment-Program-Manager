@@ -34,7 +34,7 @@ COPY requirements.txt .
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --upgrade pip --no-cache-dir \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir --use-deprecated=legacy-resolver -r requirements.txt
 
 # =============================================================================
 # Runtime Stage - minimal production image
@@ -48,9 +48,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install only runtime dependencies (libpq for psycopg2)
+# Install only runtime dependencies (libpq for psycopg2, libmagic for python-magic)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
+    libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy virtual environment from builder

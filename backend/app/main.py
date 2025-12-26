@@ -250,8 +250,11 @@ app.add_middleware(SecurityHeadersMiddleware)
 logger.info("Security headers middleware enabled")
 
 # Slowapi rate limiting middleware - applies global rate limits
-app.add_middleware(SlowAPIMiddleware)
-logger.info("Slowapi rate limiting middleware enabled")
+if settings.RATE_LIMIT_ENABLED:
+    app.add_middleware(SlowAPIMiddleware)
+    logger.info("Slowapi rate limiting middleware enabled")
+else:
+    logger.info("Slowapi rate limiting middleware DISABLED")
 
 # CORS middleware
 # Support both explicit origins list and regex pattern for flexible domain matching
