@@ -100,9 +100,12 @@ nginx/certbot/
 frontend/coverage/
 
 # Schedule data exports (OPSEC/PERSEC - never commit)
-docs/data/airtable_absences_*.json
+docs/data/airtable_*.json
 docs/data/*_export.json
 docs/data/*.json
+!docs/data/sanitized_*.json
+docs/data/pii_mapping*.json
+docs/data/*_pii_mapping*.json
 *.dump
 *.sql
 !backend/alembic/**/*.sql
