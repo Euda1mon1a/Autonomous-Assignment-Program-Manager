@@ -135,12 +135,17 @@ if (
 
 1. [x] **Greedy Solver:** Now selects template with fewest total assignments for even distribution
 2. [x] **CP-SAT Solver:** Added `template_balance_penalty` to objective function
-3. [x] **Template Filtering:** `_get_rotation_templates()` now defaults to `activity_type="clinic"`
+3. [x] **Template Filtering:** `_get_rotation_templates()` now defaults to `activity_type="outpatient"`
+   - **NOTE (2025-12-26):** Previous fix incorrectly used `"clinic"` instead of `"outpatient"`.
+     PR #442 was not merged due to this issue being caught during evaluation.
+     The solver is for outpatient half-day optimization, so the filter must match `"outpatient"`
+     activity_type (electives/selectives), not `"clinic"` (FM Clinic only).
 
 **Architecture Note:**
 - Block-assigned rotations (FMIT, NF, inpatient) are pre-assigned and shouldn't go to solver
 - Solvers are for outpatient half-day optimization only
-- Templates now filtered to `activity_type == "clinic"` by default
+- Templates now filtered to `activity_type == "outpatient"` by default
+- `"clinic"` is a separate activity_type for FM Clinic with its own capacity/supervision constraints
 
 ---
 

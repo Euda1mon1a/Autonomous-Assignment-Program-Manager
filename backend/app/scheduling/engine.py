@@ -946,6 +946,11 @@ class SchedulingEngine:
             Block-assigned rotations (FMIT, NF, Inpatient, NICU) should NOT
             be passed to the solver - they are pre-assigned separately.
 
+            The "outpatient" activity_type includes elective/selective rotations
+            (Neurology, ID, Palliative, etc.) that use half-day scheduling.
+            Note: "clinic" is a separate activity_type for FM Clinic (FMC) which
+            has its own capacity and supervision constraints.
+
             See backend/app/scheduling/solvers.py header for architecture details.
         """
         query = self.db.query(RotationTemplate)

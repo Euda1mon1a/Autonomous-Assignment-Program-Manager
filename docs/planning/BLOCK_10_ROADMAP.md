@@ -1,9 +1,41 @@
 # Block 10 Roadmap: Current Status & Actionable Plan
 
 > **Created:** 2025-12-24
-> **Last Evaluated:** 2025-12-25 (Updated)
+> **Last Evaluated:** 2025-12-26 (Updated)
 > **Purpose:** Evaluate Block 10 status, prioritize work, and coordinate Claude agents
 > **Branch:** `claude/review-block-10-todos-LyGNz`
+
+---
+
+## ⚠️ DEVIATION POLICY (READ FIRST)
+
+```
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  DEVIATION FROM THIS ROADMAP IS NOT ALLOWED UNLESS:                           ║
+║                                                                               ║
+║  1. There is a CRITICAL blocker that can ONLY be resolved locally             ║
+║  2. Tests are failing and must be fixed before proceeding                     ║
+║  3. Security vulnerability is discovered that requires immediate action       ║
+║  4. Database schema mismatch prevents any progress                            ║
+║                                                                               ║
+║  IF DEVIATION IS REQUIRED:                                                    ║
+║  → STOP and report back with: "DEVIATION REQUIRED: [reason]"                  ║
+║  → Wait for human approval before proceeding with alternative path            ║
+║  → Document the deviation in this file under "Deviation Log"                  ║
+║                                                                               ║
+║  DO NOT:                                                                      ║
+║  - Add features not in this roadmap                                           ║
+║  - Refactor "while you're in there"                                           ║
+║  - Fix unrelated bugs (document them in HUMAN_TODO.md instead)                ║
+║  - Change architecture patterns without approval                              ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Deviation Log
+
+| Date | Reason | Approved By | Resolution |
+|------|--------|-------------|------------|
+| 2025-12-26 | activity_type filter fix (PR #442) | Human | Corrected "clinic" → "outpatient" |
 
 ---
 
@@ -60,6 +92,58 @@
 ║  - ✅ RESOLVED: Full database rebuild fixed schema issues        ║
 ╚══════════════════════════════════════════════════════════════════╝
 ```
+
+---
+
+## 🎯 CLAUDE CODE IDE TASK QUEUE (Updated 2025-12-26)
+
+### Active Sprint: Post-Block 10 Enhancements
+
+**Report back after each checkpoint.** Do not proceed to next task without confirmation.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  CHECKPOINT PROTOCOL                                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  After completing EACH task:                                                │
+│                                                                             │
+│  1. COMMIT with descriptive message                                         │
+│  2. PUSH to feature branch                                                  │
+│  3. REPORT: "✓ [Task ID] Complete: [summary]. Ready for [Next Task ID]?"    │
+│  4. WAIT for human confirmation before proceeding                           │
+│                                                                             │
+│  If BLOCKED:                                                                │
+│  → Report: "⚠️ BLOCKED on [Task ID]: [reason]. Need [specific help]."       │
+│                                                                             │
+│  If DEVIATION needed:                                                       │
+│  → Report: "❌ DEVIATION REQUIRED: [reason]. Recommend [alternative]."      │
+│  → STOP and WAIT for approval                                               │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Task Queue (Execute in Order)
+
+| ID | Task | Est. | Checkpoint Report |
+|----|------|------|-------------------|
+| **T1** | ~~Fix activity_type filter (clinic → outpatient)~~ | 30m | ✓ Complete (PR pending) |
+| **T2** | Implement `PostFMITSundayBlockingConstraint` | 2h | Report: constraint added, tests pass |
+| **T3** | Implement `CallSpacingConstraint` | 2h | Report: constraint added, tests pass |
+| **T4** | Add `ResidentInpatientHeadcountConstraint` to `inpatient.py` | 2h | Report: new file created, registered |
+| **T5** | Write unit tests for T2-T4 constraints | 2h | Report: test coverage %, all pass |
+| **T6** | Run full backend test suite | 30m | Report: X passed, Y failed (if any) |
+| **T7** | Update CHANGELOG.md with all changes | 15m | Report: changelog updated |
+| **T8** | Create PR for review | 15m | Report: PR #XXX created |
+
+### Human Tasks (Requires Your Action)
+
+| ID | Task | When | Notes |
+|----|------|------|-------|
+| **H1** | Review and merge activity_type fix PR | Now | Branch: `claude/fix-activity-type-filter-s3OYL` |
+| **H2** | Approve T2-T8 task queue | After H1 | Or modify priorities |
+| **H3** | Run production schedule generation | After T8 merged | Uses real data |
+| **H4** | Validate schedule with real roster | After H3 | PII review |
 
 ---
 

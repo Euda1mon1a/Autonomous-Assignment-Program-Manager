@@ -38,9 +38,10 @@ KNOWN ISSUES (2025-12-24) - ALL FIXED:
    Previously returned ALL templates without filtering.
    STATUS: FIXED - _get_rotation_templates() now defaults to activity_type="outpatient".
    Block-assigned rotations (NF, PC, FMIT, inpatient) excluded by default.
+   NOTE: Previous fix incorrectly used "clinic" instead of "outpatient" - corrected 2025-12-26.
 
-All four fixes applied 2025-12-24. Solvers should now:
-- Only receive outpatient templates (half-day optimization)
+All four fixes applied 2025-12-24, filter corrected 2025-12-26. Solvers should now:
+- Only receive outpatient templates (half-day elective/selective optimization)
 - Distribute assignments evenly across available rotation types
 - Balance both resident workload AND template variety
 """
