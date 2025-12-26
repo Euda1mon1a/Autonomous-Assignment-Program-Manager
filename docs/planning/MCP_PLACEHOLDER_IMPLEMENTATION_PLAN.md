@@ -1,8 +1,9 @@
 # MCP Placeholder Implementation Plan
 
 > **Created:** 2025-12-24
+> **Last Updated:** 2025-12-26
 > **Purpose:** Comprehensive plan to convert MCP placeholder/mock implementations to real backend integrations
-> **Status:** Planning Phase
+> **Status:** Phase 0 Complete - 7 tools fully integrated, 10 with graceful fallback
 
 ---
 
@@ -10,30 +11,48 @@
 
 The MCP (Model Context Protocol) server has **10 placeholder implementations** that return mock data instead of real backend calculations. This document provides a prioritized implementation plan with dependencies, effort estimates, and testing strategies.
 
-### Current State
+### Current State (Updated 2025-12-26)
 
 | Category | Count | Status |
 |----------|-------|--------|
-| **Fully Integrated** | 4 | `validate_schedule`, `detect_conflicts`, `analyze_swap_candidates`, `generate_schedule` |
+| **Fully Integrated** | 7 | `validate_schedule`, `detect_conflicts`, `analyze_swap_candidates`, `generate_schedule`, `run_contingency_analysis_deep`, `check_utilization_threshold`, `get_defense_level` |
 | **Tier 1 Core (Placeholder)** | 3 | `get_static_fallbacks`, `execute_sacrifice_hierarchy`, `analyze_homeostasis` |
 | **Tier 2 Strategic (Placeholder)** | 3 | `calculate_blast_radius`, `analyze_le_chatelier`, `analyze_hub_centrality` |
 | **Tier 3 Advanced (Placeholder)** | 4 | `assess_cognitive_load`, `get_behavioral_patterns`, `analyze_stigmergy`, `check_mtf_compliance` |
+
+### December 2025 Progress
+
+**Completed (Phase 0):**
+- `run_contingency_analysis_deep` - Integrated with `POST /api/v1/resilience/contingency`
+- `check_utilization_threshold` - In-memory calculation with backend fallback
+- `get_defense_level` - In-memory calculation with backend fallback
+- Response mapping layer in `resilience_integration.py`
+- Graceful degradation pattern established for all tools
+
+**MCP Server Expansion:**
+- Total tools: **34** (up from 4 in December 2024)
+- Scheduling tools: 10
+- Resilience tools: 12
+- Swap tools: 6
+- Analytics tools: 6
 
 ---
 
 ## Implementation Priority Matrix
 
-### Priority 0: Already Integrated (No Work Needed)
+### Priority 0: Already Integrated (Complete as of Dec 2025)
 
 | Tool | File | Backend Endpoint | Status |
 |------|------|------------------|--------|
-| `validate_schedule` | `tools.py:200` | `POST /api/v1/scheduling/validate` | ✅ Working |
-| `detect_conflicts` | `tools.py:471` | `GET /api/v1/scheduling/conflicts` | ✅ Working |
-| `analyze_swap_candidates` | `tools.py:772` | `GET /api/v1/swaps/candidates` | ✅ Working (with mock fallback) |
-| `generate_schedule` | `tools.py:1011` | `POST /api/v1/scheduling/generate` | ✅ Working |
-| `run_contingency_analysis_deep` | `resilience_integration.py:657` | `POST /api/v1/resilience/contingency` | ✅ Working |
-| `check_utilization_threshold` | `resilience_integration.py:425` | In-memory calculation | ✅ Working (tries real first) |
-| `get_defense_level` | `resilience_integration.py:540` | In-memory calculation | ✅ Working (tries real first) |
+| `validate_schedule` | `tools.py:200` | `POST /api/v1/scheduling/validate` | ✅ Production |
+| `detect_conflicts` | `tools.py:471` | `GET /api/v1/scheduling/conflicts` | ✅ Production |
+| `analyze_swap_candidates` | `tools.py:772` | `GET /api/v1/swaps/candidates` | ✅ Production (mock fallback) |
+| `generate_schedule` | `tools.py:1011` | `POST /api/v1/scheduling/generate` | ✅ Production |
+| `run_contingency_analysis_deep` | `resilience_integration.py:657` | `POST /api/v1/resilience/contingency` | ✅ Production |
+| `check_utilization_threshold` | `resilience_integration.py:425` | In-memory calculation | ✅ Production (hybrid) |
+| `get_defense_level` | `resilience_integration.py:540` | In-memory calculation | ✅ Production (hybrid) |
+
+**Note:** All 7 integrated tools use the graceful degradation pattern - they attempt backend calls first, then fall back to in-memory calculations if the backend is unavailable.
 
 ### Priority 1: Core Resilience (Critical for Crisis Response)
 

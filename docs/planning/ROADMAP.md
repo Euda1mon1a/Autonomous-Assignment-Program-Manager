@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last Updated:** 2025-12-18
+> **Last Updated:** 2025-12-26
 
 This document outlines the planned features and improvements for the Residency Scheduler project, including detailed implementation notes, technical requirements, database schema changes, API modifications, and migration considerations for each milestone.
 
@@ -19,6 +19,37 @@ The current release includes:
 - ✅ Audit logging system
 - ✅ Rate limiting and security hardening
 - ✅ Export functionality (Excel, PDF, ICS)
+
+### December 2025 Additions (v1.0.1) - Awaiting Local Validation
+
+> **Status**: Code developed and CI tests pass. Pending user validation in local environment.
+
+**Personal AI Infrastructure (PAI):**
+- 🔧 34 Agent Skills organized by tier (development, scheduling, operations, experimental)
+- 🔧 27 Slash Commands for rapid task execution
+- 🔧 4 Operational Modes (Interactive, Autonomous, Review, Emergency)
+- 🔧 Multi-agent orchestration with parallel terminals
+
+**MCP Server Expansion:**
+- 🔧 Expanded from 4 to 34 MCP tools
+- 🔧 Backend API integration for 7 core tools
+- 🔧 Graceful fallback for 10 placeholder implementations
+
+**Docker Security Hardening:**
+- 🔧 Non-root user containers
+- 🔧 Multi-stage builds for reduced image size
+- 🔧 Read-only filesystems where applicable
+
+**Solver Operational Controls:**
+- 🔧 Kill-switch for runaway schedule generation
+- 🔧 Progress monitoring during long solves
+- 🔧 Prometheus metrics for solver performance
+
+**Cross-Disciplinary Research:**
+- 🔧 10+ bridge specifications (forestry, telecommunications, epidemiology, etc.)
+- 🔧 Comprehensive resilience framework documentation
+
+**Legend:** 🔧 = Implemented (pending local validation) | ✅ = Validated
 
 ---
 
@@ -856,8 +887,10 @@ Integration Management (Internal):
 **Tasks:**
 - [ ] Refactor oversized route files (resilience.py, constraints.py)
 - [x] Add frontend feature tests (8 features untested) - Completed 2025-12-21 (Session 13)
-- [ ] Consolidate documentation (docs/ vs wiki/)
+- [x] Consolidate documentation (docs/ vs wiki/) - Completed 2025-12-26 (PAI documentation restructure)
 - [x] Fix npm security vulnerabilities - See `scripts/audit-fix.sh`
+- [x] Docker security hardening - Completed 2025-12-26 (non-root, multi-stage builds)
+- [x] MCP server backend integration - Completed 2025-12-24 (34 tools, 7 fully integrated)
 
 **Implementation Details:**
 
@@ -1088,6 +1121,20 @@ Integration Management (Internal):
 - [x] CI/CD improvement recommendations (`docs/CI_CD_RECOMMENDATIONS.md`)
 - [x] Implementation tracker for swap system (`docs/IMPLEMENTATION_TRACKER.md`)
 - [x] TypeScript type-check configuration (`frontend/tsconfig.typecheck.json`)
+
+### December 2025 Implementations (Pending Local Validation)
+
+> **Note**: Items marked with 🔧 are developed and tested in CI but await user validation in local environment before being marked complete.
+
+- 🔧 Personal AI Infrastructure (PAI) - 34 skills, 27 commands, 4 modes
+- 🔧 MCP Server expansion - 4 → 34 tools with backend integration
+- 🔧 Docker security hardening - Non-root users, multi-stage builds
+- 🔧 Solver operational controls - Kill-switch, progress monitoring, Prometheus metrics
+- 🔧 Cross-disciplinary research bridges - 10+ specifications
+- 🔧 Block 10 schedule generation - 87 assignments, 0 violations, 112.5% coverage
+- 🔧 Immutable assignment preservation - 6 preserved assignment types
+- 🔧 FMIT recovery constraints - PostFMITRecoveryConstraint, PostFMITSundayBlockingConstraint
+- [x] Comprehensive README update - AI-assisted development section, updated architecture
 
 ---
 

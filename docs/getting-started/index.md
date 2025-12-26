@@ -114,6 +114,16 @@ First steps after installation.
 Environment variables and settings.
 </div>
 
+<div class="feature-card" markdown>
+### :material-robot: [AI Agent User Guide](../guides/AI_AGENT_USER_GUIDE.md)
+Get started with 34 AI skills and 27 slash commands.
+</div>
+
+<div class="feature-card" markdown>
+### :material-calendar-clock: [Schedule Generation Runbook](../guides/SCHEDULE_GENERATION_RUNBOOK.md)
+Step-by-step schedule generation guide.
+</div>
+
 </div>
 
 ---
