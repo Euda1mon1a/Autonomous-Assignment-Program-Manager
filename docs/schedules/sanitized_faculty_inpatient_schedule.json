@@ -1,0 +1,2830 @@
+{
+  "fetched_at": "2025-12-25T20:46:40.568434",
+  "table_name": "faculty_inpatient_schedule",
+  "table_id": "tblAyI4RuJ4YJgkEx",
+  "record_count": 52,
+  "records": [
+    {
+      "id": "rec4ERc00ZQmoYlPW",
+      "createdTime": "2025-04-30T21:52:33.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 12 - Week 1 - FAC-CORE-09",
+        "Inpatient Faculty": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "Inpatient Week Start": "2026-05-08",
+        "Inpatient Week End": "2026-05-14",
+        "blockWeekInpatientAttendingID": "rec4ERc00ZQmoYlPW",
+        "Monday Call": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "tuesdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "wednesdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "thursdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "fridayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "saturdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "sundayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "blockNumber": 12,
+        "weekOfBlock": 1,
+        "mondayDate": "2026-05-04",
+        "tuesdayDate": "2026-05-05",
+        "wednesdayDate": "2026-05-06",
+        "thursdayDate": "2026-05-07",
+        "fridayDate": "2026-05-08",
+        "saturdayDate": "2026-05-09",
+        "sundayDate": "2026-05-10",
+        "facultyID": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "rectoByFjGEhCHnP0"
+        ]
+      }
+    },
+    {
+      "id": "rec66RVtYFOQMGoMt",
+      "createdTime": "2025-04-30T21:51:55.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 9 - Week 1 - FAC-CORE-08",
+        "Inpatient Faculty": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "Inpatient Week Start": "2026-02-13",
+        "Inpatient Week End": "2026-02-19",
+        "blockWeekInpatientAttendingID": "rec66RVtYFOQMGoMt",
+        "holidayName": [
+          "recyz9TL7kuyoh1Vp"
+        ],
+        "Monday Call": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "tuesdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "wednesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "thursdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "fridayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "saturdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "sundayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "blockNumber": 9,
+        "weekOfBlock": 1,
+        "holidayDate": [
+          "2026-02-16"
+        ],
+        "mondayDate": "2026-02-09",
+        "tuesdayDate": "2026-02-10",
+        "wednesdayDate": "2026-02-11",
+        "thursdayDate": "2026-02-12",
+        "fridayDate": "2026-02-13",
+        "saturdayDate": "2026-02-14",
+        "sundayDate": "2026-02-15",
+        "facultyID": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "rec9KG7LgejhaAdDP"
+        ]
+      }
+    },
+    {
+      "id": "rec88588lspxZ3qcH",
+      "createdTime": "2025-04-30T21:52:01.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 9 - Week 3 - FAC-CORE-06",
+        "Inpatient Faculty": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "Inpatient Week Start": "2026-02-27",
+        "Inpatient Week End": "2026-03-05",
+        "blockWeekInpatientAttendingID": "rec88588lspxZ3qcH",
+        "Monday Call": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "tuesdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "wednesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "thursdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "fridayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "saturdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "sundayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "blockNumber": 9,
+        "weekOfBlock": 3,
+        "mondayDate": "2026-02-23",
+        "tuesdayDate": "2026-02-24",
+        "wednesdayDate": "2026-02-25",
+        "thursdayDate": "2026-02-26",
+        "fridayDate": "2026-02-27",
+        "saturdayDate": "2026-02-28",
+        "sundayDate": "2026-03-01",
+        "facultyID": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "rec9KG7LgejhaAdDP"
+        ]
+      }
+    },
+    {
+      "id": "rec8xzhjc8WAphwWB",
+      "createdTime": "2025-04-30T21:52:04.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 10 - Week 3 - FAC-CORE-08",
+        "Inpatient Faculty": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "Inpatient Week Start": "2026-03-27",
+        "Inpatient Week End": "2026-04-02",
+        "blockWeekInpatientAttendingID": "rec8xzhjc8WAphwWB",
+        "Monday Call": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "tuesdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "wednesdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "thursdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "fridayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "saturdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "sundayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "blockNumber": 10,
+        "weekOfBlock": 3,
+        "mondayDate": "2026-03-23",
+        "tuesdayDate": "2026-03-24",
+        "wednesdayDate": "2026-03-25",
+        "thursdayDate": "2026-03-26",
+        "fridayDate": "2026-03-27",
+        "saturdayDate": "2026-03-28",
+        "sundayDate": "2026-03-29",
+        "facultyID": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recHQVwPtmZwHBnGx"
+        ]
+      }
+    },
+    {
+      "id": "recADfMIzHEXCqiGb",
+      "createdTime": "2025-04-30T21:51:54.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 8 - Week 4 - FAC-CORE-01",
+        "Inpatient Faculty": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "Inpatient Week Start": "2026-02-06",
+        "Inpatient Week End": "2026-02-12",
+        "blockWeekInpatientAttendingID": "recADfMIzHEXCqiGb",
+        "Monday Call": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "tuesdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "wednesdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "thursdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "fridayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "saturdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "sundayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "blockNumber": 8,
+        "weekOfBlock": 4,
+        "mondayDate": "2026-02-02",
+        "tuesdayDate": "2026-02-03",
+        "wednesdayDate": "2026-02-04",
+        "thursdayDate": "2026-02-05",
+        "fridayDate": "2026-02-06",
+        "saturdayDate": "2026-02-07",
+        "sundayDate": "2026-02-08",
+        "facultyID": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recO8nXpj7mKdnOC2"
+        ]
+      }
+    },
+    {
+      "id": "recAFbeDA6Okg06Xe",
+      "createdTime": "2025-04-30T21:51:00.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 6 - Week 3 - FAC-CORE-03",
+        "Inpatient Faculty": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "Inpatient Week Start": "2025-12-05",
+        "Inpatient Week End": "2025-12-11",
+        "blockWeekInpatientAttendingID": "recAFbeDA6Okg06Xe",
+        "Monday Call": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "tuesdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "wednesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "thursdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "fridayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "saturdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "sundayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "blockNumber": 6,
+        "weekOfBlock": 3,
+        "mondayDate": "2025-12-01",
+        "tuesdayDate": "2025-12-02",
+        "wednesdayDate": "2025-12-03",
+        "thursdayDate": "2025-12-04",
+        "fridayDate": "2025-12-05",
+        "saturdayDate": "2025-12-06",
+        "sundayDate": "2025-12-07",
+        "facultyID": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recheHoNFIphdOOkc"
+        ]
+      }
+    },
+    {
+      "id": "recC1h4HP93uGIsdd",
+      "createdTime": "2025-04-30T21:52:36.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 12 - Week 4 - FAC-CORE-04",
+        "Inpatient Faculty": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "Inpatient Week Start": "2026-05-29",
+        "Inpatient Week End": "2026-06-04",
+        "blockWeekInpatientAttendingID": "recC1h4HP93uGIsdd",
+        "Monday Call": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "tuesdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "wednesdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "thursdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "fridayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "saturdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "sundayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "blockNumber": 12,
+        "weekOfBlock": 4,
+        "mondayDate": "2026-05-25",
+        "tuesdayDate": "2026-05-26",
+        "wednesdayDate": "2026-05-27",
+        "thursdayDate": "2026-05-28",
+        "fridayDate": "2026-05-29",
+        "saturdayDate": "2026-05-30",
+        "sundayDate": "2026-05-31",
+        "facultyID": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "rectoByFjGEhCHnP0"
+        ]
+      }
+    },
+    {
+      "id": "recCrnrzyaeXe0MQa",
+      "createdTime": "2025-04-30T21:32:07.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 4 - Week 3 - FAC-ADJ-02",
+        "Inpatient Faculty": [
+          "recuXcL4MZTkXev4a"
+        ],
+        "Inpatient Week Start": "2025-10-10",
+        "Inpatient Week End": "2025-10-16",
+        "blockWeekInpatientAttendingID": "recCrnrzyaeXe0MQa",
+        "holidayName": [
+          "recWhR9Yjd6WyV2gb"
+        ],
+        "Monday Call": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "tuesdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "wednesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "thursdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "fridayCall": [
+          "recuXcL4MZTkXev4a"
+        ],
+        "saturdayCall": [
+          "recuXcL4MZTkXev4a"
+        ],
+        "sundayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "blockNumber": 4,
+        "weekOfBlock": 3,
+        "holidayDate": [
+          "2025-10-13"
+        ],
+        "mondayDate": "2025-10-06",
+        "tuesdayDate": "2025-10-07",
+        "wednesdayDate": "2025-10-08",
+        "thursdayDate": "2025-10-09",
+        "fridayDate": "2025-10-10",
+        "saturdayDate": "2025-10-11",
+        "sundayDate": "2025-10-12",
+        "facultyID": [
+          "recuXcL4MZTkXev4a"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recxSe9VbRMwt4DqQ"
+        ]
+      }
+    },
+    {
+      "id": "recD92XBYiA3sLJGf",
+      "createdTime": "2025-04-30T21:28:15.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 1 - Week 1 - FAC-CORE-04",
+        "Inpatient Faculty": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "Inpatient Week Start": "2025-07-04",
+        "Inpatient Week End": "2025-07-10",
+        "blockWeekInpatientAttendingID": "recD92XBYiA3sLJGf",
+        "holidayName": [
+          "recYNk9sRmdPPJxe9"
+        ],
+        "Monday Call": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "tuesdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "wednesdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "thursdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "fridayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "saturdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "sundayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "blockNumber": 1,
+        "weekOfBlock": 1,
+        "holidayDate": [
+          "2025-07-04"
+        ],
+        "mondayDate": "2025-06-30",
+        "tuesdayDate": "2025-07-01",
+        "wednesdayDate": "2025-07-02",
+        "thursdayDate": "2025-07-03",
+        "fridayDate": "2025-07-04",
+        "saturdayDate": "2025-07-05",
+        "sundayDate": "2025-07-06",
+        "facultyID": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recyCXLCOdygmwkaB"
+        ]
+      }
+    },
+    {
+      "id": "recEZ6QH9JwTvRxpF",
+      "createdTime": "2025-04-30T21:52:07.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 11 - Week 2 - FAC-CORE-06",
+        "Inpatient Faculty": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "Inpatient Week Start": "2026-04-17",
+        "Inpatient Week End": "2026-04-23",
+        "blockWeekInpatientAttendingID": "recEZ6QH9JwTvRxpF",
+        "Monday Call": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "tuesdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "wednesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "thursdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "fridayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "saturdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "sundayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "blockNumber": 11,
+        "weekOfBlock": 2,
+        "mondayDate": "2026-04-13",
+        "tuesdayDate": "2026-04-14",
+        "wednesdayDate": "2026-04-15",
+        "thursdayDate": "2026-04-16",
+        "fridayDate": "2026-04-17",
+        "saturdayDate": "2026-04-18",
+        "sundayDate": "2026-04-19",
+        "facultyID": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recukCPK15uxoCGtJ"
+        ]
+      }
+    },
+    {
+      "id": "recGNin3xHFj7a4CC",
+      "createdTime": "2025-04-30T21:32:07.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 4 - Week 1 - FAC-CORE-04",
+        "Inpatient Faculty": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "Inpatient Week Start": "2025-09-26",
+        "Inpatient Week End": "2025-10-02",
+        "blockWeekInpatientAttendingID": "recGNin3xHFj7a4CC",
+        "Monday Call": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "tuesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "wednesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "thursdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "fridayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "saturdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "sundayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "blockNumber": 4,
+        "weekOfBlock": 1,
+        "mondayDate": "2025-09-22",
+        "tuesdayDate": "2025-09-23",
+        "wednesdayDate": "2025-09-24",
+        "thursdayDate": "2025-09-25",
+        "fridayDate": "2025-09-26",
+        "saturdayDate": "2025-09-27",
+        "sundayDate": "2025-09-28",
+        "facultyID": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recxSe9VbRMwt4DqQ"
+        ]
+      }
+    },
+    {
+      "id": "recHWEMYpGPL6b3oX",
+      "createdTime": "2025-04-30T21:51:20.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 7 - Week 4 - FAC-CORE-06",
+        "Inpatient Faculty": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "Inpatient Week Start": "2026-01-09",
+        "Inpatient Week End": "2026-01-15",
+        "blockWeekInpatientAttendingID": "recHWEMYpGPL6b3oX",
+        "Monday Call": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "tuesdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "wednesdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "thursdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "fridayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "saturdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "sundayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "blockNumber": 7,
+        "weekOfBlock": 4,
+        "mondayDate": "2026-01-05",
+        "tuesdayDate": "2026-01-06",
+        "wednesdayDate": "2026-01-07",
+        "thursdayDate": "2026-01-08",
+        "fridayDate": "2026-01-09",
+        "saturdayDate": "2026-01-10",
+        "sundayDate": "2026-01-11",
+        "facultyID": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "rec4QEhUx2W3VpbJg"
+        ]
+      }
+    },
+    {
+      "id": "recKV6uR8ZZVmJSOi",
+      "createdTime": "2025-04-30T21:29:30.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 2 - Week 3 - FAC-CORE-07",
+        "Inpatient Faculty": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "Inpatient Week Start": "2025-08-15",
+        "Inpatient Week End": "2025-08-21",
+        "blockWeekInpatientAttendingID": "recKV6uR8ZZVmJSOi",
+        "Monday Call": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "tuesdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "wednesdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "thursdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "fridayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "saturdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "sundayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "blockNumber": 2,
+        "weekOfBlock": 3,
+        "mondayDate": "2025-08-11",
+        "tuesdayDate": "2025-08-12",
+        "wednesdayDate": "2025-08-13",
+        "thursdayDate": "2025-08-14",
+        "fridayDate": "2025-08-15",
+        "saturdayDate": "2025-08-16",
+        "sundayDate": "2025-08-17",
+        "facultyID": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recba9vit0iwjDvyd"
+        ]
+      }
+    },
+    {
+      "id": "recN4lDMwOsh535tv",
+      "createdTime": "2025-04-30T21:52:08.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 11 - Week 3 - FAC-CORE-03",
+        "Inpatient Faculty": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "Inpatient Week Start": "2026-04-24",
+        "Inpatient Week End": "2026-04-30",
+        "blockWeekInpatientAttendingID": "recN4lDMwOsh535tv",
+        "Monday Call": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "tuesdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "wednesdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "thursdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "fridayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "saturdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "sundayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "blockNumber": 11,
+        "weekOfBlock": 3,
+        "mondayDate": "2026-04-20",
+        "tuesdayDate": "2026-04-21",
+        "wednesdayDate": "2026-04-22",
+        "thursdayDate": "2026-04-23",
+        "fridayDate": "2026-04-24",
+        "saturdayDate": "2026-04-25",
+        "sundayDate": "2026-04-26",
+        "facultyID": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recukCPK15uxoCGtJ"
+        ]
+      }
+    },
+    {
+      "id": "recPQtZdGEUs5DyID",
+      "createdTime": "2025-04-30T21:50:53.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 6 - Week 2 - FAC-CORE-07",
+        "Inpatient Faculty": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "Inpatient Week Start": "2025-11-28",
+        "Inpatient Week End": "2025-12-04",
+        "blockWeekInpatientAttendingID": "recPQtZdGEUs5DyID",
+        "Monday Call": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "tuesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "wednesdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "thursdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "fridayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "saturdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "sundayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "blockNumber": 6,
+        "weekOfBlock": 2,
+        "mondayDate": "2025-11-24",
+        "tuesdayDate": "2025-11-25",
+        "wednesdayDate": "2025-11-26",
+        "thursdayDate": "2025-11-27",
+        "fridayDate": "2025-11-28",
+        "saturdayDate": "2025-11-29",
+        "sundayDate": "2025-11-30",
+        "facultyID": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recheHoNFIphdOOkc"
+        ]
+      }
+    },
+    {
+      "id": "recPSQLHaUSLYC4u4",
+      "createdTime": "2025-04-30T21:50:49.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 5 - Week 2 - FAC-CORE-08",
+        "Inpatient Faculty": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "Inpatient Week Start": "2025-10-31",
+        "Inpatient Week End": "2025-11-06",
+        "blockWeekInpatientAttendingID": "recPSQLHaUSLYC4u4",
+        "Monday Call": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "tuesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "wednesdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "thursdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "fridayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "saturdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "sundayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "blockNumber": 5,
+        "weekOfBlock": 2,
+        "mondayDate": "2025-10-27",
+        "tuesdayDate": "2025-10-28",
+        "wednesdayDate": "2025-10-29",
+        "thursdayDate": "2025-10-30",
+        "fridayDate": "2025-10-31",
+        "saturdayDate": "2025-11-01",
+        "sundayDate": "2025-11-02",
+        "facultyID": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "reciDYU7hTsmjgAaT"
+        ]
+      }
+    },
+    {
+      "id": "recPW1TNWFpBDIWF7",
+      "createdTime": "2025-04-30T21:32:07.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 4 - Week 4 - FAC-CORE-05",
+        "Inpatient Faculty": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "Inpatient Week Start": "2025-10-17",
+        "Inpatient Week End": "2025-10-23",
+        "blockWeekInpatientAttendingID": "recPW1TNWFpBDIWF7",
+        "Monday Call": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "tuesdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "wednesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "thursdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "fridayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "saturdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "sundayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "blockNumber": 4,
+        "weekOfBlock": 4,
+        "mondayDate": "2025-10-13",
+        "tuesdayDate": "2025-10-14",
+        "wednesdayDate": "2025-10-15",
+        "thursdayDate": "2025-10-16",
+        "fridayDate": "2025-10-17",
+        "saturdayDate": "2025-10-18",
+        "sundayDate": "2025-10-19",
+        "facultyID": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recxSe9VbRMwt4DqQ"
+        ]
+      }
+    },
+    {
+      "id": "recPl3fFOebaUXVMB",
+      "createdTime": "2025-04-30T21:52:35.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 12 - Week 3 - FAC-CORE-09",
+        "Inpatient Faculty": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "Inpatient Week Start": "2026-05-22",
+        "Inpatient Week End": "2026-05-28",
+        "blockWeekInpatientAttendingID": "recPl3fFOebaUXVMB",
+        "holidayName": [
+          "reca0KjjDHeOgXm0Z"
+        ],
+        "Monday Call": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "tuesdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "wednesdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "thursdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "fridayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "saturdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "sundayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "blockNumber": 12,
+        "weekOfBlock": 3,
+        "holidayDate": [
+          "2026-05-25"
+        ],
+        "mondayDate": "2026-05-18",
+        "tuesdayDate": "2026-05-19",
+        "wednesdayDate": "2026-05-20",
+        "thursdayDate": "2026-05-21",
+        "fridayDate": "2026-05-22",
+        "saturdayDate": "2026-05-23",
+        "sundayDate": "2026-05-24",
+        "facultyID": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "rectoByFjGEhCHnP0"
+        ]
+      }
+    },
+    {
+      "id": "recQ8JmWccfRjzc0T",
+      "createdTime": "2025-04-30T21:32:07.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 4 - Week 2 - FAC-CORE-09",
+        "Inpatient Faculty": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "Inpatient Week Start": "2025-10-03",
+        "Inpatient Week End": "2025-10-09",
+        "blockWeekInpatientAttendingID": "recQ8JmWccfRjzc0T",
+        "Monday Call": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "tuesdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "wednesdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "thursdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "fridayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "saturdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "sundayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "blockNumber": 4,
+        "weekOfBlock": 2,
+        "mondayDate": "2025-09-29",
+        "tuesdayDate": "2025-09-30",
+        "wednesdayDate": "2025-10-01",
+        "thursdayDate": "2025-10-02",
+        "fridayDate": "2025-10-03",
+        "saturdayDate": "2025-10-04",
+        "sundayDate": "2025-10-05",
+        "facultyID": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recxSe9VbRMwt4DqQ"
+        ]
+      }
+    },
+    {
+      "id": "recQOhCGQKnlBrooR",
+      "createdTime": "2025-04-30T21:50:50.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 5 - Week 4 - FAC-CORE-06",
+        "Inpatient Faculty": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "Inpatient Week Start": "2025-11-14",
+        "Inpatient Week End": "2025-11-20",
+        "blockWeekInpatientAttendingID": "recQOhCGQKnlBrooR",
+        "Monday Call": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "tuesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "wednesdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "thursdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "fridayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "saturdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "sundayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "blockNumber": 5,
+        "weekOfBlock": 4,
+        "mondayDate": "2025-11-10",
+        "tuesdayDate": "2025-11-11",
+        "wednesdayDate": "2025-11-12",
+        "thursdayDate": "2025-11-13",
+        "fridayDate": "2025-11-14",
+        "saturdayDate": "2025-11-15",
+        "sundayDate": "2025-11-16",
+        "facultyID": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "reciDYU7hTsmjgAaT"
+        ]
+      }
+    },
+    {
+      "id": "recT3xMwyBUBTdfD0",
+      "createdTime": "2025-04-30T21:51:20.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 8 - Week 1 - FAC-CORE-10",
+        "Inpatient Faculty": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "Inpatient Week Start": "2026-01-16",
+        "Inpatient Week End": "2026-01-22",
+        "blockWeekInpatientAttendingID": "recT3xMwyBUBTdfD0",
+        "holidayName": [
+          "rec1J7pvwZpiLWOa1"
+        ],
+        "Monday Call": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "tuesdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "wednesdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "thursdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "fridayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "saturdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "sundayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "blockNumber": 8,
+        "weekOfBlock": 1,
+        "holidayDate": [
+          "2026-01-19"
+        ],
+        "mondayDate": "2026-01-12",
+        "tuesdayDate": "2026-01-13",
+        "wednesdayDate": "2026-01-14",
+        "thursdayDate": "2026-01-15",
+        "fridayDate": "2026-01-16",
+        "saturdayDate": "2026-01-17",
+        "sundayDate": "2026-01-18",
+        "facultyID": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recO8nXpj7mKdnOC2"
+        ]
+      }
+    },
+    {
+      "id": "recUJ47OdVC5X9HJA",
+      "createdTime": "2025-04-30T21:51:19.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 7 - Week 3 - FAC-CORE-05",
+        "Inpatient Faculty": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "Inpatient Week Start": "2026-01-02",
+        "Inpatient Week End": "2026-01-08",
+        "blockWeekInpatientAttendingID": "recUJ47OdVC5X9HJA",
+        "Monday Call": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "tuesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "wednesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "thursdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "fridayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "saturdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "sundayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "blockNumber": 7,
+        "weekOfBlock": 3,
+        "mondayDate": "2025-12-29",
+        "tuesdayDate": "2025-12-30",
+        "wednesdayDate": "2025-12-31",
+        "thursdayDate": "2026-01-01",
+        "fridayDate": "2026-01-02",
+        "saturdayDate": "2026-01-03",
+        "sundayDate": "2026-01-04",
+        "facultyID": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "rec4QEhUx2W3VpbJg"
+        ]
+      }
+    },
+    {
+      "id": "recUoxdGFRzuWgHLj",
+      "createdTime": "2025-04-30T21:49:24.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 1 - Week 3 - FAC-CORE-04",
+        "Inpatient Faculty": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "Inpatient Week Start": "2025-07-18",
+        "Inpatient Week End": "2025-07-24",
+        "blockWeekInpatientAttendingID": "recUoxdGFRzuWgHLj",
+        "Monday Call": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "tuesdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "wednesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "thursdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "fridayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "saturdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "sundayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "blockNumber": 1,
+        "weekOfBlock": 3,
+        "mondayDate": "2025-07-14",
+        "tuesdayDate": "2025-07-15",
+        "wednesdayDate": "2025-07-16",
+        "thursdayDate": "2025-07-17",
+        "fridayDate": "2025-07-18",
+        "saturdayDate": "2025-07-19",
+        "sundayDate": "2025-07-20",
+        "facultyID": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recyCXLCOdygmwkaB"
+        ]
+      }
+    },
+    {
+      "id": "recW5ZMn7b8igoSKX",
+      "createdTime": "2025-04-30T21:52:38.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 13 - Week 2 - FAC-CORE-07",
+        "Inpatient Faculty": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "Inpatient Week Start": "2026-06-12",
+        "Inpatient Week End": "2026-06-18",
+        "blockWeekInpatientAttendingID": "recW5ZMn7b8igoSKX",
+        "Monday Call": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "tuesdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "wednesdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "thursdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "fridayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "saturdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "sundayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "blockNumber": 13,
+        "weekOfBlock": 2,
+        "mondayDate": "2026-06-08",
+        "tuesdayDate": "2026-06-09",
+        "wednesdayDate": "2026-06-10",
+        "thursdayDate": "2026-06-11",
+        "fridayDate": "2026-06-12",
+        "saturdayDate": "2026-06-13",
+        "sundayDate": "2026-06-14",
+        "facultyID": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recWQEZ1WZ8lvXReP"
+        ]
+      }
+    },
+    {
+      "id": "recW61BH6FnF9y1KZ",
+      "createdTime": "2025-04-30T21:49:16.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 1 - Week 2 - FAC-CORE-07",
+        "Inpatient Faculty": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "Inpatient Week Start": "2025-07-11",
+        "Inpatient Week End": "2025-07-17",
+        "blockWeekInpatientAttendingID": "recW61BH6FnF9y1KZ",
+        "Monday Call": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "tuesdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "wednesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "thursdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "fridayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "saturdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "sundayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "blockNumber": 1,
+        "weekOfBlock": 2,
+        "mondayDate": "2025-07-07",
+        "tuesdayDate": "2025-07-08",
+        "wednesdayDate": "2025-07-09",
+        "thursdayDate": "2025-07-10",
+        "fridayDate": "2025-07-11",
+        "saturdayDate": "2025-07-12",
+        "sundayDate": "2025-07-13",
+        "facultyID": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recyCXLCOdygmwkaB"
+        ]
+      }
+    },
+    {
+      "id": "recWQuaZw5DcLZwVc",
+      "createdTime": "2025-04-30T21:29:48.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 3 - Week 2 - FAC-CORE-09",
+        "Inpatient Faculty": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "Inpatient Week Start": "2025-09-05",
+        "Inpatient Week End": "2025-09-11",
+        "blockWeekInpatientAttendingID": "recWQuaZw5DcLZwVc",
+        "Monday Call": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "tuesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "wednesdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "thursdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "fridayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "saturdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "sundayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "blockNumber": 3,
+        "weekOfBlock": 2,
+        "mondayDate": "2025-09-01",
+        "tuesdayDate": "2025-09-02",
+        "wednesdayDate": "2025-09-03",
+        "thursdayDate": "2025-09-04",
+        "fridayDate": "2025-09-05",
+        "saturdayDate": "2025-09-06",
+        "sundayDate": "2025-09-07",
+        "facultyID": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recldLCwxBq8qUpNY"
+        ]
+      }
+    },
+    {
+      "id": "recWx94aNVtZlpcSz",
+      "createdTime": "2025-04-30T21:51:40.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 8 - Week 2 - FAC-CORE-01",
+        "Inpatient Faculty": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "Inpatient Week Start": "2026-01-23",
+        "Inpatient Week End": "2026-01-29",
+        "blockWeekInpatientAttendingID": "recWx94aNVtZlpcSz",
+        "Monday Call": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "tuesdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "wednesdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "thursdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "fridayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "saturdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "sundayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "blockNumber": 8,
+        "weekOfBlock": 2,
+        "mondayDate": "2026-01-19",
+        "tuesdayDate": "2026-01-20",
+        "wednesdayDate": "2026-01-21",
+        "thursdayDate": "2026-01-22",
+        "fridayDate": "2026-01-23",
+        "saturdayDate": "2026-01-24",
+        "sundayDate": "2026-01-25",
+        "facultyID": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recO8nXpj7mKdnOC2"
+        ]
+      }
+    },
+    {
+      "id": "recXLkQTMeMNPnTeH",
+      "createdTime": "2025-04-30T21:28:15.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 2 - Week 1 - FAC-CORE-05",
+        "Inpatient Faculty": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "Inpatient Week Start": "2025-08-01",
+        "Inpatient Week End": "2025-08-07",
+        "blockWeekInpatientAttendingID": "recXLkQTMeMNPnTeH",
+        "Monday Call": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "tuesdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "wednesdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "thursdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "fridayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "saturdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "sundayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "blockNumber": 2,
+        "weekOfBlock": 1,
+        "mondayDate": "2025-07-28",
+        "tuesdayDate": "2025-07-29",
+        "wednesdayDate": "2025-07-30",
+        "thursdayDate": "2025-07-31",
+        "fridayDate": "2025-08-01",
+        "saturdayDate": "2025-08-02",
+        "sundayDate": "2025-08-03",
+        "facultyID": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recba9vit0iwjDvyd"
+        ]
+      }
+    },
+    {
+      "id": "reca5Eoodvg5M6JBj",
+      "createdTime": "2025-04-30T21:29:36.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 2 - Week 4 - FAC-CORE-03",
+        "Inpatient Faculty": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "Inpatient Week Start": "2025-08-22",
+        "Inpatient Week End": "2025-08-28",
+        "blockWeekInpatientAttendingID": "reca5Eoodvg5M6JBj",
+        "Monday Call": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "tuesdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "wednesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "thursdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "fridayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "saturdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "sundayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "blockNumber": 2,
+        "weekOfBlock": 4,
+        "mondayDate": "2025-08-18",
+        "tuesdayDate": "2025-08-19",
+        "wednesdayDate": "2025-08-20",
+        "thursdayDate": "2025-08-21",
+        "fridayDate": "2025-08-22",
+        "saturdayDate": "2025-08-23",
+        "sundayDate": "2025-08-24",
+        "facultyID": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recba9vit0iwjDvyd"
+        ]
+      }
+    },
+    {
+      "id": "recaGkSVdeZ2Ke5IY",
+      "createdTime": "2025-04-30T21:52:05.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 10 - Week 4 - FAC-CORE-02",
+        "Inpatient Faculty": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "Inpatient Week Start": "2026-04-03",
+        "Inpatient Week End": "2026-04-09",
+        "blockWeekInpatientAttendingID": "recaGkSVdeZ2Ke5IY",
+        "Monday Call": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "tuesdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "wednesdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "thursdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "fridayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "saturdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "sundayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "blockNumber": 10,
+        "weekOfBlock": 4,
+        "mondayDate": "2026-03-30",
+        "tuesdayDate": "2026-03-31",
+        "wednesdayDate": "2026-04-01",
+        "thursdayDate": "2026-04-02",
+        "fridayDate": "2026-04-03",
+        "saturdayDate": "2026-04-04",
+        "sundayDate": "2026-04-05",
+        "facultyID": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recHQVwPtmZwHBnGx"
+        ]
+      }
+    },
+    {
+      "id": "recafgXmSrKPCnnML",
+      "createdTime": "2025-04-30T21:52:37.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 13 - Week 1 - FAC-CORE-02",
+        "Inpatient Faculty": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "Inpatient Week Start": "2026-06-05",
+        "Inpatient Week End": "2026-06-11",
+        "blockWeekInpatientAttendingID": "recafgXmSrKPCnnML",
+        "Monday Call": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "tuesdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "wednesdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "thursdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "fridayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "saturdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "sundayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "blockNumber": 13,
+        "weekOfBlock": 1,
+        "mondayDate": "2026-06-01",
+        "tuesdayDate": "2026-06-02",
+        "wednesdayDate": "2026-06-03",
+        "thursdayDate": "2026-06-04",
+        "fridayDate": "2026-06-05",
+        "saturdayDate": "2026-06-06",
+        "sundayDate": "2026-06-07",
+        "facultyID": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recWQEZ1WZ8lvXReP"
+        ]
+      }
+    },
+    {
+      "id": "recajHEj96v3TJb36",
+      "createdTime": "2025-04-30T21:52:03.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 10 - Week 1 - FAC-CORE-06",
+        "Inpatient Faculty": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "Inpatient Week Start": "2026-03-13",
+        "Inpatient Week End": "2026-03-19",
+        "blockWeekInpatientAttendingID": "recajHEj96v3TJb36",
+        "Monday Call": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "tuesdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "wednesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "thursdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "fridayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "saturdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "sundayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "blockNumber": 10,
+        "weekOfBlock": 1,
+        "mondayDate": "2026-03-09",
+        "tuesdayDate": "2026-03-10",
+        "wednesdayDate": "2026-03-11",
+        "thursdayDate": "2026-03-12",
+        "fridayDate": "2026-03-13",
+        "saturdayDate": "2026-03-14",
+        "sundayDate": "2026-03-15",
+        "facultyID": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recHQVwPtmZwHBnGx"
+        ]
+      }
+    },
+    {
+      "id": "recbkTmQHQWEgzTWw",
+      "createdTime": "2025-04-30T21:32:07.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 3 - Week 4 - FAC-CORE-09",
+        "Inpatient Faculty": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "Inpatient Week Start": "2025-09-19",
+        "Inpatient Week End": "2025-09-25",
+        "blockWeekInpatientAttendingID": "recbkTmQHQWEgzTWw",
+        "Monday Call": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "tuesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "wednesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "thursdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "fridayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "saturdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "sundayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "blockNumber": 3,
+        "weekOfBlock": 4,
+        "mondayDate": "2025-09-15",
+        "tuesdayDate": "2025-09-16",
+        "wednesdayDate": "2025-09-17",
+        "thursdayDate": "2025-09-18",
+        "fridayDate": "2025-09-19",
+        "saturdayDate": "2025-09-20",
+        "sundayDate": "2025-09-21",
+        "facultyID": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recldLCwxBq8qUpNY"
+        ]
+      }
+    },
+    {
+      "id": "rece3ttctOAD6rYz5",
+      "createdTime": "2025-04-30T21:52:09.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 11 - Week 4 - FAC-CORE-05",
+        "Inpatient Faculty": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "Inpatient Week Start": "2026-05-01",
+        "Inpatient Week End": "2026-05-07",
+        "blockWeekInpatientAttendingID": "rece3ttctOAD6rYz5",
+        "Monday Call": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "tuesdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "wednesdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "thursdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "fridayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "saturdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "sundayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "blockNumber": 11,
+        "weekOfBlock": 4,
+        "mondayDate": "2026-04-27",
+        "tuesdayDate": "2026-04-28",
+        "wednesdayDate": "2026-04-29",
+        "thursdayDate": "2026-04-30",
+        "fridayDate": "2026-05-01",
+        "saturdayDate": "2026-05-02",
+        "sundayDate": "2026-05-03",
+        "facultyID": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recukCPK15uxoCGtJ"
+        ]
+      }
+    },
+    {
+      "id": "recech13z1PLdrftS",
+      "createdTime": "2025-04-30T21:51:41.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 8 - Week 3 - FAC-CORE-03",
+        "Inpatient Faculty": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "Inpatient Week Start": "2026-01-30",
+        "Inpatient Week End": "2026-02-05",
+        "blockWeekInpatientAttendingID": "recech13z1PLdrftS",
+        "Monday Call": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "tuesdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "wednesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "thursdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "fridayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "saturdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "sundayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "blockNumber": 8,
+        "weekOfBlock": 3,
+        "mondayDate": "2026-01-26",
+        "tuesdayDate": "2026-01-27",
+        "wednesdayDate": "2026-01-28",
+        "thursdayDate": "2026-01-29",
+        "fridayDate": "2026-01-30",
+        "saturdayDate": "2026-01-31",
+        "sundayDate": "2026-02-01",
+        "facultyID": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recO8nXpj7mKdnOC2"
+        ]
+      }
+    },
+    {
+      "id": "rech1votQ8aNlKj4Q",
+      "createdTime": "2025-04-30T21:28:15.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 2 - Week 2 - FAC-CORE-01",
+        "Inpatient Faculty": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "Inpatient Week Start": "2025-08-08",
+        "Inpatient Week End": "2025-08-14",
+        "blockWeekInpatientAttendingID": "rech1votQ8aNlKj4Q",
+        "Monday Call": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "tuesdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "wednesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "thursdayCall": [
+          "recuXcL4MZTkXev4a"
+        ],
+        "fridayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "saturdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "sundayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "blockNumber": 2,
+        "weekOfBlock": 2,
+        "mondayDate": "2025-08-04",
+        "tuesdayDate": "2025-08-05",
+        "wednesdayDate": "2025-08-06",
+        "thursdayDate": "2025-08-07",
+        "fridayDate": "2025-08-08",
+        "saturdayDate": "2025-08-09",
+        "sundayDate": "2025-08-10",
+        "facultyID": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recba9vit0iwjDvyd"
+        ]
+      }
+    },
+    {
+      "id": "recifDPkz00qH9SbR",
+      "createdTime": "2025-04-30T21:52:34.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 12 - Week 2 - FAC-CORE-06",
+        "Inpatient Faculty": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "Inpatient Week Start": "2026-05-15",
+        "Inpatient Week End": "2026-05-21",
+        "blockWeekInpatientAttendingID": "recifDPkz00qH9SbR",
+        "Monday Call": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "tuesdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "wednesdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "thursdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "fridayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "saturdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "sundayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "blockNumber": 12,
+        "weekOfBlock": 2,
+        "mondayDate": "2026-05-11",
+        "tuesdayDate": "2026-05-12",
+        "wednesdayDate": "2026-05-13",
+        "thursdayDate": "2026-05-14",
+        "fridayDate": "2026-05-15",
+        "saturdayDate": "2026-05-16",
+        "sundayDate": "2026-05-17",
+        "facultyID": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "rectoByFjGEhCHnP0"
+        ]
+      }
+    },
+    {
+      "id": "reclPtHwfLSwfQi4T",
+      "createdTime": "2025-04-30T21:50:50.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 5 - Week 3 - FAC-CORE-02",
+        "Inpatient Faculty": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "Inpatient Week Start": "2025-11-07",
+        "Inpatient Week End": "2025-11-13",
+        "blockWeekInpatientAttendingID": "reclPtHwfLSwfQi4T",
+        "holidayName": [
+          "recarXcXzrBb8oOZV"
+        ],
+        "Monday Call": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "tuesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "wednesdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "thursdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "fridayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "saturdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "sundayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "blockNumber": 5,
+        "weekOfBlock": 3,
+        "holidayDate": [
+          "2025-11-11"
+        ],
+        "mondayDate": "2025-11-03",
+        "tuesdayDate": "2025-11-04",
+        "wednesdayDate": "2025-11-05",
+        "thursdayDate": "2025-11-06",
+        "fridayDate": "2025-11-07",
+        "saturdayDate": "2025-11-08",
+        "sundayDate": "2025-11-09",
+        "facultyID": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "reciDYU7hTsmjgAaT"
+        ]
+      }
+    },
+    {
+      "id": "reclZUpkuB8W6KwQ3",
+      "createdTime": "2025-04-30T21:51:10.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 6 - Week 4 - FAC-CORE-07",
+        "Inpatient Faculty": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "Inpatient Week Start": "2025-12-12",
+        "Inpatient Week End": "2025-12-18",
+        "blockWeekInpatientAttendingID": "reclZUpkuB8W6KwQ3",
+        "Monday Call": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "tuesdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "wednesdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "thursdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "fridayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "saturdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "sundayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "blockNumber": 6,
+        "weekOfBlock": 4,
+        "mondayDate": "2025-12-08",
+        "tuesdayDate": "2025-12-09",
+        "wednesdayDate": "2025-12-10",
+        "thursdayDate": "2025-12-11",
+        "fridayDate": "2025-12-12",
+        "saturdayDate": "2025-12-13",
+        "sundayDate": "2025-12-14",
+        "facultyID": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recheHoNFIphdOOkc"
+        ]
+      }
+    },
+    {
+      "id": "reclumKwwN5DfcAKJ",
+      "createdTime": "2025-04-30T21:50:53.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 6 - Week 1 - FAC-CORE-03",
+        "Inpatient Faculty": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "Inpatient Week Start": "2025-11-21",
+        "Inpatient Week End": "2025-11-27",
+        "blockWeekInpatientAttendingID": "reclumKwwN5DfcAKJ",
+        "holidayName": [
+          "recJ3Pbkqvy3zlpfV"
+        ],
+        "Monday Call": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "tuesdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "wednesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "thursdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "fridayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "saturdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "sundayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "blockNumber": 6,
+        "weekOfBlock": 1,
+        "holidayDate": [
+          "2025-11-27"
+        ],
+        "mondayDate": "2025-11-17",
+        "tuesdayDate": "2025-11-18",
+        "wednesdayDate": "2025-11-19",
+        "thursdayDate": "2025-11-20",
+        "fridayDate": "2025-11-21",
+        "saturdayDate": "2025-11-22",
+        "sundayDate": "2025-11-23",
+        "facultyID": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recheHoNFIphdOOkc"
+        ]
+      }
+    },
+    {
+      "id": "recoaSzjatk8fTCry",
+      "createdTime": "2025-04-30T21:29:41.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 3 - Week 1 - FAC-CORE-04",
+        "Inpatient Faculty": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "Inpatient Week Start": "2025-08-29",
+        "Inpatient Week End": "2025-09-04",
+        "blockWeekInpatientAttendingID": "recoaSzjatk8fTCry",
+        "holidayName": [
+          "rec0k8aPfkfPyv3GU"
+        ],
+        "Monday Call": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "tuesdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "wednesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "thursdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "fridayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "saturdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "sundayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "blockNumber": 3,
+        "weekOfBlock": 1,
+        "holidayDate": [
+          "2025-09-01"
+        ],
+        "mondayDate": "2025-08-25",
+        "tuesdayDate": "2025-08-26",
+        "wednesdayDate": "2025-08-27",
+        "thursdayDate": "2025-08-28",
+        "fridayDate": "2025-08-29",
+        "saturdayDate": "2025-08-30",
+        "sundayDate": "2025-08-31",
+        "facultyID": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recldLCwxBq8qUpNY"
+        ]
+      }
+    },
+    {
+      "id": "recqEI0XgCBm2Idmn",
+      "createdTime": "2025-04-30T21:52:46.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 13 - Week 3 - FAC-CORE-02",
+        "Inpatient Faculty": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "Inpatient Week Start": "2026-06-19",
+        "Inpatient Week End": "2026-06-25",
+        "blockWeekInpatientAttendingID": "recqEI0XgCBm2Idmn",
+        "holidayName": [
+          "recJrLcYMw2rSoM43"
+        ],
+        "Monday Call": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "tuesdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "wednesdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "thursdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "fridayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "saturdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "sundayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "blockNumber": 13,
+        "weekOfBlock": 3,
+        "holidayDate": [
+          "2026-06-19"
+        ],
+        "mondayDate": "2026-06-15",
+        "tuesdayDate": "2026-06-16",
+        "wednesdayDate": "2026-06-17",
+        "thursdayDate": "2026-06-18",
+        "fridayDate": "2026-06-19",
+        "saturdayDate": "2026-06-20",
+        "sundayDate": "2026-06-21",
+        "facultyID": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recWQEZ1WZ8lvXReP"
+        ]
+      }
+    },
+    {
+      "id": "recsdq3i9mLh32oTu",
+      "createdTime": "2025-04-30T21:29:56.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 3 - Week 3 - FAC-CORE-04",
+        "Inpatient Faculty": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "Inpatient Week Start": "2025-09-12",
+        "Inpatient Week End": "2025-09-18",
+        "blockWeekInpatientAttendingID": "recsdq3i9mLh32oTu",
+        "Monday Call": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "tuesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "wednesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "thursdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "fridayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "saturdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "sundayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "blockNumber": 3,
+        "weekOfBlock": 3,
+        "mondayDate": "2025-09-08",
+        "tuesdayDate": "2025-09-09",
+        "wednesdayDate": "2025-09-10",
+        "thursdayDate": "2025-09-11",
+        "fridayDate": "2025-09-12",
+        "saturdayDate": "2025-09-13",
+        "sundayDate": "2025-09-14",
+        "facultyID": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recldLCwxBq8qUpNY"
+        ]
+      }
+    },
+    {
+      "id": "rectACv3yxa8uxOSP",
+      "createdTime": "2025-04-30T21:51:16.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 7 - Week 1 - FAC-CORE-08",
+        "Inpatient Faculty": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "Inpatient Week Start": "2025-12-19",
+        "Inpatient Week End": "2025-12-25",
+        "blockWeekInpatientAttendingID": "rectACv3yxa8uxOSP",
+        "holidayName": [
+          "recirCIjVwz50YemR"
+        ],
+        "Monday Call": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "tuesdayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "wednesdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "thursdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "fridayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "saturdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "sundayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "blockNumber": 7,
+        "weekOfBlock": 1,
+        "holidayDate": [
+          "2025-12-25"
+        ],
+        "mondayDate": "2025-12-15",
+        "tuesdayDate": "2025-12-16",
+        "wednesdayDate": "2025-12-17",
+        "thursdayDate": "2025-12-18",
+        "fridayDate": "2025-12-19",
+        "saturdayDate": "2025-12-20",
+        "sundayDate": "2025-12-21",
+        "facultyID": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "rec4QEhUx2W3VpbJg"
+        ]
+      }
+    },
+    {
+      "id": "rectM76wFJdogBbh0",
+      "createdTime": "2025-04-30T21:51:17.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 7 - Week 2 - FAC-CORE-02",
+        "Inpatient Faculty": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "Inpatient Week Start": "2025-12-26",
+        "Inpatient Week End": "2026-01-01",
+        "blockWeekInpatientAttendingID": "rectM76wFJdogBbh0",
+        "holidayName": [
+          "recE6toTZY3Ovh9Uk"
+        ],
+        "Monday Call": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "tuesdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "wednesdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "thursdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "fridayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "saturdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "sundayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "blockNumber": 7,
+        "weekOfBlock": 2,
+        "holidayDate": [
+          "2026-01-01"
+        ],
+        "mondayDate": "2025-12-22",
+        "tuesdayDate": "2025-12-23",
+        "wednesdayDate": "2025-12-24",
+        "thursdayDate": "2025-12-25",
+        "fridayDate": "2025-12-26",
+        "saturdayDate": "2025-12-27",
+        "sundayDate": "2025-12-28",
+        "facultyID": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "rec4QEhUx2W3VpbJg"
+        ]
+      }
+    },
+    {
+      "id": "rectc6uHyCUNIKyd6",
+      "createdTime": "2025-04-30T21:52:04.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 10 - Week 2 - FAC-CORE-05",
+        "Inpatient Faculty": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "Inpatient Week Start": "2026-03-20",
+        "Inpatient Week End": "2026-03-26",
+        "blockWeekInpatientAttendingID": "rectc6uHyCUNIKyd6",
+        "Monday Call": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "tuesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "wednesdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "thursdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "fridayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "saturdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "sundayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "blockNumber": 10,
+        "weekOfBlock": 2,
+        "mondayDate": "2026-03-16",
+        "tuesdayDate": "2026-03-17",
+        "wednesdayDate": "2026-03-18",
+        "thursdayDate": "2026-03-19",
+        "fridayDate": "2026-03-20",
+        "saturdayDate": "2026-03-21",
+        "sundayDate": "2026-03-22",
+        "facultyID": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recHQVwPtmZwHBnGx"
+        ]
+      }
+    },
+    {
+      "id": "recvJwSP1CmffV88f",
+      "createdTime": "2025-04-30T21:52:00.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 9 - Week 2 - FAC-CORE-01",
+        "Inpatient Faculty": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "Inpatient Week Start": "2026-02-20",
+        "Inpatient Week End": "2026-02-26",
+        "blockWeekInpatientAttendingID": "recvJwSP1CmffV88f",
+        "Monday Call": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "tuesdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "wednesdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "thursdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "fridayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "saturdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "sundayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "blockNumber": 9,
+        "weekOfBlock": 2,
+        "mondayDate": "2026-02-16",
+        "tuesdayDate": "2026-02-17",
+        "wednesdayDate": "2026-02-18",
+        "thursdayDate": "2026-02-19",
+        "fridayDate": "2026-02-20",
+        "saturdayDate": "2026-02-21",
+        "sundayDate": "2026-02-22",
+        "facultyID": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "rec9KG7LgejhaAdDP"
+        ]
+      }
+    },
+    {
+      "id": "recvQM6gBWz5YSBAt",
+      "createdTime": "2025-04-30T21:49:27.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 1 - Week 4 - FAC-CORE-01",
+        "Inpatient Faculty": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "Inpatient Week Start": "2025-07-25",
+        "Inpatient Week End": "2025-07-31",
+        "blockWeekInpatientAttendingID": "recvQM6gBWz5YSBAt",
+        "Monday Call": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "tuesdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "wednesdayCall": [
+          "recikpUu5VIjlG13H"
+        ],
+        "thursdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "fridayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "saturdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "sundayCall": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "blockNumber": 1,
+        "weekOfBlock": 4,
+        "mondayDate": "2025-07-21",
+        "tuesdayDate": "2025-07-22",
+        "wednesdayDate": "2025-07-23",
+        "thursdayDate": "2025-07-24",
+        "fridayDate": "2025-07-25",
+        "saturdayDate": "2025-07-26",
+        "sundayDate": "2025-07-27",
+        "facultyID": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recyCXLCOdygmwkaB"
+        ]
+      }
+    },
+    {
+      "id": "recwz2HYBYGvqFgxt",
+      "createdTime": "2025-04-30T21:52:06.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 11 - Week 1 - FAC-CORE-03",
+        "Inpatient Faculty": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "Inpatient Week Start": "2026-04-10",
+        "Inpatient Week End": "2026-04-16",
+        "blockWeekInpatientAttendingID": "recwz2HYBYGvqFgxt",
+        "Monday Call": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "tuesdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "wednesdayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "thursdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "fridayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "saturdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "sundayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "blockNumber": 11,
+        "weekOfBlock": 1,
+        "mondayDate": "2026-04-06",
+        "tuesdayDate": "2026-04-07",
+        "wednesdayDate": "2026-04-08",
+        "thursdayDate": "2026-04-09",
+        "fridayDate": "2026-04-10",
+        "saturdayDate": "2026-04-11",
+        "sundayDate": "2026-04-12",
+        "facultyID": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recukCPK15uxoCGtJ"
+        ]
+      }
+    },
+    {
+      "id": "recxpMsKSPNFa96cA",
+      "createdTime": "2025-04-30T21:52:56.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 13 - Week 4 - FAC-CORE-07",
+        "Inpatient Faculty": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "Inpatient Week Start": "2026-06-26",
+        "Inpatient Week End": "2026-07-02",
+        "blockWeekInpatientAttendingID": "recxpMsKSPNFa96cA",
+        "Monday Call": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "tuesdayCall": [
+          "recoStkjaq3Km9wAn"
+        ],
+        "wednesdayCall": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "thursdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "fridayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "saturdayCall": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "sundayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "blockNumber": 13,
+        "weekOfBlock": 4,
+        "mondayDate": "2026-06-22",
+        "tuesdayDate": "2026-06-23",
+        "wednesdayDate": "2026-06-24",
+        "thursdayDate": "2026-06-25",
+        "fridayDate": "2026-06-26",
+        "saturdayDate": "2026-06-27",
+        "sundayDate": "2026-06-28",
+        "facultyID": [
+          "reclzhmc5JaPTn18v"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "recWQEZ1WZ8lvXReP"
+        ]
+      }
+    },
+    {
+      "id": "recyl6n2SVspgVCSp",
+      "createdTime": "2025-04-30T21:50:40.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 5 - Week 1 - FAC-CORE-02",
+        "Inpatient Faculty": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "Inpatient Week Start": "2025-10-24",
+        "Inpatient Week End": "2025-10-30",
+        "blockWeekInpatientAttendingID": "recyl6n2SVspgVCSp",
+        "Monday Call": [
+          "recy8viKDSfN0HgxA"
+        ],
+        "tuesdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "wednesdayCall": [
+          "reckuHdI5qtvknzO6"
+        ],
+        "thursdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "fridayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "saturdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "sundayCall": [
+          "recb1zFU30CwlTP4k"
+        ],
+        "blockNumber": 5,
+        "weekOfBlock": 1,
+        "mondayDate": "2025-10-20",
+        "tuesdayDate": "2025-10-21",
+        "wednesdayDate": "2025-10-22",
+        "thursdayDate": "2025-10-23",
+        "fridayDate": "2025-10-24",
+        "saturdayDate": "2025-10-25",
+        "sundayDate": "2025-10-26",
+        "facultyID": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "reciDYU7hTsmjgAaT"
+        ]
+      }
+    },
+    {
+      "id": "recyov1oBKLAP6Ovs",
+      "createdTime": "2025-04-30T21:52:01.000Z",
+      "fields": {
+        "blockWeekInpatientAttending": "Block 9 - Week 4 - FAC-CORE-01",
+        "Inpatient Faculty": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "Inpatient Week Start": "2026-03-06",
+        "Inpatient Week End": "2026-03-12",
+        "blockWeekInpatientAttendingID": "recyov1oBKLAP6Ovs",
+        "Monday Call": [
+          "recWg0eLb8COLXaGh"
+        ],
+        "tuesdayCall": [
+          "recbx2DP37Ku3Gi7h"
+        ],
+        "wednesdayCall": [
+          "rec5AapfU9LzERaUo"
+        ],
+        "thursdayCall": [
+          "recvOpBxMTYhSK0QM"
+        ],
+        "fridayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "saturdayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "sundayCall": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "blockNumber": 9,
+        "weekOfBlock": 4,
+        "mondayDate": "2026-03-02",
+        "tuesdayDate": "2026-03-03",
+        "wednesdayDate": "2026-03-04",
+        "thursdayDate": "2026-03-05",
+        "fridayDate": "2026-03-06",
+        "saturdayDate": "2026-03-07",
+        "sundayDate": "2026-03-08",
+        "facultyID": [
+          "rec3W7tBLtt5IVNK6"
+        ],
+        "facultyClinicTemplates": [
+          "rec4XYG4UiH2FtIum",
+          "recA1DdOyznYto89m"
+        ],
+        "blocksLink": [
+          "rec9KG7LgejhaAdDP"
+        ]
+      }
+    }
+  ]
+}
