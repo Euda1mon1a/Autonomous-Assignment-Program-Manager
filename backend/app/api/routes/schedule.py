@@ -36,12 +36,20 @@ from app.services.idempotency_service import (
     IdempotencyService,
     extract_idempotency_params,
 )
+from app.schemas.block_import import (
+    BlockParseResponse,
+    ParsedBlockAssignmentSchema,
+    ParsedFMITWeekSchema,
+    ResidentRosterItem,
+)
 from app.services.xlsx_import import (
     ExternalConflict,
     FacultyTarget,
     SwapFinder,
     analyze_schedule_conflicts,
     load_external_conflicts_from_absences,
+    parse_block_schedule,
+    parse_fmit_attending,
 )
 
 # Import observability metrics (optional - graceful degradation)
@@ -682,6 +690,140 @@ def analyze_single_file(
         "alternating_patterns": alternating_providers,
         "warnings": result.warnings,
     }
+
+
+@router.post("/import/block", response_model=BlockParseResponse)
+def parse_block_schedule_endpoint(
+    file: UploadFile = File(..., description="Excel schedule file"),
+    block_number: int = Form(..., description="Block number to parse (1-13)", ge=1, le=13),
+    known_people: str | None = Form(
+        None, description="JSON array of known person names for fuzzy matching"
+    ),
+    include_fmit: bool = Form(True, description="Include FMIT attending schedule"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Parse a specific block schedule from an Excel file.
+
+    Uses anchor-based fuzzy-tolerant parsing to extract:
+    - Resident roster grouped by template (R1, R2, R3)
+    - FMIT attending schedule (weekly faculty assignments)
+    - Daily assignments with AM/PM slots
+
+    Handles human-edited spreadsheet chaos:
+    - Column shifts from copy/paste
+    - Merged cells
+    - Name typos (fuzzy matching with known_people list)
+
+    Args:
+        file: Excel file with block schedule
+        block_number: Block to parse (1-13)
+        known_people: Optional JSON array of known names for better fuzzy matching
+        include_fmit: Whether to include FMIT schedule (default: True)
+
+    Returns:
+        BlockParseResponse with roster, FMIT schedule, and parsing warnings
+    """
+    import json as json_module
+    import os
+    import tempfile
+
+    # Read and validate file
+    try:
+        file_bytes = file.file.read()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Failed to read uploaded file")
+
+    try:
+        validate_excel_upload(file_bytes, file.filename, file.content_type)
+    except FileValidationError:
+        raise HTTPException(status_code=400, detail="File validation failed")
+
+    # Parse known people if provided
+    people_list = None
+    if known_people:
+        try:
+            people_list = json_module.loads(known_people)
+            if not isinstance(people_list, list):
+                raise ValueError("known_people must be a JSON array")
+        except (json_module.JSONDecodeError, ValueError) as e:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid known_people format: {e}"
+            )
+
+    # Save to temp file (openpyxl needs file path)
+    with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
+        tmp.write(file_bytes)
+        tmp_path = tmp.name
+
+    try:
+        result = parse_block_schedule(
+            filepath=tmp_path,
+            block_number=block_number,
+            known_people=people_list,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    finally:
+        os.unlink(tmp_path)
+
+    # Parse FMIT if requested
+    fmit_schedule = []
+    if include_fmit:
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
+                tmp.write(file_bytes)
+                tmp_path = tmp.name
+            try:
+                all_fmit = parse_fmit_attending(filepath=tmp_path)
+                fmit_schedule = [
+                    ParsedFMITWeekSchema(
+                        block_number=f.block_number,
+                        week_number=f.week_number,
+                        start_date=f.start_date.isoformat() if f.start_date else None,
+                        end_date=f.end_date.isoformat() if f.end_date else None,
+                        faculty_name=f.faculty_name,
+                        is_holiday_call=f.is_holiday_call,
+                    )
+                    for f in all_fmit
+                    if f.block_number == block_number
+                ]
+            finally:
+                os.unlink(tmp_path)
+        except Exception:
+            pass  # FMIT sheet not found, that's OK
+
+    # Convert to response schema
+    return BlockParseResponse(
+        success=len(result.errors) == 0,
+        block_number=result.block_number,
+        start_date=result.start_date.isoformat() if result.start_date else None,
+        end_date=result.end_date.isoformat() if result.end_date else None,
+        residents=[ResidentRosterItem(**r) for r in result.residents],
+        residents_by_template={
+            template: [ResidentRosterItem(**r) for r in residents]
+            for template, residents in result.get_residents_by_template().items()
+        },
+        fmit_schedule=fmit_schedule,
+        assignments=[
+            ParsedBlockAssignmentSchema(
+                person_name=a.person_name,
+                date=a.date.isoformat(),
+                template=a.template,
+                role=a.role,
+                slot_am=a.slot_am,
+                slot_pm=a.slot_pm,
+                row_idx=a.row_idx,
+                confidence=a.confidence,
+            )
+            for a in result.assignments
+        ],
+        warnings=result.warnings,
+        errors=result.errors,
+        total_residents=len(result.residents),
+        total_assignments=len(result.assignments),
+    )
 
 
 @router.post("/swaps/find", response_model=SwapFinderResponse)
