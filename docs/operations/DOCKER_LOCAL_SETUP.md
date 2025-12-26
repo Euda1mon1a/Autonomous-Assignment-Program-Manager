@@ -413,10 +413,10 @@ Make sure to:
 
 ## Additional Resources
 
-- [CLAUDE.md](./CLAUDE.md) - Project development guidelines
-- [README.md](./README.md) - Main project documentation
-- [docs/](./docs/) - Comprehensive documentation
-- [.env.example](./.env.example) - Production environment template
+- [CLAUDE.md](../../CLAUDE.md) - Project development guidelines
+- [README.md](../../README.md) - Main project documentation
+- [docs/](../) - Comprehensive documentation
+- [.env.example](../../.env.example) - Production environment template
 
 ---
 
